@@ -8,6 +8,7 @@
 *.egg-info
 dist
 build
+.venv
 eggs
 parts
 bin
@@ -35,3 +36,5 @@ nosetests.xml
 .pydevproject
 .idea
 etc/mistral.conf
+tools/lintstack.head.py
+tools/pylint_exceptions
