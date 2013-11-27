@@ -5,3 +5,4 @@ pecan>=0.2.0
 WSME>=0.5b6
 amqplib>=0.6.1
 argparse
+oslo.config>=1.2.0

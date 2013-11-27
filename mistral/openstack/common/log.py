@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2011 OpenStack Foundation.
 # Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
@@ -477,7 +475,7 @@ def _setup_logging_from_conf():
         streamlog = ColorHandler()
         log_root.addHandler(streamlog)
 
-    elif not CONF.log_file:
+    elif not logpath:
         # pass sys.stdout as a positional argument
         # python2.6 calls the argument strm, in 2.7 it's stream
         streamlog = logging.StreamHandler(sys.stdout)

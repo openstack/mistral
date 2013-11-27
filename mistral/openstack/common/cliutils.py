@@ -1,5 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
 # Copyright 2012 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -26,6 +24,7 @@ import textwrap
 
 import prettytable
 import six
+from six import moves
 
 from mistral.openstack.common.apiclient import exceptions
 from mistral.openstack.common import strutils
@@ -200,7 +199,7 @@ def get_password(max_password_prompts=3):
     if hasattr(sys.stdin, "isatty") and sys.stdin.isatty():
         # Check for Ctrl-D
         try:
-            for _ in xrange(max_password_prompts):
+            for _ in moves.range(max_password_prompts):
                 pw1 = getpass.getpass("OS Password: ")
                 if verify:
                     pw2 = getpass.getpass("Please verify: ")
