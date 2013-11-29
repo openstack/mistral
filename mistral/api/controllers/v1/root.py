@@ -17,9 +17,10 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers.v1 import workbook
+from mistral.api.controllers import resource
 
 
-class RootResource(wtypes.Base):
+class RootResource(resource.Resource):
     """Root resource for API version 1.
 
     It references all other resources belonging to the API.
@@ -28,6 +29,7 @@ class RootResource(wtypes.Base):
     uri = wtypes.text
 
     # TODO: what else do we need here?
+    # TODO: we need to collect all the links from API v1.0 and provide them
 
 
 class Controller(object):

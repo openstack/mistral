@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright 2013 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +18,21 @@ import pecan
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral.api.controllers import common_types
+from mistral.openstack.common import log as logging
 from mistral.api.controllers.v1 import root as v1_root
+from mistral.api.controllers import resource
 
+LOG = logging.getLogger(__name__)
 
 API_STATUS = wtypes.Enum(str, 'SUPPORTED', 'CURRENT', 'DEPRECATED')
 
 
-class APIVersion(wtypes.Base):
+class APIVersion(resource.Resource):
     """API Version."""
 
     id = wtypes.text
     status = API_STATUS
-    link = common_types.Link
+    link = resource.Link
 
 
 class RootController(object):
@@ -37,9 +41,11 @@ class RootController(object):
 
     @wsme_pecan.wsexpose([APIVersion])
     def index(self):
+        LOG.debug("Fetching API versions.")
+
         host_url = '%s/%s' % (pecan.request.host_url, 'v1')
         api_v1 = APIVersion(id='v1.0',
                             status='CURRENT',
-                            link=common_types.Link(href=host_url, target='v1'))
+                            link=resource.Link(href=host_url, target='v1'))
 
         return [api_v1]
