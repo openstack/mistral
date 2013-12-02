@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright 2013 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,99 +14,77 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import pecan
 from pecan import rest
-import wsme
+from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api.controllers.v1 import workbook_definition
 from mistral.api.controllers.v1 import listener
+from mistral.api.controllers.v1 import execution
+from mistral.api.controllers import resource
+
 from mistral.openstack.common import log as logging
+from mistral.db import api as db_api
+
+LOG = logging.getLogger(__name__)
 
 
-LOG = logging.getLogger("%s" % __name__)
-
-
-class Workbook(wtypes.Base):
+class Workbook(resource.Resource):
     """Workbook resource."""
 
     name = wtypes.text
     description = wtypes.text
     tags = [wtypes.text]
 
-    def __str__(self):
-        return "Workbook [name='%s', description='%s', tags='%s']" % \
-               (self.name, self.description, self.tags)
 
-
-class Workbooks(wtypes.Base):
+class Workbooks(resource.Resource):
     """A collection of Workbooks."""
 
     workbooks = [Workbook]
 
-    def __str__(self):
-        return "Workbooks [workbooks=%s]" % self.workbooks
-
 
 class WorkbooksController(rest.RestController):
-    """Operations on collection of workbooks."""
 
+    definition = workbook_definition.WorkbookDefinitionController()
     listeners = listener.ListenersController()
-
-    #@pecan.expose()
-    #def _lookup(self, workbook_name, *remainder):
-    #    # Standard Pecan delegation.
-    #    return WorkbookController(workbook_name), remainder
+    executions = execution.ExecutionsController()
 
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
         LOG.debug("Fetch workbook [name=%s]" % name)
 
-        # TODO: fetch the workbook from the DB
+        values = db_api.workbook_get(name)
 
-        error = "Not implemented"
-        pecan.response.translatable_error = error
-
-        raise wsme.exc.ClientSideError(unicode(error))
+        if not values:
+            abort(404)
+        else:
+            return Workbook.from_dict(values)
 
     @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
     def put(self, name, workbook):
         LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
 
-        # TODO: modify the workbook in DB
-
-        error = "Not implemented"
-        pecan.response.translatable_error = error
-
-        raise wsme.exc.ClientSideError(unicode(error))
-
-    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, name):
-        LOG.debug("Delete workbook [name=%s]" % name)
-
-        # TODO: delete the workbook from DB
-
-        error = "Not implemented"
-        pecan.response.translatable_error = error
-
-        raise wsme.exc.ClientSideError(unicode(error))
+        return Workbook.from_dict(db_api.workbook_update(name,
+                                                         workbook.to_dict()))
 
     @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
     def post(self, workbook):
         LOG.debug("Create workbook [workbook=%s]" % workbook)
 
-        # TODO: create the listener in DB
+        return Workbook.from_dict(db_api.workbook_create(workbook.to_dict()))
 
-        error = "Not implemented"
-        pecan.response.translatable_error = error
+    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
+    def delete(self, name):
+        LOG.debug("Delete workbook [name=%s]" % name)
 
-        raise wsme.exc.ClientSideError(unicode(error))
+        db_api.workbook_delete(name)
 
     @wsme_pecan.wsexpose(Workbooks)
     def get_all(self):
         LOG.debug("Fetch workbooks.")
 
-        workbooks = []
-        # TODO: fetch workbooks from DB
+        workbooks = [Workbook.from_dict(values)
+                     for values in db_api.workbooks_get()]
 
         return Workbooks(workbooks=workbooks)
