@@ -15,6 +15,7 @@
 import pecan
 
 from mistral.api import config as api_config
+from mistral.services import periodic
 
 
 def get_pecan_config():
@@ -29,6 +30,9 @@ def setup_app(config=None):
         config = get_pecan_config()
 
     app_conf = dict(config.app)
+
+    ##TODO(akuznetsov) move this to event scheduling to separate process
+    periodic.setup()
 
     return pecan.make_app(
         app_conf.pop('root'),

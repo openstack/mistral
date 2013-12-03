@@ -43,3 +43,5 @@ class Event(mb.MistralBase):
 
     id = _id_column()
     name = sa.Column(sa.String(80), nullable=False)
+    pattern = sa.Column(sa.String(20), nullable=False)
+    next_execution_time = sa.Column(sa.DateTime, nullable=False)

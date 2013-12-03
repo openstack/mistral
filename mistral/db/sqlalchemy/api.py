@@ -86,13 +86,40 @@ def event_create(values):
         try:
             event.save(session=session)
         except db_exc.DBDuplicateEntry as e:
-            raise Exception
             LOG.exception("Database registration exception: %s", e)
+            ##TODO(akuznetsov) create special exception for this case
+            raise Exception
 
     return event_get(event.id)
 
 
+def event_update(event_id, values):
+    values = values.copy()
+
+    session = get_session()
+    with session.begin():
+        event = _event_get(event_id, session)
+        if event is None:
+            ##TODO(akuznetsov) create special exception for this case
+            raise Exception
+        event.update(values)
+
+    return event
+
+
+@to_dict
+def get_next_events(time):
+    query = model_query(m.Event, get_session())
+    query = query.filter(m.Event.next_execution_time < time)
+    query = query.order_by(m.Event.next_execution_time)
+    return query.all()
+
+
+def _event_get(event_id, session):
+    query = model_query(m.Event, session)
+    return query.filter_by(id=event_id).first()
+
+
 @to_dict
 def event_get(event_id):
-    query = model_query(m.Event, get_session())
-    return query.filter_by(id=event_id).first()
+    return _event_get(event_id, get_session())

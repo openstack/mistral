@@ -14,13 +14,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.tests.unit import base as test_base
+from mistral.openstack.common import timeutils
+
 from mistral.db.sqlalchemy import api as db_api
+from mistral.tests.unit import base as test_base
 
 
 SAMPLE_EVENT = {
     "id": "123",
-    "name": "test_event"
+    "name": "test_event",
+    "pattern": "* *",
+    "next_execution_time": timeutils.utcnow()
 }
 
 

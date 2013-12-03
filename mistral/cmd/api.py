@@ -14,6 +14,8 @@
 
 """Script to start Mistral API service."""
 
+import eventlet
+
 import os
 import sys
 from wsgiref import simple_server
@@ -24,6 +26,9 @@ from mistral.api import app
 from mistral import config
 from mistral.openstack.common import log as logging
 
+
+eventlet.monkey_patch(
+    os=True, select=True, socket=True, thread=True, time=True)
 
 LOG = logging.getLogger('mistral.cmd.api')
 
