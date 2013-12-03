@@ -15,6 +15,7 @@
 import pecan
 
 from mistral.api import config as api_config
+from mistral.db import api as db_api
 from mistral.services import periodic
 
 
@@ -31,6 +32,7 @@ def setup_app(config=None):
 
     app_conf = dict(config.app)
 
+    db_api.setup_db()
     ##TODO(akuznetsov) move this to event scheduling to separate process
     periodic.setup()
 

@@ -17,7 +17,7 @@
 from croniter import croniter
 from datetime import datetime
 from datetime import timedelta
-from mistral.db.sqlalchemy import api as db_api
+from mistral.db import api as db_api
 
 
 def get_next_events():

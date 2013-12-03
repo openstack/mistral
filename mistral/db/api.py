@@ -15,9 +15,28 @@
 #    limitations under the License.
 
 # TODO: replace this module later with a real implementation
+from mistral.openstack.common.db import api as db_api
+from mistral.openstack.common import log as logging
 
 # Workbooks
 
+_BACKEND_MAPPING = {
+    'sqlalchemy': 'mistral.db.sqlalchemy.api',
+}
+
+IMPL = db_api.DBAPI(backend_mapping=_BACKEND_MAPPING)
+LOG = logging.getLogger(__name__)
+
+
+def setup_db():
+    IMPL.setup_db()
+
+
+def drop_db():
+    IMPL.drop_db()
+
+
+# Workbook
 
 def workbook_get(name):
     return {}
@@ -115,3 +134,17 @@ def listener_delete(workbook_name, id):
 
 def listeners_get(workbook_name):
     return [{}]
+
+
+# Events
+
+def event_create(values):
+    return IMPL.event_create(values)
+
+
+def event_update(event_id, values):
+    return IMPL.event_update(event_id, values)
+
+
+def get_next_events(time):
+    return IMPL.get_next_events(time)

@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import sys
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import models as m
@@ -41,6 +42,11 @@ def to_dict(func):
             return None
 
     return decorator
+
+
+def get_backend():
+    """The backend is this module itself."""
+    return sys.modules[__name__]
 
 
 def model_query(model, session=None):
