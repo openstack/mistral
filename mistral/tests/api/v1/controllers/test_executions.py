@@ -62,6 +62,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(EXECS[0], resp.json)
 
     def test_delete(self):
+        db_api.execution_delete = mock.MagicMock(return_value=None)
         resp = self.app.delete('/v1/workbooks/my_workbook/executions/123')
 
         self.assertEqual(resp.status_int, 204)

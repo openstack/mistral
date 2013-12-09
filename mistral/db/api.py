@@ -39,76 +39,79 @@ def drop_db():
 # Workbook
 
 def workbook_get(name):
-    return {}
+    return IMPL.workbook_get(name)
 
 
 def workbook_create(values):
-    return values
+    return IMPL.workbook_create(values)
 
 
 def workbook_update(name, values):
-    return values
+    return IMPL.workbook_update(name, values)
 
 
 def workbook_delete(name):
-    pass
+    IMPL.workbook_delete(name)
 
 
 def workbooks_get():
-    return [{}]
+    return IMPL.workbooks_get_all()
 
 
 def workbook_definition_get(workbook_name):
-    return ""
+    return IMPL.workbook_get(workbook_name)['doc']
 
 
 def workbook_definition_put(workbook_name, text):
-    return text
+    workbook = IMPL.workbook_update(workbook_name, {'doc': text})
+    IMPL.create_associated_events(workbook)
+    return workbook
 
 
 # Executions
 
 
 def execution_get(workbook_name, id):
-    return {}
+    return IMPL.execution_get(workbook_name, id)
 
 
 def execution_create(workbook_name, values):
-    return values
+    return IMPL.execution_create(workbook_name, values)
 
 
 def execution_update(workbook_name, id, values):
-    return values
+    return IMPL.execution_update(workbook_name, id, values)
 
 
 def execution_delete(workbook_name, id):
-    pass
+    return IMPL.execution_delete(workbook_name, id)
 
 
 def executions_get(workbook_name):
-    return [{}]
+    return IMPL.executions_get_all(workbook_name=workbook_name)
 
 
 # Tasks
 
 def task_get(workbook_name, execution_id, id):
-    return {}
+    return IMPL.task_get(workbook_name, execution_id, id)
 
 
 def task_create(workbook_name, execution_id, values):
-    return values
+    return IMPL.task_create(workbook_name, execution_id, values)
 
 
 def task_update(workbook_name, execution_id, id, values):
-    return values
+    return IMPL.task_update(workbook_name, execution_id, id, values)
 
 
 def task_delete(workbook_name, execution_id, id):
-    pass
+    return IMPL.task_delete(workbook_name, execution_id, id)
 
 
 def tasks_get(workbook_name, execution_id):
-    return [{}]
+    return IMPL.tasks_get_all(workbook_name=workbook_name,
+                              execution_id=execution_id)
 
 
 # Listeners

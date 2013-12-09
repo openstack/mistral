@@ -18,6 +18,7 @@ import sqlalchemy as sa
 import uuid
 
 from mistral.db.sqlalchemy import model_base as mb
+from mistral.db.sqlalchemy import types as st
 
 ## Helpers
 
@@ -45,3 +46,51 @@ class Event(mb.MistralBase):
     name = sa.Column(sa.String(80), nullable=False)
     pattern = sa.Column(sa.String(20), nullable=False)
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
+
+
+class WorkflowExecution(mb.MistralBase):
+    """Contains info about particular workflow execution"""
+
+    __tablename__ = 'workflow_executions'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name'),
+    )
+
+    id = _id_column()
+    name = sa.Column(sa.String(80))
+    workbook_name = sa.Column(sa.String(80))
+    target_task = sa.Column(sa.String(80))
+    workflow_state = sa.Column(sa.String(20))
+
+
+class Workbook(mb.MistralBase):
+    """Contains info about all DSL (workbook) content"""
+
+    __tablename__ = 'workbooks'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name'),
+    )
+
+    id = _id_column()
+    name = sa.Column(sa.String(80), primary_key=True)
+    doc = sa.Column(sa.String(), nullable=True)
+    description = sa.Column(sa.String())
+    tags = sa.Column(st.JsonListType())
+    scope = sa.Column(sa.String())
+
+
+class Task(mb.MistralBase):
+    """Contains info about particular task"""
+
+    __tablename__ = 'tasks'
+
+    id = _id_column()
+    name = sa.Column(sa.String(80))
+    workbook_name = sa.Column(sa.String(80))
+    execution_id = sa.Column(sa.String(36))
+    description = sa.Column(sa.String())
+    action = sa.Column(sa.String(80))
+    state = sa.Column(sa.String(20))
+    tags = sa.Column(st.JsonListType())

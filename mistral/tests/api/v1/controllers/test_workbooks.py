@@ -60,6 +60,7 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertDictEqual(WORKBOOKS[0], resp.json)
 
     def test_delete(self):
+        db_api.workbook_delete = mock.MagicMock(return_value=None)
         resp = self.app.delete('/v1/workbooks/my_workbook')
 
         self.assertEqual(resp.status_int, 204)

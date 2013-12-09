@@ -38,7 +38,7 @@ class TestWorkbookDefinitionController(base.FunctionalTest):
     def test_put(self):
         new_definition = "new definition"
 
-        db_api.workbook_definition_update =\
+        db_api.workbook_definition_put =\
             mock.MagicMock(return_value=new_definition)
 
         resp = self.app.put('/v1/workbooks/my_workbook/definition',
