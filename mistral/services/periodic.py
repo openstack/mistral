@@ -15,12 +15,12 @@
 #    limitations under the License.
 
 
+from mistral.db import api as db_api
+from mistral.engine import engine
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral import dsl
-from mistral.db import api as db_api
-from mistral.engine import engine
 from mistral.services import scheduler as s
 
 LOG = log.getLogger(__name__)
