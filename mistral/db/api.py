@@ -14,7 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# TODO: replace this module later with a real implementation
 from mistral.openstack.common.db import api as db_api
 from mistral.openstack.common import log as logging
 
@@ -36,7 +35,27 @@ def drop_db():
     IMPL.drop_db()
 
 
+# Transaction control.
+
+
+def start_tx():
+    IMPL.start_tx()
+
+
+def commit_tx():
+    IMPL.commit_tx()
+
+
+def rollback_tx():
+    IMPL.rollback_tx()
+
+
+def end_tx():
+    IMPL.end_tx()
+
+
 # Workbook
+
 
 def workbook_get(name):
     return IMPL.workbook_get(name)

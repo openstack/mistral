@@ -8,3 +8,4 @@ argparse
 croniter
 oslo.config>=1.2.0
 requests
+pika>=0.9.13

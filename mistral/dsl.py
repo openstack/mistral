@@ -46,6 +46,10 @@ class Parser(object):
     def get_tasks(self):
         return self.doc["Workflow"]["tasks"]
 
+    def get_action(self, action_name):
+        # TODO(rakhmerov): it needs to return action definition as a dict
+        pass
+
     def get_service_name(self):
         return self.doc['Service']['name']
 

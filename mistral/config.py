@@ -31,10 +31,23 @@ db_opts = [
     # TODO: add DB properties.
 ]
 
+rabbit_opts = [
+    cfg.StrOpt('rabbit_host', default='0.0.0.0',
+               help='RabbitMQ server host name'),
+    cfg.IntOpt('rabbit_port', default=5672, help='RabbitMQ server port'),
+    cfg.StrOpt('rabbit_virtual_host', default='/',
+               help='RabbitMQ server virtual host name'),
+    cfg.StrOpt('rabbit_task_queue', default='tasks',
+               help='RabbitMQ tasks queue name'),
+    cfg.StrOpt('rabbit_user', default='guest', help='RabbitMQ user'),
+    cfg.StrOpt('rabbit_password', default='guest', help='RabbitMQ password')
+]
+
 CONF = cfg.CONF
 
 CONF.register_opts(api_opts, group='api')
 CONF.register_opts(db_opts, group='database')
+CONF.register_opts(rabbit_opts, group='rabbit')
 
 
 CONF.import_opt('verbose', 'mistral.openstack.common.log')

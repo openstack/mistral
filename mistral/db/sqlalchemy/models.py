@@ -49,23 +49,18 @@ class Event(mb.MistralBase):
 
 
 class WorkflowExecution(mb.MistralBase):
-    """Contains info about particular workflow execution"""
+    """Contains info about particular workflow execution."""
 
     __tablename__ = 'workflow_executions'
 
-    __table_args__ = (
-        sa.UniqueConstraint('name'),
-    )
-
     id = _id_column()
-    name = sa.Column(sa.String(80))
     workbook_name = sa.Column(sa.String(80))
     target_task = sa.Column(sa.String(80))
-    workflow_state = sa.Column(sa.String(20))
+    state = sa.Column(sa.String(20))
 
 
 class Workbook(mb.MistralBase):
-    """Contains info about all DSL (workbook) content"""
+    """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks'
 
@@ -75,22 +70,23 @@ class Workbook(mb.MistralBase):
 
     id = _id_column()
     name = sa.Column(sa.String(80), primary_key=True)
-    doc = sa.Column(sa.String(), nullable=True)
+    definition = sa.Column(sa.String(), nullable=True)
     description = sa.Column(sa.String())
     tags = sa.Column(st.JsonListType())
     scope = sa.Column(sa.String())
 
 
 class Task(mb.MistralBase):
-    """Contains info about particular task"""
+    """Contains info about particular task."""
 
     __tablename__ = 'tasks'
 
     id = _id_column()
     name = sa.Column(sa.String(80))
+    dependencies = sa.Column(st.JsonListType())
     workbook_name = sa.Column(sa.String(80))
     execution_id = sa.Column(sa.String(36))
     description = sa.Column(sa.String())
-    action = sa.Column(sa.String(80))
+    action = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
     tags = sa.Column(st.JsonListType())

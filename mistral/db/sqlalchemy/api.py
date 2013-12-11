@@ -82,6 +82,26 @@ def drop_db():
     return True
 
 
+def start_tx():
+    # TODO(rakhmerov): implement
+    raise NotImplemented
+
+
+def commit_tx():
+    # TODO(rakhmerov): implement
+    raise NotImplemented
+
+
+def rollback_tx():
+    # TODO(rakhmerov): implement
+    raise NotImplemented
+
+
+def end_tx():
+    # TODO(rakhmerov): implement
+    raise NotImplemented
+
+
 def event_create(values):
     values = values.copy()
     event = m.Event()
@@ -245,9 +265,8 @@ def execution_delete(workbook_name, execution_id):
 
 
 def execution_create(workbook_name, values):
-    values = values.copy()
     execution = m.WorkflowExecution()
-    execution.update(values)
+    execution.update(values.copy())
     execution.update({'workbook_name': workbook_name})
 
     session = get_session()
@@ -276,7 +295,7 @@ def _task_get(workbook_name, execution_id, task_id, session):
 
 @to_dict
 def tasks_get_all(**kwargs):
-    return _executions_get_all(get_session(), **kwargs)
+    return _tasks_get_all(get_session(), **kwargs)
 
 
 def _tasks_get_all(session, **kwargs):

@@ -14,25 +14,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""Script to start Mistral API service."""
+"""Script to start instance of Task Executor."""
 
-import eventlet
-
-import os
 import sys
-from wsgiref import simple_server
-
 from oslo.config import cfg
-
-from mistral.api import app
 from mistral import config
 from mistral.openstack.common import log as logging
+from mistral.engine.scalable.executor import executor
 
-
-eventlet.monkey_patch(
-    os=True, select=True, socket=True, thread=True, time=True)
-
-LOG = logging.getLogger('mistral.cmd.api')
+LOG = logging.getLogger('mistral.cmd.task_executor')
 
 
 def main():
@@ -40,15 +30,15 @@ def main():
         config.parse_args()
         logging.setup('Mistral')
 
-        host = cfg.CONF.api.host
-        port = cfg.CONF.api.port
+        rabbit_opts = cfg.CONF.rabbit
 
-        server = simple_server.make_server(host, port, app.setup_app())
+        executor.start(rabbit_opts)
 
-        LOG.info("Mistral API is serving on http://%s:%s (PID=%s)" %
-                 (host, port, os.getpid()))
-
-        server.serve_forever()
+        LOG.info("Mistral Task Executor is listening RabbitMQ"
+                 " [host=%s, port=%s, task_queue=%s]" %
+                 (rabbit_opts.rabbit_host,
+                  rabbit_opts.rabbit_port,
+                  rabbit_opts.rabbit_task_queue))
     except RuntimeError, e:
         sys.stderr.write("ERROR: %s\n" % e)
         sys.exit(1)
