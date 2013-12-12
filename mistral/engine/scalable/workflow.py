@@ -14,18 +14,72 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import networkx as nx
+from networkx.algorithms import traversal
+
+from mistral.engine import states
+
 
 def find_workflow_tasks(wb_dsl, target_task_name):
-    # TODO(rakhmerov): implement using networkX
-    return None
-
-
-def find_tasks_to_start(tasks):
-    # TODO(rakhmerov): implement using networkX
-    # We need to analyse graph and see which tasks are ready to start
+    dsl_tasks = wb_dsl.get_tasks()
+    full_graph = nx.DiGraph()
+    for t in dsl_tasks:
+        full_graph.add_node(t)
+    _update_dependencies(dsl_tasks, full_graph)
+    graph = _get_subgraph(full_graph, target_task_name)
+    tasks = []
+    for node in graph:
+        task = {'name': node}
+        task.update(dsl_tasks[node])
+        tasks.append(task)
     return tasks
 
 
+def find_tasks_to_start(tasks):
+    # We need to analyse graph and see which tasks are ready to start
+    return _get_resolved_tasks(tasks)
+
+
 def is_finished(tasks):
-    # TODO(rakhmerov): implement
-    return False
+    for task in tasks:
+        if not states.is_finished(task['state']):
+            return False
+    return True
+
+
+def _get_subgraph(full_graph, task_name):
+        nodes_set = traversal.dfs_predecessors(full_graph.reverse(),
+                                               task_name).keys()
+        nodes_set.append(task_name)
+        return full_graph.subgraph(nodes_set)
+
+
+def _get_dependency_tasks(tasks, task):
+        if 'dependsOn' not in tasks[task]:
+            return []
+        deps = set()
+        for t in tasks:
+            for dep in tasks[task]['dependsOn']:
+                if dep == t:
+                    deps.add(t)
+        return deps
+
+
+def _update_dependencies(tasks, graph):
+    for task in tasks:
+        for dep in _get_dependency_tasks(tasks, task):
+            graph.add_edge(dep, task)
+
+
+def _get_resolved_tasks(tasks):
+        resolved_tasks = []
+        allows = []
+        for t in tasks:
+            if t['state'] == states.SUCCESS:
+                allows += t['dependencies']
+        allow_set = set(allows)
+        for t in tasks:
+            if len(allow_set - set(t['dependencies'])) == 0:
+                if t['state'] == states.IDLE:
+                    resolved_tasks.append(t)
+        return resolved_tasks

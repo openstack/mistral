@@ -24,7 +24,8 @@ SAMPLE_EVENT = {
     "id": "123",
     "name": "test_event",
     "pattern": "* *",
-    "next_execution_time": timeutils.utcnow()
+    "next_execution_time": timeutils.utcnow(),
+    'workbook_name': 'wb_name'
 }
 
 

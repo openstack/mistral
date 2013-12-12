@@ -31,8 +31,14 @@ class Parser(object):
             raise RuntimeError("Definition could not be parsed: %s\n"
                                % exc.message)
 
-    def get_service(self):
-        return self.doc["Service"]
+    def get_services(self):
+        services = []
+        for service_name in self.doc["Services"]:
+            services.append(self.doc["Services"][service_name])
+        return services
+
+    def get_service(self, service_name):
+        return self.doc["Services"][service_name]
 
     def get_events(self):
         events_from_doc = self.doc["Workflow"]["events"]
@@ -46,12 +52,20 @@ class Parser(object):
     def get_tasks(self):
         return self.doc["Workflow"]["tasks"]
 
-    def get_action(self, action_name):
-        # TODO(rakhmerov): it needs to return action definition as a dict
-        pass
+    def get_action(self, task_action_name):
+        service_name = task_action_name.split(':')[0]
+        action_name = task_action_name.split(':')[1]
+        action = self.get_service(service_name)['actions'][action_name]
+        return action
 
-    def get_service_name(self):
-        return self.doc['Service']['name']
+    def get_actions(self, service_name):
+        return self.get_service(service_name)['actions']
+
+    def get_service_names(self):
+        names = []
+        for name in self.doc['Services']:
+            names.append(name)
+        return names
 
     def get_event_task_name(self, event_name):
         return self.doc["Workflow"]["events"][event_name]['tasks']

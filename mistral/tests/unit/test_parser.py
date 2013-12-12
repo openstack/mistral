@@ -27,11 +27,14 @@ class DSLParserTest(unittest2.TestCase):
             "tests/resources/test_rest.yaml")).read()
         self.dsl = dsl.Parser(doc)
 
-    def test_service(self):
-        service = self.dsl.get_service()
-        self.assertEqual(service["name"], "MyRest")
+    def test_services(self):
+        service = self.dsl.get_service("MyRest")
         self.assertEqual(service["type"], "REST_API")
         self.assertIn("baseUrl", service["parameters"])
+        services = self.dsl.get_services()
+        self.assertEqual(len(services), 1)
+        service_names = self.dsl.get_service_names()
+        self.assertEqual(service_names[0], "MyRest")
 
     def test_events(self):
         events = self.dsl.get_events()
@@ -43,6 +46,12 @@ class DSLParserTest(unittest2.TestCase):
         self.assertIn("parameters", tasks["create-vms"])
         self.assertEqual(tasks["backup-vms"]["action"],
                          "Nova:backup-vm")
+
+    def test_actions(self):
+        action = self.dsl.get_action("MyRest:attach-volume")
+        self.assertIn("method", action["parameters"])
+        actions = self.dsl.get_actions("MyRest")
+        self.assertIn("task-parameters", actions["attach-volume"])
 
     def test_broken_definition(self):
         broken_yaml = """
