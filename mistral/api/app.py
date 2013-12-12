@@ -14,6 +14,7 @@
 
 import pecan
 
+from mistral import context as ctx
 from mistral.api import config as api_config
 from mistral.db import api as db_api
 from mistral.services import periodic
@@ -38,6 +39,7 @@ def setup_app(config=None):
 
     app = pecan.make_app(
         app_conf.pop('root'),
+        hooks=lambda: [ctx.ContextHook()],
         logging=getattr(config, 'logging', {}),
         **app_conf
     )
