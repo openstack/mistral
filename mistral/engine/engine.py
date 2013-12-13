@@ -21,8 +21,16 @@ of workflow executions.
 
 import sys
 
+from mistral.engine import exception
+
 # TODO(rakhmerov): make it configurable
-IMPL = sys.modules["mistral.engine.scalable.engine"]
+module = "mistral.engine.scalable.engine"
+try:
+    __import__(module)
+except:
+    raise exception.EngineException("Cannot import engine module: %s" % module)
+
+IMPL = sys.modules[module]
 
 
 def start_workflow_execution(workbook_name, target_task_name):

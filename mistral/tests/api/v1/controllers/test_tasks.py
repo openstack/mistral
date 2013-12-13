@@ -36,6 +36,18 @@ TASKS = [
 
 
 class TestTasksController(base.FunctionalTest):
+    def setUp(self):
+        super(TestTasksController, self).setUp()
+        self.task_get = db_api.task_get
+        self.task_update = db_api.task_update
+        self.tasks_get = db_api.tasks_get
+
+    def tearDown(self):
+        super(TestTasksController, self).tearDown()
+        db_api.task_get = self.task_get
+        db_api.task_update = self.task_update
+        db_api.tasks_get = self.tasks_get
+
     def test_get(self):
         db_api.task_get = mock.MagicMock(return_value=TASKS[0])
 

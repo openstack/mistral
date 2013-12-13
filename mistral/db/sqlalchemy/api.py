@@ -151,11 +151,14 @@ def event_get(event_id):
     return _event_get(event_id, get_session())
 
 
-def create_associated_events(workbook):
-    if not workbook.doc:
-        return
-    #TODO(nmakhotkin) should be implemented (need DSLParser)
-    pass
+@to_dict
+def events_get_all(**kwargs):
+    return _events_get_all(get_session(), **kwargs)
+
+
+def _events_get_all(session, **kwargs):
+    query = model_query(m.Event, session)
+    return query.filter_by(**kwargs).all()
 
 
 def workbook_create(values):

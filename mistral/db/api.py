@@ -16,6 +16,7 @@
 
 from mistral.openstack.common.db import api as db_api
 from mistral.openstack.common import log as logging
+import mistral.services.scheduler
 
 # Workbooks
 
@@ -78,12 +79,12 @@ def workbooks_get():
 
 
 def workbook_definition_get(workbook_name):
-    return IMPL.workbook_get(workbook_name)['doc']
+    return IMPL.workbook_get(workbook_name)['definition']
 
 
 def workbook_definition_put(workbook_name, text):
-    workbook = IMPL.workbook_update(workbook_name, {'doc': text})
-    IMPL.create_associated_events(workbook)
+    workbook = IMPL.workbook_update(workbook_name, {'definition': text})
+    mistral.services.scheduler.create_associated_events(workbook)
     return workbook
 
 
@@ -162,6 +163,10 @@ def listeners_get(workbook_name):
 
 def event_create(values):
     return IMPL.event_create(values)
+
+
+def events_get(**kwargs):
+    return IMPL.events_get_all(**kwargs)
 
 
 def event_update(event_id, values):

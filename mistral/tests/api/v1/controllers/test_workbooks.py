@@ -31,6 +31,22 @@ WORKBOOKS = [
 
 
 class TestWorkbooksController(base.FunctionalTest):
+    def setUp(self):
+        super(TestWorkbooksController, self).setUp()
+        self.workbook_create = db_api.workbook_create
+        self.workbooks_get = db_api.workbooks_get
+        self.workbook_get = db_api.workbook_get
+        self.workbook_delete = db_api.workbook_delete
+        self.workbook_update = db_api.workbook_update
+
+    def tearDown(self):
+        super(TestWorkbooksController, self).tearDown()
+        db_api.workbook_create = self.workbook_create
+        db_api.workbooks_get = self.workbooks_get
+        db_api.workbook_get = self.workbook_get
+        db_api.workbook_update = self.workbook_update
+        db_api.workbook_delete = self.workbook_delete
+
     def test_get(self):
         db_api.workbook_get = mock.MagicMock(return_value=WORKBOOKS[0])
 

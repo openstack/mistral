@@ -25,6 +25,16 @@ DEFINITION = "my definition"
 
 
 class TestWorkbookDefinitionController(base.FunctionalTest):
+    def setUp(self):
+        super(TestWorkbookDefinitionController, self).setUp()
+        self.workbook_definition_put = db_api.workbook_definition_put
+        self.workbook_definition_get = db_api.workbook_definition_get
+
+    def tearDown(self):
+        super(TestWorkbookDefinitionController, self).tearDown()
+        db_api.workbook_definition_put = self.workbook_definition_put
+        db_api.workbook_definition_get = self.workbook_definition_get
+
     def test_get(self):
         db_api.workbook_definition_get =\
             mock.MagicMock(return_value=DEFINITION)

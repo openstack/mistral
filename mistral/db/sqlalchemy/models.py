@@ -46,6 +46,7 @@ class Event(mb.MistralBase):
     name = sa.Column(sa.String(80), nullable=False)
     pattern = sa.Column(sa.String(20), nullable=False)
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
+    workbook_name = sa.Column(sa.String(80), nullable=False)
 
 
 class WorkflowExecution(mb.MistralBase):

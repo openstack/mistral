@@ -32,6 +32,20 @@ LISTENERS = [
 
 
 class TestListenersController(base.FunctionalTest):
+    def setUp(self):
+        super(TestListenersController, self).setUp()
+        self.listener_get = db_api.listener_get
+        self.listener_update = db_api.listener_update
+        self.listener_create = db_api.listener_create
+        self.listeners_get = db_api.listeners_get
+
+    def tearDown(self):
+        super(TestListenersController, self).tearDown()
+        db_api.listener_get = self.listener_get
+        db_api.listener_update = self.listener_update
+        db_api.listener_create = self.listener_create
+        db_api.listeners_get = self.listeners_get
+
     def test_get(self):
         db_api.listener_get = mock.MagicMock(return_value=LISTENERS[0])
 

@@ -32,6 +32,22 @@ EXECS = [
 
 
 class TestExecutionsController(base.FunctionalTest):
+    def setUp(self):
+        super(TestExecutionsController, self).setUp()
+        self.execution_get = db_api.execution_get
+        self.executions_get = db_api.executions_get
+        self.execution_update = db_api.execution_update
+        self.execution_create = db_api.execution_create
+        self.execution_delete = db_api.execution_delete
+
+    def tearDown(self):
+        super(TestExecutionsController, self).tearDown()
+        db_api.execution_get = self.execution_get
+        db_api.executions_get = self.executions_get
+        db_api.execution_update = self.execution_update
+        db_api.execution_create = self.execution_create
+        db_api.execution_delete = self.execution_delete
+
     def test_get(self):
         db_api.execution_get = mock.MagicMock(return_value=EXECS[0])
 

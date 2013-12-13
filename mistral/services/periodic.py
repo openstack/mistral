@@ -18,6 +18,9 @@
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
+from mistral import dsl
+from mistral.db import api as db_api
+from mistral.engine import engine
 from mistral.services import scheduler as s
 
 LOG = log.getLogger(__name__)
@@ -28,7 +31,10 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     def scheduler_events(self, ctx):
         LOG.debug('Processing next Scheduler events.')
         for event in s.get_next_events():
-            #TODO(akuznetsov) send signal
+            workbook = db_api.workbook_get(event['workbook_name'])
+            target_task = dsl.Parser(
+                workbook['definition']).get_event_task_name(event['name'])
+            engine.start_workflow_execution(workbook['name'], target_task)
             s.set_next_execution_time(event)
 
 
