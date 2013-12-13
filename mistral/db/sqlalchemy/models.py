@@ -75,6 +75,8 @@ class Workbook(mb.MistralBase):
     description = sa.Column(sa.String())
     tags = sa.Column(st.JsonListType())
     scope = sa.Column(sa.String())
+    project_id = sa.Column(sa.String())
+    trust_id = sa.Column(sa.String())
 
 
 class Task(mb.MistralBase):

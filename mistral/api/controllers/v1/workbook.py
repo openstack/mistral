@@ -23,6 +23,7 @@ from mistral.api.controllers.v1 import workbook_definition
 from mistral.api.controllers.v1 import listener
 from mistral.api.controllers.v1 import execution
 from mistral.api.controllers import resource
+from mistral.services import workbooks
 
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
@@ -45,7 +46,6 @@ class Workbooks(resource.Resource):
 
 
 class WorkbooksController(rest.RestController):
-
     definition = workbook_definition.WorkbookDefinitionController()
     listeners = listener.ListenersController()
     executions = execution.ExecutionsController()
@@ -72,7 +72,8 @@ class WorkbooksController(rest.RestController):
     def post(self, workbook):
         LOG.debug("Create workbook [workbook=%s]" % workbook)
 
-        return Workbook.from_dict(db_api.workbook_create(workbook.to_dict()))
+        wb = workbooks.create_workbook(workbook.to_dict())
+        return Workbook.from_dict(wb)
 
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):

@@ -33,3 +33,12 @@ rabbit_virtual_host = /
 rabbit_task_queue = tasks
 rabbit_user = guest
 rabbit_password = guest
+
+[keystone_authtoken]
+auth_uri=http://localhost:5000/v3
+auth_host=localhost
+auth_port=5000
+admin_user=admin
+admin_password=password
+auth_protocol=http
+admin_tenant_name=admin

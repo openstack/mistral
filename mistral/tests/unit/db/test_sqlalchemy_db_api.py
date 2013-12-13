@@ -79,7 +79,9 @@ WORKBOOKS = [
         "definition": u'empty',
         "tags": [u'mc'],
         "scope": u'public',
-        "updated_at": None
+        "updated_at": None,
+        "project_id": '123',
+        "trust_id": '1234'
     },
     {
         "id": u'2',
@@ -88,7 +90,9 @@ WORKBOOKS = [
         "definition": u'empty',
         "tags": [u'mc'],
         "scope": u'public',
-        "updated_at": None
+        "updated_at": None,
+        "project_id": '1233',
+        "trust_id": '12345'
     },
 ]
 
