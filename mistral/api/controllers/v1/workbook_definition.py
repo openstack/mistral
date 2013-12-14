@@ -19,6 +19,7 @@ from pecan import request
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 
+
 LOG = logging.getLogger(__name__)
 
 

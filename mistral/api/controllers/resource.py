@@ -25,7 +25,9 @@ class Resource(wtypes.Base):
         d = {}
 
         for attr in self._wsme_attributes:
-            d[attr.name] = getattr(self, attr.name)
+            attr_val = getattr(self, attr.name)
+            if not isinstance(attr_val, wtypes.UnsetType):
+                d[attr.name] = attr_val
 
         return d
 

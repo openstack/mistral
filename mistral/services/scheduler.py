@@ -48,11 +48,12 @@ def create_event(name, pattern, workbook_name, start_time=None):
 
 
 def create_associated_events(workbook):
-    if not workbook.definition:
+    if not workbook['definition']:
         return
-    parser = dsl.Parser(workbook.definition)
+    parser = dsl.Parser(workbook['definition'])
     events = parser.get_events()
+    #TODO(rakhmerov): all events should be created within a single transaction
     for e in events:
         create_event(e['name'],
                      e['parameters']['cron-pattern'],
-                     workbook.name)
+                     workbook['name'])

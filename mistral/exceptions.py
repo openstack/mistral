@@ -14,22 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.openstack.common import timeutils
 
-from mistral.db.sqlalchemy import api as db_api
-from mistral.tests.unit import base as test_base
+class DataAccessException(Exception):
 
-
-SAMPLE_EVENT = {
-    "id": "123",
-    "name": "test_event",
-    "pattern": "* *",
-    "next_execution_time": timeutils.utcnow(),
-    'workbook_name': 'wb_name'
-}
-
-
-class EventTest(test_base.DbTestCase):
-    def test_event_create_list_delete(self):
-        event_db_obj = db_api.event_create(SAMPLE_EVENT)
-        self.assertIsInstance(event_db_obj, dict)
+    def __init__(self, message=None):
+        super(Exception, self).__init__(message)

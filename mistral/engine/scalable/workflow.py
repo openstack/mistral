@@ -25,13 +25,16 @@ def find_workflow_tasks(wb_dsl, target_task_name):
     full_graph = nx.DiGraph()
     for t in dsl_tasks:
         full_graph.add_node(t)
+
     _update_dependencies(dsl_tasks, full_graph)
+
     graph = _get_subgraph(full_graph, target_task_name)
     tasks = []
     for node in graph:
         task = {'name': node}
         task.update(dsl_tasks[node])
         tasks.append(task)
+
     return tasks
 
 
@@ -44,6 +47,7 @@ def is_finished(tasks):
     for task in tasks:
         if not states.is_finished(task['state']):
             return False
+
     return True
 
 
@@ -51,17 +55,20 @@ def _get_subgraph(full_graph, task_name):
         nodes_set = traversal.dfs_predecessors(full_graph.reverse(),
                                                task_name).keys()
         nodes_set.append(task_name)
+
         return full_graph.subgraph(nodes_set)
 
 
 def _get_dependency_tasks(tasks, task):
         if 'dependsOn' not in tasks[task]:
             return []
+
         deps = set()
         for t in tasks:
             for dep in tasks[task]['dependsOn']:
                 if dep == t:
                     deps.add(t)
+
         return deps
 
 
@@ -77,9 +84,12 @@ def _get_resolved_tasks(tasks):
         for t in tasks:
             if t['state'] == states.SUCCESS:
                 allows += t['dependencies']
+
         allow_set = set(allows)
+
         for t in tasks:
             if len(allow_set - set(t['dependencies'])) == 0:
                 if t['state'] == states.IDLE:
                     resolved_tasks.append(t)
+
         return resolved_tasks

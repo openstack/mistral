@@ -91,7 +91,6 @@ def start_workflow_execution(workbook_name, target_task_name):
         db_api.commit_tx()
     finally:
         db_api.end_tx()
-        pass
 
 
 def stop_workflow_execution(workbook_name, execution_id):

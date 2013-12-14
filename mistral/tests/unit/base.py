@@ -35,3 +35,6 @@ class DbTestCase(unittest2.TestCase):
         db_api.drop_db()
         os.close(self.db_fd)
         os.unlink(self.db_path)
+
+    def is_db_session_open(self):
+        return db_api._get_thread_local_session() is not None

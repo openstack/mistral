@@ -34,6 +34,7 @@ class EventsTest(base.DbTestCase):
         db_api.workbook_create({'name': 'my_workbook'})
         db_api.workbook_definition_put('my_workbook', self.doc)
         events = db_api.events_get(workbook_name='my_workbook')
+
         self.assertEqual(events[0]['name'], 'create-vms')
         self.assertEqual(events[0]['pattern'], '* * * * *')
         self.assertEqual(events[0]['workbook_name'], 'my_workbook')

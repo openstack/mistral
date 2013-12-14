@@ -16,7 +16,7 @@
 
 from mistral.openstack.common.db import api as db_api
 from mistral.openstack.common import log as logging
-import mistral.services.scheduler
+from mistral.services import scheduler
 
 # Workbooks
 
@@ -84,7 +84,7 @@ def workbook_definition_get(workbook_name):
 
 def workbook_definition_put(workbook_name, text):
     workbook = IMPL.workbook_update(workbook_name, {'definition': text})
-    mistral.services.scheduler.create_associated_events(workbook)
+    scheduler.create_associated_events(workbook)
     return workbook
 
 
