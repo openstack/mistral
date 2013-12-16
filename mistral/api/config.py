@@ -18,6 +18,7 @@ app = {
     'root': 'mistral.api.controllers.root.RootController',
     'modules': ['mistral.api'],
     'debug': True,
+    'auth_enable': True
 }
 
 # Custom Configurations must be in Python dictionary format::

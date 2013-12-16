@@ -17,12 +17,12 @@ import pecan
 from mistral.api import config as api_config
 from mistral.db import api as db_api
 from mistral.services import periodic
+from mistral.api import access_control as ac
 
 
 def get_pecan_config():
     # Set up the pecan configuration
     filename = api_config.__file__.replace('.pyc', '.py')
-
     return pecan.configuration.conf_from_file(filename)
 
 
@@ -36,8 +36,12 @@ def setup_app(config=None):
     ##TODO(akuznetsov) move this to event scheduling to separate process
     periodic.setup()
 
-    return pecan.make_app(
+    app = pecan.make_app(
         app_conf.pop('root'),
         logging=getattr(config, 'logging', {}),
         **app_conf
     )
+
+    app = ac.install(app, config)
+
+    return app

@@ -8,4 +8,5 @@ argparse
 croniter
 oslo.config>=1.2.0
 requests
+python-keystoneclient>=0.3.2
 pika>=0.9.13

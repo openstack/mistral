@@ -16,6 +16,8 @@
 
 import six
 
+from keystoneclient.v3 import client as keystone_client
+
 from mistralclient.api import httpclient
 from mistralclient.api import workbooks
 from mistralclient.api import executions
@@ -24,19 +26,55 @@ from mistralclient.api import listeners
 
 
 class Client(object):
-    def __init__(self, mistral_url=None):
-        # TODO: add all required parameters for Keystone authentication
 
+    def __init__(self, username=None, api_key=None, project_id=None,
+                 project_name=None, auth_url=None, mistral_url=None,
+                 endpoint_type='publicURL', service_type='workflow',
+                 input_auth_token=None):
         if mistral_url and not isinstance(mistral_url, six.string_types):
-            raise RuntimeError('Mistral url should be a string.')
+            raise RuntimeError('Mistral url should be string')
+        if (isinstance(project_name, six.string_types) or
+           isinstance(project_id, six.string_types)):
+                if project_name and project_id:
+                        raise RuntimeError('Only project name or '
+                                           'project id should be set')
+
+                if "v2.0" in auth_url:
+                            raise RuntimeError('Mistral support only v3  '
+                                               'kyestone api')
+                print keystone_client
+                keystone = keystone_client.Client(username=username,
+                                                  password=api_key,
+                                                  token=input_auth_token,
+                                                  tenant_id=project_id,
+                                                  tenant_name=project_name,
+                                                  auth_url=auth_url)
+
+                keystone.authenticate()
+                token = keystone.auth_token
+                user_id = keystone.user_id
+                if project_name and not project_id:
+                    if keystone.tenants.find(name=project_name):
+                        project_id = str(keystone.tenants.find(
+                            name=project_name).id)
+        else:
+                raise RuntimeError('Project name or project id should'
+                                   ' not be empty and should be string')
 
         if not mistral_url:
-            mistral_url = "http://localhost:8989/v1"
+            catalog = keystone.service_catalog.get_endpoints(service_type)
+            if service_type in catalog:
+                for e_type, endpoint in catalog.get[service_type][0].items():
+                    if str(e_type).lower() == str(endpoint_type).lower():
+                        mistral_url = endpoint
+                        break
 
-        # TODO: add Keystone authentication later
-        token = "TBD"
-
-        self.http_client = httpclient.HTTPClient(mistral_url, token)
+        if not mistral_url:
+            mistral_url = "http://localhost:8386/v1.0"
+        self.http_client = httpclient.HTTPClient(mistral_url,
+                                                 token,
+                                                 project_id,
+                                                 user_id)
 
         # Create all resource managers.
         self.workbooks = workbooks.WorkbookManager(self)

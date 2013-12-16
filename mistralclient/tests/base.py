@@ -32,25 +32,29 @@ class FakeResponse(object):
 
 
 class BaseClientTest(unittest2.TestCase):
-    def setUp(self):
-        self._client = client.Client()
+    @mock.patch('keystoneclient.v3.client.Client')
+    def setUp(self, keystone):
+        keystone.return_value = mock.Mock()
+        self._client = client.Client(project_name="test",
+                                     auth_url="v3.0",
+                                     mistral_url="test")
         self.workbooks = self._client.workbooks
         self.executions = self._client.executions
         self.tasks = self._client.tasks
         self.listeners = self._client.listeners
 
     def mock_http_get(self, json, status_code=200):
-        self._client.http_client.get =\
+        self._client.http_client.get = \
             mock.MagicMock(return_value=FakeResponse(status_code, json))
 
     def mock_http_post(self, json, status_code=201):
-        self._client.http_client.post =\
+        self._client.http_client.post = \
             mock.MagicMock(return_value=FakeResponse(status_code, json))
 
     def mock_http_put(self, json, status_code=200):
-        self._client.http_client.put =\
+        self._client.http_client.put = \
             mock.MagicMock(return_value=FakeResponse(status_code, json))
 
     def mock_http_delete(self, status_code=204):
-        self._client.http_client.delete =\
+        self._client.http_client.delete = \
             mock.MagicMock(return_value=FakeResponse(status_code))

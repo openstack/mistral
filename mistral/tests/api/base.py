@@ -34,7 +34,8 @@ class FunctionalTest(BaseTest):
             'app': {
                 'root': 'mistral.api.controllers.root.RootController',
                 'modules': ['mistral.api'],
-                'debug': False
+                'debug': False,
+                'auth_enable': False
             }
         })
 
