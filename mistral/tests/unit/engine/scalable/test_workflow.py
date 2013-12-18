@@ -30,7 +30,7 @@ TASKS = [
     {
         'dependencies': [],
         'name': 'create-vms',
-        'state': states.RUNNING
+        'state': states.SUCCESS
     },
     {
         'dependencies': ['create-vms'],

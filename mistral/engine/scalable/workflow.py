@@ -79,17 +79,14 @@ def _update_dependencies(tasks, graph):
 
 
 def _get_resolved_tasks(tasks):
-        resolved_tasks = []
-        allows = []
-        for t in tasks:
-            if t['state'] == states.SUCCESS:
-                allows += t['dependencies']
-
-        allow_set = set(allows)
-
-        for t in tasks:
-            if len(allow_set - set(t['dependencies'])) == 0:
-                if t['state'] == states.IDLE:
-                    resolved_tasks.append(t)
-
-        return resolved_tasks
+    resolved_tasks = []
+    allows = []
+    for t in tasks:
+        if t['state'] == states.SUCCESS:
+            allows += [t['name']]
+    allow_set = set(allows)
+    for t in tasks:
+        if len(set(t['dependencies']) - allow_set) == 0:
+            if t['state'] == states.IDLE:
+                resolved_tasks.append(t)
+    return resolved_tasks
