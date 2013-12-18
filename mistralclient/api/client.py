@@ -42,7 +42,7 @@ class Client(object):
                 if "v2.0" in auth_url:
                             raise RuntimeError('Mistral support only v3  '
                                                'kyestone api')
-                print keystone_client
+
                 keystone = keystone_client.Client(username=username,
                                                   password=api_key,
                                                   token=input_auth_token,
@@ -70,7 +70,7 @@ class Client(object):
                         break
 
         if not mistral_url:
-            mistral_url = "http://localhost:8386/v1.0"
+            mistral_url = "http://localhost:8989/v1"
         self.http_client = httpclient.HTTPClient(mistral_url,
                                                  token,
                                                  project_id,

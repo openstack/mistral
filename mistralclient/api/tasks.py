@@ -37,7 +37,8 @@ class TaskManager(base.ResourceManager):
             'state': state
         }
 
-        return self._update('/workbooks/%s/executions' % workbook_name, data)
+        return self._update('/workbooks/%s/executions/%s/tasks/%s' %
+                            (workbook_name, execution_id, id), data)
 
     def list(self, workbook_name, execution_id):
         self._ensure_not_empty(workbook_name=workbook_name,

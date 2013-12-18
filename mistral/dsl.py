@@ -50,7 +50,12 @@ class Parser(object):
         return events
 
     def get_tasks(self):
-        return self.doc["Workflow"]["tasks"]
+        tasks = self.doc["Workflow"]["tasks"]
+
+        for task_name, task_dsl in tasks.iteritems():
+            task_dsl["service_name"] = task_dsl["action"].split(':')[0]
+
+        return tasks
 
     def get_action(self, task_action_name):
         service_name = task_action_name.split(':')[0]

@@ -23,9 +23,10 @@ from mistralclient.api import client
 class FakeResponse(object):
     """Fake response for testing Mistral Client."""
 
-    def __init__(self, status_code, json_values={}):
+    def __init__(self, status_code, json_values={}, content=None):
         self.status_code = status_code
         self.json_values = json_values
+        self.content = content
 
     def json(self):
         return self.json_values

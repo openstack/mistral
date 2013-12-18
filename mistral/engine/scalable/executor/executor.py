@@ -14,22 +14,70 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import pika
 
 from mistral.openstack.common import log as logging
-
+from mistral.db import api as db_api
+from mistral.engine import states
+from mistral.engine.scalable.executor import action as act
 
 LOG = logging.getLogger(__name__)
+
+
+def do_task_action(task):
+    LOG.info("Starting task action [task_id=%s, action='%s', service='%s'" %
+             (task['id'], task['task_dsl']['action'], task['service_dsl']))
+
+    act.create_action(task).do_action()
+
+
+def handle_task_error(task, exc):
+    try:
+        db_api.start_tx()
+        try:
+            db_api.execution_update(task['workbook_name'],
+                                    task['execution_id'],
+                                    {'state': states.ERROR})
+            db_api.task_update(task['workbook_name'],
+                               task['execution_id'],
+                               task['id'],
+                               {'state': states.ERROR})
+            db_api.commit_tx()
+        finally:
+            db_api.end_tx()
+    except Exception as e:
+        LOG.exception(e)
 
 
 def handle_task(channel, method, properties, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
 
-    LOG.info("Received a message from RabbitMQ: " + body)
-    #TODO(rakhmerov): implement task execution logic
-    # 1. Fetch task and execution state from DB
-    # 2. If execution is in "RUNNING" state and task state is "IDLE"
-    #   then do task action (send a signal)
+    task = json.loads(body)
+    try:
+        LOG.info("Received a task from RabbitMQ: %s" % task)
+
+        db_task = db_api.task_get(task['workbook_name'],
+                                  task['execution_id'],
+                                  task['id'])
+        db_exec = db_api.execution_get(task['workbook_name'],
+                                       task['execution_id'])
+
+        if not db_exec or not db_task:
+            return
+
+        if db_exec['state'] != states.RUNNING or \
+                db_task['state'] != states.IDLE:
+            return
+
+        do_task_action(db_task)
+        db_api.task_update(task['workbook_name'],
+                           task['execution_id'],
+                           task['id'],
+                           {'state': states.RUNNING})
+    except Exception as exc:
+        LOG.exception(exc)
+        handle_task_error(task, exc)
 
 
 def start(rabbit_opts):

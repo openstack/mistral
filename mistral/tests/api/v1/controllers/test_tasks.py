@@ -18,6 +18,7 @@ import mock
 
 from mistral.tests.api import base
 from mistral.db import api as db_api
+from mistral.engine import engine
 
 # TODO: later we need additional tests verifying all the errors etc.
 
@@ -60,7 +61,7 @@ class TestTasksController(base.FunctionalTest):
         updated_task = TASKS[0].copy()
         updated_task['state'] = 'STOPPED'
 
-        db_api.task_update = mock.MagicMock(return_value=updated_task)
+        engine.convey_task_result = mock.MagicMock(return_value=updated_task)
 
         resp = self.app.put_json(
             '/v1/workbooks/my_workbook/executions/123/tasks/1',

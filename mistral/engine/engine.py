@@ -39,9 +39,9 @@ def start_workflow_execution(workbook_name, target_task_name):
 
     :param workbook_name: Workbook name
     :param target_task_name: Target task name
-    :return: Workflow execution identifier.
+    :return: Workflow execution.
     """
-    IMPL.start_workflow_execution(workbook_name, target_task_name)
+    return IMPL.start_workflow_execution(workbook_name, target_task_name)
 
 
 def stop_workflow_execution(workbook_name, execution_id):
@@ -49,8 +49,9 @@ def stop_workflow_execution(workbook_name, execution_id):
 
     :param workbook_name: Workbook name.
     :param execution_id: Workflow execution id.
+    :return: Workflow execution.
     """
-    IMPL.stop_workflow_execution(workbook_name, execution_id)
+    return IMPL.stop_workflow_execution(workbook_name, execution_id)
 
 
 def convey_task_result(workbook_name, execution_id, task_id, state, result):
@@ -70,9 +71,10 @@ def convey_task_result(workbook_name, execution_id, task_id, state, result):
     :param task_id: Task id.
     :param state: New task state.
     :param result: Task result data.
+    :return: Task.
     """
-    IMPL.convey_task_result(workbook_name, execution_id, task_id, state,
-                            result)
+    return IMPL.convey_task_result(workbook_name, execution_id, task_id,
+                                   state, result)
 
 
 def get_workflow_execution_state(workbook_name, execution_id):
@@ -82,7 +84,7 @@ def get_workflow_execution_state(workbook_name, execution_id):
     :param execution_id: Workflow execution id.
     :return: Current workflow state.
     """
-    IMPL.get_workflow_execution_state(workbook_name, execution_id)
+    return IMPL.get_workflow_execution_state(workbook_name, execution_id)
 
 
 def get_task_state(workbook_name, execution_id, task_id):
@@ -93,4 +95,4 @@ def get_task_state(workbook_name, execution_id, task_id):
     :param task_id: Task id.
     :return: Current task state.
     """
-    IMPL.get_task_state(workbook_name, execution_id, task_id)
+    return IMPL.get_task_state(workbook_name, execution_id, task_id)

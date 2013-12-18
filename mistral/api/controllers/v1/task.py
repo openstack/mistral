@@ -20,6 +20,7 @@ import wsmeext.pecan as wsme_pecan
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
+from mistral.engine import engine
 
 LOG = logging.getLogger(__name__)
 
@@ -63,8 +64,11 @@ class TasksController(rest.RestController):
                   "[workbook_name=%s, execution_id=%s, id=%s, task=%s]" %
                   (workbook_name, execution_id, id, task))
 
-        values = db_api.task_update(workbook_name, execution_id, id,
-                                    task.to_dict())
+        # TODO(rakhmerov): pass task result once it's implemented
+        values = engine.convey_task_result(workbook_name,
+                                           execution_id,
+                                           id,
+                                           task.state, None)
 
         return Task.from_dict(values)
 

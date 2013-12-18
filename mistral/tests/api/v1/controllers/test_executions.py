@@ -18,6 +18,7 @@ import mock
 
 from mistral.tests.api import base
 from mistral.db import api as db_api
+from mistral.engine import engine
 
 # TODO: later we need additional tests verifying all the errors etc.
 
@@ -69,7 +70,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(updated_exec, resp.json)
 
     def test_post(self):
-        db_api.execution_create = mock.MagicMock(return_value=EXECS[0])
+        engine.start_workflow_execution = mock.MagicMock(return_value=EXECS[0])
 
         resp = self.app.post_json('/v1/workbooks/my_workbook/executions',
                                   EXECS[0])

@@ -21,6 +21,7 @@ from mistral.api.controllers.v1 import task
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
+from mistral.engine import engine
 
 LOG = logging.getLogger(__name__)
 
@@ -73,7 +74,8 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Create listener [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
 
-        values = db_api.execution_create(workbook_name, execution.to_dict())
+        values = engine.start_workflow_execution(execution.workbook_name,
+                                                 execution.target_task)
 
         return Execution.from_dict(values)
 

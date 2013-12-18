@@ -222,7 +222,8 @@ def event_update(event_id, values, session=None):
 
 
 @to_dict
-def get_next_events(time):
+@session_aware()
+def get_next_events(time, session=None):
     query = model_query(m.Event)
     query = query.filter(m.Event.next_execution_time < time)
     query = query.order_by(m.Event.next_execution_time)

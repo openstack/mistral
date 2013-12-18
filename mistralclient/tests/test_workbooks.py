@@ -114,7 +114,8 @@ class TestWorkbooks(base.BaseClientTest):
         self.workbooks.upload_definition("my_workbook", WB_DEF)
 
     def test_get_definition(self):
-        self._client.http_client.get = mock.MagicMock(return_value=WB_DEF)
+        self._client.http_client.get =\
+            mock.MagicMock(return_value=base.FakeResponse(200, None, WB_DEF))
 
         text = self.workbooks.get_definition("my_workbook")
 

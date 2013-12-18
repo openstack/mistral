@@ -133,7 +133,7 @@ class ResourceManager(object):
 
     def _raise_api_exception(self, resp):
         error_data = get_json(resp)
-        raise APIException(error_data["error_message"])
+        raise APIException(error_data["faultstring"])
 
 
 def get_json(response):

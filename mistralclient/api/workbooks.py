@@ -69,4 +69,5 @@ class WorkbookManager(base.ResourceManager):
     def get_definition(self, name):
         self._ensure_not_empty(name=name)
 
-        return self.client.http_client.get('/workbooks/%s/definition' % name)
+        return self.client.http_client.get('/workbooks/%s/definition'
+                                           % name).content

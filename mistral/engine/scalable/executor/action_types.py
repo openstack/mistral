@@ -15,11 +15,12 @@
 #    limitations under the License.
 
 
-class DataAccessException(Exception):
-    def __init__(self, message=None):
-        super(Exception, self).__init__(message)
+"""Valid action types."""
+
+REST_API = 'REST_API'
+
+_ALL = [REST_API]
 
 
-class InvalidActionException(Exception):
-    def __init__(self, message=None):
-        super(Exception, self).__init__(message)
+def is_valid(action_type):
+    return action_type in _ALL

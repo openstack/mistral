@@ -1,0 +1,22 @@
+Services:
+   MyRest:
+     type: REST_API
+     parameters:
+         baseUrl: http://localhost:8989/v1/
+     actions:
+         my-action:
+           parameters:
+               url: workbooks
+               method: GET
+
+Workflow:
+   tasks:
+     my_task:
+         action: MyRest:my-action
+
+#   events:
+#     my_event:
+#        type: periodic
+#        tasks: my_task
+#        parameters:
+#            cron-pattern: "* * * * *"

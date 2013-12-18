@@ -10,35 +10,30 @@ Services:
                method: GET
            task-parameters:
               flavor_id:
-                optional: false
               image_id:
-                optional: false
+
          backup-vm:
            parameters:
                url: url_for_backup
                method: GET
            task-parameters:
                server_id:
-                 optional: false
+
          attach-volume:
            parameters:
                url: url_for_attach
                method: GET
            task-parameters:
                size:
-                 optional: false
                mnt_path:
-                 optional: false
+
          format-volume:
            parameters:
                url: url_for_format
                method: GET
            task-parameters:
                volume_id:
-                 optional: false
                server_id:
-                 optional: false
-
 
 Workflow:
    tasks:
@@ -49,25 +44,24 @@ Workflow:
            flavor_id: 42
 
      attach-volumes:
+         dependsOn: [create-vms]
          action: Nova:attach-volume
          parameters:
            size:
-             optional: false
            mnt_path:
-             optional: false
-         dependsOn: [create-vms]
+
      format-volumes:
+        dependsOn: [attach-volumes]
         action: Nova:format-volume
         parameters:
            server_id:
-             optional: false
-        dependsOn: [attach-volumes]
+
      backup-vms:
+        dependsOn: [create-vms]
         action: Nova:backup-vm
         parameters:
            server_id:
-             optional: false
-        dependsOn: [create-vms]
+
    events:
      create-vms:
         type: periodic

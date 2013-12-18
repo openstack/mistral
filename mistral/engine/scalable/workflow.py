@@ -44,11 +44,11 @@ def find_tasks_to_start(tasks):
 
 
 def is_finished(tasks):
-    for task in tasks:
-        if not states.is_finished(task['state']):
-            return False
+    return all(states.is_finished(task['state']) for task in tasks)
 
-    return True
+
+def is_success(tasks):
+    return all(task['state'] == states.SUCCESS for task in tasks)
 
 
 def _get_subgraph(full_graph, task_name):

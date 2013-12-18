@@ -40,7 +40,7 @@ def _notify_task_executors(tasks):
                                        creds)
 
     conn = pika.BlockingConnection(params)
-    LOG.info("Connected to RabbitMQ server [params=%s]" % params)
+    LOG.debug("Connected to RabbitMQ server [params=%s]" % params)
 
     try:
         channel = conn.channel()
@@ -58,7 +58,7 @@ def _notify_task_executors(tasks):
 
 def start_workflow_execution(workbook_name, target_task_name):
     wb = db_api.workbook_get(workbook_name)
-    wb_dsl = dsl.Parser(wb.definition)
+    wb_dsl = dsl.Parser(wb["definition"])
 
     dsl_tasks = workflow.find_workflow_tasks(wb_dsl, target_task_name)
 
@@ -76,12 +76,11 @@ def start_workflow_execution(workbook_name, target_task_name):
 
         for dsl_task in dsl_tasks:
             task = db_api.task_create(workbook_name, execution["id"], {
-                "workbook_name": workbook_name,
-                "execution_id": execution["id"],
                 "name": dsl_task["name"],
-                "action": wb_dsl.get_action(dsl_task["action"]),
+                "task_dsl": dsl_task,
+                "service_dsl": wb_dsl.get_service(dsl_task["service_name"]),
                 "state": states.IDLE,
-                "tags": dsl_task["tags"]
+                "tags": dsl_task.get("tags", None)
             })
 
             tasks.append(task)
@@ -89,48 +88,62 @@ def start_workflow_execution(workbook_name, target_task_name):
         _notify_task_executors(tasks)
 
         db_api.commit_tx()
+
+        return execution
     finally:
         db_api.end_tx()
 
 
 def stop_workflow_execution(workbook_name, execution_id):
-    db_api.execution_update(workbook_name, execution_id,
-                            {"state": states.STOPPED})
+    return db_api.execution_update(workbook_name, execution_id,
+                                   {"state": states.STOPPED})
 
 
 def convey_task_result(workbook_name, execution_id, task_id, state, result):
     db_api.start_tx()
 
     try:
-        # Update task state
+        #TODO(rakhmerov): validate state transition
+
+        # Update task state.
         task = db_api.task_update(workbook_name, execution_id, task_id,
                                   {"state": state, "result": result})
 
         if task["state"] == states.ERROR:
-            db_api.execution_update(workbook_name, execution_id, {
+            execution = db_api.execution_update(workbook_name, execution_id, {
                 "state": states.ERROR
             })
 
             db_api.commit_tx()
-            return
+            LOG.info("Execution finished with error: %s" % execution)
+
+            return task
 
         execution = db_api.execution_get(workbook_name, execution_id)
 
         if states.is_stopped_or_finished(execution["state"]):
             # The execution has finished or stopped temporarily.
             db_api.commit_tx()
-            return
+            return task
 
         # Determine what tasks need to be started.
         tasks = db_api.tasks_get(workbook_name, execution_id)
 
-        if workflow.is_finished(tasks):
+        if workflow.is_success(tasks):
+            db_api.execution_update(workbook_name, execution_id, {
+                "state": states.SUCCESS
+            })
+
             db_api.commit_tx()
-            return
+            LOG.info("Execution finished with success: %s" % execution)
+
+            return task
 
         _notify_task_executors(workflow.find_tasks_to_start(tasks))
 
         db_api.commit_tx()
+
+        return task
     finally:
         db_api.end_tx()
 
@@ -139,7 +152,9 @@ def get_workflow_execution_state(workbook_name, execution_id):
     execution = db_api.execution_get(workbook_name, execution_id)
 
     if not execution:
-        raise exception.EngineException("Workflow execution not found.")
+        raise exception.EngineException("Workflow execution not found "
+                                        "[workbook_name=%s, execution_id=%s]"
+                                        % (workbook_name, execution_id))
 
     return execution["state"]
 
