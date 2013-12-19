@@ -86,7 +86,7 @@ def _get_resolved_tasks(tasks):
             allows += [t['name']]
     allow_set = set(allows)
     for t in tasks:
-        if len(set(t['dependencies']) - allow_set) == 0:
+        if len(set(t.get('dependencies', [])) - allow_set) == 0:
             if t['state'] == states.IDLE:
                 resolved_tasks.append(t)
     return resolved_tasks

@@ -77,6 +77,7 @@ def start_workflow_execution(workbook_name, target_task_name):
         for dsl_task in dsl_tasks:
             task = db_api.task_create(workbook_name, execution["id"], {
                 "name": dsl_task["name"],
+                "dependencies": dsl_task.get("dependsOn", []),
                 "task_dsl": dsl_task,
                 "service_dsl": wb_dsl.get_service(dsl_task["service_name"]),
                 "state": states.IDLE,
@@ -85,7 +86,7 @@ def start_workflow_execution(workbook_name, target_task_name):
 
             tasks.append(task)
 
-        _notify_task_executors(tasks)
+        _notify_task_executors(workflow.find_tasks_to_start(tasks))
 
         db_api.commit_tx()
 
