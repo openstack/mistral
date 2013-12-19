@@ -17,7 +17,7 @@
 app = {
     'root': 'mistral.api.controllers.root.RootController',
     'modules': ['mistral.api'],
-    'debug': True,
+    'debug': False,
     'auth_enable': True
 }
 

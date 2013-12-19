@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 from mistralclient.api import client as cl
 

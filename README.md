@@ -20,5 +20,5 @@ Open *etc/mistral.conf* file and fix configuration properties as needed. For exa
 
 ### Running Mistral API server
 To run Mistral API server perform the following commands in a shell:
- 
-*tox -epy27 -- /mistral/cmd/api.py --config-file etc/mistral.conf*
+
+*tox -evenv -- mistral/cmd/api.py --config-file etc/mistral.conf*

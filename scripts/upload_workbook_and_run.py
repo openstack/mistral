@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from mistralclient.api import client as cl
 
 client = cl.Client(project_name="mistral",
