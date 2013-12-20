@@ -14,11 +14,18 @@ First of all, in a shell run:
 
 This will install necessary virtual environments and run all the project tests. Installing virtual environments may take significant time (~10-15 mins).
 
-### Mistral configuration
-
-Open *etc/mistral.conf* file and fix configuration properties as needed. For example, *host* and *port* specified by default may not be desired in a particular environment.
-
 ### Running Mistral API server
-To run Mistral API server perform the following commands in a shell:
+To run Mistral API server perform the following command in a shell:
 
-*tox -evenv -- mistral/cmd/api.py --config-file etc/mistral.conf*
+*tox -evenv -- python mistral/cmd/api.py --config-file path_to_config*
+
+Note that an example configuration file can be found in etc/mistral.conf.example.
+
+### Running Mistral Task Executors
+To run Mistral Task Executor instance perform the following command in a shell:
+
+*tox -evenv -- python mistral/cmd/task_executor.py --config-file path_to_config*
+
+Note that at least one Executor instance should be running so that workflow tasks are processed by Mistral.
+
+
