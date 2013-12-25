@@ -56,7 +56,6 @@ class BaseContext(object):
 
 
 class MistralContext(BaseContext):
-
     _elements = set([
         "user_id",
         "project_id",
@@ -64,6 +63,7 @@ class MistralContext(BaseContext):
         "service_catalog",
         "user_name",
         "project_name",
+        "roles",
         "is_admin",
     ])
 
@@ -127,12 +127,12 @@ def context_from_headers(headers):
         auth_token=headers.get('X-Auth-Token'),
         service_catalog=headers.get('X-Service-Catalog'),
         user_name=headers.get('X-User-Name'),
-        project_name=headers.get('X-Project-Name')
+        project_name=headers.get('X-Project-Name'),
+        roles=headers.get('X-Roles', "").split(",")
     )
 
 
 class ContextHook(PecanHook):
-
     def before(self, state):
         request_ctx = context_from_headers(state.request.headers).to_dict()
         set_ctx(request_ctx)

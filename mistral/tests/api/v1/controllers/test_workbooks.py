@@ -67,8 +67,10 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(updated_workbook, resp.json)
 
-    def test_post(self):
+    @mock.patch("mistral.services.trusts.create_trust")
+    def test_post(self, create_trust):
         db_api.workbook_create = mock.MagicMock(return_value=WORKBOOKS[0])
+        create_trust.return_value = WORKBOOKS[0]
 
         resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0])
 
