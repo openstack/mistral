@@ -18,10 +18,12 @@
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
+from mistral import context
 from mistral import dsl
 from mistral.db import api as db_api
 from mistral.engine import engine
 from mistral.services import scheduler as s
+from mistral.services import trusts as t
 
 LOG = log.getLogger(__name__)
 
@@ -32,10 +34,13 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
         LOG.debug('Processing next Scheduler events.')
         for event in s.get_next_events():
             workbook = db_api.workbook_get(event['workbook_name'])
+            ctx = t.create_context(workbook)
+            context.set_ctx(ctx)
             target_task = dsl.Parser(
                 workbook['definition']).get_event_task_name(event['name'])
             engine.start_workflow_execution(workbook['name'], target_task)
             s.set_next_execution_time(event)
+            context.set_ctx(None)
 
 
 def setup():
