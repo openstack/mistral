@@ -17,6 +17,7 @@ from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral import exceptions as ex
 from mistral.api.controllers.v1 import task
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
@@ -73,9 +74,12 @@ class ExecutionsController(rest.RestController):
     def post(self, workbook_name, execution):
         LOG.debug("Create listener [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
-
-        values = engine.start_workflow_execution(execution.workbook_name,
-                                                 execution.target_task)
+        try:
+            values = engine.start_workflow_execution(execution.workbook_name,
+                                                     execution.target_task)
+        except ex.MistralException as e:
+            #TODO(nmakhotkin) we should use thing such a decorator here
+            abort(400, e.message)
 
         return Execution.from_dict(values)
 
