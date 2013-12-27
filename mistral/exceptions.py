@@ -14,12 +14,42 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mistral.openstack.common.exception as ex
 
-class DataAccessException(Exception):
+
+class MistralException(ex.Error):
+    """Base Exception for the project
+
+    To correctly use this class, inherit from it and define
+    a 'message' and 'code' properties.
+    """
+    message = "An unknown exception occurred"
+    code = "UNKNOWN_EXCEPTION"
+
+    def __str__(self):
+        return self.message
+
+    def __init__(self, message):
+        super(MistralException, self).__init__(
+            '%s: %s' % (self.code, self.message))
+
+
+class DataAccessException(MistralException):
     def __init__(self, message=None):
-        super(Exception, self).__init__(message)
+        if message:
+            self.message = message
 
 
-class InvalidActionException(Exception):
+class InvalidActionException(MistralException):
     def __init__(self, message=None):
-        super(Exception, self).__init__(message)
+        if message:
+            self.message = message
+
+
+class DBDuplicateEntry(MistralException):
+    message = "Database object already exists"
+    code = "DB_DUPLICATE_ENTRY"
+
+    def __init__(self, message=None):
+        if message:
+            self.message = message

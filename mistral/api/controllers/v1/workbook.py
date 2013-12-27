@@ -19,6 +19,7 @@ from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral import exceptions as ex
 from mistral.api.controllers.v1 import workbook_definition
 from mistral.api.controllers.v1 import listener
 from mistral.api.controllers.v1 import execution
@@ -71,9 +72,12 @@ class WorkbooksController(rest.RestController):
     @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
     def post(self, workbook):
         LOG.debug("Create workbook [workbook=%s]" % workbook)
-
-        wb = workbooks.create_workbook(workbook.to_dict())
-        return Workbook.from_dict(wb)
+        try:
+            wb = workbooks.create_workbook(workbook.to_dict())
+            return Workbook.from_dict(wb)
+        except ex.MistralException as e:
+            #TODO(nmakhotkin) we should use thing such a decorator here
+            abort(400, e.message)
 
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
