@@ -20,6 +20,7 @@ from mistral.db import api as db_api
 from mistral import dsl
 from mistral.tests.unit import base
 from mistral import version
+from mistral.services import scheduler
 
 
 class EventsTest(base.DbTestCase):
@@ -30,9 +31,14 @@ class EventsTest(base.DbTestCase):
             "tests/resources/test_rest.yaml")).read()
         self.dsl = dsl.Parser(self.doc)
 
-    def test_events_create_after_wb_put(self):
-        db_api.workbook_create({'name': 'my_workbook'})
-        db_api.workbook_definition_put('my_workbook', self.doc)
+    def test_create_associated_events(self):
+        workbook = {
+            'name': 'my_workbook',
+            'definition': self.doc
+        }
+
+        scheduler.create_associated_events(workbook)
+
         events = db_api.events_get(workbook_name='my_workbook')
 
         self.assertEqual(events[0]['name'], 'create-vms')

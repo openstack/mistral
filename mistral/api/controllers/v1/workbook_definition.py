@@ -18,6 +18,7 @@ from pecan import request
 
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
+from mistral.services import scheduler
 
 
 LOG = logging.getLogger(__name__)
@@ -38,4 +39,7 @@ class WorkbookDefinitionController(rest.RestController):
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
                   (workbook_name, text))
 
-        return db_api.workbook_definition_put(workbook_name, text)
+        wb = db_api.workbook_definition_put(workbook_name, text)
+        scheduler.create_associated_events(wb)
+
+        return wb['definition']
