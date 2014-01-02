@@ -22,27 +22,30 @@ from mistral import dsl
 
 
 def get_next_events():
-    time = datetime.now() + timedelta(0, 2)
-    return mistral.db.api.get_next_events(time)
+    return mistral.db.api.get_next_events(datetime.now() + timedelta(0, 2))
 
 
 def set_next_execution_time(event):
     base = event['next_execution_time']
     cron = croniter(event['pattern'], base)
+
     return mistral.db.api.event_update(event['id'], {
         'next_execution_time': cron.get_next(datetime)
     })
 
 
+def _get_next_execution_time(pattern, start_time):
+    return croniter(pattern, start_time).get_next(datetime)
+
+
 def create_event(name, pattern, workbook_name, start_time=None):
     if not start_time:
         start_time = datetime.now()
-    cron = croniter(pattern, start_time)
-    next_execution_time = cron.get_next(datetime)
+
     return mistral.db.api.event_create({
         "name": name,
         "pattern": pattern,
-        "next_execution_time": next_execution_time,
+        "next_execution_time": _get_next_execution_time(pattern, start_time),
         "workbook_name": workbook_name
     })
 
@@ -50,10 +53,29 @@ def create_event(name, pattern, workbook_name, start_time=None):
 def create_associated_events(workbook):
     if not workbook['definition']:
         return
+
     parser = dsl.Parser(workbook['definition'])
-    events = parser.get_events()
-    #TODO(rakhmerov): all events should be created within a single transaction
-    for e in events:
-        create_event(e['name'],
-                     e['parameters']['cron-pattern'],
-                     workbook['name'])
+    dsl_events = parser.get_events()
+
+    # Prepare all events data in advance to make db transaction shorter.
+    events = []
+
+    for e in dsl_events:
+        pattern = e['parameters']['cron-pattern']
+        next_time = _get_next_execution_time(pattern, datetime.now())
+        events.append({
+            "name": e['name'],
+            "pattern": pattern,
+            "next_execution_time": next_time,
+            "workbook_name": workbook['name']
+        })
+
+    mistral.db.api.start_tx()
+
+    try:
+        for e in events:
+            mistral.db.api.event_create(e)
+
+        mistral.db.api.commit_tx()
+    finally:
+        mistral.db.api.end_tx()
