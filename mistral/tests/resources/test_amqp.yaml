@@ -1,24 +1,24 @@
-Service:
-   name: MyAMQP
-   type: OSLO_RPC
-   parameters:
-       host: localhost
-       port: 5672
-       userid: guest
-       password: guest
+Services:
+   MyAMQP:
+     type: OSLO_RPC
+     parameters:
+         host: localhost
+         port: 5672
+         userid: guest
+         password: guest
 
-   actions:
-       send-message:
-         parameters:
-             exchange: myExchange
-             type: fanout
-             virtual_host: /
-             queue_name: myClientQueue
-         task-parameters:
-            flavor_id:
-              optional: false
-            image_id:
-              optional: false
+     actions:
+         send-message:
+           parameters:
+               exchange: myExchange
+               type: fanout
+               virtual_host: /
+               queue_name: myClientQueue
+           task-parameters:
+              flavor_id:
+                optional: false
+              image_id:
+                optional: false
 
 
 Workflow:
@@ -32,6 +32,6 @@ Workflow:
    events:
      backup-vm:
         type: periodic
-        tasks: backup-vms
+        tasks: send-messages
         parameters:
             cron-pattern: 1 0 * * *

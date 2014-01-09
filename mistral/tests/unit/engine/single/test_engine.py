@@ -17,7 +17,7 @@ import mock
 import pkg_resources as pkg
 
 from mistral.db import api as db_api
-from mistral.engine.single import actions
+from mistral.engine.actions import actions
 from mistral.engine.single import engine
 from mistral.engine import states
 from mistral import version
@@ -43,7 +43,7 @@ class TestEngine(test_base.DbTestCase):
     def test_engine_one_task(self):
         db_api.workbook_get = mock.MagicMock(
             return_value={'definition': self.get_cfg("test_rest.yaml")})
-        actions.RestAPIAction.run = mock.MagicMock(return_value="result")
+        actions.RestAction.run = mock.MagicMock(return_value="result")
         execution = engine.start_workflow_execution(self.wb_name,
                                                     "create-vms")
         task = db_api.tasks_get(self.wb_name, execution['id'])[0]
@@ -57,7 +57,7 @@ class TestEngine(test_base.DbTestCase):
     def test_engine_multiple_tasks(self):
         db_api.workbook_get = mock.MagicMock(
             return_value={'definition': self.get_cfg("test_rest.yaml")})
-        actions.RestAPIAction.run = mock.MagicMock(return_value="result")
+        actions.RestAction.run = mock.MagicMock(return_value="result")
         execution = engine.start_workflow_execution(self.wb_name,
                                                     "backup-vms")
         tasks = db_api.tasks_get(self.wb_name, execution['id'])

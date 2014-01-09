@@ -21,14 +21,14 @@ of workflow executions.
 
 import sys
 
-from mistral.engine import exception
+from mistral import exceptions as ex
 
 # TODO(rakhmerov): make it configurable
 module = "mistral.engine.scalable.engine"
 try:
     __import__(module)
 except:
-    raise exception.EngineException("Cannot import engine module: %s" % module)
+    raise ex.EngineException("Cannot import engine module: %s" % module)
 
 IMPL = sys.modules[module]
 

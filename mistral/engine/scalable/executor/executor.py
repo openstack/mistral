@@ -20,7 +20,7 @@ import pika
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral.engine import states
-from mistral.engine.scalable.executor import action as act
+from mistral.engine.actions import action_factory as a_f
 
 LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def do_task_action(task):
     LOG.info("Starting task action [task_id=%s, action='%s', service='%s'" %
              (task['id'], task['task_dsl']['action'], task['service_dsl']))
 
-    act.create_action(task).do_action()
+    a_f.create_action(task).run()
 
 
 def handle_task_error(task, exc):

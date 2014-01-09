@@ -18,8 +18,9 @@
 """Valid action types."""
 
 REST_API = 'REST_API'
+OSLO_RPC = 'OSLO_RPC'
 
-_ALL = [REST_API]
+_ALL = [REST_API, OSLO_RPC]
 
 
 def is_valid(action_type):

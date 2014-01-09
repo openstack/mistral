@@ -21,9 +21,9 @@ from oslo.config import cfg
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import dsl
-from mistral.engine import exception
+from mistral import exceptions
 from mistral.engine import states
-from mistral.engine.scalable import workflow
+from mistral.engine import workflow
 
 
 LOG = logging.getLogger(__name__)
@@ -153,9 +153,9 @@ def get_workflow_execution_state(workbook_name, execution_id):
     execution = db_api.execution_get(workbook_name, execution_id)
 
     if not execution:
-        raise exception.EngineException("Workflow execution not found "
-                                        "[workbook_name=%s, execution_id=%s]"
-                                        % (workbook_name, execution_id))
+        raise exceptions.EngineException("Workflow execution not found "
+                                         "[workbook_name=%s, execution_id=%s]"
+                                         % (workbook_name, execution_id))
 
     return execution["state"]
 
@@ -164,6 +164,6 @@ def get_task_state(workbook_name, execution_id, task_id):
     task = db_api.task_get(workbook_name, execution_id, task_id)
 
     if not task:
-        raise exception.EngineException("Task not found.")
+        raise exceptions.EngineException("Task not found.")
 
     return task["state"]

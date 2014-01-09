@@ -52,24 +52,24 @@ def is_success(tasks):
 
 
 def _get_subgraph(full_graph, task_name):
-        nodes_set = traversal.dfs_predecessors(full_graph.reverse(),
-                                               task_name).keys()
-        nodes_set.append(task_name)
+    nodes_set = traversal.dfs_predecessors(full_graph.reverse(),
+                                           task_name).keys()
+    nodes_set.append(task_name)
 
-        return full_graph.subgraph(nodes_set)
+    return full_graph.subgraph(nodes_set)
 
 
 def _get_dependency_tasks(tasks, task):
-        if 'dependsOn' not in tasks[task]:
-            return []
+    if 'dependsOn' not in tasks[task]:
+        return []
 
-        deps = set()
-        for t in tasks:
-            for dep in tasks[task]['dependsOn']:
-                if dep == t:
-                    deps.add(t)
+    deps = set()
+    for t in tasks:
+        for dep in tasks[task]['dependsOn']:
+            if dep == t:
+                deps.add(t)
 
-        return deps
+    return deps
 
 
 def _update_dependencies(tasks, graph):
