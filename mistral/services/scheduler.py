@@ -17,19 +17,19 @@
 from croniter import croniter
 from datetime import datetime
 from datetime import timedelta
-import mistral.db.api
+from mistral.db import api as db_api
 from mistral import dsl
 
 
 def get_next_events():
-    return mistral.db.api.get_next_events(datetime.now() + timedelta(0, 2))
+    return db_api.get_next_events(datetime.now() + timedelta(0, 2))
 
 
 def set_next_execution_time(event):
     base = event['next_execution_time']
     cron = croniter(event['pattern'], base)
 
-    return mistral.db.api.event_update(event['id'], {
+    return db_api.event_update(event['id'], {
         'next_execution_time': cron.get_next(datetime)
     })
 
@@ -42,7 +42,7 @@ def create_event(name, pattern, workbook_name, start_time=None):
     if not start_time:
         start_time = datetime.now()
 
-    return mistral.db.api.event_create({
+    return db_api.event_create({
         "name": name,
         "pattern": pattern,
         "next_execution_time": _get_next_execution_time(pattern, start_time),
@@ -70,12 +70,12 @@ def create_associated_events(workbook):
             "workbook_name": workbook['name']
         })
 
-    mistral.db.api.start_tx()
+    db_api.start_tx()
 
     try:
         for e in events:
-            mistral.db.api.event_create(e)
+            db_api.event_create(e)
 
-        mistral.db.api.commit_tx()
+        db_api.commit_tx()
     finally:
-        mistral.db.api.end_tx()
+        db_api.end_tx()
