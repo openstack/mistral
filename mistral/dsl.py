@@ -42,7 +42,9 @@ class Parser(object):
         return self.doc["Services"][service_name]
 
     def get_events(self):
-        events_from_doc = self.doc["Workflow"]["events"]
+        events_from_doc = self.doc["Workflow"].get("events", None)
+        if not events_from_doc:
+            return None
         events = []
         for name in events_from_doc:
             event_dict = {'name': name}

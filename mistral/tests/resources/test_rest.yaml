@@ -45,20 +45,20 @@ Workflow:
 
      attach-volumes:
          dependsOn: [create-vms]
-         action: Nova:attach-volume
+         action: MyRest:attach-volume
          parameters:
            size:
            mnt_path:
 
      format-volumes:
         dependsOn: [attach-volumes]
-        action: Nova:format-volume
+        action: MyRest:format-volume
         parameters:
            server_id:
 
      backup-vms:
         dependsOn: [create-vms]
-        action: Nova:backup-vm
+        action: MyRest:backup-vm
         parameters:
            server_id:
 

@@ -46,7 +46,7 @@ class DSLParserTest(unittest2.TestCase):
         self.assertIn("create-vms", tasks)
         self.assertIn("parameters", tasks["create-vms"])
         self.assertEqual(tasks["backup-vms"]["action"],
-                         "Nova:backup-vm")
+                         "MyRest:backup-vm")
 
     def test_actions(self):
         action = self.dsl.get_action("MyRest:attach-volume")
