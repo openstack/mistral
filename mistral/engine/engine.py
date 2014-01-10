@@ -19,18 +19,16 @@ Facade interface to Mistral Engine that provides control over lifecycle
 of workflow executions.
 """
 
-import sys
+from mistral.openstack.common import importutils
 
-from mistral import exceptions as ex
 
 # TODO(rakhmerov): make it configurable
-module = "mistral.engine.scalable.engine"
+module_name = "mistral.engine.scalable.engine"
 try:
-    __import__(module)
-except:
-    raise ex.EngineException("Cannot import engine module: %s" % module)
-
-IMPL = sys.modules[module]
+    module = importutils.import_module(module_name)
+    IMPL = module.get_engine()
+finally:
+    pass
 
 
 def start_workflow_execution(workbook_name, target_task_name):

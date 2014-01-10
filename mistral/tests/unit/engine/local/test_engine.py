@@ -18,10 +18,13 @@ import pkg_resources as pkg
 
 from mistral.db import api as db_api
 from mistral.engine.actions import actions
-from mistral.engine.single import engine
+from mistral.engine.local import engine
 from mistral.engine import states
 from mistral import version
 from mistral.tests.unit import base as test_base
+
+
+ENGINE = engine.get_engine()
 
 
 class TestEngine(test_base.DbTestCase):
@@ -44,10 +47,10 @@ class TestEngine(test_base.DbTestCase):
         db_api.workbook_get = mock.MagicMock(
             return_value={'definition': self.get_cfg("test_rest.yaml")})
         actions.RestAction.run = mock.MagicMock(return_value="result")
-        execution = engine.start_workflow_execution(self.wb_name,
+        execution = ENGINE.start_workflow_execution(self.wb_name,
                                                     "create-vms")
         task = db_api.tasks_get(self.wb_name, execution['id'])[0]
-        engine.convey_task_result(self.wb_name, execution['id'], task['id'],
+        ENGINE.convey_task_result(self.wb_name, execution['id'], task['id'],
                                   states.SUCCESS, None)
         task = db_api.tasks_get(self.wb_name, execution['id'])[0]
         execution = db_api.execution_get(self.wb_name, execution['id'])
@@ -58,17 +61,17 @@ class TestEngine(test_base.DbTestCase):
         db_api.workbook_get = mock.MagicMock(
             return_value={'definition': self.get_cfg("test_rest.yaml")})
         actions.RestAction.run = mock.MagicMock(return_value="result")
-        execution = engine.start_workflow_execution(self.wb_name,
+        execution = ENGINE.start_workflow_execution(self.wb_name,
                                                     "backup-vms")
         tasks = db_api.tasks_get(self.wb_name, execution['id'])
-        engine.convey_task_result(self.wb_name, execution['id'],
+        ENGINE.convey_task_result(self.wb_name, execution['id'],
                                   tasks[0]['id'],
                                   states.SUCCESS, None)
         tasks = db_api.tasks_get(self.wb_name, execution['id'])
 
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
 
-        engine.convey_task_result(self.wb_name, execution['id'],
+        ENGINE.convey_task_result(self.wb_name, execution['id'],
                                   tasks[1]['id'],
                                   states.SUCCESS, None)
         tasks = db_api.tasks_get(self.wb_name, execution['id'])
