@@ -201,7 +201,6 @@ def event_create(values, session=None):
     try:
         event.save(session)
     except db_exc.DBDuplicateEntry as e:
-        LOG.exception("Database registration exception: %s", e)
         raise exc.DBDuplicateEntry("Duplicate entry for Event: %s"
                                    % e.columns)
 
@@ -262,7 +261,6 @@ def workbook_create(values, session=None):
     try:
         workbook.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        LOG.exception("Database registration exception: %s", e)
         raise exc.DBDuplicateEntry("Duplicate entry for Workbook: %s"
                                    % e.columns)
 
@@ -325,7 +323,6 @@ def execution_create(workbook_name, values, session=None):
     try:
         execution.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        LOG.exception("Database registration exception: %s", e)
         raise exc.DBDuplicateEntry("Duplicate entry for Execution: %s"
                                    % e.columns)
 
@@ -393,7 +390,6 @@ def task_create(workbook_name, execution_id, values, session=None):
     try:
         task.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        LOG.exception("Database registration exception: %s", e)
         raise exc.DBDuplicateEntry("Duplicate entry for Task: %s"
                                    % e.columns)
 
