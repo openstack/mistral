@@ -19,22 +19,83 @@ import abc
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import dsl
-from mistral import exceptions as ex
+from mistral import exceptions as exc
 from mistral.engine import states
+from mistral.engine import workflow
 
 
 LOG = logging.getLogger(__name__)
 
 
 class AbstractEngine(object):
+    @classmethod
     @abc.abstractmethod
-    def start_workflow_execution(self, workbook_name, target_task_name):
+    def _run_tasks(cls, tasks):
         pass
 
-    @abc.abstractmethod
-    def convey_task_result(self, workbook_name, execution_id, task_id,
-                           state, result):
-        pass
+    @classmethod
+    def start_workflow_execution(cls, workbook_name, target_task_name):
+        wb_dsl = cls._get_wb_dsl(workbook_name)
+        dsl_tasks = workflow.find_workflow_tasks(wb_dsl, target_task_name)
+        db_api.start_tx()
+
+        # Persist execution and tasks in DB.
+        try:
+            execution = cls._create_execution(workbook_name, target_task_name)
+
+            tasks = cls._create_tasks(dsl_tasks, wb_dsl,
+                                      workbook_name, execution['id'])
+
+            db_api.commit_tx()
+        except Exception as e:
+            raise exc.EngineException("Failed to create necessary DB objects:"
+                                      " %s" % e)
+        finally:
+            db_api.end_tx()
+
+        cls._run_tasks(workflow.find_tasks_to_start(tasks))
+
+        return execution
+
+    @classmethod
+    def convey_task_result(cls, workbook_name, execution_id,
+                           task_id, state, result):
+        db_api.start_tx()
+
+        #TODO(rakhmerov): validate state transition
+
+        # Update task state.
+        task = db_api.task_update(workbook_name, execution_id, task_id,
+                                  {"state": state, "result": result})
+        execution = db_api.execution_get(workbook_name, execution_id)
+
+        # Determine what tasks need to be started.
+        tasks = db_api.tasks_get(workbook_name, execution_id)
+
+        try:
+            new_exec_state = cls._determine_execution_state(execution, tasks)
+
+            if execution['state'] != new_exec_state:
+                db_api.execution_update(workbook_name, execution_id, {
+                    "state": new_exec_state
+                })
+
+                LOG.info("Changed execution state: %s" % execution)
+
+            db_api.commit_tx()
+        except Exception as e:
+            raise exc.EngineException("Failed to create necessary DB objects:"
+                                      " %s" % e)
+        finally:
+            db_api.end_tx()
+
+        if states.is_stopped_or_finished(execution["state"]):
+            return task
+
+        if tasks:
+            cls._run_tasks(workflow.find_tasks_to_start(tasks))
+
+        return task
 
     @classmethod
     def stop_workflow_execution(cls, workbook_name, execution_id):
@@ -46,9 +107,9 @@ class AbstractEngine(object):
         execution = db_api.execution_get(workbook_name, execution_id)
 
         if not execution:
-            raise ex.EngineException("Workflow execution not found "
-                                     "[workbook_name=%s, execution_id=%s]"
-                                     % (workbook_name, execution_id))
+            raise exc.EngineException("Workflow execution not found "
+                                      "[workbook_name=%s, execution_id=%s]"
+                                      % (workbook_name, execution_id))
 
         return execution["state"]
 
@@ -57,7 +118,7 @@ class AbstractEngine(object):
         task = db_api.task_get(workbook_name, execution_id, task_id)
 
         if not task:
-            raise ex.EngineException("Task not found.")
+            raise exc.EngineException("Task not found.")
 
         return task["state"]
 
@@ -93,18 +154,11 @@ class AbstractEngine(object):
         return wb_dsl
 
     @classmethod
-    def _determine_workflow_is_finished(cls, workbook_name, execution, task):
-        if task["state"] == states.ERROR:
-            execution = db_api.execution_update(workbook_name,
-                                                execution['id'],
-                                                {"state": states.ERROR})
+    def _determine_execution_state(cls, execution, tasks):
+        if workflow.is_error(tasks):
+            return states.ERROR
 
-            LOG.info("Execution finished with error: %s" % execution)
+        if workflow.is_success(tasks):
+            return states.SUCCESS
 
-            return True
-
-        if states.is_stopped_or_finished(execution["state"]):
-            # The execution has finished or stopped temporarily.
-            return True
-
-        return None
+        return execution['state']

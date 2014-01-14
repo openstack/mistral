@@ -18,7 +18,7 @@ import pkg_resources as pkg
 
 from mistral.db import api as db_api
 from mistral.engine.actions import actions
-from mistral.engine.local import engine
+from mistral.engine.scalable import engine
 from mistral.engine import states
 from mistral import version
 from mistral.tests.unit import base as test_base
@@ -38,7 +38,9 @@ def get_cfg(cfg_suffix):
         CFG_PREFIX + cfg_suffix)).read()
 
 
-class TestLocalEngine(test_base.DbTestCase):
+class TestScalableEngine(test_base.DbTestCase):
+    @mock.patch.object(engine.ScalableEngine, "_notify_task_executors",
+                       mock.MagicMock(return_value=""))
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
                            'definition': get_cfg("test_rest.yaml")
@@ -60,6 +62,8 @@ class TestLocalEngine(test_base.DbTestCase):
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
 
+    @mock.patch.object(engine.ScalableEngine, "_notify_task_executors",
+                       mock.MagicMock(return_value=""))
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
                            'definition': get_cfg("test_rest.yaml")
@@ -81,7 +85,10 @@ class TestLocalEngine(test_base.DbTestCase):
         self.assertIsNotNone(tasks)
         self.assertEqual(2, len(tasks))
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
-        self.assertEqual(tasks[1]['state'], states.RUNNING)
+
+        # Since we mocked out executor notification we expect IDLE
+        # for the second task.
+        self.assertEqual(tasks[1]['state'], states.IDLE)
         self.assertEqual(states.RUNNING,
                          ENGINE.get_workflow_execution_state(WB_NAME,
                                                              execution['id']))

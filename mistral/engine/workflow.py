@@ -51,6 +51,10 @@ def is_success(tasks):
     return all(task['state'] == states.SUCCESS for task in tasks)
 
 
+def is_error(tasks):
+    return all(task['state'] == states.ERROR for task in tasks)
+
+
 def _get_subgraph(full_graph, task_name):
     nodes_set = traversal.dfs_predecessors(full_graph.reverse(),
                                            task_name).keys()

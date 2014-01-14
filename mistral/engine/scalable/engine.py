@@ -19,11 +19,7 @@ import json
 import pika
 from oslo.config import cfg
 from mistral.openstack.common import log as logging
-from mistral.db import api as db_api
-from mistral import exceptions
 from mistral.engine import abstract_engine as abs_eng
-from mistral.engine import states
-from mistral.engine import workflow
 
 
 LOG = logging.getLogger(__name__)
@@ -58,69 +54,16 @@ class ScalableEngine(abs_eng.AbstractEngine):
             conn.close()
 
     @classmethod
-    def start_workflow_execution(cls, workbook_name, target_task_name):
-        wb_dsl = cls._get_wb_dsl(workbook_name)
-        dsl_tasks = workflow.find_workflow_tasks(wb_dsl, target_task_name)
-        db_api.start_tx()
-
-        # Persist execution and tasks in DB.
-        try:
-            execution = cls._create_execution(workbook_name, target_task_name)
-
-            tasks = cls._create_tasks(dsl_tasks, wb_dsl,
-                                      workbook_name, execution['id'])
-
-            cls._notify_task_executors(workflow.find_tasks_to_start(tasks))
-
-            db_api.commit_tx()
-
-            return execution
-        except Exception:
-            raise exceptions.EngineException("Cannot perform task"
-                                             " creating in DB")
-        finally:
-            db_api.end_tx()
-
-    @classmethod
-    def convey_task_result(cls, workbook_name, execution_id,
-                           task_id, state, result):
-        db_api.start_tx()
-
-        #TODO(rakhmerov): validate state transition
-
-        # Update task state.
-        task = db_api.task_update(workbook_name, execution_id, task_id,
-                                  {"state": state, "result": result})
-        execution = db_api.execution_get(workbook_name, execution_id)
-
-        # Determine what tasks need to be started.
-        tasks = db_api.tasks_get(workbook_name, execution_id)
-
-        try:
-            if cls._determine_workflow_is_finished(workbook_name,
-                                                   execution, task):
-                db_api.commit_tx()
-                return task
-
-            if workflow.is_success(tasks):
-                db_api.execution_update(workbook_name, execution_id, {
-                    "state": states.SUCCESS
-                })
-
-                db_api.commit_tx()
-                LOG.info("Execution finished with success: %s" % execution)
-
-                return task
-
-            cls._notify_task_executors(workflow.find_tasks_to_start(tasks))
-
-            db_api.commit_tx()
-            return task
-        except Exception:
-            raise exceptions.EngineException("Cannot perform task or"
-                                             " execution updating in DB")
-        finally:
-            db_api.end_tx()
+    def _run_tasks(cls, tasks):
+        # TODO(rakhmerov):
+        # This call outside of DB transaction creates a window
+        # when the engine may crash and DB will not be consistent with
+        # the task message queue state. Need to figure out the best
+        # solution to recover from this situation.
+        # However, making this call in DB transaction is really bad
+        # since it makes transaction much longer in time and under load
+        # may overload DB with open transactions.
+        cls._notify_task_executors(tasks)
 
 
 def get_engine():
