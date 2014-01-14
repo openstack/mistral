@@ -24,17 +24,17 @@ from mistral.engine import workflow
 
 TASKS = [
     {
-        'dependencies': [],
+        'requires': {},
         'name': 'backup-vms',
         'state': states.IDLE
     },
     {
-        'dependencies': [],
+        'requires': {},
         'name': 'create-vms',
         'state': states.SUCCESS
     },
     {
-        'dependencies': ['create-vms'],
+        'requires': {'create-vms': ''},
         'name': 'attach-volume',
         'state': states.IDLE
     }

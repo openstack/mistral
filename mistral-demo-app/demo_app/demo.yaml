@@ -35,17 +35,17 @@ Workflow:
          parameters:
 
      task2:
-         dependsOn: [task1]
+         requires: [task1]
          action: MyRest:task2
          parameters:
 
      task3:
-        dependsOn: [task1]
+        requires: [task1]
         action: MyRest:task3
         parameters:
 
      task4:
-        dependsOn: [task2, task3]
+        requires: [task2, task3]
         action: MyRest:task4
         parameters:
 

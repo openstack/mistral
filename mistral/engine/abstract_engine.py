@@ -136,7 +136,7 @@ class AbstractEngine(object):
         for dsl_task in dsl_tasks:
             task = db_api.task_create(workbook_name, execution_id, {
                 "name": dsl_task["name"],
-                "dependencies": dsl_task.get("dependsOn", []),
+                "requires": dsl_task.get("requires", {}),
                 "task_dsl": dsl_task,
                 "service_dsl": wb_dsl.get_service(dsl_task["service_name"]),
                 "state": states.IDLE,

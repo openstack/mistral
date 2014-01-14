@@ -64,12 +64,12 @@ def _get_subgraph(full_graph, task_name):
 
 
 def _get_dependency_tasks(tasks, task):
-    if 'dependsOn' not in tasks[task]:
+    if 'requires' not in tasks[task]:
         return []
 
     deps = set()
     for t in tasks:
-        for dep in tasks[task]['dependsOn']:
+        for dep in tasks[task]['requires']:
             if dep == t:
                 deps.add(t)
 
@@ -90,7 +90,8 @@ def _get_resolved_tasks(tasks):
             allows += [t['name']]
     allow_set = set(allows)
     for t in tasks:
-        if len(set(t.get('dependencies', [])) - allow_set) == 0:
+        deps = t.get('requires', {}).keys()
+        if len(set(deps) - allow_set) == 0:
             if t['state'] == states.IDLE:
                 resolved_tasks.append(t)
     return resolved_tasks

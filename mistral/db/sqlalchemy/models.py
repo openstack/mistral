@@ -86,7 +86,7 @@ class Task(mb.MistralBase):
 
     id = _id_column()
     name = sa.Column(sa.String(80))
-    dependencies = sa.Column(st.JsonListType())
+    requires = sa.Column(st.JsonDictType())
     workbook_name = sa.Column(sa.String(80))
     execution_id = sa.Column(sa.String(36))
     description = sa.Column(sa.String())

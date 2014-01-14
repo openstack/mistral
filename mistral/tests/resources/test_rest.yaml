@@ -44,20 +44,20 @@ Workflow:
            flavor_id: 42
 
      attach-volumes:
-         dependsOn: [create-vms]
+         requires: [create-vms]
          action: MyRest:attach-volume
          parameters:
            size:
            mnt_path:
 
      format-volumes:
-        dependsOn: [attach-volumes]
+        requires: [attach-volumes]
         action: MyRest:format-volume
         parameters:
            server_id:
 
      backup-vms:
-        dependsOn: [create-vms]
+        requires: [create-vms]
         action: MyRest:backup-vm
         parameters:
            server_id:

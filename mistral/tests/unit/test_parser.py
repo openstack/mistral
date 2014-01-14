@@ -41,12 +41,23 @@ class DSLParserTest(unittest2.TestCase):
         events = self.dsl.get_events()
         self.assertIn("create-vms", events[0]['name'])
 
+        event_task_name = self.dsl.get_event_task_name("create-vms")
+        self.assertEqual(event_task_name, "create-vms")
+        event_task_name = self.dsl.get_event_task_name("not-valid")
+        self.assertEqual(event_task_name, "")
+
     def test_tasks(self):
         tasks = self.dsl.get_tasks()
         self.assertIn("create-vms", tasks)
         self.assertIn("parameters", tasks["create-vms"])
         self.assertEqual(tasks["backup-vms"]["action"],
                          "MyRest:backup-vm")
+        attach_parameters = self.dsl.get_task_dsl_property("attach-volumes",
+                                                           "parameters")
+        self.assertIn("size", attach_parameters)
+        self.assertIn("mnt_path", attach_parameters)
+        task = self.dsl.get_task("not-valid-name")
+        self.assertEqual(task, {})
 
     def test_actions(self):
         action = self.dsl.get_action("MyRest:attach-volume")
