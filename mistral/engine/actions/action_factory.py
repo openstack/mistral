@@ -16,16 +16,20 @@
 
 from mistral.engine.actions import actions
 from mistral.engine.actions import action_types
+from mistral.engine.actions import action_helper as a_h
 import mistral.exceptions as exc
 
 
 def create_action(task):
-    action_type = task['service_dsl']['type']
+    action_type = a_h.get_action_type(task)
 
     if not action_types.is_valid(action_type):
         raise exc.InvalidActionException("Action type is not supported: %s" %
                                          action_type)
-    return _get_mapping()[action_type](task)
+    action = _get_mapping()[action_type](task)
+    action_dsl = task['service_dsl']['actions'][action.name]
+    action.result_helper = action_dsl.get('parameters', {}).get('response', {})
+    return action
 
 
 def _get_mapping():
@@ -37,6 +41,7 @@ def _get_mapping():
 
 
 def get_rest_action(task):
+    action_type = a_h.get_action_type(task)
     action_name = task['task_dsl']['action'].split(':')[1]
     action_dsl = task['service_dsl']['actions'][action_name]
     task_params = task['task_dsl'].get('parameters', None)
@@ -48,8 +53,9 @@ def get_rest_action(task):
     headers.update(action_dsl.get('headers', {}))
 
     method = action_dsl['parameters'].get('method', "GET")
-    return actions.RestAction(url, params=task_params,
-                              method=method, headers=headers)
+    return actions.RestAction(action_type, action_name, url,
+                              params=task_params, method=method,
+                              headers=headers)
 
 
 def get_mistral_rest_action(task):
@@ -64,6 +70,7 @@ def get_mistral_rest_action(task):
 
 
 def get_amqp_action(task):
+    action_type = a_h.get_action_type(task)
     action_name = task['task_dsl']['action'].split(':')[1]
     action_params = task['service_dsl']['actions'][action_name]['parameters']
     task_params = task['task_dsl'].get('parameters', None)
@@ -79,6 +86,6 @@ def get_amqp_action(task):
     exchange = action_params.get('exchange')
     queue_name = action_params['queue_name']
 
-    return actions.OsloRPCAction(host, userid, password, virtual_host,
-                                 message, routing_key, port, exchange,
-                                 queue_name)
+    return actions.OsloRPCAction(action_type, host, userid, password,
+                                 virtual_host, message, routing_key, port,
+                                 exchange, queue_name)

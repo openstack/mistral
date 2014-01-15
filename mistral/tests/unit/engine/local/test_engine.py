@@ -44,7 +44,7 @@ class TestLocalEngine(test_base.DbTestCase):
                            'definition': get_cfg("test_rest.yaml")
                        }))
     @mock.patch.object(actions.RestAction, "run",
-                       mock.MagicMock(return_value="result"))
+                       mock.MagicMock(return_value={'state': states.RUNNING}))
     def test_engine_one_task(self):
         execution = ENGINE.start_workflow_execution(WB_NAME,
                                                     "create-vms")
@@ -65,7 +65,7 @@ class TestLocalEngine(test_base.DbTestCase):
                            'definition': get_cfg("test_rest.yaml")
                        }))
     @mock.patch.object(actions.RestAction, "run",
-                       mock.MagicMock(return_value="result"))
+                       mock.MagicMock(return_value={'state': states.RUNNING}))
     def test_engine_multiple_tasks(self):
         execution = ENGINE.start_workflow_execution(WB_NAME,
                                                     "backup-vms")
@@ -99,3 +99,18 @@ class TestLocalEngine(test_base.DbTestCase):
         self.assertEqual(states.SUCCESS,
                          ENGINE.get_workflow_execution_state(WB_NAME,
                                                              execution['id']))
+
+    @mock.patch.object(actions.RestAction, "run",
+                       mock.MagicMock(return_value={'state': states.SUCCESS}))
+    @mock.patch.object(db_api, "workbook_get",
+                       mock.MagicMock(return_value={
+                           'definition': get_cfg("test_rest.yaml")
+                       }))
+    @mock.patch.object(states, "get_state_by_http_status_code",
+                       mock.MagicMock(return_value=states.SUCCESS))
+    def test_engine_sync_task(self):
+        execution = ENGINE.start_workflow_execution(WB_NAME, "create-vm-nova")
+        task = db_api.tasks_get(WB_NAME, execution['id'])[0]
+        execution = db_api.execution_get(WB_NAME, execution['id'])
+        self.assertEqual(execution['state'], states.SUCCESS)
+        self.assertEqual(task['state'], states.SUCCESS)

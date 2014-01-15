@@ -1,6 +1,6 @@
 Services:
    MyRest:
-     type: REST_API
+     type: MISTRAL_REST_API
      parameters:
          baseUrl: http://some_host
      actions:
@@ -14,14 +14,14 @@ Services:
 
          backup-vm:
            parameters:
-               url: url_for_backup
+               url: /url_for_backup
                method: GET
            task-parameters:
                server_id:
 
          attach-volume:
            parameters:
-               url: url_for_attach
+               url: /url_for_attach
                method: GET
            task-parameters:
                size:
@@ -29,11 +29,25 @@ Services:
 
          format-volume:
            parameters:
-               url: url_for_format
+               url: /url_for_format
                method: GET
            task-parameters:
                volume_id:
                server_id:
+   Nova:
+     type: REST_API
+     parameters:
+       baseUrl: http://path_to_nova
+     actions:
+       create-vm:
+         parameters:
+           url: /url_for_create
+           response:
+             select: '$.server_id'
+             store_as: vm_id
+         task-parameters:
+           flavor_id:
+           image_id:
 
 Workflow:
    tasks:
@@ -61,6 +75,12 @@ Workflow:
         action: MyRest:backup-vm
         parameters:
            server_id:
+
+     create-vm-nova:
+        action: Nova:create-vm
+        parameters:
+          image_id: 1234
+          flavor_id: 2
 
    events:
      create-vms:
