@@ -23,51 +23,39 @@ from mistral.db import api as db_api
 
 DEFINITION = "my definition"
 
+NEW_DEFINITION = """
+Workflow:
+    events:
+        create-vms:
+            type: periodic
+            tasks: create-vms
+            parameters:
+                cron-pattern: "* * * * *"
+"""
+
 
 class TestWorkbookDefinitionController(base.FunctionalTest):
-    def setUp(self):
-        super(TestWorkbookDefinitionController, self).setUp()
-        self.workbook_definition_put = db_api.workbook_definition_put
-        self.workbook_definition_get = db_api.workbook_definition_get
-
-    def tearDown(self):
-        super(TestWorkbookDefinitionController, self).tearDown()
-        db_api.workbook_definition_put = self.workbook_definition_put
-        db_api.workbook_definition_get = self.workbook_definition_get
-
+    @mock.patch.object(db_api, "workbook_definition_get",
+                       mock.MagicMock(return_value=DEFINITION))
     def test_get(self):
-        db_api.workbook_definition_get = \
-            mock.MagicMock(return_value=DEFINITION)
-
         resp = self.app.get('/v1/workbooks/my_workbook/definition',
                             headers={"Content-Type": "text/plain"})
 
         self.assertEqual(resp.status_int, 200)
         self.assertEqual(DEFINITION, resp.text)
 
+    @mock.patch.object(db_api, "workbook_definition_put",
+                       mock.MagicMock(return_value={
+                           'name': 'my_workbook',
+                           'definition': NEW_DEFINITION
+                       }))
     def test_put(self):
-        new_definition = """
-        Workflow:
-            events:
-                create-vms:
-                    type: periodic
-                    tasks: create-vms
-                    parameters:
-                        cron-pattern: "* * * * *"
-        """
-
-        db_api.workbook_definition_put = \
-            mock.MagicMock(return_value={
-                'name': 'my_workbook',
-                'definition': new_definition
-            })
-
         resp = self.app.put('/v1/workbooks/my_workbook/definition',
-                            new_definition,
+                            NEW_DEFINITION,
                             headers={"Content-Type": "text/plain"})
 
         self.assertEqual(resp.status_int, 200)
-        self.assertEqual(new_definition, resp.body)
+        self.assertEqual(NEW_DEFINITION, resp.body)
 
         # Check that associated events have been created in DB.
         events = db_api.events_get(workbook_name='my_workbook')

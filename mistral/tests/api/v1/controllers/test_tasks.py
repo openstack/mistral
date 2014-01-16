@@ -35,44 +35,32 @@ TASKS = [
     }
 ]
 
+UPDATED_TASK = TASKS[0].copy()
+UPDATED_TASK['state'] = 'STOPPED'
+
 
 class TestTasksController(base.FunctionalTest):
-    def setUp(self):
-        super(TestTasksController, self).setUp()
-        self.task_get = db_api.task_get
-        self.task_update = db_api.task_update
-        self.tasks_get = db_api.tasks_get
-
-    def tearDown(self):
-        super(TestTasksController, self).tearDown()
-        db_api.task_get = self.task_get
-        db_api.task_update = self.task_update
-        db_api.tasks_get = self.tasks_get
-
+    @mock.patch.object(db_api, "task_get",
+                       mock.MagicMock(return_value=TASKS[0]))
     def test_get(self):
-        db_api.task_get = mock.MagicMock(return_value=TASKS[0])
-
         resp = self.app.get('/v1/workbooks/my_workbook/executions/123/tasks/1')
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(TASKS[0], resp.json)
 
+    @mock.patch.object(engine, "convey_task_result",
+                       mock.MagicMock(return_value=UPDATED_TASK))
     def test_put(self):
-        updated_task = TASKS[0].copy()
-        updated_task['state'] = 'STOPPED'
-
-        engine.convey_task_result = mock.MagicMock(return_value=updated_task)
-
         resp = self.app.put_json(
             '/v1/workbooks/my_workbook/executions/123/tasks/1',
             dict(state='STOPPED'))
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(updated_task, resp.json)
+        self.assertDictEqual(UPDATED_TASK, resp.json)
 
+    @mock.patch.object(db_api, "tasks_get",
+                       mock.MagicMock(return_value=TASKS))
     def test_get_all(self):
-        db_api.tasks_get = mock.MagicMock(return_value=TASKS)
-
         resp = self.app.get('/v1/workbooks/my_workbook/executions/123/tasks')
 
         self.assertEqual(resp.status_int, 200)

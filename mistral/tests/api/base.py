@@ -17,12 +17,12 @@
 import pecan
 import pecan.testing
 
-from mistral.tests.base import BaseTest
+from mistral.tests.unit import base as test_base
 
 __all__ = ['FunctionalTest']
 
 
-class FunctionalTest(BaseTest):
+class FunctionalTest(test_base.DbTestCase):
     """Used for functional tests where you need to test your
     literal application and its integration with the framework.
     """
