@@ -16,7 +16,7 @@
 
 from mistralclient.tests import base
 
-# TODO: later we need additional tests verifying all the errors etc.
+# TODO: Later we need additional tests verifying all the errors etc.
 
 EXECS = [
     {
