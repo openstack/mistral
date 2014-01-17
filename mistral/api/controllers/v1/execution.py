@@ -36,6 +36,9 @@ class Execution(resource.Resource):
     workbook_name = wtypes.text
     target_task = wtypes.text
     state = wtypes.text
+    # Context is a JSON object but since WSME doesn't support arbitrary
+    # dictionaries we have to use text type.
+    context = wtypes.text
 
 
 class Executions(resource.Resource):

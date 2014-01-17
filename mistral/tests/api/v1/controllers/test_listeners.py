@@ -30,59 +30,47 @@ LISTENERS = [
     }
 ]
 
+UPDATED_LSNR = LISTENERS[0].copy()
+UPDATED_LSNR['description'] = 'new description'
+
 
 class TestListenersController(base.FunctionalTest):
-    def setUp(self):
-        super(TestListenersController, self).setUp()
-        self.listener_get = db_api.listener_get
-        self.listener_update = db_api.listener_update
-        self.listener_create = db_api.listener_create
-        self.listeners_get = db_api.listeners_get
-
-    def tearDown(self):
-        super(TestListenersController, self).tearDown()
-        db_api.listener_get = self.listener_get
-        db_api.listener_update = self.listener_update
-        db_api.listener_create = self.listener_create
-        db_api.listeners_get = self.listeners_get
-
+    @mock.patch.object(db_api, "listener_get",
+                       mock.MagicMock(return_value=LISTENERS[0]))
     def test_get(self):
-        db_api.listener_get = mock.MagicMock(return_value=LISTENERS[0])
-
         resp = self.app.get('/v1/workbooks/my_workbook/listeners/1')
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(LISTENERS[0], resp.json)
 
+    @mock.patch.object(db_api, "listener_update",
+                       mock.MagicMock(return_value=UPDATED_LSNR))
     def test_put(self):
-        updated_lsnr = LISTENERS[0].copy()
-        updated_lsnr['description'] = 'new description'
-
-        db_api.listener_update = mock.MagicMock(return_value=updated_lsnr)
-
         resp = self.app.put_json('/v1/workbooks/my_workbook/listeners/1',
                                  dict(description='new description'))
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(updated_lsnr, resp.json)
+        self.assertDictEqual(UPDATED_LSNR, resp.json)
 
+    @mock.patch.object(db_api, "listener_create",
+                       mock.MagicMock(return_value=LISTENERS[0]))
     def test_post(self):
-        db_api.listener_create = mock.MagicMock(return_value=LISTENERS[0])
-
         resp = self.app.post_json('/v1/workbooks/my_workbook/listeners',
                                   LISTENERS[0])
 
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(LISTENERS[0], resp.json)
 
+    @mock.patch.object(db_api, "listener_delete",
+                       mock.MagicMock(return_value=None))
     def test_delete(self):
         resp = self.app.delete('/v1/workbooks/my_workbook/listeners/1')
 
         self.assertEqual(resp.status_int, 204)
 
+    @mock.patch.object(db_api, "listeners_get",
+                       mock.MagicMock(return_value=LISTENERS))
     def test_get_all(self):
-        db_api.listeners_get = mock.MagicMock(return_value=LISTENERS)
-
         resp = self.app.get('/v1/workbooks/my_workbook/listeners')
 
         self.assertEqual(resp.status_int, 200)

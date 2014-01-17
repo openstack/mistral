@@ -23,7 +23,15 @@ EXECS = [
         'id': "123",
         'workbook_name': "my_workbook",
         'target_task': 'my_task',
-        'state': 'RUNNING'
+        'state': 'RUNNING',
+        'context': """
+            {
+                "person": {
+                    "first_name": "John",
+                    "last_name": "Doe"
+                }
+            }
+        """
     }
 ]
 
@@ -33,14 +41,15 @@ class TestExecutions(base.BaseClientTest):
     def test_create(self):
         self.mock_http_post(json=EXECS[0])
 
-        wb = self.executions.create(EXECS[0]['workbook_name'],
+        ex = self.executions.create(EXECS[0]['workbook_name'],
                                     EXECS[0]['target_task'])
 
-        self.assertIsNotNone(wb)
-        self.assertEqual(EXECS[0]['id'], wb.id)
-        self.assertEqual(EXECS[0]['workbook_name'], wb.workbook_name)
-        self.assertEqual(EXECS[0]['target_task'], wb.target_task)
-        self.assertEqual(EXECS[0]['state'], wb.state)
+        self.assertIsNotNone(ex)
+        self.assertEqual(EXECS[0]['id'], ex.id)
+        self.assertEqual(EXECS[0]['workbook_name'], ex.workbook_name)
+        self.assertEqual(EXECS[0]['target_task'], ex.target_task)
+        self.assertEqual(EXECS[0]['state'], ex.state)
+        self.assertEqual(EXECS[0]['context'], ex.context)
 
     def test_update(self):
         self.mock_http_put(json=EXECS[0])
@@ -54,6 +63,7 @@ class TestExecutions(base.BaseClientTest):
         self.assertEqual(EXECS[0]['workbook_name'], ex.workbook_name)
         self.assertEqual(EXECS[0]['target_task'], ex.target_task)
         self.assertEqual(EXECS[0]['state'], ex.state)
+        self.assertEqual(EXECS[0]['context'], ex.context)
 
     def test_list(self):
         self.mock_http_get(json={'executions': EXECS})
@@ -68,6 +78,7 @@ class TestExecutions(base.BaseClientTest):
         self.assertEqual(EXECS[0]['workbook_name'], ex.workbook_name)
         self.assertEqual(EXECS[0]['target_task'], ex.target_task)
         self.assertEqual(EXECS[0]['state'], ex.state)
+        self.assertEqual(EXECS[0]['context'], ex.context)
 
     def test_get(self):
         self.mock_http_get(json=EXECS[0])
@@ -78,6 +89,7 @@ class TestExecutions(base.BaseClientTest):
         self.assertEqual(EXECS[0]['workbook_name'], ex.workbook_name)
         self.assertEqual(EXECS[0]['target_task'], ex.target_task)
         self.assertEqual(EXECS[0]['state'], ex.state)
+        self.assertEqual(EXECS[0]['context'], ex.context)
 
     def test_delete(self):
         self.mock_http_delete(status_code=204)

@@ -29,63 +29,48 @@ WORKBOOKS = [
     }
 ]
 
+UPDATED_WORKBOOK = WORKBOOKS[0].copy()
+UPDATED_WORKBOOK['description'] = 'new description'
+
 
 class TestWorkbooksController(base.FunctionalTest):
-    def setUp(self):
-        super(TestWorkbooksController, self).setUp()
-        self.workbook_create = db_api.workbook_create
-        self.workbooks_get = db_api.workbooks_get
-        self.workbook_get = db_api.workbook_get
-        self.workbook_delete = db_api.workbook_delete
-        self.workbook_update = db_api.workbook_update
-
-    def tearDown(self):
-        super(TestWorkbooksController, self).tearDown()
-        db_api.workbook_create = self.workbook_create
-        db_api.workbooks_get = self.workbooks_get
-        db_api.workbook_get = self.workbook_get
-        db_api.workbook_update = self.workbook_update
-        db_api.workbook_delete = self.workbook_delete
-
+    @mock.patch.object(db_api, "workbook_get",
+                       mock.MagicMock(return_value=WORKBOOKS[0]))
     def test_get(self):
-        db_api.workbook_get = mock.MagicMock(return_value=WORKBOOKS[0])
-
         resp = self.app.get('/v1/workbooks/my_workbook')
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(WORKBOOKS[0], resp.json)
 
+    @mock.patch.object(db_api, "workbook_update",
+                       mock.MagicMock(return_value=UPDATED_WORKBOOK))
     def test_put(self):
-        updated_workbook = WORKBOOKS[0].copy()
-        updated_workbook['description'] = 'new description'
-
-        db_api.workbook_update = mock.MagicMock(return_value=updated_workbook)
-
         resp = self.app.put_json('/v1/workbooks/my_workbook',
                                  dict(description='new description'))
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(updated_workbook, resp.json)
+        self.assertDictEqual(UPDATED_WORKBOOK, resp.json)
 
-    @mock.patch("mistral.services.trusts.create_trust")
-    def test_post(self, create_trust):
-        db_api.workbook_create = mock.MagicMock(return_value=WORKBOOKS[0])
-        create_trust.return_value = WORKBOOKS[0]
-
+    @mock.patch.object(db_api, "workbook_create",
+                       mock.MagicMock(return_value=WORKBOOKS[0]))
+    @mock.patch("mistral.services.trusts.create_trust",
+                mock.MagicMock(return_value=WORKBOOKS[0]))
+    def test_post(self):
         resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0])
 
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(WORKBOOKS[0], resp.json)
 
+    @mock.patch.object(db_api, "workbook_delete",
+                       mock.MagicMock(return_value=None))
     def test_delete(self):
-        db_api.workbook_delete = mock.MagicMock(return_value=None)
         resp = self.app.delete('/v1/workbooks/my_workbook')
 
         self.assertEqual(resp.status_int, 204)
 
+    @mock.patch.object(db_api, "workbooks_get",
+                       mock.MagicMock(return_value=WORKBOOKS))
     def test_get_all(self):
-        db_api.workbooks_get = mock.MagicMock(return_value=WORKBOOKS)
-
         resp = self.app.get('/v1/workbooks')
 
         self.assertEqual(resp.status_int, 200)
