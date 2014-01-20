@@ -22,32 +22,45 @@ import mistral.exceptions as exc
 def create_action(task):
     action_type = task['service_dsl']['type']
 
-    if action_type == action_types.REST_API:
-        return get_rest_action(task)
-    elif action_type == action_types.OSLO_RPC:
-        return get_amqp_action(task)
-    else:
+    if not action_types.is_valid(action_type):
         raise exc.InvalidActionException("Action type is not supported: %s" %
                                          action_type)
+    return _get_mapping()[action_type](task)
+
+
+def _get_mapping():
+    return {
+        action_types.REST_API: get_rest_action,
+        action_types.MISTRAL_REST_API: get_mistral_rest_action,
+        action_types.OSLO_RPC: get_amqp_action
+    }
 
 
 def get_rest_action(task):
     action_name = task['task_dsl']['action'].split(':')[1]
-    action_params = task['service_dsl']['actions'][action_name]['parameters']
+    action_dsl = task['service_dsl']['actions'][action_name]
     task_params = task['task_dsl'].get('parameters', None)
     url = task['service_dsl']['parameters']['baseUrl'] +\
-        action_params['url']
+        action_dsl['parameters']['url']
 
-    headers = {
+    headers = {}
+    headers.update(task['task_dsl'].get('headers', {}))
+    headers.update(action_dsl.get('headers', {}))
+
+    method = action_dsl['parameters'].get('method', "GET")
+    return actions.RestAction(url, params=task_params,
+                              method=method, headers=headers)
+
+
+def get_mistral_rest_action(task):
+    mistral_headers = {
         'Mistral-Workbook-Name': task['workbook_name'],
         'Mistral-Execution-Id': task['execution_id'],
         'Mistral-Task-Id': task['id'],
     }
-
-    return actions.RestAction(url=url,
-                              params=task_params,
-                              method=action_params['method'],
-                              headers=headers)
+    action = get_rest_action(task)
+    action.headers.update(mistral_headers)
+    return action
 
 
 def get_amqp_action(task):

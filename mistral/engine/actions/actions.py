@@ -24,12 +24,12 @@ LOG = logging.getLogger(__name__)
 
 
 class BaseAction(object):
-    def do_action(self):
+    def run(self):
         pass
 
 
 class RestAction(BaseAction):
-    def __init__(self, url, params={}, method="GET", headers=None):
+    def __init__(self, url, params={}, method="GET", headers={}):
         self.url = url
         self.params = params
         self.method = method
@@ -43,6 +43,12 @@ class RestAction(BaseAction):
                                 headers=self.headers)
         LOG.info("Received HTTP response:\n%s\n%s" %
                  (resp.status_code, resp.content))
+        # Return rather json than text, but response can contain text also.
+        try:
+            return resp.json()
+        except:
+            LOG.debug("HTTP response content is not json")
+            return resp.content
 
 
 class OsloRPCAction(BaseAction):
