@@ -19,4 +19,5 @@
 import setuptools
 
 setuptools.setup(
-    name="mistral")
+    setup_requires=['pbr'],
+    pbr=True)
