@@ -53,9 +53,20 @@ def get_rest_action(task):
     headers.update(action_dsl.get('headers', {}))
 
     method = action_dsl['parameters'].get('method', "GET")
+
+    # input_yaql = task.get('input')
+    # TODO(nmakhotkin) extract input from context within the YAQL expression
+    task_input = {}  # yaql_utils.evaluate(input_yaql, ctx)
+    task_data = {}
+
+    if method.upper() == "GET":
+        task_params.update(task_input)
+    elif method.upper() in ["POST", "PUT"]:
+        task_data.update(task_input)
+
     return actions.RestAction(action_type, action_name, url,
                               params=task_params, method=method,
-                              headers=headers)
+                              headers=headers, data=task_data)
 
 
 def get_mistral_rest_action(task):
