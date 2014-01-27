@@ -14,7 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import yaql
+
 
 def evaluate(expression_str, data):
-    #TODO(nmakhotkin) evaluate YAQL expression and return the result
-    pass
+    expression = yaql.parse(expression_str)
+    return expression.evaluate(data)
