@@ -1,0 +1,57 @@
+Services:
+   MyRest:
+     type: REST_API
+     parameters:
+         baseUrl: http://localhost:8988
+     actions:
+         task1:
+           parameters:
+               url: /tasks/task1
+               method: GET
+           task-parameters:
+
+         task2:
+           parameters:
+               url: /tasks/task2
+               method: GET
+           task-parameters:
+
+         task3:
+           parameters:
+               url: /tasks/task3
+               method: GET
+           task-parameters:
+
+         task4:
+           parameters:
+               url: /tasks/task4
+               method: GET
+           task-parameters:
+
+Workflow:
+   tasks:
+     task1:
+         action: MyRest:task1
+         parameters:
+
+     task2:
+         dependsOn: [task1]
+         action: MyRest:task2
+         parameters:
+
+     task3:
+        dependsOn: [task1]
+        action: MyRest:task3
+        parameters:
+
+     task4:
+        dependsOn: [task2, task3]
+        action: MyRest:task4
+        parameters:
+
+   events:
+     task4:
+        type: periodic
+        tasks: task4
+        parameters:
+            cron-pattern: "*/1 * * * *"
