@@ -17,7 +17,18 @@
 import pecan
 import pecan.testing
 
+from oslo.config import cfg
+
+from mistral.openstack.common import importutils
 from mistral.tests.unit import base as test_base
+
+# We need to make sure that all configuration properties are registered.
+importutils.import_module("mistral.config")
+
+# Disable authentication for functional tests.
+cfg.CONF.unregister_opt(cfg.BoolOpt('auth_enable'), 'pecan')
+cfg.CONF.register_opt(cfg.BoolOpt('auth_enable', default=False), group='pecan')
+
 
 __all__ = ['FunctionalTest']
 
@@ -30,11 +41,13 @@ class FunctionalTest(test_base.DbTestCase):
     def setUp(self):
         super(FunctionalTest, self).setUp()
 
+        pecan_opts = cfg.CONF.pecan
+
         self.app = pecan.testing.load_test_app({
             'app': {
-                'root': 'mistral.api.controllers.root.RootController',
-                'modules': ['mistral.api'],
-                'debug': False,
+                'root': pecan_opts.root,
+                'modules': pecan_opts.modules,
+                'debug': pecan_opts.debug,
                 'auth_enable': False
             }
         })

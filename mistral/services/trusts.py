@@ -29,9 +29,9 @@ def create_trust(workbook):
 
     ctx = context.current()
 
-    admin_user = CONF.keystone_authtoken.admin_user
-    admin_password = CONF.keystone_authtoken.admin_password
-    admin_tenant_name = CONF.keystone_authtoken.admin_tenant_name
+    admin_user = CONF.keystone.admin_user
+    admin_password = CONF.keystone.admin_password
+    admin_tenant_name = CONF.keystone.admin_tenant_name
 
     trustee_id = keystone.client_for_trusts(
         admin_user,
@@ -50,31 +50,38 @@ def create_trust(workbook):
 
 
 def create_context(workbook):
-    if not workbook.trust_id:
+    if 'trust_id' not in workbook:
         return
 
-    admin_user = CONF.keystone_authtoken.admin_user
-    admin_password = CONF.keystone_authtoken.admin_password
+    admin_user = CONF.keystone.admin_user
+    admin_password = CONF.keystone.admin_password
 
-    client = keystone.client_for_trusts(
-        admin_user,
-        admin_password,
-        trust_id=workbook['trust_id'],
-        project_id=workbook['project_id'])
+    if CONF.pecan.auth_enable:
+        client = keystone.client_for_trusts(
+            admin_user,
+            admin_password,
+            trust_id=workbook['trust_id'],
+            project_id=workbook['project_id'])
 
-    return context.MistralContext(
-        user_id=client.user_id,
-        project_id=workbook['project_id'],
-        auth_token=client.auth_token
-    )
+        return context.MistralContext(
+            user_id=client.user_id,
+            project_id=workbook['project_id'],
+            auth_token=client.auth_token
+        )
+    else:
+        return context.MistralContext(
+            user_id=None,
+            project_id=None,
+            auth_token=None
+        )
 
 
 def delete_trust(workbook):
-    if workbook.trust_id:
+    if 'trust_id' not in workbook:
         return
 
-    admin_user = CONF.keystone_authtoken.admin_user
-    admin_password = CONF.keystone_authtoken.admin_password
+    admin_user = CONF.keystone.admin_user
+    admin_password = CONF.keystone.admin_password
 
     keystone_client = keystone.client_for_trusts(
         admin_user,

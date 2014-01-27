@@ -19,6 +19,7 @@ Configuration options registration and useful routines.
 """
 
 from oslo.config import cfg
+from keystoneclient.middleware import auth_token
 
 from mistral.openstack.common import log
 from mistral import version
@@ -27,6 +28,14 @@ from mistral import version
 api_opts = [
     cfg.StrOpt('host', default='0.0.0.0', help='Mistral API server host'),
     cfg.IntOpt('port', default=8989, help='Mistral API server port')
+]
+
+pecan_opts = [
+    cfg.StrOpt('root', default='mistral.api.controllers.root.RootController',
+               help='Pecan root controller'),
+    cfg.ListOpt('modules', default=["mistral.api"]),
+    cfg.BoolOpt('debug', default=False),
+    cfg.BoolOpt('auth_enable', default=True)
 ]
 
 db_opts = [
@@ -48,6 +57,8 @@ rabbit_opts = [
 CONF = cfg.CONF
 
 CONF.register_opts(api_opts, group='api')
+CONF.register_opts(pecan_opts, group='pecan')
+CONF.register_opts(auth_token.opts, group='keystone')
 CONF.register_opts(db_opts, group='database')
 CONF.register_opts(rabbit_opts, group='rabbit')
 

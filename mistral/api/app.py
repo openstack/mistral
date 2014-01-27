@@ -16,17 +16,28 @@
 
 import pecan
 
+from oslo.config import cfg
+
 from mistral import context as ctx
-from mistral.api import config as api_config
 from mistral.db import api as db_api
 from mistral.services import periodic
-from mistral.api import access_control as ac
+from mistral.api import access_control
 
 
 def get_pecan_config():
-    # Set up the pecan configuration
-    filename = api_config.__file__.replace('.pyc', '.py')
-    return pecan.configuration.conf_from_file(filename)
+    # Set up the pecan configuration.
+    opts = cfg.CONF.pecan
+
+    cfg_dict = {
+        "app": {
+            "root": opts.root,
+            "modules": opts.modules,
+            "debug": opts.debug,
+            "auth_enable": opts.auth_enable
+        }
+    }
+
+    return pecan.configuration.conf_from_dict(cfg_dict)
 
 
 def setup_app(config=None):
@@ -46,6 +57,7 @@ def setup_app(config=None):
         **app_conf
     )
 
-    app = ac.install(app, config)
+    # Set up access control.
+    app = access_control.setup(app)
 
     return app

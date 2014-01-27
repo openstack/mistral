@@ -62,3 +62,13 @@ class EngineException(MistralException):
         super(MistralException, self).__init__(message)
         if message:
             self.message = message
+
+
+class ApplicationContextNotFoundException(MistralException):
+    message = "Application context not found"
+    code = "APP_CTX_NOT_FOUND_ERROR"
+
+    def __init__(self, message=None):
+        super(MistralException, self).__init__(message)
+        if message:
+            self.message = message

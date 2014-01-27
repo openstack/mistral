@@ -15,14 +15,18 @@
 #    limitations under the License.
 
 from pecan.hooks import PecanHook
-import threading
 
 import eventlet
-from eventlet import corolocal
 
 from mistral.openstack.common import log as logging
+from mistral import utils
+from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
+
+#TODO(rakhmerov): refactor all threadlocal things with mistral.utils
+
+_CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 
 
 class BaseContext(object):
@@ -38,7 +42,9 @@ class BaseContext(object):
                 __mapping = __mapping.__values
             self.__values = dict(__mapping)
             self.__values.update(**kwargs)
+
         bad_keys = set(self.__values) - self._elements
+
         if bad_keys:
             raise TypeError("Only %s keys are supported. %s given" %
                             (tuple(self._elements), tuple(bad_keys)))
@@ -69,34 +75,19 @@ class MistralContext(BaseContext):
     ])
 
 
-_CTXS = threading.local()
-_CTXS._curr_ctxs = {}
-
-
 def has_ctx():
-    ident = corolocal.get_ident()
-    return ident in _CTXS._curr_ctxs and _CTXS._curr_ctxs[ident]
+    return utils.has_thread_local(_CTX_THREAD_LOCAL_NAME)
 
 
 def ctx():
     if not has_ctx():
-        # TODO(akuznetsov): replace with specific error
-        raise RuntimeError("Context isn't available here")
-    return _CTXS._curr_ctxs[corolocal.get_ident()]
+        raise exc.ApplicationContextNotFoundException()
 
-
-def current():
-    return ctx()
+    return utils.get_thread_local(_CTX_THREAD_LOCAL_NAME)
 
 
 def set_ctx(new_ctx):
-    ident = corolocal.get_ident()
-
-    if not new_ctx and ident in _CTXS._curr_ctxs:
-        del _CTXS._curr_ctxs[ident]
-
-    if new_ctx:
-        _CTXS._curr_ctxs[ident] = new_ctx
+    utils.set_thread_local(_CTX_THREAD_LOCAL_NAME, new_ctx)
 
 
 def _wrapper(ctx, thread_description, thread_group, func, *args, **kwargs):
@@ -117,7 +108,7 @@ def _wrapper(ctx, thread_description, thread_group, func, *args, **kwargs):
 
 
 def spawn(thread_description, func, *args, **kwargs):
-    eventlet.spawn(_wrapper, current().clone(), thread_description,
+    eventlet.spawn(_wrapper, ctx().clone(), thread_description,
                    None, func, *args, **kwargs)
 
 

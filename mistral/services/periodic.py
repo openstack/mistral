@@ -22,8 +22,8 @@ from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral import context
 from mistral import dsl
-from mistral.services import scheduler as s
-from mistral.services import trusts as t
+from mistral.services import scheduler as sched
+from mistral.services import trusts
 
 LOG = log.getLogger(__name__)
 
@@ -32,20 +32,24 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def scheduler_events(self, ctx):
         LOG.debug('Processing next Scheduler events.')
-        for event in s.get_next_events():
-            workbook = db_api.workbook_get(event['workbook_name'])
-            ctx = t.create_context(workbook)
-            context.set_ctx(ctx)
-            target_task = dsl.Parser(
-                workbook['definition']).get_event_task_name(event['name'])
-            engine.start_workflow_execution(workbook['name'], target_task)
-            s.set_next_execution_time(event)
-            context.set_ctx(None)
+
+        for event in sched.get_next_events():
+            wb = db_api.workbook_get(event['workbook_name'])
+            context.set_ctx(trusts.create_context(wb))
+
+            try:
+                target_task = dsl.Parser(
+                    wb['definition']).get_event_task_name(event['name'])
+                engine.start_workflow_execution(wb['name'], target_task)
+            finally:
+                sched.set_next_execution_time(event)
+                context.set_ctx(None)
 
 
 def setup():
     tg = threadgroup.ThreadGroup()
     pt = MistralPeriodicTasks()
+
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,
         initial_delay=None,
