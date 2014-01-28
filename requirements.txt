@@ -12,3 +12,4 @@ python-keystoneclient>=0.3.2
 pika>=0.9.13
 networkx
 SQLAlchemy
+yaql==0.2.1
