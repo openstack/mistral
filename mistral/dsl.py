@@ -71,10 +71,10 @@ class Parser(object):
         return task_dsl.get(property_name)
 
     def get_task_on_error(self, task_name):
-        return self.get_task_dsl_property(task_name, "OnError")
+        return self.get_task_dsl_property(task_name, "on-error")
 
     def get_task_on_success(self, task_name):
-        return self.get_task_dsl_property(task_name, "OnSuccess")
+        return self.get_task_dsl_property(task_name, "on-success")
 
     def get_task_input(self, task_name):
         return self.get_task_dsl_property(task_name, "input")
