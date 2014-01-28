@@ -30,10 +30,10 @@ class DSLParserTest(unittest2.TestCase):
 
     def test_services(self):
         service = self.dsl.get_service("MyRest")
-        self.assertEqual(service["type"], "REST_API")
+        self.assertEqual(service["type"], "MISTRAL_REST_API")
         self.assertIn("baseUrl", service["parameters"])
         services = self.dsl.get_services()
-        self.assertEqual(len(services), 1)
+        self.assertEqual(len(services), 2)
         service_names = self.dsl.get_service_names()
         self.assertEqual(service_names[0], "MyRest")
 

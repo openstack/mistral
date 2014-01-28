@@ -14,31 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""Valid task and workflow states."""
 
-IDLE = 'IDLE'
-RUNNING = 'RUNNING'
-SUCCESS = 'SUCCESS'
-ERROR = 'ERROR'
-STOPPED = 'STOPPED'
-
-_ALL = [IDLE, RUNNING, SUCCESS, ERROR, STOPPED]
-
-
-def is_valid(state):
-    return state in _ALL
-
-
-def is_finished(state):
-    return state in [SUCCESS, ERROR]
-
-
-def is_stopped_or_finished(state):
-    return state == STOPPED or is_finished(state)
-
-
-def get_state_by_http_status_code(status_code):
-    if not status_code or status_code >= 400:
-        return ERROR
-    else:
-        return SUCCESS
+def evaluate(expression_str, data):
+    #TODO(nmakhotkin) evaluate YAQL expression and return the result
+    pass

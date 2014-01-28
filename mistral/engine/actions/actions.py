@@ -24,12 +24,25 @@ LOG = logging.getLogger(__name__)
 
 
 class BaseAction(object):
+    status = None
+
+    def __init__(self, action_type, action_name):
+        self.type = action_type
+        self.name = action_name
+
+        # Result_helper is a dict for retrieving result within YAQL expression
+        # and it belongs to action (for defining this attribute immediately
+        # at action creation).
+        self.result_helper = {}
+
     def run(self):
         pass
 
 
 class RestAction(BaseAction):
-    def __init__(self, url, params={}, method="GET", headers={}):
+    def __init__(self, action_type, action_name, url, params={},
+                 method="GET", headers={}):
+        super(RestAction, self).__init__(action_type, action_name)
         self.url = url
         self.params = params
         self.method = method
@@ -44,6 +57,7 @@ class RestAction(BaseAction):
         LOG.info("Received HTTP response:\n%s\n%s" %
                  (resp.status_code, resp.content))
         # Return rather json than text, but response can contain text also.
+        self.status = resp.status_code
         try:
             return resp.json()
         except:
@@ -52,9 +66,10 @@ class RestAction(BaseAction):
 
 
 class OsloRPCAction(BaseAction):
-    def __init__(self, host, userid, password, virtual_host,
-                 message, routing_key=None, port=5672, exchange=None,
-                 queue_name=None):
+    def __init__(self, action_type, action_name, host, userid, password,
+                 virtual_host, message, routing_key=None, port=5672,
+                 exchange=None, queue_name=None):
+        super(OsloRPCAction, self).__init__(action_type, action_name)
         self.host = host
         self.port = port
         self.userid = userid
@@ -92,4 +107,5 @@ class OsloRPCAction(BaseAction):
         amqp_conn.close()
 
     def callback(self, msg):
-        pass
+        #TODO (nmakhotkin) set status
+        self.status = None
