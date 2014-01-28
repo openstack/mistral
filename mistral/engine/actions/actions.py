@@ -41,19 +41,20 @@ class BaseAction(object):
 
 class RestAction(BaseAction):
     def __init__(self, action_type, action_name, url, params={},
-                 method="GET", headers={}):
+                 method="GET", headers={}, data={}):
         super(RestAction, self).__init__(action_type, action_name)
         self.url = url
         self.params = params
         self.method = method
         self.headers = headers
+        self.data = data
 
     def run(self):
         LOG.info("Sending action HTTP request "
                  "[method=%s, url=%s, params=%s, headers=%s]" %
                  (self.method, self.url, self.params, self.headers))
         resp = requests.request(self.method, self.url, params=self.params,
-                                headers=self.headers)
+                                headers=self.headers, data=self.data)
         LOG.info("Received HTTP response:\n%s\n%s" %
                  (resp.status_code, resp.content))
         # Return rather json than text, but response can contain text also.
