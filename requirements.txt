@@ -6,8 +6,8 @@ WSME>=0.5b6
 amqplib>=0.6.1
 argparse
 croniter
-oslo.config>=1.2.0
 requests
+oslo.config>=1.2.0
 python-keystoneclient>=0.3.2
 pika>=0.9.13
 networkx
