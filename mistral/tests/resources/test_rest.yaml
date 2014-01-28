@@ -82,6 +82,15 @@ Workflow:
           image_id: 1234
           flavor_id: 2
 
+     test:
+        action: MyRest:backup-vm
+        parameters:
+          server_id:
+        on-success:
+          attach-volumes
+        on-error:
+          backup-vms: $.status != 'OK'
+
    events:
      create-vms:
         type: periodic

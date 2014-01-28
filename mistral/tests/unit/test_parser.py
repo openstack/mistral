@@ -59,6 +59,12 @@ class DSLParserTest(unittest2.TestCase):
         task = self.dsl.get_task("not-valid-name")
         self.assertEqual(task, {})
 
+    def test_task_property(self):
+        on_success = self.dsl.get_task_on_success("test")
+        self.assertEqual(on_success, {"attach-volumes": ''})
+        on_error = self.dsl.get_task_on_error("test")
+        self.assertEqual(on_error, {"backup-vms": "$.status != 'OK'"})
+
     def test_actions(self):
         action = self.dsl.get_action("MyRest:attach-volume")
         self.assertIn("method", action["parameters"])

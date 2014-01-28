@@ -71,10 +71,16 @@ class Parser(object):
         return task_dsl.get(property_name)
 
     def get_task_on_error(self, task_name):
-        return self.get_task_dsl_property(task_name, "on-error")
+        task = self.get_task_dsl_property(task_name, "on-error")
+        return task if isinstance(task, dict) else {task: ''}
 
     def get_task_on_success(self, task_name):
-        return self.get_task_dsl_property(task_name, "on-success")
+        task = self.get_task_dsl_property(task_name, "on-success")
+        return task if isinstance(task, dict) else {task: ''}
+
+    def get_task_on_finish(self, task_name):
+        task = self.get_task_dsl_property(task_name, "on-finish")
+        return task if isinstance(task, dict) else {task: ''}
 
     def get_task_input(self, task_name):
         return self.get_task_dsl_property(task_name, "input")
