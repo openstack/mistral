@@ -15,11 +15,12 @@ default_log_levels = mistral=INFO,mistral.cmd.api=INFO,mistral.api=DEBUG,wsme=DE
 #log_config_append = etc/logging.conf
 
 [api]
-# Address to bind the API server to
+# Host and port to bind the API server to
 host = 0.0.0.0
-
-# Port the bind the API server to
 port = 8989
+
+[pecan]
+auth_enable = True
 
 [database]
 #A valid SQLAlchemy connection string
@@ -34,7 +35,7 @@ rabbit_task_queue = tasks
 rabbit_user = guest
 rabbit_password = guest
 
-[keystone_authtoken]
+[keystone]
 auth_uri=http://localhost:5000/v3
 auth_host=localhost
 auth_port=5000

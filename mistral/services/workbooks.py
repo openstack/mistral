@@ -14,13 +14,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.config import cfg
+
 from mistral.db import api as db_api
 from mistral.services import trusts
 
 
 def create_workbook(values):
     workbook = db_api.workbook_create(values)
-    workbook = trusts.create_trust(workbook)
+
+    if cfg.CONF.pecan.auth_enable:
+        workbook = trusts.create_trust(workbook)
+
     ##TODO(akuznetsov) filter fields
     ##TODO(akuznetsov) create events
 

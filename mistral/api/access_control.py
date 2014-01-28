@@ -21,24 +21,13 @@ from oslo.config import cfg
 
 
 _ENFORCER = None
-OPT_GROUP_NAME = 'keystone_authtoken'
+
+auth_token.CONF = cfg.CONF
 
 
-def register_opts(conf):
-    """Register keystoneclient middleware options
-    """
-    conf.register_opts(auth_token.opts,
-                       group=OPT_GROUP_NAME)
-    auth_token.CONF = conf
-
-
-register_opts(cfg.CONF)
-
-
-def install(app, conf):
-    if conf.app.auth_enable:
-        return auth_token.AuthProtocol(app,
-                                       conf=dict(cfg.CONF.keystone_authtoken))
+def setup(app):
+    if cfg.CONF.pecan.auth_enable:
+        return auth_token.AuthProtocol(app, conf=dict(cfg.CONF.keystone))
     else:
         return app
 
