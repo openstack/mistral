@@ -16,6 +16,8 @@
 
 import mock
 
+from mistral import exceptions as ex
+from webtest.app import AppError
 from mistral.tests.api import base
 from mistral.db import api as db_api
 from mistral.engine import engine
@@ -52,6 +54,11 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(EXECS[0], resp.json)
 
+    @mock.patch.object(db_api, "execution_get",
+                       mock.MagicMock(return_value=None))
+    def test_get_empty(self):
+        self.assertNotFound('/v1/workbooks/my_workbook/executions/123')
+
     @mock.patch.object(db_api, "execution_update",
                        mock.MagicMock(return_value=UPDATED_EXEC))
     def test_put(self):
@@ -66,9 +73,16 @@ class TestExecutionsController(base.FunctionalTest):
     def test_post(self):
         resp = self.app.post_json('/v1/workbooks/my_workbook/executions',
                                   EXECS[0])
-
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(EXECS[0], resp.json)
+
+    @mock.patch.object(engine, "start_workflow_execution",
+                       mock.MagicMock(side_effect=ex.MistralException))
+    def test_post_throws_exception(self):
+        with self.assertRaises(AppError) as context:
+            self.app.post_json('/v1/workbooks/my_workbook/executions',
+                               EXECS[0])
+        self.assertIn('Bad response: 400', context.exception.message)
 
     @mock.patch.object(db_api, "execution_delete",
                        mock.MagicMock(return_value=None))

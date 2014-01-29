@@ -16,6 +16,7 @@
 
 import pecan
 import pecan.testing
+from webtest.app import AppError
 
 from oslo.config import cfg
 
@@ -55,3 +56,12 @@ class FunctionalTest(test_base.DbTestCase):
     def tearDown(self):
         super(FunctionalTest, self).tearDown()
         pecan.set_config({}, overwrite=True)
+
+    def assertNotFound(self, url):
+        try:
+            self.app.get(url, headers={'Accept': 'application/json'})
+        except AppError as error:
+            if hasattr(error, 'message'):
+                self.assertIn('Bad response: 404 Not Found', error.message)
+                return
+        self.fail('Expected 404 Not found but got OK')
