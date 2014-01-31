@@ -26,9 +26,11 @@ def create_action(task):
     if not action_types.is_valid(action_type):
         raise exc.InvalidActionException("Action type is not supported: %s" %
                                          action_type)
+
     action = _get_mapping()[action_type](task)
     action_dsl = task['service_dsl']['actions'][action.name]
     action.result_helper = action_dsl.get('parameters', {}).get('response', {})
+
     return action
 
 
@@ -44,7 +46,7 @@ def get_rest_action(task):
     action_type = a_h.get_action_type(task)
     action_name = task['task_dsl']['action'].split(':')[1]
     action_dsl = task['service_dsl']['actions'][action_name]
-    task_params = task['task_dsl'].get('parameters', None)
+    task_params = task['task_dsl'].get('parameters', {})
     url = task['service_dsl']['parameters']['baseUrl'] +\
         action_dsl['parameters']['url']
 
@@ -75,8 +77,10 @@ def get_mistral_rest_action(task):
         'Mistral-Execution-Id': task['execution_id'],
         'Mistral-Task-Id': task['id'],
     }
+
     action = get_rest_action(task)
     action.headers.update(mistral_headers)
+
     return action
 
 
@@ -84,7 +88,7 @@ def get_amqp_action(task):
     action_type = a_h.get_action_type(task)
     action_name = task['task_dsl']['action'].split(':')[1]
     action_params = task['service_dsl']['actions'][action_name]['parameters']
-    task_params = task['task_dsl'].get('parameters', None)
+    task_params = task['task_dsl'].get('parameters', {})
     service_parameters = task['service_dsl'].get('parameters', {})
 
     host = service_parameters['host']
