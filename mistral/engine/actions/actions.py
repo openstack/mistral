@@ -16,6 +16,9 @@
 
 from amqplib import client_0_8 as amqp
 import requests
+#TODO(dzimine):separate actions across different files/modules
+import smtplib
+from email.mime.text import MIMEText
 
 from mistral.openstack.common import log as logging
 
@@ -40,6 +43,7 @@ class BaseAction(object):
 
 
 class RestAction(BaseAction):
+
     def __init__(self, action_type, action_name, url, params={},
                  method="GET", headers={}, data={}):
         super(RestAction, self).__init__(action_type, action_name)
@@ -110,3 +114,49 @@ class OsloRPCAction(BaseAction):
     def callback(self, msg):
         #TODO (nmakhotkin) set status
         self.status = None
+
+
+class SendEmailAction(BaseAction):
+    def __init__(self, action_type, action_name, params, settings):
+        super(SendEmailAction, self).__init__(action_type, action_name)
+        #TODO(dzimine): validate parameters
+
+        # Task invocation parameters.
+        self.to = ', '.join(params['to'])
+        self.subject = params['subject']
+        self.body = params['body']
+
+        # Action provider settings.
+        self.smtp_server = settings['smtp_server']
+        self.sender = settings['from']
+        self.password = settings['password'] \
+            if 'password' in settings else None
+
+    def run(self):
+        LOG.info("Sending email message "
+                 "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]" %
+                 (self.sender, self.to, self.subject,
+                  self.smtp_server, self.body[:128]))
+
+        #TODO(dzimine): handle utf-8, http://stackoverflow.com/a/14506784
+        message = MIMEText(self.body)
+        message['Subject'] = self.subject
+        message['From'] = self.sender
+        message['To'] = self.to
+        try:
+            s = smtplib.SMTP(self.smtp_server)
+            if self.password is not None:
+                # Sequence to request TLS connection and log in (RFC-2487).
+                s.ehlo()
+                s.starttls()
+                s.ehlo()
+                s.login(self.sender, self.password)
+
+            s.sendmail(from_addr=self.sender,
+                       to_addrs=self.to,
+                       msg=message.as_string())
+        except (smtplib.SMTPException, IOError) as e:
+            LOG.error("Error sending email message: %s" % e)
+            #NOTE(DZ): Raise Misral exception instead re-throwing SMTP?
+            # For now just logging the error here and re-thorw the original
+            raise
