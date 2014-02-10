@@ -53,7 +53,7 @@ class AbstractEngine(object):
         finally:
             db_api.end_tx()
 
-        cls._run_tasks(workflow.find_tasks_to_start(tasks))
+        cls._run_tasks(workflow.find_resolved_tasks(tasks))
 
         return execution
 
@@ -61,16 +61,21 @@ class AbstractEngine(object):
     def convey_task_result(cls, workbook_name, execution_id,
                            task_id, state, result):
         db_api.start_tx()
-
+        wb_dsl = cls._get_wb_dsl(workbook_name)
         #TODO(rakhmerov): validate state transition
 
         # Update task state.
         task = db_api.task_update(workbook_name, execution_id, task_id,
                                   {"state": state, "result": result})
         execution = db_api.execution_get(workbook_name, execution_id)
+        cls._create_next_tasks(task,
+                               wb_dsl,
+                               workbook_name,
+                               execution_id)
 
         # Determine what tasks need to be started.
         tasks = db_api.tasks_get(workbook_name, execution_id)
+        # TODO(nmakhotkin) merge result into context
 
         try:
             new_exec_state = cls._determine_execution_state(execution, tasks)
@@ -93,7 +98,7 @@ class AbstractEngine(object):
             return task
 
         if tasks:
-            cls._run_tasks(workflow.find_tasks_to_start(tasks))
+            cls._run_tasks(workflow.find_resolved_tasks(tasks))
 
         return task
 
@@ -131,6 +136,14 @@ class AbstractEngine(object):
         })
 
     @classmethod
+    def _create_next_tasks(cls, task, wb_dsl,
+                           workbook_name, execution_id):
+        dsl_tasks = workflow.find_tasks_after_completion(task, wb_dsl)
+        tasks = cls._create_tasks(dsl_tasks, wb_dsl,
+                                  workbook_name, execution_id)
+        return workflow.find_resolved_tasks(tasks)
+
+    @classmethod
     def _create_tasks(cls, dsl_tasks, wb_dsl, workbook_name, execution_id):
         tasks = []
         for dsl_task in dsl_tasks:
@@ -158,7 +171,7 @@ class AbstractEngine(object):
         if workflow.is_error(tasks):
             return states.ERROR
 
-        if workflow.is_success(tasks):
+        if workflow.is_success(tasks) or workflow.is_finished(tasks):
             return states.SUCCESS
 
         return execution['state']

@@ -18,6 +18,10 @@ import networkx as nx
 from networkx.algorithms import traversal
 
 from mistral.engine import states
+from mistral.openstack.common import log as logging
+
+
+LOG = logging.getLogger(__name__)
 
 
 def find_workflow_tasks(wb_dsl, task_name):
@@ -38,9 +42,58 @@ def find_workflow_tasks(wb_dsl, task_name):
     return tasks
 
 
-def find_tasks_to_start(tasks):
+def find_resolved_tasks(tasks):
     # We need to analyse graph and see which tasks are ready to start
     return _get_resolved_tasks(tasks)
+
+
+def _get_checked_tasks(target_tasks):
+    checked_tasks = []
+    for t in target_tasks:
+        #TODO(nmakhotkin): see and evaluate YAQL with data from context
+        checked_tasks.append(t)
+    return checked_tasks
+
+
+def _get_tasks_to_schedule(target_tasks, wb_dsl):
+    tasks_to_schedule = _get_checked_tasks(target_tasks)
+    return [wb_dsl.get_task(t_name) for t_name in tasks_to_schedule]
+
+
+def find_tasks_after_completion(task, wb_dsl):
+    """Determine tasks which should be scheduled after completing
+    given task. Expression 'on_finish' is not mutually exclusive to
+    'on_success' and 'on_error'.
+
+    :param task: Task object
+    :param wb_dsl: DSL Parser
+    :return: list of DSL tasks.
+    """
+    state = task['state']
+    found_tasks = []
+    LOG.debug("Recieved task %s: %s" % (task['name'], state))
+
+    if state == states.ERROR:
+        tasks_on_error = wb_dsl.get_task_on_error(task['name'])
+        if tasks_on_error:
+            found_tasks = _get_tasks_to_schedule(tasks_on_error, wb_dsl)
+
+    elif state == states.SUCCESS:
+        tasks_on_success = wb_dsl.get_task_on_success(task['name'])
+        if tasks_on_success:
+            found_tasks = _get_tasks_to_schedule(tasks_on_success, wb_dsl)
+
+    if states.is_finished(state):
+        tasks_on_finish = wb_dsl.get_task_on_finish(task['name'])
+        if tasks_on_finish:
+            found_tasks += _get_tasks_to_schedule(tasks_on_finish, wb_dsl)
+
+    LOG.debug("Found tasks: %s" % found_tasks)
+    workflow_tasks = []
+    for t in found_tasks:
+        workflow_tasks += find_workflow_tasks(wb_dsl, t['name'])
+    LOG.debug("Workflow tasks to schedule: %s" % workflow_tasks)
+    return workflow_tasks
 
 
 def is_finished(tasks):

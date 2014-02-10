@@ -54,5 +54,5 @@ class WorkflowTest(base.DbTestCase):
         self.assertEqual(tasks[1]['name'], 'create-vms')
 
     def test_tasks_to_start(self):
-        tasks_to_start = workflow.find_tasks_to_start(TASKS)
+        tasks_to_start = workflow.find_resolved_tasks(TASKS)
         self.assertEqual(len(tasks_to_start), 2)

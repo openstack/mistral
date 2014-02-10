@@ -60,9 +60,9 @@ class DSLParserTest(unittest2.TestCase):
         self.assertEqual(task, {})
 
     def test_task_property(self):
-        on_success = self.dsl.get_task_on_success("test")
+        on_success = self.dsl.get_task_on_success("test_subsequent")
         self.assertEqual(on_success, {"attach-volumes": ''})
-        on_error = self.dsl.get_task_on_error("test")
+        on_error = self.dsl.get_task_on_error("test_subsequent")
         self.assertEqual(on_error, {"backup-vms": "$.status != 'OK'"})
 
     def test_actions(self):
