@@ -43,7 +43,7 @@ def _get_mapping():
 
 def _find_action_result_helper(task, action):
     try:
-        return task['service_dsl']['actions'][action.name].get('output')
+        return task['service_dsl']['actions'][action.name].get('output', {})
     except (KeyError, AttributeError):
         return None
 

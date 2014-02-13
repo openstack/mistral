@@ -14,10 +14,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+import mock
 import unittest2
 
+from mistral.engine.actions import actions
 from mistral.engine.actions import action_factory
+from mistral.engine.actions import action_helper
 from mistral.engine.actions import action_types
+from mistral.engine import states
 
 
 SAMPLE_TASK = {
@@ -79,6 +84,19 @@ SAMPLE_SEND_EMAIL_TASK = {
     }
 }
 
+SAMPLE_RESULT_HELPER = {
+    'output': {
+        'select': '$.server.id',
+        'store_as': 'vm_id'
+    }
+}
+
+SAMPLE_RESULT = {
+    'server': {
+        'id': 'afd1254-1ad3fb0'
+    }
+}
+
 
 class ActionFactoryTest(unittest2.TestCase):
     def test_get_mistral_rest(self):
@@ -108,3 +126,31 @@ class ActionFactoryTest(unittest2.TestCase):
             self.assertIn(email, action.to)
         self.assertEqual(task['service_dsl']['parameters']['smtp_server'],
                          action.smtp_server)
+
+    @mock.patch.object(actions.RestAction, "run",
+                       mock.MagicMock(return_value=SAMPLE_RESULT))
+    def test_action_result_with_results(self):
+        task = copy.deepcopy(SAMPLE_TASK)
+        task['service_dsl'].update({'type': action_types.REST_API})
+        create_vm = task['service_dsl']['actions']['create-vm']
+        create_vm.update(SAMPLE_RESULT_HELPER)
+        action = action_factory.create_action(task)
+        action_result = action.run()
+        action.status = 200
+        state, result = action_helper.extract_state_result(action,
+                                                           action_result)
+        self.assertEqual(state, states.SUCCESS)
+        self.assertEqual(result, SAMPLE_RESULT['server']['id'])
+
+    @mock.patch.object(actions.RestAction, "run",
+                       mock.MagicMock(return_value=SAMPLE_RESULT))
+    def test_action_result_without_results(self):
+        task = copy.deepcopy(SAMPLE_TASK)
+        task['service_dsl'].update({'type': action_types.REST_API})
+        action = action_factory.create_action(task)
+        action_result = action.run()
+        action.status = 200
+        state, result = action_helper.extract_state_result(action,
+                                                           action_result)
+        self.assertEqual(state, states.SUCCESS)
+        self.assertEqual(result, SAMPLE_RESULT)

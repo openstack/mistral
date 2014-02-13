@@ -54,4 +54,4 @@ _EVALUATOR = YAQLEvaluator()
 
 
 def evaluate(expression, context):
-    _EVALUATOR.evaluate(expression, context)
+    return _EVALUATOR.evaluate(expression, context)

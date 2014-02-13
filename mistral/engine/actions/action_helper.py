@@ -35,12 +35,10 @@ def extract_state_result(action, action_result):
         if action.result_helper.get('select'):
             result = expr.evaluate(action.result_helper['select'],
                                    action_result)
-            # TODO(nmakhotkin) get state for other actions
-            state = states.get_state_by_http_status_code(action.status)
         else:
-            raise exc.InvalidActionException("Cannot get the result of sync "
-                                             "task without YAQL expression")
-
+            result = action_result
+        # TODO(nmakhotkin) get state for other actions
+        state = states.get_state_by_http_status_code(action.status)
         return state, result
     raise exc.InvalidActionException("Error. Wrong type of action to "
                                      "retrieve the result")
