@@ -29,8 +29,7 @@ class Parser(object):
         try:
             self.doc = yaml.safe_load(workbook_definition)
         except error.YAMLError as exc:
-            raise RuntimeError("Definition could not be parsed: %s\n"
-                               % exc.message)
+            raise RuntimeError("Definition could not be parsed: %s\n" % exc)
 
     def get_services(self):
         services = []

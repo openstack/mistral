@@ -14,16 +14,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine.actions import actions
-from email.parser import Parser
 
 import unittest2
 from mock import patch, call
 
+from email.parser import Parser
 
-#TODO(dzimine): replace local definitions on next step
-# from mistral.engine.actions import action_types
-ACTION_TYPE = "MISTRAL_SEND_EMAIL"
+from mistral.engine.actions import actions
+from mistral.engine.actions import action_types
+
+ACTION_TYPE = action_types.SEND_EMAIL
 ACTION_NAME = "TEMPORARY"
 
 '''
