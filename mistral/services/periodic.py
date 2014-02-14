@@ -38,9 +38,9 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             context.set_ctx(trusts.create_context(wb))
 
             try:
-                target_task = dsl.Parser(
+                task = dsl.Parser(
                     wb['definition']).get_event_task_name(event['name'])
-                engine.start_workflow_execution(wb['name'], target_task)
+                engine.start_workflow_execution(wb['name'], task)
             finally:
                 sched.set_next_execution_time(event)
                 context.set_ctx(None)

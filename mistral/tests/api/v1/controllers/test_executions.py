@@ -28,7 +28,7 @@ EXECS = [
     {
         'id': "123",
         'workbook_name': 'my_workbook',
-        'target_task': 'my_task',
+        'task': 'my_task',
         'state': 'RUNNING',
         'context': """
             {

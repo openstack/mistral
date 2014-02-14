@@ -34,14 +34,14 @@ class AbstractEngine(object):
         pass
 
     @classmethod
-    def start_workflow_execution(cls, workbook_name, target_task_name):
+    def start_workflow_execution(cls, workbook_name, task_name):
         wb_dsl = cls._get_wb_dsl(workbook_name)
-        dsl_tasks = workflow.find_workflow_tasks(wb_dsl, target_task_name)
+        dsl_tasks = workflow.find_workflow_tasks(wb_dsl, task_name)
         db_api.start_tx()
 
         # Persist execution and tasks in DB.
         try:
-            execution = cls._create_execution(workbook_name, target_task_name)
+            execution = cls._create_execution(workbook_name, task_name)
 
             tasks = cls._create_tasks(dsl_tasks, wb_dsl,
                                       workbook_name, execution['id'])
@@ -123,10 +123,10 @@ class AbstractEngine(object):
         return task["state"]
 
     @classmethod
-    def _create_execution(cls, workbook_name, target_task_name):
+    def _create_execution(cls, workbook_name, task_name):
         return db_api.execution_create(workbook_name, {
             "workbook_name": workbook_name,
-            "target_task": target_task_name,
+            "task": task_name,
             "state": states.RUNNING
         })
 

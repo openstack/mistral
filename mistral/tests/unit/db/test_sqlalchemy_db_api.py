@@ -144,14 +144,14 @@ EXECUTIONS = [
     {
         "id": u'1',
         "workbook_name": u'my_workbook',
-        'target_task': u'my_task1',
+        'task': u'my_task1',
         "state": u'IDLE',
         "updated_at": None
     },
     {
         "id": u'2',
         "workbook_name": u'my_workbook',
-        'target_task': u'my_task2',
+        'task': u'my_task2',
         "state": u'RUNNING',
         "updated_at": None
     }
@@ -176,9 +176,9 @@ class ExecutionTest(test_base.DbTestCase):
 
         updated = db_api.execution_update(EXECUTIONS[0]['workbook_name'],
                                           created["id"],
-                                          {"target_task": "task10"})
+                                          {"task": "task10"})
         self.assertIsInstance(updated, dict)
-        self.assertEqual(u'task10', updated["target_task"])
+        self.assertEqual(u'task10', updated["task"])
 
         fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
                                        created["id"])

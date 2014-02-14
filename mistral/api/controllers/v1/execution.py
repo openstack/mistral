@@ -34,7 +34,7 @@ class Execution(resource.Resource):
 
     id = wtypes.text
     workbook_name = wtypes.text
-    target_task = wtypes.text
+    task = wtypes.text
     state = wtypes.text
     # Context is a JSON object but since WSME doesn't support arbitrary
     # dictionaries we have to use text type.
@@ -77,11 +77,11 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution,
                          status_code=201)
     def post(self, workbook_name, execution):
-        LOG.debug("Create listener [workbook_name=%s, execution=%s]" %
+        LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
         try:
             values = engine.start_workflow_execution(execution.workbook_name,
-                                                     execution.target_task)
+                                                     execution.task)
         except ex.MistralException as e:
             #TODO(nmakhotkin) we should use thing such a decorator here
             abort(400, e.message)

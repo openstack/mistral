@@ -56,7 +56,7 @@ class WorkflowExecution(mb.MistralBase):
 
     id = _id_column()
     workbook_name = sa.Column(sa.String(80))
-    target_task = sa.Column(sa.String(80))
+    task = sa.Column(sa.String(80))
     state = sa.Column(sa.String(20))
 
 

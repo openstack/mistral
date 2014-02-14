@@ -21,7 +21,7 @@ client = cl.Client(project_name="mistral",
                    mistral_url="http://localhost:8989/v1")
 
 WB_NAME = "my_workbook"
-TARGET_TASK = "my_task"
+TASK = "my_task"
 wb_list = client.workbooks.list()
 
 wb = None
@@ -45,6 +45,6 @@ client.workbooks.upload_definition(WB_NAME, definition)
 print "\nUploaded workbook:\n\"\n%s\"\n" %\
       client.workbooks.get_definition(WB_NAME)
 
-execution = client.executions.create(WB_NAME, TARGET_TASK)
+execution = client.executions.create(WB_NAME, TASK)
 
 print "execution: %s" % execution

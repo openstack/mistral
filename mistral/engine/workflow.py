@@ -20,7 +20,7 @@ from networkx.algorithms import traversal
 from mistral.engine import states
 
 
-def find_workflow_tasks(wb_dsl, target_task_name):
+def find_workflow_tasks(wb_dsl, task_name):
     dsl_tasks = wb_dsl.get_tasks()
     full_graph = nx.DiGraph()
     for t in dsl_tasks:
@@ -28,7 +28,7 @@ def find_workflow_tasks(wb_dsl, target_task_name):
 
     _update_dependencies(dsl_tasks, full_graph)
 
-    graph = _get_subgraph(full_graph, target_task_name)
+    graph = _get_subgraph(full_graph, task_name)
     tasks = []
     for node in graph:
         task = {'name': node}
