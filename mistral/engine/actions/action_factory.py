@@ -28,9 +28,7 @@ def create_action(task):
                                          action_type)
 
     action = _get_mapping()[action_type](task)
-    action_dsl = task['service_dsl']['actions'][action.name]
-    action.result_helper = action_dsl.get('parameters', {}).get('response', {})
-
+    action.result_helper = _find_action_result_helper(task, action)
     return action
 
 
@@ -38,8 +36,16 @@ def _get_mapping():
     return {
         action_types.REST_API: get_rest_action,
         action_types.MISTRAL_REST_API: get_mistral_rest_action,
-        action_types.OSLO_RPC: get_amqp_action
+        action_types.OSLO_RPC: get_amqp_action,
+        action_types.SEND_EMAIL: get_send_email_action
     }
+
+
+def _find_action_result_helper(task, action):
+    try:
+        return task['service_dsl']['actions'][action.name].get('output')
+    except (KeyError, AttributeError):
+        return None
 
 
 def get_rest_action(task):
@@ -104,3 +110,15 @@ def get_amqp_action(task):
     return actions.OsloRPCAction(action_type, host, userid, password,
                                  virtual_host, message, routing_key, port,
                                  exchange, queue_name)
+
+
+def get_send_email_action(task):
+    #TODO(dzimine): Refactor action_type and action_name settings
+    #               for all actions
+    action_type = a_h.get_action_type(task)
+    action_name = task['task_dsl']['action'].split(':')[1]
+    task_params = task['task_dsl'].get('parameters', {})
+    service_params = task['service_dsl'].get('parameters', {})
+
+    return actions.SendEmailAction(action_type, action_name,
+                                   task_params, service_params)

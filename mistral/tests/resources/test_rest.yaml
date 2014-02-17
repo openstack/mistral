@@ -42,12 +42,12 @@ Services:
        create-vm:
          parameters:
            url: /url_for_create
-           response:
-             select: '$.server_id'
-             store_as: vm_id
          task-parameters:
            flavor_id:
            image_id:
+         output:
+           select: '$.server_id'
+           store_as: vm_id
 
 Workflow:
    tasks:
