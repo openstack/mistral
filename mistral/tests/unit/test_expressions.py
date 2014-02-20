@@ -16,7 +16,7 @@
 
 import unittest2
 
-from mistral.utils import yaql_utils
+from mistral.engine import expressions as expr
 
 
 DATA = {
@@ -44,33 +44,37 @@ SERVERS = {
 }
 
 
-class YaqlTest(unittest2.TestCase):
+class YaqlEvaluatorTest(unittest2.TestCase):
+    def setUp(self):
+        super(YaqlEvaluatorTest, self).setUp()
+        self._evaluator = expr.YAQLEvaluator()
+
     def test_expression_result(self):
-        res = yaql_utils.evaluate("$.server", DATA)
+        res = self._evaluator.evaluate('$.server', DATA)
         self.assertEqual(res, {
-            "id": "03ea824a-aa24-4105-9131-66c48ae54acf",
-            "name": "cloud-fedora",
-            "status": "ACTIVE"
+            'id': "03ea824a-aa24-4105-9131-66c48ae54acf",
+            'name': 'cloud-fedora',
+            'status': 'ACTIVE'
         })
 
-        res = yaql_utils.evaluate("$.server.id", DATA)
-        self.assertEqual(res, "03ea824a-aa24-4105-9131-66c48ae54acf")
+        res = self._evaluator.evaluate('$.server.id', DATA)
+        self.assertEqual(res, '03ea824a-aa24-4105-9131-66c48ae54acf')
 
-        res = yaql_utils.evaluate("$.server.status = 'ACTIVE'", DATA)
+        res = self._evaluator.evaluate("$.server.status = 'ACTIVE'", DATA)
         self.assertTrue(res)
 
     def test_wrong_expression(self):
-        res = yaql_utils.evaluate("$.status = 'Invalid value'", DATA)
+        res = self._evaluator.evaluate("$.status = 'Invalid value'", DATA)
         self.assertFalse(res)
 
-        res = yaql_utils.evaluate("$.wrong_key", DATA)
+        res = self._evaluator.evaluate('$.wrong_key', DATA)
         self.assertIsNone(res)
 
-        expression_str = "invalid_expression_string"
-        res = yaql_utils.evaluate(expression_str, DATA)
+        expression_str = 'invalid_expression_string'
+        res = self._evaluator.evaluate(expression_str, DATA)
         self.assertEqual(res, expression_str)
 
     def test_select_result(self):
-        res = yaql_utils.evaluate("$.servers[$.name = ubuntu]", SERVERS)
+        res = self._evaluator.evaluate('$.servers[$.name = ubuntu]', SERVERS)
         item = list(res)[0]
         self.assertEqual(item, {'name': 'ubuntu'})

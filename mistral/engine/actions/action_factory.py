@@ -64,7 +64,7 @@ def get_rest_action(task):
 
     # input_yaql = task.get('input')
     # TODO(nmakhotkin) extract input from context within the YAQL expression
-    task_input = {}  # yaql_utils.evaluate(input_yaql, ctx)
+    task_input = {}  # expressions.evaluate(input_expr, ctx)
     task_data = {}
 
     if method.upper() == "GET":
