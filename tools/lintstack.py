@@ -31,11 +31,11 @@ from pylint.reporters import text
 # Note(maoy): E1103 is error code related to partial type inference
 ignore_codes = ["E1103"]
 # Note(maoy): the error message is the pattern of E0202. It should be ignored
-# for savanna.tests modules
-ignore_messages = ["An attribute affected in savanna.tests"]
+# for mistral.tests modules
+ignore_messages = ["An attribute affected in mistral.tests"]
 # We ignore all errors in openstack.common because it should be checked 
 # elsewhere.
-ignore_modules = ["savanna/openstack/common/"]
+ignore_modules = ["mistral/openstack/common/"]
 
 KNOWN_PYLINT_EXCEPTIONS_FILE = "tools/pylint_exceptions"
 
@@ -130,7 +130,7 @@ class ErrorKeys(object):
 def run_pylint():
     buff = StringIO.StringIO()
     reporter = text.ParseableTextReporter(output=buff)
-    args = ["--include-ids=y", "-E", "savanna"]
+    args = ["--include-ids=y", "-E", "mistral"]
     lint.Run(args, reporter=reporter, exit=False)
     val = buff.getvalue()
     buff.close()

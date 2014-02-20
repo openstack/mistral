@@ -28,6 +28,7 @@ ENGINE = engine.get_engine()
 
 CFG_PREFIX = "tests/resources/"
 WB_NAME = "my_workbook"
+CONTEXT = None  # TODO(rakhmerov): Use a meaningful value.
 
 #TODO(rakhmerov): add more tests for errors, execution stop etc.
 
@@ -46,8 +47,8 @@ class TestLocalEngine(test_base.DbTestCase):
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
     def test_engine_one_task(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME,
-                                                    "create-vms")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "create-vms",
+                                                    CONTEXT)
 
         task = db_api.tasks_get(WB_NAME, execution['id'])[0]
 
@@ -67,8 +68,8 @@ class TestLocalEngine(test_base.DbTestCase):
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
     def test_engine_multiple_tasks(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME,
-                                                    "backup-vms")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "backup-vms",
+                                                    CONTEXT)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
@@ -109,9 +110,12 @@ class TestLocalEngine(test_base.DbTestCase):
     @mock.patch.object(states, "get_state_by_http_status_code",
                        mock.MagicMock(return_value=states.SUCCESS))
     def test_engine_sync_task(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME, "create-vm-nova")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "create-vm-nova",
+                                                    CONTEXT)
+
         task = db_api.tasks_get(WB_NAME, execution['id'])[0]
         execution = db_api.execution_get(WB_NAME, execution['id'])
+
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
 
@@ -122,22 +126,28 @@ class TestLocalEngine(test_base.DbTestCase):
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
     def test_engine_tasks_on_success_finish(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME,
-                                                    "test_subsequent")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "test_subsequent",
+                                                    CONTEXT)
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+
         self.assertEqual(len(tasks), 1)
+
         execution = db_api.execution_get(WB_NAME, execution['id'])
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[0]['id'],
                                   states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+
         self.assertEqual(len(tasks), 4)
+
         attach_volumes = [t for t in tasks if t['name'] == 'attach-volumes'][0]
+
         self.assertIn(attach_volumes, tasks)
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
         self.assertEqual(tasks[1]['state'], states.IDLE)
         self.assertEqual(tasks[2]['state'], states.RUNNING)
+
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[2]['id'],
                                   states.SUCCESS, None)
@@ -146,14 +156,17 @@ class TestLocalEngine(test_base.DbTestCase):
                                   states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+
         self.assertEqual(tasks[2]['state'], states.SUCCESS)
         self.assertEqual(tasks[1]['state'], states.RUNNING)
+
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[1]['id'],
                                   states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
         execution = db_api.execution_get(WB_NAME, execution['id'])
+
         self.assertEqual(tasks[1]['state'], states.SUCCESS)
         self.assertEqual(execution['state'], states.SUCCESS)
 
@@ -164,21 +177,27 @@ class TestLocalEngine(test_base.DbTestCase):
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
     def test_engine_tasks_on_error_finish(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME,
-                                                    "test_subsequent")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "test_subsequent",
+                                                    CONTEXT)
+
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
         execution = db_api.execution_get(WB_NAME, execution['id'])
+
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[0]['id'],
                                   states.ERROR, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+
         self.assertEqual(len(tasks), 4)
+
         backup_vms = [t for t in tasks if t['name'] == 'backup-vms'][0]
+
         self.assertIn(backup_vms, tasks)
         self.assertEqual(tasks[0]['state'], states.ERROR)
         self.assertEqual(tasks[1]['state'], states.IDLE)
         self.assertEqual(tasks[2]['state'], states.RUNNING)
+
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[2]['id'],
                                   states.SUCCESS, None)
@@ -187,13 +206,16 @@ class TestLocalEngine(test_base.DbTestCase):
                                   states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+
         self.assertEqual(tasks[2]['state'], states.SUCCESS)
         self.assertEqual(tasks[1]['state'], states.RUNNING)
+
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[1]['id'],
                                   states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
         execution = db_api.execution_get(WB_NAME, execution['id'])
+
         self.assertEqual(tasks[1]['state'], states.SUCCESS)
         self.assertEqual(execution['state'], states.SUCCESS)

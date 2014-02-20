@@ -28,6 +28,8 @@ ENGINE = engine.get_engine()
 
 CFG_PREFIX = "tests/resources/"
 WB_NAME = "my_workbook"
+CONTEXT = None  # TODO(rakhmerov): Use a meaningful value.
+
 
 #TODO(rakhmerov): add more tests for errors, execution stop etc.
 
@@ -48,8 +50,8 @@ class TestScalableEngine(test_base.DbTestCase):
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value="result"))
     def test_engine_one_task(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME,
-                                                    "create-vms")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "create-vms",
+                                                    CONTEXT)
 
         task = db_api.tasks_get(WB_NAME, execution['id'])[0]
 
@@ -71,8 +73,8 @@ class TestScalableEngine(test_base.DbTestCase):
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value="result"))
     def test_engine_multiple_tasks(self):
-        execution = ENGINE.start_workflow_execution(WB_NAME,
-                                                    "backup-vms")
+        execution = ENGINE.start_workflow_execution(WB_NAME, "backup-vms",
+                                                    CONTEXT)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 

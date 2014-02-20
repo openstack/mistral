@@ -18,5 +18,4 @@ import yaql
 
 
 def evaluate(expression_str, data):
-    expression = yaql.parse(expression_str)
-    return expression.evaluate(data)
+    return yaql.parse(expression_str).evaluate(data)

@@ -26,6 +26,10 @@ from mistral.engine import workflow
 
 LOG = logging.getLogger(__name__)
 
+# TODO(rakhmerov): Upcoming Data Flow changes:
+# 1. Calculate "in_context" for all the tasks submitted for execution.
+# 2. Transfer "in_context" along with task data over AMQP.
+
 
 class AbstractEngine(object):
     @classmethod
@@ -34,17 +38,22 @@ class AbstractEngine(object):
         pass
 
     @classmethod
-    def start_workflow_execution(cls, workbook_name, task_name):
-        wb_dsl = cls._get_wb_dsl(workbook_name)
-        dsl_tasks = workflow.find_workflow_tasks(wb_dsl, task_name)
+    def start_workflow_execution(cls, workbook_name, task_name, context):
         db_api.start_tx()
+
+        wb_dsl = cls._get_wb_dsl(workbook_name)
 
         # Persist execution and tasks in DB.
         try:
-            execution = cls._create_execution(workbook_name, task_name)
+            execution = cls._create_execution(workbook_name,
+                                              task_name,
+                                              context)
 
-            tasks = cls._create_tasks(dsl_tasks, wb_dsl,
-                                      workbook_name, execution['id'])
+            tasks = cls._create_tasks(
+                workflow.find_workflow_tasks(wb_dsl, task_name),
+                wb_dsl,
+                workbook_name, execution['id']
+            )
 
             db_api.commit_tx()
         except Exception as e:
@@ -53,6 +62,9 @@ class AbstractEngine(object):
         finally:
             db_api.end_tx()
 
+        # TODO(rakhmerov): This doesn't look correct anymore, we shouldn't
+        # start tasks which don't have dependencies but are reachable only
+        # via direct transitions.
         cls._run_tasks(workflow.find_resolved_tasks(tasks))
 
         return execution
@@ -61,17 +73,17 @@ class AbstractEngine(object):
     def convey_task_result(cls, workbook_name, execution_id,
                            task_id, state, result):
         db_api.start_tx()
+
         wb_dsl = cls._get_wb_dsl(workbook_name)
         #TODO(rakhmerov): validate state transition
 
         # Update task state.
         task = db_api.task_update(workbook_name, execution_id, task_id,
-                                  {"state": state, "result": result})
+                                  {"state": state, "output": result})
+
         execution = db_api.execution_get(workbook_name, execution_id)
-        cls._create_next_tasks(task,
-                               wb_dsl,
-                               workbook_name,
-                               execution_id)
+
+        cls._create_next_tasks(task, wb_dsl, workbook_name, execution_id)
 
         # Determine what tasks need to be started.
         tasks = db_api.tasks_get(workbook_name, execution_id)
@@ -128,24 +140,27 @@ class AbstractEngine(object):
         return task["state"]
 
     @classmethod
-    def _create_execution(cls, workbook_name, task_name):
+    def _create_execution(cls, workbook_name, task_name, context):
         return db_api.execution_create(workbook_name, {
             "workbook_name": workbook_name,
             "task": task_name,
-            "state": states.RUNNING
+            "state": states.RUNNING,
+            "context": context
         })
 
     @classmethod
-    def _create_next_tasks(cls, task, wb_dsl,
-                           workbook_name, execution_id):
+    def _create_next_tasks(cls, task, wb_dsl, workbook_name, execution_id):
         dsl_tasks = workflow.find_tasks_after_completion(task, wb_dsl)
-        tasks = cls._create_tasks(dsl_tasks, wb_dsl,
-                                  workbook_name, execution_id)
+
+        tasks = cls._create_tasks(dsl_tasks, wb_dsl, workbook_name,
+                                  execution_id)
+
         return workflow.find_resolved_tasks(tasks)
 
     @classmethod
     def _create_tasks(cls, dsl_tasks, wb_dsl, workbook_name, execution_id):
         tasks = []
+
         for dsl_task in dsl_tasks:
             task = db_api.task_create(workbook_name, execution_id, {
                 "name": dsl_task["name"],
@@ -157,6 +172,7 @@ class AbstractEngine(object):
             })
 
             tasks.append(task)
+
         return tasks
 
     @classmethod

@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
+
 from pecan import rest
 from pecan import abort
 from wsme import types as wtypes
@@ -37,8 +39,28 @@ class Execution(resource.Resource):
     task = wtypes.text
     state = wtypes.text
     # Context is a JSON object but since WSME doesn't support arbitrary
-    # dictionaries we have to use text type.
+    # dictionaries we have to use text type convert to json and back manually.
     context = wtypes.text
+
+    def to_dict(self):
+        d = super(Execution, self).to_dict()
+
+        if d.get('context'):
+            d['context'] = json.loads(d['context'])
+
+        return d
+
+    @classmethod
+    def from_dict(cls, d):
+        e = cls()
+
+        for key, val in d.items():
+            if hasattr(e, key):
+                if key == 'context' and val:
+                    val = json.dumps(val)
+                setattr(e, key, val)
+
+        return e
 
 
 class Executions(resource.Resource):
@@ -80,8 +102,13 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
         try:
+            context = None
+            if execution.context:
+                context = json.loads(execution.context)
+
             values = engine.start_workflow_execution(execution.workbook_name,
-                                                     execution.task)
+                                                     execution.task,
+                                                     context)
         except ex.MistralException as e:
             #TODO(nmakhotkin) we should use thing such a decorator here
             abort(400, e.message)

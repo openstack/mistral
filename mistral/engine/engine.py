@@ -31,15 +31,16 @@ finally:
     pass
 
 
-def start_workflow_execution(workbook_name, task_name):
+def start_workflow_execution(workbook_name, task_name, context=None):
     """Starts a workflow execution based on the specified workbook name
      and target task.
 
     :param workbook_name: Workbook name
     :param task_name: Target task name
+    :param context: Execution context which defines a workflow input
     :return: Workflow execution.
     """
-    return IMPL.start_workflow_execution(workbook_name, task_name)
+    return IMPL.start_workflow_execution(workbook_name, task_name, context)
 
 
 def stop_workflow_execution(workbook_name, execution_id):

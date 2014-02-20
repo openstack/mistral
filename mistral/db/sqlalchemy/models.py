@@ -58,6 +58,7 @@ class WorkflowExecution(mb.MistralBase):
     workbook_name = sa.Column(sa.String(80))
     task = sa.Column(sa.String(80))
     state = sa.Column(sa.String(20))
+    context = sa.Column(st.JsonDictType())
 
 
 class Workbook(mb.MistralBase):
@@ -94,3 +95,8 @@ class Task(mb.MistralBase):
     service_dsl = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
     tags = sa.Column(st.JsonListType())
+
+    # Data Flow properties.
+    in_context = sa.Column(st.JsonDictType())
+    input = sa.Column(st.JsonDictType())
+    output = sa.Column(st.JsonDictType())

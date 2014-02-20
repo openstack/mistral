@@ -27,6 +27,10 @@ from mistral.engine.actions import action_helper as a_h
 
 LOG = logging.getLogger(__name__)
 
+# TODO(rakhmerov): Upcoming Data Flow changes:
+# 1. Receive "in_context" along with task data.
+# 2. Apply task input expression to "in_context" and calculate "input".
+
 
 def do_task_action(task):
     LOG.info("Starting task action [task_id=%s, action='%s', service='%s'" %

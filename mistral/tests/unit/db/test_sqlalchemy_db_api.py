@@ -22,20 +22,20 @@ from mistral.tests.unit import base as test_base
 
 EVENTS = [
     {
-        "id": u'1',
-        "name": u'test_event1',
-        'workbook_name': u'wb_name',
-        "pattern": u'* *',
-        "next_execution_time": timeutils.utcnow(),
-        "updated_at": None
+        'id': '1',
+        'name': 'test_event1',
+        'workbook_name': 'wb_name',
+        'pattern': '* *',
+        'next_execution_time': timeutils.utcnow(),
+        'updated_at': None
     },
     {
-        "id": u'2',
-        "name": u'test_event2',
-        'workbook_name': u'wb_name',
-        "pattern": u'* * *',
-        "next_execution_time": timeutils.utcnow(),
-        "updated_at": None
+        'id': '2',
+        'name': 'test_event2',
+        'workbook_name': 'wb_name',
+        'pattern': '* * *',
+        'next_execution_time': timeutils.utcnow(),
+        'updated_at': None
     }
 ]
 
@@ -45,7 +45,7 @@ class EventTest(test_base.DbTestCase):
         created = db_api.event_create(EVENTS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.event_get(created["id"])
+        fetched = db_api.event_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -53,11 +53,11 @@ class EventTest(test_base.DbTestCase):
         created = db_api.event_create(EVENTS[0])
         self.assertIsInstance(created, dict)
 
-        updated = db_api.event_update(created["id"], {"pattern": "0 * *"})
+        updated = db_api.event_update(created['id'], {'pattern': '0 * *'})
         self.assertIsInstance(updated, dict)
-        self.assertEqual(u'0 * *', updated["pattern"])
+        self.assertEqual('0 * *', updated['pattern'])
 
-        fetched = db_api.event_get(created["id"])
+        fetched = db_api.event_get(created['id'])
         self.assertDictEqual(updated, fetched)
 
     def test_event_list(self):
@@ -73,26 +73,26 @@ class EventTest(test_base.DbTestCase):
 
 WORKBOOKS = [
     {
-        "id": u'1',
-        "name": u'my_workbook1',
-        'description': u'my description',
-        "definition": u'empty',
-        "tags": [u'mc'],
-        "scope": u'public',
-        "updated_at": None,
-        "project_id": '123',
-        "trust_id": '1234'
+        'id': '1',
+        'name': 'my_workbook1',
+        'description': 'my description',
+        'definition': 'empty',
+        'tags': ['mc'],
+        'scope': 'public',
+        'updated_at': None,
+        'project_id': '123',
+        'trust_id': '1234'
     },
     {
-        "id": u'2',
-        "name": u'my_workbook2',
-        'description': u'my description',
-        "definition": u'empty',
-        "tags": [u'mc'],
-        "scope": u'public',
-        "updated_at": None,
-        "project_id": '1233',
-        "trust_id": '12345'
+        'id': '2',
+        'name': 'my_workbook2',
+        'description': 'my description',
+        'definition': 'empty',
+        'tags': ['mc'],
+        'scope': 'public',
+        'updated_at': None,
+        'project_id': '1233',
+        'trust_id': '12345'
     },
 ]
 
@@ -102,7 +102,7 @@ class WorkbookTest(test_base.DbTestCase):
         created = db_api.workbook_create(WORKBOOKS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.workbook_get(created["name"])
+        fetched = db_api.workbook_get(created['name'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -110,12 +110,12 @@ class WorkbookTest(test_base.DbTestCase):
         created = db_api.workbook_create(WORKBOOKS[0])
         self.assertIsInstance(created, dict)
 
-        updated = db_api.workbook_update(created["name"],
-                                         {"description": "my new desc"})
+        updated = db_api.workbook_update(created['name'],
+                                         {'description': 'my new desc'})
         self.assertIsInstance(updated, dict)
-        self.assertEqual(u'my new desc', updated["description"])
+        self.assertEqual('my new desc', updated['description'])
 
-        fetched = db_api.workbook_get(created["name"])
+        fetched = db_api.workbook_get(created['name'])
         self.assertDictEqual(updated, fetched)
 
     def test_workbook_list(self):
@@ -132,28 +132,30 @@ class WorkbookTest(test_base.DbTestCase):
         created = db_api.workbook_create(WORKBOOKS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.workbook_get(created["name"])
+        fetched = db_api.workbook_get(created['name'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
         db_api.workbook_delete(created['name'])
-        self.assertIsNone(db_api.workbook_get(created["name"]))
+        self.assertIsNone(db_api.workbook_get(created['name']))
 
 
 EXECUTIONS = [
     {
-        "id": u'1',
-        "workbook_name": u'my_workbook',
-        'task': u'my_task1',
-        "state": u'IDLE',
-        "updated_at": None
+        'id': '1',
+        'workbook_name': 'my_workbook',
+        'task': 'my_task1',
+        'state': 'IDLE',
+        'updated_at': None,
+        'context': None
     },
     {
-        "id": u'2',
-        "workbook_name": u'my_workbook',
-        'task': u'my_task2',
-        "state": u'RUNNING',
-        "updated_at": None
+        'id': '2',
+        'workbook_name': 'my_workbook',
+        'task': 'my_task2',
+        'state': 'RUNNING',
+        'updated_at': None,
+        'context': {'image_id': '123123'}
     }
 ]
 
@@ -165,7 +167,7 @@ class ExecutionTest(test_base.DbTestCase):
         self.assertIsInstance(created, dict)
 
         fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                       created["id"])
+                                       created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -175,13 +177,13 @@ class ExecutionTest(test_base.DbTestCase):
         self.assertIsInstance(created, dict)
 
         updated = db_api.execution_update(EXECUTIONS[0]['workbook_name'],
-                                          created["id"],
-                                          {"task": "task10"})
+                                          created['id'],
+                                          {'task': 'task10'})
         self.assertIsInstance(updated, dict)
-        self.assertEqual(u'task10', updated["task"])
+        self.assertEqual('task10', updated['task'])
 
         fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                       created["id"])
+                                       created['id'])
         self.assertDictEqual(updated, fetched)
 
     def test_execution_list(self):
@@ -203,44 +205,50 @@ class ExecutionTest(test_base.DbTestCase):
         self.assertIsInstance(created, dict)
 
         fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                       created["id"])
+                                       created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
         db_api.execution_delete(EXECUTIONS[0]['workbook_name'],
                                 created['id'])
         self.assertIsNone(db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                               created["id"]))
+                                               created['id']))
 
 
 TASKS = [
     {
-        "id": u'1',
-        "workbook_name": u'my_workbook',
-        "execution_id": u'1',
-        'name': u'my_task1',
-        'description': u'my description',
-        'requires': {u'my_task2': u'', u'my_task3': u''},
-        "task_dsl": None,
-        "service_dsl": None,
-        "action": {u'name': u'Nova:create-vm'},
-        "state": u'IDLE',
-        "tags": [u'deployment'],
-        "updated_at": None
+        'id': '1',
+        'workbook_name': 'my_workbook',
+        'execution_id': '1',
+        'name': 'my_task1',
+        'description': 'my description',
+        'requires': {'my_task2': '', 'my_task3': ''},
+        'task_dsl': None,
+        'service_dsl': None,
+        'action': {'name': 'Nova:create-vm'},
+        'state': 'IDLE',
+        'tags': ['deployment'],
+        'updated_at': None,
+        'in_context': None,
+        'input': None,
+        'output': None
     },
     {
-        "id": u'2',
-        "workbook_name": u'my_workbook',
-        "execution_id": u'1',
-        'name': u'my_task2',
-        'description': u'my description',
-        'requires': {u'my_task4': u'', u'my_task5': u''},
-        "task_dsl": None,
-        "service_dsl": None,
-        "action": {u'name': u'Cinder:create-volume'},
-        "state": u'IDLE',
-        "tags": [u'deployment'],
-        "updated_at": None
+        'id': '2',
+        'workbook_name': 'my_workbook',
+        'execution_id': '1',
+        'name': 'my_task2',
+        'description': 'my description',
+        'requires': {'my_task4': '', 'my_task5': ''},
+        'task_dsl': None,
+        'service_dsl': None,
+        'action': {'name': 'Cinder:create-volume'},
+        'state': 'IDLE',
+        'tags': ['deployment'],
+        'updated_at': None,
+        'in_context': {'image_id': '123123'},
+        'input': {'image_id': '123123'},
+        'output': {'vm_id': '343123'}
     },
 ]
 
@@ -254,7 +262,7 @@ class TaskTest(test_base.DbTestCase):
 
         fetched = db_api.task_get(TASKS[0]['workbook_name'],
                                   TASKS[0]['execution_id'],
-                                  created["id"])
+                                  created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -266,14 +274,14 @@ class TaskTest(test_base.DbTestCase):
 
         updated = db_api.task_update(TASKS[0]['workbook_name'],
                                      TASKS[0]['execution_id'],
-                                     created["id"],
-                                     {"description": "my new desc"})
+                                     created['id'],
+                                     {'description': 'my new desc'})
         self.assertIsInstance(updated, dict)
-        self.assertEqual(u'my new desc', updated["description"])
+        self.assertEqual('my new desc', updated['description'])
 
         fetched = db_api.task_get(TASKS[0]['workbook_name'],
                                   TASKS[0]['execution_id'],
-                                  created["id"])
+                                  created['id'])
         self.assertDictEqual(updated, fetched)
 
     def test_task_list(self):
@@ -299,7 +307,7 @@ class TaskTest(test_base.DbTestCase):
 
         fetched = db_api.task_get(TASKS[0]['workbook_name'],
                                   TASKS[0]['execution_id'],
-                                  created["id"])
+                                  created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -308,7 +316,7 @@ class TaskTest(test_base.DbTestCase):
                            created['id'])
         self.assertIsNone(db_api.task_get(TASKS[0]['workbook_name'],
                                           TASKS[0]['execution_id'],
-                                          created["id"]))
+                                          created['id']))
 
 
 class TXTest(test_base.DbTestCase):
@@ -319,7 +327,7 @@ class TXTest(test_base.DbTestCase):
             created = db_api.event_create(EVENTS[0])
             self.assertIsInstance(created, dict)
 
-            fetched = db_api.event_get(created["id"])
+            fetched = db_api.event_get(created['id'])
             self.assertIsInstance(fetched, dict)
             self.assertDictEqual(created, fetched)
 
@@ -331,7 +339,7 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.event_get(created["id"])
+        fetched = db_api.event_get(created['id'])
         self.assertIsNone(fetched)
 
         self.assertFalse(self.is_db_session_open())
@@ -343,7 +351,7 @@ class TXTest(test_base.DbTestCase):
             created = db_api.event_create(EVENTS[0])
             self.assertIsInstance(created, dict)
 
-            fetched = db_api.event_get(created["id"])
+            fetched = db_api.event_get(created['id'])
             self.assertIsInstance(fetched, dict)
             self.assertDictEqual(created, fetched)
 
@@ -355,7 +363,7 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.event_get(created["id"])
+        fetched = db_api.event_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -368,14 +376,14 @@ class TXTest(test_base.DbTestCase):
             created_event = db_api.event_create(EVENTS[0])
             self.assertIsInstance(created_event, dict)
 
-            fetched_event = db_api.event_get(created_event["id"])
+            fetched_event = db_api.event_get(created_event['id'])
             self.assertIsInstance(fetched_event, dict)
             self.assertDictEqual(created_event, fetched_event)
 
             created_workbook = db_api.workbook_create(WORKBOOKS[0])
             self.assertIsInstance(created_workbook, dict)
 
-            fetched_workbook = db_api.workbook_get(created_workbook["name"])
+            fetched_workbook = db_api.workbook_get(created_workbook['name'])
             self.assertIsInstance(fetched_workbook, dict)
             self.assertDictEqual(created_workbook, fetched_workbook)
 
@@ -387,10 +395,10 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched_event = db_api.event_get(created_event["id"])
+        fetched_event = db_api.event_get(created_event['id'])
         self.assertIsNone(fetched_event)
 
-        fetched_workbook = db_api.workbook_get(created_workbook["name"])
+        fetched_workbook = db_api.workbook_get(created_workbook['name'])
         self.assertIsNone(fetched_workbook)
 
         self.assertFalse(self.is_db_session_open())
@@ -402,14 +410,14 @@ class TXTest(test_base.DbTestCase):
             created_event = db_api.event_create(EVENTS[0])
             self.assertIsInstance(created_event, dict)
 
-            fetched_event = db_api.event_get(created_event["id"])
+            fetched_event = db_api.event_get(created_event['id'])
             self.assertIsInstance(fetched_event, dict)
             self.assertDictEqual(created_event, fetched_event)
 
             created_workbook = db_api.workbook_create(WORKBOOKS[0])
             self.assertIsInstance(created_workbook, dict)
 
-            fetched_workbook = db_api.workbook_get(created_workbook["name"])
+            fetched_workbook = db_api.workbook_get(created_workbook['name'])
             self.assertIsInstance(fetched_workbook, dict)
             self.assertDictEqual(created_workbook, fetched_workbook)
 
@@ -421,11 +429,11 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched_event = db_api.event_get(created_event["id"])
+        fetched_event = db_api.event_get(created_event['id'])
         self.assertIsInstance(fetched_event, dict)
         self.assertDictEqual(created_event, fetched_event)
 
-        fetched_workbook = db_api.workbook_get(created_workbook["name"])
+        fetched_workbook = db_api.workbook_get(created_workbook['name'])
         self.assertIsInstance(fetched_workbook, dict)
         self.assertDictEqual(created_workbook, fetched_workbook)
 
