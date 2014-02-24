@@ -14,35 +14,26 @@
 # limitations under the License.
 
 import mock
-import pkg_resources as pkg
 
 from mistral.db import api as db_api
 from mistral.engine.actions import actions
 from mistral.engine.local import engine
 from mistral.engine import states
-from mistral import version
-from mistral.tests.unit import base as test_base
+from mistral.tests import base
 
 
 ENGINE = engine.get_engine()
 
-CFG_PREFIX = "tests/resources/"
 WB_NAME = "my_workbook"
 CONTEXT = None  # TODO(rakhmerov): Use a meaningful value.
 
 #TODO(rakhmerov): add more tests for errors, execution stop etc.
 
 
-def get_cfg(cfg_suffix):
-    return open(pkg.resource_filename(
-        version.version_info.package,
-        CFG_PREFIX + cfg_suffix)).read()
-
-
-class TestLocalEngine(test_base.DbTestCase):
+class TestLocalEngine(base.DbTestCase):
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
-                           'definition': get_cfg("test_rest.yaml")
+                           'definition': base.get_resource("test_rest.yaml")
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
@@ -63,7 +54,7 @@ class TestLocalEngine(test_base.DbTestCase):
 
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
-                           'definition': get_cfg("test_rest.yaml")
+                           'definition': base.get_resource("test_rest.yaml")
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
@@ -105,7 +96,7 @@ class TestLocalEngine(test_base.DbTestCase):
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
-                           'definition': get_cfg("test_rest.yaml")
+                           'definition': base.get_resource("test_rest.yaml")
                        }))
     @mock.patch.object(states, "get_state_by_http_status_code",
                        mock.MagicMock(return_value=states.SUCCESS))
@@ -121,7 +112,7 @@ class TestLocalEngine(test_base.DbTestCase):
 
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
-                           'definition': get_cfg("test_rest.yaml")
+                           'definition': base.get_resource("test_rest.yaml")
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
@@ -172,7 +163,7 @@ class TestLocalEngine(test_base.DbTestCase):
 
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
-                           'definition': get_cfg("test_rest.yaml")
+                           'definition': base.get_resource("test_rest.yaml")
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))

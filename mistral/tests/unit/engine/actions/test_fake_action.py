@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2013 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,27 +14,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.engine.actions import actions
+from mistral.engine.actions import action_types
 
-import os
-import tempfile
-
-import unittest2
-
-from mistral.db.sqlalchemy import api as db_api
-from mistral.openstack.common.db.sqlalchemy import session
+from mistral.tests import base
 
 
-class DbTestCase(unittest2.TestCase):
+class FakeActionTest(base.BaseTest):
 
-    def setUp(self):
-        self.db_fd, self.db_path = tempfile.mkstemp()
-        session.set_defaults('sqlite:///' + self.db_path, self.db_path)
-        db_api.setup_db()
+    def test_send_email_real(self):
+        expected = "my output"
 
-    def tearDown(self):
-        db_api.drop_db()
-        os.close(self.db_fd)
-        os.unlink(self.db_path)
+        action = actions.EchoAction(action_types.ECHO, "test", output=expected)
 
-    def is_db_session_open(self):
-        return db_api._get_thread_local_session() is not None
+        self.assertEqual(action.run(), expected)

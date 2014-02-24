@@ -35,26 +35,32 @@ class LocalEngine(abs_eng.AbstractEngine):
     @classmethod
     def _run_task(cls, task):
         action = a_f.create_action(task)
+
         LOG.info("Task is started - %s" % task['name'])
-        db_api.task_update(task['workbook_name'], task['execution_id'],
-                           task['id'], {'state': states.RUNNING})
+
         if a_h.is_task_synchronous(task):
-            # In case of sync execution we run task
-            # and change state right after that.
-            action_result = action.run()
-            state, result = a_h.extract_state_result(action, action_result)
-            # TODO(nmakhotkin) save the result in the context with key
-            # action.result_helper['store_as']
+            try:
+                state, result = states.SUCCESS, action.run()
+            except exc.ActionException:
+                state, result = states.ERROR, None
 
-            if states.is_valid(state):
-                return cls.convey_task_result(task['workbook_name'],
-                                              task['execution_id'],
-                                              task['id'], state, result)
-            else:
-                raise exc.EngineException("Action has returned invalid "
-                                          "state: %s" % state)
+            cls.convey_task_result(task['workbook_name'],
+                                   task['execution_id'],
+                                   task['id'],
+                                   state, result)
+        else:
+            try:
+                action.run()
 
-        return action.run()
+                db_api.task_update(task['workbook_name'],
+                                   task['execution_id'],
+                                   task['id'],
+                                   {'state': states.RUNNING})
+            except exc.ActionException:
+                cls.convey_task_result(task['workbook_name'],
+                                       task['execution_id'],
+                                       task['id'],
+                                       states.ERROR, None)
 
 
 def get_engine():

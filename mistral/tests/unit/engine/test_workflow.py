@@ -18,7 +18,7 @@ import pkg_resources as pkg
 
 from mistral import dsl
 from mistral import version
-from mistral.tests.unit import base
+from mistral.tests import base
 from mistral.engine import states
 from mistral.engine import workflow
 

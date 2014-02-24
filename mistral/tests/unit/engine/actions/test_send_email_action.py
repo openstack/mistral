@@ -22,6 +22,7 @@ from email.parser import Parser
 
 from mistral.engine.actions import actions
 from mistral.engine.actions import action_types
+from mistral import exceptions as exc
 
 ACTION_TYPE = action_types.SEND_EMAIL
 ACTION_NAME = "TEMPORARY"
@@ -117,9 +118,7 @@ class SendEmailActionTest(unittest2.TestCase):
             ACTION_TYPE, ACTION_NAME, self.params, self.settings)
         try:
             action.run()
-        except IOError:
+        except exc.ActionException:
             pass
         else:
             self.assertFalse("Must throw exception")
-
-        self.assertTrue(log.error.called)

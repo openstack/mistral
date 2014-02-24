@@ -21,7 +21,7 @@ from webtest.app import AppError
 from oslo.config import cfg
 
 from mistral.openstack.common import importutils
-from mistral.tests.unit import base as test_base
+from mistral.tests import base
 
 # We need to make sure that all configuration properties are registered.
 importutils.import_module("mistral.config")
@@ -34,7 +34,7 @@ cfg.CONF.register_opt(cfg.BoolOpt('auth_enable', default=False), group='pecan')
 __all__ = ['FunctionalTest']
 
 
-class FunctionalTest(test_base.DbTestCase):
+class FunctionalTest(base.DbTestCase):
     """Used for functional tests where you need to test your
     literal application and its integration with the framework.
     """

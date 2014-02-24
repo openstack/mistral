@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mistral.tests.unit import base as test_base
+from mistral.tests import base
 
 
-class TestTaskExecutor(test_base.DbTestCase):
+class TestTaskExecutor(base.DbTestCase):
     def setUp(self):
         super(TestTaskExecutor, self).setUp()
         self.wb_name = "my_workbook"

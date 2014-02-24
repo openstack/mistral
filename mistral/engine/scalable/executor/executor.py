@@ -27,29 +27,36 @@ from mistral.engine.actions import action_helper as a_h
 
 LOG = logging.getLogger(__name__)
 
-# TODO(rakhmerov): Upcoming Data Flow changes:
-# 1. Receive "in_context" along with task data.
-# 2. Apply task input expression to "in_context" and calculate "input".
-
 
 def do_task_action(task):
     LOG.info("Starting task action [task_id=%s, action='%s', service='%s'" %
              (task['id'], task['task_dsl']['action'], task['service_dsl']))
-    action = a_f.create_action(task)
-    if a_h.is_task_synchronous(task):
-        action_result = action.run()
-        state, result = a_h.extract_state_result(action, action_result)
-        # TODO(nmakhotkin) save the result in the context with key
-        # action.result_helper['store_as']
 
-        if states.is_valid(state):
-            return engine.convey_task_result(task['workbook_name'],
-                                             task['execution_id'],
-                                             task['id'], state, result)
-        else:
-            raise exc.EngineException("Action has returned invalid "
-                                      "state: %s" % state)
-    action.run()
+    action = a_f.create_action(task)
+
+    if a_h.is_task_synchronous(task):
+        try:
+            state, result = states.SUCCESS, action.run()
+        except exc.ActionException:
+            state, result = states.ERROR, None
+
+        engine.convey_task_result(task['workbook_name'],
+                                  task['execution_id'],
+                                  task['id'],
+                                  state, result)
+    else:
+        try:
+            action.run()
+
+            db_api.task_update(task['workbook_name'],
+                               task['execution_id'],
+                               task['id'],
+                               {'state': states.RUNNING})
+        except exc.ActionException:
+            engine.convey_task_result(task['workbook_name'],
+                                      task['execution_id'],
+                                      task['id'],
+                                      states.ERROR, None)
 
 
 def handle_task_error(task, exception):

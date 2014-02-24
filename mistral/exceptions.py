@@ -59,6 +59,15 @@ class DBDuplicateEntry(MistralException):
             self.message = message
 
 
+class ActionException(MistralException):
+    code = "ACTION_ERROR"
+
+    def __init__(self, message=None):
+        super(MistralException, self).__init__(message)
+        if message:
+            self.message = message
+
+
 class EngineException(MistralException):
     code = "ENGINE_ERROR"
 

@@ -34,6 +34,7 @@ def create_action(task):
 
 def _get_mapping():
     return {
+        action_types.ECHO: get_echo_action,
         action_types.REST_API: get_rest_action,
         action_types.MISTRAL_REST_API: get_mistral_rest_action,
         action_types.OSLO_RPC: get_amqp_action,
@@ -46,6 +47,15 @@ def _find_action_result_helper(task, action):
         return task['service_dsl']['actions'][action.name].get('output', {})
     except (KeyError, AttributeError):
         return {}
+
+
+def get_echo_action(task):
+    action_type = a_h.get_action_type(task)
+    action_name = task['task_dsl']['action'].split(':')[1]
+
+    output = task['service_dsl']['actions'][action_name].get('output', {})
+
+    return actions.EchoAction(action_type, action_name, output=output)
 
 
 def get_rest_action(task):
@@ -63,7 +73,7 @@ def get_rest_action(task):
     method = action_dsl['parameters'].get('method', "GET")
 
     # input_yaql = task.get('input')
-    # TODO(nmakhotkin) extract input from context within the YAQL expression
+    # TODO(nmakhotkin) extract input from context with the YAQL expression
     task_input = {}  # expressions.evaluate(input_expr, ctx)
     task_data = {}
 

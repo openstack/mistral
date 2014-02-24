@@ -89,10 +89,13 @@ def find_tasks_after_completion(task, wb_dsl):
             found_tasks += _get_tasks_to_schedule(tasks_on_finish, wb_dsl)
 
     LOG.debug("Found tasks: %s" % found_tasks)
+
     workflow_tasks = []
     for t in found_tasks:
         workflow_tasks += find_workflow_tasks(wb_dsl, t['name'])
+
     LOG.debug("Workflow tasks to schedule: %s" % workflow_tasks)
+
     return workflow_tasks
 
 

@@ -22,13 +22,10 @@ from mistral import dsl
 from mistral import exceptions as exc
 from mistral.engine import states
 from mistral.engine import workflow
+from mistral.engine import data_flow
 
 
 LOG = logging.getLogger(__name__)
-
-# TODO(rakhmerov): Upcoming Data Flow changes:
-# 1. Calculate "in_context" for all the tasks submitted for execution.
-# 2. Transfer "in_context" along with task data over AMQP.
 
 
 class AbstractEngine(object):
@@ -41,10 +38,10 @@ class AbstractEngine(object):
     def start_workflow_execution(cls, workbook_name, task_name, context):
         db_api.start_tx()
 
-        wb_dsl = cls._get_wb_dsl(workbook_name)
-
         # Persist execution and tasks in DB.
         try:
+            wb_dsl = cls._get_wb_dsl(workbook_name)
+
             execution = cls._create_execution(workbook_name,
                                               task_name,
                                               context)
@@ -52,8 +49,13 @@ class AbstractEngine(object):
             tasks = cls._create_tasks(
                 workflow.find_workflow_tasks(wb_dsl, task_name),
                 wb_dsl,
-                workbook_name, execution['id']
+                workbook_name,
+                execution['id']
             )
+
+            tasks_to_start = workflow.find_resolved_tasks(tasks)
+
+            data_flow.prepare_tasks(tasks_to_start, context)
 
             db_api.commit_tx()
         except Exception as e:
@@ -62,10 +64,7 @@ class AbstractEngine(object):
         finally:
             db_api.end_tx()
 
-        # TODO(rakhmerov): This doesn't look correct anymore, we shouldn't
-        # start tasks which don't have dependencies but are reachable only
-        # via direct transitions.
-        cls._run_tasks(workflow.find_resolved_tasks(tasks))
+        cls._run_tasks(tasks_to_start)
 
         return execution
 
@@ -74,30 +73,39 @@ class AbstractEngine(object):
                            task_id, state, result):
         db_api.start_tx()
 
-        wb_dsl = cls._get_wb_dsl(workbook_name)
-        #TODO(rakhmerov): validate state transition
-
-        # Update task state.
-        task = db_api.task_update(workbook_name, execution_id, task_id,
-                                  {"state": state, "output": result})
-
-        execution = db_api.execution_get(workbook_name, execution_id)
-
-        cls._create_next_tasks(task, wb_dsl, workbook_name, execution_id)
-
-        # Determine what tasks need to be started.
-        tasks = db_api.tasks_get(workbook_name, execution_id)
-        # TODO(nmakhotkin) merge result into context
-
         try:
+            wb_dsl = cls._get_wb_dsl(workbook_name)
+            #TODO(rakhmerov): validate state transition
+
+            # Update task state.
+            task = db_api.task_update(workbook_name, execution_id, task_id,
+                                      {"state": state, "output": result})
+
+            execution = db_api.execution_get(workbook_name, execution_id)
+
+            # Calculate task outbound context.
+            # TODO(rakhmerov): publish result into context selectively
+            outbound_context = \
+                data_flow.merge_into_context(task['in_context'], result)
+
+            cls._create_next_tasks(task, wb_dsl)
+
+            # Determine what tasks need to be started.
+            tasks = db_api.tasks_get(workbook_name, execution_id)
+
             new_exec_state = cls._determine_execution_state(execution, tasks)
 
             if execution['state'] != new_exec_state:
-                db_api.execution_update(workbook_name, execution_id, {
-                    "state": new_exec_state
-                })
+                execution = \
+                    db_api.execution_update(workbook_name, execution_id, {
+                        "state": new_exec_state
+                    })
 
                 LOG.info("Changed execution state: %s" % execution)
+
+            tasks_to_start = workflow.find_resolved_tasks(tasks)
+
+            data_flow.prepare_tasks(tasks_to_start, outbound_context)
 
             db_api.commit_tx()
         except Exception as e:
@@ -109,8 +117,8 @@ class AbstractEngine(object):
         if states.is_stopped_or_finished(execution["state"]):
             return task
 
-        if tasks:
-            cls._run_tasks(workflow.find_resolved_tasks(tasks))
+        if tasks_to_start:
+            cls._run_tasks(tasks_to_start)
 
         return task
 
@@ -149,11 +157,11 @@ class AbstractEngine(object):
         })
 
     @classmethod
-    def _create_next_tasks(cls, task, wb_dsl, workbook_name, execution_id):
+    def _create_next_tasks(cls, task, wb_dsl):
         dsl_tasks = workflow.find_tasks_after_completion(task, wb_dsl)
 
-        tasks = cls._create_tasks(dsl_tasks, wb_dsl, workbook_name,
-                                  execution_id)
+        tasks = cls._create_tasks(dsl_tasks, wb_dsl, task['workbook_name'],
+                                  task['execution_id'])
 
         return workflow.find_resolved_tasks(tasks)
 

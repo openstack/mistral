@@ -14,36 +14,61 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+#TODO(dzimine):separate actions across different files/modules
+
+import abc
+from email.mime.text import MIMEText
+import smtplib
+
 from amqplib import client_0_8 as amqp
 import requests
-#TODO(dzimine):separate actions across different files/modules
-import smtplib
-from email.mime.text import MIMEText
 
 from mistral.openstack.common import log as logging
+from mistral import exceptions as exc
 
 
 LOG = logging.getLogger(__name__)
 
 
-class BaseAction(object):
+class Action(object):
     status = None
 
     def __init__(self, action_type, action_name):
         self.type = action_type
         self.name = action_name
 
-        # Result_helper is a dict for retrieving result within YAQL expression
-        # and it belongs to action (for defining this attribute immediately
-        # at action creation).
-        self.result_helper = {}
-
+    @abc.abstractmethod
     def run(self):
+        """Run action logic.
+
+        :return: result of the action. Note that for asynchronous actions
+        it will always be None.
+
+        In case if action failed this method must throw a ActionException
+        to indicate that.
+        """
         pass
 
 
-class RestAction(BaseAction):
+class EchoAction(Action):
+    """Echo action.
 
+    This action just returns a configured value as a result without doing
+    anything else. The value of such action implementation is that it
+    can be used in development (for testing), demonstration and designing
+    of workflows themselves where echo action can play the role of temporary
+    stub.
+    """
+
+    def __init__(self, action_type, action_name, output):
+        super(EchoAction, self).__init__(action_type, action_name)
+        self.output = output
+
+    def run(self):
+        return self.output
+
+
+class RestAction(Action):
     def __init__(self, action_type, action_name, url, params={},
                  method="GET", headers={}, data={}):
         super(RestAction, self).__init__(action_type, action_name)
@@ -57,20 +82,32 @@ class RestAction(BaseAction):
         LOG.info("Sending action HTTP request "
                  "[method=%s, url=%s, params=%s, headers=%s]" %
                  (self.method, self.url, self.params, self.headers))
-        resp = requests.request(self.method, self.url, params=self.params,
-                                headers=self.headers, data=self.data)
+
+        try:
+            resp = requests.request(self.method,
+                                    self.url,
+                                    params=self.params,
+                                    headers=self.headers,
+                                    data=self.data)
+        except Exception as e:
+            raise exc.ActionException("Failed to send HTTP request: %s" % e)
+
         LOG.info("Received HTTP response:\n%s\n%s" %
                  (resp.status_code, resp.content))
+
+        # TODO(rakhmerov):Here we need to apply logic related with
+        # extracting a result as configured in DSL.
+
         # Return rather json than text, but response can contain text also.
         self.status = resp.status_code
         try:
             return resp.json()
         except:
-            LOG.debug("HTTP response content is not json")
+            LOG.debug("HTTP response content is not json.")
             return resp.content
 
 
-class OsloRPCAction(BaseAction):
+class OsloRPCAction(Action):
     def __init__(self, action_type, action_name, host, userid, password,
                  virtual_host, message, routing_key=None, port=5672,
                  exchange=None, queue_name=None):
@@ -116,7 +153,7 @@ class OsloRPCAction(BaseAction):
         self.status = None
 
 
-class SendEmailAction(BaseAction):
+class SendEmailAction(Action):
     def __init__(self, action_type, action_name, params, settings):
         super(SendEmailAction, self).__init__(action_type, action_name)
         #TODO(dzimine): validate parameters
@@ -143,8 +180,10 @@ class SendEmailAction(BaseAction):
         message['Subject'] = self.subject
         message['From'] = self.sender
         message['To'] = self.to
+
         try:
             s = smtplib.SMTP(self.smtp_server)
+
             if self.password is not None:
                 # Sequence to request TLS connection and log in (RFC-2487).
                 s.ehlo()
@@ -156,7 +195,5 @@ class SendEmailAction(BaseAction):
                        to_addrs=self.to,
                        msg=message.as_string())
         except (smtplib.SMTPException, IOError) as e:
-            LOG.error("Error sending email message: %s" % e)
-            #NOTE(DZ): Raise Misral exception instead re-throwing SMTP?
-            # For now just logging the error here and re-thorw the original
-            raise
+            raise exc.ActionException("Failed to send an email message: %s"
+                                      % e)

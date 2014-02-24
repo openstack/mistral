@@ -18,7 +18,7 @@ import pkg_resources as pkg
 
 from mistral.db import api as db_api
 from mistral import dsl
-from mistral.tests.unit import base
+from mistral.tests import base
 from mistral import version
 from mistral.services import scheduler
 

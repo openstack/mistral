@@ -20,7 +20,7 @@ from datetime import timedelta
 from mistral.openstack.common import timeutils
 
 from mistral.services import scheduler as s
-from mistral.tests.unit import base as test_base
+from mistral.tests import base as test_base
 
 
 SAMPLE_EVENT = {

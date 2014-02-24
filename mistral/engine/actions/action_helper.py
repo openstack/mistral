@@ -15,9 +15,6 @@
 #    limitations under the License.
 
 from mistral.engine.actions import action_types as a_t
-from mistral import exceptions as exc
-from mistral.engine import states
-from mistral.engine import expressions as expr
 
 
 def get_action_type(task):
@@ -26,19 +23,3 @@ def get_action_type(task):
 
 def is_task_synchronous(task):
     return get_action_type(task) != a_t.MISTRAL_REST_API
-
-
-def extract_state_result(action, action_result):
-    # All non-Mistral tasks are sync-auto because service doesn't know
-    # about Mistral and we need to receive the result immediately.
-    if action.type != a_t.MISTRAL_REST_API:
-        if action.result_helper.get('select'):
-            result = expr.evaluate(action.result_helper['select'],
-                                   action_result)
-        else:
-            result = action_result
-        # TODO(nmakhotkin) get state for other actions
-        state = states.get_state_by_http_status_code(action.status)
-        return state, result
-    raise exc.InvalidActionException("Error. Wrong type of action to "
-                                     "retrieve the result")

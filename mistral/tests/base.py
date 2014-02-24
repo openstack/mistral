@@ -15,10 +15,25 @@
 #    limitations under the License.
 
 import unittest2
+import pkg_resources as pkg
+import os
+import tempfile
+
+from mistral import version
+from mistral.db.sqlalchemy import api as db_api
+from mistral.openstack.common.db.sqlalchemy import session
+
+
+RESOURCES_PATH = 'tests/resources/'
+
+
+def get_resource(resource_name):
+    return open(pkg.resource_filename(
+        version.version_info.package,
+        RESOURCES_PATH + resource_name)).read()
 
 
 class BaseTest(unittest2.TestCase):
-
     def setUp(self):
         super(BaseTest, self).setUp()
 
@@ -28,3 +43,19 @@ class BaseTest(unittest2.TestCase):
         super(BaseTest, self).tearDown()
 
         # TODO: add whatever is needed for all Mistral tests in here
+
+
+class DbTestCase(BaseTest):
+
+    def setUp(self):
+        self.db_fd, self.db_path = tempfile.mkstemp()
+        session.set_defaults('sqlite:///' + self.db_path, self.db_path)
+        db_api.setup_db()
+
+    def tearDown(self):
+        db_api.drop_db()
+        os.close(self.db_fd)
+        os.unlink(self.db_path)
+
+    def is_db_session_open(self):
+        return db_api._get_thread_local_session() is not None

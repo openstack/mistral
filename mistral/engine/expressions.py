@@ -53,5 +53,10 @@ class YAQLEvaluator(Evaluator):
 _EVALUATOR = YAQLEvaluator()
 
 
+def is_expression(s):
+    # TODO(rakhmerov): It should be generalized since it may not be YAQL.
+    return s and s.startswith('$.')
+
+
 def evaluate(expression, context):
     return _EVALUATOR.evaluate(expression, context)
