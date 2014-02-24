@@ -24,20 +24,18 @@ from mistral.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-def find_workflow_tasks(wb_dsl, task_name):
-    dsl_tasks = wb_dsl.get_tasks()
+def find_workflow_tasks(workbook, task_name):
+    wb_tasks = workbook.tasks
     full_graph = nx.DiGraph()
-    for t in dsl_tasks:
+    for t in wb_tasks:
         full_graph.add_node(t)
 
-    _update_dependencies(dsl_tasks, full_graph)
+    _update_dependencies(wb_tasks, full_graph)
 
     graph = _get_subgraph(full_graph, task_name)
     tasks = []
     for node in graph:
-        task = {'name': node}
-        task.update(dsl_tasks[node])
-        tasks.append(task)
+        tasks.append(wb_tasks[node])
 
     return tasks
 
@@ -55,45 +53,44 @@ def _get_checked_tasks(target_tasks):
     return checked_tasks
 
 
-def _get_tasks_to_schedule(target_tasks, wb_dsl):
+def _get_tasks_to_schedule(target_tasks, workbook):
     tasks_to_schedule = _get_checked_tasks(target_tasks)
-    return [wb_dsl.get_task(t_name) for t_name in tasks_to_schedule]
+    return [workbook.tasks.get(t_name) for t_name in tasks_to_schedule]
 
 
-def find_tasks_after_completion(task, wb_dsl):
+def find_tasks_after_completion(task, workbook):
     """Determine tasks which should be scheduled after completing
     given task. Expression 'on_finish' is not mutually exclusive to
     'on_success' and 'on_error'.
 
     :param task: Task object
-    :param wb_dsl: DSL Parser
-    :return: list of DSL tasks.
+    :param workbook: Workbook Entity
+    :return: list of task dictionaries.
     """
     state = task['state']
     found_tasks = []
     LOG.debug("Recieved task %s: %s" % (task['name'], state))
 
     if state == states.ERROR:
-        tasks_on_error = wb_dsl.get_task_on_error(task['name'])
+        tasks_on_error = workbook.tasks.get(task['name']).get_on_error()
         if tasks_on_error:
-            found_tasks = _get_tasks_to_schedule(tasks_on_error, wb_dsl)
+            found_tasks = _get_tasks_to_schedule(tasks_on_error, workbook)
 
     elif state == states.SUCCESS:
-        tasks_on_success = wb_dsl.get_task_on_success(task['name'])
+        tasks_on_success = workbook.tasks.get(task['name']).get_on_success()
         if tasks_on_success:
-            found_tasks = _get_tasks_to_schedule(tasks_on_success, wb_dsl)
+            found_tasks = _get_tasks_to_schedule(tasks_on_success, workbook)
 
     if states.is_finished(state):
-        tasks_on_finish = wb_dsl.get_task_on_finish(task['name'])
+        tasks_on_finish = workbook.tasks.get(task['name']).get_on_finish()
         if tasks_on_finish:
-            found_tasks += _get_tasks_to_schedule(tasks_on_finish, wb_dsl)
+            found_tasks += _get_tasks_to_schedule(tasks_on_finish, workbook)
 
     LOG.debug("Found tasks: %s" % found_tasks)
 
     workflow_tasks = []
     for t in found_tasks:
-        workflow_tasks += find_workflow_tasks(wb_dsl, t['name'])
-
+        workflow_tasks += find_workflow_tasks(workbook, t.name)
     LOG.debug("Workflow tasks to schedule: %s" % workflow_tasks)
 
     return workflow_tasks
@@ -120,12 +117,12 @@ def _get_subgraph(full_graph, task_name):
 
 
 def _get_dependency_tasks(tasks, task):
-    if 'requires' not in tasks[task]:
+    if len(tasks[task].requires) < 1:
         return []
 
     deps = set()
     for t in tasks:
-        for dep in tasks[task]['requires']:
+        for dep in tasks[task].requires:
             if dep == t:
                 deps.add(t)
 

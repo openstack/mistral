@@ -29,9 +29,9 @@ Workflow:
            routing_key: my_key
            message: MyMessage
 
-   events:
-     backup-vm:
-        type: periodic
-        tasks: send-messages
-        parameters:
-            cron-pattern: 1 0 * * *
+triggers:
+  backup-vm:
+    type: periodic
+    tasks: send-messages
+    parameters:
+      cron-pattern: 1 0 * * *

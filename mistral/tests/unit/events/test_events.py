@@ -17,7 +17,6 @@
 import pkg_resources as pkg
 
 from mistral.db import api as db_api
-from mistral import dsl
 from mistral.tests import base
 from mistral import version
 from mistral.services import scheduler
@@ -29,7 +28,6 @@ class EventsTest(base.DbTestCase):
         self.doc = open(pkg.resource_filename(
             version.version_info.package,
             "tests/resources/test_rest.yaml")).read()
-        self.dsl = dsl.Parser(self.doc)
 
     def test_create_associated_events(self):
         workbook = {

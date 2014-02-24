@@ -18,7 +18,7 @@ from croniter import croniter
 from datetime import datetime
 from datetime import timedelta
 from mistral.db import api as db_api
-from mistral import dsl
+from mistral import dsl_parser as parser
 
 
 def get_next_events():
@@ -50,30 +50,30 @@ def create_event(name, pattern, workbook_name, start_time=None):
     })
 
 
-def create_associated_events(workbook):
-    if not workbook['definition']:
+def create_associated_events(db_workbook):
+    if not db_workbook['definition']:
         return
 
-    parser = dsl.Parser(workbook['definition'])
-    dsl_events = parser.get_events()
+    workbook = parser.get_workbook(db_workbook['definition'])
+    triggers = workbook.get_triggers()
 
     # Prepare all events data in advance to make db transaction shorter.
-    events = []
+    db_triggers = []
 
-    for e in dsl_events:
+    for e in triggers:
         pattern = e['parameters']['cron-pattern']
         next_time = _get_next_execution_time(pattern, datetime.now())
-        events.append({
+        db_triggers.append({
             "name": e['name'],
             "pattern": pattern,
             "next_execution_time": next_time,
-            "workbook_name": workbook['name']
+            "workbook_name": db_workbook['name']
         })
 
     db_api.start_tx()
 
     try:
-        for e in events:
+        for e in db_triggers:
             db_api.event_create(e)
 
         db_api.commit_tx()

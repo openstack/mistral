@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 def evaluate_task_input(task, context):
     res = {}
 
-    params = task['task_dsl'].get('input', {})
+    params = task['task_spec'].get('input', {})
 
     if not params:
         return res
@@ -54,7 +54,7 @@ def prepare_tasks(tasks, context):
 
 
 def get_task_output(task, result):
-    vars_to_publish = task['task_dsl'].get('publish')
+    vars_to_publish = task['task_spec'].get('publish')
 
     output = {}
 

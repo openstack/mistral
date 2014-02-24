@@ -14,12 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine.actions import action_types as a_t
+from mistral.workbook import base
+from mistral.workbook import tasks
 
 
-def get_action_type(task):
-    return task['service_spec']['type']
+class WorkflowSpec(base.BaseSpec):
+    _required_keys = ['tasks']
 
-
-def is_task_synchronous(task):
-    return get_action_type(task) != a_t.MISTRAL_REST_API
+    def __init__(self, workflow):
+        super(WorkflowSpec, self).__init__(workflow)
+        if self.validate():
+            self.tasks = tasks.TaskSpecList(workflow['tasks'])

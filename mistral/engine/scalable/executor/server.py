@@ -36,8 +36,8 @@ class Executor(object):
         """
         LOG.info("Starting task action [task_id=%s, "
                  "action='%s', service='%s'" %
-                 (task['id'], task['task_dsl']['action'],
-                  task['service_dsl']))
+                 (task['id'], task['task_spec']['action'],
+                  task['service_spec']))
 
         action = a_f.create_action(task)
 

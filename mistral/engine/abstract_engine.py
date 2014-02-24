@@ -18,7 +18,7 @@ import abc
 
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
-from mistral import dsl
+from mistral import dsl_parser as parser
 from mistral import exceptions as exc
 from mistral.engine import states
 from mistral.engine import workflow
@@ -38,19 +38,17 @@ class AbstractEngine(object):
     def start_workflow_execution(cls, workbook_name, task_name, context):
         db_api.start_tx()
 
+        workbook = cls._get_workbook(workbook_name)
         # Persist execution and tasks in DB.
         try:
-            wb_dsl = cls._get_wb_dsl(workbook_name)
-
             execution = cls._create_execution(workbook_name,
                                               task_name,
                                               context)
 
             tasks = cls._create_tasks(
-                workflow.find_workflow_tasks(wb_dsl, task_name),
-                wb_dsl,
-                workbook_name,
-                execution['id']
+                workflow.find_workflow_tasks(workbook, task_name),
+                workbook,
+                workbook_name, execution['id']
             )
 
             tasks_to_start = workflow.find_resolved_tasks(tasks)
@@ -73,10 +71,9 @@ class AbstractEngine(object):
                            task_id, state, result):
         db_api.start_tx()
 
+        workbook = cls._get_workbook(workbook_name)
         try:
-            wb_dsl = cls._get_wb_dsl(workbook_name)
             #TODO(rakhmerov): validate state transition
-
             task = db_api.task_get(workbook_name, execution_id, task_id)
 
             task_output = data_flow.get_task_output(task, result)
@@ -90,7 +87,7 @@ class AbstractEngine(object):
             # Calculate task outbound context.
             outbound_context = data_flow.get_outbound_context(task)
 
-            cls._create_next_tasks(task, wb_dsl)
+            cls._create_next_tasks(task, workbook)
 
             # Determine what tasks need to be started.
             tasks = db_api.tasks_get(workbook_name, execution_id)
@@ -159,38 +156,37 @@ class AbstractEngine(object):
         })
 
     @classmethod
-    def _create_next_tasks(cls, task, wb_dsl):
-        dsl_tasks = workflow.find_tasks_after_completion(task, wb_dsl)
+    def _create_next_tasks(cls, task, workbook):
+        tasks = workflow.find_tasks_after_completion(task, workbook)
 
-        tasks = cls._create_tasks(dsl_tasks, wb_dsl, task['workbook_name'],
-                                  task['execution_id'])
+        db_tasks = cls._create_tasks(tasks, workbook, task['workbook_name'],
+                                     task['execution_id'])
 
-        return workflow.find_resolved_tasks(tasks)
+        return workflow.find_resolved_tasks(db_tasks)
 
     @classmethod
-    def _create_tasks(cls, dsl_tasks, wb_dsl, workbook_name, execution_id):
+    def _create_tasks(cls, task_list, workbook, workbook_name, execution_id):
         tasks = []
 
-        for dsl_task in dsl_tasks:
-            task = db_api.task_create(workbook_name, execution_id, {
-                "name": dsl_task["name"],
-                "requires": dsl_task.get("requires", {}),
-                "task_dsl": dsl_task,
-                "service_dsl": wb_dsl.get_service(dsl_task["service_name"]),
+        for task in task_list:
+            db_task = db_api.task_create(workbook_name, execution_id, {
+                "name": task.name,
+                "requires": task.requires,
+                "task_spec": task.to_dict(),
+                "service_spec": workbook.services.get(
+                    task.get_action_service()).to_dict(),
                 "state": states.IDLE,
-                "tags": dsl_task.get("tags", None)
+                "tags": task.get_property("tags", None)
             })
 
-            tasks.append(task)
+            tasks.append(db_task)
 
         return tasks
 
     @classmethod
-    def _get_wb_dsl(cls, workbook_name):
+    def _get_workbook(cls, workbook_name):
         wb = db_api.workbook_get(workbook_name)
-        wb_dsl = dsl.Parser(wb["definition"])
-
-        return wb_dsl
+        return parser.get_workbook(wb["definition"])
 
     @classmethod
     def _determine_execution_state(cls, execution, tasks):

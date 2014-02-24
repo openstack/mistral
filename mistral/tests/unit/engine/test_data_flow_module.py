@@ -38,7 +38,7 @@ TASK = {
     'workbook_name': WB_NAME,
     'execution_id': EXEC_ID,
     'name': 'my_task',
-    'task_dsl': {
+    'task_spec': {
         'input': {
             'p1': 'My string',
             'p2': '$.param3.param32'

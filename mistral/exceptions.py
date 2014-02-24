@@ -85,3 +85,13 @@ class ApplicationContextNotFoundException(MistralException):
         super(ApplicationContextNotFoundException, self).__init__(message)
         if message:
             self.message = message
+
+
+class InvalidModelException(MistralException):
+    message = "Wrong entity definition"
+    code = "INVALID_MODEL_EXCEPTION"
+
+    def __init__(self, message=None):
+        super(InvalidModelException, self).__init__(message)
+        if message:
+            self.message = message

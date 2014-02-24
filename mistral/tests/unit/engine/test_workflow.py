@@ -16,9 +16,9 @@
 
 import pkg_resources as pkg
 
-from mistral import dsl
 from mistral import version
 from mistral.tests import base
+from mistral import dsl_parser as parser
 from mistral.engine import states
 from mistral.engine import workflow
 
@@ -47,11 +47,11 @@ class WorkflowTest(base.DbTestCase):
         self.doc = open(pkg.resource_filename(
             version.version_info.package,
             "tests/resources/test_rest.yaml")).read()
-        self.parser = dsl.Parser(self.doc)
+        self.parser = parser.get_workbook(self.doc)
 
     def test_find_workflow_tasks(self):
         tasks = workflow.find_workflow_tasks(self.parser, "attach-volumes")
-        self.assertEqual(tasks[1]['name'], 'create-vms')
+        self.assertEqual(tasks[1].name, 'create-vms')
 
     def test_tasks_to_start(self):
         tasks_to_start = workflow.find_resolved_tasks(TASKS)

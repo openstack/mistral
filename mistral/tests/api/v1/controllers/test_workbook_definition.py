@@ -24,13 +24,23 @@ from mistral.db import api as db_api
 DEFINITION = "my definition"
 
 NEW_DEFINITION = """
+Services:
+  Service:
+    type:
+    actions:
+      action:
+        parameters:
 Workflow:
-    events:
-        create-vms:
-            type: periodic
-            tasks: create-vms
-            parameters:
-                cron-pattern: "* * * * *"
+  tasks:
+    task1:
+      parameters:
+      action: Service:action
+triggers:
+  create-vms:
+    type: periodic
+    tasks: create-vms
+    parameters:
+      cron-pattern: "* * * * *"
 """
 
 

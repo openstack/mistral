@@ -93,9 +93,9 @@ Workflow:
         on-finish:
           create-vms
 
-   events:
-     create-vms:
-        type: periodic
-        tasks: create-vms
-        parameters:
-            cron-pattern: "* * * * *"
+triggers:
+  create-vms:
+    type: periodic
+    tasks: create-vms
+    parameters:
+      cron-pattern: "* * * * *"

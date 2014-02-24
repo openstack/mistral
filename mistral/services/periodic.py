@@ -21,7 +21,7 @@ from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral import context
-from mistral import dsl
+from mistral import dsl_parser as parser
 from mistral.services import scheduler as sched
 from mistral.services import trusts
 
@@ -38,7 +38,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             context.set_ctx(trusts.create_context(wb))
 
             try:
-                task = dsl.Parser(
+                task = parser.get_workbook(
                     wb['definition']).get_event_task_name(event['name'])
                 engine.start_workflow_execution(wb['name'], task)
             finally:

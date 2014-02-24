@@ -14,12 +14,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine.actions import action_types as a_t
+import yaml
+from yaml import error
+from mistral.workbook import workbook
 
 
-def get_action_type(task):
-    return task['service_spec']['type']
+def parse(workbook_definition):
+    """Loads a workbook definition in YAML format as dictionary object."""
+    try:
+        return yaml.safe_load(workbook_definition)
+    except error.YAMLError as exc:
+        raise RuntimeError("Definition could not be parsed: %s\n" % exc)
 
 
-def is_task_synchronous(task):
-    return get_action_type(task) != a_t.MISTRAL_REST_API
+def get_workbook(workbook_definition):
+    return workbook.WorkbookSpec(parse(workbook_definition))

@@ -18,17 +18,21 @@ from mistral.engine.actions import actions
 from mistral.engine.actions import action_types
 from mistral.engine.actions import action_helper as a_h
 import mistral.exceptions as exc
+from mistral.workbook import services
+from mistral.workbook import tasks
 
 
-def create_action(task):
-    action_type = a_h.get_action_type(task)
+def create_action(db_task):
+    action_type = a_h.get_action_type(db_task)
+    task = tasks.TaskSpec(db_task['task_spec'])
+    service = services.ServiceSpec(db_task['service_spec'])
 
     if not action_types.is_valid(action_type):
         raise exc.InvalidActionException("Action type is not supported: %s" %
                                          action_type)
 
-    action = _get_mapping()[action_type](task)
-    action.result_helper = _find_action_result_helper(task, action)
+    action = _get_mapping()[action_type](db_task, task, service)
+    action.result_helper = _find_action_result_helper(db_task, action)
     return action
 
 
@@ -44,33 +48,33 @@ def _get_mapping():
 
 def _find_action_result_helper(task, action):
     try:
-        return task['service_dsl']['actions'][action.name].get('output', {})
+        return task['service_spec']['actions'][action.name].get('output', {})
     except (KeyError, AttributeError):
         return {}
 
 
-def get_echo_action(task):
-    action_type = a_h.get_action_type(task)
-    action_name = task['task_dsl']['action'].split(':')[1]
+def get_echo_action(db_task, task, service):
+    action_type = service.type
+    action_name = task.get_action_name()
 
-    output = task['service_dsl']['actions'][action_name].get('output', {})
+    output = service.actions.get(action_name).output
 
     return actions.EchoAction(action_type, action_name, output=output)
 
 
-def get_rest_action(task):
-    action_type = a_h.get_action_type(task)
-    action_name = task['task_dsl']['action'].split(':')[1]
-    action_dsl = task['service_dsl']['actions'][action_name]
-    task_params = task['task_dsl'].get('parameters', {})
-    url = task['service_dsl']['parameters']['baseUrl'] +\
-        action_dsl['parameters']['url']
+def get_rest_action(db_task, task, service):
+    action_type = service.type
+    action_name = task.get_action_name()
+    action = service.actions.get(action_name)
+    task_params = task.parameters
+    url = service.parameters['baseUrl'] +\
+        action.parameters['url']
 
     headers = {}
-    headers.update(task['task_dsl'].get('headers', {}))
-    headers.update(action_dsl.get('headers', {}))
+    headers.update(task.parameters.get('headers', {}))
+    headers.update(action.parameters.get('headers', {}))
 
-    method = action_dsl['parameters'].get('method', "GET")
+    method = action.parameters.get('method', "GET")
 
     # input_yaql = task.get('input')
     # TODO(nmakhotkin) extract input from context with the YAQL expression
@@ -87,25 +91,26 @@ def get_rest_action(task):
                               headers=headers, data=task_data)
 
 
-def get_mistral_rest_action(task):
+def get_mistral_rest_action(db_task, task, service):
     mistral_headers = {
-        'Mistral-Workbook-Name': task['workbook_name'],
-        'Mistral-Execution-Id': task['execution_id'],
-        'Mistral-Task-Id': task['id'],
+        'Mistral-Workbook-Name': db_task['workbook_name'],
+        'Mistral-Execution-Id': db_task['execution_id'],
+        'Mistral-Task-Id': db_task['id'],
     }
 
-    action = get_rest_action(task)
+    action = get_rest_action(db_task, task, service)
     action.headers.update(mistral_headers)
 
     return action
 
 
-def get_amqp_action(task):
-    action_type = a_h.get_action_type(task)
-    action_name = task['task_dsl']['action'].split(':')[1]
-    action_params = task['service_dsl']['actions'][action_name]['parameters']
-    task_params = task['task_dsl'].get('parameters', {})
-    service_parameters = task['service_dsl'].get('parameters', {})
+def get_amqp_action(db_task, task, service):
+    action_type = service.type
+    action_name = task.get_action_name()
+    action = service.actions.get(action_name)
+    action_params = action.parameters
+    task_params = task.parameters
+    service_parameters = service.parameters
 
     host = service_parameters['host']
     port = service_parameters.get('port')
@@ -117,18 +122,18 @@ def get_amqp_action(task):
     exchange = action_params.get('exchange')
     queue_name = action_params['queue_name']
 
-    return actions.OsloRPCAction(action_type, host, userid, password,
-                                 virtual_host, message, routing_key, port,
-                                 exchange, queue_name)
+    return actions.OsloRPCAction(action_type, action_name, host, userid,
+                                 password, virtual_host, message, routing_key,
+                                 port, exchange, queue_name)
 
 
-def get_send_email_action(task):
+def get_send_email_action(db_task, task, service):
     #TODO(dzimine): Refactor action_type and action_name settings
     #               for all actions
-    action_type = a_h.get_action_type(task)
-    action_name = task['task_dsl']['action'].split(':')[1]
-    task_params = task['task_dsl'].get('parameters', {})
-    service_params = task['service_dsl'].get('parameters', {})
+    action_type = service.type
+    action_name = task.get_action_name()
+    task_params = task.parameters
+    service_params = service.parameters
 
     return actions.SendEmailAction(action_type, action_name,
                                    task_params, service_params)

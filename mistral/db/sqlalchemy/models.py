@@ -91,8 +91,8 @@ class Task(mb.MistralBase):
     workbook_name = sa.Column(sa.String(80))
     execution_id = sa.Column(sa.String(36))
     description = sa.Column(sa.String())
-    task_dsl = sa.Column(st.JsonDictType())
-    service_dsl = sa.Column(st.JsonDictType())
+    task_spec = sa.Column(st.JsonDictType())
+    service_spec = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
     tags = sa.Column(st.JsonListType())
 

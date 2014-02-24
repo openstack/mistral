@@ -39,7 +39,7 @@ SAMPLE_WORKBOOK = {
     'id': str(uuid.uuid4()),
     'name': WORKBOOK_NAME,
     'description': 'my description',
-    'definition': '{}',
+    'definition': base.get_resource("test_rest.yaml"),
     'tags': [],
     'scope': 'public',
     'updated_at': None,
@@ -59,7 +59,7 @@ SAMPLE_EXECUTION = {
 SAMPLE_TASK = {
     'name': TASK_NAME,
     'workbook_name': WORKBOOK_NAME,
-    'service_dsl': {
+    'service_spec': {
         'type': action_types.REST_API,
         'parameters': {
             'baseUrl': 'http://localhost:8989/v1/'},
@@ -67,8 +67,10 @@ SAMPLE_TASK = {
             'my-action': {
                 'parameters': {
                     'url': 'workbooks',
-                    'method': 'GET'}}}},
-    'task_dsl': {
+                    'method': 'GET'}}},
+        'name': 'MyService'
+    },
+    'task_spec': {
         'action': 'MyRest:my-action',
         'service_name': 'MyRest',
         'name': TASK_NAME},
@@ -109,6 +111,7 @@ class TestExecutor(base.DbTestCase):
 
     def setUp(self):
         # Initialize configuration for the ExecutorClient.
+        super(TestExecutor, self).setUp()
         if not 'executor' in cfg.CONF:
             cfg_grp = cfg.OptGroup(name='executor', title='Executor options')
             opts = [cfg.StrOpt('host', default='0.0.0.0'),
@@ -123,8 +126,6 @@ class TestExecutor(base.DbTestCase):
         self.server = messaging.get_rpc_server(transport, target,
                                                endpoints, executor='eventlet')
         self.server.start()
-
-        super(TestExecutor, self).setUp()
 
     def tearDown(self):
         # Stop the Executor.
