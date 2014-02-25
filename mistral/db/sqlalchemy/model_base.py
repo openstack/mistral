@@ -23,6 +23,8 @@ from mistral.openstack.common.db.sqlalchemy import models as oslo_models
 class _MistralBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
     """Base class for all Mistral SQLAlchemy DB Models."""
 
+    __table__ = None
+
     def to_dict(self):
         """sqlalchemy based automatic to_dict method."""
         d = {}
