@@ -90,16 +90,16 @@ def set_ctx(new_ctx):
     utils.set_thread_local(_CTX_THREAD_LOCAL_NAME, new_ctx)
 
 
-def _wrapper(ctx, thread_description, thread_group, func, *args, **kwargs):
+def _wrapper(context, thread_desc, thread_group, func, *args, **kwargs):
     try:
-        set_ctx(ctx)
+        set_ctx(context)
         func(*args, **kwargs)
     except Exception as e:
         LOG.exception("Thread '%s' fails with exception: '%s'"
-                      % (thread_description, e))
+                      % (thread_desc, e))
         if thread_group and not thread_group.exc:
             thread_group.exc = e
-            thread_group.failed_thread = thread_description
+            thread_group.failed_thread = thread_desc
     finally:
         if thread_group:
             thread_group._on_thread_exit()

@@ -54,7 +54,7 @@ class Parser(object):
     def get_tasks(self):
         tasks = self.doc.get("Workflow", {}).get("tasks", {})
 
-        for task_name, task_dsl in tasks.iteritems():
+        for _, task_dsl in tasks.iteritems():
             task_dsl["service_name"] = task_dsl["action"].split(':')[0]
             req = task_dsl.get("requires")
             if req and isinstance(req, list):

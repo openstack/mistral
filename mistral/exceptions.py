@@ -37,12 +37,14 @@ class MistralException(ex.Error):
 
 class DataAccessException(MistralException):
     def __init__(self, message=None):
+        super(DataAccessException, self).__init__(message)
         if message:
             self.message = message
 
 
 class InvalidActionException(MistralException):
     def __init__(self, message=None):
+        super(InvalidActionException, self).__init__(message)
         if message:
             self.message = message
 
@@ -52,6 +54,7 @@ class DBDuplicateEntry(MistralException):
     code = "DB_DUPLICATE_ENTRY"
 
     def __init__(self, message=None):
+        super(DBDuplicateEntry, self).__init__(message)
         if message:
             self.message = message
 

@@ -89,7 +89,7 @@ class WorkbooksController(rest.RestController):
     def get_all(self):
         LOG.debug("Fetch workbooks.")
 
-        workbooks = [Workbook.from_dict(values)
-                     for values in db_api.workbooks_get()]
+        workbooks_list = [Workbook.from_dict(values)
+                          for values in db_api.workbooks_get()]
 
-        return Workbooks(workbooks=workbooks)
+        return Workbooks(workbooks=workbooks_list)

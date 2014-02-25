@@ -52,7 +52,7 @@ def do_task_action(task):
     action.run()
 
 
-def handle_task_error(task, exc):
+def handle_task_error(task, exception):
     try:
         db_api.start_tx()
         try:
