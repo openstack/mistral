@@ -19,6 +19,7 @@ import pecan
 from oslo.config import cfg
 
 from mistral import context as ctx
+from mistral.engine import engine
 from mistral.db import api as db_api
 from mistral.services import periodic
 from mistral.api import access_control
@@ -47,6 +48,7 @@ def setup_app(config=None):
     app_conf = dict(config.app)
 
     db_api.setup_db()
+    engine.load_engine()
     ##TODO(akuznetsov) move this to event scheduling to separate process
     periodic.setup()
 

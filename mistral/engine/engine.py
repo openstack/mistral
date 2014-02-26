@@ -20,15 +20,16 @@ of workflow executions.
 """
 
 from mistral.openstack.common import importutils
+from oslo.config import cfg
+
+_engine = None
 
 
-# TODO(rakhmerov): make it configurable
-module_name = "mistral.engine.scalable.engine"
-try:
+def load_engine():
+    global _engine
+    module_name = cfg.CONF.engine.engine
     module = importutils.import_module(module_name)
-    IMPL = module.get_engine()
-finally:
-    pass
+    _engine = module.get_engine()
 
 
 def start_workflow_execution(workbook_name, task_name, context=None):
@@ -40,7 +41,7 @@ def start_workflow_execution(workbook_name, task_name, context=None):
     :param context: Execution context which defines a workflow input
     :return: Workflow execution.
     """
-    return IMPL.start_workflow_execution(workbook_name, task_name, context)
+    return _engine.start_workflow_execution(workbook_name, task_name, context)
 
 
 def stop_workflow_execution(workbook_name, execution_id):
@@ -50,7 +51,7 @@ def stop_workflow_execution(workbook_name, execution_id):
     :param execution_id: Workflow execution id.
     :return: Workflow execution.
     """
-    return IMPL.stop_workflow_execution(workbook_name, execution_id)
+    return _engine.stop_workflow_execution(workbook_name, execution_id)
 
 
 def convey_task_result(workbook_name, execution_id, task_id, state, result):
@@ -72,8 +73,8 @@ def convey_task_result(workbook_name, execution_id, task_id, state, result):
     :param result: Task result data.
     :return: Task.
     """
-    return IMPL.convey_task_result(workbook_name, execution_id, task_id,
-                                   state, result)
+    return _engine.convey_task_result(workbook_name, execution_id, task_id,
+                                      state, result)
 
 
 def get_workflow_execution_state(workbook_name, execution_id):
@@ -83,7 +84,7 @@ def get_workflow_execution_state(workbook_name, execution_id):
     :param execution_id: Workflow execution id.
     :return: Current workflow state.
     """
-    return IMPL.get_workflow_execution_state(workbook_name, execution_id)
+    return _engine.get_workflow_execution_state(workbook_name, execution_id)
 
 
 def get_task_state(workbook_name, execution_id, task_id):
@@ -94,4 +95,4 @@ def get_task_state(workbook_name, execution_id, task_id):
     :param task_id: Task id.
     :return: Current task state.
     """
-    return IMPL.get_task_state(workbook_name, execution_id, task_id)
+    return _engine.get_task_state(workbook_name, execution_id, task_id)

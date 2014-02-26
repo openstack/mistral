@@ -29,9 +29,12 @@ from mistral.api import app
 from mistral import config
 from mistral.openstack.common import log as logging
 
-
 eventlet.monkey_patch(
-    os=True, select=True, socket=True, thread=True, time=True)
+    os=True,
+    select=True,
+    socket=True,
+    thread=False if '--use-debugger' in sys.argv else True,
+    time=True)
 
 LOG = logging.getLogger('mistral.cmd.api')
 
