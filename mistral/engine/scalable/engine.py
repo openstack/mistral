@@ -14,11 +14,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
-
-import pika
+from oslo import messaging
 from oslo.config import cfg
 from mistral.openstack.common import log as logging
+from mistral.engine.scalable.executor import client
 from mistral.engine import abstract_engine as abs_eng
 
 
@@ -28,30 +27,14 @@ LOG = logging.getLogger(__name__)
 class ScalableEngine(abs_eng.AbstractEngine):
     @classmethod
     def _notify_task_executors(cls, tasks):
-        opts = cfg.CONF.rabbit
-
-        creds = pika.PlainCredentials(opts.rabbit_user,
-                                      opts.rabbit_password)
-        params = pika.ConnectionParameters(opts.rabbit_host,
-                                           opts.rabbit_port,
-                                           opts.rabbit_virtual_host,
-                                           creds)
-
-        conn = pika.BlockingConnection(params)
-        LOG.debug("Connected to RabbitMQ server [params=%s]" % params)
-
-        try:
-            channel = conn.channel()
-            channel.queue_declare(queue=opts.rabbit_task_queue)
-
-            for task in tasks:
-                msg = json.dumps(task)
-                channel.basic_publish(exchange='',
-                                      routing_key=opts.rabbit_task_queue,
-                                      body=msg)
-                LOG.info("Submitted task for execution: '%s'" % msg)
-        finally:
-            conn.close()
+        # TODO(m4dcoder): Use a pool for transport and client
+        transport = messaging.get_transport(cfg.CONF)
+        ex_client = client.ExecutorClient(transport)
+        for task in tasks:
+            # TODO(m4dcoder): Fill request context argument with auth info
+            context = {}
+            ex_client.handle_task(context, task=task)
+            LOG.info("Submitted task for execution: '%s'" % task)
 
     @classmethod
     def _run_tasks(cls, tasks):

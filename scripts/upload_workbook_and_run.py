@@ -15,10 +15,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import time
+
 from mistralclient.api import client as cl
 
 client = cl.Client(project_name="mistral",
-                   mistral_url="http://localhost:8989/v1")
+                   mistral_url="http://localhost:8989/v1",
+                   username="admin",
+                   api_key="secrete",
+                   auth_url="http://localhost:5000/v3")
 
 WB_NAME = "my_workbook"
 TASK = "my_task"
@@ -48,3 +53,11 @@ print "\nUploaded workbook:\n\"\n%s\"\n" %\
 execution = client.executions.create(WB_NAME, TASK)
 
 print "execution: %s" % execution
+
+# wait until task is complete
+for i in range(0, 20):
+    execution = client.executions.get(WB_NAME, execution.id)
+    print "execution: %s" % execution
+    if execution.state == 'SUCCESS':
+        break
+    time.sleep(1)
