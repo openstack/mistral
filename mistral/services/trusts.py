@@ -27,7 +27,7 @@ CONF = cfg.CONF
 def create_trust(workbook):
     client = keystone.client()
 
-    ctx = context.current()
+    ctx = context.ctx()
 
     admin_user = CONF.keystone.admin_user
     admin_password = CONF.keystone.admin_password

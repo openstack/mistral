@@ -20,6 +20,8 @@ from wsme import types as wtypes
 class Resource(wtypes.Base):
     """REST API Resource."""
 
+    _wsme_attributes = []
+
     def to_dict(self):
         # TODO: take care of nested resources
         d = {}
