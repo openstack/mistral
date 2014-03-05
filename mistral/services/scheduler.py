@@ -21,15 +21,15 @@ from mistral.db import api as db_api
 from mistral import dsl_parser as parser
 
 
-def get_next_events():
-    return db_api.get_next_events(datetime.now() + timedelta(0, 2))
+def get_next_triggers():
+    return db_api.get_next_triggers(datetime.now() + timedelta(0, 2))
 
 
-def set_next_execution_time(event):
-    base = event['next_execution_time']
-    cron = croniter(event['pattern'], base)
+def set_next_execution_time(trigger):
+    base = trigger['next_execution_time']
+    cron = croniter(trigger['pattern'], base)
 
-    return db_api.event_update(event['id'], {
+    return db_api.trigger_update(trigger['id'], {
         'next_execution_time': cron.get_next(datetime)
     })
 
@@ -38,11 +38,11 @@ def _get_next_execution_time(pattern, start_time):
     return croniter(pattern, start_time).get_next(datetime)
 
 
-def create_event(name, pattern, workbook_name, start_time=None):
+def create_trigger(name, pattern, workbook_name, start_time=None):
     if not start_time:
         start_time = datetime.now()
 
-    return db_api.event_create({
+    return db_api.trigger_create({
         "name": name,
         "pattern": pattern,
         "next_execution_time": _get_next_execution_time(pattern, start_time),
@@ -50,14 +50,14 @@ def create_event(name, pattern, workbook_name, start_time=None):
     })
 
 
-def create_associated_events(db_workbook):
+def create_associated_triggers(db_workbook):
     if not db_workbook['definition']:
         return
 
     workbook = parser.get_workbook(db_workbook['definition'])
     triggers = workbook.get_triggers()
 
-    # Prepare all events data in advance to make db transaction shorter.
+    # Prepare all triggers data in advance to make db transaction shorter.
     db_triggers = []
 
     for e in triggers:
@@ -74,7 +74,7 @@ def create_associated_events(db_workbook):
 
     try:
         for e in db_triggers:
-            db_api.event_create(e)
+            db_api.trigger_create(e)
 
         db_api.commit_tx()
     finally:

@@ -49,9 +49,9 @@ Workflow:
         action: MyRest:task4
         parameters:
 
-   events:
-     task4:
-        type: periodic
-        tasks: task4
-        parameters:
-            cron-pattern: "*/1 * * * *"
+triggers:
+  task4:
+    type: periodic
+    tasks: task4
+    parameters:
+      cron-pattern: "*/1 * * * *"

@@ -30,19 +30,19 @@ LOG = log.getLogger(__name__)
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
-    def scheduler_events(self, ctx):
-        LOG.debug('Processing next Scheduler events.')
+    def scheduler_triggers(self, ctx):
+        LOG.debug('Processing next Scheduler triggers.')
 
-        for event in sched.get_next_events():
-            wb = db_api.workbook_get(event['workbook_name'])
+        for trigger in sched.get_next_triggers():
+            wb = db_api.workbook_get(trigger['workbook_name'])
             context.set_ctx(trusts.create_context(wb))
 
             try:
                 task = parser.get_workbook(
-                    wb['definition']).get_event_task_name(event['name'])
+                    wb['definition']).get_trigger_task_name(trigger['name'])
                 engine.start_workflow_execution(wb['name'], task)
             finally:
-                sched.set_next_execution_time(event)
+                sched.set_next_execution_time(trigger)
                 context.set_ctx(None)
 
 

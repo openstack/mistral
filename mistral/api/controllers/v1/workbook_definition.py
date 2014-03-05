@@ -42,6 +42,6 @@ class WorkbookDefinitionController(rest.RestController):
                   (workbook_name, text))
 
         wb = db_api.workbook_definition_put(workbook_name, text)
-        scheduler.create_associated_events(wb)
+        scheduler.create_associated_triggers(wb)
 
         return wb['definition']

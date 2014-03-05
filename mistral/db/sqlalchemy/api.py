@@ -41,7 +41,7 @@ def get_backend():
 def setup_db():
     try:
         engine = db_session.get_engine(sqlite_fk=True)
-        m.Event.metadata.create_all(engine)
+        m.Trigger.metadata.create_all(engine)
     except sa.exc.OperationalError as e:
         LOG.exception("Database registration exception: %s", e)
         return False
@@ -51,7 +51,7 @@ def setup_db():
 def drop_db():
     try:
         engine = db_session.get_engine(sqlite_fk=True)
-        m.Event.metadata.drop_all(engine)
+        m.Trigger.metadata.drop_all(engine)
     except Exception as e:
         LOG.exception("Database shutdown exception: %s", e)
         return False
@@ -190,64 +190,64 @@ def model_query(model, session=None):
     return session.query(model)
 
 
-# Events.
+# Triggers.
 
 @to_dict
 @session_aware()
-def event_create(values, session=None):
-    event = m.Event()
-    event.update(values.copy())
+def trigger_create(values, session=None):
+    trigger = m.Trigger()
+    trigger.update(values.copy())
 
     try:
-        event.save(session)
+        trigger.save(session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Event: %s"
+        raise exc.DBDuplicateEntry("Duplicate entry for Trigger: %s"
                                    % e.columns)
 
-    return event
+    return trigger
 
 
 @to_dict
 @session_aware()
-def event_update(event_id, values, session=None):
-    event = _event_get(event_id)
-    if event is None:
-        raise exc.DataAccessException("Event not found [event_id=%s]" %
-                                      event_id)
+def trigger_update(trigger_id, values, session=None):
+    trigger = _trigger_get(trigger_id)
+    if trigger is None:
+        raise exc.DataAccessException("Trigger not found [trigger_id=%s]" %
+                                      trigger_id)
 
-    event.update(values.copy())
+    trigger.update(values.copy())
 
-    return event
+    return trigger
 
 
 @to_dict
 @session_aware()
-def get_next_events(time, session=None):
-    query = model_query(m.Event)
-    query = query.filter(m.Event.next_execution_time < time)
-    query = query.order_by(m.Event.next_execution_time)
+def get_next_triggers(time, session=None):
+    query = model_query(m.Trigger)
+    query = query.filter(m.Trigger.next_execution_time < time)
+    query = query.order_by(m.Trigger.next_execution_time)
     return query.all()
 
 
 @session_aware()
-def _event_get(event_id, session=None):
-    query = model_query(m.Event)
-    return query.filter_by(id=event_id).first()
+def _trigger_get(trigger_id, session=None):
+    query = model_query(m.Trigger)
+    return query.filter_by(id=trigger_id).first()
 
 
 @to_dict
-def event_get(event_id):
-    return _event_get(event_id)
+def trigger_get(trigger_id):
+    return _trigger_get(trigger_id)
 
 
-def _events_get_all(**kwargs):
-    query = model_query(m.Event)
+def _triggers_get_all(**kwargs):
+    query = model_query(m.Trigger)
     return query.filter_by(**kwargs).all()
 
 
 @to_dict
-def events_get_all(**kwargs):
-    return _events_get_all(**kwargs)
+def triggers_get_all(**kwargs):
+    return _triggers_get_all(**kwargs)
 
 
 # Workbooks.

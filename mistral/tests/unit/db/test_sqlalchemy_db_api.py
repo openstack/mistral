@@ -20,10 +20,10 @@ from mistral.db.sqlalchemy import api as db_api
 from mistral.tests import base as test_base
 
 
-EVENTS = [
+TRIGGERS = [
     {
         'id': '1',
-        'name': 'test_event1',
+        'name': 'test_trigger1',
         'workbook_name': 'wb_name',
         'pattern': '* *',
         'next_execution_time': timeutils.utcnow(),
@@ -31,7 +31,7 @@ EVENTS = [
     },
     {
         'id': '2',
-        'name': 'test_event2',
+        'name': 'test_trigger2',
         'workbook_name': 'wb_name',
         'pattern': '* * *',
         'next_execution_time': timeutils.utcnow(),
@@ -41,30 +41,30 @@ EVENTS = [
 
 
 class EventTest(test_base.DbTestCase):
-    def test_event_create_and_get(self):
-        created = db_api.event_create(EVENTS[0])
+    def test_trigger_create_and_get(self):
+        created = db_api.trigger_create(TRIGGERS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.event_get(created['id'])
+        fetched = db_api.trigger_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
-    def test_event_update(self):
-        created = db_api.event_create(EVENTS[0])
+    def test_trigger_update(self):
+        created = db_api.trigger_create(TRIGGERS[0])
         self.assertIsInstance(created, dict)
 
-        updated = db_api.event_update(created['id'], {'pattern': '0 * *'})
+        updated = db_api.trigger_update(created['id'], {'pattern': '0 * *'})
         self.assertIsInstance(updated, dict)
         self.assertEqual('0 * *', updated['pattern'])
 
-        fetched = db_api.event_get(created['id'])
+        fetched = db_api.trigger_get(created['id'])
         self.assertDictEqual(updated, fetched)
 
-    def test_event_list(self):
-        created0 = db_api.event_create(EVENTS[0])
-        created1 = db_api.event_create(EVENTS[1])
+    def test_trigger_list(self):
+        created0 = db_api.trigger_create(TRIGGERS[0])
+        created1 = db_api.trigger_create(TRIGGERS[1])
 
-        fetched = db_api.events_get_all()
+        fetched = db_api.triggers_get_all()
 
         self.assertEqual(2, len(fetched))
         self.assertDictEqual(created0, fetched[0])
@@ -324,10 +324,10 @@ class TXTest(test_base.DbTestCase):
         db_api.start_tx()
 
         try:
-            created = db_api.event_create(EVENTS[0])
+            created = db_api.trigger_create(TRIGGERS[0])
             self.assertIsInstance(created, dict)
 
-            fetched = db_api.event_get(created['id'])
+            fetched = db_api.trigger_get(created['id'])
             self.assertIsInstance(fetched, dict)
             self.assertDictEqual(created, fetched)
 
@@ -339,7 +339,7 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.event_get(created['id'])
+        fetched = db_api.trigger_get(created['id'])
         self.assertIsNone(fetched)
 
         self.assertFalse(self.is_db_session_open())
@@ -348,10 +348,10 @@ class TXTest(test_base.DbTestCase):
         db_api.start_tx()
 
         try:
-            created = db_api.event_create(EVENTS[0])
+            created = db_api.trigger_create(TRIGGERS[0])
             self.assertIsInstance(created, dict)
 
-            fetched = db_api.event_get(created['id'])
+            fetched = db_api.trigger_get(created['id'])
             self.assertIsInstance(fetched, dict)
             self.assertDictEqual(created, fetched)
 
@@ -363,7 +363,7 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.event_get(created['id'])
+        fetched = db_api.trigger_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -373,12 +373,12 @@ class TXTest(test_base.DbTestCase):
         db_api.start_tx()
 
         try:
-            created_event = db_api.event_create(EVENTS[0])
-            self.assertIsInstance(created_event, dict)
+            created_trigger = db_api.trigger_create(TRIGGERS[0])
+            self.assertIsInstance(created_trigger, dict)
 
-            fetched_event = db_api.event_get(created_event['id'])
-            self.assertIsInstance(fetched_event, dict)
-            self.assertDictEqual(created_event, fetched_event)
+            fetched_trigger = db_api.trigger_get(created_trigger['id'])
+            self.assertIsInstance(fetched_trigger, dict)
+            self.assertDictEqual(created_trigger, fetched_trigger)
 
             created_workbook = db_api.workbook_create(WORKBOOKS[0])
             self.assertIsInstance(created_workbook, dict)
@@ -395,8 +395,8 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched_event = db_api.event_get(created_event['id'])
-        self.assertIsNone(fetched_event)
+        fetched_trigger = db_api.trigger_get(created_trigger['id'])
+        self.assertIsNone(fetched_trigger)
 
         fetched_workbook = db_api.workbook_get(created_workbook['name'])
         self.assertIsNone(fetched_workbook)
@@ -407,12 +407,12 @@ class TXTest(test_base.DbTestCase):
         db_api.start_tx()
 
         try:
-            created_event = db_api.event_create(EVENTS[0])
-            self.assertIsInstance(created_event, dict)
+            created_trigger = db_api.trigger_create(TRIGGERS[0])
+            self.assertIsInstance(created_trigger, dict)
 
-            fetched_event = db_api.event_get(created_event['id'])
-            self.assertIsInstance(fetched_event, dict)
-            self.assertDictEqual(created_event, fetched_event)
+            fetched_trigger = db_api.trigger_get(created_trigger['id'])
+            self.assertIsInstance(fetched_trigger, dict)
+            self.assertDictEqual(created_trigger, fetched_trigger)
 
             created_workbook = db_api.workbook_create(WORKBOOKS[0])
             self.assertIsInstance(created_workbook, dict)
@@ -429,9 +429,9 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched_event = db_api.event_get(created_event['id'])
-        self.assertIsInstance(fetched_event, dict)
-        self.assertDictEqual(created_event, fetched_event)
+        fetched_trigger = db_api.trigger_get(created_trigger['id'])
+        self.assertIsInstance(fetched_trigger, dict)
+        self.assertDictEqual(created_trigger, fetched_trigger)
 
         fetched_workbook = db_api.workbook_get(created_workbook['name'])
         self.assertIsInstance(fetched_workbook, dict)

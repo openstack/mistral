@@ -33,10 +33,10 @@ def _id_column():
                      default=_generate_unicode_uuid)
 
 
-class Event(mb.MistralBase):
-    """Contains all info about event."""
+class Trigger(mb.MistralBase):
+    """Contains all info about trigger."""
 
-    __tablename__ = 'events'
+    __tablename__ = 'triggers'
 
     __table_args__ = (
         sa.UniqueConstraint('name'),
