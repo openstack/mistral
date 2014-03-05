@@ -19,6 +19,10 @@ default_log_levels = mistral=INFO,mistral.cmd.api=INFO,mistral.api=DEBUG,wsme=DE
 host = 0.0.0.0
 port = 8989
 
+[engine]
+# Mistral engine class (string value)
+#engine=mistral.engine.scalable.engine
+
 [pecan]
 auth_enable = True
 

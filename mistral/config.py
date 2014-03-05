@@ -24,10 +24,14 @@ from keystoneclient.middleware import auth_token
 from mistral.openstack.common import log
 from mistral import version
 
-
 api_opts = [
     cfg.StrOpt('host', default='0.0.0.0', help='Mistral API server host'),
     cfg.IntOpt('port', default=8989, help='Mistral API server port')
+]
+
+engine_opts = [
+    cfg.StrOpt('engine', default='mistral.engine.scalable.engine',
+               help='Mistral engine class')
 ]
 
 pecan_opts = [
@@ -54,14 +58,25 @@ rabbit_opts = [
     cfg.StrOpt('rabbit_password', default='guest', help='RabbitMQ password')
 ]
 
+use_debugger = cfg.BoolOpt(
+    "use-debugger",
+    default=False,
+    help='Enables debugger. Note that using this option changes how the '
+    'eventlet library is used to support async IO. This could result '
+    'in failures that do not occur under normal operation. '
+    'Use at your own risk.'
+)
+
 CONF = cfg.CONF
 
 CONF.register_opts(api_opts, group='api')
+CONF.register_opts(engine_opts, group='engine')
 CONF.register_opts(pecan_opts, group='pecan')
 CONF.register_opts(auth_token.opts, group='keystone')
 CONF.register_opts(db_opts, group='database')
 CONF.register_opts(rabbit_opts, group='rabbit')
 
+CONF.register_cli_opt(use_debugger)
 
 CONF.import_opt('verbose', 'mistral.openstack.common.log')
 CONF.import_opt('debug', 'mistral.openstack.common.log')
@@ -72,7 +87,6 @@ CONF.import_opt('log_format', 'mistral.openstack.common.log')
 CONF.import_opt('log_date_format', 'mistral.openstack.common.log')
 CONF.import_opt('use_syslog', 'mistral.openstack.common.log')
 CONF.import_opt('syslog_log_facility', 'mistral.openstack.common.log')
-
 
 cfg.set_defaults(log.log_opts,
                  default_log_levels=['sqlalchemy=WARN',
