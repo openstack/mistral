@@ -53,11 +53,30 @@ def prepare_tasks(tasks, context):
                             'input': task['input']})
 
 
-def merge_into_context(context, values):
-    if not context:
-        return None
+def get_task_output(task, result):
+    vars_to_publish = task['task_dsl'].get('publish')
 
-    # TODO(rakhmerov): Take care of nested variables.
-    context.update(values)
+    output = {}
 
-    return context
+    if result:
+        output['task'] = {task['name']: result}
+
+        # TODO(rakhmerov): Take care of nested variables.
+        if vars_to_publish:
+            for var_name, res_var_name in vars_to_publish.iteritems():
+                output[var_name] = result[res_var_name]
+
+    return output
+
+
+def get_outbound_context(task):
+    in_context = task.get('in_context')
+
+    out_context = in_context.copy() if in_context else {}
+
+    output = task.get('output')
+
+    if output:
+        out_context.update(output)
+
+    return out_context

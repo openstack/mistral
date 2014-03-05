@@ -7,8 +7,10 @@ Services:
           full_name: John Doe
       build_greeting:
         output:
-          greeting: Hello, John Doe!
-
+          greeting: Cheers!
+      send_greeting:
+        output:
+          greeting_sent: True
 
 Workflow:
   #  context = {
@@ -33,7 +35,13 @@ Workflow:
         f_name: full_name
 
     build_greeting:
-      requires: [build_full_name]
       action: MyService:build_greeting
+      publish:
+        greet_msg: greeting
+
+    send_greeting:
+      requires: [build_full_name, build_greeting]
+      action: MyService:send_greeting
       input:
-        full_name: $.f_name
+        f_name: $.f_name
+        greet_msg: $.greet_msg

@@ -77,16 +77,18 @@ class AbstractEngine(object):
             wb_dsl = cls._get_wb_dsl(workbook_name)
             #TODO(rakhmerov): validate state transition
 
+            task = db_api.task_get(workbook_name, execution_id, task_id)
+
+            task_output = data_flow.get_task_output(task, result)
+
             # Update task state.
             task = db_api.task_update(workbook_name, execution_id, task_id,
-                                      {"state": state, "output": result})
+                                      {"state": state, "output": task_output})
 
             execution = db_api.execution_get(workbook_name, execution_id)
 
             # Calculate task outbound context.
-            # TODO(rakhmerov): publish result into context selectively
-            outbound_context = \
-                data_flow.merge_into_context(task['in_context'], result)
+            outbound_context = data_flow.get_outbound_context(task)
 
             cls._create_next_tasks(task, wb_dsl)
 

@@ -22,7 +22,6 @@ from mistral.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 
-
 WB_NAME = 'my_workbook'
 EXEC_ID = '1'
 
@@ -43,8 +42,12 @@ TASK = {
         'input': {
             'p1': 'My string',
             'p2': '$.param3.param32'
+        },
+        'publish': {
+            'new_key11': 'new_key1'
         }
-    }
+    },
+    'in_context': CONTEXT
 }
 
 
@@ -70,8 +73,16 @@ class DataFlowTest(base.DbTestCase):
             'p2': 'val32'
         })
 
-    def test_merge_into_context(self):
-        ctx = data_flow.merge_into_context(CONTEXT.copy(),
-                                           {'new_key1': 'new_val1'})
+    def test_get_outbound_context(self):
+        output = data_flow.get_task_output(TASK, {'new_key1': 'new_val1'})
 
-        self.assertEqual(ctx['new_key1'], 'new_val1')
+        self.assertDictEqual(
+            {
+                'new_key11': 'new_val1',
+                'task': {
+                    'my_task': {
+                        'new_key1': 'new_val1'
+                    }
+                }
+            },
+            output)

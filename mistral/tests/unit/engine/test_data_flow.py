@@ -20,6 +20,8 @@ from mistral.db import api as db_api
 from mistral.engine.local import engine
 from mistral.engine import states
 
+# TODO(rakhmerov): add more tests
+
 LOG = logging.getLogger(__name__)
 
 ENGINE = engine.get_engine()()
@@ -45,6 +47,13 @@ def create_workbook(definition_path):
 
 
 class DataFlowTest(base.DbTestCase):
+    def _get_task(self, tasks, name):
+        for t in tasks:
+            if t['name'] == name:
+                return t
+
+        self.fail("Task not found [name=%s]" % name)
+
     def test_two_dependent_tasks(self):
         wb = create_workbook('data_flow/two_dependent_tasks.yaml')
 
@@ -63,33 +72,129 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        if tasks[0]['name'] == 'build_full_name':
-            build_full_name_task = tasks[0]
-            build_greeting_task = tasks[1]
-        else:
-            build_full_name_task = tasks[1]
-            build_greeting_task = tasks[0]
-
-        self.assertEqual(build_full_name_task['name'], 'build_full_name')
-        self.assertEqual(build_greeting_task['name'], 'build_greeting')
+        build_full_name_task = self._get_task(tasks, 'build_full_name')
+        build_greeting_task = self._get_task(tasks, 'build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
         self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
                              build_full_name_task['input'])
-        self.assertDictEqual({'full_name': 'John Doe'},
-                             build_full_name_task['output'])
+        self.assertDictEqual(
+            {
+                'f_name': 'John Doe',
+                'task': {
+                    'build_full_name': {
+                        'full_name': 'John Doe'
+                    }
+                }
+            },
+            build_full_name_task['output'])
 
         # Check the second task.
         in_context = CONTEXT.copy()
-        in_context['full_name'] = 'John Doe'
+        in_context['f_name'] = 'John Doe'
 
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
-        self.assertDictEqual(in_context, build_greeting_task['in_context'])
+        self.assertEqual('John Doe',
+                         build_greeting_task['in_context']['f_name'])
         self.assertDictEqual({'full_name': 'John Doe'},
                              build_greeting_task['input'])
-        self.assertDictEqual({'greeting': 'Hello, John Doe!'},
-                             build_greeting_task['output'])
+        self.assertDictEqual(
+            {
+                'task': {
+                    'build_greeting': {
+                        'greeting': 'Hello, John Doe!',
+                    }
+                }
+            },
+            build_greeting_task['output'])
 
-        # TODO(rakhmerov): add more checks
+        del build_greeting_task['in_context']['f_name']
+        del build_greeting_task['in_context']['task']
+        self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
+
+    def test_task_with_two_dependencies(self):
+        wb = create_workbook('data_flow/task_with_two_dependencies.yaml')
+
+        execution = ENGINE.start_workflow_execution(wb['name'],
+                                                    'send_greeting',
+                                                    CONTEXT)
+
+        # We have to reread execution to get its latest version.
+        execution = db_api.execution_get(execution['workbook_name'],
+                                         execution['id'])
+
+        self.assertEqual(execution['state'], states.SUCCESS)
+        self.assertDictEqual(execution['context'], CONTEXT)
+
+        tasks = db_api.tasks_get(wb['name'], execution['id'])
+
+        self.assertEqual(3, len(tasks))
+
+        build_full_name_task = self._get_task(tasks, 'build_full_name')
+        build_greeting_task = self._get_task(tasks, 'build_greeting')
+        send_greeting_task = self._get_task(tasks, 'send_greeting')
+
+        # Check the first task.
+        self.assertEqual(states.SUCCESS, build_full_name_task['state'])
+        self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
+        self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
+                             build_full_name_task['input'])
+        self.assertDictEqual(
+            {
+                'f_name': 'John Doe',
+                'task': {
+                    'build_full_name': {
+                        'full_name': 'John Doe',
+                    }
+                }
+            },
+            build_full_name_task['output'])
+
+        # Check the second task.
+        in_context = CONTEXT.copy()
+        in_context['f_name'] = 'John Doe'
+
+        self.assertEqual(states.SUCCESS, build_greeting_task['state'])
+        self.assertEqual('John Doe',
+                         build_greeting_task['in_context']['f_name'])
+        self.assertDictEqual({}, build_greeting_task['input'])
+        self.assertDictEqual(
+            {
+                'greet_msg': 'Cheers!',
+                'task': {
+                    'build_greeting': {
+                        'greeting': 'Cheers!'
+                    }
+                }
+            },
+            build_greeting_task['output'])
+
+        del build_greeting_task['in_context']['f_name']
+        del build_greeting_task['in_context']['task']
+        self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
+
+        # Check the third task.
+        in_context = CONTEXT.copy()
+        in_context['f_name'] = 'John Doe'
+        in_context['greet_msg'] = 'Cheers!'
+        in_context['task'] = {
+            'build_greeting': {
+                'greeting': 'Cheers!'
+            }
+        }
+
+        self.assertEqual(states.SUCCESS, send_greeting_task['state'])
+        self.assertDictEqual(in_context, send_greeting_task['in_context'])
+        self.assertDictEqual({'f_name': 'John Doe', 'greet_msg': 'Cheers!'},
+                             send_greeting_task['input'])
+        self.assertDictEqual(
+            {
+                'task': {
+                    'send_greeting': {
+                        'greeting_sent': True
+                    }
+                }
+            },
+            send_greeting_task['output'])
