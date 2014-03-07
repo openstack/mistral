@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
 
 from mistral.workbook import base
 
@@ -38,26 +39,31 @@ class TaskSpec(base.BaseSpec):
             elif isinstance(req, dict):
                 task['requires'] = req
 
+    def _get_on_state(self, key):
+        tasks = self.get_property(key)
+        if not tasks:
+            return None
+        if isinstance(tasks, dict):
+            return tasks
+        elif isinstance(tasks, list):
+            result = {}
+            for t in tasks:
+                result.update(t if isinstance(t, dict) else {t: ''})
+            return result
+        elif isinstance(tasks, six.string_types):
+            return {tasks: ''}
+
     def get_property(self, property_name, default=None):
         return self._data.get(property_name, default)
 
     def get_on_error(self):
-        task = self.get_property("on-error")
-        if task:
-            return task if isinstance(task, dict) else {task: ''}
-        return None
+        return self._get_on_state("on-error")
 
     def get_on_success(self):
-        task = self.get_property("on-success")
-        if task:
-            return task if isinstance(task, dict) else {task: ''}
-        return None
+        return self._get_on_state("on-success")
 
     def get_on_finish(self):
-        task = self.get_property("on-finish")
-        if task:
-            return task if isinstance(task, dict) else {task: ''}
-        return None
+        return self._get_on_state("on-finish")
 
     def get_action_service(self):
         return self.action.split(':')[0]

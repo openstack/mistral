@@ -89,7 +89,8 @@ Workflow:
         on-success:
           attach-volumes
         on-error:
-          backup-vms: $.status != 'OK'
+          - backup-vms: $.status != 'OK'
+          - attach-volumes
         on-finish:
           create-vms
 

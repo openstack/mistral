@@ -175,7 +175,7 @@ class TestExecutor(base.DbTestCase):
                 self.assertIn(db_task['state'],
                               [states.RUNNING, states.SUCCESS, states.ERROR])
                 return
-            time.sleep(0.01)
+            time.sleep(0.1)
 
         # Task is not being processed. Throw an exception here.
         raise Exception('Timed out waiting for task to be processed.')

@@ -52,7 +52,8 @@ class DSLModelTest(unittest2.TestCase):
         subseq_error = subsequent.get_on_error()
         subseq_finish = subsequent.get_on_finish()
         self.assertEqual(subseq_success, {"attach-volumes": ''})
-        self.assertEqual(subseq_error, {"backup-vms": "$.status != 'OK'"})
+        self.assertEqual(subseq_error, {"backup-vms": "$.status != 'OK'",
+                                        "attach-volumes": ''})
         self.assertEqual(subseq_finish, {"create-vms": ''})
 
     def test_actions(self):

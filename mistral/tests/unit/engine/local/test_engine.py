@@ -180,7 +180,7 @@ class TestLocalEngine(base.DbTestCase):
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
-        self.assertEqual(len(tasks), 4)
+        self.assertEqual(len(tasks), 6)
 
         backup_vms = [t for t in tasks if t['name'] == 'backup-vms'][0]
 
@@ -203,6 +203,12 @@ class TestLocalEngine(base.DbTestCase):
 
         ENGINE.convey_task_result(WB_NAME, execution['id'],
                                   tasks[1]['id'],
+                                  states.SUCCESS, None)
+        ENGINE.convey_task_result(WB_NAME, execution['id'],
+                                  tasks[4]['id'],
+                                  states.SUCCESS, None)
+        ENGINE.convey_task_result(WB_NAME, execution['id'],
+                                  tasks[5]['id'],
                                   states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
