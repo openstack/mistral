@@ -27,6 +27,6 @@ def create_workbook(values):
         workbook = trusts.create_trust(workbook)
 
     ##TODO(akuznetsov) filter fields
-    ##TODO(akuznetsov) create events
+    ##TODO(akuznetsov) create triggers
 
     return workbook

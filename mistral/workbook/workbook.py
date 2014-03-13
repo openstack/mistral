@@ -51,6 +51,6 @@ class WorkbookSpec(base.BaseSpec):
     def get_actions(self, service_name):
         return self.services.get(service_name).actions
 
-    def get_event_task_name(self, event_name):
-        event = self._data["Workflow"]["events"].get(event_name)
-        return event.get('tasks') if event else ""
+    def get_trigger_task_name(self, trigger_name):
+        trigger = self._data["triggers"].get(trigger_name)
+        return trigger.get('tasks') if trigger else ""

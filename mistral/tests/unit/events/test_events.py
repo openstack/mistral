@@ -22,23 +22,23 @@ from mistral import version
 from mistral.services import scheduler
 
 
-class EventsTest(base.DbTestCase):
+class TriggersTest(base.DbTestCase):
     def setUp(self):
-        super(EventsTest, self).setUp()
+        super(TriggersTest, self).setUp()
         self.doc = open(pkg.resource_filename(
             version.version_info.package,
             "tests/resources/test_rest.yaml")).read()
 
-    def test_create_associated_events(self):
+    def test_create_associated_triggers(self):
         workbook = {
             'name': 'my_workbook',
             'definition': self.doc
         }
 
-        scheduler.create_associated_events(workbook)
+        scheduler.create_associated_triggers(workbook)
 
-        events = db_api.events_get(workbook_name='my_workbook')
+        triggers = db_api.triggers_get(workbook_name='my_workbook')
 
-        self.assertEqual(events[0]['name'], 'create-vms')
-        self.assertEqual(events[0]['pattern'], '* * * * *')
-        self.assertEqual(events[0]['workbook_name'], 'my_workbook')
+        self.assertEqual(triggers[0]['name'], 'create-vms')
+        self.assertEqual(triggers[0]['pattern'], '* * * * *')
+        self.assertEqual(triggers[0]['workbook_name'], 'my_workbook')

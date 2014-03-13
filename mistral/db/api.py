@@ -156,19 +156,19 @@ def listeners_get(workbook_name):
     return [{}]
 
 
-# Events
+# Triggers
 
-def event_create(values):
-    return IMPL.event_create(values)
-
-
-def events_get(**kwargs):
-    return IMPL.events_get_all(**kwargs)
+def trigger_create(values):
+    return IMPL.trigger_create(values)
 
 
-def event_update(event_id, values):
-    return IMPL.event_update(event_id, values)
+def triggers_get(**kwargs):
+    return IMPL.triggers_get_all(**kwargs)
 
 
-def get_next_events(time):
-    return IMPL.get_next_events(time)
+def trigger_update(trigger_id, values):
+    return IMPL.trigger_update(trigger_id, values)
+
+
+def get_next_triggers(time):
+    return IMPL.get_next_triggers(time)

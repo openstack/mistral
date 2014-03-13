@@ -67,9 +67,9 @@ class TestWorkbookDefinitionController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertEqual(NEW_DEFINITION, resp.body)
 
-        # Check that associated events have been created in DB.
-        events = db_api.events_get(workbook_name='my_workbook')
+        # Check that associated triggers have been created in DB.
+        triggers = db_api.triggers_get(workbook_name='my_workbook')
 
-        self.assertEqual(events[0]['name'], 'create-vms')
-        self.assertEqual(events[0]['pattern'], '* * * * *')
-        self.assertEqual(events[0]['workbook_name'], 'my_workbook')
+        self.assertEqual(triggers[0]['name'], 'create-vms')
+        self.assertEqual(triggers[0]['pattern'], '* * * * *')
+        self.assertEqual(triggers[0]['workbook_name'], 'my_workbook')

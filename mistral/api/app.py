@@ -49,7 +49,7 @@ def setup_app(config=None):
 
     db_api.setup_db()
     engine.load_engine()
-    ##TODO(akuznetsov) move this to event scheduling to separate process
+    ##TODO(akuznetsov) move this to trigger scheduling to separate process
     periodic.setup()
 
     app = pecan.make_app(
