@@ -231,7 +231,8 @@ TASKS = [
         'updated_at': None,
         'in_context': None,
         'input': None,
-        'output': None
+        'output': None,
+        'exec_flow_context': None
     },
     {
         'id': '2',
@@ -248,7 +249,8 @@ TASKS = [
         'updated_at': None,
         'in_context': {'image_id': '123123'},
         'input': {'image_id': '123123'},
-        'output': {'vm_id': '343123'}
+        'output': {'vm_id': '343123'},
+        'exec_flow_context': None
     },
 ]
 

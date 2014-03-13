@@ -1,0 +1,17 @@
+Services:
+   MyService:
+    type: ECHO
+    actions:
+        repeatable-action:
+            output:
+                greeting: Cheers!
+
+Workflow:
+  tasks:
+    repeater_task:
+      repeat:
+        iterations: 0
+        delay: 0
+      action: MyService:repeatable-action
+      publish:
+        greet_msg: greeting

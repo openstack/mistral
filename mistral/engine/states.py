@@ -21,8 +21,9 @@ RUNNING = 'RUNNING'
 SUCCESS = 'SUCCESS'
 ERROR = 'ERROR'
 STOPPED = 'STOPPED'
+DELAYED = 'DELAYED'
 
-_ALL = [IDLE, RUNNING, SUCCESS, ERROR, STOPPED]
+_ALL = [IDLE, RUNNING, SUCCESS, ERROR, STOPPED, DELAYED]
 
 
 def is_valid(state):
@@ -35,6 +36,10 @@ def is_finished(state):
 
 def is_stopped_or_finished(state):
     return state == STOPPED or is_finished(state)
+
+
+def is_stopped_or_unsuccessful_finish(state):
+    return state == STOPPED or state == ERROR
 
 
 def get_state_by_http_status_code(status_code):

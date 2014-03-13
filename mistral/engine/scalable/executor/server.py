@@ -116,11 +116,14 @@ class Executor(object):
                     db_task['state'] != states.IDLE:
                 return
 
-            self._do_task_action(db_task)
+            # update the state to running before performing action. The
+            # do_task_action assigns state to the task which is the appropriate
+            # value to preserve.
             db_api.task_update(task['workbook_name'],
                                task['execution_id'],
                                task['id'],
                                {'state': states.RUNNING})
+            self._do_task_action(db_task)
         except Exception as exc:
             LOG.exception(exc)
             self._handle_task_error(task, exc)

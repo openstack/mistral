@@ -71,6 +71,23 @@ class TaskSpec(base.BaseSpec):
     def get_action_name(self):
         return self.action.split(':')[1]
 
+    def is_repeater_task(self):
+        return self.get_property("repeat") is not None
+
+    def get_repeat_task_parameters(self):
+        iterations = 0
+        break_on = None
+        delay = 0
+        repeat = self.get_property("repeat")
+        if repeat:
+            if "iterations" in repeat:
+                iterations = repeat["iterations"]
+            if "break-on" in repeat:
+                break_on = repeat["break-on"]
+            if "delay" in repeat:
+                delay = repeat["delay"]
+        return iterations, break_on, delay
+
 
 class TaskSpecList(base.BaseSpecList):
     item_class = TaskSpec

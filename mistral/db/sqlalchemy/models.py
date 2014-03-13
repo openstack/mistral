@@ -100,3 +100,6 @@ class Task(mb.MistralBase):
     in_context = sa.Column(st.JsonDictType())
     input = sa.Column(st.JsonDictType())
     output = sa.Column(st.JsonDictType())
+
+    # Execution context
+    exec_flow_context = sa.Column(st.JsonDictType())

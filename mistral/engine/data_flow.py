@@ -74,12 +74,13 @@ def get_task_output(task, result):
     return output
 
 
-def get_outbound_context(task):
+def get_outbound_context(task, output=None):
     in_context = task.get('in_context')
 
     out_context = in_context.copy() if in_context else {}
 
-    output = task.get('output')
+    if not output:
+        output = task.get('output')
 
     if output:
         out_context.update(output)
@@ -105,6 +106,8 @@ def _modify_item(item, context):
 
 
 def apply_context(data, context):
+    if not context:
+        return data
     if isinstance(data, dict):
         for key in data:
             data[key] = _modify_item(data[key], context)

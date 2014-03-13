@@ -1,0 +1,26 @@
+Services:
+   MyService:
+    type: ECHO
+    actions:
+        repeatable-action:
+            output:
+                greeting: Cheers!
+
+Workflow:
+  tasks:
+    repeater_task:
+      repeat:
+        iterations: 5
+        delay: 0
+      action: MyService:repeatable-action
+      publish:
+        greet_msg: greeting
+
+    repeater_task_break_early:
+      repeat:
+        iterations: 5
+        delay: 0
+        break-on: $.greet_msg != null
+      action: MyService:repeatable-action
+      publish:
+        greet_msg: greeting
