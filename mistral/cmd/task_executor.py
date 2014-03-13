@@ -35,7 +35,9 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 
 from oslo import messaging
 from oslo.config import cfg
+
 from mistral import config
+from mistral.engine import engine
 from mistral.engine.scalable.executor import server
 from mistral.openstack.common import log as logging
 
@@ -47,6 +49,11 @@ def main():
     try:
         config.parse_args()
         logging.setup('Mistral')
+
+        # TODO(rakhmerov): This is a temporary hack.
+        # We have to initialize engine in executor process because
+        # executor now calls engine.convey_task_result() directly.
+        engine.load_engine()
 
         # Please refer to the oslo.messaging documentation for transport
         # configuration. The default transport for oslo.messaging is rabbitMQ.
