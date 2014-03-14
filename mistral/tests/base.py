@@ -45,7 +45,10 @@ class BaseTest(unittest2.TestCase):
         # TODO: add whatever is needed for all Mistral tests in here
 
     def _assert_single_item(self, items, **props):
-        def _matches(item):
+        return self._assert_multiple_items(items, 1, **props)[0]
+
+    def _assert_multiple_items(self, items, count, **props):
+        def _matches(item, **props):
             for prop_name, prop_val in props.iteritems():
                 v = item[prop_name] if isinstance(item, dict) \
                     else getattr(item, prop_name)
@@ -55,15 +58,15 @@ class BaseTest(unittest2.TestCase):
 
             return True
 
-        filtered_items = filter(_matches, items)
+        filtered_items = filter(lambda item: _matches(item, **props), items)
 
-        if len(filtered_items) == 0:
-            self.fail("Item not found [props=%s]" % props)
+        found = len(filtered_items)
 
-        if len(filtered_items) != 1:
-            self.fail("Multiple items found [props=%s]" % props)
+        if found != count:
+            self.fail("Wrong number of items found [props=%s, "
+                      "expected=%s, found=%s]" % (props, count, found))
 
-        return filtered_items[0]
+        return filtered_items
 
 
 class DbTestCase(BaseTest):
