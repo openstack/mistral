@@ -14,8 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import collections
-
 from mistral import exceptions
 
 
@@ -41,11 +39,12 @@ class BaseSpecList(object):
     item_class = None
 
     def __init__(self, data):
-        self.items = collections.OrderedDict()
+        self.items = {}
+
         for k, v in data.items():
-            item = data[k]
-            item.update({'name': k})
-            self.items.update({k: self.item_class(item)})
+            v['name'] = k
+            self.items[k] = self.item_class(v)
+
         for name in self:
             self.get(name).validate()
 

@@ -47,13 +47,6 @@ def create_workbook(definition_path):
 
 
 class DataFlowTest(base.DbTestCase):
-    def _get_task(self, tasks, name):
-        for t in tasks:
-            if t['name'] == name:
-                return t
-
-        self.fail("Task not found [name=%s]" % name)
-
     def test_two_dependent_tasks(self):
         wb = create_workbook('data_flow/two_dependent_tasks.yaml')
 
@@ -72,8 +65,10 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        build_full_name_task = self._get_task(tasks, 'build_full_name')
-        build_greeting_task = self._get_task(tasks, 'build_greeting')
+        build_full_name_task =\
+            self._assert_single_item(tasks, name='build_full_name')
+        build_greeting_task =\
+            self._assert_single_item(tasks, name='build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
@@ -133,9 +128,12 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        build_full_name_task = self._get_task(tasks, 'build_full_name')
-        build_greeting_task = self._get_task(tasks, 'build_greeting')
-        send_greeting_task = self._get_task(tasks, 'send_greeting')
+        build_full_name_task =\
+            self._assert_single_item(tasks, name='build_full_name')
+        build_greeting_task =\
+            self._assert_single_item(tasks, name='build_greeting')
+        send_greeting_task =\
+            self._assert_single_item(tasks, name='send_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
@@ -219,8 +217,10 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        build_full_name_task = self._get_task(tasks, 'build_full_name')
-        build_greeting_task = self._get_task(tasks, 'build_greeting')
+        build_full_name_task =\
+            self._assert_single_item(tasks, name='build_full_name')
+        build_greeting_task =\
+            self._assert_single_item(tasks, name='build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
@@ -281,9 +281,12 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        build_full_name_task = self._get_task(tasks, 'build_full_name')
-        build_greeting_task = self._get_task(tasks, 'build_greeting')
-        send_greeting_task = self._get_task(tasks, 'send_greeting')
+        build_full_name_task =\
+            self._assert_single_item(tasks, name='build_full_name')
+        build_greeting_task =\
+            self._assert_single_item(tasks, name='build_greeting')
+        send_greeting_task =\
+            self._assert_single_item(tasks, name='send_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])

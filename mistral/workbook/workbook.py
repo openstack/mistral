@@ -24,6 +24,7 @@ class WorkbookSpec(base.BaseSpec):
 
     def __init__(self, doc):
         super(WorkbookSpec, self).__init__(doc)
+
         if self.validate():
             self.services = services.ServiceSpecList(self._data['Services'])
             self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
@@ -31,21 +32,26 @@ class WorkbookSpec(base.BaseSpec):
 
     def get_triggers(self):
         triggers_from_data = self._data.get("triggers", None)
+
         if not triggers_from_data:
             return []
+
         triggers = []
         for name in triggers_from_data:
             trigger_dict = {'name': name}
             trigger_dict.update(triggers_from_data[name])
             triggers.append(trigger_dict)
+
         return triggers
 
     def get_action(self, task_action_name):
         if task_action_name.find(":") == -1:
             return {}
+
         service_name = task_action_name.split(':')[0]
         action_name = task_action_name.split(':')[1]
         action = self.services.get(service_name).actions.get(action_name)
+
         return action
 
     def get_actions(self, service_name):

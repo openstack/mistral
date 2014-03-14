@@ -14,9 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import pkg_resources as pkg
-
-from mistral import version
 from mistral.tests import base
 from mistral import dsl_parser as parser
 from mistral.engine import states
@@ -44,14 +41,15 @@ TASKS = [
 class WorkflowTest(base.DbTestCase):
     def setUp(self):
         super(WorkflowTest, self).setUp()
-        self.doc = open(pkg.resource_filename(
-            version.version_info.package,
-            "tests/resources/test_rest.yaml")).read()
-        self.parser = parser.get_workbook(self.doc)
+        self.parser = parser.get_workbook(base.get_resource("test_rest.yaml"))
 
     def test_find_workflow_tasks(self):
         tasks = workflow.find_workflow_tasks(self.parser, "attach-volumes")
-        self.assertEqual(tasks[1].name, 'create-vms')
+
+        self.assertEqual(2, len(tasks))
+
+        self._assert_single_item(tasks, name='create-vms')
+        self._assert_single_item(tasks, name='attach-volumes')
 
     def test_tasks_to_start(self):
         tasks_to_start = workflow.find_resolved_tasks(TASKS)

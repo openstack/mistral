@@ -14,11 +14,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import tempfile
+
 import unittest2
 import pkg_resources as pkg
 import os
-import tempfile
-
 from mistral import version
 from mistral.db.sqlalchemy import api as db_api
 from mistral.openstack.common.db.sqlalchemy import session
@@ -44,9 +44,29 @@ class BaseTest(unittest2.TestCase):
 
         # TODO: add whatever is needed for all Mistral tests in here
 
+    def _assert_single_item(self, items, **props):
+        def _matches(item):
+            for prop_name, prop_val in props.iteritems():
+                v = item[prop_name] if isinstance(item, dict) \
+                    else getattr(item, prop_name)
+
+                if v != prop_val:
+                    return False
+
+            return True
+
+        filtered_items = filter(_matches, items)
+
+        if len(filtered_items) == 0:
+            self.fail("Item not found [props=%s]" % props)
+
+        if len(filtered_items) != 1:
+            self.fail("Multiple items found [props=%s]" % props)
+
+        return filtered_items[0]
+
 
 class DbTestCase(BaseTest):
-
     def setUp(self):
         self.db_fd, self.db_path = tempfile.mkstemp()
         session.set_defaults('sqlite:///' + self.db_path, self.db_path)
