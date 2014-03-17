@@ -23,7 +23,7 @@ CONF = cfg.CONF
 
 def client():
     ctx = context.ctx()
-    auth_url = CONF.keystone_authtoken.auth_uri
+    auth_url = CONF.keystone.auth_uri
 
     keystone = keystone_client.Client(username=ctx['user_name'],
                                       token=ctx['auth_token'],
@@ -36,7 +36,7 @@ def client():
 
 def client_for_trusts(username, password, project_name=None, trust_id=None,
                       project_id=None):
-    auth_url = CONF.keystone_authtoken.auth_uri
+    auth_url = CONF.keystone.auth_uri
 
     client = keystone_client.Client(username=username,
                                     password=password,
