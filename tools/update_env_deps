@@ -1,0 +1,16 @@
+TOX_ENVLIST=`grep envlist tox.ini | cut -d '=' -f 2 | tr ',' ' '`
+TESTENVS=`grep testenv tox.ini | awk -F ':' '{print $2}' | tr '[]' ' '`
+UNFILTERED_ENVLIST=`echo "$TOX_ENVLIST $TESTENVS"`
+ENVLIST=$( awk 'BEGIN{RS=ORS=" "}!a[$0]++' <<<$UNFILTERED_ENVLIST );
+for env in $ENVLIST
+do
+  ENV_PATH=.tox/$env
+  PIP_PATH=$ENV_PATH/bin/pip
+  echo -e "\nUpdate environment ${env}...\n"
+  if [ ! -d $ENV_PATH -o ! -f $PIP_PATH ]
+  then
+    tox --notest -e$env
+  else
+    $PIP_PATH install -r requirements.txt -r test-requirements.txt
+  fi
+done
