@@ -25,11 +25,12 @@ from oslo.config import cfg
 _engine = None
 
 
-def load_engine():
+def load_engine(transport):
     global _engine
     module_name = cfg.CONF.engine.engine
     module = importutils.import_module(module_name)
     _engine = module.get_engine()
+    _engine.transport = transport
 
 
 def start_workflow_execution(workbook_name, task_name, context=None):

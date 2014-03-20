@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright 2013 - Mirantis, Inc.
-#
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
@@ -15,14 +13,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""Script to start instance of Task Executor."""
-
+import sys
 import eventlet
-eventlet.monkey_patch()
 
+eventlet.monkey_patch(
+    os=True,
+    select=True,
+    socket=True,
+    thread=False if '--use-debugger' in sys.argv else True,
+    time=True)
 
 import os
-import sys
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
@@ -32,17 +33,51 @@ POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
 if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
     sys.path.insert(0, POSSIBLE_TOPDIR)
 
-
 from oslo import messaging
 from oslo.config import cfg
 
 from mistral import config
 from mistral.engine import engine
 from mistral.engine.scalable.executor import server
+
+from mistral.api import app
+from wsgiref import simple_server
+
 from mistral.openstack.common import log as logging
 
 
-LOG = logging.getLogger('mistral.cmd.task_executor')
+LOG = logging.getLogger(__name__)
+
+
+def launch_executor(transport):
+    # TODO(rakhmerov): This is a temporary hack.
+    # We have to initialize engine in executor process because
+    # executor now calls engine.convey_task_result() directly.
+    engine.load_engine(transport)
+    target = messaging.Target(topic=cfg.CONF.executor.topic,
+                              server=cfg.CONF.executor.host)
+    endpoints = [server.Executor()]
+    ex_server = messaging.get_rpc_server(transport, target, endpoints)
+    ex_server.start()
+    ex_server.wait()
+
+
+def launch_api(transport):
+    host = cfg.CONF.api.host
+    port = cfg.CONF.api.port
+    server = simple_server.make_server(host, port,
+                                       app.setup_app(transport=transport))
+    LOG.info("Mistral API is serving on http://%s:%s (PID=%s)" %
+             (host, port, os.getpid()))
+    server.serve_forever()
+
+
+def launch_all(transport):
+    # Launch the servers on different threads.
+    t1 = eventlet.spawn(launch_executor, transport)
+    t2 = eventlet.spawn(launch_api, transport)
+    t1.wait()
+    t2.wait()
 
 
 def main():
@@ -50,10 +85,13 @@ def main():
         config.parse_args()
         logging.setup('Mistral')
 
-        # TODO(rakhmerov): This is a temporary hack.
-        # We have to initialize engine in executor process because
-        # executor now calls engine.convey_task_result() directly.
-        engine.load_engine()
+        # Map cli options to appropriate functions. The cli options are
+        # registered in mistral's config.py.
+        launch_options = {
+            'all': launch_all,
+            'api': launch_api,
+            'executor': launch_executor
+        }
 
         # Please refer to the oslo.messaging documentation for transport
         # configuration. The default transport for oslo.messaging is rabbitMQ.
@@ -68,13 +106,10 @@ def main():
         # that can be specified depending on the driver.  Please refer to the
         # driver implementation for those additional options.
         transport = messaging.get_transport(cfg.CONF)
-        target = messaging.Target(topic=cfg.CONF.executor.topic,
-                                  server=cfg.CONF.executor.host)
-        endpoints = [server.Executor()]
 
-        ex_server = messaging.get_rpc_server(transport, target, endpoints)
-        ex_server.start()
-        ex_server.wait()
+        # Launch server(s).
+        launch_options[cfg.CONF.server](transport)
+
     except RuntimeError, e:
         sys.stderr.write("ERROR: %s\n" % e)
         sys.exit(1)

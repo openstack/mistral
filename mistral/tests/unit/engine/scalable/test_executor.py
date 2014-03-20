@@ -20,15 +20,12 @@ import uuid
 import time
 import mock
 
-from oslo import messaging
-from oslo.config import cfg
-
 from mistral.tests import base
+from mistral.cmd import launch
 from mistral.engine import states
 from mistral.db import api as db_api
 from mistral.engine.actions import actions
 from mistral.engine.actions import action_types
-from mistral.engine.scalable.executor import server
 from mistral.engine.scalable.executor import client
 
 
@@ -86,51 +83,20 @@ SAMPLE_CONTEXT = {
 
 class TestExecutor(base.DbTestCase):
 
-    def get_transport(self):
-        # Get transport manually, oslo.messaging get_transport seems broken.
-        from stevedore import driver
-        from oslo.messaging import transport
-        # Get transport here to let oslo.messaging setup default config before
-        # changing the rpc_backend to the fake driver; otherwise,
-        # oslo.messaging will throw exception.
-        messaging.get_transport(cfg.CONF)
-        cfg.CONF.set_default('rpc_backend', 'fake')
-        url = transport.TransportURL.parse(cfg.CONF, None, None)
-        kwargs = dict(default_exchange=cfg.CONF.control_exchange,
-                      allowed_remote_exmods=[])
-        mgr = driver.DriverManager('oslo.messaging.drivers',
-                                   url.transport,
-                                   invoke_on_load=True,
-                                   invoke_args=[cfg.CONF, url],
-                                   invoke_kwds=kwargs)
-        return transport.Transport(mgr.driver)
-
     def mock_action_run(self):
         actions.RestAction.run = mock.MagicMock(return_value={})
         return actions.RestAction.run
 
     def setUp(self):
-        # Initialize configuration for the ExecutorClient.
         super(TestExecutor, self).setUp()
-        if not 'executor' in cfg.CONF:
-            cfg_grp = cfg.OptGroup(name='executor', title='Executor options')
-            opts = [cfg.StrOpt('host', default='0.0.0.0'),
-                    cfg.StrOpt('topic', default='executor')]
-            cfg.CONF.register_group(cfg_grp)
-            cfg.CONF.register_opts(opts, group=cfg_grp)
 
-        # Start the Executor.
-        transport = self.get_transport()
-        target = messaging.Target(topic='executor', server='0.0.0.0')
-        endpoints = [server.Executor()]
-        self.server = messaging.get_rpc_server(transport, target,
-                                               endpoints, executor='eventlet')
-        self.server.start()
+        # Run the Executor in the background.
+        self.transport = base.get_fake_transport()
+        self.ex_thread = eventlet.spawn(launch.launch_executor, self.transport)
 
     def tearDown(self):
         # Stop the Executor.
-        if self.server:
-            self.server.stop()
+        self.ex_thread.kill()
 
         super(TestExecutor, self).tearDown()
 
@@ -156,8 +122,7 @@ class TestExecutor(base.DbTestCase):
         self.assertIn('id', task)
 
         # Send the task request to the Executor.
-        transport = self.server.transport
-        ex_client = client.ExecutorClient(transport)
+        ex_client = client.ExecutorClient(self.transport)
         ex_client.handle_task(SAMPLE_CONTEXT, task=task)
 
         # Check task execution state. There is no timeout mechanism in

@@ -14,6 +14,12 @@ default_log_levels = mistral=INFO,mistral.cmd.api=INFO,mistral.api=DEBUG,wsme=DE
 # Uncomment this option to get more fine-grained control over logging configuration
 #log_config_append = etc/logging.conf
 
+# Options for oslo.messaging
+#rpc_backend=rabbit
+
+# Specifies which mistral server to start by the launch script. (string value)
+#server=all
+
 [api]
 # Host and port to bind the API server to
 host = 0.0.0.0
@@ -47,3 +53,14 @@ admin_user=admin
 admin_password=password
 auth_protocol=http
 admin_tenant_name=admin
+
+[executor]
+# Name of the executor node. This can be an opaque identifier.
+# It is not necessarily a hostname, FQDN, or IP address. (string value)
+#host=0.0.0.0
+
+# The message topic that the executor listens on. (string value)
+#topic=executor
+
+# The version of the executor. (string value)
+#version=1.0
