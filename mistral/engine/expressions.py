@@ -44,7 +44,8 @@ class Evaluator(object):
 class YAQLEvaluator(Evaluator):
     @classmethod
     def evaluate(cls, expression, context):
-        LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]")
+        LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]"
+                  % (expression, context))
 
         return yaql.parse(expression).evaluate(context)
 
@@ -59,4 +60,7 @@ def is_expression(s):
 
 
 def evaluate(expression, context):
-    return _EVALUATOR.evaluate(expression, context)
+    if is_expression(expression):
+        return _EVALUATOR.evaluate(expression, context)
+    else:
+        return expression

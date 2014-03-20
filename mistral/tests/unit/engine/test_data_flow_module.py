@@ -86,3 +86,51 @@ class DataFlowTest(base.DbTestCase):
                 }
             },
             output)
+
+    def test_apply_context(self):
+        task_spec_dict = TASK['task_spec']
+        modified_task = data_flow.apply_context(task_spec_dict, CONTEXT)
+        self.assertDictEqual(
+            {
+                'input': {
+                    'p1': 'My string',
+                    'p2': 'val32'
+                },
+                'publish': {
+                    'new_key11': 'new_key1'
+                }
+            },
+            modified_task)
+
+    def test_apply_context_arbitrary(self):
+        context = {
+            "auth_token": "123",
+            "project_id": "mistral"
+        }
+        data = {
+            "parameters": {
+                "parameter1": {
+                    "name1": "$.auth_token",
+                    "name2": "val_name2"
+                },
+                "param2": [
+                    "var1",
+                    "var2",
+                    "$.project_id"
+                ]
+            },
+            "token": "$.auth_token"
+        }
+        applied = data_flow.apply_context(data, context)
+        self.assertDictEqual(
+            {
+                "parameters": {
+                    "parameter1": {
+                        "name1": "123",
+                        "name2": "val_name2"
+                    },
+                    "param2": ["var1", "var2", "mistral"]
+                },
+                "token": "123"
+            },
+            applied)

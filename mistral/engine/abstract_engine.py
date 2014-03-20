@@ -52,7 +52,8 @@ class AbstractEngine(object):
             )
 
             tasks_to_start = workflow.find_resolved_tasks(tasks)
-
+            context = cls._add_token_to_context(
+                context, db_api.workbook_get(workbook_name))
             data_flow.prepare_tasks(tasks_to_start, context)
 
             db_api.commit_tx()
@@ -103,7 +104,8 @@ class AbstractEngine(object):
                 LOG.info("Changed execution state: %s" % execution)
 
             tasks_to_start = workflow.find_resolved_tasks(tasks)
-
+            outbound_context = cls._add_token_to_context(
+                outbound_context, db_api.workbook_get(workbook_name))
             data_flow.prepare_tasks(tasks_to_start, outbound_context)
 
             db_api.commit_tx()
@@ -197,3 +199,7 @@ class AbstractEngine(object):
             return states.SUCCESS
 
         return execution['state']
+
+    @classmethod
+    def _add_token_to_context(cls, context, workbook):
+        return data_flow.add_token_to_context(context, workbook)

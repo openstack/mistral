@@ -11,6 +11,8 @@ Services:
            task-parameters:
               flavor_id:
               image_id:
+           headers:
+             X-Auth-Token: $.auth_token
 
          backup-vm:
            parameters:
