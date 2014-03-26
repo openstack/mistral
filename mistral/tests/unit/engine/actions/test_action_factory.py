@@ -84,19 +84,6 @@ SAMPLE_SEND_EMAIL_TASK = {
     }
 }
 
-SAMPLE_RESULT_HELPER = {
-    'output': {
-        'select': '$.server.id',
-        'store_as': 'vm_id'
-    }
-}
-
-SAMPLE_RESULT = {
-    'server': {
-        'id': 'afd1254-1ad3fb0'
-    }
-}
-
 
 class ActionFactoryTest(unittest2.TestCase):
     def test_get_mistral_rest(self):
