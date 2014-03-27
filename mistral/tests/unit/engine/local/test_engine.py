@@ -17,11 +17,14 @@ import mock
 
 from mistral.db import api as db_api
 from mistral.engine.actions import actions
+from mistral.engine import expressions
 from mistral.engine.local import engine
 from mistral.engine import states
+from mistral.openstack.common import importutils
 from mistral.tests import base
 
 
+importutils.import_module("mistral.config")
 ENGINE = engine.get_engine()
 
 WB_NAME = "my_workbook"
@@ -42,6 +45,8 @@ class TestLocalEngine(base.DbTestCase):
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
+    @mock.patch.object(expressions, "evaluate",
+                       mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_one_task(self):
         # Start workflow.
         execution = ENGINE.start_workflow_execution(WB_NAME, "create-vms",
@@ -75,6 +80,8 @@ class TestLocalEngine(base.DbTestCase):
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
+    @mock.patch.object(expressions, "evaluate",
+                       mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_multiple_tasks(self):
         # Start workflow.
         execution = ENGINE.start_workflow_execution(WB_NAME, "backup-vms",
@@ -138,6 +145,8 @@ class TestLocalEngine(base.DbTestCase):
                        }))
     @mock.patch.object(states, "get_state_by_http_status_code",
                        mock.MagicMock(return_value=states.SUCCESS))
+    @mock.patch.object(expressions, "evaluate",
+                       mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_sync_task(self):
         execution = ENGINE.start_workflow_execution(WB_NAME, "create-vm-nova",
                                                     CONTEXT)
@@ -154,6 +163,8 @@ class TestLocalEngine(base.DbTestCase):
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
+    @mock.patch.object(expressions, "evaluate",
+                       mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_tasks_on_success_finish(self):
         # Start workflow.
         execution = ENGINE.start_workflow_execution(WB_NAME, "test_subsequent",
@@ -220,6 +231,8 @@ class TestLocalEngine(base.DbTestCase):
                        }))
     @mock.patch.object(actions.RestAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
+    @mock.patch.object(expressions, "evaluate",
+                       mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_tasks_on_error_finish(self):
         # Start workflow.
         execution = ENGINE.start_workflow_execution(WB_NAME, "test_subsequent",

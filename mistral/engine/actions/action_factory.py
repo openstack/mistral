@@ -14,9 +14,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from mistral.engine.actions import actions
 from mistral.engine.actions import action_types
 from mistral.engine.actions import action_helper as a_h
+from mistral.engine import data_flow as df
 import mistral.exceptions as exc
 from mistral.workbook import services
 from mistral.workbook import tasks
@@ -24,14 +27,17 @@ from mistral.workbook import tasks
 
 def create_action(db_task):
     action_type = a_h.get_action_type(db_task)
-    task = tasks.TaskSpec(db_task['task_spec'])
-    service = services.ServiceSpec(db_task['service_spec'])
+    context = db_task.get('in_context')
+    task_spec = tasks.TaskSpec(df.apply_context(
+        copy.copy(db_task['task_spec']), context))
+    service_spec = services.ServiceSpec(df.apply_context(
+        copy.copy(db_task['service_spec']), context))
 
     if not action_types.is_valid(action_type):
         raise exc.InvalidActionException("Action type is not supported: %s" %
                                          action_type)
 
-    action = _get_mapping()[action_type](db_task, task, service)
+    action = _get_mapping()[action_type](db_task, task_spec, service_spec)
     action.result_helper = _find_action_result_helper(db_task, action)
     return action
 
@@ -71,8 +77,8 @@ def get_rest_action(db_task, task, service):
         action.parameters['url']
 
     headers = {}
-    headers.update(task.parameters.get('headers', {}))
-    headers.update(action.parameters.get('headers', {}))
+    headers.update(task.get_property('headers', {}))
+    headers.update(action.to_dict().get('headers', {}))
 
     method = action.parameters.get('method', "GET")
 

@@ -14,17 +14,28 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
+from oslo.config import cfg
+
 from mistral.openstack.common import log as logging
+from mistral.openstack.common import importutils
 from mistral.tests import base
 from mistral.db import api as db_api
+from mistral.engine.actions import actions
 from mistral.engine.local import engine
 from mistral.engine import states
+from mistral.utils.openstack import keystone
 
 # TODO(rakhmerov): add more tests
 
+# We need to make sure that all configuration properties are registered.
+importutils.import_module("mistral.config")
 LOG = logging.getLogger(__name__)
 
-ENGINE = engine.get_engine()()
+ENGINE = engine.get_engine()
+TOKEN = "123ab"
+USER_ID = "321ba"
 
 CONTEXT = {
     'person': {
@@ -37,6 +48,8 @@ CONTEXT = {
         }
     }
 }
+
+cfg.CONF.pecan.auth_token = False
 
 
 def create_workbook(definition_path):
@@ -357,3 +370,28 @@ class DataFlowTest(base.DbTestCase):
         del send_greeting_task['in_context']['task']
 
         self.assertDictEqual(CONTEXT, send_greeting_task['in_context'])
+
+    @mock.patch.object(actions.RestAction, "run",
+                       mock.MagicMock(return_value={'state': states.RUNNING}))
+    @mock.patch.object(keystone, "client_for_trusts",
+                       mock.Mock(
+                           return_value=mock.MagicMock(user_id=USER_ID,
+                                                       auth_token=TOKEN)))
+    def test_add_token_to_context(self):
+        cfg.CONF.pecan.auth_enable = True
+        task_name = "create-vms"
+        workbook = create_workbook("test_rest.yaml")
+        db_api.workbook_update(workbook['name'], {'trust_id': '123'})
+        execution = ENGINE.start_workflow_execution(workbook['name'],
+                                                    task_name, {})
+        tasks = db_api.tasks_get(workbook['name'], execution['id'])
+        task = self._assert_single_item(tasks, name=task_name)
+        context = task['in_context']
+        self.assertIn("auth_token", context)
+        self.assertEqual(TOKEN, context['auth_token'])
+        self.assertEqual(USER_ID, context["user_id"])
+        ENGINE.convey_task_result(workbook['name'], execution['id'],
+                                  task['id'], states.SUCCESS, {})
+        execution = db_api.execution_get(workbook['name'], execution['id'])
+        self.assertEqual(states.SUCCESS, execution['state'])
+        cfg.CONF.pecan.auth_enable = False

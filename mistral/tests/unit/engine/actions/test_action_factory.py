@@ -27,7 +27,8 @@ SAMPLE_TASK = {
             'a': 'b'
         },
         'headers': {
-            'Cookie': 'abc'
+            'Cookie': 'abc',
+            "X-Auth-Token": "$.auth_token"
         },
         'name': 'create-vms'
     },
@@ -113,3 +114,12 @@ class ActionFactoryTest(unittest2.TestCase):
             self.assertIn(email, action.to)
         self.assertEqual(task['service_spec']['parameters']['smtp_server'],
                          action.smtp_server)
+
+    def test_apply_context_to_action(self):
+        task = SAMPLE_TASK.copy()
+        auth_token = "token"
+        task['service_spec'].update({'type': action_types.REST_API})
+        task['in_context'] = {"auth_token": auth_token}
+        action = action_factory.create_action(task)
+        self.assertIn("X-Auth-Token", action.headers)
+        self.assertEqual(auth_token, action.headers["X-Auth-Token"])
