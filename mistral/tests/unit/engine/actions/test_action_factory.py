@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import unittest2
 
 from mistral.engine.actions import action_factory
@@ -98,10 +99,22 @@ class ActionFactoryTest(unittest2.TestCase):
     def test_get_rest(self):
         task = dict(SAMPLE_TASK)
         task['service_spec'].update({'type': action_types.REST_API})
+        create_vm = task['service_spec']['actions']['create-vm']
+        action_params = create_vm['parameters']
+        task_params = task['task_spec']['parameters']
+        action_params['method'] = "GET"
         action = action_factory.create_action(task)
 
+        self.assertEqual(task_params, action.params)
         self.assertNotIn("Mistral-Workbook-Name", action.headers)
         self.assertEqual(action.method, "GET")
+
+        action_params['method'] = "POST"
+        action = action_factory.create_action(task)
+
+        self.assertEqual(json.dumps(task_params), action.data)
+        self.assertNotIn("Mistral-Workbook-Name", action.headers)
+        self.assertEqual(action.method, "POST")
 
     def test_get_email(self):
         task = dict(SAMPLE_SEND_EMAIL_TASK)

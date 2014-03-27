@@ -47,6 +47,16 @@ TASK = {
             'new_key11': 'new_key1'
         }
     },
+    'service_spec': {
+        'actions': {
+            'action': {
+                'output': {
+                    # This one should not be evaluated.
+                    'server_id': '$.server.id'
+                }
+            }
+        }
+    },
     'in_context': CONTEXT
 }
 
