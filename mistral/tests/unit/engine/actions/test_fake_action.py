@@ -16,15 +16,12 @@
 
 from mistral.engine.actions import actions
 from mistral.engine.actions import action_types
-
 from mistral.tests import base
 
 
 class FakeActionTest(base.BaseTest):
-
-    def test_send_email_real(self):
+    def test_fake_action(self):
         expected = "my output"
-
         action = actions.EchoAction(action_types.ECHO, "test", output=expected)
 
         self.assertEqual(action.run(), expected)
