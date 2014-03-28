@@ -61,7 +61,6 @@ class FunctionalTest(base.DbTestCase):
         try:
             self.app.get(url, headers={'Accept': 'application/json'})
         except AppError as error:
-            if hasattr(error, 'message'):
-                self.assertIn('Bad response: 404 Not Found', error.message)
-                return
+            self.assertIn('Bad response: 404 Not Found', str(error))
+            return
         self.fail('Expected 404 Not found but got OK')
