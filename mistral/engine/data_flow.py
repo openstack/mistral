@@ -36,10 +36,7 @@ def evaluate_task_input(task, context):
         return res
 
     for name, val in params.iteritems():
-        if expr.is_expression(val):
-            res[name] = expr.evaluate(val, context)
-        else:
-            res[name] = val
+        res[name] = expr.evaluate(val, context)
 
     return res
 

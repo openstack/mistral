@@ -41,7 +41,8 @@ TASK = {
     'task_spec': {
         'input': {
             'p1': 'My string',
-            'p2': '$.param3.param32'
+            'p2': '$.param3.param32',
+            'p3': ''
         },
         'publish': {
             'new_key11': 'new_key1'
@@ -65,7 +66,7 @@ class DataFlowTest(base.DbTestCase):
     def test_prepare_task_input(self):
         input = data_flow.evaluate_task_input(TASK, CONTEXT)
 
-        self.assertEqual(len(input), 2)
+        self.assertEqual(len(input), 3)
         self.assertEqual(input['p1'], 'My string')
         self.assertEqual(input['p2'], 'val32')
 
@@ -80,7 +81,8 @@ class DataFlowTest(base.DbTestCase):
         self.assertDictEqual(db_task['in_context'], CONTEXT)
         self.assertDictEqual(db_task['input'], {
             'p1': 'My string',
-            'p2': 'val32'
+            'p2': 'val32',
+            'p3': ''
         })
 
     def test_get_outbound_context(self):
@@ -104,7 +106,8 @@ class DataFlowTest(base.DbTestCase):
             {
                 'input': {
                     'p1': 'My string',
-                    'p2': 'val32'
+                    'p2': 'val32',
+                    'p3': ''
                 },
                 'publish': {
                     'new_key11': 'new_key1'
@@ -126,7 +129,7 @@ class DataFlowTest(base.DbTestCase):
                 "param2": [
                     "var1",
                     "var2",
-                    "$.project_id"
+                    "/servers/{$.project_id}/bla"
                 ]
             },
             "token": "$.auth_token"
@@ -139,7 +142,7 @@ class DataFlowTest(base.DbTestCase):
                         "name1": "123",
                         "name2": "val_name2"
                     },
-                    "param2": ["var1", "var2", "mistral"]
+                    "param2": ["var1", "var2", "/servers/mistral/bla"]
                 },
                 "token": "123"
             },

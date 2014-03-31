@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import abc
+import re
 import yaql
 
 from mistral.openstack.common import log as logging
@@ -40,6 +41,17 @@ class Evaluator(object):
         """
         pass
 
+    @classmethod
+    @abc.abstractmethod
+    def is_expression(cls, expression):
+        """
+        Check expression string and decide whether it is expression or not.
+
+        :param expression: Expression string
+        :return: True if string is expression
+        """
+        pass
+
 
 class YAQLEvaluator(Evaluator):
     @classmethod
@@ -49,18 +61,42 @@ class YAQLEvaluator(Evaluator):
 
         return yaql.parse(expression).evaluate(context)
 
+    @classmethod
+    def is_expression(cls, s):
+        # TODO(rakhmerov): It should be generalized since it may not be YAQL.
+        return s and s.startswith('$.')
+
+
+class InlineYAQLEvaluator(YAQLEvaluator):
+    # Put YAQL-specific regexp pattern here.
+    # Use form {$.any_symbols_except'}'} to find an expression.
+    find_expression_pattern = re.compile("\{\$\.[^\}]+\}")
+
+    @classmethod
+    def evaluate(cls, expression, context):
+        if super(InlineYAQLEvaluator, cls).is_expression(expression):
+            return super(InlineYAQLEvaluator,
+                         cls).evaluate(expression, context)
+        result = expression
+        found_expressions = cls.find_inline_expressions(expression)
+        if found_expressions:
+            for expr in found_expressions:
+                trim_expr = expr.strip("{}")
+                evaluated = super(InlineYAQLEvaluator,
+                                  cls).evaluate(trim_expr, context)
+                result = result.replace(expr, evaluated or expr)
+            return result
+        else:
+            return expression
+
+    @classmethod
+    def find_inline_expressions(cls, s):
+        return cls.find_expression_pattern.findall(s)
+
 
 # TODO(rakhmerov): Make it configurable.
-_EVALUATOR = YAQLEvaluator()
-
-
-def is_expression(s):
-    # TODO(rakhmerov): It should be generalized since it may not be YAQL.
-    return s and s.startswith('$.')
+_EVALUATOR = InlineYAQLEvaluator
 
 
 def evaluate(expression, context):
-    if is_expression(expression):
-        return _EVALUATOR.evaluate(expression, context)
-    else:
-        return expression
+    return _EVALUATOR.evaluate(expression, context)
