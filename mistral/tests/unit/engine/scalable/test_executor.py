@@ -171,6 +171,9 @@ class TestExecutor(base.DbTestCase):
                                       task['id'])
             # Ensure the request reached the executor and the action has ran.
             if db_task['state'] != states.IDLE:
+                # We have to wait sometime due to time interval between set
+                # task state to RUNNING and invocation action.run()
+                time.sleep(0.1)
                 mock_rest_action.assert_called_once_with()
                 self.assertIn(db_task['state'],
                               [states.RUNNING, states.SUCCESS, states.ERROR])
