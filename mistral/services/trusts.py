@@ -29,14 +29,7 @@ def create_trust(workbook):
 
     ctx = context.ctx()
 
-    admin_user = CONF.keystone.admin_user
-    admin_password = CONF.keystone.admin_password
-    admin_tenant_name = CONF.keystone.admin_tenant_name
-
-    trustee_id = keystone.client_for_trusts(
-        admin_user,
-        admin_password,
-        project_name=admin_tenant_name).user_id
+    trustee_id = keystone.client_for_admin(ctx['project_id']).user_id
 
     trust = client.trusts.create(trustor_user=client.user_id,
                                  trustee_user=trustee_id,
@@ -53,15 +46,8 @@ def create_context(workbook):
     if 'trust_id' not in workbook:
         return
 
-    admin_user = CONF.keystone.admin_user
-    admin_password = CONF.keystone.admin_password
-
     if CONF.pecan.auth_enable:
-        client = keystone.client_for_trusts(
-            admin_user,
-            admin_password,
-            trust_id=workbook['trust_id'],
-            project_id=workbook['project_id'])
+        client = keystone.client_for_trusts(workbook['trust_id'])
 
         return context.MistralContext(
             user_id=client.user_id,
@@ -80,11 +66,5 @@ def delete_trust(workbook):
     if 'trust_id' not in workbook:
         return
 
-    admin_user = CONF.keystone.admin_user
-    admin_password = CONF.keystone.admin_password
-
-    keystone_client = keystone.client_for_trusts(
-        admin_user,
-        admin_password,
-        workbook.trust_id)
+    keystone_client = keystone.client_for_trusts(workbook['trust_id'])
     keystone_client.trusts.delete(workbook.trust_id)
