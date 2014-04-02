@@ -19,7 +19,7 @@ from mistral.engine import states
 
 
 def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
-                     exec_flow_context=None):
+                     task_runtime_context=None):
     """
     Computes the state and exec_flow_context runtime properties for a task
     based on the supplied properties. This method takes the repeat nature of a
@@ -28,7 +28,7 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     :param task_spec: specification of the task
     :param state: suggested next state
     :param outbound_context: outbound_context to be used for computation
-    :param exec_flow_context: current flow context
+    :param task_runtime_context: current flow context
     :return: state, exec_flow_context tuple. Sample scenarios are,
     1. required iteration = 5, current iteration = 0, state = SUCCESS
        Move to next iteration therefore state = IDLE/DELAYED, iteration_no = 1.
@@ -41,16 +41,16 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
 
     if states.is_stopped_or_unsuccessful_finish(state) or not \
             task_spec.is_repeater_task():
-        return state, exec_flow_context
+        return state, task_runtime_context
 
-    if exec_flow_context is None:
-        exec_flow_context = {}
+    if task_runtime_context is None:
+        task_runtime_context = {}
     if outbound_context is None:
         outbound_context = {}
 
     iteration_no = -1
-    if "iteration_no" in exec_flow_context:
-        iteration_no = exec_flow_context["iteration_no"]
+    if "iteration_no" in task_runtime_context:
+        iteration_no = task_runtime_context["iteration_no"]
     iterations, break_on, delay = task_spec.get_repeat_task_parameters()
 
     iterations_incomplete = iteration_no + 1 < iterations
@@ -63,11 +63,11 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
         state = states.DELAYED if delay > 0 else states.IDLE
         iteration_no += 1
     elif not iterations_incomplete and state == states.IDLE:
-        # this is the case where the iterations are complete but task is still
+        # This is the case where the iterations are complete but task is still
         # IDLE which implies SUCCESS. Can happen if repeat is specified but
         # 0 iterations are requested.
         state = states.SUCCESS
 
-    exec_flow_context["iteration_no"] = iteration_no
+    task_runtime_context["iteration_no"] = iteration_no
 
-    return state, exec_flow_context
+    return state, task_runtime_context

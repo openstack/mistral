@@ -101,5 +101,7 @@ class Task(mb.MistralBase):
     input = sa.Column(st.JsonDictType())
     output = sa.Column(st.JsonDictType())
 
-    # Execution context
-    exec_flow_context = sa.Column(st.JsonDictType())
+    # Runtime context like iteration_no of a repeater.
+    # Effectively internal engine properties which will be used to determine
+    # execution of a task.
+    task_runtime_context = sa.Column(st.JsonDictType())

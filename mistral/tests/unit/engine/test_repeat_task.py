@@ -42,7 +42,8 @@ class RepeatTaskTest(base.DbTestCase):
                                                     'repeater_task', None)
         tasks = db_api.tasks_get(wb['name'], execution['id'])
         self._assert_single_item(tasks, name='repeater_task')
-        self._assert_single_item(tasks, exec_flow_context={"iteration_no": 4})
+        self._assert_single_item(tasks, task_runtime_context={
+            "iteration_no": 4})
 
     def test_no_repeat_task(self):
         wb = create_workbook('wb_2', 'repeat_task/no_repeat_task.yaml')
@@ -50,7 +51,7 @@ class RepeatTaskTest(base.DbTestCase):
                                                     'repeater_task', None)
         tasks = db_api.tasks_get(wb['name'], execution['id'])
         self._assert_single_item(tasks, name='repeater_task')
-        self._assert_single_item(tasks, exec_flow_context={
+        self._assert_single_item(tasks, task_runtime_context={
             "iteration_no": -1})
 
     def test_break_early_repeat_task(self):
@@ -59,4 +60,5 @@ class RepeatTaskTest(base.DbTestCase):
             wb['name'], 'repeater_task_break_early', None)
         tasks = db_api.tasks_get(wb['name'], execution['id'])
         self._assert_single_item(tasks, name='repeater_task_break_early')
-        self._assert_single_item(tasks, exec_flow_context={"iteration_no": 0})
+        self._assert_single_item(tasks, task_runtime_context={
+            "iteration_no": 0})
