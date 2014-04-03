@@ -22,8 +22,10 @@ import smtplib
 
 from amqplib import client_0_8 as amqp
 import requests
+import six
 
 from mistral.openstack.common import log as logging
+from mistral.engine import expressions as expr
 from mistral import exceptions as exc
 
 
@@ -48,6 +50,12 @@ class Action(object):
         to indicate that.
         """
         pass
+
+    def evaluate_result(self, raw_result):
+        result = self.result_helper.copy()
+        for k, v in six.iteritems(self.result_helper):
+            result[k] = expr.evaluate(v, raw_result)
+        return result
 
 
 class EchoAction(Action):
@@ -95,16 +103,18 @@ class RestAction(Action):
         LOG.info("Received HTTP response:\n%s\n%s" %
                  (resp.status_code, resp.content))
 
-        # TODO(rakhmerov):Here we need to apply logic related with
-        # extracting a result as configured in DSL.
-
-        # Return rather json than text, but response can contain text also.
         self.status = resp.status_code
-        try:
-            return resp.json()
-        except:
-            LOG.debug("HTTP response content is not json.")
-            return resp.content
+        if self.result_helper and isinstance(self.result_helper, dict):
+            # In case if result_helper exists, we assume response is json.
+            return self.evaluate_result(resp.json())
+        else:
+            try:
+                # We prefer to return json than text,
+                # but response can contain text also.
+                return resp.json()
+            except:
+                LOG.debug("HTTP response content is not json.")
+                return resp.content
 
 
 class OsloRPCAction(Action):
