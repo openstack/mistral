@@ -100,7 +100,12 @@ def add_token_to_context(context, db_workbook):
 
 def _modify_item(item, context):
     if isinstance(item, six.string_types):
-        return expr.evaluate(item, context)
+        try:
+            return expr.evaluate(item, context)
+        except AttributeError as e:
+            LOG.debug("Expression %s is not evaluated, [context=%s]: %s"
+                      % (item, context, e))
+            return item
     else:
         return apply_context(item, context)
 

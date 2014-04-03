@@ -84,17 +84,17 @@ def get_rest_action(db_task, task, service):
 
     # input_yaql = task.get('input')
     # TODO(nmakhotkin) extract input from context with the YAQL expression
-    task_input = {}  # expressions.evaluate(input_expr, ctx)
-    task_data = {}
+    params = {}  # expressions.evaluate(input_expr, ctx)
+    data = {}
 
     if method.upper() == "GET":
-        task_params.update(task_input)
+        params.update(task_params)
     elif method.upper() in ["POST", "PUT"]:
-        task_data.update(task_input)
+        data.update(task_params)
 
     return actions.RestAction(action_type, action_name, url,
-                              params=task_params, method=method,
-                              headers=headers, data=task_data)
+                              params=params, method=method,
+                              headers=headers, data=data)
 
 
 def get_mistral_rest_action(db_task, task, service):

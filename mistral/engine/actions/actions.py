@@ -18,6 +18,7 @@
 
 import abc
 from email.mime.text import MIMEText
+import json
 import smtplib
 
 from amqplib import client_0_8 as amqp
@@ -84,7 +85,10 @@ class RestAction(Action):
         self.params = params
         self.method = method
         self.headers = headers
-        self.data = data
+        if isinstance(data, dict):
+            self.data = json.dumps(data)
+        else:
+            self.data = data
 
     def run(self):
         LOG.info("Sending action HTTP request "
