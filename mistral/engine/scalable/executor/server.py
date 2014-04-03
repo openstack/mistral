@@ -116,7 +116,7 @@ class Executor(object):
                     db_task['state'] != states.IDLE:
                 return
 
-            # update the state to running before performing action. The
+            # Update the state to running before performing action. The
             # do_task_action assigns state to the task which is the appropriate
             # value to preserve.
             db_api.task_update(task['workbook_name'],

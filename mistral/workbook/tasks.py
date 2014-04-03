@@ -79,6 +79,7 @@ class TaskSpec(base.BaseSpec):
         break_on = None
         delay = 0
         repeat = self.get_property("repeat")
+
         if repeat:
             if "iterations" in repeat:
                 iterations = repeat["iterations"]
@@ -86,6 +87,7 @@ class TaskSpec(base.BaseSpec):
                 break_on = repeat["break-on"]
             if "delay" in repeat:
                 delay = repeat["delay"]
+
         return iterations, break_on, delay
 
 

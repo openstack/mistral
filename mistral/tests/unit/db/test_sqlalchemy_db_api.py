@@ -232,7 +232,7 @@ TASKS = [
         'in_context': None,
         'input': None,
         'output': None,
-        'exec_flow_context': None
+        'task_runtime_context': None
     },
     {
         'id': '2',
@@ -250,7 +250,7 @@ TASKS = [
         'in_context': {'image_id': '123123'},
         'input': {'image_id': '123123'},
         'output': {'vm_id': '343123'},
-        'exec_flow_context': None
+        'task_runtime_context': None
     },
 ]
 

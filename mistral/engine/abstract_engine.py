@@ -172,9 +172,8 @@ class AbstractEngine(object):
     @classmethod
     def _create_tasks(cls, task_list, workbook, workbook_name, execution_id):
         tasks = []
-        # create tasks of all the top level tasks.
         for task in task_list:
-            state, exec_flow_context = repeater.get_task_runtime(task)
+            state, task_runtime_context = repeater.get_task_runtime(task)
             service_spec = workbook.services.get(task.get_action_service())
             db_task = db_api.task_create(workbook_name, execution_id, {
                 "name": task.name,
@@ -184,7 +183,7 @@ class AbstractEngine(object):
                 service_spec.to_dict(),
                 "state": state,
                 "tags": task.get_property("tags", None),
-                "exec_flow_context": exec_flow_context
+                "task_runtime_context": task_runtime_context
             })
             tasks.append(db_task)
         return tasks
@@ -219,17 +218,16 @@ class AbstractEngine(object):
         workbook_name = task['workbook_name']
         execution_id = task['execution_id']
         task_spec = workbook.tasks.get(task["name"])
-        exec_flow_context = task["exec_flow_context"]
+        task_runtime_context = task["task_runtime_context"]
 
-        # compute the outbound_context, state and exec_flow_context
+        # Compute the outbound_context, state and exec_flow_context.
         outbound_context = data_flow.get_outbound_context(task, task_output)
-        state, exec_flow_context = repeater.get_task_runtime(task_spec, state,
-                                                             outbound_context,
-                                                             exec_flow_context)
-        # update the task
+        state, exec_flow_context = repeater.get_task_runtime(
+            task_spec, state, outbound_context, task_runtime_context)
+        # Update the task.
         update_values = {"state": state,
                          "output": task_output,
-                         "exec_flow_context": exec_flow_context}
+                         "task_runtime_context": task_runtime_context}
         task = db_api.task_update(workbook_name, execution_id, task["id"],
                                   update_values)
         return task, outbound_context
@@ -252,7 +250,7 @@ class AbstractEngine(object):
                 workbook_name = task['workbook_name']
                 execution_id = task['execution_id']
                 execution = db_api.execution_get(workbook_name, execution_id)
-                # change state from DELAYED to IDLE to unblock processing
+                # Change state from DELAYED to IDLE to unblock processing.
                 db_task = db_api.task_update(workbook_name,
                                              execution_id,
                                              task['id'],
@@ -269,7 +267,7 @@ class AbstractEngine(object):
         task_spec = workbook.tasks.get(task['name'])
         retries, break_on, delay_sec = task_spec.get_repeat_task_parameters()
         if delay_sec > 0:
-            # run the task after the specified delay
+            # Run the task after the specified delay.
             eventlet.spawn_after(delay_sec, run_delayed_task)
         else:
             LOG.warn("No delay specified for task(id=%s) name=%s. Not "
