@@ -28,6 +28,10 @@ from oslo.config import cfg
 from oslo import messaging
 from oslo.messaging import transport
 
+from mistral.engine import engine
+from mistral.engine.scalable.executor import server
+from mistral.engine.scalable import engine as concrete_engine
+
 
 RESOURCES_PATH = 'tests/resources/'
 
@@ -104,3 +108,22 @@ class DbTestCase(BaseTest):
 
     def is_db_session_open(self):
         return db_api._get_thread_local_session() is not None
+
+
+class EngineTestCase(DbTestCase):
+    def __init__(self, *args, **kwargs):
+        super(EngineTestCase, self).__init__(*args, **kwargs)
+        self.transport = get_fake_transport()
+        engine.load_engine(self.transport)
+        self.engine = concrete_engine.get_engine()
+        self.engine.transport = self.transport
+
+    @classmethod
+    def mock_run_tasks(cls, tasks):
+        """
+        Mock the engine _run_tasks to send requests directly to the task
+        executor instead of going through the oslo.messaging transport.
+        """
+        executor = server.Executor()
+        for task in tasks:
+            executor.handle_task({}, task=task)

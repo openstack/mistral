@@ -22,8 +22,8 @@ from mistral.openstack.common import log as logging
 from mistral.openstack.common import importutils
 from mistral.tests import base
 from mistral.db import api as db_api
+from mistral.engine.scalable import engine
 from mistral.engine.actions import actions
-from mistral.engine.local import engine
 from mistral.engine import states
 from mistral.utils.openstack import keystone
 
@@ -33,7 +33,6 @@ from mistral.utils.openstack import keystone
 importutils.import_module("mistral.config")
 LOG = logging.getLogger(__name__)
 
-ENGINE = engine.get_engine()
 TOKEN = "123ab"
 USER_ID = "321ba"
 
@@ -49,7 +48,9 @@ CONTEXT = {
     }
 }
 
-cfg.CONF.pecan.auth_enable = False
+# Use the set_default method to set value otherwise in certain test cases
+# the change in value is not permanent.
+cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 def create_workbook(definition_path):
@@ -59,13 +60,16 @@ def create_workbook(definition_path):
     })
 
 
-class DataFlowTest(base.DbTestCase):
+class DataFlowTest(base.EngineTestCase):
+    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
+                       mock.MagicMock(
+                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_two_dependent_tasks(self):
         wb = create_workbook('data_flow/two_dependent_tasks.yaml')
 
-        execution = ENGINE.start_workflow_execution(wb['name'],
-                                                    'build_greeting',
-                                                    CONTEXT)
+        execution = self.engine.start_workflow_execution(wb['name'],
+                                                         'build_greeting',
+                                                         CONTEXT)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
@@ -123,12 +127,15 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
 
+    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
+                       mock.MagicMock(
+                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_task_with_two_dependencies(self):
         wb = create_workbook('data_flow/task_with_two_dependencies.yaml')
 
-        execution = ENGINE.start_workflow_execution(wb['name'],
-                                                    'send_greeting',
-                                                    CONTEXT)
+        execution = self.engine.start_workflow_execution(wb['name'],
+                                                         'send_greeting',
+                                                         CONTEXT)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
@@ -212,12 +219,15 @@ class DataFlowTest(base.DbTestCase):
             },
             send_greeting_task['output'])
 
+    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
+                       mock.MagicMock(
+                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_two_subsequent_tasks(self):
         wb = create_workbook('data_flow/two_subsequent_tasks.yaml')
 
-        execution = ENGINE.start_workflow_execution(wb['name'],
-                                                    'build_full_name',
-                                                    CONTEXT)
+        execution = self.engine.start_workflow_execution(wb['name'],
+                                                         'build_full_name',
+                                                         CONTEXT)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
@@ -276,12 +286,15 @@ class DataFlowTest(base.DbTestCase):
 
         self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
 
+    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
+                       mock.MagicMock(
+                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_three_subsequent_tasks(self):
         wb = create_workbook('data_flow/three_subsequent_tasks.yaml')
 
-        execution = ENGINE.start_workflow_execution(wb['name'],
-                                                    'build_full_name',
-                                                    CONTEXT)
+        execution = self.engine.start_workflow_execution(wb['name'],
+                                                         'build_full_name',
+                                                         CONTEXT)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
@@ -377,21 +390,24 @@ class DataFlowTest(base.DbTestCase):
                        mock.Mock(
                            return_value=mock.MagicMock(user_id=USER_ID,
                                                        auth_token=TOKEN)))
+    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
+                       mock.MagicMock(
+                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_add_token_to_context(self):
         cfg.CONF.pecan.auth_enable = True
         task_name = "create-vms"
         workbook = create_workbook("test_rest.yaml")
         db_api.workbook_update(workbook['name'], {'trust_id': '123'})
-        execution = ENGINE.start_workflow_execution(workbook['name'],
-                                                    task_name, {})
+        execution = self.engine.start_workflow_execution(workbook['name'],
+                                                         task_name, {})
         tasks = db_api.tasks_get(workbook['name'], execution['id'])
         task = self._assert_single_item(tasks, name=task_name)
         context = task['in_context']
         self.assertIn("auth_token", context)
         self.assertEqual(TOKEN, context['auth_token'])
         self.assertEqual(USER_ID, context["user_id"])
-        ENGINE.convey_task_result(workbook['name'], execution['id'],
-                                  task['id'], states.SUCCESS, {})
+        self.engine.convey_task_result(workbook['name'], execution['id'],
+                                       task['id'], states.SUCCESS, {})
         execution = db_api.execution_get(workbook['name'], execution['id'])
         self.assertEqual(states.SUCCESS, execution['state'])
         cfg.CONF.pecan.auth_enable = False
