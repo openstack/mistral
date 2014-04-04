@@ -23,6 +23,11 @@ from mistral import version
 from mistral.db.sqlalchemy import api as db_api
 from mistral.openstack.common.db.sqlalchemy import session
 
+from stevedore import driver
+from oslo.config import cfg
+from oslo import messaging
+from oslo.messaging import transport
+
 
 RESOURCES_PATH = 'tests/resources/'
 
@@ -31,6 +36,23 @@ def get_resource(resource_name):
     return open(pkg.resource_filename(
         version.version_info.package,
         RESOURCES_PATH + resource_name)).read()
+
+
+def get_fake_transport():
+    # Get transport here to let oslo.messaging setup default config
+    # before changing the rpc_backend to the fake driver; otherwise,
+    # oslo.messaging will throw exception.
+    messaging.get_transport(cfg.CONF)
+    cfg.CONF.set_default('rpc_backend', 'fake')
+    url = transport.TransportURL.parse(cfg.CONF, None, None)
+    kwargs = dict(default_exchange=cfg.CONF.control_exchange,
+                  allowed_remote_exmods=[])
+    mgr = driver.DriverManager('oslo.messaging.drivers',
+                               url.transport,
+                               invoke_on_load=True,
+                               invoke_args=[cfg.CONF, url],
+                               invoke_kwds=kwargs)
+    return transport.Transport(mgr.driver)
 
 
 class BaseTest(unittest2.TestCase):

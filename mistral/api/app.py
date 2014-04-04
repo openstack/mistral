@@ -41,14 +41,14 @@ def get_pecan_config():
     return pecan.configuration.conf_from_dict(cfg_dict)
 
 
-def setup_app(config=None):
+def setup_app(config=None, transport=None):
     if not config:
         config = get_pecan_config()
 
     app_conf = dict(config.app)
 
     db_api.setup_db()
-    engine.load_engine()
+    engine.load_engine(transport)
     ##TODO(akuznetsov) move this to trigger scheduling to separate process
     periodic.setup()
 

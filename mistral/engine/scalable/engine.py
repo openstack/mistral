@@ -28,8 +28,9 @@ class ScalableEngine(abs_eng.AbstractEngine):
     @classmethod
     def _notify_task_executors(cls, tasks):
         # TODO(m4dcoder): Use a pool for transport and client
-        transport = messaging.get_transport(cfg.CONF)
-        ex_client = client.ExecutorClient(transport)
+        if not cls.transport:
+            cls.transport = messaging.get_transport(cfg.CONF)
+        ex_client = client.ExecutorClient(cls.transport)
         for task in tasks:
             # TODO(m4dcoder): Fill request context argument with auth info
             context = {}

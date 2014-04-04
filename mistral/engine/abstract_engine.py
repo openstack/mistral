@@ -31,6 +31,8 @@ LOG = logging.getLogger(__name__)
 
 
 class AbstractEngine(object):
+    transport = None
+
     @classmethod
     @abc.abstractmethod
     def _run_tasks(cls, tasks):

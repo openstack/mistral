@@ -78,6 +78,13 @@ executor_opts = [
                help='The version of the executor.')
 ]
 
+launch_opt = cfg.StrOpt(
+    'server',
+    default='all',
+    choices=('all', 'api', 'executor'),
+    help='Specifies which mistral server to start by the launch script.'
+)
+
 CONF = cfg.CONF
 
 CONF.register_opts(api_opts, group='api')
@@ -89,6 +96,7 @@ CONF.register_opts(rabbit_opts, group='rabbit')
 CONF.register_opts(executor_opts, group='executor')
 
 CONF.register_cli_opt(use_debugger)
+CONF.register_cli_opt(launch_opt)
 
 CONF.import_opt('verbose', 'mistral.openstack.common.log')
 CONF.import_opt('debug', 'mistral.openstack.common.log')
