@@ -55,7 +55,8 @@ class AbstractEngine(object):
                 workbook_name, execution['id']
             )
 
-            tasks_to_start = workflow.find_resolved_tasks(tasks)
+            tasks_to_start, delayed_tasks = workflow.find_resolved_tasks(tasks)
+
             context = cls._add_token_to_context(
                 context, db_api.workbook_get(workbook_name))
             data_flow.prepare_tasks(tasks_to_start, context)
@@ -67,6 +68,9 @@ class AbstractEngine(object):
                                       " %s" % e)
         finally:
             db_api.end_tx()
+
+        for task in delayed_tasks:
+            cls._schedule_run(workbook, task, context)
 
         cls._run_tasks(tasks_to_start)
 
@@ -105,7 +109,8 @@ class AbstractEngine(object):
 
                 LOG.info("Changed execution state: %s" % execution)
 
-            tasks_to_start = workflow.find_resolved_tasks(tasks)
+            tasks_to_start, delayed_tasks = workflow.find_resolved_tasks(tasks)
+
             outbound_context = cls._add_token_to_context(
                 outbound_context, db_api.workbook_get(workbook_name))
             data_flow.prepare_tasks(tasks_to_start, outbound_context)
@@ -121,7 +126,7 @@ class AbstractEngine(object):
         if states.is_stopped_or_finished(execution["state"]):
             return task
 
-        if task['state'] == states.DELAYED:
+        for task in delayed_tasks:
             cls._schedule_run(workbook, task, outbound_context)
 
         if tasks_to_start:

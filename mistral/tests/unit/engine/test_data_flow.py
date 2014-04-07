@@ -49,7 +49,7 @@ CONTEXT = {
     }
 }
 
-cfg.CONF.pecan.auth_token = False
+cfg.CONF.pecan.auth_enable = False
 
 
 def create_workbook(definition_path):

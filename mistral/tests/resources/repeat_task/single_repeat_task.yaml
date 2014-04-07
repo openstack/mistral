@@ -10,8 +10,8 @@ Workflow:
   tasks:
     repeater_task:
       repeat:
-        iterations: 5
-        delay: 0
+        iterations: 3
+        delay: 1
       action: MyService:repeatable-action
       publish:
         greet_msg: greeting
@@ -24,3 +24,9 @@ Workflow:
       action: MyService:repeatable-action
       publish:
         greet_msg: greeting
+
+    not_repeat_task:
+      action: MyService:repeatable-action
+      publish:
+        greet_msg: greeting
+      on-success: repeater_task

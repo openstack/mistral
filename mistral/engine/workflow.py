@@ -137,6 +137,7 @@ def _update_dependencies(tasks, graph):
 
 def _get_resolved_tasks(tasks):
     resolved_tasks = []
+    delayed_tasks = []
     allows = []
     for t in tasks:
         if t['state'] == states.SUCCESS:
@@ -147,4 +148,6 @@ def _get_resolved_tasks(tasks):
         if len(set(deps) - allow_set) == 0:
             if t['state'] == states.IDLE:
                 resolved_tasks.append(t)
-    return resolved_tasks
+            elif t['state'] == states.DELAYED:
+                delayed_tasks.append(t)
+    return resolved_tasks, delayed_tasks

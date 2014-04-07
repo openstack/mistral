@@ -14,10 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import eventlet
+
+from oslo.config import cfg
+
 from mistral.db import api as db_api
 from mistral.tests import base
 from mistral.engine.local import engine
-from oslo.config import cfg
+from mistral import dsl_parser
 from mistral.openstack.common import importutils
 
 # We need to make sure that all configuration properties are registered.
@@ -35,15 +39,20 @@ def create_workbook(workbook_name, definition_path):
 
 
 class RepeatTaskTest(base.DbTestCase):
-
     def test_simple_repeat_task(self):
         wb = create_workbook('wb_1', 'repeat_task/single_repeat_task.yaml')
         execution = ENGINE.start_workflow_execution(wb['name'],
                                                     'repeater_task', None)
+        wb_spec = dsl_parser.get_workbook(wb['definition'])
+        iterations, _, delay = wb_spec.tasks.get('repeater_task').\
+            get_repeat_task_parameters()
+
+        # Wait until all iterations are finished
+        eventlet.sleep(delay * iterations + 1)
         tasks = db_api.tasks_get(wb['name'], execution['id'])
         self._assert_single_item(tasks, name='repeater_task')
         self._assert_single_item(tasks, task_runtime_context={
-            "iteration_no": 4})
+            "iteration_no": 2})
 
     def test_no_repeat_task(self):
         wb = create_workbook('wb_2', 'repeat_task/no_repeat_task.yaml')
@@ -62,3 +71,18 @@ class RepeatTaskTest(base.DbTestCase):
         self._assert_single_item(tasks, name='repeater_task_break_early')
         self._assert_single_item(tasks, task_runtime_context={
             "iteration_no": 0})
+
+    def test_from_no_repeat_to_repeat_task(self):
+        wb = create_workbook('wb_4', 'repeat_task/single_repeat_task.yaml')
+        execution = ENGINE.start_workflow_execution(
+            wb['name'], 'not_repeat_task', None)
+        wb_spec = dsl_parser.get_workbook(wb['definition'])
+        iterations, _, delay = wb_spec.tasks.get('repeater_task').\
+            get_repeat_task_parameters()
+
+        # Wait until all iterations are finished
+        eventlet.sleep(delay * iterations + 1)
+        tasks = db_api.tasks_get(wb['name'], execution['id'])
+        self._assert_multiple_items(tasks, 2)
+        self._assert_single_item(tasks, name='repeater_task')
+        self._assert_single_item(tasks, task_runtime_context=None)
