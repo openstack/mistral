@@ -28,6 +28,7 @@ import six
 from mistral.openstack.common import log as logging
 from mistral.engine import expressions as expr
 from mistral import exceptions as exc
+from mistral.utils import ssh_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -211,3 +212,32 @@ class SendEmailAction(Action):
         except (smtplib.SMTPException, IOError) as e:
             raise exc.ActionException("Failed to send an email message: %s"
                                       % e)
+
+
+class SSHAction(Action):
+    def __init__(self, action_type, action_name,
+                 cmd, host, username, password):
+        super(SSHAction, self).__init__(action_type, action_name)
+        self.cmd = cmd
+        self.host = host
+        self.username = username
+        self.password = password
+
+    def run(self):
+        def raise_exc(parent_exc=None):
+            message = ("Failed to execute ssh cmd "
+                       "'%s' on %s" % (self.cmd, self.host))
+            if parent_exc:
+                message += "\nException: %s" % str(parent_exc)
+            raise exc.ActionException(message)
+
+        try:
+            status_code, result = ssh_utils.execute_command(self.cmd,
+                                                            self.host,
+                                                            self.username,
+                                                            self.password)
+            if status_code > 0:
+                return raise_exc()
+            return result
+        except Exception as e:
+            return raise_exc(parent_exc=e)

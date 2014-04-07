@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
 import json
 import unittest2
 
@@ -136,3 +137,21 @@ class ActionFactoryTest(unittest2.TestCase):
         action = action_factory.create_action(task)
         self.assertIn("X-Auth-Token", action.headers)
         self.assertEqual(auth_token, action.headers["X-Auth-Token"])
+
+    def test_get_ssh_action(self):
+        task = copy.copy(SAMPLE_TASK)
+        task['service_spec'].update({'type': action_types.SSH})
+        create_vm = task['service_spec']['actions']['create-vm']
+        create_vm['parameters'].update({'host': '10.0.0.1',
+                                        'cmd': 'ls -l'})
+        task_params = task['task_spec']['parameters']
+        task_params.update({'username': '$.ssh_username',
+                            'password': '$.ssh_password'})
+        task['in_context'] = {'ssh_username': 'ubuntu',
+                              'ssh_password': 'ubuntu_password'}
+        action = action_factory.create_action(task)
+
+        self.assertEqual("ubuntu", action.username)
+        self.assertEqual("ubuntu_password", action.password)
+        self.assertEqual("ls -l", action.cmd)
+        self.assertEqual("10.0.0.1", action.host)

@@ -48,7 +48,8 @@ def _get_mapping():
         action_types.REST_API: get_rest_action,
         action_types.MISTRAL_REST_API: get_mistral_rest_action,
         action_types.OSLO_RPC: get_amqp_action,
-        action_types.SEND_EMAIL: get_send_email_action
+        action_types.SEND_EMAIL: get_send_email_action,
+        action_types.SSH: get_ssh_action
     }
 
 
@@ -143,3 +144,23 @@ def get_send_email_action(db_task, task, service):
 
     return actions.SendEmailAction(action_type, action_name,
                                    task_params, service_params)
+
+
+def get_ssh_action(db_task, task, service):
+    action_type = service.type
+    action_name = task.get_action_name()
+    task_params = task.parameters
+    action = service.actions.get(action_name)
+    action_params = action.parameters
+
+    # Merge/replace action_params by task_params.
+    all_params = copy.copy(action_params)
+    all_params.update(task_params)
+
+    cmd = all_params['cmd']
+    host = all_params['host']
+    username = all_params['username']
+    password = all_params['password']
+
+    return actions.SSHAction(action_type, action_name, cmd,
+                             host, username, password)
