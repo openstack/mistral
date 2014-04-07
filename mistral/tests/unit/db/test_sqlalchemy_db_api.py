@@ -230,7 +230,7 @@ TASKS = [
         'tags': ['deployment'],
         'updated_at': None,
         'in_context': None,
-        'input': None,
+        'parameters': None,
         'output': None,
         'task_runtime_context': None
     },
@@ -248,7 +248,7 @@ TASKS = [
         'tags': ['deployment'],
         'updated_at': None,
         'in_context': {'image_id': '123123'},
-        'input': {'image_id': '123123'},
+        'parameters': {'image_id': '123123'},
         'output': {'vm_id': '343123'},
         'task_runtime_context': None
     },

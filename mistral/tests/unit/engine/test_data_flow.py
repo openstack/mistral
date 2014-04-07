@@ -82,16 +82,16 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        build_full_name_task =\
+        build_full_name_task = \
             self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task =\
+        build_greeting_task = \
             self._assert_single_item(tasks, name='build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
         self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
-                             build_full_name_task['input'])
+                             build_full_name_task['parameters'])
         self.assertDictEqual(
             {
                 'f_name': 'John Doe',
@@ -111,7 +111,7 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual('John Doe',
                          build_greeting_task['in_context']['f_name'])
         self.assertDictEqual({'full_name': 'John Doe'},
-                             build_greeting_task['input'])
+                             build_greeting_task['parameters'])
         self.assertDictEqual(
             {
                 'task': {
@@ -148,18 +148,18 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        build_full_name_task =\
+        build_full_name_task = \
             self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task =\
+        build_greeting_task = \
             self._assert_single_item(tasks, name='build_greeting')
-        send_greeting_task =\
+        send_greeting_task = \
             self._assert_single_item(tasks, name='send_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
         self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
-                             build_full_name_task['input'])
+                             build_full_name_task['parameters'])
         self.assertDictEqual(
             {
                 'f_name': 'John Doe',
@@ -178,7 +178,7 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
         self.assertEqual('John Doe',
                          build_greeting_task['in_context']['f_name'])
-        self.assertDictEqual({}, build_greeting_task['input'])
+        self.assertDictEqual({}, build_greeting_task['parameters'])
         self.assertDictEqual(
             {
                 'greet_msg': 'Cheers!',
@@ -208,7 +208,7 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, send_greeting_task['state'])
         self.assertDictEqual(in_context, send_greeting_task['in_context'])
         self.assertDictEqual({'f_name': 'John Doe', 'greet_msg': 'Cheers!'},
-                             send_greeting_task['input'])
+                             send_greeting_task['parameters'])
         self.assertDictEqual(
             {
                 'task': {
@@ -240,16 +240,16 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        build_full_name_task =\
+        build_full_name_task = \
             self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task =\
+        build_greeting_task = \
             self._assert_single_item(tasks, name='build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
         self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
-                             build_full_name_task['input'])
+                             build_full_name_task['parameters'])
         self.assertDictEqual(
             {
                 'f_name': 'John Doe',
@@ -269,7 +269,7 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual('John Doe',
                          build_greeting_task['in_context']['f_name'])
         self.assertDictEqual({'full_name': 'John Doe'},
-                             build_greeting_task['input'])
+                             build_greeting_task['parameters'])
         self.assertDictEqual(
             {
                 'greet_msg': 'Hello, John Doe!',
@@ -307,18 +307,18 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        build_full_name_task =\
+        build_full_name_task = \
             self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task =\
+        build_greeting_task = \
             self._assert_single_item(tasks, name='build_greeting')
-        send_greeting_task =\
+        send_greeting_task = \
             self._assert_single_item(tasks, name='send_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
         self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
-                             build_full_name_task['input'])
+                             build_full_name_task['parameters'])
         self.assertDictEqual(
             {
                 'f_name': 'John Doe',
@@ -338,7 +338,7 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual('John Doe',
                          build_greeting_task['in_context']['f_name'])
         self.assertDictEqual({'full_name': 'John Doe'},
-                             build_greeting_task['input'])
+                             build_greeting_task['parameters'])
         self.assertDictEqual(
             {
                 'greet_msg': 'Hello, John Doe!',
@@ -366,7 +366,7 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual('Hello, John Doe!',
                          send_greeting_task['in_context']['greet_msg'])
         self.assertDictEqual({'greeting': 'Hello, John Doe!'},
-                             send_greeting_task['input'])
+                             send_greeting_task['parameters'])
         self.assertDictEqual(
             {
                 'sent': True,
@@ -394,20 +394,30 @@ class DataFlowTest(base.EngineTestCase):
                        mock.MagicMock(
                            side_effect=base.EngineTestCase.mock_run_tasks))
     def test_add_token_to_context(self):
-        cfg.CONF.pecan.auth_enable = True
         task_name = "create-vms"
-        workbook = create_workbook("test_rest.yaml")
-        db_api.workbook_update(workbook['name'], {'trust_id': '123'})
-        execution = self.engine.start_workflow_execution(workbook['name'],
-                                                         task_name, {})
-        tasks = db_api.tasks_get(workbook['name'], execution['id'])
-        task = self._assert_single_item(tasks, name=task_name)
-        context = task['in_context']
-        self.assertIn("auth_token", context)
-        self.assertEqual(TOKEN, context['auth_token'])
-        self.assertEqual(USER_ID, context["user_id"])
-        self.engine.convey_task_result(workbook['name'], execution['id'],
-                                       task['id'], states.SUCCESS, {})
-        execution = db_api.execution_get(workbook['name'], execution['id'])
-        self.assertEqual(states.SUCCESS, execution['state'])
-        cfg.CONF.pecan.auth_enable = False
+
+        cfg.CONF.pecan.auth_enable = True
+        try:
+            workbook = create_workbook("test_rest.yaml")
+            db_api.workbook_update(workbook['name'], {'trust_id': '123'})
+
+            execution = self.engine.start_workflow_execution(workbook['name'],
+                                                             task_name, {})
+            tasks = db_api.tasks_get(workbook['name'], execution['id'])
+
+            task = self._assert_single_item(tasks, name=task_name)
+
+            context = task['in_context']
+
+            self.assertIn("auth_token", context)
+            self.assertEqual(TOKEN, context['auth_token'])
+            self.assertEqual(USER_ID, context["user_id"])
+
+            self.engine.convey_task_result(workbook['name'], execution['id'],
+                                           task['id'], states.SUCCESS, {})
+
+            execution = db_api.execution_get(workbook['name'], execution['id'])
+
+            self.assertEqual(states.SUCCESS, execution['state'])
+        finally:
+            cfg.CONF.pecan.auth_enable = False

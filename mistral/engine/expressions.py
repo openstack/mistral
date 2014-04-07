@@ -17,6 +17,7 @@
 import abc
 import re
 import yaql
+import six
 
 from mistral.openstack.common import log as logging
 
@@ -77,17 +78,22 @@ class InlineYAQLEvaluator(YAQLEvaluator):
         if super(InlineYAQLEvaluator, cls).is_expression(expression):
             return super(InlineYAQLEvaluator,
                          cls).evaluate(expression, context)
+
         result = expression
         found_expressions = cls.find_inline_expressions(expression)
+
         if found_expressions:
             for expr in found_expressions:
                 trim_expr = expr.strip("{}")
                 evaluated = super(InlineYAQLEvaluator,
                                   cls).evaluate(trim_expr, context)
                 result = result.replace(expr, evaluated or expr)
-            return result
-        else:
-            return expression
+
+        return result
+
+    @classmethod
+    def is_expression(cls, s):
+        return s
 
     @classmethod
     def find_inline_expressions(cls, s):
@@ -99,4 +105,10 @@ _EVALUATOR = InlineYAQLEvaluator
 
 
 def evaluate(expression, context):
+    # Check if the passed value is expression so we don't need to do this
+    # every time on a caller side.
+    if not isinstance(expression, six.string_types) or \
+            not _EVALUATOR.is_expression(expression):
+        return expression
+
     return _EVALUATOR.evaluate(expression, context)

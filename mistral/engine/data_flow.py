@@ -27,10 +27,10 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-def evaluate_task_input(task, context):
+def evaluate_task_parameters(task, context):
     res = {}
 
-    params = task['task_spec'].get('input', {})
+    params = task['task_spec'].get('parameters', {})
 
     if not params:
         return res
@@ -46,13 +46,13 @@ def prepare_tasks(tasks, context):
         # TODO(rakhmerov): Inbound context should be a merge of outbound
         # contexts of task dependencies, if any.
         task['in_context'] = context
-        task['input'] = evaluate_task_input(task, context)
+        task['parameters'] = evaluate_task_parameters(task, context)
 
         db_api.task_update(task['workbook_name'],
                            task['execution_id'],
                            task['id'],
                            {'in_context': task['in_context'],
-                            'input': task['input']})
+                            'parameters': task['parameters']})
 
 
 def get_task_output(task, result):
@@ -88,10 +88,12 @@ def get_outbound_context(task, output=None):
 def add_token_to_context(context, db_workbook):
     if context is None:
         context = {}
+
     if CONF.pecan.auth_enable:
         workbook_ctx = trusts.create_context(db_workbook)
         if workbook_ctx:
             context.update(workbook_ctx.to_dict())
+
     return context
 
 
@@ -110,10 +112,12 @@ def _modify_item(item, context):
 def apply_context(data, context):
     if not context:
         return data
+
     if isinstance(data, dict):
         for key in data:
             data[key] = _modify_item(data[key], context)
     elif isinstance(data, list):
         for index, item in enumerate(data):
             data[index] = _modify_item(item, context)
+
     return data

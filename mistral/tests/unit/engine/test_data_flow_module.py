@@ -39,7 +39,7 @@ TASK = {
     'execution_id': EXEC_ID,
     'name': 'my_task',
     'task_spec': {
-        'input': {
+        'parameters': {
             'p1': 'My string',
             'p2': '$.param3.param32',
             'p3': ''
@@ -63,12 +63,12 @@ TASK = {
 
 
 class DataFlowTest(base.DbTestCase):
-    def test_prepare_task_input(self):
-        input = data_flow.evaluate_task_input(TASK, CONTEXT)
+    def test_evaluate_task_parameters(self):
+        parameters = data_flow.evaluate_task_parameters(TASK, CONTEXT)
 
-        self.assertEqual(len(input), 3)
-        self.assertEqual(input['p1'], 'My string')
-        self.assertEqual(input['p2'], 'val32')
+        self.assertEqual(len(parameters), 3)
+        self.assertEqual(parameters['p1'], 'My string')
+        self.assertEqual(parameters['p2'], 'val32')
 
     def test_prepare_tasks(self):
         task = db_api.task_create(WB_NAME, EXEC_ID, TASK.copy())
@@ -79,7 +79,7 @@ class DataFlowTest(base.DbTestCase):
         db_task = db_api.task_get(WB_NAME, EXEC_ID, tasks[0]['id'])
 
         self.assertDictEqual(db_task['in_context'], CONTEXT)
-        self.assertDictEqual(db_task['input'], {
+        self.assertDictEqual(db_task['parameters'], {
             'p1': 'My string',
             'p2': 'val32',
             'p3': ''
@@ -104,7 +104,7 @@ class DataFlowTest(base.DbTestCase):
         modified_task = data_flow.apply_context(task_spec_dict, CONTEXT)
         self.assertDictEqual(
             {
-                'input': {
+                'parameters': {
                     'p1': 'My string',
                     'p2': 'val32',
                     'p3': ''

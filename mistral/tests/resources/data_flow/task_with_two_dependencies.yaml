@@ -28,7 +28,7 @@ Workflow:
   tasks:
     build_full_name:
       action: MyService:build_full_name
-      input:
+      parameters:
         first_name: $.person.first_name
         last_name: $.person.last_name
       publish:
@@ -42,6 +42,6 @@ Workflow:
     send_greeting:
       requires: [build_full_name, build_greeting]
       action: MyService:send_greeting
-      input:
+      parameters:
         f_name: $.f_name
         greet_msg: $.greet_msg

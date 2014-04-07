@@ -29,7 +29,7 @@ Workflow:
   tasks:
     build_full_name:
       action: MyService:build_full_name
-      input:
+      parameters:
         first_name: $.person.first_name
         last_name: $.person.last_name
       publish:
@@ -38,7 +38,7 @@ Workflow:
 
     build_greeting:
       action: MyService:build_greeting
-      input:
+      parameters:
         full_name: $.f_name
       publish:
         greet_msg: greeting
@@ -46,7 +46,7 @@ Workflow:
 
     send_greeting:
       action: MyService:send_greeting
-      input:
+      parameters:
         greeting: $.task.build_greeting.greeting
       publish:
         sent: greeting_sent

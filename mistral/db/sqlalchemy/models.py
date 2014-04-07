@@ -98,7 +98,7 @@ class Task(mb.MistralBase):
 
     # Data Flow properties.
     in_context = sa.Column(st.JsonDictType())
-    input = sa.Column(st.JsonDictType())
+    parameters = sa.Column(st.JsonDictType())
     output = sa.Column(st.JsonDictType())
 
     # Runtime context like iteration_no of a repeater.
