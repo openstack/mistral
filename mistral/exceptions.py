@@ -42,13 +42,6 @@ class DataAccessException(MistralException):
             self.message = message
 
 
-class InvalidActionException(MistralException):
-    def __init__(self, message=None):
-        super(InvalidActionException, self).__init__(message)
-        if message:
-            self.message = message
-
-
 class DBDuplicateEntry(MistralException):
     message = "Database object already exists"
     code = "DB_DUPLICATE_ENTRY"
@@ -64,6 +57,23 @@ class ActionException(MistralException):
 
     def __init__(self, message=None):
         super(MistralException, self).__init__(message)
+        if message:
+            self.message = message
+
+
+class InvalidActionException(MistralException):
+    def __init__(self, message=None):
+        super(InvalidActionException, self).__init__(message)
+        if message:
+            self.message = message
+
+
+class ActionRegistrationException(MistralException):
+    message = "Failed to register action"
+    code = "ACTION_REGISTRATION_ERROR"
+
+    def __init__(self, message=None):
+        super(ActionRegistrationException, self).__init__(message)
         if message:
             self.message = message
 
