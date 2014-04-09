@@ -71,6 +71,9 @@ class TaskSpec(base.BaseSpec):
     def get_action_name(self):
         return self.action.split(':')[1]
 
+    def get_full_action_name(self):
+        return self.action
+
     def is_repeater_task(self):
         return self.get_property("repeat") is not None
 

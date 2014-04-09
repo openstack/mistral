@@ -14,10 +14,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import inspect
+
 from mistral.actions import base
 from mistral.actions import std_actions
 from mistral import exceptions as exc
+from mistral.workbook import tasks
 
+
+_ACTION_CTX_PARAM = 'action_context'
 _STD_NAMESPACE = "std"
 
 _NAMESPACES = {}
@@ -44,6 +49,8 @@ def get_registered_namespaces():
 def _register_standard_action_classes():
     register_action_class(_STD_NAMESPACE, "echo", std_actions.EchoAction)
     register_action_class(_STD_NAMESPACE, "http", std_actions.HTTPAction)
+    register_action_class(_STD_NAMESPACE,
+                          "mistral_http", std_actions.MistralHTTPAction)
     register_action_class(_STD_NAMESPACE, "email", std_actions.SendEmailAction)
 
 
@@ -67,12 +74,40 @@ def get_action_class(action_full_name):
     return ns.get_action_class(arr[1])
 
 
+def _get_action_context(db_task):
+    return {
+        'workbook_name': db_task['workbook_name'],
+        'execution_id': db_task['execution_id'],
+        'task_id': db_task['id'],
+        'task_name': db_task['name'],
+        'task_tags': db_task['tags']
+    }
+
+
+def _has_action_context_param(action_cls):
+    arg_spec = inspect.getargspec(action_cls.__init__)
+
+    return _ACTION_CTX_PARAM in arg_spec.args
+
+
 def create_action(db_task):
     # TODO: Take care of ad-hoc actions.
-    action_cls = get_action_class(db_task['task_spec']['action'])
+    task_spec = tasks.TaskSpec(db_task['task_spec'])
+    full_action_name = task_spec.get_full_action_name()
+
+    action_cls = get_action_class(full_action_name)
+
+    if not action_cls:
+        raise exc.ActionException("Action is not registered: %s" %
+                                  full_action_name)
+
+    action_params = db_task['parameters'].copy()
+
+    if _has_action_context_param(action_cls):
+        action_params[_ACTION_CTX_PARAM] = _get_action_context(db_task)
 
     try:
-        action = action_cls(**db_task['parameters'].copy())
+        action = action_cls(**action_params)
     except Exception as e:
         raise exc.ActionException('Failed to create action [db_task=%s]: %s' %
                                   (db_task, e))

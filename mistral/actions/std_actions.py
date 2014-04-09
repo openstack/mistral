@@ -87,6 +87,19 @@ class HTTPAction(base.Action):
         return resp
 
 
+class MistralHTTPAction(HTTPAction):
+    def __init__(self, action_context, url, params, method,
+                 headers={}, body={}):
+        headers.update({
+            'Mistral-Workbook-Name': action_context['workbook_name'],
+            'Mistral-Execution-Id': action_context['execution_id'],
+            'Mistral-Task-Id': action_context['task_id'],
+        })
+
+        super(MistralHTTPAction, self).__init__(url, params, method,
+                                                headers, body)
+
+
 class SendEmailAction(base.Action):
     def __init__(self, params, settings):
         #TODO(dzimine): validate parameters

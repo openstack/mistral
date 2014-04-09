@@ -14,20 +14,27 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import unittest2
 import json
 
+import unittest2
 from mistral.openstack.common import log as logging
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
 from mistral.tests import base
 
+
 LOG = logging.getLogger(__name__)
 
 DB_TASK = {
     'task_spec': {
-        'action': 'std.http',
+        'name': 'my_task',
+        'action': 'std.http'
     },
+    'name': 'my_task',
+    'workbook_name': 'my_workbook',
+    'execution_id': '123',
+    'id': '123',
+    'tags': ['deployment', 'test'],
     'parameters': {
         'url': 'http://some.url',
         'params': {
@@ -57,14 +64,17 @@ class ActionFactoryTest(base.BaseTest):
 
         std_ns = namespaces["std"]
 
-        self.assertEqual(3, len(std_ns))
+        self.assertEqual(4, len(std_ns))
 
         self.assertTrue(std_ns.contains_action_name("echo"))
         self.assertTrue(std_ns.contains_action_name("http"))
+        self.assertTrue(std_ns.contains_action_name("mistral_http"))
         self.assertTrue(std_ns.contains_action_name("email"))
 
         self.assertEqual(std.EchoAction, std_ns.get_action_class("echo"))
         self.assertEqual(std.HTTPAction, std_ns.get_action_class("http"))
+        self.assertEqual(std.MistralHTTPAction,
+                         std_ns.get_action_class("mistral_http"))
         self.assertEqual(std.SendEmailAction,
                          std_ns.get_action_class("email"))
 
@@ -78,7 +88,7 @@ class ActionFactoryTest(base.BaseTest):
     def test_get_action_class_failure(self):
         self.assertEqual(std.EchoAction, a_f.get_action_class("echo"))
 
-    def test_create_action(self):
+    def test_create_http_action(self):
         action = a_f.create_action(DB_TASK)
 
         self.assertIsNotNone(action)
@@ -90,3 +100,29 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual(task_params['method'], action.method)
         self.assertEqual(task_params['headers'], action.headers)
         self.assertDictEqual(task_params['body'], json.loads(action.body))
+
+    def test_create_mistral_http_action(self):
+        db_task = DB_TASK.copy()
+        db_task['task_spec'] = db_task['task_spec'].copy()
+        db_task['task_spec']['action'] = 'std.mistral_http'
+
+        action = a_f.create_action(db_task)
+
+        self.assertIsNotNone(action)
+
+        task_params = db_task['parameters']
+
+        self.assertEqual(task_params['url'], action.url)
+        self.assertDictEqual(task_params['params'], action.params)
+        self.assertEqual(task_params['method'], action.method)
+        self.assertEqual(task_params['headers'], action.headers)
+        self.assertDictEqual(task_params['body'], json.loads(action.body))
+
+        headers = task_params['headers']
+
+        self.assertEqual(db_task['workbook_name'],
+                         headers['Mistral-Workbook-Name'])
+        self.assertEqual(db_task['execution_id'],
+                         headers['Mistral-Execution-Id'])
+        self.assertEqual(db_task['id'],
+                         headers['Mistral-Task-Id'])

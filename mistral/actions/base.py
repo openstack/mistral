@@ -32,6 +32,16 @@ class Action(object):
     if any) and are treated as action parameters. So in a regular general
     purpose languages terminology action is a method declaration and task is
     a method call.
+
+    Base action class initializer doesn't have arguments. However, concrete
+    action classes may have any number of parameters defining action behavior.
+    These parameters must correspond to parameters declared in action
+    specification (e.g. using DSL or others).
+    Action initializer may have a conventional argument with name
+    "action_context". If it presents then action factory will fill it with
+    a dictionary containing contextual information like execution identifier,
+    workbook name and other that may be needed for some specific action
+    implementations.
     """
 
     @abc.abstractmethod
