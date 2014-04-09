@@ -16,6 +16,7 @@
 
 from mistral.actions import base
 from mistral.actions import std_actions
+from mistral import exceptions as exc
 
 _STD_NAMESPACE = "std"
 
@@ -46,9 +47,37 @@ def _register_standard_action_classes():
     register_action_class(_STD_NAMESPACE, "email", std_actions.SendEmailAction)
 
 
+def get_action_class(action_full_name):
+    """Finds action class by full action name (i.e. 'namespace.action_name').
+
+    :param action_full_name: Full action name (that includes namespace).
+    :return: Action class or None if not found.
+    """
+    arr = action_full_name.split('.')
+
+    if len(arr) != 2:
+        raise exc.ActionException('Invalid action name: %s' %
+                                  action_full_name)
+
+    ns = _NAMESPACES.get(arr[0])
+
+    if not ns:
+        return None
+
+    return ns.get_action_class(arr[1])
+
+
 def create_action(db_task):
-    # TODO: Implement
-    return None
+    # TODO: Take care of ad-hoc actions.
+    action_cls = get_action_class(db_task['task_spec']['action'])
+
+    try:
+        action = action_cls(**db_task['parameters'].copy())
+    except Exception as e:
+        raise exc.ActionException('Failed to create action [db_task=%s]: %s' %
+                                  (db_task, e))
+
+    return action
 
 
 # Registering standard actions on module load.

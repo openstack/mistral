@@ -25,8 +25,8 @@ class ActionSpec(base.BaseSpec):
         if self.validate():
             self.name = action['name']
             self.parameters = action.get('parameters', {})
-            self.input = action.get('input', {})
             self.output = action.get('output', {})
+            # TODO: Get rid of it once new action design is finished.
             self.task_parameters = action.get('task-parameters', {})
 
 

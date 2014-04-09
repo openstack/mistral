@@ -38,8 +38,7 @@ class EchoAction(base.Action):
     stub.
     """
 
-    def __init__(self, namespace, name, output):
-        super(EchoAction, self).__init__(namespace, name)
+    def __init__(self, output):
         self.output = output
 
     def run(self):
@@ -52,10 +51,7 @@ class EchoAction(base.Action):
 
 
 class HTTPAction(base.Action):
-    def __init__(self, namespace, name, url, params={},
-                 method="GET", headers={}, body={}):
-        super(HTTPAction, self).__init__(namespace, name)
-
+    def __init__(self, url, params={}, method="GET", headers={}, body={}):
         self.url = url
         self.params = params
         self.method = method
@@ -92,8 +88,7 @@ class HTTPAction(base.Action):
 
 
 class SendEmailAction(base.Action):
-    def __init__(self, namespace, name, params, settings):
-        super(SendEmailAction, self).__init__(namespace, name)
+    def __init__(self, params, settings):
         #TODO(dzimine): validate parameters
 
         # Task invocation parameters.

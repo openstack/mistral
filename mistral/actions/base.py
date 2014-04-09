@@ -34,10 +34,6 @@ class Action(object):
     a method call.
     """
 
-    def __init__(self, namespace, name):
-        self.namespace = namespace
-        self.name = name
-
     @abc.abstractmethod
     def run(self):
         """Run action logic.
