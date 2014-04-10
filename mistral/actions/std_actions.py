@@ -23,6 +23,8 @@ import requests
 from mistral.openstack.common import log as logging
 from mistral.actions import base
 from mistral import exceptions as exc
+# TODO: Move expressions out of package 'engine'.
+from mistral.engine import expressions as expr
 
 
 LOG = logging.getLogger(__name__)
@@ -151,3 +153,43 @@ class SendEmailAction(base.Action):
                  "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]" %
                  (self.sender, self.to, self.subject,
                   self.smtp_server, self.body[:128]))
+
+
+class AdHocAction(base.Action):
+    def __init__(self, base_action_cls, action_spec, **params):
+        self.base_action_cls = base_action_cls
+        self.action_spec = action_spec
+
+        base_params = self._convert_params(params)
+        self.base_action = base_action_cls(**base_params)
+
+    def _convert_params(self, params):
+        base_params_spec = self.action_spec.get('base-parameters')
+
+        if not base_params_spec:
+            return {}
+
+        return dict((k, expr.evaluate(v, params))
+                    for k, v in base_params_spec.iteritems())
+
+    def _convert_result(self, result):
+        transformer = self.action_spec.get('output')
+
+        if not transformer:
+            return result
+
+        expr_ctx = {'base_output': result}
+
+        if isinstance(transformer, dict):
+            return dict((k, expr.evaluate(v, expr_ctx))
+                        for k, v in transformer.iteritems())
+        elif isinstance(transformer, list):
+            return [expr.evaluate(item, expr_ctx) for item in transformer]
+        else:
+            return expr.evaluate(transformer, expr_ctx)
+
+    def run(self):
+        return self._convert_result(self.base_action.run())
+
+    def test(self):
+        return self._convert_result(self.base_action.test())
