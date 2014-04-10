@@ -164,6 +164,7 @@ class AdHocAction(base.Action):
         self.base_action = base_action_cls(**base_params)
 
     def _convert_params(self, params):
+        # TODO(rakhmerov): ActionSpec should be used instead of dict.
         base_params_spec = self.action_spec.get('base-parameters')
 
         if not base_params_spec:
@@ -173,6 +174,7 @@ class AdHocAction(base.Action):
                     for k, v in base_params_spec.iteritems())
 
     def _convert_result(self, result):
+        # TODO(rakhmerov): ActionSpec should be used instead of dict.
         transformer = self.action_spec.get('output')
 
         if not transformer:

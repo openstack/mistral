@@ -54,6 +54,34 @@ DB_TASK = {
     }
 }
 
+DB_TASK_ADHOC = {
+    'task_spec': {
+        'name': 'my_task',
+        'action': 'my_namespace.my_action'
+    },
+    'action_spec': {
+        'name': 'my_action',
+        'namespace': 'my_namespace',
+        'class': 'std.echo',
+        'base-parameters': {
+            'output': '{$.first} and {$.second}'
+        },
+        'parameters': ['first', 'second'],
+        'output': {
+            'res': '{$.base_output}'
+        }
+    },
+    'name': 'my_task',
+    'workbook_name': 'my_workbook',
+    'execution_id': '123',
+    'id': '123',
+    'tags': ['deployment', 'test'],
+    'parameters': {
+        'first': 'Tango',
+        'second': 'Cash'
+    }
+}
+
 
 class ActionFactoryTest(base.BaseTest):
     def test_register_standard_actions(self):
@@ -126,3 +154,27 @@ class ActionFactoryTest(base.BaseTest):
                          headers['Mistral-Execution-Id'])
         self.assertEqual(db_task['id'],
                          headers['Mistral-Task-Id'])
+
+    def test_adhoc_echo_action(self):
+        db_task = DB_TASK_ADHOC.copy()
+        action_spec = db_task['action_spec']
+
+        # With dic-like output formatter.
+        action = a_f.create_action(db_task)
+
+        self.assertDictEqual({'res': 'Tango and Cash'}, action.run())
+
+        # With list-like output formatter.
+        action_spec['output'] = ['$.base_output', '$.base_output']
+
+        action = a_f.create_action(db_task)
+
+        self.assertListEqual(['Tango and Cash', 'Tango and Cash'],
+                             action.run())
+
+        # With single-object output formatter.
+        action_spec['output'] = "'{$.base_output}' is a cool movie!"
+
+        action = a_f.create_action(db_task)
+
+        self.assertEqual("'Tango and Cash' is a cool movie!", action.run())

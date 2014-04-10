@@ -18,15 +18,17 @@ from mistral.workbook import base
 
 
 class ActionSpec(base.BaseSpec):
+    # TODO(rakhmerov): Add parameters required by new design (class etc.)
     _required_keys = ['name']
 
     def __init__(self, action):
         super(ActionSpec, self).__init__(action)
+
         if self.validate():
             self.name = action['name']
             self.parameters = action.get('parameters', {})
             self.output = action.get('output', {})
-            # TODO: Get rid of it once new action design is finished.
+            # TODO(rakhmerov): Get rid of it once new design is finished.
             self.task_parameters = action.get('task-parameters', {})
 
 
