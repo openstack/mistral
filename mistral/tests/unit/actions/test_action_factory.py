@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import json
+import copy
 
 import unittest2
 from mistral.openstack.common import log as logging
@@ -92,7 +93,7 @@ class ActionFactoryTest(base.BaseTest):
 
         std_ns = namespaces["std"]
 
-        self.assertEqual(4, len(std_ns))
+        self.assertEqual(5, len(std_ns))
 
         self.assertTrue(std_ns.contains_action_name("echo"))
         self.assertTrue(std_ns.contains_action_name("http"))
@@ -130,8 +131,7 @@ class ActionFactoryTest(base.BaseTest):
         self.assertDictEqual(task_params['body'], json.loads(action.body))
 
     def test_create_mistral_http_action(self):
-        db_task = DB_TASK.copy()
-        db_task['task_spec'] = db_task['task_spec'].copy()
+        db_task = copy.copy(DB_TASK)
         db_task['task_spec']['action'] = 'std.mistral_http'
 
         action = a_f.create_action(db_task)
@@ -154,6 +154,30 @@ class ActionFactoryTest(base.BaseTest):
                          headers['Mistral-Execution-Id'])
         self.assertEqual(db_task['id'],
                          headers['Mistral-Task-Id'])
+
+    def test_get_ssh_action(self):
+        db_task = copy.copy(DB_TASK)
+        db_task['task_spec'] = {
+            'name': 'my_task',
+            'action': 'std.ssh',
+            'parameters': {
+                'host': '10.0.0.1',
+                'cmd': 'ls -l',
+                'username': '$.ssh_username',
+                'password': '$.ssh_password'
+            }
+        }
+        db_task['parameters'] = {'host': '10.0.0.1',
+                                 'cmd': 'ls -l',
+                                 'username': 'ubuntu',
+                                 'password': 'ubuntu_password'}
+
+        action = a_f.create_action(db_task)
+
+        self.assertEqual("ubuntu", action.username)
+        self.assertEqual("ubuntu_password", action.password)
+        self.assertEqual("ls -l", action.cmd)
+        self.assertEqual("10.0.0.1", action.host)
 
     def test_adhoc_echo_action(self):
         db_task = DB_TASK_ADHOC.copy()

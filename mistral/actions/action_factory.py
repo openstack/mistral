@@ -53,6 +53,7 @@ def _register_standard_action_classes():
     register_action_class(_STD_NAMESPACE, "http", std_actions.HTTPAction)
     register_action_class(_STD_NAMESPACE,
                           "mistral_http", std_actions.MistralHTTPAction)
+    register_action_class(_STD_NAMESPACE, "ssh", std_actions.SSHAction)
     register_action_class(_STD_NAMESPACE, "email", std_actions.SendEmailAction)
 
 

@@ -25,6 +25,7 @@ from mistral.actions import base
 from mistral import exceptions as exc
 # TODO: Move expressions out of package 'engine'.
 from mistral.engine import expressions as expr
+from mistral.utils import ssh_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -156,6 +157,34 @@ class SendEmailAction(base.Action):
                  "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]" %
                  (self.sender, self.to, self.subject,
                   self.smtp_server, self.body[:128]))
+
+
+class SSHAction(base.Action):
+    def __init__(self, cmd, host, username, password):
+        self.cmd = cmd
+        self.host = host
+        self.username = username
+        self.password = password
+
+    def run(self):
+        def raise_exc(parent_exc=None):
+            message = ("Failed to execute ssh cmd "
+                       "'%s' on %s" % (self.cmd, self.host))
+            if parent_exc:
+                message += "\nException: %s" % str(parent_exc)
+            raise exc.ActionException(message)
+
+        try:
+            status_code, result = ssh_utils.execute_command(self.cmd,
+                                                            self.host,
+                                                            self.username,
+                                                            self.password)
+            if status_code > 0:
+                return raise_exc()
+
+            return result
+        except Exception as e:
+            return raise_exc(parent_exc=e)
 
 
 class AdHocAction(base.Action):
