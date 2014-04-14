@@ -24,7 +24,7 @@ from mistral import exceptions as exc
 from mistral.engine import states
 from mistral.engine import workflow
 from mistral.engine import data_flow
-from mistral.engine import repeater
+from mistral.engine import retry
 
 
 LOG = logging.getLogger(__name__)
@@ -181,11 +181,10 @@ class AbstractEngine(object):
         tasks = []
 
         for task in task_list:
-            state, task_runtime_context = repeater.get_task_runtime(task)
+            state, task_runtime_context = retry.get_task_runtime(task)
             action_ns = workbook.namespaces.get(task.get_action_namespace())
             action_spec = \
                 action_ns.actions.get(task.get_action_name())
-
             db_task = db_api.task_create(workbook_name, execution_id, {
                 "name": task.name,
                 "requires": task.requires,
@@ -235,7 +234,7 @@ class AbstractEngine(object):
 
         # Compute the outbound_context, state and exec_flow_context.
         outbound_context = data_flow.get_outbound_context(task, task_output)
-        state, exec_flow_context = repeater.get_task_runtime(
+        state, task_runtime_context = retry.get_task_runtime(
             task_spec, state, outbound_context, task_runtime_context)
 
         # Update the task.
@@ -280,8 +279,7 @@ class AbstractEngine(object):
                 cls._run_tasks(task_to_start)
 
         task_spec = workbook.tasks.get(task['name'])
-        retries, break_on, delay_sec = task_spec.get_repeat_task_parameters()
-
+        retries, break_on, delay_sec = task_spec.get_retry_parameters()
         if delay_sec > 0:
             # Run the task after the specified delay.
             eventlet.spawn_after(delay_sec, run_delayed_task)

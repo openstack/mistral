@@ -22,7 +22,7 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
                      task_runtime_context=None):
     """
     Computes the state and exec_flow_context runtime properties for a task
-    based on the supplied properties. This method takes the repeat nature of a
+    based on the supplied properties. This method takes the retry nature of a
     task into consideration.
 
     :param task_spec: specification of the task
@@ -30,17 +30,15 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     :param outbound_context: outbound_context to be used for computation
     :param task_runtime_context: current flow context
     :return: state, exec_flow_context tuple. Sample scenarios are,
-    1. required iteration = 5, current iteration = 0, state = SUCCESS
-       Move to next iteration therefore state = IDLE/DELAYED, iteration_no = 1.
-    2. required iteration = 5, current iteration = 2, state = ERROR Stop task.
-        state = ERROR, iteration_no = 2
-    3. required iteration = 5, current iteration = 4, state = SUCCESS
-    Iterations complete therefore state = SUCCESS, iteration_no = 4.
-
+    1. state = SUCCESS
+       No need to move to next iteration.
+    2. retry:count = 5, current:count = 2, state = ERROR,
+       state = IDLE/DELAYED, current:count = 3
+    3. retry:count = 5, current:count = 4, state = ERROR
+    Iterations complete therefore state = #{state}, current:count = 4.
     """
 
-    if states.is_stopped_or_unsuccessful_finish(state) or not \
-            task_spec.is_repeater_task():
+    if not (state is states.ERROR and task_spec.is_retry_task()):
         return state, task_runtime_context
 
     if task_runtime_context is None:
@@ -48,26 +46,19 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     if outbound_context is None:
         outbound_context = {}
 
-    iteration_no = -1
-    if "iteration_no" in task_runtime_context:
-        iteration_no = task_runtime_context["iteration_no"]
-    iterations, break_on, delay = task_spec.get_repeat_task_parameters()
+    retry_no = -1
+    if "retry_no" in task_runtime_context:
+        retry_no = task_runtime_context["retry_no"]
+    retry_count, break_on, delay = task_spec.get_retry_parameters()
 
-    iterations_incomplete = iteration_no + 1 < iterations
+    retries_remain = retry_no + 1 < retry_count
     break_early = expressions.evaluate(break_on, outbound_context) if \
         break_on and outbound_context else False
 
-    if iterations_incomplete and break_early:
-        state = states.SUCCESS
-    elif iterations_incomplete:
+    if retries_remain and not break_early:
         state = states.DELAYED if delay > 0 else states.IDLE
-        iteration_no += 1
-    elif not iterations_incomplete and state == states.IDLE:
-        # This is the case where the iterations are complete but task is still
-        # IDLE which implies SUCCESS. Can happen if repeat is specified but
-        # 0 iterations are requested.
-        state = states.SUCCESS
+        retry_no += 1
 
-    task_runtime_context["iteration_no"] = iteration_no
+    task_runtime_context["retry_no"] = retry_no
 
     return state, task_runtime_context

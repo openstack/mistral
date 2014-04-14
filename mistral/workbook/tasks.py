@@ -79,22 +79,22 @@ class TaskSpec(base.BaseSpec):
     def get_full_action_name(self):
         return self.action
 
-    def is_repeater_task(self):
-        return self.get_property("repeat") is not None
+    def is_retry_task(self):
+        return self.get_property("retry") is not None
 
-    def get_repeat_task_parameters(self):
+    def get_retry_parameters(self):
         iterations = 0
         break_on = None
         delay = 0
-        repeat = self.get_property("repeat")
+        retry = self.get_property("retry")
 
-        if repeat:
-            if "iterations" in repeat:
-                iterations = repeat["iterations"]
-            if "break-on" in repeat:
-                break_on = repeat["break-on"]
-            if "delay" in repeat:
-                delay = repeat["delay"]
+        if retry:
+            if "count" in retry:
+                iterations = retry["count"]
+            if "break-on" in retry:
+                break_on = retry["break-on"]
+            if "delay" in retry:
+                delay = retry["delay"]
 
         return iterations, break_on, delay
 
