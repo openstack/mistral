@@ -20,6 +20,7 @@ from mistral.actions import base
 from mistral.actions import std_actions
 from mistral import exceptions as exc
 from mistral.workbook import tasks
+from mistral.workbook import actions
 from mistral.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -98,17 +99,18 @@ def _create_adhoc_action(db_task):
     full_action_name = task_spec.get_full_action_name()
 
     # TODO(rakhmerov): Fix model attributes during refactoring.
-    # TODO(rakhmerov): ActionSpec should be used instead.
-    adhoc_action_spec = db_task['action_spec']
+    raw_action_spec = db_task['action_spec']
 
-    if not adhoc_action_spec:
+    if not raw_action_spec:
         return None
+
+    action_spec = actions.ActionSpec(raw_action_spec)
 
     LOG.info('Using ad-hoc action [action=%s, db_task=%s]' %
              (full_action_name, db_task))
 
     # Create an ad-hoc action.
-    base_cls = get_action_class(adhoc_action_spec['class'])
+    base_cls = get_action_class(action_spec.clazz)
 
     action_context = None
     if _has_action_context_param(base_cls):
@@ -124,7 +126,7 @@ def _create_adhoc_action(db_task):
 
     return std_actions.AdHocAction(action_context,
                                    base_cls,
-                                   adhoc_action_spec,
+                                   action_spec,
                                    **action_params)
 
 

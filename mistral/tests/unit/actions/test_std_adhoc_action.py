@@ -14,11 +14,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from mistral.actions import std_actions as std
 from mistral.tests import base
+from mistral.workbook import namespaces as ns
 
 NS_SPEC = {
-    'my_namespace': {
+    'name': 'my_namespace',
+    'actions': {
         'my_action': {
             'class': 'std.echo',
             'base-parameters': {
@@ -35,7 +39,9 @@ NS_SPEC = {
 
 class AdHocActionTest(base.BaseTest):
     def test_adhoc_echo_action(self):
-        action_spec = NS_SPEC['my_namespace']['my_action'].copy()
+        ns_raw_spec = copy.copy(NS_SPEC)
+
+        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
 
         # With dic-like output formatter.
         action = std.AdHocAction(None, std.EchoAction, action_spec,
@@ -44,7 +50,9 @@ class AdHocActionTest(base.BaseTest):
         self.assertDictEqual({'res': 'Tango and Cash'}, action.run())
 
         # With list-like output formatter.
-        action_spec['output'] = ['$.base_output', '$.base_output']
+        ns_raw_spec['actions']['my_action']['output'] =\
+            ['$.base_output', '$.base_output']
+        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
 
         action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
@@ -53,7 +61,9 @@ class AdHocActionTest(base.BaseTest):
                              action.run())
 
         # With single-object output formatter.
-        action_spec['output'] = "'{$.base_output}' is a cool movie!"
+        ns_raw_spec['actions']['my_action']['output'] =\
+            "'{$.base_output}' is a cool movie!"
+        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
 
         action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
