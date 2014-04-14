@@ -38,7 +38,7 @@ class AdHocActionTest(base.BaseTest):
         action_spec = NS_SPEC['my_namespace']['my_action'].copy()
 
         # With dic-like output formatter.
-        action = std.AdHocAction(std.EchoAction, action_spec,
+        action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
 
         self.assertDictEqual({'res': 'Tango and Cash'}, action.run())
@@ -46,7 +46,7 @@ class AdHocActionTest(base.BaseTest):
         # With list-like output formatter.
         action_spec['output'] = ['$.base_output', '$.base_output']
 
-        action = std.AdHocAction(std.EchoAction, action_spec,
+        action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
 
         self.assertListEqual(['Tango and Cash', 'Tango and Cash'],
@@ -55,7 +55,7 @@ class AdHocActionTest(base.BaseTest):
         # With single-object output formatter.
         action_spec['output'] = "'{$.base_output}' is a cool movie!"
 
-        action = std.AdHocAction(std.EchoAction, action_spec,
+        action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
 
         self.assertEqual("'Tango and Cash' is a cool movie!", action.run())

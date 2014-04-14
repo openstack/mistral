@@ -1,10 +1,10 @@
-Services:
-   MyService:
-    type: ECHO
+Namespaces:
+  MyService:
     actions:
-        repeatable-action:
-            output:
-                greeting: Cheers!
+      repeatable-action:
+        class: std.echo
+        output:
+          greeting: Cheers!
 
 Workflow:
   tasks:
@@ -12,6 +12,6 @@ Workflow:
       repeat:
         iterations: 0
         delay: 0
-      action: MyService:repeatable-action
+      action: MyService.repeatable-action
       publish:
         greet_msg: greeting

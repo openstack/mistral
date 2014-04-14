@@ -101,6 +101,7 @@ class RepeatTaskTest(base.EngineTestCase):
         # Wait until all iterations are finished
         eventlet.sleep(delay * iterations + 1)
         tasks = db_api.tasks_get(wb['name'], execution['id'])
+
         self._assert_multiple_items(tasks, 2)
         self._assert_single_item(tasks, name='repeater_task')
         self._assert_single_item(tasks, task_runtime_context=None)

@@ -20,12 +20,11 @@ from oslo.config import cfg
 from mistral.openstack.common import log as logging
 from mistral.openstack.common import importutils
 from mistral.db import api as db_api
-from mistral.engine.actions import actions
+from mistral.actions import std_actions
 from mistral.engine import expressions
 from mistral.engine.scalable import engine
 from mistral.engine import states
 from mistral.tests import base
-
 
 # We need to make sure that all configuration properties are registered.
 importutils.import_module("mistral.config")
@@ -48,7 +47,7 @@ class TestScalableEngine(base.EngineTestCase):
                        mock.MagicMock(return_value={
                            'definition': base.get_resource("test_rest.yaml")
                        }))
-    @mock.patch.object(actions.RestAction, "run",
+    @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value="result"))
     def test_engine_one_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "create-vms",
@@ -71,7 +70,7 @@ class TestScalableEngine(base.EngineTestCase):
                        mock.MagicMock(return_value={
                            'definition': base.get_resource("test_rest.yaml")
                        }))
-    @mock.patch.object(actions.RestAction, "run",
+    @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value="result"))
     def test_engine_multiple_tasks(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "backup-vms",
@@ -113,7 +112,7 @@ class TestScalableEngine(base.EngineTestCase):
     @mock.patch.object(engine.ScalableEngine, '_run_tasks',
                        mock.MagicMock(
                            side_effect=base.EngineTestCase.mock_run_tasks))
-    @mock.patch.object(actions.RestAction, "run",
+    @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
     @mock.patch.object(db_api, "workbook_get",
                        mock.MagicMock(return_value={
@@ -141,7 +140,7 @@ class TestScalableEngine(base.EngineTestCase):
                        mock.MagicMock(return_value={
                            'definition': base.get_resource("test_rest.yaml")
                        }))
-    @mock.patch.object(actions.RestAction, "run",
+    @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
     @mock.patch.object(expressions, "evaluate",
                        mock.MagicMock(side_effect=lambda x, y: x))
@@ -213,7 +212,7 @@ class TestScalableEngine(base.EngineTestCase):
                        mock.MagicMock(return_value={
                            'definition': base.get_resource("test_rest.yaml")
                        }))
-    @mock.patch.object(actions.RestAction, "run",
+    @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value={'state': states.SUCCESS}))
     @mock.patch.object(expressions, "evaluate",
                        mock.MagicMock(side_effect=lambda x, y: x))

@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+#TODO(rakhmerov): Remove this module after refactoring.
+
 from mistral.engine.actions import action_types as a_t
 
 

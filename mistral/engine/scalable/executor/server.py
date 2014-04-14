@@ -19,8 +19,7 @@ from mistral.db import api as db_api
 from mistral import exceptions as exc
 from mistral.engine import engine
 from mistral.engine import states
-from mistral.engine.actions import action_factory as a_f
-from mistral.engine.actions import action_helper as a_h
+from mistral.actions import action_factory as a_f
 
 
 LOG = logging.getLogger(__name__)
@@ -35,13 +34,13 @@ class Executor(object):
         :type task: dict
         """
         LOG.info("Starting task action [task_id=%s, "
-                 "action='%s', service='%s'" %
+                 "action='%s', action_spec='%s'" %
                  (task['id'], task['task_spec']['action'],
-                  task['service_spec']))
+                  task['action_spec']))
 
         action = a_f.create_action(task)
 
-        if a_h.is_task_synchronous(task):
+        if action.is_sync():
             try:
                 state, result = states.SUCCESS, action.run()
             except exc.ActionException:
@@ -101,6 +100,7 @@ class Executor(object):
             task = kwargs.get('task', None)
             if not task:
                 raise Exception('No task is provided to the executor.')
+
             LOG.info("Received a task: %s" % task)
 
             db_task = db_api.task_get(task['workbook_name'],
@@ -123,7 +123,8 @@ class Executor(object):
                                task['execution_id'],
                                task['id'],
                                {'state': states.RUNNING})
+
             self._do_task_action(db_task)
-        except Exception as exc:
-            LOG.exception(exc)
-            self._handle_task_error(task, exc)
+        except Exception as e:
+            LOG.exception(e)
+            self._handle_task_error(task, e)

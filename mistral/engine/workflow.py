@@ -91,6 +91,7 @@ def find_tasks_after_completion(task, workbook):
     workflow_tasks = []
     for t in found_tasks:
         workflow_tasks += find_workflow_tasks(workbook, t.name)
+
     LOG.debug("Workflow tasks to schedule: %s" % workflow_tasks)
 
     return workflow_tasks

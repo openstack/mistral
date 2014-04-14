@@ -1,13 +1,27 @@
-Services:
+Namespaces:
   MyService:
-    type: ECHO
     actions:
+      # These ad-hoc actions based on std.echo have parameters only for test
+      # purposes. In practice, it's more convenient just to use std.echo and
+      # specify parameter 'output'.
       build_full_name:
+        class: std.echo
+        base-parameters:
+          output: '{$.first_name} {$.last_name}'
+        parameters:
+          - first_name
+          - last_name
         output:
-          full_name: John Doe
+          full_name: $.base_output
+
       build_greeting:
+        class: std.echo
+        base-parameters:
+          output: 'Hello, {$.full_name}!'
+        parameters:
+          - full_name
         output:
-          greeting: Hello, John Doe!
+          greeting: $.base_output
 
 
 Workflow:
@@ -25,7 +39,7 @@ Workflow:
 
   tasks:
     build_full_name:
-      action: MyService:build_full_name
+      action: MyService.build_full_name
       parameters:
         first_name: $.person.first_name
         last_name: $.person.last_name
@@ -34,6 +48,6 @@ Workflow:
 
     build_greeting:
       requires: [build_full_name]
-      action: MyService:build_greeting
+      action: MyService.build_greeting
       parameters:
         full_name: $.f_name

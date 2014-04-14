@@ -24,7 +24,9 @@ class TaskSpec(base.BaseSpec):
 
     def __init__(self, task):
         super(TaskSpec, self).__init__(task)
+
         self._prepare(task)
+
         if self.validate():
             self.requires = task['requires']
             self.action = task['action']
@@ -34,6 +36,7 @@ class TaskSpec(base.BaseSpec):
     def _prepare(self, task):
         if task:
             req = task.get("requires", {})
+
             if req and isinstance(req, list):
                 task["requires"] = dict(zip(req, ['']*len(req)))
             elif isinstance(req, dict):
@@ -41,8 +44,10 @@ class TaskSpec(base.BaseSpec):
 
     def _get_on_state(self, key):
         tasks = self.get_property(key)
+
         if not tasks:
             return None
+
         if isinstance(tasks, dict):
             return tasks
         elif isinstance(tasks, list):
@@ -65,11 +70,11 @@ class TaskSpec(base.BaseSpec):
     def get_on_finish(self):
         return self._get_on_state("on-finish")
 
-    def get_action_service(self):
-        return self.action.split(':')[0]
+    def get_action_namespace(self):
+        return self.action.split('.')[0]
 
     def get_action_name(self):
-        return self.action.split(':')[1]
+        return self.action.split('.')[1]
 
     def get_full_action_name(self):
         return self.action

@@ -25,6 +25,7 @@ from mistral.services import scheduler
 class TriggersTest(base.DbTestCase):
     def setUp(self):
         super(TriggersTest, self).setUp()
+
         self.doc = open(pkg.resource_filename(
             version.version_info.package,
             "tests/resources/test_rest.yaml")).read()

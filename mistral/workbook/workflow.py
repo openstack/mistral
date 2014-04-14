@@ -23,5 +23,6 @@ class WorkflowSpec(base.BaseSpec):
 
     def __init__(self, workflow):
         super(WorkflowSpec, self).__init__(workflow)
+
         if self.validate():
             self.tasks = tasks.TaskSpecList(workflow['tasks'])

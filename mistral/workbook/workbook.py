@@ -15,18 +15,19 @@
 #    limitations under the License.
 
 from mistral.workbook import base
-from mistral.workbook import services
+from mistral.workbook import namespaces
 from mistral.workbook import workflow
 
 
 class WorkbookSpec(base.BaseSpec):
-    _required_keys = ['Services', 'Workflow']
+    _required_keys = ['Namespaces', 'Workflow']
 
     def __init__(self, doc):
         super(WorkbookSpec, self).__init__(doc)
 
         if self.validate():
-            self.services = services.ServiceSpecList(self._data['Services'])
+            self.namespaces =\
+                namespaces.NamespaceSpecList(self._data['Namespaces'])
             self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
             self.tasks = self.workflow.tasks
 
@@ -48,14 +49,14 @@ class WorkbookSpec(base.BaseSpec):
         if task_action_name.find(":") == -1:
             return {}
 
-        service_name = task_action_name.split(':')[0]
+        namespace_name = task_action_name.split(':')[0]
         action_name = task_action_name.split(':')[1]
-        action = self.services.get(service_name).actions.get(action_name)
+        action = self.namespaces.get(namespace_name).actions.get(action_name)
 
         return action
 
-    def get_actions(self, service_name):
-        return self.services.get(service_name).actions
+    def get_actions(self, namespace_name):
+        return self.namespaces.get(namespace_name).actions
 
     def get_trigger_task_name(self, trigger_name):
         trigger = self._data["triggers"].get(trigger_name)

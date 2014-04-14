@@ -92,56 +92,69 @@ def _has_action_context_param(action_cls):
     return _ACTION_CTX_PARAM in arg_spec.args
 
 
+def _create_adhoc_action(db_task):
+    task_spec = tasks.TaskSpec(db_task['task_spec'])
+    full_action_name = task_spec.get_full_action_name()
+
+    # TODO(rakhmerov): Fix model attributes during refactoring.
+    # TODO(rakhmerov): ActionSpec should be used instead.
+    adhoc_action_spec = db_task['action_spec']
+
+    if not adhoc_action_spec:
+        return None
+
+    LOG.info('Using ad-hoc action [action=%s, db_task=%s]' %
+             (full_action_name, db_task))
+
+    # Create an ad-hoc action.
+    base_cls = get_action_class(adhoc_action_spec['class'])
+
+    action_context = None
+    if _has_action_context_param(base_cls):
+        action_context = _get_action_context(db_task)
+
+    if not base_cls:
+        msg = 'Ad-hoc action base class is not registered ' \
+              '[workbook_name=%s, action=%s, base_class=%s]' % \
+              (db_task['workbook_name'], full_action_name, base_cls)
+        raise exc.ActionException(msg)
+
+    action_params = db_task['parameters'] or {}
+
+    return std_actions.AdHocAction(action_context,
+                                   base_cls,
+                                   adhoc_action_spec,
+                                   **action_params)
+
+
 def create_action(db_task):
     task_spec = tasks.TaskSpec(db_task['task_spec'])
     full_action_name = task_spec.get_full_action_name()
 
     action_cls = get_action_class(full_action_name)
 
-    adhoc_action_spec = None
-
     if not action_cls:
         # If action is not found in registered actions try to find ad-hoc
         # action definition.
-        # TODO(rakhmerov): Fix model attributes during refactoring.
-        # TODO(rakhmerov): ActionSpec should be used instead.
-        adhoc_action_spec = db_task['action_spec']
+        action = _create_adhoc_action(db_task)
 
-        if adhoc_action_spec:
-            LOG.info('Using ad-hoc action [action=%s, db_task=%s]' %
-                     (full_action_name, db_task))
-            action_cls = std_actions.AdHocAction
+        if action:
+            return action
+        else:
+            msg = 'Unknown action [workbook_name=%s, action=%s]' % \
+                  (db_task['workbook_name'], full_action_name)
+            raise exc.ActionException(msg)
 
-    if not action_cls:
-        msg = 'Unknown action [workbook_name=%s, action=%s]' % \
-              (db_task['workbook_name'], full_action_name)
-        raise exc.ActionException(msg)
-
-    action_params = db_task['parameters'].copy()
+    action_params = db_task['parameters'] or {}
 
     if _has_action_context_param(action_cls):
         action_params[_ACTION_CTX_PARAM] = _get_action_context(db_task)
 
     try:
-        if not adhoc_action_spec:
-            # Create a regular action from a registered class.
-            action = action_cls(**action_params)
-        else:
-            # Create an ad-hoc action.
-            base_cls = get_action_class(adhoc_action_spec['class'])
-
-            if not base_cls:
-                msg = 'Ad-hoc action base class is not registered ' \
-                      '[workbook_name=%s, action=%s, base_class=%s]' % \
-                      (db_task['workbook_name'], full_action_name, base_cls)
-                raise exc.ActionException(msg)
-
-            action = action_cls(base_cls, adhoc_action_spec, **action_params)
+        return action_cls(**action_params)
     except Exception as e:
         raise exc.ActionException('Failed to create action [db_task=%s]: %s' %
                                   (db_task, e))
-
-    return action
 
 
 # Registering standard actions on module load.

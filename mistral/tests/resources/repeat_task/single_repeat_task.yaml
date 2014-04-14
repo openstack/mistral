@@ -1,10 +1,12 @@
-Services:
-   MyService:
-    type: ECHO
+Namespaces:
+  MyService:
     actions:
-        repeatable-action:
-            output:
-                greeting: Cheers!
+      repeatable-action:
+        class: std.echo
+        base-parameters:
+          output: Cheers!
+        output:
+          greeting: $.base_output
 
 Workflow:
   tasks:
@@ -12,7 +14,7 @@ Workflow:
       repeat:
         iterations: 3
         delay: 1
-      action: MyService:repeatable-action
+      action: MyService.repeatable-action
       publish:
         greet_msg: greeting
 
@@ -21,12 +23,12 @@ Workflow:
         iterations: 5
         delay: 0
         break-on: $.greet_msg != null
-      action: MyService:repeatable-action
+      action: MyService.repeatable-action
       publish:
         greet_msg: greeting
 
     not_repeat_task:
-      action: MyService:repeatable-action
+      action: MyService.repeatable-action
       publish:
         greet_msg: greeting
       on-success: repeater_task

@@ -24,17 +24,20 @@ from mistral.db import api as db_api
 DEFINITION = "my definition"
 
 NEW_DEFINITION = """
-Services:
+Namespaces:
   Service:
-    type:
     actions:
       action:
-        parameters:
+        class: std.echo
+        base-parameters:
+            output: Haha
+
 Workflow:
   tasks:
     task1:
       parameters:
       action: Service:action
+
 triggers:
   create-vms:
     type: periodic

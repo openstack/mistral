@@ -42,9 +42,9 @@ class AbstractEngine(object):
     def start_workflow_execution(cls, workbook_name, task_name, context):
         db_api.start_tx()
 
-        workbook = cls._get_workbook(workbook_name)
         # Persist execution and tasks in DB.
         try:
+            workbook = cls._get_workbook(workbook_name)
             execution = cls._create_execution(workbook_name,
                                               task_name,
                                               context)
@@ -81,8 +81,8 @@ class AbstractEngine(object):
                            task_id, state, result):
         db_api.start_tx()
 
-        workbook = cls._get_workbook(workbook_name)
         try:
+            workbook = cls._get_workbook(workbook_name)
             #TODO(rakhmerov): validate state transition
             task = db_api.task_get(workbook_name, execution_id, task_id)
 
@@ -179,20 +179,26 @@ class AbstractEngine(object):
     @classmethod
     def _create_tasks(cls, task_list, workbook, workbook_name, execution_id):
         tasks = []
+
         for task in task_list:
             state, task_runtime_context = repeater.get_task_runtime(task)
-            service_spec = workbook.services.get(task.get_action_service())
+            action_ns = workbook.namespaces.get(task.get_action_namespace())
+            action_spec = \
+                action_ns.actions.get(task.get_action_name())
+
             db_task = db_api.task_create(workbook_name, execution_id, {
                 "name": task.name,
                 "requires": task.requires,
                 "task_spec": task.to_dict(),
-                "service_spec": {} if not service_spec else
-                service_spec.to_dict(),
+                "action_spec": {} if not action_spec
+                else action_spec.to_dict(),
                 "state": state,
                 "tags": task.get_property("tags", None),
                 "task_runtime_context": task_runtime_context
             })
+
             tasks.append(db_task)
+
         return tasks
 
     @classmethod
@@ -231,6 +237,7 @@ class AbstractEngine(object):
         outbound_context = data_flow.get_outbound_context(task, task_output)
         state, exec_flow_context = repeater.get_task_runtime(
             task_spec, state, outbound_context, task_runtime_context)
+
         # Update the task.
         update_values = {"state": state,
                          "output": task_output,
@@ -257,6 +264,7 @@ class AbstractEngine(object):
                 workbook_name = task['workbook_name']
                 execution_id = task['execution_id']
                 execution = db_api.execution_get(workbook_name, execution_id)
+
                 # Change state from DELAYED to IDLE to unblock processing.
                 db_task = db_api.task_update(workbook_name,
                                              execution_id,
@@ -273,6 +281,7 @@ class AbstractEngine(object):
 
         task_spec = workbook.tasks.get(task['name'])
         retries, break_on, delay_sec = task_spec.get_repeat_task_parameters()
+
         if delay_sec > 0:
             # Run the task after the specified delay.
             eventlet.spawn_after(delay_sec, run_delayed_task)

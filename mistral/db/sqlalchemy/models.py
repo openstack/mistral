@@ -92,7 +92,7 @@ class Task(mb.MistralBase):
     execution_id = sa.Column(sa.String(36))
     description = sa.Column(sa.String())
     task_spec = sa.Column(st.JsonDictType())
-    service_spec = sa.Column(st.JsonDictType())
+    action_spec = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
     tags = sa.Column(st.JsonListType())
 

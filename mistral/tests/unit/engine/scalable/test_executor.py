@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import eventlet
+
 eventlet.monkey_patch()
 
 import uuid
@@ -24,10 +25,8 @@ from mistral.tests import base
 from mistral.cmd import launch
 from mistral.engine import states
 from mistral.db import api as db_api
-from mistral.engine.actions import actions
-from mistral.engine.actions import action_types
+from mistral.actions import std_actions
 from mistral.engine.scalable.executor import client
-
 
 WORKBOOK_NAME = 'my_workbook'
 TASK_NAME = 'my_task'
@@ -56,24 +55,20 @@ SAMPLE_EXECUTION = {
 SAMPLE_TASK = {
     'name': TASK_NAME,
     'workbook_name': WORKBOOK_NAME,
-    'service_spec': {
-        'type': action_types.REST_API,
-        'parameters': {
-            'baseUrl': 'http://localhost:8989/v1/'},
-        'actions': {
-            'my-action': {
-                'parameters': {
-                    'url': 'workbooks',
-                    'method': 'GET'}}},
-        'name': 'MyService'
+    'action_spec': {
+        'name': 'my-action',
+        'class': 'std.http',
+        'base-parameters': {
+            'url': 'http://localhost:8989/v1/workbooks',
+            'method': 'GET'
+        },
+        'namespace': 'MyRest'
     },
     'task_spec': {
-        'action': 'MyRest:my-action',
-        'service_name': 'MyRest',
+        'action': 'MyRest.my-action',
         'name': TASK_NAME},
     'requires': {},
     'state': states.IDLE}
-
 
 SAMPLE_CONTEXT = {
     'user': 'admin',
@@ -82,10 +77,9 @@ SAMPLE_CONTEXT = {
 
 
 class TestExecutor(base.DbTestCase):
-
     def mock_action_run(self):
-        actions.RestAction.run = mock.MagicMock(return_value={})
-        return actions.RestAction.run
+        std_actions.HTTPAction.run = mock.MagicMock(return_value={})
+        return std_actions.HTTPAction.run
 
     def setUp(self):
         super(TestExecutor, self).setUp()
@@ -101,7 +95,7 @@ class TestExecutor(base.DbTestCase):
         super(TestExecutor, self).tearDown()
 
     def test_handle_task(self):
-        # Mock the RestAction
+        # Mock HTTP action.
         mock_rest_action = self.mock_action_run()
 
         # Create a new workbook.

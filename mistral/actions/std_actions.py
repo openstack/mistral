@@ -90,7 +90,7 @@ class HTTPAction(base.Action):
 
 
 class MistralHTTPAction(HTTPAction):
-    def __init__(self, action_context, url, params, method,
+    def __init__(self, action_context, url, params={}, method="GET",
                  headers={}, body={}):
         headers.update({
             'Mistral-Workbook-Name': action_context['workbook_name'],
@@ -100,6 +100,9 @@ class MistralHTTPAction(HTTPAction):
 
         super(MistralHTTPAction, self).__init__(url, params, method,
                                                 headers, body)
+
+    def is_sync(self):
+        return False
 
 
 class SendEmailAction(base.Action):
@@ -156,11 +159,16 @@ class SendEmailAction(base.Action):
 
 
 class AdHocAction(base.Action):
-    def __init__(self, base_action_cls, action_spec, **params):
+    def __init__(self, action_context,
+                 base_action_cls, action_spec, **params):
         self.base_action_cls = base_action_cls
         self.action_spec = action_spec
 
         base_params = self._convert_params(params)
+
+        if action_context:
+            base_params['action_context'] = action_context
+
         self.base_action = base_action_cls(**base_params)
 
     def _convert_params(self, params):
@@ -189,6 +197,9 @@ class AdHocAction(base.Action):
             return [expr.evaluate(item, expr_ctx) for item in transformer]
         else:
             return expr.evaluate(transformer, expr_ctx)
+
+    def is_sync(self):
+        return self.base_action.is_sync()
 
     def run(self):
         return self._convert_result(self.base_action.run())
