@@ -62,13 +62,13 @@ TASK = {
 }
 
 
-class DataFlowTest(base.DbTestCase):
+class DataFlowModuleTest(base.DbTestCase):
     def test_evaluate_task_parameters(self):
         parameters = data_flow.evaluate_task_parameters(TASK, CONTEXT)
 
-        self.assertEqual(len(parameters), 3)
-        self.assertEqual(parameters['p1'], 'My string')
-        self.assertEqual(parameters['p2'], 'val32')
+        self.assertEqual(3, len(parameters))
+        self.assertEqual('My string', parameters['p1'])
+        self.assertEqual('val32', parameters['p2'])
 
     def test_prepare_tasks(self):
         task = db_api.task_create(WB_NAME, EXEC_ID, TASK.copy())
@@ -78,12 +78,11 @@ class DataFlowTest(base.DbTestCase):
 
         db_task = db_api.task_get(WB_NAME, EXEC_ID, tasks[0]['id'])
 
-        self.assertDictEqual(db_task['in_context'], CONTEXT)
-        self.assertDictEqual(db_task['parameters'], {
-            'p1': 'My string',
-            'p2': 'val32',
-            'p3': ''
-        })
+        self.assertDictEqual(CONTEXT, db_task['in_context'])
+        self.assertDictEqual({'p1': 'My string',
+                              'p2': 'val32',
+                              'p3': ''},
+                             db_task['parameters'])
 
     def test_get_outbound_context(self):
         output = data_flow.get_task_output(TASK, {'new_key1': 'new_val1'})
@@ -102,6 +101,7 @@ class DataFlowTest(base.DbTestCase):
     def test_apply_context(self):
         task_spec_dict = TASK['task_spec']
         modified_task = data_flow.apply_context(task_spec_dict, CONTEXT)
+
         self.assertDictEqual(
             {
                 'parameters': {
@@ -134,7 +134,9 @@ class DataFlowTest(base.DbTestCase):
             },
             "token": "$.auth_token"
         }
+
         applied = data_flow.apply_context(data, context)
+
         self.assertDictEqual(
             {
                 "parameters": {

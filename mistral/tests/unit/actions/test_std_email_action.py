@@ -116,7 +116,7 @@ class SendEmailActionTest(unittest2.TestCase):
         smtpmock.assert_has_calls(calls)
         self.assertTrue(smtpmock.sendmail.called, "should call sendmail")
 
-    @patch('mistral.engine.actions.actions.LOG')
+    @patch('mistral.actions.std_actions.LOG')
     def test_exception(self, log):
         self.params['smtp_server'] = "wrong host"
 

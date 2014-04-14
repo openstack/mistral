@@ -23,7 +23,7 @@ from mistral.openstack.common import importutils
 from mistral.tests import base
 from mistral.db import api as db_api
 from mistral.engine.scalable import engine
-from mistral.engine.actions import actions
+from mistral.actions import std_actions
 from mistral.engine import states
 from mistral.utils.openstack import keystone
 
@@ -75,8 +75,8 @@ class DataFlowTest(base.EngineTestCase):
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
-        self.assertEqual(execution['state'], states.SUCCESS)
-        self.assertDictEqual(execution['context'], CONTEXT)
+        self.assertEqual(states.SUCCESS, execution['state'])
+        self.assertDictEqual(CONTEXT, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -141,8 +141,8 @@ class DataFlowTest(base.EngineTestCase):
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
-        self.assertEqual(execution['state'], states.SUCCESS)
-        self.assertDictEqual(execution['context'], CONTEXT)
+        self.assertEqual(states.SUCCESS, execution['state'])
+        self.assertDictEqual(CONTEXT, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -233,8 +233,8 @@ class DataFlowTest(base.EngineTestCase):
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
-        self.assertEqual(execution['state'], states.SUCCESS)
-        self.assertDictEqual(execution['context'], CONTEXT)
+        self.assertEqual(states.SUCCESS, execution['state'])
+        self.assertDictEqual(CONTEXT, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -300,8 +300,8 @@ class DataFlowTest(base.EngineTestCase):
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
-        self.assertEqual(execution['state'], states.SUCCESS)
-        self.assertDictEqual(execution['context'], CONTEXT)
+        self.assertEqual(states.SUCCESS, execution['state'])
+        self.assertDictEqual(CONTEXT, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -384,7 +384,7 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertDictEqual(CONTEXT, send_greeting_task['in_context'])
 
-    @mock.patch.object(actions.RestAction, "run",
+    @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
     @mock.patch.object(keystone, "client_for_trusts",
                        mock.Mock(
