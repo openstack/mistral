@@ -183,8 +183,11 @@ class AbstractEngine(object):
         for task in task_list:
             state, task_runtime_context = retry.get_task_runtime(task)
             action_ns = workbook.namespaces.get(task.get_action_namespace())
-            action_spec = \
-                action_ns.actions.get(task.get_action_name())
+
+            if action_ns:
+                action_spec = \
+                    action_ns.actions.get(task.get_action_name())
+
             db_task = db_api.task_create(workbook_name, execution_id, {
                 "name": task.name,
                 "requires": task.requires,

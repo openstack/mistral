@@ -53,7 +53,7 @@ class EchoAction(base.Action):
 
 
 class HTTPAction(base.Action):
-    def __init__(self, url, params={}, method="GET", headers={}, body={}):
+    def __init__(self, url, params={}, method="GET", headers={}, body=None):
         self.url = url
         self.params = params
         self.method = method
@@ -63,9 +63,9 @@ class HTTPAction(base.Action):
     def run(self):
         LOG.info("Running HTTP action "
                  "[url=%s, params=%s, method=%s, headers=%s, body=%s]" %
-                 (self.method,
-                  self.url,
+                 (self.url,
                   self.params,
+                  self.method,
                   self.headers,
                   self.body))
 
@@ -91,7 +91,7 @@ class HTTPAction(base.Action):
 
 class MistralHTTPAction(HTTPAction):
     def __init__(self, action_context, url, params={}, method="GET",
-                 headers={}, body={}):
+                 headers={}, body=None):
         headers.update({
             'Mistral-Workbook-Name': action_context['workbook_name'],
             'Mistral-Execution-Id': action_context['execution_id'],
