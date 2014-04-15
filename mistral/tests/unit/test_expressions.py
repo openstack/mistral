@@ -16,7 +16,7 @@
 
 import unittest2
 
-from mistral.engine import expressions as expr
+from mistral import expressions as expr
 
 
 DATA = {

@@ -23,8 +23,7 @@ import requests
 from mistral.openstack.common import log as logging
 from mistral.actions import base
 from mistral import exceptions as exc
-# TODO: Move expressions out of package 'engine'.
-from mistral.engine import expressions as expr
+from mistral import expressions as expr
 from mistral.utils import ssh_utils
 
 
