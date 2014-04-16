@@ -86,7 +86,16 @@ class HTTPAction(base.Action):
             raise exc.ActionException("Received error HTTP code: %s" %
                                       resp.status_code)
 
-        return resp
+        # Construct all important resp data in readable structure.
+        headers = dict(resp.headers.items())
+        status = resp.status_code
+        try:
+            content = resp.json()
+        except Exception as e:
+            LOG.debug("HTTP action response is not json.")
+            content = resp.content
+
+        return {'content': content, 'headers': headers, 'status': status}
 
 
 class MistralHTTPAction(HTTPAction):
