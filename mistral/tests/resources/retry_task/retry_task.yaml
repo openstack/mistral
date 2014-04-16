@@ -13,7 +13,7 @@ Namespaces:
         base-parameters:
           output: Cheers!
         output:
-          greeting: $.base_output
+          greeting: $
 
 Workflow:
   tasks:

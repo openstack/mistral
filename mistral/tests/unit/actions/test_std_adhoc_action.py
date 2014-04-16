@@ -30,7 +30,7 @@ NS_SPEC = {
             },
             'parameters': ['first', 'second'],
             'output': {
-                'res': '{$.base_output}'
+                'res': '{$}'
             }
         }
     }
@@ -50,8 +50,7 @@ class AdHocActionTest(base.BaseTest):
         self.assertDictEqual({'res': 'Tango and Cash'}, action.run())
 
         # With list-like output formatter.
-        ns_raw_spec['actions']['my_action']['output'] =\
-            ['$.base_output', '$.base_output']
+        ns_raw_spec['actions']['my_action']['output'] = ['$', '$']
         action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
 
         action = std.AdHocAction(None, std.EchoAction, action_spec,
@@ -62,7 +61,7 @@ class AdHocActionTest(base.BaseTest):
 
         # With single-object output formatter.
         ns_raw_spec['actions']['my_action']['output'] =\
-            "'{$.base_output}' is a cool movie!"
+            "'{$}' is a cool movie!"
         action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
 
         action = std.AdHocAction(None, std.EchoAction, action_spec,

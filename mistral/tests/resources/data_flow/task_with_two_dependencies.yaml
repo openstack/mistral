@@ -12,14 +12,14 @@ Namespaces:
           - first_name
           - last_name
         output:
-          full_name: $.base_output
+          full_name: $
 
       build_greeting:
         class: std.echo
         base-parameters:
           output: Cheers!
         output:
-          greeting: $.base_output
+          greeting: $
 
       send_greeting:
         class: std.echo
@@ -29,7 +29,7 @@ Namespaces:
           - f_name
           - greet_msg
         output:
-          greeting_sent: $.base_output
+          greeting_sent: $
 
 Workflow:
   #  context = {

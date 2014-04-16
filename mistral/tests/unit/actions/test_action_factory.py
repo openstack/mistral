@@ -68,7 +68,7 @@ DB_TASK_ADHOC = {
         },
         'parameters': ['first', 'second'],
         'output': {
-            'res': '{$.base_output}'
+            'res': '{$}'
         }
     },
     'name': 'my_task',
@@ -188,7 +188,7 @@ class ActionFactoryTest(base.BaseTest):
         self.assertDictEqual({'res': 'Tango and Cash'}, action.run())
 
         # With list-like output formatter.
-        action_spec['output'] = ['$.base_output', '$.base_output']
+        action_spec['output'] = ['$', '$']
 
         action = a_f.create_action(db_task)
 
@@ -196,7 +196,7 @@ class ActionFactoryTest(base.BaseTest):
                              action.run())
 
         # With single-object output formatter.
-        action_spec['output'] = "'{$.base_output}' is a cool movie!"
+        action_spec['output'] = "'{$}' is a cool movie!"
 
         action = a_f.create_action(db_task)
 

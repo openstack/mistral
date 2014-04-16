@@ -12,7 +12,7 @@ Namespaces:
           - first_name
           - last_name
         output:
-          full_name: $.base_output
+          full_name: $
 
       build_greeting:
         class: std.echo
@@ -21,7 +21,7 @@ Namespaces:
         parameters:
           - full_name
         output:
-          greeting: $.base_output
+          greeting: $
 
 
 Workflow:

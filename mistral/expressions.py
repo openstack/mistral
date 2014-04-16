@@ -65,13 +65,13 @@ class YAQLEvaluator(Evaluator):
     @classmethod
     def is_expression(cls, s):
         # TODO(rakhmerov): It should be generalized since it may not be YAQL.
-        return s and s.startswith('$.')
+        return s and s.startswith('$')
 
 
 class InlineYAQLEvaluator(YAQLEvaluator):
     # Put YAQL-specific regexp pattern here.
     # Use form {$.any_symbols_except'}'} to find an expression.
-    find_expression_pattern = re.compile("\{\$\.[^\}]+\}")
+    find_expression_pattern = re.compile("\{\$\.*[^\}]*\}")
 
     @classmethod
     def evaluate(cls, expression, context):

@@ -223,15 +223,14 @@ class AdHocAction(base.Action):
         if not transformer:
             return result
 
-        expr_ctx = {'base_output': result}
-
+        # Use base action result as a context for evaluating expressions.
         if isinstance(transformer, dict):
-            return dict((k, expr.evaluate(v, expr_ctx))
+            return dict((k, expr.evaluate(v, result))
                         for k, v in transformer.iteritems())
         elif isinstance(transformer, list):
-            return [expr.evaluate(item, expr_ctx) for item in transformer]
+            return [expr.evaluate(item, result) for item in transformer]
         else:
-            return expr.evaluate(transformer, expr_ctx)
+            return expr.evaluate(transformer, result)
 
     def is_sync(self):
         return self.base_action.is_sync()
