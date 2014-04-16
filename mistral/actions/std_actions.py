@@ -228,7 +228,12 @@ class AdHocAction(base.Action):
         return self.base_action.is_sync()
 
     def run(self):
-        return self._convert_result(self.base_action.run())
+        try:
+            return self._convert_result(self.base_action.run())
+        except Exception as e:
+            raise exc.ActionException("Failed to convert result in action %s,"
+                                      "[Exception = %s"
+                                      % (self.action_spec.name, e))
 
     def test(self):
         return self._convert_result(self.base_action.test())
