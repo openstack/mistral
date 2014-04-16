@@ -22,8 +22,8 @@ import requests
 
 from mistral.openstack.common import log as logging
 from mistral.actions import base
-from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral import exceptions as exc
 from mistral.utils import ssh_utils
 
 
@@ -214,8 +214,7 @@ class AdHocAction(base.Action):
         if not base_params_spec:
             return {}
 
-        return dict((k, expr.evaluate(v, params))
-                    for k, v in base_params_spec.iteritems())
+        return expr.evaluate_recursively(base_params_spec, params)
 
     def _convert_result(self, result):
         transformer = self.action_spec.output
@@ -224,13 +223,7 @@ class AdHocAction(base.Action):
             return result
 
         # Use base action result as a context for evaluating expressions.
-        if isinstance(transformer, dict):
-            return dict((k, expr.evaluate(v, result))
-                        for k, v in transformer.iteritems())
-        elif isinstance(transformer, list):
-            return [expr.evaluate(item, result) for item in transformer]
-        else:
-            return expr.evaluate(transformer, result)
+        return expr.evaluate_recursively(transformer, result)
 
     def is_sync(self):
         return self.base_action.is_sync()

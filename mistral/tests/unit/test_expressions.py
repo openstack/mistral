@@ -28,7 +28,6 @@ DATA = {
     "status": "OK"
 }
 
-
 SERVERS = {
     "servers": [
         {
@@ -78,3 +77,67 @@ class YaqlEvaluatorTest(unittest2.TestCase):
         res = self._evaluator.evaluate('$.servers[$.name = ubuntu]', SERVERS)
         item = list(res)[0]
         self.assertEqual(item, {'name': 'ubuntu'})
+
+    def test_evaluate_recursively(self):
+        task_spec_dict = {
+            'parameters': {
+                'p1': 'My string',
+                'p2': '$.param2',
+                'p3': ''
+            },
+            'publish': {
+                'new_key11': 'new_key1'
+            }
+        }
+        modified_task = expr.evaluate_recursively(task_spec_dict,
+                                                  {
+                                                      'param2': 'val32'
+                                                  })
+
+        self.assertDictEqual(
+            {
+                'parameters': {
+                    'p1': 'My string',
+                    'p2': 'val32',
+                    'p3': ''
+                },
+                'publish': {
+                    'new_key11': 'new_key1'
+                }
+            },
+            modified_task)
+
+    def test_evaluate_recursively_arbitrary_dict(self):
+        context = {
+            "auth_token": "123",
+            "project_id": "mistral"
+        }
+        data = {
+            "parameters": {
+                "parameter1": {
+                    "name1": "$.auth_token",
+                    "name2": "val_name2"
+                },
+                "param2": [
+                    "var1",
+                    "var2",
+                    "/servers/{$.project_id}/bla"
+                ]
+            },
+            "token": "$.auth_token"
+        }
+
+        applied = expr.evaluate_recursively(data, context)
+
+        self.assertDictEqual(
+            {
+                "parameters": {
+                    "parameter1": {
+                        "name1": "123",
+                        "name2": "val_name2"
+                    },
+                    "param2": ["var1", "var2", "/servers/mistral/bla"]
+                },
+                "token": "123"
+            },
+            applied)

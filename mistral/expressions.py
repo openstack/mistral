@@ -112,3 +112,31 @@ def evaluate(expression, context):
         return expression
 
     return _EVALUATOR.evaluate(expression, context)
+
+
+def _evaluate_item(item, context):
+    if isinstance(item, six.string_types):
+        try:
+            return evaluate(item, context)
+        except AttributeError as e:
+            LOG.debug("Expression %s is not evaluated, [context=%s]: %s"
+                      % (item, context, e))
+            return item
+    else:
+        return evaluate_recursively(item, context)
+
+
+def evaluate_recursively(data, context):
+    if not context:
+        return data
+
+    if isinstance(data, dict):
+        for key in data:
+            data[key] = _evaluate_item(data[key], context)
+    elif isinstance(data, list):
+        for index, item in enumerate(data):
+            data[index] = _evaluate_item(item, context)
+    elif isinstance(data, six.string_types):
+        return _evaluate_item(data, context)
+
+    return data

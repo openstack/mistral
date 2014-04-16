@@ -14,7 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
 from oslo.config import cfg
 
 from mistral.db import api as db_api
@@ -95,29 +94,3 @@ def add_token_to_context(context, db_workbook):
             context.update(workbook_ctx.to_dict())
 
     return context
-
-
-def _modify_item(item, context):
-    if isinstance(item, six.string_types):
-        try:
-            return expr.evaluate(item, context)
-        except AttributeError as e:
-            LOG.debug("Expression %s is not evaluated, [context=%s]: %s"
-                      % (item, context, e))
-            return item
-    else:
-        return apply_context(item, context)
-
-
-def apply_context(data, context):
-    if not context:
-        return data
-
-    if isinstance(data, dict):
-        for key in data:
-            data[key] = _modify_item(data[key], context)
-    elif isinstance(data, list):
-        for index, item in enumerate(data):
-            data[index] = _modify_item(item, context)
-
-    return data
