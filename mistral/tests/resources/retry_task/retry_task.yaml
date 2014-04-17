@@ -7,7 +7,7 @@ Namespaces:
           url: http://path_to_service/action_url
           method: GET
         output:
-          output: '$.op_1'
+          output: $
       sync-action:
         class: std.echo
         base-parameters:

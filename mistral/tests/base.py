@@ -30,8 +30,8 @@ from mistral.openstack.common import importutils
 # We need to make sure that all configuration properties are registered.
 importutils.import_module("mistral.config")
 
-
 from mistral.db.sqlalchemy import api as db_api
+from mistral.openstack.common import log as logging
 from mistral.engine import engine
 from mistral.engine.scalable.executor import server
 from mistral.engine.scalable import engine as concrete_engine
@@ -40,6 +40,7 @@ from mistral import version
 
 
 RESOURCES_PATH = 'tests/resources/'
+LOG = logging.getLogger(__name__)
 
 
 def get_resource(resource_name):
@@ -95,6 +96,8 @@ class BaseTest(unittest2.TestCase):
         found = len(filtered_items)
 
         if found != count:
+            LOG.info("[failed test ctx] items=%s, expected_props=%s" % (str(
+                items), props))
             self.fail("Wrong number of items found [props=%s, "
                       "expected=%s, found=%s]" % (props, count, found))
 
