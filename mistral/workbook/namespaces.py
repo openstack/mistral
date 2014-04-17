@@ -18,19 +18,51 @@ from mistral.workbook import actions
 from mistral.workbook import base
 
 
+def merge_dicts(left, right):
+    for k, v in right.iteritems():
+        if k not in left:
+            left[k] = v
+        else:
+            left_v = left[k]
+
+            if isinstance(left_v, dict) and isinstance(v, dict):
+                merge_dicts(left_v, v)
+
+
+def merge_base_parameters(action, ns_base_parameters):
+    if not ns_base_parameters:
+        return
+
+    if 'base-parameters' not in action:
+        action['base-parameters'] = ns_base_parameters
+        return
+
+    action_base_parameters = action['base-parameters']
+
+    merge_dicts(action_base_parameters, ns_base_parameters)
+
+
 class NamespaceSpec(base.BaseSpec):
     _required_keys = ['name', 'actions']
 
-    def __init__(self, service):
-        super(NamespaceSpec, self).__init__(service)
+    def __init__(self, namespace):
+        super(NamespaceSpec, self).__init__(namespace)
 
         if self.validate():
-            self.name = service['name']
+            self.name = namespace['name']
+            self.clazz = namespace.get('class')
+            self.base_parameters = namespace.get('base-parameters')
+            self.parameters = namespace.get('parameters')
 
-            for _, action in service['actions'].iteritems():
+            for _, action in namespace['actions'].iteritems():
                 action['namespace'] = self.name
 
-            self.actions = actions.ActionSpecList(service['actions'])
+                if 'class' not in action:
+                    action['class'] = self.clazz
+
+                merge_base_parameters(action, self.base_parameters)
+
+            self.actions = actions.ActionSpecList(namespace['actions'])
 
 
 class NamespaceSpecList(base.BaseSpecList):
