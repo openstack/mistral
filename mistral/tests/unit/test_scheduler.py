@@ -20,7 +20,7 @@ from datetime import timedelta
 from mistral.openstack.common import timeutils
 
 from mistral.services import scheduler as s
-from mistral.tests import base as test_base
+from mistral.tests import base
 
 
 SAMPLE_TRIGGER = {
@@ -32,7 +32,7 @@ SAMPLE_TRIGGER = {
 }
 
 
-class SchedulerTest(test_base.DbTestCase):
+class SchedulerTest(base.DbTestCase):
     def setUp(self):
         super(SchedulerTest, self).setUp()
         self.wb_name = "My workbook"

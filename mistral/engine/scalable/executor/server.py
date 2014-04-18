@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.config import cfg
+
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import exceptions as exc
@@ -23,6 +25,7 @@ from mistral.actions import action_factory as a_f
 
 
 LOG = logging.getLogger(__name__)
+WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class Executor(object):
@@ -119,6 +122,11 @@ class Executor(object):
             # Update the state to running before performing action. The
             # do_task_action assigns state to the task which is the appropriate
             # value to preserve.
+
+            WORKFLOW_TRACE.info("Task '%s' [%s -> %s]" % (db_task['name'],
+                                                          db_task['state'],
+                                                          states.RUNNING))
+
             db_api.task_update(task['workbook_name'],
                                task['execution_id'],
                                task['id'],

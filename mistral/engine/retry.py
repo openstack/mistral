@@ -14,8 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.config import cfg
+
 from mistral import expressions
 from mistral.engine import states
+from mistral.openstack.common import log as logging
+
+
+WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
@@ -46,6 +52,8 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     if outbound_context is None:
         outbound_context = {}
 
+    wf_trace_msg = "Task '%s' [%s -> " % (task_spec.name, state)
+
     retry_no = -1
     if "retry_no" in task_runtime_context:
         retry_no = task_runtime_context["retry_no"]
@@ -58,6 +66,8 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     if retries_remain and not break_early:
         state = states.DELAYED if delay > 0 else states.IDLE
         retry_no += 1
+
+    WORKFLOW_TRACE.info(wf_trace_msg + "%s, delay = %s sec]" % (state, delay))
 
     task_runtime_context["retry_no"] = retry_no
 
