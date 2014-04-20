@@ -16,6 +16,7 @@
 
 import json
 
+import pecan
 from pecan import rest
 from pecan import abort
 from wsme import types as wtypes
@@ -26,7 +27,7 @@ from mistral.api.controllers.v1 import task
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
-from mistral.engine import engine
+
 
 LOG = logging.getLogger(__name__)
 
@@ -56,7 +57,8 @@ class Execution(resource.Resource):
 
         for key, val in d.items():
             if hasattr(e, key):
-                if key == 'context' and val:
+                # Nonetype check for dictionary must be explicit
+                if key == 'context' and val is not None:
                     val = json.dumps(val)
                 setattr(e, key, val)
 
@@ -101,11 +103,13 @@ class ExecutionsController(rest.RestController):
     def post(self, workbook_name, execution):
         LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
+
         try:
             context = None
             if execution.context:
                 context = json.loads(execution.context)
 
+            engine = pecan.request.context['engine']
             values = engine.start_workflow_execution(execution.workbook_name,
                                                      execution.task,
                                                      context)

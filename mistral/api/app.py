@@ -19,10 +19,10 @@ import pecan
 from oslo.config import cfg
 
 from mistral import context as ctx
-from mistral.engine import engine
 from mistral.db import api as db_api
 from mistral.services import periodic
 from mistral.api import access_control
+from mistral.api.hooks import engine
 
 
 def get_pecan_config():
@@ -48,13 +48,14 @@ def setup_app(config=None, transport=None):
     app_conf = dict(config.app)
 
     db_api.setup_db()
-    engine.load_engine(transport)
+
     ##TODO(akuznetsov) move this to trigger scheduling to separate process
-    periodic.setup()
+    periodic.setup(transport)
 
     app = pecan.make_app(
         app_conf.pop('root'),
-        hooks=lambda: [ctx.ContextHook()],
+        hooks=lambda: [ctx.ContextHook(),
+                       engine.EngineHook(transport=transport)],
         logging=getattr(config, 'logging', {}),
         **app_conf
     )

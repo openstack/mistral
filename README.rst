@@ -21,12 +21,17 @@ To run Mistral API server perform the following command in a shell:
 
 Note that an example configuration file can be found in etc/mistral.conf.example.
 
+### Running Mistral Engines
+To run Mistral Engine perform the following command in a shell:
+
+*tox -evenv -- python mistral/cmd/launch.py --server engine --config-file path_to_config*
+
 ### Running Mistral Task Executors
 To run Mistral Task Executor instance perform the following command in a shell:
 
 *tox -evenv -- python mistral/cmd/launch.py --server executor --config-file path_to_config*
 
-Note that at least one Executor instance should be running so that workflow tasks are processed by Mistral.
+Note that at least one Engine instance and one Executor instance should be running so that workflow tasks are processed by Mistral.
 
 ### Debugging
 To debug using a local engine and executor without dependencies such as RabbitMQ, create etc/mistral.conf with the following settings::

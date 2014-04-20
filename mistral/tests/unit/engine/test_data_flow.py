@@ -25,6 +25,7 @@ from mistral.db import api as db_api
 from mistral.engine.scalable import engine
 from mistral.actions import std_actions
 from mistral.engine import states
+from mistral.engine import client
 from mistral.utils.openstack import keystone
 
 
@@ -60,6 +61,15 @@ def create_workbook(definition_path):
     })
 
 
+@mock.patch.object(
+    client.EngineClient, 'start_workflow_execution',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
+@mock.patch.object(
+    client.EngineClient, 'convey_task_result',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
+@mock.patch.object(
+    engine.ScalableEngine, '_run_tasks',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
 class DataFlowTest(base.EngineTestCase):
     def _check_in_context_execution(self, task):
         self.assertIn('__execution', task['in_context'])
@@ -70,9 +80,6 @@ class DataFlowTest(base.EngineTestCase):
         self.assertEqual(task['execution_id'], exec_dict['id'])
         self.assertIn('task', exec_dict)
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_two_dependent_tasks(self):
         CTX = copy.copy(CONTEXT)
 
@@ -141,9 +148,6 @@ class DataFlowTest(base.EngineTestCase):
         del build_greeting_task['in_context']['__execution']
         self.assertDictEqual(CTX, build_greeting_task['in_context'])
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_task_with_two_dependencies(self):
         CTX = copy.copy(CONTEXT)
 
@@ -240,9 +244,6 @@ class DataFlowTest(base.EngineTestCase):
             },
             send_greeting_task['output'])
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_two_subsequent_tasks(self):
         CTX = copy.copy(CONTEXT)
 
@@ -312,9 +313,6 @@ class DataFlowTest(base.EngineTestCase):
         del build_greeting_task['in_context']['__execution']
         self.assertDictEqual(CTX, build_greeting_task['in_context'])
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
     def test_three_subsequent_tasks(self):
         CTX = copy.copy(CONTEXT)
 
@@ -415,15 +413,13 @@ class DataFlowTest(base.EngineTestCase):
         del send_greeting_task['in_context']['__execution']
         self.assertDictEqual(CTX, send_greeting_task['in_context'])
 
-    @mock.patch.object(std_actions.HTTPAction, "run",
-                       mock.MagicMock(return_value={'state': states.RUNNING}))
-    @mock.patch.object(keystone, "client_for_trusts",
-                       mock.Mock(
-                           return_value=mock.MagicMock(user_id=USER_ID,
-                                                       auth_token=TOKEN)))
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
+    @mock.patch.object(
+        std_actions.HTTPAction, 'run',
+        mock.MagicMock(return_value={'state': states.RUNNING}))
+    @mock.patch.object(
+        keystone, 'client_for_trusts',
+        mock.Mock(return_value=mock.MagicMock(user_id=USER_ID,
+                                              auth_token=TOKEN)))
     def test_add_token_to_context(self):
         task_name = "create-vms"
 

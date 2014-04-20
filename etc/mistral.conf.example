@@ -18,6 +18,7 @@ default_log_levels = mistral=INFO,mistral.cmd.api=INFO,mistral.api=DEBUG,wsme=DE
 #rpc_backend=rabbit
 
 # Specifies which mistral server to start by the launch script. (string value)
+# Choices are all, api, engine, and executor.
 #server=all
 
 [api]
@@ -28,6 +29,16 @@ port = 8989
 [engine]
 # Mistral engine class (string value)
 #engine=mistral.engine.scalable.engine
+
+# Name of the engine node. This can be an opaque identifier.
+# It is not necessarily a hostname, FQDN, or IP address. (string value)
+#host=0.0.0.0
+
+# The message topic that the engine listens on. (string value)
+#topic=engine
+
+# The version of the engine. (string value)
+#version=1.0
 
 [pecan]
 auth_enable = True

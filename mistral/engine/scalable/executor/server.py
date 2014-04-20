@@ -19,7 +19,8 @@ from oslo.config import cfg
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import exceptions as exc
-from mistral.engine import engine
+from mistral import engine
+from mistral.engine import client
 from mistral.engine import states
 from mistral.actions import action_factory as a_f
 
@@ -29,6 +30,10 @@ WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class Executor(object):
+
+    def __init__(self, transport=None):
+        self.transport = engine.get_transport(transport)
+        self.engine = client.EngineClient(self.transport)
 
     def _do_task_action(self, task):
         """Executes the action defined by the task and return result.
@@ -49,19 +54,19 @@ class Executor(object):
             except exc.ActionException:
                 state, result = states.ERROR, None
 
-            engine.convey_task_result(task['workbook_name'],
-                                      task['execution_id'],
-                                      task['id'],
-                                      state, result)
+            self.engine.convey_task_result(task['workbook_name'],
+                                           task['execution_id'],
+                                           task['id'],
+                                           state, result)
         else:
             try:
                 action.run()
 
             except exc.ActionException:
-                engine.convey_task_result(task['workbook_name'],
-                                          task['execution_id'],
-                                          task['id'],
-                                          states.ERROR, None)
+                self.engine.convey_task_result(task['workbook_name'],
+                                               task['execution_id'],
+                                               task['id'],
+                                               states.ERROR, None)
 
     def _handle_task_error(self, task, exception):
         """Handle exception from the task execution.

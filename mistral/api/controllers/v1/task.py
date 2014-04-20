@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import pecan
 from pecan import rest
 from pecan import abort
 from wsme import types as wtypes
@@ -22,7 +23,7 @@ import wsmeext.pecan as wsme_pecan
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
-from mistral.engine import engine
+
 
 LOG = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class TasksController(rest.RestController):
                   (workbook_name, execution_id, id, task))
 
         # TODO(rakhmerov): pass task result once it's implemented
+        engine = pecan.request.context['engine']
         values = engine.convey_task_result(workbook_name,
                                            execution_id,
                                            id,

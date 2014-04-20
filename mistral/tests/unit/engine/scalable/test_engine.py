@@ -17,13 +17,14 @@ import mock
 
 from oslo.config import cfg
 
+from mistral.tests import base
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral.actions import std_actions
 from mistral import expressions
 from mistral.engine.scalable import engine
 from mistral.engine import states
-from mistral.tests import base
+from mistral.engine import client
 
 
 LOG = logging.getLogger(__name__)
@@ -38,15 +39,23 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 #TODO(rakhmerov): add more tests for errors, execution stop etc.
 
 
+@mock.patch.object(
+    client.EngineClient, 'start_workflow_execution',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
+@mock.patch.object(
+    client.EngineClient, 'convey_task_result',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
+@mock.patch.object(
+    db_api, 'workbook_get',
+    mock.MagicMock(
+        return_value={'definition': base.get_resource('test_rest.yaml')}))
+@mock.patch.object(
+    std_actions.HTTPAction, 'run',
+    mock.MagicMock(return_value={'state': states.SUCCESS}))
 class TestScalableEngine(base.EngineTestCase):
-    @mock.patch.object(engine.ScalableEngine, "_notify_task_executors",
-                       mock.MagicMock(return_value=""))
-    @mock.patch.object(db_api, "workbook_get",
-                       mock.MagicMock(return_value={
-                           'definition': base.get_resource("test_rest.yaml")
-                       }))
-    @mock.patch.object(std_actions.HTTPAction, "run",
-                       mock.MagicMock(return_value="result"))
+    @mock.patch.object(
+        engine.ScalableEngine, "_notify_task_executors",
+        mock.MagicMock(return_value=""))
     def test_engine_one_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "create-vms",
                                                          CONTEXT)
@@ -62,14 +71,13 @@ class TestScalableEngine(base.EngineTestCase):
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
 
-    @mock.patch.object(engine.ScalableEngine, "_notify_task_executors",
-                       mock.MagicMock(return_value=""))
-    @mock.patch.object(db_api, "workbook_get",
-                       mock.MagicMock(return_value={
-                           'definition': base.get_resource("test_rest.yaml")
-                       }))
-    @mock.patch.object(std_actions.HTTPAction, "run",
-                       mock.MagicMock(return_value="result"))
+    @mock.patch.object(
+        client.EngineClient, 'get_workflow_execution_state',
+        mock.MagicMock(
+            side_effect=base.EngineTestCase.mock_get_workflow_state))
+    @mock.patch.object(
+        engine.ScalableEngine, "_notify_task_executors",
+        mock.MagicMock(return_value=""))
     def test_engine_multiple_tasks(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "backup-vms",
                                                          CONTEXT)
@@ -107,19 +115,14 @@ class TestScalableEngine(base.EngineTestCase):
                          self.engine.get_workflow_execution_state(
                              WB_NAME, execution['id']))
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
-    @mock.patch.object(std_actions.HTTPAction, "run",
-                       mock.MagicMock(return_value={'state': states.SUCCESS}))
-    @mock.patch.object(db_api, "workbook_get",
-                       mock.MagicMock(return_value={
-                           'definition': base.get_resource("test_rest.yaml")
-                       }))
-    @mock.patch.object(states, "get_state_by_http_status_code",
-                       mock.MagicMock(return_value=states.SUCCESS))
-    @mock.patch.object(expressions, "evaluate",
-                       mock.MagicMock(side_effect=lambda x, y: x))
+    @mock.patch.object(
+        engine.ScalableEngine, '_run_tasks',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+    @mock.patch.object(
+        states, "get_state_by_http_status_code",
+        mock.MagicMock(return_value=states.SUCCESS))
+    @mock.patch.object(
+        expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_sync_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          "create-vm-nova",
@@ -131,17 +134,11 @@ class TestScalableEngine(base.EngineTestCase):
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
-    @mock.patch.object(db_api, "workbook_get",
-                       mock.MagicMock(return_value={
-                           'definition': base.get_resource("test_rest.yaml")
-                       }))
-    @mock.patch.object(std_actions.HTTPAction, "run",
-                       mock.MagicMock(return_value={'state': states.SUCCESS}))
-    @mock.patch.object(expressions, "evaluate",
-                       mock.MagicMock(side_effect=lambda x, y: x))
+    @mock.patch.object(
+        engine.ScalableEngine, '_run_tasks',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+    @mock.patch.object(
+        expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_tasks_on_success_finish(self):
         # Start workflow.
         execution = self.engine.start_workflow_execution(WB_NAME,
@@ -203,17 +200,11 @@ class TestScalableEngine(base.EngineTestCase):
         self.assertEqual(execution['state'], states.SUCCESS)
         self._assert_multiple_items(tasks, 4, state=states.SUCCESS)
 
-    @mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                       mock.MagicMock(
-                           side_effect=base.EngineTestCase.mock_run_tasks))
-    @mock.patch.object(db_api, "workbook_get",
-                       mock.MagicMock(return_value={
-                           'definition': base.get_resource("test_rest.yaml")
-                       }))
-    @mock.patch.object(std_actions.HTTPAction, "run",
-                       mock.MagicMock(return_value={'state': states.SUCCESS}))
-    @mock.patch.object(expressions, "evaluate",
-                       mock.MagicMock(side_effect=lambda x, y: x))
+    @mock.patch.object(
+        engine.ScalableEngine, '_run_tasks',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+    @mock.patch.object(
+        expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_tasks_on_error_finish(self):
         # Start workflow.
         execution = self.engine.start_workflow_execution(WB_NAME,

@@ -37,12 +37,10 @@ from oslo import messaging
 from oslo.config import cfg
 
 from mistral import config
-from mistral.engine import engine
+from mistral import engine
 from mistral.engine.scalable.executor import server
-
 from mistral.api import app
 from wsgiref import simple_server
-
 from mistral.openstack.common import log as logging
 
 
@@ -50,16 +48,23 @@ LOG = logging.getLogger(__name__)
 
 
 def launch_executor(transport):
-    # TODO(rakhmerov): This is a temporary hack.
-    # We have to initialize engine in executor process because
-    # executor now calls engine.convey_task_result() directly.
-    engine.load_engine(transport)
     target = messaging.Target(topic=cfg.CONF.executor.topic,
                               server=cfg.CONF.executor.host)
-    endpoints = [server.Executor()]
-    ex_server = messaging.get_rpc_server(transport, target, endpoints)
+    endpoints = [server.Executor(transport)]
+    ex_server = messaging.get_rpc_server(
+        transport, target, endpoints, executor='eventlet')
     ex_server.start()
     ex_server.wait()
+
+
+def launch_engine(transport):
+    target = messaging.Target(topic=cfg.CONF.engine.topic,
+                              server=cfg.CONF.engine.host)
+    endpoints = [engine.Engine(transport)]
+    en_server = messaging.get_rpc_server(
+        transport, target, endpoints, executor='eventlet')
+    en_server.start()
+    en_server.wait()
 
 
 def launch_api(transport):
@@ -75,9 +80,9 @@ def launch_api(transport):
 def launch_all(transport):
     # Launch the servers on different threads.
     t1 = eventlet.spawn(launch_executor, transport)
-    t2 = eventlet.spawn(launch_api, transport)
-    t1.wait()
-    t2.wait()
+    t2 = eventlet.spawn(launch_engine, transport)
+    t3 = eventlet.spawn(launch_api, transport)
+    t1.wait() and t2.wait() and t3.wait()
 
 
 def main():
@@ -90,6 +95,7 @@ def main():
         launch_options = {
             'all': launch_all,
             'api': launch_api,
+            'engine': launch_engine,
             'executor': launch_executor
         }
 

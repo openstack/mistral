@@ -14,9 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
 from mistral.db import api as db_api
-from mistral.engine import engine
+from mistral import engine
+from mistral.engine import client
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
@@ -25,10 +25,17 @@ from mistral import dsl_parser as parser
 from mistral.services import scheduler as sched
 from mistral.services import trusts
 
+
 LOG = log.getLogger(__name__)
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
+
+    def __init__(self, transport=None):
+        super(MistralPeriodicTasks, self).__init__()
+        self.transport = engine.get_transport(transport)
+        self.engine = client.EngineClient(self.transport)
+
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def scheduler_triggers(self, ctx):
         LOG.debug('Processing next Scheduler triggers.')
@@ -40,15 +47,15 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             try:
                 task = parser.get_workbook(
                     wb['definition']).get_trigger_task_name(trigger['name'])
-                engine.start_workflow_execution(wb['name'], task)
+                self.engine.start_workflow_execution(wb['name'], task)
             finally:
                 sched.set_next_execution_time(trigger)
                 context.set_ctx(None)
 
 
-def setup():
+def setup(transport):
     tg = threadgroup.ThreadGroup()
-    pt = MistralPeriodicTasks()
+    pt = MistralPeriodicTasks(transport=transport)
 
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,

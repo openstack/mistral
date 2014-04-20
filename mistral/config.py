@@ -31,7 +31,15 @@ api_opts = [
 
 engine_opts = [
     cfg.StrOpt('engine', default='mistral.engine.scalable.engine',
-               help='Mistral engine class')
+               help='Mistral engine class'),
+    cfg.StrOpt('host', default='0.0.0.0',
+               help='Name of the engine node. This can be an opaque '
+                    'identifier. It is not necessarily a hostname, '
+                    'FQDN, or IP address.'),
+    cfg.StrOpt('topic', default='engine',
+               help='The message topic that the engine listens on.'),
+    cfg.StrOpt('version', default='1.0',
+               help='The version of the engine.')
 ]
 
 pecan_opts = [
@@ -81,7 +89,7 @@ executor_opts = [
 launch_opt = cfg.StrOpt(
     'server',
     default='all',
-    choices=('all', 'api', 'executor'),
+    choices=('all', 'api', 'engine', 'executor'),
     help='Specifies which mistral server to start by the launch script.'
 )
 

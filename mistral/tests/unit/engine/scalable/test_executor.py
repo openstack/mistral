@@ -18,18 +18,31 @@ import eventlet
 eventlet.monkey_patch()
 
 import uuid
-import time
 import mock
 
+from oslo.config import cfg
+
 from mistral.tests import base
-from mistral.cmd import launch
+from mistral.openstack.common import log as logging
+from mistral.openstack.common import importutils
 from mistral.engine import states
 from mistral.db import api as db_api
 from mistral.actions import std_actions
-from mistral.engine.scalable.executor import client
+from mistral.engine import client as engine
+from mistral.engine.scalable.executor import client as executor
+
+
+# We need to make sure that all configuration properties are registered.
+importutils.import_module("mistral.config")
+LOG = logging.getLogger(__name__)
+
+# Use the set_default method to set value otherwise in certain test cases
+# the change in value is not permanent.
+cfg.CONF.set_default('auth_enable', False, group='pecan')
+
 
 WORKBOOK_NAME = 'my_workbook'
-TASK_NAME = 'my_task'
+TASK_NAME = 'create-vms'
 
 SAMPLE_WORKBOOK = {
     'id': str(uuid.uuid4()),
@@ -77,27 +90,19 @@ SAMPLE_CONTEXT = {
 
 
 class TestExecutor(base.DbTestCase):
-    def mock_action_run(self):
-        std_actions.HTTPAction.run = mock.MagicMock(return_value={})
-        return std_actions.HTTPAction.run
-
-    def setUp(self):
-        super(TestExecutor, self).setUp()
-
-        # Run the Executor in the background.
+    def __init__(self, *args, **kwargs):
+        super(TestExecutor, self).__init__(*args, **kwargs)
         self.transport = base.get_fake_transport()
-        self.ex_thread = eventlet.spawn(launch.launch_executor, self.transport)
 
-    def tearDown(self):
-        # Stop the Executor.
-        self.ex_thread.kill()
-
-        super(TestExecutor, self).tearDown()
-
+    @mock.patch.object(
+        executor.ExecutorClient, 'handle_task',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_handle_task))
+    @mock.patch.object(
+        std_actions.HTTPAction, 'run', mock.MagicMock(return_value={}))
+    @mock.patch.object(
+        engine.EngineClient, 'convey_task_result',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
     def test_handle_task(self):
-        # Mock HTTP action.
-        mock_rest_action = self.mock_action_run()
-
         # Create a new workbook.
         workbook = db_api.workbook_create(SAMPLE_WORKBOOK)
         self.assertIsInstance(workbook, dict)
@@ -116,28 +121,11 @@ class TestExecutor(base.DbTestCase):
         self.assertIn('id', task)
 
         # Send the task request to the Executor.
-        ex_client = client.ExecutorClient(self.transport)
+        ex_client = executor.ExecutorClient(self.transport)
         ex_client.handle_task(SAMPLE_CONTEXT, task=task)
 
-        # Check task execution state. There is no timeout mechanism in
-        # unittest. There is an example to add a custom timeout decorator that
-        # can wrap this test function in another process and then manage the
-        # process time. However, it seems more straightforward to keep the
-        # loop finite.
-        for i in range(0, 50):
-            db_task = db_api.task_get(task['workbook_name'],
-                                      task['execution_id'],
-                                      task['id'])
-            # Ensure the request reached the executor and the action has ran.
-            if db_task['state'] != states.IDLE:
-                # We have to wait sometime due to time interval between set
-                # task state to RUNNING and invocation action.run()
-                time.sleep(0.1)
-                mock_rest_action.assert_called_once_with()
-                self.assertIn(db_task['state'],
-                              [states.RUNNING, states.SUCCESS, states.ERROR])
-                return
-            time.sleep(0.1)
-
-        # Task is not being processed. Throw an exception here.
-        raise Exception('Timed out waiting for task to be processed.')
+        # Check task execution state.
+        db_task = db_api.task_get(task['workbook_name'],
+                                  task['execution_id'],
+                                  task['id'])
+        self.assertEqual(db_task['state'], states.SUCCESS)

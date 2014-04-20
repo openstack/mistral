@@ -24,6 +24,7 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.db import api as db_api
+from mistral.engine import client
 from mistral.engine.scalable import engine
 from mistral.actions import std_actions
 from mistral.engine import states
@@ -57,16 +58,23 @@ class FailBeforeSuccessMocker(object):
         return "result"
 
 
-@mock.patch.object(engine.ScalableEngine, '_run_tasks',
-                   mock.MagicMock(
-                       side_effect=base.EngineTestCase.mock_run_tasks))
-@mock.patch.object(db_api, "workbook_get",
-                   mock.MagicMock(return_value={
-                       'definition': base.get_resource(
-                           "retry_task/retry_task.yaml")
-                   }))
-@mock.patch.object(std_actions.HTTPAction, "run",
-                   mock.MagicMock(return_value="result"))
+@mock.patch.object(
+    client.EngineClient, 'start_workflow_execution',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
+@mock.patch.object(
+    client.EngineClient, 'convey_task_result',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
+@mock.patch.object(
+    engine.ScalableEngine, '_run_tasks',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+@mock.patch.object(
+    db_api, 'workbook_get',
+    mock.MagicMock(
+        return_value={
+            'definition': base.get_resource('retry_task/retry_task.yaml')}))
+@mock.patch.object(
+    std_actions.HTTPAction, 'run',
+    mock.MagicMock(return_value='result'))
 class TaskRetryTest(base.EngineTestCase):
 
     def test_no_retry(self):
