@@ -54,10 +54,6 @@ class Executor(object):
             try:
                 action.run()
 
-                db_api.task_update(task['workbook_name'],
-                                   task['execution_id'],
-                                   task['id'],
-                                   {'state': states.RUNNING})
             except exc.ActionException:
                 engine.convey_task_result(task['workbook_name'],
                                           task['execution_id'],
