@@ -184,6 +184,7 @@ class AbstractEngine(object):
             state, task_runtime_context = retry.get_task_runtime(task)
             action_ns = workbook.namespaces.get(task.get_action_namespace())
 
+            action_spec = None
             if action_ns:
                 action_spec = \
                     action_ns.actions.get(task.get_action_name())
