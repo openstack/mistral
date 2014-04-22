@@ -14,18 +14,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import pkg_resources as pkg
-import unittest2
-
 from mistral import dsl_parser as parser
-from mistral import version
+from mistral.tests import base
 
 
-class DSLModelTest(unittest2.TestCase):
+class DSLModelTest(base.BaseTest):
     def setUp(self):
-        self.doc = open(pkg.resource_filename(
-            version.version_info.package,
-            "tests/resources/test_rest.yaml")).read()
+        self.doc = base.get_resource("test_rest.yaml")
 
     def test_load_dsl(self):
         self.workbook = parser.get_workbook(self.doc)
@@ -72,7 +67,15 @@ class DSLModelTest(unittest2.TestCase):
 
         create_vm = actions.get("create-vm")
 
-        self.assertIn('method', create_vm.base_parameters)
+        base_params = create_vm.base_parameters
+
+        self.assertEqual('std.mistral_http', create_vm.clazz)
+        self.assertIn('method', base_params)
+        self.assertIn('headers', base_params)
+        self.assertEqual('$.auth_token',
+                         base_params['headers']['X-Auth-Token'])
+        self.assertEqual('application/json',
+                         base_params['headers']['Content-Type'])
 
     def test_namespaces(self):
         self.workbook = parser.get_workbook(self.doc)

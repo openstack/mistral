@@ -1,40 +1,38 @@
 Namespaces:
   MyRest:
+    class: std.mistral_http
+    base-parameters:
+      method: GET
+      headers:
+        X-Auth-Token: $.auth_token
+
     actions:
       create-vm:
-        class: std.mistral_http
         base-parameters:
           url: http://some_host/service/action/execute
-          method: GET
           headers:
-            X-Auth-Token: $.auth_token
+            Content-Type: 'application/json'
         parameters:
           - image_id
           - flavor_id
         output:
 
       backup-vm:
-        class: std.mistral_http
         base-parameters:
           url: http://some_host/url_for_backup
-          method: GET
         parameters:
           - server_id
 
       attach-volume:
-        class: std.mistral_http
         base-parameters:
           url: /url_for_attach
-          method: GET
         parameters:
           - size
           - mnt_path
 
       format-volume:
-        class: std.mistral_http
         base-parameters:
           url: /url_for_format
-          method: GET
         parameters:
           - server_id
 
