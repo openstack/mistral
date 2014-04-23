@@ -14,23 +14,29 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import tempfile
-
-import unittest2
-import pkg_resources as pkg
 import os
-from mistral import version
-from mistral.db.sqlalchemy import api as db_api
-from mistral.openstack.common.db.sqlalchemy import session
+import tempfile
+import unittest2
 
-from stevedore import driver
-from oslo.config import cfg
 from oslo import messaging
+from oslo.config import cfg
 from oslo.messaging import transport
+import pkg_resources as pkg
+from stevedore import driver
 
+from mistral.openstack.common import importutils
+
+
+# We need to make sure that all configuration properties are registered.
+importutils.import_module("mistral.config")
+
+
+from mistral.db.sqlalchemy import api as db_api
 from mistral.engine import engine
 from mistral.engine.scalable.executor import server
 from mistral.engine.scalable import engine as concrete_engine
+from mistral.openstack.common.db.sqlalchemy import session
+from mistral import version
 
 
 RESOURCES_PATH = 'tests/resources/'

@@ -18,7 +18,6 @@ import mock
 from oslo.config import cfg
 
 from mistral.openstack.common import log as logging
-from mistral.openstack.common import importutils
 from mistral.db import api as db_api
 from mistral.actions import std_actions
 from mistral import expressions
@@ -26,8 +25,7 @@ from mistral.engine.scalable import engine
 from mistral.engine import states
 from mistral.tests import base
 
-# We need to make sure that all configuration properties are registered.
-importutils.import_module("mistral.config")
+
 LOG = logging.getLogger(__name__)
 
 WB_NAME = "my_workbook"

@@ -22,7 +22,6 @@ from oslo.config import cfg
 
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-from mistral.openstack.common import importutils
 from mistral.tests import base
 from mistral.db import api as db_api
 from mistral.engine.scalable import engine
@@ -30,8 +29,6 @@ from mistral.actions import std_actions
 from mistral.engine import states
 from mistral import dsl_parser as parser
 
-# We need to make sure that all configuration properties are registered.
-importutils.import_module("mistral.config")
 
 LOG = logging.getLogger(__name__)
 

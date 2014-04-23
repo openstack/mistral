@@ -20,7 +20,6 @@ import mock
 from oslo.config import cfg
 
 from mistral.openstack.common import log as logging
-from mistral.openstack.common import importutils
 from mistral.tests import base
 from mistral.db import api as db_api
 from mistral.engine.scalable import engine
@@ -31,8 +30,7 @@ from mistral.utils.openstack import keystone
 
 # TODO(rakhmerov): add more tests
 
-# We need to make sure that all configuration properties are registered.
-importutils.import_module("mistral.config")
+
 LOG = logging.getLogger(__name__)
 
 TOKEN = "123ab"

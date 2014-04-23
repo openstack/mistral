@@ -18,6 +18,8 @@ import abc
 import copy
 import eventlet
 
+from oslo.config import cfg
+
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import dsl_parser as parser
@@ -29,6 +31,7 @@ from mistral.engine import retry
 
 
 LOG = logging.getLogger(__name__)
+WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class AbstractEngine(object):
@@ -44,6 +47,9 @@ class AbstractEngine(object):
         context = copy.copy(context) if context else {}
 
         db_api.start_tx()
+
+        WORKFLOW_TRACE.info("New execution started - [workbook_name = '%s', "
+                            "task_name = '%s']" % (workbook_name, task_name))
 
         # Persist execution and tasks in DB.
         try:
@@ -88,6 +94,13 @@ class AbstractEngine(object):
             workbook = cls._get_workbook(workbook_name)
             #TODO(rakhmerov): validate state transition
             task = db_api.task_get(workbook_name, execution_id, task_id)
+
+            wf_trace_msg = "Task '%s', [%s -> %s" % (task['name'],
+                                                     task['state'], state)
+
+            wf_trace_msg += ']' if state == states.ERROR \
+                else ", result = %s]" % result
+            WORKFLOW_TRACE.info(wf_trace_msg)
 
             task_output = data_flow.get_task_output(task, result)
 
@@ -277,6 +290,11 @@ class AbstractEngine(object):
                 execution = db_api.execution_get(workbook_name, execution_id)
 
                 # Change state from DELAYED to IDLE to unblock processing.
+
+                WORKFLOW_TRACE.info("Task '%s' [%s -> %s]"
+                                    % (task['name'],
+                                       task['state'], states.IDLE))
+
                 db_task = db_api.task_update(workbook_name,
                                              execution_id,
                                              task['id'],

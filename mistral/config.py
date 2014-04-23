@@ -85,6 +85,12 @@ launch_opt = cfg.StrOpt(
     help='Specifies which mistral server to start by the launch script.'
 )
 
+
+wf_trace_log_name_opt = cfg.StrOpt('workflow_trace_log_name',
+                                   default='workflow_trace',
+                                   help='Logger name for pretty '
+                                   'workflow trace output.')
+
 CONF = cfg.CONF
 
 CONF.register_opts(api_opts, group='api')
@@ -94,6 +100,7 @@ CONF.register_opts(auth_token.opts, group='keystone')
 CONF.register_opts(db_opts, group='database')
 CONF.register_opts(rabbit_opts, group='rabbit')
 CONF.register_opts(executor_opts, group='executor')
+CONF.register_opt(wf_trace_log_name_opt)
 
 CONF.register_cli_opt(use_debugger)
 CONF.register_cli_opt(launch_opt)
