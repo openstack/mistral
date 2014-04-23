@@ -94,3 +94,16 @@ def add_token_to_context(context, db_workbook):
             context.update(workbook_ctx.to_dict())
 
     return context
+
+
+def add_execution_to_context(context, db_execution):
+    if context is None:
+        context = {}
+
+    context['__execution'] = {
+        'id': db_execution['id'],
+        'workbook_name': db_execution['workbook_name'],
+        'task': db_execution['task']
+    }
+
+    return context

@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import abc
+import copy
 import eventlet
 
 from mistral.openstack.common import log as logging
@@ -40,6 +41,8 @@ class AbstractEngine(object):
 
     @classmethod
     def start_workflow_execution(cls, workbook_name, task_name, context):
+        context = copy.copy(context) if context else {}
+
         db_api.start_tx()
 
         # Persist execution and tasks in DB.
@@ -57,8 +60,8 @@ class AbstractEngine(object):
 
             tasks_to_start, delayed_tasks = workflow.find_resolved_tasks(tasks)
 
-            context = cls._add_token_to_context(
-                context, db_api.workbook_get(workbook_name))
+            cls._add_variables_to_data_flow_context(context, execution)
+
             data_flow.prepare_tasks(tasks_to_start, context)
 
             db_api.commit_tx()
@@ -111,8 +114,9 @@ class AbstractEngine(object):
 
             tasks_to_start, delayed_tasks = workflow.find_resolved_tasks(tasks)
 
-            outbound_context = cls._add_token_to_context(
-                outbound_context, db_api.workbook_get(workbook_name))
+            cls._add_variables_to_data_flow_context(outbound_context,
+                                                    execution)
+
             data_flow.prepare_tasks(tasks_to_start, outbound_context)
 
             db_api.commit_tx()
@@ -169,6 +173,13 @@ class AbstractEngine(object):
         })
 
     @classmethod
+    def _add_variables_to_data_flow_context(cls, context, execution):
+        db_workbook = db_api.workbook_get(execution['workbook_name'])
+
+        data_flow.add_token_to_context(context, db_workbook)
+        data_flow.add_execution_to_context(context, execution)
+
+    @classmethod
     def _create_next_tasks(cls, task, workbook):
         tasks = workflow.find_tasks_after_completion(task, workbook)
 
@@ -220,10 +231,6 @@ class AbstractEngine(object):
         return execution['state']
 
     @classmethod
-    def _add_token_to_context(cls, context, workbook):
-        return data_flow.add_token_to_context(context, workbook)
-
-    @classmethod
     def _update_task(cls, workbook, task, state, task_output):
         """
         Update the task with the runtime information. The outbound_context
@@ -247,6 +254,7 @@ class AbstractEngine(object):
                          "task_runtime_context": task_runtime_context}
         task = db_api.task_update(workbook_name, execution_id, task["id"],
                                   update_values)
+
         return task, outbound_context
 
     @classmethod

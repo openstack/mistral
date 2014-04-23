@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
 import mock
 
 from oslo.config import cfg
@@ -26,6 +27,7 @@ from mistral.engine.scalable import engine
 from mistral.actions import std_actions
 from mistral.engine import states
 from mistral.utils.openstack import keystone
+
 
 # TODO(rakhmerov): add more tests
 
@@ -61,22 +63,33 @@ def create_workbook(definition_path):
 
 
 class DataFlowTest(base.EngineTestCase):
+    def _check_in_context_execution(self, task):
+        self.assertIn('__execution', task['in_context'])
+
+        exec_dict = task['in_context']['__execution']
+
+        self.assertEqual('my_workbook', exec_dict['workbook_name'])
+        self.assertEqual(task['execution_id'], exec_dict['id'])
+        self.assertIn('task', exec_dict)
+
     @mock.patch.object(engine.ScalableEngine, '_run_tasks',
                        mock.MagicMock(
                            side_effect=base.EngineTestCase.mock_run_tasks))
     def test_two_dependent_tasks(self):
+        CTX = copy.copy(CONTEXT)
+
         wb = create_workbook('data_flow/two_dependent_tasks.yaml')
 
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          'build_greeting',
-                                                         CONTEXT)
+                                                         CTX)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
-        self.assertDictEqual(CONTEXT, execution['context'])
+        self.assertDictEqual(CTX, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -89,7 +102,9 @@ class DataFlowTest(base.EngineTestCase):
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
-        self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
+        self._check_in_context_execution(build_full_name_task)
+        del build_full_name_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
                              build_full_name_task['parameters'])
         self.assertDictEqual(
@@ -104,7 +119,7 @@ class DataFlowTest(base.EngineTestCase):
             build_full_name_task['output'])
 
         # Check the second task.
-        in_context = CONTEXT.copy()
+        in_context = CTX
         in_context['f_name'] = 'John Doe'
 
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
@@ -122,27 +137,30 @@ class DataFlowTest(base.EngineTestCase):
             },
             build_greeting_task['output'])
 
-        del build_greeting_task['in_context']['f_name']
         del build_greeting_task['in_context']['task']
 
-        self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
+        self._check_in_context_execution(build_greeting_task)
+        del build_greeting_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_greeting_task['in_context'])
 
     @mock.patch.object(engine.ScalableEngine, '_run_tasks',
                        mock.MagicMock(
                            side_effect=base.EngineTestCase.mock_run_tasks))
     def test_task_with_two_dependencies(self):
+        CTX = copy.copy(CONTEXT)
+
         wb = create_workbook('data_flow/task_with_two_dependencies.yaml')
 
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          'send_greeting',
-                                                         CONTEXT)
+                                                         CTX)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
-        self.assertDictEqual(CONTEXT, execution['context'])
+        self.assertDictEqual(CTX, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -157,7 +175,9 @@ class DataFlowTest(base.EngineTestCase):
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
-        self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
+        self._check_in_context_execution(build_full_name_task)
+        del build_full_name_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
                              build_full_name_task['parameters'])
         self.assertDictEqual(
@@ -172,7 +192,7 @@ class DataFlowTest(base.EngineTestCase):
             build_full_name_task['output'])
 
         # Check the second task.
-        in_context = CONTEXT.copy()
+        in_context = CTX
         in_context['f_name'] = 'John Doe'
 
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
@@ -190,13 +210,14 @@ class DataFlowTest(base.EngineTestCase):
             },
             build_greeting_task['output'])
 
-        del build_greeting_task['in_context']['f_name']
         del build_greeting_task['in_context']['task']
 
-        self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
+        self._check_in_context_execution(build_greeting_task)
+        del build_greeting_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_greeting_task['in_context'])
 
         # Check the third task.
-        in_context = CONTEXT.copy()
+        in_context = CTX
         in_context['f_name'] = 'John Doe'
         in_context['greet_msg'] = 'Cheers!'
         in_context['task'] = {
@@ -206,6 +227,8 @@ class DataFlowTest(base.EngineTestCase):
         }
 
         self.assertEqual(states.SUCCESS, send_greeting_task['state'])
+        self._check_in_context_execution(send_greeting_task)
+        del send_greeting_task['in_context']['__execution']
         self.assertDictEqual(in_context, send_greeting_task['in_context'])
         self.assertDictEqual({'f_name': 'John Doe', 'greet_msg': 'Cheers!'},
                              send_greeting_task['parameters'])
@@ -223,18 +246,20 @@ class DataFlowTest(base.EngineTestCase):
                        mock.MagicMock(
                            side_effect=base.EngineTestCase.mock_run_tasks))
     def test_two_subsequent_tasks(self):
+        CTX = copy.copy(CONTEXT)
+
         wb = create_workbook('data_flow/two_subsequent_tasks.yaml')
 
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          'build_full_name',
-                                                         CONTEXT)
+                                                         CTX)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
-        self.assertDictEqual(CONTEXT, execution['context'])
+        self.assertDictEqual(CTX, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -247,7 +272,9 @@ class DataFlowTest(base.EngineTestCase):
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
-        self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
+        self._check_in_context_execution(build_full_name_task)
+        del build_full_name_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
                              build_full_name_task['parameters'])
         self.assertDictEqual(
@@ -262,7 +289,7 @@ class DataFlowTest(base.EngineTestCase):
             build_full_name_task['output'])
 
         # Check the second task.
-        in_context = CONTEXT.copy()
+        in_context = CTX
         in_context['f_name'] = 'John Doe'
 
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
@@ -281,27 +308,30 @@ class DataFlowTest(base.EngineTestCase):
             },
             build_greeting_task['output'])
 
-        del build_greeting_task['in_context']['f_name']
         del build_greeting_task['in_context']['task']
 
-        self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
+        self._check_in_context_execution(build_greeting_task)
+        del build_greeting_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_greeting_task['in_context'])
 
     @mock.patch.object(engine.ScalableEngine, '_run_tasks',
                        mock.MagicMock(
                            side_effect=base.EngineTestCase.mock_run_tasks))
     def test_three_subsequent_tasks(self):
+        CTX = copy.copy(CONTEXT)
+
         wb = create_workbook('data_flow/three_subsequent_tasks.yaml')
 
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          'build_full_name',
-                                                         CONTEXT)
+                                                         CTX)
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['workbook_name'],
                                          execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
-        self.assertDictEqual(CONTEXT, execution['context'])
+        self.assertDictEqual(CTX, execution['context'])
 
         tasks = db_api.tasks_get(wb['name'], execution['id'])
 
@@ -316,7 +346,9 @@ class DataFlowTest(base.EngineTestCase):
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
-        self.assertDictEqual(CONTEXT, build_full_name_task['in_context'])
+        self._check_in_context_execution(build_full_name_task)
+        del build_full_name_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_full_name_task['in_context'])
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
                              build_full_name_task['parameters'])
         self.assertDictEqual(
@@ -331,7 +363,7 @@ class DataFlowTest(base.EngineTestCase):
             build_full_name_task['output'])
 
         # Check the second task.
-        in_context = CONTEXT.copy()
+        in_context = CTX
         in_context['f_name'] = 'John Doe'
 
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
@@ -350,13 +382,14 @@ class DataFlowTest(base.EngineTestCase):
             },
             build_greeting_task['output'])
 
-        del build_greeting_task['in_context']['f_name']
         del build_greeting_task['in_context']['task']
 
-        self.assertDictEqual(CONTEXT, build_greeting_task['in_context'])
+        self._check_in_context_execution(build_greeting_task)
+        del build_greeting_task['in_context']['__execution']
+        self.assertDictEqual(CTX, build_greeting_task['in_context'])
 
         # Check the third task.
-        in_context = CONTEXT.copy()
+        in_context = CTX
         in_context['f_name'] = 'John Doe'
         in_context['greet_msg'] = 'Hello, John Doe!'
 
@@ -378,11 +411,11 @@ class DataFlowTest(base.EngineTestCase):
             },
             send_greeting_task['output'])
 
-        del send_greeting_task['in_context']['f_name']
-        del send_greeting_task['in_context']['greet_msg']
         del send_greeting_task['in_context']['task']
 
-        self.assertDictEqual(CONTEXT, send_greeting_task['in_context'])
+        self._check_in_context_execution(send_greeting_task)
+        del send_greeting_task['in_context']['__execution']
+        self.assertDictEqual(CTX, send_greeting_task['in_context'])
 
     @mock.patch.object(std_actions.HTTPAction, "run",
                        mock.MagicMock(return_value={'state': states.RUNNING}))
