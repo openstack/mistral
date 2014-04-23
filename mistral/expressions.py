@@ -87,7 +87,9 @@ class InlineYAQLEvaluator(YAQLEvaluator):
                 trim_expr = expr.strip("{}")
                 evaluated = super(InlineYAQLEvaluator,
                                   cls).evaluate(trim_expr, context)
-                result = result.replace(expr, evaluated or expr)
+
+                replacement = str(evaluated) if evaluated else expr
+                result = result.replace(expr, replacement)
 
         return result
 
