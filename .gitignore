@@ -37,6 +37,6 @@ nosetests.xml
 .pydevproject
 .idea
 .DS_Store
-etc/mistral.conf
+etc/*.conf
 tools/lintstack.head.py
 tools/pylint_exceptions
