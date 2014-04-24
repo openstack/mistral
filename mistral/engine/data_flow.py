@@ -27,17 +27,9 @@ CONF = cfg.CONF
 
 
 def evaluate_task_parameters(task, context):
-    res = {}
-
     params = task['task_spec'].get('parameters', {})
 
-    if not params:
-        return res
-
-    for name, val in params.iteritems():
-        res[name] = expr.evaluate(val, context)
-
-    return res
+    return expr.evaluate_recursively(params, context)
 
 
 def prepare_tasks(tasks, context):
