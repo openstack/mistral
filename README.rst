@@ -45,3 +45,7 @@ To debug using a local engine and executor without dependencies such as RabbitMQ
 and run in pdb, PyDev or PyCharm::
 
     mistral/cmd/launch.py --server all --config-file etc/mistral.conf --use-debugger
+
+### Running examples
+
+To run the examples find them in mistral-extra repository (https://github.com/stackforge/mistral-extra) and follow the instructions on each example.
