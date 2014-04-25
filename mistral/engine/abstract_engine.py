@@ -118,6 +118,11 @@ class AbstractEngine(object):
             new_exec_state = cls._determine_execution_state(execution, tasks)
 
             if execution['state'] != new_exec_state:
+                wf_trace_msg = \
+                    "Execution '%s', [%s -> %s]" % \
+                    (execution_id, execution['state'], new_exec_state)
+                WORKFLOW_TRACE.info(wf_trace_msg)
+
                 execution = \
                     db_api.execution_update(workbook_name, execution_id, {
                         "state": new_exec_state
