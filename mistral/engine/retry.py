@@ -44,7 +44,7 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     Iterations complete therefore state = #{state}, current:count = 4.
     """
 
-    if not (state is states.ERROR and task_spec.is_retry_task()):
+    if not (state == states.ERROR and task_spec.is_retry_task()):
         return state, task_runtime_context
 
     if task_runtime_context is None:
