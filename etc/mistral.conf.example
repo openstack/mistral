@@ -11,6 +11,14 @@ log_file = /tmp/mistral.log
 # Log levels for specific modules
 default_log_levels = mistral=INFO,mistral.cmd.api=INFO,mistral.api=DEBUG,wsme=DEBUG
 
+# Rabbit config for oslo.messaging
+rabbit_host = localhost
+rabbit_port = 5672
+rabbit_virtual_host = /
+rabbit_task_queue = tasks
+rabbit_user = guest
+rabbit_password = guest
+
 # Uncomment this option to get more fine-grained control over logging configuration
 #log_config_append = etc/logging.conf
 
@@ -47,14 +55,6 @@ auth_enable = True
 #A valid SQLAlchemy connection string
 #connection = mysql://root:password@localhost:3306/mistral
 connection = sqlite:///mistral.sqlite
-
-[rabbit]
-rabbit_host = localhost
-rabbit_port = 5672
-rabbit_virtual_host = /
-rabbit_task_queue = tasks
-rabbit_user = guest
-rabbit_password = guest
 
 [keystone]
 auth_uri=http://localhost:5000/v3
