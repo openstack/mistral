@@ -95,8 +95,8 @@ class AbstractEngine(object):
             #TODO(rakhmerov): validate state transition
             task = db_api.task_get(workbook_name, execution_id, task_id)
 
-            wf_trace_msg = "Task '%s', [%s -> %s" % (task['name'],
-                                                     task['state'], state)
+            wf_trace_msg = "Task '%s' [%s -> %s" % \
+                           (task['name'], task['state'], state)
 
             wf_trace_msg += ']' if state == states.ERROR \
                 else ", result = %s]" % result
@@ -119,7 +119,7 @@ class AbstractEngine(object):
 
             if execution['state'] != new_exec_state:
                 wf_trace_msg = \
-                    "Execution '%s', [%s -> %s]" % \
+                    "Execution '%s' [%s -> %s]" % \
                     (execution_id, execution['state'], new_exec_state)
                 WORKFLOW_TRACE.info(wf_trace_msg)
 
