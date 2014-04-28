@@ -72,12 +72,12 @@ class Workbook(mb.MistralBase):
 
     id = _id_column()
     name = sa.Column(sa.String(80), primary_key=True)
-    definition = sa.Column(sa.String(), nullable=True)
-    description = sa.Column(sa.String())
+    definition = sa.Column(sa.Text(), nullable=True)
+    description = sa.Column(sa.String(200))
     tags = sa.Column(st.JsonListType())
-    scope = sa.Column(sa.String())
-    project_id = sa.Column(sa.String())
-    trust_id = sa.Column(sa.String())
+    scope = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80))
+    trust_id = sa.Column(sa.String(80))
 
 
 class Task(mb.MistralBase):
@@ -90,7 +90,7 @@ class Task(mb.MistralBase):
     requires = sa.Column(st.JsonDictType())
     workbook_name = sa.Column(sa.String(80))
     execution_id = sa.Column(sa.String(36))
-    description = sa.Column(sa.String())
+    description = sa.Column(sa.String(200))
     task_spec = sa.Column(st.JsonDictType())
     action_spec = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
