@@ -21,7 +21,7 @@ from mistral import exceptions as ex
 from webtest.app import AppError
 from mistral.tests.api import base
 from mistral.db import api as db_api
-from mistral.engine import client
+from mistral import engine
 
 # TODO: later we need additional tests verifying all the errors etc.
 
@@ -75,7 +75,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_EXEC, canonize(resp.json))
 
-    @mock.patch.object(client.EngineClient, 'start_workflow_execution',
+    @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(return_value=EXECS[0]))
     def test_post(self):
         new_exec = EXECS[0].copy()
@@ -86,7 +86,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(EXECS[0], canonize(resp.json))
 
-    @mock.patch.object(client.EngineClient, 'start_workflow_execution',
+    @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(side_effect=ex.MistralException))
     def test_post_throws_exception(self):
         with self.assertRaises(AppError) as context:

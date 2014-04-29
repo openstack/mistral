@@ -35,8 +35,8 @@ host = 0.0.0.0
 port = 8989
 
 [engine]
-# Mistral engine class (string value)
-#engine=mistral.engine.scalable.engine
+# Mistral engine plugin (string value)
+#engine=default
 
 # Name of the engine node. This can be an opaque identifier.
 # It is not necessarily a hostname, FQDN, or IP address. (string value)

@@ -34,9 +34,8 @@ from mistral.db.sqlalchemy import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.openstack.common.db.sqlalchemy import session
 from mistral import version
-from mistral.engine import client
-from mistral.engine.scalable import engine
-from mistral.engine.scalable.executor import server
+from mistral import engine
+from mistral.engine import executor
 
 
 RESOURCES_PATH = 'tests/resources/'
@@ -121,10 +120,11 @@ class DbTestCase(BaseTest):
 
 class EngineTestCase(DbTestCase):
     transport = get_fake_transport()
+    backend = engine.get_engine(cfg.CONF.engine.engine, transport)
 
     def __init__(self, *args, **kwargs):
         super(EngineTestCase, self).__init__(*args, **kwargs)
-        self.engine = client.EngineClient(self.transport)
+        self.engine = engine.EngineClient(self.transport)
 
     @classmethod
     def mock_task_result(cls, workbook_name, execution_id,
@@ -133,8 +133,13 @@ class EngineTestCase(DbTestCase):
         Mock the engine convey_task_results to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
-        return engine.ScalableEngine.convey_task_result(
-            workbook_name, execution_id, task_id, state, result)
+        cntx = {}
+        kwargs = {'workbook_name': workbook_name,
+                  'execution_id': execution_id,
+                  'task_id': task_id,
+                  'state': state,
+                  'result': result}
+        return cls.backend.convey_task_result(cntx, **kwargs)
 
     @classmethod
     def mock_start_workflow(cls, workbook_name, task_name, context=None):
@@ -142,8 +147,11 @@ class EngineTestCase(DbTestCase):
         Mock the engine start_workflow_execution to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
-        return engine.ScalableEngine.start_workflow_execution(
-            workbook_name, task_name, context)
+        cntx = {}
+        kwargs = {'workbook_name': workbook_name,
+                  'task_name': task_name,
+                  'context': context}
+        return cls.backend.start_workflow_execution(cntx, **kwargs)
 
     @classmethod
     def mock_get_workflow_state(cls, workbook_name, execution_id):
@@ -151,8 +159,10 @@ class EngineTestCase(DbTestCase):
         Mock the engine get_workflow_execution_state to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
-        return engine.ScalableEngine.get_workflow_execution_state(
-            workbook_name, execution_id)
+        cntx = {}
+        kwargs = {'workbook_name': workbook_name,
+                  'execution_id': execution_id}
+        return cls.backend.get_workflow_execution_state(cntx, **kwargs)
 
     @classmethod
     def mock_run_tasks(cls, tasks):
@@ -160,9 +170,9 @@ class EngineTestCase(DbTestCase):
         Mock the engine _run_tasks to send requests directly to the task
         executor instead of going through the oslo.messaging transport.
         """
-        executor = server.Executor(transport=cls.transport)
+        exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)
         for task in tasks:
-            executor.handle_task({}, task=task)
+            exctr.handle_task({}, task=task)
 
     @classmethod
     def mock_handle_task(cls, cntx, **kwargs):
@@ -170,5 +180,5 @@ class EngineTestCase(DbTestCase):
         Mock the executor handle_task to send requests directory to the task
         executor instead of going through the oslo.messaging transport.
         """
-        executor = server.Executor(transport=cls.transport)
-        return executor.handle_task(cntx, **kwargs)
+        exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)
+        return exctr.handle_task(cntx, **kwargs)

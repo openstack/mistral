@@ -19,9 +19,8 @@ from oslo.config import cfg
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import exceptions as exc
-from mistral import engine
-from mistral.engine import client
 from mistral.engine import states
+from mistral.engine import executor
 from mistral.actions import action_factory as a_f
 
 
@@ -29,10 +28,7 @@ LOG = logging.getLogger(__name__)
 WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
-class Executor(object):
-    def __init__(self, transport=None):
-        self.transport = engine.get_transport(transport)
-        self.engine = client.EngineClient(self.transport)
+class DefaultExecutor(executor.Executor):
 
     def _do_task_action(self, task):
         """Executes the action defined by the task and return result.

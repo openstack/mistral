@@ -28,8 +28,8 @@ from mistral.openstack.common import importutils
 from mistral.engine import states
 from mistral.db import api as db_api
 from mistral.actions import std_actions
-from mistral.engine import client as engine
-from mistral.engine.scalable.executor import client as executor
+from mistral import engine
+from mistral.engine import executor
 
 
 # We need to make sure that all configuration properties are registered.

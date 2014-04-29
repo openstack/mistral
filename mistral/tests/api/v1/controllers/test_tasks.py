@@ -18,7 +18,7 @@ import mock
 
 from mistral.tests.api import base
 from mistral.db import api as db_api
-from mistral.engine import client
+from mistral import engine
 
 # TODO: later we need additional tests verifying all the errors etc.
 
@@ -48,7 +48,7 @@ class TestTasksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(TASKS[0], resp.json)
 
-    @mock.patch.object(client.EngineClient, "convey_task_result",
+    @mock.patch.object(engine.EngineClient, "convey_task_result",
                        mock.MagicMock(return_value=UPDATED_TASK))
     def test_put(self):
         resp = self.app.put_json(
