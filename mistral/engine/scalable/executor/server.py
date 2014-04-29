@@ -30,7 +30,6 @@ WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class Executor(object):
-
     def __init__(self, transport=None):
         self.transport = engine.get_transport(transport)
         self.engine = client.EngineClient(self.transport)
