@@ -1,0 +1,167 @@
+# lib/mistral
+
+# Dependencies:
+# ``functions`` file
+# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
+
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_mistral
+# configure_mistral
+# start_mistral
+# stop_mistral
+
+
+# Save trace setting
+XTRACE=$(set +o | grep xtrace)
+set -o xtrace
+
+
+# Defaults
+# --------
+
+# Set up default repos
+MISTRAL_REPO=${MISTRAL_REPO:-${GIT_BASE}/stackforge/mistral.git}
+MISTRAL_BRANCH=${MISTRAL_BRANCH:-master}
+
+# Set up default directories
+MISTRAL_DIR=$DEST/mistral
+MISTRAL_CONF_DIR=${MISTRAL_CONF_DIR:-/etc/mistral}
+MISTRAL_CONF_FILE=${MISTRAL_CONF_DIR}/mistral.conf
+MISTRAL_DEBUG=${MISTRAL_DEBUG:-True}
+
+MISTRAL_SERVICE_HOST=${MISTRAL_SERVICE_HOST:-$SERVICE_HOST}
+MISTRAL_SERVICE_PORT=${MISTRAL_SERVICE_PORT:-8989}
+MISTRAL_SERVICE_PROTOCOL=${MISTRAL_SERVICE_PROTOCOL:-$SERVICE_PROTOCOL}
+
+MISTRAL_ADMIN_USER=${MISTRAL_ADMIN_USER:-mistral}
+
+# Support entry points installation of console scripts
+if [[ -d $MISTRAL_DIR/bin ]]; then
+    MISTRAL_BIN_DIR=$MISTRAL_DIR/bin
+else
+    MISTRAL_BIN_DIR=$(get_python_exec_prefix)
+fi
+
+# create_mistral_accounts() - Set up common required mistral accounts
+#
+# Tenant      User       Roles
+# ------------------------------
+# service     mistral     admin
+function create_mistral_accounts() {
+    if ! is_service_enabled key; then
+        return
+    fi
+
+    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
+    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
+
+    MISTRAL_USER=$(openstack user create \
+        $MISTRAL_ADMIN_USER \
+        --password "$SERVICE_PASSWORD" \
+        --project $SERVICE_TENANT \
+        --email mistral@example.com \
+        | grep " id " | get_field 2)
+
+    openstack role add \
+        $ADMIN_ROLE \
+        --project $SERVICE_TENANT \
+        --user $MISTRAL_USER
+
+    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
+        MISTRAL_SERVICE=$(openstack service create \
+            mistral \
+            --type=workflow_service \
+            --description="Workflow Service" \
+            | grep " id " | get_field 2)
+        openstack endpoint create \
+            $MISTRAL_SERVICE \
+            --region RegionOne \
+            --publicurl "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v1" \
+            --adminurl "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v1" \
+            --internalurl "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v1"
+    fi
+}
+
+
+function mkdir_chown_stack {
+    if [[ ! -d "$1" ]]; then
+        sudo mkdir -p "$1"
+    fi
+    sudo chown $STACK_USER "$1"
+}
+
+# Entry points
+# ------------
+
+# configure_mistral() - Set config files, create data dirs, etc
+function configure_mistral {
+    mkdir_chown_stack "$MISTRAL_CONF_DIR"
+
+    # Copy over Mistral configuration file and configure common parameters.
+    cp $MISTRAL_DIR/etc/mistral.conf.example $MISTRAL_CONF_FILE
+    iniset $MISTRAL_CONF_FILE DEFAULT debug $MISTRAL_DEBUG
+
+    # Run all Mistral processes as a single process
+    iniset $MISTRAL_CONF_FILE DEFAULT server all
+
+    # Mistral Configuration
+    #-------------------------
+
+    # Setup keystone_authtoken section
+    iniset $MISTRAL_CONF_FILE keystone auth_host $KEYSTONE_AUTH_HOST
+    iniset $MISTRAL_CONF_FILE keystone auth_port $KEYSTONE_AUTH_PORT
+    iniset $MISTRAL_CONF_FILE keystone auth_protocol $KEYSTONE_AUTH_PROTOCOL
+    iniset $MISTRAL_CONF_FILE keystone admin_tenant_name $SERVICE_TENANT_NAME
+    iniset $MISTRAL_CONF_FILE keystone admin_user $MISTRAL_ADMIN_USER
+    iniset $MISTRAL_CONF_FILE keystone admin_password $SERVICE_PASSWORD
+
+    # Setup RabbitMQ credentials
+    iniset $MISTRAL_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
+
+    # Configure the database.
+    iniset $MISTRAL_CONF_FILE database connection `database_connection_url mistral`
+
+    # Configure keystone auth url
+    iniset $MISTRAL_CONF_FILE keystone auth_uri "http://${KEYSTONE_AUTH_HOST}:5000/v3"
+}
+
+
+# init_mistral() - Initialize the database
+function init_mistral() {
+    # (re)create Mistral database
+    recreate_database mistral utf8
+}
+
+
+# install_mistral() - Collect source and prepare
+function install_mistral() {
+    git_clone $MISTRAL_REPO $MISTRAL_DIR $MISTRAL_BRANCH
+
+    # setup_package function is used because Mistral requirements
+    # don't match with global-requirement.txt
+    # both functions (setup_develop and setup_package) are defined at:
+    # http://git.openstack.org/cgit/openstack-dev/devstack/tree/functions-common
+    setup_package $MISTRAL_DIR -e
+}
+
+
+# start_mistral() - Start running processes, including screen
+function start_mistral() {
+    screen_it mistral "cd $MISTRAL_DIR && $MISTRAL_BIN_DIR/mistral-server --config-file $MISTRAL_CONF_DIR/mistral.conf"
+}
+
+
+# stop_mistral() - Stop running processes
+function stop_mistral() {
+    # Kill the Mistral screen windows
+    screen -S $SCREEN_NAME -p mistral -X kill
+}
+
+
+# Restore xtrace
+$XTRACE
+
+# Local variables:
+# mode: shell-script
+# End:
