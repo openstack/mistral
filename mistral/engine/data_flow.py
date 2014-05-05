@@ -55,11 +55,26 @@ def get_task_output(task, result):
         output['task'] = {task['name']: result}
 
         # TODO(rakhmerov): Take care of nested variables.
-        if vars_to_publish:
+        if vars_to_publish and isinstance(result, dict):
             for var_name, res_var_name in vars_to_publish.iteritems():
                 output[var_name] = result[res_var_name]
+        elif not isinstance(result, dict):
+            LOG.info("Unable to publish in context from non-dict task result:"
+                     " [task %s, result = %s]" % (task['name'], result))
 
     return output
+
+
+def _merge_dicts(target, src):
+    for key in src:
+        to_merge = (key in target
+                    and isinstance(target[key], dict)
+                    and isinstance(src[key], dict))
+        if to_merge:
+            _merge_dicts(target[key], src[key])
+        else:
+            target[key] = src[key]
+    return target
 
 
 def get_outbound_context(task, output=None):
@@ -71,7 +86,7 @@ def get_outbound_context(task, output=None):
         output = task.get('output')
 
     if output:
-        out_context.update(output)
+        out_context = _merge_dicts(out_context, output)
 
     return out_context
 

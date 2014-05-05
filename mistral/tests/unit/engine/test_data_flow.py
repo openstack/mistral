@@ -225,11 +225,17 @@ class DataFlowTest(base.EngineTestCase):
         in_context['task'] = {
             'build_greeting': {
                 'greeting': 'Cheers!'
+            },
+            'build_full_name': {
+                'full_name': 'John Doe',
             }
         }
 
         self.assertEqual(states.SUCCESS, send_greeting_task['state'])
         self._check_in_context_execution(send_greeting_task)
+
+        self.assertEqual(2, len(send_greeting_task['in_context']['task']))
+
         del send_greeting_task['in_context']['__execution']
         self.assertDictEqual(in_context, send_greeting_task['in_context'])
         self.assertDictEqual({'f_name': 'John Doe', 'greet_msg': 'Cheers!'},
@@ -406,6 +412,8 @@ class DataFlowTest(base.EngineTestCase):
                 }
             },
             send_greeting_task['output'])
+
+        self.assertEqual(2, len(send_greeting_task['in_context']['task']))
 
         del send_greeting_task['in_context']['task']
 
