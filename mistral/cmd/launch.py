@@ -38,7 +38,7 @@ from oslo.config import cfg
 
 from mistral import config
 from mistral import engine
-from mistral.engine.scalable.executor import server
+from mistral.engine import executor
 from mistral.api import app
 from wsgiref import simple_server
 from mistral.openstack.common import log as logging
@@ -50,7 +50,9 @@ LOG = logging.getLogger(__name__)
 def launch_executor(transport):
     target = messaging.Target(topic=cfg.CONF.executor.topic,
                               server=cfg.CONF.executor.host)
-    endpoints = [server.Executor(transport)]
+    # Since engine and executor are tightly coupled, use the engine
+    # configuration to decide which executor to get.
+    endpoints = [executor.get_executor(cfg.CONF.engine.engine, transport)]
     ex_server = messaging.get_rpc_server(
         transport, target, endpoints, executor='eventlet')
     ex_server.start()
@@ -60,7 +62,7 @@ def launch_executor(transport):
 def launch_engine(transport):
     target = messaging.Target(topic=cfg.CONF.engine.topic,
                               server=cfg.CONF.engine.host)
-    endpoints = [engine.Engine(transport)]
+    endpoints = [engine.get_engine(cfg.CONF.engine.engine, transport)]
     en_server = messaging.get_rpc_server(
         transport, target, endpoints, executor='eventlet')
     en_server.start()

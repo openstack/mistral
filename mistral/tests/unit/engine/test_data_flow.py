@@ -22,10 +22,10 @@ from oslo.config import cfg
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.db import api as db_api
-from mistral.engine.scalable import engine
 from mistral.actions import std_actions
+from mistral import engine
 from mistral.engine import states
-from mistral.engine import client
+from mistral.engine.drivers.default import engine as concrete_engine
 from mistral.utils.openstack import keystone
 
 
@@ -62,13 +62,13 @@ def create_workbook(definition_path):
 
 
 @mock.patch.object(
-    client.EngineClient, 'start_workflow_execution',
+    engine.EngineClient, 'start_workflow_execution',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
 @mock.patch.object(
-    client.EngineClient, 'convey_task_result',
+    engine.EngineClient, 'convey_task_result',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
 @mock.patch.object(
-    engine.ScalableEngine, '_run_tasks',
+    concrete_engine.DefaultEngine, '_run_tasks',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
 class DataFlowTest(base.EngineTestCase):
     def _check_in_context_execution(self, task):

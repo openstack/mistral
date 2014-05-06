@@ -15,7 +15,6 @@
 from pecan.hooks import PecanHook
 
 from mistral import engine
-from mistral.engine import client
 from mistral.openstack.common import log as logging
 
 
@@ -26,7 +25,7 @@ class EngineHook(PecanHook):
 
     def __init__(self, transport=None):
         self.transport = engine.get_transport(transport)
-        self.engine = client.EngineClient(self.transport)
+        self.engine = engine.EngineClient(self.transport)
 
     def before(self, state):
         state.request.context['engine'] = self.engine

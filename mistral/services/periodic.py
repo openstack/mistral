@@ -16,7 +16,6 @@
 
 from mistral.db import api as db_api
 from mistral import engine
-from mistral.engine import client
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
@@ -34,7 +33,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     def __init__(self, transport=None):
         super(MistralPeriodicTasks, self).__init__()
         self.transport = engine.get_transport(transport)
-        self.engine = client.EngineClient(self.transport)
+        self.engine = engine.EngineClient(self.transport)
 
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def scheduler_triggers(self, ctx):

@@ -30,8 +30,8 @@ api_opts = [
 ]
 
 engine_opts = [
-    cfg.StrOpt('engine', default='mistral.engine.scalable.engine',
-               help='Mistral engine class'),
+    cfg.StrOpt('engine', default='default',
+               help='Mistral engine plugin'),
     cfg.StrOpt('host', default='0.0.0.0',
                help='Name of the engine node. This can be an opaque '
                     'identifier. It is not necessarily a hostname, '

@@ -22,9 +22,9 @@ from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral.actions import std_actions
 from mistral import expressions
-from mistral.engine.scalable import engine
+from mistral import engine
 from mistral.engine import states
-from mistral.engine import client
+from mistral.engine.drivers.default import engine as concrete_engine
 
 
 LOG = logging.getLogger(__name__)
@@ -40,10 +40,10 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 @mock.patch.object(
-    client.EngineClient, 'start_workflow_execution',
+    engine.EngineClient, 'start_workflow_execution',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
 @mock.patch.object(
-    client.EngineClient, 'convey_task_result',
+    engine.EngineClient, 'convey_task_result',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
 @mock.patch.object(
     db_api, 'workbook_get',
@@ -54,7 +54,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
     mock.MagicMock(return_value={'state': states.SUCCESS}))
 class TestScalableEngine(base.EngineTestCase):
     @mock.patch.object(
-        engine.ScalableEngine, "_notify_task_executors",
+        concrete_engine.DefaultEngine, "_notify_task_executors",
         mock.MagicMock(return_value=""))
     def test_engine_one_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "create-vms",
@@ -72,11 +72,11 @@ class TestScalableEngine(base.EngineTestCase):
         self.assertEqual(task['state'], states.SUCCESS)
 
     @mock.patch.object(
-        client.EngineClient, 'get_workflow_execution_state',
+        engine.EngineClient, 'get_workflow_execution_state',
         mock.MagicMock(
             side_effect=base.EngineTestCase.mock_get_workflow_state))
     @mock.patch.object(
-        engine.ScalableEngine, "_notify_task_executors",
+        concrete_engine.DefaultEngine, "_notify_task_executors",
         mock.MagicMock(return_value=""))
     def test_engine_multiple_tasks(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "backup-vms",
@@ -116,7 +116,7 @@ class TestScalableEngine(base.EngineTestCase):
                              WB_NAME, execution['id']))
 
     @mock.patch.object(
-        engine.ScalableEngine, '_run_tasks',
+        concrete_engine.DefaultEngine, '_run_tasks',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
         states, "get_state_by_http_status_code",
@@ -135,7 +135,7 @@ class TestScalableEngine(base.EngineTestCase):
         self.assertEqual(task['state'], states.SUCCESS)
 
     @mock.patch.object(
-        engine.ScalableEngine, '_run_tasks',
+        concrete_engine.DefaultEngine, '_run_tasks',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
@@ -201,7 +201,7 @@ class TestScalableEngine(base.EngineTestCase):
         self._assert_multiple_items(tasks, 4, state=states.SUCCESS)
 
     @mock.patch.object(
-        engine.ScalableEngine, '_run_tasks',
+        concrete_engine.DefaultEngine, '_run_tasks',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
