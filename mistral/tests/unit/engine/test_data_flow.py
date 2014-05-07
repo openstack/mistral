@@ -304,10 +304,14 @@ class DataFlowTest(base.EngineTestCase):
                              build_greeting_task['parameters'])
         self.assertDictEqual(
             {
-                'greet_msg': 'Hello, John Doe!',
+                'greet_msg': {
+                    'greet_message': 'Hello, John Doe!'
+                },
                 'task': {
                     'build_greeting': {
-                        'greeting': 'Hello, John Doe!',
+                        'greeting': {
+                            'greet_message': 'Hello, John Doe!'
+                        },
                     }
                 }
             },
