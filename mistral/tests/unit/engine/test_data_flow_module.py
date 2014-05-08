@@ -45,7 +45,7 @@ TASK = {
             'p3': ''
         },
         'publish': {
-            'new_key11': 'new_key1'
+            'new_key11': '$.new_key1'
         }
     },
     'service_spec': {

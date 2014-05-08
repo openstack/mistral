@@ -51,12 +51,12 @@ Workflow:
         first_name: $.person.first_name
         last_name: $.person.last_name
       publish:
-        f_name: full_name
+        f_name: $.full_name
 
     build_greeting:
       action: MyService.build_greeting
       publish:
-        greet_msg: greeting
+        greet_msg: $.greeting
 
     send_greeting:
       requires: [build_full_name, build_greeting]

@@ -22,7 +22,7 @@ Workflow:
       retry:
         count: 5
       publish:
-        rt_output: output
+        rt_output: $.output
 
     delay_retry_task:
       action: MyService.some-action
@@ -35,7 +35,7 @@ Workflow:
     no_retry_task:
       action: MyService.some-action
       publish:
-        n_rt_output: output
+        n_rt_output: $.output
       on-success: delay_retry_task
 
     sync_task:
@@ -43,4 +43,4 @@ Workflow:
       retry:
         count: 5
       publish:
-        st_output: greeting
+        st_output: $.greeting
