@@ -79,15 +79,12 @@ class TestCase(testtools.TestCase):
         """
         super(TestCase, cls).setUpClass()
 
-        username = CONF.identity.username
-        password = CONF.identity.password
-        tenant_name = CONF.identity.tenant_name
+        mgr = clients.Manager()
+        cls.client = MistralClient(mgr.auth_provider)
 
-        mgr = clients.Manager(username, password, tenant_name)
-        auth_provider = mgr.get_auth_provider(mgr.get_default_credentials())
-
-        cls.client = MistralClient(auth_provider)
-        cls.obj = []
+    def setUp(self):
+        super(TestCase, self).setUp()
+        self.obj = []
 
     def tearDown(self):
         super(TestCase, self).tearDown()
