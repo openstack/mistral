@@ -123,8 +123,10 @@ class ExecutionsController(rest.RestController):
     def delete(self, workbook_name, id):
         LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-
-        db_api.execution_delete(workbook_name, id)
+        try:
+            db_api.execution_delete(workbook_name, id)
+        except ex.NotFoundException as e:
+            abort(404, e.message)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
     def get_all(self, workbook_name):

@@ -82,8 +82,10 @@ class WorkbooksController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         LOG.debug("Delete workbook [name=%s]" % name)
-
-        db_api.workbook_delete(name)
+        try:
+            db_api.workbook_delete(name)
+        except ex.NotFoundException as e:
+            abort(404, e.message)
 
     @wsme_pecan.wsexpose(Workbooks)
     def get_all(self):
