@@ -29,7 +29,8 @@ def create_trust(workbook):
 
     ctx = context.ctx()
 
-    trustee_id = keystone.client_for_admin(ctx['project_id']).user_id
+    trustee_id = keystone.client_for_admin(
+        CONF.keystone.admin_tenant_name).user_id
 
     trust = client.trusts.create(trustor_user=client.user_id,
                                  trustee_user=trustee_id,
