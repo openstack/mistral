@@ -1,57 +1,59 @@
-Services:
-   MyRest:
-     type: REST_API
-     parameters:
-         baseUrl: http://localhost:8988
-     actions:
-         task1:
-           parameters:
-               url: /tasks/task1
-               method: GET
-           task-parameters:
+Namespaces:
+  Rest:
+    class: std.mistral_http
+    actions:
+      put_service_on_hold:
+        base-parameters:
+          url: http://localhost:8988/tasks/put_service_on_hold
 
-         task2:
-           parameters:
-               url: /tasks/task2
-               method: GET
-           task-parameters:
+      backup_user_data:
+        base-parameters:
+          url: http://localhost:8988/tasks/backup_user_data
 
-         task3:
-           parameters:
-               url: /tasks/task3
-               method: GET
-           task-parameters:
+      backup_service_data:
+        base-parameters:
+          url: http://localhost:8988/tasks/backup_service_data
 
-         task4:
-           parameters:
-               url: /tasks/task4
-               method: GET
-           task-parameters:
+      execute_backup:
+        base-parameters:
+          url: http://localhost:8988/tasks/execute_backup
 
 Workflow:
-   tasks:
-     task1:
-         action: MyRest:task1
-         parameters:
+  tasks:
+    put_service_on_hold:
+      action: Rest.put_service_on_hold
 
-     task2:
-         dependsOn: [task1]
-         action: MyRest:task2
-         parameters:
+    backup_user_data:
+      requires: [put_service_on_hold]
+      action: Rest.backup_user_data
 
-     task3:
-        dependsOn: [task1]
-        action: MyRest:task3
-        parameters:
+    backup_service_data:
+      requires: [put_service_on_hold]
+      action: Rest.backup_service_data
 
-     task4:
-        dependsOn: [task2, task3]
-        action: MyRest:task4
-        parameters:
+    send_email:
+      requires: [backup_service_data, backup_user_data]
+      action: std.email
+      parameters:
+        # Use password if smtpd requires TLS authentication (password: None).
+        params:
+          to: [mistral@example.com, boss@example.com]
+          subject: Backup complete
+          body: |
+            Congratulations, the backup is complete
+
+            -- Thanks, Mistral Team.
+        settings:
+          smtp_server: localhost:10025
+          from: mistral@example.com
+
+    execute_backup:
+      requires: [backup_user_data, backup_service_data, send_email]
+      action: Rest.execute_backup
 
 triggers:
-  task4:
+  execute_backup:
     type: periodic
-    tasks: task4
+    tasks: execute_backup
     parameters:
       cron-pattern: "*/1 * * * *"
