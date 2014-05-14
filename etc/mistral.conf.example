@@ -25,8 +25,9 @@ rabbit_password = guest
 # Options for oslo.messaging
 #rpc_backend=rabbit
 
-# Specifies which mistral server to start by the launch script. (string value)
-# Choices are all, api, engine, and executor.
+# Specifies which mistral server(s) to start by the launch script. (string value)
+# Choices are all (default) or comma delimited list of api, engine, and/or executor.
+# Example: server=api,engine
 #server=all
 
 [api]

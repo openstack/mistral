@@ -37,6 +37,14 @@ To run Mistral Task Executor instance perform the following command in a shell:
 
 Note that at least one Engine instance and one Executor instance should be running so that workflow tasks are processed by Mistral.
 
+Running Multiple Mistral Servers Under the Same Process
+-------------------------------------------------------
+To run more than one server (API, Engine, or Task Executor) on the same process, perform the following command in a shell:
+
+    tox -evenv -- python mistral/cmd/launch.py --server api,engine --config-file path_to_config
+
+The --server command line option can be a comma delimited list. The valid options are "all" (by default if not specified) or any combination of "api", "engine", and "executor". It's important to note that the "fake" transport for the rpc_backend defined in the config file should only be used if "all" the Mistral servers are launched on the same process. Otherwise, messages do not get delivered if the Mistral servers are launched on different processes because the "fake" transport is using an in process queue.
+
 Debugging
 ---------
 

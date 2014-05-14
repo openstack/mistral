@@ -86,11 +86,12 @@ executor_opts = [
                help='The version of the executor.')
 ]
 
-launch_opt = cfg.StrOpt(
+launch_opt = cfg.ListOpt(
     'server',
-    default='all',
-    choices=('all', 'api', 'engine', 'executor'),
-    help='Specifies which mistral server to start by the launch script.'
+    default=['all'],
+    help='Specifies which mistral server to start by the launch script. '
+         'Valid options are all or any combination of '
+         'api, engine, and executor.'
 )
 
 
