@@ -21,7 +21,8 @@ Namespaces:
         parameters:
           - full_name
         output:
-          greeting: $
+          greeting:
+            greet_message: $
 
 
 Workflow:
