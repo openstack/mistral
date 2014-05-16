@@ -212,8 +212,8 @@ def trigger_create(values, session=None):
 def trigger_update(trigger_id, values, session=None):
     trigger = _trigger_get(trigger_id)
     if trigger is None:
-        raise exc.DataAccessException("Trigger not found [trigger_id=%s]" %
-                                      trigger_id)
+        raise exc.NotFoundException("Trigger not found [trigger_id=%s]" %
+                                    trigger_id)
 
     trigger.update(values.copy())
 
@@ -272,7 +272,7 @@ def workbook_create(values, session=None):
 def workbook_update(workbook_name, values, session=None):
     workbook = _workbook_get(workbook_name)
     if not workbook:
-        raise exc.DataAccessException(
+        raise exc.NotFoundException(
             "Workbook not found [workbook_name=%s]" % workbook_name)
 
     workbook.update(values.copy())
@@ -284,7 +284,7 @@ def workbook_update(workbook_name, values, session=None):
 def workbook_delete(workbook_name, session=None):
     workbook = _workbook_get(workbook_name)
     if not workbook:
-        raise exc.DataAccessException(
+        raise exc.NotFoundException(
             "Workbook not found [workbook_name=%s]" % workbook_name)
 
     session.delete(workbook)
@@ -334,7 +334,7 @@ def execution_create(workbook_name, values, session=None):
 def execution_update(workbook_name, execution_id, values, session=None):
     execution = _execution_get(workbook_name, execution_id)
     if not execution:
-        raise exc.DataAccessException(
+        raise exc.NotFoundException(
             "Execution not found [workbook_name=%s, execution_id=%s]" %
             (workbook_name, execution_id))
     execution.update(values.copy())
@@ -346,7 +346,7 @@ def execution_update(workbook_name, execution_id, values, session=None):
 def execution_delete(workbook_name, execution_id, session=None):
     execution = _execution_get(workbook_name, execution_id)
     if not execution:
-        raise exc.DataAccessException(
+        raise exc.NotFoundException(
             "Execution not found [workbook_name=%s, execution_id=%s]" %
             (workbook_name, execution_id))
 
@@ -401,7 +401,7 @@ def task_create(workbook_name, execution_id, values, session=None):
 def task_update(workbook_name, execution_id, task_id, values, session=None):
     task = _task_get(workbook_name, execution_id, task_id)
     if not task:
-        raise exc.DataAccessException(
+        raise exc.NotFoundException(
             "Task not found [workbook_name=%s, execution_id=%s, task_id=%s]" %
             (workbook_name, execution_id, task_id))
 
@@ -414,7 +414,7 @@ def task_update(workbook_name, execution_id, task_id, values, session=None):
 def task_delete(workbook_name, execution_id, task_id, session=None):
     task = _task_get(workbook_name, execution_id, task_id)
     if not task:
-        raise exc.DataAccessException(
+        raise exc.NotFoundException(
             "Task not found [workbook_name=%s, execution_id=%s, task_id=%s]" %
             (workbook_name, execution_id, task_id))
 

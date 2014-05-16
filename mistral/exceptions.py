@@ -42,6 +42,15 @@ class DataAccessException(MistralException):
             self.message = message
 
 
+class NotFoundException(MistralException):
+    message = "Object not found"
+
+    def __init__(self, message=None):
+        super(NotFoundException, self).__init__(message)
+        if message:
+            self.message = message
+
+
 class DBDuplicateEntry(MistralException):
     message = "Database object already exists"
     code = "DB_DUPLICATE_ENTRY"
