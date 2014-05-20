@@ -34,12 +34,12 @@ def client():
     return keystone
 
 
-def _admin_client(trust_id=None, project_id=None):
+def _admin_client(trust_id=None, project_name=None):
     auth_url = CONF.keystone.auth_uri
 
     client = keystone_client.Client(username=CONF.keystone.admin_user,
                                     password=CONF.keystone.admin_password,
-                                    project_id=project_id,
+                                    project_name=project_name,
                                     auth_url=auth_url,
                                     trust_id=trust_id)
     client.management_url = auth_url
@@ -47,8 +47,8 @@ def _admin_client(trust_id=None, project_id=None):
     return client
 
 
-def client_for_admin(project_id):
-    return _admin_client(project_id=project_id)
+def client_for_admin(project_name):
+    return _admin_client(project_name=project_name)
 
 
 def client_for_trusts(trust_id):
