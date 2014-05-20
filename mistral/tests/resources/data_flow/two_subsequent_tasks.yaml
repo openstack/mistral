@@ -45,7 +45,7 @@ Workflow:
         first_name: $.person.first_name
         last_name: $.person.last_name
       publish:
-        f_name: full_name
+        f_name: $.full_name
       on-success: build_greeting
 
     build_greeting:
@@ -53,4 +53,4 @@ Workflow:
       parameters:
         full_name: $.f_name
       publish:
-        greet_msg: greeting
+        greet_msg: $.greeting

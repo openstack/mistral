@@ -47,26 +47,19 @@ def prepare_tasks(tasks, context):
 
 
 def get_task_output(task, result):
-    vars_to_publish = task['task_spec'].get('publish')
+    publish_transformer = task['task_spec'].get('publish')
 
-    output = {}
+    output = expr.evaluate_recursively(publish_transformer, result) or {}
 
     if result:
         output['task'] = {task['name']: result}
-
-        # TODO(rakhmerov): Take care of nested variables.
-        if vars_to_publish and isinstance(result, dict):
-            for var_name, res_var_name in vars_to_publish.iteritems():
-                output[var_name] = result[res_var_name]
-        elif not isinstance(result, dict):
-            LOG.info("Unable to publish in context from non-dict task result:"
-                     " [task %s, result = %s]" % (task['name'], result))
 
     return output
 
 
 def _merge_dicts(target, src):
     for key in src:
+        # TODO(nmakhotkin) Take care of the same key in both dicts
         to_merge = (key in target
                     and isinstance(target[key], dict)
                     and isinstance(src[key], dict))
