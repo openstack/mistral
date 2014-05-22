@@ -292,7 +292,11 @@ def workbook_delete(workbook_name, session=None):
 
 @to_dict
 def workbook_get(workbook_name):
-    return _workbook_get(workbook_name)
+    workbook = _workbook_get(workbook_name)
+    if not workbook:
+        raise exc.NotFoundException(
+            "Workbook not found [workbook_name=%s]" % workbook_name)
+    return workbook
 
 
 @to_dict
@@ -355,7 +359,12 @@ def execution_delete(workbook_name, execution_id, session=None):
 
 @to_dict
 def execution_get(workbook_name, execution_id):
-    return _execution_get(workbook_name, execution_id)
+    execution = _execution_get(workbook_name, execution_id)
+    if not execution:
+        raise exc.NotFoundException(
+            "Execution not found [workbook_name=%s, execution_id=%s]" %
+            (workbook_name, execution_id))
+    return execution
 
 
 @to_dict

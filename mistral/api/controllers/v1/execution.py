@@ -79,13 +79,12 @@ class ExecutionsController(rest.RestController):
     def get(self, workbook_name, id):
         LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-
-        values = db_api.execution_get(workbook_name, id)
-
-        if not values:
-            abort(404)
-        else:
+        #TODO (nmakhotkin) This should be refactored later
+        try:
+            values = db_api.execution_get(workbook_name, id)
             return Execution.from_dict(values)
+        except ex.NotFoundException as e:
+            abort(404, e.message)
 
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text, body=Execution)
     def put(self, workbook_name, id, execution):
