@@ -14,10 +14,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from pecan import abort
 from pecan import rest
 from pecan import expose
 from pecan import request
+import six
 
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral.services import scheduler
@@ -40,8 +43,9 @@ class WorkbookDefinitionController(rest.RestController):
 
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
                   (workbook_name, text))
-
-        wb = db_api.workbook_definition_put(workbook_name, text)
-        scheduler.create_associated_triggers(wb)
-
-        return wb['definition']
+        try:
+            wb = db_api.workbook_definition_put(workbook_name, text)
+            scheduler.create_associated_triggers(wb)
+            return wb['definition']
+        except exc.MistralException as e:
+            abort(400, six.text_type(e))
