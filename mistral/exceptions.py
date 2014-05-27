@@ -21,96 +21,56 @@ class MistralException(ex.Error):
     """Base Exception for the project
 
     To correctly use this class, inherit from it and define
-    a 'message' and 'code' properties.
+    a 'message' and 'http_code' properties.
     """
     message = "An unknown exception occurred"
-    code = "UNKNOWN_EXCEPTION"
+    http_code = 500
 
     def __str__(self):
         return self.message
 
-    def __init__(self, message=message):
-        self.message = message
+    def __init__(self, message=None):
+        if message is not None:
+            self.message = message
         super(MistralException, self).__init__(
-            '%s: %s' % (self.code, self.message))
+            '%d: %s' % (self.http_code, self.message))
 
 
 class DataAccessException(MistralException):
-    def __init__(self, message=None):
-        super(DataAccessException, self).__init__(message)
-        if message:
-            self.message = message
+    http_code = 400
 
 
 class NotFoundException(MistralException):
+    http_code = 404
     message = "Object not found"
-
-    def __init__(self, message=None):
-        super(NotFoundException, self).__init__(message)
-        if message:
-            self.message = message
 
 
 class DBDuplicateEntry(MistralException):
+    http_code = 409
     message = "Database object already exists"
-    code = "DB_DUPLICATE_ENTRY"
-
-    def __init__(self, message=None):
-        super(DBDuplicateEntry, self).__init__(message)
-        if message:
-            self.message = message
 
 
 class ActionException(MistralException):
-    code = "ACTION_ERROR"
-
-    def __init__(self, message=None):
-        super(MistralException, self).__init__(message)
-        if message:
-            self.message = message
+    http_code = 400
 
 
 class InvalidActionException(MistralException):
-    def __init__(self, message=None):
-        super(InvalidActionException, self).__init__(message)
-        if message:
-            self.message = message
+    http_code = 400
 
 
 class ActionRegistrationException(MistralException):
     message = "Failed to register action"
-    code = "ACTION_REGISTRATION_ERROR"
-
-    def __init__(self, message=None):
-        super(ActionRegistrationException, self).__init__(message)
-        if message:
-            self.message = message
 
 
 class EngineException(MistralException):
-    code = "ENGINE_ERROR"
-
-    def __init__(self, message=None):
-        super(EngineException, self).__init__(message)
-        if message:
-            self.message = message
+    pass
 
 
 class ApplicationContextNotFoundException(MistralException):
+    http_code = 400
     message = "Application context not found"
-    code = "APP_CTX_NOT_FOUND_ERROR"
-
-    def __init__(self, message=None):
-        super(ApplicationContextNotFoundException, self).__init__(message)
-        if message:
-            self.message = message
 
 
 class InvalidModelException(MistralException):
+    http_code = 400
     message = "Wrong entity definition"
-    code = "INVALID_MODEL_EXCEPTION"
-
-    def __init__(self, message=None):
-        super(InvalidModelException, self).__init__(message)
-        if message:
-            self.message = message
