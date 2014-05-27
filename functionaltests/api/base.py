@@ -54,7 +54,7 @@ class MistralClient(rest_client.RestClient):
 
     def get_workbook_definition(self, name):
         headers = {'X-Auth-Token': self.auth_provider.get_token()}
-        return self.get('v1/workbooks/{name}/definition'.format(name=name),
+        return self.get('workbooks/{name}/definition'.format(name=name),
                         headers)
 
     def upload_workbook_definition(self, name):
