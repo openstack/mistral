@@ -1,59 +1,32 @@
 Namespaces:
-  Rest:
-    class: std.mistral_http
+  Nova:
+    class: std.http
     actions:
-      put_service_on_hold:
+      create-vm:
         base-parameters:
-          url: http://localhost:8988/tasks/put_service_on_hold
-
-      backup_user_data:
-        base-parameters:
-          url: http://localhost:8988/tasks/backup_user_data
-
-      backup_service_data:
-        base-parameters:
-          url: http://localhost:8988/tasks/backup_service_data
-
-      execute_backup:
-        base-parameters:
-          url: http://localhost:8988/tasks/execute_backup
+          url: '{$.nova_url}/{$.project_id}/servers'
+          method: POST
+          headers:
+            X-Auth-Token: $.auth_token
+            Content-Type: application/json
+          body:
+            server:
+              name: $.server_name
+              imageRef: $.image_id
+              flavorRef: $.flavor_id
+        output:
+          vm_id: $.content.server.id
 
 Workflow:
   tasks:
-    put_service_on_hold:
-      action: Rest.put_service_on_hold
-
-    backup_user_data:
-      requires: [put_service_on_hold]
-      action: Rest.backup_user_data
-
-    backup_service_data:
-      requires: [put_service_on_hold]
-      action: Rest.backup_service_data
-
-    send_email:
-      requires: [backup_service_data, backup_user_data]
-      action: std.email
+    create-vm:
+      action: Nova.create-vm
       parameters:
-        # Use password if smtpd requires TLS authentication (password: None).
-        params:
-          to: [mistral@example.com, boss@example.com]
-          subject: Backup complete
-          body: |
-            Congratulations, the backup is complete
-
-            -- Thanks, Mistral Team.
-        settings:
-          smtp_server: localhost:10025
-          from: mistral@example.com
-
-    execute_backup:
-      requires: [backup_user_data, backup_service_data, send_email]
-      action: Rest.execute_backup
-
-triggers:
-  execute_backup:
-    type: periodic
-    tasks: execute_backup
-    parameters:
-      cron-pattern: "*/1 * * * *"
+        server_name: $.server_name
+        image_id: $.image_id
+        flavor_id: $.flavor_id
+        nova_url: $.nova_url
+        project_id: $.project_id
+        auth_token: $.auth_token
+      publish:
+        vm_id: vm_id

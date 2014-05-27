@@ -16,12 +16,12 @@
 
 import json
 import os
-import testtools
 
 from tempest import clients
 from tempest.common import rest_client
 from tempest import config
 from tempest import exceptions
+import tempest.test
 
 CONF = config.CONF
 
@@ -64,12 +64,16 @@ class MistralClient(rest_client.RestClient):
         __location = os.path.realpath(os.path.join(os.getcwd(),
                                                    os.path.dirname(__file__)))
 
-        file = open(os.path.join(__location, 'demo.yaml'), 'rb').read()
-        return self.put('v1/workbooks/{name}/definition'.format(name=name),
+        file = open(os.path.join(__location, 'v1/demo.yaml'), 'rb').read()
+        return self.put('workbooks/{name}/definition'.format(name=name),
                         file, headers)
 
+    def create_execution(self, workbook, body):
+        return self.post('workbooks/{name}/executions'.format(name=workbook),
+                         json.dumps(body))
 
-class TestCase(testtools.TestCase):
+
+class TestCase(tempest.test.BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -78,8 +82,8 @@ class TestCase(testtools.TestCase):
         """
         super(TestCase, cls).setUpClass()
 
-        mgr = clients.Manager()
-        cls.client = MistralClient(mgr.auth_provider)
+        cls.mgr = clients.Manager()
+        cls.client = MistralClient(cls.mgr.auth_provider)
 
     def setUp(self):
         super(TestCase, self).setUp()
@@ -91,5 +95,31 @@ class TestCase(testtools.TestCase):
         for i in self.obj:
             try:
                 self.client.delete_obj(i[0], i[1])
+            except exceptions.NotFound:
+                pass
+
+
+class TestCaseAdvanced(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+
+        super(TestCaseAdvanced, cls).setUpClass()
+
+        cls.server_client = cls.mgr.servers_client
+
+        cls.image_ref = CONF.compute.image_ref
+        cls.flavor_ref = CONF.compute.flavor_ref
+
+    def setUp(self):
+        super(TestCaseAdvanced, self).setUp()
+        self.server_ids = []
+
+    def tearDown(self):
+        super(TestCaseAdvanced, self).tearDown()
+
+        for server_id in self.server_ids:
+            try:
+                self.server_client.delete_server(server_id)
             except exceptions.NotFound:
                 pass
