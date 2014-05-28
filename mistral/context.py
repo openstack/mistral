@@ -30,7 +30,7 @@ _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 
 
 class BaseContext(object):
-    """Container for context variables"""
+    """Container for context variables."""
 
     _elements = set()
 
