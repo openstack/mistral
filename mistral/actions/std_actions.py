@@ -53,28 +53,57 @@ class EchoAction(base.Action):
 
 
 class HTTPAction(base.Action):
-    def __init__(self, url, params={}, method="GET", headers={}, body=None):
+    def __init__(self,
+                 url,
+                 method="GET",
+                 params=None,
+                 body=None,
+                 headers=None,
+                 cookies=None,
+                 auth=None,
+                 timeout=None,
+                 allow_redirects=None,
+                 proxies=None):
         self.url = url
-        self.params = params
         self.method = method
-        self.headers = headers
+        self.params = params
         self.body = json.dumps(body) if isinstance(body, dict) else body
+        self.headers = headers
+        self.cookies = cookies
+        self.auth = auth
+        self.timeout = timeout
+        self.allow_redirects = allow_redirects
+        self.proxies = proxies
 
     def run(self):
         LOG.info("Running HTTP action "
-                 "[url=%s, params=%s, method=%s, headers=%s, body=%s]" %
+                 "[url=%s, method=%s, params=%s, body=%s, headers=%s,"
+                 " cookies=%s, auth=%s, timeout=%s, allow_redirects=%s,"
+                 " proxies=%s]" %
                  (self.url,
-                  self.params,
                   self.method,
+                  self.params,
+                  self.body,
                   self.headers,
-                  self.body))
+                  self.cookies,
+                  self.auth,
+                  self.timeout,
+                  self.allow_redirects,
+                  self.proxies))
 
         try:
-            resp = requests.request(self.method,
-                                    self.url,
-                                    params=self.params,
-                                    headers=self.headers,
-                                    data=self.body)
+            resp = requests.request(
+                self.method,
+                self.url,
+                params=self.params,
+                data=self.body,
+                headers=self.headers,
+                cookies=self.cookies,
+                auth=self.auth,
+                timeout=self.timeout,
+                allow_redirects=self.allow_redirects,
+                proxies=self.proxies
+            )
         except Exception as e:
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
 
@@ -99,16 +128,36 @@ class HTTPAction(base.Action):
 
 
 class MistralHTTPAction(HTTPAction):
-    def __init__(self, action_context, url, params={}, method="GET",
-                 headers={}, body=None):
+    def __init__(self,
+                 action_context,
+                 url,
+                 method="GET",
+                 params=None,
+                 body=None,
+                 headers=None,
+                 cookies=None,
+                 auth=None,
+                 timeout=None,
+                 allow_redirects=None,
+                 proxies=None):
         headers.update({
             'Mistral-Workbook-Name': action_context['workbook_name'],
             'Mistral-Execution-Id': action_context['execution_id'],
             'Mistral-Task-Id': action_context['task_id'],
         })
 
-        super(MistralHTTPAction, self).__init__(url, params, method,
-                                                headers, body)
+        super(MistralHTTPAction, self).__init__(
+            url,
+            method,
+            params,
+            body,
+            headers,
+            cookies,
+            auth,
+            timeout,
+            allow_redirects,
+            proxies,
+        )
 
     def is_sync(self):
         return False
