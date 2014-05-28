@@ -63,11 +63,23 @@ class Execution(resource.Resource):
 
         return e
 
+    @classmethod
+    def sample(cls):
+        return cls(id='1234',
+                   workbook_name='flow',
+                   task='doit',
+                   state='SUCCESS',
+                   context='{}')
+
 
 class Executions(resource.Resource):
     """A collection of Execution resources."""
 
     executions = [Execution]
+
+    @classmethod
+    def sample(cls):
+        return cls(executions=[Execution.sample()])
 
 
 class ExecutionsController(rest.RestController):
@@ -77,6 +89,7 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text)
     def get(self, workbook_name, id):
+        """Return the specified Execution."""
         LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
         values = db_api.execution_get(workbook_name, id)
@@ -85,6 +98,7 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text, body=Execution)
     def put(self, workbook_name, id, execution):
+        """Update the specified Execution."""
         LOG.debug("Update execution [workbook_name=%s, id=%s, execution=%s]" %
                   (workbook_name, id, execution))
 
@@ -98,6 +112,7 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution,
                          status_code=201)
     def post(self, workbook_name, execution):
+        """Create a new Execution."""
         LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
 
@@ -115,12 +130,14 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, workbook_name, id):
+        """Delete the specified Execution."""
         LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
         db_api.execution_delete(workbook_name, id)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
     def get_all(self, workbook_name):
+        """Return all Executions."""
         LOG.debug("Fetch executions [workbook_name=%s]" % workbook_name)
 
         executions = [Execution.from_dict(values)

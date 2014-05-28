@@ -38,11 +38,21 @@ class Workbook(resource.Resource):
     description = wtypes.text
     tags = [wtypes.text]
 
+    @classmethod
+    def sample(cls):
+        return cls(name='flow',
+                   description='my workflow',
+                   tags=['large', 'expensive'])
+
 
 class Workbooks(resource.Resource):
     """A collection of Workbooks."""
 
     workbooks = [Workbook]
+
+    @classmethod
+    def sample(cls):
+        return cls(workbooks=[Workbook.sample()])
 
 
 class WorkbooksController(rest.RestController):
@@ -53,6 +63,7 @@ class WorkbooksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
+        """Return the named workbook."""
         LOG.debug("Fetch workbook [name=%s]" % name)
 
         values = db_api.workbook_get(name)
@@ -61,6 +72,7 @@ class WorkbooksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
     def put(self, name, workbook):
+        """Update the named workbook."""
         LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
 
         return Workbook.from_dict(db_api.workbook_update(name,
@@ -69,6 +81,7 @@ class WorkbooksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
     def post(self, workbook):
+        """Create a new workbook."""
         LOG.debug("Create workbook [workbook=%s]" % workbook)
         wb = workbooks.create_workbook(workbook.to_dict())
         return Workbook.from_dict(wb)
@@ -76,11 +89,13 @@ class WorkbooksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
+        """Delete the named workbook."""
         LOG.debug("Delete workbook [name=%s]" % name)
         db_api.workbook_delete(name)
 
     @wsme_pecan.wsexpose(Workbooks)
     def get_all(self):
+        """return all workbooks."""
         LOG.debug("Fetch workbooks.")
 
         workbooks_list = [Workbook.from_dict(values)
