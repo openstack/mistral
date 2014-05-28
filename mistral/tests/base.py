@@ -129,8 +129,7 @@ class EngineTestCase(DbTestCase):
     @classmethod
     def mock_task_result(cls, workbook_name, execution_id,
                          task_id, state, result):
-        """
-        Mock the engine convey_task_results to send request directly
+        """Mock the engine convey_task_results to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
         cntx = {}
@@ -143,8 +142,7 @@ class EngineTestCase(DbTestCase):
 
     @classmethod
     def mock_start_workflow(cls, workbook_name, task_name, context=None):
-        """
-        Mock the engine start_workflow_execution to send request directly
+        """Mock the engine start_workflow_execution to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
         cntx = {}
@@ -155,9 +153,9 @@ class EngineTestCase(DbTestCase):
 
     @classmethod
     def mock_get_workflow_state(cls, workbook_name, execution_id):
-        """
-        Mock the engine get_workflow_execution_state to send request directly
-        to the engine instead of going through the oslo.messaging transport.
+        """Mock the engine get_workflow_execution_state to send request
+        directly to the engine instead of going through the oslo.messaging
+        transport.
         """
         cntx = {}
         kwargs = {'workbook_name': workbook_name,
@@ -166,8 +164,7 @@ class EngineTestCase(DbTestCase):
 
     @classmethod
     def mock_run_tasks(cls, tasks):
-        """
-        Mock the engine _run_tasks to send requests directly to the task
+        """Mock the engine _run_tasks to send requests directly to the task
         executor instead of going through the oslo.messaging transport.
         """
         exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)
@@ -176,8 +173,7 @@ class EngineTestCase(DbTestCase):
 
     @classmethod
     def mock_handle_task(cls, cntx, **kwargs):
-        """
-        Mock the executor handle_task to send requests directory to the task
+        """Mock the executor handle_task to send requests directory to the task
         executor instead of going through the oslo.messaging transport.
         """
         exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)

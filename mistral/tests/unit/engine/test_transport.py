@@ -64,8 +64,8 @@ class TestTransport(base.EngineTestCase):
     @mock.patch.object(
         std_actions.HTTPAction, 'run', mock.MagicMock(return_value={}))
     def test_transport(self):
-        """
-        Test if engine request traversed through the oslo.messaging transport.
+        """Test if engine request traversed through the oslo.messaging
+        transport.
         """
         execution = self.engine.start_workflow_execution(
             WB_NAME, 'create-vms', CONTEXT)

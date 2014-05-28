@@ -45,8 +45,7 @@ class Evaluator(object):
     @classmethod
     @abc.abstractmethod
     def is_expression(cls, expression):
-        """
-        Check expression string and decide whether it is expression or not.
+        """Check expression string and decide whether it is expression or not.
 
         :param expression: Expression string
         :return: True if string is expression

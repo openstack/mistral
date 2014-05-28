@@ -341,8 +341,7 @@ class Engine(object):
 
     @classmethod
     def _update_task(cls, workbook, task, state, task_output):
-        """
-        Update the task with the runtime information. The outbound_context
+        """Update the task with the runtime information. The outbound_context
         for this task is also calculated.
         :return: task, outbound_context. task is the updated task and
         computed outbound context.
@@ -367,14 +366,12 @@ class Engine(object):
         return task, outbound_context
 
     def _schedule_run(cls, workbook, task, outbound_context):
-        """
-        Schedules task to run after the delay defined in the task
+        """Schedules task to run after the delay defined in the task
         specification. If no delay is specified this method is a no-op.
         """
 
         def run_delayed_task():
-            """
-            Runs the delayed task. Performs all the steps required to setup
+            """Runs the delayed task. Performs all the steps required to setup
             a task to run which are not already done. This is mostly code
             copied over from convey_task_result.
             """
@@ -414,9 +411,7 @@ class Engine(object):
 
 
 class EngineClient(object):
-    """
-    RPC client for the Engine.
-    """
+    """RPC client for the Engine."""
 
     def __init__(self, transport):
         """Construct an RPC client for the Engine.
