@@ -53,6 +53,29 @@ class EchoAction(base.Action):
 
 
 class HTTPAction(base.Action):
+    """Constructs an HTTP action.
+
+    :param url: URL for the new HTTP request.
+    :param method: (optional, 'GET' by default) method for the new HTTP
+        request.
+    :param params: (optional) Dictionary or bytes to be sent in the
+        query string for the HTTP request.
+    :param body: (optional) Dictionary, bytes, or file-like object to send
+        in the body of the HTTP request.
+    :param headers: (optional) Dictionary of HTTP Headers to send with
+        the HTTP request.
+    :param cookies: (optional) Dict or CookieJar object to send with
+        the HTTP request.
+    :param auth: (optional) Auth tuple to enable Basic/Digest/Custom
+        HTTP Auth.
+    :param timeout: (optional) Float describing the timeout of the request
+        in seconds.
+    :param allow_redirects: (optional) Boolean. Set to True if POST/PUT/DELETE
+        redirect following is allowed.
+    :param proxies: (optional) Dictionary mapping protocol to the URL of
+        the proxy.
+    """
+
     def __init__(self,
                  url,
                  method="GET",
