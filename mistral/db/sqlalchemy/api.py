@@ -111,7 +111,7 @@ def session_aware(param_name="session"):
                     ses.commit()
 
                 return result
-            except:
+            except Exception:
                 if created:
                     ses.rollback()
                 raise
