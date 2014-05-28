@@ -62,10 +62,11 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(EXECS[0], canonize(resp.json))
 
     @mock.patch.object(db_api, 'execution_get',
-                       mock.MagicMock(side_effect=ex.NotFoundException))
+                       mock.MagicMock(side_effect=ex.NotFoundException()))
     def test_get_empty(self):
-
-        self.assertNotFound('/v1/workbooks/my_workbook/executions/123')
+        resp = self.app.get('/v1/workbooks/my_workbook/executions/123',
+                            expect_errors=True)
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, 'execution_update',
                        mock.MagicMock(return_value=UPDATED_EXEC))
@@ -75,6 +76,15 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_EXEC, canonize(resp.json))
+
+    @mock.patch.object(db_api, 'execution_update',
+                       mock.MagicMock(
+                           side_effect=ex.NotFoundException()))
+    def test_put_not_found(self):
+        resp = self.app.put_json('/v1/workbooks/my_workbook/executions/123',
+                                 dict(state='STOPPED'), expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(return_value=EXECS[0]))
@@ -101,6 +111,14 @@ class TestExecutionsController(base.FunctionalTest):
         resp = self.app.delete('/v1/workbooks/my_workbook/executions/123')
 
         self.assertEqual(resp.status_int, 204)
+
+    @mock.patch.object(db_api, 'execution_delete',
+                       mock.MagicMock(side_effect=ex.NotFoundException))
+    def test_delete_not_found(self):
+        resp = self.app.delete('/v1/workbooks/my_workbook/executions/123',
+                               expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, 'executions_get',
                        mock.MagicMock(return_value=EXECS))

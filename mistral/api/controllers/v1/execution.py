@@ -18,15 +18,14 @@ import json
 
 import pecan
 from pecan import rest
-from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral import exceptions as ex
 from mistral.api.controllers.v1 import task
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
+from mistral.utils import rest_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -75,17 +74,15 @@ class ExecutionsController(rest.RestController):
 
     tasks = task.TasksController()
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text)
     def get(self, workbook_name, id):
         LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-        #TODO (nmakhotkin) This should be refactored later
-        try:
-            values = db_api.execution_get(workbook_name, id)
-            return Execution.from_dict(values)
-        except ex.NotFoundException as e:
-            abort(404, e.message)
+        values = db_api.execution_get(workbook_name, id)
+        return Execution.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text, body=Execution)
     def put(self, workbook_name, id, execution):
         LOG.debug("Update execution [workbook_name=%s, id=%s, execution=%s]" %
@@ -97,35 +94,30 @@ class ExecutionsController(rest.RestController):
 
         return Execution.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution,
                          status_code=201)
     def post(self, workbook_name, execution):
         LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
 
-        try:
-            context = None
-            if execution.context:
-                context = json.loads(execution.context)
+        context = None
+        if execution.context:
+            context = json.loads(execution.context)
 
-            engine = pecan.request.context['engine']
-            values = engine.start_workflow_execution(execution.workbook_name,
-                                                     execution.task,
-                                                     context)
-        except ex.MistralException as e:
-            #TODO(nmakhotkin) we should use thing such a decorator here
-            abort(400, e.message)
+        engine = pecan.request.context['engine']
+        values = engine.start_workflow_execution(execution.workbook_name,
+                                                 execution.task,
+                                                 context)
 
         return Execution.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, workbook_name, id):
         LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-        try:
-            db_api.execution_delete(workbook_name, id)
-        except ex.NotFoundException as e:
-            abort(404, e.message)
+        db_api.execution_delete(workbook_name, id)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
     def get_all(self, workbook_name):

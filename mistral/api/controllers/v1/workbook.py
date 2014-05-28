@@ -15,16 +15,15 @@
 #    limitations under the License.
 
 from pecan import rest
-from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral import exceptions as ex
 from mistral.api.controllers.v1 import workbook_definition
 from mistral.api.controllers.v1 import listener
 from mistral.api.controllers.v1 import execution
 from mistral.api.controllers import resource
 from mistral.services import workbooks
+from mistral.utils import rest_utils
 
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
@@ -51,17 +50,15 @@ class WorkbooksController(rest.RestController):
     listeners = listener.ListenersController()
     executions = execution.ExecutionsController()
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
         LOG.debug("Fetch workbook [name=%s]" % name)
 
-        #TODO (nmakhotkin) This should be refactored later
-        try:
-            values = db_api.workbook_get(name)
-            return Workbook.from_dict(values)
-        except ex.NotFoundException as e:
-            abort(404, e.message)
+        values = db_api.workbook_get(name)
+        return Workbook.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
     def put(self, name, workbook):
         LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
@@ -69,23 +66,18 @@ class WorkbooksController(rest.RestController):
         return Workbook.from_dict(db_api.workbook_update(name,
                                                          workbook.to_dict()))
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
     def post(self, workbook):
         LOG.debug("Create workbook [workbook=%s]" % workbook)
-        try:
-            wb = workbooks.create_workbook(workbook.to_dict())
-            return Workbook.from_dict(wb)
-        except ex.MistralException as e:
-            #TODO(nmakhotkin) we should use thing such a decorator here
-            abort(400, e.message)
+        wb = workbooks.create_workbook(workbook.to_dict())
+        return Workbook.from_dict(wb)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         LOG.debug("Delete workbook [name=%s]" % name)
-        try:
-            db_api.workbook_delete(name)
-        except ex.NotFoundException as e:
-            abort(404, e.message)
+        db_api.workbook_delete(name)
 
     @wsme_pecan.wsexpose(Workbooks)
     def get_all(self):

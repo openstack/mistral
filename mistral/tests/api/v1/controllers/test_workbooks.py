@@ -16,10 +16,9 @@
 
 import mock
 
+from mistral import exceptions
 from mistral.tests.api import base
 from mistral.db import api as db_api
-
-# TODO: later we need additional tests verifying all the errors etc.
 
 WORKBOOKS = [
     {
@@ -42,6 +41,13 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(WORKBOOKS[0], resp.json)
 
+    @mock.patch.object(db_api, "workbook_get",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_get_not_found(self):
+        resp = self.app.get('/v1/workbooks/dev_null', expect_errors=True)
+        self.assertEqual(resp.status_int, 404)
+
     @mock.patch.object(db_api, "workbook_update",
                        mock.MagicMock(return_value=UPDATED_WORKBOOK))
     def test_put(self):
@@ -50,6 +56,15 @@ class TestWorkbooksController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_WORKBOOK, resp.json)
+
+    @mock.patch.object(db_api, "workbook_update",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_put_not_found(self):
+        resp = self.app.put_json('/v1/workbooks/my_workbook',
+                                 dict(description='new description'),
+                                 expect_errors=True)
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "workbook_create",
                        mock.MagicMock(return_value=WORKBOOKS[0]))
@@ -61,12 +76,30 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(WORKBOOKS[0], resp.json)
 
+    @mock.patch.object(db_api, "workbook_create",
+                       mock.MagicMock(side_effect=exceptions.DBDuplicateEntry))
+    @mock.patch("mistral.services.trusts.create_trust",
+                mock.MagicMock(return_value=WORKBOOKS[0]))
+    def test_post_dup(self):
+        resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0],
+                                  expect_errors=True)
+
+        self.assertEqual(resp.status_int, 409)
+
     @mock.patch.object(db_api, "workbook_delete",
                        mock.MagicMock(return_value=None))
     def test_delete(self):
         resp = self.app.delete('/v1/workbooks/my_workbook')
 
         self.assertEqual(resp.status_int, 204)
+
+    @mock.patch.object(db_api, "workbook_delete",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_delete_not_found(self):
+        resp = self.app.delete('/v1/workbooks/my_workbook', expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "workbooks_get",
                        mock.MagicMock(return_value=WORKBOOKS))

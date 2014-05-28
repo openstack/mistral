@@ -26,6 +26,14 @@ class MistralException(ex.Error):
     message = "An unknown exception occurred"
     http_code = 500
 
+    @property
+    def code(self):
+        """This is here for webob to read.
+
+        https://github.com/Pylons/webob/blob/master/webob/exc.py
+        """
+        return self.http_code
+
     def __str__(self):
         return self.message
 

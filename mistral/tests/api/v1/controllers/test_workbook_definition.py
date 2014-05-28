@@ -16,10 +16,9 @@
 
 import mock
 
+from mistral import exceptions
 from mistral.tests.api import base
 from mistral.db import api as db_api
-
-# TODO: later we need additional tests verifying all the errors etc.
 
 DEFINITION = "my definition"
 
@@ -57,6 +56,16 @@ class TestWorkbookDefinitionController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertEqual(DEFINITION, resp.text)
 
+    @mock.patch.object(db_api, "workbook_definition_get",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_get_not_found(self):
+        resp = self.app.get('/v1/workbooks/my_workbook/definition',
+                            headers={"Content-Type": "text/plain"},
+                            expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
+
     @mock.patch.object(db_api, "workbook_definition_put",
                        mock.MagicMock(return_value={
                            'name': 'my_workbook',
@@ -76,3 +85,14 @@ class TestWorkbookDefinitionController(base.FunctionalTest):
         self.assertEqual(triggers[0]['name'], 'create-vms')
         self.assertEqual(triggers[0]['pattern'], '* * * * *')
         self.assertEqual(triggers[0]['workbook_name'], 'my_workbook')
+
+    @mock.patch.object(db_api, "workbook_definition_put",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_put_not_found(self):
+        resp = self.app.put('/v1/workbooks/my_workbook/definition',
+                            NEW_DEFINITION,
+                            headers={"Content-Type": "text/plain"},
+                            expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)

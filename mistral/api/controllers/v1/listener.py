@@ -15,13 +15,13 @@
 #    limitations under the License.
 
 from pecan import rest
-from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
+from mistral.utils import rest_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -58,17 +58,14 @@ class Listeners(resource.Resource):
 
 
 class ListenersController(rest.RestController):
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text)
     def get(self, workbook_name, id):
         LOG.debug("Fetch listener [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
 
         values = db_api.listener_get(workbook_name, id)
-
-        if not values:
-            abort(404)
-        else:
-            return Listener.from_dict(values)
+        return Listener.from_dict(values)
 
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text, body=Listener)
     def put(self, workbook_name, id, listener):
@@ -79,6 +76,7 @@ class ListenersController(rest.RestController):
 
         return Listener.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Listener, wtypes.text, body=Listener, status_code=201)
     def post(self, workbook_name, listener):
         LOG.debug("Create listener [workbook_name=%s, listener=%s]" %
@@ -88,6 +86,7 @@ class ListenersController(rest.RestController):
 
         return Listener.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, workbook_name, id):
         LOG.debug("Delete listener [workbook_name=%s, id=%s]" %

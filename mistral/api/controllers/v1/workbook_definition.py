@@ -14,38 +14,34 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from pecan import abort
 from pecan import rest
 from pecan import expose
 from pecan import request
-import six
 
-from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral.services import scheduler
+from mistral.utils import rest_utils
 
 
 LOG = logging.getLogger(__name__)
 
 
 class WorkbookDefinitionController(rest.RestController):
+    @rest_utils.wrap_pecan_controller_exception
     @expose()
     def get(self, workbook_name):
         LOG.debug("Fetch workbook definition [workbook_name=%s]" %
                   workbook_name)
-
         return db_api.workbook_definition_get(workbook_name)
 
+    @rest_utils.wrap_pecan_controller_exception
     @expose(content_type="text/plain")
     def put(self, workbook_name):
         text = request.text
 
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
                   (workbook_name, text))
-        try:
-            wb = db_api.workbook_definition_put(workbook_name, text)
-            scheduler.create_associated_triggers(wb)
-            return wb['definition']
-        except exc.MistralException as e:
-            abort(400, six.text_type(e))
+        wb = db_api.workbook_definition_put(workbook_name, text)
+        scheduler.create_associated_triggers(wb)
+        return wb['definition']

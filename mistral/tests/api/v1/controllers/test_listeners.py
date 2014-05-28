@@ -16,10 +16,9 @@
 
 import mock
 
+from mistral import exceptions
 from mistral.tests.api import base
 from mistral.db import api as db_api
-
-# TODO: later we need additional tests verifying all the errors etc.
 
 LISTENERS = [
     {
@@ -43,6 +42,15 @@ class TestListenersController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(LISTENERS[0], resp.json)
 
+    @mock.patch.object(db_api, "listener_get",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_get_not_found(self):
+        resp = self.app.get('/v1/workbooks/my_workbook/listeners/1',
+                            expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
+
     @mock.patch.object(db_api, "listener_update",
                        mock.MagicMock(return_value=UPDATED_LSNR))
     def test_put(self):
@@ -51,6 +59,16 @@ class TestListenersController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_LSNR, resp.json)
+
+    @mock.patch.object(db_api, "listener_update",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_put_not_found(self):
+        resp = self.app.put_json('/v1/workbooks/my_workbook/listeners/1',
+                                 dict(description='new description'),
+                                 expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "listener_create",
                        mock.MagicMock(return_value=LISTENERS[0]))
@@ -67,6 +85,15 @@ class TestListenersController(base.FunctionalTest):
         resp = self.app.delete('/v1/workbooks/my_workbook/listeners/1')
 
         self.assertEqual(resp.status_int, 204)
+
+    @mock.patch.object(db_api, "listener_delete",
+                       mock.MagicMock(
+                           side_effect=exceptions.NotFoundException()))
+    def test_delete_not_found(self):
+        resp = self.app.delete('/v1/workbooks/my_workbook/listeners/1',
+                               expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "listeners_get",
                        mock.MagicMock(return_value=LISTENERS))

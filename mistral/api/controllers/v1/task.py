@@ -16,13 +16,13 @@
 
 import pecan
 from pecan import rest
-from pecan import abort
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
 from mistral.db import api as db_api
+from mistral.utils import rest_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -48,18 +48,16 @@ class Tasks(resource.Resource):
 
 
 class TasksController(rest.RestController):
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Task, wtypes.text, wtypes.text, wtypes.text)
     def get(self, workbook_name, execution_id, id):
         LOG.debug("Fetch task [workbook_name=%s, execution_id=%s, id=%s]" %
                   (workbook_name, execution_id, id))
 
         values = db_api.task_get(workbook_name, execution_id, id)
-
-        if not values:
-            abort(404)
-
         return Task.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Task, wtypes.text, wtypes.text, wtypes.text,
                          body=Task)
     def put(self, workbook_name, execution_id, id, task):
