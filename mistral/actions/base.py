@@ -15,9 +15,9 @@
 #    limitations under the License.
 
 import abc
+from stevedore import extension
 
 from mistral.openstack.common import log as logging
-from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
 
@@ -86,24 +86,26 @@ class Action(object):
 class Namespace(object):
     """Action namespace."""
 
-    def __init__(self, name):
-        self.name = name
-        self.action_classes = {}  # action name -> action class
-
-    def add(self, action_name, action_cls):
-        if action_name in self.action_classes:
-            raise exc.ActionRegistrationException(
-                "Action is already associated with namespace "
-                "[action_cls=%s, namespace=%s" %
-                (action_cls, self))
-
-        self.action_classes[action_name] = action_cls
+    def __init__(self, namespace):
+        self.name = namespace.split('.')[-1]
+        self.mgr = extension.ExtensionManager(
+            namespace=namespace,
+            invoke_on_load=False)
 
     def contains_action_name(self, name):
-        return name in self.action_classes
+        return name in self.mgr.names()
 
     def get_action_class(self, name):
-        return self.action_classes.get(name)
+        # ExtensionManager has no "get"
+        if self.contains_action_name(name):
+            return self.mgr[name].plugin
+        else:
+            return None
 
     def __len__(self):
-        return len(self.action_classes)
+        # ExtensionManager has no len()
+        return len(self.mgr.names())
+
+    def log(self):
+        for ext in self.mgr:
+            LOG.debug('%s:%s' % (self.name, ext.name))
