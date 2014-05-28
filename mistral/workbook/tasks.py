@@ -38,7 +38,7 @@ class TaskSpec(base.BaseSpec):
             req = task.get("requires", {})
 
             if req and isinstance(req, list):
-                task["requires"] = dict(zip(req, ['']*len(req)))
+                task["requires"] = dict(zip(req, [''] * len(req)))
             elif isinstance(req, dict):
                 task['requires'] = req
 
