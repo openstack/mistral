@@ -15,4 +15,5 @@ python-keystoneclient>=0.7.0
 networkx>=1.8
 six>=1.6.0
 SQLAlchemy>=0.7.8,<=0.9.99
+stevedore>=0.14
 yaql==0.2.1 # This is not in global requirements

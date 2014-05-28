@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import inspect
+from oslo.config import cfg
 
 from mistral.actions import base
 from mistral.actions import std_actions
@@ -26,36 +27,29 @@ from mistral.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 _ACTION_CTX_PARAM = 'action_context'
-_STD_NAMESPACE = "std"
-
 _NAMESPACES = {}
 
 
-def _find_or_create_namespace(name):
+def _find_or_create_namespace(full_name):
+    name = full_name.split('.')[-1]
     ns = _NAMESPACES.get(name)
 
     if not ns:
-        ns = base.Namespace(name)
+        ns = base.Namespace(full_name)
         _NAMESPACES[name] = ns
 
     return ns
-
-
-def register_action_class(namespace_name, action_name, action_cls):
-    _find_or_create_namespace(namespace_name).add(action_name, action_cls)
 
 
 def get_registered_namespaces():
     return _NAMESPACES.copy()
 
 
-def _register_standard_action_classes():
-    register_action_class(_STD_NAMESPACE, "echo", std_actions.EchoAction)
-    register_action_class(_STD_NAMESPACE, "http", std_actions.HTTPAction)
-    register_action_class(_STD_NAMESPACE,
-                          "mistral_http", std_actions.MistralHTTPAction)
-    register_action_class(_STD_NAMESPACE, "ssh", std_actions.SSHAction)
-    register_action_class(_STD_NAMESPACE, "email", std_actions.SendEmailAction)
+def _register_action_classes():
+    cfg.CONF.import_opt('action_plugins', 'mistral.config')
+    for py_ns in cfg.CONF.action_plugins:
+        ns = _find_or_create_namespace(py_ns)
+        ns.log()
 
 
 def get_action_class(action_full_name):
@@ -160,5 +154,5 @@ def create_action(db_task):
                                   (db_task, e))
 
 
-# Registering standard actions on module load.
-_register_standard_action_classes()
+# Registering actions on module load.
+_register_action_classes()

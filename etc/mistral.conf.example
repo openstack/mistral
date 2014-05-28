@@ -30,6 +30,10 @@ rabbit_password = guest
 # Example: server=api,engine
 #server=all
 
+# List of python module namespaces to search for plug-ins.
+# See: doc/source/writing_a_plugin_action.rst on how to write a plugin.
+action_plugins = mistral.actions.std
+
 [api]
 # Host and port to bind the API server to
 host = 0.0.0.0
