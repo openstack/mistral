@@ -62,8 +62,9 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(EXECS[0], canonize(resp.json))
 
     @mock.patch.object(db_api, 'execution_get',
-                       mock.MagicMock(return_value=None))
+                       mock.MagicMock(side_effect=ex.NotFoundException))
     def test_get_empty(self):
+
         self.assertNotFound('/v1/workbooks/my_workbook/executions/123')
 
     @mock.patch.object(db_api, 'execution_update',

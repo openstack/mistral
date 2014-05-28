@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions as exc
 from mistral.openstack.common import timeutils
 
 from mistral.db.sqlalchemy import api as db_api
@@ -137,7 +138,8 @@ class WorkbookTest(test_base.DbTestCase):
         self.assertDictEqual(created, fetched)
 
         db_api.workbook_delete(created['name'])
-        self.assertIsNone(db_api.workbook_get(created['name']))
+        self.assertRaises(exc.NotFoundException,
+                          db_api.workbook_get, created['name'])
 
 
 EXECUTIONS = [
@@ -211,8 +213,10 @@ class ExecutionTest(test_base.DbTestCase):
 
         db_api.execution_delete(EXECUTIONS[0]['workbook_name'],
                                 created['id'])
-        self.assertIsNone(db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                               created['id']))
+        self.assertRaises(exc.NotFoundException,
+                          db_api.execution_get,
+                          EXECUTIONS[0]['workbook_name'],
+                          created['id'])
 
 
 TASKS = [
@@ -400,8 +404,8 @@ class TXTest(test_base.DbTestCase):
         fetched_trigger = db_api.trigger_get(created_trigger['id'])
         self.assertIsNone(fetched_trigger)
 
-        fetched_workbook = db_api.workbook_get(created_workbook['name'])
-        self.assertIsNone(fetched_workbook)
+        self.assertRaises(exc.NotFoundException, db_api.workbook_get,
+                          created_workbook['name'])
 
         self.assertFalse(self.is_db_session_open())
 

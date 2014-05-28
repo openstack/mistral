@@ -55,12 +55,12 @@ class WorkbooksController(rest.RestController):
     def get(self, name):
         LOG.debug("Fetch workbook [name=%s]" % name)
 
-        values = db_api.workbook_get(name)
-
-        if not values:
-            abort(404)
-        else:
+        #TODO (nmakhotkin) This should be refactored later
+        try:
+            values = db_api.workbook_get(name)
             return Workbook.from_dict(values)
+        except ex.NotFoundException as e:
+            abort(404, e.message)
 
     @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
     def put(self, name, workbook):
