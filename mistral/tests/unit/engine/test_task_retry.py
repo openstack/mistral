@@ -121,7 +121,7 @@ class TaskRetryTest(base.EngineTestCase):
         task_spec = workbook.tasks.get(tasks[0]['name'])
         retry_count, _, __ = task_spec.get_retry_parameters()
 
-        for x in xrange(0, retry_count/2):
+        for x in xrange(0, retry_count / 2):
             self.engine.convey_task_result(WB_NAME, execution['id'],
                                            tasks[0]['id'], states.ERROR,
                                            {'output': 'result'})
@@ -135,7 +135,7 @@ class TaskRetryTest(base.EngineTestCase):
 
         self._assert_single_item(tasks, name='retry_task')
         self._assert_single_item(tasks, task_runtime_context={
-            'retry_no': retry_count/2 - 1})
+            'retry_no': retry_count / 2 - 1})
 
     def test_retry_delay(self):
         task_name = 'delay_retry_task'
@@ -250,7 +250,7 @@ class TaskRetryTest(base.EngineTestCase):
 
         # After a pre-set no of retries the mock method will return a
         # success to simulate this test-case.
-        mock_functor = FailBeforeSuccessMocker(retry_count/2 + 1)
+        mock_functor = FailBeforeSuccessMocker(retry_count / 2 + 1)
 
         with mock.patch.object(std_actions.EchoAction, "run",
                                side_effect=mock_functor.mock_partial_failure):
@@ -262,5 +262,5 @@ class TaskRetryTest(base.EngineTestCase):
 
             self._assert_single_item(tasks, name=task_name_1)
             self._assert_single_item(tasks, task_runtime_context={
-                'retry_no': retry_count/2})
+                'retry_no': retry_count / 2})
             self._assert_single_item(tasks, state=states.SUCCESS)
