@@ -40,24 +40,24 @@ if not wb:
                                  description="My test workbook",
                                  tags=["test"])
 
-print "Created workbook: %s" % wb
+print("Created workbook: %s" % wb)
 
 with open("scripts/test.yaml") as definition_file:
     definition = definition_file.read()
 
 client.workbooks.upload_definition(WB_NAME, definition)
 
-print "\nUploaded workbook:\n\"\n%s\"\n" %\
-      client.workbooks.get_definition(WB_NAME)
+print("\nUploaded workbook:\n\"\n%s\"\n" %
+      client.workbooks.get_definition(WB_NAME))
 
 execution = client.executions.create(WB_NAME, TASK)
 
-print "execution: %s" % execution
+print("execution: %s" % execution)
 
 # wait until task is complete
 for i in range(0, 20):
     execution = client.executions.get(WB_NAME, execution.id)
-    print "execution: %s" % execution
+    print("execution: %s" % execution)
     if execution.state == 'SUCCESS':
         break
     time.sleep(1)
