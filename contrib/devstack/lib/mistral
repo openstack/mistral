@@ -104,6 +104,7 @@ function configure_mistral {
 
     # Run all Mistral processes as a single process
     iniset $MISTRAL_CONF_FILE DEFAULT server all
+    iniset $MISTRAL_CONF_FILE DEFAULT rpc_backend fake
 
     # Mistral Configuration
     #-------------------------
