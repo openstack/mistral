@@ -26,8 +26,7 @@ WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
                      task_runtime_context=None):
-    """
-    Computes the state and exec_flow_context runtime properties for a task
+    """Computes the state and exec_flow_context runtime properties for a task
     based on the supplied properties. This method takes the retry nature of a
     task into consideration.
 

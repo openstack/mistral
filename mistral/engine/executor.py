@@ -49,9 +49,7 @@ class Executor(object):
 
 
 class ExecutorClient(object):
-    """
-    RPC client for the Executor.
-    """
+    """RPC client for the Executor."""
 
     def __init__(self, transport):
         """Construct an RPC client for the Executor.

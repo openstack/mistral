@@ -73,9 +73,8 @@ class TestCase(testtools.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """
-            This method allows to initialize authentication before
-            each test case and define parameters of Mistral API Service
+        """This method allows to initialize authentication before
+        each test case and define parameters of Mistral API Service.
         """
         super(TestCase, cls).setUpClass()
 
