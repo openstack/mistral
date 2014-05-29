@@ -16,7 +16,8 @@
 
 
 import unittest2
-from mock import patch, call
+from mock import call
+from mock import patch
 
 from email.parser import Parser
 
