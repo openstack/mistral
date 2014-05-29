@@ -20,14 +20,16 @@ from mistral.workbook import workflow
 
 
 class WorkbookSpec(base.BaseSpec):
-    _required_keys = ['Namespaces', 'Workflow']
+    _required_keys = ['Workflow']
 
     def __init__(self, doc):
         super(WorkbookSpec, self).__init__(doc)
+        self.namespaces = None
 
         if self.validate():
-            self.namespaces =\
-                namespaces.NamespaceSpecList(self._data['Namespaces'])
+            ns_dict = self._data.get('Namespaces')
+            if ns_dict:
+                self.namespaces = namespaces.NamespaceSpecList(ns_dict)
             self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
             self.tasks = self.workflow.tasks
 

@@ -18,6 +18,12 @@ from mistral import dsl_parser as parser
 from mistral.tests import base
 
 
+SIMPLE_WORKBOOK = """Workflow:
+  tasks:
+    create-vms:
+      action: MyRest.create-vm"""
+
+
 class DSLModelTest(base.BaseTest):
     def setUp(self):
         self.doc = base.get_resource("test_rest.yaml")
@@ -87,6 +93,9 @@ class DSLModelTest(base.BaseTest):
         nova_namespace = namespaces.get("Nova")
 
         self.assertEqual(1, len(nova_namespace.actions))
+
+    def test_workbook_without_namespaces(self):
+        parser.get_workbook(SIMPLE_WORKBOOK)
 
     def test_triggers(self):
         self.workbook = parser.get_workbook(self.doc)
