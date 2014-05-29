@@ -32,6 +32,8 @@ class Task(resource.Resource):
     """Task resource."""
 
     id = wtypes.text
+    "The ID of the Task."
+
     workbook_name = wtypes.text
     execution_id = wtypes.text
     name = wtypes.text
@@ -40,17 +42,34 @@ class Task(resource.Resource):
     state = wtypes.text
     tags = [wtypes.text]
 
+    @classmethod
+    def sample(cls):
+        return cls(id='1234',
+                   workbook_name='notifier',
+                   execution_id='234',
+                   name='notifier',
+                   description='tell when you are done',
+                   action='std.email',
+                   state='OK',
+                   tags=['foo', 'fee'])
+
 
 class Tasks(resource.Resource):
     """A collection of tasks."""
 
     tasks = [Task]
+    "List of tasks."
+
+    @classmethod
+    def sample(cls):
+        return cls(tasks=[Task.sample()])
 
 
 class TasksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Task, wtypes.text, wtypes.text, wtypes.text)
     def get(self, workbook_name, execution_id, id):
+        """Return the specified task."""
         LOG.debug("Fetch task [workbook_name=%s, execution_id=%s, id=%s]" %
                   (workbook_name, execution_id, id))
 
@@ -61,6 +80,7 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Task, wtypes.text, wtypes.text, wtypes.text,
                          body=Task)
     def put(self, workbook_name, execution_id, id, task):
+        """Update the specified task."""
         LOG.debug("Update task "
                   "[workbook_name=%s, execution_id=%s, id=%s, task=%s]" %
                   (workbook_name, execution_id, id, task))
@@ -76,6 +96,7 @@ class TasksController(rest.RestController):
 
     @wsme_pecan.wsexpose(Tasks, wtypes.text, wtypes.text)
     def get_all(self, workbook_name, execution_id):
+        """Return all tasks within the execution."""
         LOG.debug("Fetch tasks [workbook_name=%s, execution_id=%s]" %
                   (workbook_name, execution_id))
 

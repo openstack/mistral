@@ -6,6 +6,10 @@ flake8==2.0
 pylint==0.25.2
 sphinx>=1.1.2
 unittest2
+oslosphinx
+sphinxcontrib-pecanwsme>=0.8
+sphinxcontrib-httpdomain
+docutils==0.9.1
 fixtures>=0.3.14
 mock>=1.0
 nose

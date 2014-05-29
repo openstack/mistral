@@ -1,0 +1,58 @@
+V1 API
+======
+
+.. autotype:: mistral.api.controllers.resource.Link
+   :members:
+
+Workbooks
+---------
+
+.. rest-controller:: mistral.api.controllers.v1.workbook:WorkbooksController
+   :webprefix: /v1/workbooks
+
+.. autotype:: mistral.api.controllers.v1.workbook.Workbooks
+   :members:
+
+.. autotype:: mistral.api.controllers.v1.workbook.Workbook
+   :members:
+
+Workbook Definitions
+--------------------
+
+.. rest-controller:: mistral.api.controllers.v1.workbook_definition:WorkbookDefinitionController
+   :webprefix: /v1/workbooks/definition
+
+Executions
+----------
+.. rest-controller:: mistral.api.controllers.v1.execution:ExecutionsController
+   :webprefix: /v1/workbooks/executions
+
+.. autotype:: mistral.api.controllers.v1.execution.Executions
+   :members:
+
+.. autotype:: mistral.api.controllers.v1.execution.Execution
+   :members:
+
+Listeners
+---------
+.. rest-controller:: mistral.api.controllers.v1.listener:ListenersController
+   :webprefix: /v1/workbooks/listeners
+
+.. autotype:: mistral.api.controllers.v1.listener.Listeners
+   :members:
+
+.. autotype:: mistral.api.controllers.v1.listener.Listener
+   :members:
+
+
+Tasks
+-----
+
+.. rest-controller:: mistral.api.controllers.v1.task:TasksController
+   :webprefix: /v1/workbooks/executions/tasks
+
+.. autotype:: mistral.api.controllers.v1.task.Tasks
+   :members:
+
+.. autotype:: mistral.api.controllers.v1.task.Task
+   :members:

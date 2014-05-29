@@ -28,7 +28,10 @@ LOG = logging.getLogger(__name__)
 
 class Event(resource.Resource):
     """Event descriptor."""
-    pass
+
+    @classmethod
+    def sample(cls):
+        return cls()
 
 
 class TaskEvent(Event):
@@ -50,17 +53,30 @@ class Listener(resource.Resource):
     webhook = wtypes.text
     events = [Event]
 
+    @classmethod
+    def sample(cls):
+        return cls(id='1234',
+                   workbook_name='flow',
+                   description='listener for my flow',
+                   webhook='http://example.com/here',
+                   events=[Event.sample()])
+
 
 class Listeners(resource.Resource):
     """A collection of Listener resources."""
 
     listeners = [Listener]
 
+    @classmethod
+    def sample(cls):
+        return cls(listeners=[Listener.sample()])
+
 
 class ListenersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text)
     def get(self, workbook_name, id):
+        """Return the specified listener."""
         LOG.debug("Fetch listener [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
 
@@ -69,6 +85,7 @@ class ListenersController(rest.RestController):
 
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text, body=Listener)
     def put(self, workbook_name, id, listener):
+        """Update the specified listener."""
         LOG.debug("Update listener [workbook_name=%s, id=%s, listener=%s]" %
                   (workbook_name, id, listener))
 
@@ -79,6 +96,7 @@ class ListenersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Listener, wtypes.text, body=Listener, status_code=201)
     def post(self, workbook_name, listener):
+        """Create a new listener."""
         LOG.debug("Create listener [workbook_name=%s, listener=%s]" %
                   (workbook_name, listener))
 
@@ -89,6 +107,7 @@ class ListenersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, workbook_name, id):
+        """Delete the specified listener."""
         LOG.debug("Delete listener [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
 
@@ -96,6 +115,7 @@ class ListenersController(rest.RestController):
 
     @wsme_pecan.wsexpose(Listeners, wtypes.text)
     def get_all(self, workbook_name):
+        """Return all listeners."""
         LOG.debug("Fetch listeners [workbook_name=%s]" % workbook_name)
 
         listeners = [Listener.from_dict(values)

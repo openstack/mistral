@@ -11,7 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
+   readme
+   develop_applications/index
 
 Indices and tables
 ==================

@@ -31,6 +31,7 @@ class WorkbookDefinitionController(rest.RestController):
     @rest_utils.wrap_pecan_controller_exception
     @expose()
     def get(self, workbook_name):
+        """Return the workbook definition."""
         LOG.debug("Fetch workbook definition [workbook_name=%s]" %
                   workbook_name)
         return db_api.workbook_definition_get(workbook_name)
@@ -38,6 +39,7 @@ class WorkbookDefinitionController(rest.RestController):
     @rest_utils.wrap_pecan_controller_exception
     @expose(content_type="text/plain")
     def put(self, workbook_name):
+        """Update the workbook's definition."""
         text = request.text
 
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %

@@ -31,8 +31,20 @@ class APIVersion(resource.Resource):
     """API Version."""
 
     id = wtypes.text
+    "The version identifier."
+
     status = API_STATUS
+    "The status of the API (SUPPORTED, CURRENT or DEPRECATED)."
+
     link = resource.Link
+    "The link to the versioned API."
+
+    @classmethod
+    def sample(cls):
+        return cls(id='v1.0',
+                   status='CURRENT',
+                   link=resource.Link(target_name='v1',
+                                      href='http://example.com:9777/v1'))
 
 
 class RootController(object):
