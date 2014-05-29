@@ -85,10 +85,10 @@ class Engine(object):
 
         context = copy.copy(context) if context else {}
 
-        db_api.start_tx()
-
         WORKFLOW_TRACE.info("New execution started - [workbook_name = '%s', "
                             "task_name = '%s']" % (workbook_name, task_name))
+
+        db_api.start_tx()
 
         # Persist execution and tasks in DB.
         try:
@@ -111,9 +111,9 @@ class Engine(object):
 
             db_api.commit_tx()
         except Exception as e:
-            LOG.exception("Failed to create necessary DB objects.")
-            raise exc.EngineException("Failed to create necessary DB objects:"
-                                      " %s" % e)
+            msg = "Failed to create necessary DB objects: %s" % e
+            LOG.exception(msg)
+            raise exc.EngineException(msg)
         finally:
             db_api.end_tx()
 
@@ -214,9 +214,9 @@ class Engine(object):
 
             db_api.commit_tx()
         except Exception as e:
-            LOG.exception("Failed to create necessary DB objects.")
-            raise exc.EngineException("Failed to create necessary DB objects:"
-                                      " %s" % e)
+            msg = "Failed to create necessary DB objects: %s" % e
+            LOG.exception(msg)
+            raise exc.EngineException(msg)
         finally:
             db_api.end_tx()
 
