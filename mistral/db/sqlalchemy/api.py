@@ -17,6 +17,8 @@
 import sys
 import sqlalchemy as sa
 
+from oslo.config import cfg
+
 from mistral import utils
 from mistral import exceptions as exc
 from mistral.db.sqlalchemy import models as m
@@ -27,10 +29,30 @@ from mistral.openstack.common.db import exception as db_exc
 
 LOG = logging.getLogger(__name__)
 
-get_engine = db_session.get_engine
-get_session = db_session.get_session
+cfg.CONF.import_opt('connection',
+                    'mistral.openstack.common.db.options',
+                    group='database')
 
 _DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
+
+_facade = None
+
+
+def get_facade():
+    global _facade
+    if not _facade:
+        _facade = db_session.EngineFacade(
+            cfg.CONF.database.connection, sqlite_fk=True, autocommit=False,
+            **dict(cfg.CONF.database.iteritems()))
+    return _facade
+
+
+def get_engine():
+    return get_facade().get_engine()
+
+
+def get_session():
+    return get_facade().get_session()
 
 
 def get_backend():
@@ -40,7 +62,7 @@ def get_backend():
 
 def setup_db():
     try:
-        engine = db_session.get_engine(sqlite_fk=True)
+        engine = get_engine()
         m.Trigger.metadata.create_all(engine)
     except sa.exc.OperationalError as e:
         LOG.exception("Database registration exception: %s", e)
@@ -50,7 +72,7 @@ def setup_db():
 
 def drop_db():
     try:
-        engine = db_session.get_engine(sqlite_fk=True)
+        engine = get_engine()
         m.Trigger.metadata.drop_all(engine)
     except Exception as e:
         LOG.exception("Database shutdown exception: %s", e)
@@ -83,7 +105,7 @@ def _get_or_create_thread_local_session():
     if ses:
         return ses, False
 
-    ses = get_session(autocommit=False)
+    ses = get_session()
     _set_thread_local_session(ses)
 
     return ses, True
@@ -139,7 +161,7 @@ def start_tx():
         raise exc.DataAccessException("Database transaction has already been"
                                       " started.")
 
-    _set_thread_local_session(get_session(autocommit=False))
+    _set_thread_local_session(get_session())
 
 
 def commit_tx():

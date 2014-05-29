@@ -32,7 +32,6 @@ importutils.import_module("mistral.config")
 
 from mistral.db.sqlalchemy import api as db_api
 from mistral.openstack.common import log as logging
-from mistral.openstack.common.db.sqlalchemy import session
 from mistral import version
 from mistral import engine
 from mistral.engine import executor
@@ -106,7 +105,8 @@ class BaseTest(unittest2.TestCase):
 class DbTestCase(BaseTest):
     def setUp(self):
         self.db_fd, self.db_path = tempfile.mkstemp()
-        session.set_defaults('sqlite:///' + self.db_path, self.db_path)
+        cfg.CONF.set_default('connection', 'sqlite:///' + self.db_path,
+                             group='database')
         db_api.setup_db()
 
     def tearDown(self):

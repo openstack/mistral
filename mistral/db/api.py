@@ -23,7 +23,7 @@ _BACKEND_MAPPING = {
     'sqlalchemy': 'mistral.db.sqlalchemy.api',
 }
 
-IMPL = db_api.DBAPI(backend_mapping=_BACKEND_MAPPING)
+IMPL = db_api.DBAPI('sqlalchemy', backend_mapping=_BACKEND_MAPPING)
 LOG = logging.getLogger(__name__)
 
 
