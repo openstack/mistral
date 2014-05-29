@@ -129,8 +129,8 @@ def main():
             # Launch distinct set of server(s).
             launch_any(transport, set(cfg.CONF.server))
 
-    except RuntimeError, e:
-        sys.stderr.write("ERROR: %s\n" % e)
+    except RuntimeError as excp:
+        sys.stderr.write("ERROR: %s\n" % excp)
         sys.exit(1)
 
 
