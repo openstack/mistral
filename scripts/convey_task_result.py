@@ -53,22 +53,22 @@ def find_task(execution_id):
 execution = find_execution()
 
 if not execution:
-    print "Unable to find running executions."
+    print("Unable to find running executions.")
     sys.exit(0)
 
-print "Updating execution: %s" % execution
+print("Updating execution: %s" % execution)
 
 task = find_task(execution.id)
 if not task:
-    print "Unable to find running tasks for execution: %s" % execution
+    print("Unable to find running tasks for execution: %s" % execution)
     sys.exit(0)
 
-print "Setting task to SUCCESS state: %s" % task
+print("Setting task to SUCCESS state: %s" % task)
 
 task = client.tasks.update(WB_NAME, execution.id, task.id, "SUCCESS")
 
-print "Updated task: %s" % task
+print("Updated task: %s" % task)
 
 execution = client.executions.get(WB_NAME, task.execution_id)
 
-print "Updated execution: %s" % execution
+print("Updated execution: %s" % execution)
