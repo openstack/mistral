@@ -24,12 +24,14 @@ class WorkbookSpec(base.BaseSpec):
 
     def __init__(self, doc):
         super(WorkbookSpec, self).__init__(doc)
-        self.namespaces = None
+        self.namespaces = {}
 
         if self.validate():
             ns_dict = self._data.get('Namespaces')
+
             if ns_dict:
                 self.namespaces = namespaces.NamespaceSpecList(ns_dict)
+
             self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
             self.tasks = self.workflow.tasks
 
@@ -47,15 +49,15 @@ class WorkbookSpec(base.BaseSpec):
 
         return triggers
 
-    def get_action(self, task_action_name):
-        if task_action_name.find(":") == -1:
+    def get_action(self, full_action_name):
+        if full_action_name.find(".") == -1:
             return {}
 
-        namespace_name = task_action_name.split(':')[0]
-        action_name = task_action_name.split(':')[1]
-        action = self.namespaces.get(namespace_name).actions.get(action_name)
+        ns_name = full_action_name.split('.')[0]
+        action_name = full_action_name.split('.')[1]
 
-        return action
+        if self.namespaces:
+            return self.namespaces.get(ns_name).actions.get(action_name)
 
     def get_actions(self, namespace_name):
         return self.namespaces.get(namespace_name).actions

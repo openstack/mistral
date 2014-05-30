@@ -56,7 +56,6 @@ class DefaultExecutor(executor.Executor):
         else:
             try:
                 action.run()
-
             except exc.ActionException:
                 self.engine.convey_task_result(task['workbook_name'],
                                                task['execution_id'],
