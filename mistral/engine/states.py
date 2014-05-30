@@ -36,10 +36,3 @@ def is_finished(state):
 
 def is_stopped_or_finished(state):
     return state == STOPPED or is_finished(state)
-
-
-def get_state_by_http_status_code(status_code):
-    if not status_code or status_code >= 400:
-        return ERROR
-    else:
-        return SUCCESS
