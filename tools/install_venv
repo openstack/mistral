@@ -1,3 +1,0 @@
-#!/bin/sh
-
-tox -vvv -evenv -- python --version

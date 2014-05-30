@@ -19,16 +19,12 @@
 
 import abc
 import argparse
-import logging
 import os
 
 import six
 from stevedore import extension
 
 from mistral.openstack.common.apiclient import exceptions
-
-
-logger = logging.getLogger(__name__)
 
 
 _discovered_plugins = {}
@@ -58,7 +54,7 @@ def load_auth_system_opts(parser):
     """
     group = parser.add_argument_group("Common auth options")
     BaseAuthPlugin.add_common_opts(group)
-    for name, auth_plugin in _discovered_plugins.iteritems():
+    for name, auth_plugin in six.iteritems(_discovered_plugins):
         group = parser.add_argument_group(
             "Auth-system '%s' options" % name,
             conflict_handler="resolve")
@@ -80,7 +76,7 @@ def load_plugin_from_args(args):
     alphabetical order.
 
     :type args: argparse.Namespace
-    :raises: AuthorizationFailure
+    :raises: AuthPluginOptionsMissing
     """
     auth_system = args.os_auth_system
     if auth_system:
@@ -89,7 +85,7 @@ def load_plugin_from_args(args):
         plugin.sufficient_options()
         return plugin
 
-    for plugin_auth_system in sorted(_discovered_plugins.iterkeys()):
+    for plugin_auth_system in sorted(six.iterkeys(_discovered_plugins)):
         plugin_class = _discovered_plugins[plugin_auth_system]
         plugin = plugin_class()
         plugin.parse_opts(args)
@@ -217,8 +213,8 @@ class BaseAuthPlugin(object):
         :type service_type: string
         :param endpoint_type: Type of endpoint.
                               Possible values: public or publicURL,
-                                  internal or internalURL,
-                                  admin or adminURL
+                              internal or internalURL,
+                              admin or adminURL
         :type endpoint_type: string
         :returns: tuple of token and endpoint strings
         :raises: EndpointException

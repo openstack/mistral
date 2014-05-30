@@ -14,10 +14,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mistral.openstack.common.exception as ex
+
+class Error(Exception):
+    def __init__(self, message=None):
+        super(Error, self).__init__(message)
 
 
-class MistralException(ex.Error):
+class MistralException(Error):
     """Base Exception for the project
 
     To correctly use this class, inherit from it and define
