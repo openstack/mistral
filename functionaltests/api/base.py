@@ -16,6 +16,7 @@
 
 import json
 import os
+import time
 
 from tempest import clients
 from tempest.common import rest_client
@@ -68,9 +69,30 @@ class MistralClient(rest_client.RestClient):
         return self.put('workbooks/{name}/definition'.format(name=name),
                         file, headers)
 
-    def create_execution(self, workbook, body):
-        return self.post('workbooks/{name}/executions'.format(name=workbook),
-                         json.dumps(body))
+    def create_execution(self, workbook_name, body):
+        return self.post('workbooks/{name}/executions'.format(
+            name=workbook_name), json.dumps(body))
+
+    def get_execution(self, workbook_name, execution_id):
+        return self.get('/workbooks/{name}/executions/{execution}'.format(
+            name=workbook_name, execution=execution_id))
+
+    def get_tasks_list(self, workbook_name, execution_id):
+        resp, body = self.get(
+            '/workbooks/{name}/executions/{execution}/tasks'.format(
+                name=workbook_name,
+                execution=execution_id))
+
+        return resp, json.loads(body)['tasks']
+
+    def get_task(self, workbook_name, execution_id, task_id):
+        resp, body = self.get(
+            '/workbooks/{name}/executions/{execution}/tasks/{task}'.format(
+                name=workbook_name,
+                execution=execution_id,
+                task=task_id))
+
+        return resp, json.loads(body)
 
 
 class TestCase(tempest.test.BaseTestCase):
@@ -121,5 +143,33 @@ class TestCaseAdvanced(TestCase):
         for server_id in self.server_ids:
             try:
                 self.server_client.delete_server(server_id)
+                self.server_client.wait_for_server_termination(server_id)
             except exceptions.NotFound:
                 pass
+
+    def _create_execution(self, workbook_name, server_name):
+
+        nova_url = "/".join(self.server_client.base_url.split('/')[:-1])
+
+        context = {
+            "server_name": server_name,
+            "nova_url": nova_url,
+            "image_id": self.image_ref,
+            "flavor_id": self.flavor_ref
+        }
+
+        post_body = {
+            "workbook_name": workbook_name,
+            "task": "create-vm",
+            "context": json.dumps(context)
+        }
+
+        resp, body = self.client.create_execution(workbook_name, post_body)
+
+        while not self.server_client.list_servers()[1]['servers']:
+            time.sleep(2)
+        for server in self.server_client.list_servers()[1]['servers']:
+            if server['name'] == server_name:
+                self.server_ids.append(server['id'])
+
+        return resp, json.loads(body)
