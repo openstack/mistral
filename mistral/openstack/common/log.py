@@ -117,7 +117,7 @@ logging_cli_opts = [
                 default=False,
                 help='Use syslog for logging. '
                      'Existing syslog format is DEPRECATED during I, '
-                     'and will chang in J to honor RFC5424.'),
+                     'and will change in J to honor RFC5424.'),
     cfg.BoolOpt('use-syslog-rfc-format',
                 # TODO(bogdando) remove or use True after existing
                 #    syslog format deprecation in J
@@ -424,9 +424,7 @@ class JSONFormatter(logging.Formatter):
 
 def _create_logging_excepthook(product_name):
     def logging_excepthook(exc_type, value, tb):
-        extra = {}
-        if CONF.verbose or CONF.debug:
-            extra['exc_info'] = (exc_type, value, tb)
+        extra = {'exc_info': (exc_type, value, tb)}
         getLogger(product_name).critical(
             "".join(traceback.format_exception_only(exc_type, value)),
             **extra)
