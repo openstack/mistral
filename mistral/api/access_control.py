@@ -22,12 +22,10 @@ from oslo.config import cfg
 
 _ENFORCER = None
 
-auth_token.CONF = cfg.CONF
-
 
 def setup(app):
     if cfg.CONF.pecan.auth_enable:
-        return auth_token.AuthProtocol(app, conf=dict(cfg.CONF.keystone))
+        return auth_token.AuthProtocol(app, dict(cfg.CONF.keystone_authtoken))
     else:
         return app
 

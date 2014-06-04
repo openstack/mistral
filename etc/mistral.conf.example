@@ -61,7 +61,7 @@ auth_enable = True
 #connection = mysql://root:password@localhost:3306/mistral
 connection = sqlite:///mistral.sqlite
 
-[keystone]
+[keystone_authtoken]
 auth_uri=http://localhost:5000/v3
 auth_host=localhost
 auth_port=5000

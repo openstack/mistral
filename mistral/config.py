@@ -19,7 +19,6 @@ Configuration options registration and useful routines.
 """
 
 from oslo.config import cfg
-from keystoneclient.middleware import auth_token
 
 from mistral.openstack.common import log
 from mistral import version
@@ -110,7 +109,6 @@ CONF = cfg.CONF
 CONF.register_opts(api_opts, group='api')
 CONF.register_opts(engine_opts, group='engine')
 CONF.register_opts(pecan_opts, group='pecan')
-CONF.register_opts(auth_token.opts, group='keystone')
 CONF.register_opts(db_opts, group='database')
 CONF.register_opts(rabbit_opts, group='rabbit')
 CONF.register_opts(executor_opts, group='executor')
