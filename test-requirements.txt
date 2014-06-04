@@ -1,5 +1,5 @@
 hacking>=0.8.0,<0.9
-
+coverage>=3.6
 pep8==1.4.5
 pyflakes>=0.7.2,<0.7.4
 flake8==2.0
@@ -13,5 +13,6 @@ docutils==0.9.1
 fixtures>=0.3.14
 mock>=1.0
 nose
-testtools>=0.9.32
+testrepository>=0.0.18
+testtools>=0.9.34
 lockfile>=0.9.1
