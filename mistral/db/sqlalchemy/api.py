@@ -242,6 +242,16 @@ def trigger_update(trigger_id, values, session=None):
     return trigger
 
 
+@session_aware()
+def trigger_delete(trigger_id, session=None):
+    trigger = _trigger_get(trigger_id)
+    if not trigger:
+        raise exc.NotFoundException("Trigger not found [trigger_id=%s]" %
+                                    trigger_id)
+
+    session.delete(trigger)
+
+
 @to_dict
 @session_aware()
 def get_next_triggers(time, session=None):
@@ -259,7 +269,11 @@ def _trigger_get(trigger_id, session=None):
 
 @to_dict
 def trigger_get(trigger_id):
-    return _trigger_get(trigger_id)
+    trigger = _trigger_get(trigger_id)
+    if not trigger:
+        raise exc.NotFoundException("Trigger not found [trigger_id=%s]" %
+                                    trigger_id)
+    return trigger
 
 
 def _triggers_get_all(**kwargs):
@@ -454,7 +468,13 @@ def task_delete(workbook_name, execution_id, task_id, session=None):
 
 @to_dict
 def task_get(workbook_name, execution_id, task_id):
-    return _task_get(workbook_name, execution_id, task_id)
+    task = _task_get(workbook_name, execution_id, task_id)
+    if not task:
+        raise exc.NotFoundException(
+            "Task not found [workbook_name=%s, execution_id=%s, task_id=%s]" %
+            (workbook_name, execution_id, task_id))
+
+    return task
 
 
 def _task_get(workbook_name, execution_id, task_id):
