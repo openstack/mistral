@@ -18,10 +18,12 @@ from mistral import dsl_parser as parser
 from mistral.tests import base
 
 
-SIMPLE_WORKBOOK = """Workflow:
+SIMPLE_WORKBOOK = """
+Workflow:
   tasks:
     create-vms:
-      action: MyRest.create-vm"""
+      action: MyRest.create-vm
+"""
 
 
 class DSLModelTest(base.BaseTest):
@@ -29,24 +31,22 @@ class DSLModelTest(base.BaseTest):
         self.doc = base.get_resource("test_rest.yaml")
 
     def test_load_dsl(self):
-        self.workbook = parser.get_workbook(self.doc)
-        self.assertEqual(self.workbook.workflow.tasks.items,
-                         self.workbook.tasks.items)
-        self.assertEqual(self.workbook.tasks.get("create-vms").name,
-                         "create-vms")
-        self.assertEqual(4,
-                         len(self.workbook.namespaces.get("MyRest").actions))
+        wb = parser.get_workbook(self.doc)
+
+        self.assertEqual(wb.workflow.tasks.items, wb.tasks.items)
+        self.assertEqual(wb.tasks.get("create-vms").name, "create-vms")
+        self.assertEqual(4, len(wb.namespaces.get("MyRest").actions))
 
     def test_tasks(self):
-        self.workbook = parser.get_workbook(self.doc)
-        self.assertEqual(len(self.workbook.tasks), 6)
+        wb = parser.get_workbook(self.doc)
+        self.assertEqual(len(wb.tasks), 6)
 
-        attach_volumes = self.workbook.tasks.get("attach-volumes")
+        attach_volumes = wb.tasks.get("attach-volumes")
 
         self.assertEqual(attach_volumes.get_action_namespace(), "MyRest")
 
         t_parameters = {"image_id": 1234, "flavor_id": 2}
-        create_vm_nova = self.workbook.tasks.get("create-vm-nova")
+        create_vm_nova = wb.tasks.get("create-vm-nova")
 
         self.assertEqual(create_vm_nova.parameters, t_parameters)
 
@@ -54,7 +54,8 @@ class DSLModelTest(base.BaseTest):
 
         self.assertEqual(attach_volumes.requires, attach_requires)
 
-        subsequent = self.workbook.tasks.get("test_subsequent")
+        subsequent = wb.tasks.get("test_subsequent")
+
         subseq_success = subsequent.get_on_success()
         subseq_error = subsequent.get_on_error()
         subseq_finish = subsequent.get_on_finish()
@@ -65,9 +66,9 @@ class DSLModelTest(base.BaseTest):
         self.assertEqual(subseq_finish, {"create-vms": ''})
 
     def test_actions(self):
-        self.workbook = parser.get_workbook(self.doc)
+        wb = parser.get_workbook(self.doc)
 
-        actions = self.workbook.namespaces.get("MyRest").actions
+        actions = wb.namespaces.get("MyRest").actions
 
         self.assertEqual(len(actions), 4)
 
@@ -83,14 +84,18 @@ class DSLModelTest(base.BaseTest):
         self.assertEqual('application/json',
                          base_params['headers']['Content-Type'])
 
+        action = wb.get_action("MyRest.create-vm")
+
+        self.assertIsNotNone(action)
+        self.assertEqual("create-vm", action.name)
+        self.assertEqual("MyRest", action.namespace)
+
     def test_namespaces(self):
-        self.workbook = parser.get_workbook(self.doc)
+        wb = parser.get_workbook(self.doc)
 
-        namespaces = self.workbook.namespaces
+        self.assertEqual(len(wb.namespaces), 2)
 
-        self.assertEqual(len(namespaces), 2)
-
-        nova_namespace = namespaces.get("Nova")
+        nova_namespace = wb.namespaces.get("Nova")
 
         self.assertEqual(1, len(nova_namespace.actions))
 
@@ -98,6 +103,6 @@ class DSLModelTest(base.BaseTest):
         parser.get_workbook(SIMPLE_WORKBOOK)
 
     def test_triggers(self):
-        self.workbook = parser.get_workbook(self.doc)
+        wb = parser.get_workbook(self.doc)
 
-        self.assertEqual(len(self.workbook.get_triggers()), 1)
+        self.assertEqual(len(wb.get_triggers()), 1)

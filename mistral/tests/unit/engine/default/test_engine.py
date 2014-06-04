@@ -17,6 +17,7 @@ import mock
 
 from oslo.config import cfg
 
+from mistral import dsl_parser as parser
 from mistral.tests import base
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
@@ -37,6 +38,16 @@ CONTEXT = None  # TODO(rakhmerov): Use a meaningful value.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 #TODO(rakhmerov): add more tests for errors, execution stop etc.
+
+
+WB_WITHOUT_NAMESPACES = """Workflow:
+  tasks:
+    task:
+      action: std.http
+      parameters:
+        method: GET
+        url: http://some_url
+"""
 
 
 @mock.patch.object(
@@ -274,3 +285,26 @@ class TestScalableEngine(base.EngineTestCase):
 
         self._assert_single_item(tasks, state=states.ERROR)
         self._assert_multiple_items(tasks, 5, state=states.SUCCESS)
+
+    @mock.patch.object(
+        concrete_engine.DefaultEngine, "_notify_task_executors",
+        mock.MagicMock(return_value=""))
+    @mock.patch.object(
+        engine.Engine, '_get_workbook',
+        mock.MagicMock(
+            return_value=parser.get_workbook(WB_WITHOUT_NAMESPACES)))
+    @mock.patch.object(
+        concrete_engine.DefaultEngine, '_run_tasks',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+    def test_engine_without_namespaces(self):
+        execution = self.engine.start_workflow_execution(WB_NAME, "task", {})
+
+        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+
+        self.assertIsNotNone(tasks)
+        self.assertEqual(1, len(tasks))
+        self.assertEqual(tasks[0]['state'], states.SUCCESS)
+
+        execution = db_api.execution_get(WB_NAME, execution['id'])
+
+        self.assertEqual(execution['state'], states.SUCCESS)
