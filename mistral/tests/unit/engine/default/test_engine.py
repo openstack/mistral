@@ -119,9 +119,6 @@ class TestScalableEngine(base.EngineTestCase):
         concrete_engine.DefaultEngine, '_run_tasks',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
-        states, "get_state_by_http_status_code",
-        mock.MagicMock(return_value=states.SUCCESS))
-    @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     def test_engine_sync_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
