@@ -77,6 +77,10 @@ class MistralClient(rest_client.RestClient):
         return self.get('/workbooks/{name}/executions/{execution}'.format(
             name=workbook_name, execution=execution_id))
 
+    def update_execution(self, workbook_name, execution_id, put_body):
+        return self.put('/workbooks/{name}/executions/{execution}'.format(
+            name=workbook_name, execution=execution_id), json.dumps(put_body))
+
     def get_tasks_list(self, workbook_name, execution_id):
         resp, body = self.get(
             '/workbooks/{name}/executions/{execution}/tasks'.format(
@@ -91,6 +95,15 @@ class MistralClient(rest_client.RestClient):
                 name=workbook_name,
                 execution=execution_id,
                 task=task_id))
+
+        return resp, json.loads(body)
+
+    def update_task(self, workbook_name, execution_id, task_id, put_body):
+        resp, body = self.put(
+            '/workbooks/{name}/executions/{execution}/tasks/{task}'.format(
+                name=workbook_name,
+                execution=execution_id,
+                task=task_id), json.dumps(put_body))
 
         return resp, json.loads(body)
 
@@ -135,7 +148,12 @@ class TestCaseAdvanced(TestCase):
 
     def setUp(self):
         super(TestCaseAdvanced, self).setUp()
+
         self.server_ids = []
+
+        self.client.create_obj('workbooks', 'test123')
+        self.obj.append(['workbooks', 'test123'])
+        self.client.upload_workbook_definition('test123')
 
     def tearDown(self):
         super(TestCaseAdvanced, self).tearDown()
