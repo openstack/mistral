@@ -1,0 +1,19 @@
+Namespaces:
+  Nova:
+    actions:
+      create-vm:
+        class: std.http
+        base-parameters:
+          url: http://path_to_nova/url_for_create
+        parameters:
+          - image_id
+          - flavor_id
+        output:
+          vm_id: $.base_output.server_id
+Workflow:
+  tasks:
+    create-vm-nova:
+      action: Nova.create-vm
+      parameters:
+        image_id: 1234
+        flavor_id: 2
