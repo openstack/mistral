@@ -85,6 +85,8 @@ class TestTasksController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "tasks_get",
                        mock.MagicMock(return_value=TASKS))
+    @mock.patch.object(db_api, "ensure_execution_exists",
+                       mock.MagicMock(return_value={'id': "abc123"}))
     def test_get_all(self):
         resp = self.app.get('/v1/workbooks/my_workbook/executions/123/tasks')
 
@@ -92,3 +94,8 @@ class TestTasksController(base.FunctionalTest):
 
         self.assertEqual(len(resp.json), 1)
         self.assertDictEqual(TASKS[0], canonize(resp.json['tasks'][0]))
+
+    @mock.patch.object(db_api, "tasks_get",
+                       mock.MagicMock(return_value=TASKS))
+    def test_get_all_nonexistent_execution(self):
+        self.assertNotFound('/v1/workbooks/my_workbook/executions/123/tasks')

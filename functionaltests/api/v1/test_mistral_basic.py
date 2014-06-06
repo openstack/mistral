@@ -15,7 +15,6 @@
 # under the License.
 
 import json
-import testtools
 import uuid
 
 from tempest import exceptions
@@ -203,7 +202,6 @@ class AdvancedTests(base.TestCaseAdvanced):
         self.assertRaises(exceptions.NotFound, self.client.update_execution,
                           'test123', id, put_body)
 
-    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1326287')
     @test.attr(type='negative')
     def test_get_tasks_list_of_nonexistent_execution(self):
 
@@ -218,7 +216,6 @@ class AdvancedNegativeTestsWithExecutionCreate(base.TestCaseAdvanced):
 
         self.execution = self._create_execution('test123', 'aloha')[1]
 
-    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1326278')
     @test.attr(type='negative')
     def test_get_nonexistent_task(self):
         self.assertRaises(exceptions.NotFound, self.client.get_task,

@@ -98,6 +98,10 @@ def execution_get(workbook_name, id):
     return IMPL.execution_get(workbook_name, id)
 
 
+def ensure_execution_exists(workbook_name, execution_id):
+    return IMPL.ensure_execution_exists(workbook_name, execution_id)
+
+
 def execution_create(workbook_name, values):
     return IMPL.execution_create(workbook_name, values)
 

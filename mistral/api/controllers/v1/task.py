@@ -114,9 +114,12 @@ class TasksController(rest.RestController):
 
             return Task.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Tasks, wtypes.text, wtypes.text)
     def get_all(self, workbook_name, execution_id):
         """Return all tasks within the execution."""
+        db_api.ensure_execution_exists(workbook_name, execution_id)
+
         LOG.debug("Fetch tasks [workbook_name=%s, execution_id=%s]" %
                   (workbook_name, execution_id))
 
