@@ -15,6 +15,8 @@
 # under the License.
 
 import json
+import testtools
+import uuid
 
 from tempest import exceptions
 from tempest import test
@@ -120,15 +122,14 @@ class SanityTests(base.TestCase):
                           self.client.get_workbook_definition,
                           'fksn')
 
+    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1325933')
+    @test.attr(type='negative')
+    def test_get_executions_list_from_nonexistent_workbook(self):
+        self.assertRaises(exceptions.NotFound, self.client.get_list_obj,
+                          'workbooks/nonexistentworkbook/executions')
 
-class ExecutionTests(base.TestCaseAdvanced):
 
-    def setUp(self):
-        super(ExecutionTests, self).setUp()
-
-        self.client.create_obj('workbooks', 'test123')
-        self.obj.append(['workbooks', 'test123'])
-        self.client.upload_workbook_definition('test123')
+class AdvancedTests(base.TestCaseAdvanced):
 
     @test.attr(type='positive')
     def test_create_execution(self):
@@ -179,3 +180,61 @@ class ExecutionTests(base.TestCaseAdvanced):
         self.assertEqual(tasks[0], task)
 
     #TODO(smurashov): Need to add test which would check task update
+
+    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1325914')
+    @test.attr(type='negative')
+    def test_create_execution_in_nonexistent_workbook(self):
+        self.assertRaises(exceptions.NotFound, self._create_execution,
+                          'nonexistentworkbook', 'catchme')
+
+    def test_get_nonexistent_execution(self):
+
+        self.assertRaises(exceptions.NotFound, self.client.get_execution,
+                          'test123', str(uuid.uuid4()))
+
+    @test.attr(type='negative')
+    def test_update_nonexistent_execution(self):
+
+        id = str(uuid.uuid4())
+        put_body = {
+            "id": id,
+            "state": "STOPPED"
+        }
+
+        self.assertRaises(exceptions.NotFound, self.client.update_execution,
+                          'test123', id, put_body)
+
+    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1326287')
+    @test.attr(type='negative')
+    def test_get_tasks_list_of_nonexistent_execution(self):
+
+        self.assertRaises(exceptions.NotFound, self.client.get_tasks_list,
+                          'test123', str(uuid.uuid4()))
+
+
+class AdvancedNegativeTestsWithExecutionCreate(base.TestCaseAdvanced):
+
+    def setUp(self):
+        super(AdvancedNegativeTestsWithExecutionCreate, self).setUp()
+
+        self.execution = self._create_execution('test123', 'aloha')[1]
+
+    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1326278')
+    @test.attr(type='negative')
+    def test_get_nonexistent_task(self):
+        self.assertRaises(exceptions.NotFound, self.client.get_task,
+                          'test123', self.execution['id'], str(uuid.uuid4()))
+
+    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1326284')
+    @test.attr(type='negative')
+    def test_update_nonexistent_task(self):
+
+        id = str(uuid.uuid4())
+        put_body = {
+            "id": id,
+            "state": "ERROR"
+        }
+
+        self.assertRaises(exceptions.NotFound, self.client.update_task,
+                          'test123', self.execution['id'], str(uuid.uuid4()),
+                          put_body)
