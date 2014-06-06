@@ -15,7 +15,6 @@
 # under the License.
 
 import json
-import time
 
 from tempest import exceptions
 from tempest import test
@@ -124,34 +123,59 @@ class SanityTests(base.TestCase):
 
 class ExecutionTests(base.TestCaseAdvanced):
 
-    @test.attr(type='smoke')
-    def test_create_execution(self):
+    def setUp(self):
+        super(ExecutionTests, self).setUp()
+
         self.client.create_obj('workbooks', 'test123')
         self.obj.append(['workbooks', 'test123'])
         self.client.upload_workbook_definition('test123')
 
-        nova_url = "/".join(self.server_client.base_url.split('/')[:-1])
-
-        context = {
-            "server_name": "aloha",
-            "nova_url": nova_url,
-            "image_id": self.image_ref,
-            "flavor_id": self.flavor_ref
-        }
-
-        post_body = {
-            "workbook_name": "test123",
-            "task": "create-vm",
-            "context": json.dumps(context)
-        }
-
-        resp, body = self.client.create_execution('test123', post_body)
-        body = json.loads(body)
+    @test.attr(type='positive')
+    def test_create_execution(self):
+        resp, body = self._create_execution('test123', 'aloha')
 
         self.assertEqual(201, resp.status)
         self.assertEqual('test123', body["workbook_name"])
-        while not self.server_client.list_servers()[1]['servers']:
-            time.sleep(2)
-        for server in self.server_client.list_servers()[1]['servers']:
-            if server['name'] == 'aloha':
-                self.server_ids.append(server['id'])
+
+    @test.attr(type='positive')
+    def test_get_execution(self):
+        _, execution = self._create_execution('test123', 'aloha')
+
+        resp, body = self.client.get_execution('test123', execution['id'])
+
+        body = json.loads(body)
+        del execution['state']
+        del body['state']
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(execution, body)
+
+    #TODO(smurashov): Need to add test which would check execution update
+
+    @test.attr(type='positive')
+    def test_get_tasks_list(self):
+        execution = self._create_execution('test123', 'aloha')[1]
+
+        resp, tasks = self.client.get_tasks_list('test123', execution['id'])
+
+        self.assertEqual(200, resp.status)
+        for task in tasks:
+            self.assertEqual(execution['id'], task['execution_id'])
+            self.assertEqual('test123', task['workbook_name'])
+
+    @test.attr(type='positive')
+    def test_get_task(self):
+        _, execution = self._create_execution('test123', 'aloha')
+
+        tasks = self.client.get_tasks_list('test123', execution['id'])[1]
+
+        resp, task = self.client.get_task('test123', execution['id'],
+                                          tasks[0]['id'])
+
+        del tasks[0]['state']
+        del task['state']
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(tasks[0], task)
+
+    #TODO(smurashov): Need to add test which would check task update
