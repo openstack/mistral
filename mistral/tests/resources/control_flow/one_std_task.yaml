@@ -1,0 +1,17 @@
+Namespaces:
+  Nova:
+    actions:
+      create-vm:
+        class: std.http
+        base-parameters:
+          url: http://path_to_nova/url_for_create
+        output:
+          vm_id: $.base_output.server_id
+
+Workflow:
+  tasks:
+    std_http_task:
+      action: std.http
+      parameters:
+        method: GET
+        url: http://some_url

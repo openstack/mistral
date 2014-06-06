@@ -56,8 +56,8 @@ class WorkbookSpec(base.BaseSpec):
         ns_name = full_action_name.split('.')[0]
         action_name = full_action_name.split('.')[1]
 
-        if self.namespaces:
-            return self.namespaces.get(ns_name).actions.get(action_name)
+        if ns_name in self.namespaces:
+            return self.namespaces[ns_name].actions.get(action_name)
 
     def get_actions(self, namespace_name):
         return self.namespaces.get(namespace_name).actions
