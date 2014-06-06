@@ -11,9 +11,10 @@ Namespaces:
 
 Workflow:
   tasks:
-    retry_task:
+    delay_retry_task:
       action: MyService.some-action
       retry:
-        count: 5
+        count: 2
+        delay: 0.1
       publish:
-        rt_output: $.output
+        rt_output: output

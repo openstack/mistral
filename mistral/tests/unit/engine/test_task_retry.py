@@ -68,15 +68,14 @@ class FailBeforeSuccessMocker(object):
     concrete_engine.DefaultEngine, '_run_tasks',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
 @mock.patch.object(
-    db_api, 'workbook_get',
-    mock.MagicMock(
-        return_value={
-            'definition': base.get_resource('retry_task/retry_task.yaml')}))
-@mock.patch.object(
     std_actions.HTTPAction, 'run',
     mock.MagicMock(return_value='result'))
 class TaskRetryTest(base.EngineTestCase):
 
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={
+            'definition': base.get_resource('retry_task/retry_task.yaml')}))
     def test_no_retry(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          'retry_task', None)
@@ -90,6 +89,10 @@ class TaskRetryTest(base.EngineTestCase):
         self._assert_single_item(tasks, name='retry_task')
         self._assert_single_item(tasks, task_runtime_context=None)
 
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={
+            'definition': base.get_resource('retry_task/retry_task.yaml')}))
     def test_retry_always_error(self):
         workbook = _get_workbook(WB_NAME)
 
@@ -112,6 +115,10 @@ class TaskRetryTest(base.EngineTestCase):
             'retry_no': retry_count - 1})
         self._assert_single_item(tasks, state=states.ERROR)
 
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={
+            'definition': base.get_resource('retry_task/retry_task.yaml')}))
     def test_retry_eventual_success(self):
         workbook = _get_workbook(WB_NAME)
 
@@ -137,6 +144,10 @@ class TaskRetryTest(base.EngineTestCase):
         self._assert_single_item(tasks, task_runtime_context={
             'retry_no': retry_count / 2 - 1})
 
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'retry_task/delay_retry_task.yaml')}))
     def test_retry_delay(self):
         task_name = 'delay_retry_task'
         workbook = _get_workbook(WB_NAME)
@@ -174,6 +185,10 @@ class TaskRetryTest(base.EngineTestCase):
             'retry_no': retry_count - 1})
         self._assert_single_item(tasks, state=states.ERROR)
 
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={
+            'definition': base.get_resource('retry_task/two_tasks.yaml')}))
     def test_from_no_retry_to_retry_task(self):
         task_name_1 = 'no_retry_task'
         task_name_2 = 'delay_retry_task'
@@ -225,27 +240,35 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(std_actions.EchoAction, "run",
                        mock.MagicMock(side_effect=exc.ActionException))
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={
+            'definition': base.get_resource('retry_task/sync_task.yaml')}))
     def test_sync_action_always_error(self):
-        task_name_1 = 'sync_task'
         workbook = _get_workbook(WB_NAME)
-        task_spec = workbook.tasks.get(task_name_1)
+        start_task = 'sync-task'
+        task_spec = workbook.tasks.get(start_task)
         retry_count, _, __ = task_spec.get_retry_parameters()
 
         execution = self.engine.start_workflow_execution(WB_NAME,
-                                                         task_name_1, None)
+                                                         start_task, None)
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
-        self._assert_single_item(tasks, name=task_name_1)
+        self._assert_single_item(tasks, name=start_task)
         self._assert_single_item(tasks, task_runtime_context={
             'retry_no': retry_count - 1})
         self._assert_single_item(tasks, state=states.ERROR)
 
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={
+            'definition': base.get_resource('retry_task/sync_task.yaml')}))
     def test_sync_action_eventual_success(self):
-        task_name_1 = 'sync_task'
+        start_task = 'sync-task'
         workbook = _get_workbook(WB_NAME)
-        task_spec = workbook.tasks.get(task_name_1)
+        task_spec = workbook.tasks.get(start_task)
         retry_count, _, __ = task_spec.get_retry_parameters()
 
         # After a pre-set no of retries the mock method will return a
@@ -255,12 +278,13 @@ class TaskRetryTest(base.EngineTestCase):
         with mock.patch.object(std_actions.EchoAction, "run",
                                side_effect=mock_functor.mock_partial_failure):
             execution = self.engine.start_workflow_execution(WB_NAME,
-                                                             task_name_1, None)
+                                                             start_task,
+                                                             None)
 
             # TODO(rakhmerov): It's not stable, need to avoid race condition.
             tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
-            self._assert_single_item(tasks, name=task_name_1)
+            self._assert_single_item(tasks, name=start_task)
             self._assert_single_item(tasks, task_runtime_context={
                 'retry_no': retry_count / 2})
             self._assert_single_item(tasks, state=states.SUCCESS)
