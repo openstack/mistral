@@ -25,7 +25,7 @@ TRIGGERS = [
     {
         'id': '1',
         'name': 'test_trigger1',
-        'workbook_name': 'wb_name',
+        'workbook_name': 'my_workbook1',
         'pattern': '* *',
         'next_execution_time': timeutils.utcnow(),
         'updated_at': None
@@ -33,7 +33,7 @@ TRIGGERS = [
     {
         'id': '2',
         'name': 'test_trigger2',
-        'workbook_name': 'wb_name',
+        'workbook_name': 'my_workbook2',
         'pattern': '* * *',
         'next_execution_time': timeutils.utcnow(),
         'updated_at': None
@@ -41,7 +41,7 @@ TRIGGERS = [
 ]
 
 
-class EventTest(test_base.DbTestCase):
+class TriggerTest(test_base.DbTestCase):
     def test_trigger_create_and_get(self):
         created = db_api.trigger_create(TRIGGERS[0])
         self.assertIsInstance(created, dict)
@@ -60,6 +60,13 @@ class EventTest(test_base.DbTestCase):
 
         fetched = db_api.trigger_get(created['id'])
         self.assertDictEqual(updated, fetched)
+
+    def test_trigger_delete(self):
+        created = db_api.trigger_create(TRIGGERS[0])
+        db_api.trigger_delete(created['id'])
+
+        self.assertRaises(exc.NotFoundException, db_api.trigger_get,
+                          created['id'])
 
     def test_trigger_list(self):
         created0 = db_api.trigger_create(TRIGGERS[0])
@@ -320,9 +327,9 @@ class TaskTest(test_base.DbTestCase):
         db_api.task_delete(TASKS[0]['workbook_name'],
                            TASKS[0]['execution_id'],
                            created['id'])
-        self.assertIsNone(db_api.task_get(TASKS[0]['workbook_name'],
-                                          TASKS[0]['execution_id'],
-                                          created['id']))
+        self.assertRaises(exc.NotFoundException, db_api.task_get,
+                          TASKS[0]['workbook_name'], TASKS[0]['execution_id'],
+                          created['id'])
 
 
 class TXTest(test_base.DbTestCase):
@@ -345,8 +352,8 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.trigger_get(created['id'])
-        self.assertIsNone(fetched)
+        self.assertRaises(exc.NotFoundException,
+                          db_api.trigger_get, created['id'])
 
         self.assertFalse(self.is_db_session_open())
 
@@ -401,8 +408,8 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched_trigger = db_api.trigger_get(created_trigger['id'])
-        self.assertIsNone(fetched_trigger)
+        self.assertRaises(exc.NotFoundException,
+                          db_api.trigger_get, created_trigger['id'])
 
         self.assertRaises(exc.NotFoundException, db_api.workbook_get,
                           created_workbook['name'])
