@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from keystoneclient.v3 import client as keystone_client
+from keystoneclient.v3 import client as ks_client
 from oslo.config import cfg
 
 from mistral import context
@@ -23,25 +23,25 @@ CONF = cfg.CONF
 
 def client():
     ctx = context.ctx()
-    auth_url = CONF.keystone.auth_uri
+    auth_url = CONF.keystone_authtoken.auth_uri
 
-    keystone = keystone_client.Client(username=ctx['user_name'],
-                                      token=ctx['auth_token'],
-                                      tenant_id=ctx['project_id'],
-                                      auth_url=auth_url)
+    keystone = ks_client.Client(username=ctx['user_name'],
+                                token=ctx['auth_token'],
+                                tenant_id=ctx['project_id'],
+                                auth_url=auth_url)
     keystone.management_url = auth_url
 
     return keystone
 
 
 def _admin_client(trust_id=None, project_name=None):
-    auth_url = CONF.keystone.auth_uri
+    auth_url = CONF.keystone_authtoken.auth_uri
 
-    client = keystone_client.Client(username=CONF.keystone.admin_user,
-                                    password=CONF.keystone.admin_password,
-                                    project_name=project_name,
-                                    auth_url=auth_url,
-                                    trust_id=trust_id)
+    client = ks_client.Client(username=CONF.keystone_authtoken.admin_user,
+                              password=CONF.keystone_authtoken.admin_password,
+                              project_name=project_name,
+                              auth_url=auth_url,
+                              trust_id=trust_id)
     client.management_url = auth_url
 
     return client
