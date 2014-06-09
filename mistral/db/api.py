@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions
+
 from mistral.openstack.common.db import api as db_api
 from mistral.openstack.common import log as logging
 
@@ -78,7 +80,11 @@ def workbooks_get():
 
 
 def workbook_definition_get(workbook_name):
-    return IMPL.workbook_get(workbook_name)['definition']
+    definition = IMPL.workbook_get(workbook_name)['definition']
+    if not definition:
+        raise exceptions.NotFoundException("Definition of workbook "
+                                           "%s is empty." % workbook_name)
+    return definition
 
 
 def workbook_definition_put(workbook_name, text):
