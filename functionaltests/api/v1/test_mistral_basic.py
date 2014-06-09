@@ -225,7 +225,6 @@ class AdvancedNegativeTestsWithExecutionCreate(base.TestCaseAdvanced):
         self.assertRaises(exceptions.NotFound, self.client.get_task,
                           'test123', self.execution['id'], str(uuid.uuid4()))
 
-    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1326284')
     @test.attr(type='negative')
     def test_update_nonexistent_task(self):
 

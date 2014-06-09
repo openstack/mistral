@@ -85,14 +85,15 @@ class TasksController(rest.RestController):
                   "[workbook_name=%s, execution_id=%s, id=%s, task=%s]" %
                   (workbook_name, execution_id, id, task))
 
-        # TODO(rakhmerov): pass task result once it's implemented
-        engine = pecan.request.context['engine']
-        values = engine.convey_task_result(workbook_name,
-                                           execution_id,
-                                           id,
-                                           task.state, None)
+        if db_api.task_get(workbook_name, execution_id, id):
+            # TODO(rakhmerov): pass task result once it's implemented
+            engine = pecan.request.context['engine']
+            values = engine.convey_task_result(workbook_name,
+                                               execution_id,
+                                               id,
+                                               task.state, None)
 
-        return Task.from_dict(values)
+            return Task.from_dict(values)
 
     @wsme_pecan.wsexpose(Tasks, wtypes.text, wtypes.text)
     def get_all(self, workbook_name, execution_id):
