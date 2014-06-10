@@ -122,7 +122,6 @@ class SanityTests(base.TestCase):
                           self.client.get_workbook_definition,
                           'fksn')
 
-    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1325933')
     @test.attr(type='negative')
     def test_get_executions_list_from_nonexistent_workbook(self):
         self.assertRaises(exceptions.NotFound, self.client.get_list_obj,

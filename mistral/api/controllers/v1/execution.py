@@ -140,7 +140,8 @@ class ExecutionsController(rest.RestController):
         """Return all Executions."""
         LOG.debug("Fetch executions [workbook_name=%s]" % workbook_name)
 
-        executions = [Execution.from_dict(values)
-                      for values in db_api.executions_get(workbook_name)]
+        if db_api.workbook_get(workbook_name):
+            executions = [Execution.from_dict(values)
+                          for values in db_api.executions_get(workbook_name)]
 
-        return Executions(executions=executions)
+            return Executions(executions=executions)

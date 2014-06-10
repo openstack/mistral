@@ -122,6 +122,8 @@ class TestExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, 'executions_get',
                        mock.MagicMock(return_value=EXECS))
+    @mock.patch.object(db_api, 'workbook_get',
+                       mock.MagicMock(return_value={'name': 'my_workbook'}))
     def test_get_all(self):
         resp = self.app.get('/v1/workbooks/my_workbook/executions')
 
@@ -129,3 +131,11 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(len(resp.json), 1)
         self.assertDictEqual(EXECS[0], canonize(resp.json['executions'][0]))
+
+    @mock.patch.object(db_api, 'executions_get',
+                       mock.MagicMock(return_value=EXECS))
+    def test_get_all_no_workbook(self):
+        resp = self.app.get('/v1/workbooks/my_workbook/executions',
+                            expect_errors=True)
+
+        self.assertEqual(resp.status_int, 404)
