@@ -1,0 +1,7 @@
+Workflow:
+  tasks:
+    task1:
+      action: std.http
+      parameters:
+        method: GET
+        url: http://some_url

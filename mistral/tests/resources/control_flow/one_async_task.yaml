@@ -1,0 +1,26 @@
+Namespaces:
+  MyRest:
+    class: std.mistral_http
+    base-parameters:
+      method: GET
+      headers:
+        X-Auth-Token: $.auth_token
+
+    actions:
+      create-vm:
+        base-parameters:
+          url: http://some_host/service/action/execute
+          headers:
+            Content-Type: 'application/json'
+        parameters:
+          - image_id
+          - flavor_id
+        output:
+
+Workflow:
+  tasks:
+    create-vms:
+      action: MyRest.create-vm
+      parameters:
+        image_id: 1234
+        flavor_id: 42

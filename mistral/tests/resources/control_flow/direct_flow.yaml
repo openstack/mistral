@@ -1,0 +1,53 @@
+Namespaces:
+  MyRest:
+    class: std.mistral_http
+    base-parameters:
+      method: GET
+      headers:
+        X-Auth-Token: $.auth_token
+
+    actions:
+      async-action:
+        base-parameters:
+          url: http://some_host/service/action/execute
+          headers:
+            Content-Type: 'application/json'
+        parameters:
+          - input1
+          - input2
+        output:
+
+Workflow:
+  tasks:
+    start-task:
+      action: MyRest.async-action
+      parameters:
+        input1: foo
+        input2: bar
+      on-success:
+        task-one
+      on-error:
+        - task-three
+        - task-four
+      on-finish:
+        task-two
+
+    task-one:
+      action: MyRest.async-action
+      on-success: task-two
+
+    task-two:
+      action: MyRest.async-action
+
+    task-three:
+      action: MyRest.async-action
+
+    task-four:
+      action: MyRest.async-action
+
+triggers:
+  my-cron:
+    type: periodic
+    tasks: start-task
+    parameters:
+      cron-pattern: "* * * * *"

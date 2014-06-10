@@ -17,7 +17,6 @@ import mock
 
 from oslo.config import cfg
 
-from mistral import dsl_parser as parser
 from mistral.tests import base
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
@@ -40,16 +39,6 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 #TODO(rakhmerov): add more tests for errors, execution stop etc.
 
 
-WB_WITHOUT_NAMESPACES = """Workflow:
-  tasks:
-    task:
-      action: std.http
-      parameters:
-        method: GET
-        url: http://some_url
-"""
-
-
 @mock.patch.object(
     engine.EngineClient, 'start_workflow_execution',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
@@ -57,17 +46,17 @@ WB_WITHOUT_NAMESPACES = """Workflow:
     engine.EngineClient, 'convey_task_result',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
 @mock.patch.object(
-    db_api, 'workbook_get',
-    mock.MagicMock(
-        return_value={'definition': base.get_resource('test_rest.yaml')}))
-@mock.patch.object(
     std_actions.HTTPAction, 'run',
     mock.MagicMock(return_value={'state': states.SUCCESS}))
-class TestScalableEngine(base.EngineTestCase):
+class TestEngine(base.EngineTestCase):
     @mock.patch.object(
         concrete_engine.DefaultEngine, "_notify_task_executors",
         mock.MagicMock(return_value=""))
-    def test_engine_one_task(self):
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'control_flow/one_async_task.yaml')}))
+    def test_with_one_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "create-vms",
                                                          CONTEXT)
 
@@ -89,7 +78,11 @@ class TestScalableEngine(base.EngineTestCase):
     @mock.patch.object(
         concrete_engine.DefaultEngine, "_notify_task_executors",
         mock.MagicMock(return_value=""))
-    def test_engine_multiple_tasks(self):
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'control_flow/require_flow.yaml')}))
+    def test_require_flow(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "backup-vms",
                                                          CONTEXT)
 
@@ -131,7 +124,11 @@ class TestScalableEngine(base.EngineTestCase):
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
-    def test_engine_sync_task(self):
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'control_flow/one_sync_task.yaml')}))
+    def test_with_one_sync_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          "create-vm-nova",
                                                          CONTEXT)
@@ -147,164 +144,137 @@ class TestScalableEngine(base.EngineTestCase):
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
-    def test_engine_tasks_on_success_finish(self):
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'control_flow/direct_flow.yaml')}))
+    def test_direct_flow_on_success_finish(self):
         # Start workflow.
         execution = self.engine.start_workflow_execution(WB_NAME,
-                                                         "test_subsequent",
+                                                         "start-task",
                                                          CONTEXT)
+        # Only the first task is RUNNING
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
-
         self.assertEqual(len(tasks), 1)
-
-        execution = db_api.execution_get(WB_NAME, execution['id'])
-
-        task = self._assert_single_item(tasks, name='test_subsequent')
-
-        # Make 'test_subsequent' task successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task['id'],
-                                       states.SUCCESS, None)
-
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-
-        self.assertEqual(len(tasks), 4)
-
-        self._assert_single_item(tasks,
-                                 name='test_subsequent',
-                                 state=states.SUCCESS)
-        self._assert_single_item(tasks,
-                                 name='attach-volumes',
-                                 state=states.IDLE)
-
-        tasks2 = self._assert_multiple_items(tasks, 2,
-                                             name='create-vms',
-                                             state=states.RUNNING)
-
-        # Make 2 'create-vms' tasks successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks2[0]['id'],
-                                       states.SUCCESS, None)
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks2[1]['id'],
-                                       states.SUCCESS, None)
-
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-
-        self._assert_multiple_items(tasks, 2,
-                                    name='create-vms',
-                                    state=states.SUCCESS)
         task = self._assert_single_item(tasks,
-                                        name='attach-volumes',
+                                        name='start-task',
                                         state=states.RUNNING)
 
-        # Make 'attach-volumes' task successful.
+        # Make 'start-task' successful.
         self.engine.convey_task_result(WB_NAME, execution['id'],
                                        task['id'],
                                        states.SUCCESS, None)
 
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        self.assertEqual(len(tasks), 3)
+        self._assert_single_item(tasks,
+                                 name='start-task',
+                                 state=states.SUCCESS)
+        task1 = self._assert_single_item(tasks,
+                                         name='task-one',
+                                         state=states.RUNNING)
+        self._assert_single_item(tasks,
+                                 name='task-two',
+                                 state=states.RUNNING)
+
+        # Make 'task-one' tasks successful.
+        self.engine.convey_task_result(WB_NAME, execution['id'],
+                                       task1['id'],
+                                       states.SUCCESS, None)
+
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
-        self.assertEqual(execution['state'], states.SUCCESS)
+        tasks_2 = self._assert_multiple_items(tasks, 2,
+                                              name='task-two',
+                                              state=states.RUNNING)
+
+        # Make both 'task-two' task successful.
+        self.engine.convey_task_result(WB_NAME, execution['id'],
+                                       tasks_2[0]['id'],
+                                       states.SUCCESS, None)
+        self.engine.convey_task_result(WB_NAME, execution['id'],
+                                       tasks_2[1]['id'],
+                                       states.SUCCESS, None)
+
+        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        execution = db_api.execution_get(WB_NAME, execution['id'])
+
         self._assert_multiple_items(tasks, 4, state=states.SUCCESS)
+        self.assertEqual(execution['state'], states.SUCCESS)
 
     @mock.patch.object(
         concrete_engine.DefaultEngine, '_run_tasks',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
-    def test_engine_tasks_on_error_finish(self):
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'control_flow/direct_flow.yaml')}))
+    def test_direct_flow_on_error_finish(self):
         # Start workflow.
         execution = self.engine.start_workflow_execution(WB_NAME,
-                                                         "test_subsequent",
+                                                         "start-task",
                                                          CONTEXT)
-
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-        execution = db_api.execution_get(WB_NAME, execution['id'])
-
-        # Make 'test_subsequent' task successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[0]['id'],
-                                       states.ERROR, None)
-
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
-        self.assertEqual(len(tasks), 6)
+        self.assertEqual(execution['state'], states.RUNNING)
+        start_task = self._assert_single_item(tasks,
+                                              name='start-task',
+                                              state=states.RUNNING)
 
-        self._assert_single_item(tasks,
-                                 name='backup-vms',
-                                 state=states.IDLE)
-        self._assert_single_item(tasks,
-                                 name='test_subsequent',
-                                 state=states.ERROR)
-        self._assert_single_item(tasks,
-                                 name='attach-volumes',
-                                 state=states.IDLE)
-
-        tasks2 = self._assert_multiple_items(tasks, 3,
-                                             name='create-vms',
-                                             state=states.RUNNING)
-
-        # Make 'create-vms' tasks successful.
+        # Make 'start-task' task fail.
         self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks2[0]['id'],
-                                       states.SUCCESS, None)
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks2[1]['id'],
-                                       states.SUCCESS, None)
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks2[2]['id'],
-                                       states.SUCCESS, None)
-
+                                       start_task['id'],
+                                       states.ERROR, CONTEXT)
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
 
-        task1 = self._assert_single_item(tasks,
-                                         name='backup-vms',
+        self.assertEqual(len(tasks), 4)
+        task3 = self._assert_single_item(tasks,
+                                         name='task-three',
                                          state=states.RUNNING)
         task2 = self._assert_single_item(tasks,
-                                         name='attach-volumes',
+                                         name='task-two',
+                                         state=states.RUNNING)
+        task4 = self._assert_single_item(tasks,
+                                         name='task-four',
                                          state=states.RUNNING)
 
-        self._assert_multiple_items(tasks, 3,
-                                    name='create-vms',
-                                    state=states.SUCCESS)
-
-        # Make tasks 'backup-vms' and 'attach-volumes' successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task1['id'],
-                                       states.SUCCESS, None)
+        # Make all running tasks successful.
         self.engine.convey_task_result(WB_NAME, execution['id'],
                                        task2['id'],
                                        states.SUCCESS, None)
-
-        execution = db_api.execution_get(WB_NAME, execution['id'])
-
-        self.assertEqual(execution['state'], states.SUCCESS)
+        self.engine.convey_task_result(WB_NAME, execution['id'],
+                                       task3['id'],
+                                       states.SUCCESS, None)
+        self.engine.convey_task_result(WB_NAME, execution['id'],
+                                       task4['id'],
+                                       states.SUCCESS, None)
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        execution = db_api.execution_get(WB_NAME, execution['id'])
 
+        self._assert_multiple_items(tasks, 3, state=states.SUCCESS)
         self._assert_single_item(tasks, state=states.ERROR)
-        self._assert_multiple_items(tasks, 5, state=states.SUCCESS)
+        self.assertEqual(execution['state'], states.SUCCESS)
 
     @mock.patch.object(
         concrete_engine.DefaultEngine, "_notify_task_executors",
         mock.MagicMock(return_value=""))
     @mock.patch.object(
-        engine.Engine, '_get_workbook',
-        mock.MagicMock(
-            return_value=parser.get_workbook(WB_WITHOUT_NAMESPACES)))
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value={'definition': base.get_resource(
+            'control_flow/no_namespaces.yaml')}))
     @mock.patch.object(
         concrete_engine.DefaultEngine, '_run_tasks',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
-    def test_engine_without_namespaces(self):
-        execution = self.engine.start_workflow_execution(WB_NAME, "task", {})
+    def test_engine_with_no_namespaces(self):
+        execution = self.engine.start_workflow_execution(WB_NAME, "task1", {})
 
         tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        execution = db_api.execution_get(WB_NAME, execution['id'])
 
         self.assertIsNotNone(tasks)
         self.assertEqual(1, len(tasks))
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
-
-        execution = db_api.execution_get(WB_NAME, execution['id'])
-
         self.assertEqual(execution['state'], states.SUCCESS)
