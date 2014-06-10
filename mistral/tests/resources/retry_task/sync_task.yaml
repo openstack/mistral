@@ -1,0 +1,18 @@
+Namespaces:
+  MyService:
+    actions:
+      sync-action:
+        class: std.echo
+        base-parameters:
+          output: Cheers!
+        output:
+          greeting: $
+
+Workflow:
+  tasks:
+    sync-task:
+      action: MyService.sync-action
+      retry:
+        count: 5
+      publish:
+        st_output: $.greeting
