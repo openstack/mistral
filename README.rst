@@ -64,3 +64,8 @@ Running examples
 ----------------
 
 To run the examples find them in mistral-extra repository (https://github.com/stackforge/mistral-extra) and follow the instructions on each example.
+
+Tests
+-----
+
+Information about automated tests for Mistral can be found here: https://wiki.openstack.org/wiki/Mistral/Testing
