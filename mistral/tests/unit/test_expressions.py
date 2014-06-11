@@ -14,10 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import unittest2
-
 from mistral import expressions as expr
-
+from mistral.tests import base
 
 DATA = {
     "server": {
@@ -43,7 +41,7 @@ SERVERS = {
 }
 
 
-class YaqlEvaluatorTest(unittest2.TestCase):
+class YaqlEvaluatorTest(base.BaseTest):
     def setUp(self):
         super(YaqlEvaluatorTest, self).setUp()
         self._evaluator = expr.YAQLEvaluator()

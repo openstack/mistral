@@ -22,12 +22,11 @@ SAMPLE_TASK_SPEC = {
     'on-error': ["task1", "task2"]
 }
 
-import unittest2
-
+from mistral.tests import base
 from mistral.workbook import tasks
 
 
-class GetOnStateTest(unittest2.TestCase):
+class GetOnStateTest(base.BaseTest):
     def setUp(self):
         self.task = tasks.TaskSpec(SAMPLE_TASK_SPEC)
 
