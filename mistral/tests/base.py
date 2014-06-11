@@ -104,12 +104,14 @@ class BaseTest(unittest2.TestCase):
 
 class DbTestCase(BaseTest):
     def setUp(self):
+        super(DbTestCase, self).setUp()
         self.db_fd, self.db_path = tempfile.mkstemp()
         cfg.CONF.set_default('connection', 'sqlite:///' + self.db_path,
                              group='database')
         db_api.setup_db()
 
     def tearDown(self):
+        super(DbTestCase, self).tearDown()
         db_api.drop_db()
         os.close(self.db_fd)
         os.unlink(self.db_path)

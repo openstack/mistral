@@ -28,6 +28,7 @@ Workflow:
 
 class DSLModelTest(base.BaseTest):
     def setUp(self):
+        super(DSLModelTest, self).setUp()
         self.doc = base.get_resource("test_rest.yaml")
 
     def test_load_dsl(self):

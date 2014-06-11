@@ -28,6 +28,7 @@ from mistral.workbook import tasks
 
 class GetOnStateTest(base.BaseTest):
     def setUp(self):
+        super(GetOnStateTest, self).setUp()
         self.task = tasks.TaskSpec(SAMPLE_TASK_SPEC)
 
     def test_state_finish(self):
