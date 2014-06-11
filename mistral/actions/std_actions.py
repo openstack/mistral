@@ -16,7 +16,7 @@
 
 import json
 import smtplib
-from email.mime.text import MIMEText
+from email.mime import text
 
 import requests
 
@@ -209,7 +209,7 @@ class SendEmailAction(base.Action):
                   self.smtp_server, self.body[:128]))
 
         # TODO(dzimine): handle utf-8, http://stackoverflow.com/a/14506784
-        message = MIMEText(self.body)
+        message = text.MIMEText(self.body)
         message['Subject'] = self.subject
         message['From'] = self.sender
         message['To'] = self.to

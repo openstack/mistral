@@ -18,7 +18,7 @@ import mock
 import json
 
 from mistral import exceptions as ex
-from webtest.app import AppError
+from webtest import app as webtest_app
 from mistral.tests.api import base
 from mistral.db import api as db_api
 from mistral import engine
@@ -130,7 +130,7 @@ class TestExecutionsController(base.FunctionalTest):
     @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(side_effect=ex.MistralException))
     def test_post_throws_exception(self):
-        context = self.assertRaises(AppError, self.app.post_json,
+        context = self.assertRaises(webtest_app.AppError, self.app.post_json,
                                     '/v1/workbooks/my_workbook/executions',
                                     EXECS[0])
         self.assertIn('Bad response: 400', context.message)

@@ -14,7 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from pecan.hooks import PecanHook
+from pecan import hooks
 
 import eventlet
 
@@ -124,7 +124,7 @@ def context_from_headers(headers):
     )
 
 
-class ContextHook(PecanHook):
+class ContextHook(hooks.PecanHook):
     def before(self, state):
         request_ctx = context_from_headers(state.request.headers).to_dict()
         set_ctx(request_ctx)

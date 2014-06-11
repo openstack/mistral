@@ -15,14 +15,14 @@
 #    limitations under the License.
 
 from croniter import croniter
-from datetime import datetime
-from datetime import timedelta
+import datetime
 from mistral.db import api as db_api
 from mistral import dsl_parser as parser
 
 
 def get_next_triggers():
-    return db_api.get_next_triggers(datetime.now() + timedelta(0, 2))
+    return db_api.get_next_triggers(datetime.datetime.now() +
+                                    datetime.timedelta(0, 2))
 
 
 def set_next_execution_time(trigger):
@@ -30,17 +30,17 @@ def set_next_execution_time(trigger):
     cron = croniter(trigger['pattern'], base)
 
     return db_api.trigger_update(trigger['id'], {
-        'next_execution_time': cron.get_next(datetime)
+        'next_execution_time': cron.get_next(datetime.datetime)
     })
 
 
 def _get_next_execution_time(pattern, start_time):
-    return croniter(pattern, start_time).get_next(datetime)
+    return croniter(pattern, start_time).get_next(datetime.datetime)
 
 
 def create_trigger(name, pattern, workbook_name, start_time=None):
     if not start_time:
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
 
     return db_api.trigger_create({
         "name": name,
@@ -62,7 +62,7 @@ def create_associated_triggers(db_workbook):
 
     for e in triggers:
         pattern = e['parameters']['cron-pattern']
-        next_time = _get_next_execution_time(pattern, datetime.now())
+        next_time = _get_next_execution_time(pattern, datetime.datetime.now())
         db_triggers.append({
             "name": e['name'],
             "pattern": pattern,

@@ -16,7 +16,7 @@
 
 import pecan
 import pecan.testing
-from webtest.app import AppError
+from webtest import app as webtest_app
 
 from oslo.config import cfg
 
@@ -56,7 +56,7 @@ class FunctionalTest(base.DbTestCase):
     def assertNotFound(self, url):
         try:
             self.app.get(url, headers={'Accept': 'application/json'})
-        except AppError as error:
+        except webtest_app.AppError as error:
             self.assertIn('Bad response: 404 Not Found', str(error))
             return
         self.fail('Expected 404 Not found but got OK')
@@ -64,7 +64,7 @@ class FunctionalTest(base.DbTestCase):
     def assertUnauthorized(self, url):
         try:
             self.app.get(url, headers={'Accept': 'application/json'})
-        except AppError as error:
+        except webtest_app.AppError as error:
             self.assertIn('Bad response: 401 Unauthorized', str(error))
             return
         self.fail('Expected 401 Unauthorized but got OK')

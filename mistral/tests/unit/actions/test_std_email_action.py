@@ -14,12 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
+from email import parser
+import mock
 import testtools
-from mock import call
-from mock import patch
-
-from email.parser import Parser
 
 from mistral.actions import std_actions as std
 from mistral import exceptions as exc
@@ -81,7 +78,7 @@ class SendEmailActionTest(base.BaseTest):
 
         action.run()
 
-    @patch('smtplib.SMTP')
+    @mock.patch('smtplib.SMTP')
     def test_send_email(self, smtp):
         action = std.SendEmailAction(self.params, self.settings)
 
@@ -97,14 +94,14 @@ class SendEmailActionTest(base.BaseTest):
         self.assertEqual(
             sendmail.call_args[1]['to_addrs'], self.to_addrs)
 
-        message = Parser().parsestr(sendmail.call_args[1]['msg'])
+        message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 
         self.assertEqual(self.settings['from'], message['from'])
         self.assertEqual(self.to_addrs, message['to'])
         self.assertEqual(self.params['subject'], message['subject'])
         self.assertEqual(self.params['body'], message.get_payload())
 
-    @patch('smtplib.SMTP')
+    @mock.patch('smtplib.SMTP')
     def test_with_password(self, smtp):
         self.settings['password'] = "secret"
 
@@ -113,13 +110,14 @@ class SendEmailActionTest(base.BaseTest):
         action.run()
 
         smtpmock = smtp.return_value
-        calls = [call.ehlo(), call.starttls(), call.ehlo(),
-                 call.login(self.settings['from'], self.settings['password'])]
+        calls = [mock.call.ehlo(), mock.call.starttls(), mock.call.ehlo(),
+                 mock.call.login(self.settings['from'],
+                                 self.settings['password'])]
 
         smtpmock.assert_has_calls(calls)
         self.assertTrue(smtpmock.sendmail.called, "should call sendmail")
 
-    @patch('mistral.actions.std_actions.LOG')
+    @mock.patch('mistral.actions.std_actions.LOG')
     def test_exception(self, log):
         self.params['smtp_server'] = "wrong host"
 

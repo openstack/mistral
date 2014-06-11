@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from pecan.hooks import PecanHook
+from pecan import hooks
 
 from mistral import engine
 from mistral.openstack.common import log as logging
@@ -21,7 +21,7 @@ from mistral.openstack.common import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class EngineHook(PecanHook):
+class EngineHook(hooks.PecanHook):
 
     def __init__(self, transport=None):
         self.transport = engine.get_transport(transport)

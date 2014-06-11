@@ -14,9 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from pecan import rest
-from pecan import expose
-from pecan import request
+import pecan
 
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
@@ -27,9 +25,9 @@ from mistral.utils import rest_utils
 LOG = logging.getLogger(__name__)
 
 
-class WorkbookDefinitionController(rest.RestController):
+class WorkbookDefinitionController(pecan.rest.RestController):
     @rest_utils.wrap_pecan_controller_exception
-    @expose()
+    @pecan.expose()
     def get(self, workbook_name):
         """Return the workbook definition."""
         LOG.debug("Fetch workbook definition [workbook_name=%s]" %
@@ -37,10 +35,10 @@ class WorkbookDefinitionController(rest.RestController):
         return db_api.workbook_definition_get(workbook_name)
 
     @rest_utils.wrap_pecan_controller_exception
-    @expose(content_type="text/plain")
+    @pecan.expose(content_type="text/plain")
     def put(self, workbook_name):
         """Update the workbook's definition."""
-        text = request.text
+        text = pecan.request.text
 
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
                   (workbook_name, text))
