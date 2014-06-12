@@ -14,16 +14,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
-import smtplib
 from email.mime import text
-
+import json
 import requests
+import smtplib
 
-from mistral.openstack.common import log as logging
 from mistral.actions import base
-from mistral import expressions as expr
 from mistral import exceptions as exc
+from mistral import expressions as expr
+from mistral.openstack.common import log as logging
 from mistral.utils import ssh_utils
 
 

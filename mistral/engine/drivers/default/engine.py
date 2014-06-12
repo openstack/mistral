@@ -12,12 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo import messaging
 from oslo.config import cfg
+from oslo import messaging
 
-from mistral.openstack.common import log as logging
 from mistral import engine
 from mistral.engine import executor
+from mistral.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

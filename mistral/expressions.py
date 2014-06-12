@@ -16,8 +16,8 @@
 
 import abc
 import re
-import yaql
 import six
+import yaql
 
 from mistral.openstack.common import log as logging
 

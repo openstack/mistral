@@ -15,16 +15,15 @@
 #    limitations under the License.
 
 import json
-
 import pecan
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral.api.controllers.v1 import task
-from mistral.openstack.common import log as logging
 from mistral.api.controllers import resource
+from mistral.api.controllers.v1 import task
 from mistral.db import api as db_api
+from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
 
 

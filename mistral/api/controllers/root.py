@@ -18,9 +18,9 @@ import pecan
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral.openstack.common import log as logging
-from mistral.api.controllers.v1 import root as v1_root
 from mistral.api.controllers import resource
+from mistral.api.controllers.v1 import root as v1_root
+from mistral.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

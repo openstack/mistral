@@ -17,9 +17,9 @@
 import pkg_resources as pkg
 
 from mistral.db import api as db_api
+from mistral.services import scheduler
 from mistral.tests import base
 from mistral import version
-from mistral.services import scheduler
 
 
 class TriggersTest(base.DbTestCase):

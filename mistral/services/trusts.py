@@ -16,9 +16,9 @@
 
 from oslo.config import cfg
 
-from mistral.utils.openstack import keystone
 from mistral import context
 from mistral.db import api as db_api
+from mistral.utils.openstack import keystone
 
 
 CONF = cfg.CONF

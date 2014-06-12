@@ -14,10 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.db.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import timeutils
-
-from mistral.db.sqlalchemy import api as db_api
 from mistral.tests import base as test_base
 
 

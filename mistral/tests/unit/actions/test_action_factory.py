@@ -13,13 +13,14 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-import json
-import copy
 
-from mistral import exceptions
-from mistral.openstack.common import log as logging
+import copy
+import json
+
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
+from mistral import exceptions
+from mistral.openstack.common import log as logging
 from mistral.tests import base
 
 

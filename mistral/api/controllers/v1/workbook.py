@@ -18,15 +18,14 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral.api.controllers.v1 import workbook_definition
-from mistral.api.controllers.v1 import listener
-from mistral.api.controllers.v1 import execution
 from mistral.api.controllers import resource
+from mistral.api.controllers.v1 import execution
+from mistral.api.controllers.v1 import listener
+from mistral.api.controllers.v1 import workbook_definition
+from mistral.db import api as db_api
+from mistral.openstack.common import log as logging
 from mistral.services import workbooks
 from mistral.utils import rest_utils
-
-from mistral.openstack.common import log as logging
-from mistral.db import api as db_api
 
 LOG = logging.getLogger(__name__)
 

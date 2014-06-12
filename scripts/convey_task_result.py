@@ -15,8 +15,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import sys
 from mistralclient.api import client as cl
+import sys
 
 client = cl.Client(project_name="mistral",
                    mistral_url="http://localhost:8989/v1")

@@ -15,7 +15,6 @@
 #    limitations under the License.
 
 from mistral import exceptions
-
 from mistral.openstack.common.db import api as db_api
 from mistral.openstack.common import log as logging
 

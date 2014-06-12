@@ -20,9 +20,9 @@ from oslo.config import cfg
 from mistral.actions import base
 from mistral.actions import std_actions
 from mistral import exceptions as exc
-from mistral.workbook import tasks
-from mistral.workbook import actions
 from mistral.openstack.common import log as logging
+from mistral.workbook import actions
+from mistral.workbook import tasks
 
 LOG = logging.getLogger(__name__)
 

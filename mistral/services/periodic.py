@@ -14,13 +14,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import context
 from mistral.db import api as db_api
+from mistral import dsl_parser as parser
 from mistral import engine
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
-from mistral import context
-from mistral import dsl_parser as parser
 from mistral.services import scheduler as sched
 from mistral.services import trusts
 

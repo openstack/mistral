@@ -16,10 +16,10 @@
 
 import copy
 
+from mistral.actions import base as actions_base
 from mistral.actions import std_actions as std
 from mistral.tests import base
 from mistral.workbook import namespaces as ns
-from mistral.actions import base as actions_base
 
 NS_SPEC = {
     'name': 'my_namespace',

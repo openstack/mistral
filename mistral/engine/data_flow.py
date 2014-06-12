@@ -18,8 +18,8 @@ from oslo.config import cfg
 
 from mistral.db import api as db_api
 from mistral import expressions as expr
-from mistral.services import trusts
 from mistral.openstack.common import log as logging
+from mistral.services import trusts
 
 
 LOG = logging.getLogger(__name__)

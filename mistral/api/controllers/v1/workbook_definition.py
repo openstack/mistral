@@ -16,8 +16,8 @@
 
 import pecan
 
-from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
+from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral.utils import rest_utils
 

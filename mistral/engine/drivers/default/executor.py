@@ -16,12 +16,12 @@
 
 from oslo.config import cfg
 
-from mistral.openstack.common import log as logging
-from mistral.db import api as db_api
-from mistral import exceptions as exc
-from mistral.engine import states
-from mistral.engine import executor
 from mistral.actions import action_factory as a_f
+from mistral.db import api as db_api
+from mistral.engine import executor
+from mistral.engine import states
+from mistral import exceptions as exc
+from mistral.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

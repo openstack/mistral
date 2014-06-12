@@ -13,24 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import uuid
+
 import eventlet
+import mock
+from oslo.config import cfg
 
 eventlet.monkey_patch()
 
-import uuid
-import mock
-
-from oslo.config import cfg
-
-from mistral.tests import base
-from mistral.openstack.common import log as logging
-from mistral.engine import states
-from mistral.db import api as db_api
 from mistral.actions import std_actions
+from mistral.db import api as db_api
 from mistral import engine
 from mistral.engine import executor
+from mistral.engine import states
+from mistral.openstack.common import importutils
+from mistral.openstack.common import log as logging
+from mistral.tests import base
 
 
+# We need to make sure that all configuration properties are registered.
+importutils.import_module("mistral.config")
 LOG = logging.getLogger(__name__)
 
 # Use the set_default method to set value otherwise in certain test cases

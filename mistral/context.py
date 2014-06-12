@@ -14,13 +14,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import eventlet
 from pecan import hooks
 
-import eventlet
-
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils
-from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
 

@@ -14,14 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mock
 import json
-
-from mistral import exceptions as ex
+import mock
 from webtest import app as webtest_app
-from mistral.tests.api import base
+
 from mistral.db import api as db_api
 from mistral import engine
+from mistral import exceptions as ex
+from mistral.tests.api import base
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 

@@ -18,8 +18,8 @@ import pecan
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
-from mistral.api.controllers.v1 import workbook
 from mistral.api.controllers import resource
+from mistral.api.controllers.v1 import workbook
 
 
 class RootResource(resource.Resource):

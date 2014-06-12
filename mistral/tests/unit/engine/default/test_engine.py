@@ -14,17 +14,16 @@
 # limitations under the License.
 
 import mock
-
 from oslo.config import cfg
 
-from mistral.tests import base
-from mistral.openstack.common import log as logging
-from mistral.db import api as db_api
 from mistral.actions import std_actions
-from mistral import expressions
+from mistral.db import api as db_api
 from mistral import engine
-from mistral.engine import states
 from mistral.engine.drivers.default import engine as concrete_engine
+from mistral.engine import states
+from mistral import expressions
+from mistral.openstack.common import log as logging
+from mistral.tests import base
 
 
 LOG = logging.getLogger(__name__)

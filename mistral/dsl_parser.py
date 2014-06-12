@@ -16,6 +16,7 @@
 
 import yaml
 from yaml import error
+
 from mistral.workbook import workbook
 
 

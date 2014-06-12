@@ -14,13 +14,13 @@
 
 import abc
 
-from oslo import messaging
 from oslo.config import cfg
+from oslo import messaging
 import six
 from stevedore import driver
 
-from mistral.openstack.common import log as logging
 from mistral import engine
+from mistral.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

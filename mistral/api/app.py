@@ -14,15 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.config import cfg
 import pecan
 
-from oslo.config import cfg
-
+from mistral.api import access_control
+from mistral.api.hooks import engine
 from mistral import context as ctx
 from mistral.db import api as db_api
 from mistral.services import periodic
-from mistral.api import access_control
-from mistral.api.hooks import engine
 
 
 def get_pecan_config():

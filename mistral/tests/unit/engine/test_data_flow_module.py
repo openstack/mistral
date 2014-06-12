@@ -14,11 +14,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine import data_flow
-from mistral.tests import base
 from mistral.db import api as db_api
-
+from mistral.engine import data_flow
 from mistral.openstack.common import log as logging
+from mistral.tests import base
 
 LOG = logging.getLogger(__name__)
 

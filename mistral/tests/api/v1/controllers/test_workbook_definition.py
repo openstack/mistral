@@ -16,9 +16,9 @@
 
 import mock
 
+from mistral.db import api as db_api
 from mistral import exceptions
 from mistral.tests.api import base
-from mistral.db import api as db_api
 
 DEFINITION = "my definition"
 

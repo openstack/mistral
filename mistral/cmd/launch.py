@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import sys
+
 import eventlet
 
 eventlet.monkey_patch(
@@ -33,14 +34,14 @@ POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
 if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
     sys.path.insert(0, POSSIBLE_TOPDIR)
 
-from oslo import messaging
 from oslo.config import cfg
+from oslo import messaging
+from wsgiref import simple_server
 
+from mistral.api import app
 from mistral import config
 from mistral import engine
 from mistral.engine import executor
-from mistral.api import app
-from wsgiref import simple_server
 from mistral.openstack.common import log as logging
 
 

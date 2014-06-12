@@ -15,22 +15,22 @@
 #    limitations under the License.
 
 import os
+import pkg_resources as pkg
 import sys
 import tempfile
 import testtools.matchers as ttm
 
-from oslo import messaging
 from oslo.config import cfg
+from oslo import messaging
 from oslo.messaging import transport
 from oslotest import base
-import pkg_resources as pkg
 from stevedore import driver
 
 from mistral.db.sqlalchemy import api as db_api
-from mistral.openstack.common import log as logging
-from mistral import version
 from mistral import engine
 from mistral.engine import executor
+from mistral.openstack.common import log as logging
+from mistral import version
 
 
 RESOURCES_PATH = 'tests/resources/'

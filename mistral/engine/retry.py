@@ -16,8 +16,8 @@
 
 from oslo.config import cfg
 
-from mistral import expressions
 from mistral.engine import states
+from mistral import expressions
 from mistral.openstack.common import log as logging
 
 

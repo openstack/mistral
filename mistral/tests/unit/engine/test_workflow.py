@@ -14,10 +14,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.tests import base
 from mistral import dsl_parser as parser
 from mistral.engine import states
 from mistral.engine import workflow
+from mistral.tests import base
 
 TASKS = [
     {

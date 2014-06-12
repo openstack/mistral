@@ -12,18 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mock
-import uuid
 import datetime
+import uuid
+
+from keystoneclient.middleware import auth_token
+import mock
+from oslo.config import cfg
 import pecan
 import pecan.testing
 
-from oslo.config import cfg
-from keystoneclient.middleware import auth_token
-
-from mistral.tests.api import base
 from mistral.db import api as db_api
 from mistral.openstack.common import timeutils
+from mistral.tests.api import base
 
 
 WORKBOOKS = [

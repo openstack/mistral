@@ -16,25 +16,24 @@ import abc
 import copy
 
 import eventlet
-import six
-from oslo import messaging
 from oslo.config import cfg
+from oslo import messaging
+import six
 from stevedore import driver
-
-from mistral.openstack.common import log as logging
-from mistral.db import api as db_api
-from mistral import dsl_parser as parser
-from mistral import exceptions as exc
 
 # Submoules of mistral.engine will throw NoSuchOptError if configuration
 # options required at top level of this  __init__.py are not imported before
 # the submodules are referenced.
 cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 
-from mistral.engine import states
-from mistral.engine import workflow
+from mistral.db import api as db_api
+from mistral import dsl_parser as parser
 from mistral.engine import data_flow
 from mistral.engine import retry
+from mistral.engine import states
+from mistral.engine import workflow
+from mistral import exceptions as exc
+from mistral.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)
