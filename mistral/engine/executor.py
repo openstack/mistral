@@ -16,6 +16,7 @@ import abc
 
 from oslo import messaging
 from oslo.config import cfg
+import six
 from stevedore import driver
 
 from mistral.openstack.common import log as logging
@@ -34,10 +35,9 @@ def get_executor(name, transport):
     return mgr.driver
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Executor(object):
     """Abstract class for task execution."""
-
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, transport=None):
         self.transport = engine.get_transport(transport)

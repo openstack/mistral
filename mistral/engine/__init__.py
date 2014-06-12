@@ -14,8 +14,9 @@
 
 import abc
 import copy
-import eventlet
 
+import eventlet
+import six
 from oslo import messaging
 from oslo.config import cfg
 from stevedore import driver
@@ -53,10 +54,9 @@ def get_engine(name, transport):
     return mgr.driver
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Engine(object):
     """Abstract engine for workflow execution."""
-
-    __metaclass__ = abc.ABCMeta
 
     transport = None
 
