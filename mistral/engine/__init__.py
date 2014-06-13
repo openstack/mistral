@@ -20,18 +20,16 @@ from oslo import messaging
 from oslo.config import cfg
 from stevedore import driver
 
-# If mistral.config is not imported here, nosetests will fail on import
-# because workflow_trace_log_name is not registered. The use of importutils
-# to import mistral.config instead of simply "from mistral import config" is
-# to avoid pep8 error on module referenced but not used.
-# TODO(m4dcoder): Refactor and clean up configuration registration.
-from mistral.openstack.common import importutils
-importutils.import_module("mistral.config")
-
 from mistral.openstack.common import log as logging
 from mistral.db import api as db_api
 from mistral import dsl_parser as parser
 from mistral import exceptions as exc
+
+# Submoules of mistral.engine will throw NoSuchOptError if configuration
+# options required at top level of this  __init__.py are not imported before
+# the submodules are referenced.
+cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
+
 from mistral.engine import states
 from mistral.engine import workflow
 from mistral.engine import data_flow

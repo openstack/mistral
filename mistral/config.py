@@ -44,25 +44,19 @@ engine_opts = [
 pecan_opts = [
     cfg.StrOpt('root', default='mistral.api.controllers.root.RootController',
                help='Pecan root controller'),
-    cfg.ListOpt('modules', default=["mistral.api"]),
-    cfg.BoolOpt('debug', default=False),
-    cfg.BoolOpt('auth_enable', default=True)
+    cfg.ListOpt('modules', default=["mistral.api"],
+                help='A list of modules where pecan will search for '
+                     'applications.'),
+    cfg.BoolOpt('debug', default=False,
+                help='Enables the ability to display tracebacks in the '
+                     'browser and interactively debug during '
+                     'development.'),
+    cfg.BoolOpt('auth_enable', default=True,
+                help='Enables user authentication in pecan.')
 ]
 
 db_opts = [
     # TODO: add DB properties.
-]
-
-rabbit_opts = [
-    cfg.StrOpt('rabbit_host', default='0.0.0.0',
-               help='RabbitMQ server host name'),
-    cfg.IntOpt('rabbit_port', default=5672, help='RabbitMQ server port'),
-    cfg.StrOpt('rabbit_virtual_host', default='/',
-               help='RabbitMQ server virtual host name'),
-    cfg.StrOpt('rabbit_task_queue', default='tasks',
-               help='RabbitMQ tasks queue name'),
-    cfg.StrOpt('rabbit_user', default='guest', help='RabbitMQ user'),
-    cfg.StrOpt('rabbit_password', default='guest', help='RabbitMQ password')
 ]
 
 use_debugger = cfg.BoolOpt(
@@ -110,7 +104,6 @@ CONF.register_opts(api_opts, group='api')
 CONF.register_opts(engine_opts, group='engine')
 CONF.register_opts(pecan_opts, group='pecan')
 CONF.register_opts(db_opts, group='database')
-CONF.register_opts(rabbit_opts, group='rabbit')
 CONF.register_opts(executor_opts, group='executor')
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(action_plugins_opt)

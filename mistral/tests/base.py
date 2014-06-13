@@ -24,12 +24,6 @@ from oslo.messaging import transport
 import pkg_resources as pkg
 from stevedore import driver
 
-from mistral.openstack.common import importutils
-
-
-# We need to make sure that all configuration properties are registered.
-importutils.import_module("mistral.config")
-
 from mistral.db.sqlalchemy import api as db_api
 from mistral.openstack.common import log as logging
 from mistral import version

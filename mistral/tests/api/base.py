@@ -20,15 +20,11 @@ from webtest.app import AppError
 
 from oslo.config import cfg
 
-from mistral.openstack.common import importutils
 from mistral.tests import base
 
-# We need to make sure that all configuration properties are registered.
-importutils.import_module("mistral.config")
 
 # Disable authentication for functional tests.
-cfg.CONF.unregister_opt(cfg.BoolOpt('auth_enable'), 'pecan')
-cfg.CONF.register_opt(cfg.BoolOpt('auth_enable', default=False), group='pecan')
+cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 __all__ = ['FunctionalTest']
