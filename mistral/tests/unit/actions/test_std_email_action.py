@@ -51,6 +51,7 @@ REMOTE_SMTP = False
 class SendEmailActionTest(base.BaseTest):
 
     def setUp(self):
+        super(SendEmailActionTest, self).setUp()
         self.params = {
             'to': ["dz@example.com, deg@example.com", "xyz@example.com"],
             'subject': "Multi word subject с русскими буквами",
