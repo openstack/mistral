@@ -89,6 +89,7 @@ class SanityTests(base.TestCase):
     def test_get_workbook_definition(self):
         self.client.create_obj('workbooks', 'test')
         self.obj.append(['workbooks', 'test'])
+        self.client.upload_workbook_definition('test')
         resp, body = self.client.get_workbook_definition('test')
 
         self.assertEqual(200, resp.status)
