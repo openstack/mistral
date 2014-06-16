@@ -41,6 +41,16 @@ EXECS = [
     }
 ]
 
+
+WORKBOOKS = [
+    {
+        'name': "my_workbook",
+        'description': "My cool Mistral workbook",
+        'tags': ['deployment', 'demo']
+    }
+]
+
+
 UPDATED_EXEC = EXECS[0].copy()
 UPDATED_EXEC['state'] = 'STOPPED'
 
@@ -88,7 +98,13 @@ class TestExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(return_value=EXECS[0]))
+    @mock.patch.object(db_api, 'workbook_definition_get',
+                       mock.Mock(return_value="Workflow:"))
     def test_post(self):
+        my_workbook = WORKBOOKS[0]
+        self.app.post_json('/v1/workbooks',
+                           my_workbook)
+
         new_exec = EXECS[0].copy()
         new_exec['context'] = json.dumps(new_exec['context'])
 
@@ -96,6 +112,20 @@ class TestExecutionsController(base.FunctionalTest):
                                   new_exec)
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(EXECS[0], canonize(resp.json))
+
+    @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
+                       mock.MagicMock(return_value=EXECS[0]))
+    def test_post_definition_empty(self):
+        my_workbook = WORKBOOKS[0]
+        self.app.post_json('/v1/workbooks',
+                           my_workbook)
+
+        new_exec = EXECS[0].copy()
+        new_exec['context'] = json.dumps(new_exec['context'])
+
+        resp = self.app.post_json('/v1/workbooks/my_workbook/executions',
+                                  new_exec, expect_errors=True)
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(side_effect=ex.MistralException))

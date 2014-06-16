@@ -180,7 +180,6 @@ class AdvancedTests(base.TestCaseAdvanced):
 
     #TODO(smurashov): Need to add test which would check task update
 
-    @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1325914')
     @test.attr(type='negative')
     def test_create_execution_in_nonexistent_workbook(self):
         self.assertRaises(exceptions.NotFound, self._create_execution,

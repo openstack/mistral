@@ -116,16 +116,18 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
                   (workbook_name, execution))
 
-        context = None
-        if execution.context:
-            context = json.loads(execution.context)
+        if (db_api.workbook_get(workbook_name)
+                and db_api.workbook_definition_get(workbook_name)):
+            context = None
+            if execution.context:
+                context = json.loads(execution.context)
 
-        engine = pecan.request.context['engine']
-        values = engine.start_workflow_execution(execution.workbook_name,
-                                                 execution.task,
-                                                 context)
+            engine = pecan.request.context['engine']
+            values = engine.start_workflow_execution(execution.workbook_name,
+                                                     execution.task,
+                                                     context)
 
-        return Execution.from_dict(values)
+            return Execution.from_dict(values)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
