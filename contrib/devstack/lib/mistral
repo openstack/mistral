@@ -99,7 +99,7 @@ function configure_mistral {
     mkdir_chown_stack "$MISTRAL_CONF_DIR"
 
     # Copy over Mistral configuration file and configure common parameters.
-    cp $MISTRAL_DIR/etc/mistral.conf.example $MISTRAL_CONF_FILE
+    cp $MISTRAL_DIR/etc/mistral.conf.sample $MISTRAL_CONF_FILE
     iniset $MISTRAL_CONF_FILE DEFAULT debug $MISTRAL_DEBUG
 
     # Run all Mistral processes as a single process
