@@ -76,12 +76,6 @@ class TestKeystoneMiddleware(base.FunctionalTest):
             }
         })
 
-    def tearDown(self):
-        # By default, unit tests in Mistral has auth disabled and will fail
-        # if this option is not reset to False after this test is completed.
-        cfg.CONF.set_default('auth_enable', False, group='pecan')
-        super(TestKeystoneMiddleware, self).tearDown()
-
     @mock.patch.object(
         auth_token.AuthProtocol, '_get_user_token_from_header',
         mock.MagicMock(return_value=''))

@@ -48,16 +48,15 @@ class FunctionalTest(base.DbTestCase):
                 'auth_enable': False
             }
         })
+        self.addCleanup(pecan.set_config, {}, overwrite=True)
+        self.addCleanup(cfg.CONF.set_default, 'auth_enable', False,
+                        group='pecan')
 
         # make sure the api get the correct context.
         self.patch_ctx = mock.patch('mistral.context.context_from_headers')
         self.mock_ctx = self.patch_ctx.start()
         self.mock_ctx.return_value = self.ctx
         self.addCleanup(self.patch_ctx.stop)
-
-    def tearDown(self):
-        super(FunctionalTest, self).tearDown()
-        pecan.set_config({}, overwrite=True)
 
     def assertNotFound(self, url):
         try:

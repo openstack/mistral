@@ -48,14 +48,9 @@ class TestTransport(base.EngineTestCase):
 
         # Run the Engine and Executor in the background.
         self.en_thread = eventlet.spawn(launch.launch_engine, self.transport)
+        self.addCleanup(self.en_thread.kill)
         self.ex_thread = eventlet.spawn(launch.launch_executor, self.transport)
-
-    def tearDown(self):
-        # Stop the Engine and the Executor.
-        self.en_thread.kill()
-        self.ex_thread.kill()
-
-        super(TestTransport, self).tearDown()
+        self.addCleanup(self.ex_thread.kill)
 
     @mock.patch.object(
         db_api, 'workbook_get',
