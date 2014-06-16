@@ -23,6 +23,7 @@ from email.parser import Parser
 
 from mistral.actions import std_actions as std
 from mistral import exceptions as exc
+from mistral.tests import base
 
 """
 To try against a real SNMP server:
@@ -47,7 +48,7 @@ LOCAL_SMTPD = False
 REMOTE_SMTP = False
 
 
-class SendEmailActionTest(unittest2.TestCase):
+class SendEmailActionTest(base.BaseTest):
 
     def setUp(self):
         self.params = {
