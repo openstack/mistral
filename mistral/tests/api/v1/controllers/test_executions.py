@@ -23,7 +23,7 @@ from mistral.tests.api import base
 from mistral.db import api as db_api
 from mistral import engine
 
-# TODO: later we need additional tests verifying all the errors etc.
+# TODO(everyone): later we need additional tests verifying all the errors etc.
 
 
 EXECS = [

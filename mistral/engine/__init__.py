@@ -165,7 +165,7 @@ class Engine(object):
 
         try:
             workbook = self._get_workbook(workbook_name)
-            #TODO(rakhmerov): validate state transition
+            # TODO(rakhmerov): validate state transition
             task = db_api.task_get(workbook_name, execution_id, task_id)
 
             wf_trace_msg = "Task '%s' [%s -> %s" % \

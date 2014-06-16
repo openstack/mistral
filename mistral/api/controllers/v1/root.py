@@ -30,8 +30,9 @@ class RootResource(resource.Resource):
 
     uri = wtypes.text
 
-    # TODO: what else do we need here?
-    # TODO: we need to collect all the links from API v1.0 and provide them
+    # TODO(everyone): what else do we need here?
+    # TODO(everyone): we need to collect all the links from API v1.0
+    #                 and provide them.
 
 
 class Controller(object):

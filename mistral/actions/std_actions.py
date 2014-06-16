@@ -133,7 +133,8 @@ class HTTPAction(base.Action):
         LOG.info("HTTP action response:\n%s\n%s" %
                  (resp.status_code, resp.content))
 
-        # TODO: Not sure we need to have this check here in base HTTP action.
+        # TODO(everyone): Not sure we need to have this check here in base HTTP
+        #                 action.
         if resp.status_code not in range(200, 307):
             raise exc.ActionException("Received error HTTP code: %s" %
                                       resp.status_code)
@@ -188,7 +189,7 @@ class MistralHTTPAction(HTTPAction):
 
 class SendEmailAction(base.Action):
     def __init__(self, params, settings):
-        #TODO(dzimine): validate parameters
+        # TODO(dzimine): validate parameters
 
         # Task invocation parameters.
         self.to = ', '.join(params['to'])
@@ -207,7 +208,7 @@ class SendEmailAction(base.Action):
                  (self.sender, self.to, self.subject,
                   self.smtp_server, self.body[:128]))
 
-        #TODO(dzimine): handle utf-8, http://stackoverflow.com/a/14506784
+        # TODO(dzimine): handle utf-8, http://stackoverflow.com/a/14506784
         message = MIMEText(self.body)
         message['Subject'] = self.subject
         message['From'] = self.sender

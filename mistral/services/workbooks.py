@@ -26,7 +26,7 @@ def create_workbook(values):
     if cfg.CONF.pecan.auth_enable:
         workbook = trusts.create_trust(workbook)
 
-    ##TODO(akuznetsov) filter fields
-    ##TODO(akuznetsov) create triggers
+    # TODO(akuznetsov) filter fields
+    # TODO(akuznetsov) create triggers
 
     return workbook
