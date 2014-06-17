@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import mock
 
 from mistral.tests.api import base
@@ -29,14 +30,29 @@ TASKS = [
         'execution_id': '123',
         'name': 'my_task',
         'description': 'My cool task',
-        'action': 'my_action',
         'state': 'RUNNING',
-        'tags': ['deployment', 'demo']
+        'tags': ['deployment', 'demo'],
+        'output': {
+            'a': 'b'
+        },
+        'parameters': {
+            'c': 'd'
+        }
     }
 ]
 
 UPDATED_TASK = TASKS[0].copy()
 UPDATED_TASK['state'] = 'STOPPED'
+
+
+def canonize(json_dict):
+    if json_dict.get('output'):
+        json_dict['output'] = json.loads(json_dict['output'])
+
+    if json_dict.get('parameters'):
+        json_dict['parameters'] = json.loads(json_dict['parameters'])
+
+    return json_dict
 
 
 class TestTasksController(base.FunctionalTest):
@@ -46,7 +62,7 @@ class TestTasksController(base.FunctionalTest):
         resp = self.app.get('/v1/workbooks/my_workbook/executions/123/tasks/1')
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(TASKS[0], resp.json)
+        self.assertDictEqual(TASKS[0], canonize(resp.json))
 
     @mock.patch.object(engine.EngineClient, "convey_task_result",
                        mock.MagicMock(return_value=UPDATED_TASK))
@@ -57,7 +73,7 @@ class TestTasksController(base.FunctionalTest):
             '/v1/workbooks/my_workbook/executions/123/tasks/1',
             dict(state='STOPPED'))
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_TASK, resp.json)
+        self.assertDictEqual(UPDATED_TASK, canonize(resp.json))
 
     @mock.patch.object(engine.EngineClient, "convey_task_result",
                        mock.MagicMock(return_value=UPDATED_TASK))
@@ -75,4 +91,4 @@ class TestTasksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json), 1)
-        self.assertDictEqual(TASKS[0], resp.json['tasks'][0])
+        self.assertDictEqual(TASKS[0], canonize(resp.json['tasks'][0]))

@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
+
 import pecan
 from pecan import rest
 from wsme import types as wtypes
@@ -38,20 +40,37 @@ class Task(resource.Resource):
     execution_id = wtypes.text
     name = wtypes.text
     description = wtypes.text
-    action = wtypes.text
     state = wtypes.text
     tags = [wtypes.text]
+    output = wtypes.text
+    parameters = wtypes.text
+
+    @classmethod
+    def from_dict(cls, d):
+        e = cls()
+
+        for key, val in d.items():
+            if hasattr(e, key):
+                # Nonetype check for dictionary must be explicit
+                if val is not None and (
+                        key == 'parameters' or key == 'output'):
+                    val = json.dumps(val)
+                setattr(e, key, val)
+
+        return e
 
     @classmethod
     def sample(cls):
         return cls(id='1234',
                    workbook_name='notifier',
                    execution_id='234',
-                   name='notifier',
+                   name='build_greeting',
                    description='tell when you are done',
-                   action='std.email',
                    state='OK',
-                   tags=['foo', 'fee'])
+                   tags=['foo', 'fee'],
+                   output='{"task": {"build_greeting": '
+                          '{"greeting": "Hello, John Doe!"}}}',
+                   parameters='{ "first_name": "John", "last_name": "Doe"}')
 
 
 class Tasks(resource.Resource):
