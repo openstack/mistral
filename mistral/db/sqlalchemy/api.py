@@ -19,6 +19,7 @@ import sys
 from oslo.config import cfg
 import sqlalchemy as sa
 
+from mistral import context
 from mistral.db.sqlalchemy import models as m
 from mistral import exceptions as exc
 from mistral.openstack.common.db import exception as db_exc
@@ -292,6 +293,7 @@ def triggers_get_all(**kwargs):
 def workbook_create(values, session=None):
     workbook = m.Workbook()
     workbook.update(values.copy())
+    workbook['project_id'] = context.ctx().project_id
 
     try:
         workbook.save(session=session)
@@ -311,6 +313,7 @@ def workbook_update(workbook_name, values, session=None):
             "Workbook not found [workbook_name=%s]" % workbook_name)
 
     workbook.update(values.copy())
+    workbook['project_id'] = context.ctx().project_id
 
     return workbook
 
@@ -341,13 +344,17 @@ def workbooks_get_all(**kwargs):
 
 def _workbooks_get_all(**kwargs):
     query = model_query(m.Workbook)
-    return query.filter_by(**kwargs).all()
+    proj = query.filter_by(project_id=context.ctx().project_id,
+                           **kwargs)
+    public = query.filter_by(scope='public', **kwargs)
+    return proj.union(public).all()
 
 
 @session_aware()
 def _workbook_get(workbook_name, session=None):
     query = model_query(m.Workbook)
-    return query.filter_by(name=workbook_name).first()
+    return query.filter_by(name=workbook_name,
+                           project_id=context.ctx().project_id).first()
 
 
 # Workflow executions.
