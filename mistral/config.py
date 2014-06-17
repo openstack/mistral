@@ -56,7 +56,7 @@ pecan_opts = [
 ]
 
 db_opts = [
-    # TODO: add DB properties.
+    # TODO(everyone): add DB properties.
 ]
 
 use_debugger = cfg.BoolOpt(

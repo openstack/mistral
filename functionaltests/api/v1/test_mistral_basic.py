@@ -151,7 +151,7 @@ class AdvancedTests(base.TestCaseAdvanced):
         self.assertEqual(200, resp.status)
         self.assertEqual(execution, body)
 
-    #TODO(smurashov): Need to add test which would check execution update
+    # TODO(smurashov): Need to add test which would check execution update
 
     @test.attr(type='positive')
     def test_get_tasks_list(self):
@@ -179,7 +179,7 @@ class AdvancedTests(base.TestCaseAdvanced):
         self.assertEqual(200, resp.status)
         self.assertEqual(tasks[0], task)
 
-    #TODO(smurashov): Need to add test which would check task update
+    # TODO(smurashov): Need to add test which would check task update
 
     @test.attr(type='negative')
     def test_create_execution_in_nonexistent_workbook(self):

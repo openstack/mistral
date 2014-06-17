@@ -54,7 +54,7 @@ def execute_command(cmd, host, username, password,
         chan = ssh.get_transport().open_session()
         chan.exec_command(cmd)
 
-        # TODO (nmakhotkin): that could hang if stderr buffer overflows
+        # TODO(nmakhotkin): that could hang if stderr buffer overflows
         stdout = _read_paramimko_stream(chan.recv)
         stderr = _read_paramimko_stream(chan.recv_stderr)
 

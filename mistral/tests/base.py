@@ -62,12 +62,12 @@ class BaseTest(unittest2.TestCase):
     def setUp(self):
         super(BaseTest, self).setUp()
 
-        # TODO: add whatever is needed for all Mistral tests in here
+        # TODO(everyone): add whatever is needed for all Mistral tests in here
 
     def tearDown(self):
         super(BaseTest, self).tearDown()
 
-        # TODO: add whatever is needed for all Mistral tests in here
+        # TODO(everyone): add whatever is needed for all Mistral tests in here
 
     def _assert_single_item(self, items, **props):
         return self._assert_multiple_items(items, 1, **props)[0]

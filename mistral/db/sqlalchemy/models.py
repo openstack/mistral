@@ -20,7 +20,7 @@ import uuid
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 
-## Helpers
+# Helpers
 
 
 def _generate_unicode_uuid():

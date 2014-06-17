@@ -24,7 +24,7 @@ from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
 
-#TODO(rakhmerov): refactor all threadlocal things with mistral.utils
+# TODO(rakhmerov): refactor all threadlocal things with mistral.utils
 
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 

@@ -48,7 +48,7 @@ def find_resolved_tasks(tasks):
 def _get_checked_tasks(target_tasks):
     checked_tasks = []
     for t in target_tasks:
-        #TODO(nmakhotkin): see and evaluate YAQL with data from context
+        # TODO(nmakhotkin): see and evaluate YAQL with data from context
         checked_tasks.append(t)
     return checked_tasks
 

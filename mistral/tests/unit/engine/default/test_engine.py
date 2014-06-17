@@ -36,7 +36,7 @@ CONTEXT = None  # TODO(rakhmerov): Use a meaningful value.
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-#TODO(rakhmerov): add more tests for errors, execution stop etc.
+# TODO(rakhmerov): add more tests for errors, execution stop etc.
 
 
 @mock.patch.object(
