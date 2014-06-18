@@ -82,14 +82,14 @@ def get_outbound_context(task, output=None):
     return out_context
 
 
-def add_token_to_context(context, db_workbook):
+def add_openstack_data_to_context(context, db_workbook):
     if context is None:
         context = {}
 
     if CONF.pecan.auth_enable:
         workbook_ctx = trusts.create_context(db_workbook)
         if workbook_ctx:
-            context.update(workbook_ctx.to_dict())
+            context.update({'openstack': workbook_ctx.to_dict()})
 
     return context
 

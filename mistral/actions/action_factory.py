@@ -72,14 +72,19 @@ def get_action_class(action_full_name):
     return ns.get_action_class(arr[1])
 
 
-def _get_action_context(db_task):
-    return {
+def _get_action_context(db_task, openstack_context):
+    result = {
         'workbook_name': db_task['workbook_name'],
         'execution_id': db_task['execution_id'],
         'task_id': db_task['id'],
         'task_name': db_task['name'],
-        'task_tags': db_task['tags']
+        'task_tags': db_task['tags'],
     }
+
+    if openstack_context:
+        result.update({'openstack': openstack_context})
+
+    return result
 
 
 def _has_action_context_param(action_cls):
@@ -88,7 +93,7 @@ def _has_action_context_param(action_cls):
     return _ACTION_CTX_PARAM in arg_spec.args
 
 
-def _create_adhoc_action(db_task):
+def _create_adhoc_action(db_task, openstack_context):
     task_spec = tasks.TaskSpec(db_task['task_spec'])
     full_action_name = task_spec.get_full_action_name()
 
@@ -108,7 +113,7 @@ def _create_adhoc_action(db_task):
 
     action_context = None
     if _has_action_context_param(base_cls):
-        action_context = _get_action_context(db_task)
+        action_context = _get_action_context(db_task, openstack_context)
 
     if not base_cls:
         msg = 'Ad-hoc action base class is not registered ' \
@@ -130,10 +135,14 @@ def create_action(db_task):
 
     action_cls = get_action_class(full_action_name)
 
+    openstack_ctx = db_task['in_context'].get('openstack')
+
     if not action_cls:
         # If action is not found in registered actions try to find ad-hoc
         # action definition.
-        action = _create_adhoc_action(db_task)
+        if openstack_ctx is not None:
+            db_task['parameters'].update({'openstack': openstack_ctx})
+        action = _create_adhoc_action(db_task, openstack_ctx)
 
         if action:
             return action
@@ -145,7 +154,8 @@ def create_action(db_task):
     action_params = db_task['parameters'] or {}
 
     if _has_action_context_param(action_cls):
-        action_params[_ACTION_CTX_PARAM] = _get_action_context(db_task)
+        action_params[_ACTION_CTX_PARAM] = _get_action_context(db_task,
+                                                               openstack_ctx)
 
     try:
         return action_cls(**action_params)

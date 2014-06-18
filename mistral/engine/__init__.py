@@ -278,7 +278,7 @@ class Engine(object):
     def _add_variables_to_data_flow_context(cls, context, execution):
         db_workbook = db_api.workbook_get(execution['workbook_name'])
 
-        data_flow.add_token_to_context(context, db_workbook)
+        data_flow.add_openstack_data_to_context(context, db_workbook)
         data_flow.add_execution_to_context(context, execution)
 
     @classmethod

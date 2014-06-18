@@ -4,10 +4,10 @@ Namespaces:
     actions:
       create-vm:
         base-parameters:
-          url: '{$.nova_url}/{$.project_id}/servers'
+          url: '{$.nova_url}/{$.openstack.project_id}/servers'
           method: POST
           headers:
-            X-Auth-Token: $.auth_token
+            X-Auth-Token: $.openstack.auth_token
             Content-Type: application/json
           body:
             server:
@@ -26,7 +26,5 @@ Workflow:
         image_id: $.image_id
         flavor_id: $.flavor_id
         nova_url: $.nova_url
-        project_id: $.project_id
-        auth_token: $.auth_token
       publish:
-        vm_id: vm_id
+        vm_id: $.vm_id

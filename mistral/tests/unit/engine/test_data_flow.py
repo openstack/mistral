@@ -447,11 +447,11 @@ class DataFlowTest(base.EngineTestCase):
 
             task = self._assert_single_item(tasks, name=task_name)
 
-            context = task['in_context']
+            openstack_context = task['in_context']['openstack']
 
-            self.assertIn("auth_token", context)
-            self.assertEqual(TOKEN, context['auth_token'])
-            self.assertEqual(USER_ID, context["user_id"])
+            self.assertIn("auth_token", openstack_context)
+            self.assertEqual(TOKEN, openstack_context['auth_token'])
+            self.assertEqual(USER_ID, openstack_context["user_id"])
 
             self.engine.convey_task_result(task['id'], states.SUCCESS, {})
 

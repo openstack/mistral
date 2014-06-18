@@ -76,6 +76,8 @@ SAMPLE_TASK = {
         },
         'namespace': 'MyRest'
     },
+    'in_context': {},
+    'parameters': {},
     'task_spec': {
         'action': 'MyRest.my-action',
         'name': TASK_NAME},
