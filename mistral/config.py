@@ -121,9 +121,23 @@ CONF.import_opt('log_date_format', 'mistral.openstack.common.log')
 CONF.import_opt('use_syslog', 'mistral.openstack.common.log')
 CONF.import_opt('syslog_log_facility', 'mistral.openstack.common.log')
 
+# Extend oslo default_log_levels to include some that are useful for mistral
+# some are in oslo logging already, this is just making sure it stays this
+# way.
+default_log_levels = cfg.CONF.default_log_levels
+logs_to_quieten = ['sqlalchemy=WARN',
+                   'oslo.messaging=INFO',
+                   'iso8601=WARN',
+                   'eventlet.wsgi.server=WARN',
+                   'stevedore=INFO',
+                   'mistral.openstack.common.loopingcall=INFO',
+                   'mistral.openstack.common.periodic_task=INFO',
+                   'mistral.services.periodic=INFO']
+for chatty in logs_to_quieten:
+    if chatty not in default_log_levels:
+        default_log_levels.append(chatty)
 cfg.set_defaults(log.log_opts,
-                 default_log_levels=['sqlalchemy=WARN',
-                                     'eventlet.wsgi.server=WARN'])
+                 default_log_levels=default_log_levels)
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
