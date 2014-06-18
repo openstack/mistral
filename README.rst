@@ -20,7 +20,7 @@ To run Mistral API server perform the following command in a shell:
 
     tox -evenv -- python mistral/cmd/launch.py --server api --config-file path_to_config*
 
-Note that an example configuration file can be found in etc/mistral.conf.example.
+Note that an example configuration file can be found in etc/mistral.conf.sample.
 
 Running Mistral Engines
 -----------------------
