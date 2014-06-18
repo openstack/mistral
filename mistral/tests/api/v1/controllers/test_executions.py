@@ -130,10 +130,10 @@ class TestExecutionsController(base.FunctionalTest):
     @mock.patch.object(engine.EngineClient, 'start_workflow_execution',
                        mock.MagicMock(side_effect=ex.MistralException))
     def test_post_throws_exception(self):
-        with self.assertRaises(AppError) as context:
-            self.app.post_json('/v1/workbooks/my_workbook/executions',
-                               EXECS[0])
-        self.assertIn('Bad response: 400', context.exception.message)
+        context = self.assertRaises(AppError, self.app.post_json,
+                                    '/v1/workbooks/my_workbook/executions',
+                                    EXECS[0])
+        self.assertIn('Bad response: 400', context.message)
 
     @mock.patch.object(db_api, 'execution_delete',
                        mock.MagicMock(return_value=None))

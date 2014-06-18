@@ -16,7 +16,7 @@
 import json
 import copy
 
-import unittest2
+from mistral import exceptions
 from mistral.openstack.common import log as logging
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
@@ -112,9 +112,10 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual(std.SendEmailAction,
                          a_f.get_action_class("std.email"))
 
-    @unittest2.expectedFailure
     def test_get_action_class_failure(self):
-        self.assertEqual(std.EchoAction, a_f.get_action_class("echo"))
+        exc = self.assertRaises(exceptions.ActionException,
+                                a_f.get_action_class, 'echo')
+        self.assertIn('Invalid action name', exc.message)
 
     def test_create_http_action(self):
         action = a_f.create_action(DB_TASK)

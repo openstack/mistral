@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 
-import unittest2
+import testtools
 from mock import call
 from mock import patch
 
@@ -63,12 +63,12 @@ class SendEmailActionTest(base.BaseTest):
         }
         self.to_addrs = ', '.join(self.params['to'])
 
-    @unittest2.skipIf(not LOCAL_SMTPD, "Setup local smtpd to run it")
+    @testtools.skipIf(not LOCAL_SMTPD, "Setup local smtpd to run it")
     def test_send_email_real(self):
         action = std.SendEmailAction(self.params, self.settings)
         action.run()
 
-    @unittest2.skipIf(not REMOTE_SMTP, "Configure Remote SMTP to run it")
+    @testtools.skipIf(not REMOTE_SMTP, "Configure Remote SMTP to run it")
     def test_with_password_real(self):
         self.params['to'] = ["dz@stackstorm.com"]
         self.settings = {

@@ -15,12 +15,14 @@
 #    limitations under the License.
 
 import os
+import sys
 import tempfile
-import unittest2
+import testtools.matchers as ttm
 
 from oslo import messaging
 from oslo.config import cfg
 from oslo.messaging import transport
+from oslotest import base
 import pkg_resources as pkg
 from stevedore import driver
 
@@ -58,7 +60,7 @@ def get_fake_transport():
     return transport.Transport(mgr.driver)
 
 
-class BaseTest(unittest2.TestCase):
+class BaseTest(base.BaseTestCase):
     def setUp(self):
         super(BaseTest, self).setUp()
 
@@ -68,6 +70,20 @@ class BaseTest(unittest2.TestCase):
         super(BaseTest, self).tearDown()
 
         # TODO(everyone): add whatever is needed for all Mistral tests in here
+
+    def assertListEqual(self, l1, l2):
+        if tuple(sys.version_info)[0:2] < (2, 7):
+            # for python 2.6 compatibility
+            self.assertEqual(l1, l2)
+        else:
+            super(BaseTest, self).assertListEqual(l1, l2)
+
+    def assertDictEqual(self, cmp1, cmp2):
+        if tuple(sys.version_info)[0:2] < (2, 7):
+            # for python 2.6 compatibility
+            self.assertThat(cmp1, ttm.Equals(cmp2))
+        else:
+            super(BaseTest, self).assertDictEqual(cmp1, cmp2)
 
     def _assert_single_item(self, items, **props):
         return self._assert_multiple_items(items, 1, **props)[0]

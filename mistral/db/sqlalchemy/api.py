@@ -71,9 +71,11 @@ def setup_db():
 
 
 def drop_db():
+    global _facade
     try:
         engine = get_engine()
         m.Trigger.metadata.drop_all(engine)
+        _facade = None
     except Exception as e:
         LOG.exception("Database shutdown exception: %s", e)
         return False
