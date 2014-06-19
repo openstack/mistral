@@ -77,7 +77,8 @@ class TaskRetryTest(base.EngineTestCase):
     def test_no_retry(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          'retry_task', None)
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self.engine.convey_task_result(WB_NAME, execution['id'],
                                        tasks[0]['id'], states.SUCCESS,
@@ -96,7 +97,8 @@ class TaskRetryTest(base.EngineTestCase):
 
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          'retry_task', None)
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
         task_spec = workbook.tasks.get(tasks[0]['name'])
         retry_count, _, __ = task_spec.get_retry_parameters()
 
@@ -106,7 +108,8 @@ class TaskRetryTest(base.EngineTestCase):
                                            {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name='retry_task')
         self._assert_single_item(tasks, task_runtime_context={
@@ -122,7 +125,8 @@ class TaskRetryTest(base.EngineTestCase):
 
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          'retry_task', None)
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
         task_spec = workbook.tasks.get(tasks[0]['name'])
         retry_count, _, __ = task_spec.get_retry_parameters()
 
@@ -136,7 +140,8 @@ class TaskRetryTest(base.EngineTestCase):
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name='retry_task')
         self._assert_single_item(tasks, task_runtime_context={
@@ -153,7 +158,8 @@ class TaskRetryTest(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          task_name, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
         task_spec = workbook.tasks.get(tasks[0]['name'])
         retry_count, _, delay = task_spec.get_retry_parameters()
 
@@ -162,7 +168,8 @@ class TaskRetryTest(base.EngineTestCase):
                                            tasks[0]['id'], states.ERROR,
                                            {'output': 'result'})
 
-            tasks = db_api.tasks_get(WB_NAME, execution['id'])
+            tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                     execution_id=execution['id'])
 
             # TODO(rakhmerov): It's not stable, need to avoid race condition.
             self._assert_single_item(tasks, name=task_name)
@@ -176,7 +183,8 @@ class TaskRetryTest(base.EngineTestCase):
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name=task_name)
         self._assert_single_item(tasks, task_runtime_context={
@@ -195,7 +203,8 @@ class TaskRetryTest(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          task_name_1, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name=task_name_1)
 
@@ -203,7 +212,8 @@ class TaskRetryTest(base.EngineTestCase):
                                        tasks[0]['id'], states.SUCCESS,
                                        {'output': 'result'})
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name=task_name_2)
 
@@ -215,7 +225,8 @@ class TaskRetryTest(base.EngineTestCase):
                                            tasks[1]['id'], states.ERROR,
                                            {'output': 'result'})
 
-            tasks = db_api.tasks_get(WB_NAME, execution['id'])
+            tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                     execution_id=execution['id'])
 
             # TODO(rakhmerov): It's not stable, need to avoid race condition.
             self._assert_single_item(tasks, name=task_name_1)
@@ -229,7 +240,8 @@ class TaskRetryTest(base.EngineTestCase):
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name=task_name_2)
         self._assert_single_item(tasks, task_runtime_context={
@@ -252,7 +264,8 @@ class TaskRetryTest(base.EngineTestCase):
                                                          start_task, None)
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self._assert_single_item(tasks, name=start_task)
         self._assert_single_item(tasks, task_runtime_context={
@@ -280,7 +293,8 @@ class TaskRetryTest(base.EngineTestCase):
                                                              None)
 
             # TODO(rakhmerov): It's not stable, need to avoid race condition.
-            tasks = db_api.tasks_get(WB_NAME, execution['id'])
+            tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                     execution_id=execution['id'])
 
             self._assert_single_item(tasks, name=start_task)
             self._assert_single_item(tasks, task_runtime_context={

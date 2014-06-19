@@ -93,51 +93,50 @@ def workbook_definition_put(workbook_name, text):
 # Executions
 
 
-def execution_get(workbook_name, id):
-    return IMPL.execution_get(workbook_name, id)
+def execution_get(id):
+    return IMPL.execution_get(id)
 
 
-def ensure_execution_exists(workbook_name, execution_id):
-    return IMPL.ensure_execution_exists(workbook_name, execution_id)
+def ensure_execution_exists(execution_id):
+    return IMPL.ensure_execution_exists(execution_id)
 
 
 def execution_create(workbook_name, values):
     return IMPL.execution_create(workbook_name, values)
 
 
-def execution_update(workbook_name, id, values):
-    return IMPL.execution_update(workbook_name, id, values)
+def execution_update(id, values):
+    return IMPL.execution_update(id, values)
 
 
-def execution_delete(workbook_name, id):
-    return IMPL.execution_delete(workbook_name, id)
+def execution_delete(id):
+    return IMPL.execution_delete(id)
 
 
-def executions_get(workbook_name):
-    return IMPL.executions_get_all(workbook_name=workbook_name)
+def executions_get(**kwargs):
+    return IMPL.executions_get(**kwargs)
 
 
 # Tasks
 
-def task_get(workbook_name, execution_id, id):
-    return IMPL.task_get(workbook_name, execution_id, id)
+def task_get(id):
+    return IMPL.task_get(id)
 
 
-def task_create(workbook_name, execution_id, values):
-    return IMPL.task_create(workbook_name, execution_id, values)
+def task_create(execution_id, values):
+    return IMPL.task_create(execution_id, values)
 
 
-def task_update(workbook_name, execution_id, id, values):
-    return IMPL.task_update(workbook_name, execution_id, id, values)
+def task_update(id, values):
+    return IMPL.task_update(id, values)
 
 
-def task_delete(workbook_name, execution_id, id):
-    return IMPL.task_delete(workbook_name, execution_id, id)
+def task_delete(id):
+    return IMPL.task_delete(id)
 
 
-def tasks_get(workbook_name, execution_id):
-    return IMPL.tasks_get_all(workbook_name=workbook_name,
-                              execution_id=execution_id)
+def tasks_get(**kwargs):
+    return IMPL.tasks_get(**kwargs)
 
 
 # Listeners

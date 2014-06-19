@@ -70,7 +70,8 @@ class TestTransport(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(
             WB_NAME, 'create-vms', CONTEXT)
 
-        task = db_api.tasks_get(WB_NAME, execution['id'])[0]
+        task = db_api.tasks_get(workbook_name=WB_NAME,
+                                execution_id=execution['id'])[0]
 
         # Check task execution state. There is no timeout mechanism in
         # unittest. There is an example to add a custom timeout decorator that
@@ -78,9 +79,7 @@ class TestTransport(base.EngineTestCase):
         # process time. However, it seems more straightforward to keep the
         # loop finite.
         for i in range(0, 50):
-            db_task = db_api.task_get(task['workbook_name'],
-                                      task['execution_id'],
-                                      task['id'])
+            db_task = db_api.task_get(task['id'])
             # Ensure the request reached the executor and the action has ran.
             if db_task['state'] != states.IDLE:
                 # We have to wait sometime due to time interval between set

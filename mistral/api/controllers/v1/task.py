@@ -92,7 +92,7 @@ class TasksController(rest.RestController):
         LOG.debug("Fetch task [workbook_name=%s, execution_id=%s, id=%s]" %
                   (workbook_name, execution_id, id))
 
-        values = db_api.task_get(workbook_name, execution_id, id)
+        values = db_api.task_get(id)
         return Task.from_dict(values)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -104,7 +104,7 @@ class TasksController(rest.RestController):
                   "[workbook_name=%s, execution_id=%s, id=%s, task=%s]" %
                   (workbook_name, execution_id, id, task))
 
-        if db_api.task_get(workbook_name, execution_id, id):
+        if db_api.task_get(id):
             # TODO(rakhmerov): pass task result once it's implemented
             engine = pecan.request.context['engine']
             values = engine.convey_task_result(workbook_name,
@@ -118,12 +118,13 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks, wtypes.text, wtypes.text)
     def get_all(self, workbook_name, execution_id):
         """Return all tasks within the execution."""
-        db_api.ensure_execution_exists(workbook_name, execution_id)
+        db_api.ensure_execution_exists(execution_id)
 
         LOG.debug("Fetch tasks [workbook_name=%s, execution_id=%s]" %
                   (workbook_name, execution_id))
 
         tasks = [Task.from_dict(values)
-                 for values in db_api.tasks_get(workbook_name, execution_id)]
+                 for values in db_api.tasks_get(workbook_name=workbook_name,
+                                                execution_id=execution_id)]
 
         return Tasks(tasks=tasks)

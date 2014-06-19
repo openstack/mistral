@@ -73,12 +73,9 @@ class DefaultExecutor(executor.Executor):
         try:
             db_api.start_tx()
             try:
-                db_api.execution_update(task['workbook_name'],
-                                        task['execution_id'],
+                db_api.execution_update(task['execution_id'],
                                         {'state': states.ERROR})
-                db_api.task_update(task['workbook_name'],
-                                   task['execution_id'],
-                                   task['id'],
+                db_api.task_update(task['id'],
                                    {'state': states.ERROR})
                 db_api.commit_tx()
             finally:
@@ -101,11 +98,8 @@ class DefaultExecutor(executor.Executor):
 
             LOG.info("Received a task: %s" % task)
 
-            db_task = db_api.task_get(task['workbook_name'],
-                                      task['execution_id'],
-                                      task['id'])
-            db_exec = db_api.execution_get(task['workbook_name'],
-                                           task['execution_id'])
+            db_task = db_api.task_get(task['id'])
+            db_exec = db_api.execution_get(task['execution_id'])
 
             if not db_exec or not db_task:
                 return
@@ -122,9 +116,7 @@ class DefaultExecutor(executor.Executor):
                                                           db_task['state'],
                                                           states.RUNNING))
 
-            db_api.task_update(task['workbook_name'],
-                               task['execution_id'],
-                               task['id'],
+            db_api.task_update(task['id'],
                                {'state': states.RUNNING})
 
             self._do_task_action(db_task)

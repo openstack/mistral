@@ -59,13 +59,15 @@ class TestEngine(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(WB_NAME, "create-vms",
                                                          CONTEXT)
 
-        task = db_api.tasks_get(WB_NAME, execution['id'])[0]
+        task = db_api.tasks_get(workbook_name=WB_NAME,
+                                execution_id=execution['id'])[0]
 
         self.engine.convey_task_result(WB_NAME, execution['id'], task['id'],
                                        states.SUCCESS, None)
 
-        task = db_api.tasks_get(WB_NAME, execution['id'])[0]
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        task = db_api.tasks_get(workbook_name=WB_NAME,
+                                execution_id=execution['id'])[0]
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
@@ -85,13 +87,15 @@ class TestEngine(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(WB_NAME, "backup-vms",
                                                          CONTEXT)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self.engine.convey_task_result(WB_NAME, execution['id'],
                                        tasks[0]['id'],
                                        states.SUCCESS, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self.assertIsNotNone(tasks)
         self.assertEqual(2, len(tasks))
@@ -108,8 +112,9 @@ class TestEngine(base.EngineTestCase):
                                        tasks[1]['id'],
                                        states.SUCCESS, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
@@ -132,8 +137,9 @@ class TestEngine(base.EngineTestCase):
                                                          "create-vm-nova",
                                                          CONTEXT)
 
-        task = db_api.tasks_get(WB_NAME, execution['id'])[0]
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        task = db_api.tasks_get(workbook_name=WB_NAME,
+                                execution_id=execution['id'])[0]
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
@@ -153,7 +159,8 @@ class TestEngine(base.EngineTestCase):
                                                          "start-task",
                                                          CONTEXT)
         # Only the first task is RUNNING
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
         self.assertEqual(len(tasks), 1)
         task = self._assert_single_item(tasks,
                                         name='start-task',
@@ -164,7 +171,8 @@ class TestEngine(base.EngineTestCase):
                                        task['id'],
                                        states.SUCCESS, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
         self.assertEqual(len(tasks), 3)
         self._assert_single_item(tasks,
                                  name='start-task',
@@ -181,7 +189,8 @@ class TestEngine(base.EngineTestCase):
                                        task1['id'],
                                        states.SUCCESS, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         tasks_2 = self._assert_multiple_items(tasks, 2,
                                               name='task-two',
@@ -195,8 +204,9 @@ class TestEngine(base.EngineTestCase):
                                        tasks_2[1]['id'],
                                        states.SUCCESS, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self._assert_multiple_items(tasks, 4, state=states.SUCCESS)
         self.assertEqual(execution['state'], states.SUCCESS)
@@ -215,7 +225,8 @@ class TestEngine(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          "start-task",
                                                          CONTEXT)
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self.assertEqual(execution['state'], states.RUNNING)
         start_task = self._assert_single_item(tasks,
@@ -226,7 +237,8 @@ class TestEngine(base.EngineTestCase):
         self.engine.convey_task_result(WB_NAME, execution['id'],
                                        start_task['id'],
                                        states.ERROR, CONTEXT)
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
 
         self.assertEqual(len(tasks), 4)
         task3 = self._assert_single_item(tasks,
@@ -250,8 +262,9 @@ class TestEngine(base.EngineTestCase):
                                        task4['id'],
                                        states.SUCCESS, None)
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self._assert_multiple_items(tasks, 3, state=states.SUCCESS)
         self._assert_single_item(tasks, state=states.ERROR)
@@ -270,8 +283,9 @@ class TestEngine(base.EngineTestCase):
     def test_engine_with_no_namespaces(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "task1", {})
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertIsNotNone(tasks)
         self.assertEqual(1, len(tasks))
@@ -289,8 +303,9 @@ class TestEngine(base.EngineTestCase):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          "std_http_task", {})
 
-        tasks = db_api.tasks_get(WB_NAME, execution['id'])
-        execution = db_api.execution_get(WB_NAME, execution['id'])
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, tasks[0]['state'])

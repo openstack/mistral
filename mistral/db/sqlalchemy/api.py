@@ -207,9 +207,6 @@ def model_query(model, session=None):
     """Query helper.
 
     :param model: base model to query
-    :param context: context to query under
-    :param project_only: if present and context is user-type, then restrict
-            query to match the context's tenant_id.
     """
     return session.query(model)
 
@@ -373,56 +370,53 @@ def execution_create(workbook_name, values, session=None):
 
 @to_dict
 @session_aware()
-def execution_update(workbook_name, execution_id, values, session=None):
-    execution = _execution_get(workbook_name, execution_id)
+def execution_update(execution_id, values, session=None):
+    execution = _execution_get(execution_id)
     if not execution:
         raise exc.NotFoundException(
-            "Execution not found [workbook_name=%s, execution_id=%s]" %
-            (workbook_name, execution_id))
+            "Execution not found [execution_id=%s]" % execution_id)
+
     execution.update(values.copy())
 
     return execution
 
 
 @session_aware()
-def execution_delete(workbook_name, execution_id, session=None):
-    execution = _execution_get(workbook_name, execution_id)
+def execution_delete(execution_id, session=None):
+    execution = _execution_get(execution_id)
     if not execution:
         raise exc.NotFoundException(
-            "Execution not found [workbook_name=%s, execution_id=%s]" %
-            (workbook_name, execution_id))
+            "Execution not found [execution_id=%s]" % execution_id)
 
     session.delete(execution)
 
 
 @to_dict
-def execution_get(workbook_name, execution_id):
-    execution = _execution_get(workbook_name, execution_id)
+def execution_get(execution_id):
+    execution = _execution_get(execution_id)
     if not execution:
         raise exc.NotFoundException(
-            "Execution not found [workbook_name=%s, execution_id=%s]" %
-            (workbook_name, execution_id))
+            "Execution not found [execution_id=%s]" % execution_id)
     return execution
 
 
-def ensure_execution_exists(workbook_name, execution_id):
-    execution_get(workbook_name, execution_id)
+def ensure_execution_exists(execution_id):
+    execution_get(execution_id)
 
 
 @to_dict
-def executions_get_all(**kwargs):
-    return _executions_get_all(**kwargs)
+def executions_get(**kwargs):
+    return _executions_get(**kwargs)
 
 
-def _executions_get_all(**kwargs):
+def _executions_get(**kwargs):
     query = model_query(m.WorkflowExecution)
     return query.filter_by(**kwargs).all()
 
 
-def _execution_get(workbook_name, execution_id):
+def _execution_get(execution_id):
     query = model_query(m.WorkflowExecution)
-    return query.filter_by(id=execution_id,
-                           workbook_name=workbook_name).first()
+    return query.filter_by(id=execution_id).first()
 
 
 # Workflow tasks.
@@ -430,13 +424,10 @@ def _execution_get(workbook_name, execution_id):
 
 @to_dict
 @session_aware()
-def task_create(workbook_name, execution_id, values, session=None):
+def task_create(execution_id, values, session=None):
     task = m.Task()
     task.update(values)
-    task.update({
-        'workbook_name': workbook_name,
-        'execution_id': execution_id
-    })
+    task.update({'execution_id': execution_id})
 
     try:
         task.save(session=session)
@@ -449,12 +440,11 @@ def task_create(workbook_name, execution_id, values, session=None):
 
 @to_dict
 @session_aware()
-def task_update(workbook_name, execution_id, task_id, values, session=None):
-    task = _task_get(workbook_name, execution_id, task_id)
+def task_update(task_id, values, session=None):
+    task = _task_get(task_id)
     if not task:
         raise exc.NotFoundException(
-            "Task not found [workbook_name=%s, execution_id=%s, task_id=%s]" %
-            (workbook_name, execution_id, task_id))
+            "Task not found [task_id=%s]" % task_id)
 
     task.update(values.copy())
 
@@ -462,39 +452,37 @@ def task_update(workbook_name, execution_id, task_id, values, session=None):
 
 
 @session_aware()
-def task_delete(workbook_name, execution_id, task_id, session=None):
-    task = _task_get(workbook_name, execution_id, task_id)
+def task_delete(task_id, session=None):
+    task = _task_get(task_id)
     if not task:
         raise exc.NotFoundException(
-            "Task not found [workbook_name=%s, execution_id=%s, task_id=%s]" %
-            (workbook_name, execution_id, task_id))
+            "Task not found [task_id=%s]" % task_id)
 
     session.delete(task)
 
 
 @to_dict
-def task_get(workbook_name, execution_id, task_id):
-    task = _task_get(workbook_name, execution_id, task_id)
+def task_get(task_id):
+    task = _task_get(task_id)
     if not task:
         raise exc.NotFoundException(
-            "Task not found [workbook_name=%s, execution_id=%s, task_id=%s]" %
-            (workbook_name, execution_id, task_id))
+            "Task not found [task_id=%s]" % task_id)
 
     return task
 
 
-def _task_get(workbook_name, execution_id, task_id):
+def _task_get(task_id):
     query = model_query(m.Task)
-    return query.filter_by(id=task_id,
-                           workbook_name=workbook_name,
-                           execution_id=execution_id).first()
+    return query.filter_by(id=task_id).first()
 
 
 @to_dict
-def tasks_get_all(**kwargs):
-    return _tasks_get_all(**kwargs)
+def tasks_get(**kwargs):
+    return _tasks_get(**kwargs)
 
 
-def _tasks_get_all(**kwargs):
+def _tasks_get(**kwargs):
     query = model_query(m.Task)
-    return query.filter_by(**kwargs).all()
+    result = query.filter_by(**kwargs).all()
+
+    return result

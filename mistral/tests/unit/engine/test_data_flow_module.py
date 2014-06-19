@@ -70,12 +70,12 @@ class DataFlowModuleTest(base.DbTestCase):
         self.assertEqual('val32', parameters['p2'])
 
     def test_prepare_tasks(self):
-        task = db_api.task_create(WB_NAME, EXEC_ID, TASK.copy())
+        task = db_api.task_create(EXEC_ID, TASK.copy())
         tasks = [task]
 
         data_flow.prepare_tasks(tasks, CONTEXT)
 
-        db_task = db_api.task_get(WB_NAME, EXEC_ID, tasks[0]['id'])
+        db_task = db_api.task_get(tasks[0]['id'])
 
         self.assertDictEqual(CONTEXT, db_task['in_context'])
         self.assertDictEqual({'p1': 'My string',

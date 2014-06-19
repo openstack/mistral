@@ -113,8 +113,7 @@ class TestExecutor(base.DbTestCase):
 
         # Create a new task.
         SAMPLE_TASK['execution_id'] = execution['id']
-        task = db_api.task_create(SAMPLE_TASK['workbook_name'],
-                                  SAMPLE_TASK['execution_id'],
+        task = db_api.task_create(SAMPLE_TASK['execution_id'],
                                   SAMPLE_TASK)
         self.assertIsInstance(task, dict)
         self.assertIn('id', task)
@@ -124,7 +123,5 @@ class TestExecutor(base.DbTestCase):
         ex_client.handle_task(SAMPLE_CONTEXT, task=task)
 
         # Check task execution state.
-        db_task = db_api.task_get(task['workbook_name'],
-                                  task['execution_id'],
-                                  task['id'])
+        db_task = db_api.task_get(task['id'])
         self.assertEqual(db_task['state'], states.SUCCESS)
