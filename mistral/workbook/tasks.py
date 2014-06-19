@@ -42,11 +42,11 @@ class TaskSpec(base.BaseSpec):
             elif isinstance(req, dict):
                 task['requires'] = req
 
-    def _get_on_state(self, key):
+    def _get_as_dict(self, key):
         tasks = self.get_property(key)
 
         if not tasks:
-            return None
+            return {}
 
         if isinstance(tasks, dict):
             return tasks
@@ -61,14 +61,17 @@ class TaskSpec(base.BaseSpec):
     def get_property(self, property_name, default=None):
         return self._data.get(property_name, default)
 
+    def get_requires(self):
+        return self._get_as_dict('requires').keys()
+
     def get_on_error(self):
-        return self._get_on_state("on-error")
+        return self._get_as_dict("on-error")
 
     def get_on_success(self):
-        return self._get_on_state("on-success")
+        return self._get_as_dict("on-success")
 
     def get_on_finish(self):
-        return self._get_on_state("on-finish")
+        return self._get_as_dict("on-finish")
 
     def get_action_namespace(self):
         return self.action.split('.')[0]

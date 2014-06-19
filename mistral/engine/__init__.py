@@ -303,7 +303,7 @@ class Engine(object):
 
             db_task = db_api.task_create(workbook_name, execution_id, {
                 "name": task.name,
-                "requires": task.requires,
+                "requires": task.get_requires(),
                 "task_spec": task.to_dict(),
                 "action_spec": {} if not action_spec
                 else action_spec.to_dict(),

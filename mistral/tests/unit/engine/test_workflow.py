@@ -31,7 +31,7 @@ TASKS = [
         'state': states.SUCCESS
     },
     {
-        'requires': {'create-vms': ''},
+        'requires': ['create-vms'],
         'name': 'attach-volume',
         'state': states.IDLE
     }
