@@ -35,12 +35,12 @@ def create_trust(workbook):
     trust = client.trusts.create(trustor_user=client.user_id,
                                  trustee_user=trustee_id,
                                  impersonation=True,
-                                 role_names=ctx['roles'],
-                                 project=ctx['project_id'])
+                                 role_names=ctx.roles,
+                                 project=ctx.project_id)
 
     return db_api.workbook_update(workbook['name'],
                                   {'trust_id': trust.id,
-                                   'project_id': ctx['project_id']})
+                                   'project_id': ctx.project_id})
 
 
 def create_context(workbook):

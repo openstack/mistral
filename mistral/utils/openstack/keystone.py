@@ -25,9 +25,9 @@ def client():
     ctx = context.ctx()
     auth_url = CONF.keystone_authtoken.auth_uri
 
-    keystone = ks_client.Client(username=ctx['user_name'],
-                                token=ctx['auth_token'],
-                                tenant_id=ctx['project_id'],
+    keystone = ks_client.Client(username=ctx.user_name,
+                                token=ctx.auth_token,
+                                tenant_id=ctx.project_id,
                                 auth_url=auth_url)
     keystone.management_url = auth_url
 

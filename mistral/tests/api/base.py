@@ -14,12 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo.config import cfg
 import pecan
 import pecan.testing
 from webtest import app as webtest_app
 
 from mistral.tests import base
+
 
 # Disable authentication for functional tests.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
@@ -46,6 +48,12 @@ class FunctionalTest(base.DbTestCase):
                 'auth_enable': False
             }
         })
+
+        # make sure the api get the correct context.
+        self.patch_ctx = mock.patch('mistral.context.context_from_headers')
+        self.mock_ctx = self.patch_ctx.start()
+        self.mock_ctx.return_value = self.ctx
+        self.addCleanup(self.patch_ctx.stop)
 
     def tearDown(self):
         super(FunctionalTest, self).tearDown()
