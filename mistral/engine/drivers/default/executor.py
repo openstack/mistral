@@ -83,7 +83,7 @@ class DefaultExecutor(executor.Executor):
         """Handle the execution of the workbook task.
 
         :param cntx: a request context dict
-        :type cntx: dict
+        :type cntx: MistralContext
         :param kwargs: a dict of method arguments
         :type kwargs: dict
         """

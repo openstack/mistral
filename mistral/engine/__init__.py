@@ -26,6 +26,7 @@ from stevedore import driver
 # the submodules are referenced.
 cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 
+from mistral import context as auth_context
 from mistral.db import api as db_api
 from mistral import dsl_parser as parser
 from mistral.engine import data_flow
@@ -71,7 +72,7 @@ class Engine(object):
         and target task.
 
         :param cntx: a request context dict
-        :type cntx: dict
+        :type cntx: MistralContext
         :param kwargs: a dict of method arguments
         :type kwargs: dict
         :return: Workflow execution.
@@ -387,7 +388,8 @@ class Engine(object):
         retries, break_on, delay_sec = task_spec.get_retry_parameters()
         if delay_sec > 0:
             # Run the task after the specified delay.
-            eventlet.spawn_after(delay_sec, run_delayed_task)
+            eventlet.spawn_after(delay_sec, run_delayed_task,
+                                 context=auth_context.ctx())
         else:
             LOG.warn("No delay specified for task(id=%s) name=%s. Not "
                      "scheduling for execution." % (task['id'], task['name']))
@@ -402,8 +404,11 @@ class EngineClient(object):
         :param transport: a messaging transport handle
         :type transport: Transport
         """
+        serializer = auth_context.RpcContextSerializer(
+            auth_context.JsonPayloadSerializer())
         target = messaging.Target(topic=cfg.CONF.engine.topic)
-        self._client = messaging.RPCClient(transport, target)
+        self._client = messaging.RPCClient(transport, target,
+                                           serializer=serializer)
 
     def start_workflow_execution(self, workbook_name, task_name, context=None):
         """Starts a workflow execution based on the specified workbook name
@@ -414,8 +419,7 @@ class EngineClient(object):
         :param context: Execution context which defines a workflow input
         :return: Workflow execution.
         """
-        # TODO(m4dcoder): refactor auth context
-        cntx = {}
+        cntx = auth_context.ctx()
         kwargs = {'workbook_name': workbook_name,
                   'task_name': task_name,
                   'context': context}
@@ -465,8 +469,7 @@ class EngineClient(object):
         :param execution_id: Workflow execution id.
         :return: Current workflow state.
         """
-        # TODO(m4dcoder): refactor auth context
-        cntx = {}
+        cntx = auth_context.ctx()
         kwargs = {'workbook_name': workbook_name,
                   'execution_id': execution_id}
         return self._client.call(
@@ -480,8 +483,7 @@ class EngineClient(object):
         :param task_id: Task id.
         :return: Current task state.
         """
-        # TODO(m4dcoder): refactor auth context
-        cntx = {}
+        cntx = auth_context.ctx()
         kwargs = {'workbook_name': workbook_name,
                   'executioin_id': execution_id,
                   'task_id': task_id}
