@@ -153,8 +153,6 @@ class Engine(object):
         :type kwargs: dict
         :return: Task.
         """
-        workbook_name = kwargs.get('workbook_name')
-        execution_id = kwargs.get('execution_id')
         task_id = kwargs.get('task_id')
         state = kwargs.get('state')
         result = kwargs.get('result')
@@ -162,9 +160,9 @@ class Engine(object):
         db_api.start_tx()
 
         try:
-            workbook = self._get_workbook(workbook_name)
             # TODO(rakhmerov): validate state transition
             task = db_api.task_get(task_id)
+            workbook = self._get_workbook(task['workbook_name'])
 
             wf_trace_msg = "Task '%s' [%s -> %s" % \
                            (task['name'], task['state'], state)
@@ -179,24 +177,24 @@ class Engine(object):
             task, outbound_context = self._update_task(workbook, task, state,
                                                        task_output)
 
-            execution = db_api.execution_get(execution_id)
+            execution = db_api.execution_get(task['execution_id'])
 
             self._create_next_tasks(task, workbook)
 
             # Determine what tasks need to be started.
-            tasks = db_api.tasks_get(workbook_name=workbook_name,
-                                     execution_id=execution_id)
+            tasks = db_api.tasks_get(workbook_name=task['workbook_name'],
+                                     execution_id=task['execution_id'])
 
             new_exec_state = self._determine_execution_state(execution, tasks)
 
             if execution['state'] != new_exec_state:
                 wf_trace_msg = \
                     "Execution '%s' [%s -> %s]" % \
-                    (execution_id, execution['state'], new_exec_state)
+                    (execution['id'], execution['state'], new_exec_state)
                 WORKFLOW_TRACE.info(wf_trace_msg)
 
                 execution = \
-                    db_api.execution_update(execution_id, {
+                    db_api.execution_update(execution['id'], {
                         "state": new_exec_state
                     })
 
@@ -436,8 +434,7 @@ class EngineClient(object):
                   'execution_id': execution_id}
         return self._client.call(cntx, 'stop_workflow_execution', **kwargs)
 
-    def convey_task_result(self, workbook_name, execution_id,
-                           task_id, state, result):
+    def convey_task_result(self, task_id, state, result):
         """Conveys task result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
@@ -449,8 +446,6 @@ class EngineClient(object):
         it possibly needs to move the workflow on, i.e. run other workflow
         tasks for which all dependencies are satisfied.
 
-        :param workbook_name: Workbook name.
-        :param execution_id: Workflow execution id.
         :param task_id: Task id.
         :param state: New task state.
         :param result: Task result data.
@@ -458,9 +453,7 @@ class EngineClient(object):
         """
         # TODO(m4dcoder): refactor auth context
         cntx = {}
-        kwargs = {'workbook_name': workbook_name,
-                  'execution_id': execution_id,
-                  'task_id': task_id,
+        kwargs = {'task_id': task_id,
                   'state': state,
                   'result': result}
         return self._client.call(cntx, 'convey_task_result', **kwargs)

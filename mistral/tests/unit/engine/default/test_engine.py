@@ -62,8 +62,7 @@ class TestEngine(base.EngineTestCase):
         task = db_api.tasks_get(workbook_name=WB_NAME,
                                 execution_id=execution['id'])[0]
 
-        self.engine.convey_task_result(WB_NAME, execution['id'], task['id'],
-                                       states.SUCCESS, None)
+        self.engine.convey_task_result(task['id'], states.SUCCESS, None)
 
         task = db_api.tasks_get(workbook_name=WB_NAME,
                                 execution_id=execution['id'])[0]
@@ -90,8 +89,7 @@ class TestEngine(base.EngineTestCase):
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
                                  execution_id=execution['id'])
 
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[0]['id'],
+        self.engine.convey_task_result(tasks[0]['id'],
                                        states.SUCCESS, None)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -108,8 +106,7 @@ class TestEngine(base.EngineTestCase):
                          self.engine.get_workflow_execution_state(
                              WB_NAME, execution['id']))
 
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[1]['id'],
+        self.engine.convey_task_result(tasks[1]['id'],
                                        states.SUCCESS, None)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -167,8 +164,7 @@ class TestEngine(base.EngineTestCase):
                                         state=states.RUNNING)
 
         # Make 'start-task' successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task['id'],
+        self.engine.convey_task_result(task['id'],
                                        states.SUCCESS, None)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -185,8 +181,7 @@ class TestEngine(base.EngineTestCase):
                                  state=states.RUNNING)
 
         # Make 'task-one' tasks successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task1['id'],
+        self.engine.convey_task_result(task1['id'],
                                        states.SUCCESS, None)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -197,11 +192,9 @@ class TestEngine(base.EngineTestCase):
                                               state=states.RUNNING)
 
         # Make both 'task-two' task successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks_2[0]['id'],
+        self.engine.convey_task_result(tasks_2[0]['id'],
                                        states.SUCCESS, None)
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks_2[1]['id'],
+        self.engine.convey_task_result(tasks_2[1]['id'],
                                        states.SUCCESS, None)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -234,8 +227,7 @@ class TestEngine(base.EngineTestCase):
                                               state=states.RUNNING)
 
         # Make 'start-task' task fail.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       start_task['id'],
+        self.engine.convey_task_result(start_task['id'],
                                        states.ERROR, CONTEXT)
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
                                  execution_id=execution['id'])
@@ -252,14 +244,11 @@ class TestEngine(base.EngineTestCase):
                                          state=states.RUNNING)
 
         # Make all running tasks successful.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task2['id'],
+        self.engine.convey_task_result(task2['id'],
                                        states.SUCCESS, None)
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task3['id'],
+        self.engine.convey_task_result(task3['id'],
                                        states.SUCCESS, None)
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       task4['id'],
+        self.engine.convey_task_result(task4['id'],
                                        states.SUCCESS, None)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,

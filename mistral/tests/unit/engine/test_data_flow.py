@@ -453,8 +453,7 @@ class DataFlowTest(base.EngineTestCase):
             self.assertEqual(TOKEN, context['auth_token'])
             self.assertEqual(USER_ID, context["user_id"])
 
-            self.engine.convey_task_result(workbook['name'], execution['id'],
-                                           task['id'], states.SUCCESS, {})
+            self.engine.convey_task_result(task['id'], states.SUCCESS, {})
 
             execution = db_api.execution_get(execution['id'])
 
