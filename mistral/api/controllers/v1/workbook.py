@@ -57,7 +57,7 @@ class Workbooks(resource.Resource):
 class WorkbooksController(rest.RestController):
     definition = workbook_definition.WorkbookDefinitionController()
     listeners = listener.ListenersController()
-    executions = execution.ExecutionsController()
+    executions = execution.WorkbookExecutionsController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text)

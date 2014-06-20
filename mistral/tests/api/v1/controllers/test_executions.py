@@ -65,8 +65,16 @@ def canonize(json_dict):
 class TestExecutionsController(base.FunctionalTest):
     @mock.patch.object(db_api, 'execution_get',
                        mock.MagicMock(return_value=EXECS[0]))
-    def test_get(self):
+    def test_workbook_get(self):
         resp = self.app.get('/v1/workbooks/my_workbook/executions/123')
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertDictEqual(EXECS[0], canonize(resp.json))
+
+    @mock.patch.object(db_api, 'execution_get',
+                       mock.MagicMock(return_value=EXECS[0]))
+    def test_root_get(self):
+        resp = self.app.get('/v1/executions/123')
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(EXECS[0], canonize(resp.json))
@@ -80,8 +88,17 @@ class TestExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, 'execution_update',
                        mock.MagicMock(return_value=UPDATED_EXEC))
-    def test_put(self):
+    def test_workbook_put(self):
         resp = self.app.put_json('/v1/workbooks/my_workbook/executions/123',
+                                 dict(state='STOPPED'))
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertDictEqual(UPDATED_EXEC, canonize(resp.json))
+
+    @mock.patch.object(db_api, 'execution_update',
+                       mock.MagicMock(return_value=UPDATED_EXEC))
+    def test_root_put(self):
+        resp = self.app.put_json('/v1/executions/123',
                                  dict(state='STOPPED'))
 
         self.assertEqual(resp.status_int, 200)
@@ -137,8 +154,15 @@ class TestExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, 'execution_delete',
                        mock.MagicMock(return_value=None))
-    def test_delete(self):
+    def test_workbook_delete(self):
         resp = self.app.delete('/v1/workbooks/my_workbook/executions/123')
+
+        self.assertEqual(resp.status_int, 204)
+
+    @mock.patch.object(db_api, 'execution_delete',
+                       mock.MagicMock(return_value=None))
+    def test_root_delete(self):
+        resp = self.app.delete('/v1/executions/123')
 
         self.assertEqual(resp.status_int, 204)
 
@@ -154,8 +178,20 @@ class TestExecutionsController(base.FunctionalTest):
                        mock.MagicMock(return_value=EXECS))
     @mock.patch.object(db_api, 'workbook_get',
                        mock.MagicMock(return_value={'name': 'my_workbook'}))
-    def test_get_all(self):
+    def test_workbook_get_all(self):
         resp = self.app.get('/v1/workbooks/my_workbook/executions')
+
+        self.assertEqual(resp.status_int, 200)
+
+        self.assertEqual(len(resp.json), 1)
+        self.assertDictEqual(EXECS[0], canonize(resp.json['executions'][0]))
+
+    @mock.patch.object(db_api, 'executions_get',
+                       mock.MagicMock(return_value=EXECS))
+    @mock.patch.object(db_api, 'workbook_get',
+                       mock.MagicMock(return_value={'name': 'my_workbook'}))
+    def test_root_get_all(self):
+        resp = self.app.get('/v1/executions')
 
         self.assertEqual(resp.status_int, 200)
 

@@ -83,7 +83,28 @@ class Executions(resource.Resource):
 
 class ExecutionsController(rest.RestController):
 
-    tasks = task.TasksController()
+    def _get(self, id):
+        values = db_api.execution_get(id)
+        return Execution.from_dict(values)
+
+    def _put(self, id, execution):
+        values = db_api.execution_update(id, execution.to_dict())
+
+        return Execution.from_dict(values)
+
+    def _delete(self, id):
+        db_api.execution_delete(id)
+
+    def _get_all(self, **kwargs):
+        executions = [Execution.from_dict(values) for values
+                      in db_api.executions_get(**kwargs)]
+
+        return Executions(executions=executions)
+
+
+class WorkbookExecutionsController(ExecutionsController):
+
+    tasks = task.WorkbookTasksController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text)
@@ -91,8 +112,7 @@ class ExecutionsController(rest.RestController):
         """Return the specified Execution."""
         LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-        values = db_api.execution_get(id)
-        return Execution.from_dict(values)
+        return self._get(id)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text, body=Execution)
@@ -100,11 +120,7 @@ class ExecutionsController(rest.RestController):
         """Update the specified Execution."""
         LOG.debug("Update execution [workbook_name=%s, id=%s, execution=%s]" %
                   (workbook_name, id, execution))
-
-        values = db_api.execution_update(id,
-                                         execution.to_dict())
-
-        return Execution.from_dict(values)
+        return self._put(id, execution)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution,
@@ -133,7 +149,7 @@ class ExecutionsController(rest.RestController):
         """Delete the specified Execution."""
         LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-        db_api.execution_delete(id)
+        return self._delete(id)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
     def get_all(self, workbook_name):
@@ -141,9 +157,38 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Fetch executions [workbook_name=%s]" % workbook_name)
 
         if db_api.workbook_get(workbook_name):
-            executions = [
-                Execution.from_dict(values) for values
-                in db_api.executions_get(workbook_name=workbook_name)
-            ]
+            return self._get_all(workbook_name=workbook_name)
 
-            return Executions(executions=executions)
+
+class RootExecutionsController(ExecutionsController):
+
+    tasks = task.ExecutionTasksController()
+
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose(Execution, wtypes.text)
+    def get(self, id):
+        """Return the specified Execution."""
+        LOG.debug("Fetch execution [id=%s]" % id)
+        return self._get(id)
+
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution)
+    def put(self, id, execution):
+        """Update the specified Execution."""
+        LOG.debug("Update execution [id=%s, execution=%s]" %
+                  (id, execution))
+        return self._put(id, execution)
+
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
+    def delete(self, id):
+        """Delete the specified Execution."""
+        LOG.debug("Delete execution [id=%s]" % id)
+        return self._delete(id)
+
+    @wsme_pecan.wsexpose(Executions)
+    def get_all(self):
+        """Return all Executions."""
+        LOG.debug("Fetch executions")
+
+        return self._get_all()
