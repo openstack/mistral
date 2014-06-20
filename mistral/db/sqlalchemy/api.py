@@ -483,6 +483,4 @@ def tasks_get(**kwargs):
 
 def _tasks_get(**kwargs):
     query = model_query(m.Task)
-    result = query.filter_by(**kwargs).all()
-
-    return result
+    return query.filter_by(**kwargs).all()

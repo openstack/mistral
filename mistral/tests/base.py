@@ -139,15 +139,12 @@ class EngineTestCase(DbTestCase):
         self.engine = engine.EngineClient(self.transport)
 
     @classmethod
-    def mock_task_result(cls, workbook_name, execution_id,
-                         task_id, state, result):
+    def mock_task_result(cls, task_id, state, result):
         """Mock the engine convey_task_results to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
         cntx = {}
-        kwargs = {'workbook_name': workbook_name,
-                  'execution_id': execution_id,
-                  'task_id': task_id,
+        kwargs = {'task_id': task_id,
                   'state': state,
                   'result': result}
         return cls.backend.convey_task_result(cntx, **kwargs)

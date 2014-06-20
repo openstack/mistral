@@ -107,9 +107,7 @@ class TasksController(rest.RestController):
         if db_api.task_get(id):
             # TODO(rakhmerov): pass task result once it's implemented
             engine = pecan.request.context['engine']
-            values = engine.convey_task_result(workbook_name,
-                                               execution_id,
-                                               id,
+            values = engine.convey_task_result(id,
                                                task.state, None)
 
             return Task.from_dict(values)

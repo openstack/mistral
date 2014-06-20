@@ -49,17 +49,13 @@ class DefaultExecutor(executor.Executor):
             except exc.ActionException:
                 state, result = states.ERROR, None
 
-            self.engine.convey_task_result(task['workbook_name'],
-                                           task['execution_id'],
-                                           task['id'],
+            self.engine.convey_task_result(task['id'],
                                            state, result)
         else:
             try:
                 action.run()
             except exc.ActionException:
-                self.engine.convey_task_result(task['workbook_name'],
-                                               task['execution_id'],
-                                               task['id'],
+                self.engine.convey_task_result(task['id'],
                                                states.ERROR, None)
 
     def _handle_task_error(self, task, exception):

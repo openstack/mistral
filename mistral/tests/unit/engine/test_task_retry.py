@@ -80,8 +80,7 @@ class TaskRetryTest(base.EngineTestCase):
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
                                  execution_id=execution['id'])
 
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[0]['id'], states.SUCCESS,
+        self.engine.convey_task_result(tasks[0]['id'], states.SUCCESS,
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
@@ -103,8 +102,7 @@ class TaskRetryTest(base.EngineTestCase):
         retry_count, _, __ = task_spec.get_retry_parameters()
 
         for x in xrange(0, retry_count + 1):
-            self.engine.convey_task_result(WB_NAME, execution['id'],
-                                           tasks[0]['id'], states.ERROR,
+            self.engine.convey_task_result(tasks[0]['id'], states.ERROR,
                                            {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
@@ -131,12 +129,10 @@ class TaskRetryTest(base.EngineTestCase):
         retry_count, _, __ = task_spec.get_retry_parameters()
 
         for x in xrange(0, retry_count / 2):
-            self.engine.convey_task_result(WB_NAME, execution['id'],
-                                           tasks[0]['id'], states.ERROR,
+            self.engine.convey_task_result(tasks[0]['id'], states.ERROR,
                                            {'output': 'result'})
 
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[0]['id'], states.SUCCESS,
+        self.engine.convey_task_result(tasks[0]['id'], states.SUCCESS,
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
@@ -164,8 +160,7 @@ class TaskRetryTest(base.EngineTestCase):
         retry_count, _, delay = task_spec.get_retry_parameters()
 
         for x in xrange(0, retry_count):
-            self.engine.convey_task_result(WB_NAME, execution['id'],
-                                           tasks[0]['id'], states.ERROR,
+            self.engine.convey_task_result(tasks[0]['id'], states.ERROR,
                                            {'output': 'result'})
 
             tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -178,8 +173,7 @@ class TaskRetryTest(base.EngineTestCase):
             eventlet.sleep(delay * 2)
 
         # Convey final result outside the loop.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[0]['id'], states.ERROR,
+        self.engine.convey_task_result(tasks[0]['id'], states.ERROR,
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
@@ -208,8 +202,7 @@ class TaskRetryTest(base.EngineTestCase):
 
         self._assert_single_item(tasks, name=task_name_1)
 
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[0]['id'], states.SUCCESS,
+        self.engine.convey_task_result(tasks[0]['id'], states.SUCCESS,
                                        {'output': 'result'})
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -221,8 +214,7 @@ class TaskRetryTest(base.EngineTestCase):
         retry_count, _, delay = task_spec.get_retry_parameters()
 
         for x in xrange(0, retry_count):
-            self.engine.convey_task_result(WB_NAME, execution['id'],
-                                           tasks[1]['id'], states.ERROR,
+            self.engine.convey_task_result(tasks[1]['id'], states.ERROR,
                                            {'output': 'result'})
 
             tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -235,8 +227,7 @@ class TaskRetryTest(base.EngineTestCase):
             eventlet.sleep(delay * 2)
 
         # Convey final result outside the loop.
-        self.engine.convey_task_result(WB_NAME, execution['id'],
-                                       tasks[1]['id'], states.ERROR,
+        self.engine.convey_task_result(tasks[1]['id'], states.ERROR,
                                        {'output': 'result'})
 
         # TODO(rakhmerov): It's not stable, need to avoid race condition.
