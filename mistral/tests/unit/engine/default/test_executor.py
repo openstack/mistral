@@ -79,7 +79,7 @@ SAMPLE_TASK = {
     'task_spec': {
         'action': 'MyRest.my-action',
         'name': TASK_NAME},
-    'requires': {},
+    'requires': [],
     'state': states.IDLE}
 
 SAMPLE_CONTEXT = {

@@ -42,7 +42,22 @@ def find_workflow_tasks(workbook, task_name):
 
 def find_resolved_tasks(tasks):
     # We need to analyse graph and see which tasks are ready to start
-    return _get_resolved_tasks(tasks)
+    resolved_tasks = []
+    delayed_tasks = []
+    allows = []
+    for t in tasks:
+        if t['state'] == states.SUCCESS:
+            allows += [t['name']]
+    allow_set = set(allows)
+    for t in tasks:
+        deps = t.get('requires', [])
+        if len(set(deps) - allow_set) == 0:
+        # all required tasks, if any, are SUCCESS
+            if t['state'] == states.IDLE:
+                resolved_tasks.append(t)
+            elif t['state'] == states.DELAYED:
+                delayed_tasks.append(t)
+    return resolved_tasks, delayed_tasks
 
 
 def _get_checked_tasks(target_tasks):
@@ -134,21 +149,3 @@ def _update_dependencies(tasks, graph):
     for task in tasks:
         for dep in _get_dependency_tasks(tasks, task):
             graph.add_edge(dep, task)
-
-
-def _get_resolved_tasks(tasks):
-    resolved_tasks = []
-    delayed_tasks = []
-    allows = []
-    for t in tasks:
-        if t['state'] == states.SUCCESS:
-            allows += [t['name']]
-    allow_set = set(allows)
-    for t in tasks:
-        deps = t.get('requires', {}).keys()
-        if len(set(deps) - allow_set) == 0:
-            if t['state'] == states.IDLE:
-                resolved_tasks.append(t)
-            elif t['state'] == states.DELAYED:
-                delayed_tasks.append(t)
-    return resolved_tasks, delayed_tasks

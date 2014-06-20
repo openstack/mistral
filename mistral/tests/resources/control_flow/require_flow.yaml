@@ -45,7 +45,7 @@ Workflow:
         flavor_id: 42
 
     attach-volumes:
-      requires: attach-volumes
+      requires: create-vms
       action: MyRest.attach-volume
       parameters:
         size: 1234
@@ -58,7 +58,8 @@ Workflow:
         server_id: 123
 
     backup-vms:
-      requires: [create-vms]
+      requires: 
+        - create-vms
       action: MyRest.backup-vm
       parameters:
         server_id: 123
