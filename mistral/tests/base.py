@@ -14,7 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import os
 import pkg_resources as pkg
 import sys
 import tempfile
@@ -62,16 +61,6 @@ def get_fake_transport():
 
 
 class BaseTest(base.BaseTestCase):
-    def setUp(self):
-        super(BaseTest, self).setUp()
-
-        # TODO(everyone): add whatever is needed for all Mistral tests in here
-
-    def tearDown(self):
-        super(BaseTest, self).tearDown()
-
-        # TODO(everyone): add whatever is needed for all Mistral tests in here
-
     def assertListEqual(self, l1, l2):
         if tuple(sys.version_info)[0:2] < (2, 7):
             # for python 2.6 compatibility
@@ -116,10 +105,11 @@ class BaseTest(base.BaseTestCase):
 class DbTestCase(BaseTest):
     def setUp(self):
         super(DbTestCase, self).setUp()
-        self.db_fd, self.db_path = tempfile.mkstemp()
+        _db_fd, self.db_path = tempfile.mkstemp()
         cfg.CONF.set_default('connection', 'sqlite:///' + self.db_path,
                              group='database')
         db_api.setup_db()
+        self.addCleanup(db_api.drop_db)
 
         self.ctx = auth_context.MistralContext(user_id='1-2-3-4',
                                                project_id='5-6-7-8',
@@ -128,12 +118,6 @@ class DbTestCase(BaseTest):
                                                is_admin=False)
         auth_context.set_ctx(self.ctx)
         self.addCleanup(auth_context.set_ctx, None)
-
-    def tearDown(self):
-        super(DbTestCase, self).tearDown()
-        db_api.drop_db()
-        os.close(self.db_fd)
-        os.unlink(self.db_path)
 
     def is_db_session_open(self):
         return db_api._get_thread_local_session() is not None
