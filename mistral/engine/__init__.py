@@ -130,10 +130,9 @@ class Engine(object):
         :type kwargs: dict
         :return: Workflow execution.
         """
-        workbook_name = kwargs.get('workbook_name')
         execution_id = kwargs.get('execution_id')
 
-        return db_api.execution_update(workbook_name, execution_id,
+        return db_api.execution_update(execution_id,
                                        {"state": states.STOPPED})
 
     def convey_task_result(self, cntx, **kwargs):
@@ -165,7 +164,7 @@ class Engine(object):
         try:
             workbook = self._get_workbook(workbook_name)
             # TODO(rakhmerov): validate state transition
-            task = db_api.task_get(workbook_name, execution_id, task_id)
+            task = db_api.task_get(task_id)
 
             wf_trace_msg = "Task '%s' [%s -> %s" % \
                            (task['name'], task['state'], state)
@@ -180,12 +179,13 @@ class Engine(object):
             task, outbound_context = self._update_task(workbook, task, state,
                                                        task_output)
 
-            execution = db_api.execution_get(workbook_name, execution_id)
+            execution = db_api.execution_get(execution_id)
 
             self._create_next_tasks(task, workbook)
 
             # Determine what tasks need to be started.
-            tasks = db_api.tasks_get(workbook_name, execution_id)
+            tasks = db_api.tasks_get(workbook_name=workbook_name,
+                                     execution_id=execution_id)
 
             new_exec_state = self._determine_execution_state(execution, tasks)
 
@@ -196,7 +196,7 @@ class Engine(object):
                 WORKFLOW_TRACE.info(wf_trace_msg)
 
                 execution = \
-                    db_api.execution_update(workbook_name, execution_id, {
+                    db_api.execution_update(execution_id, {
                         "state": new_exec_state
                     })
 
@@ -240,7 +240,7 @@ class Engine(object):
         workbook_name = kwargs.get('workbook_name')
         execution_id = kwargs.get('execution_id')
 
-        execution = db_api.execution_get(workbook_name, execution_id)
+        execution = db_api.execution_get(execution_id)
 
         if not execution:
             raise exc.EngineException("Workflow execution not found "
@@ -258,11 +258,9 @@ class Engine(object):
         :type kwargs: dict
         :return: Current task state.
         """
-        workbook_name = kwargs.get('workbook_name')
-        execution_id = kwargs.get('execution_id')
         task_id = kwargs.get('task_id')
 
-        task = db_api.task_get(workbook_name, execution_id, task_id)
+        task = db_api.task_get(task_id)
 
         if not task:
             raise exc.EngineException("Task not found.")
@@ -301,7 +299,7 @@ class Engine(object):
             state, task_runtime_context = retry.get_task_runtime(task)
             action_spec = workbook.get_action(task.get_full_action_name())
 
-            db_task = db_api.task_create(workbook_name, execution_id, {
+            db_task = db_api.task_create(execution_id, {
                 "name": task.name,
                 "requires": task.get_requires(),
                 "task_spec": task.to_dict(),
@@ -309,7 +307,8 @@ class Engine(object):
                 else action_spec.to_dict(),
                 "state": state,
                 "tags": task.get_property("tags", None),
-                "task_runtime_context": task_runtime_context
+                "task_runtime_context": task_runtime_context,
+                "workbook_name": workbook_name
             })
 
             tasks.append(db_task)
@@ -338,8 +337,6 @@ class Engine(object):
         :return: task, outbound_context. task is the updated task and
         computed outbound context.
         """
-        workbook_name = task['workbook_name']
-        execution_id = task['execution_id']
         task_spec = workbook.tasks.get(task["name"])
         task_runtime_context = task["task_runtime_context"]
 
@@ -352,8 +349,7 @@ class Engine(object):
         update_values = {"state": state,
                          "output": task_output,
                          "task_runtime_context": task_runtime_context}
-        task = db_api.task_update(workbook_name, execution_id, task["id"],
-                                  update_values)
+        task = db_api.task_update(task["id"], update_values)
 
         return task, outbound_context
 
@@ -369,9 +365,8 @@ class Engine(object):
             """
             db_api.start_tx()
             try:
-                workbook_name = task['workbook_name']
                 execution_id = task['execution_id']
-                execution = db_api.execution_get(workbook_name, execution_id)
+                execution = db_api.execution_get(execution_id)
 
                 # Change state from DELAYED to IDLE to unblock processing.
 
@@ -379,9 +374,7 @@ class Engine(object):
                                     % (task['name'],
                                        task['state'], states.IDLE))
 
-                db_task = db_api.task_update(workbook_name,
-                                             execution_id,
-                                             task['id'],
+                db_task = db_api.task_update(task['id'],
                                              {"state": states.IDLE})
                 task_to_start = [db_task]
                 data_flow.prepare_tasks(task_to_start, outbound_context)

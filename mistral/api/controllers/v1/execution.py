@@ -91,7 +91,7 @@ class ExecutionsController(rest.RestController):
         """Return the specified Execution."""
         LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-        values = db_api.execution_get(workbook_name, id)
+        values = db_api.execution_get(id)
         return Execution.from_dict(values)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -101,8 +101,7 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Update execution [workbook_name=%s, id=%s, execution=%s]" %
                   (workbook_name, id, execution))
 
-        values = db_api.execution_update(workbook_name,
-                                         id,
+        values = db_api.execution_update(id,
                                          execution.to_dict())
 
         return Execution.from_dict(values)
@@ -134,7 +133,7 @@ class ExecutionsController(rest.RestController):
         """Delete the specified Execution."""
         LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
-        db_api.execution_delete(workbook_name, id)
+        db_api.execution_delete(id)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
     def get_all(self, workbook_name):
@@ -142,7 +141,9 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Fetch executions [workbook_name=%s]" % workbook_name)
 
         if db_api.workbook_get(workbook_name):
-            executions = [Execution.from_dict(values)
-                          for values in db_api.executions_get(workbook_name)]
+            executions = [
+                Execution.from_dict(values) for values
+                in db_api.executions_get(workbook_name=workbook_name)
+            ]
 
             return Executions(executions=executions)

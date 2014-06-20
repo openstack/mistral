@@ -90,13 +90,13 @@ class DataFlowTest(base.EngineTestCase):
                                                          CTX)
 
         # We have to reread execution to get its latest version.
-        execution = db_api.execution_get(execution['workbook_name'],
-                                         execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
         self.assertDictEqual(CTX, execution['context'])
 
-        tasks = db_api.tasks_get(wb['name'], execution['id'])
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
 
         self.assertEqual(2, len(tasks))
 
@@ -158,13 +158,13 @@ class DataFlowTest(base.EngineTestCase):
                                                          CTX)
 
         # We have to reread execution to get its latest version.
-        execution = db_api.execution_get(execution['workbook_name'],
-                                         execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
         self.assertDictEqual(CTX, execution['context'])
 
-        tasks = db_api.tasks_get(wb['name'], execution['id'])
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
 
         self.assertEqual(3, len(tasks))
 
@@ -260,13 +260,13 @@ class DataFlowTest(base.EngineTestCase):
                                                          CTX)
 
         # We have to reread execution to get its latest version.
-        execution = db_api.execution_get(execution['workbook_name'],
-                                         execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
         self.assertDictEqual(CTX, execution['context'])
 
-        tasks = db_api.tasks_get(wb['name'], execution['id'])
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
 
         self.assertEqual(2, len(tasks))
 
@@ -333,13 +333,13 @@ class DataFlowTest(base.EngineTestCase):
                                                          CTX)
 
         # We have to reread execution to get its latest version.
-        execution = db_api.execution_get(execution['workbook_name'],
-                                         execution['id'])
+        execution = db_api.execution_get(execution['id'])
 
         self.assertEqual(states.SUCCESS, execution['state'])
         self.assertDictEqual(CTX, execution['context'])
 
-        tasks = db_api.tasks_get(wb['name'], execution['id'])
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
 
         self.assertEqual(3, len(tasks))
 
@@ -442,7 +442,8 @@ class DataFlowTest(base.EngineTestCase):
 
             execution = self.engine.start_workflow_execution(workbook['name'],
                                                              task_name, {})
-            tasks = db_api.tasks_get(workbook['name'], execution['id'])
+            tasks = db_api.tasks_get(workbook_name=workbook['name'],
+                                     execution_id=execution['id'])
 
             task = self._assert_single_item(tasks, name=task_name)
 
@@ -455,7 +456,7 @@ class DataFlowTest(base.EngineTestCase):
             self.engine.convey_task_result(workbook['name'], execution['id'],
                                            task['id'], states.SUCCESS, {})
 
-            execution = db_api.execution_get(workbook['name'], execution['id'])
+            execution = db_api.execution_get(execution['id'])
 
             self.assertEqual(states.SUCCESS, execution['state'])
         finally:

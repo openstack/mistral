@@ -174,8 +174,7 @@ class ExecutionTest(test_base.DbTestCase):
                                           EXECUTIONS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                       created['id'])
+        fetched = db_api.execution_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
@@ -184,14 +183,12 @@ class ExecutionTest(test_base.DbTestCase):
                                           EXECUTIONS[0])
         self.assertIsInstance(created, dict)
 
-        updated = db_api.execution_update(EXECUTIONS[0]['workbook_name'],
-                                          created['id'],
+        updated = db_api.execution_update(created['id'],
                                           {'task': 'task10'})
         self.assertIsInstance(updated, dict)
         self.assertEqual('task10', updated['task'])
 
-        fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                       created['id'])
+        fetched = db_api.execution_get(created['id'])
         self.assertDictEqual(updated, fetched)
 
     def test_execution_list(self):
@@ -200,7 +197,7 @@ class ExecutionTest(test_base.DbTestCase):
         created1 = db_api.execution_create(EXECUTIONS[1]['workbook_name'],
                                            EXECUTIONS[1])
 
-        fetched = db_api.executions_get_all(
+        fetched = db_api.executions_get(
             workbook_name=EXECUTIONS[0]['workbook_name'])
 
         self.assertEqual(2, len(fetched))
@@ -212,16 +209,13 @@ class ExecutionTest(test_base.DbTestCase):
                                           EXECUTIONS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.execution_get(EXECUTIONS[0]['workbook_name'],
-                                       created['id'])
+        fetched = db_api.execution_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
-        db_api.execution_delete(EXECUTIONS[0]['workbook_name'],
-                                created['id'])
+        db_api.execution_delete(created['id'])
         self.assertRaises(exc.NotFoundException,
                           db_api.execution_get,
-                          EXECUTIONS[0]['workbook_name'],
                           created['id'])
 
 
@@ -267,44 +261,34 @@ TASKS = [
 
 class TaskTest(test_base.DbTestCase):
     def test_task_create_and_get(self):
-        created = db_api.task_create(TASKS[0]['workbook_name'],
-                                     TASKS[0]['execution_id'],
+        created = db_api.task_create(TASKS[0]['execution_id'],
                                      TASKS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.task_get(TASKS[0]['workbook_name'],
-                                  TASKS[0]['execution_id'],
-                                  created['id'])
+        fetched = db_api.task_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
     def test_task_update(self):
-        created = db_api.task_create(TASKS[0]['workbook_name'],
-                                     TASKS[0]['execution_id'],
+        created = db_api.task_create(TASKS[0]['execution_id'],
                                      TASKS[0])
         self.assertIsInstance(created, dict)
 
-        updated = db_api.task_update(TASKS[0]['workbook_name'],
-                                     TASKS[0]['execution_id'],
-                                     created['id'],
+        updated = db_api.task_update(created['id'],
                                      {'description': 'my new desc'})
         self.assertIsInstance(updated, dict)
         self.assertEqual('my new desc', updated['description'])
 
-        fetched = db_api.task_get(TASKS[0]['workbook_name'],
-                                  TASKS[0]['execution_id'],
-                                  created['id'])
+        fetched = db_api.task_get(created['id'])
         self.assertDictEqual(updated, fetched)
 
     def test_task_list(self):
-        created0 = db_api.task_create(TASKS[0]['workbook_name'],
-                                      TASKS[0]['execution_id'],
+        created0 = db_api.task_create(TASKS[0]['execution_id'],
                                       TASKS[0])
-        created1 = db_api.task_create(TASKS[1]['workbook_name'],
-                                      TASKS[1]['execution_id'],
+        created1 = db_api.task_create(TASKS[1]['execution_id'],
                                       TASKS[1])
 
-        fetched = db_api.tasks_get_all(
+        fetched = db_api.tasks_get(
             workbook_name=TASKS[0]['workbook_name'])
 
         self.assertEqual(2, len(fetched))
@@ -312,22 +296,16 @@ class TaskTest(test_base.DbTestCase):
         self.assertDictEqual(created1, fetched[1])
 
     def test_task_delete(self):
-        created = db_api.task_create(TASKS[0]['workbook_name'],
-                                     TASKS[0]['execution_id'],
+        created = db_api.task_create(TASKS[0]['execution_id'],
                                      TASKS[0])
         self.assertIsInstance(created, dict)
 
-        fetched = db_api.task_get(TASKS[0]['workbook_name'],
-                                  TASKS[0]['execution_id'],
-                                  created['id'])
+        fetched = db_api.task_get(created['id'])
         self.assertIsInstance(fetched, dict)
         self.assertDictEqual(created, fetched)
 
-        db_api.task_delete(TASKS[0]['workbook_name'],
-                           TASKS[0]['execution_id'],
-                           created['id'])
+        db_api.task_delete(created['id'])
         self.assertRaises(exc.NotFoundException, db_api.task_get,
-                          TASKS[0]['workbook_name'], TASKS[0]['execution_id'],
                           created['id'])
 
 

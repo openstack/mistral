@@ -39,9 +39,7 @@ def prepare_tasks(tasks, context):
         task['in_context'] = context
         task['parameters'] = evaluate_task_parameters(task, context)
 
-        db_api.task_update(task['workbook_name'],
-                           task['execution_id'],
-                           task['id'],
+        db_api.task_update(task['id'],
                            {'in_context': task['in_context'],
                             'parameters': task['parameters']})
 
