@@ -405,6 +405,10 @@ def execution_get(workbook_name, execution_id):
     return execution
 
 
+def ensure_execution_exists(workbook_name, execution_id):
+    execution_get(workbook_name, execution_id)
+
+
 @to_dict
 def executions_get_all(**kwargs):
     return _executions_get_all(**kwargs)
