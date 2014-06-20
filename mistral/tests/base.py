@@ -18,14 +18,15 @@ import os
 import pkg_resources as pkg
 import sys
 import tempfile
-import testtools.matchers as ttm
 
 from oslo.config import cfg
 from oslo import messaging
 from oslo.messaging import transport
 from oslotest import base
 from stevedore import driver
+import testtools.matchers as ttm
 
+from mistral import context as auth_context
 from mistral.db.sqlalchemy import api as db_api
 from mistral import engine
 from mistral.engine import executor
@@ -119,6 +120,14 @@ class DbTestCase(BaseTest):
         cfg.CONF.set_default('connection', 'sqlite:///' + self.db_path,
                              group='database')
         db_api.setup_db()
+
+        self.ctx = auth_context.MistralContext(user_id='1-2-3-4',
+                                               project_id='5-6-7-8',
+                                               user_name='test-user',
+                                               project_name='test-project',
+                                               is_admin=False)
+        auth_context.set_ctx(self.ctx)
+        self.addCleanup(auth_context.set_ctx, None)
 
     def tearDown(self):
         super(DbTestCase, self).tearDown()

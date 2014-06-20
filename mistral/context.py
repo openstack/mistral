@@ -125,7 +125,7 @@ def context_from_headers(headers):
 
 class ContextHook(hooks.PecanHook):
     def before(self, state):
-        request_ctx = context_from_headers(state.request.headers).to_dict()
+        request_ctx = context_from_headers(state.request.headers)
         set_ctx(request_ctx)
 
     def after(self, state):
