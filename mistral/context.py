@@ -15,9 +15,11 @@
 #    limitations under the License.
 
 import eventlet
+from oslo import messaging
 from pecan import hooks
 
 from mistral import exceptions as exc
+from mistral.openstack.common import jsonutils
 from mistral.openstack.common import log as logging
 from mistral import utils
 
@@ -121,6 +123,36 @@ def context_from_headers(headers):
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(",")
     )
+
+
+class JsonPayloadSerializer(messaging.NoOpSerializer):
+    @staticmethod
+    def serialize_entity(context, entity):
+        return jsonutils.to_primitive(entity, convert_instances=True)
+
+
+class RpcContextSerializer(messaging.Serializer):
+
+    def __init__(self, base=None):
+        self._base = base or messaging.NoOpSerializer()
+
+    def serialize_entity(self, context, entity):
+        if not self._base:
+            return entity
+        return self._base.serialize_entity(context, entity)
+
+    def deserialize_entity(self, context, entity):
+        if not self._base:
+            return entity
+        return self._base.deserialize_entity(context, entity)
+
+    def serialize_context(self, context):
+        return context.to_dict()
+
+    def deserialize_context(self, context):
+        ctx = MistralContext(**context)
+        set_ctx(ctx)
+        return ctx
 
 
 class ContextHook(hooks.PecanHook):

@@ -40,6 +40,7 @@ from wsgiref import simple_server
 
 from mistral.api import app
 from mistral import config
+from mistral import context
 from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
@@ -49,23 +50,27 @@ LOG = logging.getLogger(__name__)
 
 
 def launch_executor(transport):
+    serializer = context.RpcContextSerializer(context.JsonPayloadSerializer())
     target = messaging.Target(topic=cfg.CONF.executor.topic,
                               server=cfg.CONF.executor.host)
     # Since engine and executor are tightly coupled, use the engine
     # configuration to decide which executor to get.
     endpoints = [executor.get_executor(cfg.CONF.engine.engine, transport)]
     server = messaging.get_rpc_server(
-        transport, target, endpoints, executor='eventlet')
+        transport, target, endpoints, executor='eventlet',
+        serializer=serializer)
     server.start()
     server.wait()
 
 
 def launch_engine(transport):
+    serializer = context.RpcContextSerializer(context.JsonPayloadSerializer())
     target = messaging.Target(topic=cfg.CONF.engine.topic,
                               server=cfg.CONF.engine.host)
     endpoints = [engine.get_engine(cfg.CONF.engine.engine, transport)]
     server = messaging.get_rpc_server(
-        transport, target, endpoints, executor='eventlet')
+        transport, target, endpoints, executor='eventlet',
+        serializer=serializer)
     server.start()
     server.wait()
 

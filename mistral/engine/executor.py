@@ -19,6 +19,7 @@ from oslo import messaging
 import six
 from stevedore import driver
 
+from mistral import context as auth_context
 from mistral import engine
 from mistral.openstack.common import log as logging
 
@@ -57,14 +58,17 @@ class ExecutorClient(object):
         :param transport: a messaging transport handle
         :type transport: Transport
         """
+        serializer = auth_context.RpcContextSerializer(
+            auth_context.JsonPayloadSerializer())
         target = messaging.Target(topic=cfg.CONF.executor.topic)
-        self._client = messaging.RPCClient(transport, target)
+        self._client = messaging.RPCClient(transport, target,
+                                           serializer=serializer)
 
     def handle_task(self, cntx, **kwargs):
         """Send the task request to the Executor for execution.
 
         :param cntx: a request context dict
-        :type cntx: dict
+        :type cntx: MistralContext
         :param kwargs: a dict of method arguments
         :type kwargs: dict
         """

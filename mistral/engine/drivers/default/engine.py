@@ -15,6 +15,7 @@
 from oslo.config import cfg
 from oslo import messaging
 
+from mistral import context as auth_context
 from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
@@ -30,10 +31,8 @@ class DefaultEngine(engine.Engine):
             self.transport = messaging.get_transport(cfg.CONF)
         exctr = executor.ExecutorClient(self.transport)
         for task in tasks:
-            # TODO(m4dcoder): Fill request context argument with auth info
-            context = {}
-            exctr.handle_task(context, task=task)
             LOG.info("Submitted task for execution: '%s'" % task)
+            exctr.handle_task(auth_context.ctx(), task=task)
 
     def _run_tasks(self, tasks):
         # TODO(rakhmerov):
