@@ -28,6 +28,7 @@ from mistral.services import workbooks
 from mistral.utils import rest_utils
 
 LOG = logging.getLogger(__name__)
+SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 
 
 class Workbook(resource.Resource):
@@ -36,6 +37,7 @@ class Workbook(resource.Resource):
     name = wtypes.text
     description = wtypes.text
     tags = [wtypes.text]
+    scope = SCOPE_TYPES
 
     @classmethod
     def sample(cls):
@@ -94,7 +96,11 @@ class WorkbooksController(rest.RestController):
 
     @wsme_pecan.wsexpose(Workbooks)
     def get_all(self):
-        """return all workbooks."""
+        """return all workbooks.
+
+        Where project_id is the same as the requestor or
+        project_id is different but the scope is public.
+        """
         LOG.debug("Fetch workbooks.")
 
         workbooks_list = [Workbook.from_dict(values)

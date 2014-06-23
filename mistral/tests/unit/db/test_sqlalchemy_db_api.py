@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import context as auth_context
 from mistral.db.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import timeutils
@@ -87,7 +88,7 @@ WORKBOOKS = [
         'tags': ['mc'],
         'scope': 'public',
         'updated_at': None,
-        'project_id': '123',
+        'project_id': '1233',
         'trust_id': '1234'
     },
     {
@@ -96,7 +97,7 @@ WORKBOOKS = [
         'description': 'my description',
         'definition': 'empty',
         'tags': ['mc'],
-        'scope': 'public',
+        'scope': 'private',
         'updated_at': None,
         'project_id': '1233',
         'trust_id': '12345'
@@ -146,6 +147,56 @@ class WorkbookTest(test_base.DbTestCase):
         db_api.workbook_delete(created['name'])
         self.assertRaises(exc.NotFoundException,
                           db_api.workbook_get, created['name'])
+
+    def test_workbook_private(self):
+        # create a workbook(scope=private) as under one project
+        # then make sure it's NOT visible for other projects.
+        created1 = db_api.workbook_create(WORKBOOKS[1])
+
+        fetched = db_api.workbooks_get_all()
+
+        self.assertEqual(1, len(fetched))
+        self.assertDictEqual(created1, fetched[0])
+
+        # create a new user.
+        ctx = auth_context.MistralContext(user_id='9-0-44-5',
+                                          project_id='99-88-33',
+                                          user_name='test-user',
+                                          project_name='test-another',
+                                          is_admin=False)
+        auth_context.set_ctx(ctx)
+
+        fetched = db_api.workbooks_get_all()
+        self.assertEqual(0, len(fetched))
+
+    def test_workbook_public(self):
+        # create a workbook(scope=public) as under one project
+        # then make sure it's visible for other projects.
+        created0 = db_api.workbook_create(WORKBOOKS[0])
+
+        fetched = db_api.workbooks_get_all()
+
+        self.assertEqual(1, len(fetched))
+        self.assertDictEqual(created0, fetched[0])
+
+        # assert that the project_id stored is actually the context's
+        # project_id not the one given.
+        self.assertEqual(created0['project_id'], auth_context.ctx().project_id)
+        self.assertNotEqual(WORKBOOKS[0]['project_id'],
+                            auth_context.ctx().project_id)
+
+        # create a new user.
+        ctx = auth_context.MistralContext(user_id='9-0-44-5',
+                                          project_id='99-88-33',
+                                          user_name='test-user',
+                                          project_name='test-another',
+                                          is_admin=False)
+        auth_context.set_ctx(ctx)
+
+        fetched = db_api.workbooks_get_all()
+        self.assertEqual(1, len(fetched))
+        self.assertDictEqual(created0, fetched[0])
+        self.assertEqual('public', created0['scope'])
 
 
 EXECUTIONS = [
