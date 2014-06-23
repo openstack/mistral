@@ -276,11 +276,11 @@ class Engine(object):
         })
 
     @classmethod
-    def _add_variables_to_data_flow_context(cls, context, execution):
+    def _add_variables_to_data_flow_context(cls, df_ctx, execution):
         db_workbook = db_api.workbook_get(execution['workbook_name'])
 
-        data_flow.add_openstack_data_to_context(context, db_workbook)
-        data_flow.add_execution_to_context(context, execution)
+        data_flow.add_openstack_data_to_context(df_ctx, db_workbook)
+        data_flow.add_execution_to_context(df_ctx, execution)
 
     @classmethod
     def _create_next_tasks(cls, task, workbook):
@@ -357,12 +357,21 @@ class Engine(object):
         specification. If no delay is specified this method is a no-op.
         """
 
-        def run_delayed_task():
+        # TODO(rakhmerov): Reavaluate parameter 'context' once it's clear
+        # how to work with trust chains correctly in keystone
+        # (waiting for corresponding changes to be made).
+        def run_delayed_task(context):
             """Runs the delayed task. Performs all the steps required to setup
             a task to run which are not already done. This is mostly code
             copied over from convey_task_result.
+
+            :param context Mistral authentication context inherited from a
+                caller thread.
             """
+            auth_context.set_ctx(context)
+
             db_api.start_tx()
+
             try:
                 execution_id = task['execution_id']
                 execution = db_api.execution_get(execution_id)
@@ -386,6 +395,7 @@ class Engine(object):
 
         task_spec = workbook.tasks.get(task['name'])
         retries, break_on, delay_sec = task_spec.get_retry_parameters()
+
         if delay_sec > 0:
             # Run the task after the specified delay.
             eventlet.spawn_after(delay_sec, run_delayed_task,
@@ -432,8 +442,7 @@ class EngineClient(object):
         :param execution_id: Workflow execution id.
         :return: Workflow execution.
         """
-        # TODO(m4dcoder): refactor auth context
-        cntx = {}
+        cntx = auth_context.ctx()
         kwargs = {'workbook_name': workbook_name,
                   'execution_id': execution_id}
         return self._client.call(cntx, 'stop_workflow_execution', **kwargs)
@@ -455,8 +464,7 @@ class EngineClient(object):
         :param result: Task result data.
         :return: Task.
         """
-        # TODO(m4dcoder): refactor auth context
-        cntx = {}
+        cntx = auth_context.ctx()
         kwargs = {'task_id': task_id,
                   'state': state,
                   'result': result}
