@@ -30,6 +30,11 @@ WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 class DefaultExecutor(executor.Executor):
 
+    def _log_action_exception(self, message, task, exc):
+        LOG.exception("%s [task_id=%s, action='%s', action_spec='%s']\n %s" %
+                      (message, task['id'], task['task_spec']['action'],
+                      task['action_spec'], exc))
+
     def _do_task_action(self, task):
         """Executes the action defined by the task and return result.
 
@@ -37,35 +42,39 @@ class DefaultExecutor(executor.Executor):
         :type task: dict
         """
         LOG.info("Starting task action [task_id=%s, "
-                 "action='%s', action_spec='%s'" %
+                 "action='%s', action_spec='%s']" %
                  (task['id'], task['task_spec']['action'],
                   task['action_spec']))
 
         action = a_f.create_action(task)
 
+        #TODO(dzimine): on failure, convey failure details back
+
         if action.is_sync():
             try:
                 state, result = states.SUCCESS, action.run()
-            except exc.ActionException:
+            except exc.ActionException as ex:
+                self._log_action_exception("Action failed", task, ex)
                 state, result = states.ERROR, None
 
-            self.engine.convey_task_result(task['id'],
-                                           state, result)
+            self.engine.convey_task_result(task['id'], state, result)
         else:
             try:
                 action.run()
-            except exc.ActionException:
-                self.engine.convey_task_result(task['id'],
-                                               states.ERROR, None)
+            except exc.ActionException as ex:
+                self._log_action_exception("Action failed", task, ex)
+                self.engine.convey_task_result(task['id'], states.ERROR, None)
 
     def _handle_task_error(self, task, exception):
-        """Handle exception from the task execution.
+        """Handle unexpected exception from the task execution.
 
         :param task: the task corresponding to the exception
         :type task: dict
         :param exception: an exception thrown during the execution of the task
         :type exception: Exception
         """
+        #TODO(dzimine): why exception is a parameter here?
+        #TODO(dzimine): convey exception details to end user (why task failed?)
         try:
             db_api.start_tx()
             try:
@@ -76,8 +85,8 @@ class DefaultExecutor(executor.Executor):
                 db_api.commit_tx()
             finally:
                 db_api.end_tx()
-        except Exception as e:
-            LOG.exception(e)
+        except Exception as ex:
+            LOG.exception(ex)
 
     def handle_task(self, cntx, **kwargs):
         """Handle the execution of the workbook task.
@@ -116,6 +125,7 @@ class DefaultExecutor(executor.Executor):
                                {'state': states.RUNNING})
 
             self._do_task_action(db_task)
-        except Exception as e:
-            LOG.exception(e)
-            self._handle_task_error(task, e)
+        except Exception as ex:
+            self._log_action_exception("Unexpected exception while trying "
+                                       "to execute action", task, ex)
+            self._handle_task_error(task, ex)
