@@ -222,8 +222,8 @@ class ActionFactoryTest(base.BaseTest):
                 'project_id': '321'
             }
         })
-        ## In case of no-adhoc action we should evaluate task parameters
-        ## to see what we need.
+        # In case of no-adhoc action we should evaluate task parameters
+        # to see what we need.
         task_spec = db_task['task_spec']
         task_spec['parameters'] = {
             'url': "http://some/{$.openstack.project_id}/servers",

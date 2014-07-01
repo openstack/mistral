@@ -11,13 +11,13 @@ posix_ipc
 croniter>=0.3.4 # MIT License
 requests>=1.1
 kombu>=2.4.8
-oslo.config>=1.2.0
+oslo.config>=1.2.1
 oslo.messaging>=1.3.0
 oslotest
-paramiko>=1.9.0
-python-keystoneclient>=0.7.0
+paramiko>=1.13.0
+python-keystoneclient>=0.9.0
 networkx>=1.8
-six>=1.6.0
-SQLAlchemy>=0.7.8,<=0.9.99
+six>=1.7.0
+SQLAlchemy>=0.7.8,!=0.9.5,<=0.9.99
 stevedore>=0.14
 yaql==0.2.1 # This is not in global requirements

@@ -33,7 +33,7 @@ class DefaultExecutor(executor.Executor):
     def _log_action_exception(self, message, task, exc):
         LOG.exception("%s [task_id=%s, action='%s', action_spec='%s']\n %s" %
                       (message, task['id'], task['task_spec']['action'],
-                      task['action_spec'], exc))
+                       task['action_spec'], exc))
 
     def _do_task_action(self, task):
         """Executes the action defined by the task and return result.
@@ -48,7 +48,7 @@ class DefaultExecutor(executor.Executor):
 
         action = a_f.create_action(task)
 
-        #TODO(dzimine): on failure, convey failure details back
+        # TODO(dzimine): on failure, convey failure details back
 
         if action.is_sync():
             try:
@@ -73,8 +73,9 @@ class DefaultExecutor(executor.Executor):
         :param exception: an exception thrown during the execution of the task
         :type exception: Exception
         """
-        #TODO(dzimine): why exception is a parameter here?
-        #TODO(dzimine): convey exception details to end user (why task failed?)
+        # TODO(dzimine): why exception is a parameter here?
+        # TODO(dzimine): convey exception details to end user
+        # (why task failed?)
         try:
             db_api.start_tx()
             try:

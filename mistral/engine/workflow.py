@@ -52,7 +52,7 @@ def find_resolved_tasks(tasks):
     for t in tasks:
         deps = t.get('requires', [])
         if len(set(deps) - allow_set) == 0:
-        # all required tasks, if any, are SUCCESS
+            # all required tasks, if any, are SUCCESS
             if t['state'] == states.IDLE:
                 resolved_tasks.append(t)
             elif t['state'] == states.DELAYED:
