@@ -150,14 +150,38 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual(task_params['headers'], action.headers)
         self.assertDictEqual(task_params['body'], json.loads(action.body))
 
-        headers = task_params['headers']
+        self.assertEqual(db_task['workbook_name'],
+                         action.headers['Mistral-Workbook-Name'])
+        self.assertEqual(db_task['execution_id'],
+                         action.headers['Mistral-Execution-Id'])
+        self.assertEqual(db_task['id'],
+                         action.headers['Mistral-Task-Id'])
+
+    def test_create_mistral_http_action_with_no_headers(self):
+        db_task = copy.copy(DB_TASK)
+        db_task['task_spec']['action'] = 'std.mistral_http'
+
+        del db_task['parameters']['headers']
+
+        action = a_f.create_action(db_task)
+
+        self.assertIsNotNone(action)
+
+        task_params = db_task['parameters']
+
+        self.assertEqual(task_params['url'], action.url)
+        self.assertDictEqual(task_params['params'], action.params)
+        self.assertEqual(task_params['method'], action.method)
+        self.assertDictEqual(task_params['body'], json.loads(action.body))
+
+        self.assertIsNotNone(action.headers)
 
         self.assertEqual(db_task['workbook_name'],
-                         headers['Mistral-Workbook-Name'])
+                         action.headers['Mistral-Workbook-Name'])
         self.assertEqual(db_task['execution_id'],
-                         headers['Mistral-Execution-Id'])
+                         action.headers['Mistral-Execution-Id'])
         self.assertEqual(db_task['id'],
-                         headers['Mistral-Task-Id'])
+                         action.headers['Mistral-Task-Id'])
 
     def test_create_adhoc_action_with_openstack_context(self):
         db_task = copy.copy(DB_TASK_ADHOC)

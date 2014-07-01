@@ -163,6 +163,7 @@ class MistralHTTPAction(HTTPAction):
                  timeout=None,
                  allow_redirects=None,
                  proxies=None):
+        headers = headers or {}
         headers.update({
             'Mistral-Workbook-Name': action_context['workbook_name'],
             'Mistral-Execution-Id': action_context['execution_id'],
