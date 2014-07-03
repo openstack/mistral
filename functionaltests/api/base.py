@@ -32,7 +32,7 @@ class MistralClient(rest_client.RestClient):
     def __init__(self, auth_provider):
         super(MistralClient, self).__init__(auth_provider)
 
-        self.service = 'workflow_service'
+        self.service = 'workflow'
         self.endpoint_url = 'publicURL'
 
     def get_list_obj(self, name):

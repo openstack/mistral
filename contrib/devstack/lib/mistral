@@ -71,7 +71,7 @@ function create_mistral_accounts() {
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         MISTRAL_SERVICE=$(openstack service create \
             mistral \
-            --type=workflow_service \
+            --type=workflow \
             --description="Workflow Service" \
             | grep " id " | get_field 2)
         openstack endpoint create \
