@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 import inspect
-from oslo.config import cfg
+from stevedore import extension
 
 from mistral.actions import base
 from mistral.actions import std_actions
@@ -30,12 +30,11 @@ _ACTION_CTX_PARAM = 'action_context'
 _NAMESPACES = {}
 
 
-def _find_or_create_namespace(full_name):
-    name = full_name.split('.')[-1]
+def _find_or_create_namespace(name):
     ns = _NAMESPACES.get(name)
 
     if not ns:
-        ns = base.Namespace(full_name)
+        ns = base.Namespace(name)
         _NAMESPACES[name] = ns
 
     return ns
@@ -46,10 +45,16 @@ def get_registered_namespaces():
 
 
 def _register_action_classes():
-    cfg.CONF.import_opt('action_plugins', 'mistral.config')
-    for py_ns in cfg.CONF.action_plugins:
-        ns = _find_or_create_namespace(py_ns)
-        ns.log()
+    mgr = extension.ExtensionManager(
+        namespace='mistral.actions',
+        invoke_on_load=False)
+
+    for name in mgr.names():
+        ns = _find_or_create_namespace(name.split('.')[0])
+        ns.add(name.split('.')[1], mgr[name].plugin)
+
+    for ns in _NAMESPACES:
+        _NAMESPACES[ns].log()
 
 
 def get_action_class(action_full_name):

@@ -198,9 +198,6 @@
 # Options defined in mistral.config
 #
 
-# List of namespaces to search for plug-ins. (list value)
-#action_plugins=mistral.actions.std
-
 # Specifies which mistral server to start by the launch
 # script. Valid options are all or any combination of api,
 # engine, and executor. (list value)
