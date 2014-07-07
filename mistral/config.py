@@ -87,12 +87,6 @@ launch_opt = cfg.ListOpt(
          'api, engine, and executor.'
 )
 
-action_plugins_opt = cfg.ListOpt(
-    'action_plugins',
-    default=['mistral.actions.std'],
-    help='List of namespaces to search for plug-ins.')
-
-
 wf_trace_log_name_opt = cfg.StrOpt('workflow_trace_log_name',
                                    default='workflow_trace',
                                    help='Logger name for pretty '
@@ -106,7 +100,6 @@ CONF.register_opts(pecan_opts, group='pecan')
 CONF.register_opts(db_opts, group='database')
 CONF.register_opts(executor_opts, group='executor')
 CONF.register_opt(wf_trace_log_name_opt)
-CONF.register_opt(action_plugins_opt)
 
 CONF.register_cli_opt(use_debugger)
 CONF.register_cli_opt(launch_opt)

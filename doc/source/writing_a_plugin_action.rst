@@ -21,22 +21,11 @@ How to write an Action Plugin
 ::
 
  [entry_points]
- myproject.plugins.example =
-    runner = solum.mistral_plugins.somefile:RunnerAction
+ mistral.actions =
+    example.runner = my.mistral_plugins.somefile:RunnerAction
 
-3. Add the namespace into /etc/mistral/mistral.conf
-   (don't overwrite "mistral.plugins.std")
+3. Use your plugin
 
-::
-
- action_plugins = mistral.plugins.std,myproject.plugins.example
-
-4. Use your plugin
-
-Note on naming the plugin.
-
- * The namespace is "myproject.plugins.example"
- * The class is named "runner"
  * Now you can call the action "example.runner"
 
 ::
