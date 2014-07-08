@@ -24,6 +24,10 @@ set -o xtrace
 MISTRAL_REPO=${MISTRAL_REPO:-${GIT_BASE}/stackforge/mistral.git}
 MISTRAL_BRANCH=${MISTRAL_BRANCH:-master}
 
+MISTRAL_PYTHONCLIENT_REPO=${MISTRAL_PYTHONCLIENT_REPO:-${GIT_BASE}/stackforge/python-mistralclient.git}
+MISTRAL_PYTHONCLIENT_BRANCH=${MISTRAL_PYTHONCLIENT_BRANCH:-$MISTRAL_BRANCH}
+MISTRAL_PYTHONCLIENT_DIR=$DEST/python-mistralclient
+
 # Set up default directories
 MISTRAL_DIR=$DEST/mistral
 MISTRAL_CONF_DIR=${MISTRAL_CONF_DIR:-/etc/mistral}
@@ -137,6 +141,8 @@ function init_mistral() {
 
 # install_mistral() - Collect source and prepare
 function install_mistral() {
+    install_mistral_pythonclient
+
     git_clone $MISTRAL_REPO $MISTRAL_DIR $MISTRAL_BRANCH
 
     # setup_package function is used because Mistral requirements
@@ -144,6 +150,11 @@ function install_mistral() {
     # both functions (setup_develop and setup_package) are defined at:
     # http://git.openstack.org/cgit/openstack-dev/devstack/tree/functions-common
     setup_package $MISTRAL_DIR -e
+}
+
+function install_mistral_pythonclient() {
+    git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
+    setup_package $MISTRAL_PYTHONCLIENT_DIR -e
 }
 
 

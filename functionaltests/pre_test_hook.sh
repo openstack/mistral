@@ -14,7 +14,7 @@
 
 # This script is executed inside pre_test_hook function in desvstack gate.
 
-# Install Murano devstack integration
+# Install Mistral devstack integration
 MISTRAL_BASE=/opt/stack/new/mistral/contrib/devstack
 DEVSTACK_BASE=/opt/stack/new/devstack
 cp $MISTRAL_BASE/lib/* $DEVSTACK_BASE/lib
