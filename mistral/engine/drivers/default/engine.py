@@ -12,9 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo.config import cfg
-from oslo import messaging
-
 from mistral import context as auth_context
 from mistral import engine
 from mistral.engine import executor
@@ -25,16 +22,7 @@ LOG = logging.getLogger(__name__)
 
 
 class DefaultEngine(engine.Engine):
-    def _notify_task_executors(self, tasks):
-        # TODO(m4dcoder): Use a pool for transport and client
-        if not self.transport:
-            self.transport = messaging.get_transport(cfg.CONF)
-        exctr = executor.ExecutorClient(self.transport)
-        for task in tasks:
-            LOG.info("Submitted task for execution: '%s'" % task)
-            exctr.handle_task(auth_context.ctx(), task=task)
-
-    def _run_tasks(self, tasks):
+    def _run_task(self, task_id, action_name, params):
         # TODO(rakhmerov):
         # This call outside of DB transaction creates a window
         # when the engine may crash and DB will not be consistent with
@@ -43,4 +31,12 @@ class DefaultEngine(engine.Engine):
         # However, making this call in DB transaction is really bad
         # since it makes transaction much longer in time and under load
         # may overload DB with open transactions.
-        self._notify_task_executors(tasks)
+        # TODO(m4dcoder): Use a pool for transport and client
+
+        exctr = executor.ExecutorClient(self.transport)
+
+        LOG.info("Submitted task for execution: '%s'" % task_id)
+        exctr.handle_task(auth_context.ctx(),
+                          task_id=task_id,
+                          action_name=action_name,
+                          params=params)

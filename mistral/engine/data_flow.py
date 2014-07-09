@@ -14,16 +14,44 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import inspect
 from oslo.config import cfg
 
+from mistral.actions import action_factory as a_f
 from mistral.db import api as db_api
+from mistral.engine import states
+from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import trusts
+from mistral.workbook import tasks as wb_task
 
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
+
+_ACTION_CTX_PARAM = 'action_context'
+
+
+def _has_action_context_param(action_cls):
+    arg_spec = inspect.getargspec(action_cls.__init__)
+
+    return _ACTION_CTX_PARAM in arg_spec.args
+
+
+def _get_action_context(db_task, openstack_context):
+    result = {
+        'workbook_name': db_task['workbook_name'],
+        'execution_id': db_task['execution_id'],
+        'task_id': db_task['id'],
+        'task_name': db_task['name'],
+        'task_tags': db_task['tags'],
+    }
+
+    if openstack_context:
+        result.update({'openstack': openstack_context})
+
+    return result
 
 
 def evaluate_task_parameters(task, context):
@@ -32,16 +60,51 @@ def evaluate_task_parameters(task, context):
     return expr.evaluate_recursively(params, context)
 
 
-def prepare_tasks(tasks, context):
+def prepare_tasks(tasks, context, workbook):
+    results = []
+
     for task in tasks:
-        # TODO(rakhmerov): Inbound context should be a merge of outbound
-        # contexts of task dependencies, if any.
-        task['in_context'] = context
-        task['parameters'] = evaluate_task_parameters(task, context)
+        # TODO(rakhmerov): Inbound context should be a merge of
+        # outbound contexts of task dependencies, if any.
+        action_params = evaluate_task_parameters(task, context)
 
         db_api.task_update(task['id'],
-                           {'in_context': task['in_context'],
-                            'parameters': task['parameters']})
+                           {'state': states.RUNNING,
+                            'in_context': context,
+                            'parameters': action_params})
+
+        # Get action name. Unwrap ad-hoc and reevaluate params if
+        # necessary.
+        action_name = wb_task.TaskSpec(task['task_spec'])\
+            .get_full_action_name()
+
+        openstack_ctx = context.get('openstack')
+
+        if not a_f.get_action_class(action_name):
+            # If action is not found in registered actions try to find
+            # ad-hoc action definition.
+            if openstack_ctx is not None:
+                action_params.update({'openstack': openstack_ctx})
+
+            action = a_f.resolve_adhoc_action_name(workbook, action_name)
+
+            if not action:
+                msg = 'Unknown action [workbook=%s, action=%s]' % \
+                      (workbook, action_name)
+                raise exc.ActionException(msg)
+
+            action_params = a_f.convert_adhoc_action_params(workbook,
+                                                            action_name,
+                                                            action_params)
+            action_name = action
+
+        if _has_action_context_param(a_f.get_action_class(action_name)):
+            action_params[_ACTION_CTX_PARAM] = \
+                _get_action_context(task, openstack_ctx)
+
+        results.append((task['id'], action_name, action_params))
+
+    return results
 
 
 def get_task_output(task, result):

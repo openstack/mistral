@@ -19,6 +19,7 @@ import json
 
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
+from mistral import dsl_parser as parser
 from mistral.engine import data_flow
 from mistral import exceptions
 from mistral.openstack.common import log as logging
@@ -283,3 +284,39 @@ class ActionFactoryTest(base.BaseTest):
         action = a_f.create_action(db_task)
 
         self.assertEqual("'Tango and Cash' is a cool movie!", action.run())
+
+    def test_resolve_adhoc_action_name(self):
+        workbook = parser.get_workbook(
+            base.get_resource('control_flow/one_sync_task.yaml'))
+        action_name = 'MyActions.concat'
+
+        action = a_f.resolve_adhoc_action_name(workbook, action_name)
+
+        self.assertEqual('std.echo', action)
+
+    def test_convert_adhoc_action_params(self):
+        workbook = parser.get_workbook(
+            base.get_resource('control_flow/one_sync_task.yaml'))
+        action_name = 'MyActions.concat'
+        params = {
+            'left': 'Stormin',
+            'right': 'Stanley'
+        }
+
+        parameters = a_f.convert_adhoc_action_params(workbook,
+                                                     action_name,
+                                                     params)
+
+        self.assertEqual({'output': 'Stormin Stanley'}, parameters)
+
+    def test_convert_adhoc_action_result(self):
+        workbook = parser.get_workbook(
+            base.get_resource('control_flow/one_sync_task.yaml'))
+        action_name = 'MyActions.concat'
+        result = {'output': 'Stormin Stanley'}
+
+        parameters = a_f.convert_adhoc_action_result(workbook,
+                                                     action_name,
+                                                     result)
+
+        self.assertEqual({'string': 'Stormin Stanley'}, parameters)

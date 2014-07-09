@@ -21,11 +21,12 @@ from oslo import messaging
 import six
 from stevedore import driver
 
-# Submoules of mistral.engine will throw NoSuchOptError if configuration
+# Submodules of mistral.engine will throw NoSuchOptError if configuration
 # options required at top level of this  __init__.py are not imported before
 # the submodules are referenced.
 cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 
+from mistral.actions import action_factory as a_f
 from mistral import context as auth_context
 from mistral.db import api as db_api
 from mistral import dsl_parser as parser
@@ -35,6 +36,7 @@ from mistral.engine import states
 from mistral.engine import workflow
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.workbook import tasks as wb_task
 
 
 LOG = logging.getLogger(__name__)
@@ -42,7 +44,7 @@ WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 def get_transport(transport=None):
-    return (transport if transport else messaging.get_transport(cfg.CONF))
+    return transport if transport else messaging.get_transport(cfg.CONF)
 
 
 def get_engine(name, transport):
@@ -64,7 +66,7 @@ class Engine(object):
         self.transport = get_transport(transport)
 
     @abc.abstractmethod
-    def _run_tasks(cls, tasks):
+    def _run_task(cls, task_id, action_name, action_params):
         raise NotImplementedError()
 
     def start_workflow_execution(self, cntx, **kwargs):
@@ -91,21 +93,31 @@ class Engine(object):
         # Persist execution and tasks in DB.
         try:
             workbook = self._get_workbook(workbook_name)
-            execution = self._create_execution(workbook_name,
-                                               task_name,
+            execution = self._create_execution(workbook_name, task_name,
                                                context)
 
+            # Create the whole tree of tasks required by target task, including
+            # target task itself.
             tasks = self._create_tasks(
                 workflow.find_workflow_tasks(workbook, task_name),
                 workbook,
                 workbook_name, execution['id']
             )
 
+            # Create a list of tasks that can be executed immediately (have
+            # their requirements satisfied, or, at that point, rather don't
+            # have them at all) along with the list of tasks that require some
+            # delay before they'll be executed.
             tasks_to_start, delayed_tasks = workflow.find_resolved_tasks(tasks)
 
+            # Populate context with special variables such as `openstack` and
+            # `__execution`.
             self._add_variables_to_data_flow_context(context, execution)
 
-            data_flow.prepare_tasks(tasks_to_start, context)
+            # Update task with new context and params.
+            executables = data_flow.prepare_tasks(tasks_to_start,
+                                                  context,
+                                                  workbook)
 
             db_api.commit_tx()
         except Exception as e:
@@ -118,7 +130,8 @@ class Engine(object):
         for task in delayed_tasks:
             self._schedule_run(workbook, task, context)
 
-        self._run_tasks(tasks_to_start)
+        for task_id, action_name, action_params in executables:
+            self._run_task(task_id, action_name, action_params)
 
         return execution
 
@@ -172,19 +185,33 @@ class Engine(object):
                 else ", result = %s]" % result
             WORKFLOW_TRACE.info(wf_trace_msg)
 
+            action_name = wb_task.TaskSpec(task['task_spec'])\
+                .get_full_action_name()
+
+            if not a_f.get_action_class(action_name):
+                action = a_f.resolve_adhoc_action_name(workbook, action_name)
+
+                if not action:
+                    msg = 'Unknown action [workbook=%s, action=%s]' % \
+                          (workbook, action_name)
+                    raise exc.ActionException(msg)
+
+                result = a_f.convert_adhoc_action_result(workbook,
+                                                         action_name,
+                                                         result)
+
             task_output = data_flow.get_task_output(task, result)
 
             # Update task state.
-            task, outbound_context = self._update_task(workbook, task, state,
-                                                       task_output)
+            task, context = self._update_task(workbook, task, state,
+                                              task_output)
 
             execution = db_api.execution_get(task['execution_id'])
 
             self._create_next_tasks(task, workbook)
 
             # Determine what tasks need to be started.
-            tasks = db_api.tasks_get(workbook_name=task['workbook_name'],
-                                     execution_id=task['execution_id'])
+            tasks = db_api.tasks_get(execution_id=task['execution_id'])
 
             new_exec_state = self._determine_execution_state(execution, tasks)
 
@@ -194,19 +221,25 @@ class Engine(object):
                     (execution['id'], execution['state'], new_exec_state)
                 WORKFLOW_TRACE.info(wf_trace_msg)
 
-                execution = \
-                    db_api.execution_update(execution['id'], {
-                        "state": new_exec_state
-                    })
+                execution = db_api.execution_update(execution['id'], {
+                    "state": new_exec_state
+                })
 
                 LOG.info("Changed execution state: %s" % execution)
 
+            # Create a list of tasks that can be executed immediately (have
+            # their requirements satisfied) along with the list of tasks that
+            # require some delay before they'll be executed.
             tasks_to_start, delayed_tasks = workflow.find_resolved_tasks(tasks)
 
-            self._add_variables_to_data_flow_context(outbound_context,
-                                                     execution)
+            # Populate context with special variables such as `openstack` and
+            # `__execution`.
+            self._add_variables_to_data_flow_context(context, execution)
 
-            data_flow.prepare_tasks(tasks_to_start, outbound_context)
+            # Update task with new context and params.
+            executables = data_flow.prepare_tasks(tasks_to_start,
+                                                  context,
+                                                  workbook)
 
             db_api.commit_tx()
         except Exception as e:
@@ -216,14 +249,14 @@ class Engine(object):
         finally:
             db_api.end_tx()
 
-        if states.is_stopped_or_finished(execution["state"]):
+        if states.is_stopped_or_finished(execution['state']):
             return task
 
         for task in delayed_tasks:
-            self._schedule_run(workbook, task, outbound_context)
+            self._schedule_run(workbook, task, context)
 
-        if tasks_to_start:
-            self._run_tasks(tasks_to_start)
+        for task_id, action_name, action_params in executables:
+            self._run_task(task_id, action_name, action_params)
 
         return task
 
@@ -352,7 +385,7 @@ class Engine(object):
 
         return task, outbound_context
 
-    def _schedule_run(cls, workbook, task, outbound_context):
+    def _schedule_run(self, workbook, task, outbound_context):
         """Schedules task to run after the delay defined in the task
         specification. If no delay is specified this method is a no-op.
         """
@@ -376,22 +409,23 @@ class Engine(object):
                 execution_id = task['execution_id']
                 execution = db_api.execution_get(execution_id)
 
-                # Change state from DELAYED to IDLE to unblock processing.
+                # Change state from DELAYED to RUNNING.
 
                 WORKFLOW_TRACE.info("Task '%s' [%s -> %s]"
                                     % (task['name'],
-                                       task['state'], states.IDLE))
-
-                db_task = db_api.task_update(task['id'],
-                                             {"state": states.IDLE})
-                task_to_start = [db_task]
-                data_flow.prepare_tasks(task_to_start, outbound_context)
+                                       task['state'], states.RUNNING))
+                executables = data_flow.prepare_tasks([task],
+                                                      outbound_context,
+                                                      workbook)
                 db_api.commit_tx()
             finally:
                 db_api.end_tx()
 
-            if not states.is_stopped_or_finished(execution["state"]):
-                cls._run_tasks(task_to_start)
+            if states.is_stopped_or_finished(execution['state']):
+                return
+
+            for task_id, action_name, action_params in executables:
+                self._run_task(task_id, action_name, action_params)
 
         task_spec = workbook.tasks.get(task['name'])
         retries, break_on, delay_sec = task_spec.get_retry_parameters()

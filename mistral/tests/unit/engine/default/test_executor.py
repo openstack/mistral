@@ -95,9 +95,6 @@ SAMPLE_CONTEXT = {
 @mock.patch.object(
     executor.ExecutorClient, 'handle_task',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_handle_task))
-@mock.patch.object(
-    engine.EngineClient, 'convey_task_result',
-    mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
 class TestExecutor(base.DbTestCase):
     def __init__(self, *args, **kwargs):
         super(TestExecutor, self).__init__(*args, **kwargs)
@@ -122,30 +119,69 @@ class TestExecutor(base.DbTestCase):
         self.assertIsInstance(self.task, dict)
         self.assertIn('id', self.task)
 
-    @mock.patch.object(
-        std_actions.HTTPAction, 'run', mock.MagicMock(return_value={}))
-    def test_handle_task(self):
+    @mock.patch.object(std_actions.EchoAction, 'run')
+    @mock.patch.object(engine.EngineClient, 'convey_task_result',
+                       mock.MagicMock())
+    def test_handle_task(self, action):
+        task_id = '12345'
+        action_name = 'std.echo'
+        params = {
+            'output': 'some'
+        }
 
         # Send the task request to the Executor.
         ex_client = executor.ExecutorClient(self.transport)
-        ex_client.handle_task(SAMPLE_CONTEXT, task=self.task)
+        ex_client.handle_task(SAMPLE_CONTEXT,
+                              task_id=task_id,
+                              action_name=action_name,
+                              params=params)
 
-        # Check task execution state.
-        db_task = db_api.task_get(self.task['id'])
-        self.assertEqual(db_task['state'], states.SUCCESS)
+        engine.EngineClient.convey_task_result\
+            .assert_called_once_with(task_id,
+                                     states.SUCCESS,
+                                     action.return_value)
 
-    @mock.patch.object(
-        std_actions.HTTPAction, 'run',
-        mock.MagicMock(side_effect=exceptions.ActionException))
+    @mock.patch.object(engine.EngineClient, 'convey_task_result',
+                       mock.MagicMock())
+    def test_handle_task_not_registered(self):
+        task_id = '12345'
+        action_name = 'not.registered'
+        params = {
+            'output': 'some'
+        }
+
+        # Send the task request to the Executor.
+        ex_client = executor.ExecutorClient(self.transport)
+        self.assertRaises(exceptions.ActionException, ex_client.handle_task,
+                          SAMPLE_CONTEXT,
+                          task_id=task_id,
+                          action_name=action_name,
+                          params=params)
+
+        self.assertFalse(engine.EngineClient.convey_task_result.called)
+
+    @mock.patch.object(std_actions.EchoAction, 'run',
+                       mock.MagicMock(side_effect=exceptions.ActionException))
+    @mock.patch.object(engine.EngineClient, 'convey_task_result',
+                       mock.MagicMock())
     def test_handle_task_action_exception(self):
+        task_id = '12345'
+        action_name = 'std.echo'
+        params = {
+            'output': 'some'
+        }
 
         # Send the task request to the Executor.
         ex_client = executor.ExecutorClient(self.transport)
         with mock.patch('mistral.engine.drivers.default.executor.'
                         'DefaultExecutor._log_action_exception') as log:
-            ex_client.handle_task(SAMPLE_CONTEXT, task=self.task)
+            ex_client.handle_task(SAMPLE_CONTEXT,
+                                  task_id=task_id,
+                                  action_name=action_name,
+                                  params=params)
             self.assertTrue(log.called, "Exception must be logged")
 
-        # Check task execution state.
-        db_task = db_api.task_get(self.task['id'])
-        self.assertEqual(db_task['state'], states.ERROR)
+        engine.EngineClient.convey_task_result\
+            .assert_called_once_with(task_id,
+                                     states.ERROR,
+                                     None)

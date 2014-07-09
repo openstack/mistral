@@ -14,10 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from mistral.db import api as db_api
 from mistral.engine import data_flow
+from mistral.engine import states
 from mistral.openstack.common import log as logging
 from mistral.tests import base
+from mistral.workbook import workbook
 
 LOG = logging.getLogger(__name__)
 
@@ -38,6 +42,7 @@ TASK = {
     'execution_id': EXEC_ID,
     'name': 'my_task',
     'task_spec': {
+        'action': 'std.echo',
         'parameters': {
             'p1': 'My string',
             'p2': '$.param3.param32',
@@ -47,17 +52,31 @@ TASK = {
             'new_key11': '$.new_key1'
         }
     },
-    'service_spec': {
-        'actions': {
-            'action': {
-                'output': {
-                    # This one should not be evaluated.
-                    'server_id': '$.server.id'
+    'in_context': CONTEXT
+}
+
+TASK2 = copy.deepcopy(TASK)
+TASK2['task_spec']['action'] = 'some.thing'
+
+WORKBOOK = {
+    'Namespaces': {
+        'some': {
+            'actions': {
+                'thing': {
+                    'class': 'std.echo',
+                    'base-parameters': {
+                        'output': '{$.p1} {$.p2}'
+                    }
                 }
             }
         }
     },
-    'in_context': CONTEXT
+    'Workflow': {
+        'tasks': {
+            'first_task': TASK['task_spec'],
+            'second_task': TASK2['task_spec']
+        }
+    }
 }
 
 
@@ -70,18 +89,36 @@ class DataFlowModuleTest(base.DbTestCase):
         self.assertEqual('val32', parameters['p2'])
 
     def test_prepare_tasks(self):
-        task = db_api.task_create(EXEC_ID, TASK.copy())
-        tasks = [task]
+        wb = workbook.WorkbookSpec(WORKBOOK)
 
-        data_flow.prepare_tasks(tasks, CONTEXT)
+        tasks = [
+            db_api.task_create(EXEC_ID, TASK.copy()),
+            db_api.task_create(EXEC_ID, TASK2.copy())
+        ]
 
-        db_task = db_api.task_get(tasks[0]['id'])
+        executables = data_flow.prepare_tasks(tasks, CONTEXT, wb)
 
-        self.assertDictEqual(CONTEXT, db_task['in_context'])
-        self.assertDictEqual({'p1': 'My string',
-                              'p2': 'val32',
-                              'p3': ''},
-                             db_task['parameters'])
+        self.assertEqual(2, len(executables))
+
+        self.assertEqual(tasks[0]['id'], executables[0][0])
+        self.assertEqual('std.echo', executables[0][1])
+        self.assertDictEqual({'p2': 'val32', 'p3': '', 'p1': 'My string'},
+                             executables[0][2])
+
+        self.assertEqual(tasks[1]['id'], executables[1][0])
+        self.assertEqual('std.echo', executables[1][1])
+        self.assertDictEqual({'output': 'My string val32'},
+                             executables[1][2])
+
+        for task in tasks:
+            db_task = db_api.task_get(task['id'])
+
+            self.assertDictEqual(CONTEXT, db_task['in_context'])
+            self.assertDictEqual({'p1': 'My string',
+                                  'p2': 'val32',
+                                  'p3': ''},
+                                 db_task['parameters'])
+            self.assertEqual(states.RUNNING, db_task['state'])
 
     def test_get_outbound_context(self):
         output = data_flow.get_task_output(TASK, {'new_key1': 'new_val1'})

@@ -63,8 +63,8 @@ class FailBeforeSuccessMocker(object):
     engine.EngineClient, 'convey_task_result',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
 @mock.patch.object(
-    concrete_engine.DefaultEngine, '_run_tasks',
-    mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+    concrete_engine.DefaultEngine, '_run_task',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
 @mock.patch.object(
     std_actions.HTTPAction, 'run',
     mock.MagicMock(return_value='result'))
@@ -160,6 +160,12 @@ class TaskRetryTest(base.EngineTestCase):
         retry_count, _, delay = task_spec.get_retry_parameters()
 
         for x in xrange(0, retry_count):
+            tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                     execution_id=execution['id'])
+
+            self._assert_single_item(tasks, name=task_name)
+            self._assert_single_item(tasks, state=states.RUNNING)
+
             self.engine.convey_task_result(tasks[0]['id'], states.ERROR,
                                            {'output': 'result'})
 

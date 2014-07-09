@@ -20,6 +20,7 @@ from stevedore import extension
 from mistral.actions import base
 from mistral.actions import std_actions
 from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.workbook import actions
 from mistral.workbook import tasks
@@ -168,6 +169,44 @@ def create_action(db_task):
         raise exc.ActionException('Failed to create action [db_task=%s]: %s' %
                                   (db_task, e))
 
+
+def resolve_adhoc_action_name(workbook, action_name):
+    action_spec = workbook.get_action(action_name)
+
+    if not action_spec:
+        msg = 'Ad-hoc action class is not registered ' \
+              '[workbook=%s, action=%s, action_spec=%s]' % \
+              (workbook, action_name, action_spec)
+        raise exc.ActionException(msg)
+
+    base_cls = get_action_class(action_spec.clazz)
+
+    if not base_cls:
+        msg = 'Ad-hoc action base class is not registered ' \
+              '[workbook=%s, action=%s, base_class=%s]' % \
+              (workbook, action_name, base_cls)
+        raise exc.ActionException(msg)
+
+    return action_spec.clazz
+
+
+def convert_adhoc_action_params(workbook, action_name, params):
+    base_params = workbook.get_action(action_name).base_parameters
+
+    if not base_params:
+        return {}
+
+    return expr.evaluate_recursively(base_params, params)
+
+
+def convert_adhoc_action_result(workbook, action_name, result):
+    transformer = workbook.get_action(action_name).output
+
+    if not transformer:
+        return result
+
+    # Use base action result as a context for evaluating expressions.
+    return expr.evaluate_recursively(transformer, result)
 
 # Registering actions on module load.
 _register_action_classes()

@@ -54,6 +54,7 @@ Workflow:
         f_name: $.full_name
 
     build_greeting:
+      requires: [build_full_name]
       action: MyService.build_greeting
       publish:
         greet_msg: $.greeting
