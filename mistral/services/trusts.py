@@ -59,7 +59,8 @@ def create_context(workbook):
         return context.MistralContext(
             user_id=None,
             project_id=None,
-            auth_token=None
+            auth_token=None,
+            is_admin=True
         )
 
 

@@ -40,6 +40,9 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
         LOG.debug('Processing next Scheduler triggers.')
 
         for trigger in sched.get_next_triggers():
+            # Setup admin context before schedule triggers.
+            context.set_ctx(ctx)
+
             wb = db_api.workbook_get(trigger['workbook_name'])
             context.set_ctx(trusts.create_context(wb))
 
@@ -56,8 +59,14 @@ def setup(transport):
     tg = threadgroup.ThreadGroup()
     pt = MistralPeriodicTasks(transport=transport)
 
+    ctx = context.MistralContext(
+        user_id=None,
+        project_id=None,
+        auth_token=None,
+        is_admin=True)
+
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,
         initial_delay=None,
         periodic_interval_max=1,
-        context=None)
+        context=ctx)

@@ -353,8 +353,11 @@ def _workbooks_get_all(**kwargs):
 @session_aware()
 def _workbook_get(workbook_name, session=None):
     query = model_query(m.Workbook)
-    return query.filter_by(name=workbook_name,
-                           project_id=context.ctx().project_id).first()
+    if context.ctx().is_admin:
+        return query.filter_by(name=workbook_name).first()
+    else:
+        return query.filter_by(name=workbook_name,
+                               project_id=context.ctx().project_id).first()
 
 
 # Workflow executions.
