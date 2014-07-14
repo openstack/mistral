@@ -1,0 +1,29 @@
+Workflow:
+  tasks:
+    task:
+      requires: [atask, pretask]
+      action: std.echo
+      parameters:
+        output: some
+    btask:
+      requires: [ztask]
+      action: std.echo
+      parameters:
+        output: some
+    ztask:
+      action: std.echo
+      parameters:
+        output: some
+    atask:
+      action: std.echo
+      parameters:
+        output: some
+    ctask:
+      action: std.echo
+      parameters:
+        output: some
+    pretask:
+      requires: [btask, ztask]
+      action: std.echo
+      parameters:
+        output: some

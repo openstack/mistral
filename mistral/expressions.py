@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import abc
+import copy
 import re
 import six
 import yaql
@@ -128,6 +129,8 @@ def _evaluate_item(item, context):
 
 
 def evaluate_recursively(data, context):
+    data = copy.copy(data)
+
     if not context:
         return data
 

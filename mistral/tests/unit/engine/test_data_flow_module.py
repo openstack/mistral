@@ -96,7 +96,7 @@ class DataFlowModuleTest(base.DbTestCase):
             db_api.task_create(EXEC_ID, TASK2.copy())
         ]
 
-        executables = data_flow.prepare_tasks(tasks, CONTEXT, wb)
+        executables = data_flow.prepare_tasks(tasks, CONTEXT, wb, tasks)
 
         self.assertEqual(2, len(executables))
 
