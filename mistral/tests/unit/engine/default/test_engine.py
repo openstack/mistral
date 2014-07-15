@@ -17,9 +17,11 @@ import mock
 from oslo.config import cfg
 
 from mistral.actions import std_actions
+from mistral import context as auth_context
 from mistral.db import api as db_api
 from mistral import engine
 from mistral.engine.drivers.default import engine as concrete_engine
+from mistral.engine import executor
 from mistral.engine import states
 from mistral import expressions
 from mistral.openstack.common import log as logging
@@ -38,6 +40,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 # TODO(rakhmerov): add more tests for errors, execution stop etc.
 
 
+@mock.patch.object(auth_context, 'ctx', mock.MagicMock())
 @mock.patch.object(
     engine.EngineClient, 'start_workflow_execution',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
@@ -48,21 +51,28 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
     std_actions.HTTPAction, 'run',
     mock.MagicMock(return_value={'state': states.SUCCESS}))
 class TestEngine(base.EngineTestCase):
-    @mock.patch.object(
-        concrete_engine.DefaultEngine, "_notify_task_executors",
-        mock.MagicMock(return_value=""))
+    @mock.patch.object(executor.ExecutorClient, "handle_task",
+                       mock.MagicMock())
     @mock.patch.object(
         db_api, 'workbook_get',
         mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/one_async_task.yaml')}))
+            'control_flow/one_sync_task.yaml')}))
     def test_with_one_task(self):
-        execution = self.engine.start_workflow_execution(WB_NAME, "create-vms",
+        execution = self.engine.start_workflow_execution(WB_NAME, "build_name",
                                                          CONTEXT)
 
         task = db_api.tasks_get(workbook_name=WB_NAME,
                                 execution_id=execution['id'])[0]
 
-        self.engine.convey_task_result(task['id'], states.SUCCESS, None)
+        executor.ExecutorClient.handle_task\
+            .assert_called_once_with(auth_context.ctx(),
+                                     params={'output': 'Stormin Stanley'},
+                                     task_id=task['id'],
+                                     action_name='std.echo')
+
+        self.engine.convey_task_result(task['id'],
+                                       states.SUCCESS,
+                                       {'output': 'Stormin Stanley'})
 
         task = db_api.tasks_get(workbook_name=WB_NAME,
                                 execution_id=execution['id'])[0]
@@ -70,20 +80,22 @@ class TestEngine(base.EngineTestCase):
 
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(task['state'], states.SUCCESS)
+        self.assertEqual(
+            task['output'],
+            {'task': {'build_name': {'string': 'Stormin Stanley'}}})
 
     @mock.patch.object(
         engine.EngineClient, 'get_workflow_execution_state',
         mock.MagicMock(
             side_effect=base.EngineTestCase.mock_get_workflow_state))
-    @mock.patch.object(
-        concrete_engine.DefaultEngine, "_notify_task_executors",
-        mock.MagicMock(return_value=""))
+    @mock.patch.object(executor.ExecutorClient, "handle_task",
+                       mock.MagicMock())
     @mock.patch.object(
         db_api, 'workbook_get',
         mock.MagicMock(return_value={'definition': base.get_resource(
             'control_flow/require_flow.yaml')}))
     def test_require_flow(self):
-        execution = self.engine.start_workflow_execution(WB_NAME, "backup-vms",
+        execution = self.engine.start_workflow_execution(WB_NAME, "greet",
                                                          CONTEXT)
 
         tasks = db_api.tasks_get(workbook_name=WB_NAME,
@@ -99,9 +111,7 @@ class TestEngine(base.EngineTestCase):
         self.assertEqual(2, len(tasks))
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
 
-        # Since we mocked out executor notification we expect IDLE
-        # for the second task.
-        self.assertEqual(tasks[1]['state'], states.IDLE)
+        self.assertEqual(tasks[1]['state'], states.RUNNING)
         self.assertEqual(states.RUNNING,
                          self.engine.get_workflow_execution_state(
                              WB_NAME, execution['id']))
@@ -121,8 +131,8 @@ class TestEngine(base.EngineTestCase):
                              WB_NAME, execution['id']))
 
     @mock.patch.object(
-        concrete_engine.DefaultEngine, '_run_tasks',
-        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+        concrete_engine.DefaultEngine, '_run_task',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     @mock.patch.object(
@@ -130,8 +140,7 @@ class TestEngine(base.EngineTestCase):
         mock.MagicMock(return_value={'definition': base.get_resource(
             'control_flow/one_sync_task.yaml')}))
     def test_with_one_sync_task(self):
-        execution = self.engine.start_workflow_execution(WB_NAME,
-                                                         "create-vm-nova",
+        execution = self.engine.start_workflow_execution(WB_NAME, "build_name",
                                                          CONTEXT)
 
         task = db_api.tasks_get(workbook_name=WB_NAME,
@@ -142,8 +151,8 @@ class TestEngine(base.EngineTestCase):
         self.assertEqual(task['state'], states.SUCCESS)
 
     @mock.patch.object(
-        concrete_engine.DefaultEngine, '_run_tasks',
-        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+        concrete_engine.DefaultEngine, '_run_task',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     @mock.patch.object(
@@ -205,8 +214,8 @@ class TestEngine(base.EngineTestCase):
         self.assertEqual(execution['state'], states.SUCCESS)
 
     @mock.patch.object(
-        concrete_engine.DefaultEngine, '_run_tasks',
-        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+        concrete_engine.DefaultEngine, '_run_task',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
     @mock.patch.object(
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     @mock.patch.object(
@@ -260,15 +269,12 @@ class TestEngine(base.EngineTestCase):
         self.assertEqual(execution['state'], states.SUCCESS)
 
     @mock.patch.object(
-        concrete_engine.DefaultEngine, "_notify_task_executors",
-        mock.MagicMock(return_value=""))
-    @mock.patch.object(
         db_api, 'workbook_get',
         mock.MagicMock(return_value={'definition': base.get_resource(
             'control_flow/no_namespaces.yaml')}))
     @mock.patch.object(
-        concrete_engine.DefaultEngine, '_run_tasks',
-        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+        concrete_engine.DefaultEngine, '_run_task',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
     def test_engine_with_no_namespaces(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "task1", {})
 
@@ -286,8 +292,8 @@ class TestEngine(base.EngineTestCase):
         mock.MagicMock(return_value={'definition': base.get_resource(
             'control_flow/one_std_task.yaml')}))
     @mock.patch.object(
-        concrete_engine.DefaultEngine, '_run_tasks',
-        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+        concrete_engine.DefaultEngine, '_run_task',
+        mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
     def test_engine_task_std_action_with_namespaces(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          "std_http_task", {})

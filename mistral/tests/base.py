@@ -165,13 +165,15 @@ class EngineTestCase(DbTestCase):
         return cls.backend.get_workflow_execution_state(cntx, **kwargs)
 
     @classmethod
-    def mock_run_tasks(cls, tasks):
+    def mock_run_task(cls, task_id, action_name, params):
         """Mock the engine _run_tasks to send requests directly to the task
         executor instead of going through the oslo.messaging transport.
         """
         exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)
-        for task in tasks:
-            exctr.handle_task({}, task=task)
+        exctr.handle_task(auth_context.ctx(),
+                          task_id=task_id,
+                          action_name=action_name,
+                          params=params)
 
     @classmethod
     def mock_handle_task(cls, cntx, **kwargs):

@@ -1,65 +1,26 @@
 Namespaces:
-  MyRest:
-    class: std.mistral_http
-    base-parameters:
-      method: GET
-      headers:
-        X-Auth-Token: $.auth_token
-
+  MyActions:
     actions:
-      create-vm:
+      concat:
+        class: std.echo
         base-parameters:
-          url: http://some_host/service/action/execute
-          headers:
-            Content-Type: 'application/json'
+          output: '{$.left} {$.right}'
         parameters:
-          - image_id
-          - flavor_id
+          - left
+          - right
         output:
-
-      backup-vm:
-        base-parameters:
-          url: http://some_host/url_for_backup
-        parameters:
-          - server_id
-
-      attach-volume:
-        base-parameters:
-          url: /url_for_attach
-        parameters:
-          - size
-          - mnt_path
-
-      format-volume:
-        base-parameters:
-          url: /url_for_format
-        parameters:
-          - server_id
+          string: $.output
 
 Workflow:
   tasks:
-    create-vms:
-      action: MyRest.create-vm
+    build_name:
+      action: MyActions.concat
       parameters:
-        image_id: 1234
-        flavor_id: 42
-
-    attach-volumes:
-      requires: create-vms
-      action: MyRest.attach-volume
+        left: Stormin
+        right: Stanley
+    greet:
+      requires: [build_name]
+      action: MyActions.concat
       parameters:
-        size: 1234
-        mnt_path: /path/to/volume
-
-    format-volumes:
-      requires: [attach-volumes]
-      action: MyRest.format-volume
-      parameters:
-        server_id: 123
-
-    backup-vms:
-      requires: 
-        - create-vms
-      action: MyRest.backup-vm
-      parameters:
-        server_id: 123
+        left: Greetings
+        right: {$.string}

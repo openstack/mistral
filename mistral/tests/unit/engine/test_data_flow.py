@@ -68,8 +68,8 @@ def create_workbook(definition_path):
     engine.EngineClient, 'convey_task_result',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_task_result))
 @mock.patch.object(
-    concrete_engine.DefaultEngine, '_run_tasks',
-    mock.MagicMock(side_effect=base.EngineTestCase.mock_run_tasks))
+    concrete_engine.DefaultEngine, '_run_task',
+    mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
 class DataFlowTest(base.EngineTestCase):
     def _check_in_context_execution(self, task):
         self.assertIn('__execution', task['in_context'])

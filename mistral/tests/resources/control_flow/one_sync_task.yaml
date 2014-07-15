@@ -1,19 +1,20 @@
 Namespaces:
-  Nova:
+  MyActions:
     actions:
-      create-vm:
-        class: std.http
+      concat:
+        class: std.echo
         base-parameters:
-          url: http://path_to_nova/url_for_create
+          output: '{$.left} {$.right}'
         parameters:
-          - image_id
-          - flavor_id
+          - left
+          - right
         output:
-          vm_id: $.base_output.server_id
+          string: $.output
+
 Workflow:
   tasks:
-    create-vm-nova:
-      action: Nova.create-vm
+    build_name:
+      action: MyActions.concat
       parameters:
-        image_id: 1234
-        flavor_id: 2
+        left: Stormin
+        right: Stanley
