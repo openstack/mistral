@@ -14,10 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.db.sqlalchemy import models as oslo_models
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
-
-from mistral.openstack.common.db.sqlalchemy import models as oslo_models
 
 
 class _MistralBase(oslo_models.ModelBase, oslo_models.TimestampMixin):

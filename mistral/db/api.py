@@ -14,8 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.db import api as db_api
+
 from mistral import exceptions
-from mistral.openstack.common.db import api as db_api
 from mistral.openstack.common import log as logging
 
 # Workbooks

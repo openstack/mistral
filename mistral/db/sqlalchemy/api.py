@@ -17,22 +17,21 @@
 import sys
 
 from oslo.config import cfg
+from oslo.db import exception as db_exc
+from oslo.db import options
+from oslo.db.sqlalchemy import session as db_session
 import sqlalchemy as sa
 
 from mistral import context
 from mistral.db.sqlalchemy import models as m
 from mistral import exceptions as exc
-from mistral.openstack.common.db import exception as db_exc
-from mistral.openstack.common.db.sqlalchemy import session as db_session
 from mistral.openstack.common import log as logging
 from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
 
-cfg.CONF.import_opt('connection',
-                    'mistral.openstack.common.db.options',
-                    group='database')
+options.set_defaults(cfg.CONF, sqlite_db="mistral.sqlite")
 
 _DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
 
