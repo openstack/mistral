@@ -74,7 +74,11 @@ class ActionRegistrationException(MistralException):
 
 
 class EngineException(MistralException):
-    pass
+    http_code = 500
+
+
+class WorkflowException(MistralException):
+    http_code = 400
 
 
 class ApplicationContextNotFoundException(MistralException):
