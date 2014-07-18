@@ -22,10 +22,8 @@ from pecan import hooks
 
 from mistral import exceptions as exc
 from mistral.openstack.common import jsonutils
-from mistral.openstack.common import log as logging
 from mistral import utils
 
-LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
@@ -103,8 +101,6 @@ def _wrapper(context, thread_desc, thread_group, func, *args, **kwargs):
         set_ctx(context)
         func(*args, **kwargs)
     except Exception as e:
-        LOG.exception("Thread '%s' fails with exception: '%s'"
-                      % (thread_desc, e))
         if thread_group and not thread_group.exc:
             thread_group.exc = e
             thread_group.failed_thread = thread_desc

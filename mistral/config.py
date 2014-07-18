@@ -23,6 +23,7 @@ from oslo.config import cfg
 from mistral.openstack.common import log
 from mistral import version
 
+
 launch_opt = cfg.ListOpt(
     'server',
     default=['all'],
