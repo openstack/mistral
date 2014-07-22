@@ -25,7 +25,15 @@ echo "Successfully contacted Mistral API"
 # Where tempest code lives
 TEMPEST_DIR=${TEMPEST_DIR:-/opt/stack/new/tempest}
 
-# Add tempest source tree to PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$TEMPEST_DIR
+# Where mistral code and mistralclient code live
+MISTRAL_DIR=/opt/stack/new/mistral
+MISTRALCLIENT_DIR=/opt/stack/new/python-mistralclient
 
-nosetests -sv api/v1
+# Define PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:$TEMPEST_DIR
+export PYTHONPATH=$PYTHONPATH:$MISTRAL_DIR
+export PYTHONPATH=$PYTHONPATH:$MISTRALCLIENT_DIR
+
+echo $PYTHONPATH
+pwd
+nosetests -sv functionaltests
