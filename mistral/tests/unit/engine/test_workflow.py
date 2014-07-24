@@ -21,19 +21,27 @@ from mistral.tests import base
 
 TASKS = [
     {
-        'requires': {},
         'name': 'backup-vms',
-        'state': states.IDLE
+        'state': states.IDLE,
+        'task_spec': {
+            'requires': {}
+        }
     },
     {
-        'requires': {},
         'name': 'create-vms',
-        'state': states.SUCCESS
+        'state': states.SUCCESS,
+        'task_spec': {
+            'requires': {}
+        }
     },
     {
-        'requires': ['create-vms'],
         'name': 'attach-volume',
-        'state': states.IDLE
+        'state': states.IDLE,
+        'task_spec': {
+            'requires': {
+                'create-vms': ''
+            }
+        }
     }
 ]
 
@@ -41,15 +49,32 @@ TASKS = [
 class WorkflowTest(base.DbTestCase):
     def setUp(self):
         super(WorkflowTest, self).setUp()
-        self.parser = parser.get_workbook(base.get_resource("test_rest.yaml"))
 
     def test_find_workflow_tasks(self):
-        tasks = workflow.find_workflow_tasks(self.parser, "attach-volumes")
+        tasks = workflow.find_workflow_tasks(
+            parser.get_workbook(base.get_resource("test_rest.yaml")),
+            "attach-volumes"
+        )
 
         self.assertEqual(2, len(tasks))
 
         self._assert_single_item(tasks, name='create-vms')
         self._assert_single_item(tasks, name='attach-volumes')
+
+    def test_find_workflow_tasks_order(self):
+        tasks = workflow.find_workflow_tasks(
+            parser.get_workbook(base.get_resource("test_order.yaml")),
+            'task'
+        )
+
+        self.assertEqual(5, len(tasks))
+
+        completed = set()
+
+        for i, task in enumerate(tasks):
+            self.assertTrue(set(task.requires.keys()).issubset(completed),
+                            "Task %s isn't completed yet" % task.name)
+            completed.add(task.name)
 
     def test_tasks_to_start(self):
         tasks_to_start = workflow.find_resolved_tasks(TASKS)

@@ -32,10 +32,9 @@ def find_workflow_tasks(workbook, task_name):
 
     _update_dependencies(wb_tasks, full_graph)
 
-    graph = _get_subgraph(full_graph, task_name)
-    tasks = []
-    for node in graph:
-        tasks.append(wb_tasks[node])
+    # Find the list of the tasks in the order they supposed to be executed
+    tasks = [wb_tasks[node] for node
+             in traversal.dfs_postorder_nodes(full_graph.reverse(), task_name)]
 
     return tasks
 
@@ -50,7 +49,7 @@ def find_resolved_tasks(tasks):
             allows += [t['name']]
     allow_set = set(allows)
     for t in tasks:
-        deps = t.get('requires', [])
+        deps = t['task_spec'].get('requires', {}).keys()
         if len(set(deps) - allow_set) == 0:
             # all required tasks, if any, are SUCCESS
             if t['state'] == states.IDLE:
@@ -122,14 +121,6 @@ def is_success(tasks):
 
 def is_error(tasks):
     return all(task['state'] == states.ERROR for task in tasks)
-
-
-def _get_subgraph(full_graph, task_name):
-    nodes_set = traversal.dfs_predecessors(full_graph.reverse(),
-                                           task_name).keys()
-    nodes_set.append(task_name)
-
-    return full_graph.subgraph(nodes_set)
 
 
 def _get_dependency_tasks(tasks, task):

@@ -40,7 +40,7 @@ from mistral.workbook import tasks as wb_task
 
 
 LOG = logging.getLogger(__name__)
-WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
+WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 def get_transport(transport=None):
@@ -85,8 +85,8 @@ class Engine(object):
 
         context = copy.copy(context) if context else {}
 
-        WORKFLOW_TRACE.info("New execution started - [workbook_name = '%s', "
-                            "task_name = '%s']" % (workbook_name, task_name))
+        WF_TRACE.info("New execution started - [workbook_name = '%s', "
+                      "task_name = '%s']" % (workbook_name, task_name))
 
         db_api.start_tx()
 
@@ -117,11 +117,12 @@ class Engine(object):
             # Update task with new context and params.
             executables = data_flow.prepare_tasks(tasks_to_start,
                                                   context,
-                                                  workbook)
+                                                  workbook,
+                                                  tasks)
 
             db_api.commit_tx()
         except Exception as e:
-            msg = "Failed to create necessary DB objects: %s" % e
+            msg = "Failed to start workflow execution: %s" % e
             LOG.exception(msg)
             raise exc.EngineException(msg)
         finally:
@@ -172,18 +173,17 @@ class Engine(object):
         result = kwargs.get('result')
 
         db_api.start_tx()
-
         try:
             # TODO(rakhmerov): validate state transition
             task = db_api.task_get(task_id)
             workbook = self._get_workbook(task['workbook_name'])
 
-            wf_trace_msg = "Task '%s' [%s -> %s" % \
-                           (task['name'], task['state'], state)
-
-            wf_trace_msg += ']' if state == states.ERROR \
-                else ", result = %s]" % result
-            WORKFLOW_TRACE.info(wf_trace_msg)
+            if state == states.ERROR:
+                WF_TRACE.info("Task '%s' [%s -> %s]" %
+                              (task['name'], task['state'], state))
+            else:
+                WF_TRACE.info("Task '%s' [%s -> %s, result = %s]" %
+                              (task['name'], task['state'], state, result))
 
             action_name = wb_task.TaskSpec(task['task_spec'])\
                 .get_full_action_name()
@@ -206,20 +206,43 @@ class Engine(object):
             task, context = self._update_task(workbook, task, state,
                                               task_output)
 
-            execution = db_api.execution_get(task['execution_id'])
-
             self._create_next_tasks(task, workbook)
 
+            # At that point, sqlalchemy tries to flush the changes in task
+            # to the db and, in some cases, hits sqlite database lock
+            # established by another thread of convey_task_results executed
+            # at the same time (for example, as a result of two std.echo
+            # tasks started one after another within the same self._run_task
+            # call). By separating the transaction into two, we creating a
+            # window of opportunity for task changes to be flushed. The
+            # possible ramifications are unclear at the moment and should be
+            # a subject of further review.
+
+            # TODO(rakhmerov): review the possibility to use a single
+            # transaction after switching to the db with better support of
+            # concurrency.
+            db_api.commit_tx()
+        except Exception as e:
+            msg = "Failed to save task result: %s" % e
+            LOG.exception(msg)
+            raise exc.EngineException(msg)
+        finally:
+            db_api.end_tx()
+
+        db_api.start_tx()
+        try:
+            execution = db_api.execution_get(task['execution_id'])
+
             # Determine what tasks need to be started.
-            tasks = db_api.tasks_get(execution_id=task['execution_id'])
+            tasks = db_api.tasks_get(execution_id=execution['id'])
 
             new_exec_state = self._determine_execution_state(execution, tasks)
 
             if execution['state'] != new_exec_state:
-                wf_trace_msg = \
-                    "Execution '%s' [%s -> %s]" % \
+                WF_TRACE.info(
+                    "Execution '%s' [%s -> %s]" %
                     (execution['id'], execution['state'], new_exec_state)
-                WORKFLOW_TRACE.info(wf_trace_msg)
+                )
 
                 execution = db_api.execution_update(execution['id'], {
                     "state": new_exec_state
@@ -239,11 +262,12 @@ class Engine(object):
             # Update task with new context and params.
             executables = data_flow.prepare_tasks(tasks_to_start,
                                                   context,
-                                                  workbook)
+                                                  workbook,
+                                                  tasks)
 
             db_api.commit_tx()
         except Exception as e:
-            msg = "Failed to create necessary DB objects: %s" % e
+            msg = "Failed to queue next batch of tasks: %s" % e
             LOG.exception(msg)
             raise exc.EngineException(msg)
         finally:
@@ -325,7 +349,7 @@ class Engine(object):
 
     @classmethod
     def _create_tasks(cls, task_list, workbook, workbook_name, execution_id):
-        tasks = []
+        tasks = {}
 
         for task in task_list:
             state, task_runtime_context = retry.get_task_runtime(task)
@@ -333,7 +357,8 @@ class Engine(object):
 
             db_task = db_api.task_create(execution_id, {
                 "name": task.name,
-                "requires": task.get_requires(),
+                "requires": [tasks[name]['id'] for name
+                             in task.get_requires()],
                 "task_spec": task.to_dict(),
                 "action_spec": {} if not action_spec
                 else action_spec.to_dict(),
@@ -343,9 +368,9 @@ class Engine(object):
                 "workbook_name": workbook_name
             })
 
-            tasks.append(db_task)
+            tasks[db_task['name']] = db_task
 
-        return tasks
+        return tasks.values()
 
     @classmethod
     def _get_workbook(cls, workbook_name):
@@ -409,14 +434,16 @@ class Engine(object):
                 execution_id = task['execution_id']
                 execution = db_api.execution_get(execution_id)
 
+                tasks = db_api.tasks_get(execution_id=execution_id)
+
                 # Change state from DELAYED to RUNNING.
 
-                WORKFLOW_TRACE.info("Task '%s' [%s -> %s]"
-                                    % (task['name'],
-                                       task['state'], states.RUNNING))
+                WF_TRACE.info("Task '%s' [%s -> %s]" %
+                              (task['name'], task['state'], states.RUNNING))
                 executables = data_flow.prepare_tasks([task],
                                                       outbound_context,
-                                                      workbook)
+                                                      workbook,
+                                                      tasks)
                 db_api.commit_tx()
             finally:
                 db_api.end_tx()

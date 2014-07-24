@@ -61,6 +61,13 @@ def create_workbook(definition_path):
     })
 
 
+def context_contains_required(task):
+    requires = task.get('task_spec').get('requires')
+    subcontexts = task.get('in_context').get('task', {})
+
+    return set(requires.keys()).issubset(set(subcontexts.keys()))
+
+
 @mock.patch.object(
     engine.EngineClient, 'start_workflow_execution',
     mock.MagicMock(side_effect=base.EngineTestCase.mock_start_workflow))
@@ -249,6 +256,41 @@ class DataFlowTest(base.EngineTestCase):
                 }
             },
             send_greeting_task['output'])
+
+    def test_task_with_diamond_dependencies(self):
+        CTX = copy.copy(CONTEXT)
+
+        wb = create_workbook('data_flow/task_with_diamond_dependencies.yaml')
+
+        execution = self.engine.start_workflow_execution(wb['name'],
+                                                         'send_greeting',
+                                                         CTX)
+
+        # We have to reread execution to get its latest version.
+        execution = db_api.execution_get(execution['id'])
+
+        self.assertEqual(states.SUCCESS, execution['state'])
+        self.assertDictEqual(CTX, execution['context'])
+
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
+
+        self.assertEqual(4, len(tasks))
+
+        results = {
+            'build_full_name': ('full_name', 'John Doe'),
+            'build_address': ('address', 'To John Doe'),
+            'build_greeting': ('greeting', 'Dear John Doe'),
+            'send_greeting': ('task',
+                              {'send_greeting':
+                               {'string': 'To John Doe. Dear John Doe,..'}})
+        }
+
+        for task in tasks:
+            self.assertTrue(context_contains_required(task),
+                            "Task context is incomplete: %s" % task['name'])
+            key, value = results[task['name']]
+            self.assertEqual(value, task['output'][key])
 
     def test_two_subsequent_tasks(self):
         CTX = copy.copy(CONTEXT)

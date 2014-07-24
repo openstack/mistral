@@ -60,12 +60,23 @@ def evaluate_task_parameters(task, context):
     return expr.evaluate_recursively(params, context)
 
 
-def prepare_tasks(tasks, context, workbook):
+def build_required_context(task, tasks):
+    context = {}
+
+    for req_task in tasks:
+        if req_task['id'] in task.get('requires', []):
+            _merge_dicts(context, get_outbound_context(req_task))
+
+    return context
+
+
+def prepare_tasks(tasks_to_start, context, workbook, tasks):
     results = []
 
-    for task in tasks:
-        # TODO(rakhmerov): Inbound context should be a merge of
-        # outbound contexts of task dependencies, if any.
+    for task in tasks_to_start:
+
+        context = _merge_dicts(context, build_required_context(task, tasks))
+
         action_params = evaluate_task_parameters(task, context)
 
         db_api.task_update(task['id'],
