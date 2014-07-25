@@ -44,22 +44,18 @@ TRIGGERS = [
 class TriggerTest(test_base.DbTestCase):
     def test_trigger_create_and_get(self):
         created = db_api.trigger_create(TRIGGERS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.trigger_get(created['id'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
     def test_trigger_update(self):
         created = db_api.trigger_create(TRIGGERS[0])
-        self.assertIsInstance(created, dict)
 
         updated = db_api.trigger_update(created['id'], {'pattern': '0 * *'})
-        self.assertIsInstance(updated, dict)
-        self.assertEqual('0 * *', updated['pattern'])
+        self.assertEqual('0 * *', updated.pattern)
 
         fetched = db_api.trigger_get(created['id'])
-        self.assertDictEqual(updated, fetched)
+        self.assertEqual(updated, fetched)
 
     def test_trigger_delete(self):
         created = db_api.trigger_create(TRIGGERS[0])
@@ -75,8 +71,8 @@ class TriggerTest(test_base.DbTestCase):
         fetched = db_api.triggers_get_all()
 
         self.assertEqual(2, len(fetched))
-        self.assertDictEqual(created0, fetched[0])
-        self.assertDictEqual(created1, fetched[1])
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
 
 
 WORKBOOKS = [
@@ -108,23 +104,19 @@ WORKBOOKS = [
 class WorkbookTest(test_base.DbTestCase):
     def test_workbook_create_and_get(self):
         created = db_api.workbook_create(WORKBOOKS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.workbook_get(created['name'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
     def test_workbook_update(self):
         created = db_api.workbook_create(WORKBOOKS[0])
-        self.assertIsInstance(created, dict)
 
         updated = db_api.workbook_update(created['name'],
                                          {'description': 'my new desc'})
-        self.assertIsInstance(updated, dict)
         self.assertEqual('my new desc', updated['description'])
 
         fetched = db_api.workbook_get(created['name'])
-        self.assertDictEqual(updated, fetched)
+        self.assertEqual(updated, fetched)
 
     def test_workbook_list(self):
         created0 = db_api.workbook_create(WORKBOOKS[0])
@@ -133,16 +125,14 @@ class WorkbookTest(test_base.DbTestCase):
         fetched = db_api.workbooks_get_all()
 
         self.assertEqual(2, len(fetched))
-        self.assertDictEqual(created0, fetched[0])
-        self.assertDictEqual(created1, fetched[1])
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
 
     def test_workbook_delete(self):
         created = db_api.workbook_create(WORKBOOKS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.workbook_get(created['name'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
         db_api.workbook_delete(created['name'])
         self.assertRaises(exc.NotFoundException,
@@ -156,7 +146,7 @@ class WorkbookTest(test_base.DbTestCase):
         fetched = db_api.workbooks_get_all()
 
         self.assertEqual(1, len(fetched))
-        self.assertDictEqual(created1, fetched[0])
+        self.assertEqual(created1, fetched[0])
 
         # create a new user.
         ctx = auth_context.MistralContext(user_id='9-0-44-5',
@@ -177,7 +167,7 @@ class WorkbookTest(test_base.DbTestCase):
         fetched = db_api.workbooks_get_all()
 
         self.assertEqual(1, len(fetched))
-        self.assertDictEqual(created0, fetched[0])
+        self.assertEqual(created0, fetched[0])
 
         # assert that the project_id stored is actually the context's
         # project_id not the one given.
@@ -194,8 +184,9 @@ class WorkbookTest(test_base.DbTestCase):
         auth_context.set_ctx(ctx)
 
         fetched = db_api.workbooks_get_all()
+
         self.assertEqual(1, len(fetched))
-        self.assertDictEqual(created0, fetched[0])
+        self.assertEqual(created0, fetched[0])
         self.assertEqual('public', created0['scope'])
 
 
@@ -223,24 +214,20 @@ class ExecutionTest(test_base.DbTestCase):
     def test_execution_create_and_get(self):
         created = db_api.execution_create(EXECUTIONS[0]['workbook_name'],
                                           EXECUTIONS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.execution_get(created['id'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
     def test_execution_update(self):
         created = db_api.execution_create(EXECUTIONS[0]['workbook_name'],
                                           EXECUTIONS[0])
-        self.assertIsInstance(created, dict)
 
         updated = db_api.execution_update(created['id'],
                                           {'task': 'task10'})
-        self.assertIsInstance(updated, dict)
         self.assertEqual('task10', updated['task'])
 
         fetched = db_api.execution_get(created['id'])
-        self.assertDictEqual(updated, fetched)
+        self.assertEqual(updated, fetched)
 
     def test_execution_list(self):
         created0 = db_api.execution_create(EXECUTIONS[0]['workbook_name'],
@@ -252,17 +239,15 @@ class ExecutionTest(test_base.DbTestCase):
             workbook_name=EXECUTIONS[0]['workbook_name'])
 
         self.assertEqual(2, len(fetched))
-        self.assertDictEqual(created0, fetched[0])
-        self.assertDictEqual(created1, fetched[1])
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
 
     def test_execution_delete(self):
         created = db_api.execution_create(EXECUTIONS[0]['workbook_name'],
                                           EXECUTIONS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.execution_get(created['id'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
         db_api.execution_delete(created['id'])
         self.assertRaises(exc.NotFoundException,
@@ -314,24 +299,20 @@ class TaskTest(test_base.DbTestCase):
     def test_task_create_and_get(self):
         created = db_api.task_create(TASKS[0]['execution_id'],
                                      TASKS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.task_get(created['id'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
     def test_task_update(self):
         created = db_api.task_create(TASKS[0]['execution_id'],
                                      TASKS[0])
-        self.assertIsInstance(created, dict)
 
         updated = db_api.task_update(created['id'],
                                      {'description': 'my new desc'})
-        self.assertIsInstance(updated, dict)
         self.assertEqual('my new desc', updated['description'])
 
         fetched = db_api.task_get(created['id'])
-        self.assertDictEqual(updated, fetched)
+        self.assertEqual(updated, fetched)
 
     def test_task_list(self):
         created0 = db_api.task_create(TASKS[0]['execution_id'],
@@ -343,17 +324,15 @@ class TaskTest(test_base.DbTestCase):
             workbook_name=TASKS[0]['workbook_name'])
 
         self.assertEqual(2, len(fetched))
-        self.assertDictEqual(created0, fetched[0])
-        self.assertDictEqual(created1, fetched[1])
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
 
     def test_task_delete(self):
         created = db_api.task_create(TASKS[0]['execution_id'],
                                      TASKS[0])
-        self.assertIsInstance(created, dict)
 
         fetched = db_api.task_get(created['id'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        self.assertEqual(created, fetched)
 
         db_api.task_delete(created['id'])
         self.assertRaises(exc.NotFoundException, db_api.task_get,
@@ -366,11 +345,9 @@ class TXTest(test_base.DbTestCase):
 
         try:
             created = db_api.trigger_create(TRIGGERS[0])
-            self.assertIsInstance(created, dict)
 
             fetched = db_api.trigger_get(created['id'])
-            self.assertIsInstance(fetched, dict)
-            self.assertDictEqual(created, fetched)
+            self.assertEqual(created, fetched)
 
             self.assertTrue(self.is_db_session_open())
 
@@ -390,11 +367,9 @@ class TXTest(test_base.DbTestCase):
 
         try:
             created = db_api.trigger_create(TRIGGERS[0])
-            self.assertIsInstance(created, dict)
 
-            fetched = db_api.trigger_get(created['id'])
-            self.assertIsInstance(fetched, dict)
-            self.assertDictEqual(created, fetched)
+            fetched = db_api.trigger_get(created.id)
+            self.assertEqual(created, fetched)
 
             self.assertTrue(self.is_db_session_open())
 
@@ -404,9 +379,8 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.trigger_get(created['id'])
-        self.assertIsInstance(fetched, dict)
-        self.assertDictEqual(created, fetched)
+        fetched = db_api.trigger_get(created.id)
+        self.assertEqual(created, fetched)
 
         self.assertFalse(self.is_db_session_open())
 
@@ -414,19 +388,15 @@ class TXTest(test_base.DbTestCase):
         db_api.start_tx()
 
         try:
-            created_trigger = db_api.trigger_create(TRIGGERS[0])
-            self.assertIsInstance(created_trigger, dict)
+            created = db_api.trigger_create(TRIGGERS[0])
 
-            fetched_trigger = db_api.trigger_get(created_trigger['id'])
-            self.assertIsInstance(fetched_trigger, dict)
-            self.assertDictEqual(created_trigger, fetched_trigger)
+            fetched = db_api.trigger_get(created['id'])
+            self.assertEqual(created, fetched)
 
             created_workbook = db_api.workbook_create(WORKBOOKS[0])
-            self.assertIsInstance(created_workbook, dict)
 
             fetched_workbook = db_api.workbook_get(created_workbook['name'])
-            self.assertIsInstance(fetched_workbook, dict)
-            self.assertDictEqual(created_workbook, fetched_workbook)
+            self.assertEqual(created_workbook, fetched_workbook)
 
             self.assertTrue(self.is_db_session_open())
 
@@ -437,7 +407,7 @@ class TXTest(test_base.DbTestCase):
         self.assertFalse(self.is_db_session_open())
 
         self.assertRaises(exc.NotFoundException,
-                          db_api.trigger_get, created_trigger['id'])
+                          db_api.trigger_get, created['id'])
 
         self.assertRaises(exc.NotFoundException, db_api.workbook_get,
                           created_workbook['name'])
@@ -448,19 +418,15 @@ class TXTest(test_base.DbTestCase):
         db_api.start_tx()
 
         try:
-            created_trigger = db_api.trigger_create(TRIGGERS[0])
-            self.assertIsInstance(created_trigger, dict)
+            created = db_api.trigger_create(TRIGGERS[0])
 
-            fetched_trigger = db_api.trigger_get(created_trigger['id'])
-            self.assertIsInstance(fetched_trigger, dict)
-            self.assertDictEqual(created_trigger, fetched_trigger)
+            fetched = db_api.trigger_get(created['id'])
+            self.assertEqual(created, fetched)
 
             created_workbook = db_api.workbook_create(WORKBOOKS[0])
-            self.assertIsInstance(created_workbook, dict)
 
             fetched_workbook = db_api.workbook_get(created_workbook['name'])
-            self.assertIsInstance(fetched_workbook, dict)
-            self.assertDictEqual(created_workbook, fetched_workbook)
+            self.assertEqual(created_workbook, fetched_workbook)
 
             self.assertTrue(self.is_db_session_open())
 
@@ -470,12 +436,10 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched_trigger = db_api.trigger_get(created_trigger['id'])
-        self.assertIsInstance(fetched_trigger, dict)
-        self.assertDictEqual(created_trigger, fetched_trigger)
+        fetched = db_api.trigger_get(created['id'])
+        self.assertEqual(created, fetched)
 
         fetched_workbook = db_api.workbook_get(created_workbook['name'])
-        self.assertIsInstance(fetched_workbook, dict)
-        self.assertDictEqual(created_workbook, fetched_workbook)
+        self.assertEqual(created_workbook, fetched_workbook)
 
         self.assertFalse(self.is_db_session_open())

@@ -24,6 +24,7 @@ eventlet.monkey_patch()
 from mistral.actions import std_actions
 from mistral.cmd import launch
 from mistral.db import api as db_api
+from mistral.db.sqlalchemy import models
 from mistral.engine import states
 from mistral.openstack.common import importutils
 from mistral.openstack.common import log as logging
@@ -42,6 +43,15 @@ WB_NAME = 'my_workbook'
 CONTEXT = None  # TODO(rakhmerov): Use a meaningful value.
 
 
+def get_mock_workbook(file, name='my_wb'):
+    wb = models.Workbook()
+
+    wb.name = name
+    wb.definition = base.get_resource(file)
+
+    return wb
+
+
 class TestTransport(base.EngineTestCase):
     def setUp(self):
         super(TestTransport, self).setUp()
@@ -55,7 +65,7 @@ class TestTransport(base.EngineTestCase):
     @mock.patch.object(
         db_api, 'workbook_get',
         mock.MagicMock(
-            return_value={'definition': base.get_resource('test_rest.yaml')}))
+            return_value=get_mock_workbook('test_rest.yaml')))
     @mock.patch.object(
         std_actions.HTTPAction, 'run', mock.MagicMock(return_value={}))
     def test_transport(self):

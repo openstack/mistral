@@ -86,21 +86,22 @@ class Tasks(resource.Resource):
 
 class TasksController(rest.RestController):
     def _get(self, id):
-        values = db_api.task_get(id)
-        return Task.from_dict(values)
+        db_model = db_api.task_get(id)
+
+        return Task.from_dict(db_model.to_dict())
 
     def _put(self, id, task):
         if db_api.task_get(id):
             # TODO(rakhmerov): pass task result once it's implemented
             engine = pecan.request.context['engine']
-            values = engine.convey_task_result(id,
-                                               task.state, None)
+
+            values = engine.convey_task_result(id, task.state, None)
 
             return Task.from_dict(values)
 
     def _get_all(self, **kwargs):
-        tasks = [Task.from_dict(values)
-                 for values in db_api.tasks_get(**kwargs)]
+        tasks = [Task.from_dict(db_model.to_dict())
+                 for db_model in db_api.tasks_get(**kwargs)]
 
         return Tasks(tasks=tasks)
 

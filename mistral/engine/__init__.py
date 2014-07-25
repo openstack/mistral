@@ -101,7 +101,7 @@ class Engine(object):
             tasks = self._create_tasks(
                 workflow.find_workflow_tasks(workbook, task_name),
                 workbook,
-                workbook_name, execution['id']
+                workbook_name, execution.id
             )
 
             # Create a list of tasks that can be executed immediately (have
@@ -134,7 +134,7 @@ class Engine(object):
         for task_id, action_name, action_params in executables:
             self._run_task(task_id, action_name, action_params)
 
-        return execution
+        return execution.to_dict()
 
     def stop_workflow_execution(self, cntx, **kwargs):
         """Stops the workflow execution with the given id.
@@ -147,8 +147,9 @@ class Engine(object):
         """
         execution_id = kwargs.get('execution_id')
 
-        return db_api.execution_update(execution_id,
-                                       {"state": states.STOPPED})
+        return db_api.execution_update(
+            execution_id, {"state": states.STOPPED}
+        ).to_dict()
 
     def convey_task_result(self, cntx, **kwargs):
         """Conveys task result to Mistral Engine.
@@ -173,19 +174,20 @@ class Engine(object):
         result = kwargs.get('result')
 
         db_api.start_tx()
+
         try:
             # TODO(rakhmerov): validate state transition
             task = db_api.task_get(task_id)
-            workbook = self._get_workbook(task['workbook_name'])
+            workbook = self._get_workbook(task.workbook_name)
 
             if state == states.ERROR:
                 WF_TRACE.info("Task '%s' [%s -> %s]" %
-                              (task['name'], task['state'], state))
+                              (task.name, task.state, state))
             else:
                 WF_TRACE.info("Task '%s' [%s -> %s, result = %s]" %
-                              (task['name'], task['state'], state, result))
+                              (task.name, task.state, state, result))
 
-            action_name = wb_task.TaskSpec(task['task_spec'])\
+            action_name = wb_task.TaskSpec(task.task_spec)\
                 .get_full_action_name()
 
             if not a_f.get_action_class(action_name):
@@ -230,21 +232,22 @@ class Engine(object):
             db_api.end_tx()
 
         db_api.start_tx()
+
         try:
-            execution = db_api.execution_get(task['execution_id'])
+            execution = db_api.execution_get(task.execution_id)
 
             # Determine what tasks need to be started.
-            tasks = db_api.tasks_get(execution_id=execution['id'])
+            tasks = db_api.tasks_get(execution_id=execution.id)
 
             new_exec_state = self._determine_execution_state(execution, tasks)
 
-            if execution['state'] != new_exec_state:
+            if execution.state != new_exec_state:
                 WF_TRACE.info(
                     "Execution '%s' [%s -> %s]" %
-                    (execution['id'], execution['state'], new_exec_state)
+                    (execution.id, execution.state, new_exec_state)
                 )
 
-                execution = db_api.execution_update(execution['id'], {
+                execution = db_api.execution_update(execution.id, {
                     "state": new_exec_state
                 })
 
@@ -273,7 +276,7 @@ class Engine(object):
         finally:
             db_api.end_tx()
 
-        if states.is_stopped_or_finished(execution['state']):
+        if states.is_stopped_or_finished(execution.state):
             return task
 
         for task in delayed_tasks:
@@ -282,7 +285,7 @@ class Engine(object):
         for task_id, action_name, action_params in executables:
             self._run_task(task_id, action_name, action_params)
 
-        return task
+        return task.to_dict()
 
     def get_workflow_execution_state(self, cntx, **kwargs):
         """Gets the workflow execution state.
@@ -303,7 +306,7 @@ class Engine(object):
                                       "[workbook_name=%s, execution_id=%s]"
                                       % (workbook_name, execution_id))
 
-        return execution["state"]
+        return execution.state
 
     def get_task_state(self, cntx, **kwargs):
         """Gets task state.
@@ -321,7 +324,7 @@ class Engine(object):
         if not task:
             raise exc.EngineException("Task not found.")
 
-        return task["state"]
+        return task.state
 
     @classmethod
     def _create_execution(cls, workbook_name, task_name, context):
@@ -334,7 +337,7 @@ class Engine(object):
 
     @classmethod
     def _add_variables_to_data_flow_context(cls, df_ctx, execution):
-        db_workbook = db_api.workbook_get(execution['workbook_name'])
+        db_workbook = db_api.workbook_get(execution.workbook_name)
 
         data_flow.add_openstack_data_to_context(df_ctx, db_workbook)
         data_flow.add_execution_to_context(df_ctx, execution)
@@ -343,8 +346,8 @@ class Engine(object):
     def _create_next_tasks(cls, task, workbook):
         tasks = workflow.find_tasks_after_completion(task, workbook)
 
-        db_tasks = cls._create_tasks(tasks, workbook, task['workbook_name'],
-                                     task['execution_id'])
+        db_tasks = cls._create_tasks(tasks, workbook, task.workbook_name,
+                                     task.execution_id)
         return workflow.find_resolved_tasks(db_tasks)
 
     @classmethod
@@ -357,7 +360,7 @@ class Engine(object):
 
             db_task = db_api.task_create(execution_id, {
                 "name": task.name,
-                "requires": [tasks[name]['id'] for name
+                "requires": [tasks[name].id for name
                              in task.get_requires()],
                 "task_spec": task.to_dict(),
                 "action_spec": {} if not action_spec
@@ -368,14 +371,14 @@ class Engine(object):
                 "workbook_name": workbook_name
             })
 
-            tasks[db_task['name']] = db_task
+            tasks[db_task.name] = db_task
 
         return tasks.values()
 
     @classmethod
     def _get_workbook(cls, workbook_name):
         wb = db_api.workbook_get(workbook_name)
-        return parser.get_workbook(wb["definition"])
+        return parser.get_workbook(wb.definition)
 
     @classmethod
     def _determine_execution_state(cls, execution, tasks):
@@ -385,7 +388,7 @@ class Engine(object):
         if workflow.is_success(tasks) or workflow.is_finished(tasks):
             return states.SUCCESS
 
-        return execution['state']
+        return execution.state
 
     @classmethod
     def _update_task(cls, workbook, task, state, task_output):
@@ -394,8 +397,8 @@ class Engine(object):
         :return: task, outbound_context. task is the updated task and
         computed outbound context.
         """
-        task_spec = workbook.tasks.get(task["name"])
-        task_runtime_context = task["task_runtime_context"]
+        task_spec = workbook.tasks.get(task.name)
+        task_runtime_context = task.task_runtime_context
 
         # Compute the outbound_context, state and exec_flow_context.
         outbound_context = data_flow.get_outbound_context(task, task_output)
@@ -403,9 +406,12 @@ class Engine(object):
             task_spec, state, outbound_context, task_runtime_context)
 
         # Update the task.
-        update_values = {"state": state,
-                         "output": task_output,
-                         "task_runtime_context": task_runtime_context}
+        update_values = {
+            "state": state,
+            "output": task_output,
+            "task_runtime_context": task_runtime_context
+        }
+
         task = db_api.task_update(task["id"], update_values)
 
         return task, outbound_context
@@ -431,7 +437,7 @@ class Engine(object):
             db_api.start_tx()
 
             try:
-                execution_id = task['execution_id']
+                execution_id = task.execution_id
                 execution = db_api.execution_get(execution_id)
 
                 tasks = db_api.tasks_get(execution_id=execution_id)
@@ -439,7 +445,7 @@ class Engine(object):
                 # Change state from DELAYED to RUNNING.
 
                 WF_TRACE.info("Task '%s' [%s -> %s]" %
-                              (task['name'], task['state'], states.RUNNING))
+                              (task.name, task.state, states.RUNNING))
                 executables = data_flow.prepare_tasks([task],
                                                       outbound_context,
                                                       workbook,
@@ -448,13 +454,13 @@ class Engine(object):
             finally:
                 db_api.end_tx()
 
-            if states.is_stopped_or_finished(execution['state']):
+            if states.is_stopped_or_finished(execution.state):
                 return
 
             for task_id, action_name, action_params in executables:
                 self._run_task(task_id, action_name, action_params)
 
-        task_spec = workbook.tasks.get(task['name'])
+        task_spec = workbook.tasks.get(task.name)
         retries, break_on, delay_sec = task_spec.get_retry_parameters()
 
         if delay_sec > 0:
@@ -463,7 +469,7 @@ class Engine(object):
                                  context=auth_context.ctx())
         else:
             LOG.warn("No delay specified for task(id=%s) name=%s. Not "
-                     "scheduling for execution." % (task['id'], task['name']))
+                     "scheduling for execution." % (task.id, task.name))
 
 
 class EngineClient(object):
@@ -490,11 +496,17 @@ class EngineClient(object):
         :param context: Execution context which defines a workflow input
         :return: Workflow execution.
         """
-        cntx = auth_context.ctx()
-        kwargs = {'workbook_name': workbook_name,
-                  'task_name': task_name,
-                  'context': context}
-        return self._client.call(cntx, 'start_workflow_execution', **kwargs)
+        kwargs = {
+            'workbook_name': workbook_name,
+            'task_name': task_name,
+            'context': context
+        }
+
+        return self._client.call(
+            auth_context.ctx(),
+            'start_workflow_execution',
+            **kwargs
+        )
 
     def stop_workflow_execution(self, workbook_name, execution_id):
         """Stops the workflow execution with the given id.
@@ -503,10 +515,16 @@ class EngineClient(object):
         :param execution_id: Workflow execution id.
         :return: Workflow execution.
         """
-        cntx = auth_context.ctx()
-        kwargs = {'workbook_name': workbook_name,
-                  'execution_id': execution_id}
-        return self._client.call(cntx, 'stop_workflow_execution', **kwargs)
+        kwargs = {
+            'workbook_name': workbook_name,
+            'execution_id': execution_id
+        }
+
+        return self._client.call(
+            auth_context.ctx(),
+            'stop_workflow_execution',
+            **kwargs
+        )
 
     def convey_task_result(self, task_id, state, result):
         """Conveys task result to Mistral Engine.
@@ -525,11 +543,17 @@ class EngineClient(object):
         :param result: Task result data.
         :return: Task.
         """
-        cntx = auth_context.ctx()
-        kwargs = {'task_id': task_id,
-                  'state': state,
-                  'result': result}
-        return self._client.call(cntx, 'convey_task_result', **kwargs)
+        kwargs = {
+            'task_id': task_id,
+            'state': state,
+            'result': result
+        }
+
+        return self._client.call(
+            auth_context.ctx(),
+            'convey_task_result',
+            **kwargs
+        )
 
     def get_workflow_execution_state(self, workbook_name, execution_id):
         """Gets the workflow execution state.
@@ -538,11 +562,16 @@ class EngineClient(object):
         :param execution_id: Workflow execution id.
         :return: Current workflow state.
         """
-        cntx = auth_context.ctx()
-        kwargs = {'workbook_name': workbook_name,
-                  'execution_id': execution_id}
+        kwargs = {
+            'workbook_name': workbook_name,
+            'execution_id': execution_id
+        }
+
         return self._client.call(
-            cntx, 'get_workflow_execution_state', **kwargs)
+            auth_context.ctx(),
+            'get_workflow_execution_state',
+            **kwargs
+        )
 
     def get_task_state(self, workbook_name, execution_id, task_id):
         """Gets task state.
@@ -552,8 +581,14 @@ class EngineClient(object):
         :param task_id: Task id.
         :return: Current task state.
         """
-        cntx = auth_context.ctx()
-        kwargs = {'workbook_name': workbook_name,
-                  'executioin_id': execution_id,
-                  'task_id': task_id}
-        return self._client.call(cntx, 'get_task_state', **kwargs)
+        kwargs = {
+            'workbook_name': workbook_name,
+            'executioin_id': execution_id,
+            'task_id': task_id
+        }
+
+        return self._client.call(
+            auth_context.ctx(),
+            'get_task_state',
+            **kwargs
+        )

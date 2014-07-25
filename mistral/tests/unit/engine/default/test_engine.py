@@ -19,6 +19,7 @@ from oslo.config import cfg
 from mistral.actions import std_actions
 from mistral import context as auth_context
 from mistral.db import api as db_api
+from mistral.db.sqlalchemy import models
 from mistral import engine
 from mistral.engine.drivers.default import engine as concrete_engine
 from mistral.engine import executor
@@ -40,6 +41,15 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 # TODO(rakhmerov): add more tests for errors, execution stop etc.
 
 
+def get_mock_workbook(file, name='my_wb'):
+    wb = models.Workbook()
+
+    wb.name = name
+    wb.definition = base.get_resource(file)
+
+    return wb
+
+
 @mock.patch.object(auth_context, 'ctx', mock.MagicMock())
 @mock.patch.object(
     engine.EngineClient, 'start_workflow_execution',
@@ -55,8 +65,8 @@ class TestEngine(base.EngineTestCase):
                        mock.MagicMock())
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/one_sync_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/one_sync_task.yaml')))
     def test_with_one_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "build_name",
                                                          CONTEXT)
@@ -64,7 +74,7 @@ class TestEngine(base.EngineTestCase):
         task = db_api.tasks_get(workbook_name=WB_NAME,
                                 execution_id=execution['id'])[0]
 
-        executor.ExecutorClient.handle_task\
+        executor.ExecutorClient.handle_task \
             .assert_called_once_with(auth_context.ctx(),
                                      params={'output': 'Stormin Stanley'},
                                      task_id=task['id'],
@@ -92,8 +102,8 @@ class TestEngine(base.EngineTestCase):
                        mock.MagicMock())
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/require_flow.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/require_flow.yaml')))
     def test_require_flow(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "greet",
                                                          CONTEXT)
@@ -137,8 +147,8 @@ class TestEngine(base.EngineTestCase):
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/one_sync_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/one_sync_task.yaml')))
     def test_with_one_sync_task(self):
         execution = self.engine.start_workflow_execution(WB_NAME, "build_name",
                                                          CONTEXT)
@@ -157,8 +167,8 @@ class TestEngine(base.EngineTestCase):
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/direct_flow.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/direct_flow.yaml')))
     def test_direct_flow_on_success_finish(self):
         # Start workflow.
         execution = self.engine.start_workflow_execution(WB_NAME,
@@ -220,8 +230,8 @@ class TestEngine(base.EngineTestCase):
         expressions, "evaluate", mock.MagicMock(side_effect=lambda x, y: x))
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/direct_flow.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/direct_flow.yaml')))
     def test_direct_flow_on_error_finish(self):
         # Start workflow.
         execution = self.engine.start_workflow_execution(WB_NAME,
@@ -270,8 +280,8 @@ class TestEngine(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/no_namespaces.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/no_namespaces.yaml')))
     @mock.patch.object(
         concrete_engine.DefaultEngine, '_run_task',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
@@ -289,8 +299,8 @@ class TestEngine(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'control_flow/one_std_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/one_std_task.yaml')))
     @mock.patch.object(
         concrete_engine.DefaultEngine, '_run_task',
         mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))

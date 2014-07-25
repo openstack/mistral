@@ -64,11 +64,13 @@ class Execution(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(id='1234',
-                   workbook_name='flow',
-                   task='doit',
-                   state='SUCCESS',
-                   context='{}')
+        return cls(
+            id='1234',
+            workbook_name='flow',
+            task='doit',
+            state='SUCCESS',
+            context='{}'
+        )
 
 
 class Executions(resource.Resource):
@@ -82,28 +84,25 @@ class Executions(resource.Resource):
 
 
 class ExecutionsController(rest.RestController):
-
     def _get(self, id):
-        values = db_api.execution_get(id)
-        return Execution.from_dict(values)
+        return Execution.from_dict(db_api.execution_get(id).to_dict())
 
     def _put(self, id, execution):
-        values = db_api.execution_update(id, execution.to_dict())
+        db_model = db_api.execution_update(id, execution.to_dict())
 
-        return Execution.from_dict(values)
+        return Execution.from_dict(db_model.to_dict())
 
     def _delete(self, id):
         db_api.execution_delete(id)
 
     def _get_all(self, **kwargs):
-        executions = [Execution.from_dict(values) for values
+        executions = [Execution.from_dict(db_model.to_dict()) for db_model
                       in db_api.executions_get(**kwargs)]
 
         return Executions(executions=executions)
 
 
 class WorkbookExecutionsController(ExecutionsController):
-
     tasks = task.WorkbookTasksController()
 
     @rest_utils.wrap_wsme_controller_exception
@@ -112,6 +111,7 @@ class WorkbookExecutionsController(ExecutionsController):
         """Return the specified Execution."""
         LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
+
         return self._get(id)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -120,6 +120,7 @@ class WorkbookExecutionsController(ExecutionsController):
         """Update the specified Execution."""
         LOG.debug("Update execution [workbook_name=%s, id=%s, execution=%s]" %
                   (workbook_name, id, execution))
+
         return self._put(id, execution)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -133,13 +134,17 @@ class WorkbookExecutionsController(ExecutionsController):
         if (db_api.workbook_get(workbook_name)
                 and db_api.workbook_definition_get(workbook_name)):
             context = None
+
             if execution.context:
                 context = json.loads(execution.context)
 
             engine = pecan.request.context['engine']
-            values = engine.start_workflow_execution(execution.workbook_name,
-                                                     execution.task,
-                                                     context)
+
+            values = engine.start_workflow_execution(
+                execution.workbook_name,
+                execution.task,
+                context
+            )
 
             return Execution.from_dict(values)
 
@@ -149,6 +154,7 @@ class WorkbookExecutionsController(ExecutionsController):
         """Delete the specified Execution."""
         LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
+
         return self._delete(id)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
@@ -161,7 +167,6 @@ class WorkbookExecutionsController(ExecutionsController):
 
 
 class RootExecutionsController(ExecutionsController):
-
     tasks = task.ExecutionTasksController()
 
     @rest_utils.wrap_wsme_controller_exception
@@ -169,6 +174,7 @@ class RootExecutionsController(ExecutionsController):
     def get(self, id):
         """Return the specified Execution."""
         LOG.debug("Fetch execution [id=%s]" % id)
+
         return self._get(id)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -177,6 +183,7 @@ class RootExecutionsController(ExecutionsController):
         """Update the specified Execution."""
         LOG.debug("Update execution [id=%s, execution=%s]" %
                   (id, execution))
+
         return self._put(id, execution)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -184,6 +191,7 @@ class RootExecutionsController(ExecutionsController):
     def delete(self, id):
         """Delete the specified Execution."""
         LOG.debug("Delete execution [id=%s]" % id)
+
         return self._delete(id)
 
     @wsme_pecan.wsexpose(Executions)

@@ -19,6 +19,7 @@ import json
 
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
+from mistral.db.sqlalchemy import models
 from mistral import dsl_parser as parser
 from mistral.engine import data_flow
 from mistral import exceptions
@@ -123,7 +124,10 @@ class ActionFactoryTest(base.BaseTest):
         self.assertIn('Invalid action name', exc.message)
 
     def test_create_http_action(self):
-        action = a_f.create_action(DB_TASK)
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK))
+
+        action = a_f.create_action(db_task)
 
         self.assertIsNotNone(action)
 
@@ -136,14 +140,16 @@ class ActionFactoryTest(base.BaseTest):
         self.assertDictEqual(task_params['body'], json.loads(action.body))
 
     def test_create_mistral_http_action(self):
-        db_task = copy.copy(DB_TASK)
-        db_task['task_spec']['action'] = 'std.mistral_http'
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK))
+
+        db_task.task_spec['action'] = 'std.mistral_http'
 
         action = a_f.create_action(db_task)
 
         self.assertIsNotNone(action)
 
-        task_params = db_task['parameters']
+        task_params = db_task.parameters
 
         self.assertEqual(task_params['url'], action.url)
         self.assertDictEqual(task_params['params'], action.params)
@@ -151,24 +157,26 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual(task_params['headers'], action.headers)
         self.assertDictEqual(task_params['body'], json.loads(action.body))
 
-        self.assertEqual(db_task['workbook_name'],
+        self.assertEqual(db_task.workbook_name,
                          action.headers['Mistral-Workbook-Name'])
-        self.assertEqual(db_task['execution_id'],
+        self.assertEqual(db_task.execution_id,
                          action.headers['Mistral-Execution-Id'])
-        self.assertEqual(db_task['id'],
+        self.assertEqual(db_task.id,
                          action.headers['Mistral-Task-Id'])
 
     def test_create_mistral_http_action_with_no_headers(self):
-        db_task = copy.copy(DB_TASK)
-        db_task['task_spec']['action'] = 'std.mistral_http'
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK))
 
-        del db_task['parameters']['headers']
+        db_task.task_spec['action'] = 'std.mistral_http'
+
+        del db_task.parameters['headers']
 
         action = a_f.create_action(db_task)
 
         self.assertIsNotNone(action)
 
-        task_params = db_task['parameters']
+        task_params = db_task.parameters
 
         self.assertEqual(task_params['url'], action.url)
         self.assertDictEqual(task_params['params'], action.params)
@@ -177,23 +185,25 @@ class ActionFactoryTest(base.BaseTest):
 
         self.assertIsNotNone(action.headers)
 
-        self.assertEqual(db_task['workbook_name'],
+        self.assertEqual(db_task.workbook_name,
                          action.headers['Mistral-Workbook-Name'])
-        self.assertEqual(db_task['execution_id'],
+        self.assertEqual(db_task.execution_id,
                          action.headers['Mistral-Execution-Id'])
-        self.assertEqual(db_task['id'],
+        self.assertEqual(db_task.id,
                          action.headers['Mistral-Task-Id'])
 
     def test_create_adhoc_action_with_openstack_context(self):
-        db_task = copy.copy(DB_TASK_ADHOC)
-        db_task['action_spec']['output'] = {'res': '{$}'}
-        db_task['in_context'].update({
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK_ADHOC))
+
+        db_task.action_spec['output'] = {'res': '{$}'}
+        db_task.in_context.update({
             'openstack': {
                 'auth_token': '123',
                 'project_id': '321'
             }
         })
-        base_parameters = db_task['action_spec']['base-parameters']
+        base_parameters = db_task.action_spec['base-parameters']
         base_parameters['output'] = ("{$.openstack.auth_token}"
                                      "{$.openstack.project_id}")
 
@@ -202,12 +212,15 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual({'res': "123321"}, action.run())
 
     def test_create_adhoc_action_no_openstack_context(self):
-        db_task = copy.copy(DB_TASK_ADHOC)
-        db_task['action_spec']['output'] = {'res': '{$}'}
-        db_task['in_context'].update({
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK_ADHOC))
+
+        db_task.action_spec['output'] = {'res': '{$}'}
+        db_task.in_context.update({
             'openstack': None
         })
-        base_parameters = db_task['action_spec']['base-parameters']
+
+        base_parameters = db_task.action_spec['base-parameters']
         base_parameters['output'] = "$.openstack.auth_token"
 
         action = a_f.create_action(db_task)
@@ -215,30 +228,35 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual({'res': "$.openstack.auth_token"}, action.run())
 
     def test_create_no_adhoc_action_with_openstack_context(self):
-        db_task = copy.copy(DB_TASK)
-        db_task['task_spec']['action'] = 'std.http'
-        db_task['in_context'].update({
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK))
+
+        db_task.task_spec['action'] = 'std.http'
+        db_task.in_context.update({
             'openstack': {
                 'auth_token': '123',
                 'project_id': '321'
             }
         })
+
         # In case of no-adhoc action we should evaluate task parameters
         # to see what we need.
-        task_spec = db_task['task_spec']
+        task_spec = db_task.task_spec
         task_spec['parameters'] = {
             'url': "http://some/{$.openstack.project_id}/servers",
         }
 
-        db_task['parameters'] = data_flow.evaluate_task_parameters(
-            db_task, db_task['in_context'])
+        db_task.parameters = data_flow.evaluate_task_parameters(
+            db_task, db_task.in_context)
 
         action = a_f.create_action(db_task)
 
         self.assertEqual("http://some/321/servers", action.url)
 
     def test_get_ssh_action(self):
-        db_task = copy.copy(DB_TASK)
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK))
+
         db_task['task_spec'] = {
             'name': 'my_task',
             'action': 'std.ssh',
@@ -249,10 +267,13 @@ class ActionFactoryTest(base.BaseTest):
                 'password': '$.ssh_password'
             }
         }
-        db_task['parameters'] = {'host': '10.0.0.1',
-                                 'cmd': 'ls -l',
-                                 'username': 'ubuntu',
-                                 'password': 'ubuntu_password'}
+
+        db_task['parameters'] = {
+            'host': '10.0.0.1',
+            'cmd': 'ls -l',
+            'username': 'ubuntu',
+            'password': 'ubuntu_password'
+        }
 
         action = a_f.create_action(db_task)
 
@@ -262,8 +283,10 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual("10.0.0.1", action.host)
 
     def test_adhoc_echo_action(self):
-        db_task = copy.copy(DB_TASK_ADHOC)
-        action_spec = db_task['action_spec']
+        db_task = models.Task()
+        db_task.update(copy.copy(DB_TASK_ADHOC))
+
+        action_spec = db_task.action_spec
 
         # With dic-like output formatter.
         action = a_f.create_action(db_task)
@@ -297,6 +320,7 @@ class ActionFactoryTest(base.BaseTest):
     def test_convert_adhoc_action_params(self):
         workbook = parser.get_workbook(
             base.get_resource('control_flow/one_sync_task.yaml'))
+
         action_name = 'MyActions.concat'
         params = {
             'left': 'Stormin',
@@ -312,6 +336,7 @@ class ActionFactoryTest(base.BaseTest):
     def test_convert_adhoc_action_result(self):
         workbook = parser.get_workbook(
             base.get_resource('control_flow/one_sync_task.yaml'))
+
         action_name = 'MyActions.concat'
         result = {'output': 'Stormin Stanley'}
 

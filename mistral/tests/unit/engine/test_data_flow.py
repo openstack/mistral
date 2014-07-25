@@ -79,9 +79,9 @@ def context_contains_required(task):
     mock.MagicMock(side_effect=base.EngineTestCase.mock_run_task))
 class DataFlowTest(base.EngineTestCase):
     def _check_in_context_execution(self, task):
-        self.assertIn('__execution', task['in_context'])
+        self.assertIn('__execution', task.in_context)
 
-        exec_dict = task['in_context']['__execution']
+        exec_dict = task.in_context['__execution']
 
         self.assertEqual('my_workbook', exec_dict['workbook_name'])
         self.assertEqual(task['execution_id'], exec_dict['id'])
@@ -115,8 +115,8 @@ class DataFlowTest(base.EngineTestCase):
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
         self._check_in_context_execution(build_full_name_task)
-        del build_full_name_task['in_context']['__execution']
-        self.assertDictEqual(CTX, build_full_name_task['in_context'])
+        del build_full_name_task.in_context['__execution']
+        self.assertDictEqual(CTX, build_full_name_task.in_context)
         self.assertDictEqual({'first_name': 'John', 'last_name': 'Doe'},
                              build_full_name_task['parameters'])
         self.assertDictEqual(
@@ -136,7 +136,7 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, build_greeting_task['state'])
         self.assertEqual('John Doe',
-                         build_greeting_task['in_context']['f_name'])
+                         build_greeting_task.in_context['f_name'])
         self.assertDictEqual({'full_name': 'John Doe'},
                              build_greeting_task['parameters'])
         self.assertDictEqual(
@@ -443,9 +443,9 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, send_greeting_task['state'])
         self.assertEqual('John Doe',
-                         send_greeting_task['in_context']['f_name'])
+                         send_greeting_task.in_context['f_name'])
         self.assertEqual('Hello, John Doe!',
-                         send_greeting_task['in_context']['greet_msg'])
+                         send_greeting_task.in_context['greet_msg'])
         self.assertDictEqual({'greeting': 'Hello, John Doe!'},
                              send_greeting_task['parameters'])
         self.assertDictEqual(
@@ -459,13 +459,13 @@ class DataFlowTest(base.EngineTestCase):
             },
             send_greeting_task['output'])
 
-        self.assertEqual(2, len(send_greeting_task['in_context']['task']))
+        self.assertEqual(2, len(send_greeting_task.in_context['task']))
 
         del send_greeting_task['in_context']['task']
 
         self._check_in_context_execution(send_greeting_task)
-        del send_greeting_task['in_context']['__execution']
-        self.assertDictEqual(CTX, send_greeting_task['in_context'])
+        del send_greeting_task.in_context['__execution']
+        self.assertDictEqual(CTX, send_greeting_task.in_context)
 
     @mock.patch.object(
         std_actions.HTTPAction, 'run',
@@ -475,30 +475,31 @@ class DataFlowTest(base.EngineTestCase):
         mock.Mock(return_value=mock.MagicMock(user_id=USER_ID,
                                               auth_token=TOKEN)))
     def test_add_token_to_context(self):
-        task_name = "create-vms"
+        task_name = 'create-vms'
 
         cfg.CONF.pecan.auth_enable = True
-        try:
-            workbook = create_workbook("test_rest.yaml")
-            db_api.workbook_update(workbook['name'], {'trust_id': '123'})
 
-            execution = self.engine.start_workflow_execution(workbook['name'],
+        try:
+            wb = create_workbook('test_rest.yaml')
+            wb = db_api.workbook_update(wb.name, {'trust_id': '123'})
+
+            execution = self.engine.start_workflow_execution(wb.name,
                                                              task_name, {})
-            tasks = db_api.tasks_get(workbook_name=workbook['name'],
+            tasks = db_api.tasks_get(workbook_name=wb.name,
                                      execution_id=execution['id'])
 
             task = self._assert_single_item(tasks, name=task_name)
 
-            openstack_context = task['in_context']['openstack']
+            openstack_context = task.in_context['openstack']
 
             self.assertIn("auth_token", openstack_context)
             self.assertEqual(TOKEN, openstack_context['auth_token'])
             self.assertEqual(USER_ID, openstack_context["user_id"])
 
-            self.engine.convey_task_result(task['id'], states.SUCCESS, {})
+            self.engine.convey_task_result(task.id, states.SUCCESS, {})
 
             execution = db_api.execution_get(execution['id'])
 
-            self.assertEqual(states.SUCCESS, execution['state'])
+            self.assertEqual(states.SUCCESS, execution.state)
         finally:
             cfg.CONF.pecan.auth_enable = False

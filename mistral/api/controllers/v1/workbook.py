@@ -67,8 +67,9 @@ class WorkbooksController(rest.RestController):
         """Return the named workbook."""
         LOG.debug("Fetch workbook [name=%s]" % name)
 
-        values = db_api.workbook_get(name)
-        return Workbook.from_dict(values)
+        db_model = db_api.workbook_get(name)
+
+        return Workbook.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
@@ -76,16 +77,19 @@ class WorkbooksController(rest.RestController):
         """Update the named workbook."""
         LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
 
-        return Workbook.from_dict(db_api.workbook_update(name,
-                                                         workbook.to_dict()))
+        db_model = db_api.workbook_update(name, workbook.to_dict())
+
+        return Workbook.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
     def post(self, workbook):
         """Create a new workbook."""
         LOG.debug("Create workbook [workbook=%s]" % workbook)
-        wb = workbooks.create_workbook(workbook.to_dict())
-        return Workbook.from_dict(wb)
+
+        db_model = workbooks.create_workbook(workbook.to_dict())
+
+        return Workbook.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
@@ -103,7 +107,7 @@ class WorkbooksController(rest.RestController):
         """
         LOG.debug("Fetch workbooks.")
 
-        workbooks_list = [Workbook.from_dict(values)
-                          for values in db_api.workbooks_get()]
+        workbooks_list = [Workbook.from_dict(db_model.to_dict())
+                          for db_model in db_api.workbooks_get()]
 
         return Workbooks(workbooks=workbooks_list)

@@ -38,21 +38,21 @@ def create_trust(workbook):
                                  role_names=ctx.roles,
                                  project=ctx.project_id)
 
-    return db_api.workbook_update(workbook['name'],
+    return db_api.workbook_update(workbook.name,
                                   {'trust_id': trust.id,
                                    'project_id': ctx.project_id})
 
 
 def create_context(workbook):
-    if 'trust_id' not in workbook:
+    if not workbook.trust_id:
         return
 
     if CONF.pecan.auth_enable:
-        client = keystone.client_for_trusts(workbook['trust_id'])
+        client = keystone.client_for_trusts(workbook.trust_id)
 
         return context.MistralContext(
             user_id=client.user_id,
-            project_id=workbook['project_id'],
+            project_id=workbook.project_id,
             auth_token=client.auth_token
         )
     else:
@@ -65,8 +65,8 @@ def create_context(workbook):
 
 
 def delete_trust(workbook):
-    if 'trust_id' not in workbook:
+    if not workbook.trust_id:
         return
 
-    keystone_client = keystone.client_for_trusts(workbook['trust_id'])
+    keystone_client = keystone.client_for_trusts(workbook.trust_id)
     keystone_client.trusts.delete(workbook.trust_id)

@@ -22,9 +22,10 @@ from mistral.tests.api import base
 
 WORKBOOKS = [
     {
-        'name': "my_workbook",
-        'description': "My cool Mistral workbook",
-        'tags': ['deployment', 'demo']
+        u'name': u'my_workbook',
+        u'description': u'My cool Mistral workbook',
+        u'tags': [u'deployment', u'demo'],
+        u'scope': None
     }
 ]
 
@@ -34,7 +35,7 @@ UPDATED_WORKBOOK['description'] = 'new description'
 
 class TestWorkbooksController(base.FunctionalTest):
     @mock.patch.object(db_api, "workbook_get",
-                       mock.MagicMock(return_value=WORKBOOKS[0]))
+                       base.create_mock_workbook(WORKBOOKS[0]))
     def test_get(self):
         resp = self.app.get('/v1/workbooks/my_workbook')
 
@@ -49,7 +50,7 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "workbook_update",
-                       mock.MagicMock(return_value=UPDATED_WORKBOOK))
+                       base.create_mock_workbook(UPDATED_WORKBOOK))
     def test_put(self):
         resp = self.app.put_json('/v1/workbooks/my_workbook',
                                  dict(description='new description'))
@@ -67,7 +68,7 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "workbook_create",
-                       mock.MagicMock(return_value=WORKBOOKS[0]))
+                       base.create_mock_workbook(WORKBOOKS[0]))
     @mock.patch("mistral.services.trusts.create_trust",
                 mock.MagicMock(return_value=WORKBOOKS[0]))
     def test_post(self):
@@ -102,7 +103,7 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "workbooks_get",
-                       mock.MagicMock(return_value=WORKBOOKS))
+                       base.create_mock_workbooks(WORKBOOKS))
     def test_get_all(self):
         resp = self.app.get('/v1/workbooks')
 

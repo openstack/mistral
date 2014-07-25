@@ -17,6 +17,7 @@
 import copy
 
 from mistral.db import api as db_api
+from mistral.db.sqlalchemy import models
 from mistral.engine import data_flow
 from mistral.engine import states
 from mistral.openstack.common import log as logging
@@ -82,7 +83,10 @@ WORKBOOK = {
 
 class DataFlowModuleTest(base.DbTestCase):
     def test_evaluate_task_parameters(self):
-        parameters = data_flow.evaluate_task_parameters(TASK, CONTEXT)
+        db_task = models.Task()
+        db_task.update(TASK)
+
+        parameters = data_flow.evaluate_task_parameters(db_task, CONTEXT)
 
         self.assertEqual(3, len(parameters))
         self.assertEqual('My string', parameters['p1'])
@@ -121,7 +125,10 @@ class DataFlowModuleTest(base.DbTestCase):
             self.assertEqual(states.RUNNING, db_task['state'])
 
     def test_get_outbound_context(self):
-        output = data_flow.get_task_output(TASK, {'new_key1': 'new_val1'})
+        db_task = models.Task()
+        db_task.update(TASK)
+
+        output = data_flow.get_task_output(db_task, {'new_key1': 'new_val1'})
 
         self.assertDictEqual(
             {

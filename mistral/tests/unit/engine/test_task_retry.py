@@ -20,6 +20,7 @@ from oslo.config import cfg
 
 from mistral.actions import std_actions
 from mistral.db import api as db_api
+from mistral.db.sqlalchemy import models as m
 from mistral import dsl_parser as parser
 from mistral import engine
 from mistral.engine.drivers.default import engine as concrete_engine
@@ -36,6 +37,16 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WB_NAME = "my_workbook"
+
+
+# TODO(rakhmerov): Find a better home for this method.
+def get_mock_workbook(file, name='my_wb'):
+    wb = m.Workbook()
+
+    wb.name = name
+    wb.definition = base.get_resource(file)
+
+    return wb
 
 
 def _get_workbook(workbook_name):
@@ -72,8 +83,8 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={
-            'definition': base.get_resource('retry_task/retry_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/retry_task.yaml')))
     def test_no_retry(self):
         execution = self.engine.start_workflow_execution(WB_NAME,
                                                          'retry_task', None)
@@ -89,8 +100,8 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={
-            'definition': base.get_resource('retry_task/retry_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/retry_task.yaml')))
     def test_retry_always_error(self):
         workbook = _get_workbook(WB_NAME)
 
@@ -116,8 +127,8 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={
-            'definition': base.get_resource('retry_task/retry_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/retry_task.yaml')))
     def test_retry_eventual_success(self):
         workbook = _get_workbook(WB_NAME)
 
@@ -145,8 +156,8 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={'definition': base.get_resource(
-            'retry_task/delay_retry_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/delay_retry_task.yaml')))
     def test_retry_delay(self):
         task_name = 'delay_retry_task'
         workbook = _get_workbook(WB_NAME)
@@ -193,8 +204,8 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={
-            'definition': base.get_resource('retry_task/two_tasks.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/two_tasks.yaml')))
     def test_from_no_retry_to_retry_task(self):
         task_name_1 = 'no_retry_task'
         task_name_2 = 'delay_retry_task'
@@ -249,8 +260,8 @@ class TaskRetryTest(base.EngineTestCase):
                        mock.MagicMock(side_effect=exc.ActionException))
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={
-            'definition': base.get_resource('retry_task/sync_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/sync_task.yaml')))
     def test_sync_action_always_error(self):
         workbook = _get_workbook(WB_NAME)
         start_task = 'sync-task'
@@ -271,8 +282,8 @@ class TaskRetryTest(base.EngineTestCase):
 
     @mock.patch.object(
         db_api, 'workbook_get',
-        mock.MagicMock(return_value={
-            'definition': base.get_resource('retry_task/sync_task.yaml')}))
+        mock.MagicMock(return_value=get_mock_workbook(
+            'retry_task/sync_task.yaml')))
     def test_sync_action_eventual_success(self):
         start_task = 'sync-task'
         workbook = _get_workbook(WB_NAME)

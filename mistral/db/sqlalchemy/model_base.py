@@ -24,13 +24,23 @@ class _MistralBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
     __table__ = None
 
+    def __eq__(self, other):
+        if type(self) is not type(other):
+            return False
+
+        for col in self.__table__.columns:
+            if getattr(self, col.name) != getattr(other, col.name):
+                return False
+
+        return True
+
     def to_dict(self):
         """sqlalchemy based automatic to_dict method."""
         d = {}
 
-        # if a column is unloaded at this point, it is
+        # If a column is unloaded at this point, it is
         # probably deferred. We do not want to access it
-        # here and thereby cause it to load...
+        # here and thereby cause it to load.
         unloaded = attributes.instance_state(self).unloaded
 
         for col in self.__table__.columns:

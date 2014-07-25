@@ -25,6 +25,8 @@ from mistral.utils import rest_utils
 
 LOG = logging.getLogger(__name__)
 
+# TODO(rakhmerov): Fix DB access when listeners are implemented.
+
 
 class Event(resource.Resource):
     """Event descriptor."""
@@ -80,8 +82,7 @@ class ListenersController(rest.RestController):
         LOG.debug("Fetch listener [workbook_name=%s, id=%s]" %
                   (workbook_name, id))
 
-        values = db_api.listener_get(workbook_name, id)
-        return Listener.from_dict(values)
+        return Listener.from_dict(db_api.listener_get(workbook_name, id))
 
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text, body=Listener)
     def put(self, workbook_name, id, listener):

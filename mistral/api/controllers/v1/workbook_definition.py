@@ -32,16 +32,20 @@ class WorkbookDefinitionController(pecan.rest.RestController):
         """Return the workbook definition."""
         LOG.debug("Fetch workbook definition [workbook_name=%s]" %
                   workbook_name)
+
         return db_api.workbook_definition_get(workbook_name)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
     def put(self, workbook_name):
-        """Update the workbook's definition."""
+        """Update workbook definition."""
         text = pecan.request.text
 
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
                   (workbook_name, text))
+
         wb = db_api.workbook_definition_put(workbook_name, text)
+
         scheduler.create_associated_triggers(wb)
+
         return wb['definition']

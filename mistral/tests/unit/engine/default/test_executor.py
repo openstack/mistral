@@ -98,15 +98,19 @@ SAMPLE_CONTEXT = {
 class TestExecutor(base.DbTestCase):
     def __init__(self, *args, **kwargs):
         super(TestExecutor, self).__init__(*args, **kwargs)
+
         self.transport = base.get_fake_transport()
 
     def setUp(self):
         super(TestExecutor, self).setUp()
+
         # Create a new workbook.
         self.workbook = db_api.workbook_create(SAMPLE_WORKBOOK)
+
         # Create a new execution.
         self.execution = db_api.execution_create(
             SAMPLE_EXECUTION['workbook_name'], SAMPLE_EXECUTION)
+
         # Create a new task.
         SAMPLE_TASK['execution_id'] = self.execution['id']
         self.task = db_api.task_create(
@@ -114,10 +118,10 @@ class TestExecutor(base.DbTestCase):
 
     def test_setup(self):
         """Validate test setup."""
-        self.assertIsInstance(self.workbook, dict)
-        self.assertIsInstance(self.execution, dict)
-        self.assertIsInstance(self.task, dict)
-        self.assertIn('id', self.task)
+        self.assertIsNotNone(self.workbook)
+        self.assertIsNotNone(self.execution)
+        self.assertIsNotNone(self.task)
+        self.assertIsNotNone(self.task.id)
 
     @mock.patch.object(std_actions.EchoAction, 'run')
     @mock.patch.object(engine.EngineClient, 'convey_task_result',

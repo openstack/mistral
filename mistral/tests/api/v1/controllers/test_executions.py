@@ -41,7 +41,6 @@ EXECS = [
     }
 ]
 
-
 WORKBOOKS = [
     {
         'name': "my_workbook",
@@ -49,7 +48,6 @@ WORKBOOKS = [
         'tags': ['deployment', 'demo']
     }
 ]
-
 
 UPDATED_EXEC = EXECS[0].copy()
 UPDATED_EXEC['state'] = 'STOPPED'
@@ -64,7 +62,7 @@ def canonize(json_dict):
 
 class TestExecutionsController(base.FunctionalTest):
     @mock.patch.object(db_api, 'execution_get',
-                       mock.MagicMock(return_value=EXECS[0]))
+                       base.create_mock_execution(EXECS[0]))
     def test_workbook_get(self):
         resp = self.app.get('/v1/workbooks/my_workbook/executions/123')
 
@@ -72,7 +70,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(EXECS[0], canonize(resp.json))
 
     @mock.patch.object(db_api, 'execution_get',
-                       mock.MagicMock(return_value=EXECS[0]))
+                       base.create_mock_execution(EXECS[0]))
     def test_root_get(self):
         resp = self.app.get('/v1/executions/123')
 
@@ -87,7 +85,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, 'execution_update',
-                       mock.MagicMock(return_value=UPDATED_EXEC))
+                       base.create_mock_execution(UPDATED_EXEC))
     def test_workbook_put(self):
         resp = self.app.put_json('/v1/workbooks/my_workbook/executions/123',
                                  dict(state='STOPPED'))
@@ -96,7 +94,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(UPDATED_EXEC, canonize(resp.json))
 
     @mock.patch.object(db_api, 'execution_update',
-                       mock.MagicMock(return_value=UPDATED_EXEC))
+                       base.create_mock_execution(UPDATED_EXEC))
     def test_root_put(self):
         resp = self.app.put_json('/v1/executions/123',
                                  dict(state='STOPPED'))
@@ -105,8 +103,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(UPDATED_EXEC, canonize(resp.json))
 
     @mock.patch.object(db_api, 'execution_update',
-                       mock.MagicMock(
-                           side_effect=ex.NotFoundException()))
+                       mock.MagicMock(side_effect=ex.NotFoundException()))
     def test_put_not_found(self):
         resp = self.app.put_json('/v1/workbooks/my_workbook/executions/123',
                                  dict(state='STOPPED'), expect_errors=True)
@@ -119,8 +116,8 @@ class TestExecutionsController(base.FunctionalTest):
                        mock.Mock(return_value="Workflow:"))
     def test_post(self):
         my_workbook = WORKBOOKS[0]
-        self.app.post_json('/v1/workbooks',
-                           my_workbook)
+
+        self.app.post_json('/v1/workbooks', my_workbook)
 
         new_exec = EXECS[0].copy()
         new_exec['context'] = json.dumps(new_exec['context'])
@@ -175,9 +172,9 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, 'executions_get',
-                       mock.MagicMock(return_value=EXECS))
+                       base.create_mock_executions(EXECS))
     @mock.patch.object(db_api, 'workbook_get',
-                       mock.MagicMock(return_value={'name': 'my_workbook'}))
+                       base.create_mock_workbook({'name': 'my_workbook'}))
     def test_workbook_get_all(self):
         resp = self.app.get('/v1/workbooks/my_workbook/executions')
 
@@ -187,9 +184,9 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertDictEqual(EXECS[0], canonize(resp.json['executions'][0]))
 
     @mock.patch.object(db_api, 'executions_get',
-                       mock.MagicMock(return_value=EXECS))
+                       base.create_mock_executions(EXECS))
     @mock.patch.object(db_api, 'workbook_get',
-                       mock.MagicMock(return_value={'name': 'my_workbook'}))
+                       base.create_mock_workbook({'name': 'my_workbook'}))
     def test_root_get_all(self):
         resp = self.app.get('/v1/executions')
 

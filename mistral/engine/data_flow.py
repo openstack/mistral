@@ -41,11 +41,11 @@ def _has_action_context_param(action_cls):
 
 def _get_action_context(db_task, openstack_context):
     result = {
-        'workbook_name': db_task['workbook_name'],
-        'execution_id': db_task['execution_id'],
-        'task_id': db_task['id'],
-        'task_name': db_task['name'],
-        'task_tags': db_task['tags'],
+        'workbook_name': db_task.workbook_name,
+        'execution_id': db_task.execution_id,
+        'task_id': db_task.id,
+        'task_name': db_task.name,
+        'task_tags': db_task.tags,
     }
 
     if openstack_context:
@@ -54,8 +54,8 @@ def _get_action_context(db_task, openstack_context):
     return result
 
 
-def evaluate_task_parameters(task, context):
-    params = task['task_spec'].get('parameters', {})
+def evaluate_task_parameters(task_db, context):
+    params = task_db.task_spec.get('parameters', {})
 
     return expr.evaluate_recursively(params, context)
 
@@ -64,7 +64,9 @@ def build_required_context(task, tasks):
     context = {}
 
     for req_task in tasks:
-        if req_task['id'] in task.get('requires', []):
+        dep_ids = task.requires or []
+
+        if req_task.id in dep_ids:
             _merge_dicts(context, get_outbound_context(req_task))
 
     return context
@@ -74,19 +76,18 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
     results = []
 
     for task in tasks_to_start:
-
         context = _merge_dicts(context, build_required_context(task, tasks))
 
         action_params = evaluate_task_parameters(task, context)
 
-        db_api.task_update(task['id'],
+        db_api.task_update(task.id,
                            {'state': states.RUNNING,
                             'in_context': context,
                             'parameters': action_params})
 
         # Get action name. Unwrap ad-hoc and reevaluate params if
         # necessary.
-        action_name = wb_task.TaskSpec(task['task_spec'])\
+        action_name = wb_task.TaskSpec(task.task_spec)\
             .get_full_action_name()
 
         openstack_ctx = context.get('openstack')
@@ -113,18 +114,18 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
             action_params[_ACTION_CTX_PARAM] = \
                 _get_action_context(task, openstack_ctx)
 
-        results.append((task['id'], action_name, action_params))
+        results.append((task.id, action_name, action_params))
 
     return results
 
 
 def get_task_output(task, result):
-    publish_transformer = task['task_spec'].get('publish')
+    publish_transformer = task.task_spec.get('publish')
 
     output = expr.evaluate_recursively(publish_transformer, result) or {}
 
     if result:
-        output['task'] = {task['name']: result}
+        output['task'] = {task.name: result}
 
     return output
 
@@ -143,7 +144,7 @@ def _merge_dicts(target, src):
 
 
 def get_outbound_context(task, output=None):
-    in_context = task.get('in_context')
+    in_context = task.in_context
 
     out_context = in_context.copy() if in_context else {}
 
@@ -173,9 +174,9 @@ def add_execution_to_context(context, db_execution):
         context = {}
 
     context['__execution'] = {
-        'id': db_execution['id'],
+        'id': db_execution.id,
         'workbook_name': db_execution['workbook_name'],
-        'task': db_execution['task']
+        'task': db_execution.task
     }
 
     return context

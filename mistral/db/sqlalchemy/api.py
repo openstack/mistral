@@ -213,7 +213,6 @@ def model_query(model, session=None):
 
 # Triggers.
 
-@to_dict
 @session_aware()
 def trigger_create(values, session=None):
     trigger = m.Trigger()
@@ -228,7 +227,6 @@ def trigger_create(values, session=None):
     return trigger
 
 
-@to_dict
 @session_aware()
 def trigger_update(trigger_id, values, session=None):
     trigger = _trigger_get(trigger_id)
@@ -251,7 +249,6 @@ def trigger_delete(trigger_id, session=None):
     session.delete(trigger)
 
 
-@to_dict
 @session_aware()
 def get_next_triggers(time, session=None):
     query = model_query(m.Trigger)
@@ -266,7 +263,6 @@ def _trigger_get(trigger_id, session=None):
     return query.filter_by(id=trigger_id).first()
 
 
-@to_dict
 def trigger_get(trigger_id):
     trigger = _trigger_get(trigger_id)
     if not trigger:
@@ -280,14 +276,12 @@ def _triggers_get_all(**kwargs):
     return query.filter_by(**kwargs).all()
 
 
-@to_dict
 def triggers_get_all(**kwargs):
     return _triggers_get_all(**kwargs)
 
 
 # Workbooks.
 
-@to_dict
 @session_aware()
 def workbook_create(values, session=None):
     workbook = m.Workbook()
@@ -303,10 +297,10 @@ def workbook_create(values, session=None):
     return workbook
 
 
-@to_dict
 @session_aware()
 def workbook_update(workbook_name, values, session=None):
     workbook = _workbook_get(workbook_name)
+
     if not workbook:
         raise exc.NotFoundException(
             "Workbook not found [workbook_name=%s]" % workbook_name)
@@ -327,16 +321,16 @@ def workbook_delete(workbook_name, session=None):
     session.delete(workbook)
 
 
-@to_dict
 def workbook_get(workbook_name):
     workbook = _workbook_get(workbook_name)
+
     if not workbook:
         raise exc.NotFoundException(
             "Workbook not found [workbook_name=%s]" % workbook_name)
+
     return workbook
 
 
-@to_dict
 def workbooks_get_all(**kwargs):
     return _workbooks_get_all(**kwargs)
 
@@ -361,7 +355,7 @@ def _workbook_get(workbook_name, session=None):
 
 # Workflow executions.
 
-@to_dict
+
 @session_aware()
 def execution_create(workbook_name, values, session=None):
     execution = m.WorkflowExecution()
@@ -377,7 +371,6 @@ def execution_create(workbook_name, values, session=None):
     return execution
 
 
-@to_dict
 @session_aware()
 def execution_update(execution_id, values, session=None):
     execution = _execution_get(execution_id)
@@ -400,12 +393,13 @@ def execution_delete(execution_id, session=None):
     session.delete(execution)
 
 
-@to_dict
 def execution_get(execution_id):
     execution = _execution_get(execution_id)
+
     if not execution:
         raise exc.NotFoundException(
             "Execution not found [execution_id=%s]" % execution_id)
+
     return execution
 
 
@@ -413,7 +407,6 @@ def ensure_execution_exists(execution_id):
     execution_get(execution_id)
 
 
-@to_dict
 def executions_get(**kwargs):
     return _executions_get(**kwargs)
 
@@ -425,13 +418,13 @@ def _executions_get(**kwargs):
 
 def _execution_get(execution_id):
     query = model_query(m.WorkflowExecution)
+
     return query.filter_by(id=execution_id).first()
 
 
 # Workflow tasks.
 
 
-@to_dict
 @session_aware()
 def task_create(execution_id, values, session=None):
     task = m.Task()
@@ -447,7 +440,6 @@ def task_create(execution_id, values, session=None):
     return task
 
 
-@to_dict
 @session_aware()
 def task_update(task_id, values, session=None):
     task = _task_get(task_id)
@@ -470,7 +462,6 @@ def task_delete(task_id, session=None):
     session.delete(task)
 
 
-@to_dict
 def task_get(task_id):
     task = _task_get(task_id)
     if not task:
@@ -485,7 +476,6 @@ def _task_get(task_id):
     return query.filter_by(id=task_id).first()
 
 
-@to_dict
 def tasks_get(**kwargs):
     return _tasks_get(**kwargs)
 
