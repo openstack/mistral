@@ -21,13 +21,13 @@ from oslo.config import cfg
 from mistral.actions import std_actions
 from mistral.db import api as db_api
 from mistral.db.sqlalchemy import models as m
-from mistral import dsl_parser as parser
 from mistral import engine
 from mistral.engine.drivers.default import engine as concrete_engine
 from mistral.engine import states
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
+from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ def get_mock_workbook(file, name='my_wb'):
 
 def _get_workbook(workbook_name):
     wb = db_api.workbook_get(workbook_name)
-    return parser.get_workbook(wb["definition"])
+    return spec_parser.get_workbook_spec_from_yaml(wb["definition"])
 
 
 class FailBeforeSuccessMocker(object):

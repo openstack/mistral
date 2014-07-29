@@ -20,11 +20,11 @@ import json
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
 from mistral.db.sqlalchemy import models
-from mistral import dsl_parser as parser
 from mistral.engine import data_flow
 from mistral import exceptions
 from mistral.openstack.common import log as logging
 from mistral.tests import base
+from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
@@ -323,16 +323,17 @@ class ActionFactoryTest(base.BaseTest):
         self.assertEqual("'Tango and Cash' is a cool movie!", action.run())
 
     def test_resolve_adhoc_action_name(self):
-        workbook = parser.get_workbook(
+        wb = spec_parser.get_workbook_spec_from_yaml(
             base.get_resource('control_flow/one_sync_task.yaml'))
+
         action_name = 'MyActions.concat'
 
-        action = a_f.resolve_adhoc_action_name(workbook, action_name)
+        action = a_f.resolve_adhoc_action_name(wb, action_name)
 
         self.assertEqual('std.echo', action)
 
     def test_convert_adhoc_action_params(self):
-        workbook = parser.get_workbook(
+        wb = spec_parser.get_workbook_spec_from_yaml(
             base.get_resource('control_flow/one_sync_task.yaml'))
 
         action_name = 'MyActions.concat'
@@ -341,20 +342,20 @@ class ActionFactoryTest(base.BaseTest):
             'right': 'Stanley'
         }
 
-        parameters = a_f.convert_adhoc_action_params(workbook,
+        parameters = a_f.convert_adhoc_action_params(wb,
                                                      action_name,
                                                      params)
 
         self.assertEqual({'output': 'Stormin Stanley'}, parameters)
 
     def test_convert_adhoc_action_result(self):
-        workbook = parser.get_workbook(
+        wb = spec_parser.get_workbook_spec_from_yaml(
             base.get_resource('control_flow/one_sync_task.yaml'))
 
         action_name = 'MyActions.concat'
         result = {'output': 'Stormin Stanley'}
 
-        parameters = a_f.convert_adhoc_action_result(workbook,
+        parameters = a_f.convert_adhoc_action_result(wb,
                                                      action_name,
                                                      result)
 

@@ -24,7 +24,7 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import trusts
-from mistral.workbook import tasks as wb_task
+from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
 
         # Get action name. Unwrap ad-hoc and reevaluate params if
         # necessary.
-        action_name = wb_task.TaskSpec(task.task_spec)\
+        action_name = spec_parser.get_task_spec(task.task_spec)\
             .get_full_action_name()
 
         openstack_ctx = context.get('openstack')

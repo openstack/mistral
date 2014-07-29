@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+# TODO(rakhmerov): Can we just extend dsl_specs_v1.py and remove this one?.
+
 SAMPLE_TASK_SPEC = {
     'action': 'MyRest:create-vm',
     'name': 'create-vms',
@@ -23,27 +25,31 @@ SAMPLE_TASK_SPEC = {
 }
 
 from mistral.tests import base
-from mistral.workbook import tasks
+from mistral.workbook.v1 import tasks
 
 
 class GetOnStateTest(base.BaseTest):
     def setUp(self):
         super(GetOnStateTest, self).setUp()
+
         self.task = tasks.TaskSpec(SAMPLE_TASK_SPEC)
 
     def test_state_finish(self):
         on_finish = self.task.get_on_finish()
+
         self.assertIsInstance(on_finish, dict)
         self.assertIn("attach-volumes", on_finish)
 
     def test_state_error(self):
         on_error = self.task.get_on_error()
+
         self.assertIsInstance(on_error, dict)
         self.assertEqual(len(on_error), 2)
         self.assertIn("task1", on_error)
 
     def test_state_success(self):
         on_success = self.task.get_on_success()
+
         self.assertIsInstance(on_success, dict)
         self.assertEqual(len(on_success), 3)
         self.assertIn("task1", on_success)

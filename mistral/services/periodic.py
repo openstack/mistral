@@ -16,13 +16,13 @@
 
 from mistral import context
 from mistral.db import api as db_api
-from mistral import dsl_parser as parser
 from mistral import engine
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral.services import scheduler as sched
 from mistral.services import trusts
+from mistral.workbook import parser as spec_parser
 
 
 LOG = log.getLogger(__name__)
@@ -32,6 +32,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
     def __init__(self, transport=None):
         super(MistralPeriodicTasks, self).__init__()
+
         self.transport = engine.get_transport(transport)
         self.engine = engine.EngineClient(self.transport)
 
@@ -44,11 +45,13 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             context.set_ctx(ctx)
 
             wb = db_api.workbook_get(trigger['workbook_name'])
+
             context.set_ctx(trusts.create_context(wb))
 
             try:
-                task = parser.get_workbook(
+                task = spec_parser.get_workbook_spec_from_yaml(
                     wb['definition']).get_trigger_task_name(trigger['name'])
+
                 self.engine.start_workflow_execution(wb['name'], task)
             finally:
                 sched.set_next_execution_time(trigger)

@@ -93,7 +93,7 @@ Workflow:
       on-finish:
         create-vms
 
-triggers:
+Triggers:
   create-vms:
     type: periodic
     tasks: create-vms

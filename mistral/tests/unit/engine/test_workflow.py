@@ -14,10 +14,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import dsl_parser as parser
 from mistral.engine import states
 from mistral.engine import workflow
 from mistral.tests import base
+from mistral.workbook import parser as spec_parser
+
 
 TASKS = [
     {
@@ -51,8 +52,10 @@ class WorkflowTest(base.DbTestCase):
         super(WorkflowTest, self).setUp()
 
     def test_find_workflow_tasks(self):
+        wb_definition = base.get_resource("test_rest.yaml")
+
         tasks = workflow.find_workflow_tasks(
-            parser.get_workbook(base.get_resource("test_rest.yaml")),
+            spec_parser.get_workbook_spec_from_yaml(wb_definition),
             "attach-volumes"
         )
 
@@ -62,8 +65,10 @@ class WorkflowTest(base.DbTestCase):
         self._assert_single_item(tasks, name='attach-volumes')
 
     def test_find_workflow_tasks_order(self):
+        wb_definition = base.get_resource("test_order.yaml")
+
         tasks = workflow.find_workflow_tasks(
-            parser.get_workbook(base.get_resource("test_order.yaml")),
+            spec_parser.get_workbook_spec_from_yaml(wb_definition),
             'task'
         )
 

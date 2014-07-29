@@ -65,7 +65,7 @@ def set_thread_local(var_name, val):
     if val:
         gl_storage = _get_greenlet_local_storage()
         if not gl_storage:
-            gl_storage =\
+            gl_storage = \
                 _th_loc_storage.greenlet_locals[corolocal.get_ident()] = {}
 
         gl_storage[var_name] = val
@@ -93,3 +93,20 @@ def log_exec(logger, level=logging.INFO):
         return _logged
 
     return _decorator
+
+
+def merge_dicts(left, right):
+    """Merges two dictionaries.
+
+    Values of right dictionary recursively get merged into left dictionary.
+    :param left: Left dictionary.
+    :param right: Right dictionary.
+    """
+    for k, v in right.iteritems():
+        if k not in left:
+            left[k] = v
+        else:
+            left_v = left[k]
+
+            if isinstance(left_v, dict) and isinstance(v, dict):
+                merge_dicts(left_v, v)

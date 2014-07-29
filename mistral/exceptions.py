@@ -86,6 +86,10 @@ class ApplicationContextNotFoundException(MistralException):
     message = "Application context not found"
 
 
+class DSLParsingException(MistralException):
+    http_code = 400
+
+
 class InvalidModelException(MistralException):
     http_code = 400
     message = "Wrong entity definition"

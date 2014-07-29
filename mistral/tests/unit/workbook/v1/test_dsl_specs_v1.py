@@ -14,8 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import dsl_parser as parser
 from mistral.tests import base
+from mistral.workbook import parser
 
 
 SIMPLE_WORKBOOK = """
@@ -26,20 +26,23 @@ Workflow:
 """
 
 
-class DSLModelTest(base.BaseTest):
+class DSLv1ModelTest(base.BaseTest):
     def setUp(self):
-        super(DSLModelTest, self).setUp()
+        super(DSLv1ModelTest, self).setUp()
+
+        # TODO(rakhmerov): Need to have a dedicated resource.
         self.doc = base.get_resource("test_rest.yaml")
 
     def test_load_dsl(self):
-        wb = parser.get_workbook(self.doc)
+        wb = parser.get_workbook_spec_from_yaml(self.doc)
 
         self.assertEqual(wb.workflow.tasks.items, wb.tasks.items)
         self.assertEqual(wb.tasks.get("create-vms").name, "create-vms")
         self.assertEqual(4, len(wb.namespaces.get("MyRest").actions))
 
     def test_tasks(self):
-        wb = parser.get_workbook(self.doc)
+        wb = parser.get_workbook_spec_from_yaml(self.doc)
+
         self.assertEqual(len(wb.tasks), 6)
 
         attach_volumes = wb.tasks.get("attach-volumes")
@@ -67,7 +70,7 @@ class DSLModelTest(base.BaseTest):
         self.assertEqual(subseq_finish, {"create-vms": ''})
 
     def test_actions(self):
-        wb = parser.get_workbook(self.doc)
+        wb = parser.get_workbook_spec_from_yaml(self.doc)
 
         actions = wb.namespaces.get("MyRest").actions
 
@@ -92,7 +95,7 @@ class DSLModelTest(base.BaseTest):
         self.assertEqual("MyRest", action.namespace)
 
     def test_namespaces(self):
-        wb = parser.get_workbook(self.doc)
+        wb = parser.get_workbook_spec_from_yaml(self.doc)
 
         self.assertEqual(len(wb.namespaces), 2)
 
@@ -101,9 +104,9 @@ class DSLModelTest(base.BaseTest):
         self.assertEqual(1, len(nova_namespace.actions))
 
     def test_workbook_without_namespaces(self):
-        parser.get_workbook(SIMPLE_WORKBOOK)
+        parser.get_workbook_spec_from_yaml(SIMPLE_WORKBOOK)
 
     def test_triggers(self):
-        wb = parser.get_workbook(self.doc)
+        wb = parser.get_workbook_spec_from_yaml(self.doc)
 
         self.assertEqual(len(wb.get_triggers()), 1)

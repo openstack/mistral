@@ -19,7 +19,7 @@ import copy
 from mistral.actions import base as actions_base
 from mistral.actions import std_actions as std
 from mistral.tests import base
-from mistral.workbook import namespaces as ns
+from mistral.workbook import parser as spec_parser
 
 NS_SPEC = {
     'name': 'my_namespace',
@@ -67,7 +67,8 @@ class AdHocActionTest(base.BaseTest):
     def test_adhoc_echo_action(self):
         ns_raw_spec = copy.copy(NS_SPEC)
 
-        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
+        action_spec = spec_parser.get_namespace_spec(ns_raw_spec).\
+            actions.get('my_action')
 
         # With dic-like output formatter.
         action = std.AdHocAction(None, std.EchoAction, action_spec,
@@ -77,7 +78,8 @@ class AdHocActionTest(base.BaseTest):
 
         # With list-like output formatter.
         ns_raw_spec['actions']['my_action']['output'] = ['$', '$']
-        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
+        action_spec = spec_parser.get_namespace_spec(ns_raw_spec).\
+            actions.get('my_action')
 
         action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
@@ -88,7 +90,8 @@ class AdHocActionTest(base.BaseTest):
         # With single-object output formatter.
         ns_raw_spec['actions']['my_action']['output'] = \
             "'{$}' is a cool movie!"
-        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
+        action_spec = spec_parser.get_namespace_spec(ns_raw_spec).\
+            actions.get('my_action')
 
         action = std.AdHocAction(None, std.EchoAction, action_spec,
                                  first="Tango", second="Cash")
@@ -98,7 +101,8 @@ class AdHocActionTest(base.BaseTest):
     def test_adhoc_echo_action_with_namespace_parameters(self):
         ns_raw_spec = copy.copy(NS_SPEC_WITH_PARAMS)
 
-        action_spec = ns.NamespaceSpec(ns_raw_spec).actions.get('my_action')
+        action_spec = spec_parser.get_namespace_spec(ns_raw_spec).\
+            actions.get('my_action')
 
         action = std.AdHocAction(None, MyAction, action_spec,
                                  first="Bifur",

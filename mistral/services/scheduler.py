@@ -17,7 +17,7 @@
 from croniter import croniter
 import datetime
 from mistral.db import api as db_api
-from mistral import dsl_parser as parser
+from mistral.workbook import parser as spec_parser
 
 
 def get_next_triggers():
@@ -54,8 +54,11 @@ def create_associated_triggers(db_workbook):
     if not db_workbook['definition']:
         return
 
-    workbook = parser.get_workbook(db_workbook['definition'])
-    triggers = workbook.get_triggers()
+    wb_spec = spec_parser.get_workbook_spec_from_yaml(
+        db_workbook['definition']
+    )
+
+    triggers = wb_spec.get_triggers()
 
     # Prepare all triggers data in advance to make db transaction shorter.
     db_triggers = []

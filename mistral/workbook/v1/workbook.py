@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,28 +13,38 @@
 #    limitations under the License.
 
 from mistral.workbook import base
-from mistral.workbook import namespaces
-from mistral.workbook import workflow
+from mistral.workbook.v1 import namespaces
+from mistral.workbook.v1 import workflow
 
 
 class WorkbookSpec(base.BaseSpec):
-    _required_keys = ['Workflow']
+    # See http://json-schema.org
+    _schema = {
+        "type": "object",
+        "properties": {
+            "Namespaces": {"type": "object"},
+            "Workflow": {"type": "object"},
+            "Triggers": {"type": "object"}
+        },
+        "required": ["Workflow"],
+        "additionalProperties": False
+    }
 
     def __init__(self, doc):
         super(WorkbookSpec, self).__init__(doc)
+
         self.namespaces = {}
 
-        if self.validate():
-            ns_dict = self._data.get('Namespaces')
+        ns_dict = self._data.get('Namespaces')
 
-            if ns_dict:
-                self.namespaces = namespaces.NamespaceSpecList(ns_dict)
+        if ns_dict:
+            self.namespaces = namespaces.NamespaceSpecList(ns_dict)
 
-            self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
-            self.tasks = self.workflow.tasks
+        self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
+        self.tasks = self.workflow.tasks
 
     def get_triggers(self):
-        triggers_from_data = self._data.get("triggers", None)
+        triggers_from_data = self._data.get("Triggers", None)
 
         if not triggers_from_data:
             return []
@@ -63,5 +71,5 @@ class WorkbookSpec(base.BaseSpec):
         return self.namespaces.get(namespace_name).actions
 
     def get_trigger_task_name(self, trigger_name):
-        trigger = self._data["triggers"].get(trigger_name)
+        trigger = self._data["Triggers"].get(trigger_name)
         return trigger.get('tasks') if trigger else ""

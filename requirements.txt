@@ -24,3 +24,4 @@ six>=1.7.0
 SQLAlchemy>=0.7.8,!=0.9.5,<=0.9.99
 stevedore>=0.14
 yaql==0.2.1 # This is not in global requirements
+jsonschema>=2.0.0,<3.0.0

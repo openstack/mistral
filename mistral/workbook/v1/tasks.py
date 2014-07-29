@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,24 +12,37 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from mistral.workbook import base
 
 
 class TaskSpec(base.BaseSpec):
-    _required_keys = ['name', 'action']
+    # See http://json-schema.org
+    _schema = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "action": {"type": ["string", "null"]},
+            "parameters": {"type": ["object", "null"]},
+            "publish": {"type": ["object", "null"]},
+            "retry": {"type": ["object", "null"]},
+            "requires": {"type": ["object", "string", "array", "null"]},
+            "on-finish": {"type": ["string", "array", "null"]},
+            "on-success": {"type": ["string", "array", "null"]},
+            "on-error": {"type": ["string", "array", "null"]}
+        },
+        "required": ["name", "action"],
+        "additionalProperties": False
+    }
 
-    def __init__(self, task):
-        super(TaskSpec, self).__init__(task)
+    def __init__(self, data):
+        super(TaskSpec, self).__init__(data)
 
-        self._prepare(task)
+        self._prepare(data)
 
-        if self.validate():
-            self.requires = task['requires']
-            self.action = task['action']
-            self.name = task['name']
-            self.parameters = task.get('parameters', {})
+        self.requires = data.get('requires')
+        self.action = data['action']
+        self.name = data['name']
+        self.parameters = data.get('parameters', {})
 
     def _prepare(self, task):
         if task:
@@ -41,22 +52,6 @@ class TaskSpec(base.BaseSpec):
                 task["requires"] = dict(zip(req, [''] * len(req)))
             elif isinstance(req, dict):
                 task['requires'] = req
-
-    def _get_as_dict(self, key):
-        tasks = self.get_property(key)
-
-        if not tasks:
-            return {}
-
-        if isinstance(tasks, dict):
-            return tasks
-        elif isinstance(tasks, list):
-            result = {}
-            for t in tasks:
-                result.update(t if isinstance(t, dict) else {t: ''})
-            return result
-        elif isinstance(tasks, six.string_types):
-            return {tasks: ''}
 
     def get_property(self, property_name, default=None):
         return self._data.get(property_name, default)

@@ -29,14 +29,13 @@ cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 from mistral.actions import action_factory as a_f
 from mistral import context as auth_context
 from mistral.db import api as db_api
-from mistral import dsl_parser as parser
 from mistral.engine import data_flow
 from mistral.engine import retry
 from mistral.engine import states
 from mistral.engine import workflow
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-from mistral.workbook import tasks as wb_task
+from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
@@ -187,7 +186,7 @@ class Engine(object):
                 WF_TRACE.info("Task '%s' [%s -> %s, result = %s]" %
                               (task.name, task.state, state, result))
 
-            action_name = wb_task.TaskSpec(task.task_spec)\
+            action_name = spec_parser.get_task_spec(task.task_spec)\
                 .get_full_action_name()
 
             if not a_f.get_action_class(action_name):
@@ -378,7 +377,8 @@ class Engine(object):
     @classmethod
     def _get_workbook(cls, workbook_name):
         wb = db_api.workbook_get(workbook_name)
-        return parser.get_workbook(wb.definition)
+
+        return spec_parser.get_workbook_spec_from_yaml(wb.definition)
 
     @classmethod
     def _determine_execution_state(cls, execution, tasks):

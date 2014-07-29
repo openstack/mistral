@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +12,64 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import exceptions
+import jsonschema
+import six
+
+from mistral import exceptions as exc
 
 
 class BaseSpec(object):
-    _required_keys = []
+    # See http://json-schema.org
+    _schema = {
+        "type": "object",
+    }
+
+    _version = "1.0"
 
     def __init__(self, data):
         self._data = data
 
+        self.validate()
+
     def validate(self):
-        if not all(k in self._data for k in self._required_keys):
-            message = ("Wrong model definition for: %s. It should contain"
-                       " required keys: %s" % (self.__class__.__name__,
-                                               self._required_keys))
-            raise exceptions.InvalidModelException(message)
-        return True
+        try:
+            jsonschema.validate(self._data, self._schema)
+        except jsonschema.ValidationError as e:
+            raise exc.InvalidModelException("Invalid DSL: %s" % e)
+
+    def _spec_property(self, prop_name, spec_cls):
+        prop_val = self._data.get(prop_name)
+
+        return spec_cls(prop_val) if prop_val else None
+
+    def _inject_version(self, prop_names):
+        for prop_name in prop_names:
+            prop_data = self._data.get(prop_name)
+
+            if isinstance(prop_data, dict):
+                prop_data['version'] = self._version
+
+    def _get_as_dict(self, prop_name):
+        prop_val = self._data.get(prop_name)
+
+        if not prop_val:
+            return {}
+
+        if isinstance(prop_val, dict):
+            return prop_val
+        elif isinstance(prop_val, list):
+            result = {}
+            for t in prop_val:
+                result.update(t if isinstance(t, dict) else {t: ''})
+            return result
+        elif isinstance(prop_val, six.string_types):
+            return {prop_val: ''}
 
     def to_dict(self):
         return self._data
+
+    def get_version(self):
+        return self._version
 
 
 class BaseSpecList(object):
@@ -42,11 +79,9 @@ class BaseSpecList(object):
         self.items = {}
 
         for k, v in data.items():
-            v['name'] = k
-            self.items[k] = self.item_class(v)
-
-        for name in self:
-            self.get(name).validate()
+            if k != 'version':
+                v['name'] = k
+                self.items[k] = self.item_class(v)
 
     def __iter__(self):
         return iter(self.items)

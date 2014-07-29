@@ -22,7 +22,7 @@ from mistral.engine import data_flow
 from mistral.engine import states
 from mistral.openstack.common import log as logging
 from mistral.tests import base
-from mistral.workbook import workbook
+from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class DataFlowModuleTest(base.DbTestCase):
         self.assertEqual('val32', parameters['p2'])
 
     def test_prepare_tasks(self):
-        wb = workbook.WorkbookSpec(WORKBOOK)
+        wb = spec_parser.get_workbook_spec(WORKBOOK)
 
         tasks = [
             db_api.task_create(EXEC_ID, TASK.copy()),

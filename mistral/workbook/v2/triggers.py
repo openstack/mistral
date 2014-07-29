@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,25 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.openstack.common import log as logging
-from mistral.tests import base
+from mistral.workbook import base
 
-LOG = logging.getLogger(__name__)
+# TODO(rakhmerov): In progress.
 
 
-class ReverseWorkflowHandlerTest(base.BaseTest):
-    def test_start_workflow(self):
+class TriggerSpec(base.BaseSpec):
+    _version = '2.0'
+
+    def __init__(self, data):
+        super(TriggerSpec, self).__init__(data)
         # TODO(rakhmerov): Implement.
-        pass
 
-    def test_stop_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
 
-    def test_resume_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
-
-    def test_on_task_result_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
+class TriggerSpecList(base.BaseSpecList):
+    item_class = TriggerSpec

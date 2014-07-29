@@ -45,7 +45,7 @@ Workflow:
     task-four:
       action: MyRest.async-action
 
-triggers:
+Triggers:
   my-cron:
     type: periodic
     tasks: start-task

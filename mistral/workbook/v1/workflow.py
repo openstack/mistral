@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,14 +13,21 @@
 #    limitations under the License.
 
 from mistral.workbook import base
-from mistral.workbook import tasks
+from mistral.workbook.v1 import tasks
 
 
 class WorkflowSpec(base.BaseSpec):
-    _required_keys = ['tasks']
+    # See http://json-schema.org
+    _schema = {
+        "type": "object",
+        "properties": {
+            "tasks": {"type": "object"},
+        },
+        "required": ["tasks"],
+        "additionalProperties": False
+    }
 
     def __init__(self, workflow):
         super(WorkflowSpec, self).__init__(workflow)
 
-        if self.validate():
-            self.tasks = tasks.TaskSpecList(workflow['tasks'])
+        self.tasks = tasks.TaskSpecList(workflow['tasks'])

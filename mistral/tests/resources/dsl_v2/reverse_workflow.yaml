@@ -1,0 +1,13 @@
+---
+Version: '2.0'
+
+Workflows:
+  wf1:
+    type: reverse
+    tasks:
+      task1:
+        action: std.echo output="Hey"
+
+      task2:
+        action: std.echo output="Hi!"
+        requires: [task1]

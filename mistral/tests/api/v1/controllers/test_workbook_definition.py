@@ -37,7 +37,7 @@ Workflow:
       parameters:
       action: Service:action
 
-triggers:
+Triggers:
   create-vms:
     type: periodic
     tasks: create-vms
