@@ -17,10 +17,15 @@
 
 RETVAL=0
 
+cd /opt/stack/new/
+
+echo "Repository: $ZUUL_PROJECT"
+
 #Run API tests only for mistral repository
 if [[ "$ZUUL_PROJECT" == "stackforge/mistral" ]]; then
-    cd /opt/stack/new/mistral/functionaltests
-    sudo ./run_tests.sh
+    cd mistral/
+    echo "Run mistral API tests"
+    sudo bash ./functionaltests/run_tests.sh
     RETVAL=$?
     # Copy tempest log files to be published among other logs upon job completion
     sudo cp /opt/stack/new/mistral/functionaltests/tempest.log /opt/stack/logs
@@ -28,8 +33,9 @@ fi
 
 #Run client tests for both repositories: mistral and python-mistralclient
 if [[ RETVAL -eq 0 ]]; then
-    cd /opt/stack/new/python-mistralclient/functionaltests
-    sudo ./run_tests.sh
+    cd /opt/stack/new/python-mistralclient/
+    echo "Run mistralclient tests"
+    sudo bash ./functionaltests/run_tests.sh
     RETVAL=$?
 fi
 
