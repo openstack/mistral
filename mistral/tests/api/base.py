@@ -20,7 +20,7 @@ import pecan
 import pecan.testing
 from webtest import app as webtest_app
 
-from mistral.db.sqlalchemy import models as m
+from mistral.db.v1.sqlalchemy import models
 from mistral.tests import base
 
 # Disable authentication for functional tests.
@@ -32,7 +32,7 @@ __all__ = ['FunctionalTest']
 # Group of methods to mock DB API calls.
 
 def create_db_workbook(values):
-    wb = m.Workbook()
+    wb = models.Workbook()
     wb.update(values)
     return wb
 
@@ -48,7 +48,7 @@ def create_mock_workbooks(arr_of_values):
 
 
 def create_db_execution(values):
-    ex = m.WorkflowExecution()
+    ex = models.WorkflowExecution()
     ex.update(values)
     return ex
 
@@ -64,7 +64,7 @@ def create_mock_executions(arr_of_values):
 
 
 def create_db_task(values):
-    t = m.Task()
+    t = models.Task()
     t.update(values)
     return t
 

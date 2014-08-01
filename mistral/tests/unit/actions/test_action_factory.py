@@ -19,7 +19,7 @@ import json
 
 from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
-from mistral.db.sqlalchemy import models
+from mistral.db.v1.sqlalchemy import models
 from mistral.engine import data_flow
 from mistral import exceptions
 from mistral.openstack.common import log as logging

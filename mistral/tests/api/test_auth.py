@@ -22,7 +22,7 @@ import pecan
 import pecan.testing
 
 from mistral.db import api as db_api
-from mistral.db.sqlalchemy import models as m
+from mistral.db.v1.sqlalchemy import models
 from mistral.openstack.common import timeutils
 from mistral.tests.api import base
 
@@ -62,7 +62,7 @@ PKI_TOKEN_VERIFIED = {
 
 
 def get_mock_workbook(values):
-    wb = m.Workbook()
+    wb = models.Workbook()
     wb.update(values)
     return wb
 

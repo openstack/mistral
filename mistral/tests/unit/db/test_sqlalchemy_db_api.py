@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 from mistral import context as auth_context
-from mistral.db.sqlalchemy import api as db_api
+from mistral.db.v1.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import timeutils
 from mistral.tests import base as test_base

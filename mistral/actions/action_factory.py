@@ -110,6 +110,7 @@ def _has_action_context_param(action_cls):
     return _ACTION_CTX_PARAM in arg_spec.args
 
 
+# TODO(rakhmerov): It's not used anywhere.
 def _create_adhoc_action(db_task, openstack_context):
     task_spec = spec_parser.get_task_spec(db_task['task_spec'])
 
@@ -145,6 +146,7 @@ def _create_adhoc_action(db_task, openstack_context):
                                    **action_params)
 
 
+# TODO(rakhmerov): It's not used anywhere. Remove it later.
 def create_action(db_task):
     task_spec = spec_parser.get_task_spec(db_task['task_spec'])
 

@@ -16,7 +16,6 @@
 
 import pkg_resources as pkg
 import sys
-import tempfile
 
 from oslo.config import cfg
 from oslo import messaging
@@ -26,7 +25,8 @@ from stevedore import driver
 import testtools.matchers as ttm
 
 from mistral import context as auth_context
-from mistral.db.sqlalchemy import api as db_api
+from mistral.db.sqlalchemy import base as db_sa_base
+from mistral.db.v1 import api as db_api_v1
 from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
@@ -105,11 +105,11 @@ class BaseTest(base.BaseTestCase):
 class DbTestCase(BaseTest):
     def setUp(self):
         super(DbTestCase, self).setUp()
-        _db_fd, self.db_path = tempfile.mkstemp()
-        cfg.CONF.set_default('connection', 'sqlite:///' + self.db_path,
-                             group='database')
-        db_api.setup_db()
-        self.addCleanup(db_api.drop_db)
+
+        cfg.CONF.set_default('connection', 'sqlite://', group='database')
+        db_api_v1.setup_db()
+
+        self.addCleanup(db_api_v1.drop_db)
 
         self.ctx = auth_context.MistralContext(user_id='1-2-3-4',
                                                project_id='5-6-7-8',
@@ -120,7 +120,7 @@ class DbTestCase(BaseTest):
         self.addCleanup(auth_context.set_ctx, None)
 
     def is_db_session_open(self):
-        return db_api._get_thread_local_session() is not None
+        return db_sa_base._get_thread_local_session() is not None
 
 
 class EngineTestCase(DbTestCase):

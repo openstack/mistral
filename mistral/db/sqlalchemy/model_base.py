@@ -14,9 +14,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+
+import uuid
+
 from oslo.db.sqlalchemy import models as oslo_models
+import sqlalchemy as sa
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
+
+
+def _generate_unicode_uuid():
+    return unicode(str(uuid.uuid4()))
+
+
+def _id_column():
+    return sa.Column(sa.String(36),
+                     primary_key=True,
+                     default=_generate_unicode_uuid)
 
 
 class _MistralBase(oslo_models.ModelBase, oslo_models.TimestampMixin):

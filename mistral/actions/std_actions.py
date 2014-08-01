@@ -268,6 +268,7 @@ class SSHAction(base.Action):
             return raise_exc(parent_exc=e)
 
 
+# TODO(rakhmerov): It's not used anywhere.  Remove it later.
 class AdHocAction(base.Action):
     def __init__(self, action_context,
                  base_action_cls, action_spec, **params):

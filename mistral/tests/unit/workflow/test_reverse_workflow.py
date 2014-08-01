@@ -14,7 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.db.sqlalchemy import models as m
+from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
@@ -32,7 +32,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
             base.get_resource('dsl_v2/reverse_workflow.yaml')
         )
 
-        exec_db = m.WorkflowExecution()
+        exec_db = models.Execution()
         exec_db.update({
             'id': '1-2-3-4',
             'wf_spec': wf_spec.to_dict()

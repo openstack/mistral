@@ -16,206 +16,69 @@
 
 import sys
 
-from oslo.config import cfg
 from oslo.db import exception as db_exc
-from oslo.db import options
-from oslo.db.sqlalchemy import session as db_session
 import sqlalchemy as sa
 
 from mistral import context
-from mistral.db.sqlalchemy import models as m
+from mistral.db.sqlalchemy import base as b
+from mistral.db.v1.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
 
-options.set_defaults(cfg.CONF, sqlite_db="mistral.sqlite")
-
-_DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
-
-_facade = None
-
-
-def get_facade():
-    global _facade
-    if not _facade:
-        _facade = db_session.EngineFacade(
-            cfg.CONF.database.connection, sqlite_fk=True, autocommit=False,
-            **dict(cfg.CONF.database.iteritems()))
-    return _facade
-
-
-def get_engine():
-    return get_facade().get_engine()
-
-
-def get_session():
-    return get_facade().get_session()
-
 
 def get_backend():
-    """The backend is this module itself."""
+    """Consumed by openstack common code.
+
+    The backend is this module itself.
+    :return Name of db backend.
+    """
     return sys.modules[__name__]
 
 
 def setup_db():
     try:
-        engine = get_engine()
-        m.Trigger.metadata.create_all(engine)
+        models.Workbook.metadata.create_all(b.get_engine())
     except sa.exc.OperationalError as e:
-        LOG.exception("Database registration exception: %s", e)
-        return False
-    return True
+        raise exc.DBException("Failed to setup database: %s" % e)
 
 
 def drop_db():
     global _facade
+
     try:
-        engine = get_engine()
-        m.Trigger.metadata.drop_all(engine)
+        # TODO(rakhmerov): How to setup for multiple versions?
+        models.Workbook.metadata.drop_all(b.get_engine())
         _facade = None
     except Exception as e:
-        LOG.exception("Database shutdown exception: %s", e)
-        return False
-    return True
-
-
-def to_dict(func):
-    def decorator(*args, **kwargs):
-        res = func(*args, **kwargs)
-
-        if isinstance(res, list):
-            return [item.to_dict() for item in res]
-
-        if res:
-            return res.to_dict()
-        else:
-            return None
-
-    return decorator
-
-
-def _get_thread_local_session():
-    return utils.get_thread_local(_DB_SESSION_THREAD_LOCAL_NAME)
-
-
-def _get_or_create_thread_local_session():
-    ses = _get_thread_local_session()
-
-    if ses:
-        return ses, False
-
-    ses = get_session()
-    _set_thread_local_session(ses)
-
-    return ses, True
-
-
-def _set_thread_local_session(session):
-    utils.set_thread_local(_DB_SESSION_THREAD_LOCAL_NAME, session)
-
-
-def session_aware(param_name="session"):
-    """Decorator for methods working within db session."""
-
-    def _decorator(func):
-        def _within_session(*args, **kw):
-            # If 'created' flag is True it means that the transaction is
-            # demarcated explicitly outside this module.
-            ses, created = _get_or_create_thread_local_session()
-
-            try:
-                kw[param_name] = ses
-
-                result = func(*args, **kw)
-
-                if created:
-                    ses.commit()
-
-                return result
-            except Exception:
-                if created:
-                    ses.rollback()
-                raise
-            finally:
-                if created:
-                    _set_thread_local_session(None)
-                    ses.close()
-
-        _within_session.__doc__ = func.__doc__
-
-        return _within_session
-
-    return _decorator
+        raise exc.DBException("Failed to drop database: %s" + e)
 
 
 # Transaction management.
 
-
 def start_tx():
-    """Opens new database session and starts new transaction assuming
-        there wasn't any opened sessions within the same thread.
-    """
-    ses = _get_thread_local_session()
-    if ses:
-        raise exc.DataAccessException("Database transaction has already been"
-                                      " started.")
-
-    _set_thread_local_session(get_session())
+    b.start_tx()
 
 
 def commit_tx():
-    """Commits previously started database transaction."""
-    ses = _get_thread_local_session()
-    if not ses:
-        raise exc.DataAccessException("Nothing to commit. Database transaction"
-                                      " has not been previously started.")
-
-    ses.commit()
+    b.commit_tx()
 
 
 def rollback_tx():
-    """Rolls back previously started database transaction."""
-    ses = _get_thread_local_session()
-    if not ses:
-        raise exc.DataAccessException("Nothing to roll back. Database"
-                                      " transaction has not been started.")
-
-    ses.rollback()
+    b.rollback_tx()
 
 
 def end_tx():
-    """Ends current database transaction.
-        It rolls back all uncommitted changes and closes database session.
-    """
-    ses = _get_thread_local_session()
-    if not ses:
-        raise exc.DataAccessException("Database transaction has not been"
-                                      " started.")
-
-    if ses.dirty:
-        ses.rollback()
-
-    ses.close()
-    _set_thread_local_session(None)
-
-
-@session_aware()
-def model_query(model, session=None):
-    """Query helper.
-
-    :param model: base model to query
-    """
-    return session.query(model)
+    b.end_tx()
 
 
 # Triggers.
 
-@session_aware()
+@b.session_aware()
 def trigger_create(values, session=None):
-    trigger = m.Trigger()
+    trigger = models.Trigger()
     trigger.update(values.copy())
 
     try:
@@ -227,7 +90,7 @@ def trigger_create(values, session=None):
     return trigger
 
 
-@session_aware()
+@b.session_aware()
 def trigger_update(trigger_id, values, session=None):
     trigger = _trigger_get(trigger_id)
     if trigger is None:
@@ -239,7 +102,7 @@ def trigger_update(trigger_id, values, session=None):
     return trigger
 
 
-@session_aware()
+@b.session_aware()
 def trigger_delete(trigger_id, session=None):
     trigger = _trigger_get(trigger_id)
     if not trigger:
@@ -249,17 +112,17 @@ def trigger_delete(trigger_id, session=None):
     session.delete(trigger)
 
 
-@session_aware()
+@b.session_aware()
 def get_next_triggers(time, session=None):
-    query = model_query(m.Trigger)
-    query = query.filter(m.Trigger.next_execution_time < time)
-    query = query.order_by(m.Trigger.next_execution_time)
+    query = b.model_query(models.Trigger)
+    query = query.filter(models.Trigger.next_execution_time < time)
+    query = query.order_by(models.Trigger.next_execution_time)
     return query.all()
 
 
-@session_aware()
+@b.session_aware()
 def _trigger_get(trigger_id, session=None):
-    query = model_query(m.Trigger)
+    query = b.model_query(models.Trigger)
     return query.filter_by(id=trigger_id).first()
 
 
@@ -272,7 +135,7 @@ def trigger_get(trigger_id):
 
 
 def _triggers_get_all(**kwargs):
-    query = model_query(m.Trigger)
+    query = b.model_query(models.Trigger)
     return query.filter_by(**kwargs).all()
 
 
@@ -282,9 +145,9 @@ def triggers_get_all(**kwargs):
 
 # Workbooks.
 
-@session_aware()
+@b.session_aware()
 def workbook_create(values, session=None):
-    workbook = m.Workbook()
+    workbook = models.Workbook()
     workbook.update(values.copy())
     workbook['project_id'] = context.ctx().project_id
 
@@ -297,7 +160,7 @@ def workbook_create(values, session=None):
     return workbook
 
 
-@session_aware()
+@b.session_aware()
 def workbook_update(workbook_name, values, session=None):
     workbook = _workbook_get(workbook_name)
 
@@ -311,7 +174,7 @@ def workbook_update(workbook_name, values, session=None):
     return workbook
 
 
-@session_aware()
+@b.session_aware()
 def workbook_delete(workbook_name, session=None):
     workbook = _workbook_get(workbook_name)
     if not workbook:
@@ -336,16 +199,16 @@ def workbooks_get_all(**kwargs):
 
 
 def _workbooks_get_all(**kwargs):
-    query = model_query(m.Workbook)
+    query = b.model_query(models.Workbook)
     proj = query.filter_by(project_id=context.ctx().project_id,
                            **kwargs)
     public = query.filter_by(scope='public', **kwargs)
     return proj.union(public).all()
 
 
-@session_aware()
+@b.session_aware()
 def _workbook_get(workbook_name, session=None):
-    query = model_query(m.Workbook)
+    query = b.model_query(models.Workbook)
     if context.ctx().is_admin:
         return query.filter_by(name=workbook_name).first()
     else:
@@ -356,9 +219,9 @@ def _workbook_get(workbook_name, session=None):
 # Workflow executions.
 
 
-@session_aware()
+@b.session_aware()
 def execution_create(workbook_name, values, session=None):
-    execution = m.WorkflowExecution()
+    execution = models.WorkflowExecution()
     execution.update(values.copy())
     execution.update({'workbook_name': workbook_name})
 
@@ -371,7 +234,7 @@ def execution_create(workbook_name, values, session=None):
     return execution
 
 
-@session_aware()
+@b.session_aware()
 def execution_update(execution_id, values, session=None):
     execution = _execution_get(execution_id)
     if not execution:
@@ -383,7 +246,7 @@ def execution_update(execution_id, values, session=None):
     return execution
 
 
-@session_aware()
+@b.session_aware()
 def execution_delete(execution_id, session=None):
     execution = _execution_get(execution_id)
     if not execution:
@@ -412,12 +275,12 @@ def executions_get(**kwargs):
 
 
 def _executions_get(**kwargs):
-    query = model_query(m.WorkflowExecution)
+    query = b.model_query(models.WorkflowExecution)
     return query.filter_by(**kwargs).all()
 
 
 def _execution_get(execution_id):
-    query = model_query(m.WorkflowExecution)
+    query = b.model_query(models.WorkflowExecution)
 
     return query.filter_by(id=execution_id).first()
 
@@ -425,9 +288,9 @@ def _execution_get(execution_id):
 # Workflow tasks.
 
 
-@session_aware()
+@b.session_aware()
 def task_create(execution_id, values, session=None):
-    task = m.Task()
+    task = models.Task()
     task.update(values)
     task.update({'execution_id': execution_id})
 
@@ -440,7 +303,7 @@ def task_create(execution_id, values, session=None):
     return task
 
 
-@session_aware()
+@b.session_aware()
 def task_update(task_id, values, session=None):
     task = _task_get(task_id)
     if not task:
@@ -452,7 +315,7 @@ def task_update(task_id, values, session=None):
     return task
 
 
-@session_aware()
+@b.session_aware()
 def task_delete(task_id, session=None):
     task = _task_get(task_id)
     if not task:
@@ -472,7 +335,7 @@ def task_get(task_id):
 
 
 def _task_get(task_id):
-    query = model_query(m.Task)
+    query = b.model_query(models.Task)
     return query.filter_by(id=task_id).first()
 
 
@@ -481,5 +344,5 @@ def tasks_get(**kwargs):
 
 
 def _tasks_get(**kwargs):
-    query = model_query(m.Task)
+    query = b.model_query(models.Task)
     return query.filter_by(**kwargs).all()

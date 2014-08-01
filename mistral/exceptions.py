@@ -47,6 +47,10 @@ class MistralException(Error):
             '%d: %s' % (self.http_code, self.message))
 
 
+class DBException(MistralException):
+    http_code = 400
+
+
 class DataAccessException(MistralException):
     http_code = 400
 

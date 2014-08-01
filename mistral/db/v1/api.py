@@ -14,8 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# TODO(rakhmerov): Module deprecated in favor of v1/api.py
-
 from oslo.db import api as db_api
 
 from mistral import exceptions

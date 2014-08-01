@@ -24,7 +24,7 @@ eventlet.monkey_patch()
 from mistral.actions import std_actions
 from mistral.cmd import launch
 from mistral.db import api as db_api
-from mistral.db.sqlalchemy import models
+from mistral.db.v1.sqlalchemy import models
 from mistral.engine import states
 from mistral.openstack.common import importutils
 from mistral.openstack.common import log as logging
