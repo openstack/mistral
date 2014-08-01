@@ -93,12 +93,26 @@ class ActionFactoryTest(base.BaseTest):
     def test_register_standard_actions(self):
         namespaces = a_f.get_registered_namespaces()
 
-        self.assertEqual(1, len(namespaces))
+        self.assertIn("nova", namespaces)
+        self.assertIn("glance", namespaces)
+        self.assertIn("keystone", namespaces)
         self.assertIn("std", namespaces)
 
         std_ns = namespaces["std"]
+        nova_ns = namespaces["nova"]
+        keystone_ns = namespaces["keystone"]
+        glance_ns = namespaces["glance"]
 
         self.assertEqual(5, len(std_ns))
+
+        self.assertTrue(nova_ns.contains_action_name("servers_get"))
+        self.assertTrue(nova_ns.contains_action_name("volumes_delete"))
+
+        self.assertTrue(keystone_ns.contains_action_name("users_list"))
+        self.assertTrue(keystone_ns.contains_action_name("trusts_create"))
+
+        self.assertTrue(glance_ns.contains_action_name("images_list"))
+        self.assertTrue(glance_ns.contains_action_name("images_delete"))
 
         self.assertTrue(std_ns.contains_action_name("echo"))
         self.assertTrue(std_ns.contains_action_name("http"))

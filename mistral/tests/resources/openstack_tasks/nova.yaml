@@ -1,0 +1,4 @@
+Workflow:
+  tasks:
+    nova_server_list:
+      action: nova.servers_list

@@ -1,0 +1,4 @@
+Workflow:
+  tasks:
+    keystone_user_list:
+      action: keystone.users_list

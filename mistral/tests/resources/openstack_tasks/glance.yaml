@@ -1,0 +1,4 @@
+Workflow:
+  tasks:
+    glance_image_list:
+      action: glance.images_list

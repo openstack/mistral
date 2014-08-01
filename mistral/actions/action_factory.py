@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,15 +13,18 @@
 #    limitations under the License.
 
 import inspect
+
 from stevedore import extension
 
 from mistral.actions import base
+from mistral.actions import generator_factory
 from mistral.actions import std_actions
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.workbook import actions
 from mistral.workbook import tasks
+
 
 LOG = logging.getLogger(__name__)
 
@@ -45,6 +46,16 @@ def get_registered_namespaces():
     return _NAMESPACES.copy()
 
 
+def _register_dynamic_action_classes():
+    all_generators = generator_factory.all_generators()
+    for name in all_generators:
+        ns = _find_or_create_namespace(name)
+        generator = all_generators[name]()
+        action_classes = generator.create_action_classes()
+        for action_name, action in action_classes.items():
+            ns.add(action_name, action)
+
+
 def _register_action_classes():
     mgr = extension.ExtensionManager(
         namespace='mistral.actions',
@@ -56,6 +67,8 @@ def _register_action_classes():
 
     for ns in _NAMESPACES:
         _NAMESPACES[ns].log()
+
+    _register_dynamic_action_classes()
 
 
 def get_action_class(action_full_name):
