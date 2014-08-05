@@ -65,7 +65,7 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         :return: Tasks with no dependencies.
         """
         # TODO(rakhmerov): Implement.
-        raise NotImplemented
+        raise NotImplementedError
 
     def _find_resolved_tasks(self):
         """Finds all tasks with resolved dependencies.
@@ -73,4 +73,4 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         :return: Tasks with resolved dependencies.
         """
         # TODO(rakhmerov): Implement.
-        raise NotImplemented
+        raise NotImplementedError

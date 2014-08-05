@@ -20,8 +20,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     @classmethod
     def start_workflow(cls, workflow_spec, execution, **kwargs):
         # TODO(rakhmerov): Implement.
-        raise NotImplemented
+        raise NotImplementedError
 
     def on_task_result(cls, workflow_spec, execution, task, task_result):
         # TODO(rakhmerov): Implement.
-        raise NotImplemented
+        raise NotImplementedError

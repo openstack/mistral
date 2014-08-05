@@ -86,7 +86,7 @@ class WorkflowHandler(object):
         :param kwargs: Additional parameters specific to workflow type.
         :return: List of tasks that can be scheduled for execution.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def on_task_result(self, task, task_result):
@@ -98,7 +98,7 @@ class WorkflowHandler(object):
         :param task_result: Task result.
         :return  List of tasks that can be scheduled for execution.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class FlowControl(object):
@@ -116,4 +116,4 @@ class FlowControl(object):
         :return: Dictionary {task: state} for those tasks whose states
             have changed. {task} is a subset of {downstream_tasks}.
         """
-        raise NotImplemented
+        raise NotImplementedError

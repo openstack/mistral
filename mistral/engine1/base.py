@@ -47,7 +47,7 @@ class Engine(object):
         :param input: Workflow input data as a dictionary.
         :return: Workflow execution object.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def on_task_result(self, task_id, task_result):
@@ -59,7 +59,7 @@ class Engine(object):
         :param task_result: Task result object.
         :return:
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def stop_workflow(self, execution_id):
@@ -68,7 +68,7 @@ class Engine(object):
         :param execution_id: Execution id.
         :return: Workflow execution object.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def resume_workflow(self, execution_id):
@@ -77,7 +77,7 @@ class Engine(object):
         :param execution_id: Execution id.
         :return: Workflow execution object.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     @abc.abstractmethod
     def rollback_workflow(self, execution_id):
@@ -86,7 +86,7 @@ class Engine(object):
         :param execution_id: Execution id.
         :return: Workflow execution object.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -104,7 +104,7 @@ class WorkflowPolicy(object):
         :param task_db: Completed task.
         :return: New workflow state.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -123,4 +123,4 @@ class TaskPolicy(object):
         :param task_db: Completed task.
         :return: New task state.
         """
-        raise NotImplemented
+        raise NotImplementedError

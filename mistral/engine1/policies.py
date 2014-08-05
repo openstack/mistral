@@ -22,4 +22,4 @@ from mistral.engine1 import base
 class RetryTaskPolicy(base.TaskPolicy):
     def on_task_finish(self, task_db):
         # TODO(rakhmerov): Implement.
-        raise NotImplemented
+        raise NotImplementedError

@@ -196,4 +196,4 @@ class DefaultEngine(base.Engine):
 
     def rollback_workflow(self, execution_id):
         # TODO(rakhmerov): Implement.
-        raise NotImplemented
+        raise NotImplementedError
