@@ -140,8 +140,7 @@ def _get_workbooks(**kwargs):
     return proj.union(public).all()
 
 
-@b.session_aware()
-def _get_workbook(name, session=None):
+def _get_workbook(name):
     query = b.model_query(models.Workbook)
 
     return query.filter_by(name=name,
