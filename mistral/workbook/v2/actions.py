@@ -22,6 +22,7 @@ class ActionSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
+            "Version": {"type": "string"},
             "name": {"type": "string"},
             "class": {"type": "string"},
             "namespace": {"type": "string"},
@@ -29,7 +30,7 @@ class ActionSpec(base.BaseSpec):
             "parameters": {"type": "array"},
             "output": {},
         },
-        "required": ["name", "class", "namespace"],
+        "required": ["Version", "name", "class", "namespace"],
         "additionalProperties": False
     }
 
@@ -66,3 +67,4 @@ class ActionSpec(base.BaseSpec):
 
 class ActionSpecList(base.BaseSpecList):
     item_class = ActionSpec
+    _version = '2.0'

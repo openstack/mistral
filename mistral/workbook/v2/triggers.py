@@ -27,3 +27,4 @@ class TriggerSpec(base.BaseSpec):
 
 class TriggerSpecList(base.BaseSpecList):
     item_class = TriggerSpec
+    _version = '2.0'

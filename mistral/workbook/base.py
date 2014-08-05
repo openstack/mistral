@@ -47,7 +47,7 @@ class BaseSpec(object):
             prop_data = self._data.get(prop_name)
 
             if isinstance(prop_data, dict):
-                prop_data['version'] = self._version
+                prop_data['Version'] = self._version
 
     def _get_as_dict(self, prop_name):
         prop_val = self._data.get(prop_name)
@@ -75,12 +75,15 @@ class BaseSpec(object):
 class BaseSpecList(object):
     item_class = None
 
+    _version = '1.0'
+
     def __init__(self, data):
         self.items = {}
 
-        for k, v in data.items():
-            if k != 'version':
+        for k, v in data.iteritems():
+            if k not in ['version', 'Version']:
                 v['name'] = k
+                v['Version'] = self._version
                 self.items[k] = self.item_class(v)
 
     def __iter__(self):

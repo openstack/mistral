@@ -21,12 +21,13 @@ class WorkflowSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
+            "Version": {"type": "string"},
             "name": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
             "parameters": {"type": ["array", "null"]},
             "tasks": {"type": "object"},
         },
-        "required": ["name", "type", "tasks"],
+        "required": ["Version", "name", "type", "tasks"],
         "additionalProperties": False
     }
 
@@ -51,3 +52,4 @@ class WorkflowSpec(base.BaseSpec):
 
 class WorkflowSpecList(base.BaseSpecList):
     item_class = WorkflowSpec
+    _version = '2.0'

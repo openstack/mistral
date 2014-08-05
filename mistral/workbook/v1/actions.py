@@ -20,6 +20,7 @@ class ActionSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
+            "Version": {"type": "string"},
             "name": {"type": "string"},
             "class": {"type": "string"},
             "namespace": {"type": "string"},

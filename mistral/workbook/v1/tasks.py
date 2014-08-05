@@ -20,6 +20,7 @@ class TaskSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
+            "Version": {"type": "string"},
             "name": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "parameters": {"type": ["object", "null"]},

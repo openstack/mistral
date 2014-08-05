@@ -61,7 +61,7 @@ class DSLv2ModelTest(base.BaseTest):
     def setUp(self):
         super(DSLv2ModelTest, self).setUp()
 
-    def test_valid_workbook_spec(self):
+    def test_build_valid_workbook_spec(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
 
         # Workbook.
@@ -164,3 +164,12 @@ class DSLv2ModelTest(base.BaseTest):
             {'name': 'John Doe', 'age': '32'},
             task3_spec.get_parameters()
         )
+
+    def test_to_dict(self):
+        wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
+
+        d = wb_spec.to_dict()
+
+        self.assertEqual('2.0', d['Version'])
+        self.assertEqual('2.0', d['Workflows']['Version'])
+        self.assertEqual('2.0', d['Workflows']['wf1']['Version'])

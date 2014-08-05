@@ -14,6 +14,7 @@
 
 from mistral.engine1 import states
 from mistral import exceptions as exc
+from mistral.workbook import parser as spec_parser
 from mistral.workflow import base
 
 
@@ -33,11 +34,11 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
     """
 
     def start_workflow(self, **kwargs):
-        wf_spec = self.exec_db.wf_spec
+        wf_spec = spec_parser.get_workflow_spec(self.exec_db.wf_spec)
 
         task_name = kwargs.get('task_name')
 
-        if task_name not in wf_spec.tasks:
+        if not wf_spec.get_tasks().get(task_name):
             msg = 'Invalid task name [wf_spec=%s, task_name=%s]' % \
                   (wf_spec, task_name)
             raise exc.WorkflowException(msg)

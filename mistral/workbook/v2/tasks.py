@@ -31,6 +31,7 @@ class TaskSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
+            "Version": {"type": "string"},
             "name": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
@@ -42,7 +43,7 @@ class TaskSpec(base.BaseSpec):
             "on-success": {"type": ["string", "object", "array", "null"]},
             "on-error": {"type": ["string", "object", "array", "null"]}
         },
-        "required": ["name"],
+        "required": ["Version", "name"],
         "additionalProperties": False
     }
 
@@ -150,3 +151,4 @@ class TaskSpec(base.BaseSpec):
 
 class TaskSpecList(base.BaseSpecList):
     item_class = TaskSpec
+    _version = '2.0'

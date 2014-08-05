@@ -36,12 +36,13 @@ class NamespaceSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
+            "Version": {"type": "string"},
             "name": {"type": "string"},
             "class": {"type": ["string", "null"]},
             "base-parameters": {"type": ["object", "null"]},
             "actions": {"type": "object"}
         },
-        "required": ["name", "actions"],
+        "required": ["Version", "name", "actions"],
         "additionalProperties": False
     }
 
@@ -83,3 +84,4 @@ class NamespaceSpec(base.BaseSpec):
 
 class NamespaceSpecList(base.BaseSpecList):
     item_class = NamespaceSpec
+    _version = '2.0'
