@@ -33,14 +33,9 @@ class WorkbookSpec(base.BaseSpec):
     def __init__(self, doc):
         super(WorkbookSpec, self).__init__(doc)
 
-        self.namespaces = {}
-
-        ns_dict = self._data.get('Namespaces')
-
-        if ns_dict:
-            self.namespaces = namespaces.NamespaceSpecList(ns_dict)
-
-        self.workflow = workflow.WorkflowSpec(self._data['Workflow'])
+        self.namespaces = self._spec_property('Namespaces',
+                                              namespaces.NamespaceSpecList)
+        self.workflow = self._spec_property('Workflow', workflow.WorkflowSpec)
         self.tasks = self.workflow.tasks
 
     def get_triggers(self):
@@ -58,13 +53,16 @@ class WorkbookSpec(base.BaseSpec):
         return triggers
 
     def get_action(self, full_action_name):
+        if not self.namespaces:
+            return None
+
         if full_action_name.find(".") == -1:
             return {}
 
         ns_name = full_action_name.split('.')[0]
         action_name = full_action_name.split('.')[1]
 
-        if ns_name in self.namespaces:
+        if ns_name in self.namespaces.item_keys():
             return self.namespaces[ns_name].actions.get(action_name)
 
     def get_actions(self, namespace_name):

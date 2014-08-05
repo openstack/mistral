@@ -22,6 +22,6 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def on_task_result(cls, workflow_spec, execution, task, task_result):
+    def on_task_result(cls, workflow_spec, execution, task_db, task_result):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError

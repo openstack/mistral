@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 from mistral.db.v2.sqlalchemy import models
+from mistral.engine1 import states
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
@@ -49,14 +50,21 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         exec_db = models.Execution()
         exec_db.update({
             'id': '1-2-3-4',
-            'wf_spec': wb_spec.get_workflows().get('wf1').to_dict()
+            'wf_spec': wb_spec.get_workflows().get('wf1').to_dict(),
+            'state': states.IDLE
         })
 
+        self.exec_db = exec_db
         self.handler = r_wf.ReverseWorkflowHandler(exec_db)
 
     def test_start_workflow(self):
-        # task_specs = self.handler.start_workflow(task_name='task2')
+        task_specs = self.handler.start_workflow(task_name='task2')
 
+        self.assertEqual(1, len(task_specs))
+        self.assertEqual('task1', task_specs[0].get_name())
+        self.assertEqual(states.RUNNING, self.exec_db.state)
+
+    def test_on_task_result_workflow(self):
         # TODO(rakhmerov): Implement.
         pass
 
@@ -65,9 +73,5 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         pass
 
     def test_resume_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
-
-    def test_on_task_result_workflow(self):
         # TODO(rakhmerov): Implement.
         pass

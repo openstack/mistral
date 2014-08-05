@@ -27,16 +27,17 @@ LOG = logging.getLogger(__name__)
 def find_workflow_tasks(workbook, task_name):
     wb_tasks = workbook.tasks
     full_graph = nx.DiGraph()
+
     for t in wb_tasks:
         full_graph.add_node(t)
 
     _update_dependencies(wb_tasks, full_graph)
 
-    # Find the list of the tasks in the order they supposed to be executed
-    tasks = [wb_tasks[node] for node
-             in traversal.dfs_postorder_nodes(full_graph.reverse(), task_name)]
+    # Find the list of the tasks in the order they're supposed to be executed.
+    task_spec = wb_tasks[task_name]
 
-    return tasks
+    return [node for node
+            in traversal.dfs_postorder_nodes(full_graph.reverse(), task_spec)]
 
 
 def find_resolved_tasks(tasks):
@@ -123,20 +124,23 @@ def is_error(tasks):
     return all(task['state'] == states.ERROR for task in tasks)
 
 
-def _get_dependency_tasks(tasks, task):
-    if len(tasks[task].requires) < 1:
+def _get_dependency_tasks(tasks_spec, task_spec):
+    dep_task_names = tasks_spec[task_spec.name].get_requires()
+
+    if len(dep_task_names) == 0:
         return []
 
-    deps = set()
-    for t in tasks:
-        for dep in tasks[task].requires:
-            if dep == t:
-                deps.add(t)
+    dep_t_specs = set()
 
-    return deps
+    for t_spec in tasks_spec:
+        for t_name in dep_task_names:
+            if t_name == t_spec.name:
+                dep_t_specs.add(t_spec)
+
+    return dep_t_specs
 
 
-def _update_dependencies(tasks, graph):
-    for task in tasks:
-        for dep in _get_dependency_tasks(tasks, task):
-            graph.add_edge(dep, task)
+def _update_dependencies(tasks_spec, graph):
+    for t_spec in tasks_spec:
+        for dep_t_spec in _get_dependency_tasks(tasks_spec, t_spec):
+            graph.add_edge(dep_t_spec, t_spec)

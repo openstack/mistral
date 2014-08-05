@@ -14,7 +14,9 @@
 
 import abc
 from mistral.engine1 import states
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
 
@@ -34,6 +36,31 @@ class WorkflowHandler(object):
         :param exec_db: Execution.
         """
         self.exec_db = exec_db
+        self.wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
+
+    @abc.abstractmethod
+    def start_workflow(self, **kwargs):
+        """Starts workflow.
+
+        Given a workflow specification this method makes required analysis
+        according to this workflow type rules and identifies a list of
+        tasks that can be scheduled for execution.
+        :param kwargs: Additional parameters specific to workflow type.
+        :return: List of tasks that can be scheduled for execution.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def on_task_result(self, task_db, task_result):
+        """Handles event of arriving a task result.
+
+        Given task result performs analysis of the workflow execution and
+        identifies tasks that can be scheduled for execution.
+        :param task_db: Task that the result corresponds to.
+        :param task_result: Task result.
+        :return  List of tasks that can be scheduled for execution.
+        """
+        raise NotImplementedError
 
     def is_stopped_or_finished(self):
         return states.is_stopped_or_finished(self.exec_db.state)
@@ -50,9 +77,9 @@ class WorkflowHandler(object):
 
             LOG.info('Stopped workflow [execution=%s]' % self.exec_db)
         else:
-            LOG.info("Can't change workflow state [execution=%s,"
-                     " state=%s, new state=%s]" %
-                     (self.exec_db, state, states.STOPPED))
+            msg = "Can't change workflow state [execution=%s," \
+                  " state=%s -> %s]" % (self.exec_db, state, states.STOPPED)
+            raise exc.WorkflowException(msg)
 
         return self.exec_db
 
@@ -68,37 +95,13 @@ class WorkflowHandler(object):
 
             LOG.info('Resumed workflow [execution=%s]' % self.exec_db)
         else:
-            LOG.info("Can't change workflow state [execution=%s,"
-                     " state=%s, new state=%s]" %
-                     (self.exec_db, state, states.RUNNING))
+            msg = "Can't change workflow state [execution=%s," \
+                  " state=%s -> %s]" % (self.exec_db, state, states.RUNNING)
+            raise exc.WorkflowException(msg)
 
         # TODO(rakhmerov): A concrete handler should also find tasks to run.
 
         return []
-
-    @abc.abstractmethod
-    def start_workflow(self, **kwargs):
-        """Starts workflow.
-
-        Given a workflow specification this method makes required analysis
-        according to this workflow type rules and identifies a list of
-        tasks that can be scheduled for execution.
-        :param kwargs: Additional parameters specific to workflow type.
-        :return: List of tasks that can be scheduled for execution.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def on_task_result(self, task, task_result):
-        """Handles event of arriving a task result.
-
-        Given task result performs analysis of the workflow execution and
-        identifies tasks that can be scheduled for execution.
-        :param task: Task that the result corresponds to.
-        :param task_result: Task result.
-        :return  List of tasks that can be scheduled for execution.
-        """
-        raise NotImplementedError
 
 
 class FlowControl(object):

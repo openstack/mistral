@@ -86,8 +86,11 @@ class BaseSpecList(object):
                 v['Version'] = self._version
                 self.items[k] = self.item_class(v)
 
+    def item_keys(self):
+        return self.items.keys()
+
     def __iter__(self):
-        return iter(self.items)
+        return self.items.itervalues()
 
     def __getitem__(self, name):
         return self.items.get(name)
