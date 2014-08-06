@@ -70,16 +70,7 @@ class WorkflowHandler(object):
 
         :return: Execution object.
         """
-        state = self.exec_db.state
-
-        if states.is_valid_transition(state, states.STOPPED):
-            self.exec_db.state = states.STOPPED
-
-            LOG.info('Stopped workflow [execution=%s]' % self.exec_db)
-        else:
-            msg = "Can't change workflow state [execution=%s," \
-                  " state=%s -> %s]" % (self.exec_db, state, states.STOPPED)
-            raise exc.WorkflowException(msg)
+        self._set_execution_state(states.STOPPED)
 
         return self.exec_db
 
@@ -88,20 +79,21 @@ class WorkflowHandler(object):
 
         :return: Tasks available to run.
         """
-        state = self.exec_db.state
-
-        if states.is_valid_transition(state, states.RUNNING):
-            self.exec_db.state = states.RUNNING
-
-            LOG.info('Resumed workflow [execution=%s]' % self.exec_db)
-        else:
-            msg = "Can't change workflow state [execution=%s," \
-                  " state=%s -> %s]" % (self.exec_db, state, states.RUNNING)
-            raise exc.WorkflowException(msg)
+        self._set_execution_state(states.RUNNING)
 
         # TODO(rakhmerov): A concrete handler should also find tasks to run.
 
         return []
+
+    def _set_execution_state(self, state):
+        cur_state = self.exec_db.state
+
+        if states.is_valid_transition(cur_state, state):
+            self.exec_db.state = state
+        else:
+            msg = "Can't change workflow state [execution=%s," \
+                  " state=%s -> %s]" % (self.exec_db, cur_state, state)
+            raise exc.WorkflowException(msg)
 
 
 class FlowControl(object):

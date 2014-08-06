@@ -15,6 +15,8 @@
 #    limitations under the License.
 
 from mistral.db.v2.sqlalchemy import models
+# TODO(rakhmerov): Should the next two be in package 'workflow'?
+from mistral.engine1 import base as eng_base
 from mistral.engine1 import states
 from mistral.openstack.common import log as logging
 from mistral.tests import base
@@ -55,7 +57,21 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         })
 
         self.exec_db = exec_db
+        self.wb_spec = wb_spec
         self.handler = r_wf.ReverseWorkflowHandler(exec_db)
+
+    def _create_db_task(self, id, name, state):
+        tasks_spec = self.wb_spec.get_workflows()['wf1'].get_tasks()
+
+        task_db = models.Task()
+        task_db.update({
+            'id': id,
+            'name': name,
+            'spec': tasks_spec[name].to_dict(),
+            'state': state
+        })
+
+        return task_db
 
     def test_start_workflow(self):
         task_specs = self.handler.start_workflow(task_name='task2')
@@ -64,9 +80,41 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         self.assertEqual('task1', task_specs[0].get_name())
         self.assertEqual(states.RUNNING, self.exec_db.state)
 
-    def test_on_task_result_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
+    def test_on_task_result(self):
+        self.exec_db.update({'state': states.RUNNING})
+
+        task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
+        task2_db = self._create_db_task('1-1-1-2', 'task2', states.IDLE)
+
+        self.exec_db.tasks.append(task1_db)
+        self.exec_db.tasks.append(task2_db)
+
+        # Emulate finishing 'task1'.
+        task_specs = self.handler.on_task_result(
+            task1_db,
+            eng_base.TaskResult(data='Hey')
+        )
+
+        self.assertEqual(1, len(task_specs))
+        self.assertEqual('task2', task_specs[0].get_name())
+
+        self.assertEqual(states.RUNNING, self.exec_db.state)
+        self.assertEqual(states.SUCCESS, task1_db.state)
+        self.assertEqual(states.IDLE, task2_db.state)
+
+        # Emulate finishing 'task2'.
+        task2_db.state = states.RUNNING
+
+        task_specs = self.handler.on_task_result(
+            task2_db,
+            eng_base.TaskResult(data='Hi!')
+        )
+
+        self.assertEqual(0, len(task_specs))
+
+        self.assertEqual(states.SUCCESS, self.exec_db.state)
+        self.assertEqual(states.SUCCESS, task1_db.state)
+        self.assertEqual(states.SUCCESS, task2_db.state)
 
     def test_stop_workflow(self):
         # TODO(rakhmerov): Implement.

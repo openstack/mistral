@@ -45,35 +45,34 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
                   (self.wf_spec, task_name)
             raise exc.WorkflowException(msg)
 
-        task_specs = self._find_tasks_with_no_dependencies(task_spec)
+        task_specs = self._find_tasks_without_dependencies(task_spec)
 
         if len(task_specs) > 0:
-            state = self.exec_db.state
-
-            if states.is_valid_transition(self.exec_db.state, states.RUNNING):
-                self.exec_db.state = states.RUNNING
-            else:
-                msg = "Can't change workflow state [execution=%s," \
-                      " state=%s -> %s]" % \
-                      (self.exec_db, state, states.RUNNING)
-                raise exc.WorkflowException(msg)
+            self._set_execution_state(states.RUNNING)
 
         return task_specs
 
     def on_task_result(self, task_db, task_result):
         task_db.state = \
             states.ERROR if task_result.is_error() else states.SUCCESS
-        task_db.output = task_result.data
+
+        # TODO(rakhmerov): Temporary hack. We need to use data flow here.
+        task_db.output = {'result': task_result.data}
 
         if task_db.state == states.ERROR:
-            # No need to check state transition since it's possible to switch
-            # to ERROR state from any other state.
-            self.exec_db.state = states.ERROR
+            # TODO(rakhmerov): Temporary hack, need to use policies.
+            self._set_execution_state(states.ERROR)
+
             return []
 
-        return self._find_resolved_tasks()
+        task_specs = self._find_resolved_tasks()
 
-    def _find_tasks_with_no_dependencies(self, task_spec):
+        if len(task_specs) == 0:
+            self._set_execution_state(states.SUCCESS)
+
+        return task_specs
+
+    def _find_tasks_without_dependencies(self, task_spec):
         """Given a target task name finds tasks with no dependencies.
 
         :param task_spec: Target task specification in the workflow graph
@@ -126,5 +125,23 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
 
         :return: Tasks with resolved dependencies.
         """
-        # TODO(rakhmerov): Implement.
-        raise NotImplementedError
+
+        tasks_db = self.exec_db.tasks
+
+        # We need to analyse the graph and see which tasks are ready to start.
+        resolved_task_specs = []
+        success_task_names = set()
+
+        for t in tasks_db:
+            if t.state == states.SUCCESS:
+                success_task_names.add(t.name)
+
+        for t in tasks_db:
+            t_spec = self.wf_spec.get_tasks()[t.name]
+
+            if not (set(t_spec.get_requires()) - success_task_names):
+                # All required tasks, if any, are SUCCESS.
+                if t.state == states.IDLE:
+                    resolved_task_specs.append(t_spec)
+
+        return resolved_task_specs
