@@ -122,3 +122,28 @@ class OpenStackActionsEngineTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task['state'])
         self.assertEqual("servers", task['output']['task'][task_name])
+
+    @mock.patch.object(actions.HeatAction, 'run',
+                       mock.Mock(return_value="stacks"))
+    def test_heat_action(self):
+        context = {}
+        wb = create_workbook('openstack_tasks/heat.yaml')
+        task_name = 'heat_stack_list'
+        execution = self.engine.start_workflow_execution(wb['name'],
+                                                         task_name,
+                                                         context)
+
+        # We have to reread execution to get its latest version.
+        execution = db_api.execution_get(execution['id'])
+
+        self.assertEqual(states.SUCCESS, execution['state'])
+
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
+
+        self.assertEqual(1, len(tasks))
+
+        task = self._assert_single_item(tasks, name=task_name)
+
+        self.assertEqual(states.SUCCESS, task['state'])
+        self.assertEqual("stacks", task['output']['task'][task_name])

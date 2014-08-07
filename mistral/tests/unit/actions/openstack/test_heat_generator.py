@@ -18,15 +18,14 @@ from mistral.actions.openstack.action_generator import generators
 from mistral.actions.openstack import actions
 
 
-class KeystoneGeneratorTest(base.BaseTestCase):
+class HeatGeneratorTest(base.BaseTestCase):
     def test_generator(self):
-        action_name = "keystone.users_create"
-        generator = generators.KeystoneActionGenerator
+        action_name = "heat.stacks_list"
+        generator = generators.HeatActionGenerator
         action_classes = generator.create_action_classes()
         short_action_name = action_name.split(".")[1]
         action_class = action_classes[short_action_name]
 
         self.assertIsNotNone(generator)
         self.assertIn(short_action_name, action_classes)
-        self.assertTrue(issubclass(action_class, actions.KeystoneAction))
-        self.assertEqual("users.create", action_class.client_method)
+        self.assertTrue(issubclass(action_class, actions.HeatAction))

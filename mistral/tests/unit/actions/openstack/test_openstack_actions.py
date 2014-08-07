@@ -54,3 +54,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().users.get.called)
         mocked().users.get.assert_called_once_with(user="1234-abcd")
+
+    @mock.patch.object(actions.HeatAction, '_get_client')
+    def test_heat_action(self, mocked):
+        method_name = "stacks.get"
+        action_class = actions.HeatAction
+        action_class.client_method = method_name
+        params = {'id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().stacks.get.called)
+        mocked().stacks.get.assert_called_once_with(id="1234-abcd")

@@ -14,14 +14,14 @@
 
 from oslotest import base
 
-from mistral.actions import generator_factory
+from mistral.actions.openstack.action_generator import generators
 from mistral.actions.openstack import actions
 
 
 class NovaGeneratorTest(base.BaseTestCase):
     def test_generator(self):
         action_name = "nova.servers_get"
-        generator = generator_factory.all_generators()["nova"]()
+        generator = generators.NovaActionGenerator
         action_classes = generator.create_action_classes()
         short_action_name = action_name.split(".")[1]
         action_class = action_classes[short_action_name]

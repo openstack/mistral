@@ -14,14 +14,14 @@
 
 from oslotest import base
 
-from mistral.actions import generator_factory
+from mistral.actions.openstack.action_generator import generators
 from mistral.actions.openstack import actions
 
 
 class GlanceGeneratorTest(base.BaseTestCase):
     def test_generator(self):
         action_name = "glance.images_list"
-        generator = generator_factory.all_generators()["glance"]()
+        generator = generators.GlanceActionGenerator
         action_classes = generator.create_action_classes()
         short_action_name = action_name.split(".")[1]
         action_class = action_classes[short_action_name]

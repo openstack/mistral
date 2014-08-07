@@ -48,9 +48,8 @@ def get_registered_namespaces():
 
 def _register_dynamic_action_classes():
     all_generators = generator_factory.all_generators()
-    for name in all_generators:
-        ns = _find_or_create_namespace(name)
-        generator = all_generators[name]()
+    for generator in all_generators:
+        ns = _find_or_create_namespace(generator.action_namespace)
         action_classes = generator.create_action_classes()
         for action_name, action in action_classes.items():
             ns.add(action_name, action)

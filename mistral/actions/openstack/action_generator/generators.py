@@ -17,15 +17,20 @@ from mistral.actions.openstack import actions
 
 
 class NovaActionGenerator(base.OpenStackActionGenerator):
-    _action_namespace = "nova"
+    action_namespace = "nova"
     base_action_class = actions.NovaAction
 
 
 class GlanceActionGenerator(base.OpenStackActionGenerator):
-    _action_namespace = "glance"
+    action_namespace = "glance"
     base_action_class = actions.GlanceAction
 
 
 class KeystoneActionGenerator(base.OpenStackActionGenerator):
-    _action_namespace = "keystone"
+    action_namespace = "keystone"
     base_action_class = actions.KeystoneAction
+
+
+class HeatActionGenerator(base.OpenStackActionGenerator):
+    action_namespace = "heat"
+    base_action_class = actions.HeatAction

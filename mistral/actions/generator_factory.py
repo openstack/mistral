@@ -1,6 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -16,8 +16,9 @@ from mistral.actions.openstack.action_generator import generators
 
 
 def all_generators():
-    return {
-        "nova": generators.NovaActionGenerator,
-        "glance": generators.GlanceActionGenerator,
-        "keystone": generators.KeystoneActionGenerator
-    }
+    return [
+        generators.NovaActionGenerator,
+        generators.GlanceActionGenerator,
+        generators.KeystoneActionGenerator,
+        generators.HeatActionGenerator
+    ]

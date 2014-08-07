@@ -12,13 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import inspect
+
 from glanceclient.v2 import client as glanceclient
+from heatclient.v1 import client as heatclient
 from keystoneclient.v3 import client as keystoneclient
 from novaclient.v1_1 import client as novaclient
 from oslo.config import cfg
 
 from mistral.actions.openstack import base
 from mistral import context
+from mistral import exceptions as exc
 from mistral.utils.openstack import keystone as keystone_utils
 
 
@@ -57,3 +61,27 @@ class KeystoneAction(base.OpenStackAction):
 
         return self._client_class(token=ctx.auth_token,
                                   auth_url=auth_url)
+
+
+class HeatAction(base.OpenStackAction):
+    _client_class = heatclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+        endpoint_url_tmpl = keystone_utils.get_endpoint_for_project('heat')
+        endpoint_url = endpoint_url_tmpl % {'tenant_id': ctx.project_id}
+
+        return self._client_class(endpoint_url,
+                                  token=ctx.auth_token,
+                                  username=ctx.user_name)
+
+    def run(self):
+        try:
+            method = self._get_client_method()
+            result = method(**self._kwargs_for_run)
+            if inspect.isgenerator(result):
+                return [v for v in result]
+            return result
+        except Exception as e:
+            raise exc.ActionException("%s failed: %s"
+                                      % (self.__class__.__name__, e))

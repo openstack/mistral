@@ -37,27 +37,29 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
     specific python-client and sets needed arguments
     to actions.
     """
-    _action_namespace = None
+    action_namespace = None
     base_action_class = None
 
-    def create_action_class(self, method_name):
+    @classmethod
+    def create_action_class(cls, method_name):
         if not method_name:
             return None
 
-        action_class = type(str(method_name), (self.base_action_class,), {})
+        action_class = type(str(method_name), (cls.base_action_class,), {})
         setattr(action_class, 'client_method', method_name)
 
         return action_class
 
-    def create_action_classes(self):
+    @classmethod
+    def create_action_classes(cls):
         mapping = json.loads(open(pkg.resource_filename(
                              version.version_info.package,
                              MAPPING_PATH)).read())
-        method_dict = mapping[self._action_namespace]
+        method_dict = mapping[cls.action_namespace]
 
         action_classes = {}
 
         for action_name, method_name in method_dict.items():
-            action_classes[action_name] = self.create_action_class(method_name)
+            action_classes[action_name] = cls.create_action_class(method_name)
 
         return action_classes
