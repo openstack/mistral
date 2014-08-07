@@ -155,6 +155,12 @@ class WorkbookTest(test_base.DbTestCase):
         self.assertEqual(created0, fetched[0])
         self.assertEqual('public', created0['scope'])
 
+    def test_workbook_repr(self):
+        s = db_api.create_workbook(WORKBOOKS[0]).__repr__()
+
+        self.assertIn('Workbook ', s)
+        self.assertIn("'name': 'my_workbook1'", s)
+        self.assertIn("'description': 'my description'", s)
 
 EXECUTIONS = [
     {
@@ -223,6 +229,13 @@ class ExecutionTest(test_base.DbTestCase):
             db_api.get_execution,
             created['id']
         )
+
+    def test_execution_repr(self):
+        s = db_api.create_execution(EXECUTIONS[0]).__repr__()
+
+        self.assertIn('Execution ', s)
+        self.assertIn("'id': '1'", s)
+        self.assertIn("'state': 'IDLE'", s)
 
 
 TASKS = [
@@ -333,6 +346,18 @@ class TaskTest(test_base.DbTestCase):
             db_api.get_task,
             created['id']
         )
+
+    def test_task_repr(self):
+        ex = db_api.create_execution(EXECUTIONS[0])
+
+        values = copy.copy(TASKS[0])
+        values.update({'execution_id': ex.id})
+
+        s = db_api.create_task(values).__repr__()
+
+        self.assertIn('Task ', s)
+        self.assertIn("'id': '1'", s)
+        self.assertIn("'name': 'my_task1'", s)
 
 
 class TXTest(test_base.DbTestCase):

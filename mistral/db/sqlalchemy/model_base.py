@@ -66,6 +66,9 @@ class _MistralBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
         return d
 
+    def __repr__(self):
+        return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
+
 
 def datetime_to_str(dct, attr_name):
     if dct.get(attr_name) is not None:
