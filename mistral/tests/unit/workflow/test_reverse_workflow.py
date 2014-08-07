@@ -15,13 +15,12 @@
 #    limitations under the License.
 
 from mistral.db.v2.sqlalchemy import models
-# TODO(rakhmerov): Should the next two be in package 'workflow'?
-from mistral.engine1 import base as eng_base
-from mistral.engine1 import states
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import base as wf_base
 from mistral.workflow import reverse_workflow as r_wf
+from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
@@ -92,7 +91,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         # Emulate finishing 'task1'.
         task_specs = self.handler.on_task_result(
             task1_db,
-            eng_base.TaskResult(data='Hey')
+            wf_base.TaskResult(data='Hey')
         )
 
         self.assertEqual(1, len(task_specs))
@@ -107,7 +106,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
 
         task_specs = self.handler.on_task_result(
             task2_db,
-            eng_base.TaskResult(data='Hi!')
+            wf_base.TaskResult(data='Hi!')
         )
 
         self.assertEqual(0, len(task_specs))

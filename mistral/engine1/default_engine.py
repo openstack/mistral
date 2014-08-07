@@ -18,10 +18,10 @@ from oslo.config import cfg
 
 from mistral.db import api as db_api
 from mistral.engine1 import base
-from mistral.engine1 import states
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workflow import selector as wf_selector
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)

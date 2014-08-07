@@ -19,20 +19,6 @@ import abc
 import six
 
 
-class TaskResult(object):
-    """Explicit data structure containing a result of task execution."""
-
-    def __init__(self, data=None, error=None):
-        self.data = data
-        self.error = error
-
-    def is_error(self):
-        return self.error is not None
-
-    def is_success(self):
-        return not self.is_error()
-
-
 @six.add_metaclass(abc.ABCMeta)
 class Engine(object):
     """Engine interface."""

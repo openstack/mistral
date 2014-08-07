@@ -15,9 +15,9 @@
 import networkx as nx
 from networkx.algorithms import traversal
 
-from mistral.engine1 import states
 from mistral import exceptions as exc
 from mistral.workflow import base
+from mistral.workflow import states
 
 
 class ReverseWorkflowHandler(base.WorkflowHandler):

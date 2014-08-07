@@ -14,9 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine1 import states as s
 from mistral.openstack.common import log as logging
 from mistral.tests import base
+from mistral.workflow import states as s
 
 LOG = logging.getLogger(__name__)
 

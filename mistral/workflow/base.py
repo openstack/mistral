@@ -13,10 +13,10 @@
 #    limitations under the License.
 
 import abc
-from mistral.engine1 import states
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -94,6 +94,20 @@ class WorkflowHandler(object):
             msg = "Can't change workflow state [execution=%s," \
                   " state=%s -> %s]" % (self.exec_db, cur_state, state)
             raise exc.WorkflowException(msg)
+
+
+class TaskResult(object):
+    """Explicit data structure containing a result of task execution."""
+
+    def __init__(self, data=None, error=None):
+        self.data = data
+        self.error = error
+
+    def is_error(self):
+        return self.error is not None
+
+    def is_success(self):
+        return not self.is_error()
 
 
 class FlowControl(object):
