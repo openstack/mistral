@@ -20,7 +20,7 @@ from mistral.workflow import reverse_workflow
 
 def select_workflow_handler(workflow_spec):
     # TODO(rakhmerov): This algorithm is actually for DSL v2.
-    wf_type = workflow_spec.type or 'direct'
+    wf_type = workflow_spec.get_type() or 'direct'
 
     if wf_type == 'reverse':
         return reverse_workflow.ReverseWorkflowHandler

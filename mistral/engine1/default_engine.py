@@ -14,24 +14,34 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
 from oslo.config import cfg
 
-from mistral.db import api as db_api
+from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.workbook import parser as spec_parser
+from mistral.workflow import data_flow
 from mistral.workflow import selector as wf_selector
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
+
+# Submodules of mistral.engine will throw NoSuchOptError if configuration
+# options required at top level of this  __init__.py are not imported before
+# the submodules are referenced.
+cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
+
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 # TODO(rakhmerov): Add necessary logging including WF_TRACE.
-# TODO(rakhmerov): All is written here assuming data models are not dicts.
 
 
 def _select_workflow_handler(exec_db):
-    handler_cls = wf_selector.select_workflow_handler(exec_db['wf_spec'])
+    wf_spec = spec_parser.get_workflow_spec(exec_db['wf_spec'])
+
+    handler_cls = wf_selector.select_workflow_handler(wf_spec)
 
     if not handler_cls:
         msg = 'Failed to find a workflow handler [workflow=%s.%s]' % \
@@ -41,35 +51,30 @@ def _select_workflow_handler(exec_db):
     return handler_cls(exec_db)
 
 
-def _create_db_execution(workbook_name, workflow_name, task_name, input):
-    # TODO(rakhmerov): Change DB model attributes.
-    return db_api.execution_create(workbook_name, {
-        "workbook_name": workbook_name,
-        "workflow_name": workflow_name,
-        "task": task_name,
-        "state": states.RUNNING,
-        "input": input
+def _create_db_execution(wf_spec, input, start_params):
+    return db_api.create_execution({
+        'wf_spec': wf_spec.to_dict(),
+        'start_params': start_params,
+        'state': states.RUNNING,
+        'input': input,
+        'context': copy.copy(input) or {}
     })
 
 
 def _create_db_tasks(exec_db, task_specs):
-    tasks_db = []
-
     for task_spec in task_specs:
-        task_db = db_api.task_create(exec_db.id, {
+        db_api.create_task({
             'execution_id': exec_db.id,
-            'name': task_spec.name,
-            'state': states.IDLE,
-            'specification': task_spec.to_dict(),
-            'parameters': {},  # TODO(rakhmerov): Evaluate.
-            'in_context': {},  # TODO(rakhmerov): Evaluate.
-            'output': {},  # TODO(rakhmerov): Evaluate.
+            'name': task_spec.get_name(),
+            'state': states.RUNNING,
+            'spec': task_spec.to_dict(),
+            'parameters': None,
+            'in_context': None,
+            'output': None,
             'runtime_context': None
         })
 
-        tasks_db.append(task_db)
-
-    return tasks_db
+    return exec_db.tasks
 
 
 def _apply_task_policies(task_db):
@@ -95,12 +100,15 @@ def _run_workflow(t):
 def _process(exec_db, task_specs):
     LOG.debug('Processing workflow tasks: %s' % task_specs)
 
-    tasks_db = _create_db_tasks(exec_db, task_specs)
+    _create_db_tasks(exec_db, task_specs)
 
-    for t in tasks_db:
-        if t.action:
+    # Evaluate Data Flow properties ('parameters', 'in_context').
+    data_flow.prepare_db_tasks(exec_db.tasks, task_specs, exec_db.context)
+
+    for t in task_specs:
+        if t.get_action_name():
             _run_action(t)
-        elif t.workflow:
+        elif t.get_workflow_name():
             _run_workflow(t)
         else:
             msg = "Neither 'action' nor 'workflow' is defined in task" \
@@ -109,22 +117,26 @@ def _process(exec_db, task_specs):
 
 
 class DefaultEngine(base.Engine):
-    def start_workflow(self, workbook_name, workflow_name, task_name, input):
+    def start_workflow(self, workbook_name, workflow_name, input, **kwargs):
         db_api.start_tx()
 
         try:
+            wb_db = db_api.get_workbook(workbook_name)
+
+            wb_spec = \
+                spec_parser.get_workbook_spec_from_yaml(wb_db.definition)
+
             exec_db = _create_db_execution(
-                workbook_name,
-                workflow_name,
-                task_name,
-                input
+                wb_spec.get_workflows()[workflow_name],
+                input,
+                kwargs
             )
 
             wf_handler = _select_workflow_handler(exec_db)
 
-            task_specs = wf_handler.start_workflow(task_name=task_name)
+            task_specs = wf_handler.start_workflow(**kwargs)
 
-            if len(task_specs) > 0:
+            if task_specs:
                 _process(exec_db, task_specs)
 
             db_api.commit_tx()
@@ -137,8 +149,8 @@ class DefaultEngine(base.Engine):
         db_api.start_tx()
 
         try:
-            task_db = db_api.task_get(task_id)
-            exec_db = db_api.execution_get(task_db.execution_id)
+            task_db = db_api.get_task(task_id)
+            exec_db = db_api.get_execution(task_db.execution_id)
 
             wf_handler = _select_workflow_handler(exec_db)
 
@@ -147,7 +159,7 @@ class DefaultEngine(base.Engine):
                 task_result
             )
 
-            if len(task_specs) > 0:
+            if task_specs:
                 _apply_task_policies(task_db)
                 _apply_workflow_policies(exec_db, task_db)
 
@@ -163,7 +175,7 @@ class DefaultEngine(base.Engine):
         db_api.start_tx()
 
         try:
-            exec_db = db_api.execution_get(execution_id)
+            exec_db = db_api.get_execution(execution_id)
 
             wf_handler = _select_workflow_handler(exec_db)
 
@@ -179,13 +191,13 @@ class DefaultEngine(base.Engine):
         db_api.start_tx()
 
         try:
-            exec_db = db_api.execution_get(execution_id)
+            exec_db = db_api.get_execution(execution_id)
 
             wf_handler = _select_workflow_handler(exec_db)
 
             task_specs = wf_handler.resume_workflow()
 
-            if len(task_specs) > 0:
+            if task_specs:
                 _process(exec_db, task_specs)
 
             db_api.commit_tx()

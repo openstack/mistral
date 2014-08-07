@@ -24,13 +24,13 @@ class Engine(object):
     """Engine interface."""
 
     @abc.abstractmethod
-    def start_workflow(self, workbook_name, workflow_name, task_name, input):
+    def start_workflow(self, workbook_name, workflow_name, input, **kwargs):
         """Starts the specified workflow.
 
         :param workbook_name: Workbook name.
         :param workflow_name: Workflow name.
-        :param task_name: Task name.
         :param input: Workflow input data as a dictionary.
+        :param kwargs: Additional parameters.
         :return: Workflow execution object.
         """
         raise NotImplementedError

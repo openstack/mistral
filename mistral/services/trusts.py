@@ -14,6 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+# TODO(rakhmerov): Is this module properly named and placed?
+# According to its interface it may be called 'security'.
+
 from oslo.config import cfg
 
 from mistral import context
@@ -32,18 +35,26 @@ def create_trust(workbook):
     trustee_id = keystone.client_for_admin(
         CONF.keystone_authtoken.admin_tenant_name).user_id
 
-    trust = client.trusts.create(trustor_user=client.user_id,
-                                 trustee_user=trustee_id,
-                                 impersonation=True,
-                                 role_names=ctx.roles,
-                                 project=ctx.project_id)
+    trust = client.trusts.create(
+        trustor_user=client.user_id,
+        trustee_user=trustee_id,
+        impersonation=True,
+        role_names=ctx.roles,
+        project=ctx.project_id
+    )
 
-    return db_api.workbook_update(workbook.name,
-                                  {'trust_id': trust.id,
-                                   'project_id': ctx.project_id})
+    return db_api.workbook_update(
+        workbook.name,
+        {'trust_id': trust.id, 'project_id': ctx.project_id}
+    )
 
 
 def create_context(workbook):
+    """Creates Mistral security context.
+
+    :param workbook: Workbook DB model.
+    :return: Mistral security context.
+    """
     if not workbook.trust_id:
         return
 

@@ -50,6 +50,7 @@ class Execution(mb.MistralBase):
     wf_spec = sa.Column(st.JsonDictType())
     start_params = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
+    input = sa.Column(st.JsonDictType())
     context = sa.Column(st.JsonDictType())
 
 
@@ -61,7 +62,6 @@ class Task(mb.MistralBase):
     # Main properties.
     id = mb._id_column()
     name = sa.Column(sa.String(80))
-    requires = sa.Column(st.JsonListType())
     wf_name = sa.Column(sa.String(80))
     spec = sa.Column(st.JsonDictType())
     action_spec = sa.Column(st.JsonDictType())
