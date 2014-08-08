@@ -17,6 +17,7 @@ import inspect
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
 from keystoneclient.v3 import client as keystoneclient
+from neutronclient.v2_0 import client as neutronclient
 from novaclient.v1_1 import client as novaclient
 from oslo.config import cfg
 
@@ -85,3 +86,16 @@ class HeatAction(base.OpenStackAction):
         except Exception as e:
             raise exc.ActionException("%s failed: %s"
                                       % (self.__class__.__name__, e))
+
+
+class NeutronAction(base.OpenStackAction):
+    _client_class = neutronclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+        auth_url = CONF.keystone_authtoken.auth_uri
+        endpoint_url = keystone_utils.get_endpoint_for_project('neutron')
+
+        return self._client_class(endpoint_url=endpoint_url,
+                                  token=ctx.auth_token,
+                                  auth_url=auth_url)
