@@ -1,5 +1,3 @@
-
-
 # Copyright 2013 Mirantis, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -20,7 +18,7 @@ import uuid
 from tempest import exceptions
 from tempest import test
 
-from functionaltests.api import base
+from mistral.tests.functional.api import base
 
 
 class SanityTests(base.TestCase):

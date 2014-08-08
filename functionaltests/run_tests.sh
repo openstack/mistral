@@ -31,9 +31,6 @@ MISTRALCLIENT_DIR=/opt/stack/new/python-mistralclient
 
 # Define PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$TEMPEST_DIR
-export PYTHONPATH=$PYTHONPATH:$MISTRAL_DIR
-export PYTHONPATH=$PYTHONPATH:$MISTRALCLIENT_DIR
 
-echo $PYTHONPATH
 pwd
-nosetests -sv functionaltests
+nosetests -sv mistral/tests/functional/

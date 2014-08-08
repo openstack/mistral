@@ -27,8 +27,6 @@ if [[ "$ZUUL_PROJECT" == "stackforge/mistral" ]]; then
     echo "Run mistral API tests"
     sudo bash ./functionaltests/run_tests.sh
     RETVAL=$?
-    # Copy tempest log files to be published among other logs upon job completion
-    sudo cp /opt/stack/new/mistral/functionaltests/tempest.log /opt/stack/logs
 fi
 
 #Run client tests for both repositories: mistral and python-mistralclient
@@ -38,8 +36,5 @@ if [[ RETVAL -eq 0 ]]; then
     sudo bash ./functionaltests/run_tests.sh
     RETVAL=$?
 fi
-
-# Copy tempest log files to be published among other logs upon job completion
-sudo cp /opt/stack/new/python-mistralclient/functionaltests/tempest.log /opt/stack/logs/tempest_client.log
 
 exit $RETVAL
