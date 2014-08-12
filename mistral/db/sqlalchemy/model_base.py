@@ -33,7 +33,7 @@ def _id_column():
                      default=_generate_unicode_uuid)
 
 
-class _MistralBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
+class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
     """Base class for all Mistral SQLAlchemy DB Models."""
 
     __table__ = None
@@ -75,4 +75,4 @@ def datetime_to_str(dct, attr_name):
         dct[attr_name] = dct[attr_name].isoformat(' ')
 
 
-MistralBase = declarative.declarative_base(cls=_MistralBase)
+MistralModelBase = declarative.declarative_base(cls=_MistralModelBase)

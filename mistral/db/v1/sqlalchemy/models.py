@@ -20,7 +20,7 @@ from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 
 
-class Workbook(mb.MistralBase):
+class Workbook(mb.MistralModelBase):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks'
@@ -39,7 +39,7 @@ class Workbook(mb.MistralBase):
     trust_id = sa.Column(sa.String(80))
 
 
-class WorkflowExecution(mb.MistralBase):
+class WorkflowExecution(mb.MistralModelBase):
     """Contains info about particular workflow execution."""
 
     __tablename__ = 'workflow_executions'
@@ -51,7 +51,7 @@ class WorkflowExecution(mb.MistralBase):
     context = sa.Column(st.JsonDictType())
 
 
-class Task(mb.MistralBase):
+class Task(mb.MistralModelBase):
     """Contains info about particular task."""
 
     __tablename__ = 'tasks'
@@ -78,7 +78,7 @@ class Task(mb.MistralBase):
     task_runtime_context = sa.Column(st.JsonDictType())
 
 
-class Trigger(mb.MistralBase):
+class Trigger(mb.MistralModelBase):
     """Contains all info about trigger."""
 
     __tablename__ = 'triggers'
