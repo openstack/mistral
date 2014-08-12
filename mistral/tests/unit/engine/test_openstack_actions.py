@@ -16,9 +16,11 @@ import mock
 from oslo.config import cfg
 
 from mistral.actions.openstack import actions
+from mistral import context as auth_context
 from mistral.db import api as db_api
 from mistral import engine
 from mistral.engine.drivers.default import engine as concrete_engine
+from mistral.engine.drivers.default import executor
 from mistral.engine import states
 from mistral.openstack.common import log as logging
 from mistral.tests import base
@@ -100,13 +102,33 @@ class OpenStackActionsEngineTest(base.EngineTestCase):
 
     @mock.patch.object(actions.NovaAction, 'run',
                        mock.Mock(return_value="servers"))
+    @mock.patch.object(executor.DefaultExecutor, "handle_task",
+                       mock.MagicMock())
     def test_nova_action(self):
         context = {}
         wb = create_workbook('openstack_tasks/nova.yaml')
-        task_name = 'nova_server_list'
+        task_name = 'nova_server_findall'
+        task_params = {'status': 'ACTIVE', 'tenant_id': '8e44eb2ce32'}
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          task_name,
                                                          context)
+
+        tasks = db_api.tasks_get(workbook_name=wb['name'],
+                                 execution_id=execution['id'])
+
+        self.assertEqual(1, len(tasks))
+        task = self._assert_single_item(tasks, name=task_name)
+
+        executor.DefaultExecutor.handle_task.assert_called_once_with(
+            auth_context.ctx(),
+            params=task_params,
+            task_id=task['id'],
+            action_name="nova.servers_findall"
+        )
+
+        self.engine.convey_task_result(task['id'],
+                                       states.SUCCESS,
+                                       "servers")
 
         # We have to reread execution to get its latest version.
         execution = db_api.execution_get(execution['id'])

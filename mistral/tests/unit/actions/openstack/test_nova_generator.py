@@ -29,4 +29,4 @@ class NovaGeneratorTest(base.BaseTestCase):
         self.assertIsNotNone(generator)
         self.assertIn(short_action_name, action_classes)
         self.assertTrue(issubclass(action_class, actions.NovaAction))
-        self.assertEqual("servers.get", action_class.client_method)
+        self.assertEqual("servers.get", action_class.client_method_name)
