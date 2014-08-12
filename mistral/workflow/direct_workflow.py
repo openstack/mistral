@@ -18,10 +18,10 @@ from mistral.workflow import base
 class DirectWorkflowHandler(base.WorkflowHandler):
 
     @classmethod
-    def start_workflow(cls, workflow_spec, execution, **kwargs):
+    def start_workflow(cls, workflow_spec, execution, **params):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def on_task_result(cls, workflow_spec, execution, task_db, task_result):
+    def on_task_result(cls, workflow_spec, execution, task_db, raw_result):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError

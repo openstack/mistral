@@ -70,6 +70,8 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
             'state': state
         })
 
+        self.exec_db.tasks.append(task_db)
+
         return task_db
 
     def test_start_workflow(self):
@@ -83,10 +85,6 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         self.exec_db.update({'state': states.RUNNING})
 
         task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
-        task2_db = self._create_db_task('1-1-1-2', 'task2', states.IDLE)
-
-        self.exec_db.tasks.append(task1_db)
-        self.exec_db.tasks.append(task2_db)
 
         # Emulate finishing 'task1'.
         task_specs = self.handler.on_task_result(
@@ -99,10 +97,9 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
 
         self.assertEqual(states.RUNNING, self.exec_db.state)
         self.assertEqual(states.SUCCESS, task1_db.state)
-        self.assertEqual(states.IDLE, task2_db.state)
 
         # Emulate finishing 'task2'.
-        task2_db.state = states.RUNNING
+        task2_db = self._create_db_task('1-1-1-2', 'task2', states.RUNNING)
 
         task_specs = self.handler.on_task_result(
             task2_db,

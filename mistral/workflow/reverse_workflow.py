@@ -35,8 +35,8 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
     when a dependency of 'A' is resolved, will run task 'A'.
     """
 
-    def start_workflow(self, **kwargs):
-        task_name = kwargs.get('task_name')
+    def start_workflow(self, **params):
+        task_name = params.get('task_name')
 
         task_spec = self.wf_spec.get_tasks().get(task_name)
 
@@ -52,12 +52,11 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
 
         return task_specs
 
-    def on_task_result(self, task_db, task_result):
-        task_db.state = \
-            states.ERROR if task_result.is_error() else states.SUCCESS
-
-        # TODO(rakhmerov): Temporary hack. We need to use data flow here.
-        task_db.output = {'result': task_result.data}
+    def on_task_result(self, task_db, raw_result):
+        super(ReverseWorkflowHandler, self).on_task_result(
+            task_db,
+            raw_result
+        )
 
         if task_db.state == states.ERROR:
             # TODO(rakhmerov): Temporary hack, need to use policies.
@@ -71,6 +70,10 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
             self._set_execution_state(states.SUCCESS)
 
         return task_specs
+
+    def get_upstream_tasks(self, task_spec):
+        return [self.wf_spec.get_tasks()[t_name]
+                for t_name in task_spec.get_requires() or []]
 
     def _find_tasks_without_dependencies(self, task_spec):
         """Given a target task name finds tasks with no dependencies.
@@ -126,22 +129,24 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         :return: Tasks with resolved dependencies.
         """
 
-        tasks_db = self.exec_db.tasks
-
         # We need to analyse the graph and see which tasks are ready to start.
         resolved_task_specs = []
         success_task_names = set()
 
-        for t in tasks_db:
+        for t in self.exec_db.tasks:
             if t.state == states.SUCCESS:
                 success_task_names.add(t.name)
 
-        for t in tasks_db:
-            t_spec = self.wf_spec.get_tasks()[t.name]
-
+        for t_spec in self.wf_spec.get_tasks():
             if not (set(t_spec.get_requires()) - success_task_names):
-                # All required tasks, if any, are SUCCESS.
-                if t.state == states.IDLE:
+                task_db = self._find_db_task(t_spec.get_name())
+
+                if not task_db or task_db.state == states.IDLE:
                     resolved_task_specs.append(t_spec)
 
         return resolved_task_specs
+
+    def _find_db_task(self, name):
+        db_tasks = filter(lambda t: t.name == name, self.exec_db.tasks)
+
+        return db_tasks[0] if db_tasks else None

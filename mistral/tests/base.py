@@ -101,6 +101,38 @@ class BaseTest(base.BaseTestCase):
 
         return filtered_items
 
+    def _assert_dict_contains_subset(self, expected, actual, msg=None):
+        """Checks whether actual is a superset of expected.
+
+        Note: This is almost the exact copy of the standard method
+        assertDictContainsSubset() that appeared in Python 2.7, it was
+        added to use it with Python 2.6.
+        """
+        missing = []
+        mismatched = []
+
+        for key, value in expected.iteritems():
+            if key not in actual:
+                missing.append(key)
+            elif value != actual[key]:
+                mismatched.append('%s, expected: %s, actual: %s' %
+                                  (key, value,
+                                   actual[key]))
+
+        if not (missing or mismatched):
+            return
+
+        standardMsg = ''
+
+        if missing:
+            standardMsg = 'Missing: %s' % ','.join(m for m in missing)
+        if mismatched:
+            if standardMsg:
+                standardMsg += '; '
+            standardMsg += 'Mismatched values: %s' % ','.join(mismatched)
+
+        self.fail(self._formatMessage(msg, standardMsg))
+
 
 class DbTestCase(BaseTest):
     def setUp(self):

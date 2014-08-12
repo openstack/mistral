@@ -24,25 +24,26 @@ class Engine(object):
     """Engine interface."""
 
     @abc.abstractmethod
-    def start_workflow(self, workbook_name, workflow_name, input, **kwargs):
+    def start_workflow(self, workbook_name, workflow_name, input, **params):
         """Starts the specified workflow.
 
         :param workbook_name: Workbook name.
         :param workflow_name: Workflow name.
         :param input: Workflow input data as a dictionary.
-        :param kwargs: Additional parameters.
+        :param params: Additional workflow type specific parameters.
         :return: Workflow execution object.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_task_result(self, task_id, task_result):
+    def on_task_result(self, task_id, raw_result):
         """Accepts workflow task raw result and continues the workflow.
 
         Task result here is a raw task result which comes from a corresponding
         action/workflow associated which the task is associated with.
         :param task_id: Task id.
-        :param task_result: Task result object.
+        :param raw_result: Raw task result that comes from action/workflow
+        (before publisher). Instance of mistral.workflow.base.TaskResult
         :return:
         """
         raise NotImplementedError

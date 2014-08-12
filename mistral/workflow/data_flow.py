@@ -14,10 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# TODO(rakhmerov): Module needs to be fully reviewed and refactored
+# TODO(rakhmerov): Take care of ad-hoc actions.
 
 import copy
-import itertools
 from oslo.config import cfg
 
 from mistral import expressions as expr
@@ -30,56 +29,60 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-# TODO(rakhmerov): How to take this into account correctly?
-# The problem is that dependencies is a responsibility of reverse
-# workflow handler.
-def build_required_context(task, tasks):
-    context = {}
+def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db):
+    """Prepare Data Flow properties ('in_context' and 'parameters')
+     of given DB task.
 
-    for req_task in tasks:
-        dep_ids = task.requires or []
+    :param task_db: DB task to prepare.
+    :param task_spec: Task specification.
+    :param upstream_task_specs: Specifications of workflow upstream tasks.
+    :param exec_db: Execution DB model.
+    """
 
-        if req_task.id in dep_ids:
-            utils.merge_dicts(context, evaluate_outbound_context(req_task))
+    upstream_db_tasks = [
+        filter(lambda t: t.name == t_spec.get_name(), exec_db.tasks)[0]
+        for t_spec in upstream_task_specs
+    ]
 
-    return context
+    task_db.in_context = utils.merge_dicts(
+        exec_db.context,
+        _evaluate_upstream_context(upstream_db_tasks)
+    )
+
+    task_db.parameters = evaluate_task_parameters(
+        task_spec,
+        task_db.in_context
+    )
 
 
 def evaluate_task_parameters(task_spec, context):
     return expr.evaluate_recursively(task_spec.get_parameters(), context)
 
 
-def prepare_db_tasks(db_tasks, task_specs, context):
-    """Prepare Data Flow properties ('in_context' and 'parameters')
-     of given DB tasks.
+def _evaluate_upstream_context(upstream_db_tasks):
+    ctx = {}
 
-    :param db_tasks: DB tasks.
-    :param task_specs: Task specifications.
-    :param context: Data Flow context.
-    :return:
-    """
-    # TODO(rakhmerov): Take care of ad-hoc actions.
-    for task_db, task_spec in itertools.izip(db_tasks, task_specs):
-        task_db.in_context = context
-        task_db.parameters = evaluate_task_parameters(task_spec, context)
+    for t_db in upstream_db_tasks:
+        utils.merge_dicts(ctx, evaluate_outbound_context(t_db))
+
+    return ctx
 
 
-def evaluate_task_output(task_spec, result):
-    """Evaluates task output
+def evaluate_task_output(task_spec, raw_result):
+    """Evaluates task output give a raw task result from action/workflow.
 
-    :param task_db: DB task.
     :param task_spec: Task specification
-    :param result: Raw task result that comes from action/workflow
-        (before publisher).
+    :param raw_result: Raw task result that comes from action/workflow
+        (before publisher). Instance of mistral.workflow.base.TaskResult
     :return: Complete task output that goes to Data Flow context.
     """
-    publish_transformer = task_spec.get_publish()
+    publish_dict = task_spec.get_publish()
 
     # Evaluate 'publish' clause using raw result as a context.
-    output = expr.evaluate_recursively(publish_transformer, result) or {}
+    output = expr.evaluate_recursively(publish_dict, raw_result.data) or {}
 
     # Add raw task result to task output under key 'task'
-    output['task'] = {task_spec.get_name(): result}
+    output['task'] = {task_spec.get_name(): raw_result.data}
 
     return output
 

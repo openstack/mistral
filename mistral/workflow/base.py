@@ -16,6 +16,7 @@ import abc
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import data_flow
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
@@ -39,28 +40,37 @@ class WorkflowHandler(object):
         self.wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
 
     @abc.abstractmethod
-    def start_workflow(self, **kwargs):
+    def start_workflow(self, **params):
         """Starts workflow.
 
         Given a workflow specification this method makes required analysis
         according to this workflow type rules and identifies a list of
         tasks that can be scheduled for execution.
-        :param kwargs: Additional parameters specific to workflow type.
+        :param params: Additional parameters specific to workflow type.
         :return: List of tasks that can be scheduled for execution.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_task_result(self, task_db, task_result):
+    def on_task_result(self, task_db, raw_result):
         """Handles event of arriving a task result.
 
         Given task result performs analysis of the workflow execution and
         identifies tasks that can be scheduled for execution.
         :param task_db: Task that the result corresponds to.
-        :param task_result: Task result.
+        :param raw_result: Raw task result that comes from action/workflow
+        (before publisher). Instance of mistral.workflow.base.TaskResult
         :return  List of tasks that can be scheduled for execution.
         """
-        raise NotImplementedError
+        task_db.state = \
+            states.ERROR if raw_result.is_error() else states.SUCCESS
+
+        task_spec = self.wf_spec.get_tasks()[task_db.name]
+
+        task_db.output =\
+            data_flow.evaluate_task_output(task_spec, raw_result)
+
+        return []
 
     def is_stopped_or_finished(self):
         return states.is_stopped_or_finished(self.exec_db.state)
@@ -84,6 +94,15 @@ class WorkflowHandler(object):
         # TODO(rakhmerov): A concrete handler should also find tasks to run.
 
         return []
+
+    @abc.abstractmethod
+    def get_upstream_tasks(self, task_spec):
+        """Gets workflow upstream tasks for the given task.
+
+        :param task_spec: Task specification.
+        :return: List of upstream task specifications for the given task spec.
+        """
+        raise NotImplementedError
 
     def _set_execution_state(self, state):
         cur_state = self.exec_db.state

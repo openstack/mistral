@@ -110,3 +110,5 @@ def merge_dicts(left, right):
 
             if isinstance(left_v, dict) and isinstance(v, dict):
                 merge_dicts(left_v, v)
+
+    return left

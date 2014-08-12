@@ -23,8 +23,9 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
-from mistral.workflow import selector as wf_selector
 from mistral.workflow import states
+from mistral.workflow import workflow_handler_factory as wfh_factory
+
 
 LOG = logging.getLogger(__name__)
 
@@ -38,21 +39,18 @@ WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 # TODO(rakhmerov): Add necessary logging including WF_TRACE.
 
 
-def _select_workflow_handler(exec_db):
-    wf_spec = spec_parser.get_workflow_spec(exec_db['wf_spec'])
-
-    handler_cls = wf_selector.select_workflow_handler(wf_spec)
-
-    if not handler_cls:
-        msg = 'Failed to find a workflow handler [workflow=%s.%s]' % \
-              (exec_db['wb_spec'].name, exec_db['wf_name'])
-        raise exc.EngineException(msg)
-
-    return handler_cls(exec_db)
+def _apply_task_policies(task_db):
+    # TODO(rakhmerov): Implement.
+    pass
 
 
-def _create_db_execution(wf_spec, input, start_params):
-    return db_api.create_execution({
+def _apply_workflow_policies(exec_db, task_db):
+    # TODO(rakhmerov): Implement.
+    pass
+
+
+def _create_db_execution(wb_db, wf_spec, input, start_params):
+    exec_db = db_api.create_execution({
         'wf_spec': wf_spec.to_dict(),
         'start_params': start_params,
         'state': states.RUNNING,
@@ -60,10 +58,17 @@ def _create_db_execution(wf_spec, input, start_params):
         'context': copy.copy(input) or {}
     })
 
+    data_flow.add_openstack_data_to_context(wb_db, exec_db.context)
+    data_flow.add_execution_to_context(exec_db, exec_db.context)
+
+    return exec_db
+
 
 def _create_db_tasks(exec_db, task_specs):
+    new_db_tasks = []
+
     for task_spec in task_specs:
-        db_api.create_task({
+        t = db_api.create_task({
             'execution_id': exec_db.id,
             'name': task_spec.get_name(),
             'state': states.RUNNING,
@@ -74,17 +79,38 @@ def _create_db_tasks(exec_db, task_specs):
             'runtime_context': None
         })
 
-    return exec_db.tasks
+        new_db_tasks.append(t)
+
+    return new_db_tasks
 
 
-def _apply_task_policies(task_db):
-    # TODO(rakhmerov): Implement.
-    pass
+def _prepare_db_tasks(task_specs, exec_db, wf_handler):
+    wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
+
+    new_db_tasks = _create_db_tasks(exec_db, task_specs)
+
+    # Evaluate Data Flow properties ('parameters', 'in_context').
+    for t_db in new_db_tasks:
+        task_spec = wf_spec.get_tasks()[t_db.name]
+
+        data_flow.prepare_db_task(
+            t_db,
+            task_spec,
+            wf_handler.get_upstream_tasks(task_spec),
+            exec_db
+        )
 
 
-def _apply_workflow_policies(exec_db, task_db):
-    # TODO(rakhmerov): Implement.
-    pass
+def _run_tasks(task_specs):
+    for t in task_specs:
+        if t.get_action_name():
+            _run_action(t)
+        elif t.get_workflow_name():
+            _run_workflow(t)
+        else:
+            msg = "Neither 'action' nor 'workflow' is defined in task" \
+                  " specification [task_spec=%s]" % t
+            raise exc.WorkflowException(msg)
 
 
 def _run_action(t):
@@ -97,27 +123,18 @@ def _run_workflow(t):
     pass
 
 
-def _process(exec_db, task_specs):
+def _process_task_specs(task_specs, exec_db, wf_handler):
     LOG.debug('Processing workflow tasks: %s' % task_specs)
 
-    _create_db_tasks(exec_db, task_specs)
+    # DB tasks & Data Flow properties
+    _prepare_db_tasks(task_specs, exec_db, wf_handler)
 
-    # Evaluate Data Flow properties ('parameters', 'in_context').
-    data_flow.prepare_db_tasks(exec_db.tasks, task_specs, exec_db.context)
-
-    for t in task_specs:
-        if t.get_action_name():
-            _run_action(t)
-        elif t.get_workflow_name():
-            _run_workflow(t)
-        else:
-            msg = "Neither 'action' nor 'workflow' is defined in task" \
-                  " specification [task_spec=%s]" % t
-            raise exc.WorkflowException(msg)
+    # Running actions/workflows.
+    _run_tasks(task_specs)
 
 
 class DefaultEngine(base.Engine):
-    def start_workflow(self, workbook_name, workflow_name, input, **kwargs):
+    def start_workflow(self, workbook_name, workflow_name, input, **params):
         db_api.start_tx()
 
         try:
@@ -125,19 +142,17 @@ class DefaultEngine(base.Engine):
 
             wb_spec = \
                 spec_parser.get_workbook_spec_from_yaml(wb_db.definition)
+            wf_spec = wb_spec.get_workflows()[workflow_name]
 
-            exec_db = _create_db_execution(
-                wb_spec.get_workflows()[workflow_name],
-                input,
-                kwargs
-            )
+            exec_db = _create_db_execution(wb_db, wf_spec, input, params)
 
-            wf_handler = _select_workflow_handler(exec_db)
+            wf_handler = wfh_factory.create_workflow_handler(exec_db, wf_spec)
 
-            task_specs = wf_handler.start_workflow(**kwargs)
+            # Calculate tasks to process next.
+            task_specs = wf_handler.start_workflow(**params)
 
             if task_specs:
-                _process(exec_db, task_specs)
+                _process_task_specs(task_specs, exec_db, wf_handler)
 
             db_api.commit_tx()
         finally:
@@ -145,25 +160,23 @@ class DefaultEngine(base.Engine):
 
         return exec_db
 
-    def on_task_result(self, task_id, task_result):
+    def on_task_result(self, task_id, raw_result):
         db_api.start_tx()
 
         try:
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
 
-            wf_handler = _select_workflow_handler(exec_db)
+            wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
-            task_specs = wf_handler.on_task_result(
-                task_db,
-                task_result
-            )
+            # Calculate tasks to process next.
+            task_specs = wf_handler.on_task_result(task_db, raw_result)
 
             if task_specs:
                 _apply_task_policies(task_db)
                 _apply_workflow_policies(exec_db, task_db)
 
-                _process(exec_db, task_specs)
+                _process_task_specs(task_specs, exec_db, wf_handler)
 
             db_api.commit_tx()
         finally:
@@ -177,7 +190,7 @@ class DefaultEngine(base.Engine):
         try:
             exec_db = db_api.get_execution(execution_id)
 
-            wf_handler = _select_workflow_handler(exec_db)
+            wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
             wf_handler.stop_workflow()
 
@@ -193,12 +206,13 @@ class DefaultEngine(base.Engine):
         try:
             exec_db = db_api.get_execution(execution_id)
 
-            wf_handler = _select_workflow_handler(exec_db)
+            wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
+            # Calculate tasks to process next.
             task_specs = wf_handler.resume_workflow()
 
             if task_specs:
-                _process(exec_db, task_specs)
+                _process_task_specs(task_specs, exec_db, wf_handler)
 
             db_api.commit_tx()
         finally:

@@ -133,6 +133,9 @@ class TaskSpec(base.BaseSpec):
     def get_retry(self):
         return self._retry
 
+    def get_publish(self):
+        return self._publish
+
     def get_requires(self):
         if isinstance(self._requires, six.string_types):
             return [self._requires]
