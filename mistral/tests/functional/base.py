@@ -14,15 +14,36 @@
 #    under the License.
 
 import json
-import os
+import time
+
 from tempest import clients
 from tempest.common import rest_client
 from tempest import config
 from tempest import exceptions
 import tempest.test
-import time
 
 CONF = config.CONF
+
+
+def get_resource(path):
+    main_package = 'mistral/tests'
+    dir_path = __file__[0:__file__.find(main_package) + len(main_package) + 1]
+    return open(dir_path + path).read()
+
+
+def find_items(items, **props):
+        def _matches(item, **props):
+            for prop_name, prop_val in props.iteritems():
+                if item[prop_name] != prop_val:
+                    return False
+
+            return True
+
+        filtered = filter(lambda item: _matches(item, **props), items)
+
+        if len(filtered) == 1:
+            return filtered[0]
+        return filtered
 
 
 class MistralClient(rest_client.RestClient):
@@ -37,13 +58,20 @@ class MistralClient(rest_client.RestClient):
         resp, body = self.get(name)
         return resp, json.loads(body)
 
-    def create_obj(self, path, name):
+    def get_workbook_list(self):
+        resp, body = self.get_list_obj('workbooks')
+        return resp, body['workbooks']
+
+    def create_workbook(self, name):
         post_body = '{"name": "%s"}' % name
-        resp, body = self.post(path, post_body)
+        resp, body = self.post('workbooks', post_body)
         return resp, json.loads(body)
 
     def delete_obj(self, path, name):
         return self.delete('{path}/{name}'.format(path=path, name=name))
+
+    def delete_workbook(self, workbook_name):
+        return self.delete_obj('workbooks', workbook_name)
 
     def update_obj(self, path, name):
         post_body = '{"name": "%s"}' % (name + 'updated')
@@ -56,18 +84,12 @@ class MistralClient(rest_client.RestClient):
         return self.get('workbooks/{name}/definition'.format(name=name),
                         headers)
 
-    def upload_workbook_definition(self, name, path):
+    def upload_workbook_definition(self, name, text):
         headers = {'Content-Type': 'text/plain',
                    'X-Auth-Token': self.auth_provider.get_token()}
 
-        __location = os.path.realpath(os.path.join(os.getcwd(),
-                                                   os.path.dirname(__file__)))
-
-        tests_dir = '/'.join(__location.split('/')[:-2:])
-        file = open(os.path.join(tests_dir, path), 'rb').read()
-
         return self.put('workbooks/{name}/definition'.format(name=name),
-                        file, headers)
+                        text, headers)
 
     def create_execution(self, workbook_name, body):
         return self.post('workbooks/{name}/executions'.format(
@@ -108,7 +130,7 @@ class MistralClient(rest_client.RestClient):
         return resp, json.loads(body)
 
     def create_execution_wait_success(self, workbook_name,
-                                      context, task, timeout=120):
+                                      context, task, timeout=180):
 
         post_body = {
             "workbook_name": workbook_name,
@@ -144,7 +166,6 @@ class MistralClient(rest_client.RestClient):
 
 
 class TestCase(tempest.test.BaseTestCase):
-
     @classmethod
     def setUpClass(cls):
         """This method allows to initialize authentication before
@@ -157,23 +178,18 @@ class TestCase(tempest.test.BaseTestCase):
 
     def setUp(self):
         super(TestCase, self).setUp()
-        self.obj = []
 
     def tearDown(self):
         super(TestCase, self).tearDown()
 
-        for i in self.obj:
-            try:
-                self.client.delete_obj(i[0], i[1])
-            except exceptions.NotFound:
-                pass
+        _, workbooks = self.client.get_workbook_list()
+        for wb in workbooks:
+            self.client.delete_workbook(wb['name'])
 
 
 class TestCaseAdvanced(TestCase):
-
     @classmethod
     def setUpClass(cls):
-
         super(TestCaseAdvanced, cls).setUpClass()
 
         cls.server_client = cls.mgr.servers_client
@@ -184,10 +200,10 @@ class TestCaseAdvanced(TestCase):
     def setUp(self):
         super(TestCaseAdvanced, self).setUp()
 
+        self.workbook_name = 'test'
         self.server_ids = []
 
-        self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        self.client.create_workbook(self.workbook_name)
 
     def tearDown(self):
         _, executions = self.client.get_list_obj('workbooks/test/executions')

@@ -18,7 +18,7 @@ import uuid
 from tempest import exceptions
 from tempest import test
 
-from mistral.tests.functional.api import base
+from mistral.tests.functional import base
 
 
 class SanityTests(base.TestCase):
@@ -37,8 +37,7 @@ class SanityTests(base.TestCase):
 
     @test.attr(type='smoke')
     def test_get_workbook(self):
-        self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        self.client.create_workbook('test')
         resp, body = self.client.get_list_obj('workbooks/test')
 
         self.assertEqual(200, resp.status)
@@ -46,8 +45,7 @@ class SanityTests(base.TestCase):
 
     @test.attr(type='smoke')
     def test_get_executions(self):
-        self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        self.client.create_workbook('test')
         resp, body = self.client.get_list_obj('workbooks/test/executions')
 
         self.assertEqual(200, resp.status)
@@ -55,8 +53,7 @@ class SanityTests(base.TestCase):
 
     @test.attr(type='smoke')
     def test_create_and_delete_workbook(self):
-        resp, body = self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        resp, body = self.client.create_workbook('test')
 
         self.assertEqual(201, resp.status)
         self.assertEqual('test', body['name'])
@@ -66,28 +63,25 @@ class SanityTests(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertEqual('test', body['workbooks'][0]['name'])
 
-        self.client.delete_obj('workbooks', 'test')
+        self.client.delete_workbook('test')
         _, body = self.client.get_list_obj('workbooks')
 
         self.assertEqual([], body['workbooks'])
 
     @test.attr(type='smoke')
     def test_update_workbook(self):
-        self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        self.client.create_workbook('test')
         resp, body = self.client.update_obj('workbooks', 'test')
 
         self.assertEqual(200, resp.status)
         self.assertEqual('testupdated', body['name'])
 
-        self.obj.append(['workbooks', 'testupdated'])
-
     @test.attr(type='smoke')
     def test_get_workbook_definition(self):
-        self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        self.client.create_workbook('test')
+        text = base.get_resource('resources/hello.yaml')
         self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
+            'test', text)
         resp, body = self.client.get_workbook_definition('test')
 
         self.assertEqual(200, resp.status)
@@ -95,23 +89,22 @@ class SanityTests(base.TestCase):
 
     @test.attr(type='smoke')
     def test_upload_workbook_definition(self):
-        self.client.create_obj('workbooks', 'test1')
-        self.obj.append(['workbooks', 'test1'])
+        self.client.create_workbook('test1')
+        text = base.get_resource('resources/hello.yaml')
         resp, body = self.client.upload_workbook_definition(
-            'test1', 'resources/hello.yaml')
+            'test1', text)
 
         self.assertEqual(200, resp.status)
         self.assertIsNotNone(body)
 
     @test.attr(type='negative')
     def test_double_create_obj(self):
-        self.client.create_obj('workbooks', 'test')
-        self.obj.append(['workbooks', 'test'])
+        self.client.create_workbook('test')
 
-        self.assertRaises(exceptions.Conflict, self.client.create_obj,
-                          'workbooks', 'test')
+        self.assertRaises(exceptions.Conflict, self.client.create_workbook,
+                          'test')
 
-        self.client.delete_obj('workbooks', 'test')
+        self.client.delete_workbook('test')
         _, body = self.client.get_list_obj('workbooks')
 
         self.assertEqual([], body['workbooks'])
@@ -129,11 +122,14 @@ class SanityTests(base.TestCase):
 
 
 class AdvancedTests(base.TestCaseAdvanced):
+    def setUp(self):
+        super(AdvancedTests, self).setUp()
+
+        wb = base.get_resource('resources/hello.yaml')
+        self.client.upload_workbook_definition('test', wb)
 
     @test.attr(type='positive')
     def test_create_execution(self):
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
         resp, body = self.client.create_execution_wait_success(
             'test', '', 'hello')
 
@@ -142,10 +138,8 @@ class AdvancedTests(base.TestCaseAdvanced):
 
     @test.attr(type='positive')
     def test_get_execution(self):
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
-        execution = self.client.create_execution_wait_success(
-            'test', '', 'hello')[1]
+        _, execution = self.client.create_execution_wait_success('test', '',
+                                                                 'hello')
 
         resp, body = self.client.get_execution('test', execution['id'])
 
@@ -158,10 +152,8 @@ class AdvancedTests(base.TestCaseAdvanced):
 
     @test.attr(type='positive')
     def test_update_execution(self):
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
-        execution = self.client.create_execution_wait_success(
-            'test', '', 'hello')[1]
+        _, execution = self.client.create_execution_wait_success('test', '',
+                                                                 'hello')
 
         resp, body = self.client.update_execution(
             'test', execution['id'], '{}')
@@ -175,10 +167,8 @@ class AdvancedTests(base.TestCaseAdvanced):
 
     @test.attr(type='positive')
     def test_get_tasks_list(self):
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
-        execution = self.client.create_execution_wait_success(
-            'test', '', 'hello')[1]
+        _, execution = self.client.create_execution_wait_success('test', '',
+                                                                 'hello')
 
         resp, tasks = self.client.get_tasks_list('test', execution['id'])
 
@@ -189,12 +179,10 @@ class AdvancedTests(base.TestCaseAdvanced):
 
     @test.attr(type='positive')
     def test_get_task(self):
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
-        execution = self.client.create_execution_wait_success(
-            'test', '', 'hello')[1]
+        _, execution = self.client.create_execution_wait_success('test', '',
+                                                                 'hello')
 
-        tasks = self.client.get_tasks_list('test', execution['id'])[1]
+        _, tasks = self.client.get_tasks_list('test', execution['id'])
 
         resp, task = self.client.get_task('test', execution['id'],
                                           tasks[0]['id'])
@@ -212,14 +200,11 @@ class AdvancedTests(base.TestCaseAdvanced):
                           'nonexistentworkbook', '', 'catchme')
 
     def test_get_nonexistent_execution(self):
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
         self.assertRaises(exceptions.NotFound, self.client.get_execution,
                           'test', str(uuid.uuid4()))
 
     @test.attr(type='negative')
     def test_update_nonexistent_execution(self):
-
         id = str(uuid.uuid4())
         put_body = {
             "id": id,
@@ -231,19 +216,17 @@ class AdvancedTests(base.TestCaseAdvanced):
 
     @test.attr(type='negative')
     def test_get_tasks_list_of_nonexistent_execution(self):
-
         self.assertRaises(exceptions.NotFound, self.client.get_tasks_list,
                           'test', str(uuid.uuid4()))
 
 
 class AdvancedNegativeTestsWithExecutionCreate(base.TestCaseAdvanced):
-
     def setUp(self):
         super(AdvancedNegativeTestsWithExecutionCreate, self).setUp()
-        self.client.upload_workbook_definition(
-            'test', 'resources/hello.yaml')
-        self.execution = self.client.create_execution_wait_success(
-            'test', '', 'hello')[1]
+        wb = base.get_resource('resources/hello.yaml')
+        self.client.upload_workbook_definition('test', wb)
+        _, self.execution = self.client.create_execution_wait_success(
+            'test', '', 'hello')
 
     @test.attr(type='negative')
     def test_get_nonexistent_task(self):
@@ -252,7 +235,6 @@ class AdvancedNegativeTestsWithExecutionCreate(base.TestCaseAdvanced):
 
     @test.attr(type='negative')
     def test_update_nonexistent_task(self):
-
         id = str(uuid.uuid4())
         put_body = {
             "id": id,
