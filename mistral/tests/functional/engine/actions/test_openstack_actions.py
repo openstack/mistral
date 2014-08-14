@@ -23,6 +23,12 @@ CONF = cfg.CONF
 
 
 class OpenStackActionsTest(base.TestCaseAdvanced):
+    @classmethod
+    def setUpClass(cls):
+        super(OpenStackActionsTest, cls).setUpClass()
+
+        cls.identity_client = cls.mgr.identity_v3_client
+
     def test_nova_actions(self):
         nova_wb = base.get_resource(
             'resources/openstack_tasks/nova_actions.yaml')
@@ -47,3 +53,22 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         self.assertEqual('ACTIVE', server['status'])
 
         self.server_client.delete_server(server_id)
+
+    def test_keystone_actions(self):
+        keystone_wb = base.get_resource(
+            'resources/openstack_tasks/keystone_actions.yaml')
+        self.client.upload_workbook_definition(self.workbook_name,
+                                               keystone_wb)
+        _, execution = self.client.create_execution_wait_success(
+            self.workbook_name, context={}, task='get_some_endpoint')
+        _, tasks = self.client.get_tasks_list(self.workbook_name,
+                                              execution['id'])
+        final_task = base.find_items(tasks, name="get_some_endpoint",
+                                     state='SUCCESS')
+
+        self.assertIsNotNone(final_task)
+        self.assertEqual('SUCCESS', execution['state'])
+
+        output = json.loads(final_task['output'])
+        url = output['endpoint_url']
+        self.assertIn("http://", url)
