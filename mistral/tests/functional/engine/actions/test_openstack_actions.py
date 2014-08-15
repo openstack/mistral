@@ -28,6 +28,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         super(OpenStackActionsTest, cls).setUpClass()
 
         cls.identity_client = cls.mgr.identity_v3_client
+        cls.images_client = cls.mgr.images_client
 
     def test_nova_actions(self):
         nova_wb = base.get_resource(
@@ -72,3 +73,24 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         output = json.loads(final_task['output'])
         url = output['endpoint_url']
         self.assertIn("http://", url)
+
+    def test_glance_actions(self):
+        glance_wb = base.get_resource(
+            'resources/openstack_tasks/glance_actions.yaml')
+        self.client.upload_workbook_definition(self.workbook_name,
+                                               glance_wb)
+
+        _, execution = self.client.create_execution_wait_success(
+            self.workbook_name, context={}, task='image_list')
+        _, task_list = self.client.get_tasks_list(self.workbook_name,
+                                                  execution['id'])
+        final_task = base.find_items(task_list,
+                                     name='image_get', state='SUCCESS')
+
+        self.assertIsNotNone(final_task)
+        self.assertEqual('SUCCESS', execution['state'])
+
+        output = json.loads(final_task['output'])
+        _, image = self.images_client.get_image(output['image_id'])
+
+        self.assertEqual(output['image_name'], image['name'])
