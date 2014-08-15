@@ -54,7 +54,7 @@ class OpenStackActionsEngineTest(base.EngineTestCase):
                        mock.Mock(return_value="images"))
     def test_glance_action(self):
         context = {}
-        wb = create_workbook('openstack_tasks/glance.yaml')
+        wb = create_workbook('openstack/glance.yaml')
         task_name = 'glance_image_list'
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          task_name,
@@ -79,7 +79,7 @@ class OpenStackActionsEngineTest(base.EngineTestCase):
                        mock.Mock(return_value="users"))
     def test_keystone_action(self):
         context = {}
-        wb = create_workbook('openstack_tasks/keystone.yaml')
+        wb = create_workbook('openstack/keystone.yaml')
         task_name = 'keystone_user_list'
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          task_name,
@@ -106,9 +106,9 @@ class OpenStackActionsEngineTest(base.EngineTestCase):
                        mock.MagicMock())
     def test_nova_action(self):
         context = {}
-        wb = create_workbook('openstack_tasks/nova.yaml')
         task_name = 'nova_server_findall'
         task_params = {'status': 'ACTIVE', 'tenant_id': '8e44eb2ce32'}
+        wb = create_workbook('openstack/nova.yaml')
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          task_name,
                                                          context)
@@ -149,7 +149,7 @@ class OpenStackActionsEngineTest(base.EngineTestCase):
                        mock.Mock(return_value="stacks"))
     def test_heat_action(self):
         context = {}
-        wb = create_workbook('openstack_tasks/heat.yaml')
+        wb = create_workbook('openstack/heat.yaml')
         task_name = 'heat_stack_list'
         execution = self.engine.start_workflow_execution(wb['name'],
                                                          task_name,
