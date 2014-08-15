@@ -46,7 +46,8 @@ Workflows:
         action: std.echo output="Thanks {$.name}!"
 
   wf2:
-    type: direct
+    type: linear
+    start_task: task3
 
     tasks:
       task3:
@@ -146,7 +147,7 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual('2.0', wf2_spec.get_version())
         self.assertEqual('wf2', wf2_spec.get_name())
-        self.assertEqual('direct', wf2_spec.get_type())
+        self.assertEqual('linear', wf2_spec.get_type())
         self.assertEqual(1, len(wf2_spec.get_tasks()))
 
         task3_spec = wf2_spec.get_tasks().get('task3')

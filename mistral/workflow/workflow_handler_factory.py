@@ -16,7 +16,7 @@
 
 from mistral import exceptions as exc
 from mistral.workbook import parser as spec_parser
-from mistral.workflow import direct_workflow
+from mistral.workflow import linear_workflow
 from mistral.workflow import reverse_workflow
 
 
@@ -42,6 +42,6 @@ def _select_workflow_handler(wf_spec):
         return reverse_workflow.ReverseWorkflowHandler
 
     if wf_type == 'direct':
-        return direct_workflow.DirectWorkflowHandler
+        return linear_workflow.LinearWorkflowHandler
 
     return None

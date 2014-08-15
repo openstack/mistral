@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions as exc
 from mistral.workbook import base
 from mistral.workbook.v2 import tasks
 
@@ -23,7 +24,8 @@ class WorkflowSpec(base.BaseSpec):
         "properties": {
             "Version": {"type": "string"},
             "name": {"type": "string"},
-            "type": {"enum": ["reverse", "direct"]},
+            "type": {"enum": ["reverse", "linear"]},
+            "start_task": {"type": "string"},
             "parameters": {"type": ["array", "null"]},
             "tasks": {"type": "object"},
         },
@@ -38,13 +40,28 @@ class WorkflowSpec(base.BaseSpec):
 
         self._name = data['name']
         self._type = data['type']
+        self._start_task_name = data.get('start_task')
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
+
+    def validate(self):
+        super(WorkflowSpec, self).validate()
+
+        if self._data['type'] == 'linear':
+            if 'start_task' not in self._data:
+                msg = "Linear workflow 'start_task' property is not defined."
+                raise exc.InvalidModelException(msg)
+            elif self._data['start_task'] not in self._data['tasks'].keys():
+                msg = "'start_task' property of linear workflow is invalid."
+                raise exc.InvalidModelException(msg)
 
     def get_name(self):
         return self._name
 
     def get_type(self):
         return self._type
+
+    def get_start_task_name(self):
+        return self._start_task_name
 
     def get_tasks(self):
         return self._tasks
