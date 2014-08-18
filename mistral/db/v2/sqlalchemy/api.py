@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import contextlib
 import sys
 
 from oslo.db import exception as db_exc
@@ -53,7 +54,7 @@ def drop_db():
         models.Workbook.metadata.drop_all(b.get_engine())
         _facade = None
     except Exception as e:
-        raise exc.DBException("Failed to drop database: %s" + e)
+        raise exc.DBException("Failed to drop database: %s" % e)
 
 
 # Transaction management.
@@ -72,6 +73,19 @@ def rollback_tx():
 
 def end_tx():
     b.end_tx()
+
+
+@contextlib.contextmanager
+def transaction():
+    try:
+        start_tx()
+        yield
+    except Exception as e:
+        raise exc.DBException("Failure during transaction processing: %s" % e)
+    else:
+        commit_tx()
+    finally:
+        end_tx()
 
 
 # Workbooks.

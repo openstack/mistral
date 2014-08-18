@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import contextlib
+
 from oslo.db import api as db_api
 
 from mistral import exceptions
@@ -54,6 +56,12 @@ def rollback_tx():
 
 def end_tx():
     IMPL.end_tx()
+
+
+@contextlib.contextmanager
+def transaction():
+    with IMPL.transaction():
+        yield
 
 
 # Workbook

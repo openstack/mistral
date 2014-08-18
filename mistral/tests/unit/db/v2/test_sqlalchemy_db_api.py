@@ -404,6 +404,21 @@ class TXTest(test_base.DbTestCase):
         self.assertEqual(created, fetched)
         self.assertFalse(self.is_db_session_open())
 
+    def test_commit_transaction(self):
+        with db_api.transaction():
+            created = db_api.create_workbook(WORKBOOKS[0])
+            fetched = db_api.get_workbook(created.name)
+
+            self.assertEqual(created, fetched)
+            self.assertTrue(self.is_db_session_open())
+
+        self.assertFalse(self.is_db_session_open())
+
+        fetched = db_api.get_workbook(created.name)
+
+        self.assertEqual(created, fetched)
+        self.assertFalse(self.is_db_session_open())
+
     def test_rollback_multiple_objects(self):
         db_api.start_tx()
 
@@ -436,6 +451,29 @@ class TXTest(test_base.DbTestCase):
         )
 
         self.assertFalse(self.is_db_session_open())
+
+    def test_rollback_transaction(self):
+        try:
+            with db_api.transaction():
+                created = db_api.create_workbook(WORKBOOKS[0])
+                fetched = db_api.get_workbook(
+                    created['name']
+                )
+
+                self.assertEqual(created, fetched)
+                self.assertTrue(self.is_db_session_open())
+
+                db_api.create_workbook(WORKBOOKS[0])
+
+        except exc.DBException:
+            pass
+
+        self.assertFalse(self.is_db_session_open())
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_workbook,
+            created['name']
+        )
 
     def test_commit_multiple_objects(self):
         db_api.start_tx()
