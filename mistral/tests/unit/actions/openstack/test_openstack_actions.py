@@ -23,7 +23,7 @@ class OpenStackActionTest(base.BaseTestCase):
     def test_nova_action(self, mocked):
         method_name = "servers.get"
         action_class = actions.NovaAction
-        action_class.client_method = method_name
+        action_class.client_method_name = method_name
         params = {'server': '1234-abcd'}
         action = action_class(**params)
         action.run()
@@ -35,7 +35,7 @@ class OpenStackActionTest(base.BaseTestCase):
     def test_glance_action(self, mocked):
         method_name = "images.delete"
         action_class = actions.GlanceAction
-        action_class.client_method = method_name
+        action_class.client_method_name = method_name
         params = {'image': '1234-abcd'}
         action = action_class(**params)
         action.run()
@@ -47,7 +47,7 @@ class OpenStackActionTest(base.BaseTestCase):
     def test_keystone_action(self, mocked):
         method_name = "users.get"
         action_class = actions.KeystoneAction
-        action_class.client_method = method_name
+        action_class.client_method_name = method_name
         params = {'user': '1234-abcd'}
         action = action_class(**params)
         action.run()
@@ -59,7 +59,7 @@ class OpenStackActionTest(base.BaseTestCase):
     def test_heat_action(self, mocked):
         method_name = "stacks.get"
         action_class = actions.HeatAction
-        action_class.client_method = method_name
+        action_class.client_method_name = method_name
         params = {'id': '1234-abcd'}
         action = action_class(**params)
         action.run()

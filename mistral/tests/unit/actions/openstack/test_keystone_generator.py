@@ -29,4 +29,4 @@ class KeystoneGeneratorTest(base.BaseTestCase):
         self.assertIsNotNone(generator)
         self.assertIn(short_action_name, action_classes)
         self.assertTrue(issubclass(action_class, actions.KeystoneAction))
-        self.assertEqual("users.create", action_class.client_method)
+        self.assertEqual("users.create", action_class.client_method_name)

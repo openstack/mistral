@@ -26,7 +26,7 @@ class OpenStackAction(base.Action):
     """
     _kwargs_for_run = {}
     _client_class = None
-    client_method = None
+    client_method_name = None
 
     def __init__(self, **kwargs):
         self._kwargs_for_run = kwargs
@@ -42,7 +42,7 @@ class OpenStackAction(base.Action):
         pass
 
     def _get_client_method(self):
-        hierarchy_list = self.client_method.split('.')
+        hierarchy_list = self.client_method_name.split('.')
         attribute = self._get_client()
         for attr in hierarchy_list:
             attribute = getattr(attribute, attr)

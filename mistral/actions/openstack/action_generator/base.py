@@ -45,8 +45,8 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
         if not method_name:
             return None
 
-        action_class = type(str(method_name), (cls.base_action_class,), {})
-        setattr(action_class, 'client_method', method_name)
+        action_class = type(str(method_name), (cls.base_action_class,),
+                            {'client_method_name': method_name})
 
         return action_class
 
