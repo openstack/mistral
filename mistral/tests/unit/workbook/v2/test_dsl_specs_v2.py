@@ -28,6 +28,7 @@ Namespaces:
         class: std.echo
         base-parameters:
             output: "Hello {$.name}!"
+        output: $
 
 Workflows:
   wf1:
@@ -103,7 +104,7 @@ class DSLv2ModelTest(base.BaseTest):
             action_spec.get_base_parameters()
         )
         self.assertDictEqual({}, action_spec.get_parameters())
-        self.assertIsNone(action_spec.get_output())
+        self.assertEqual('$', action_spec.get_output())
 
         # Workflows.
 

@@ -184,3 +184,11 @@ class DefaultEngineTest(base.DbTestCase):
 
         self._assert_single_item(exec_db.tasks, name='task1')
         self._assert_single_item(exec_db.tasks, name='task2')
+
+    def test_stop_workflow(self):
+        # TODO(akhmerov): Implement.
+        pass
+
+    def test_resume_workflow(self):
+        # TODO(akhmerov): Implement.
+        pass

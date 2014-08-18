@@ -27,6 +27,7 @@ class WorkflowSpec(base.BaseSpec):
             "type": {"enum": ["reverse", "linear"]},
             "start_task": {"type": "string"},
             "parameters": {"type": ["array", "null"]},
+            "output": {"type": ["array", "null"]},
             "tasks": {"type": "object"},
         },
         "required": ["Version", "name", "type", "tasks"],

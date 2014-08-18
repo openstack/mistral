@@ -26,7 +26,7 @@ class ActionSpec(base.BaseSpec):
             "namespace": {"type": "string"},
             "base-parameters": {"type": "object"},
             "parameters": {"type": "array"},
-            "output": {},
+            "output": {"type": ["string", "object", "array", "null"]},
         },
         "required": ["name", "class", "namespace"],
         "additionalProperties": False
