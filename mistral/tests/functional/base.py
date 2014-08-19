@@ -43,6 +43,7 @@ def find_items(items, **props):
 
         if len(filtered) == 1:
             return filtered[0]
+
         return filtered
 
 
