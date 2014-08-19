@@ -17,6 +17,7 @@
 import logging
 import threading
 
+
 from eventlet import corolocal
 
 # Thread local storage.
@@ -102,6 +103,13 @@ def merge_dicts(left, right):
     :param left: Left dictionary.
     :param right: Right dictionary.
     """
+
+    if left is None:
+        return right
+
+    if right is None:
+        return left
+
     for k, v in right.iteritems():
         if k not in left:
             left[k] = v

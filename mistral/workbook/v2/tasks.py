@@ -23,7 +23,7 @@ from mistral.workbook.v2 import retry
 # TODO(rakhmerov): In progress.
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
-PARAMS_PTRN = re.compile("([\w]+)=(\".*\"|\'.*'|[\d\.]*)")
+PARAMS_PTRN = re.compile("([\w]+)=(\"[^=]*\"|\'[^=]*'|[\d\.]*)")
 
 
 class TaskSpec(base.BaseSpec):
@@ -35,6 +35,7 @@ class TaskSpec(base.BaseSpec):
             "name": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
+            "workflow_parameters": {"type": ["object", "null"]},
             "parameters": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "retry": {"type": ["object", "null"]},
@@ -53,8 +54,9 @@ class TaskSpec(base.BaseSpec):
         super(TaskSpec, self).__init__(data)
 
         self._name = data['name']
-        self._action = data.get('action', None)
-        self._workflow = data.get('workflow', None)
+        self._action = data.get('action')
+        self._workflow = data.get('workflow')
+        self._workflow_parameters = data.get('workflow_parameters')
         self._parameters = data.get('parameters', {})
         self._publish = data.get('publish', {})
         self._retry = self._spec_property('retry', retry.RetrySpec)
@@ -92,7 +94,11 @@ class TaskSpec(base.BaseSpec):
 
         params = {}
         for k, v in re.findall(PARAMS_PTRN, cmd_str):
-            params[k] = v.replace('"', '').replace("'", '')
+            # Remove embracing quotes.
+            if v[0] == '"' or v[0] == "'":
+                v = v[1:-1]
+
+            params[k] = v
 
         return cmd, params
 
@@ -126,6 +132,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_short_workflow_name(self):
         return self._workflow.split('.')[-1] if self._workflow else None
+
+    def get_workflow_parameters(self):
+        return self._workflow_parameters
 
     def get_parameters(self):
         return self._parameters

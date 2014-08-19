@@ -24,6 +24,8 @@ from oslotest import base
 from stevedore import driver
 import testtools.matchers as ttm
 
+import time
+
 from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.v1 import api as db_api_v1
@@ -31,7 +33,6 @@ from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
 from mistral import version
-
 
 RESOURCES_PATH = 'tests/resources/'
 LOG = logging.getLogger(__name__)
@@ -43,20 +44,30 @@ def get_resource(resource_name):
         RESOURCES_PATH + resource_name)).read()
 
 
+# TODO(rakhmerov): Remove together with the current engine implementation.
 def get_fake_transport():
     # Get transport here to let oslo.messaging setup default config
     # before changing the rpc_backend to the fake driver; otherwise,
     # oslo.messaging will throw exception.
     messaging.get_transport(cfg.CONF)
+
     cfg.CONF.set_default('rpc_backend', 'fake')
+
     url = transport.TransportURL.parse(cfg.CONF, None, None)
-    kwargs = dict(default_exchange=cfg.CONF.control_exchange,
-                  allowed_remote_exmods=[])
-    mgr = driver.DriverManager('oslo.messaging.drivers',
-                               url.transport,
-                               invoke_on_load=True,
-                               invoke_args=[cfg.CONF, url],
-                               invoke_kwds=kwargs)
+
+    kwargs = dict(
+        default_exchange=cfg.CONF.control_exchange,
+        allowed_remote_exmods=[]
+    )
+
+    mgr = driver.DriverManager(
+        'oslo.messaging.drivers',
+        url.transport,
+        invoke_on_load=True,
+        invoke_args=[cfg.CONF, url],
+        invoke_kwds=kwargs
+    )
+
     return transport.Transport(mgr.driver)
 
 
@@ -133,6 +144,28 @@ class BaseTest(base.BaseTestCase):
 
         self.fail(self._formatMessage(msg, standardMsg))
 
+    def _await(self, predicate, delay=1, timeout=30):
+        """Awaits for predicate function to evaluate to True.
+
+        If within a configured timeout predicate function hasn't evaluated
+        to True then an exception is raised.
+        :param predicate: Predication function.
+        :param delay: Delay in seconds between predicate function calls.
+        :param timeout: Maximum amount of time to wait for predication
+            function to evaluate to True.
+        :return:
+        """
+        end_time = time.time() + timeout
+
+        while True:
+            if predicate():
+                break
+
+            if time.time() + delay > end_time:
+                raise AssertionError("Failed to wait for expected result.")
+
+            time.sleep(delay)
+
 
 class DbTestCase(BaseTest):
     def setUp(self):
@@ -155,12 +188,14 @@ class DbTestCase(BaseTest):
         return db_sa_base._get_thread_local_session() is not None
 
 
+# TODO(rakhmerov): Remove together with the current engine implementation.
 class EngineTestCase(DbTestCase):
     transport = get_fake_transport()
     backend = engine.get_engine(cfg.CONF.engine.engine, transport)
 
     def __init__(self, *args, **kwargs):
         super(EngineTestCase, self).__init__(*args, **kwargs)
+
         self.engine = engine.EngineClient(self.transport)
 
     @classmethod
@@ -168,22 +203,26 @@ class EngineTestCase(DbTestCase):
         """Mock the engine convey_task_results to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
-        cntx = {}
-        kwargs = {'task_id': task_id,
-                  'state': state,
-                  'result': result}
-        return cls.backend.convey_task_result(cntx, **kwargs)
+        kwargs = {
+            'task_id': task_id,
+            'state': state,
+            'result': result
+        }
+
+        return cls.backend.convey_task_result({}, **kwargs)
 
     @classmethod
     def mock_start_workflow(cls, workbook_name, task_name, context=None):
         """Mock the engine start_workflow_execution to send request directly
         to the engine instead of going through the oslo.messaging transport.
         """
-        cntx = {}
-        kwargs = {'workbook_name': workbook_name,
-                  'task_name': task_name,
-                  'context': context}
-        return cls.backend.start_workflow_execution(cntx, **kwargs)
+        kwargs = {
+            'workbook_name': workbook_name,
+            'task_name': task_name,
+            'context': context
+        }
+
+        return cls.backend.start_workflow_execution({}, **kwargs)
 
     @classmethod
     def mock_get_workflow_state(cls, workbook_name, execution_id):
@@ -191,10 +230,12 @@ class EngineTestCase(DbTestCase):
         directly to the engine instead of going through the oslo.messaging
         transport.
         """
-        cntx = {}
-        kwargs = {'workbook_name': workbook_name,
-                  'execution_id': execution_id}
-        return cls.backend.get_workflow_execution_state(cntx, **kwargs)
+        kwargs = {
+            'workbook_name': workbook_name,
+            'execution_id': execution_id
+        }
+
+        return cls.backend.get_workflow_execution_state({}, **kwargs)
 
     @classmethod
     def mock_run_task(cls, task_id, action_name, params):
@@ -202,10 +243,13 @@ class EngineTestCase(DbTestCase):
         executor instead of going through the oslo.messaging transport.
         """
         exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)
-        exctr.handle_task(auth_context.ctx(),
-                          task_id=task_id,
-                          action_name=action_name,
-                          params=params)
+
+        exctr.handle_task(
+            auth_context.ctx(),
+            task_id=task_id,
+            action_name=action_name,
+            params=params
+        )
 
     @classmethod
     def mock_handle_task(cls, cntx, **kwargs):
@@ -213,4 +257,5 @@ class EngineTestCase(DbTestCase):
         executor instead of going through the oslo.messaging transport.
         """
         exctr = executor.get_executor(cfg.CONF.engine.engine, cls.transport)
+
         return exctr.handle_task(cntx, **kwargs)

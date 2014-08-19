@@ -75,6 +75,9 @@ class MistralContext(BaseContext):
         "is_admin",
     ])
 
+    def __repr__(self):
+        return "MistralContext %s" % self.to_dict()
+
 
 def has_ctx():
     return utils.has_thread_local(_CTX_THREAD_LOCAL_NAME)

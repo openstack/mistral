@@ -77,6 +77,21 @@ class Engine(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
+class Executor(object):
+    """Action executor interface."""
+
+    @abc.abstractmethod
+    def run_action(self, task_id, action_name, action_params):
+        """Runs action.
+
+        :param task_id: Corresponding task id.
+        :param action_name: Action name.
+        :param action_params: Action parameters.
+        """
+        raise NotImplementedError()
+
+
+@six.add_metaclass(abc.ABCMeta)
 class WorkflowPolicy(object):
     """Workflow policy.
 

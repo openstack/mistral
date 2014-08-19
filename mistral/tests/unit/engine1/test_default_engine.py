@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +13,7 @@
 #    limitations under the License.
 
 import copy
+import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -62,7 +61,9 @@ class DefaultEngineTest(base.DbTestCase):
             'tags': ['test']
         })
 
-        self.engine = d_eng.DefaultEngine()
+        # Note: For purposes of this test we can easily use
+        # simple magic mocks for engine and executor clients
+        self.engine = d_eng.DefaultEngine(mock.MagicMock(), mock.MagicMock())
 
     def test_start_workflow(self):
         wf_input = {
@@ -104,7 +105,11 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            'my_wb', 'wf1', wf_input, task_name='task2')
+            'my_wb',
+            'wf1',
+            wf_input,
+            task_name='task2'
+        )
 
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.RUNNING, exec_db.state)
@@ -172,7 +177,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual('task2', task2_db.name)
         self.assertEqual(states.SUCCESS, task2_db.state)
 
-        in_context = copy.copy(wf_input)
+        in_context = copy.deepcopy(wf_input)
         in_context.update(task1_db.output)
 
         self._assert_dict_contains_subset(in_context, task2_db.in_context)

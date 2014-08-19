@@ -38,25 +38,6 @@ class LinearWorkflowHandler(base.WorkflowHandler):
 
         return [self._find_start_task()]
 
-    def on_task_result(self, task_db, raw_result):
-        super(LinearWorkflowHandler, self).on_task_result(task_db, raw_result)
-
-        if task_db.state == states.ERROR:
-            # TODO(rakhmerov): Temporary hack, need to use policies.
-            self._set_execution_state(states.ERROR)
-
-            return []
-
-        task_specs = self._find_next_tasks(task_db)
-
-        if len(task_specs) == 0:
-            # If there are no running tasks at this point we can conclude that
-            # the workflow has finished.
-            if not self._find_running_tasks():
-                self._set_execution_state(states.SUCCESS)
-
-        return task_specs
-
     def get_upstream_tasks(self, task_spec):
         # TODO(rakhmerov): For linear workflow it's pretty hard to do
         #  so we may need to get rid of it at all.
@@ -112,7 +93,3 @@ class LinearWorkflowHandler(base.WorkflowHandler):
                 task_specs.append(self.wf_spec.get_tasks()[t_name])
 
         return task_specs
-
-    def _find_running_tasks(self):
-        return [t_db for t_db in self.exec_db.tasks
-                if states.RUNNING == t_db.state]

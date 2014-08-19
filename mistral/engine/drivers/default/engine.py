@@ -36,6 +36,7 @@ class DefaultEngine(engine.Engine):
         exctr = executor.ExecutorClient(self.transport)
 
         LOG.info("Submitted task for execution: '%s'" % task_id)
+
         exctr.handle_task(auth_context.ctx(),
                           task_id=task_id,
                           action_name=action_name,

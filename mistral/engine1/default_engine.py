@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +17,9 @@ from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
-from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import workflow_handler_factory as wfh_factory
@@ -39,101 +37,11 @@ WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 # TODO(rakhmerov): Add necessary logging including WF_TRACE.
 
 
-def _apply_task_policies(task_db):
-    # TODO(rakhmerov): Implement.
-    pass
-
-
-def _apply_workflow_policies(exec_db, task_db):
-    # TODO(rakhmerov): Implement.
-    pass
-
-
-def _create_db_execution(wb_db, wf_spec, input, start_params):
-    exec_db = db_api.create_execution({
-        'wf_spec': wf_spec.to_dict(),
-        'start_params': start_params,
-        'state': states.RUNNING,
-        'input': input,
-        'context': copy.copy(input) or {}
-    })
-
-    data_flow.add_openstack_data_to_context(wb_db, exec_db.context)
-    data_flow.add_execution_to_context(exec_db, exec_db.context)
-
-    return exec_db
-
-
-def _create_db_tasks(exec_db, task_specs):
-    new_db_tasks = []
-
-    for task_spec in task_specs:
-        t = db_api.create_task({
-            'execution_id': exec_db.id,
-            'name': task_spec.get_name(),
-            'state': states.RUNNING,
-            'spec': task_spec.to_dict(),
-            'parameters': None,
-            'in_context': None,
-            'output': None,
-            'runtime_context': None
-        })
-
-        new_db_tasks.append(t)
-
-    return new_db_tasks
-
-
-def _prepare_db_tasks(task_specs, exec_db, wf_handler):
-    wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
-
-    new_db_tasks = _create_db_tasks(exec_db, task_specs)
-
-    # Evaluate Data Flow properties ('parameters', 'in_context').
-    for t_db in new_db_tasks:
-        task_spec = wf_spec.get_tasks()[t_db.name]
-
-        data_flow.prepare_db_task(
-            t_db,
-            task_spec,
-            wf_handler.get_upstream_tasks(task_spec),
-            exec_db
-        )
-
-
-def _run_tasks(task_specs):
-    for t in task_specs:
-        if t.get_action_name():
-            _run_action(t)
-        elif t.get_workflow_name():
-            _run_workflow(t)
-        else:
-            msg = "Neither 'action' nor 'workflow' is defined in task" \
-                  " specification [task_spec=%s]" % t
-            raise exc.WorkflowException(msg)
-
-
-def _run_action(t):
-    # TODO(rakhmerov): Implement.
-    pass
-
-
-def _run_workflow(t):
-    # TODO(rakhmerov): Implement.
-    pass
-
-
-def _process_task_specs(task_specs, exec_db, wf_handler):
-    LOG.debug('Processing workflow tasks: %s' % task_specs)
-
-    # DB tasks & Data Flow properties
-    _prepare_db_tasks(task_specs, exec_db, wf_handler)
-
-    # Running actions/workflows.
-    _run_tasks(task_specs)
-
-
 class DefaultEngine(base.Engine):
+    def __init__(self, engine_client, executor_client):
+        self._engine_client = engine_client
+        self._executor_client = executor_client
+
     def start_workflow(self, workbook_name, workflow_name, input, **params):
         db_api.start_tx()
 
@@ -144,7 +52,7 @@ class DefaultEngine(base.Engine):
                 spec_parser.get_workbook_spec_from_yaml(wb_db.definition)
             wf_spec = wb_spec.get_workflows()[workflow_name]
 
-            exec_db = _create_db_execution(wb_db, wf_spec, input, params)
+            exec_db = self._create_db_execution(wb_db, wf_spec, input, params)
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db, wf_spec)
 
@@ -152,7 +60,7 @@ class DefaultEngine(base.Engine):
             task_specs = wf_handler.start_workflow(**params)
 
             if task_specs:
-                _process_task_specs(task_specs, exec_db, wf_handler)
+                self._process_task_specs(task_specs, exec_db, wf_handler)
 
             db_api.commit_tx()
         finally:
@@ -173,10 +81,13 @@ class DefaultEngine(base.Engine):
             task_specs = wf_handler.on_task_result(task_db, raw_result)
 
             if task_specs:
-                _apply_task_policies(task_db)
-                _apply_workflow_policies(exec_db, task_db)
+                self._apply_task_policies(task_db)
+                self._apply_workflow_policies(exec_db, task_db)
 
-                _process_task_specs(task_specs, exec_db, wf_handler)
+                self._process_task_specs(task_specs, exec_db, wf_handler)
+
+            if exec_db.state == states.SUCCESS and exec_db.parent_task_id:
+                self._process_subworkflow_output(exec_db)
 
             db_api.commit_tx()
         finally:
@@ -212,7 +123,7 @@ class DefaultEngine(base.Engine):
             task_specs = wf_handler.resume_workflow()
 
             if task_specs:
-                _process_task_specs(task_specs, exec_db, wf_handler)
+                self._process_task_specs(task_specs, exec_db, wf_handler)
 
             db_api.commit_tx()
         finally:
@@ -223,3 +134,111 @@ class DefaultEngine(base.Engine):
     def rollback_workflow(self, execution_id):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
+
+    def _apply_task_policies(self, task_db):
+        # TODO(rakhmerov): Implement.
+        pass
+
+    def _apply_workflow_policies(self, exec_db, task_db):
+        # TODO(rakhmerov): Implement.
+        pass
+
+    def _process_task_specs(self, task_specs, exec_db, wf_handler):
+        LOG.debug('Processing workflow tasks: %s' % task_specs)
+
+        # DB tasks & Data Flow properties
+        db_tasks = self._prepare_db_tasks(task_specs, exec_db, wf_handler)
+
+        # Running actions/workflows.
+        self._run_tasks(db_tasks, task_specs)
+
+    def _prepare_db_tasks(self, task_specs, exec_db, wf_handler):
+        wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
+
+        new_db_tasks = self._create_db_tasks(exec_db, task_specs)
+
+        # Evaluate Data Flow properties ('parameters', 'in_context').
+        for t_db in new_db_tasks:
+            task_spec = wf_spec.get_tasks()[t_db.name]
+
+            data_flow.prepare_db_task(
+                t_db,
+                task_spec,
+                wf_handler.get_upstream_tasks(task_spec),
+                exec_db
+            )
+
+        return new_db_tasks
+
+    def _create_db_execution(self, wb_db, wf_spec, input, params):
+        exec_db = db_api.create_execution({
+            'wf_spec': wf_spec.to_dict(),
+            'start_params': params or {},
+            'state': states.RUNNING,
+            'input': input or {},
+            'output': {},
+            'context': copy.copy(input) or {},
+            'parent_task_id': params.get('parent_task_id')
+        })
+
+        data_flow.add_openstack_data_to_context(wb_db, exec_db.context)
+        data_flow.add_execution_to_context(exec_db, exec_db.context)
+
+        return exec_db
+
+    def _create_db_tasks(self, exec_db, task_specs):
+        new_db_tasks = []
+
+        for task_spec in task_specs:
+            t = db_api.create_task({
+                'execution_id': exec_db.id,
+                'name': task_spec.get_name(),
+                'state': states.RUNNING,
+                'spec': task_spec.to_dict(),
+                'parameters': None,
+                'in_context': None,
+                'output': None,
+                'runtime_context': None
+            })
+
+            new_db_tasks.append(t)
+
+        return new_db_tasks
+
+    def _run_tasks(self, db_tasks, task_specs):
+        for t_db, t_spec in zip(db_tasks, task_specs):
+            if t_spec.get_action_name():
+                self._run_action(t_db, t_spec)
+            elif t_spec.get_workflow_name():
+                self._run_workflow(t_db, t_spec)
+
+    def _run_action(self, task_db, task_spec):
+        # TODO(rakhmerov): Take care of ad-hoc actions.
+        action_name = task_spec.get_action_name()
+
+        self._executor_client.run_action(
+            task_db.id,
+            action_name,
+            task_db.parameters or {}
+        )
+
+    def _run_workflow(self, task_db, task_spec):
+        wb_name = task_spec.get_workflow_namespace()
+        wf_name = task_spec.get_short_workflow_name()
+        wf_input = task_db.parameters
+
+        start_params = copy.copy(task_spec.get_workflow_parameters())
+        start_params.update({'parent_task_id': task_db.id})
+
+        self._engine_client.start_workflow(
+            wb_name,
+            wf_name,
+            wf_input,
+            **start_params
+        )
+
+    def _process_subworkflow_output(self, exec_db):
+        self._engine_client.on_task_result(
+            exec_db.parent_task_id,
+            wf_base.TaskResult(data=exec_db.output)
+        )

@@ -52,28 +52,34 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
 
         return task_specs
 
-    def on_task_result(self, task_db, raw_result):
-        super(ReverseWorkflowHandler, self).on_task_result(
-            task_db,
-            raw_result
-        )
-
-        if task_db.state == states.ERROR:
-            # TODO(rakhmerov): Temporary hack, need to use policies.
-            self._set_execution_state(states.ERROR)
-
-            return []
-
-        task_specs = self._find_resolved_tasks()
-
-        if len(task_specs) == 0:
-            self._set_execution_state(states.SUCCESS)
-
-        return task_specs
-
     def get_upstream_tasks(self, task_spec):
         return [self.wf_spec.get_tasks()[t_name]
                 for t_name in task_spec.get_requires() or []]
+
+    def _find_next_tasks(self, task_db):
+        """Finds all tasks with resolved dependencies.
+
+        :param task_db: Task DB model causing the operation
+            (not used in this handler).
+        :return: Tasks with resolved dependencies.
+        """
+
+        # We need to analyse the graph and see which tasks are ready to start.
+        resolved_task_specs = []
+        success_task_names = set()
+
+        for t in self.exec_db.tasks:
+            if t.state == states.SUCCESS:
+                success_task_names.add(t.name)
+
+        for t_spec in self.wf_spec.get_tasks():
+            if not (set(t_spec.get_requires()) - success_task_names):
+                t_db = self._find_db_task(t_spec.get_name())
+
+                if not t_db or t_db.state == states.IDLE:
+                    resolved_task_specs.append(t_spec)
+
+        return resolved_task_specs
 
     def _find_tasks_without_dependencies(self, task_spec):
         """Given a target task name finds tasks with no dependencies.
@@ -122,29 +128,6 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
                     dep_t_specs.add(t_spec)
 
         return dep_t_specs
-
-    def _find_resolved_tasks(self):
-        """Finds all tasks with resolved dependencies.
-
-        :return: Tasks with resolved dependencies.
-        """
-
-        # We need to analyse the graph and see which tasks are ready to start.
-        resolved_task_specs = []
-        success_task_names = set()
-
-        for t in self.exec_db.tasks:
-            if t.state == states.SUCCESS:
-                success_task_names.add(t.name)
-
-        for t_spec in self.wf_spec.get_tasks():
-            if not (set(t_spec.get_requires()) - success_task_names):
-                task_db = self._find_db_task(t_spec.get_name())
-
-                if not task_db or task_db.state == states.IDLE:
-                    resolved_task_specs.append(t_spec)
-
-        return resolved_task_specs
 
     def _find_db_task(self, name):
         db_tasks = filter(lambda t: t.name == name, self.exec_db.tasks)
