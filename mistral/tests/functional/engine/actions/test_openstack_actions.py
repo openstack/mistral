@@ -1,0 +1,49 @@
+# Copyright 2014 - Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+import json
+
+from tempest.config import cfg
+
+from mistral.tests.functional import base
+
+
+CONF = cfg.CONF
+
+
+class OpenStackActionsTest(base.TestCaseAdvanced):
+    def test_nova_actions(self):
+        nova_wb = base.get_resource(
+            'resources/openstack_tasks/nova_actions.yaml')
+        self.client.upload_workbook_definition(self.workbook_name, nova_wb)
+
+        context = {'server_name': 'mistral-test', 'image_ref': self.image_ref,
+                   'flavor_ref': self.flavor_ref}
+
+        _, execution = self.client.create_execution_wait_success(
+            self.workbook_name, context, 'server_create')
+        _, task_list = self.client.get_tasks_list(self.workbook_name,
+                                                  execution['id'])
+        final_task = base.find_items(task_list,
+                                     name='wait_instance', state='SUCCESS')
+
+        self.assertIsNotNone(final_task)
+        self.assertEqual('SUCCESS', execution['state'])
+
+        server_id = json.loads(final_task['output'])['instance_id']
+        _, server = self.server_client.get_server(server_id)
+
+        self.assertEqual('ACTIVE', server['status'])
+
+        self.server_client.delete_server(server_id)
