@@ -1,4 +1,3 @@
-
 # Copyright 2013 Mirantis, Inc.
 # All Rights Reserved.
 #
@@ -16,13 +15,12 @@
 
 import json
 import os
-import time
-
 from tempest import clients
 from tempest.common import rest_client
 from tempest import config
 from tempest import exceptions
 import tempest.test
+import time
 
 CONF = config.CONF
 
@@ -58,14 +56,16 @@ class MistralClient(rest_client.RestClient):
         return self.get('workbooks/{name}/definition'.format(name=name),
                         headers)
 
-    def upload_workbook_definition(self, name):
+    def upload_workbook_definition(self, name, path):
         headers = {'Content-Type': 'text/plain',
                    'X-Auth-Token': self.auth_provider.get_token()}
 
         __location = os.path.realpath(os.path.join(os.getcwd(),
                                                    os.path.dirname(__file__)))
 
-        file = open(os.path.join(__location, 'v1/demo.yaml'), 'rb').read()
+        tests_dir = '/'.join(__location.split('/')[:-2:])
+        file = open(os.path.join(tests_dir, path), 'rb').read()
+
         return self.put('workbooks/{name}/definition'.format(name=name),
                         file, headers)
 
@@ -106,6 +106,41 @@ class MistralClient(rest_client.RestClient):
                 task=task_id), json.dumps(put_body))
 
         return resp, json.loads(body)
+
+    def create_execution_wait_success(self, workbook_name,
+                                      context, task, timeout=120):
+
+        post_body = {
+            "workbook_name": workbook_name,
+            "task": task,
+            "context": json.dumps(context)
+        }
+
+        resp, ex_body = self.create_execution(workbook_name, post_body)
+        ex_body = json.loads(ex_body)
+
+        start_time = time.time()
+
+        while ex_body['state'] != 'SUCCESS':
+
+            if time.time() - start_time > timeout:
+                msg = "Execution exceeds timeout {0} to change state " \
+                      "to SUCCESS. Execution: {1}".format(timeout, ex_body)
+                raise exceptions.TimeoutException(msg)
+
+            _, ex_body = self.get_execution(workbook_name, ex_body['id'])
+            ex_body = json.loads(ex_body)
+            time.sleep(2)
+
+        return resp, ex_body
+
+    def get_task_by_name(self, workbook_name, execution_id, name):
+        _, tasks = self.get_tasks_list(workbook_name, execution_id)
+        for task in tasks:
+            if task['name'] == name:
+                _, task_body = self.get_task(
+                    workbook_name, execution_id, task['id'])
+                return task_body
 
 
 class TestCase(tempest.test.BaseTestCase):
@@ -151,43 +186,13 @@ class TestCaseAdvanced(TestCase):
 
         self.server_ids = []
 
-        self.client.create_obj('workbooks', 'test123')
-        self.obj.append(['workbooks', 'test123'])
-        self.client.upload_workbook_definition('test123')
+        self.client.create_obj('workbooks', 'test')
+        self.obj.append(['workbooks', 'test'])
 
     def tearDown(self):
+        _, executions = self.client.get_list_obj('workbooks/test/executions')
+
+        for ex in executions['executions']:
+            self.client.delete_obj('executions', '{0}'.format(ex['id']))
+
         super(TestCaseAdvanced, self).tearDown()
-
-        for server_id in self.server_ids:
-            try:
-                self.server_client.delete_server(server_id)
-                self.server_client.wait_for_server_termination(server_id)
-            except exceptions.NotFound:
-                pass
-
-    def _create_execution(self, workbook_name, server_name):
-
-        nova_url = "/".join(self.server_client.base_url.split('/')[:-1])
-
-        context = {
-            "server_name": server_name,
-            "nova_url": nova_url,
-            "image_id": self.image_ref,
-            "flavor_id": self.flavor_ref
-        }
-
-        post_body = {
-            "workbook_name": workbook_name,
-            "task": "create-vm",
-            "context": json.dumps(context)
-        }
-
-        resp, body = self.client.create_execution(workbook_name, post_body)
-
-        while not self.server_client.list_servers()[1]['servers']:
-            time.sleep(2)
-        for server in self.server_client.list_servers()[1]['servers']:
-            if server['name'] == server_name:
-                self.server_ids.append(server['id'])
-
-        return resp, json.loads(body)
