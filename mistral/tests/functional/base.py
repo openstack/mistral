@@ -131,7 +131,6 @@ class MistralClient(rest_client.RestClient):
 
     def create_execution_wait_success(self, workbook_name,
                                       context, task, timeout=180):
-
         post_body = {
             "workbook_name": workbook_name,
             "task": task,
@@ -144,7 +143,6 @@ class MistralClient(rest_client.RestClient):
         start_time = time.time()
 
         while ex_body['state'] != 'SUCCESS':
-
             if time.time() - start_time > timeout:
                 msg = "Execution exceeds timeout {0} to change state " \
                       "to SUCCESS. Execution: {1}".format(timeout, ex_body)
@@ -162,6 +160,7 @@ class MistralClient(rest_client.RestClient):
             if task['name'] == name:
                 _, task_body = self.get_task(
                     workbook_name, execution_id, task['id'])
+
                 return task_body
 
 

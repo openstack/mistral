@@ -223,6 +223,7 @@ class AdvancedTests(base.TestCaseAdvanced):
 class AdvancedNegativeTestsWithExecutionCreate(base.TestCaseAdvanced):
     def setUp(self):
         super(AdvancedNegativeTestsWithExecutionCreate, self).setUp()
+
         wb = base.get_resource('resources/hello.yaml')
         self.client.upload_workbook_definition('test', wb)
         _, self.execution = self.client.create_execution_wait_success(

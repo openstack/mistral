@@ -36,26 +36,26 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_full_name')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_full_name']['string'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_full_name']['string'],
                          "John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_address')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_address']['string'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_address']['string'],
                          "To John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_greeting')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_greeting']['string'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_greeting']['string'],
                          "Dear John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'send_greeting')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['send_greeting']['string'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['send_greeting']['string'],
                          "To John Doe. Dear John Doe,..")
 
     def test_task_with_two_dependencies(self):
@@ -68,20 +68,20 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_full_name')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_full_name']['full_name'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_full_name']['full_name'],
                          "John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_greeting')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_greeting']['greeting'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_greeting']['greeting'],
                          "Cheers!")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'send_greeting')
-        task = json.loads(task['output'])
-        self.assertTrue(task['task']['send_greeting']['greeting_sent'])
+        task_output = json.loads(task['output'])
+        self.assertTrue(task_output['task']['send_greeting']['greeting_sent'])
 
     def test_direct_flow_tasks_on_success(self):
         text = base.get_resource(
@@ -93,20 +93,20 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_full_name')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_full_name']['full_name'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_full_name']['full_name'],
                          "John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_greeting')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_greeting']['greeting'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_greeting']['greeting'],
                          "Hello, John Doe!")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'send_greeting')
-        task = json.loads(task['output'])
-        self.assertTrue(task['task']['send_greeting']['greeting_sent'])
+        task_output = json.loads(task['output'])
+        self.assertTrue(task_output['task']['send_greeting']['greeting_sent'])
 
     def test_two_dependent_tasks(self):
         text = base.get_resource(
@@ -118,14 +118,14 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_full_name')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_full_name']['full_name'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_full_name']['full_name'],
                          "John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_greeting')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_greeting']['greeting'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_greeting']['greeting'],
                          "Hello, John Doe!")
 
     def test_two_subsequent_tasks(self):
@@ -138,13 +138,13 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_full_name')
-        task = json.loads(task['output'])
-        self.assertEqual(task['task']['build_full_name']['full_name'],
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['build_full_name']['full_name'],
                          "John Doe")
 
         task = self.client.get_task_by_name('test', ex['id'],
                                             'build_greeting')
-        task = json.loads(task['output'])
+        task_output = json.loads(task['output'])
         self.assertEqual(
-            task['task']['build_greeting']['greeting']['greet_message'],
+            task_output['task']['build_greeting']['greeting']['greet_message'],
             "Hello, John Doe!")
