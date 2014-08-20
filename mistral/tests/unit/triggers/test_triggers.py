@@ -17,7 +17,7 @@
 import pkg_resources as pkg
 
 from mistral.db.v1 import api as db_api
-from mistral.services import scheduler
+from mistral.services import triggers as trigger_srv
 from mistral.tests import base
 from mistral import version
 
@@ -36,7 +36,9 @@ class TriggersTest(base.DbTestCase):
             'definition': self.doc
         }
 
-        scheduler.create_associated_triggers(workbook)
+        wb_db = db_api.workbook_create(workbook)
+
+        trigger_srv.create_associated_triggers(wb_db)
 
         triggers = db_api.triggers_get(workbook_name='my_workbook')
 

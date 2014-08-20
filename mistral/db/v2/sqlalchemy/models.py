@@ -103,3 +103,16 @@ class Task(mb.MistralModelBase):
     # Relations.
     execution_id = sa.Column(sa.String(36), sa.ForeignKey('executions_v2.id'))
     execution = relationship('Execution', backref="tasks", lazy='joined')
+
+
+class DelayedCall(mb.MistralModelBase):
+    """Contains info about delayed calls."""
+
+    __tablename__ = 'delayed_calls_v2'
+
+    id = mb._id_column()
+    factory_method_path = sa.Column(sa.String(200), nullable=True)
+    target_method_name = sa.Column(sa.String(80), nullable=False)
+    method_arguments = sa.Column(st.JsonDictType())
+    auth_context = sa.Column(st.JsonDictType())
+    execution_time = sa.Column(sa.DateTime, nullable=False)

@@ -31,7 +31,8 @@ class DefaultExecutor(executor.Executor):
 
     def _log_action_exception(self, message, task_id, action, params, ex):
         LOG.exception("%s [task_id=%s, action='%s', params='%s']\n %s" %
-                      (message, task_id, action, params, ex))
+                      (message, str(task_id), str(action),
+                       str(params), str(ex)))
 
     def handle_task(self, cntx, task_id, action_name, params={}):
         """Handle the execution of the workbook task.

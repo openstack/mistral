@@ -152,3 +152,18 @@ def update_task(id, values):
 
 def delete_task(id):
     return IMPL.delete_task(id)
+
+
+# Delayed calls.
+
+
+def create_delayed_call(values):
+    return IMPL.create_delayed_call(values)
+
+
+def delete_delayed_call(id):
+    return IMPL.delete_delayed_call(id)
+
+
+def get_delayed_calls_to_start(time):
+    return IMPL.get_delayed_calls_to_start(time)

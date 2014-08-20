@@ -17,7 +17,7 @@
 import datetime
 
 from mistral.openstack.common import timeutils
-from mistral.services import scheduler as s
+from mistral.services import triggers as t
 from mistral.tests import base
 
 
@@ -30,30 +30,30 @@ SAMPLE_TRIGGER = {
 }
 
 
-class SchedulerTest(base.DbTestCase):
+class TriggerServiceTest(base.DbTestCase):
     def setUp(self):
-        super(SchedulerTest, self).setUp()
+        super(TriggerServiceTest, self).setUp()
         self.wb_name = "My workbook"
 
     def test_trigger_create_and_update(self):
         base = datetime.datetime(2010, 8, 25)
         next_trigger = datetime.datetime(2010, 8, 25, 0, 5)
-        trigger = s.create_trigger("test", "*/5 * * * *", self.wb_name, base)
+        trigger = t.create_trigger("test", "*/5 * * * *", self.wb_name, base)
         self.assertEqual(trigger['next_execution_time'], next_trigger)
 
-        trigger = s.set_next_execution_time(trigger)
+        trigger = t.set_next_execution_time(trigger)
         next_trigger = datetime.datetime(2010, 8, 25, 0, 10)
         self.assertEqual(trigger['next_execution_time'], next_trigger)
 
     def test_get_trigger_in_correct_orders(self):
         base = datetime.datetime(2010, 8, 25)
-        s.create_trigger("test1", "*/5 * * * *", self.wb_name, base)
+        t.create_trigger("test1", "*/5 * * * *", self.wb_name, base)
         base = datetime.datetime(2010, 8, 22)
-        s.create_trigger("test2", "*/5 * * * *", self.wb_name, base)
+        t.create_trigger("test2", "*/5 * * * *", self.wb_name, base)
         base = datetime.datetime(2010, 9, 21)
-        s.create_trigger("test3", "*/5 * * * *", self.wb_name, base)
+        t.create_trigger("test3", "*/5 * * * *", self.wb_name, base)
         base = datetime.datetime.now() + datetime.timedelta(0, 50)
-        s.create_trigger("test4", "*/5 * * * *", self.wb_name, base)
-        triggersName = [e['name'] for e in s.get_next_triggers()]
+        t.create_trigger("test4", "*/5 * * * *", self.wb_name, base)
+        triggersName = [e['name'] for e in t.get_next_triggers()]
 
         self.assertEqual(triggersName, ["test2", "test1", "test3"])

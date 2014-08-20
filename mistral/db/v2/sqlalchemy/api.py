@@ -370,3 +370,45 @@ def _get_tasks(**kwargs):
     query = b.model_query(models.Task)
 
     return query.filter_by(**kwargs).all()
+
+
+# Delayed calls.
+
+@b.session_aware()
+def create_delayed_call(values, session=None):
+    delayed_call = models.DelayedCall()
+    delayed_call.update(values.copy())
+
+    try:
+        delayed_call.save(session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry("Duplicate entry for DelayedCall: %s"
+                                   % e.columns)
+
+    return delayed_call
+
+
+@b.session_aware()
+def delete_delayed_call(delayed_call_id, session=None):
+    delayed_call = _get_delayed_call(delayed_call_id)
+    if not delayed_call:
+        raise exc.NotFoundException("DelayedCall not found [delayed_call_id="
+                                    "%s]" % delayed_call_id)
+
+    session.delete(delayed_call)
+
+
+@b.session_aware()
+def get_delayed_calls_to_start(time, session=None):
+    query = b.model_query(models.DelayedCall)
+    query = query.filter(models.DelayedCall.execution_time < time)
+    query = query.order_by(models.DelayedCall.execution_time)
+
+    return query.all()
+
+
+@b.session_aware()
+def _get_delayed_call(delayed_call_id, session=None):
+    query = b.model_query(models.DelayedCall)
+
+    return query.filter_by(id=delayed_call_id).first()

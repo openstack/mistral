@@ -20,7 +20,7 @@ from mistral import context
 from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
 from mistral import exceptions as exc
-from mistral.services import scheduler
+from mistral.services import triggers
 from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
@@ -35,7 +35,7 @@ def update_workbook_v1(workbook_name, values):
     wb_db = db_api_v1.workbook_update(workbook_name, values)
 
     if 'definition' in values:
-        scheduler.create_associated_triggers(wb_db)
+        triggers.create_associated_triggers(wb_db)
 
     return wb_db
 

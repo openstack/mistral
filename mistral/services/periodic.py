@@ -20,7 +20,7 @@ from mistral import engine
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
-from mistral.services import scheduler as sched
+from mistral.services import triggers
 from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
@@ -40,7 +40,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     def scheduler_triggers(self, ctx):
         LOG.debug('Processing next Scheduler triggers.')
 
-        for trigger in sched.get_next_triggers():
+        for trigger in triggers.get_next_triggers():
             # Setup admin context before schedule triggers.
             context.set_ctx(ctx)
 
@@ -54,7 +54,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
                 self.engine.start_workflow_execution(wb['name'], task)
             finally:
-                sched.set_next_execution_time(trigger)
+                triggers.set_next_execution_time(trigger)
                 context.set_ctx(None)
 
 
