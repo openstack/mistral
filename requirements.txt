@@ -17,6 +17,7 @@ oslo.messaging>=1.3.0
 paramiko>=1.13.0
 python-heatclient>=0.2.9
 python-keystoneclient>=0.9.0
+python-neutronclient>=2.3.6,<3
 python-novaclient>=2.17
 python-glanceclient>=0.13
 networkx>=1.8

@@ -20,5 +20,6 @@ def all_generators():
         generators.NovaActionGenerator,
         generators.GlanceActionGenerator,
         generators.KeystoneActionGenerator,
-        generators.HeatActionGenerator
+        generators.HeatActionGenerator,
+        generators.NeutronActionGenerator
     ]

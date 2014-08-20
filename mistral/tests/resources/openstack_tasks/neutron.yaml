@@ -1,0 +1,4 @@
+Workflow:
+  tasks:
+    neutron_list_networks:
+      action: neutron.list_networks

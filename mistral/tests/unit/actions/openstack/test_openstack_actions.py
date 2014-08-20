@@ -66,3 +66,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().stacks.get.called)
         mocked().stacks.get.assert_called_once_with(id="1234-abcd")
+
+    @mock.patch.object(actions.NeutronAction, '_get_client')
+    def test_neutron_action(self, mocked):
+        method_name = "show_network"
+        action_class = actions.NeutronAction
+        action_class.client_method_name = method_name
+        params = {'id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().show_network.called)
+        mocked().show_network.assert_called_once_with(id="1234-abcd")

@@ -34,3 +34,8 @@ class KeystoneActionGenerator(base.OpenStackActionGenerator):
 class HeatActionGenerator(base.OpenStackActionGenerator):
     action_namespace = "heat"
     base_action_class = actions.HeatAction
+
+
+class NeutronActionGenerator(base.OpenStackActionGenerator):
+    action_namespace = "neutron"
+    base_action_class = actions.NeutronAction
