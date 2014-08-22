@@ -99,6 +99,10 @@ def workbook_definition_put(workbook_name, text):
     return IMPL.workbook_update(workbook_name, {'definition': text})
 
 
+def workbooks_delete(**kwargs):
+    return IMPL.workbooks_delete(**kwargs)
+
+
 # Executions
 
 
@@ -126,6 +130,10 @@ def executions_get(**kwargs):
     return IMPL.executions_get(**kwargs)
 
 
+def executions_delete(**kwargs):
+    return IMPL.executions_delete(**kwargs)
+
+
 # Tasks
 
 def task_get(id):
@@ -142,6 +150,10 @@ def task_update(id, values):
 
 def task_delete(id):
     return IMPL.task_delete(id)
+
+
+def tasks_delete(**kwargs):
+    return IMPL.tasks_delete(**kwargs)
 
 
 def tasks_get(**kwargs):
@@ -189,3 +201,7 @@ def trigger_update(trigger_id, values):
 
 def get_next_triggers(time):
     return IMPL.get_next_triggers(time)
+
+
+def triggers_delete(**kwargs):
+    return IMPL.triggers_delete(**kwargs)

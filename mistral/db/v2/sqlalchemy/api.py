@@ -88,6 +88,11 @@ def transaction():
         end_tx()
 
 
+def _delete_all(model, session=None, **kwargs):
+    query = b.model_query(model).filter_by(**kwargs)
+    query.delete()
+
+
 # Workbooks.
 
 def get_workbook(name):
@@ -175,6 +180,11 @@ def _get_workbook(name):
                            project_id=context.ctx().project_id).first()
 
 
+@b.session_aware()
+def delete_workbooks(**kwargs):
+    return _delete_all(models.Workbook, **kwargs)
+
+
 # Workflows.
 
 def get_workflow(name):
@@ -244,6 +254,11 @@ def delete_workflow(name, session=None):
             "Workflow not found [workflow_name=%s]" % name)
 
     session.delete(wf)
+
+
+@b.session_aware()
+def delete_workflows(**kwargs):
+    return _delete_all(models.Workflow, **kwargs)
 
 
 def _get_workflows(**kwargs):
@@ -339,6 +354,12 @@ def delete_execution(id, session=None):
     session.delete(execution)
 
 
+@b.session_aware()
+def delete_executions(**kwargs):
+    _delete_all(models.Task)
+    return _delete_all(models.Execution, **kwargs)
+
+
 def _get_executions(**kwargs):
     query = b.model_query(models.Execution)
 
@@ -420,6 +441,11 @@ def delete_task(id, session=None):
     session.delete(task)
 
 
+@b.session_aware()
+def delete_tasks(**kwargs):
+    return _delete_all(models.Task, **kwargs)
+
+
 def _get_task(id):
     query = b.model_query(models.Task)
 
@@ -472,3 +498,75 @@ def _get_delayed_call(delayed_call_id, session=None):
     query = b.model_query(models.DelayedCall)
 
     return query.filter_by(id=delayed_call_id).first()
+
+# Actions.
+
+
+def get_action(name):
+    action = _get_action(name)
+
+    if not action:
+        raise exc.NotFoundException(
+            "Action not found [action_name=%s]" % name)
+
+    return action
+
+
+def get_actions(**kwargs):
+    return _get_actions(**kwargs)
+
+
+@b.session_aware()
+def create_action(values, session=None):
+    action = models.Action()
+
+    action.update(values)
+
+    try:
+        action.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry("Duplicate entry for action %s: %s"
+                                   % (action.name, e.columns))
+
+    return action
+
+
+@b.session_aware()
+def delete_actions(**kwargs):
+    return _delete_all(models.Action, **kwargs)
+
+
+@b.session_aware()
+def update_action(name, values, session=None):
+    action = _get_action(name)
+
+    if not action:
+        raise exc.NotFoundException(
+            "Action not found [action_name=%s]" % name)
+
+    action.update(values.copy())
+
+    return action
+
+
+@b.session_aware()
+def delete_action(name, session=None):
+    action = _get_action(name)
+
+    if not action:
+        raise exc.NotFoundException(
+            "Action not found [action_name=%s]" % name)
+
+    session.delete(action)
+
+
+def _get_action(name):
+    query = b.model_query(models.Action)
+
+    return query.filter_by(name=name).first()
+
+
+def _get_actions(**kwargs):
+    query = b.model_query(models.Action)
+
+    return query.filter_by(**kwargs).all()

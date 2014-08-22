@@ -92,6 +92,9 @@ def delete_workbook(name):
     IMPL.delete_workbook(name)
 
 
+def delete_workbooks(**kwargs):
+    IMPL.delete_workbooks(**kwargs)
+
 # Workflows.
 
 
@@ -122,6 +125,10 @@ def create_or_update_workflow(name, values):
 
 def delete_workflow(name):
     IMPL.delete_workflow(name)
+
+
+def delete_workflows(**kwargs):
+    IMPL.delete_workflows(**kwargs)
 
 
 # Executions.
@@ -159,6 +166,10 @@ def delete_execution(id):
     return IMPL.delete_execution(id)
 
 
+def delete_executions(**kwargs):
+    IMPL.delete_executions(**kwargs)
+
+
 # Tasks.
 
 def get_task(id):
@@ -190,6 +201,10 @@ def delete_task(id):
     return IMPL.delete_task(id)
 
 
+def delete_tasks(**kwargs):
+    return IMPL.delete_tasks(**kwargs)
+
+
 # Delayed calls.
 
 
@@ -203,3 +218,29 @@ def delete_delayed_call(id):
 
 def get_delayed_calls_to_start(time):
     return IMPL.get_delayed_calls_to_start(time)
+
+# Actions.
+
+
+def get_action(name):
+    return IMPL.get_action(name)
+
+
+def get_actions(**kwargs):
+    return IMPL.get_actions(**kwargs)
+
+
+def create_action(values):
+    return IMPL.create_action(values)
+
+
+def update_action(name, values):
+    return IMPL.update_action(name, values)
+
+
+def delete_action(name):
+    return IMPL.delete_action(name)
+
+
+def delete_actions(**kwargs):
+    return IMPL.delete_actions(**kwargs)

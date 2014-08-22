@@ -111,6 +111,8 @@ class TestExecutor(base.DbTestCase):
         self.execution = db_api.execution_create(
             SAMPLE_EXECUTION['workbook_name'], SAMPLE_EXECUTION)
 
+        self.addCleanup(db_api.execution_delete, SAMPLE_EXECUTION['id'])
+
         # Create a new task.
         SAMPLE_TASK['execution_id'] = self.execution['id']
         self.task = db_api.task_create(

@@ -127,3 +127,23 @@ class DelayedCall(mb.MistralModelBase):
     method_arguments = sa.Column(st.JsonDictType())
     auth_context = sa.Column(st.JsonDictType())
     execution_time = sa.Column(sa.DateTime, nullable=False)
+
+
+class Action(mb.MistralModelBase):
+    """Contains info about registered Actions."""
+
+    __tablename__ = 'actions_v2'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name'),
+    )
+
+    # Main properties.
+    id = mb.id_column()
+    name = sa.Column(sa.String(200))
+    description = sa.Column(sa.Text())
+
+    # Service properties.
+    action_class = sa.Column(sa.String(200))
+    attributes = sa.Column(st.JsonDictType())
+    is_system = sa.Column(sa.Boolean())

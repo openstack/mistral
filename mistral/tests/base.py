@@ -2,7 +2,7 @@
 #
 # Copyright 2013 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -16,6 +16,7 @@
 
 import pkg_resources as pkg
 import sys
+import time
 
 from oslo.config import cfg
 from oslo import messaging
@@ -24,8 +25,7 @@ from oslotest import base
 from stevedore import driver
 import testtools.matchers as ttm
 
-import time
-
+from mistral.actions import action_factory
 from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.v1 import api as db_api_v1
@@ -169,14 +169,50 @@ class BaseTest(base.BaseTestCase):
 
 
 class DbTestCase(BaseTest):
-    def setUp(self):
-        super(DbTestCase, self).setUp()
+    is_heavy_init_called = False
 
+    @classmethod
+    def __heavy_init(cls):
+        """Make this method private to prevent extending this one.
+        It runs heavy_init() only once.
+
+        Note: setUpClass() can be used, but it magically is not invoked
+        from child class in another module.
+        """
+        if not cls.is_heavy_init_called:
+            cls.heavy_init()
+            cls.is_heavy_init_called = True
+
+    @classmethod
+    def heavy_init(cls):
+        """Runs a long initialization (runs once by class)
+        and can be extended by child classes.
+        """
         cfg.CONF.set_default('connection', 'sqlite://', group='database')
         db_api_v1.setup_db()
         db_api_v2.setup_db()
+        action_factory.sync_db()
 
-        self.addCleanup(db_api_v1.drop_db)
+    def _clean_db(self):
+        with db_api_v1.transaction():
+            db_api_v1.workbooks_delete()
+            db_api_v1.executions_delete()
+            db_api_v1.triggers_delete()
+            db_api_v1.tasks_delete()
+
+        with db_api_v2.transaction():
+            db_api_v2.delete_workbooks()
+            db_api_v2.delete_executions()
+            db_api_v2.delete_workflows()
+            db_api_v2.delete_tasks()
+
+    def setUp(self):
+        super(DbTestCase, self).setUp()
+
+        self.__heavy_init()
+        cfg.CONF.set_default('connection', 'sqlite://', group='database')
+        db_api_v1.setup_db()
+        db_api_v2.setup_db()
 
         self.ctx = auth_context.MistralContext(user_id='1-2-3-4',
                                                project_id='5-6-7-8',
@@ -184,7 +220,9 @@ class DbTestCase(BaseTest):
                                                project_name='test-project',
                                                is_admin=False)
         auth_context.set_ctx(self.ctx)
+
         self.addCleanup(auth_context.set_ctx, None)
+        self.addCleanup(self._clean_db)
 
     def is_db_session_open(self):
         return db_sa_base._get_thread_local_session() is not None

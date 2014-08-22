@@ -89,53 +89,36 @@ DB_TASK_ADHOC = {
 }
 
 
-class ActionFactoryTest(base.BaseTest):
+class ActionFactoryTest(base.DbTestCase):
     def test_register_standard_actions(self):
-        namespaces = a_f.get_registered_namespaces()
+        action_list = a_f.get_registered_actions()
 
-        self.assertIn("nova", namespaces)
-        self.assertIn("glance", namespaces)
-        self.assertIn("keystone", namespaces)
-        self.assertIn("std", namespaces)
+        self._assert_single_item(action_list, name="std.echo")
+        self._assert_single_item(action_list, name="std.email")
+        self._assert_single_item(action_list, name="std.http")
+        self._assert_single_item(action_list, name="std.mistral_http")
+        self._assert_single_item(action_list, name="std.ssh")
 
-        std_ns = namespaces["std"]
-        nova_ns = namespaces["nova"]
-        keystone_ns = namespaces["keystone"]
-        glance_ns = namespaces["glance"]
+        self._assert_single_item(action_list, name="nova.servers_get")
+        self._assert_single_item(action_list, name="nova.volumes_delete")
 
-        self.assertEqual(5, len(std_ns))
+        self._assert_single_item(action_list, name="keystone.users_list")
+        self._assert_single_item(action_list, name="keystone.trusts_create")
 
-        self.assertTrue(nova_ns.contains_action_name("servers_get"))
-        self.assertTrue(nova_ns.contains_action_name("volumes_delete"))
-
-        self.assertTrue(keystone_ns.contains_action_name("users_list"))
-        self.assertTrue(keystone_ns.contains_action_name("trusts_create"))
-
-        self.assertTrue(glance_ns.contains_action_name("images_list"))
-        self.assertTrue(glance_ns.contains_action_name("images_delete"))
-
-        self.assertTrue(std_ns.contains_action_name("echo"))
-        self.assertTrue(std_ns.contains_action_name("http"))
-        self.assertTrue(std_ns.contains_action_name("mistral_http"))
-        self.assertTrue(std_ns.contains_action_name("email"))
-
-        self.assertEqual(std.EchoAction, std_ns.get_action_class("echo"))
-        self.assertEqual(std.HTTPAction, std_ns.get_action_class("http"))
-        self.assertEqual(std.MistralHTTPAction,
-                         std_ns.get_action_class("mistral_http"))
-        self.assertEqual(std.SendEmailAction,
-                         std_ns.get_action_class("email"))
+        self._assert_single_item(action_list, name="glance.images_list")
+        self._assert_single_item(action_list, name="glance.images_delete")
 
     def test_get_action_class(self):
         self.assertEqual(std.EchoAction, a_f.get_action_class("std.echo"))
         self.assertEqual(std.HTTPAction, a_f.get_action_class("std.http"))
+        self.assertEqual(std.MistralHTTPAction,
+                         a_f.get_action_class("std.mistral_http"))
         self.assertEqual(std.SendEmailAction,
                          a_f.get_action_class("std.email"))
 
     def test_get_action_class_failure(self):
-        exc = self.assertRaises(exceptions.ActionException,
-                                a_f.get_action_class, 'echo')
-        self.assertIn('Invalid action name', exc.message)
+        self.assertRaises(exceptions.ActionException,
+                          a_f.get_action_class, 'echo')
 
     def test_create_http_action(self):
         db_task = models.Task()

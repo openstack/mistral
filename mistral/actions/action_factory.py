@@ -19,9 +19,12 @@ from stevedore import extension
 from mistral.actions import base
 from mistral.actions import generator_factory
 from mistral.actions import std_actions
+from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.openstack.common import importutils
 from mistral.openstack.common import log as logging
+from mistral.utils import inspect_utils as i_utils
 from mistral.workbook import parser as spec_parser
 
 
@@ -31,6 +34,7 @@ _ACTION_CTX_PARAM = 'action_context'
 _NAMESPACES = {}
 
 
+# TODO(nmakhotkin): It's not used anywhere.
 def _find_or_create_namespace(name):
     ns = _NAMESPACES.get(name)
 
@@ -41,32 +45,68 @@ def _find_or_create_namespace(name):
     return ns
 
 
-def get_registered_namespaces():
-    return _NAMESPACES.copy()
+def get_registered_actions(**kwargs):
+    return db_api.get_actions(**kwargs)
+
+
+def _register_action_in_db(name, action_class, attributes,
+                           description=None):
+    values = {
+        'name': name,
+        'action_class': action_class,
+        'attributes': attributes,
+        'description': description,
+        'is_system': True
+    }
+
+    try:
+        LOG.debug("Registering action in DB: %s" % name)
+        db_api.create_action(values)
+    except exc.DBDuplicateEntry:
+        LOG.debug("Action %s already exists in DB." % name)
+
+
+def _clear_system_action_db():
+    db_api.delete_actions(is_system=True)
+
+
+def sync_db():
+    _clear_system_action_db()
+    register_action_classes()
 
 
 def _register_dynamic_action_classes():
     all_generators = generator_factory.all_generators()
     for generator in all_generators:
-        ns = _find_or_create_namespace(generator.action_namespace)
         action_classes = generator.create_action_classes()
+
+        module = generator.base_action_class.__module__
+        class_name = generator.base_action_class.__name__
+
+        action_class_str = "%s.%s" % (module, class_name)
         for action_name, action in action_classes.items():
-            ns.add(action_name, action)
+            attrs = i_utils.get_public_fields(action)
+            full_action_name = "%s.%s" % (generator.action_namespace,
+                                          action_name)
+
+            _register_action_in_db(full_action_name,
+                                   action_class_str,
+                                   attrs)
 
 
-def _register_action_classes():
+def register_action_classes():
     mgr = extension.ExtensionManager(
         namespace='mistral.actions',
         invoke_on_load=False)
 
-    for name in mgr.names():
-        ns = _find_or_create_namespace(name.split('.')[0])
-        ns.add(name.split('.')[1], mgr[name].plugin)
+    with db_api.transaction():
+        for name in mgr.names():
+            action_class_str = mgr[name].entry_point_target.replace(':', '.')
+            attrs = i_utils.get_public_fields(mgr[name].plugin)
 
-    for ns in _NAMESPACES:
-        _NAMESPACES[ns].log()
+            _register_action_in_db(name, action_class_str, attrs)
 
-    _register_dynamic_action_classes()
+        _register_dynamic_action_classes()
 
 
 def get_action_class(action_full_name):
@@ -75,18 +115,23 @@ def get_action_class(action_full_name):
     :param action_full_name: Full action name (that includes namespace).
     :return: Action class or None if not found.
     """
-    arr = action_full_name.split('.')
 
-    if len(arr) != 2:
+    # TODO(nmakhotkin) Validate action_name.
+    if action_full_name.find('.') == -1:
         raise exc.ActionException('Invalid action name: %s' %
                                   action_full_name)
-
-    ns = _NAMESPACES.get(arr[0])
-
-    if not ns:
+    # TODO(nmakhotkin) Temporary hack to return None if action not found
+    try:
+        action_db = db_api.get_action(action_full_name)
+    except exc.NotFoundException:
         return None
 
-    return ns.get_action_class(arr[1])
+    # Rebuild action class and restore attributes.
+    action_class = importutils.import_class(action_db.action_class)
+    for name, value in action_db.attributes.items():
+        setattr(action_class, name, value)
+
+    return action_class
 
 
 def _get_action_context(db_task, openstack_context):
@@ -220,6 +265,3 @@ def convert_adhoc_action_result(workbook, action_name, result):
 
     # Use base action result as a context for evaluating expressions.
     return expr.evaluate_recursively(transformer, result)
-
-# Registering actions on module load.
-_register_action_classes()

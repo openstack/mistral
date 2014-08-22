@@ -88,6 +88,11 @@ def transaction():
         end_tx()
 
 
+def _delete_all(model, session=None, **kwargs):
+    query = b.model_query(model)
+    query.filter_by(**kwargs).delete()
+
+
 # Triggers.
 
 @b.session_aware()
@@ -155,6 +160,11 @@ def _triggers_get_all(**kwargs):
 
 def triggers_get_all(**kwargs):
     return _triggers_get_all(**kwargs)
+
+
+@b.session_aware()
+def triggers_delete(**kwargs):
+    return _delete_all(models.Trigger, **kwargs)
 
 
 # Workbooks.
@@ -230,6 +240,11 @@ def _workbook_get(workbook_name, session=None):
                                project_id=context.ctx().project_id).first()
 
 
+@b.session_aware()
+def workbooks_delete(**kwargs):
+    return _delete_all(models.Workbook, **kwargs)
+
+
 # Workflow executions.
 
 
@@ -268,6 +283,11 @@ def execution_delete(execution_id, session=None):
             "Execution not found [execution_id=%s]" % execution_id)
 
     session.delete(execution)
+
+
+@b.session_aware()
+def executions_delete(**kwargs):
+    return _delete_all(models.WorkflowExecution, **kwargs)
 
 
 def execution_get(execution_id):
@@ -337,6 +357,11 @@ def task_delete(task_id, session=None):
             "Task not found [task_id=%s]" % task_id)
 
     session.delete(task)
+
+
+@b.session_aware()
+def tasks_delete(**kwargs):
+    return _delete_all(models.Task, **kwargs)
 
 
 def task_get(task_id):

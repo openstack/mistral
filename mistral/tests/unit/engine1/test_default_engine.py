@@ -57,8 +57,11 @@ class DefaultEngineTest(base.DbTestCase):
     def setUp(self):
         super(DefaultEngineTest, self).setUp()
 
+        self.wb_name = self.getUniqueString("wb")
+
         wb_service.create_workbook_v2({
-            'name': 'my_wb',
+            'name': self.wb_name,
+            'description': 'Simple workbook for testing engine.',
             'definition': WORKBOOK,
             'tags': ['test']
         })
@@ -75,7 +78,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            'my_wb.wf1',
+            '%s.wf1' % self.wb_name,
             wf_input,
             task_name='task2'
         )
@@ -110,7 +113,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            'my_wb.wf1',
+            '%s.wf1' % self.wb_name,
             wf_input,
             task_name='task2'
         )
