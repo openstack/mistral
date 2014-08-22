@@ -46,7 +46,7 @@ Workflows:
         requires: [task1]
 
   wf2:
-    type: linear
+    type: direct
     start_task: task1
     output:
       slogan: $.slogan
