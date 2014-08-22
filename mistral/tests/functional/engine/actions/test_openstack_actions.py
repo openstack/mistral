@@ -15,6 +15,7 @@
 import json
 
 from tempest.config import cfg
+from tempest import test
 
 from mistral.tests.functional import base
 
@@ -30,13 +31,17 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         cls.identity_client = cls.mgr.identity_v3_client
         cls.images_client = cls.mgr.images_client
 
+    @test.attr(type='openstack')
     def test_nova_actions(self):
         nova_wb = base.get_resource(
             'resources/openstack/nova_actions.yaml')
         self.client.upload_workbook_definition(self.workbook_name, nova_wb)
 
-        context = {'server_name': 'mistral-test', 'image_ref': self.image_ref,
-                   'flavor_ref': self.flavor_ref}
+        context = {
+            'server_name': 'mistral-test',
+            'image_ref': self.image_ref,
+            'flavor_ref': self.flavor_ref
+        }
 
         _, execution = self.client.create_execution_wait_success(
             self.workbook_name, context, 'server_create')
@@ -55,6 +60,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
 
         self.server_client.delete_server(server_id)
 
+    @test.attr(type='openstack')
     def test_keystone_actions(self):
         keystone_wb = base.get_resource(
             'resources/openstack/keystone_actions.yaml')
@@ -74,6 +80,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         url = output['endpoint_url']
         self.assertIn("http://", url)
 
+    @test.attr(type='openstack')
     def test_glance_actions(self):
         glance_wb = base.get_resource(
             'resources/openstack/glance_actions.yaml')
