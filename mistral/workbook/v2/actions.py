@@ -25,12 +25,11 @@ class ActionSpec(base.BaseSpec):
             "Version": {"type": "string"},
             "name": {"type": "string"},
             "class": {"type": "string"},
-            "namespace": {"type": "string"},
             "base-parameters": {"type": "object"},
             "parameters": {"type": "array"},
             "output": {"type": ["string", "object", "array", "null"]},
         },
-        "required": ["Version", "name", "class", "namespace"],
+        "required": ["Version", "name", "class"],
         "additionalProperties": False
     }
 
@@ -41,7 +40,6 @@ class ActionSpec(base.BaseSpec):
 
         self._name = data['name']
         self._class = data['class']
-        self._namespace = data['namespace']
         self._base_parameters = data.get('base-parameters', {})
         self._parameters = data.get('parameters', {})
         self._output = data.get('output')
@@ -51,9 +49,6 @@ class ActionSpec(base.BaseSpec):
 
     def get_class(self):
         return self._class
-
-    def get_namespace(self):
-        return self._namespace
 
     def get_base_parameters(self):
         return self._base_parameters

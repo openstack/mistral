@@ -21,14 +21,12 @@ VALID_WB = """
 ---
 Version: '2.0'
 
-Namespaces:
-  ns1:
-    actions:
-      action1:
-        class: std.echo
-        base-parameters:
-            output: "Hello {$.name}!"
-        output: $
+Actions:
+  action1:
+    class: std.echo
+    base-parameters:
+        output: "Hello {$.name}!"
+    output: $
 
 Workflows:
   wf1:
@@ -67,33 +65,17 @@ class DSLv2ModelTest(base.BaseTest):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
 
         # Workbook.
-        ns_specs = wb_spec.get_namespaces()
+        act_specs = wb_spec.get_actions()
         wf_specs = wb_spec.get_workflows()
         tr_specs = wb_spec.get_triggers()
 
         self.assertEqual('2.0', wb_spec.get_version())
-        self.assertIsNotNone(ns_specs)
+        self.assertIsNotNone(act_specs)
         self.assertIsNotNone(wf_specs)
         self.assertIsNone(tr_specs)
 
-        # Namespaces.
-        self.assertEqual(1, len(ns_specs))
-
-        ns_spec = ns_specs.get('ns1')
-
-        self.assertIsNotNone(ns_spec)
-        self.assertEqual('2.0', ns_spec.get_version())
-        self.assertEqual('ns1', ns_spec.get_name())
-        self.assertIsNone(ns_spec.get_class())
-        self.assertIsNone(ns_spec.get_base_parameters())
-        self.assertIsNone(ns_spec.get_parameters())
-
-        action_specs = ns_spec.get_actions()
-
-        self.assertEqual(1, len(action_specs))
-
         # Actions.
-        action_spec = action_specs.get('action1')
+        action_spec = act_specs.get('action1')
 
         self.assertIsNotNone(action_spec)
         self.assertEqual('2.0', action_spec.get_version())

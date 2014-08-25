@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 from mistral.workbook import base
-from mistral.workbook.v2 import namespaces as ns
+from mistral.workbook.v2 import actions as act
 from mistral.workbook.v2 import triggers as tr
 from mistral.workbook.v2 import workflows as wf
 
@@ -24,7 +24,7 @@ class WorkbookSpec(base.BaseSpec):
         "type": "object",
         "properties": {
             "Version": {"value": "2.0"},
-            "Namespaces": {"type": "object"},
+            "Actions": {"type": "object"},
             "Workflows": {"type": "object"},
             "Triggers": {"type": "object"}
         },
@@ -36,16 +36,15 @@ class WorkbookSpec(base.BaseSpec):
     def __init__(self, data):
         super(WorkbookSpec, self).__init__(data)
 
-        self._inject_version(['Namespaces', 'Workflows', 'Triggers'])
+        self._inject_version(['Actions', 'Workflows', 'Triggers'])
 
-        self._namespaces = \
-            self._spec_property('Namespaces', ns.NamespaceSpecList)
+        self._actions = self._spec_property('Actions', act.ActionSpecList)
         self._workflows = \
             self._spec_property('Workflows', wf.WorkflowSpecList)
         self._triggers = self._spec_property('Triggers', tr.TriggerSpecList)
 
-    def get_namespaces(self):
-        return self._namespaces
+    def get_actions(self):
+        return self._actions
 
     def get_workflows(self):
         return self._workflows
