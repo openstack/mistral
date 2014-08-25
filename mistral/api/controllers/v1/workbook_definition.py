@@ -16,9 +16,9 @@
 
 import pecan
 
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.openstack.common import log as logging
-from mistral.services import scheduler
+from mistral.services import workbooks
 from mistral.utils import rest_utils
 
 
@@ -33,7 +33,7 @@ class WorkbookDefinitionController(pecan.rest.RestController):
         LOG.debug("Fetch workbook definition [workbook_name=%s]" %
                   workbook_name)
 
-        return db_api.workbook_definition_get(workbook_name)
+        return db_api.workbook_get(workbook_name).definition
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -44,8 +44,6 @@ class WorkbookDefinitionController(pecan.rest.RestController):
         LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
                   (workbook_name, text))
 
-        wb = db_api.workbook_definition_put(workbook_name, text)
+        wb = workbooks.update_workbook_v1(workbook_name, {'definition': text})
 
-        scheduler.create_associated_triggers(wb)
-
-        return wb['definition']
+        return wb.definition

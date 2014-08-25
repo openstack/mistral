@@ -20,14 +20,13 @@
 from oslo.config import cfg
 
 from mistral import context
-from mistral.db import api as db_api
 from mistral.utils.openstack import keystone
 
 
 CONF = cfg.CONF
 
 
-def create_trust(workbook):
+def create_trust():
     client = keystone.client()
 
     ctx = context.ctx()
@@ -35,7 +34,7 @@ def create_trust(workbook):
     trustee_id = keystone.client_for_admin(
         CONF.keystone_authtoken.admin_tenant_name).user_id
 
-    trust = client.trusts.create(
+    return client.trusts.create(
         trustor_user=client.user_id,
         trustee_user=trustee_id,
         impersonation=True,
@@ -43,27 +42,23 @@ def create_trust(workbook):
         project=ctx.project_id
     )
 
-    return db_api.workbook_update(
-        workbook.name,
-        {'trust_id': trust.id, 'project_id': ctx.project_id}
-    )
 
-
-def create_context(workbook):
+def create_context(trust_id, project_id):
     """Creates Mistral security context.
 
-    :param workbook: Workbook DB model.
+    :param trust_id: Trust Id.
+    :param project_id: Project Id.
     :return: Mistral security context.
     """
-    if not workbook.trust_id:
+    if not trust_id:
         return
 
     if CONF.pecan.auth_enable:
-        client = keystone.client_for_trusts(workbook.trust_id)
+        client = keystone.client_for_trusts(trust_id)
 
         return context.MistralContext(
             user_id=client.user_id,
-            project_id=workbook.project_id,
+            project_id=project_id,
             auth_token=client.auth_token
         )
     else:

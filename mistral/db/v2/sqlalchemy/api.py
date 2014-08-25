@@ -147,6 +147,79 @@ def _get_workbook(name):
                            project_id=context.ctx().project_id).first()
 
 
+# Workflows.
+
+def get_workflow(name):
+    wf = _get_workflow(name)
+
+    if not wf:
+        raise exc.NotFoundException(
+            "Workflow not found [workflow_name=%s]" % name)
+
+    return wf
+
+
+def get_workflows(**kwargs):
+    return _get_workflows(**kwargs)
+
+
+@b.session_aware()
+def create_workflow(values, session=None):
+    wf = models.Workflow()
+
+    wf.update(values.copy())
+    wf['project_id'] = context.ctx().project_id
+
+    try:
+        wf.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry("Duplicate entry for workflow: %s"
+                                   % e.columns)
+
+    return wf
+
+
+@b.session_aware()
+def update_workflow(name, values, session=None):
+    wf = _get_workflow(name)
+
+    if not wf:
+        raise exc.NotFoundException(
+            "Workflow not found [workflow_name=%s]" % name)
+
+    wf.update(values.copy())
+    wf['project_id'] = context.ctx().project_id
+
+    return wf
+
+
+@b.session_aware()
+def delete_workflow(name, session=None):
+    wf = _get_workflow(name)
+
+    if not wf:
+        raise exc.NotFoundException(
+            "Workflow not found [workflow_name=%s]" % name)
+
+    session.delete(wf)
+
+
+def _get_workflows(**kwargs):
+    query = b.model_query(models.Workflow)
+    proj = query.filter_by(project_id=context.ctx().project_id,
+                           **kwargs)
+    public = query.filter_by(scope='public', **kwargs)
+
+    return proj.union(public).all()
+
+
+def _get_workflow(name):
+    query = b.model_query(models.Workflow)
+
+    return query.filter_by(name=name,
+                           project_id=context.ctx().project_id).first()
+
+
 # Executions.
 
 def get_execution(id):

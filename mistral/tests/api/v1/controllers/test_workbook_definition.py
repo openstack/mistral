@@ -16,7 +16,7 @@
 
 import mock
 
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral import exceptions
 from mistral.tests.api import base
 
@@ -47,8 +47,8 @@ Triggers:
 
 
 class TestWorkbookDefinitionController(base.FunctionalTest):
-    @mock.patch.object(db_api, "workbook_definition_get",
-                       mock.MagicMock(return_value=DEFINITION))
+    @mock.patch.object(db_api, "workbook_get",
+                       base.create_mock_workbook({'definition': DEFINITION}))
     def test_get(self):
         resp = self.app.get('/v1/workbooks/my_workbook/definition',
                             headers={"Content-Type": "text/plain"})
@@ -66,11 +66,10 @@ class TestWorkbookDefinitionController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "workbook_definition_put",
-                       mock.MagicMock(return_value={
+    @mock.patch.object(db_api, "workbook_update",
+                       base.create_mock_workbook({
                            'name': 'my_workbook',
-                           'definition': NEW_DEFINITION
-                       }))
+                           'definition': NEW_DEFINITION}))
     def test_put(self):
         resp = self.app.put('/v1/workbooks/my_workbook/definition',
                             NEW_DEFINITION,
@@ -86,7 +85,7 @@ class TestWorkbookDefinitionController(base.FunctionalTest):
         self.assertEqual(triggers[0]['pattern'], '* * * * *')
         self.assertEqual(triggers[0]['workbook_name'], 'my_workbook')
 
-    @mock.patch.object(db_api, "workbook_definition_put",
+    @mock.patch.object(db_api, "workbook_update",
                        mock.MagicMock(
                            side_effect=exceptions.NotFoundException()))
     def test_put_not_found(self):

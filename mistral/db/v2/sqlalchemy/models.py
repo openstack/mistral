@@ -34,7 +34,25 @@ class Workbook(mb.MistralModelBase):
     name = sa.Column(sa.String(80), primary_key=True)
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
-    description = sa.Column(sa.String(200))
+    tags = sa.Column(st.JsonListType())
+    scope = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80))
+    trust_id = sa.Column(sa.String(80))
+
+
+class Workflow(mb.MistralModelBase):
+    """Contains info about workflow (including definition in Mistral DSL)."""
+
+    __tablename__ = 'workflows_v2'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name'),
+    )
+
+    id = mb._id_column()
+    name = sa.Column(sa.String(80), primary_key=True)
+    definition = sa.Column(sa.Text(), nullable=True)
+    spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
     scope = sa.Column(sa.String(80))
     project_id = sa.Column(sa.String(80))

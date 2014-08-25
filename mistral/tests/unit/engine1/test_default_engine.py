@@ -14,17 +14,23 @@
 
 import copy
 import mock
+from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine1 import default_engine as d_eng
 from mistral.openstack.common import log as logging
+from mistral.services import workbooks as wb_service
 from mistral.tests import base
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
+
+# Use the set_default method to set value otherwise in certain test cases
+# the change in value is not permanent.
+cfg.CONF.set_default('auth_enable', False, group='pecan')
+
 
 WORKBOOK = """
 ---
@@ -51,13 +57,9 @@ class DefaultEngineTest(base.DbTestCase):
     def setUp(self):
         super(DefaultEngineTest, self).setUp()
 
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
-
-        db_api.create_workbook({
+        wb_service.create_workbook_v2({
             'name': 'my_wb',
-            'description': 'Simple workbook for testing engine.',
             'definition': WORKBOOK,
-            'spec': wb_spec.to_dict(),
             'tags': ['test']
         })
 
@@ -73,7 +75,10 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            'my_wb', 'wf1', wf_input, task_name='task2')
+            'my_wb.wf1',
+            wf_input,
+            task_name='task2'
+        )
 
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.RUNNING, exec_db.state)
@@ -105,8 +110,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            'my_wb',
-            'wf1',
+            'my_wb.wf1',
             wf_input,
             task_name='task2'
         )

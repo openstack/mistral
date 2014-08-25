@@ -28,7 +28,6 @@ WORKBOOKS = [
     {
         'id': '1',
         'name': 'my_workbook1',
-        'description': 'my description',
         'definition': 'empty',
         'tags': ['mc'],
         'scope': 'public',
@@ -160,7 +159,6 @@ class WorkbookTest(test_base.DbTestCase):
 
         self.assertIn('Workbook ', s)
         self.assertIn("'name': 'my_workbook1'", s)
-        self.assertIn("'description': 'my description'", s)
 
 EXECUTIONS = [
     {

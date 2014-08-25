@@ -119,12 +119,15 @@ def evaluate_outbound_context(task_db):
     )
 
 
-def add_openstack_data_to_context(workbook_db, context):
+def add_openstack_data_to_context(workflow_db, context):
     if context is None:
         context = {}
 
     if CONF.pecan.auth_enable:
-        workbook_ctx = trusts.create_context(workbook_db)
+        workbook_ctx = trusts.create_context(
+            workflow_db.trust_id,
+            workflow_db.project_id
+        )
 
         if workbook_ctx:
             context.update({'openstack': workbook_ctx.to_dict()})

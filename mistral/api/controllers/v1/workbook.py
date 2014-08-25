@@ -22,7 +22,7 @@ from mistral.api.controllers import resource
 from mistral.api.controllers.v1 import execution
 from mistral.api.controllers.v1 import listener
 from mistral.api.controllers.v1 import workbook_definition
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks
 from mistral.utils import rest_utils
@@ -87,7 +87,7 @@ class WorkbooksController(rest.RestController):
         """Create a new workbook."""
         LOG.debug("Create workbook [workbook=%s]" % workbook)
 
-        db_model = workbooks.create_workbook(workbook.to_dict())
+        db_model = workbooks.create_workbook_v1(workbook.to_dict())
 
         return Workbook.from_dict(db_model.to_dict())
 

@@ -90,8 +90,7 @@ class EngineServer(object):
     def __init__(self, engine):
         self._engine = engine
 
-    def start_workflow(self, rpc_ctx, workbook_name, workflow_name, input,
-                       params):
+    def start_workflow(self, rpc_ctx, workflow_name, workflow_input, params):
         """Receives calls over RPC to start workflows on engine.
 
         :param rpc_ctx: RPC request context.
@@ -100,14 +99,13 @@ class EngineServer(object):
 
         LOG.info(
             "Received RPC request 'start_workflow'[rpc_ctx=%s,"
-            " workbook_name=%s, workflow_name=%s, input=%s, params=%s]"
-            % (rpc_ctx, workbook_name, workflow_name, input, params)
+            " workflow_name=%s, workflow_input=%s, params=%s]"
+            % (rpc_ctx, workflow_name, workflow_input, params)
         )
 
         return self._engine.start_workflow(
-            workbook_name,
             workflow_name,
-            input,
+            workflow_input,
             **params
         )
 
@@ -187,7 +185,7 @@ class EngineClient(base.Engine):
             serializer=serializer
         )
 
-    def start_workflow(self, workbook_name, workflow_name, input, **params):
+    def start_workflow(self, workflow_name, workflow_input, **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.
@@ -196,9 +194,8 @@ class EngineClient(base.Engine):
         return self._client.call(
             auth_ctx.ctx(),
             'start_workflow',
-            workbook_name=workbook_name,
             workflow_name=workflow_name,
-            input=input,
+            workflow_input=workflow_input,
             params=params
         )
 
