@@ -67,6 +67,11 @@ def get_workbook(name):
     return IMPL.get_workbook(name)
 
 
+def load_workbook(name):
+    """Unlike get_workbook this method is allowed to return None."""
+    return IMPL.load_workbook(name)
+
+
 def get_workbooks():
     return IMPL.get_workbooks()
 
@@ -79,6 +84,10 @@ def update_workbook(name, values):
     return IMPL.update_workbook(name, values)
 
 
+def create_or_update_workbook(name, values):
+    return IMPL.create_or_update_workbook(name, values)
+
+
 def delete_workbook(name):
     IMPL.delete_workbook(name)
 
@@ -88,6 +97,11 @@ def delete_workbook(name):
 
 def get_workflow(name):
     return IMPL.get_workflow(name)
+
+
+def load_workflow(name):
+    """Unlike get_workflow this method is allowed to return None."""
+    return IMPL.load_workflow(name)
 
 
 def get_workflows():
@@ -102,6 +116,10 @@ def update_workflow(name, values):
     return IMPL.update_workflow(name, values)
 
 
+def create_or_update_workflow(name, values):
+    return IMPL.create_or_update_workflow(name, values)
+
+
 def delete_workflow(name):
     IMPL.delete_workflow(name)
 
@@ -110,6 +128,11 @@ def delete_workflow(name):
 
 def get_execution(id):
     return IMPL.get_execution(id)
+
+
+def load_execution(name):
+    """Unlike get_execution this method is allowed to return None."""
+    return IMPL.load_execution(name)
 
 
 def get_executions(**kwargs):
@@ -128,6 +151,10 @@ def update_execution(id, values):
     return IMPL.update_execution(id, values)
 
 
+def create_or_update_execution(id, values):
+    return IMPL.create_or_update_execution(id, values)
+
+
 def delete_execution(id):
     return IMPL.delete_execution(id)
 
@@ -136,6 +163,11 @@ def delete_execution(id):
 
 def get_task(id):
     return IMPL.get_task(id)
+
+
+def load_task(name):
+    """Unlike get_task this method is allowed to return None."""
+    return IMPL.load_task(name)
 
 
 def get_tasks(**kwargs):
@@ -148,6 +180,10 @@ def create_task(values):
 
 def update_task(id, values):
     return IMPL.update_task(id, values)
+
+
+def create_or_update_task(id, values):
+    return IMPL.create_or_update_task(id, values)
 
 
 def delete_task(id):

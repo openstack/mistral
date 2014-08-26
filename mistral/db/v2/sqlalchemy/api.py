@@ -100,6 +100,10 @@ def get_workbook(name):
     return wb
 
 
+def load_workbook(name):
+    return _get_workbook(name)
+
+
 def get_workbooks(**kwargs):
     return _get_workbooks(**kwargs)
 
@@ -132,6 +136,16 @@ def update_workbook(name, values, session=None):
     wb['project_id'] = context.ctx().project_id
 
     return wb
+
+
+@b.session_aware()
+def create_or_update_workbook(name, values, session=None):
+    wb = _get_workbook(name)
+
+    if not wb:
+        return create_workbook(values)
+    else:
+        return update_workbook(name, values)
 
 
 @b.session_aware()
@@ -173,6 +187,10 @@ def get_workflow(name):
     return wf
 
 
+def load_workflow(name):
+    return _get_workflow(name)
+
+
 def get_workflows(**kwargs):
     return _get_workflows(**kwargs)
 
@@ -205,6 +223,16 @@ def update_workflow(name, values, session=None):
     wf['project_id'] = context.ctx().project_id
 
     return wf
+
+
+@b.session_aware()
+def create_or_update_workflow(name, values, session=None):
+    wf = _get_workflow(name)
+
+    if not wf:
+        return create_workflow(values)
+    else:
+        return update_workflow(name, values)
 
 
 @b.session_aware()
@@ -250,6 +278,10 @@ def get_execution(id):
     return execution
 
 
+def load_execution(id):
+    return _get_execution(id)
+
+
 def ensure_execution_exists(id):
     get_execution(id)
 
@@ -287,6 +319,16 @@ def update_execution(id, values, session=None):
 
 
 @b.session_aware()
+def create_or_update_execution(id, values, session=None):
+    execution = _get_execution(id)
+
+    if not execution:
+        return create_execution(values)
+    else:
+        return update_execution(id, values)
+
+
+@b.session_aware()
 def delete_execution(id, session=None):
     execution = _get_execution(id)
 
@@ -321,6 +363,10 @@ def get_task(id):
     return task
 
 
+def load_task(id):
+    return _get_task(id)
+
+
 def get_tasks(**kwargs):
     return _get_tasks(**kwargs)
 
@@ -351,6 +397,16 @@ def update_task(id, values, session=None):
     task.update(values.copy())
 
     return task
+
+
+@b.session_aware()
+def create_or_update_task(id, values, session=None):
+    task = _get_task(id)
+
+    if not task:
+        return create_task(values)
+    else:
+        return update_task(id, values)
 
 
 @b.session_aware()
