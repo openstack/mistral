@@ -18,7 +18,7 @@ from oslo.config import cfg
 
 from mistral.actions import std_actions
 from mistral import context as auth_context
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.db.v1.sqlalchemy import models
 from mistral import engine
 from mistral.engine.drivers.default import engine as concrete_engine

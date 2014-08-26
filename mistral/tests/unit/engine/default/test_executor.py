@@ -22,7 +22,7 @@ from oslo.config import cfg
 eventlet.monkey_patch()
 
 from mistral.actions import std_actions
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral import engine
 from mistral.engine import executor
 from mistral.engine import states
