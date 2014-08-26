@@ -29,6 +29,7 @@ WORKBOOKS = [
         'id': '1',
         'name': 'my_workbook1',
         'definition': 'empty',
+        'spec': {},
         'tags': ['mc'],
         'scope': 'public',
         'updated_at': None,
@@ -40,6 +41,7 @@ WORKBOOKS = [
         'name': 'my_workbook2',
         'description': 'my description',
         'definition': 'empty',
+        'spec': {},
         'tags': ['mc'],
         'scope': 'private',
         'updated_at': None,
@@ -62,10 +64,10 @@ class WorkbookTest(test_base.DbTestCase):
 
         updated = db_api.update_workbook(
             created['name'],
-            {'description': 'my new desc'}
+            {'definition': 'my new definition'}
         )
 
-        self.assertEqual('my new desc', updated['description'])
+        self.assertEqual('my new definition', updated.definition)
 
         fetched = db_api.get_workbook(created['name'])
 
@@ -159,6 +161,144 @@ class WorkbookTest(test_base.DbTestCase):
 
         self.assertIn('Workbook ', s)
         self.assertIn("'name': 'my_workbook1'", s)
+
+WORKFLOWS = [
+    {
+        'id': '1',
+        'name': 'my_wf1',
+        'definition': 'empty',
+        'spec': {},
+        'tags': ['mc'],
+        'scope': 'public',
+        'project_id': '1233',
+        'trust_id': '1234'
+    },
+    {
+        'id': '2',
+        'name': 'my_wf2',
+        'definition': 'empty',
+        'spec': {},
+        'tags': ['mc'],
+        'scope': 'private',
+        'project_id': '1233',
+        'trust_id': '12345'
+    },
+]
+
+
+class WorkflowTest(test_base.DbTestCase):
+    def test_workflow_create_and_get(self):
+        created = db_api.create_workflow(WORKFLOWS[0])
+
+        fetched = db_api.get_workflow(created.name)
+
+        self.assertEqual(created, fetched)
+
+    def test_workflow_update(self):
+        created = db_api.create_workflow(WORKFLOWS[0])
+
+        updated = db_api.update_workflow(
+            created['name'],
+            {'definition': 'my new definition'}
+        )
+
+        self.assertEqual('my new definition', updated.definition)
+
+        fetched = db_api.get_workflow(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_workflow_list(self):
+        created0 = db_api.create_workflow(WORKFLOWS[0])
+        created1 = db_api.create_workflow(WORKFLOWS[1])
+
+        fetched = db_api.get_workflows()
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_workflow_delete(self):
+        created = db_api.create_workflow(WORKFLOWS[0])
+
+        fetched = db_api.get_workflow(created['name'])
+
+        self.assertEqual(created, fetched)
+
+        db_api.delete_workflow(created['name'])
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_workflow,
+            created['name']
+        )
+
+    def test_workflow_private(self):
+        # Create a workflow(scope=private) as under one project
+        # then make sure it's NOT visible for other projects.
+        created1 = db_api.create_workflow(WORKFLOWS[1])
+
+        fetched = db_api.get_workflows()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+        # Create a new user.
+        ctx = auth_context.MistralContext(
+            user_id='9-0-44-5',
+            project_id='99-88-33',
+            user_name='test-user',
+            project_name='test-another',
+            is_admin=False
+        )
+
+        auth_context.set_ctx(ctx)
+
+        fetched = db_api.get_workflows()
+
+        self.assertEqual(0, len(fetched))
+
+    def test_workflow_public(self):
+        # Create a workflow(scope=public) as under one project
+        # then make sure it's visible for other projects.
+        created0 = db_api.create_workflow(WORKFLOWS[0])
+
+        fetched = db_api.get_workflows()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
+        # Assert that the project_id stored is actually the context's
+        # project_id not the one given.
+        self.assertEqual(created0['project_id'], auth_context.ctx().project_id)
+        self.assertNotEqual(
+            WORKFLOWS[0]['project_id'],
+            auth_context.ctx().project_id
+        )
+
+        # Create a new user.
+        ctx = auth_context.MistralContext(
+            user_id='9-0-44-5',
+            project_id='99-88-33',
+            user_name='test-user',
+            project_name='test-another',
+            is_admin=False
+        )
+
+        auth_context.set_ctx(ctx)
+
+        fetched = db_api.get_workflows()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual('public', created0['scope'])
+
+    def test_workflow_repr(self):
+        s = db_api.create_workflow(WORKFLOWS[0]).__repr__()
+
+        self.assertIn('Workflow ', s)
+        self.assertIn("'name': 'my_wf1'", s)
+
 
 EXECUTIONS = [
     {
