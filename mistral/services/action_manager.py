@@ -16,7 +16,6 @@ import inspect
 
 from stevedore import extension
 
-from mistral.actions import base
 from mistral.actions import generator_factory
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
@@ -31,18 +30,6 @@ from mistral.workbook import parser as spec_parser
 LOG = logging.getLogger(__name__)
 
 _ACTION_CTX_PARAM = 'action_context'
-_NAMESPACES = {}
-
-
-# TODO(nmakhotkin): It's not used anywhere.
-def _find_or_create_namespace(name):
-    ns = _NAMESPACES.get(name)
-
-    if not ns:
-        ns = base.Namespace(name)
-        _NAMESPACES[name] = ns
-
-    return ns
 
 
 def get_registered_actions(**kwargs):

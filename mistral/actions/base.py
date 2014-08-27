@@ -80,28 +80,3 @@ class Action(object):
             doesn't override this method then the action is synchronous.
         """
         return True
-
-
-class Namespace(object):
-    """Action namespace."""
-
-    def __init__(self, namespace):
-        self.name = namespace
-        self.actions = {}
-
-    def contains_action_name(self, name):
-        return name in self.actions
-
-    def get_action_class(self, name):
-        return self.actions.get(name)
-
-    def __len__(self):
-        return len(self.actions)
-
-    def log(self):
-        for ext in self.actions:
-            LOG.debug('%s:%s' % (self.name, ext))
-
-    def add(self, name, action):
-        if name not in self.actions:
-            self.actions[name] = action
