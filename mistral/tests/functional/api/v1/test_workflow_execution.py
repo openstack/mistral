@@ -148,3 +148,52 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
         self.assertEqual(
             task_output['task']['build_greeting']['greeting']['greet_message'],
             "Hello, John Doe!")
+
+    def test_mixed_workflow(self):
+        text = base.get_resource(
+            'resources/test_mixed_flow.yaml')
+        self.client.upload_workbook_definition('test', text)
+
+        _, ex = self.client.create_execution_wait_success(
+            'test', {}, 'task2')
+
+        task = self.client.get_task_by_name('test', ex['id'],
+                                            'task1')
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['task1']['string'],
+                         "workflow is")
+
+        task = self.client.get_task_by_name('test', ex['id'],
+                                            'task2')
+        task_output = json.loads(task['output'])
+        self.assertEqual(
+            task_output['task']['task2']['string'],
+            "workflow is complete")
+
+        task = self.client.get_task_by_name('test', ex['id'],
+                                            'task3')
+        task_output = json.loads(task['output'])
+        self.assertEqual(
+            task_output['task']['task3']['string'],
+            "workflow is complete !")
+
+    def test_direct_workflow_all_keywords(self):
+        text = base.get_resource(
+            'resources/test_direct_flow_all_keywords.yaml')
+        self.client.upload_workbook_definition('test', text)
+
+        _, ex = self.client.create_execution_wait_success(
+            'test', {}, 'task1')
+
+        task = self.client.get_task_by_name('test', ex['id'],
+                                            'task2')
+        task_output = json.loads(task['output'])
+        self.assertEqual(task_output['task']['task2']['string'],
+                         "workflow is")
+
+        task = self.client.get_task_by_name('test', ex['id'],
+                                            'task4')
+        task_output = json.loads(task['output'])
+        self.assertEqual(
+            task_output['task']['task4']['string'],
+            "workflow is complete!")

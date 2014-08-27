@@ -1,0 +1,63 @@
+Namespaces:
+  Nova:
+    class: std.mistral_http
+    base-parameters:
+      method: GET
+      headers:
+        X-Auth-Token: $.auth_token
+
+    actions:
+      create-vm:
+        base-parameters:
+          url: http://some_host/service/action/execute
+          headers:
+            Content-Type: 'application/json'
+        parameters:
+          - image_id
+          - flavor_id
+
+  Echo:
+    actions:
+      concat:
+        class: std.echo
+        base-parameters:
+          output: '{$.left} {$.right}'
+        parameters:
+          - left
+          - right
+        output:
+          string: $
+
+Workflow:
+  tasks:
+    task1:
+      action: Nova.create-vm
+      parameters:
+        image_id: 1234
+        flavor_id: 42
+      on-error: task2
+
+    task2:
+      action: Echo.concat
+      parameters:
+        left: workflow
+        right: is
+      publish:
+        result2: $.string 
+      on-finish: task3
+
+    task3:
+      action: Nova.create-vm
+      parameters:
+        image_id: 1234
+        flavor_id: 42
+      on-finish: task4
+
+    task4:
+      action: Echo.concat
+      parameters:
+        left: $.result2
+        right: complete!
+      publish:
+        result4: $.string
+
