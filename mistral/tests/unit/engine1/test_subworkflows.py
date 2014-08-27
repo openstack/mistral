@@ -54,7 +54,7 @@ Workflows:
 
   wf2:
     type: direct
-    start_task: task1
+    start-task: task1
     output:
       slogan: $.slogan
 

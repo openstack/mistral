@@ -47,7 +47,7 @@ Workflows:
 
   wf2:
     type: direct
-    start_task: task1
+    start-task: task1
     output:
       result: $.result
 
@@ -67,7 +67,7 @@ Version: '2.0'
 Workflows:
   wf1:
     type: direct
-    start_task: task1
+    start-task: task1
     output:
       result: $.result
 
