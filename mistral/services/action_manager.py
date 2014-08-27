@@ -109,26 +109,35 @@ def register_action_classes():
         _register_dynamic_action_classes()
 
 
+def get_action_db(action_name):
+    # TODO(nmakhotkin) Validate action_name.
+    if action_name.find('.') == -1:
+        raise exc.ActionException('Invalid action name: %s' %
+                                  action_name)
+    # TODO(nmakhotkin) Temporary hack to return None if action not found
+    try:
+        action_db = db_api.get_action(action_name)
+    except exc.NotFoundException:
+        return None
+    return action_db
+
+
 def get_action_class(action_full_name):
     """Finds action class by full action name (i.e. 'namespace.action_name').
 
     :param action_full_name: Full action name (that includes namespace).
     :return: Action class or None if not found.
     """
+    action_db = get_action_db(action_full_name)
+    if action_db:
+        return construct_action_class(action_db.action_class,
+                                      action_db.attributes)
 
-    # TODO(nmakhotkin) Validate action_name.
-    if action_full_name.find('.') == -1:
-        raise exc.ActionException('Invalid action name: %s' %
-                                  action_full_name)
-    # TODO(nmakhotkin) Temporary hack to return None if action not found
-    try:
-        action_db = db_api.get_action(action_full_name)
-    except exc.NotFoundException:
-        return None
 
+def construct_action_class(action_class_str, attributes):
     # Rebuild action class and restore attributes.
-    action_class = importutils.import_class(action_db.action_class)
-    for name, value in action_db.attributes.items():
+    action_class = importutils.import_class(action_class_str)
+    for name, value in attributes.items():
         setattr(action_class, name, value)
 
     return action_class
