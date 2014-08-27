@@ -47,12 +47,12 @@ else
     MISTRAL_BIN_DIR=$(get_python_exec_prefix)
 fi
 
-# create_mistral_accounts() - Set up common required mistral accounts
+# create_mistral_accounts - Set up common required mistral accounts
 #
 # Tenant      User       Roles
 # ------------------------------
 # service     mistral     admin
-function create_mistral_accounts() {
+function create_mistral_accounts {
     if ! is_service_enabled key; then
         return
     fi
@@ -98,7 +98,7 @@ function mkdir_chown_stack {
 # Entry points
 # ------------
 
-# configure_mistral() - Set config files, create data dirs, etc
+# configure_mistral - Set config files, create data dirs, etc
 function configure_mistral {
     mkdir_chown_stack "$MISTRAL_CONF_DIR"
 
@@ -132,15 +132,15 @@ function configure_mistral {
 }
 
 
-# init_mistral() - Initialize the database
-function init_mistral() {
+# init_mistral - Initialize the database
+function init_mistral {
     # (re)create Mistral database
     recreate_database mistral utf8
 }
 
 
-# install_mistral() - Collect source and prepare
-function install_mistral() {
+# install_mistral - Collect source and prepare
+function install_mistral {
     install_mistral_pythonclient
 
     git_clone $MISTRAL_REPO $MISTRAL_DIR $MISTRAL_BRANCH
@@ -152,20 +152,20 @@ function install_mistral() {
     setup_package $MISTRAL_DIR -e
 }
 
-function install_mistral_pythonclient() {
+function install_mistral_pythonclient {
     git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
     setup_package $MISTRAL_PYTHONCLIENT_DIR -e
 }
 
 
-# start_mistral() - Start running processes, including screen
-function start_mistral() {
+# start_mistral - Start running processes, including screen
+function start_mistral {
     screen_it mistral "cd $MISTRAL_DIR && $MISTRAL_BIN_DIR/mistral-server --config-file $MISTRAL_CONF_DIR/mistral.conf"
 }
 
 
-# stop_mistral() - Stop running processes
-function stop_mistral() {
+# stop_mistral - Stop running processes
+function stop_mistral {
     # Kill the Mistral screen windows
     screen -S $SCREEN_NAME -p mistral -X kill
 }
