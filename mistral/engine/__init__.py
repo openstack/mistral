@@ -26,7 +26,6 @@ from stevedore import driver
 # the submodules are referenced.
 cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 
-from mistral.actions import action_factory as a_f
 from mistral import context as auth_context
 from mistral.db.v1 import api as db_api
 from mistral.engine import data_flow
@@ -35,6 +34,7 @@ from mistral.engine import states
 from mistral.engine import workflow
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager as a_m
 from mistral.workbook import parser as spec_parser
 
 
@@ -189,15 +189,15 @@ class Engine(object):
             action_name = spec_parser.get_task_spec(task.task_spec)\
                 .get_full_action_name()
 
-            if not a_f.get_action_class(action_name):
-                action = a_f.resolve_adhoc_action_name(workbook, action_name)
+            if not a_m.get_action_class(action_name):
+                action = a_m.resolve_adhoc_action_name(workbook, action_name)
 
                 if not action:
                     msg = 'Unknown action [workbook=%s, action=%s]' % \
                           (workbook, action_name)
                     raise exc.ActionException(msg)
 
-                result = a_f.convert_adhoc_action_result(workbook,
+                result = a_m.convert_adhoc_action_result(workbook,
                                                          action_name,
                                                          result)
 

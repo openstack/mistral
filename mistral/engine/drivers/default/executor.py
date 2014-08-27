@@ -16,11 +16,11 @@
 
 from oslo.config import cfg
 
-from mistral.actions import action_factory as a_f
 from mistral.engine import executor
 from mistral.engine import states
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager as a_m
 
 
 LOG = logging.getLogger(__name__)
@@ -28,7 +28,6 @@ WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class DefaultExecutor(executor.Executor):
-
     def _log_action_exception(self, message, task_id, action, params, ex):
         LOG.exception("%s [task_id=%s, action='%s', params='%s']\n %s" %
                       (message, str(task_id), str(action),
@@ -44,7 +43,7 @@ class DefaultExecutor(executor.Executor):
         :param params: a dict of action parameters
         """
 
-        action_cls = a_f.get_action_class(action_name)
+        action_cls = a_m.get_action_class(action_name)
 
         # TODO(dzimine): on failure, convey failure details back
         try:

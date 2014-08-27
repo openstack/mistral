@@ -17,12 +17,12 @@
 import copy
 import json
 
-from mistral.actions import action_factory as a_f
 from mistral.actions import std_actions as std
 from mistral.db.v1.sqlalchemy import models
 from mistral.engine import data_flow
 from mistral import exceptions
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager as a_m
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 
@@ -91,7 +91,7 @@ DB_TASK_ADHOC = {
 
 class ActionFactoryTest(base.DbTestCase):
     def test_register_standard_actions(self):
-        action_list = a_f.get_registered_actions()
+        action_list = a_m.get_registered_actions()
 
         self._assert_single_item(action_list, name="std.echo")
         self._assert_single_item(action_list, name="std.email")
@@ -109,22 +109,22 @@ class ActionFactoryTest(base.DbTestCase):
         self._assert_single_item(action_list, name="glance.images_delete")
 
     def test_get_action_class(self):
-        self.assertEqual(std.EchoAction, a_f.get_action_class("std.echo"))
-        self.assertEqual(std.HTTPAction, a_f.get_action_class("std.http"))
+        self.assertEqual(std.EchoAction, a_m.get_action_class("std.echo"))
+        self.assertEqual(std.HTTPAction, a_m.get_action_class("std.http"))
         self.assertEqual(std.MistralHTTPAction,
-                         a_f.get_action_class("std.mistral_http"))
+                         a_m.get_action_class("std.mistral_http"))
         self.assertEqual(std.SendEmailAction,
-                         a_f.get_action_class("std.email"))
+                         a_m.get_action_class("std.email"))
 
     def test_get_action_class_failure(self):
         self.assertRaises(exceptions.ActionException,
-                          a_f.get_action_class, 'echo')
+                          a_m.get_action_class, 'echo')
 
     def test_create_http_action(self):
         db_task = models.Task()
         db_task.update(copy.copy(DB_TASK))
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertIsNotNone(action)
 
@@ -142,7 +142,7 @@ class ActionFactoryTest(base.DbTestCase):
 
         db_task.task_spec['action'] = 'std.mistral_http'
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertIsNotNone(action)
 
@@ -169,7 +169,7 @@ class ActionFactoryTest(base.DbTestCase):
 
         del db_task.parameters['headers']
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertIsNotNone(action)
 
@@ -204,7 +204,7 @@ class ActionFactoryTest(base.DbTestCase):
         base_parameters['output'] = ("{$.openstack.auth_token}"
                                      "{$.openstack.project_id}")
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertEqual({'res': "123321"}, action.run())
 
@@ -220,7 +220,7 @@ class ActionFactoryTest(base.DbTestCase):
         base_parameters = db_task.action_spec['base-parameters']
         base_parameters['output'] = "$.openstack.auth_token"
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertEqual({'res': "$.openstack.auth_token"}, action.run())
 
@@ -246,7 +246,7 @@ class ActionFactoryTest(base.DbTestCase):
         db_task.parameters = data_flow.evaluate_task_parameters(
             db_task, db_task.in_context)
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertEqual("http://some/321/servers", action.url)
 
@@ -272,7 +272,7 @@ class ActionFactoryTest(base.DbTestCase):
             'password': 'ubuntu_password'
         }
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertEqual("ubuntu", action.username)
         self.assertEqual("ubuntu_password", action.password)
@@ -286,14 +286,14 @@ class ActionFactoryTest(base.DbTestCase):
         action_spec = db_task.action_spec
 
         # With dic-like output formatter.
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertDictEqual({'res': 'Tango and Cash'}, action.run())
 
         # With list-like output formatter.
         action_spec['output'] = ['$', '$']
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertListEqual(['Tango and Cash', 'Tango and Cash'],
                              action.run())
@@ -301,7 +301,7 @@ class ActionFactoryTest(base.DbTestCase):
         # With single-object output formatter.
         action_spec['output'] = "'{$}' is a cool movie!"
 
-        action = a_f.create_action(db_task)
+        action = a_m.create_action(db_task)
 
         self.assertEqual("'Tango and Cash' is a cool movie!", action.run())
 
@@ -311,7 +311,7 @@ class ActionFactoryTest(base.DbTestCase):
 
         action_name = 'MyActions.concat'
 
-        action = a_f.resolve_adhoc_action_name(wb, action_name)
+        action = a_m.resolve_adhoc_action_name(wb, action_name)
 
         self.assertEqual('std.echo', action)
 
@@ -325,7 +325,7 @@ class ActionFactoryTest(base.DbTestCase):
             'right': 'Stanley'
         }
 
-        parameters = a_f.convert_adhoc_action_params(wb,
+        parameters = a_m.convert_adhoc_action_params(wb,
                                                      action_name,
                                                      params)
 
@@ -338,7 +338,7 @@ class ActionFactoryTest(base.DbTestCase):
         action_name = 'MyActions.concat'
         result = {'output': 'Stormin Stanley'}
 
-        parameters = a_f.convert_adhoc_action_result(wb,
+        parameters = a_m.convert_adhoc_action_result(wb,
                                                      action_name,
                                                      result)
 

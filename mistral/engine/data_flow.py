@@ -17,12 +17,12 @@
 import inspect
 from oslo.config import cfg
 
-from mistral.actions import action_factory as a_f
 from mistral.db.v1 import api as db_api
 from mistral.engine import states
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager as a_m
 from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
@@ -92,25 +92,25 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
 
         openstack_ctx = context.get('openstack')
 
-        if not a_f.get_action_class(action_name):
+        if not a_m.get_action_class(action_name):
             # If action is not found in registered actions try to find
             # ad-hoc action definition.
             if openstack_ctx is not None:
                 action_params.update({'openstack': openstack_ctx})
 
-            action = a_f.resolve_adhoc_action_name(workbook, action_name)
+            action = a_m.resolve_adhoc_action_name(workbook, action_name)
 
             if not action:
                 msg = 'Unknown action [workbook=%s, action=%s]' % \
                       (workbook, action_name)
                 raise exc.ActionException(msg)
 
-            action_params = a_f.convert_adhoc_action_params(workbook,
+            action_params = a_m.convert_adhoc_action_params(workbook,
                                                             action_name,
                                                             action_params)
             action_name = action
 
-        if _has_action_context_param(a_f.get_action_class(action_name)):
+        if _has_action_context_param(a_m.get_action_class(action_name)):
             action_params[_ACTION_CTX_PARAM] = \
                 _get_action_context(task, openstack_ctx)
 

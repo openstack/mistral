@@ -14,10 +14,10 @@
 
 from oslo.config import cfg
 
-from mistral.actions import action_factory
 from mistral.db.v2 import api as db_api
 from mistral import config
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager
 
 
 CONF = cfg.CONF
@@ -30,7 +30,7 @@ def main():
 
     db_api.setup_db()
 
-    action_factory.sync_db()
+    action_manager.sync_db()
 
 
 if __name__ == '__main__':
