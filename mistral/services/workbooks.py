@@ -19,7 +19,6 @@ from oslo.config import cfg
 from mistral import context
 from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
-from mistral import exceptions as exc
 from mistral.services import triggers
 from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
@@ -104,13 +103,7 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'project_id': wb_db.project_id
             }
 
-            # TODO(rakhmerov): This looks really ugly. Need more decent way.
-            try:
-                db_api_v2.get_workflow(wf_name)
-
-                db_api_v2.update_workflow(wf_name, values)
-            except exc.NotFoundException:
-                db_api_v2.create_workflow(values)
+            db_api_v2.create_or_update_workflow(wf_name, values)
 
 
 def _add_security_info(values):
