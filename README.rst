@@ -13,6 +13,15 @@ First of all, in a shell run:
 
 This will install necessary virtual environments and run all the project tests. Installing virtual environments may take significant time (~10-15 mins).
 
+
+Before the first run
+--------------------
+
+Before starting Mistral server, run sync_db script.
+
+    tools/sync_db.sh --config-file path_to_config*
+
+
 Running Mistral API server
 --------------------------
 
