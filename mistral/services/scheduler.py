@@ -16,7 +16,7 @@
 
 from croniter import croniter
 import datetime
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.workbook import parser as spec_parser
 
 

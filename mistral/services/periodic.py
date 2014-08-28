@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 from mistral import context
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral import engine
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task

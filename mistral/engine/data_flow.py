@@ -18,7 +18,7 @@ import inspect
 from oslo.config import cfg
 
 from mistral.actions import action_factory as a_f
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.engine import states
 from mistral import exceptions as exc
 from mistral import expressions as expr

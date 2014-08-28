@@ -16,7 +16,7 @@
 
 import copy
 
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.db.v1.sqlalchemy import models
 from mistral.engine import data_flow
 from mistral.engine import states

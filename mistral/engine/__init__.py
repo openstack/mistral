@@ -28,7 +28,7 @@ cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 
 from mistral.actions import action_factory as a_f
 from mistral import context as auth_context
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.engine import data_flow
 from mistral.engine import retry
 from mistral.engine import states

@@ -20,7 +20,7 @@ import pecan
 from mistral.api import access_control
 from mistral.api.hooks import engine
 from mistral import context as ctx
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.services import periodic
 
 
