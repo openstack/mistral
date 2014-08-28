@@ -54,7 +54,7 @@ Workflows:
     tasks:
       task1:
         workflow: my_wb.wf1 param1='Hi'
-        workflow_parameters:
+        workflow-parameters:
             task_name: task1
         publish:
           result: "The result of subworkflow is '{$.final_result}'"
@@ -74,7 +74,7 @@ Workflows:
     tasks:
       task1:
         workflow: my_wb.wf2 param1='Hi'
-        workflow_parameters:
+        workflow-parameters:
             task_name: task1
         publish:
           result: "The result of subworkflow is '{$.final_result}'"

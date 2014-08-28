@@ -35,7 +35,7 @@ class TaskSpec(base.BaseSpec):
             "name": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
-            "workflow_parameters": {"type": ["object", "null"]},
+            "workflow-parameters": {"type": ["object", "null"]},
             "parameters": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "retry": {"type": ["object", "null"]},
@@ -56,7 +56,7 @@ class TaskSpec(base.BaseSpec):
         self._name = data['name']
         self._action = data.get('action')
         self._workflow = data.get('workflow')
-        self._workflow_parameters = data.get('workflow_parameters')
+        self._workflow_parameters = data.get('workflow-parameters')
         self._parameters = data.get('parameters', {})
         self._publish = data.get('publish', {})
         self._retry = self._spec_property('retry', retry.RetrySpec)
