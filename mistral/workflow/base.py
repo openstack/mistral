@@ -164,13 +164,17 @@ class TaskResult(object):
         self.error = error
 
     def __repr__(self):
-        return 'TaskResult [data=%s, error=%s]' % (self.data, self.error)
+        return 'TaskResult [data=%s, error=%s]' % \
+               (repr(self.data), repr(self.error))
 
     def is_error(self):
         return self.error is not None
 
     def is_success(self):
         return not self.is_error()
+
+    def __eq__(self, other):
+        return self.data == other.data and self.error == other.error
 
 
 class FlowControl(object):

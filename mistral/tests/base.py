@@ -29,6 +29,7 @@ import time
 from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.v1 import api as db_api_v1
+from mistral.db.v2 import api as db_api_v2
 from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
@@ -173,6 +174,7 @@ class DbTestCase(BaseTest):
 
         cfg.CONF.set_default('connection', 'sqlite://', group='database')
         db_api_v1.setup_db()
+        db_api_v2.setup_db()
 
         self.addCleanup(db_api_v1.drop_db)
 

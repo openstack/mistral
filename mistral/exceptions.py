@@ -97,3 +97,8 @@ class DSLParsingException(MistralException):
 class InvalidModelException(MistralException):
     http_code = 400
     message = "Wrong entity definition"
+
+
+class InvalidResultException(MistralException):
+    http_code = 400
+    message = "Unable to parse result"

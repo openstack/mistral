@@ -54,7 +54,7 @@ def _get_spec_version(spec_dict):
     elif 'version' in spec_dict:
         ver = spec_dict['version']
 
-    if ver not in ALL_VERSIONS:
+    if str(ver) not in ALL_VERSIONS:
         raise exc.DSLParsingException('Unsupported DSL version: %s' % ver)
 
     return ver

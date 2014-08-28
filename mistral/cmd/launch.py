@@ -43,6 +43,7 @@ from mistral import config
 from mistral import context as ctx
 from mistral import engine
 from mistral.engine import executor
+from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
 
 
@@ -57,7 +58,10 @@ def launch_executor(transport):
 
     # Since engine and executor are tightly coupled, use the engine
     # configuration to decide which executor to get.
-    endpoints = [executor.get_executor(cfg.CONF.engine.engine, transport)]
+    endpoints = [
+        executor.get_executor(cfg.CONF.engine.engine, transport),
+        rpc.get_executor_server()
+    ]
 
     server = messaging.get_rpc_server(
         transport,
@@ -77,7 +81,10 @@ def launch_engine(transport):
         server=cfg.CONF.engine.host
     )
 
-    endpoints = [engine.get_engine(cfg.CONF.engine.engine, transport)]
+    endpoints = [
+        engine.get_engine(cfg.CONF.engine.engine, transport),
+        rpc.get_engine_server()
+    ]
 
     server = messaging.get_rpc_server(
         transport,

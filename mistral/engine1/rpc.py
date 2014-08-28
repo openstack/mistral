@@ -77,7 +77,7 @@ def get_executor_server():
 def get_executor_client():
     global _EXECUTOR_CLIENT
 
-    if not _ENGINE_CLIENT:
+    if not _EXECUTOR_CLIENT:
         _EXECUTOR_CLIENT = ExecutorClient(get_transport())
 
     return _EXECUTOR_CLIENT
@@ -185,17 +185,16 @@ class EngineClient(base.Engine):
             serializer=serializer
         )
 
-    def start_workflow(self, workflow_name, workflow_input, **params):
+    def start_workflow(self, workflow_name, workflow_input=None, **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.
         """
-
         return self._client.call(
             auth_ctx.ctx(),
             'start_workflow',
             workflow_name=workflow_name,
-            workflow_input=workflow_input,
+            workflow_input=workflow_input or {},
             params=params
         )
 
