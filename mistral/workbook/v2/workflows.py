@@ -24,7 +24,7 @@ class WorkflowSpec(base.BaseSpec):
         "properties": {
             "Version": {"type": "string"},
             "name": {"type": "string"},
-            "type": {"enum": ["reverse", "linear"]},
+            "type": {"enum": ["reverse", "direct"]},
             "start_task": {"type": "string"},
             "parameters": {"type": ["array", "null"]},
             "output": {"type": ["string", "object", "array", "null"]},
@@ -49,12 +49,12 @@ class WorkflowSpec(base.BaseSpec):
     def validate(self):
         super(WorkflowSpec, self).validate()
 
-        if self._data['type'] == 'linear':
+        if self._data['type'] == 'direct':
             if 'start_task' not in self._data:
-                msg = "Linear workflow 'start_task' property is not defined."
+                msg = "Direct workflow 'start_task' property is not defined."
                 raise exc.InvalidModelException(msg)
             elif self._data['start_task'] not in self._data['tasks'].keys():
-                msg = "'start_task' property of linear workflow is invalid."
+                msg = "'start_task' property of direct workflow is invalid."
                 raise exc.InvalidModelException(msg)
 
     def get_name(self):

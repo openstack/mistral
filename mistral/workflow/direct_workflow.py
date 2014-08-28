@@ -21,25 +21,26 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
-class LinearWorkflowHandler(base.WorkflowHandler):
-    """'Linear workflow' handler.
+class DirectWorkflowHandler(base.WorkflowHandler):
+    """'Direct workflow' handler.
 
     This handler implements the workflow pattern which is based on
     direct transitions between tasks, i.e. after each task completion
     a decision should be made which tasks should run next based on
     result of task execution.
-    For example, if there's a workflow consisting of three tasks 'A',
-    'B' and 'C' where 'A' starts first then 'B' and 'C' can start second
-    if certain associated with transition 'A'->'B' and 'A'->'C' evaluate
-    to true.
+    Note, that tasks can run in parallel. For example, if there's a workflow
+    consisting of three tasks 'A', 'B' and 'C' where 'A' starts first then
+    'B' and 'C' can start second if certain associated with transition
+    'A'->'B' and 'A'->'C' evaluate to true.
     """
+
     def start_workflow(self, **params):
         self._set_execution_state(states.RUNNING)
 
         return [self._find_start_task()]
 
     def get_upstream_tasks(self, task_spec):
-        # TODO(rakhmerov): For linear workflow it's pretty hard to do
+        # TODO(rakhmerov): For direct workflow it's pretty hard to do
         #  so we may need to get rid of it at all.
         return []
 

@@ -19,7 +19,7 @@ from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
-from mistral.workflow import linear_workflow as l_wf
+from mistral.workflow import direct_workflow as d_wf
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ Version: '2.0'
 
 Workflows:
   wf1:
-    type: linear
+    type: direct
     start_task: task1
 
     tasks:
@@ -65,7 +65,7 @@ class LinearWorkflowHandlerTest(base.BaseTest):
 
         self.exec_db = exec_db
         self.wb_spec = wb_spec
-        self.handler = l_wf.LinearWorkflowHandler(exec_db)
+        self.handler = d_wf.DirectWorkflowHandler(exec_db)
 
     def _create_db_task(self, id, name, state):
         tasks_spec = self.wb_spec.get_workflows()['wf1'].get_tasks()
