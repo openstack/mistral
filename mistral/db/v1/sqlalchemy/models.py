@@ -29,7 +29,7 @@ class Workbook(mb.MistralModelBase):
         sa.UniqueConstraint('name'),
     )
 
-    id = mb._id_column()
+    id = mb.id_column()
     name = sa.Column(sa.String(80), primary_key=True)
     definition = sa.Column(sa.Text(), nullable=True)
     description = sa.Column(sa.String(200))
@@ -44,7 +44,7 @@ class WorkflowExecution(mb.MistralModelBase):
 
     __tablename__ = 'workflow_executions'
 
-    id = mb._id_column()
+    id = mb.id_column()
     workbook_name = sa.Column(sa.String(80))
     task = sa.Column(sa.String(80))
     state = sa.Column(sa.String(20))
@@ -56,7 +56,7 @@ class Task(mb.MistralModelBase):
 
     __tablename__ = 'tasks'
 
-    id = mb._id_column()
+    id = mb.id_column()
     name = sa.Column(sa.String(80))
     requires = sa.Column(st.JsonListType())
     workbook_name = sa.Column(sa.String(80))
@@ -87,7 +87,7 @@ class Trigger(mb.MistralModelBase):
         sa.UniqueConstraint('name'),
     )
 
-    id = mb._id_column()
+    id = mb.id_column()
     name = sa.Column(sa.String(80), nullable=False)
     pattern = sa.Column(sa.String(20), nullable=False)
     next_execution_time = sa.Column(sa.DateTime, nullable=False)

@@ -172,7 +172,8 @@ class DefaultEngine(base.Engine):
 
         return new_db_tasks
 
-    def _create_db_execution(self, wf_db, wf_spec, wf_input, params):
+    @staticmethod
+    def _create_db_execution(wf_db, wf_spec, wf_input, params):
         exec_db = db_api.create_execution({
             'wf_spec': wf_spec.to_dict(),
             'start_params': params or {},
@@ -188,7 +189,8 @@ class DefaultEngine(base.Engine):
 
         return exec_db
 
-    def _create_db_tasks(self, exec_db, task_specs):
+    @staticmethod
+    def _create_db_tasks(exec_db, task_specs):
         new_db_tasks = []
 
         for task_spec in task_specs:
