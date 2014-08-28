@@ -46,7 +46,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
             wb = db_api.workbook_get(trigger['workbook_name'])
 
-            context.set_ctx(trusts.create_context(wb))
+            context.set_ctx(trusts.create_context(wb.trust_id, wb.project_id))
 
             try:
                 task = spec_parser.get_workbook_spec_from_yaml(

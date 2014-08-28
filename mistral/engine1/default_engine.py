@@ -42,17 +42,20 @@ class DefaultEngine(base.Engine):
         self._engine_client = engine_client
         self._executor_client = executor_client
 
-    def start_workflow(self, workbook_name, workflow_name, input, **params):
+    def start_workflow(self, workflow_name, workflow_input, **params):
         db_api.start_tx()
 
         try:
-            wb_db = db_api.get_workbook(workbook_name)
+            wf_db = db_api.get_workflow(workflow_name)
 
-            wb_spec = \
-                spec_parser.get_workbook_spec_from_yaml(wb_db.definition)
-            wf_spec = wb_spec.get_workflows()[workflow_name]
+            wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
 
-            exec_db = self._create_db_execution(wb_db, wf_spec, input, params)
+            exec_db = self._create_db_execution(
+                wf_db,
+                wf_spec,
+                workflow_input,
+                params
+            )
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db, wf_spec)
 
@@ -170,18 +173,18 @@ class DefaultEngine(base.Engine):
 
         return new_db_tasks
 
-    def _create_db_execution(self, wb_db, wf_spec, input, params):
+    def _create_db_execution(self, wf_db, wf_spec, wf_input, params):
         exec_db = db_api.create_execution({
             'wf_spec': wf_spec.to_dict(),
             'start_params': params or {},
             'state': states.RUNNING,
-            'input': input or {},
+            'input': wf_input or {},
             'output': {},
-            'context': copy.copy(input) or {},
+            'context': copy.copy(wf_input) or {},
             'parent_task_id': params.get('parent_task_id')
         })
 
-        data_flow.add_openstack_data_to_context(wb_db, exec_db.context)
+        data_flow.add_openstack_data_to_context(wf_db, exec_db.context)
         data_flow.add_execution_to_context(exec_db, exec_db.context)
 
         return exec_db
@@ -223,15 +226,13 @@ class DefaultEngine(base.Engine):
         )
 
     def _run_workflow(self, task_db, task_spec):
-        wb_name = task_spec.get_workflow_namespace()
-        wf_name = task_spec.get_short_workflow_name()
+        wf_name = task_spec.get_workflow_name()
         wf_input = task_db.parameters
 
         start_params = copy.copy(task_spec.get_workflow_parameters())
         start_params.update({'parent_task_id': task_db.id})
 
         self._engine_client.start_workflow(
-            wb_name,
             wf_name,
             wf_input,
             **start_params

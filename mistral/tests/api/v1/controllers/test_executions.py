@@ -18,7 +18,7 @@ import json
 import mock
 from webtest import app as webtest_app
 
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral import engine
 from mistral import exceptions as ex
 from mistral.tests.api import base

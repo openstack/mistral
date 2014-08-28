@@ -12,13 +12,20 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.config import cfg
+
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
+from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
+
+# Use the set_default method to set value otherwise in certain test cases
+# the change in value is not permanent.
+cfg.CONF.set_default('auth_enable', False, group='pecan')
+
 
 WORKBOOK = """
 ---
@@ -65,18 +72,14 @@ class SubworkflowsTest(base.EngineTestCase):
     def setUp(self):
         super(SubworkflowsTest, self).setUp()
 
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
-
-        db_api.create_workbook({
+        wb_service.create_workbook_v2({
             'name': 'my_wb',
-            'description': 'Simple workbook for testing engine.',
             'definition': WORKBOOK,
-            'spec': wb_spec.to_dict(),
             'tags': ['test']
         })
 
     def test_subworkflow(self):
-        exec1_db = self.engine.start_workflow('my_wb', 'wf2', None)
+        exec1_db = self.engine.start_workflow('my_wb.wf2', None)
 
         # Execution 1.
         self.assertIsNotNone(exec1_db)

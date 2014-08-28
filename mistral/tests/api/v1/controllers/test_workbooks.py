@@ -16,7 +16,7 @@
 
 import mock
 
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral import exceptions
 from mistral.tests.api import base
 
@@ -79,8 +79,8 @@ class TestWorkbooksController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "workbook_create",
                        mock.MagicMock(side_effect=exceptions.DBDuplicateEntry))
-    @mock.patch("mistral.services.trusts.create_trust",
-                mock.MagicMock(return_value=WORKBOOKS[0]))
+    @mock.patch("mistral.services.workbooks._add_security_info",
+                mock.MagicMock(return_value=None))
     def test_post_dup(self):
         resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0],
                                   expect_errors=True)

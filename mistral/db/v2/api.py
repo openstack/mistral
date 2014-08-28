@@ -83,6 +83,29 @@ def delete_workbook(name):
     IMPL.delete_workbook(name)
 
 
+# Workflows.
+
+
+def get_workflow(name):
+    return IMPL.get_workflow(name)
+
+
+def get_workflows():
+    return IMPL.get_workflows()
+
+
+def create_workflow(values):
+    return IMPL.create_workflow(values)
+
+
+def update_workflow(name, values):
+    return IMPL.update_workflow(name, values)
+
+
+def delete_workflow(name):
+    IMPL.delete_workflow(name)
+
+
 # Executions.
 
 def get_execution(id):

@@ -22,7 +22,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
-from mistral.db import api as db_api
+from mistral.db.v1 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
 

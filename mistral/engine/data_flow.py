@@ -162,7 +162,10 @@ def add_openstack_data_to_context(context, db_workbook):
         context = {}
 
     if CONF.pecan.auth_enable:
-        workbook_ctx = trusts.create_context(db_workbook)
+        workbook_ctx = trusts.create_context(
+            db_workbook.trust_id, db_workbook.project_id
+        )
+
         if workbook_ctx:
             context.update({'openstack': workbook_ctx.to_dict()})
 
