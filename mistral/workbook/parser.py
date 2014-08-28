@@ -22,7 +22,6 @@ from mistral.workbook.v1 import tasks as tasks_v1
 from mistral.workbook.v1 import workbook as wb_v1
 from mistral.workbook.v1 import workflow as wf_v1
 from mistral.workbook.v2 import actions as actions_v2
-from mistral.workbook.v2 import namespaces as ns_v2
 from mistral.workbook.v2 import tasks as tasks_v2
 from mistral.workbook.v2 import workbook as wb_v2
 from mistral.workbook.v2 import workflows as wf_v2
@@ -82,7 +81,7 @@ def get_namespace_spec(spec_dict):
     if _get_spec_version(spec_dict) == V1_0:
         return ns_v1.NamespaceSpec(spec_dict)
     else:
-        return ns_v2.NamespaceSpec(spec_dict)
+        return None
 
 
 def get_action_spec(spec_dict):
