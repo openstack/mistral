@@ -15,6 +15,7 @@
 import abc
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -51,7 +52,6 @@ class WorkflowHandler(object):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
     def on_task_result(self, task_db, raw_result):
         """Handles event of arriving a task result.
 
@@ -70,7 +70,44 @@ class WorkflowHandler(object):
         task_db.output =\
             data_flow.evaluate_task_output(task_spec, raw_result)
 
-        return []
+        if task_db.state == states.ERROR:
+            # TODO(rakhmerov): Temporary hack, need to use policies.
+            self._set_execution_state(states.ERROR)
+
+            return []
+
+        task_specs = self._find_next_tasks(task_db)
+
+        if len(task_specs) == 0:
+            # If there are no running tasks at this point we can conclude that
+            # the workflow has finished.
+            if not self._find_running_tasks():
+                self._set_execution_state(states.SUCCESS)
+
+                task_out_ctx = data_flow.evaluate_outbound_context(task_db)
+
+                self.exec_db.context = utils.merge_dicts(
+                    self.exec_db.context,
+                    task_out_ctx
+                )
+
+                self.exec_db.output = data_flow.evaluate_workflow_output(
+                    self.wf_spec,
+                    task_out_ctx
+                )
+
+        return task_specs
+
+    @abc.abstractmethod
+    def _find_next_tasks(self, task_db):
+        """Finds tasks that should run next.
+
+        A concrete algorithm of finding such tasks depends on a concrete
+        workflow handler.
+        :param task_db: Task DB model causing the operation (completed).
+        :return: List of task specifications.
+        """
+        raise NotImplementedError
 
     def is_stopped_or_finished(self):
         return states.is_stopped_or_finished(self.exec_db.state)
@@ -114,6 +151,10 @@ class WorkflowHandler(object):
                   " state=%s -> %s]" % (self.exec_db, cur_state, state)
             raise exc.WorkflowException(msg)
 
+    def _find_running_tasks(self):
+        return [t_db for t_db in self.exec_db.tasks
+                if states.RUNNING == t_db.state]
+
 
 class TaskResult(object):
     """Explicit data structure containing a result of task execution."""
@@ -121,6 +162,9 @@ class TaskResult(object):
     def __init__(self, data=None, error=None):
         self.data = data
         self.error = error
+
+    def __repr__(self):
+        return 'TaskResult [data=%s, error=%s]' % (self.data, self.error)
 
     def is_error(self):
         return self.error is not None

@@ -40,7 +40,7 @@ from wsgiref import simple_server
 
 from mistral.api import app
 from mistral import config
-from mistral import context
+from mistral import context as ctx
 from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
@@ -50,27 +50,43 @@ LOG = logging.getLogger(__name__)
 
 
 def launch_executor(transport):
-    serializer = context.RpcContextSerializer(context.JsonPayloadSerializer())
-    target = messaging.Target(topic=cfg.CONF.executor.topic,
-                              server=cfg.CONF.executor.host)
+    target = messaging.Target(
+        topic=cfg.CONF.executor.topic,
+        server=cfg.CONF.executor.host
+    )
+
     # Since engine and executor are tightly coupled, use the engine
     # configuration to decide which executor to get.
     endpoints = [executor.get_executor(cfg.CONF.engine.engine, transport)]
+
     server = messaging.get_rpc_server(
-        transport, target, endpoints, executor='eventlet',
-        serializer=serializer)
+        transport,
+        target,
+        endpoints,
+        executor='eventlet',
+        serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
+    )
+
     server.start()
     server.wait()
 
 
 def launch_engine(transport):
-    serializer = context.RpcContextSerializer(context.JsonPayloadSerializer())
-    target = messaging.Target(topic=cfg.CONF.engine.topic,
-                              server=cfg.CONF.engine.host)
+    target = messaging.Target(
+        topic=cfg.CONF.engine.topic,
+        server=cfg.CONF.engine.host
+    )
+
     endpoints = [engine.get_engine(cfg.CONF.engine.engine, transport)]
+
     server = messaging.get_rpc_server(
-        transport, target, endpoints, executor='eventlet',
-        serializer=serializer)
+        transport,
+        target,
+        endpoints,
+        executor='eventlet',
+        serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
+    )
+
     server.start()
     server.wait()
 
@@ -78,10 +94,16 @@ def launch_engine(transport):
 def launch_api(transport):
     host = cfg.CONF.api.host
     port = cfg.CONF.api.port
-    server = simple_server.make_server(host, port,
-                                       app.setup_app(transport=transport))
+
+    server = simple_server.make_server(
+        host,
+        port,
+        app.setup_app(transport=transport)
+    )
+
     LOG.info("Mistral API is serving on http://%s:%s (PID=%s)" %
              (host, port, os.getpid()))
+
     server.serve_forever()
 
 
@@ -89,6 +111,7 @@ def launch_any(transport, options):
     # Launch the servers on different threads.
     threads = [eventlet.spawn(LAUNCH_OPTIONS[option], transport)
                for option in options]
+
     [thread.wait() for thread in threads]
 
 
@@ -123,7 +146,7 @@ def main():
         # processes because the "fake" transport is using an in process queue.
         transport = messaging.get_transport(cfg.CONF)
 
-        if (cfg.CONF.server == ['all']):
+        if cfg.CONF.server == ['all']:
             # Launch all servers.
             launch_any(transport, LAUNCH_OPTIONS.keys())
         else:

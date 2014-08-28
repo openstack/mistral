@@ -41,7 +41,7 @@ def _select_workflow_handler(wf_spec):
     if wf_type == 'reverse':
         return reverse_workflow.ReverseWorkflowHandler
 
-    if wf_type == 'direct':
+    if wf_type == 'linear':
         return linear_workflow.LinearWorkflowHandler
 
     return None

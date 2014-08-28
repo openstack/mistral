@@ -27,7 +27,7 @@ class WorkflowSpec(base.BaseSpec):
             "type": {"enum": ["reverse", "linear"]},
             "start_task": {"type": "string"},
             "parameters": {"type": ["array", "null"]},
-            "output": {"type": ["array", "null"]},
+            "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
         },
         "required": ["Version", "name", "type", "tasks"],
@@ -41,6 +41,8 @@ class WorkflowSpec(base.BaseSpec):
 
         self._name = data['name']
         self._type = data['type']
+        self._parameters = data.get('parameters')
+        self._output = data.get('output')
         self._start_task_name = data.get('start_task')
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
 
@@ -60,6 +62,12 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_type(self):
         return self._type
+
+    def get_parameters(self):
+        return self._parameters
+
+    def get_output(self):
+        return self._output
 
     def get_start_task_name(self):
         return self._start_task_name

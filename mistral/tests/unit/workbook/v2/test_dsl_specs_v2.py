@@ -52,7 +52,7 @@ Workflows:
 
     tasks:
       task3:
-        workflow: wf1 name="John Doe" age=32
+        workflow: wf1 name="John Doe" age=32 param1="Bonnie" param2="Clyde"
 """
 
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
@@ -163,7 +163,12 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf1', task3_spec.get_short_workflow_name())
         self.assertIsNone(task3_spec.get_workflow_namespace())
         self.assertEqual(
-            {'name': 'John Doe', 'age': '32'},
+            {
+                'name': 'John Doe',
+                'age': '32',
+                'param1': 'Bonnie',
+                'param2': 'Clyde'
+            },
             task3_spec.get_parameters()
         )
 

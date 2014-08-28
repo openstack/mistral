@@ -69,7 +69,7 @@ def _evaluate_upstream_context(upstream_db_tasks):
 
 
 def evaluate_task_output(task_spec, raw_result):
-    """Evaluates task output give a raw task result from action/workflow.
+    """Evaluates task output given a raw task result from action/workflow.
 
     :param task_spec: Task specification
     :param raw_result: Raw task result that comes from action/workflow
@@ -87,6 +87,20 @@ def evaluate_task_output(task_spec, raw_result):
     return output
 
 
+def evaluate_workflow_output(wf_spec, context):
+    """Evaluates workflow output.
+
+    :param wf_spec: Workflow specification.
+    :param context: Final Data Flow context (cause task's outbound context).
+    """
+    output_dict = wf_spec.get_output()
+
+    # Evaluate 'publish' clause using raw result as a context.
+    output = expr.evaluate_recursively(output_dict, context)
+
+    return output or context
+
+
 def evaluate_outbound_context(task_db):
     """Evaluates task outbound Data Flow context.
 
@@ -95,8 +109,12 @@ def evaluate_outbound_context(task_db):
     :param task_db: DB task.
     :return: Outbound task Data Flow context.
     """
+
+    in_context = copy.deepcopy(dict(task_db.in_context)) \
+        if task_db.in_context is not None else {}
+
     return utils.merge_dicts(
-        copy.copy(task_db.in_context) or {},
+        in_context,
         task_db.output
     )
 

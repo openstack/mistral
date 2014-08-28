@@ -23,22 +23,17 @@ from oslo.config import cfg
 from mistral.openstack.common import log
 from mistral import version
 
+launch_opt = cfg.ListOpt(
+    'server',
+    default=['all'],
+    help='Specifies which mistral server to start by the launch script. '
+         'Valid options are all or any combination of '
+         'api, engine, and executor.'
+)
+
 api_opts = [
     cfg.StrOpt('host', default='0.0.0.0', help='Mistral API server host'),
     cfg.IntOpt('port', default=8989, help='Mistral API server port')
-]
-
-engine_opts = [
-    cfg.StrOpt('engine', default='default',
-               help='Mistral engine plugin'),
-    cfg.StrOpt('host', default='0.0.0.0',
-               help='Name of the engine node. This can be an opaque '
-                    'identifier. It is not necessarily a hostname, '
-                    'FQDN, or IP address.'),
-    cfg.StrOpt('topic', default='engine',
-               help='The message topic that the engine listens on.'),
-    cfg.StrOpt('version', default='1.0',
-               help='The version of the engine.')
 ]
 
 pecan_opts = [
@@ -68,6 +63,19 @@ use_debugger = cfg.BoolOpt(
     'Use at your own risk.'
 )
 
+engine_opts = [
+    cfg.StrOpt('engine', default='default',
+               help='Mistral engine plugin'),
+    cfg.StrOpt('host', default='0.0.0.0',
+               help='Name of the engine node. This can be an opaque '
+                    'identifier. It is not necessarily a hostname, '
+                    'FQDN, or IP address.'),
+    cfg.StrOpt('topic', default='engine',
+               help='The message topic that the engine listens on.'),
+    cfg.StrOpt('version', default='1.0',
+               help='The version of the engine.')
+]
+
 executor_opts = [
     cfg.StrOpt('host', default='0.0.0.0',
                help='Name of the executor node. This can be an opaque '
@@ -78,14 +86,6 @@ executor_opts = [
     cfg.StrOpt('version', default='1.0',
                help='The version of the executor.')
 ]
-
-launch_opt = cfg.ListOpt(
-    'server',
-    default=['all'],
-    help='Specifies which mistral server to start by the launch script. '
-         'Valid options are all or any combination of '
-         'api, engine, and executor.'
-)
 
 wf_trace_log_name_opt = cfg.StrOpt('workflow_trace_log_name',
                                    default='workflow_trace',

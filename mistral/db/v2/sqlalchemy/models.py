@@ -51,7 +51,11 @@ class Execution(mb.MistralModelBase):
     start_params = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
     input = sa.Column(st.JsonDictType())
+    output = sa.Column(st.JsonDictType())
     context = sa.Column(st.JsonDictType())
+    # Can't use ForeignKey constraint here because SqlAlchemy will detect
+    # a circular dependency and raise an error.
+    parent_task_id = sa.Column(sa.String(36))
 
 
 class Task(mb.MistralModelBase):

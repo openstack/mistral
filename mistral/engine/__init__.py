@@ -65,7 +65,7 @@ class Engine(object):
         self.transport = get_transport(transport)
 
     @abc.abstractmethod
-    def _run_task(cls, task_id, action_name, action_params):
+    def _run_task(self, task_id, action_name, action_params):
         raise NotImplementedError()
 
     def start_workflow_execution(self, cntx, **kwargs):
