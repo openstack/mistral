@@ -16,12 +16,12 @@ import inspect
 
 from stevedore import extension
 
+from mistral.actions import action_factory
 from mistral.actions import generator_factory
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
-from mistral.openstack.common import importutils
 from mistral.openstack.common import log as logging
 from mistral.utils import inspect_utils as i_utils
 from mistral.workbook import parser as spec_parser
@@ -117,17 +117,8 @@ def get_action_class(action_full_name):
     """
     action_db = get_action_db(action_full_name)
     if action_db:
-        return construct_action_class(action_db.action_class,
-                                      action_db.attributes)
-
-
-def construct_action_class(action_class_str, attributes):
-    # Rebuild action class and restore attributes.
-    action_class = importutils.import_class(action_class_str)
-    for name, value in attributes.items():
-        setattr(action_class, name, value)
-
-    return action_class
+        return action_factory.construct_action_class(action_db.action_class,
+                                                     action_db.attributes)
 
 
 def _get_action_context(db_task, openstack_context):
