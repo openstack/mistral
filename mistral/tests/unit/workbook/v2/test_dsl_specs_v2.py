@@ -150,6 +150,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(1, len(wf2_spec.get_tasks()))
+        self.assertEqual('task3', wf2_spec.get_start_task().get_name())
 
         task3_spec = wf2_spec.get_tasks().get('task3')
 
