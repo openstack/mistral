@@ -143,6 +143,8 @@ class MistralClient(rest_client.RestClient):
 
         start_time = time.time()
 
+        expected_states = ['SUCCESS', 'RUNNING']
+
         while ex_body['state'] != 'SUCCESS':
             if time.time() - start_time > timeout:
                 msg = "Execution exceeds timeout {0} to change state " \
@@ -151,6 +153,12 @@ class MistralClient(rest_client.RestClient):
 
             _, ex_body = self.get_execution(workbook_name, ex_body['id'])
             ex_body = json.loads(ex_body)
+
+            if ex_body['state'] not in expected_states:
+                msg = "Execution state %s is not in expected " \
+                      "states: %s" % (ex_body['state'], expected_states)
+                raise exceptions.TempestException(msg)
+
             time.sleep(2)
 
         return resp, ex_body
