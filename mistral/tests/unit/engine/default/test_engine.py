@@ -118,10 +118,10 @@ class TestEngine(base.EngineTestCase):
                                  execution_id=execution['id'])
 
         self.assertIsNotNone(tasks)
-        self.assertEqual(2, len(tasks))
+        self.assertEqual(3, len(tasks))
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
-
         self.assertEqual(tasks[1]['state'], states.RUNNING)
+        self.assertEqual(tasks[2]['state'], states.IDLE)
         self.assertEqual(states.RUNNING,
                          self.engine.get_workflow_execution_state(
                              WB_NAME, execution['id']))
@@ -133,10 +133,75 @@ class TestEngine(base.EngineTestCase):
                                  execution_id=execution['id'])
         execution = db_api.execution_get(execution['id'])
 
+        self.assertEqual(3, len(tasks))
+        self.assertEqual(tasks[2]['state'], states.RUNNING)
+
+        self.engine.convey_task_result(tasks[2]['id'],
+                                       states.SUCCESS, None)
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+
+        execution = db_api.execution_get(execution['id'])
+
         self.assertEqual(execution['state'], states.SUCCESS)
         self.assertEqual(tasks[0]['state'], states.SUCCESS)
         self.assertEqual(tasks[1]['state'], states.SUCCESS)
+        self.assertEqual(tasks[2]['state'], states.SUCCESS)
         self.assertEqual(states.SUCCESS,
+                         self.engine.get_workflow_execution_state(
+                             WB_NAME, execution['id']))
+
+    @mock.patch.object(
+        engine.EngineClient, 'get_workflow_execution_state',
+        mock.MagicMock(
+            side_effect=base.EngineTestCase.mock_get_workflow_state))
+    @mock.patch.object(executor.ExecutorClient, "handle_task",
+                       mock.MagicMock())
+    @mock.patch.object(
+        db_api, 'workbook_get',
+        mock.MagicMock(return_value=get_mock_workbook(
+            'control_flow/require_flow.yaml')))
+    def test_require_error_flow(self):
+        execution = self.engine.start_workflow_execution(WB_NAME, "greet",
+                                                         CONTEXT)
+
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+
+        self.engine.convey_task_result(tasks[0]['id'],
+                                       states.ERROR, None)
+
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+
+        self.assertIsNotNone(tasks)
+        self.assertEqual(3, len(tasks))
+        self.assertEqual(tasks[0]['state'], states.ERROR)
+        self.assertEqual(tasks[1]['state'], states.RUNNING)
+        self.assertEqual(tasks[2]['state'], states.IDLE)
+        self.assertEqual(states.ERROR,
+                         self.engine.get_workflow_execution_state(
+                             WB_NAME, execution['id']))
+
+        self.engine.convey_task_result(tasks[1]['id'],
+                                       states.SUCCESS, None)
+
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+        execution = db_api.execution_get(execution['id'])
+
+        self.assertEqual(3, len(tasks))
+
+        tasks = db_api.tasks_get(workbook_name=WB_NAME,
+                                 execution_id=execution['id'])
+
+        execution = db_api.execution_get(execution['id'])
+
+        self.assertEqual(execution['state'], states.ERROR)
+        self.assertEqual(tasks[0]['state'], states.ERROR)
+        self.assertEqual(tasks[1]['state'], states.SUCCESS)
+        self.assertEqual(tasks[2]['state'], states.IDLE)
+        self.assertEqual(states.ERROR,
                          self.engine.get_workflow_execution_state(
                              WB_NAME, execution['id']))
 
