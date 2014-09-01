@@ -96,3 +96,5 @@ def setup():
         initial_delay=None,
         periodic_interval_max=1,
         context=None)
+
+    return tg

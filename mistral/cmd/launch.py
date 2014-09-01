@@ -41,9 +41,11 @@ from wsgiref import simple_server
 from mistral.api import app
 from mistral import config
 from mistral import context as ctx
+from mistral.db.v2 import api as db_api
 from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
+from mistral.services import scheduler
 
 
 LOG = logging.getLogger(__name__)
@@ -78,6 +80,10 @@ def launch_engine(transport):
     )
 
     endpoints = [engine.get_engine(cfg.CONF.engine.engine, transport)]
+
+    # Setup scheduler in engine.
+    db_api.setup_db()
+    scheduler.setup()
 
     server = messaging.get_rpc_server(
         transport,

@@ -22,7 +22,6 @@ from mistral.api.hooks import engine
 from mistral import context as ctx
 from mistral.db.v1 import api as db_api
 from mistral.services import periodic
-from mistral.services import scheduler
 
 
 def get_pecan_config():
@@ -51,7 +50,6 @@ def setup_app(config=None, transport=None):
 
     # TODO(akuznetsov) move this to trigger scheduling to separate process
     periodic.setup(transport)
-    scheduler.setup()
 
     app = pecan.make_app(
         app_conf.pop('root'),
