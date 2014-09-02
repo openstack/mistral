@@ -40,6 +40,8 @@ Workflows:
       task1:
         action: ns1.action1 name="{$.name}"
         policies:
+          wait-before: 2
+          wait-after: 5
           retry:
             count: 10
             delay: 30
@@ -122,7 +124,12 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('action1', task1_spec.get_short_action_name())
         self.assertEqual({'name': '{$.name}'}, task1_spec.get_parameters())
 
-        retry_spec = task1_spec.get_policies().get_retry()
+        policies = task1_spec.get_policies()
+
+        self.assertEqual(2, policies.get_wait_before())
+        self.assertEqual(5, policies.get_wait_after())
+
+        retry_spec = policies.get_retry()
 
         self.assertEqual(10, retry_spec.get_count())
         self.assertEqual(30, retry_spec.get_delay())
