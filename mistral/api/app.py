@@ -20,7 +20,8 @@ import pecan
 from mistral.api import access_control
 from mistral.api.hooks import engine
 from mistral import context as ctx
-from mistral.db.v1 import api as db_api
+from mistral.db.v1 import api as db_api_v1
+from mistral.db.v2 import api as db_api_v2
 from mistral.services import periodic
 from mistral.services import scheduler
 
@@ -47,7 +48,8 @@ def setup_app(config=None, transport=None):
 
     app_conf = dict(config.app)
 
-    db_api.setup_db()
+    db_api_v1.setup_db()
+    db_api_v2.setup_db()
 
     # TODO(akuznetsov) move this to trigger scheduling to separate process
     periodic.setup(transport)

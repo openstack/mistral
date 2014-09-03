@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 
@@ -103,6 +104,16 @@ class Task(mb.MistralModelBase):
     # Relations.
     execution_id = sa.Column(sa.String(36), sa.ForeignKey('executions_v2.id'))
     execution = relationship('Execution', backref="tasks", lazy='joined')
+
+    def to_dict(self):
+        d = super(Task, self).to_dict()
+
+        d['result'] = json.dumps(
+            d['output'].get('task', {}).get(d['name'], {})
+            if d['output'] else {}
+        )
+
+        return d
 
 
 class DelayedCall(mb.MistralModelBase):

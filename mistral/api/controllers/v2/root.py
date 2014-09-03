@@ -19,27 +19,33 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
-from mistral.api.controllers.v1 import execution
-from mistral.api.controllers.v1 import task
-from mistral.api.controllers.v1 import workbook
+from mistral.api.controllers.v2 import execution
+from mistral.api.controllers.v2 import task
+from mistral.api.controllers.v2 import workbook
+from mistral.api.controllers.v2 import workflow
 
 
 class RootResource(resource.Resource):
-    """Root resource for API version 1.
+    """Root resource for API version 2.
 
     It references all other resources belonging to the API.
     """
 
     uri = wtypes.text
 
+    # TODO(everyone): what else do we need here?
+    # TODO(everyone): we need to collect all the links from API v2.0
+    #                 and provide them.
+
 
 class Controller(object):
-    """API root controller for version 1."""
+    """API root controller for version 2."""
 
     workbooks = workbook.WorkbooksController()
-    executions = execution.RootExecutionsController()
-    tasks = task.RootTasksController()
+    workflows = workflow.WorkflowsController()
+    executions = execution.ExecutionsController()
+    tasks = task.TasksController()
 
     @wsme_pecan.wsexpose(RootResource)
     def index(self):
-        return RootResource(uri='%s/%s' % (pecan.request.host_url, 'v1'))
+        return RootResource(uri='%s/%s' % (pecan.request.host_url, 'v2'))

@@ -27,7 +27,7 @@ class TestRootController(base.FunctionalTest):
 
         data = jsonutils.loads(resp.body.decode())
 
-        self.assertEqual(data[0]['id'], 'v1.0')
-        self.assertEqual(data[0]['status'], 'SUPPORTED')
-        self.assertEqual(data[0]['link'], {'href': 'http://localhost/v1',
-                                           'target': 'v1'})
+        self.assertEqual(data[1]['id'], 'v2.0')
+        self.assertEqual(data[1]['status'], 'CURRENT')
+        self.assertEqual(data[1]['link'], {'href': 'http://localhost/v2',
+                                           'target': 'v2'})
