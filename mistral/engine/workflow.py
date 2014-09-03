@@ -122,7 +122,8 @@ def is_success(tasks):
 
 def is_error(tasks):
     return any(task['state'] == states.ERROR and
-               not task['task_spec'].get('on-error', {}) for task in tasks)
+               not task['task_spec'].get('on-error', {}) and
+               not task['task_spec'].get('on-finish', {}) for task in tasks)
 
 
 def _get_dependency_tasks(tasks_spec, task_spec):
