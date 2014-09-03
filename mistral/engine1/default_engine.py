@@ -17,7 +17,9 @@ from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager as a_m
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
@@ -217,12 +219,17 @@ class DefaultEngine(base.Engine):
                 self._run_workflow(t_db, t_spec)
 
     def _run_action(self, task_db, task_spec):
-        # TODO(rakhmerov): Take care of ad-hoc actions.
         action_name = task_spec.get_action_name()
+        action = a_m.get_action_db(action_name)
+
+        if not action:
+            raise exc.InvalidActionException("Failed to find Action "
+                                             "[action_name=%s]" % action_name)
 
         self._executor_client.run_action(
             task_db.id,
-            action_name,
+            action.action_class,
+            action.attributes or {},
             task_db.parameters or {}
         )
 

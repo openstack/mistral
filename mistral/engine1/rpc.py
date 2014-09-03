@@ -264,7 +264,8 @@ class ExecutorServer(object):
     def __init__(self, executor):
         self._executor = executor
 
-    def run_action(self, rpc_ctx, task_id, action_name, params):
+    def run_action(self, rpc_ctx, task_id, action_class_str,
+                   attributes, params):
         """Receives calls over RPC to run task on engine.
 
         :param rpc_ctx: RPC request context dictionary.
@@ -272,11 +273,12 @@ class ExecutorServer(object):
 
         LOG.info(
             "Received RPC request 'run_action'[rpc_ctx=%s,"
-            " task_id=%s, action_name=%s, params=%s]"
-            % (rpc_ctx, task_id, action_name, params)
+            " task_id=%s, action_class=%s, attributes=%s, params=%s]"
+            % (rpc_ctx, task_id, action_class_str, attributes, params)
         )
 
-        self._executor.run_action(task_id, action_name, params)
+        self._executor.run_action(task_id, action_class_str,
+                                  attributes, params)
 
 
 class ExecutorClient(base.Executor):
@@ -298,12 +300,14 @@ class ExecutorClient(base.Executor):
             serializer=serializer
         )
 
-    def run_action(self, task_id, action_name, action_params):
+    def run_action(self, task_id, action_class_str, attributes,
+                   action_params):
         """Sends a request to run action to executor."""
 
         kwargs = {
             'task_id': task_id,
-            'action_name': action_name,
+            'action_class_str': action_class_str,
+            'attributes': attributes,
             'params': action_params
         }
 

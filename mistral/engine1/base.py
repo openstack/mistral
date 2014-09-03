@@ -80,11 +80,13 @@ class Executor(object):
     """Action executor interface."""
 
     @abc.abstractmethod
-    def run_action(self, task_id, action_name, action_params):
+    def run_action(self, task_id, action_class_str, attributes,
+                   action_params):
         """Runs action.
 
         :param task_id: Corresponding task id.
-        :param action_name: Action name.
+        :param action_class_str: Path to action class in dot notation.
+        :param attributes: Attributes of action class which will be set to.
         :param action_params: Action parameters.
         """
         raise NotImplementedError()
