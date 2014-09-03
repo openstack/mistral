@@ -125,6 +125,14 @@ class EngineServer(object):
 
         return self._engine.on_task_result(task_id, task_result)
 
+    def run_task(self, rpc_ctx, task_id):
+        """Runs task with id=task_id.
+
+        :param task_id:
+        :return:
+        """
+        return self._engine.run_task(task_id)
+
     def stop_workflow(self, rpc_ctx, execution_id):
         """Receives calls over RPC to stop workflows on engine.
 
@@ -220,6 +228,16 @@ class EngineClient(base.Engine):
             result_data=task_result.data,
             result_error=task_result.error
         )
+
+    def run_task(self, task_id):
+        """Runs task with id=task_id.
+
+        :param task_id:
+        :return:
+        """
+        return self._client.call(auth_ctx.ctx(),
+                                 'run_task',
+                                 task_id=task_id)
 
     def stop_workflow(self, execution_id):
         """Stops the workflow with the given execution id.

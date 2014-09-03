@@ -14,7 +14,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.engine import states
 from mistral.engine1 import base
+from mistral.services import scheduler
+
+
+_ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
 
 
 def build_policies(policies_spec):
@@ -60,8 +65,13 @@ class WaitBeforePolicy(base.TaskPolicy):
         self.delay = delay
 
     def before_task_start(self, task_db, task_spec, exec_db, wf_spec):
-        # TODO(rakhmerov): Implement.
-        raise NotImplementedError
+        task_db.state = states.DELAYED
+        scheduler.schedule_call(
+            _ENGINE_CLIENT_PATH,
+            'run_task',
+            self.delay,
+            task_id=task_db.id
+        )
 
 
 class WaitAfterPolicy(base.TaskPolicy):

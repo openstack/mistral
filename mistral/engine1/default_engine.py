@@ -236,6 +236,13 @@ class DefaultEngine(base.Engine):
         elif t_spec.get_workflow_name():
             self._run_workflow(t_db, t_spec)
 
+    def run_task(self, task_id):
+        with db_api.transaction():
+            task_db = db_api.update_task(task_id, {'state': states.RUNNING})
+            task_spec = spec_parser.get_task_spec(task_db.spec)
+
+            self._run_task(task_db, task_spec)
+
     def _run_action(self, task_db, task_spec):
         action_name = task_spec.get_action_name()
         action = a_m.get_action_db(action_name)

@@ -48,6 +48,15 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def run_task(self, task_id):
+        """Runs task with id=task_id.
+
+        :param task_id:
+        :return:
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def stop_workflow(self, execution_id):
         """Stops workflow execution.
 
