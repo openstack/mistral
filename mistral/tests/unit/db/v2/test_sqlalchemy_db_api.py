@@ -52,18 +52,24 @@ WORKBOOKS = [
 
 
 class WorkbookTest(test_base.DbTestCase):
-    def test_workbook_create_and_get(self):
+    def test_create_and_get_and_load_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
         fetched = db_api.get_workbook(created['name'])
 
         self.assertEqual(created, fetched)
 
-    def test_workbook_update(self):
+        fetched = db_api.load_workbook(created.name)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_workbook("not-existing-wb"))
+
+    def test_update_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
         updated = db_api.update_workbook(
-            created['name'],
+            created.name,
             {'definition': 'my new definition'}
         )
 
@@ -73,7 +79,32 @@ class WorkbookTest(test_base.DbTestCase):
 
         self.assertEqual(updated, fetched)
 
-    def test_workbook_list(self):
+    def test_create_or_update_workbook(self):
+        name = WORKBOOKS[0]['name']
+
+        self.assertIsNone(db_api.load_workbook(name))
+
+        created = db_api.create_or_update_workbook(name, WORKBOOKS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.name)
+
+        updated = db_api.create_or_update_workbook(
+            created.name,
+            {'definition': 'my new definition'}
+        )
+
+        self.assertEqual('my new definition', updated.definition)
+        self.assertEqual(
+            'my new definition',
+            db_api.load_workbook(updated.name).definition
+        )
+
+        fetched = db_api.get_workbook(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_workbooks(self):
         created0 = db_api.create_workbook(WORKBOOKS[0])
         created1 = db_api.create_workbook(WORKBOOKS[1])
 
@@ -83,19 +114,19 @@ class WorkbookTest(test_base.DbTestCase):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
-    def test_workbook_delete(self):
+    def test_delete_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
-        fetched = db_api.get_workbook(created['name'])
+        fetched = db_api.get_workbook(created.name)
 
         self.assertEqual(created, fetched)
 
-        db_api.delete_workbook(created['name'])
+        db_api.delete_workbook(created.name)
 
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_workbook,
-            created['name']
+            created.name
         )
 
     def test_workbook_private(self):
@@ -135,7 +166,7 @@ class WorkbookTest(test_base.DbTestCase):
 
         # Assert that the project_id stored is actually the context's
         # project_id not the one given.
-        self.assertEqual(created0['project_id'], auth_context.ctx().project_id)
+        self.assertEqual(created0.project_id, auth_context.ctx().project_id)
         self.assertNotEqual(WORKBOOKS[0]['project_id'],
                             auth_context.ctx().project_id)
 
@@ -154,7 +185,7 @@ class WorkbookTest(test_base.DbTestCase):
 
         self.assertEqual(1, len(fetched))
         self.assertEqual(created0, fetched[0])
-        self.assertEqual('public', created0['scope'])
+        self.assertEqual('public', created0.scope)
 
     def test_workbook_repr(self):
         s = db_api.create_workbook(WORKBOOKS[0]).__repr__()
@@ -187,14 +218,20 @@ WORKFLOWS = [
 
 
 class WorkflowTest(test_base.DbTestCase):
-    def test_workflow_create_and_get(self):
+    def test_create_and_get_and_load_workflow(self):
         created = db_api.create_workflow(WORKFLOWS[0])
 
         fetched = db_api.get_workflow(created.name)
 
         self.assertEqual(created, fetched)
 
-    def test_workflow_update(self):
+        fetched = db_api.load_workflow(created.name)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_workflow("not-existing-wf"))
+
+    def test_update_workflow(self):
         created = db_api.create_workflow(WORKFLOWS[0])
 
         updated = db_api.update_workflow(
@@ -208,7 +245,32 @@ class WorkflowTest(test_base.DbTestCase):
 
         self.assertEqual(updated, fetched)
 
-    def test_workflow_list(self):
+    def test_create_or_update_workflow(self):
+        name = WORKFLOWS[0]['name']
+
+        self.assertIsNone(db_api.load_workflow(name))
+
+        created = db_api.create_or_update_workflow(name, WORKFLOWS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.name)
+
+        updated = db_api.create_or_update_workflow(
+            created.name,
+            {'definition': 'my new definition'}
+        )
+
+        self.assertEqual('my new definition', updated.definition)
+        self.assertEqual(
+            'my new definition',
+            db_api.load_workflow(updated.name).definition
+        )
+
+        fetched = db_api.get_workflow(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_workflows(self):
         created0 = db_api.create_workflow(WORKFLOWS[0])
         created1 = db_api.create_workflow(WORKFLOWS[1])
 
@@ -218,19 +280,19 @@ class WorkflowTest(test_base.DbTestCase):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
-    def test_workflow_delete(self):
+    def test_delete_workflow(self):
         created = db_api.create_workflow(WORKFLOWS[0])
 
-        fetched = db_api.get_workflow(created['name'])
+        fetched = db_api.get_workflow(created.name)
 
         self.assertEqual(created, fetched)
 
-        db_api.delete_workflow(created['name'])
+        db_api.delete_workflow(created.name)
 
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_workflow,
-            created['name']
+            created.name
         )
 
     def test_workflow_private(self):
@@ -270,7 +332,7 @@ class WorkflowTest(test_base.DbTestCase):
 
         # Assert that the project_id stored is actually the context's
         # project_id not the one given.
-        self.assertEqual(created0['project_id'], auth_context.ctx().project_id)
+        self.assertEqual(created0.project_id, auth_context.ctx().project_id)
         self.assertNotEqual(
             WORKFLOWS[0]['project_id'],
             auth_context.ctx().project_id
@@ -291,7 +353,7 @@ class WorkflowTest(test_base.DbTestCase):
 
         self.assertEqual(1, len(fetched))
         self.assertEqual(created0, fetched[0])
-        self.assertEqual('public', created0['scope'])
+        self.assertEqual('public', created0.scope)
 
     def test_workflow_repr(self):
         s = db_api.create_workflow(WORKFLOWS[0]).__repr__()
@@ -323,26 +385,60 @@ EXECUTIONS = [
 
 
 class ExecutionTest(test_base.DbTestCase):
-    def test_execution_create_and_get(self):
+    def test_create_and_get_and_load_execution(self):
         created = db_api.create_execution(EXECUTIONS[0])
 
-        fetched = db_api.get_execution(created['id'])
+        fetched = db_api.get_execution(created.id)
 
         self.assertEqual(created, fetched)
 
-    def test_execution_update(self):
+        fetched = db_api.load_execution(created.id)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_execution("not-existing-id"))
+
+    def test_update_execution(self):
         created = db_api.create_execution(EXECUTIONS[0])
 
-        updated = db_api.update_execution(created['id'],
-                                          {'task': 'task10'})
+        updated = db_api.update_execution(created.id, {'state': 'RUNNING'})
 
-        self.assertEqual('task10', updated['task'])
+        self.assertEqual('RUNNING', updated.state)
+        self.assertEqual(
+            'RUNNING',
+            db_api.load_execution(updated.id).state
+        )
 
-        fetched = db_api.get_execution(created['id'])
+        fetched = db_api.get_execution(created.id)
 
         self.assertEqual(updated, fetched)
 
-    def test_execution_list(self):
+    def test_create_or_update_execution(self):
+        id = 'not-existing-id'
+
+        self.assertIsNone(db_api.load_execution(id))
+
+        created = db_api.create_or_update_execution(id, EXECUTIONS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.id)
+
+        updated = db_api.create_or_update_execution(
+            created.id,
+            {'state': 'RUNNING'}
+        )
+
+        self.assertEqual('RUNNING', updated.state)
+        self.assertEqual(
+            'RUNNING',
+            db_api.load_execution(updated.id).state
+        )
+
+        fetched = db_api.get_execution(created.id)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_executions(self):
         created0 = db_api.create_execution(EXECUTIONS[0])
         db_api.create_execution(EXECUTIONS[1])
 
@@ -353,19 +449,19 @@ class ExecutionTest(test_base.DbTestCase):
         self.assertEqual(1, len(fetched))
         self.assertEqual(created0, fetched[0])
 
-    def test_execution_delete(self):
+    def test_delete_execution(self):
         created = db_api.create_execution(EXECUTIONS[0])
 
-        fetched = db_api.get_execution(created['id'])
+        fetched = db_api.get_execution(created.id)
 
         self.assertEqual(created, fetched)
 
-        db_api.delete_execution(created['id'])
+        db_api.delete_execution(created.id)
 
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_execution,
-            created['id']
+            created.id
         )
 
     def test_execution_repr(self):
@@ -415,7 +511,7 @@ TASKS = [
 
 
 class TaskTest(test_base.DbTestCase):
-    def test_task_create_and_get(self):
+    def test_create_and_get_and_load_task(self):
         ex = db_api.create_execution(EXECUTIONS[0])
 
         values = copy.copy(TASKS[0])
@@ -423,11 +519,17 @@ class TaskTest(test_base.DbTestCase):
 
         created = db_api.create_task(values)
 
-        fetched = db_api.get_task(created['id'])
+        fetched = db_api.get_task(created.id)
 
         self.assertEqual(created, fetched)
 
-    def test_task_update(self):
+        fetched = db_api.load_task(created.id)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_task("not-existing-id"))
+
+    def test_update_task(self):
         ex = db_api.create_execution(EXECUTIONS[0])
 
         values = copy.copy(TASKS[0])
@@ -436,17 +538,47 @@ class TaskTest(test_base.DbTestCase):
         created = db_api.create_task(values)
 
         updated = db_api.update_task(
-            created['id'],
+            created.id,
             {'description': 'my new desc'}
         )
 
         self.assertEqual('my new desc', updated['description'])
 
-        fetched = db_api.get_task(created['id'])
+        fetched = db_api.get_task(created.id)
 
         self.assertEqual(updated, fetched)
 
-    def test_task_list(self):
+    def test_create_or_update_task(self):
+        id = 'not-existing-id'
+
+        self.assertIsNone(db_api.load_task(id))
+
+        ex = db_api.create_execution(EXECUTIONS[0])
+
+        values = copy.copy(TASKS[0])
+        values.update({'execution_id': ex.id})
+
+        created = db_api.create_or_update_task(id, values)
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.id)
+
+        updated = db_api.create_or_update_task(
+            created.id,
+            {'state': 'RUNNING'}
+        )
+
+        self.assertEqual('RUNNING', updated.state)
+        self.assertEqual(
+            'RUNNING',
+            db_api.load_task(updated.id).state
+        )
+
+        fetched = db_api.get_task(created.id)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_tasks(self):
         ex = db_api.create_execution(EXECUTIONS[0])
 
         values = copy.copy(TASKS[0])
@@ -465,7 +597,7 @@ class TaskTest(test_base.DbTestCase):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
-    def test_task_delete(self):
+    def test_delete_task(self):
         ex = db_api.create_execution(EXECUTIONS[0])
 
         values = copy.copy(TASKS[0])
@@ -473,11 +605,11 @@ class TaskTest(test_base.DbTestCase):
 
         created = db_api.create_task(values)
 
-        fetched = db_api.get_task(created['id'])
+        fetched = db_api.get_task(created.id)
 
         self.assertEqual(created, fetched)
 
-        db_api.delete_task(created['id'])
+        db_api.delete_task(created.id)
 
         self.assertRaises(
             exc.NotFoundException,
@@ -567,7 +699,7 @@ class TXTest(test_base.DbTestCase):
             self.assertEqual(created, fetched)
 
             created_workbook = db_api.create_workbook(WORKBOOKS[0])
-            fetched_workbook = db_api.get_workbook(created_workbook['name'])
+            fetched_workbook = db_api.get_workbook(created_workbook.name)
 
             self.assertEqual(created_workbook, fetched_workbook)
             self.assertTrue(self.is_db_session_open())
@@ -580,12 +712,12 @@ class TXTest(test_base.DbTestCase):
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_execution,
-            created['id']
+            created.id
         )
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_workbook,
-            created_workbook['name']
+            created_workbook.name
         )
 
         self.assertFalse(self.is_db_session_open())
@@ -618,12 +750,12 @@ class TXTest(test_base.DbTestCase):
 
         try:
             created = db_api.create_execution(EXECUTIONS[0])
-            fetched = db_api.get_execution(created['id'])
+            fetched = db_api.get_execution(created.id)
 
             self.assertEqual(created, fetched)
 
             created_workbook = db_api.create_workbook(WORKBOOKS[0])
-            fetched_workbook = db_api.get_workbook(created_workbook['name'])
+            fetched_workbook = db_api.get_workbook(created_workbook.name)
 
             self.assertEqual(created_workbook, fetched_workbook)
             self.assertTrue(self.is_db_session_open())
@@ -634,11 +766,11 @@ class TXTest(test_base.DbTestCase):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.get_execution(created['id'])
+        fetched = db_api.get_execution(created.id)
 
         self.assertEqual(created, fetched)
 
-        fetched_workbook = db_api.get_workbook(created_workbook['name'])
+        fetched_workbook = db_api.get_workbook(created_workbook.name)
 
         self.assertEqual(created_workbook, fetched_workbook)
         self.assertFalse(self.is_db_session_open())
