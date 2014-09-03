@@ -17,6 +17,7 @@ from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
+from mistral.engine1 import policies
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
@@ -25,7 +26,6 @@ from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import workflow_handler_factory as wfh_factory
-
 
 LOG = logging.getLogger(__name__)
 
@@ -85,10 +85,14 @@ class DefaultEngine(base.Engine):
             # Calculate tasks to process next.
             task_specs = wf_handler.on_task_result(task_db, raw_result)
 
-            if task_specs:
-                self._apply_task_policies(task_db)
-                self._apply_workflow_policies(exec_db, task_db)
+            self._after_task_complete(
+                task_db,
+                spec_parser.get_task_spec(task_db.spec),
+                exec_db,
+                spec_parser.get_workflow_spec(exec_db.wf_spec)
+            )
 
+            if task_specs:
                 self._process_task_specs(task_specs, exec_db, wf_handler)
 
             self._check_subworkflow_completion(exec_db)
@@ -139,14 +143,6 @@ class DefaultEngine(base.Engine):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def _apply_task_policies(self, task_db):
-        # TODO(rakhmerov): Implement.
-        pass
-
-    def _apply_workflow_policies(self, exec_db, task_db):
-        # TODO(rakhmerov): Implement.
-        pass
-
     def _process_task_specs(self, task_specs, exec_db, wf_handler):
         LOG.debug('Processing workflow tasks: %s' % task_specs)
 
@@ -154,7 +150,7 @@ class DefaultEngine(base.Engine):
         db_tasks = self._prepare_db_tasks(task_specs, exec_db, wf_handler)
 
         # Running actions/workflows.
-        self._run_tasks(db_tasks, task_specs)
+        self._run_tasks(db_tasks, task_specs, exec_db)
 
     def _prepare_db_tasks(self, task_specs, exec_db, wf_handler):
         wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
@@ -211,12 +207,34 @@ class DefaultEngine(base.Engine):
 
         return new_db_tasks
 
-    def _run_tasks(self, db_tasks, task_specs):
+    @staticmethod
+    def _before_task_start(task_db, task_spec, exec_db, wf_spec):
+        for p in policies.build_policies(task_spec.get_policies()):
+            p.before_task_start(task_db, task_spec, exec_db, wf_spec)
+
+    @staticmethod
+    def _after_task_complete(task_db, task_spec, exec_db, wf_spec):
+        for p in policies.build_policies(task_spec.get_policies()):
+            p.after_task_complete(task_db, task_spec, exec_db, wf_spec)
+
+    def _run_tasks(self, db_tasks, task_specs, exec_db):
         for t_db, t_spec in zip(db_tasks, task_specs):
-            if t_spec.get_action_name():
-                self._run_action(t_db, t_spec)
-            elif t_spec.get_workflow_name():
-                self._run_workflow(t_db, t_spec)
+            self._before_task_start(
+                t_db,
+                t_spec,
+                exec_db,
+                spec_parser.get_workflow_spec(exec_db.wf_spec)
+            )
+
+            # Policies could possibly change task state.
+            if t_db.state == states.RUNNING:
+                self._run_task(t_db, t_spec)
+
+    def _run_task(self, t_db, t_spec):
+        if t_spec.get_action_name():
+            self._run_action(t_db, t_spec)
+        elif t_spec.get_workflow_name():
+            self._run_workflow(t_db, t_spec)
 
     def _run_action(self, task_db, task_spec):
         action_name = task_spec.get_action_name()

@@ -93,26 +93,6 @@ class Executor(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class WorkflowPolicy(object):
-    """Workflow policy.
-
-    Provides interface to manage workflow execution after each
-    task completion.
-    """
-
-    @abc.abstractmethod
-    def on_task_complete(self, exec_db, wf_spec, task_db, task_spec):
-        """Perform policy on task completion.
-
-        :param exec_db: Execution DB model.
-        :param wf_spec: Workflow specification.
-        :param task_db: Completed task.
-        :param task_spec: Completed task specification.
-        """
-        raise NotImplementedError
-
-
-@six.add_metaclass(abc.ABCMeta)
 class TaskPolicy(object):
     """Task policy.
 
@@ -121,11 +101,24 @@ class TaskPolicy(object):
     to run a task repeatedly if it finishes with a failure.
     """
 
-    @abc.abstractmethod
-    def on_task_complete(self, task_db, task_spec):
-        """Perform policy on task completion.
+    def before_task_start(self, task_db, task_spec, exec_db, wf_spec):
+        """Called right before task start.
 
-        :param task_db: Completed task.
-        :param task_spec: Completed task specification.
+        :param task_db: DB model for task that is about to start.
+        :param task_spec: Task specification.
+        :param exec_db: Workflow execution object.
+        :param wf_spec: Workflow specification.
         """
-        raise NotImplementedError
+        # No-op by default.
+        pass
+
+    def after_task_complete(self, task_db, task_spec, exec_db, wf_spec):
+        """Called right after task completes.
+
+        :param task_db: Completed task DB model.
+        :param task_spec: Completed task specification.
+        :param exec_db: Workflow execution object.
+        :param wf_spec: Workflow specification.
+        """
+        # No-op by default.
+        pass
