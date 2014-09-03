@@ -220,6 +220,10 @@ def delete_workflow(name, session=None):
 
 def _get_workflows(**kwargs):
     query = b.model_query(models.Workflow)
+
+    # TODO(rakhmerov): I think DB layer shouldn't do this.
+    #  It's not its responsibility. Additional security filtering should
+    #  be applied in upper layers.
     proj = query.filter_by(project_id=context.ctx().project_id,
                            **kwargs)
     public = query.filter_by(scope='public', **kwargs)
