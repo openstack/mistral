@@ -19,6 +19,7 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral.services import scheduler
 from mistral.tests import base
+from mistral.workflow import base as wf_base
 
 
 def factory_method():
@@ -56,7 +57,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         eventlet.sleep(delay * 2)
 
-        factory().run_something.called_once_with(name='task', id='123')
+        factory().run_something.assert_called_once_with(name='task', id='123')
 
         time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
         calls = db_api.get_delayed_calls_to_start(time_filter)
@@ -86,7 +87,54 @@ class SchedulerServiceTest(base.DbTestCase):
 
         eventlet.sleep(delay * 2)
 
-        method().called_once_with(name='task', id='321')
+        method.assert_called_once_with(name='task', id='321')
+
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        calls = db_api.get_delayed_calls_to_start(time_filter)
+
+        self.assertEqual(0, len(calls))
+
+    @mock.patch('mistral.tests.unit.services.test_scheduler.factory_method')
+    def test_scheduler_with_serializer(self, factory):
+        factory_method = ('mistral.tests.unit.services.'
+                          'test_scheduler.factory_method')
+        target_method = 'run_something'
+
+        task_result = wf_base.TaskResult('data', 'error')
+
+        method_args = {
+            'name': 'task',
+            'id': '123',
+            'result': task_result}
+
+        serializers_map = {
+            'result': 'mistral.utils.serializer.TaskResultSerializer'
+        }
+
+        delay = 0.5
+
+        scheduler.schedule_call(factory_method,
+                                target_method,
+                                delay,
+                                serializers=serializers_map,
+                                **method_args)
+
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        calls = db_api.get_delayed_calls_to_start(time_filter)
+
+        self.assertEqual(1, len(calls))
+        call = self._assert_single_item(calls,
+                                        target_method_name=target_method)
+
+        self.assertIn('name', call['method_arguments'])
+
+        eventlet.sleep(delay * 2)
+
+        result = factory().run_something.call_args[1].get('result')
+
+        self.assertIsInstance(result, wf_base.TaskResult)
+        self.assertEqual('data', result.data)
+        self.assertEqual('error', result.error)
 
         time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
         calls = db_api.get_delayed_calls_to_start(time_filter)

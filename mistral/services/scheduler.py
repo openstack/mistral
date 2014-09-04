@@ -12,11 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
+import copy
 import datetime
 
 from mistral import context
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.openstack.common import importutils
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
@@ -27,7 +28,7 @@ LOG = log.getLogger(__name__)
 
 
 def schedule_call(factory_method_path, target_method_name,
-                  run_after, **method_args):
+                  run_after, serializers=None, **method_args):
     """Add this call specification to DB, and then after run_after
     seconds service CallScheduler invokes the target_method.
 
@@ -36,6 +37,12 @@ def schedule_call(factory_method_path, target_method_name,
     :param target_method_name: Name of target object method which
     will be invoked.
     :param run_after: Value in seconds.
+    param serializers: map of argument names and their serializer class paths.
+     Use when an argument is an object of specific type, and needs to be
+      serialized. Example:
+      { "result": "mistral.utils.serializer.TaskResultSerializer"}
+      Serializer for the object type must implement serializer interface
+       in mistral/utils/serializer.py
     :param method_args: Target method keyword arguments.
     :return: None
     """
@@ -44,11 +51,27 @@ def schedule_call(factory_method_path, target_method_name,
     execution_time = (datetime.datetime.now()
                       + datetime.timedelta(seconds=run_after))
 
+    if serializers:
+        for arg_name, serializer_path in serializers.items():
+            if arg_name not in method_args:
+                raise exc.MistralException("Serializable method argument %s"
+                                           " not found in method_args=%s"
+                                           % (arg_name, method_args))
+            try:
+                serializer = importutils.import_class(serializer_path)()
+            except ImportError as e:
+                raise ImportError("Cannot import class %s: %s"
+                                  % (serializer_path, e))
+
+            serialized = serializer.serialize(method_args[arg_name])
+            method_args[arg_name] = serialized
+
     values = {
         'factory_method_path': factory_method_path,
         'target_method_name': target_method_name,
         'execution_time': execution_time,
         'auth_context': ctx,
+        'serializers': serializers,
         'method_arguments': method_args
     }
 
@@ -76,9 +99,21 @@ class CallScheduler(periodic_task.PeriodicTasks):
             else:
                 target_method = importutils.import_class(
                     call.target_method_name)
+
+            method_args = copy.copy(call.method_arguments)
+
+            if call.serializers:
+                # Deserialize arguments.
+                for arg_name, serializer_path in call.serializers.items():
+                    serializer = importutils.import_class(serializer_path)()
+
+                    deserialized = serializer.deserialize(
+                        method_args[arg_name])
+
+                    method_args[arg_name] = deserialized
             try:
                 # Call the method.
-                target_method(**call.method_arguments)
+                target_method(**method_args)
             except Exception as e:
                 LOG.debug("Exception was thrown during the "
                           "delayed call %s - %s", call, e)
