@@ -21,8 +21,11 @@ VALID_WB = """
 ---
 Version: '2.0'
 
+Description: This is a test workbook
+
 Actions:
   action1:
+    description: This is a test ad-hoc action
     base: std.echo
     base-parameters:
         output: "Hello {$.name}!"
@@ -30,6 +33,7 @@ Actions:
 
 Workflows:
   wf1:
+    description: This is a test workflow
     type: reverse
 
     parameters:
@@ -38,6 +42,7 @@ Workflows:
 
     tasks:
       task1:
+        description: This is a test task
         action: ns1.action1 name="{$.name}"
         policies:
           wait-before: 2
@@ -99,6 +104,7 @@ class DSLv2ModelTest(base.BaseTest):
         tr_specs = wb_spec.get_triggers()
 
         self.assertEqual('2.0', wb_spec.get_version())
+        self.assertEqual('This is a test workbook', wb_spec.get_description())
         self.assertIsNotNone(act_specs)
         self.assertIsNotNone(wf_specs)
         self.assertIsNone(tr_specs)
@@ -109,6 +115,10 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertIsNotNone(action_spec)
         self.assertEqual('2.0', action_spec.get_version())
         self.assertEqual('action1', action_spec.get_name())
+        self.assertEqual(
+            'This is a test ad-hoc action',
+            action_spec.get_description()
+        )
         self.assertEqual('std.echo', action_spec.get_base())
         self.assertDictEqual(
             {'output': 'Hello {$.name}!'},
@@ -125,6 +135,10 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual('2.0', wf1_spec.get_version())
         self.assertEqual('wf1', wf1_spec.get_name())
+        self.assertEqual(
+            'This is a test workflow',
+            wf1_spec.get_description()
+        )
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertEqual(2, len(wf1_spec.get_tasks()))
 
@@ -135,6 +149,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertIsNotNone(task1_spec)
         self.assertEqual('2.0', task1_spec.get_version())
         self.assertEqual('task1', task1_spec.get_name())
+        self.assertEqual('This is a test task', task1_spec.get_description())
         self.assertEqual('ns1.action1', task1_spec.get_action_name())
         self.assertEqual('action1', task1_spec.get_short_action_name())
         self.assertEqual({'name': '{$.name}'}, task1_spec.get_parameters())

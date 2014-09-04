@@ -24,6 +24,7 @@ class WorkbookSpec(base.BaseSpec):
         "type": "object",
         "properties": {
             "Version": {"value": "2.0"},
+            "Description": {"type": "string"},
             "Actions": {"type": "object"},
             "Workflows": {"type": "object"},
             "Triggers": {"type": "object"}
@@ -38,10 +39,14 @@ class WorkbookSpec(base.BaseSpec):
 
         self._inject_version(['Actions', 'Workflows', 'Triggers'])
 
+        self._description = data.get('Description')
         self._actions = self._spec_property('Actions', act.ActionSpecList)
         self._workflows = \
             self._spec_property('Workflows', wf.WorkflowSpecList)
         self._triggers = self._spec_property('Triggers', tr.TriggerSpecList)
+
+    def get_description(self):
+        return self._description
 
     def get_actions(self):
         return self._actions
