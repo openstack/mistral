@@ -78,6 +78,8 @@ class TaskSpec(base.BaseSpec):
                   " specified:" % self._data
             raise exc.InvalidModelException(msg)
 
+        params = {}
+
         if self._action:
             self._action, params = self._parse_cmd_and_params(self._action)
         elif self._workflow:
@@ -85,7 +87,8 @@ class TaskSpec(base.BaseSpec):
 
         utils.merge_dicts(self._parameters, params)
 
-    def _parse_cmd_and_params(self, cmd_str):
+    @staticmethod
+    def _parse_cmd_and_params(cmd_str):
         # TODO(rakhmerov): Try to find a way with one expression.
         cmd_matcher = CMD_PTRN.search(cmd_str)
 
@@ -114,30 +117,8 @@ class TaskSpec(base.BaseSpec):
     def get_action_name(self):
         return self._action if self._action else None
 
-    def get_action_namespace(self):
-        if not self._action:
-            return None
-
-        arr = self._action.split('.')
-
-        return arr[0] if len(arr) > 1 else None
-
-    def get_short_action_name(self):
-        return self._action.split('.')[-1] if self._action else None
-
     def get_workflow_name(self):
         return self._workflow
-
-    def get_workflow_namespace(self):
-        if not self._workflow:
-            return None
-
-        arr = self._workflow.split('.')
-
-        return arr[0] if len(arr) > 1 else None
-
-    def get_short_workflow_name(self):
-        return self._workflow.split('.')[-1] if self._workflow else None
 
     def get_parameters(self):
         return self._parameters

@@ -149,7 +149,6 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('task1', task1_spec.get_name())
         self.assertEqual('This is a test task', task1_spec.get_description())
         self.assertEqual('ns1.action1', task1_spec.get_action_name())
-        self.assertEqual('action1', task1_spec.get_short_action_name())
         self.assertEqual({'name': '{$.name}'}, task1_spec.get_parameters())
 
         policies = task1_spec.get_policies()
@@ -169,11 +168,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', task2_spec.get_version())
         self.assertEqual('task2', task2_spec.get_name())
         self.assertEqual('std.echo', task2_spec.get_action_name())
-        self.assertEqual('echo', task2_spec.get_short_action_name())
-        self.assertEqual('std', task2_spec.get_action_namespace())
         self.assertIsNone(task2_spec.get_workflow_name())
-        self.assertIsNone(task2_spec.get_short_workflow_name())
-        self.assertIsNone(task2_spec.get_workflow_namespace())
         self.assertEqual(
             {'output': 'Thanks {$.name}!'},
             task2_spec.get_parameters()
@@ -193,11 +188,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', task3_spec.get_version())
         self.assertEqual('task3', task3_spec.get_name())
         self.assertIsNone(task3_spec.get_action_name())
-        self.assertIsNone(task3_spec.get_short_action_name())
-        self.assertIsNone(task3_spec.get_action_namespace())
         self.assertEqual('wf1', task3_spec.get_workflow_name())
-        self.assertEqual('wf1', task3_spec.get_short_workflow_name())
-        self.assertIsNone(task3_spec.get_workflow_namespace())
         self.assertEqual(
             {
                 'name': 'John Doe',
