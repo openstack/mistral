@@ -65,6 +65,21 @@ Workflows:
         workflow: wf1 name="John Doe" age=32 param1="Bonnie" param2="Clyde"
         workflow-parameters:
           param1: val1
+        on-error:
+          task4: $.my_val = 1
+        on-success:
+          task5: $.my_val = 2
+        on-complete:
+          task6: $.my_val = 3
+
+      task4:
+        action: std.echo output="Task 4 echo"
+
+      task5:
+        action: std.echo output="Task 5 echo"
+
+      task6:
+        action: std.echo output="Task 6 echo"
 """
 
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
@@ -156,7 +171,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', wf2_spec.get_version())
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
-        self.assertEqual(1, len(wf2_spec.get_tasks()))
+        self.assertEqual(4, len(wf2_spec.get_tasks()))
         self.assertEqual('task3', wf2_spec.get_start_task().get_name())
 
         task3_spec = wf2_spec.get_tasks().get('task3')
@@ -182,6 +197,18 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertDictEqual(
             {'param1': 'val1'},
             task3_spec.get_workflow_parameters()
+        )
+        self.assertDictEqual(
+            {'task4': '$.my_val = 1'},
+            task3_spec.get_on_error()
+        )
+        self.assertDictEqual(
+            {'task5': '$.my_val = 2'},
+            task3_spec.get_on_success()
+        )
+        self.assertDictEqual(
+            {'task6': '$.my_val = 3'},
+            task3_spec.get_on_complete()
         )
 
     def test_to_dict(self):

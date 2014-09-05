@@ -40,7 +40,7 @@ class TaskSpec(base.BaseSpec):
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
             "requires": {"type": ["string", "array", "null"]},
-            "on-finish": {"type": ["string", "object", "array", "null"]},
+            "on-complete": {"type": ["string", "object", "array", "null"]},
             "on-success": {"type": ["string", "object", "array", "null"]},
             "on-error": {"type": ["string", "object", "array", "null"]}
         },
@@ -154,8 +154,8 @@ class TaskSpec(base.BaseSpec):
 
         return self._requires
 
-    def get_on_finish(self):
-        return self._get_as_dict("on-finish")
+    def get_on_complete(self):
+        return self._get_as_dict("on-complete")
 
     def get_on_success(self):
         return self._get_as_dict("on-success")

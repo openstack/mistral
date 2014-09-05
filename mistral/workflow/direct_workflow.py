@@ -47,7 +47,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def _find_next_tasks(self, task_db):
         """Finds tasks that should run after completing given task.
 
-        Expression 'on_finish' is not mutually exclusive to 'on_success'
+        Expression 'on_complete' is not mutually exclusive to 'on_success'
          and 'on_error'.
         :param task_db: Task DB model.
         :return: List of task specifications.
@@ -74,10 +74,10 @@ class DirectWorkflowHandler(base.WorkflowHandler):
                 task_specs = self._get_tasks_to_schedule(on_success, ctx)
 
         if states.is_finished(t_state):
-            on_finish = tasks_spec[t_name].get_on_finish()
+            on_complete = tasks_spec[t_name].get_on_complete()
 
-            if on_finish:
-                task_specs += self._get_tasks_to_schedule(on_finish, ctx)
+            if on_complete:
+                task_specs += self._get_tasks_to_schedule(on_complete, ctx)
 
         LOG.debug("Found tasks: %s" % task_specs)
 

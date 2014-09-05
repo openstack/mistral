@@ -38,7 +38,7 @@ Workflows:
         action: std.echo output="Hey"
         publish:
           res1: $
-        on-finish:
+        on-complete:
             - task2: $.res1 = 'Hey'
             - task3: $.res1 = 'Not Hey'
 
@@ -50,9 +50,9 @@ Workflows:
 """
 
 
-class LinearWorkflowHandlerTest(base.BaseTest):
+class DirectWorkflowHandlerTest(base.BaseTest):
     def setUp(self):
-        super(LinearWorkflowHandlerTest, self).setUp()
+        super(DirectWorkflowHandlerTest, self).setUp()
 
         wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
 
