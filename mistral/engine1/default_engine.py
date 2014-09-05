@@ -89,8 +89,7 @@ class DefaultEngine(base.Engine):
 
                 self._process_task_specs(task_specs, exec_db, wf_handler)
 
-            if exec_db.state == states.SUCCESS and exec_db.parent_task_id:
-                self._process_subworkflow_output(exec_db)
+            self._check_subworkflow_completion(exec_db)
 
             db_api.commit_tx()
         finally:
@@ -238,8 +237,19 @@ class DefaultEngine(base.Engine):
             **start_params
         )
 
-    def _process_subworkflow_output(self, exec_db):
-        self._engine_client.on_task_result(
-            exec_db.parent_task_id,
-            wf_base.TaskResult(data=exec_db.output)
-        )
+    def _check_subworkflow_completion(self, exec_db):
+        if not exec_db.parent_task_id:
+            return
+
+        if exec_db.state == states.SUCCESS:
+            self._engine_client.on_task_result(
+                exec_db.parent_task_id,
+                wf_base.TaskResult(data=exec_db.output)
+            )
+        elif exec_db.state == states.ERROR:
+            err_msg = 'Failed subworkflow [execution_id=%s]' % exec_db.id
+
+            self._engine_client.on_task_result(
+                exec_db.parent_task_id,
+                wf_base.TaskResult(error=err_msg)
+            )

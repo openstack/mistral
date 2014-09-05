@@ -12,9 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo.config import cfg
 
+from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
@@ -78,7 +81,7 @@ class SubworkflowsTest(base.EngineTestCase):
             'tags': ['test']
         })
 
-    def test_subworkflow(self):
+    def test_subworkflow_success(self):
         exec1_db = self.engine.start_workflow('my_wb.wf2', None)
 
         # Execution 1.
@@ -141,4 +144,26 @@ class SubworkflowsTest(base.EngineTestCase):
                 'slogan': "'Bonnie & Clyde' is a cool movie!"
             },
             exec1_db.output
+        )
+
+    @mock.patch.object(std_actions.EchoAction, 'run',
+                       mock.MagicMock(side_effect=exc.ActionException))
+    def test_subworkflow_error(self):
+        exec1_db = self.engine.start_workflow('my_wb.wf2', None)
+
+        db_execs = db_api.get_executions()
+
+        self.assertEqual(2, len(db_execs))
+
+        exec2_db = db_execs[0] if db_execs[0].id != exec1_db.id \
+            else db_execs[1]
+
+        # Wait till workflow 'wf1' is completed.
+        self._await(
+            lambda: db_api.get_execution(exec2_db.id).state == states.ERROR,
+        )
+
+        # Wait till workflow 'wf2' is completed, its state must be ERROR.
+        self._await(
+            lambda: db_api.get_execution(exec1_db.id).state == states.ERROR,
         )
