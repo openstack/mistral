@@ -87,7 +87,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         task_specs = []
 
         for t_name, condition in task_conditions.iteritems():
-            if expr.evaluate(condition, ctx):
+            if not condition or expr.evaluate(condition, ctx):
                 task_specs.append(self.wf_spec.get_tasks()[t_name])
 
         return task_specs
