@@ -94,16 +94,18 @@ class Executor(object):
 class WorkflowPolicy(object):
     """Workflow policy.
 
-    Provides the interface to change the workflow state depending on certain
-    conditions.
+    Provides interface to manage workflow execution after each
+    task completion.
     """
 
     @abc.abstractmethod
-    def on_task_finish(self, exec_db, task_db):
-        """Calculates workflow state after task completion.
+    def on_task_complete(self, exec_db, wf_spec, task_db, task_spec):
+        """Perform policy on task completion.
 
+        :param exec_db: Execution DB model.
+        :param wf_spec: Workflow specification.
         :param task_db: Completed task.
-        :return: New workflow state.
+        :param task_spec: Completed task specification.
         """
         raise NotImplementedError
 
@@ -112,16 +114,16 @@ class WorkflowPolicy(object):
 class TaskPolicy(object):
     """Task policy.
 
-    Provides the interface to perform any work after a has completed.
+    Provides interface to perform any work after a task has completed.
     An example of task policy may be 'retry' policy that makes engine
     to run a task repeatedly if it finishes with a failure.
     """
 
     @abc.abstractmethod
-    def on_task_finish(self, task_db):
-        """Calculates workflow state after task completion.
+    def on_task_complete(self, task_db, task_spec):
+        """Perform policy on task completion.
 
         :param task_db: Completed task.
-        :return: New task state.
+        :param task_spec: Completed task specification.
         """
         raise NotImplementedError
