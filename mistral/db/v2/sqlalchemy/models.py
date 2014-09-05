@@ -31,7 +31,7 @@ class Workbook(mb.MistralModelBase):
         sa.UniqueConstraint('name'),
     )
 
-    id = mb._id_column()
+    id = mb.id_column()
     name = sa.Column(sa.String(80), primary_key=True)
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
@@ -50,7 +50,7 @@ class Workflow(mb.MistralModelBase):
         sa.UniqueConstraint('name'),
     )
 
-    id = mb._id_column()
+    id = mb.id_column()
     name = sa.Column(sa.String(80), primary_key=True)
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
@@ -65,7 +65,7 @@ class Execution(mb.MistralModelBase):
 
     __tablename__ = 'executions_v2'
 
-    id = mb._id_column()
+    id = mb.id_column()
     wf_spec = sa.Column(st.JsonDictType())
     start_params = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
@@ -83,7 +83,7 @@ class Task(mb.MistralModelBase):
     __tablename__ = 'tasks_v2'
 
     # Main properties.
-    id = mb._id_column()
+    id = mb.id_column()
     name = sa.Column(sa.String(80))
     wf_name = sa.Column(sa.String(80))
     spec = sa.Column(st.JsonDictType())
@@ -121,7 +121,7 @@ class DelayedCall(mb.MistralModelBase):
 
     __tablename__ = 'delayed_calls_v2'
 
-    id = mb._id_column()
+    id = mb.id_column()
     factory_method_path = sa.Column(sa.String(200), nullable=True)
     target_method_name = sa.Column(sa.String(80), nullable=False)
     method_arguments = sa.Column(st.JsonDictType())
