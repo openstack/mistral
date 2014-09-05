@@ -43,16 +43,10 @@ def create_workbook_v2(values):
     _add_security_info(values)
     _update_specification(values)
 
-    db_api_v2.start_tx()
-
-    try:
+    with db_api_v2.transaction():
         wb_db = db_api_v2.create_workbook(values)
 
         _check_workbook_definition_update(wb_db, values)
-
-        db_api_v2.commit_tx()
-    finally:
-        db_api_v2.end_tx()
 
     return wb_db
 
@@ -60,16 +54,10 @@ def create_workbook_v2(values):
 def update_workbook_v2(workbook_name, values):
     _update_specification(values)
 
-    db_api_v2.start_tx()
-
-    try:
+    with db_api_v2.transaction():
         wb_db = db_api_v2.update_workbook(workbook_name, values)
 
         _check_workbook_definition_update(wb_db, values)
-
-        db_api_v2.commit_tx()
-    finally:
-        db_api_v2.end_tx()
 
     return wb_db
 

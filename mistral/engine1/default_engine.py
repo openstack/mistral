@@ -45,9 +45,7 @@ class DefaultEngine(base.Engine):
         self._executor_client = executor_client
 
     def start_workflow(self, workflow_name, workflow_input, **params):
-        db_api.start_tx()
-
-        try:
+        with db_api.transaction():
             wf_db = db_api.get_workflow(workflow_name)
 
             wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
@@ -67,16 +65,10 @@ class DefaultEngine(base.Engine):
             if task_specs:
                 self._process_task_specs(task_specs, exec_db, wf_handler)
 
-            db_api.commit_tx()
-        finally:
-            db_api.end_tx()
-
         return exec_db
 
     def on_task_result(self, task_id, raw_result):
-        db_api.start_tx()
-
-        try:
+        with db_api.transaction():
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
 
@@ -95,32 +87,20 @@ class DefaultEngine(base.Engine):
 
             self._check_subworkflow_completion(exec_db)
 
-            db_api.commit_tx()
-        finally:
-            db_api.end_tx()
-
         return task_db
 
     def stop_workflow(self, execution_id):
-        db_api.start_tx()
-
-        try:
+        with db_api.transaction():
             exec_db = db_api.get_execution(execution_id)
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
             wf_handler.stop_workflow()
 
-            db_api.commit_tx()
-        finally:
-            db_api.end_tx()
-
         return exec_db
 
     def resume_workflow(self, execution_id):
-        db_api.start_tx()
-
-        try:
+        with db_api.transaction():
             exec_db = db_api.get_execution(execution_id)
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
@@ -130,10 +110,6 @@ class DefaultEngine(base.Engine):
 
             if task_specs:
                 self._process_task_specs(task_specs, exec_db, wf_handler)
-
-            db_api.commit_tx()
-        finally:
-            db_api.end_tx()
 
         return exec_db
 
