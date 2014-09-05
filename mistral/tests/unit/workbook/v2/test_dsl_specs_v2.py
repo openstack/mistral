@@ -23,7 +23,7 @@ Version: '2.0'
 
 Actions:
   action1:
-    class: std.echo
+    base: std.echo
     base-parameters:
         output: "Hello {$.name}!"
     output: $
@@ -80,7 +80,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertIsNotNone(action_spec)
         self.assertEqual('2.0', action_spec.get_version())
         self.assertEqual('action1', action_spec.get_name())
-        self.assertEqual('std.echo', action_spec.get_class())
+        self.assertEqual('std.echo', action_spec.get_base())
         self.assertDictEqual(
             {'output': 'Hello {$.name}!'},
             action_spec.get_base_parameters()
