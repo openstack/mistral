@@ -64,7 +64,7 @@ class WaitBeforePolicy(base.TaskPolicy):
     def __init__(self, delay):
         self.delay = delay
 
-    def before_task_start(self, task_db, task_spec, exec_db, wf_spec):
+    def before_task_start(self, task_db, task_spec):
         task_db.state = states.DELAYED
         scheduler.schedule_call(
             _ENGINE_CLIENT_PATH,
@@ -78,7 +78,7 @@ class WaitAfterPolicy(base.TaskPolicy):
     def __init__(self, delay):
         self.delay = delay
 
-    def after_task_complete(self, task_db, task_spec, exec_db, wf_spec):
+    def after_task_complete(self, task_db, task_spec):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
@@ -89,10 +89,10 @@ class RetryPolicy(base.TaskPolicy):
         self.delay = delay
         self.break_on = break_on
 
-    def before_task_start(self, task_db, task_spec, exec_db, wf_spec):
+    def before_task_start(self, task_db, task_spec):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def after_task_complete(self, task_db, task_spec, exec_db, wf_spec):
+    def after_task_complete(self, task_db, task_spec):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError

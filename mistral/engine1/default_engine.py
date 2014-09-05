@@ -87,9 +87,7 @@ class DefaultEngine(base.Engine):
 
             self._after_task_complete(
                 task_db,
-                spec_parser.get_task_spec(task_db.spec),
-                exec_db,
-                spec_parser.get_workflow_spec(exec_db.wf_spec)
+                spec_parser.get_task_spec(task_db.spec)
             )
 
             if task_specs:
@@ -150,7 +148,7 @@ class DefaultEngine(base.Engine):
         db_tasks = self._prepare_db_tasks(task_specs, exec_db, wf_handler)
 
         # Running actions/workflows.
-        self._run_tasks(db_tasks, task_specs, exec_db)
+        self._run_tasks(db_tasks, task_specs)
 
     def _prepare_db_tasks(self, task_specs, exec_db, wf_handler):
         wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
@@ -208,23 +206,18 @@ class DefaultEngine(base.Engine):
         return new_db_tasks
 
     @staticmethod
-    def _before_task_start(task_db, task_spec, exec_db, wf_spec):
+    def _before_task_start(task_db, task_spec):
         for p in policies.build_policies(task_spec.get_policies()):
-            p.before_task_start(task_db, task_spec, exec_db, wf_spec)
+            p.before_task_start(task_db, task_spec)
 
     @staticmethod
-    def _after_task_complete(task_db, task_spec, exec_db, wf_spec):
+    def _after_task_complete(task_db, task_spec):
         for p in policies.build_policies(task_spec.get_policies()):
-            p.after_task_complete(task_db, task_spec, exec_db, wf_spec)
+            p.after_task_complete(task_db, task_spec)
 
-    def _run_tasks(self, db_tasks, task_specs, exec_db):
+    def _run_tasks(self, db_tasks, task_specs):
         for t_db, t_spec in zip(db_tasks, task_specs):
-            self._before_task_start(
-                t_db,
-                t_spec,
-                exec_db,
-                spec_parser.get_workflow_spec(exec_db.wf_spec)
-            )
+            self._before_task_start(t_db, t_spec)
 
             # Policies could possibly change task state.
             if t_db.state == states.RUNNING:
