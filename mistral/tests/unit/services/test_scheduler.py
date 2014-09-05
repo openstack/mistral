@@ -28,7 +28,9 @@ def factory_method():
 class SchedulerServiceTest(base.DbTestCase):
     def setUp(self):
         super(SchedulerServiceTest, self).setUp()
-        scheduler.setup()
+
+        thread_group = scheduler.setup()
+        self.addCleanup(thread_group.stop)
 
     @mock.patch('mistral.tests.unit.services.test_scheduler.factory_method')
     def test_scheduler_with_factory(self, factory):
