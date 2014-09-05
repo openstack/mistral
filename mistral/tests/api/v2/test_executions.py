@@ -28,6 +28,7 @@ from mistral.tests.api import base
 from mistral.workflow import states
 
 EXEC_DB = models.Execution(id='123',
+                           wf_name='some',
                            wf_spec={'name': 'some'},
                            state=states.RUNNING,
                            input={},

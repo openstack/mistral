@@ -66,6 +66,7 @@ class Execution(mb.MistralModelBase):
     __tablename__ = 'executions_v2'
 
     id = mb.id_column()
+    wf_name = sa.Column(sa.String(80))
     wf_spec = sa.Column(st.JsonDictType())
     start_params = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))

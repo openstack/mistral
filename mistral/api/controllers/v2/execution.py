@@ -66,7 +66,7 @@ class Execution(resource.Resource):
                     val = json.dumps(val)
                 setattr(e, key, val)
 
-        setattr(e, 'workflow_name', d.get('wf_spec', {}).get('name'))
+        setattr(e, 'workflow_name', d['wf_name'])
 
         return e
 

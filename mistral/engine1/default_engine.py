@@ -147,6 +147,7 @@ class DefaultEngine(base.Engine):
     @staticmethod
     def _create_db_execution(wf_db, wf_spec, wf_input, params):
         exec_db = db_api.create_execution({
+            'wf_name': wf_db.name,
             'wf_spec': wf_spec.to_dict(),
             'start_params': params or {},
             'state': states.RUNNING,
@@ -227,12 +228,46 @@ class DefaultEngine(base.Engine):
             task_db.parameters or {}
         )
 
-    def _run_workflow(self, task_db, task_spec):
-        wf_name = task_spec.get_workflow_name()
-        wf_input = task_db.parameters
+    @staticmethod
+    def _resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
+        wf_db = None
 
-        wf_db = db_api.get_workflow(wf_name)
+        if parent_wf_name != parent_wf_spec_name:
+            # If parent workflow belongs to a workbook then
+            # check child workflow within the same workbook
+            # (to be able to use short names within workbooks).
+            # If it doesn't exist then use a name from spec
+            # to find a workflow in DB.
+            wb_name = parent_wf_name.rstrip(parent_wf_spec_name)[:-1]
+
+            wf_full_name = "%s.%s" % (wb_name, wf_spec_name)
+
+            wf_db = db_api.load_workflow(wf_full_name)
+
+        if not wf_db:
+            wf_db = db_api.load_workflow(wf_spec_name)
+
+        return wf_db
+
+    def _run_workflow(self, task_db, task_spec):
+        parent_exec_db = task_db.execution
+        parent_wf_spec = spec_parser.get_workflow_spec(parent_exec_db.wf_spec)
+
+        wf_spec_name = task_spec.get_workflow_name()
+
+        wf_db = self._resolve_workflow(
+            parent_exec_db.wf_name,
+            parent_wf_spec.get_name(),
+            wf_spec_name
+        )
+
+        if not wf_db:
+            msg = 'Workflow not found [name=%s]' % wf_spec_name
+            raise exc.WorkflowException(msg)
+
         wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
+
+        wf_input = task_db.parameters
 
         start_params = {'parent_task_id': task_db.id}
 
@@ -242,7 +277,7 @@ class DefaultEngine(base.Engine):
                 del wf_input[k]
 
         self._engine_client.start_workflow(
-            wf_name,
+            wf_db.name,
             wf_input,
             **start_params
         )
