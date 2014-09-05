@@ -39,6 +39,11 @@ Workflows:
     tasks:
       task1:
         action: ns1.action1 name="{$.name}"
+        policies:
+          retry:
+            count: 10
+            delay: 30
+            break-on: $.my_val = 10
 
       task2:
         requires: [task1]
@@ -47,6 +52,11 @@ Workflows:
   wf2:
     type: direct
     start-task: task3
+    policies:
+      retry:
+        count: 10
+        delay: 30
+        break-on: $.my_val = 10
 
     tasks:
       task3:
@@ -111,6 +121,12 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('ns1.action1', task1_spec.get_action_name())
         self.assertEqual('action1', task1_spec.get_short_action_name())
         self.assertEqual({'name': '{$.name}'}, task1_spec.get_parameters())
+
+        retry_spec = task1_spec.get_policies().get_retry()
+
+        self.assertEqual(10, retry_spec.get_count())
+        self.assertEqual(30, retry_spec.get_delay())
+        self.assertEqual('$.my_val = 10', retry_spec.get_break_on())
 
         task2_spec = wf1_spec.get_tasks().get('task2')
 

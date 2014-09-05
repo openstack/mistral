@@ -18,7 +18,7 @@ import six
 from mistral import exceptions as exc
 from mistral import utils
 from mistral.workbook import base
-from mistral.workbook.v2 import retry
+from mistral.workbook.v2 import task_policies
 
 # TODO(rakhmerov): In progress.
 
@@ -38,7 +38,7 @@ class TaskSpec(base.BaseSpec):
             "workflow-parameters": {"type": ["object", "null"]},
             "parameters": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
-            "retry": {"type": ["object", "null"]},
+            "policies": {"type": ["object", "null"]},
             "requires": {"type": ["string", "array", "null"]},
             "on-finish": {"type": ["string", "object", "array", "null"]},
             "on-success": {"type": ["string", "object", "array", "null"]},
@@ -59,7 +59,10 @@ class TaskSpec(base.BaseSpec):
         self._workflow_parameters = data.get('workflow-parameters')
         self._parameters = data.get('parameters', {})
         self._publish = data.get('publish', {})
-        self._retry = self._spec_property('retry', retry.RetrySpec)
+        self._policies = self._spec_property(
+            'policies',
+            task_policies.TaskPoliciesSpec
+        )
         self._requires = data.get('requires', [])
 
         self._process_action_and_workflow()
@@ -139,8 +142,8 @@ class TaskSpec(base.BaseSpec):
     def get_parameters(self):
         return self._parameters
 
-    def get_retry(self):
-        return self._retry
+    def get_policies(self):
+        return self._policies
 
     def get_publish(self):
         return self._publish

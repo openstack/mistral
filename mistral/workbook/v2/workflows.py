@@ -26,6 +26,7 @@ class WorkflowSpec(base.BaseSpec):
             "name": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
             "start-task": {"type": "string"},
+            "policies": {"type": ["object", "null"]},
             "parameters": {"type": ["array", "null"]},
             "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
@@ -44,6 +45,8 @@ class WorkflowSpec(base.BaseSpec):
         self._parameters = data.get('parameters')
         self._output = data.get('output')
         self._start_task_name = data.get('start-task')
+        # TODO(rakhmerov): Build workflow policies specification.
+        self._policies = None
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
 
     def validate(self):
@@ -71,6 +74,9 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_start_task_name(self):
         return self._start_task_name
+
+    def get_policies(self):
+        return self._policies
 
     def get_tasks(self):
         return self._tasks

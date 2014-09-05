@@ -14,8 +14,6 @@
 
 from mistral.workbook import base
 
-# TODO(rakhmerov): In progress.
-
 
 class RetrySpec(base.BaseSpec):
     # See http://json-schema.org
@@ -29,8 +27,6 @@ class RetrySpec(base.BaseSpec):
         "required": ["count", "delay"],
         "additionalProperties": False
     }
-
-    _version = '2.0'
 
     def __init__(self, data):
         super(RetrySpec, self).__init__(data)
