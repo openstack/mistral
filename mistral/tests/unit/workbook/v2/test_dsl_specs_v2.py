@@ -51,6 +51,8 @@ Workflows:
     tasks:
       task3:
         workflow: wf1 name="John Doe" age=32 param1="Bonnie" param2="Clyde"
+        workflow-parameters:
+          param1: val1
 """
 
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
@@ -152,6 +154,10 @@ class DSLv2ModelTest(base.BaseTest):
                 'param2': 'Clyde'
             },
             task3_spec.get_parameters()
+        )
+        self.assertDictEqual(
+            {'param1': 'val1'},
+            task3_spec.get_workflow_parameters()
         )
 
     def test_to_dict(self):

@@ -64,7 +64,7 @@ Workflows:
     tasks:
       task1:
         workflow: my_wb.wf1 param1='Bonnie' param2='Clyde'
-        workflow_parameters:
+        workflow-parameters:
             task_name: task2
         publish:
           slogan: "{$.final_result} is a cool movie!"
