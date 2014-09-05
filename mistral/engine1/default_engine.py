@@ -231,8 +231,15 @@ class DefaultEngine(base.Engine):
         wf_name = task_spec.get_workflow_name()
         wf_input = task_db.parameters
 
-        start_params = copy.copy(task_spec.get_workflow_parameters())
-        start_params.update({'parent_task_id': task_db.id})
+        wf_db = db_api.get_workflow(wf_name)
+        wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
+
+        start_params = {'parent_task_id': task_db.id}
+
+        for k, v in wf_input.items():
+            if k not in wf_spec.get_parameters():
+                start_params[k] = v
+                del wf_input[k]
 
         self._engine_client.start_workflow(
             wf_name,

@@ -68,8 +68,6 @@ Workflows:
     tasks:
       task3:
         workflow: wf1 name="John Doe" age=32 param1="Bonnie" param2="Clyde"
-        workflow-parameters:
-          param1: val1
         on-error:
           task4: $.my_val = 1
         on-success:
@@ -208,10 +206,6 @@ class DSLv2ModelTest(base.BaseTest):
                 'param2': 'Clyde'
             },
             task3_spec.get_parameters()
-        )
-        self.assertDictEqual(
-            {'param1': 'val1'},
-            task3_spec.get_workflow_parameters()
         )
         self.assertDictEqual(
             {'task4': '$.my_val = 1'},

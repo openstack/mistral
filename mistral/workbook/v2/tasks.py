@@ -36,7 +36,6 @@ class TaskSpec(base.BaseSpec):
             "description": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
-            "workflow-parameters": {"type": ["object", "null"]},
             "parameters": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
@@ -58,7 +57,6 @@ class TaskSpec(base.BaseSpec):
         self._description = data.get('description')
         self._action = data.get('action')
         self._workflow = data.get('workflow')
-        self._workflow_parameters = data.get('workflow-parameters')
         self._parameters = data.get('parameters', {})
         self._publish = data.get('publish', {})
         self._policies = self._spec_property(
@@ -140,9 +138,6 @@ class TaskSpec(base.BaseSpec):
 
     def get_short_workflow_name(self):
         return self._workflow.split('.')[-1] if self._workflow else None
-
-    def get_workflow_parameters(self):
-        return self._workflow_parameters
 
     def get_parameters(self):
         return self._parameters

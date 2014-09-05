@@ -44,8 +44,8 @@ class WorkflowSpec(base.BaseSpec):
         self._name = data['name']
         self._description = data.get('description')
         self._type = data['type']
-        self._parameters = data.get('parameters')
-        self._output = data.get('output')
+        self._parameters = data.get('parameters', {})
+        self._output = data.get('output', {})
         self._start_task_name = data.get('start-task')
         # TODO(rakhmerov): Build workflow policies specification.
         self._policies = None

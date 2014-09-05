@@ -53,9 +53,7 @@ Workflows:
 
     tasks:
       task1:
-        workflow: my_wb.wf1 param1='Hi'
-        workflow-parameters:
-            task_name: task1
+        workflow: my_wb.wf1 param1='Hi' task_name='task1'
         publish:
           result: "The result of subworkflow is '{$.final_result}'"
 """
@@ -73,9 +71,7 @@ Workflows:
 
     tasks:
       task1:
-        workflow: my_wb.wf2 param1='Hi'
-        workflow-parameters:
-            task_name: task1
+        workflow: my_wb.wf2 param1='Hi' task_name='task1'
         publish:
           result: "The result of subworkflow is '{$.final_result}'"
 
@@ -94,7 +90,7 @@ Workflows:
 """
 
 
-class SubworkflowsTest(base.EngineTestCase):
+class WorkbookServiceTest(base.EngineTestCase):
     def test_create_workbook(self):
         wb_db = wb_service.create_workbook_v2({
             'name': 'my_wb',

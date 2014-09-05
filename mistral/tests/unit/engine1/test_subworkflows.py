@@ -45,7 +45,7 @@ Workflows:
 
     tasks:
       task1:
-        action: std.echo output="{$.param1}"
+        action: std.echo output='{$.param1}'
         publish:
           result1: $
 
@@ -63,9 +63,7 @@ Workflows:
 
     tasks:
       task1:
-        workflow: my_wb.wf1 param1='Bonnie' param2='Clyde'
-        workflow-parameters:
-            task_name: task2
+        workflow: my_wb.wf1 param1='Bonnie' param2='Clyde' task_name='task2'
         publish:
           slogan: "{$.final_result} is a cool movie!"
 """
