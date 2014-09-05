@@ -46,7 +46,7 @@ Workflows:
 
   wf2:
     type: direct
-    start_task: task3
+    start-task: task3
 
     tasks:
       task3:

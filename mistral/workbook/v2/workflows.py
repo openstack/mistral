@@ -25,7 +25,7 @@ class WorkflowSpec(base.BaseSpec):
             "Version": {"type": "string"},
             "name": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
-            "start_task": {"type": "string"},
+            "start-task": {"type": "string"},
             "parameters": {"type": ["array", "null"]},
             "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
@@ -43,18 +43,18 @@ class WorkflowSpec(base.BaseSpec):
         self._type = data['type']
         self._parameters = data.get('parameters')
         self._output = data.get('output')
-        self._start_task_name = data.get('start_task')
+        self._start_task_name = data.get('start-task')
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
 
     def validate(self):
         super(WorkflowSpec, self).validate()
 
         if self._data['type'] == 'direct':
-            if 'start_task' not in self._data:
-                msg = "Direct workflow 'start_task' property is not defined."
+            if 'start-task' not in self._data:
+                msg = "Direct workflow 'start-task' property is not defined."
                 raise exc.InvalidModelException(msg)
-            elif self._data['start_task'] not in self._data['tasks'].keys():
-                msg = "'start_task' property of direct workflow is invalid."
+            elif self._data['start-task'] not in self._data['tasks'].keys():
+                msg = "'start-task' property of direct workflow is invalid."
                 raise exc.InvalidModelException(msg)
 
     def get_name(self):
