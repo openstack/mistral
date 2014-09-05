@@ -37,15 +37,12 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def start_workflow(self, **params):
         self._set_execution_state(states.RUNNING)
 
-        return [self._find_start_task()]
+        return [self.wf_spec.get_start_task()]
 
     def get_upstream_tasks(self, task_spec):
         # TODO(rakhmerov): For direct workflow it's pretty hard to do
         #  so we may need to get rid of it at all.
         return []
-
-    def _find_start_task(self):
-        return self.wf_spec.get_tasks()[self.wf_spec.get_start_task_name()]
 
     def _find_next_tasks(self, task_db):
         """Finds tasks that should run after completing given task.

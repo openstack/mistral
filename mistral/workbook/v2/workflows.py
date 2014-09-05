@@ -72,8 +72,8 @@ class WorkflowSpec(base.BaseSpec):
     def get_output(self):
         return self._output
 
-    def get_start_task_name(self):
-        return self._start_task_name
+    def get_start_task(self):
+        return self._tasks[self._start_task_name]
 
     def get_policies(self):
         return self._policies
