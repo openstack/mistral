@@ -20,7 +20,6 @@ import json
 from mistral.actions import std_actions as std
 from mistral.db.v1.sqlalchemy import models
 from mistral.engine import data_flow
-from mistral import exceptions
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
 from mistral.tests import base
@@ -115,10 +114,6 @@ class ActionFactoryTest(base.DbTestCase):
                          a_m.get_action_class("std.mistral_http"))
         self.assertEqual(std.SendEmailAction,
                          a_m.get_action_class("std.email"))
-
-    def test_get_action_class_failure(self):
-        self.assertRaises(exceptions.ActionException,
-                          a_m.get_action_class, 'echo')
 
     def test_create_http_action(self):
         db_task = models.Task()

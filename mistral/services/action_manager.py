@@ -97,15 +97,12 @@ def register_action_classes():
 
 
 def get_action_db(action_name):
-    # TODO(nmakhotkin) Validate action_name.
-    if action_name.find('.') == -1:
-        raise exc.ActionException('Invalid action name: %s' %
-                                  action_name)
     # TODO(nmakhotkin) Temporary hack to return None if action not found
     try:
         action_db = db_api.get_action(action_name)
     except exc.NotFoundException:
         return None
+
     return action_db
 
 

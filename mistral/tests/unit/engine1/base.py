@@ -20,11 +20,13 @@ from oslo import messaging
 from oslo.messaging import transport
 
 from mistral import context as ctx
+from mistral.db.v2 import api as db_api
 from mistral.engine1 import default_engine as def_eng
 from mistral.engine1 import default_executor as def_exec
 from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
+from mistral.workflow import states
 
 from stevedore import driver
 
@@ -127,3 +129,15 @@ class EngineTestCase(base.DbTestCase):
         LOG.info("Finishing engine and executor threads...")
 
         [thread.kill() for thread in self.threads]
+
+    def is_execution_success(self, exec_id):
+        return db_api.get_execution(exec_id).state == states.SUCCESS
+
+    def is_execution_error(self, exec_id):
+        return db_api.get_execution(exec_id).state == states.ERROR
+
+    def is_task_success(self, task_id):
+        return db_api.get_task(task_id).state == states.SUCCESS
+
+    def is_task_error(self, task_id):
+        return db_api.get_task(task_id).state == states.ERROR

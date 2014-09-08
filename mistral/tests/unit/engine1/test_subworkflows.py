@@ -21,7 +21,6 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
-from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -112,9 +111,7 @@ class SubworkflowsTest(base.EngineTestCase):
         )
 
         # Wait till workflow 'wf1' is completed.
-        self._await(
-            lambda: db_api.get_execution(exec2_db.id).state == states.SUCCESS,
-        )
+        self._await(lambda: self.is_execution_success(exec2_db.id))
 
         exec2_db = db_api.get_execution(exec2_db.id)
 
@@ -126,9 +123,7 @@ class SubworkflowsTest(base.EngineTestCase):
         )
 
         # Wait till workflow 'wf2' is completed.
-        self._await(
-            lambda: db_api.get_execution(exec1_db.id).state == states.SUCCESS,
-        )
+        self._await(lambda: self.is_execution_success(exec1_db.id))
 
         exec1_db = db_api.get_execution(exec1_db.id)
 
@@ -157,11 +152,7 @@ class SubworkflowsTest(base.EngineTestCase):
             else db_execs[1]
 
         # Wait till workflow 'wf1' is completed.
-        self._await(
-            lambda: db_api.get_execution(exec2_db.id).state == states.ERROR,
-        )
+        self._await(lambda: self.is_execution_error(exec2_db.id))
 
         # Wait till workflow 'wf2' is completed, its state must be ERROR.
-        self._await(
-            lambda: db_api.get_execution(exec1_db.id).state == states.ERROR,
-        )
+        self._await(lambda: self.is_execution_error(exec1_db.id))

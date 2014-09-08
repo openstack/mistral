@@ -218,8 +218,9 @@ class DefaultEngine(base.Engine):
         action = a_m.get_action_db(action_name)
 
         if not action:
-            raise exc.InvalidActionException("Failed to find Action "
-                                             "[action_name=%s]" % action_name)
+            raise exc.InvalidActionException(
+                "Failed to find Action [action_name=%s]" % action_name
+            )
 
         self._executor_client.run_action(
             task_db.id,
