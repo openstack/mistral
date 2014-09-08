@@ -542,7 +542,7 @@ class TaskTest(test_base.DbTestCase):
             {'description': 'my new desc'}
         )
 
-        self.assertEqual('my new desc', updated['description'])
+        self.assertEqual('my new desc', updated.description)
 
         fetched = db_api.get_task(created.id)
 
@@ -614,7 +614,7 @@ class TaskTest(test_base.DbTestCase):
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_task,
-            created['id']
+            created.id
         )
 
     def test_task_repr(self):
@@ -628,6 +628,116 @@ class TaskTest(test_base.DbTestCase):
         self.assertIn('Task ', s)
         self.assertIn("'id': '1'", s)
         self.assertIn("'name': 'my_task1'", s)
+
+ACTIONS = [
+    {
+        'id': '1',
+        'name': 'action1',
+        'description': 'Action #1',
+        'is_system': True,
+        'action_class': 'mypackage.my_module.Action1',
+        'attributes': None
+    },
+    {
+        'id': '2',
+        'name': 'action2',
+        'description': 'Action #2',
+        'is_system': True,
+        'action_class': 'mypackage.my_module.Action2',
+        'attributes': None
+    },
+]
+
+
+class ActionTest(test_base.DbTestCase):
+    def setUp(self):
+        super(ActionTest, self).setUp()
+
+        db_api.delete_actions()
+
+    def test_create_and_get_and_load_action(self):
+        created = db_api.create_action(ACTIONS[0])
+
+        fetched = db_api.get_action(created.name)
+
+        self.assertEqual(created, fetched)
+
+        fetched = db_api.load_action(created.name)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_action("not-existing-id"))
+
+    def test_update_action(self):
+        created = db_api.create_action(ACTIONS[0])
+
+        updated = db_api.update_action(
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual('my new desc', updated.description)
+
+        fetched = db_api.get_action(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_create_or_update_action(self):
+        name = 'not-existing-id'
+
+        self.assertIsNone(db_api.load_action(name))
+
+        created = db_api.create_or_update_action(name, ACTIONS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.name)
+
+        updated = db_api.create_or_update_action(
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual('my new desc', updated.description)
+        self.assertEqual(
+            'my new desc',
+            db_api.load_action(updated.name).description
+        )
+
+        fetched = db_api.get_action(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_actions(self):
+        created0 = db_api.create_action(ACTIONS[0])
+        created1 = db_api.create_action(ACTIONS[1])
+
+        fetched = db_api.get_actions(is_system=True)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_delete_action(self):
+        created = db_api.create_action(ACTIONS[0])
+
+        fetched = db_api.get_action(created.name)
+
+        self.assertEqual(created, fetched)
+
+        db_api.delete_action(created.name)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_action,
+            created.name
+        )
+
+    def test_task_repr(self):
+        s = db_api.create_action(ACTIONS[0]).__repr__()
+
+        self.assertIn('Action ', s)
+        self.assertIn("'id': '1'", s)
+        self.assertIn("'name': 'action1'", s)
 
 
 class TXTest(test_base.DbTestCase):

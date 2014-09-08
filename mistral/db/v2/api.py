@@ -219,11 +219,16 @@ def delete_delayed_call(id):
 def get_delayed_calls_to_start(time):
     return IMPL.get_delayed_calls_to_start(time)
 
-# Actions.
 
+# Actions.
 
 def get_action(name):
     return IMPL.get_action(name)
+
+
+def load_action(name):
+    """Unlike get_action this method is allowed to return None."""
+    return IMPL.load_action(name)
 
 
 def get_actions(**kwargs):
@@ -236,6 +241,10 @@ def create_action(values):
 
 def update_action(name, values):
     return IMPL.update_action(name, values)
+
+
+def create_or_update_action(name, values):
+    return IMPL.create_or_update_action(name, values)
 
 
 def delete_action(name):

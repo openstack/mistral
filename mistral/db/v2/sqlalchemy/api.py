@@ -512,6 +512,10 @@ def get_action(name):
     return action
 
 
+def load_action(name):
+    return _get_action(name)
+
+
 def get_actions(**kwargs):
     return _get_actions(**kwargs)
 
@@ -532,11 +536,6 @@ def create_action(values, session=None):
 
 
 @b.session_aware()
-def delete_actions(**kwargs):
-    return _delete_all(models.Action, **kwargs)
-
-
-@b.session_aware()
 def update_action(name, values, session=None):
     action = _get_action(name)
 
@@ -550,6 +549,16 @@ def update_action(name, values, session=None):
 
 
 @b.session_aware()
+def create_or_update_action(name, values, session=None):
+    action = _get_action(name)
+
+    if not action:
+        return create_action(values)
+    else:
+        return update_action(name, values)
+
+
+@b.session_aware()
 def delete_action(name, session=None):
     action = _get_action(name)
 
@@ -558,6 +567,11 @@ def delete_action(name, session=None):
             "Action not found [action_name=%s]" % name)
 
     session.delete(action)
+
+
+@b.session_aware()
+def delete_actions(**kwargs):
+    return _delete_all(models.Action, **kwargs)
 
 
 def _get_action(name):

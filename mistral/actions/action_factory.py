@@ -18,6 +18,7 @@ from mistral.openstack.common import importutils
 def construct_action_class(action_class_str, attributes):
     # Rebuild action class and restore attributes.
     action_class = importutils.import_class(action_class_str)
+
     for name, value in attributes.items():
         setattr(action_class, name, value)
 

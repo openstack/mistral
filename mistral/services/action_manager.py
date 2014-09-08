@@ -48,6 +48,7 @@ def _register_action_in_db(name, action_class, attributes,
 
     try:
         LOG.debug("Registering action in DB: %s" % name)
+
         db_api.create_action(values)
     except exc.DBDuplicateEntry:
         LOG.debug("Action %s already exists in DB." % name)
@@ -63,28 +64,32 @@ def sync_db():
 
 
 def _register_dynamic_action_classes():
-    all_generators = generator_factory.all_generators()
-    for generator in all_generators:
+    for generator in generator_factory.all_generators():
         action_classes = generator.create_action_classes()
 
         module = generator.base_action_class.__module__
         class_name = generator.base_action_class.__name__
 
         action_class_str = "%s.%s" % (module, class_name)
-        for action_name, action in action_classes.items():
-            attrs = i_utils.get_public_fields(action)
-            full_action_name = "%s.%s" % (generator.action_namespace,
-                                          action_name)
 
-            _register_action_in_db(full_action_name,
-                                   action_class_str,
-                                   attrs)
+        for action_name, action in action_classes.items():
+            full_action_name =\
+                "%s.%s" % (generator.action_namespace, action_name)
+
+            attrs = i_utils.get_public_fields(action)
+
+            _register_action_in_db(
+                full_action_name,
+                action_class_str,
+                attrs
+            )
 
 
 def register_action_classes():
     mgr = extension.ExtensionManager(
         namespace='mistral.actions',
-        invoke_on_load=False)
+        invoke_on_load=False
+    )
 
     with db_api.transaction():
         for name in mgr.names():
@@ -97,13 +102,7 @@ def register_action_classes():
 
 
 def get_action_db(action_name):
-    # TODO(nmakhotkin) Temporary hack to return None if action not found
-    try:
-        action_db = db_api.get_action(action_name)
-    except exc.NotFoundException:
-        return None
-
-    return action_db
+    return db_api.load_action(action_name)
 
 
 def get_action_class(action_full_name):
@@ -113,6 +112,7 @@ def get_action_class(action_full_name):
     :return: Action class or None if not found.
     """
     action_db = get_action_db(action_full_name)
+
     if action_db:
         return action_factory.construct_action_class(action_db.action_class,
                                                      action_db.attributes)
@@ -146,6 +146,7 @@ def _create_adhoc_action(db_task, openstack_context):
     full_action_name = task_spec.get_full_action_name()
 
     raw_action_spec = db_task['action_spec']
+
     if not raw_action_spec:
         return None
 
