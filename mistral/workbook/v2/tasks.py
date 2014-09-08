@@ -33,6 +33,7 @@ class TaskSpec(base.BaseSpec):
         "properties": {
             "Version": {"type": "string"},
             "name": {"type": "string"},
+            "description": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "workflow-parameters": {"type": ["object", "null"]},
@@ -54,6 +55,7 @@ class TaskSpec(base.BaseSpec):
         super(TaskSpec, self).__init__(data)
 
         self._name = data['name']
+        self._description = data.get('description')
         self._action = data.get('action')
         self._workflow = data.get('workflow')
         self._workflow_parameters = data.get('workflow-parameters')
@@ -107,6 +109,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_name(self):
         return self._name
+
+    def get_description(self):
+        return self._description
 
     def get_action_name(self):
         return self._action if self._action else None

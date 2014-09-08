@@ -24,6 +24,7 @@ class WorkflowSpec(base.BaseSpec):
         "properties": {
             "Version": {"type": "string"},
             "name": {"type": "string"},
+            "description": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
             "start-task": {"type": "string"},
             "policies": {"type": ["object", "null"]},
@@ -41,6 +42,7 @@ class WorkflowSpec(base.BaseSpec):
         super(WorkflowSpec, self).__init__(data)
 
         self._name = data['name']
+        self._description = data.get('description')
         self._type = data['type']
         self._parameters = data.get('parameters')
         self._output = data.get('output')
@@ -62,6 +64,9 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_name(self):
         return self._name
+
+    def get_description(self):
+        return self._description
 
     def get_type(self):
         return self._type
