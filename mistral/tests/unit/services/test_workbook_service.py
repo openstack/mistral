@@ -31,6 +31,12 @@ WORKBOOK = """
 ---
 Version: '2.0'
 
+Actions:
+  concat:
+    base: std.echo
+    base-parameters:
+      output: "{$.str1}{$.str2}"
+
 Workflows:
   wf1:
     type: reverse
@@ -61,6 +67,12 @@ Workflows:
 UPDATED_WORKBOOK = """
 ---
 Version: '2.0'
+
+Actions:
+  concat:
+    base: std.echo
+    base-parameters:
+      output: "{$.str1}{$.str2}"
 
 Workflows:
   wf1:
@@ -103,6 +115,20 @@ class WorkbookServiceTest(base.EngineTestCase):
         self.assertEqual(WORKBOOK, wb_db.definition)
         self.assertIsNotNone(wb_db.spec)
         self.assertListEqual(['test'], wb_db.tags)
+
+        db_actions = db_api.get_actions(name='my_wb.concat')
+
+        self.assertEqual(1, len(db_actions))
+
+        # Action.
+        action_db = self._assert_single_item(db_actions, name='my_wb.concat')
+
+        self.assertFalse(action_db.is_system)
+
+        action_spec = spec_parser.get_action_spec(action_db.spec)
+
+        self.assertEqual('concat', action_spec.get_name())
+        self.assertEqual('std.echo', action_spec.get_base())
 
         db_wfs = db_api.get_workflows()
 
