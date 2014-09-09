@@ -37,8 +37,10 @@ _EXECUTOR_CLIENT = None
 def get_transport():
     global _TRANSPORT
 
-    return _TRANSPORT if _TRANSPORT \
-        else messaging.get_transport(cfg.CONF)
+    if not _TRANSPORT:
+        _TRANSPORT = messaging.get_transport(cfg.CONF)
+
+    return _TRANSPORT
 
 
 def get_engine_server():

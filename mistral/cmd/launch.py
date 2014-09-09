@@ -157,7 +157,7 @@ def main():
         # servers are launched on the same process. Otherwise, messages do not
         # get delivered if the Mistral servers are launched on different
         # processes because the "fake" transport is using an in process queue.
-        transport = messaging.get_transport(cfg.CONF)
+        transport = rpc.get_transport()
 
         if cfg.CONF.server == ['all']:
             # Launch all servers.
