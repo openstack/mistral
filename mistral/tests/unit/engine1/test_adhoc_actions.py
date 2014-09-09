@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
@@ -32,10 +31,11 @@ WORKBOOK = """
 Version: '2.0'
 
 Actions:
-  concat:
+  my_action:
     base: std.echo
     base-parameters:
       output: "{$.str1}{$.str2}"
+    output: "{$}{$}"
 
 Workflows:
   wf1:
@@ -49,7 +49,7 @@ Workflows:
 
     tasks:
       task1:
-        action: concat str1='{$.str1}' str2='{$.str2}'
+        action: my_action str1='{$.str1}' str2='{$.str2}'
         publish:
           result: $
 """
@@ -65,7 +65,6 @@ class AdhocActionsTest(base.EngineTestCase):
             'tags': ['test']
         })
 
-    @testtools.skip('')
     def test_run_workflow_with_adhoc_action(self):
         exec_db = self.engine.start_workflow(
             'my_wb.wf1',
@@ -76,4 +75,4 @@ class AdhocActionsTest(base.EngineTestCase):
 
         exec_db = db_api.get_execution(exec_db.id)
 
-        self.assertDictEqual({'result': 'ab'}, exec_db.output)
+        self.assertDictEqual({'result': 'abab'}, exec_db.output)

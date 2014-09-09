@@ -1,6 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -19,13 +19,14 @@ from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
 from mistral.engine1 import policies
 from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral.openstack.common import log as logging
-from mistral.services import action_manager as a_m
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import workflow_handler_factory as wfh_factory
+
 
 LOG = logging.getLogger(__name__)
 
@@ -71,6 +72,8 @@ class DefaultEngine(base.Engine):
         with db_api.transaction():
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
+
+            raw_result = self._transform_result(exec_db, task_db, raw_result)
 
             self._after_task_complete(
                 task_db,
@@ -217,20 +220,73 @@ class DefaultEngine(base.Engine):
 
             self._run_task(task_db, task_spec)
 
-    def _run_action(self, task_db, task_spec):
-        action_name = task_spec.get_action_name()
-        action = a_m.get_action_db(action_name)
+    @staticmethod
+    def _resolve_action(wf_name, wf_spec_name, action_spec_name):
+        action_db = None
 
-        if not action:
+        if wf_name != wf_spec_name:
+            # If workflow belongs to a workbook then check
+            # action within the same workbook (to be able to
+            # use short names within workbooks).
+            # If it doesn't exist then use a name from spec
+            # to find an action in DB.
+            wb_name = wf_name.rstrip(wf_spec_name)[:-1]
+
+            action_full_name = "%s.%s" % (wb_name, action_spec_name)
+
+            action_db = db_api.load_action(action_full_name)
+
+        if not action_db:
+            action_db = db_api.load_action(action_spec_name)
+
+        if not action_db:
             raise exc.InvalidActionException(
-                "Failed to find Action [action_name=%s]" % action_name
+                "Failed to find action [action_name=%s]" % action_spec_name
             )
+
+        return action_db
+
+    def _run_action(self, task_db, task_spec):
+        exec_db = task_db.execution
+        wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
+
+        action_spec_name = task_spec.get_action_name()
+
+        action_db = self._resolve_action(
+            exec_db.wf_name,
+            wf_spec.get_name(),
+            action_spec_name
+        )
+
+        action_params = task_db.parameters or {}
+
+        if action_db.spec:
+            # Ad-hoc action.
+            action_spec = spec_parser.get_action_spec(action_db.spec)
+
+            base_name = action_spec.get_base()
+
+            action_db = self._resolve_action(
+                exec_db.wf_name,
+                wf_spec.get_name(),
+                base_name
+            )
+
+            base_params = action_spec.get_base_parameters()
+
+            if base_params:
+                action_params = expr.evaluate_recursively(
+                    base_params,
+                    action_params
+                )
+            else:
+                action_params = {}
 
         self._executor_client.run_action(
             task_db.id,
-            action.action_class,
-            action.attributes or {},
-            task_db.parameters or {}
+            action_db.action_class,
+            action_db.attributes or {},
+            action_params
         )
 
     @staticmethod
@@ -252,6 +308,11 @@ class DefaultEngine(base.Engine):
         if not wf_db:
             wf_db = db_api.load_workflow(wf_spec_name)
 
+        if not wf_db:
+            raise exc.WorkflowException(
+                "Failed to find workflow [name=%s]" % wf_spec_name
+            )
+
         return wf_db
 
     def _run_workflow(self, task_db, task_spec):
@@ -265,10 +326,6 @@ class DefaultEngine(base.Engine):
             parent_wf_spec.get_name(),
             wf_spec_name
         )
-
-        if not wf_db:
-            msg = 'Workflow not found [name=%s]' % wf_spec_name
-            raise exc.WorkflowException(msg)
 
         wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
 
@@ -303,3 +360,44 @@ class DefaultEngine(base.Engine):
                 exec_db.parent_task_id,
                 wf_base.TaskResult(error=err_msg)
             )
+
+    def _transform_result(self, exec_db, task_db, raw_result):
+        if raw_result.is_error():
+            return raw_result
+
+        action_spec_name =\
+            spec_parser.get_task_spec(task_db.spec).get_action_name()
+
+        wf_spec_name = \
+            spec_parser.get_workflow_spec(exec_db.wf_spec).get_name()
+
+        if action_spec_name:
+            return self._transform_action_result(
+                exec_db.wf_name,
+                wf_spec_name,
+                action_spec_name,
+                raw_result
+            )
+
+        return raw_result
+
+    def _transform_action_result(self, wf_name, wf_spec_name, action_spec_name,
+                                 raw_result):
+        action_db = self._resolve_action(
+            wf_name,
+            wf_spec_name,
+            action_spec_name
+        )
+
+        if not action_db.spec:
+            return raw_result
+
+        transformer = spec_parser.get_action_spec(action_db.spec).get_output()
+
+        if transformer is None:
+            return raw_result
+
+        return wf_base.TaskResult(
+            data=expr.evaluate_recursively(transformer, raw_result.data),
+            error=raw_result.error
+        )
