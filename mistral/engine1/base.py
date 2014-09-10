@@ -119,11 +119,13 @@ class TaskPolicy(object):
         # No-op by default.
         pass
 
-    def after_task_complete(self, task_db, task_spec):
+    def after_task_complete(self, task_db, task_spec, raw_result):
         """Called right after task completes.
 
         :param task_db: Completed task DB model.
         :param task_spec: Completed task specification.
+        :param raw_result: TaskResult instance passed to on_task_result.
+         It is needed for analysis of result and scheduling task again.
         """
         # No-op by default.
         pass

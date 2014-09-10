@@ -208,7 +208,7 @@ class EngineClient(base.Engine):
             params=params
         )
 
-    def on_task_result(self, task_id, task_result):
+    def on_task_result(self, task_id, raw_result):
         """Conveys task result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
@@ -227,8 +227,8 @@ class EngineClient(base.Engine):
             auth_ctx.ctx(),
             'on_task_result',
             task_id=task_id,
-            result_data=task_result.data,
-            result_error=task_result.error
+            result_data=raw_result.data,
+            result_error=raw_result.error
         )
 
     def run_task(self, task_id):

@@ -72,15 +72,19 @@ class DefaultEngine(base.Engine):
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
 
+            self._after_task_complete(
+                task_db,
+                spec_parser.get_task_spec(task_db.spec),
+                raw_result
+            )
+
+            if task_db.state == states.DELAYED:
+                return task_db
+
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
             # Calculate tasks to process next.
             task_specs = wf_handler.on_task_result(task_db, raw_result)
-
-            self._after_task_complete(
-                task_db,
-                spec_parser.get_task_spec(task_db.spec)
-            )
 
             if task_specs:
                 self._process_task_specs(task_specs, exec_db, wf_handler)
@@ -188,9 +192,9 @@ class DefaultEngine(base.Engine):
             p.before_task_start(task_db, task_spec)
 
     @staticmethod
-    def _after_task_complete(task_db, task_spec):
+    def _after_task_complete(task_db, task_spec, raw_result):
         for p in policies.build_policies(task_spec.get_policies()):
-            p.after_task_complete(task_db, task_spec)
+            p.after_task_complete(task_db, task_spec, raw_result)
 
     def _run_tasks(self, db_tasks, task_specs):
         for t_db, t_spec in zip(db_tasks, task_specs):

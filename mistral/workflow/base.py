@@ -153,7 +153,7 @@ class WorkflowHandler(object):
 
     def _find_running_tasks(self):
         return [t_db for t_db in self.exec_db.tasks
-                if states.RUNNING == t_db.state]
+                if t_db.state == states.RUNNING]
 
 
 class TaskResult(object):

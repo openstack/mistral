@@ -17,7 +17,6 @@ import sys
 import eventlet
 from oslo.config import cfg
 from oslo import messaging
-from oslo.messaging import transport
 
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api
@@ -27,8 +26,6 @@ from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workflow import states
-
-from stevedore import driver
 
 
 eventlet.monkey_patch(
@@ -40,32 +37,6 @@ eventlet.monkey_patch(
 )
 
 LOG = logging.getLogger(__name__)
-
-
-def get_fake_transport():
-    # Get transport here to let oslo.messaging setup default config
-    # before changing the rpc_backend to the fake driver; otherwise,
-    # oslo.messaging will throw exception.
-    messaging.get_transport(cfg.CONF)
-
-    cfg.CONF.set_default('rpc_backend', 'fake')
-
-    url = transport.TransportURL.parse(cfg.CONF, None)
-
-    kwargs = dict(
-        default_exchange=cfg.CONF.control_exchange,
-        allowed_remote_exmods=[]
-    )
-
-    mgr = driver.DriverManager(
-        'oslo.messaging.drivers',
-        url.transport,
-        invoke_on_load=True,
-        invoke_args=(cfg.CONF, url),
-        invoke_kwds=kwargs
-    )
-
-    return transport.Transport(mgr.driver)
 
 
 def launch_engine_server(transport, engine):
@@ -108,13 +79,21 @@ class EngineTestCase(base.DbTestCase):
     def setUp(self):
         super(EngineTestCase, self).setUp()
 
-        transport = base.get_fake_transport()
+        # Get transport here to let oslo.messaging setup default config
+        # before changing the rpc_backend to the fake driver; otherwise,
+        # oslo.messaging will throw exception.
+        messaging.get_transport(cfg.CONF)
 
-        engine_client = rpc.EngineClient(transport)
-        executor_client = rpc.ExecutorClient(transport)
+        # Set the transport to 'fake' for Engine tests.
+        cfg.CONF.set_default('rpc_backend', 'fake')
+        transport = rpc.get_transport()
 
-        self.engine = def_eng.DefaultEngine(engine_client, executor_client)
-        self.executor = def_exec.DefaultExecutor(engine_client)
+        self.engine_client = rpc.EngineClient(transport)
+        self.executor_client = rpc.ExecutorClient(transport)
+
+        self.engine = def_eng.DefaultEngine(self.engine_client,
+                                            self.executor_client)
+        self.executor = def_exec.DefaultExecutor(self.engine_client)
 
         LOG.info("Starting engine and executor threads...")
 
@@ -141,3 +120,6 @@ class EngineTestCase(base.DbTestCase):
 
     def is_task_error(self, task_id):
         return db_api.get_task(task_id).state == states.ERROR
+
+    def is_task_delayed(self, task_id):
+        return db_api.get_task(task_id).state == states.DELAYED
