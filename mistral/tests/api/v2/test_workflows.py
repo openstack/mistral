@@ -23,13 +23,15 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.api import base
 
-WORKFLOW_DB = models.Workflow(id='123',
-                              name='flow',
-                              definition='---',
-                              tags=['deployment', 'demo'],
-                              scope="public",
-                              created_at=datetime.datetime(1970, 1, 1),
-                              updated_at=datetime.datetime(1970, 1, 1))
+WORKFLOW_DB = models.Workflow(
+    id='123',
+    name='flow',
+    definition='---',
+    tags=['deployment', 'demo'],
+    scope="public",
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1)
+)
 
 WORKFLOW = {
     'id': '123',

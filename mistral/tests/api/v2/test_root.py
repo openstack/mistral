@@ -19,7 +19,6 @@ from mistral.tests.api import base
 
 
 class TestRootController(base.FunctionalTest):
-
     def test_index(self):
         resp = self.app.get('/', headers={'Accept': 'application/json'})
 

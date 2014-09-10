@@ -29,20 +29,22 @@ from mistral.workflow import states
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
-TASK_DB = models.Task(id='123',
-                      name='task',
-                      wf_name='flow',
-                      spec={},
-                      action_spec={},
-                      state=states.RUNNING,
-                      tags=['a', 'b'],
-                      in_context={},
-                      parameters={},
-                      output={},
-                      runtime_context={},
-                      execution_id='123',
-                      created_at=datetime.datetime(1970, 1, 1),
-                      updated_at=datetime.datetime(1970, 1, 1))
+TASK_DB = models.Task(
+    id='123',
+    name='task',
+    wf_name='flow',
+    spec={},
+    action_spec={},
+    state=states.RUNNING,
+    tags=['a', 'b'],
+    in_context={},
+    parameters={},
+    output={},
+    runtime_context={},
+    execution_id='123',
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1)
+)
 
 TASK = {
     'id': '123',

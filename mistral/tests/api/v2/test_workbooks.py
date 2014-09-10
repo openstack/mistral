@@ -24,13 +24,15 @@ from mistral import exceptions as exc
 from mistral.services import workbooks
 from mistral.tests.api import base
 
-WORKBOOK_DB = models.Workbook(id='123',
-                              name='book',
-                              definition='---',
-                              tags=['deployment', 'demo'],
-                              scope="public",
-                              created_at=datetime.datetime(1970, 1, 1),
-                              updated_at=datetime.datetime(1970, 1, 1))
+WORKBOOK_DB = models.Workbook(
+    id='123',
+    name='book',
+    definition='---',
+    tags=['deployment', 'demo'],
+    scope="public",
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1)
+)
 
 WORKBOOK = {
     'id': '123',

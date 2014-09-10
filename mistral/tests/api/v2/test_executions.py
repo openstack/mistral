@@ -27,14 +27,16 @@ from mistral import exceptions as exc
 from mistral.tests.api import base
 from mistral.workflow import states
 
-EXEC_DB = models.Execution(id='123',
-                           wf_name='some',
-                           wf_spec={'name': 'some'},
-                           state=states.RUNNING,
-                           input={},
-                           output={},
-                           created_at=datetime.datetime(1970, 1, 1),
-                           updated_at=datetime.datetime(1970, 1, 1))
+EXEC_DB = models.Execution(
+    id='123',
+    wf_name='some',
+    wf_spec={'name': 'some'},
+    state=states.RUNNING,
+    input={},
+    output={},
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1)
+)
 
 EXEC = {
     'id': '123',
