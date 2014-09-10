@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import re
 import six
 
@@ -23,7 +24,8 @@ from mistral.workbook.v2 import task_policies
 # TODO(rakhmerov): In progress.
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
-PARAMS_PTRN = re.compile("([\w]+)=(\"[^=]*\"|\'[^=]*'|[\d\.]*)")
+PARAMS_PTRN = re.compile("([\w]+)=(\"[^=]*\"|\'[^=]*'|"
+                         "\{[^=]*\}|\[[^=]*\]|[\.,:\w\d\.]*)")
 
 
 class TaskSpec(base.BaseSpec):
@@ -103,6 +105,11 @@ class TaskSpec(base.BaseSpec):
             # Remove embracing quotes.
             if v[0] == '"' or v[0] == "'":
                 v = v[1:-1]
+            else:
+                try:
+                    v = json.loads(v)
+                except Exception:
+                    pass
 
             params[k] = v
 
