@@ -36,6 +36,8 @@ class Workbook(mb.MistralModelBase):
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
+
+    # Security properties.
     scope = sa.Column(sa.String(80))
     project_id = sa.Column(sa.String(80))
     trust_id = sa.Column(sa.String(80))
@@ -55,6 +57,8 @@ class Workflow(mb.MistralModelBase):
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
+
+    # Security properties.
     scope = sa.Column(sa.String(80))
     project_id = sa.Column(sa.String(80))
     trust_id = sa.Column(sa.String(80))
@@ -145,7 +149,16 @@ class Action(mb.MistralModelBase):
     name = sa.Column(sa.String(200))
     description = sa.Column(sa.Text())
 
+    # Ad-hoc action properties.
+    definition = sa.Column(sa.Text(), nullable=True)
+    spec = sa.Column(st.JsonDictType())
+
     # Service properties.
     action_class = sa.Column(sa.String(200))
     attributes = sa.Column(st.JsonDictType())
     is_system = sa.Column(sa.Boolean())
+
+    # Security properties.
+    scope = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80))
+    trust_id = sa.Column(sa.String(80))

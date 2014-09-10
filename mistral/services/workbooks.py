@@ -74,8 +74,19 @@ def _check_workbook_definition_update(wb_db, values):
 
 def _create_or_update_actions(wb_db, actions_spec):
     if actions_spec:
-        # TODO(rakhmerov): Complete when action DB model is added.
-        pass
+        for action_spec in actions_spec:
+            action_name = '%s.%s' % (wb_db.name, action_spec.get_name())
+
+            values = {
+                'name': action_name,
+                'spec': action_spec.to_dict(),
+                'is_system': False,
+                'scope': wb_db.scope,
+                'trust_id': wb_db.trust_id,
+                'project_id': wb_db.project_id
+            }
+
+            db_api_v2.create_or_update_action(action_name, values)
 
 
 def _create_or_update_workflows(wb_db, workflows_spec):
