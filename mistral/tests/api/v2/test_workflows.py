@@ -23,34 +23,62 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.api import base
 
-WORKFLOW_DB = models.Workflow(
+WF_DEFINITION = """
+---
+Version: '2.0'
+
+type: direct
+start-task: task1
+parameters:
+  - param1
+
+tasks:
+  task1:
+    action: std.echo output="Hi"
+"""
+
+WF_DB = models.Workflow(
     id='123',
     name='flow',
-    definition='---',
+    definition=WF_DEFINITION,
     tags=['deployment', 'demo'],
     scope="public",
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )
 
-WORKFLOW = {
+WF = {
     'id': '123',
     'name': 'flow',
-    'definition': '---',
+    'definition': WF_DEFINITION,
     'tags': ['deployment', 'demo'],
     'scope': 'public',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'
 }
 
-UPDATED_WORKFLOW_DB = copy.copy(WORKFLOW_DB)
-UPDATED_WORKFLOW_DB['definition'] = '---\nVersion: 2.0'
-UPDATED_WORKFLOW = copy.copy(WORKFLOW)
-UPDATED_WORKFLOW['definition'] = '---\nVersion: 2.0'
+UPDATED_WF_DEFINITION = """
+---
+Version: '2.0'
 
-MOCK_WORKFLOW = mock.MagicMock(return_value=WORKFLOW_DB)
-MOCK_WORKFLOWS = mock.MagicMock(return_value=[WORKFLOW_DB])
-MOCK_UPDATED_WORKFLOW = mock.MagicMock(return_value=UPDATED_WORKFLOW_DB)
+type: direct
+start-task: task1
+parameters:
+  - param1
+
+tasks:
+  task1:
+    action: std.echo output="Hi"
+"""
+
+UPDATED_WF_DB = copy.copy(WF_DB)
+UPDATED_WF_DB['definition'] = UPDATED_WF_DEFINITION
+UPDATED_WF = copy.copy(WF)
+UPDATED_WF['definition'] = UPDATED_WF_DEFINITION
+
+MOCK_WF = mock.MagicMock(return_value=WF_DB)
+MOCK_WFS = mock.MagicMock(return_value=[WF_DB])
+MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
@@ -58,12 +86,12 @@ MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
 
 
 class TestWorkflowsController(base.FunctionalTest):
-    @mock.patch.object(db_api, "get_workflow", MOCK_WORKFLOW)
+    @mock.patch.object(db_api, "get_workflow", MOCK_WF)
     def test_get(self):
         resp = self.app.get('/v2/workflows/123')
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(WORKFLOW, resp.json)
+        self.assertDictEqual(WF, resp.json)
 
     @mock.patch.object(db_api, "get_workflow", MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -71,30 +99,39 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "update_workflow", MOCK_UPDATED_WORKFLOW)
+    @mock.patch.object(db_api, "update_workflow", MOCK_UPDATED_WF)
     def test_put(self):
-        resp = self.app.put_json('/v2/workflows/123', UPDATED_WORKFLOW)
+        resp = self.app.put_json('/v2/workflows/123', UPDATED_WF)
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_WORKFLOW, resp.json)
+        self.assertDictEqual(UPDATED_WF, resp.json)
 
     @mock.patch.object(db_api, "update_workflow", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json('/v2/workflows/123', UPDATED_WORKFLOW,
+        resp = self.app.put_json('/v2/workflows/123', UPDATED_WF,
                                  expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "create_workflow", MOCK_WORKFLOW)
-    def test_post(self):
-        resp = self.app.post_json('/v2/workflows', WORKFLOW)
+    @mock.patch.object(db_api, "create_workflow")
+    def test_post(self, mock_mtd):
+        mock_mtd.return_value = WF_DB
+
+        resp = self.app.post_json('/v2/workflows', WF)
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(WORKFLOW, resp.json)
+        self.assertDictEqual(WF, resp.json)
+
+        mock_mtd.assert_called_once()
+
+        spec = mock_mtd.call_args[0][0]['spec']
+
+        self.assertIsNotNone(spec)
+        self.assertEqual(WF_DB.name, spec['name'])
 
     @mock.patch.object(db_api, "create_workflow", MOCK_DUPLICATE)
     def test_post_dup(self):
-        resp = self.app.post_json('/v2/workflows', WORKFLOW,
+        resp = self.app.post_json('/v2/workflows', WF,
                                   expect_errors=True)
 
         self.assertEqual(resp.status_int, 409)
@@ -111,14 +148,14 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "get_workflows", MOCK_WORKFLOWS)
+    @mock.patch.object(db_api, "get_workflows", MOCK_WFS)
     def test_get_all(self):
         resp = self.app.get('/v2/workflows')
 
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['workflows']), 1)
-        self.assertDictEqual(WORKFLOW, resp.json['workflows'][0])
+        self.assertDictEqual(WF, resp.json['workflows'][0])
 
     @mock.patch.object(db_api, "get_workflows", MOCK_EMPTY)
     def test_get_all_empty(self):

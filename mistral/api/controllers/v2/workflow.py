@@ -22,6 +22,7 @@ from mistral.api.controllers import resource
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
+from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
@@ -61,6 +62,21 @@ class Workflows(resource.Resource):
         return cls(workflows=[Workflow.sample()])
 
 
+def _get_workflow_values(workflow):
+    # Build specification in order to validate DSL and store its
+    # serialized version in DB.
+    values = workflow.to_dict()
+
+    spec = spec_parser.get_workflow_spec_from_yaml(
+        workflow.definition,
+        workflow.name
+    )
+
+    values['spec'] = spec.to_dict()
+
+    return values
+
+
 class WorkflowsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflow, wtypes.text)
@@ -78,7 +94,10 @@ class WorkflowsController(rest.RestController):
         """Update the named workflow."""
         LOG.debug("Update workflow [name=%s, workflow=%s]" % (name, workflow))
 
-        db_model = db_api.update_workflow(name, workflow.to_dict())
+        db_model = db_api.update_workflow(
+            name,
+            _get_workflow_values(workflow)
+        )
 
         return Workflow.from_dict(db_model.to_dict())
 
@@ -88,7 +107,7 @@ class WorkflowsController(rest.RestController):
         """Create a new workflow."""
         LOG.debug("Create workflow [workflow=%s]" % workflow)
 
-        db_model = db_api.create_workflow(workflow.to_dict())
+        db_model = db_api.create_workflow(_get_workflow_values(workflow))
 
         return Workflow.from_dict(db_model.to_dict())
 

@@ -106,6 +106,14 @@ def get_workflow_spec(spec_dict):
         return wf_v2.WorkflowSpec(spec_dict)
 
 
+def get_workflow_spec_from_yaml(text, workflow_name):
+    spec_dict = parse_yaml(text)
+
+    spec_dict['name'] = workflow_name
+
+    return get_workflow_spec(spec_dict)
+
+
 def get_task_spec(spec_dict):
     if _get_spec_version(spec_dict) == V1_0:
         return tasks_v1.TaskSpec(spec_dict)
