@@ -86,6 +86,9 @@ Workflows:
 
       task7:
         workflow: wf2 is_true=true object_list=[1, null, "str"]
+
+      task8:
+        workflow: wf2 expr_list=["$.value", "{$.key}"] expr={$.value}
 """
 
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
@@ -182,7 +185,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', wf2_spec.get_version())
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
-        self.assertEqual(5, len(wf2_spec.get_tasks()))
+        self.assertEqual(6, len(wf2_spec.get_tasks()))
         self.assertEqual('task3', wf2_spec.get_start_task().get_name())
 
         task3_spec = wf2_spec.get_tasks().get('task3')
@@ -222,6 +225,16 @@ class DSLv2ModelTest(base.BaseTest):
                 'object_list': [1, None, 'str'],
             },
             task7_spec.get_parameters()
+        )
+
+        task8_spec = wf2_spec.get_tasks().get('task8')
+
+        self.assertEqual(
+            {
+                'expr_list': ['$.value', '{$.key}'],
+                'expr': '{$.value}',
+            },
+            task8_spec.get_parameters()
         )
 
     def test_to_dict(self):
