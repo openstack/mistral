@@ -104,7 +104,7 @@ class WorkflowsController(rest.RestController):
     def get_all(self):
         """Return all workflows.
 
-        Where project_id is the same as the requestor or
+        Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
         LOG.debug("Fetch workflows.")

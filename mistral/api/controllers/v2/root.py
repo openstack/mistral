@@ -19,6 +19,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import action
 from mistral.api.controllers.v2 import execution
 from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import workbook
@@ -42,6 +43,7 @@ class Controller(object):
     """API root controller for version 2."""
 
     workbooks = workbook.WorkbooksController()
+    actions = action.ActionsController()
     workflows = workflow.WorkflowsController()
     executions = execution.ExecutionsController()
     tasks = task.TasksController()
