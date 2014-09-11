@@ -18,7 +18,7 @@ import mock
 
 from mistral.db.v1 import api as db_api
 from mistral import exceptions
-from mistral.tests.api import base
+from mistral.tests.unit.api import base
 
 WORKBOOKS = [
     {

@@ -24,7 +24,7 @@ import pecan.testing
 from mistral.db.v1 import api as db_api
 from mistral.db.v1.sqlalchemy import models
 from mistral.openstack.common import timeutils
-from mistral.tests.api import base
+from mistral.tests.unit.api import base
 
 
 WORKBOOKS = [

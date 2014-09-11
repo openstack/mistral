@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 from mistral.openstack.common import jsonutils
-from mistral.tests.api import base
+from mistral.tests.unit.api import base
 
 
 class TestRootController(base.FunctionalTest):
