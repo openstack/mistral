@@ -22,7 +22,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import workbooks
-from mistral.tests.api import base
+from mistral.tests.unit.api import base
 
 WORKBOOK_DB = models.Workbook(
     id='123',
