@@ -34,6 +34,7 @@ class Execution(resource.Resource):
 
     id = wtypes.text
     workflow_name = wtypes.text
+    params = wtypes.text
 
     state = wtypes.text
     # Context is a JSON object but since WSME doesn't support arbitrary
@@ -52,6 +53,12 @@ class Execution(resource.Resource):
 
         if d.get('output'):
             d['output'] = json.loads(d['output'])
+
+        if d.get('params'):
+            params = json.loads(d['params'])
+            del d['params']
+            for k, v in params.items():
+                d[k] = v
 
         return d
 
