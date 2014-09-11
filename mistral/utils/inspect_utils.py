@@ -32,3 +32,27 @@ def get_public_fields(obj):
             public_fields[attribute_str] = attr
 
     return public_fields
+
+
+def get_docstring(obj):
+    return inspect.getdoc(obj)
+
+
+def get_arg_list_as_str(func):
+    argspec = inspect.getargspec(func)
+    defs = list(argspec.defaults or [])
+
+    args = argspec.args
+    args.remove('self')
+
+    diff_args_defs = len(args) - len(defs)
+    arg_str_list = []
+
+    for index, default in enumerate(args):
+        if index >= diff_args_defs:
+            arg_str_list.append("%s=%s" % (args[index],
+                                           defs[index - diff_args_defs]))
+        else:
+            arg_str_list.append("%s" % args[index])
+
+    return ", ".join(arg_str_list)

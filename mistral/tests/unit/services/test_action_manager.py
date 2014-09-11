@@ -1,0 +1,41 @@
+# Copyright 2014 - Mirantis, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+from mistral.db.v2 import api as db_api
+from mistral.tests import base
+
+
+class ActionManagerTest(base.DbTestCase):
+    def test_action_parameters(self):
+        std_http = db_api.get_action("std.http")
+        std_email = db_api.get_action("std.email")
+
+        http_action_params = ("url, method=GET, params=None, body=None, "
+                              "headers=None, cookies=None, auth=None, "
+                              "timeout=None, allow_redirects=None, "
+                              "proxies=None")
+
+        self.assertEqual(http_action_params, std_http.parameters)
+        self.assertEqual("params, settings", std_email.parameters)
+
+    def test_action_description(self):
+        std_http = db_api.get_action("std.http")
+        std_echo = db_api.get_action("std.echo")
+
+        self.assertIn("Constructs an HTTP action", std_http.description)
+        self.assertIn("param body: (optional) Dictionary, bytes",
+                      std_http.description)
+
+        self.assertIn("This action just returns a configured value",
+                      std_echo.description)
