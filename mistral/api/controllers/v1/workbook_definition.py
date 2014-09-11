@@ -18,7 +18,6 @@ import pecan
 
 from mistral.db.v1 import api as db_api
 from mistral.openstack.common import log as logging
-from mistral.services import triggers
 from mistral.services import workbooks
 from mistral.utils import rest_utils
 
@@ -46,7 +45,5 @@ class WorkbookDefinitionController(pecan.rest.RestController):
                   (workbook_name, text))
 
         wb = workbooks.update_workbook_v1(workbook_name, {'definition': text})
-
-        triggers.create_associated_triggers(wb)
 
         return wb.definition
