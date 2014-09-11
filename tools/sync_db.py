@@ -26,6 +26,11 @@ LOG = logging.getLogger(__name__)
 
 def main():
     config.parse_args()
+
+    if len(CONF.config_file) == 0:
+        print "Usage: sync_db --config-file <path-to-config-file>"
+        return exit(1)
+
     logging.setup('Mistral')
 
     db_api.setup_db()
