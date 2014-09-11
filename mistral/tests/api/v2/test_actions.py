@@ -27,6 +27,7 @@ ACTION_DEFINITION = """
 ---
 Version: '2.0'
 
+description: My super cool action.
 base: std.echo
 base-parameters:
   output: "{$.str1}{$.str2}"
@@ -35,7 +36,6 @@ base-parameters:
 ACTION = {
     'id': '123',
     'name': 'my_action',
-    'description': 'My super cool action.',
     'definition': ACTION_DEFINITION,
     'scope': 'public',
 }
@@ -125,7 +125,11 @@ class TestActionsController(base.FunctionalTest):
 
         mock_mtd.assert_called_once()
 
-        spec = mock_mtd.call_args[0][0]['spec']
+        values = mock_mtd.call_args[0][0]
+
+        self.assertEqual('My super cool action.', values['description'])
+
+        spec = values['spec']
 
         self.assertIsNotNone(spec)
         self.assertEqual(ACTION_DB.name, spec['name'])

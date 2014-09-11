@@ -74,6 +74,7 @@ def _get_action_values(action):
     )
 
     values['spec'] = spec.to_dict()
+    values['description'] = spec.get_description()
     values['is_system'] = False
 
     return values
