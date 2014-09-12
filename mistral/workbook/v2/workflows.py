@@ -22,7 +22,7 @@ class WorkflowSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "Version": {"type": "string"},
+            "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
@@ -32,7 +32,7 @@ class WorkflowSpec(base.BaseSpec):
             "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
         },
-        "required": ["Version", "name", "type", "tasks"],
+        "required": ["version", "name", "type", "tasks"],
         "additionalProperties": False
     }
 

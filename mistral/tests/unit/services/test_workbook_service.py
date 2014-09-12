@@ -29,15 +29,15 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WORKBOOK = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Actions:
+actions:
   concat:
     base: std.echo
     base-parameters:
       output: "{$.str1}{$.str2}"
 
-Workflows:
+workflows:
   wf1:
     type: reverse
     parameters:
@@ -66,15 +66,15 @@ Workflows:
 
 UPDATED_WORKBOOK = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Actions:
+actions:
   concat:
     base: std.echo
     base-parameters:
       output: "{$.str1}{$.str2}"
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1

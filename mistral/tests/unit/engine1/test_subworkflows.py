@@ -31,9 +31,9 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WORKBOOK = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Workflows:
+workflows:
   wf1:
     type: reverse
     parameters:

@@ -30,9 +30,9 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WORKBOOK = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1
@@ -52,9 +52,9 @@ Workflows:
 
 WAIT_BEFORE_WB = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1
@@ -69,9 +69,9 @@ Workflows:
 
 WAIT_AFTER_WB = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1
@@ -86,9 +86,9 @@ Workflows:
 
 RETRY_WB = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1

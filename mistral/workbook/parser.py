@@ -49,9 +49,7 @@ def _get_spec_version(spec_dict):
     # If version is not specified it will '1.0' by default.
     ver = V1_0
 
-    if 'Version' in spec_dict:
-        ver = spec_dict['Version']
-    elif 'version' in spec_dict:
+    if 'version' in spec_dict:
         ver = spec_dict['version']
 
     if str(ver) not in ALL_VERSIONS:

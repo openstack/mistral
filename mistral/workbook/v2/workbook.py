@@ -23,11 +23,11 @@ class WorkbookSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "Version": {"value": "2.0"},
-            "Description": {"type": "string"},
-            "Actions": {"type": "object"},
-            "Workflows": {"type": "object"},
-            "Triggers": {"type": "object"}
+            "version": {"value": "2.0"},
+            "description": {"type": "string"},
+            "actions": {"type": "object"},
+            "workflows": {"type": "object"},
+            "triggers": {"type": "object"}
         },
         "additionalProperties": False
     }
@@ -37,13 +37,13 @@ class WorkbookSpec(base.BaseSpec):
     def __init__(self, data):
         super(WorkbookSpec, self).__init__(data)
 
-        self._inject_version(['Actions', 'Workflows', 'Triggers'])
+        self._inject_version(['actions', 'workflows', 'triggers'])
 
-        self._description = data.get('Description')
-        self._actions = self._spec_property('Actions', act.ActionSpecList)
+        self._description = data.get('description')
+        self._actions = self._spec_property('actions', act.ActionSpecList)
         self._workflows = \
-            self._spec_property('Workflows', wf.WorkflowSpecList)
-        self._triggers = self._spec_property('Triggers', tr.TriggerSpecList)
+            self._spec_property('workflows', wf.WorkflowSpecList)
+        self._triggers = self._spec_property('triggers', tr.TriggerSpecList)
 
     def get_description(self):
         return self._description

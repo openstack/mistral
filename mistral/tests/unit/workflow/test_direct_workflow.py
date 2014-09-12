@@ -26,9 +26,9 @@ LOG = logging.getLogger(__name__)
 
 WORKBOOK = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1

@@ -25,7 +25,7 @@ from mistral.tests.unit.api import base
 
 ACTION_DEFINITION = """
 ---
-Version: '2.0'
+version: '2.0'
 
 description: My super cool action.
 base: std.echo
@@ -54,7 +54,7 @@ SYSTEM_ACTION_DB.update(SYSTEM_ACTION)
 
 UPDATED_ACTION_DEFINITION = """
 ---
-Version: '2.0'
+version: '2.0'
 
 base: std.echo
 base-parameters:

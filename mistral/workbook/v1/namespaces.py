@@ -35,7 +35,7 @@ class NamespaceSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "Version": {"type": "string"},
+            "version": {"type": "string"},
             "name": {"type": "string"},
             "class": {"type": ["string", "null"]},
             "base-parameters": {"type": ["object", "null"]},

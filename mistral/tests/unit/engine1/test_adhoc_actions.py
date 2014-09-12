@@ -28,16 +28,16 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WORKBOOK = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Actions:
+actions:
   my_action:
     base: std.echo
     base-parameters:
       output: "{$.str1}{$.str2}"
     output: "{$}{$}"
 
-Workflows:
+workflows:
   wf1:
     type: direct
     start-task: task1

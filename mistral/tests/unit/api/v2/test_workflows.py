@@ -25,7 +25,7 @@ from mistral.tests.unit.api import base
 
 WF_DEFINITION = """
 ---
-Version: '2.0'
+version: '2.0'
 
 type: direct
 start-task: task1
@@ -59,7 +59,7 @@ WF = {
 
 UPDATED_WF_DEFINITION = """
 ---
-Version: '2.0'
+version: '2.0'
 
 type: direct
 start-task: task1

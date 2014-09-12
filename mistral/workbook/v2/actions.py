@@ -22,7 +22,7 @@ class ActionSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "Version": {"type": "string"},
+            "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
             "base": {"type": "string"},
@@ -30,7 +30,7 @@ class ActionSpec(base.BaseSpec):
             "parameters": {"type": "array"},
             "output": {"type": ["string", "object", "array", "null"]},
         },
-        "required": ["Version", "name", "base"],
+        "required": ["version", "name", "base"],
         "additionalProperties": False
     }
 

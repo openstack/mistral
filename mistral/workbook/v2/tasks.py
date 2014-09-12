@@ -33,7 +33,7 @@ class TaskSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "Version": {"type": "string"},
+            "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
             "action": {"type": ["string", "null"]},
@@ -46,7 +46,7 @@ class TaskSpec(base.BaseSpec):
             "on-success": {"type": ["string", "object", "array", "null"]},
             "on-error": {"type": ["string", "object", "array", "null"]}
         },
-        "required": ["Version", "name"],
+        "required": ["version", "name"],
         "additionalProperties": False
     }
 

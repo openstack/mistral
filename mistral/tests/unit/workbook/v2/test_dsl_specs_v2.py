@@ -19,11 +19,11 @@ from mistral.workbook import parser as spec_parser
 
 VALID_WB = """
 ---
-Version: '2.0'
+version: '2.0'
 
-Description: This is a test workbook
+description: This is a test workbook
 
-Actions:
+actions:
   action1:
     description: This is a test ad-hoc action
     base: std.echo
@@ -31,7 +31,7 @@ Actions:
         output: "Hello {$.name}!"
     output: $
 
-Workflows:
+workflows:
   wf1:
     description: This is a test workflow
     type: reverse
@@ -242,6 +242,6 @@ class DSLv2ModelTest(base.BaseTest):
 
         d = wb_spec.to_dict()
 
-        self.assertEqual('2.0', d['Version'])
-        self.assertEqual('2.0', d['Workflows']['Version'])
-        self.assertEqual('2.0', d['Workflows']['wf1']['Version'])
+        self.assertEqual('2.0', d['version'])
+        self.assertEqual('2.0', d['workflows']['version'])
+        self.assertEqual('2.0', d['workflows']['wf1']['version'])
