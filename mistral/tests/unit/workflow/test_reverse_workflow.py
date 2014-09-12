@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from mistral.db.v2.sqlalchemy import models
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
@@ -72,15 +73,26 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
 
         return task_db
 
-    def test_start_workflow(self):
+    def test_start_workflow_task2(self):
         task_specs = self.handler.start_workflow(task_name='task2')
 
         self.assertEqual(1, len(task_specs))
         self.assertEqual('task1', task_specs[0].get_name())
         self.assertEqual(states.RUNNING, self.exec_db.state)
 
+    def test_start_workflow_task1(self):
+        task_specs = self.handler.start_workflow(task_name='task1')
+
+        self.assertEqual(1, len(task_specs))
+        self.assertEqual('task1', task_specs[0].get_name())
+        self.assertEqual(states.RUNNING, self.exec_db.state)
+
+    def test_start_workflow_without_task(self):
+        self.assertRaises(exc.WorkflowException, self.handler.start_workflow)
+
     def test_on_task_result(self):
         self.exec_db.update({'state': states.RUNNING})
+        self.exec_db.update({'start_params': {'task_name': 'task2'}})
 
         task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
 

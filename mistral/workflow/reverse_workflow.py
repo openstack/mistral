@@ -59,10 +59,14 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
     def _find_next_tasks(self, task_db):
         """Finds all tasks with resolved dependencies.
 
-        :param task_db: Task DB model causing the operation
-            (not used in this handler).
+        :param task_db: Task DB model causing the operation.
         :return: Tasks with resolved dependencies.
         """
+
+        # If cause task is the target task of the workflow then
+        # there's no more tasks to start.
+        if self.exec_db.start_params['task_name'] == task_db.name:
+            return []
 
         # We need to analyse the graph and see which tasks are ready to start.
         resolved_task_specs = []
@@ -73,6 +77,11 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
                 success_task_names.add(t.name)
 
         for t_spec in self.wf_spec.get_tasks():
+            # Skip task if it doesn't have a direct dependency
+            # on the cause task.
+            if task_db.name not in t_spec.get_requires():
+                continue
+
             if not (set(t_spec.get_requires()) - success_task_names):
                 t_db = self._find_db_task(t_spec.get_name())
 
