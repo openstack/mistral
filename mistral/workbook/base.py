@@ -12,10 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import jsonschema
+import re
 import six
 
 from mistral import exceptions as exc
+
+
+CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
+PARAMS_PTRN = re.compile("([\w]+)=(\"[^=]*\"|\'[^=]*'|"
+                         "\{[^=]*\}|\[[^=]*\]|[\.,:\w\d\.]*)")
 
 
 class BaseSpec(object):
@@ -64,6 +71,32 @@ class BaseSpec(object):
             return result
         elif isinstance(prop_val, six.string_types):
             return {prop_val: ''}
+
+    @staticmethod
+    def _parse_cmd_and_params(cmd_str):
+        # TODO(rakhmerov): Try to find a way with one expression.
+        cmd_matcher = CMD_PTRN.search(cmd_str)
+
+        if not cmd_matcher:
+            msg = "Invalid action/workflow task property: %s" % cmd_str
+            raise exc.InvalidModelException(msg)
+
+        cmd = cmd_matcher.group()
+
+        params = {}
+        for k, v in re.findall(PARAMS_PTRN, cmd_str):
+            # Remove embracing quotes.
+            if v[0] == '"' or v[0] == "'":
+                v = v[1:-1]
+            else:
+                try:
+                    v = json.loads(v)
+                except Exception:
+                    pass
+
+            params[k] = v
+
+        return cmd, params
 
     def to_dict(self):
         return self._data

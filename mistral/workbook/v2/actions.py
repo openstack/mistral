@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import utils
 from mistral.workbook import base
 
 # TODO(rakhmerov): In progress.
@@ -45,6 +46,10 @@ class ActionSpec(base.BaseSpec):
         self._base_parameters = data.get('base-parameters', {})
         self._parameters = data.get('parameters', {})
         self._output = data.get('output')
+
+        self._base, params = self._parse_cmd_and_params(self._base)
+
+        utils.merge_dicts(self._base_parameters, params)
 
     def get_name(self):
         return self._name

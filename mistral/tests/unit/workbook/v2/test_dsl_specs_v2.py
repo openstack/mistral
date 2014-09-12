@@ -31,6 +31,11 @@ actions:
         output: "Hello {$.name}!"
     output: $
 
+  action2:
+    description: This is a test ad-hoc action with base params
+    base: std.echo output="Echo output"
+    output: $
+
 workflows:
   wf1:
     description: This is a test workflow
@@ -236,6 +241,16 @@ class DSLv2ModelTest(base.BaseTest):
             },
             task8_spec.get_parameters()
         )
+
+    def test_adhoc_action_with_base_in_one_string(self):
+        wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
+
+        act_specs = wb_spec.get_actions()
+        action_spec = act_specs.get("action2")
+
+        self.assertEqual("std.echo", action_spec.get_base())
+        self.assertEqual({'output': 'Echo output'},
+                         action_spec.get_base_parameters())
 
     def test_to_dict(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
