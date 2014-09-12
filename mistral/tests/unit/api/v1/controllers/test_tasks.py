@@ -83,28 +83,30 @@ class TestTasksController(base.FunctionalTest):
     def test_workbook_put(self):
         resp = self.app.put_json(
             '/v1/workbooks/my_workbook/executions/123/tasks/1',
-            dict(state='STOPPED'))
+            dict(state='STOPPED', output='{"a":"b"}'))
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_TASK, canonize(resp.json))
 
-    @mock.patch.object(engine.EngineClient, "convey_task_result",
-                       mock.MagicMock(return_value=UPDATED_TASK))
+    @mock.patch.object(engine.EngineClient, "convey_task_result")
     @mock.patch.object(db_api, "task_get", base.create_mock_task(TASKS[0]))
-    def test_execution_put(self):
+    def test_execution_put(self, convey_task_result):
+        convey_task_result.return_value = UPDATED_TASK
         resp = self.app.put_json(
             '/v1/executions/123/tasks/1',
-            dict(state='STOPPED'))
+            dict(state='STOPPED', output='{"a":"b"}'))
         self.assertEqual(resp.status_int, 200)
+        convey_task_result.called_once_with(resp.json)
         self.assertDictEqual(UPDATED_TASK, canonize(resp.json))
 
-    @mock.patch.object(engine.EngineClient, "convey_task_result",
-                       mock.MagicMock(return_value=UPDATED_TASK))
+    @mock.patch.object(engine.EngineClient, "convey_task_result")
     @mock.patch.object(db_api, "task_get", base.create_mock_task(TASKS[0]))
-    def test_root_put(self):
+    def test_root_put(self, convey_task_result):
+        convey_task_result.return_value = UPDATED_TASK
         resp = self.app.put_json(
             '/v1/tasks/1',
-            dict(state='STOPPED'))
+            dict(state='STOPPED', output='{"a":"b"}'))
         self.assertEqual(resp.status_int, 200)
+        convey_task_result.called_once_with(resp.json)
         self.assertDictEqual(UPDATED_TASK, canonize(resp.json))
 
     @mock.patch.object(engine.EngineClient, "convey_task_result",
