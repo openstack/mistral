@@ -18,17 +18,17 @@
 
 IDLE = 'IDLE'
 RUNNING = 'RUNNING'
-STOPPED = 'STOPPED'
+PAUSED = 'PAUSED'
 DELAYED = 'DELAYED'
 SUCCESS = 'SUCCESS'
 ERROR = 'ERROR'
 
-_ALL = [IDLE, RUNNING, SUCCESS, ERROR, STOPPED, DELAYED]
+_ALL = [IDLE, RUNNING, SUCCESS, ERROR, PAUSED, DELAYED]
 
 _VALID_TRANSITIONS = {
     IDLE: [RUNNING, ERROR],
-    RUNNING: [STOPPED, DELAYED, SUCCESS, ERROR],
-    STOPPED: [RUNNING, ERROR],
+    RUNNING: [PAUSED, DELAYED, SUCCESS, ERROR],
+    PAUSED: [RUNNING, ERROR],
     DELAYED: [RUNNING, ERROR],
     SUCCESS: [],
     ERROR: []
@@ -47,8 +47,8 @@ def is_finished(state):
     return state in [SUCCESS, ERROR]
 
 
-def is_stopped_or_finished(state):
-    return state == STOPPED or is_finished(state)
+def is_paused_or_finished(state):
+    return state == PAUSED or is_finished(state)
 
 
 def is_valid_transition(from_state, to_state):

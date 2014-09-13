@@ -27,31 +27,31 @@ class StatesModuleTest(base.BaseTest):
         self.assertTrue(s.is_valid_transition(s.IDLE, s.IDLE))
         self.assertTrue(s.is_valid_transition(s.IDLE, s.RUNNING))
         self.assertTrue(s.is_valid_transition(s.IDLE, s.ERROR))
-        self.assertFalse(s.is_valid_transition(s.IDLE, s.STOPPED))
+        self.assertFalse(s.is_valid_transition(s.IDLE, s.PAUSED))
         self.assertFalse(s.is_valid_transition(s.IDLE, s.DELAYED))
         self.assertFalse(s.is_valid_transition(s.IDLE, s.SUCCESS))
 
         # From RUNNING
         self.assertTrue(s.is_valid_transition(s.RUNNING, s.RUNNING))
         self.assertTrue(s.is_valid_transition(s.RUNNING, s.ERROR))
-        self.assertTrue(s.is_valid_transition(s.RUNNING, s.STOPPED))
+        self.assertTrue(s.is_valid_transition(s.RUNNING, s.PAUSED))
         self.assertTrue(s.is_valid_transition(s.RUNNING, s.DELAYED))
         self.assertTrue(s.is_valid_transition(s.RUNNING, s.SUCCESS))
         self.assertFalse(s.is_valid_transition(s.RUNNING, s.IDLE))
 
-        # From STOPPED
-        self.assertTrue(s.is_valid_transition(s.STOPPED, s.STOPPED))
-        self.assertTrue(s.is_valid_transition(s.STOPPED, s.RUNNING))
-        self.assertTrue(s.is_valid_transition(s.STOPPED, s.ERROR))
-        self.assertFalse(s.is_valid_transition(s.STOPPED, s.DELAYED))
-        self.assertFalse(s.is_valid_transition(s.STOPPED, s.SUCCESS))
-        self.assertFalse(s.is_valid_transition(s.STOPPED, s.IDLE))
+        # From PAUSED
+        self.assertTrue(s.is_valid_transition(s.PAUSED, s.PAUSED))
+        self.assertTrue(s.is_valid_transition(s.PAUSED, s.RUNNING))
+        self.assertTrue(s.is_valid_transition(s.PAUSED, s.ERROR))
+        self.assertFalse(s.is_valid_transition(s.PAUSED, s.DELAYED))
+        self.assertFalse(s.is_valid_transition(s.PAUSED, s.SUCCESS))
+        self.assertFalse(s.is_valid_transition(s.PAUSED, s.IDLE))
 
         # From DELAYED
         self.assertTrue(s.is_valid_transition(s.DELAYED, s.DELAYED))
         self.assertTrue(s.is_valid_transition(s.DELAYED, s.RUNNING))
         self.assertTrue(s.is_valid_transition(s.DELAYED, s.ERROR))
-        self.assertFalse(s.is_valid_transition(s.DELAYED, s.STOPPED))
+        self.assertFalse(s.is_valid_transition(s.DELAYED, s.PAUSED))
         self.assertFalse(s.is_valid_transition(s.DELAYED, s.SUCCESS))
         self.assertFalse(s.is_valid_transition(s.DELAYED, s.IDLE))
 
@@ -59,14 +59,14 @@ class StatesModuleTest(base.BaseTest):
         self.assertTrue(s.is_valid_transition(s.SUCCESS, s.SUCCESS))
         self.assertFalse(s.is_valid_transition(s.SUCCESS, s.RUNNING))
         self.assertFalse(s.is_valid_transition(s.SUCCESS, s.ERROR))
-        self.assertFalse(s.is_valid_transition(s.SUCCESS, s.STOPPED))
+        self.assertFalse(s.is_valid_transition(s.SUCCESS, s.PAUSED))
         self.assertFalse(s.is_valid_transition(s.SUCCESS, s.DELAYED))
         self.assertFalse(s.is_valid_transition(s.SUCCESS, s.IDLE))
 
         # From ERROR
         self.assertTrue(s.is_valid_transition(s.ERROR, s.ERROR))
         self.assertFalse(s.is_valid_transition(s.ERROR, s.RUNNING))
-        self.assertFalse(s.is_valid_transition(s.ERROR, s.STOPPED))
+        self.assertFalse(s.is_valid_transition(s.ERROR, s.PAUSED))
         self.assertFalse(s.is_valid_transition(s.ERROR, s.DELAYED))
         self.assertFalse(s.is_valid_transition(s.ERROR, s.SUCCESS))
         self.assertFalse(s.is_valid_transition(s.ERROR, s.IDLE))

@@ -135,19 +135,19 @@ class EngineServer(object):
         """
         return self._engine.run_task(task_id)
 
-    def stop_workflow(self, rpc_ctx, execution_id):
-        """Receives calls over RPC to stop workflows on engine.
+    def pause_workflow(self, rpc_ctx, execution_id):
+        """Receives calls over RPC to pause workflows on engine.
 
         :param rpc_ctx: Request context.
         :return: Workflow execution.
         """
 
         LOG.info(
-            "Received RPC request 'stop_workflow'[rpc_ctx=%s,"
+            "Received RPC request 'pause_workflow'[rpc_ctx=%s,"
             " execution_id=%s]" % (rpc_ctx, execution_id)
         )
 
-        return self._engine.stop_workflow(execution_id)
+        return self._engine.pause_workflow(execution_id)
 
     def resume_workflow(self, rpc_ctx, execution_id):
         """Receives calls over RPC to resume workflows on engine.
@@ -241,7 +241,7 @@ class EngineClient(base.Engine):
                                  'run_task',
                                  task_id=task_id)
 
-    def stop_workflow(self, execution_id):
+    def pause_workflow(self, execution_id):
         """Stops the workflow with the given execution id.
 
         :return: Workflow execution.
@@ -249,7 +249,7 @@ class EngineClient(base.Engine):
 
         return self._client.call(
             auth_ctx.ctx(),
-            'stop_workflow',
+            'pause_workflow',
             execution_id=execution_id
         )
 

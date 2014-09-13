@@ -57,8 +57,8 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def stop_workflow(self, execution_id):
-        """Stops workflow execution.
+    def pause_workflow(self, execution_id):
+        """Pauses workflow execution.
 
         :param execution_id: Execution id.
         :return: Workflow execution object.

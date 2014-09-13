@@ -96,13 +96,13 @@ class DefaultEngine(base.Engine):
 
         return task_db
 
-    def stop_workflow(self, execution_id):
+    def pause_workflow(self, execution_id):
         with db_api.transaction():
             exec_db = db_api.get_execution(execution_id)
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
-            wf_handler.stop_workflow()
+            wf_handler.pause_workflow()
 
         return exec_db
 

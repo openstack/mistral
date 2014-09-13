@@ -109,15 +109,15 @@ class WorkflowHandler(object):
         """
         raise NotImplementedError
 
-    def is_stopped_or_finished(self):
-        return states.is_stopped_or_finished(self.exec_db.state)
+    def is_paused_or_finished(self):
+        return states.is_paused_or_finished(self.exec_db.state)
 
-    def stop_workflow(self):
+    def pause_workflow(self):
         """Stops workflow this handler is associated with.
 
         :return: Execution object.
         """
-        self._set_execution_state(states.STOPPED)
+        self._set_execution_state(states.PAUSED)
 
         return self.exec_db
 
