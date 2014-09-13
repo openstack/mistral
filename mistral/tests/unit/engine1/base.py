@@ -115,6 +115,9 @@ class EngineTestCase(base.DbTestCase):
     def is_execution_error(self, exec_id):
         return db_api.get_execution(exec_id).state == states.ERROR
 
+    def is_execution_paused(self, exec_id):
+        return db_api.get_execution(exec_id).state == states.STOPPED
+
     def is_task_success(self, task_id):
         return db_api.get_task(task_id).state == states.SUCCESS
 
