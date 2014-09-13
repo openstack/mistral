@@ -24,8 +24,8 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine1 import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
-from mistral.workflow import base as wf
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
@@ -67,13 +67,13 @@ UPDATED_TASK_DB = copy.copy(TASK_DB)
 UPDATED_TASK_DB['state'] = 'SUCCESS'
 UPDATED_TASK = copy.copy(TASK)
 UPDATED_TASK['state'] = 'SUCCESS'
-UPDATED_TASK_RES = wf.TaskResult(json.loads(UPDATED_TASK['result']))
+UPDATED_TASK_RES = wf_utils.TaskResult(json.loads(UPDATED_TASK['result']))
 
 ERROR_TASK_DB = copy.copy(TASK_DB)
 ERROR_TASK_DB['state'] = 'ERROR'
 ERROR_TASK = copy.copy(TASK)
 ERROR_TASK['state'] = 'ERROR'
-ERROR_TASK_RES = wf.TaskResult(None, json.loads(ERROR_TASK['result']))
+ERROR_TASK_RES = wf_utils.TaskResult(None, json.loads(ERROR_TASK['result']))
 
 BROKEN_TASK = copy.copy(TASK)
 BROKEN_TASK['result'] = 'string not escaped'

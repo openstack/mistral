@@ -17,9 +17,9 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
-from mistral.workflow import base as wf_base
 from mistral.workflow import reverse_workflow as r_wf
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -74,17 +74,17 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         return task_db
 
     def test_start_workflow_task2(self):
-        task_specs = self.handler.start_workflow(task_name='task2')
+        commands = self.handler.start_workflow(task_name='task2')
 
-        self.assertEqual(1, len(task_specs))
-        self.assertEqual('task1', task_specs[0].get_name())
+        self.assertEqual(1, len(commands))
+        self.assertEqual('task1', commands[0].task_spec.get_name())
         self.assertEqual(states.RUNNING, self.exec_db.state)
 
     def test_start_workflow_task1(self):
-        task_specs = self.handler.start_workflow(task_name='task1')
+        commands = self.handler.start_workflow(task_name='task1')
 
-        self.assertEqual(1, len(task_specs))
-        self.assertEqual('task1', task_specs[0].get_name())
+        self.assertEqual(1, len(commands))
+        self.assertEqual('task1', commands[0].task_spec.get_name())
         self.assertEqual(states.RUNNING, self.exec_db.state)
 
     def test_start_workflow_without_task(self):
@@ -97,13 +97,13 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
 
         # Emulate finishing 'task1'.
-        task_specs = self.handler.on_task_result(
+        commands = self.handler.on_task_result(
             task1_db,
-            wf_base.TaskResult(data='Hey')
+            wf_utils.TaskResult(data='Hey')
         )
 
-        self.assertEqual(1, len(task_specs))
-        self.assertEqual('task2', task_specs[0].get_name())
+        self.assertEqual(1, len(commands))
+        self.assertEqual('task2', commands[0].task_spec.get_name())
 
         self.assertEqual(states.RUNNING, self.exec_db.state)
         self.assertEqual(states.SUCCESS, task1_db.state)
@@ -113,7 +113,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
 
         task_specs = self.handler.on_task_result(
             task2_db,
-            wf_base.TaskResult(data='Hi!')
+            wf_utils.TaskResult(data='Hi!')
         )
 
         self.assertEqual(0, len(task_specs))

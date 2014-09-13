@@ -26,8 +26,8 @@ from mistral.engine1 import rpc
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
-from mistral.workflow import base as wf_base
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -117,9 +117,9 @@ class TasksController(rest.RestController):
             raise exc.InvalidResultException()
 
         if task.state == states.ERROR:
-            raw_result = wf_base.TaskResult(None, result)
+            raw_result = wf_utils.TaskResult(None, result)
         else:
-            raw_result = wf_base.TaskResult(result)
+            raw_result = wf_utils.TaskResult(result)
 
         engine = rpc.get_engine_client()
 

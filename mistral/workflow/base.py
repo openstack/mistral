@@ -13,6 +13,8 @@
 #    limitations under the License.
 
 import abc
+
+from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils
@@ -48,7 +50,7 @@ class WorkflowHandler(object):
         according to this workflow type rules and identifies a list of
         tasks that can be scheduled for execution.
         :param params: Additional parameters specific to workflow type.
-        :return: List of tasks that can be scheduled for execution.
+        :return: List of engine commands that needs to be performed.
         """
         raise NotImplementedError
 
@@ -59,8 +61,8 @@ class WorkflowHandler(object):
         identifies tasks that can be scheduled for execution.
         :param task_db: Task that the result corresponds to.
         :param raw_result: Raw task result that comes from action/workflow
-        (before publisher). Instance of mistral.workflow.base.TaskResult
-        :return  List of tasks that can be scheduled for execution.
+        (before publisher). Instance of mistral.workflow.utils.TaskResult
+        :return List of engine commands that needs to be performed.
         """
         task_db.state = \
             states.ERROR if raw_result.is_error() else states.SUCCESS
@@ -96,7 +98,7 @@ class WorkflowHandler(object):
                     task_out_ctx
                 )
 
-        return task_specs
+        return [commands.RunTask(t_s) for t_s in task_specs]
 
     @abc.abstractmethod
     def _find_next_tasks(self, task_db):
@@ -124,7 +126,7 @@ class WorkflowHandler(object):
     def resume_workflow(self):
         """Resumes workflow this handler is associated with.
 
-        :return: Tasks available to run.
+        :return: List of engine commands that needs to be performed..
         """
         self._set_execution_state(states.RUNNING)
 
@@ -154,27 +156,6 @@ class WorkflowHandler(object):
     def _find_running_tasks(self):
         return [t_db for t_db in self.exec_db.tasks
                 if t_db.state == states.RUNNING]
-
-
-class TaskResult(object):
-    """Explicit data structure containing a result of task execution."""
-
-    def __init__(self, data=None, error=None):
-        self.data = data
-        self.error = error
-
-    def __repr__(self):
-        return 'TaskResult [data=%s, error=%s]' % \
-               (repr(self.data), repr(self.error))
-
-    def is_error(self):
-        return self.error is not None
-
-    def is_success(self):
-        return not self.is_error()
-
-    def __eq__(self, other):
-        return self.data == other.data and self.error == other.error
 
 
 class FlowControl(object):

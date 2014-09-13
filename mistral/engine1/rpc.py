@@ -17,20 +17,15 @@ from oslo import messaging
 
 from mistral import context as auth_ctx
 from mistral.engine1 import base
-from mistral.engine1 import default_engine as def_eng
-from mistral.engine1 import default_executor as def_executor
 from mistral.openstack.common import log as logging
-from mistral.workflow import base as wf_base
+from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 
 
 _TRANSPORT = None
 
-_ENGINE_SERVER = None
 _ENGINE_CLIENT = None
-
-_EXECUTOR_SERVER = None
 _EXECUTOR_CLIENT = None
 
 
@@ -43,18 +38,6 @@ def get_transport():
     return _TRANSPORT
 
 
-def get_engine_server():
-    global _ENGINE_SERVER
-
-    if not _ENGINE_SERVER:
-        # TODO(rakhmerov): It should be configurable.
-        _ENGINE_SERVER = EngineServer(
-            def_eng.DefaultEngine(get_engine_client(), get_executor_client())
-        )
-
-    return _ENGINE_SERVER
-
-
 def get_engine_client():
     global _ENGINE_CLIENT
 
@@ -62,18 +45,6 @@ def get_engine_client():
         _ENGINE_CLIENT = EngineClient(get_transport())
 
     return _ENGINE_CLIENT
-
-
-def get_executor_server():
-    global _EXECUTOR_SERVER
-
-    if not _EXECUTOR_SERVER:
-        # TODO(rakhmerov): It should be configurable.
-        _EXECUTOR_SERVER = ExecutorServer(
-            def_executor.DefaultExecutor(get_engine_client())
-        )
-
-    return _EXECUTOR_SERVER
 
 
 def get_executor_client():
@@ -118,7 +89,7 @@ class EngineServer(object):
         :return: Task.
         """
 
-        task_result = wf_base.TaskResult(result_data, result_error)
+        task_result = wf_utils.TaskResult(result_data, result_error)
 
         LOG.info(
             "Received RPC request 'on_task_result'[rpc_ctx=%s,"

@@ -87,9 +87,29 @@ class WaitBeforePolicy(base.TaskPolicy):
         self.delay = delay
 
     def before_task_start(self, task_db, task_spec):
+        context_key = 'wait_before_policy'
+
+        runtime_context = _ensure_context_has_key(
+            task_db.runtime_context,
+            context_key
+        )
+
+        task_db.runtime_context = runtime_context
+
+        policy_context = runtime_context[context_key]
+
+        if policy_context.get('skip'):
+            # Unset state 'DELAYED'.
+            task_db.state = states.RUNNING
+
+            return
+
+        policy_context.update({'skip': True})
+
         _log_task_delay(task_db.name, task_db.state, self.delay)
 
         task_db.state = states.DELAYED
+
         scheduler.schedule_call(
             _ENGINE_CLIENT_PATH,
             'run_task',
@@ -106,7 +126,10 @@ class WaitAfterPolicy(base.TaskPolicy):
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
-            task_db.runtime_context, context_key)
+            task_db.runtime_context,
+            context_key
+        )
+
         task_db.runtime_context = runtime_context
 
         policy_context = runtime_context[context_key]
@@ -115,6 +138,7 @@ class WaitAfterPolicy(base.TaskPolicy):
             # Unset state 'DELAYED'.
             task_db.state = \
                 states.ERROR if raw_result.is_error() else states.SUCCESS
+
             return
 
         policy_context.update({'skip': True})
@@ -125,8 +149,9 @@ class WaitAfterPolicy(base.TaskPolicy):
         task_db.state = states.DELAYED
 
         serializers = {
-            'raw_result': 'mistral.utils.serializer.TaskResultSerializer'
+            'raw_result': 'mistral.workflow.utils.TaskResultSerializer'
         }
+
         scheduler.schedule_call(
             _ENGINE_CLIENT_PATH,
             'on_task_result',
@@ -156,8 +181,12 @@ class RetryPolicy(base.TaskPolicy):
         context_key = 'retry_task_policy'
 
         runtime_context = _ensure_context_has_key(
-            task_db.runtime_context, context_key)
+            task_db.runtime_context,
+            context_key
+        )
+
         task_db.runtime_context = runtime_context
+
         state = states.ERROR if raw_result.is_error() else states.SUCCESS
 
         if state != states.ERROR:
@@ -167,14 +196,17 @@ class RetryPolicy(base.TaskPolicy):
 
         policy_context = runtime_context[context_key]
         retry_no = 0
+
         if "retry_no" in policy_context:
             retry_no = policy_context["retry_no"]
             del policy_context["retry_no"]
 
         retries_remain = retry_no + 1 < self.count
-        break_early = (expressions.evaluate(
-            self.break_on, outbound_context) if
-            self.break_on and outbound_context else False)
+
+        break_early = (
+            expressions.evaluate(self.break_on, outbound_context)
+            if self.break_on and outbound_context else False
+        )
 
         if not retries_remain or break_early:
             return

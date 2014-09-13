@@ -91,8 +91,10 @@ class EngineTestCase(base.DbTestCase):
         self.engine_client = rpc.EngineClient(transport)
         self.executor_client = rpc.ExecutorClient(transport)
 
-        self.engine = def_eng.DefaultEngine(self.engine_client,
-                                            self.executor_client)
+        self.engine = def_eng.DefaultEngine(
+            self.engine_client,
+            self.executor_client
+        )
         self.executor = def_exec.DefaultExecutor(self.engine_client)
 
         LOG.info("Starting engine and executor threads...")

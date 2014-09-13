@@ -22,8 +22,8 @@ from mistral.engine1 import default_engine as d_eng
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests import base
-from mistral.workflow import base as wf_base
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Finish 'task1'.
         task1_db = self.engine.on_task_result(
             exec_db.tasks[0].id,
-            wf_base.TaskResult(data='Hey')
+            wf_utils.TaskResult(data='Hey')
         )
 
         self.assertIsInstance(task1_db, models.Task)
@@ -172,7 +172,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Finish 'task2'.
         task2_db = self.engine.on_task_result(
             task2_db.id,
-            wf_base.TaskResult(data='Hi')
+            wf_utils.TaskResult(data='Hi')
         )
 
         exec_db = db_api.get_execution(exec_db.id)

@@ -19,7 +19,7 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral.services import scheduler
 from mistral.tests import base
-from mistral.workflow import base as wf_base
+from mistral.workflow import utils as wf_utils
 
 
 def factory_method():
@@ -100,7 +100,7 @@ class SchedulerServiceTest(base.DbTestCase):
                           'test_scheduler.factory_method')
         target_method = 'run_something'
 
-        task_result = wf_base.TaskResult('data', 'error')
+        task_result = wf_utils.TaskResult('data', 'error')
 
         method_args = {
             'name': 'task',
@@ -108,7 +108,7 @@ class SchedulerServiceTest(base.DbTestCase):
             'result': task_result}
 
         serializers_map = {
-            'result': 'mistral.utils.serializer.TaskResultSerializer'
+            'result': 'mistral.workflow.utils.TaskResultSerializer'
         }
 
         delay = 0.5
@@ -132,7 +132,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         result = factory().run_something.call_args[1].get('result')
 
-        self.assertIsInstance(result, wf_base.TaskResult)
+        self.assertIsInstance(result, wf_utils.TaskResult)
         self.assertEqual('data', result.data)
         self.assertEqual('error', result.error)
 

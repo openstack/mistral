@@ -17,14 +17,14 @@ from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
+from mistral.engine1 import commands
 from mistral.engine1 import policies
-from mistral import exceptions as exc
-from mistral import expressions as expr
+from mistral.engine1 import utils
 from mistral.openstack.common import log as logging
 from mistral.workbook import parser as spec_parser
-from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 from mistral.workflow import workflow_handler_factory as wfh_factory
 
 
@@ -60,11 +60,10 @@ class DefaultEngine(base.Engine):
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db, wf_spec)
 
-            # Calculate tasks to process next.
-            task_specs = wf_handler.start_workflow(**params)
+            # Calculate commands to process next.
+            commands = wf_handler.start_workflow(**params)
 
-            if task_specs:
-                self._process_task_specs(task_specs, exec_db, wf_handler)
+            self._run_commands(commands, exec_db, wf_handler)
 
         return exec_db
 
@@ -73,7 +72,7 @@ class DefaultEngine(base.Engine):
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
 
-            raw_result = self._transform_result(exec_db, task_db, raw_result)
+            raw_result = utils.transform_result(exec_db, task_db, raw_result)
 
             self._after_task_complete(
                 task_db,
@@ -86,11 +85,10 @@ class DefaultEngine(base.Engine):
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
-            # Calculate tasks to process next.
-            task_specs = wf_handler.on_task_result(task_db, raw_result)
+            # Calculate commands to process next.
+            commands = wf_handler.on_task_result(task_db, raw_result)
 
-            if task_specs:
-                self._process_task_specs(task_specs, exec_db, wf_handler)
+            self._run_commands(commands, exec_db, wf_handler)
 
             self._check_subworkflow_completion(exec_db)
 
@@ -112,11 +110,10 @@ class DefaultEngine(base.Engine):
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
-            # Calculate tasks to process next.
-            task_specs = wf_handler.resume_workflow()
+            # Calculate commands to process next.
+            commands = wf_handler.resume_workflow()
 
-            if task_specs:
-                self._process_task_specs(task_specs, exec_db, wf_handler)
+            self._run_commands(commands, exec_db, wf_handler)
 
         return exec_db
 
@@ -124,32 +121,13 @@ class DefaultEngine(base.Engine):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def _process_task_specs(self, task_specs, exec_db, wf_handler):
-        LOG.debug('Processing workflow tasks: %s' % task_specs)
+    @staticmethod
+    def _run_commands(commands, exec_db, wf_handler):
+        if not commands:
+            return
 
-        # DB tasks & Data Flow properties
-        db_tasks = self._prepare_db_tasks(task_specs, exec_db, wf_handler)
-
-        # Running actions/workflows.
-        self._run_tasks(db_tasks, task_specs)
-
-    def _prepare_db_tasks(self, task_specs, exec_db, wf_handler):
-        wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
-
-        new_db_tasks = self._create_db_tasks(exec_db, task_specs)
-
-        # Evaluate Data Flow properties ('parameters', 'in_context').
-        for t_db in new_db_tasks:
-            task_spec = wf_spec.get_tasks()[t_db.name]
-
-            data_flow.prepare_db_task(
-                t_db,
-                task_spec,
-                wf_handler.get_upstream_tasks(task_spec),
-                exec_db
-            )
-
-        return new_db_tasks
+        for cmd in commands:
+            cmd.run(exec_db, wf_handler)
 
     @staticmethod
     def _create_db_execution(wf_db, wf_spec, wf_input, params):
@@ -170,179 +148,20 @@ class DefaultEngine(base.Engine):
         return exec_db
 
     @staticmethod
-    def _create_db_tasks(exec_db, task_specs):
-        new_db_tasks = []
-
-        for task_spec in task_specs:
-            t = db_api.create_task({
-                'execution_id': exec_db.id,
-                'name': task_spec.get_name(),
-                'state': states.RUNNING,
-                'spec': task_spec.to_dict(),
-                'parameters': None,
-                'in_context': None,
-                'output': None,
-                'runtime_context': None
-            })
-
-            new_db_tasks.append(t)
-
-        return new_db_tasks
-
-    @staticmethod
-    def _before_task_start(task_db, task_spec):
-        for p in policies.build_policies(task_spec.get_policies()):
-            p.before_task_start(task_db, task_spec)
-
-    @staticmethod
     def _after_task_complete(task_db, task_spec, raw_result):
         for p in policies.build_policies(task_spec.get_policies()):
             p.after_task_complete(task_db, task_spec, raw_result)
-
-    def _run_tasks(self, db_tasks, task_specs):
-        for t_db, t_spec in zip(db_tasks, task_specs):
-            self._before_task_start(t_db, t_spec)
-
-            # Policies could possibly change task state.
-            if t_db.state == states.RUNNING:
-                self._run_task(t_db, t_spec)
-
-    def _run_task(self, t_db, t_spec):
-        if t_spec.get_action_name():
-            self._run_action(t_db, t_spec)
-        elif t_spec.get_workflow_name():
-            self._run_workflow(t_db, t_spec)
 
     def run_task(self, task_id):
         with db_api.transaction():
             task_db = db_api.update_task(task_id, {'state': states.RUNNING})
             task_spec = spec_parser.get_task_spec(task_db.spec)
 
-            self._run_task(task_db, task_spec)
+            exec_db = task_db.execution
 
-    @staticmethod
-    def _resolve_action(wf_name, wf_spec_name, action_spec_name):
-        action_db = None
+            wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
-        if wf_name != wf_spec_name:
-            # If workflow belongs to a workbook then check
-            # action within the same workbook (to be able to
-            # use short names within workbooks).
-            # If it doesn't exist then use a name from spec
-            # to find an action in DB.
-            wb_name = wf_name.rstrip(wf_spec_name)[:-1]
-
-            action_full_name = "%s.%s" % (wb_name, action_spec_name)
-
-            action_db = db_api.load_action(action_full_name)
-
-        if not action_db:
-            action_db = db_api.load_action(action_spec_name)
-
-        if not action_db:
-            raise exc.InvalidActionException(
-                "Failed to find action [action_name=%s]" % action_spec_name
-            )
-
-        return action_db
-
-    def _run_action(self, task_db, task_spec):
-        exec_db = task_db.execution
-        wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
-
-        action_spec_name = task_spec.get_action_name()
-
-        action_db = self._resolve_action(
-            exec_db.wf_name,
-            wf_spec.get_name(),
-            action_spec_name
-        )
-
-        action_params = task_db.parameters or {}
-
-        if action_db.spec:
-            # Ad-hoc action.
-            action_spec = spec_parser.get_action_spec(action_db.spec)
-
-            base_name = action_spec.get_base()
-
-            action_db = self._resolve_action(
-                exec_db.wf_name,
-                wf_spec.get_name(),
-                base_name
-            )
-
-            base_params = action_spec.get_base_parameters()
-
-            if base_params:
-                action_params = expr.evaluate_recursively(
-                    base_params,
-                    action_params
-                )
-            else:
-                action_params = {}
-
-        self._executor_client.run_action(
-            task_db.id,
-            action_db.action_class,
-            action_db.attributes or {},
-            action_params
-        )
-
-    @staticmethod
-    def _resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
-        wf_db = None
-
-        if parent_wf_name != parent_wf_spec_name:
-            # If parent workflow belongs to a workbook then
-            # check child workflow within the same workbook
-            # (to be able to use short names within workbooks).
-            # If it doesn't exist then use a name from spec
-            # to find a workflow in DB.
-            wb_name = parent_wf_name.rstrip(parent_wf_spec_name)[:-1]
-
-            wf_full_name = "%s.%s" % (wb_name, wf_spec_name)
-
-            wf_db = db_api.load_workflow(wf_full_name)
-
-        if not wf_db:
-            wf_db = db_api.load_workflow(wf_spec_name)
-
-        if not wf_db:
-            raise exc.WorkflowException(
-                "Failed to find workflow [name=%s]" % wf_spec_name
-            )
-
-        return wf_db
-
-    def _run_workflow(self, task_db, task_spec):
-        parent_exec_db = task_db.execution
-        parent_wf_spec = spec_parser.get_workflow_spec(parent_exec_db.wf_spec)
-
-        wf_spec_name = task_spec.get_workflow_name()
-
-        wf_db = self._resolve_workflow(
-            parent_exec_db.wf_name,
-            parent_wf_spec.get_name(),
-            wf_spec_name
-        )
-
-        wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
-
-        wf_input = task_db.parameters
-
-        start_params = {'parent_task_id': task_db.id}
-
-        for k, v in wf_input.items():
-            if k not in wf_spec.get_parameters():
-                start_params[k] = v
-                del wf_input[k]
-
-        self._engine_client.start_workflow(
-            wf_db.name,
-            wf_input,
-            **start_params
-        )
+            commands.RunTask(task_spec, task_db).run(exec_db, wf_handler)
 
     def _check_subworkflow_completion(self, exec_db):
         if not exec_db.parent_task_id:
@@ -351,53 +170,12 @@ class DefaultEngine(base.Engine):
         if exec_db.state == states.SUCCESS:
             self._engine_client.on_task_result(
                 exec_db.parent_task_id,
-                wf_base.TaskResult(data=exec_db.output)
+                wf_utils.TaskResult(data=exec_db.output)
             )
         elif exec_db.state == states.ERROR:
             err_msg = 'Failed subworkflow [execution_id=%s]' % exec_db.id
 
             self._engine_client.on_task_result(
                 exec_db.parent_task_id,
-                wf_base.TaskResult(error=err_msg)
+                wf_utils.TaskResult(error=err_msg)
             )
-
-    def _transform_result(self, exec_db, task_db, raw_result):
-        if raw_result.is_error():
-            return raw_result
-
-        action_spec_name =\
-            spec_parser.get_task_spec(task_db.spec).get_action_name()
-
-        wf_spec_name = \
-            spec_parser.get_workflow_spec(exec_db.wf_spec).get_name()
-
-        if action_spec_name:
-            return self._transform_action_result(
-                exec_db.wf_name,
-                wf_spec_name,
-                action_spec_name,
-                raw_result
-            )
-
-        return raw_result
-
-    def _transform_action_result(self, wf_name, wf_spec_name, action_spec_name,
-                                 raw_result):
-        action_db = self._resolve_action(
-            wf_name,
-            wf_spec_name,
-            action_spec_name
-        )
-
-        if not action_db.spec:
-            return raw_result
-
-        transformer = spec_parser.get_action_spec(action_db.spec).get_output()
-
-        if transformer is None:
-            return raw_result
-
-        return wf_base.TaskResult(
-            data=expr.evaluate_recursively(transformer, raw_result.data),
-            error=raw_result.error
-        )
