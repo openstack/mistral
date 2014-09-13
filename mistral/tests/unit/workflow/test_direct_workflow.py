@@ -39,8 +39,8 @@ workflows:
         publish:
           res1: $
         on-complete:
-            - task2: $.res1 = 'Hey'
-            - task3: $.res1 = 'Not Hey'
+          - task2: $.res1 = 'Hey'
+          - task3: $.res1 = 'Not Hey'
 
       task2:
         action: std.echo output="Hi"

@@ -74,11 +74,11 @@ workflows:
       task3:
         workflow: wf1 name="John Doe" age=32 param1=null param2=false
         on-error:
-          task4: $.my_val = 1
+          - task4: $.my_val = 1
         on-success:
-          task5: $.my_val = 2
+          - task5: $.my_val = 2
         on-complete:
-          task6: $.my_val = 3
+          - task6: $.my_val = 3
 
       task4:
         action: std.echo output="Task 4 echo"

@@ -36,9 +36,9 @@ class TaskSpec(base.BaseSpec):
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
             "requires": {"type": ["string", "array", "null"]},
-            "on-complete": {"type": ["string", "object", "array", "null"]},
-            "on-success": {"type": ["string", "object", "array", "null"]},
-            "on-error": {"type": ["string", "object", "array", "null"]}
+            "on-complete": {"type": ["array", "null"]},
+            "on-success": {"type": ["array", "null"]},
+            "on-error": {"type": ["array", "null"]}
         },
         "required": ["version", "name"],
         "additionalProperties": False
