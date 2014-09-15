@@ -56,6 +56,8 @@ class RunTask(EngineCommand):
         self._before_task_start()
         self._run_task()
 
+        return True
+
     def _prepare_task(self, exec_db, wf_handler):
         if self.task_db:
             return
@@ -195,10 +197,16 @@ class RollbackWorkflow(EngineCommand):
         pass
 
 
-CMD_MAP = {
-    'run_task': RunTask,
+RESERVED_COMMANDS = {
     'fail': FailWorkflow,
     'succeed': SucceedWorkflow,
     'pause': PauseWorkflow,
     'rollback': PauseWorkflow
 }
+
+
+def get_reserved_command(cmd_name):
+    if cmd_name not in RESERVED_COMMANDS:
+        return None
+
+    return RESERVED_COMMANDS[cmd_name]()

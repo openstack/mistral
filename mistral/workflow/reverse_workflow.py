@@ -57,8 +57,9 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         return [self.wf_spec.get_tasks()[t_name]
                 for t_name in task_spec.get_requires() or []]
 
-    def _find_next_tasks(self, task_db):
-        """Finds all tasks with resolved dependencies.
+    def _find_next_commands(self, task_db):
+        """Finds all tasks with resolved dependencies and return them
+         in the form of engine commands.
 
         :param task_db: Task DB model causing the operation.
         :return: Tasks with resolved dependencies.
@@ -89,7 +90,7 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
                 if not t_db or t_db.state == states.IDLE:
                     resolved_task_specs.append(t_spec)
 
-        return resolved_task_specs
+        return [commands.RunTask(t_s) for t_s in resolved_task_specs]
 
     def _find_tasks_without_dependencies(self, task_spec):
         """Given a target task name finds tasks with no dependencies.
