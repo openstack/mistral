@@ -88,7 +88,7 @@ class DefaultEngine(base.Engine):
             # Calculate commands to process next.
             commands = wf_handler.on_task_result(task_db, raw_result)
 
-            self._run_commands(commands, exec_db, wf_handler)
+            self._run_commands(commands, exec_db, wf_handler, task_db)
 
             self._check_subworkflow_completion(exec_db)
 
@@ -122,12 +122,12 @@ class DefaultEngine(base.Engine):
         raise NotImplementedError
 
     @staticmethod
-    def _run_commands(commands, exec_db, wf_handler):
+    def _run_commands(commands, exec_db, wf_handler, cause_task_db=None):
         if not commands:
             return
 
         for cmd in commands:
-            if not cmd.run(exec_db, wf_handler):
+            if not cmd.run(exec_db, wf_handler, cause_task_db):
                 break
 
     @staticmethod
