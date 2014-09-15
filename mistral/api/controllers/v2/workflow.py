@@ -67,12 +67,13 @@ def _get_workflow_values(workflow):
     # serialized version in DB.
     values = workflow.to_dict()
 
-    spec = spec_parser.get_workflow_spec_from_yaml(
-        workflow.definition,
-        workflow.name
-    )
+    if workflow.definition:
+        spec = spec_parser.get_workflow_spec_from_yaml(
+            workflow.definition,
+            workflow.name
+        )
 
-    values['spec'] = spec.to_dict()
+        values['spec'] = spec.to_dict()
 
     return values
 
