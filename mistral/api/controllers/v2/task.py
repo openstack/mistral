@@ -136,3 +136,15 @@ class TasksController(rest.RestController):
                  for db_model in db_api.get_tasks()]
 
         return Tasks(tasks=tasks)
+
+
+class ExecutionTasksController(rest.RestController):
+    @wsme_pecan.wsexpose(Tasks, wtypes.text)
+    def get_all(self, execution_id):
+        """Return all tasks within the execution."""
+        LOG.debug("Fetch tasks")
+
+        tasks = [Task.from_dict(db_model.to_dict())
+                 for db_model in db_api.get_tasks(execution_id=execution_id)]
+
+        return Tasks(tasks=tasks)
