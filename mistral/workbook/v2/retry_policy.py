@@ -31,8 +31,8 @@ class RetrySpec(base.BaseSpec):
     def __init__(self, data):
         super(RetrySpec, self).__init__(data)
 
+        self._break_on = data.get('break-on')
         self._count = data['count']
-        self._break_on = data['break-on']
         self._delay = data['delay']
 
     def get_count(self):
