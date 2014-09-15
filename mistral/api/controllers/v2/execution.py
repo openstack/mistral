@@ -49,9 +49,6 @@ class Execution(resource.Resource):
     def to_dict(self):
         d = super(Execution, self).to_dict()
 
-        if d.get('input'):
-            d['input'] = json.loads(d['input'])
-
         if d.get('output'):
             d['output'] = json.loads(d['output'])
 
@@ -128,8 +125,12 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Create execution [execution=%s]" % execution)
 
         engine = rpc.get_engine_client()
-
-        result = engine.start_workflow(**execution.to_dict())
+        exec_dict = execution.to_dict()
+        result = engine.start_workflow(
+            workflow_name=exec_dict['workflow_name'],
+            workflow_input=exec_dict.get('input'),
+            **exec_dict.get('params') or {}
+        )
 
         return Execution.from_dict(result)
 
