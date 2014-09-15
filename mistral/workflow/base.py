@@ -70,7 +70,7 @@ class WorkflowHandler(object):
         task_db.output =\
             data_flow.evaluate_task_output(task_spec, raw_result)
 
-        if task_db.state == states.ERROR:
+        if task_db.state == states.ERROR and not task_spec.get_on_error():
             # TODO(rakhmerov): Temporary hack, need to use policies.
             self._set_execution_state(states.ERROR)
 
