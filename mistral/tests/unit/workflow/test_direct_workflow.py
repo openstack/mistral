@@ -31,7 +31,6 @@ version: '2.0'
 workflows:
   wf1:
     type: direct
-    start-task: task1
 
     tasks:
       task1:

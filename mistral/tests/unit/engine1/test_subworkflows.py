@@ -56,7 +56,6 @@ workflows:
 
   wf2:
     type: direct
-    start-task: task1
     output:
       slogan: $.slogan
 

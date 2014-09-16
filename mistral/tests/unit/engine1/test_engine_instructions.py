@@ -34,7 +34,6 @@ version: '2.0'
 workflows:
   wf:
     type: direct
-    start-task: task1
     parameters:
       - my_var
 
@@ -46,6 +45,7 @@ workflows:
           - succeed: $.my_var = 2
           - pause: $.my_var = 3
           - rollback: $.my_var = 3
+          - task2: $.my_var = 4 # (Never happens in this test)
 
       task2:
         action: std.echo output='2'
@@ -58,7 +58,6 @@ version: '2.0'
 workflows:
   wf:
     type: direct
-    start-task: task1
     parameters:
       - my_var
 
@@ -67,6 +66,7 @@ workflows:
       - succeed: $.my_var = 2
       - pause: $.my_var = 3
       - rollback: $.my_var = 3
+      - task2: $.my_var = 4 # (Never happens in this test)
 
     tasks:
       task1:

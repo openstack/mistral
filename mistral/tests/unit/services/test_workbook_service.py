@@ -53,7 +53,6 @@ workflows:
 
   wf2:
     type: direct
-    start-task: task1
     output:
       result: $.result
 
@@ -77,7 +76,6 @@ actions:
 workflows:
   wf1:
     type: direct
-    start-task: task1
     output:
       result: $.result
 

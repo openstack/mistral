@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import exceptions as exc
 from mistral.workbook import base
 from mistral.workbook.v2 import tasks
 
@@ -26,7 +25,6 @@ class WorkflowSpec(base.BaseSpec):
             "name": {"type": "string"},
             "description": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
-            "start-task": {"type": "string"},
             "policies": {"type": ["object", "null"]},
             "on-task-complete": {"type": ["array", "null"]},
             "on-task-success": {"type": ["array", "null"]},
@@ -49,22 +47,10 @@ class WorkflowSpec(base.BaseSpec):
         self._type = data['type']
         self._parameters = data.get('parameters', {})
         self._output = data.get('output', {})
-        self._start_task_name = data.get('start-task')
         # TODO(rakhmerov): Build workflow policies specification.
         self._policies = None
 
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
-
-    def validate(self):
-        super(WorkflowSpec, self).validate()
-
-        if self._data['type'] == 'direct':
-            if 'start-task' not in self._data:
-                msg = "Direct workflow 'start-task' property is not defined."
-                raise exc.InvalidModelException(msg)
-            elif self._data['start-task'] not in self._data['tasks'].keys():
-                msg = "'start-task' property of direct workflow is invalid."
-                raise exc.InvalidModelException(msg)
 
     def get_name(self):
         return self._name
@@ -80,9 +66,6 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_output(self):
         return self._output
-
-    def get_start_task(self):
-        return self._tasks[self._start_task_name]
 
     def get_policies(self):
         return self._policies

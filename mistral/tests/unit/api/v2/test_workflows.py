@@ -28,7 +28,6 @@ WF_DEFINITION = """
 version: '2.0'
 
 type: direct
-start-task: task1
 parameters:
   - param1
 
@@ -62,7 +61,6 @@ UPDATED_WF_DEFINITION = """
 version: '2.0'
 
 type: direct
-start-task: task1
 parameters:
   - param1
 

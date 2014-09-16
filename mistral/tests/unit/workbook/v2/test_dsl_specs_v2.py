@@ -63,7 +63,6 @@ workflows:
 
   wf2:
     type: direct
-    start-task: task3
     policies:
       retry:
         count: 10
@@ -197,7 +196,6 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(6, len(wf2_spec.get_tasks()))
-        self.assertEqual('task3', wf2_spec.get_start_task().get_name())
         self.assertDictEqual(
             {'fail': '$.my_val = 0'},
             wf2_spec.get_on_task_error()

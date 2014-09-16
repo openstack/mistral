@@ -40,7 +40,6 @@ actions:
 workflows:
   wf1:
     type: direct
-    start-task: task1
     parameters:
       - str1
       - str2

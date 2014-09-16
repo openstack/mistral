@@ -39,13 +39,34 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def start_workflow(self, **params):
         self._set_execution_state(states.RUNNING)
 
-        # TODO(rakhmerov): Explicit start task will be removed.
-        return [commands.RunTask(self.wf_spec.get_start_task())]
+        return self._find_start_commands()
 
     def get_upstream_tasks(self, task_spec):
         # TODO(rakhmerov): For direct workflow it's pretty hard to do
         #  so we may need to get rid of it at all.
         return []
+
+    def _find_start_commands(self):
+        start_task_specs = []
+
+        for t_s in self.wf_spec.get_tasks():
+            if not self._has_inbound_transitions(t_s):
+                start_task_specs.append(t_s)
+
+        return [commands.RunTask(t_s) for t_s in start_task_specs]
+
+    def _has_inbound_transitions(self, task_spec):
+        task_name = task_spec.get_name()
+
+        for t_s in self.wf_spec.get_tasks():
+            t_n = t_s.get_name()
+
+            if task_name in self.get_on_error_clause(t_n) \
+                    or task_name in self.get_on_success_clause(t_n) \
+                    or task_name in self.get_on_complete_clause(t_n):
+                return True
+
+        return False
 
     def _find_next_commands(self, task_db):
         """Finds commands that should run after completing given task.
