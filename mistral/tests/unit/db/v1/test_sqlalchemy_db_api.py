@@ -23,7 +23,6 @@ from mistral.tests import base as test_base
 
 TRIGGERS = [
     {
-        'id': '1',
         'name': 'test_trigger1',
         'workbook_name': 'my_workbook1',
         'pattern': '* *',
@@ -31,7 +30,6 @@ TRIGGERS = [
         'updated_at': None
     },
     {
-        'id': '2',
         'name': 'test_trigger2',
         'workbook_name': 'my_workbook2',
         'pattern': '* * *',
@@ -77,7 +75,6 @@ class TriggerTest(test_base.DbTestCase):
 
 WORKBOOKS = [
     {
-        'id': '1',
         'name': 'my_workbook1',
         'description': 'my description',
         'definition': 'empty',
@@ -88,7 +85,6 @@ WORKBOOKS = [
         'trust_id': '1234'
     },
     {
-        'id': '2',
         'name': 'my_workbook2',
         'description': 'my description',
         'definition': 'empty',
@@ -192,7 +188,6 @@ class WorkbookTest(test_base.DbTestCase):
 
 EXECUTIONS = [
     {
-        'id': '1',
         'workbook_name': 'my_workbook',
         'task': 'my_task1',
         'state': 'IDLE',
@@ -200,7 +195,6 @@ EXECUTIONS = [
         'context': None
     },
     {
-        'id': '2',
         'workbook_name': 'my_workbook',
         'task': 'my_task2',
         'state': 'RUNNING',
@@ -257,7 +251,6 @@ class ExecutionTest(test_base.DbTestCase):
 
 TASKS = [
     {
-        'id': '1',
         'workbook_name': 'my_workbook',
         'execution_id': '1',
         'name': 'my_task1',
@@ -275,7 +268,6 @@ TASKS = [
         'task_runtime_context': None
     },
     {
-        'id': '2',
         'workbook_name': 'my_workbook',
         'execution_id': '1',
         'name': 'my_task2',
@@ -442,7 +434,7 @@ class TXTest(test_base.DbTestCase):
                 self.assertTrue(self.is_db_session_open())
 
                 db_api.workbook_create(WORKBOOKS[0])
-        except exc.DBException:
+        except exc.DBDuplicateEntry:
             pass
 
         self.assertFalse(self.is_db_session_open())

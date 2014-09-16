@@ -26,7 +26,6 @@ from mistral.tests import base as test_base
 
 WORKBOOKS = [
     {
-        'id': '1',
         'name': 'my_workbook1',
         'definition': 'empty',
         'spec': {},
@@ -37,7 +36,6 @@ WORKBOOKS = [
         'trust_id': '1234'
     },
     {
-        'id': '2',
         'name': 'my_workbook2',
         'description': 'my description',
         'definition': 'empty',
@@ -195,7 +193,6 @@ class WorkbookTest(test_base.DbTestCase):
 
 WORKFLOWS = [
     {
-        'id': '1',
         'name': 'my_wf1',
         'definition': 'empty',
         'spec': {},
@@ -205,7 +202,6 @@ WORKFLOWS = [
         'trust_id': '1234'
     },
     {
-        'id': '2',
         'name': 'my_wf2',
         'definition': 'empty',
         'spec': {},
@@ -364,7 +360,6 @@ class WorkflowTest(test_base.DbTestCase):
 
 EXECUTIONS = [
     {
-        'id': '1',
         'wf_spec': {},
         'start_params': {'task': 'my_task1'},
         'state': 'IDLE',
@@ -373,7 +368,6 @@ EXECUTIONS = [
         'context': None
     },
     {
-        'id': '2',
         'wf_spec': {},
         'start_params': {'task': 'my_task1'},
         'state': 'RUNNING',
@@ -468,13 +462,12 @@ class ExecutionTest(test_base.DbTestCase):
         s = db_api.create_execution(EXECUTIONS[0]).__repr__()
 
         self.assertIn('Execution ', s)
-        self.assertIn("'id': '1'", s)
+        self.assertIn("'context': None", s)
         self.assertIn("'state': 'IDLE'", s)
 
 
 TASKS = [
     {
-        'id': '1',
         'execution_id': '1',
         'wf_name': 'my_wb.my_wf',
         'name': 'my_task1',
@@ -491,7 +484,6 @@ TASKS = [
         'updated_at': None
     },
     {
-        'id': '2',
         'execution_id': '1',
         'wf_name': 'my_wb.my_wf',
         'name': 'my_task2',
@@ -626,12 +618,11 @@ class TaskTest(test_base.DbTestCase):
         s = db_api.create_task(values).__repr__()
 
         self.assertIn('Task ', s)
-        self.assertIn("'id': '1'", s)
+        self.assertIn("'state': 'IDLE'", s)
         self.assertIn("'name': 'my_task1'", s)
 
 ACTIONS = [
     {
-        'id': '1',
         'name': 'action1',
         'description': 'Action #1',
         'is_system': True,
@@ -639,7 +630,6 @@ ACTIONS = [
         'attributes': None
     },
     {
-        'id': '2',
         'name': 'action2',
         'description': 'Action #2',
         'is_system': True,
@@ -732,11 +722,11 @@ class ActionTest(test_base.DbTestCase):
             created.name
         )
 
-    def test_task_repr(self):
+    def test_action_repr(self):
         s = db_api.create_action(ACTIONS[0]).__repr__()
 
         self.assertIn('Action ', s)
-        self.assertIn("'id': '1'", s)
+        self.assertIn("'description': 'Action #1'", s)
         self.assertIn("'name': 'action1'", s)
 
 
@@ -845,7 +835,7 @@ class TXTest(test_base.DbTestCase):
 
                 db_api.create_workbook(WORKBOOKS[0])
 
-        except exc.DBException:
+        except exc.DBDuplicateEntry:
             pass
 
         self.assertFalse(self.is_db_session_open())
