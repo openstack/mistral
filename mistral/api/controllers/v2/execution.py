@@ -20,6 +20,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import task
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
@@ -99,6 +100,8 @@ class Executions(resource.Resource):
 
 
 class ExecutionsController(rest.RestController):
+    tasks = task.ExecutionTasksController()
+
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text)
     def get(self, id):
