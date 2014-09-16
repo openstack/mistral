@@ -19,6 +19,7 @@ from mistral.workflow import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -59,24 +60,22 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         t_name = task_db.name
         t_state = task_db.state
 
-        tasks_spec = self.wf_spec.get_tasks()
-
         ctx = data_flow.evaluate_outbound_context(task_db)
 
         if t_state == states.ERROR:
-            on_error = tasks_spec[t_name].get_on_error()
+            on_error = self.get_on_error_clause(t_name)
 
             if on_error:
                 commands = self._get_next_commands(on_error, ctx)
 
         elif t_state == states.SUCCESS:
-            on_success = tasks_spec[t_name].get_on_success()
+            on_success = self.get_on_success_clause(t_name)
 
             if on_success:
                 commands = self._get_next_commands(on_success, ctx)
 
         if states.is_finished(t_state):
-            on_complete = tasks_spec[t_name].get_on_complete()
+            on_complete = self.get_on_complete_clause(t_name)
 
             if on_complete:
                 commands += self._get_next_commands(on_complete, ctx)
@@ -84,6 +83,18 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         LOG.debug("Found commands: %s" % commands)
 
         return commands
+
+    def get_on_error_clause(self, t_name):
+        return self.wf_spec.get_tasks()[t_name].get_on_error() or\
+            self.wf_spec.get_on_task_error()
+
+    def get_on_success_clause(self, t_name):
+        return self.wf_spec.get_tasks()[t_name].get_on_success() or\
+            self.wf_spec.get_on_task_success()
+
+    def get_on_complete_clause(self, t_name):
+        return self.wf_spec.get_tasks()[t_name].get_on_complete() or\
+            self.wf_spec.get_on_task_complete()
 
     def _get_next_commands(self, cmd_conditions, ctx):
         commands = []

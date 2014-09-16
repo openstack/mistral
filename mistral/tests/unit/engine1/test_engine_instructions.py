@@ -51,6 +51,31 @@ workflows:
         action: std.echo output='2'
 """
 
+WORKBOOK1 = """
+---
+version: '2.0'
+
+workflows:
+  wf:
+    type: direct
+    start-task: task1
+    parameters:
+      - my_var
+
+    on-task-complete:
+      - fail: $.my_var = 1
+      - succeed: $.my_var = 2
+      - pause: $.my_var = 3
+      - rollback: $.my_var = 3
+
+    tasks:
+      task1:
+        action: std.echo output='1'
+
+      task2:
+        action: std.echo output='2'
+"""
+
 
 class EngineInstructionsTest(base.EngineTestCase):
     def setUp(self):
@@ -59,6 +84,12 @@ class EngineInstructionsTest(base.EngineTestCase):
         wb_service.create_workbook_v2({
             'name': 'my_wb',
             'definition': WORKBOOK,
+            'tags': ['test']
+        })
+
+        wb_service.create_workbook_v2({
+            'name': 'my_wb1',
+            'definition': WORKBOOK1,
             'tags': ['test']
         })
 
@@ -105,5 +136,51 @@ class EngineInstructionsTest(base.EngineTestCase):
         )
 
     def test_rollback(self):
+        # TODO(rakhmerov): Implement.
+        pass
+
+    def test_fail_wf_level(self):
+        exec_db = self.engine.start_workflow('my_wb1.wf', {'my_var': 1})
+
+        self._await(lambda: self.is_execution_error(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(1, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+
+    def test_succeed_wf_level(self):
+        exec_db = self.engine.start_workflow('my_wb1.wf', {'my_var': 2})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(1, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+
+    def test_pause_wf_level(self):
+        exec_db = self.engine.start_workflow('my_wb1.wf', {'my_var': 3})
+
+        self._await(lambda: self.is_execution_paused(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(1, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+
+    def test_rollback_wf_level(self):
         # TODO(rakhmerov): Implement.
         pass
