@@ -93,7 +93,15 @@ class TasksController(rest.RestController):
     def _put(self, id, task):
         if db_api.task_get(id):
             engine = pecan.request.context['engine']
-            raw_result = json.loads(task.output)
+
+            if task.output:
+                try:
+                    raw_result = json.loads(task.output)
+                except Exception:
+                    raw_result = task.output
+            else:
+                raw_result = None
+
             values = engine.convey_task_result(id, task.state, raw_result)
 
             return Task.from_dict(values)
