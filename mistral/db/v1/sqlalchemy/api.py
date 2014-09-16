@@ -80,9 +80,6 @@ def transaction():
     try:
         start_tx()
         yield
-    except Exception as e:
-        raise exc.DBException("Failure during transaction processing: %s" % e)
-    else:
         commit_tx()
     finally:
         end_tx()

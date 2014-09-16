@@ -103,7 +103,7 @@ class TestActionsController(base.FunctionalTest):
         resp = self.app.put_json('/v2/actions/my_action', UPDATED_ACTION,
                                  expect_errors=True)
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_action", MOCK_SYSTEM_ACTION)
     def test_put_system(self):
@@ -153,7 +153,7 @@ class TestActionsController(base.FunctionalTest):
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/actions/my_action', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "get_action", MOCK_SYSTEM_ACTION)
     def test_delete_system(self):
