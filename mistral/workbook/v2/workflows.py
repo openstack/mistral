@@ -49,6 +49,9 @@ class WorkflowSpec(base.BaseSpec):
         self._output = data.get('output', {})
         # TODO(rakhmerov): Build workflow policies specification.
         self._policies = None
+        self._on_task_complete = self._as_list_of_tuples("on-task-complete")
+        self._on_task_success = self._as_list_of_tuples("on-task-success")
+        self._on_task_error = self._as_list_of_tuples("on-task-error")
 
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
 
@@ -71,13 +74,13 @@ class WorkflowSpec(base.BaseSpec):
         return self._policies
 
     def get_on_task_complete(self):
-        return self._as_list_of_tuples("on-task-complete")
+        return self._on_task_complete
 
     def get_on_task_success(self):
-        return self._as_list_of_tuples("on-task-success")
+        return self._on_task_success
 
     def get_on_task_error(self):
-        return self._as_list_of_tuples("on-task-error")
+        return self._on_task_error
 
     def get_tasks(self):
         return self._tasks

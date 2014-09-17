@@ -60,6 +60,9 @@ class TaskSpec(base.BaseSpec):
             task_policies.TaskPoliciesSpec
         )
         self._requires = data.get('requires', [])
+        self._on_complete = self._as_list_of_tuples('on-complete')
+        self._on_success = self._as_list_of_tuples('on-success')
+        self._on_error = self._as_list_of_tuples('on-error')
 
         self._process_action_and_workflow()
 
@@ -112,13 +115,13 @@ class TaskSpec(base.BaseSpec):
         return self._requires
 
     def get_on_complete(self):
-        return self._as_list_of_tuples('on-complete')
+        return self._on_complete
 
     def get_on_success(self):
-        return self._as_list_of_tuples('on-success')
+        return self._on_success
 
     def get_on_error(self):
-        return self._as_list_of_tuples('on-error')
+        return self._on_error
 
 
 class TaskSpecList(base.BaseSpecList):
