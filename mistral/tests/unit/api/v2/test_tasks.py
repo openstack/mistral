@@ -134,6 +134,15 @@ class TestTasksController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 400)
 
+    @mock.patch.object(rpc.EngineClient, 'on_task_result')
+    def test_put_without_result(self, f):
+        task = copy.copy(UPDATED_TASK)
+        del task['result']
+        f.return_value = UPDATED_TASK_DB.to_dict()
+        resp = self.app.put_json('/v2/tasks/123', task)
+
+        self.assertEqual(resp.status_int, 200)
+
     @mock.patch.object(db_api, 'get_tasks', MOCK_TASKS)
     def test_get_all(self):
         resp = self.app.get('/v2/tasks')

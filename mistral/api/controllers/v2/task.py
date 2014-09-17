@@ -109,12 +109,14 @@ class TasksController(rest.RestController):
         """Update the specified task."""
         LOG.debug("Update task [id=%s, task=%s]" % (id, task))
 
-        # Client must provide a valid json. It doesn't necessarily should be an
+        # Client must provide a valid json. It shouldn't  necessarily be an
         # object but it should be json complaint so strings have to be escaped.
-        try:
-            result = json.loads(task.result)
-        except ValueError:
-            raise exc.InvalidResultException()
+        result = None
+        if task.result:
+            try:
+                result = json.loads(task.result)
+            except (ValueError, TypeError) as e:
+                raise exc.InvalidResultException(str(e))
 
         if task.state == states.ERROR:
             raw_result = wf_utils.TaskResult(None, result)
