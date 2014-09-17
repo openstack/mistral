@@ -46,15 +46,15 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         #  so we may need to get rid of it at all.
         return []
 
-    def _find_next_tasks(self, task_db):
-        """Finds tasks that should run after completing given task.
+    def _find_next_commands(self, task_db):
+        """Finds commands that should run after completing given task.
 
         Expression 'on_complete' is not mutually exclusive to 'on_success'
          and 'on_error'.
         :param task_db: Task DB model.
         :return: List of task specifications.
         """
-        task_specs = []
+        commands = []
 
         t_name = task_db.name
         t_state = task_db.state
@@ -67,29 +67,34 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             on_error = tasks_spec[t_name].get_on_error()
 
             if on_error:
-                task_specs = self._get_tasks_to_schedule(on_error, ctx)
+                commands = self._get_next_commands(on_error, ctx)
 
         elif t_state == states.SUCCESS:
             on_success = tasks_spec[t_name].get_on_success()
 
             if on_success:
-                task_specs = self._get_tasks_to_schedule(on_success, ctx)
+                commands = self._get_next_commands(on_success, ctx)
 
         if states.is_finished(t_state):
             on_complete = tasks_spec[t_name].get_on_complete()
 
             if on_complete:
-                task_specs += self._get_tasks_to_schedule(on_complete, ctx)
+                commands += self._get_next_commands(on_complete, ctx)
 
-        LOG.debug("Found tasks: %s" % task_specs)
+        LOG.debug("Found commands: %s" % commands)
 
-        return task_specs
+        return commands
 
-    def _get_tasks_to_schedule(self, task_conditions, ctx):
-        task_specs = []
+    def _get_next_commands(self, cmd_conditions, ctx):
+        commands = []
 
-        for t_name, condition in task_conditions.iteritems():
+        for t_name, condition in cmd_conditions.iteritems():
             if not condition or expr.evaluate(condition, ctx):
-                task_specs.append(self.wf_spec.get_tasks()[t_name])
+                commands.append(self.build_command(t_name))
 
-        return task_specs
+        return commands
+
+    def build_command(self, cmd_name):
+        cmd = commands.get_reserved_command(cmd_name)
+
+        return cmd or commands.RunTask(self.wf_spec.get_tasks()[cmd_name])

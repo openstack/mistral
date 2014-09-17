@@ -14,7 +14,6 @@
 
 import abc
 
-from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils
@@ -78,9 +77,9 @@ class WorkflowHandler(object):
 
             return []
 
-        task_specs = self._find_next_tasks(task_db)
+        commands = self._find_next_commands(task_db)
 
-        if len(task_specs) == 0:
+        if len(commands) == 0:
             # If there are no running tasks at this point we can conclude that
             # the workflow has finished.
             if not self._find_running_tasks():
@@ -98,16 +97,16 @@ class WorkflowHandler(object):
                     task_out_ctx
                 )
 
-        return [commands.RunTask(t_s) for t_s in task_specs]
+        return commands
 
     @abc.abstractmethod
-    def _find_next_tasks(self, task_db):
-        """Finds tasks that should run next.
+    def _find_next_commands(self, task_db):
+        """Finds commands that should run next.
 
         A concrete algorithm of finding such tasks depends on a concrete
         workflow handler.
         :param task_db: Task DB model causing the operation (completed).
-        :return: List of task specifications.
+        :return: List of engine commands.
         """
         raise NotImplementedError
 

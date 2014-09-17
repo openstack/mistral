@@ -127,7 +127,8 @@ class DefaultEngine(base.Engine):
             return
 
         for cmd in commands:
-            cmd.run(exec_db, wf_handler)
+            if not cmd.run(exec_db, wf_handler):
+                break
 
     @staticmethod
     def _create_db_execution(wf_db, wf_spec, wf_input, params):

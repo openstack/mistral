@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
@@ -53,8 +52,6 @@ workflows:
 """
 
 
-# TODO(rakhmerov): Delete this decorator when tests pass.
-@testtools.skip('')
 class EngineInstructionsTest(base.EngineTestCase):
     def setUp(self):
         super(EngineInstructionsTest, self).setUp()
