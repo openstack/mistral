@@ -69,6 +69,12 @@ workflows:
         count: 10
         delay: 30
         break-on: $.my_val = 10
+    on-task-error:
+      - fail: $.my_val = 0
+    on-task-success:
+      - pause
+    on-task-complete:
+      - succeed
 
     tasks:
       task3:
@@ -192,6 +198,12 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(6, len(wf2_spec.get_tasks()))
         self.assertEqual('task3', wf2_spec.get_start_task().get_name())
+        self.assertDictEqual(
+            {'fail': '$.my_val = 0'},
+            wf2_spec.get_on_task_error()
+        )
+        self.assertDictEqual({'pause': ''}, wf2_spec.get_on_task_success())
+        self.assertDictEqual({'succeed': ''}, wf2_spec.get_on_task_complete())
 
         task3_spec = wf2_spec.get_tasks().get('task3')
 
