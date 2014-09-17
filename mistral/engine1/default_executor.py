@@ -20,7 +20,7 @@ from mistral.actions import action_factory as a_f
 from mistral.engine1 import base
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-from mistral.workflow import base as wf_base
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class DefaultExecutor(base.Executor):
             if action.is_sync():
                 self._engine_client.on_task_result(
                     task_id,
-                    wf_base.TaskResult(data=result)
+                    wf_utils.TaskResult(data=result)
                 )
         except exc.ActionException as e:
             LOG.exception(
@@ -61,5 +61,5 @@ class DefaultExecutor(base.Executor):
 
             self._engine_client.on_task_result(
                 task_id,
-                wf_base.TaskResult(error=str(e))
+                wf_utils.TaskResult(error=str(e))
             )

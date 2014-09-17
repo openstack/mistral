@@ -15,6 +15,7 @@
 import networkx as nx
 from networkx.algorithms import traversal
 
+from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.workflow import base
 from mistral.workflow import states
@@ -50,7 +51,7 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         if len(task_specs) > 0:
             self._set_execution_state(states.RUNNING)
 
-        return task_specs
+        return [commands.RunTask(t_s) for t_s in task_specs]
 
     def get_upstream_tasks(self, task_spec):
         return [self.wf_spec.get_tasks()[t_name]

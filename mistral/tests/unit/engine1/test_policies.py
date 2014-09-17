@@ -95,7 +95,7 @@ workflows:
 
     tasks:
       task1:
-        action: std.http url="http://some_non-existient_host"
+        action: std.http url="http://some_non-existing_host"
         policies:
           retry:
             count: 2
@@ -154,8 +154,12 @@ class PoliciesTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.tasks[0]
+
         self.assertEqual(states.DELAYED, task_db.state)
-        self.assertIsNone(task_db.runtime_context)
+        self.assertDictEqual(
+            {'wait_before_policy': {'skip': True}},
+            task_db.runtime_context
+        )
 
         self._await(
             lambda: self.is_execution_success(exec_db.id),
@@ -175,6 +179,7 @@ class PoliciesTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.tasks[0]
+
         self.assertEqual(states.RUNNING, task_db.state)
         self.assertIsNone(task_db.runtime_context)
 
@@ -200,6 +205,7 @@ class PoliciesTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.tasks[0]
+
         self.assertEqual(states.RUNNING, task_db.state)
         self.assertIsNone(task_db.runtime_context)
 
@@ -213,10 +219,13 @@ class PoliciesTest(base.EngineTestCase):
         self._await(
             lambda: self.is_execution_error(exec_db.id),
         )
+
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.tasks[0]
 
         self.assertEqual(
-            1, task_db.runtime_context["retry_task_policy"]["retry_no"])
+            1,
+            task_db.runtime_context["retry_task_policy"]["retry_no"]
+        )
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.ERROR, exec_db.state)

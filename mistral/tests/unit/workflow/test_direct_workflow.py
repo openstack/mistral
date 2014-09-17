@@ -18,9 +18,9 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
-from mistral.workflow import base as wf_base
 from mistral.workflow import direct_workflow as d_wf
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -83,10 +83,10 @@ class DirectWorkflowHandlerTest(base.BaseTest):
         return task_db
 
     def test_start_workflow(self):
-        task_specs = self.handler.start_workflow()
+        commands = self.handler.start_workflow()
 
-        self.assertEqual(1, len(task_specs))
-        self.assertEqual('task1', task_specs[0].get_name())
+        self.assertEqual(1, len(commands))
+        self.assertEqual('task1', commands[0].task_spec.get_name())
         self.assertEqual(states.RUNNING, self.exec_db.state)
 
     def test_on_task_result(self):
@@ -95,13 +95,13 @@ class DirectWorkflowHandlerTest(base.BaseTest):
         task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
 
         # Emulate finishing 'task1'.
-        task_specs = self.handler.on_task_result(
+        commands = self.handler.on_task_result(
             task1_db,
-            wf_base.TaskResult(data='Hey')
+            wf_utils.TaskResult(data='Hey')
         )
 
-        self.assertEqual(1, len(task_specs))
-        self.assertEqual('task2', task_specs[0].get_name())
+        self.assertEqual(1, len(commands))
+        self.assertEqual('task2', commands[0].task_spec.get_name())
 
         self.assertEqual(states.RUNNING, self.exec_db.state)
         self.assertEqual(states.SUCCESS, task1_db.state)
@@ -109,12 +109,12 @@ class DirectWorkflowHandlerTest(base.BaseTest):
         # Emulate finishing 'task2'.
         task2_db = self._create_db_task('1-1-1-2', 'task2', states.RUNNING)
 
-        task_specs = self.handler.on_task_result(
+        commands = self.handler.on_task_result(
             task2_db,
-            wf_base.TaskResult(data='Hi')
+            wf_utils.TaskResult(data='Hi')
         )
 
-        self.assertEqual(0, len(task_specs))
+        self.assertEqual(0, len(commands))
 
         self.assertEqual(states.SUCCESS, self.exec_db.state)
         self.assertEqual(states.SUCCESS, task1_db.state)

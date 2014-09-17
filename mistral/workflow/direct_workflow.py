@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.engine1 import commands
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.workflow import base
@@ -37,7 +38,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def start_workflow(self, **params):
         self._set_execution_state(states.RUNNING)
 
-        return [self.wf_spec.get_start_task()]
+        # TODO(rakhmerov): Explicit start task will be removed.
+        return [commands.RunTask(self.wf_spec.get_start_task())]
 
     def get_upstream_tasks(self, task_spec):
         # TODO(rakhmerov): For direct workflow it's pretty hard to do

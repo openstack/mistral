@@ -14,8 +14,6 @@
 
 import abc
 
-from mistral.workflow import base
-
 
 class Serializer(object):
     @abc.abstractmethod
@@ -25,17 +23,3 @@ class Serializer(object):
     @abc.abstractmethod
     def deserialize(self, entity):
         pass
-
-
-class TaskResultSerializer(Serializer):
-    def serialize(self, entity):
-        return {
-            'data': entity.data,
-            'error': entity.error
-        }
-
-    def deserialize(self, entity):
-        return base.TaskResult(
-            entity['data'],
-            entity['error']
-        )

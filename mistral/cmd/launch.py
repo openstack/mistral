@@ -44,6 +44,8 @@ from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral import engine
 from mistral.engine import executor
+from mistral.engine1 import default_engine as def_eng
+from mistral.engine1 import default_executor as def_executor
 from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
@@ -60,10 +62,11 @@ def launch_executor(transport):
 
     # Since engine and executor are tightly coupled, use the engine
     # configuration to decide which executor to get.
-    endpoints = [
-        executor.get_executor(cfg.CONF.engine.engine, transport),
-        rpc.get_executor_server()
-    ]
+    executor_v1 = executor.get_executor(cfg.CONF.engine.engine, transport)
+
+    executor_v2 = def_executor.DefaultExecutor(rpc.get_engine_client())
+
+    endpoints = [executor_v1, rpc.ExecutorServer(executor_v2)]
 
     server = messaging.get_rpc_server(
         transport,
@@ -83,10 +86,13 @@ def launch_engine(transport):
         server=cfg.CONF.engine.host
     )
 
-    endpoints = [
-        engine.get_engine(cfg.CONF.engine.engine, transport),
-        rpc.get_engine_server()
-    ]
+    engine_v1 = engine.get_engine(cfg.CONF.engine.engine, transport)
+    engine_v2 = def_eng.DefaultEngine(
+        rpc.get_engine_client(),
+        rpc.get_executor_client()
+    )
+
+    endpoints = [engine_v1, rpc.EngineServer(engine_v2)]
 
     # Setup scheduler in engine.
     db_api.setup_db()
