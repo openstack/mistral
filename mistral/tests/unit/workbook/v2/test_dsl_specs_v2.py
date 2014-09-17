@@ -196,12 +196,15 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(6, len(wf2_spec.get_tasks()))
-        self.assertDictEqual(
-            {'fail': '$.my_val = 0'},
+        self.assertListEqual(
+            [('fail', '$.my_val = 0')],
             wf2_spec.get_on_task_error()
         )
-        self.assertDictEqual({'pause': ''}, wf2_spec.get_on_task_success())
-        self.assertDictEqual({'succeed': ''}, wf2_spec.get_on_task_complete())
+        self.assertListEqual([('pause', '')], wf2_spec.get_on_task_success())
+        self.assertListEqual(
+            [('succeed', '')],
+            wf2_spec.get_on_task_complete()
+        )
 
         task3_spec = wf2_spec.get_tasks().get('task3')
 
@@ -219,16 +222,16 @@ class DSLv2ModelTest(base.BaseTest):
             },
             task3_spec.get_parameters()
         )
-        self.assertDictEqual(
-            {'task4': '$.my_val = 1'},
+        self.assertListEqual(
+            [('task4', '$.my_val = 1')],
             task3_spec.get_on_error()
         )
-        self.assertDictEqual(
-            {'task5': '$.my_val = 2'},
+        self.assertListEqual(
+            [('task5', '$.my_val = 2')],
             task3_spec.get_on_success()
         )
-        self.assertDictEqual(
-            {'task6': '$.my_val = 3'},
+        self.assertListEqual(
+            [('task6', '$.my_val = 3')],
             task3_spec.get_on_complete()
         )
 

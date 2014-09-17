@@ -112,13 +112,13 @@ class TaskSpec(base.BaseSpec):
         return self._requires
 
     def get_on_complete(self):
-        return self._get_as_dict("on-complete")
+        return self._as_list_of_tuples('on-complete')
 
     def get_on_success(self):
-        return self._get_as_dict("on-success")
+        return self._as_list_of_tuples('on-success')
 
     def get_on_error(self):
-        return self._get_as_dict("on-error")
+        return self._as_list_of_tuples('on-error')
 
 
 class TaskSpecList(base.BaseSpecList):

@@ -56,7 +56,7 @@ class BaseSpec(object):
             if isinstance(prop_data, dict):
                 prop_data['version'] = self._version
 
-    def _get_as_dict(self, prop_name):
+    def _as_dict(self, prop_name):
         prop_val = self._data.get(prop_name)
 
         if not prop_val:
@@ -71,6 +71,18 @@ class BaseSpec(object):
             return result
         elif isinstance(prop_val, six.string_types):
             return {prop_val: ''}
+
+    def _as_list_of_tuples(self, prop_name):
+        prop_val = self._data.get(prop_name)
+
+        if not prop_val:
+            return []
+
+        return [self._as_tuple(item) for item in prop_val]
+
+    @staticmethod
+    def _as_tuple(val):
+        return val.items()[0] if isinstance(val, dict) else (val, '')
 
     @staticmethod
     def _parse_cmd_and_params(cmd_str):

@@ -71,13 +71,13 @@ class WorkflowSpec(base.BaseSpec):
         return self._policies
 
     def get_on_task_complete(self):
-        return self._get_as_dict("on-task-complete")
+        return self._as_list_of_tuples("on-task-complete")
 
     def get_on_task_success(self):
-        return self._get_as_dict("on-task-success")
+        return self._as_list_of_tuples("on-task-success")
 
     def get_on_task_error(self):
-        return self._get_as_dict("on-task-error")
+        return self._as_list_of_tuples("on-task-error")
 
     def get_tasks(self):
         return self._tasks
