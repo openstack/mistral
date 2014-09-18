@@ -31,11 +31,14 @@ WORKBOOK = """
 version: '2.0'
 
 actions:
-  my_action:
+  concat_twice:
     base: std.echo
     base-parameters:
-      output: "{$.str1}{$.str2}"
-    output: "{$}{$}"
+      output: "{$.s1}+{$.s2}"
+    parameters:
+      - s1
+      - s2
+    output: "{$} and {$}"
 
 workflows:
   wf1:
@@ -44,11 +47,12 @@ workflows:
       - str1
       - str2
     output:
-      result: $.result
+      workflow_result: $.result # This access to execution context variables
+      concat_task_result: $.task.concat # This access to task raw result
 
     tasks:
-      task1:
-        action: my_action str1='{$.str1}' str2='{$.str2}'
+      concat:
+        action: concat_twice s1={$.str1} s2={$.str2}
         publish:
           result: $
 """
@@ -74,4 +78,6 @@ class AdhocActionsTest(base.EngineTestCase):
 
         exec_db = db_api.get_execution(exec_db.id)
 
-        self.assertDictEqual({'result': 'abab'}, exec_db.output)
+        self.assertDictEqual({'workflow_result': 'a+b and a+b',
+                             'concat_task_result': 'a+b and a+b'},
+                             exec_db.output)
