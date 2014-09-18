@@ -24,6 +24,9 @@ CONF = cfg.CONF
 
 
 class OpenStackActionsTest(base.TestCaseAdvanced):
+
+    _version = 1
+
     @classmethod
     def setUpClass(cls):
         super(OpenStackActionsTest, cls).setUpClass()
@@ -35,7 +38,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
     def test_nova_actions(self):
         nova_wb = base.get_resource(
             'resources/openstack/nova_actions.yaml')
-        self.client.upload_workbook_definition(self.workbook_name, nova_wb)
+        self.client.prepare_workbook(self.workbook_name, nova_wb)
 
         context = {
             'server_name': 'mistral-test',
@@ -64,8 +67,8 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
     def test_keystone_actions(self):
         keystone_wb = base.get_resource(
             'resources/openstack/keystone_actions.yaml')
-        self.client.upload_workbook_definition(self.workbook_name,
-                                               keystone_wb)
+        self.client.prepare_workbook(self.workbook_name,
+                                     keystone_wb)
         _, execution = self.client.create_execution_wait_success(
             self.workbook_name, context={}, task='get_some_endpoint')
         _, tasks = self.client.get_tasks_list(self.workbook_name,
@@ -84,8 +87,8 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
     def test_glance_actions(self):
         glance_wb = base.get_resource(
             'resources/openstack/glance_actions.yaml')
-        self.client.upload_workbook_definition(self.workbook_name,
-                                               glance_wb)
+        self.client.prepare_workbook(self.workbook_name,
+                                     glance_wb)
 
         _, execution = self.client.create_execution_wait_success(
             self.workbook_name, context={}, task='image_list')
