@@ -72,8 +72,8 @@ class WorkflowHandler(object):
             data_flow.evaluate_task_output(task_spec, raw_result)
 
         if task_db.state == states.ERROR and not task_spec.get_on_error():
-            # TODO(rakhmerov): Temporary hack, need to use policies.
-            self._set_execution_state(states.ERROR)
+            if not self.is_paused_or_finished():
+                self._set_execution_state(states.ERROR)
 
             return []
 
@@ -83,7 +83,8 @@ class WorkflowHandler(object):
             # If there are no running tasks at this point we can conclude that
             # the workflow has finished.
             if not self._find_running_tasks():
-                self._set_execution_state(states.SUCCESS)
+                if not self.is_paused_or_finished():
+                    self._set_execution_state(states.SUCCESS)
 
                 task_out_ctx = data_flow.evaluate_outbound_context(task_db)
 

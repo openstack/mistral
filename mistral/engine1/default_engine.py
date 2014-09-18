@@ -21,12 +21,12 @@ from mistral.engine1 import commands
 from mistral.engine1 import policies
 from mistral.engine1 import utils
 from mistral.openstack.common import log as logging
+from mistral import utils as u
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 from mistral.workflow import workflow_handler_factory as wfh_factory
-
 
 LOG = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class DefaultEngine(base.Engine):
         self._engine_client = engine_client
         self._executor_client = executor_client
 
+    @u.log_exec(LOG)
     def start_workflow(self, workflow_name, workflow_input, **params):
         with db_api.transaction():
             wf_db = db_api.get_workflow(workflow_name)
@@ -67,7 +68,9 @@ class DefaultEngine(base.Engine):
 
         return exec_db
 
+    @u.log_exec(LOG)
     def on_task_result(self, task_id, raw_result):
+
         with db_api.transaction():
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
@@ -94,6 +97,7 @@ class DefaultEngine(base.Engine):
 
         return task_db
 
+    @u.log_exec(LOG)
     def pause_workflow(self, execution_id):
         with db_api.transaction():
             exec_db = db_api.get_execution(execution_id)
@@ -104,6 +108,7 @@ class DefaultEngine(base.Engine):
 
         return exec_db
 
+    @u.log_exec(LOG)
     def resume_workflow(self, execution_id):
         with db_api.transaction():
             exec_db = db_api.get_execution(execution_id)
@@ -153,6 +158,7 @@ class DefaultEngine(base.Engine):
         for p in policies.build_policies(task_spec.get_policies()):
             p.after_task_complete(task_db, task_spec, raw_result)
 
+    @u.log_exec(LOG)
     def run_task(self, task_id):
         with db_api.transaction():
             task_db = db_api.update_task(task_id, {'state': states.RUNNING})

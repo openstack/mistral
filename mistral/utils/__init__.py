@@ -72,7 +72,7 @@ def set_thread_local(var_name, val):
         gl_storage[var_name] = val
 
 
-def log_exec(logger, level=logging.INFO):
+def log_exec(logger, level=logging.DEBUG):
     """Decorator for logging function execution.
         By default, target function execution is logged with INFO level.
     """
