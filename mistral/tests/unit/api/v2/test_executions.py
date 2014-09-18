@@ -32,7 +32,7 @@ EXEC_DB = models.Execution(
     wf_name='some',
     wf_spec={'name': 'some'},
     state=states.RUNNING,
-    input={},
+    input={'foo': 'bar'},
     output={},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
@@ -40,7 +40,7 @@ EXEC_DB = models.Execution(
 
 EXEC = {
     'id': '123',
-    'input': '{}',
+    'input': '{"foo": "bar"}',
     'output': '{}',
     'state': 'RUNNING',
     'created_at': '1970-01-01 00:00:00',

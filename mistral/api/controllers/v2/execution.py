@@ -49,6 +49,9 @@ class Execution(resource.Resource):
     def to_dict(self):
         d = super(Execution, self).to_dict()
 
+        if d.get('input'):
+            d['input'] = json.loads(d['input'])
+
         if d.get('output'):
             d['output'] = json.loads(d['output'])
 
