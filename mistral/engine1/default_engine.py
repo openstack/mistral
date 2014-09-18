@@ -41,9 +41,8 @@ WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class DefaultEngine(base.Engine):
-    def __init__(self, engine_client, executor_client):
+    def __init__(self, engine_client):
         self._engine_client = engine_client
-        self._executor_client = executor_client
 
     @u.log_exec(LOG)
     def start_workflow(self, workflow_name, workflow_input, **params):
