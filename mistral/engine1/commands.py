@@ -33,7 +33,7 @@ class EngineCommand(object):
     """Engine command interface."""
 
     @abc.abstractmethod
-    def run(self, exec_db, wf_handler):
+    def run(self, exec_db, wf_handler, cause_task_db=None):
         """Runs the command.
 
         :param exec_db: Workflow execution DB object.
@@ -49,16 +49,16 @@ class RunTask(EngineCommand):
         self.task_spec = task_spec
         self.task_db = task_db
 
-    def run(self, exec_db, wf_handler):
+    def run(self, exec_db, wf_handler, cause_task_db=None):
         LOG.debug('Running workflow task: %s' % self.task_spec)
 
-        self._prepare_task(exec_db, wf_handler)
+        self._prepare_task(exec_db, wf_handler, cause_task_db)
         self._before_task_start()
         self._run_task()
 
         return True
 
-    def _prepare_task(self, exec_db, wf_handler):
+    def _prepare_task(self, exec_db, wf_handler, cause_task_db):
         if self.task_db:
             return
 
@@ -69,7 +69,8 @@ class RunTask(EngineCommand):
             self.task_db,
             self.task_spec,
             wf_handler.get_upstream_tasks(self.task_spec),
-            exec_db
+            exec_db,
+            cause_task_db
         )
 
     def _before_task_start(self):
@@ -172,28 +173,28 @@ class RunTask(EngineCommand):
 
 
 class FailWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler):
+    def run(self, exec_db, wf_handler, cause_task_db=None):
         exec_db.state = states.ERROR
 
         return False
 
 
 class SucceedWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler):
+    def run(self, exec_db, wf_handler, cause_task_db=None):
         exec_db.state = states.SUCCESS
 
         return False
 
 
 class PauseWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler):
+    def run(self, exec_db, wf_handler, cause_task_db=None):
         wf_handler.pause_workflow()
 
         return False
 
 
 class RollbackWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler):
+    def run(self, exec_db, wf_handler, cause_task_db=None):
         pass
 
 

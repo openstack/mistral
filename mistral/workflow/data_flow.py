@@ -29,7 +29,8 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db):
+def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
+                    cause_task_db=None):
     """Prepare Data Flow properties ('in_context' and 'parameters')
      of given DB task.
 
@@ -48,6 +49,15 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db):
         exec_db.context,
         _evaluate_upstream_context(upstream_db_tasks)
     )
+
+    if cause_task_db:
+        old_task_output = copy.copy(cause_task_db.output)
+
+        # TODO(nmakhotkin) Do it using _evaluate_upstream_context()
+        task_db.in_context = utils.merge_dicts(
+            task_db.in_context,
+            old_task_output
+        )
 
     task_db.parameters = evaluate_task_parameters(
         task_spec,
