@@ -19,6 +19,7 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine1 import default_engine as d_eng
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests import base
@@ -39,6 +40,10 @@ version: '2.0'
 workflows:
   wf1:
     type: reverse
+    parameters:
+      - param1
+      - param2
+
     tasks:
       task1:
         action: std.echo output="{$.param1}"
@@ -48,6 +53,7 @@ workflows:
       task2:
         action: std.echo output="{$.param2}"
         requires: [task1]
+
 """
 
 # TODO(rakhmerov): Add more advanced tests including various capabilities.
@@ -104,6 +110,24 @@ class DefaultEngineTest(base.DbTestCase):
         self._assert_dict_contains_subset(wf_input, task_db.in_context)
         self.assertIn('__execution', task_db.in_context)
         self.assertDictEqual({'output': 'Hey'}, task_db.parameters)
+
+    def test_start_workflow_missing_parameters(self):
+        self.assertRaises(
+            exc.WorkflowInputException,
+            self.engine.start_workflow,
+            '%s.wf1' % self.wb_name,
+            None,
+            task_name='task2'
+        )
+
+    def test_start_workflow_unexpected_parameters(self):
+        self.assertRaises(
+            exc.WorkflowInputException,
+            self.engine.start_workflow,
+            '%s.wf1' % self.wb_name,
+            {'param1': 'Hey', 'param2': 'Hi', 'unexpected_param': 'val'},
+            task_name='task2'
+        )
 
     def test_on_task_result(self):
         wf_input = {

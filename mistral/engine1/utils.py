@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
@@ -20,6 +22,35 @@ from mistral.workbook import parser as spec_parser
 from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
+
+
+def validate_workflow_input(wf_db, wf_spec, wf_input):
+    input_param_names = copy.copy((wf_input or {}).keys())
+    missing_param_names = []
+
+    for p_name in wf_spec.get_parameters():
+        if p_name not in input_param_names:
+            missing_param_names.append(p_name)
+        else:
+            input_param_names.remove(p_name)
+
+    if missing_param_names or input_param_names:
+        msg = 'Invalid workflow input [workflow=%s'
+        msg_props = [wf_db.name]
+
+        if missing_param_names:
+            msg += ', missing=%s'
+            msg_props.append(missing_param_names)
+
+        if input_param_names:
+            msg += ', unexpected=%s'
+            msg_props.append(input_param_names)
+
+        msg += ']'
+
+        raise exc.WorkflowInputException(
+            msg % tuple(msg_props)
+        )
 
 
 def resolve_action(wf_name, wf_spec_name, action_spec_name):

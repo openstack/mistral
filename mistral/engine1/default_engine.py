@@ -51,6 +51,8 @@ class DefaultEngine(base.Engine):
 
             wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
 
+            utils.validate_workflow_input(wf_db, wf_spec, workflow_input)
+
             exec_db = self._create_db_execution(
                 wf_db,
                 wf_spec,
@@ -69,7 +71,6 @@ class DefaultEngine(base.Engine):
 
     @u.log_exec(LOG)
     def on_task_result(self, task_id, raw_result):
-
         with db_api.transaction():
             task_db = db_api.get_task(task_id)
             exec_db = db_api.get_execution(task_db.execution_id)
