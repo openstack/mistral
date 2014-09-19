@@ -56,17 +56,25 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         return [commands.RunTask(t_s) for t_s in start_task_specs]
 
     def _has_inbound_transitions(self, task_spec):
-        task_name = task_spec.get_name()
-
         for t_s in self.wf_spec.get_tasks():
-            t_n = t_s.get_name()
-
-            if task_name in self.get_on_error_clause(t_n) \
-                    or task_name in self.get_on_success_clause(t_n) \
-                    or task_name in self.get_on_complete_clause(t_n):
+            if self._transition_exists(t_s.get_name(), task_spec.get_name()):
                 return True
 
         return False
+
+    def _transition_exists(self, from_task_name, to_task_name):
+        t_names = set()
+
+        for tup in self.get_on_error_clause(from_task_name):
+            t_names.add(tup[0])
+
+        for tup in self.get_on_success_clause(from_task_name):
+            t_names.add(tup[0])
+
+        for tup in self.get_on_complete_clause(from_task_name):
+            t_names.add(tup[0])
+
+        return to_task_name in t_names
 
     def _find_next_commands(self, task_db):
         """Finds commands that should run after completing given task.
@@ -120,7 +128,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def _get_next_commands(self, cmd_conditions, ctx):
         commands = []
 
-        for t_name, condition in cmd_conditions.iteritems():
+        for t_name, condition in cmd_conditions:
             if not condition or expr.evaluate(condition, ctx):
                 commands.append(self.build_command(t_name))
 

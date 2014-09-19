@@ -58,16 +58,16 @@ class TaskSpec(base.BaseSpec):
         return self._data.get(property_name, default)
 
     def get_requires(self):
-        return self._get_as_dict('requires').keys()
+        return self._as_dict('requires').keys()
 
     def get_on_error(self):
-        return self._get_as_dict("on-error")
+        return self._as_dict("on-error")
 
     def get_on_success(self):
-        return self._get_as_dict("on-success")
+        return self._as_dict("on-success")
 
     def get_on_finish(self):
-        return self._get_as_dict("on-finish")
+        return self._as_dict("on-finish")
 
     def get_action_namespace(self):
         return self.action.split('.')[0]
