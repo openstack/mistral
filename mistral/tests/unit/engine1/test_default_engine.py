@@ -68,7 +68,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Note: For purposes of this test we can easily use
         # simple magic mocks for engine and executor clients
-        self.engine = d_eng.DefaultEngine(mock.MagicMock(), mock.MagicMock())
+        self.engine = d_eng.DefaultEngine(mock.MagicMock())
 
     def test_start_workflow(self):
         wf_input = {

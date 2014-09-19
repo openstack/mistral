@@ -87,10 +87,7 @@ def launch_engine(transport):
     )
 
     engine_v1 = engine.get_engine(cfg.CONF.engine.engine, transport)
-    engine_v2 = def_eng.DefaultEngine(
-        rpc.get_engine_client(),
-        rpc.get_executor_client()
-    )
+    engine_v2 = def_eng.DefaultEngine(rpc.get_engine_client())
 
     endpoints = [engine_v1, rpc.EngineServer(engine_v2)]
 
