@@ -56,10 +56,7 @@ class Execution(resource.Resource):
             d['output'] = json.loads(d['output'])
 
         if d.get('params'):
-            params = json.loads(d['params'])
-            del d['params']
-            for k, v in params.items():
-                d[k] = v
+            d['params'] = json.loads(d['params'])
 
         return d
 
