@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-WORKBOOK = """
+WORKBOOK1 = """
 ---
 version: '2.0'
 
@@ -44,51 +44,19 @@ workflows:
           - fail: $.my_var = 1
           - succeed: $.my_var = 2
           - pause: $.my_var = 3
-          - rollback: $.my_var = 3
-          - task2: $.my_var = 4 # (Never happens in this test)
-
-      task2:
-        action: std.echo output='2'
-"""
-
-WORKBOOK1 = """
----
-version: '2.0'
-
-workflows:
-  wf:
-    type: direct
-    parameters:
-      - my_var
-
-    on-task-complete:
-      - fail: $.my_var = 1
-      - succeed: $.my_var = 2
-      - pause: $.my_var = 3
-      - rollback: $.my_var = 3
-      - task2: $.my_var = 4 # (Never happens in this test)
-
-    tasks:
-      task1:
-        action: std.echo output='1'
+          - task2
 
       task2:
         action: std.echo output='2'
 """
 
 
-class EngineInstructionsTest(base.EngineTestCase):
+class SimpleEngineInstructionsTest(base.EngineTestCase):
     def setUp(self):
-        super(EngineInstructionsTest, self).setUp()
+        super(SimpleEngineInstructionsTest, self).setUp()
 
         wb_service.create_workbook_v2({
             'name': 'my_wb',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
-
-        wb_service.create_workbook_v2({
-            'name': 'my_wb1',
             'definition': WORKBOOK1,
             'tags': ['test']
         })
@@ -135,12 +103,45 @@ class EngineInstructionsTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-    def test_rollback(self):
-        # TODO(rakhmerov): Implement.
-        pass
 
-    def test_fail_wf_level(self):
-        exec_db = self.engine.start_workflow('my_wb1.wf', {'my_var': 1})
+WORKBOOK2 = """
+---
+version: '2.0'
+
+workflows:
+  wf:
+    type: direct
+    parameters:
+      - my_var
+
+    on-task-complete:
+      - fail: $.my_var = 1
+      - succeed: $.my_var = 2
+      - pause: $.my_var = 3
+      - rollback: $.my_var = 3
+      - task2: $.my_var = 4 # (Never happens in this test)
+
+    tasks:
+      task1:
+        action: std.echo output='1'
+
+      task2:
+        action: std.echo output='2'
+"""
+
+
+class SimpleEngineWorkflowLevelInstructionsTest(base.EngineTestCase):
+    def setUp(self):
+        super(SimpleEngineWorkflowLevelInstructionsTest, self).setUp()
+
+        wb_service.create_workbook_v2({
+            'name': 'my_wb',
+            'definition': WORKBOOK2,
+            'tags': ['test']
+        })
+
+    def test_fail(self):
+        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
 
         self._await(lambda: self.is_execution_error(exec_db.id))
 
@@ -153,8 +154,8 @@ class EngineInstructionsTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-    def test_succeed_wf_level(self):
-        exec_db = self.engine.start_workflow('my_wb1.wf', {'my_var': 2})
+    def test_succeed(self):
+        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
@@ -167,8 +168,8 @@ class EngineInstructionsTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-    def test_pause_wf_level(self):
-        exec_db = self.engine.start_workflow('my_wb1.wf', {'my_var': 3})
+    def test_pause(self):
+        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
@@ -181,6 +182,136 @@ class EngineInstructionsTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-    def test_rollback_wf_level(self):
-        # TODO(rakhmerov): Implement.
-        pass
+
+WORKBOOK3 = """
+---
+version: '2.0'
+
+workflows:
+  fail_first_wf:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output='1'
+        on-complete:
+          - fail
+          - task2
+
+      task2:
+        action: std.echo output='2'
+
+  fail_second_wf:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output='1'
+        on-complete:
+          - task2
+          - fail
+
+      task2:
+        action: std.echo output='2'
+
+  succeed_first_wf:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output='1'
+        on-complete:
+          - succeed
+          - task2
+
+      task2:
+        action: std.echo output='2'
+
+  succeed_second_wf:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output='1'
+        on-complete:
+          - task2
+          - succeed
+
+      task2:
+        action: std.http url='some.not.existing.url'
+"""
+
+
+class OrderEngineInstructionsTest(base.EngineTestCase):
+    def setUp(self):
+        super(OrderEngineInstructionsTest, self).setUp()
+
+        wb_service.create_workbook_v2({
+            'name': 'my_wb',
+            'definition': WORKBOOK3,
+            'tags': ['test']
+        })
+
+    def test_fail_first(self):
+        exec_db = self.engine.start_workflow('my_wb.fail_first_wf', None)
+
+        self._await(lambda: self.is_execution_error(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(1, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+
+    def test_fail_second(self):
+        exec_db = self.engine.start_workflow('my_wb.fail_second_wf', None)
+
+        self._await(lambda: self.is_execution_error(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(2, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+        task2_db = self._assert_single_item(exec_db.tasks, name='task2')
+
+        self._await(lambda: self.is_task_success(task2_db.id))
+        self._await(lambda: self.is_execution_error(exec_db.id))
+
+    def test_succeed_first(self):
+        exec_db = self.engine.start_workflow('my_wb.succeed_first_wf', None)
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(1, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+
+    def test_succeed_second(self):
+        exec_db = self.engine.start_workflow('my_wb.succeed_second_wf', None)
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(2, len(exec_db.tasks))
+        self._assert_single_item(
+            exec_db.tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+        task2_db = self._assert_single_item(exec_db.tasks, name='task2')
+
+        self._await(lambda: self.is_task_error(task2_db.id))
+        self._await(lambda: self.is_execution_success(exec_db.id))
