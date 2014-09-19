@@ -140,6 +140,8 @@ function configure_mistral {
 
     # Configure the database.
     iniset $MISTRAL_CONF_FILE database connection `database_connection_url mistral`
+    iniset $MISTRAL_CONF_FILE database max_overflow -1
+    iniset $MISTRAL_CONF_FILE database max_pool_size 1000
 
     # Configure keystone auth url
     iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri "http://${KEYSTONE_AUTH_HOST}:5000/v3"

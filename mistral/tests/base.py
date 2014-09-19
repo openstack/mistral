@@ -189,8 +189,12 @@ class DbTestCase(BaseTest):
         and can be extended by child classes.
         """
         cfg.CONF.set_default('connection', 'sqlite://', group='database')
+        cfg.CONF.set_default('max_overflow', -1, group='database')
+        cfg.CONF.set_default('max_pool_size', 1000, group='database')
+
         db_api_v1.setup_db()
         db_api_v2.setup_db()
+
         action_manager.sync_db()
 
     def _clean_db(self):
@@ -210,15 +214,15 @@ class DbTestCase(BaseTest):
         super(DbTestCase, self).setUp()
 
         self.__heavy_init()
-        cfg.CONF.set_default('connection', 'sqlite://', group='database')
-        db_api_v1.setup_db()
-        db_api_v2.setup_db()
 
-        self.ctx = auth_context.MistralContext(user_id='1-2-3-4',
-                                               project_id='5-6-7-8',
-                                               user_name='test-user',
-                                               project_name='test-project',
-                                               is_admin=False)
+        self.ctx = auth_context.MistralContext(
+            user_id='1-2-3-4',
+            project_id='5-6-7-8',
+            user_name='test-user',
+            project_name='test-project',
+            is_admin=False
+        )
+
         auth_context.set_ctx(self.ctx)
 
         self.addCleanup(auth_context.set_ctx, None)
