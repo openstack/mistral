@@ -18,13 +18,11 @@ from stevedore import extension
 
 from mistral.actions import action_factory
 from mistral.actions import generator_factory
-from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.utils import inspect_utils as i_utils
-from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
@@ -144,80 +142,6 @@ def _has_action_context_param(action_cls):
     arg_spec = inspect.getargspec(action_cls.__init__)
 
     return _ACTION_CTX_PARAM in arg_spec.args
-
-
-# TODO(rakhmerov): It's not used anywhere.
-def _create_adhoc_action(db_task, openstack_context):
-    task_spec = spec_parser.get_task_spec(db_task['task_spec'])
-
-    full_action_name = task_spec.get_full_action_name()
-
-    raw_action_spec = db_task['action_spec']
-
-    if not raw_action_spec:
-        return None
-
-    action_spec = spec_parser.get_action_spec(raw_action_spec)
-
-    LOG.info('Using ad-hoc action [action=%s, db_task=%s]' %
-             (full_action_name, db_task))
-
-    # Create an ad-hoc action.
-    base_cls = get_action_class(action_spec.clazz)
-
-    action_context = None
-    if _has_action_context_param(base_cls):
-        action_context = _get_action_context(db_task, openstack_context)
-
-    if not base_cls:
-        msg = 'Ad-hoc action base class is not registered ' \
-              '[workbook_name=%s, action=%s, base_class=%s]' % \
-              (db_task['workbook_name'], full_action_name, base_cls)
-        raise exc.ActionException(msg)
-
-    action_params = db_task['parameters'] or {}
-
-    return std_actions.AdHocAction(action_context,
-                                   base_cls,
-                                   action_spec,
-                                   **action_params)
-
-
-# TODO(rakhmerov): It's not used anywhere. Remove it later.
-def create_action(db_task):
-    task_spec = spec_parser.get_task_spec(db_task['task_spec'])
-
-    full_action_name = task_spec.get_full_action_name()
-
-    action_cls = get_action_class(full_action_name)
-
-    openstack_ctx = db_task['in_context'].get('openstack')
-
-    if not action_cls:
-        # If action is not found in registered actions try to find ad-hoc
-        # action definition.
-        if openstack_ctx is not None:
-            db_task['parameters'].update({'openstack': openstack_ctx})
-        action = _create_adhoc_action(db_task, openstack_ctx)
-
-        if action:
-            return action
-        else:
-            msg = 'Unknown action [workbook_name=%s, action=%s]' % \
-                  (db_task['workbook_name'], full_action_name)
-            raise exc.ActionException(msg)
-
-    action_params = db_task['parameters'] or {}
-
-    if _has_action_context_param(action_cls):
-        action_params[_ACTION_CTX_PARAM] = _get_action_context(db_task,
-                                                               openstack_ctx)
-
-    try:
-        return action_cls(**action_params)
-    except Exception as e:
-        raise exc.ActionException('Failed to create action [db_task=%s]: %s' %
-                                  (db_task, e))
 
 
 def resolve_adhoc_action_name(workbook, action_name):
