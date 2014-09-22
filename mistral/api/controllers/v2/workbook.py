@@ -74,10 +74,10 @@ class WorkbooksController(rest.RestController):
         return Workbook.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
-    def put(self, name, workbook):
-        """Update the named workbook."""
-        LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
+    @wsme_pecan.wsexpose(Workbook, body=Workbook)
+    def put(self, workbook):
+        """Update a workbook."""
+        LOG.debug("Update workbook [workbook=%s]" % workbook)
 
         db_model = workbooks.update_workbook_v2(workbook.to_dict())
 
