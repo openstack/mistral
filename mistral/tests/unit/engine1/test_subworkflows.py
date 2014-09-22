@@ -33,6 +33,8 @@ WORKBOOK = """
 ---
 version: '2.0'
 
+name: my_wb
+
 workflows:
   wf1:
     type: reverse

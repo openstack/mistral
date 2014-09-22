@@ -30,6 +30,8 @@ WORKBOOK = """
 ---
 version: '2.0'
 
+name: my_wb
+
 actions:
   concat_twice:
     base: std.echo

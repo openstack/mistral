@@ -21,7 +21,9 @@ VALID_WB = """
 ---
 version: '2.0'
 
+name: my_workbook
 description: This is a test workbook
+tags: [test, v2]
 
 actions:
   action1:
@@ -118,7 +120,9 @@ class DSLv2ModelTest(base.BaseTest):
         tr_specs = wb_spec.get_triggers()
 
         self.assertEqual('2.0', wb_spec.get_version())
+        self.assertEqual('my_workbook', wb_spec.get_name())
         self.assertEqual('This is a test workbook', wb_spec.get_description())
+        self.assertListEqual(['test', 'v2'], wb_spec.get_tags())
         self.assertIsNotNone(act_specs)
         self.assertIsNotNone(wf_specs)
         self.assertIsNone(tr_specs)

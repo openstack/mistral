@@ -32,6 +32,8 @@ WORKBOOK = """
 ---
 version: '2.0'
 
+name: my_wb
+
 workflows:
   wf1:
     type: direct
@@ -53,6 +55,8 @@ WAIT_BEFORE_WB = """
 ---
 version: '2.0'
 
+name: my_wb
+
 workflows:
   wf1:
     type: direct
@@ -69,6 +73,8 @@ WAIT_AFTER_WB = """
 ---
 version: '2.0'
 
+name: my_wb
+
 workflows:
   wf1:
     type: direct
@@ -84,6 +90,8 @@ workflows:
 RETRY_WB = """
 ---
 version: '2.0'
+
+name: my_wb
 
 workflows:
   wf1:

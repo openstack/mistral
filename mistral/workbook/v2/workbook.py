@@ -24,11 +24,14 @@ class WorkbookSpec(base.BaseSpec):
         "type": "object",
         "properties": {
             "version": {"value": "2.0"},
+            "name": {"type": "string"},
             "description": {"type": "string"},
+            "tags": {"type": "array"},
             "actions": {"type": "object"},
             "workflows": {"type": "object"},
             "triggers": {"type": "object"}
         },
+        "required": ["name"],
         "additionalProperties": False
     }
 
@@ -39,14 +42,22 @@ class WorkbookSpec(base.BaseSpec):
 
         self._inject_version(['actions', 'workflows', 'triggers'])
 
+        self._name = data['name']
         self._description = data.get('description')
+        self._tags = data.get('tags', [])
         self._actions = self._spec_property('actions', act.ActionSpecList)
         self._workflows = \
             self._spec_property('workflows', wf.WorkflowSpecList)
         self._triggers = self._spec_property('triggers', tr.TriggerSpecList)
 
+    def get_name(self):
+        return self._name
+
     def get_description(self):
         return self._description
+
+    def get_tags(self):
+        return self._tags
 
     def get_actions(self):
         return self._actions
