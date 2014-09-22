@@ -18,22 +18,21 @@ from mistral.tests.functional.api.v1 import test_mistral_basic
 from mistral.tests.functional import base
 
 
-class WorkbooksTestsV2(test_mistral_basic.WorkbooksTestsV1):
+class WorkbookTestsV2(test_mistral_basic.WorkbookTestsV1):
 
     _version = 2
 
 
-class WorkflowsTestsV2(base.TestCase):
+class WorkflowTestsV2(base.TestCase):
 
     _version = 2
 
     def tearDown(self):
-
         _, wfs = self.client.get_list_obj('workflows')
         for wf in wfs['workflows']:
             self.client.delete_obj('workflows', wf['name'])
 
-        super(WorkflowsTestsV2, self).tearDown()
+        super(WorkflowTestsV2, self).tearDown()
 
     @test.attr(type='smoke')
     def test_get_list_workflows(self):
@@ -97,11 +96,12 @@ class WorkflowsTestsV2(base.TestCase):
         self.assertIsNotNone(body)
 
 
-class ExecutionsTestsV2(test_mistral_basic.ExecutionsTestsV1):
+class ExecutionTestsV2(test_mistral_basic.ExecutionTestsV1):
 
     _version = 2
 
     def setUp(self):
-        super(ExecutionsTestsV2, self).setUp()
+        super(ExecutionTestsV2, self).setUp()
+
         self.entity_type = 'workflow_name'
         self.entity_name = 'test.test'

@@ -1,5 +1,6 @@
 ---
 version: "2.0"
+name: "test"
 
 workflows:
   test:

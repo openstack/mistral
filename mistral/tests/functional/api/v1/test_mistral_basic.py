@@ -21,7 +21,7 @@ from tempest import test
 from mistral.tests.functional import base
 
 
-class WorkbooksTestsV1(base.TestCase):
+class WorkbookTestsV1(base.TestCase):
 
     _version = 1
 
@@ -112,12 +112,12 @@ class WorkbooksTestsV1(base.TestCase):
         self.assertEqual([], body['workbooks'])
 
 
-class ExecutionsTestsV1(base.TestCase):
+class ExecutionTestsV1(base.TestCase):
 
     _version = 1
 
     def setUp(self):
-        super(ExecutionsTestsV1, self).setUp()
+        super(ExecutionTestsV1, self).setUp()
 
         self.client.create_workbook('test')
         self.client.upload_workbook_definition('test')
@@ -125,7 +125,7 @@ class ExecutionsTestsV1(base.TestCase):
         self.entity_name = 'test'
 
     def tearDown(self):
-        super(ExecutionsTestsV1, self).tearDown()
+        super(ExecutionTestsV1, self).tearDown()
 
         _, executions = self.client.get_list_obj('executions')
         for ex in executions['executions']:
