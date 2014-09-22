@@ -74,14 +74,14 @@ class TestWorkbooksController(base.FunctionalTest):
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_UPDATED_WORKBOOK)
     def test_put(self):
-        resp = self.app.put_json('/v2/workbooks/123', UPDATED_WORKBOOK)
+        resp = self.app.put_json('/v2/workbooks', UPDATED_WORKBOOK)
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_WORKBOOK, resp.json)
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json('/v2/workbooks/123', UPDATED_WORKBOOK,
+        resp = self.app.put_json('/v2/workbooks', UPDATED_WORKBOOK,
                                  expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
