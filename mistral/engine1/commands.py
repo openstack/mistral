@@ -38,6 +38,7 @@ class EngineCommand(object):
 
         :param exec_db: Workflow execution DB object.
         :param wf_handler: Workflow handler currently being used.
+        :param cause_task_db: Task that caused the command to run.
         :return False if engine should stop further command processing,
             True otherwise.
         """

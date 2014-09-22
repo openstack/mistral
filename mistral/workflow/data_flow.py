@@ -51,12 +51,11 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
     )
 
     if cause_task_db:
-        old_task_output = copy.copy(cause_task_db.output)
-
-        # TODO(nmakhotkin) Do it using _evaluate_upstream_context()
+        # TODO(nmakhotkin): Do it using _evaluate_upstream_context()
+        # TODO(rakhmerov): Think if Data Flow should be a part of wf handler.
         task_db.in_context = utils.merge_dicts(
             task_db.in_context,
-            old_task_output
+            copy.copy(cause_task_db.output)
         )
 
     task_db.parameters = evaluate_task_parameters(
