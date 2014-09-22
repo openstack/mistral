@@ -65,28 +65,18 @@ class DefaultEngineTest(base.DbTestCase):
     def setUp(self):
         super(DefaultEngineTest, self).setUp()
 
-        self.wb_name = self.getUniqueString("wb")
-
-        wb_service.create_workbook_v2({
-            'name': self.wb_name,
-            'description': 'Simple workbook for testing engine.',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2({'definition': WORKBOOK})
 
         # Note: For purposes of this test we can easily use
         # simple magic mocks for engine and executor clients
         self.engine = d_eng.DefaultEngine(mock.MagicMock())
 
     def test_start_workflow(self):
-        wf_input = {
-            'param1': 'Hey',
-            'param2': 'Hi'
-        }
+        wf_input = {'param1': 'Hey', 'param2': 'Hi'}
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            '%s.wf1' % self.wb_name,
+            'wb.wf1',
             wf_input,
             task_name='task2'
         )
@@ -117,7 +107,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertRaises(
             exc.WorkflowInputException,
             self.engine.start_workflow,
-            '%s.wf1' % self.wb_name,
+            'wb.wf1',
             None,
             task_name='task2'
         )
@@ -126,20 +116,17 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertRaises(
             exc.WorkflowInputException,
             self.engine.start_workflow,
-            '%s.wf1' % self.wb_name,
+            'wb.wf1',
             {'param1': 'Hey', 'param2': 'Hi', 'unexpected_param': 'val'},
             task_name='task2'
         )
 
     def test_on_task_result(self):
-        wf_input = {
-            'param1': 'Hey',
-            'param2': 'Hi'
-        }
+        wf_input = {'param1': 'Hey', 'param2': 'Hi'}
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            '%s.wf1' % self.wb_name,
+            'wb.wf1',
             wf_input,
             task_name='task2'
         )

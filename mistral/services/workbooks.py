@@ -42,30 +42,29 @@ def update_workbook_v1(workbook_name, values):
 def create_workbook_v2(values):
     _add_security_info(values)
     _update_specification(values)
+    _infer_data_from_specification(values)
 
     with db_api_v2.transaction():
         wb_db = db_api_v2.create_workbook(values)
 
-        _check_workbook_definition_update(wb_db, values)
+        _on_workbook_update(wb_db, values)
 
     return wb_db
 
 
-def update_workbook_v2(workbook_name, values):
+def update_workbook_v2(values):
     _update_specification(values)
+    _infer_data_from_specification(values)
 
     with db_api_v2.transaction():
-        wb_db = db_api_v2.update_workbook(workbook_name, values)
+        wb_db = db_api_v2.update_workbook(values['name'], values)
 
-        _check_workbook_definition_update(wb_db, values)
+        _on_workbook_update(wb_db, values)
 
     return wb_db
 
 
-def _check_workbook_definition_update(wb_db, values):
-    if 'spec' not in values:
-        return
-
+def _on_workbook_update(wb_db, values):
     wb_spec = spec_parser.get_workbook_spec(values['spec'])
 
     _create_or_update_actions(wb_db, wb_spec.get_actions())
@@ -121,3 +120,8 @@ def _update_specification(values):
     if 'definition' in values:
         spec = spec_parser.get_workbook_spec_from_yaml(values['definition'])
         values['spec'] = spec.to_dict()
+
+
+def _infer_data_from_specification(values):
+    values['name'] = values['spec']['name']
+    values['tags'] = values['spec'].get('tags', [])

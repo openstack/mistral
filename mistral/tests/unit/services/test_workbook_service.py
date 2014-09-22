@@ -32,6 +32,7 @@ WORKBOOK = """
 version: '2.0'
 
 name: my_wb
+tags: [test]
 
 actions:
   concat:
@@ -70,6 +71,7 @@ UPDATED_WORKBOOK = """
 version: '2.0'
 
 name: my_wb
+tags: [test]
 
 actions:
   concat:
@@ -106,11 +108,7 @@ workflows:
 
 class WorkbookServiceTest(base.EngineTestCase):
     def test_create_workbook(self):
-        wb_db = wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
+        wb_db = wb_service.create_workbook_v2({'definition': WORKBOOK})
 
         self.assertIsNotNone(wb_db)
         self.assertEqual('my_wb', wb_db.name)
@@ -152,18 +150,13 @@ class WorkbookServiceTest(base.EngineTestCase):
 
     def test_update_workbook(self):
         # Create workbook.
-        wb_db = wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
+        wb_db = wb_service.create_workbook_v2({'definition': WORKBOOK})
 
         self.assertIsNotNone(wb_db)
         self.assertEqual(2, len(db_api.get_workflows()))
 
         # Update workbook.
         wb_db = wb_service.update_workbook_v2(
-            'my_wb',
             {'definition': UPDATED_WORKBOOK}
         )
 
