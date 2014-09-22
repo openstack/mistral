@@ -31,6 +31,8 @@ WORKBOOK = """
 ---
 version: '2.0'
 
+name: my_wb
+
 actions:
   concat:
     base: std.echo
@@ -66,6 +68,8 @@ workflows:
 UPDATED_WORKBOOK = """
 ---
 version: '2.0'
+
+name: my_wb
 
 actions:
   concat:

@@ -31,6 +31,8 @@ WORKBOOK1 = """
 ---
 version: '2.0'
 
+name: my_wb
+
 workflows:
   wf:
     type: direct
@@ -107,6 +109,8 @@ class SimpleEngineInstructionsTest(base.EngineTestCase):
 WORKBOOK2 = """
 ---
 version: '2.0'
+
+name: my_wb
 
 workflows:
   wf:
@@ -186,6 +190,8 @@ class SimpleEngineWorkflowLevelInstructionsTest(base.EngineTestCase):
 WORKBOOK3 = """
 ---
 version: '2.0'
+
+name: my_wb
 
 workflows:
   fail_first_wf:
