@@ -32,7 +32,7 @@ WORKBOOK = """
 ---
 version: '2.0'
 
-name: my_wb
+name: wb
 
 workflows:
   wf1:
@@ -55,7 +55,7 @@ WAIT_BEFORE_WB = """
 ---
 version: '2.0'
 
-name: my_wb
+name: wb
 
 workflows:
   wf1:
@@ -73,7 +73,7 @@ WAIT_AFTER_WB = """
 ---
 version: '2.0'
 
-name: my_wb
+name: wb
 
 workflows:
   wf1:
@@ -91,7 +91,7 @@ RETRY_WB = """
 ---
 version: '2.0'
 
-name: my_wb
+name: wb
 
 workflows:
   wf1:
@@ -108,15 +108,6 @@ workflows:
 """
 
 
-def create_workbook(name, definition):
-    return wb_service.create_workbook_v2({
-        'name': name,
-        'description': 'Simple workbook for testing policies.',
-        'definition': definition,
-        'tags': ['test']
-    })
-
-
 class PoliciesTest(base.EngineTestCase):
     def setUp(self):
         super(PoliciesTest, self).setUp()
@@ -124,8 +115,6 @@ class PoliciesTest(base.EngineTestCase):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
 
         self.task_spec = wb_spec.get_workflows()['wf1'].get_tasks()['task1']
-
-        self.wb_name = self.getUniqueString("wb")
 
         thread_group = scheduler.setup()
         self.addCleanup(thread_group.stop)
@@ -150,10 +139,10 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual('$.my_val = 10', p.break_on)
 
     def test_wait_before_policy(self):
-        create_workbook(self.wb_name, WAIT_BEFORE_WB)
+        wb_service.create_workbook_v2({'definition': WAIT_BEFORE_WB})
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('%s.wf1' % self.wb_name, {})
+        exec_db = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
@@ -175,10 +164,10 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, exec_db.state)
 
     def test_wait_after_policy(self):
-        create_workbook(self.wb_name, WAIT_AFTER_WB)
+        wb_service.create_workbook_v2({'definition': WAIT_AFTER_WB})
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('%s.wf1' % self.wb_name, {})
+        exec_db = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
@@ -201,10 +190,10 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, exec_db.state)
 
     def test_retry_policy(self):
-        create_workbook(self.wb_name, RETRY_WB)
+        wb_service.create_workbook_v2({'definition': RETRY_WB})
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('%s.wf1' % self.wb_name, {})
+        exec_db = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)

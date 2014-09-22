@@ -79,7 +79,7 @@ class WorkbooksController(rest.RestController):
         """Update the named workbook."""
         LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
 
-        db_model = workbooks.update_workbook_v2(name, workbook.to_dict())
+        db_model = workbooks.update_workbook_v2(workbook.to_dict())
 
         return Workbook.from_dict(db_model.to_dict())
 
