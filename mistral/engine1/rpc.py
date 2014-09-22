@@ -166,7 +166,7 @@ class EngineClient(base.Engine):
             serializer=serializer
         )
 
-    def start_workflow(self, workflow_name, workflow_input=None, **params):
+    def start_workflow(self, workflow_name, workflow_input, **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.

@@ -99,11 +99,12 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(EXEC, resp.json)
-        # workflow_input=u'{}', workflow_name=u'some'
+
         exec_dict = execution.Execution(**EXEC).to_dict()
+
         f.assert_called_once_with(
-            workflow_name=exec_dict['workflow_name'],
-            workflow_input=exec_dict['input']
+            exec_dict['workflow_name'],
+            exec_dict['input']
         )
 
     @mock.patch.object(rpc.EngineClient, 'start_workflow', MOCK_ACTION_EXC)
