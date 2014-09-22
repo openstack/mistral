@@ -126,9 +126,10 @@ class ExecutionsController(rest.RestController):
 
         engine = rpc.get_engine_client()
         exec_dict = execution.to_dict()
+
         result = engine.start_workflow(
-            workflow_name=exec_dict['workflow_name'],
-            workflow_input=exec_dict.get('input'),
+            exec_dict['workflow_name'],
+            exec_dict.get('input'),
             **exec_dict.get('params') or {}
         )
 
