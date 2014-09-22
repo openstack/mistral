@@ -12,33 +12,65 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo.config import cfg
+
+from mistral import context
 from mistral.db.v2 import api as db_api
+from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
 
-def create_workflow(values):
-    _update_specification(values)
+def create_workflows(definition):
+    wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
+
+    db_wfs = []
 
     with db_api.transaction():
-        wf_db = db_api.create_workflow(values)
+        for wf_spec in wf_list_spec.get_workflows():
+            db_wfs.append(create_workflow(wf_spec, definition))
 
-    return wf_db
+    return db_wfs
 
 
-def update_workflow(workflow_name, values):
-    _update_specification(values)
+def update_workflows(definition):
+    wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
+
+    db_wfs = []
 
     with db_api.transaction():
-        wf_db = db_api.update_workflow(workflow_name, values)
+        for wf_spec in wf_list_spec.get_workflows():
+            db_wfs.append(create_or_update_workflow(wf_spec, definition))
 
-    return wf_db
+    return db_wfs
 
 
-def _update_specification(values):
-    # No need to do anything if specification gets pushed explicitly.
-    if 'spec' in values:
-        return
+def create_workflow(wf_spec, definition):
+    values = {
+        'name': wf_spec.get_name(),
+        'definition': definition,
+        'spec': wf_spec.to_dict()
+    }
 
-    if 'definition' in values:
-        spec = spec_parser.get_workflow_spec_from_yaml(values['definition'])
-        values['spec'] = spec.to_dict()
+    _add_security_info(values)
+
+    return db_api.create_workflow(values)
+
+
+def create_or_update_workflow(wf_spec, definition):
+    values = {
+        'name': wf_spec.get_name(),
+        'definition': definition,
+        'spec': wf_spec.to_dict()
+    }
+
+    _add_security_info(values)
+
+    return db_api.create_or_update_workflow(values['name'], values)
+
+
+def _add_security_info(values):
+    if cfg.CONF.pecan.auth_enable:
+        values.update({
+            'trust_id': trusts.create_trust().id,
+            'project_id': context.ctx().project_id
+        })

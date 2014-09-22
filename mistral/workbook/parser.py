@@ -104,10 +104,20 @@ def get_workflow_spec(spec_dict):
         return wf_v2.WorkflowSpec(spec_dict)
 
 
+def get_workflow_list_spec(spec_dict):
+    return wf_v2.WorkflowListSpec(spec_dict)
+
+
 def get_workflow_spec_from_yaml(text):
     spec_dict = parse_yaml(text)
 
     return get_workflow_spec(spec_dict)
+
+
+def get_workflow_list_spec_from_yaml(text):
+    spec_dict = parse_yaml(text)
+
+    return get_workflow_list_spec(spec_dict)
 
 
 def get_task_spec(spec_dict):

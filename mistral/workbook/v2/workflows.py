@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions as exc
 from mistral.workbook import base
 from mistral.workbook.v2 import tasks
 
@@ -90,3 +91,41 @@ class WorkflowSpec(base.BaseSpec):
 class WorkflowSpecList(base.BaseSpecList):
     item_class = WorkflowSpec
     _version = '2.0'
+
+
+class WorkflowListSpec(base.BaseSpec):
+    # See http://json-schema.org
+    _schema = {
+        "type": "object",
+        "properties": {
+            "version": {"type": "string"},
+        },
+        "required": ["version"],
+        "additionalProperties": True
+    }
+
+    _version = '2.0'
+
+    def __init__(self, data):
+        super(WorkflowListSpec, self).__init__(data)
+
+        self._workflows = []
+
+        for k, v in data.iteritems():
+            if k == 'version':
+                continue
+
+            v['name'] = k
+            self._inject_version([k])
+
+            self._workflows.append(WorkflowSpec(v))
+
+    def validate(self):
+        if len(self._data.keys()) < 2:
+            raise exc.InvalidModelException(
+                'At least one workflow must be in workflow list [data=%s]' %
+                self._data
+            )
+
+    def get_workflows(self):
+        return self._workflows

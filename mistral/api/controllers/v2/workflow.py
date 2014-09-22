@@ -53,7 +53,7 @@ class Workflow(resource.Resource):
 
 
 class Workflows(resource.Resource):
-    """A collection of Workflows."""
+    """A collection of workflows."""
 
     workflows = [Workflow]
 
@@ -74,24 +74,38 @@ class WorkflowsController(rest.RestController):
         return Workflow.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workflow, wtypes.text, body=Workflow)
-    def put(self, name, workflow):
-        """Update the named workflow."""
-        LOG.debug("Update workflow [name=%s, workflow=%s]" % (name, workflow))
+    @wsme_pecan.wsexpose(Workflows, body=Workflow)
+    def put(self, workflow):
+        """Update one or more workflows.
 
-        db_model = workflows.update_workflow(name, workflow.to_dict())
+        NOTE: Field 'definition' is allowed to have definitions
+            of multiple workflows. In this case they all will be updated.
+        """
+        LOG.debug("Update workflow(s) [definition=%s]" % workflow.definition)
 
-        return Workflow.from_dict(db_model.to_dict())
+        db_models = workflows.update_workflows(workflow.definition)
+
+        workflows_list = [Workflow.from_dict(db_model.to_dict())
+                          for db_model in db_models]
+
+        return Workflows(workflows=workflows_list)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workflow, body=Workflow, status_code=201)
+    @wsme_pecan.wsexpose(Workflows, body=Workflow, status_code=201)
     def post(self, workflow):
-        """Create a new workflow."""
-        LOG.debug("Create workflow [workflow=%s]" % workflow)
+        """Create a new workflow.
 
-        db_model = workflows.create_workflow(workflow.to_dict())
+        NOTE: Field 'definition' is allowed to have definitions
+            of multiple workflows. In this case they all will be created.
+        """
+        LOG.debug("Create workflow(s) [definition=%s]" % workflow.definition)
 
-        return Workflow.from_dict(db_model.to_dict())
+        db_models = workflows.create_workflows(workflow.definition)
+
+        workflows_list = [Workflow.from_dict(db_model.to_dict())
+                          for db_model in db_models]
+
+        return Workflows(workflows=workflows_list)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
