@@ -33,9 +33,9 @@ version: '2.0'
 actions:
   concat_twice:
     base: std.echo
-    base-parameters:
+    base-input:
       output: "{$.s1}+{$.s2}"
-    parameters:
+    input:
       - s1
       - s2
     output: "{$} and {$}"
@@ -43,7 +43,7 @@ actions:
 workflows:
   wf1:
     type: direct
-    parameters:
+    input:
       - str1
       - str2
     output:
@@ -78,6 +78,10 @@ class AdhocActionsTest(base.EngineTestCase):
 
         exec_db = db_api.get_execution(exec_db.id)
 
-        self.assertDictEqual({'workflow_result': 'a+b and a+b',
-                             'concat_task_result': 'a+b and a+b'},
-                             exec_db.output)
+        self.assertDictEqual(
+            {
+                'workflow_result': 'a+b and a+b',
+                'concat_task_result': 'a+b and a+b'
+            },
+            exec_db.output
+        )

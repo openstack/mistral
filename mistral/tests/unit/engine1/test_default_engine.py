@@ -40,7 +40,7 @@ version: '2.0'
 workflows:
   wf1:
     type: reverse
-    parameters:
+    input:
       - param1
       - param2
 
@@ -109,7 +109,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Data Flow properties.
         self._assert_dict_contains_subset(wf_input, task_db.in_context)
         self.assertIn('__execution', task_db.in_context)
-        self.assertDictEqual({'output': 'Hey'}, task_db.parameters)
+        self.assertDictEqual({'output': 'Hey'}, task_db.input)
 
     def test_start_workflow_missing_parameters(self):
         self.assertRaises(
@@ -158,7 +158,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIsNone(task_db.runtime_context)
         self._assert_dict_contains_subset(wf_input, task_db.in_context)
         self.assertIn('__execution', task_db.in_context)
-        self.assertDictEqual({'output': 'Hey'}, task_db.parameters)
+        self.assertDictEqual({'output': 'Hey'}, task_db.input)
 
         # Finish 'task1'.
         task1_db = self.engine.on_task_result(
@@ -173,7 +173,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Data Flow properties.
         self._assert_dict_contains_subset(wf_input, task1_db.in_context)
         self.assertIn('__execution', task_db.in_context)
-        self.assertDictEqual({'output': 'Hey'}, task1_db.parameters)
+        self.assertDictEqual({'output': 'Hey'}, task1_db.input)
         self.assertDictEqual(
             {
                 'result': 'Hey',
@@ -213,7 +213,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         self._assert_dict_contains_subset(in_context, task2_db.in_context)
         self.assertIn('__execution', task_db.in_context)
-        self.assertDictEqual({'output': 'Hi'}, task2_db.parameters)
+        self.assertDictEqual({'output': 'Hi'}, task2_db.input)
         self.assertDictEqual({'task': {'task2': 'Hi'}}, task2_db.output)
 
         self.assertEqual(2, len(exec_db.tasks))

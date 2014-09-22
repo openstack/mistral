@@ -36,7 +36,7 @@ version: '2.0'
 workflows:
   wf1:
     type: reverse
-    parameters:
+    input:
       - param1
       - param2
     output:

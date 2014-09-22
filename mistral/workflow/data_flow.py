@@ -31,7 +31,7 @@ CONF = cfg.CONF
 
 def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
                     cause_task_db=None):
-    """Prepare Data Flow properties ('in_context' and 'parameters')
+    """Prepare Data Flow properties ('in_context' and 'input')
      of given DB task.
 
     :param task_db: DB task to prepare.
@@ -58,14 +58,14 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
             copy.copy(cause_task_db.output)
         )
 
-    task_db.parameters = evaluate_task_parameters(
+    task_db.input = evaluate_task_input(
         task_spec,
         task_db.in_context
     )
 
 
-def evaluate_task_parameters(task_spec, context):
-    return expr.evaluate_recursively(task_spec.get_parameters(), context)
+def evaluate_task_input(task_spec, context):
+    return expr.evaluate_recursively(task_spec.get_input(), context)
 
 
 def _evaluate_upstream_context(upstream_db_tasks):

@@ -65,7 +65,7 @@ class RunTask(EngineCommand):
 
         self.task_db = self._create_db_task(exec_db)
 
-        # Evaluate Data Flow properties ('parameters', 'in_context').
+        # Evaluate Data Flow properties ('input', 'in_context').
         data_flow.prepare_db_task(
             self.task_db,
             self.task_spec,
@@ -84,7 +84,7 @@ class RunTask(EngineCommand):
             'name': self.task_spec.get_name(),
             'state': states.RUNNING,
             'spec': self.task_spec.to_dict(),
-            'parameters': None,
+            'input': None,
             'in_context': None,
             'output': None,
             'runtime_context': None
@@ -112,7 +112,7 @@ class RunTask(EngineCommand):
             action_spec_name
         )
 
-        action_params = self.task_db.parameters or {}
+        action_input = self.task_db.input or {}
 
         if action_db.spec:
             # Ad-hoc action.
@@ -126,21 +126,21 @@ class RunTask(EngineCommand):
                 base_name
             )
 
-            base_params = action_spec.get_base_parameters()
+            base_input = action_spec.get_base_input()
 
-            if base_params:
-                action_params = expr.evaluate_recursively(
-                    base_params,
-                    action_params
+            if base_input:
+                action_input = expr.evaluate_recursively(
+                    base_input,
+                    action_input
                 )
             else:
-                action_params = {}
+                action_input = {}
 
         rpc.get_executor_client().run_action(
             self.task_db.id,
             action_db.action_class,
             action_db.attributes or {},
-            action_params
+            action_input
         )
 
     def _run_workflow(self):
@@ -157,12 +157,12 @@ class RunTask(EngineCommand):
 
         wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
 
-        wf_input = self.task_db.parameters
+        wf_input = self.task_db.input
 
         start_params = {'parent_task_id': self.task_db.id}
 
         for k, v in wf_input.items():
-            if k not in wf_spec.get_parameters():
+            if k not in wf_spec.get_input():
                 start_params[k] = v
                 del wf_input[k]
 

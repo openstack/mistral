@@ -85,7 +85,7 @@ class BaseSpec(object):
         return val.items()[0] if isinstance(val, dict) else (val, '')
 
     @staticmethod
-    def _parse_cmd_and_params(cmd_str):
+    def _parse_cmd_and_input(cmd_str):
         # TODO(rakhmerov): Try to find a way with one expression.
         cmd_matcher = CMD_PTRN.search(cmd_str)
 

@@ -45,7 +45,7 @@ class Task(resource.Resource):
     state = wtypes.text
     result = wtypes.text
 
-    parameters = wtypes.text
+    input = wtypes.text
     output = wtypes.text
 
     created_at = wtypes.text
@@ -59,7 +59,7 @@ class Task(resource.Resource):
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit
                 if val is not None and (
-                        key == 'parameters' or key == 'output'):
+                        key == 'input' or key == 'output'):
                     val = json.dumps(val)
                 setattr(e, key, val)
 
@@ -75,7 +75,7 @@ class Task(resource.Resource):
                    # TODO(everyone): replace with states.SUCCESS
                    state='SUCCESS',
                    tags=['foo', 'fee'],
-                   parameters='{"first_name": "John", "last_name": "Doe"}',
+                   input='{"first_name": "John", "last_name": "Doe"}',
                    output='{"task": {"build_greeting": '
                           '{"greeting": "Hello, John Doe!"}}}',
                    created_at='1970-01-01T00:00:00.000000',

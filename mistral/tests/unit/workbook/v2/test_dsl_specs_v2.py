@@ -27,7 +27,7 @@ actions:
   action1:
     description: This is a test ad-hoc action
     base: std.echo
-    base-parameters:
+    base-input:
         output: "Hello {$.name}!"
     output: $
 
@@ -41,7 +41,7 @@ workflows:
     description: This is a test workflow
     type: reverse
 
-    parameters:
+    input:
       - name
       - age
 
@@ -136,9 +136,9 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('std.echo', action_spec.get_base())
         self.assertDictEqual(
             {'output': 'Hello {$.name}!'},
-            action_spec.get_base_parameters()
+            action_spec.get_base_input()
         )
-        self.assertDictEqual({}, action_spec.get_parameters())
+        self.assertDictEqual({}, action_spec.get_input())
         self.assertEqual('$', action_spec.get_output())
 
         # Workflows.
@@ -165,7 +165,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('task1', task1_spec.get_name())
         self.assertEqual('This is a test task', task1_spec.get_description())
         self.assertEqual('ns1.action1', task1_spec.get_action_name())
-        self.assertEqual({'name': '{$.name}'}, task1_spec.get_parameters())
+        self.assertEqual({'name': '{$.name}'}, task1_spec.get_input())
 
         policies = task1_spec.get_policies()
 
@@ -187,7 +187,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertIsNone(task2_spec.get_workflow_name())
         self.assertEqual(
             {'output': 'Thanks {$.name}!'},
-            task2_spec.get_parameters()
+            task2_spec.get_input()
         )
 
         wf2_spec = wf_specs.get('wf2')
@@ -220,7 +220,7 @@ class DSLv2ModelTest(base.BaseTest):
                 'param1': None,
                 'param2': False
             },
-            task3_spec.get_parameters()
+            task3_spec.get_input()
         )
         self.assertListEqual(
             [('task4', '$.my_val = 1')],
@@ -242,7 +242,7 @@ class DSLv2ModelTest(base.BaseTest):
                 'is_true': True,
                 'object_list': [1, None, 'str'],
             },
-            task7_spec.get_parameters()
+            task7_spec.get_input()
         )
 
         task8_spec = wf2_spec.get_tasks().get('task8')
@@ -252,7 +252,7 @@ class DSLv2ModelTest(base.BaseTest):
                 'expr_list': ['$.value', '{$.key}'],
                 'expr': '{$.value}',
             },
-            task8_spec.get_parameters()
+            task8_spec.get_input()
         )
 
     def test_adhoc_action_with_base_in_one_string(self):
@@ -263,7 +263,7 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual("std.echo", action_spec.get_base())
         self.assertEqual({'output': 'Echo output'},
-                         action_spec.get_base_parameters())
+                         action_spec.get_base_input())
 
     def test_to_dict(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)

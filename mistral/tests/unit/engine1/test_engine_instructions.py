@@ -34,7 +34,7 @@ version: '2.0'
 workflows:
   wf:
     type: direct
-    parameters:
+    input:
       - my_var
 
     tasks:
@@ -111,7 +111,7 @@ version: '2.0'
 workflows:
   wf:
     type: direct
-    parameters:
+    input:
       - my_var
 
     on-task-complete:

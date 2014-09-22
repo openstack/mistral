@@ -17,17 +17,19 @@ from mistral.tests import base
 
 
 class ActionManagerTest(base.DbTestCase):
-    def test_action_parameters(self):
+    def test_action_input(self):
         std_http = db_api.get_action("std.http")
         std_email = db_api.get_action("std.email")
 
-        http_action_params = ("url, method=GET, params=None, body=None, "
-                              "headers=None, cookies=None, auth=None, "
-                              "timeout=None, allow_redirects=None, "
-                              "proxies=None")
+        http_action_input = (
+            "url, method=GET, params=None, body=None, "
+            "headers=None, cookies=None, auth=None, "
+            "timeout=None, allow_redirects=None, "
+            "proxies=None"
+        )
 
-        self.assertEqual(http_action_params, std_http.parameters)
-        self.assertEqual("params, settings", std_email.parameters)
+        self.assertEqual(http_action_input, std_http.input)
+        self.assertEqual("params, settings", std_email.input)
 
     def test_action_description(self):
         std_http = db_api.get_action("std.http")

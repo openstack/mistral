@@ -98,7 +98,7 @@ class Task(mb.MistralModelBase):
 
     # Data Flow properties.
     in_context = sa.Column(st.JsonDictType())
-    parameters = sa.Column(st.JsonDictType())
+    input = sa.Column(st.JsonDictType())
     output = sa.Column(st.JsonDictType())
 
     # Runtime context like iteration_no of a repeater.
@@ -148,7 +148,7 @@ class Action(mb.MistralModelBase):
     id = mb.id_column()
     name = sa.Column(sa.String(200))
     description = sa.Column(sa.Text())
-    parameters = sa.Column(sa.String(240))
+    input = sa.Column(sa.String(240))
 
     # Ad-hoc action properties.
     definition = sa.Column(sa.Text(), nullable=True)

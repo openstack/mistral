@@ -32,7 +32,7 @@ class TaskSpec(base.BaseSpec):
             "description": {"type": "string"},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
-            "parameters": {"type": ["object", "null"]},
+            "input": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
             "requires": {"type": ["string", "array", "null"]},
@@ -53,7 +53,7 @@ class TaskSpec(base.BaseSpec):
         self._description = data.get('description')
         self._action = data.get('action')
         self._workflow = data.get('workflow')
-        self._parameters = data.get('parameters', {})
+        self._input = data.get('input', {})
         self._publish = data.get('publish', {})
         self._policies = self._spec_property(
             'policies',
@@ -80,12 +80,12 @@ class TaskSpec(base.BaseSpec):
         params = {}
 
         if self._action:
-            self._action, params = self._parse_cmd_and_params(self._action)
+            self._action, params = self._parse_cmd_and_input(self._action)
         elif self._workflow:
-            self._workflow, params = self._parse_cmd_and_params(
+            self._workflow, params = self._parse_cmd_and_input(
                 self._workflow)
 
-        utils.merge_dicts(self._parameters, params)
+        utils.merge_dicts(self._input, params)
 
     def get_name(self):
         return self._name
@@ -99,8 +99,8 @@ class TaskSpec(base.BaseSpec):
     def get_workflow_name(self):
         return self._workflow
 
-    def get_parameters(self):
-        return self._parameters
+    def get_input(self):
+        return self._input
 
     def get_policies(self):
         return self._policies

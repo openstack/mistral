@@ -29,7 +29,7 @@ class WorkflowSpec(base.BaseSpec):
             "on-task-complete": {"type": ["array", "null"]},
             "on-task-success": {"type": ["array", "null"]},
             "on-task-error": {"type": ["array", "null"]},
-            "parameters": {"type": ["array", "null"]},
+            "input": {"type": ["array", "null"]},
             "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
         },
@@ -45,9 +45,10 @@ class WorkflowSpec(base.BaseSpec):
         self._name = data['name']
         self._description = data.get('description')
         self._type = data['type']
-        self._parameters = data.get('parameters', {})
+        self._input = data.get('input', [])
         self._output = data.get('output', {})
-        # TODO(rakhmerov): Build workflow policies specification.
+
+        # TODO(rakhmerov): Implement 'task-defaults' instead.
         self._policies = None
         self._on_task_complete = self._as_list_of_tuples("on-task-complete")
         self._on_task_success = self._as_list_of_tuples("on-task-success")
@@ -64,8 +65,8 @@ class WorkflowSpec(base.BaseSpec):
     def get_type(self):
         return self._type
 
-    def get_parameters(self):
-        return self._parameters
+    def get_input(self):
+        return self._input
 
     def get_output(self):
         return self._output
