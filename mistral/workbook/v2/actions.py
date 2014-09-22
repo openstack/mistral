@@ -27,8 +27,8 @@ class ActionSpec(base.BaseSpec):
             "name": {"type": "string"},
             "description": {"type": "string"},
             "base": {"type": "string"},
-            "base-parameters": {"type": "object"},
-            "parameters": {"type": "array"},
+            "base-input": {"type": "object"},
+            "input": {"type": "array"},
             "output": {"type": ["string", "object", "array", "null"]},
         },
         "required": ["version", "name", "base"],
@@ -43,13 +43,13 @@ class ActionSpec(base.BaseSpec):
         self._name = data['name']
         self._description = data.get('description')
         self._base = data['base']
-        self._base_parameters = data.get('base-parameters', {})
-        self._parameters = data.get('parameters', {})
+        self._base_input = data.get('base-input', {})
+        self._input = data.get('input', {})
         self._output = data.get('output')
 
-        self._base, params = self._parse_cmd_and_params(self._base)
+        self._base, _input = self._parse_cmd_and_input(self._base)
 
-        utils.merge_dicts(self._base_parameters, params)
+        utils.merge_dicts(self._base_input, _input)
 
     def get_name(self):
         return self._name
@@ -60,11 +60,11 @@ class ActionSpec(base.BaseSpec):
     def get_base(self):
         return self._base
 
-    def get_base_parameters(self):
-        return self._base_parameters
+    def get_base_input(self):
+        return self._base_input
 
-    def get_parameters(self):
-        return self._parameters
+    def get_input(self):
+        return self._input
 
     def get_output(self):
         return self._output

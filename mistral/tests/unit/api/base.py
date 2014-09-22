@@ -112,7 +112,9 @@ class FunctionalTest(base.DbTestCase):
             self.app.get(url, headers={'Accept': 'application/json'})
         except webtest_app.AppError as error:
             self.assertIn('Bad response: 404 Not Found', str(error))
+
             return
+
         self.fail('Expected 404 Not found but got OK')
 
     def assertUnauthorized(self, url):
@@ -120,5 +122,7 @@ class FunctionalTest(base.DbTestCase):
             self.app.get(url, headers={'Accept': 'application/json'})
         except webtest_app.AppError as error:
             self.assertIn('Bad response: 401 Unauthorized', str(error))
+
             return
+
         self.fail('Expected 401 Unauthorized but got OK')

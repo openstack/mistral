@@ -34,13 +34,13 @@ version: '2.0'
 actions:
   concat:
     base: std.echo
-    base-parameters:
+    base-input:
       output: "{$.str1}{$.str2}"
 
 workflows:
   wf1:
     type: reverse
-    parameters:
+    input:
       - param1
     output:
       result: $.result
@@ -70,7 +70,7 @@ version: '2.0'
 actions:
   concat:
     base: std.echo
-    base-parameters:
+    base-input:
       output: "{$.str1}{$.str2}"
 
 workflows:
@@ -87,7 +87,7 @@ workflows:
 
   wf2:
     type: reverse
-    parameters:
+    input:
       - param1
     output:
       result: $.result

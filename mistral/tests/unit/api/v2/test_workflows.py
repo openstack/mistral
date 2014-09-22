@@ -28,7 +28,7 @@ WF_DEFINITION = """
 version: '2.0'
 
 type: direct
-parameters:
+input:
   - param1
 
 tasks:
@@ -61,7 +61,7 @@ UPDATED_WF_DEFINITION = """
 version: '2.0'
 
 type: direct
-parameters:
+input:
   - param1
 
 tasks:

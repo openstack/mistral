@@ -28,7 +28,7 @@ def validate_workflow_input(wf_db, wf_spec, wf_input):
     input_param_names = copy.copy((wf_input or {}).keys())
     missing_param_names = []
 
-    for p_name in wf_spec.get_parameters():
+    for p_name in wf_spec.get_input():
         if p_name not in input_param_names:
             missing_param_names.append(p_name)
         else:

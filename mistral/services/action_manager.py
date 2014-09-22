@@ -37,13 +37,13 @@ def get_registered_actions(**kwargs):
 
 
 def _register_action_in_db(name, action_class, attributes,
-                           description=None, parameter_str=None):
+                           description=None, input_str=None):
     values = {
         'name': name,
         'action_class': action_class,
         'attributes': attributes,
         'description': description,
-        'parameters': parameter_str,
+        'input': input_str,
         'is_system': True
     }
 
@@ -97,13 +97,13 @@ def register_action_classes():
             action_class_str = mgr[name].entry_point_target.replace(':', '.')
             action_class = mgr[name].plugin
             description = i_utils.get_docstring(action_class)
-            parameter_str = i_utils.get_arg_list_as_str(action_class.__init__)
+            input_str = i_utils.get_arg_list_as_str(action_class.__init__)
 
             attrs = i_utils.get_public_fields(mgr[name].plugin)
 
             _register_action_in_db(name, action_class_str, attrs,
                                    description=description,
-                                   parameter_str=parameter_str)
+                                   input_str=input_str)
 
         _register_dynamic_action_classes()
 

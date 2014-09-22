@@ -29,7 +29,7 @@ version: '2.0'
 
 description: My super cool action.
 base: std.echo
-base-parameters:
+base-input:
   output: "{$.str1}{$.str2}"
 """
 
@@ -57,7 +57,7 @@ UPDATED_ACTION_DEFINITION = """
 version: '2.0'
 
 base: std.echo
-base-parameters:
+base-input:
   output: "{$.str1}{$.str2}{$.str3}"
 """
 

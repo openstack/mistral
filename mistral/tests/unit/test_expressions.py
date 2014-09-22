@@ -28,15 +28,9 @@ DATA = {
 
 SERVERS = {
     "servers": [
-        {
-            'name': 'centos'
-        },
-        {
-            'name': 'ubuntu'
-        },
-        {
-            'name': 'fedora'
-        }
+        {'name': 'centos'},
+        {'name': 'ubuntu'},
+        {'name': 'fedora'}
     ]
 }
 
@@ -87,10 +81,12 @@ class YaqlEvaluatorTest(base.BaseTest):
                 'new_key11': 'new_key1'
             }
         }
-        modified_task = expr.evaluate_recursively(task_spec_dict,
-                                                  {
-                                                      'param2': 'val32'
-                                                  })
+        modified_task = expr.evaluate_recursively(
+            task_spec_dict,
+            {
+                'param2': 'val32'
+            }
+        )
 
         self.assertDictEqual(
             {
@@ -103,13 +99,15 @@ class YaqlEvaluatorTest(base.BaseTest):
                     'new_key11': 'new_key1'
                 }
             },
-            modified_task)
+            modified_task
+        )
 
     def test_evaluate_recursively_arbitrary_dict(self):
         context = {
             "auth_token": "123",
             "project_id": "mistral"
         }
+
         data = {
             "parameters": {
                 "parameter1": {
@@ -138,4 +136,5 @@ class YaqlEvaluatorTest(base.BaseTest):
                 },
                 "token": "123"
             },
-            applied)
+            applied
+        )

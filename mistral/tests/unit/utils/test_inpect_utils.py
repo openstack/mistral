@@ -22,10 +22,13 @@ class InspectUtilsTest(base.BaseTest):
         action_class = std_actions.HTTPAction
         parameters_str = i_u.get_arg_list_as_str(action_class.__init__)
 
-        http_action_params = ("url, method=GET, params=None, body=None, "
-                              "headers=None, cookies=None, auth=None, "
-                              "timeout=None, allow_redirects=None, "
-                              "proxies=None")
+        http_action_params = (
+            "url, method=GET, params=None, body=None, "
+            "headers=None, cookies=None, auth=None, "
+            "timeout=None, allow_redirects=None, "
+            "proxies=None"
+        )
+
         self.assertEqual(http_action_params, parameters_str)
 
     def test_get_parameters_str_all_mandatory(self):

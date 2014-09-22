@@ -38,7 +38,7 @@ TASK_DB = models.Task(
     state=states.RUNNING,
     tags=['a', 'b'],
     in_context={},
-    parameters={},
+    input={},
     output={},
     runtime_context={},
     execution_id='123',
@@ -50,15 +50,11 @@ TASK = {
     'id': '123',
     'name': 'task',
     'wf_name': 'flow',
-
     'state': 'RUNNING',
     'result': '{}',
-
-    'parameters': '{}',
+    'input': '{}',
     'output': '{}',
-
     'execution_id': '123',
-
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'
 }
