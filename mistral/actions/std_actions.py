@@ -21,7 +21,6 @@ import smtplib
 
 from mistral.actions import base
 from mistral import exceptions as exc
-from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.utils import ssh_utils
 
@@ -266,49 +265,3 @@ class SSHAction(base.Action):
             return result
         except Exception as e:
             return raise_exc(parent_exc=e)
-
-
-# TODO(rakhmerov): It's not used anywhere.  Remove it later.
-class AdHocAction(base.Action):
-    def __init__(self, action_context,
-                 base_action_cls, action_spec, **params):
-        self.base_action_cls = base_action_cls
-        self.action_spec = action_spec
-
-        base_params = self._convert_params(params)
-
-        if action_context:
-            base_params['action_context'] = action_context
-
-        self.base_action = base_action_cls(**base_params)
-
-    def _convert_params(self, params):
-        base_params_spec = self.action_spec.base_parameters
-
-        if not base_params_spec:
-            return {}
-
-        return expr.evaluate_recursively(base_params_spec, params)
-
-    def _convert_result(self, result):
-        transformer = self.action_spec.output
-
-        if not transformer:
-            return result
-
-        # Use base action result as a context for evaluating expressions.
-        return expr.evaluate_recursively(transformer, result)
-
-    def is_sync(self):
-        return self.base_action.is_sync()
-
-    def run(self):
-        try:
-            return self._convert_result(self.base_action.run())
-        except Exception as e:
-            raise exc.ActionException("Failed to convert result in action %s,"
-                                      "[Exception = %s"
-                                      % (self.action_spec.name, e))
-
-    def test(self):
-        return self._convert_result(self.base_action.test())
