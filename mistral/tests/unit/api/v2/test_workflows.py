@@ -27,6 +27,7 @@ WF_DEFINITION = """
 ---
 version: '2.0'
 
+name: flow
 type: direct
 input:
   - param1
@@ -60,6 +61,7 @@ UPDATED_WF_DEFINITION = """
 ---
 version: '2.0'
 
+name: flow
 type: direct
 input:
   - param1
