@@ -22,27 +22,28 @@ from mistral.workbook import parser as spec_parser
 
 
 def create_actions(definition):
-    wf_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
+    action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
-    db_wfs = []
+    db_actions = []
 
     with db_api.transaction():
-        for wf_spec in wf_list_spec.get_actions():
-            db_wfs.append(create_action(wf_spec, definition))
+        for action_spec in action_list_spec.get_actions():
+            db_actions.append(create_action(action_spec, definition))
 
-    return db_wfs
+    return db_actions
 
 
 def update_actions(definition):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
-    db_wfs = []
+    db_actions = []
 
     with db_api.transaction():
         for action_spec in action_list_spec.get_actions():
-            db_wfs.append(create_or_update_action(action_spec, definition))
+            db_actions.append(create_or_update_action(action_spec,
+                                                      definition))
 
-    return db_wfs
+    return db_actions
 
 
 def create_action(action_spec, definition):
