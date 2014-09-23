@@ -10,7 +10,6 @@ sphinxcontrib-pecanwsme>=0.8
 sphinxcontrib-httpdomain
 docutils==0.9.1
 fixtures>=0.3.14
-mock>=1.0
 nose
 testrepository>=0.0.18
 testtools>=0.9.34
