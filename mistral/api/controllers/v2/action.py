@@ -22,8 +22,8 @@ from mistral.api.controllers import resource
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.services import actions
 from mistral.utils import rest_utils
-from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
@@ -63,23 +63,6 @@ class Actions(resource.Resource):
         return cls(actions=[Action.sample()])
 
 
-def _get_action_values(action):
-    # Build specification in order to validate DSL and store its
-    # serialized version in DB.
-    values = action.to_dict()
-
-    spec = spec_parser.get_action_spec_from_yaml(
-        action.definition,
-        action.name
-    )
-
-    values['spec'] = spec.to_dict()
-    values['description'] = spec.get_description()
-    values['is_system'] = False
-
-    return values
-
-
 class ActionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Action, wtypes.text)
@@ -92,34 +75,38 @@ class ActionsController(rest.RestController):
         return Action.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Action, wtypes.text, body=Action)
-    def put(self, name, action):
-        """Update the named action."""
-        LOG.debug("Update action [name=%s, action=%s]" % (name, action))
+    @wsme_pecan.wsexpose(Actions, body=Action)
+    def put(self, action):
+        """Update one or more actions.
 
-        with db_api.transaction():
-            db_model = db_api.get_action(name)
+        NOTE: Field 'definition' is allowed to have definitions
+            of multiple actions. In this case they all will be updated.
+        """
+        LOG.debug("Update action(s) [definition=%s]" % action.definition)
 
-            if db_model.is_system:
-                msg = "Attempt to modify a system action: %s" % name
-                raise exc.DataAccessException(msg)
+        db_models = actions.update_actions(action.definition)
 
-            db_model = db_api.update_action(
-                name,
-                _get_action_values(action)
-            )
+        actions_list = [Action.from_dict(db_model.to_dict())
+                        for db_model in db_models]
 
-        return Action.from_dict(db_model.to_dict())
+        return Actions(actions=actions_list)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Action, body=Action, status_code=201)
+    @wsme_pecan.wsexpose(Actions, body=Action, status_code=201)
     def post(self, action):
-        """Create a new action."""
-        LOG.debug("Create action [action=%s]" % action)
+        """Create a new action.
 
-        db_model = db_api.create_action(_get_action_values(action))
+        NOTE: Field 'definition' is allowed to have definitions
+            of multiple actions. In this case they all will be created.
+        """
+        LOG.debug("Create action(s) [definition=%s]" % action.definition)
 
-        return Action.from_dict(db_model.to_dict())
+        db_models = actions.create_actions(action.definition)
+
+        actions_list = [Action.from_dict(db_model.to_dict())
+                        for db_model in db_models]
+
+        return Actions(actions=actions_list)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

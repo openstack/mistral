@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions as exc
 from mistral import utils
 from mistral.workbook import base
 
@@ -44,7 +45,7 @@ class ActionSpec(base.BaseSpec):
         self._description = data.get('description')
         self._base = data['base']
         self._base_input = data.get('base-input', {})
-        self._input = data.get('input', {})
+        self._input = data.get('input', [])
         self._output = data.get('output')
 
         self._base, _input = self._parse_cmd_and_input(self._base)
@@ -73,3 +74,41 @@ class ActionSpec(base.BaseSpec):
 class ActionSpecList(base.BaseSpecList):
     item_class = ActionSpec
     _version = '2.0'
+
+
+class ActionListSpec(base.BaseSpec):
+    # See http://json-schema.org
+    _schema = {
+        "type": "object",
+        "properties": {
+            "version": {"type": "string"},
+        },
+        "required": ["version"],
+        "additionalProperties": True
+    }
+
+    _version = '2.0'
+
+    def __init__(self, data):
+        super(ActionListSpec, self).__init__(data)
+
+        self._actions = []
+
+        for k, v in data.iteritems():
+            if k == 'version':
+                continue
+
+            v['name'] = k
+            self._inject_version([k])
+
+            self._actions.append(ActionSpec(v))
+
+    def validate(self):
+        if len(self._data.keys()) < 2:
+            raise exc.InvalidModelException(
+                'At least one action must be in action list [data=%s]' %
+                self._data
+            )
+
+    def get_actions(self):
+        return self._actions

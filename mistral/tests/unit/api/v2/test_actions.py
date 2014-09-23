@@ -27,23 +27,35 @@ ACTION_DEFINITION = """
 ---
 version: '2.0'
 
-description: My super cool action.
-base: std.echo
-base-input:
-  output: "{$.str1}{$.str2}"
+my_action:
+  description: My super cool action.
+  base: std.echo
+  base-input:
+    output: "{$.str1}{$.str2}"
+"""
+
+SYSTEM_ACTION_DEFINITION = """
+---
+version: '2.0'
+
+std.echo:
+  base: std.http
+  base-input:
+    url: "some.url"
 """
 
 ACTION = {
     'id': '123',
     'name': 'my_action',
-    'definition': ACTION_DEFINITION,
-    'scope': 'public',
+    'description': 'My super cool action.',
+    'definition': ACTION_DEFINITION
 }
 
 SYSTEM_ACTION = {
     'id': '1234',
-    'name': 'std.edho',
-    'is_system': True
+    'name': 'std.echo',
+    'is_system': True,
+    'definition': SYSTEM_ACTION_DEFINITION
 }
 
 ACTION_DB = models.Action()
@@ -56,9 +68,11 @@ UPDATED_ACTION_DEFINITION = """
 ---
 version: '2.0'
 
-base: std.echo
-base-input:
-  output: "{$.str1}{$.str2}{$.str3}"
+my_action:
+  description: My super cool action.
+  base: std.echo
+  base-input:
+    output: "{$.str1}{$.str2}{$.str3}"
 """
 
 UPDATED_ACTION_DB = copy.copy(ACTION_DB)
@@ -91,24 +105,34 @@ class TestActionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(db_api, "get_action", MOCK_ACTION)
-    @mock.patch.object(db_api, "update_action", MOCK_UPDATED_ACTION)
+    @mock.patch.object(db_api, "create_or_update_action", MOCK_UPDATED_ACTION)
     def test_put(self):
-        resp = self.app.put_json('/v2/actions/my_action', UPDATED_ACTION)
+        resp = self.app.put_json('/v2/actions', UPDATED_ACTION)
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_ACTION, resp.json)
 
-    @mock.patch.object(db_api, "update_action", MOCK_NOT_FOUND)
+        self.assertDictEqual(
+            {'actions': [UPDATED_ACTION]},
+            resp.json
+        )
+
+    @mock.patch.object(db_api, "create_or_update_action", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json('/v2/actions/my_action', UPDATED_ACTION,
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/actions',
+            UPDATED_ACTION,
+            expect_errors=True
+        )
 
         self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_action", MOCK_SYSTEM_ACTION)
     def test_put_system(self):
-        resp = self.app.put_json('/v2/actions/std.echo', UPDATED_ACTION,
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/actions',
+            SYSTEM_ACTION,
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 400)
         self.assertIn('Attempt to modify a system action: std.echo',
@@ -121,7 +145,10 @@ class TestActionsController(base.FunctionalTest):
         resp = self.app.post_json('/v2/actions', ACTION)
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(ACTION, resp.json)
+        self.assertDictEqual(
+            {'actions': [ACTION]},
+            resp.json
+        )
 
         mock_mtd.assert_called_once()
 

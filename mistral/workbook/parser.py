@@ -97,6 +97,16 @@ def get_action_spec_from_yaml(text, action_name):
     return get_action_spec(spec_dict)
 
 
+def get_action_list_spec(spec_dict):
+    return actions_v2.ActionListSpec(spec_dict)
+
+
+def get_action_list_spec_from_yaml(text):
+    spec_dict = parse_yaml(text)
+
+    return get_action_list_spec(spec_dict)
+
+
 def get_workflow_spec(spec_dict):
     if _get_spec_version(spec_dict) == V1_0:
         return wf_v1.WorkflowSpec(spec_dict)
