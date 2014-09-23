@@ -63,6 +63,7 @@ class MistralClientBase(rest_client.RestClient):
             msg = ("Invalid parameter 'version'. "
                    "Use version=1 or version=2.")
             raise exceptions.UnprocessableEntity(msg)
+
         self.endpoint_url = 'publicURL'
 
     def get_list_obj(self, name):
