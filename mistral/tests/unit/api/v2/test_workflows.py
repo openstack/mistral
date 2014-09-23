@@ -27,32 +27,26 @@ WF_DEFINITION = """
 ---
 version: '2.0'
 
-name: flow
-type: direct
-input:
-  - param1
+flow:
+  type: direct
+  input:
+    - param1
 
-tasks:
-  task1:
-    action: std.echo output="Hi"
+  tasks:
+    task1:
+      action: std.echo output="Hi"
 """
 
 WF_DB = models.Workflow(
-    id='123',
     name='flow',
     definition=WF_DEFINITION,
-    tags=['deployment', 'demo'],
-    scope="public",
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )
 
 WF = {
-    'id': '123',
     'name': 'flow',
     'definition': WF_DEFINITION,
-    'tags': ['deployment', 'demo'],
-    'scope': 'public',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'
 }
@@ -61,14 +55,15 @@ UPDATED_WF_DEFINITION = """
 ---
 version: '2.0'
 
-name: flow
-type: direct
-input:
-  - param1
+flow:
+  type: direct
+  input:
+    - param1
+    - param2
 
-tasks:
-  task1:
-    action: std.echo output="Hi"
+  tasks:
+    task1:
+      action: std.echo output="Hi"
 """
 
 UPDATED_WF_DB = copy.copy(WF_DB)
@@ -99,17 +94,25 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "update_workflow", MOCK_UPDATED_WF)
+    @mock.patch.object(db_api, "create_or_update_workflow", MOCK_UPDATED_WF)
     def test_put(self):
-        resp = self.app.put_json('/v2/workflows/123', UPDATED_WF)
+        resp = self.app.put_json('/v2/workflows', UPDATED_WF)
+
+        self.maxDiff = None
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_WF, resp.json)
+        self.assertDictEqual(
+            {'workflows': [UPDATED_WF]},
+            resp.json
+        )
 
-    @mock.patch.object(db_api, "update_workflow", MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, "create_or_update_workflow", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json('/v2/workflows/123', UPDATED_WF,
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/workflows',
+            UPDATED_WF,
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 404)
 
@@ -120,7 +123,10 @@ class TestWorkflowsController(base.FunctionalTest):
         resp = self.app.post_json('/v2/workflows', WF)
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(WF, resp.json)
+        self.assertDictEqual(
+            {'workflows': [WF]},
+            resp.json
+        )
 
         mock_mtd.assert_called_once()
 
@@ -131,8 +137,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "create_workflow", MOCK_DUPLICATE)
     def test_post_dup(self):
-        resp = self.app.post_json('/v2/workflows', WF,
-                                  expect_errors=True)
+        resp = self.app.post_json('/v2/workflows', WF, expect_errors=True)
 
         self.assertEqual(resp.status_int, 409)
 
