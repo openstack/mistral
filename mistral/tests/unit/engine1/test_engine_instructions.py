@@ -118,12 +118,13 @@ workflows:
     input:
       - my_var
 
-    on-task-complete:
-      - fail: $.my_var = 1
-      - succeed: $.my_var = 2
-      - pause: $.my_var = 3
-      - rollback: $.my_var = 3
-      - task2: $.my_var = 4 # (Never happens in this test)
+    task-defaults:
+      on-complete:
+        - fail: $.my_var = 1
+        - succeed: $.my_var = 2
+        - pause: $.my_var = 3
+        - rollback: $.my_var = 3
+        - task2: $.my_var = 4 # (Never happens in this test)
 
     tasks:
       task1:
