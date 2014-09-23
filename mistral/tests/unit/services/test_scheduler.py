@@ -49,7 +49,6 @@ class SchedulerServiceTest(base.DbTestCase):
         time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
-        self.assertEqual(1, len(calls))
         call = self._assert_single_item(calls,
                                         target_method_name=target_method)
 
@@ -76,10 +75,9 @@ class SchedulerServiceTest(base.DbTestCase):
                                 delay,
                                 **method_args)
 
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
-        self.assertEqual(1, len(calls))
         call = self._assert_single_item(calls,
                                         target_method_name=target_method)
 
@@ -119,7 +117,7 @@ class SchedulerServiceTest(base.DbTestCase):
                                 serializers=serializers_map,
                                 **method_args)
 
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
         self.assertEqual(1, len(calls))

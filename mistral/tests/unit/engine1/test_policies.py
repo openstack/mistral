@@ -44,6 +44,7 @@ workflows:
         policies:
           wait-before: 2
           wait-after: 5
+          timeout: 7
           retry:
             count: 5
             delay: 10
@@ -108,6 +109,39 @@ workflows:
 """
 
 
+TIMEOUT_WB = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.mistral_http
+        policies:
+          timeout: 2
+        input:
+          # We need to fix this
+          action_context:
+            workbook_name: wb
+            execution_id: 123
+            task_id: 3121
+          url: http://google.com
+          method: GET
+        on-error:
+          - task2
+
+      task2:
+        action: std.echo output="Hi!"
+        policies:
+          timeout: 2
+"""
+
+
 class PoliciesTest(base.EngineTestCase):
     def setUp(self):
         super(PoliciesTest, self).setUp()
@@ -122,8 +156,7 @@ class PoliciesTest(base.EngineTestCase):
     def test_build_policies(self):
         arr = policies.build_policies(self.task_spec.get_policies())
 
-        self.assertEqual(3, len(arr))
-
+        self.assertEqual(4, len(arr))
         p = self._assert_single_item(arr, delay=2)
 
         self.assertIsInstance(p, policies.WaitBeforePolicy)
@@ -137,6 +170,10 @@ class PoliciesTest(base.EngineTestCase):
         self.assertIsInstance(p, policies.RetryPolicy)
         self.assertEqual(5, p.count)
         self.assertEqual('$.my_val = 10', p.break_on)
+
+        p = self._assert_single_item(arr, delay=7)
+
+        self.assertIsInstance(p, policies.TimeoutPolicy)
 
     def test_wait_before_policy(self):
         wb_service.create_workbook_v2({'definition': WAIT_BEFORE_WB})
@@ -222,3 +259,32 @@ class PoliciesTest(base.EngineTestCase):
         )
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.ERROR, exec_db.state)
+
+    def test_timeout_policy(self):
+        wb_service.create_workbook_v2({'definition': TIMEOUT_WB})
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb.wf1', {})
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = exec_db.tasks[0]
+
+        self.assertEqual(states.RUNNING, task_db.state)
+
+        self._await(
+            lambda: self.is_task_error(task_db.id),
+        )
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = exec_db.tasks[0]
+
+        self.assertEqual(states.ERROR, task_db.state)
+        self.assertIsNotNone(exec_db)
+
+        self._await(
+            lambda: self.is_execution_success(exec_db.id),
+        )
+
+        exec_db = db_api.get_execution(exec_db.id)
+        self.assertEqual(states.SUCCESS, exec_db.state)
