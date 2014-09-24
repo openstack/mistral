@@ -165,9 +165,10 @@ class WaitAfterPolicy(base.TaskPolicy):
         policy_context = runtime_context[context_key]
 
         if policy_context.get('skip'):
-            # Unset state 'DELAYED'.
-            task_db.state = \
-                states.ERROR if raw_result.is_error() else states.SUCCESS
+            # Need to avoid terminal states.
+            if not states.is_finished(task_db.state):
+                # Unset state 'DELAYED'.
+                task_db.state = states.RUNNING
 
             return
 
