@@ -14,6 +14,7 @@
 
 from mistral import exceptions as exc
 from mistral.workbook import base
+from mistral.workbook.v2 import task_defaults
 from mistral.workbook.v2 import tasks
 
 
@@ -26,10 +27,7 @@ class WorkflowSpec(base.BaseSpec):
             "name": {"type": "string"},
             "description": {"type": "string"},
             "type": {"enum": ["reverse", "direct"]},
-            "policies": {"type": ["object", "null"]},
-            "on-task-complete": {"type": ["array", "null"]},
-            "on-task-success": {"type": ["array", "null"]},
-            "on-task-error": {"type": ["array", "null"]},
+            "task-defaults": {"type": "object"},
             "input": {"type": ["array", "null"]},
             "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
@@ -43,18 +41,18 @@ class WorkflowSpec(base.BaseSpec):
     def __init__(self, data):
         super(WorkflowSpec, self).__init__(data)
 
+        self._inject_version(['task-defaults'])
+
         self._name = data['name']
         self._description = data.get('description')
         self._type = data['type']
         self._input = data.get('input', [])
         self._output = data.get('output', {})
 
-        # TODO(rakhmerov): Implement 'task-defaults' instead.
-        self._policies = None
-        self._on_task_complete = self._as_list_of_tuples("on-task-complete")
-        self._on_task_success = self._as_list_of_tuples("on-task-success")
-        self._on_task_error = self._as_list_of_tuples("on-task-error")
-
+        self._task_defaults = self._spec_property(
+            'task-defaults',
+            task_defaults.TaskDefaultsSpec
+        )
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
 
     def get_name(self):
@@ -72,17 +70,8 @@ class WorkflowSpec(base.BaseSpec):
     def get_output(self):
         return self._output
 
-    def get_policies(self):
-        return self._policies
-
-    def get_on_task_complete(self):
-        return self._on_task_complete
-
-    def get_on_task_success(self):
-        return self._on_task_success
-
-    def get_on_task_error(self):
-        return self._on_task_error
+    def get_task_defaults(self):
+        return self._task_defaults
 
     def get_tasks(self):
         return self._tasks

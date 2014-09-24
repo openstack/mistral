@@ -65,17 +65,19 @@ workflows:
 
   wf2:
     type: direct
-    policies:
-      retry:
-        count: 10
-        delay: 30
-        break-on: $.my_val = 10
-    on-task-error:
-      - fail: $.my_val = 0
-    on-task-success:
-      - pause
-    on-task-complete:
-      - succeed
+
+    task-defaults:
+      policies:
+        retry:
+          count: 10
+          delay: 30
+          break-on: $.my_val = 10
+      on-error:
+        - fail: $.my_val = 0
+      on-success:
+        - pause
+      on-complete:
+        - succeed
 
     tasks:
       task3:
@@ -200,14 +202,20 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(6, len(wf2_spec.get_tasks()))
+
+        task_defaults_spec = wf2_spec.get_task_defaults()
+
         self.assertListEqual(
             [('fail', '$.my_val = 0')],
-            wf2_spec.get_on_task_error()
+            task_defaults_spec.get_on_error()
         )
-        self.assertListEqual([('pause', '')], wf2_spec.get_on_task_success())
+        self.assertListEqual(
+            [('pause', '')],
+            task_defaults_spec.get_on_success()
+        )
         self.assertListEqual(
             [('succeed', '')],
-            wf2_spec.get_on_task_complete()
+            task_defaults_spec.get_on_complete()
         )
 
         task3_spec = wf2_spec.get_tasks().get('task3')

@@ -113,17 +113,51 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return commands
 
+    @staticmethod
+    def _remove_task_from_clause(on_clause, t_name):
+        return filter(lambda tup: tup[0] != t_name, on_clause)
+
     def get_on_error_clause(self, t_name):
-        return self.wf_spec.get_tasks()[t_name].get_on_error() or\
-            self.wf_spec.get_on_task_error()
+        result = self.wf_spec.get_tasks()[t_name].get_on_error()
+
+        if not result:
+            task_defaults = self.wf_spec.get_task_defaults()
+
+            if task_defaults:
+                result = self._remove_task_from_clause(
+                    task_defaults.get_on_error(),
+                    t_name
+                )
+
+        return result
 
     def get_on_success_clause(self, t_name):
-        return self.wf_spec.get_tasks()[t_name].get_on_success() or\
-            self.wf_spec.get_on_task_success()
+        result = self.wf_spec.get_tasks()[t_name].get_on_success()
+
+        if not result:
+            task_defaults = self.wf_spec.get_task_defaults()
+
+            if task_defaults:
+                result = self._remove_task_from_clause(
+                    task_defaults.get_on_success(),
+                    t_name
+                )
+
+        return result
 
     def get_on_complete_clause(self, t_name):
-        return self.wf_spec.get_tasks()[t_name].get_on_complete() or\
-            self.wf_spec.get_on_task_complete()
+        result = self.wf_spec.get_tasks()[t_name].get_on_complete()
+
+        if not result:
+            task_defaults = self.wf_spec.get_task_defaults()
+
+            if task_defaults:
+                result = self._remove_task_from_clause(
+                    task_defaults.get_on_complete(),
+                    t_name
+                )
+
+        return result
 
     def _get_next_commands(self, cmd_conditions, ctx):
         commands = []
