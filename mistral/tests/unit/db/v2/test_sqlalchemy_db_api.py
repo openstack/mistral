@@ -127,6 +127,30 @@ class WorkbookTest(test_base.DbTestCase):
             created.name
         )
 
+    def test_workbooks_in_two_projects(self):
+        created = db_api.create_workbook(WORKBOOKS[1])
+        fetched = db_api.get_workbooks()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created, fetched[0])
+
+        # Create a new user.
+        ctx = auth_context.MistralContext(
+            user_id='9-0-44-5',
+            project_id='99-88-33',
+            user_name='test-user',
+            project_name='test-another',
+            is_admin=False
+        )
+
+        auth_context.set_ctx(ctx)
+
+        created = db_api.create_workbook(WORKBOOKS[1])
+        fetched = db_api.get_workbooks()
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created, fetched[0])
+
     def test_workbook_private(self):
         # Create a workbook(scope=private) as under one project
         # then make sure it's NOT visible for other projects.

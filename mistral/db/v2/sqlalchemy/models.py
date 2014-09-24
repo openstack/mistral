@@ -28,11 +28,11 @@ class Workbook(mb.MistralModelBase):
     __tablename__ = 'workbooks_v2'
 
     __table_args__ = (
-        sa.UniqueConstraint('name'),
+        sa.UniqueConstraint('name', 'project_id'),
     )
 
     id = mb.id_column()
-    name = sa.Column(sa.String(80), primary_key=True)
+    name = sa.Column(sa.String(80))
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
@@ -49,11 +49,11 @@ class Workflow(mb.MistralModelBase):
     __tablename__ = 'workflows_v2'
 
     __table_args__ = (
-        sa.UniqueConstraint('name'),
+        sa.UniqueConstraint('name', 'project_id'),
     )
 
     id = mb.id_column()
-    name = sa.Column(sa.String(80), primary_key=True)
+    name = sa.Column(sa.String(80))
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
@@ -141,7 +141,7 @@ class Action(mb.MistralModelBase):
     __tablename__ = 'actions_v2'
 
     __table_args__ = (
-        sa.UniqueConstraint('name'),
+        sa.UniqueConstraint('name', 'project_id'),
     )
 
     # Main properties.
