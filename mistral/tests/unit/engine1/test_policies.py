@@ -52,6 +52,34 @@ workflows:
 """
 
 
+WB_WITH_DEFAULTS = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    task-defaults:
+      policies:
+        wait-before: 2
+        retry:
+          count: 2
+          delay: 1
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        policies:
+          wait-before: 3
+          wait-after: 5
+          timeout: 7
+
+"""
+
+
 WAIT_BEFORE_WB = """
 ---
 version: '2.0'
@@ -146,15 +174,18 @@ class PoliciesTest(base.EngineTestCase):
     def setUp(self):
         super(PoliciesTest, self).setUp()
 
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
-
-        self.task_spec = wb_spec.get_workflows()['wf1'].get_tasks()['task1']
+        self.wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
+        self.wf_spec = self.wb_spec.get_workflows()['wf1']
+        self.task_spec = self.wf_spec.get_tasks()['task1']
 
         thread_group = scheduler.setup()
         self.addCleanup(thread_group.stop)
 
     def test_build_policies(self):
-        arr = policies.build_policies(self.task_spec.get_policies())
+        arr = policies.build_policies(
+            self.task_spec.get_policies(),
+            self.wf_spec
+        )
 
         self.assertEqual(4, len(arr))
         p = self._assert_single_item(arr, delay=2)
@@ -170,6 +201,32 @@ class PoliciesTest(base.EngineTestCase):
         self.assertIsInstance(p, policies.RetryPolicy)
         self.assertEqual(5, p.count)
         self.assertEqual('$.my_val = 10', p.break_on)
+
+        p = self._assert_single_item(arr, delay=7)
+
+        self.assertIsInstance(p, policies.TimeoutPolicy)
+
+    def test_build_policies_with_workflow_defaults(self):
+        wb_spec = spec_parser.get_workbook_spec_from_yaml(WB_WITH_DEFAULTS)
+        wf_spec = wb_spec.get_workflows()['wf1']
+        task_spec = wf_spec.get_tasks()['task1']
+
+        arr = policies.build_policies(task_spec.get_policies(), wf_spec)
+
+        self.assertEqual(4, len(arr))
+
+        p = self._assert_single_item(arr, delay=3)
+
+        self.assertIsInstance(p, policies.WaitBeforePolicy)
+
+        p = self._assert_single_item(arr, delay=5)
+
+        self.assertIsInstance(p, policies.WaitAfterPolicy)
+
+        p = self._assert_single_item(arr, delay=1)
+
+        self.assertIsInstance(p, policies.RetryPolicy)
+        self.assertEqual(2, p.count)
 
         p = self._assert_single_item(arr, delay=7)
 

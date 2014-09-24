@@ -4,7 +4,7 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
+# You may obtain a copy of the License at
 #
 #        http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -37,18 +37,38 @@ def _log_task_delay(task_name, state_from, delay_sec):
     WORKFLOW_TRACE.info(wf_trace_msg)
 
 
-def build_policies(policies_spec):
-    if not policies_spec:
+def build_policies(policies_spec, wf_spec):
+    task_defaults = wf_spec.get_task_defaults()
+    wf_policies = task_defaults.get_policies() if task_defaults else None
+    if not (policies_spec or wf_policies):
         return []
 
-    policies = [
-        build_wait_before_policy(policies_spec),
-        build_wait_after_policy(policies_spec),
-        build_retry_policy(policies_spec),
-        build_timeout_policy(policies_spec),
+    return construct_policies_list(policies_spec, wf_policies)
+
+
+def get_factories_list():
+    return [
+        build_wait_before_policy,
+        build_wait_after_policy,
+        build_retry_policy,
+        build_timeout_policy
     ]
 
-    return filter(None, policies)
+
+def construct_policies_list(policies_spec, wf_policies):
+    factories = get_factories_list()
+    policies = []
+
+    for factory in factories:
+        policy = factory(policies_spec)
+
+        if wf_policies and not policy:
+            policy = factory(wf_policies)
+
+        if policy:
+            policies.append(policy)
+
+    return policies
 
 
 def build_wait_before_policy(policies_spec):
@@ -241,7 +261,6 @@ class TimeoutPolicy(base.TaskPolicy):
         self.delay = timeout_sec
 
     def before_task_start(self, task_db, task_spec):
-
         WORKFLOW_TRACE.info("Task %s is waiting completeness in %s seconds."
                             % (task_db.name, self.delay))
 

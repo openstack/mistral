@@ -76,17 +76,17 @@ class DefaultEngine(base.Engine):
             exec_db = db_api.get_execution(task_db.execution_id)
 
             raw_result = utils.transform_result(exec_db, task_db, raw_result)
+            wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
             self._after_task_complete(
                 task_db,
                 spec_parser.get_task_spec(task_db.spec),
-                raw_result
+                raw_result,
+                wf_handler.wf_spec
             )
 
             if task_db.state == states.DELAYED:
                 return task_db
-
-            wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
             # Calculate commands to process next.
             commands = wf_handler.on_task_result(task_db, raw_result)
@@ -154,8 +154,8 @@ class DefaultEngine(base.Engine):
         return exec_db
 
     @staticmethod
-    def _after_task_complete(task_db, task_spec, raw_result):
-        for p in policies.build_policies(task_spec.get_policies()):
+    def _after_task_complete(task_db, task_spec, raw_result, wf_spec):
+        for p in policies.build_policies(task_spec.get_policies(), wf_spec):
             p.after_task_complete(task_db, task_spec, raw_result)
 
     @u.log_exec(LOG)

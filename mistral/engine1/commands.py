@@ -54,7 +54,7 @@ class RunTask(EngineCommand):
         LOG.debug('Running workflow task: %s' % self.task_spec)
 
         self._prepare_task(exec_db, wf_handler, cause_task_db)
-        self._before_task_start()
+        self._before_task_start(wf_handler.wf_spec)
         self._run_task()
 
         return True
@@ -74,8 +74,9 @@ class RunTask(EngineCommand):
             cause_task_db
         )
 
-    def _before_task_start(self):
-        for p in policies.build_policies(self.task_spec.get_policies()):
+    def _before_task_start(self, wf_spec):
+        for p in policies.build_policies(self.task_spec.get_policies(),
+                                         wf_spec):
             p.before_task_start(self.task_db, self.task_spec)
 
     def _create_db_task(self, exec_db):
