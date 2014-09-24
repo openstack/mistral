@@ -63,11 +63,13 @@ class WorkflowHandler(object):
         (before publisher). Instance of mistral.workflow.utils.TaskResult
         :return List of engine commands that needs to be performed.
         """
-        # TODO(rakhmerov): need to ignore result if task is complete.
+
+        # Ignore if task already completed.
+        if states.is_finished(task_db.state):
+            return []
 
         task_db.state = \
             states.ERROR if raw_result.is_error() else states.SUCCESS
-
         task_spec = self.wf_spec.get_tasks()[task_db.name]
 
         task_db.output =\

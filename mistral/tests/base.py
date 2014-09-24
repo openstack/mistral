@@ -167,6 +167,9 @@ class BaseTest(base.BaseTestCase):
 
             time.sleep(delay)
 
+    def _sleep(self, seconds):
+        time.sleep(seconds)
+
 
 class DbTestCase(BaseTest):
     is_heavy_init_called = False
