@@ -16,11 +16,14 @@
 
 from oslo.config import cfg
 
+from mistral.db.v2 import api as db_api
 from mistral.engine import states
 from mistral.engine1 import base
+from mistral.engine1 import rpc
 from mistral import expressions
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
+from mistral.workflow import utils
 
 
 WORKFLOW_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
@@ -41,7 +44,8 @@ def build_policies(policies_spec):
     policies = [
         build_wait_before_policy(policies_spec),
         build_wait_after_policy(policies_spec),
-        build_retry_policy(policies_spec)
+        build_retry_policy(policies_spec),
+        build_timeout_policy(policies_spec),
     ]
 
     return filter(None, policies)
@@ -70,6 +74,12 @@ def build_retry_policy(policies_spec):
         retry.get_delay(),
         retry.get_break_on()
     )
+
+
+def build_timeout_policy(policies_spec):
+    timeout_policy = policies_spec.get_timeout()
+
+    return TimeoutPolicy(timeout_policy) if timeout_policy > 0 else None
 
 
 def _ensure_context_has_key(runtime_context, key):
@@ -224,3 +234,33 @@ class RetryPolicy(base.TaskPolicy):
             self.delay,
             task_id=task_db.id
         )
+
+
+class TimeoutPolicy(base.TaskPolicy):
+    def __init__(self, timeout_sec):
+        self.delay = timeout_sec
+
+    def before_task_start(self, task_db, task_spec):
+
+        WORKFLOW_TRACE.info("Task %s is waiting completeness in %s seconds."
+                            % (task_db.name, self.delay))
+
+        fail_task_func_path = ('mistral.engine1.policies.'
+                               'fail_task_if_incomplete')
+
+        scheduler.schedule_call(
+            None,
+            fail_task_func_path,
+            self.delay,
+            task_id=task_db.id,
+            timeout=self.delay
+        )
+
+
+def fail_task_if_incomplete(task_id, timeout):
+    task_db = db_api.get_task(task_id)
+    if not states.is_finished(task_db.state):
+        msg = "Task failed: Timeout exceeded for %s seconds." % timeout
+        WORKFLOW_TRACE.info(msg)
+        result = utils.TaskResult(error=msg)
+        rpc.get_engine_client().on_task_result(task_id, result)
