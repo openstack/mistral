@@ -68,7 +68,7 @@ class WorkbookTestsV1(base.TestCase):
         resp, body = self.client.update_workbook('test')
 
         self.assertEqual(200, resp.status)
-        self.assertEqual('testupdated', body['name'])
+        self.assertEqual('test', body['name'])
 
     @test.attr(type='smoke')
     def test_get_workbook_definition(self):
