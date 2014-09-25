@@ -50,7 +50,6 @@ def setup_app(config=None, transport=None):
     db_api_v1.setup_db()
     db_api_v2.setup_db()
 
-    # TODO(akuznetsov) move this to trigger scheduling to separate process
     periodic.setup(transport)
 
     app = pecan.make_app(

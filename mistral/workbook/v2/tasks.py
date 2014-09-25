@@ -19,8 +19,6 @@ from mistral import utils
 from mistral.workbook import base
 from mistral.workbook.v2 import task_policies
 
-# TODO(rakhmerov): In progress.
-
 
 class TaskSpec(base.BaseSpec):
     # See http://json-schema.org

@@ -61,13 +61,13 @@ def create_context(trust_id, project_id):
             project_id=project_id,
             auth_token=client.auth_token
         )
-    else:
-        return context.MistralContext(
-            user_id=None,
-            project_id=None,
-            auth_token=None,
-            is_admin=True
-        )
+
+    return context.MistralContext(
+        user_id=None,
+        project_id=None,
+        auth_token=None,
+        is_admin=True
+    )
 
 
 def delete_trust(workbook):

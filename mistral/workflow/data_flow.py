@@ -14,8 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# TODO(rakhmerov): Take care of ad-hoc actions.
-
 import copy
 from oslo.config import cfg
 

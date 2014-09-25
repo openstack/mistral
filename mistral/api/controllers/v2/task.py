@@ -39,7 +39,8 @@ class Task(resource.Resource):
     id = wtypes.text
     name = wtypes.text
 
-    wf_name = wtypes.text  # should probably change model's field name instead
+    # TODO(rakhmerov): Inconsistent with 'workflow_name' for executions.
+    wf_name = wtypes.text
     execution_id = wtypes.text
 
     state = wtypes.text
@@ -57,7 +58,7 @@ class Task(resource.Resource):
 
         for key, val in d.items():
             if hasattr(e, key):
-                # Nonetype check for dictionary must be explicit
+                # Nonetype check for dictionary must be explicit.
                 if val is not None and (
                         key == 'input' or key == 'output'):
                     val = json.dumps(val)
@@ -67,19 +68,20 @@ class Task(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   wf_name='book',
-                   execution_id='123e4567-e89b-12d3-a456-426655440000',
-                   name='task',
-                   description='tell when you are done',
-                   # TODO(everyone): replace with states.SUCCESS
-                   state='SUCCESS',
-                   tags=['foo', 'fee'],
-                   input='{"first_name": "John", "last_name": "Doe"}',
-                   output='{"task": {"build_greeting": '
-                          '{"greeting": "Hello, John Doe!"}}}',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            wf_name='book',
+            execution_id='123e4567-e89b-12d3-a456-426655440000',
+            name='task',
+            description='tell when you are done',
+            state=states.SUCCESS,
+            tags=['foo', 'fee'],
+            input='{"first_name": "John", "last_name": "Doe"}',
+            output='{"task": {"build_greeting": '
+                   '{"greeting": "Hello, John Doe!"}}}',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000'
+        )
 
 
 class Tasks(resource.Resource):
@@ -112,6 +114,7 @@ class TasksController(rest.RestController):
         # Client must provide a valid json. It shouldn't  necessarily be an
         # object but it should be json complaint so strings have to be escaped.
         result = None
+
         if task.result:
             try:
                 result = json.loads(task.result)
@@ -119,9 +122,9 @@ class TasksController(rest.RestController):
                 raise exc.InvalidResultException(str(e))
 
         if task.state == states.ERROR:
-            raw_result = wf_utils.TaskResult(None, result)
+            raw_result = wf_utils.TaskResult(error=result)
         else:
-            raw_result = wf_utils.TaskResult(result)
+            raw_result = wf_utils.TaskResult(data=result)
 
         engine = rpc.get_engine_client()
 

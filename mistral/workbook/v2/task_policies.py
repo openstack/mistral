@@ -14,7 +14,6 @@
 
 from mistral.workbook import base
 from mistral.workbook.v2 import retry_policy
-# TODO(rakhmerov): In progress.
 
 
 class TaskPoliciesSpec(base.BaseSpec):

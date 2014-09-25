@@ -23,7 +23,6 @@ class Resource(wtypes.Base):
     _wsme_attributes = []
 
     def to_dict(self):
-        # TODO(everyone): take care of nested resources
         d = {}
 
         for attr in self._wsme_attributes:
@@ -35,7 +34,6 @@ class Resource(wtypes.Base):
 
     @classmethod
     def from_dict(cls, d):
-        # TODO(everyone): take care of nested resources
         obj = cls()
 
         for key, val in d.items():

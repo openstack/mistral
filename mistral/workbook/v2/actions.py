@@ -16,8 +16,6 @@ from mistral import exceptions as exc
 from mistral import utils
 from mistral.workbook import base
 
-# TODO(rakhmerov): In progress.
-
 
 class ActionSpec(base.BaseSpec):
     # See http://json-schema.org
