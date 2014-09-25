@@ -43,10 +43,10 @@ class WorkflowTestsV2(base.TestCase):
 
     @test.attr(type='smoke')
     def test_create_and_delete_workflow(self):
-        resp, body = self.client.create_workflow('wf')
+        resp, body = self.client.create_workflow()
 
         self.assertEqual(201, resp.status)
-        self.assertEqual('wf', body['name'])
+        self.assertEqual('wf', body['workflows'][0]['name'])
 
         resp, body = self.client.get_list_obj('workflows')
 
@@ -64,7 +64,7 @@ class WorkflowTestsV2(base.TestCase):
 
     @test.attr(type='smoke')
     def test_get_workflow(self):
-        self.client.create_workflow('wf')
+        self.client.create_workflow()
         resp, body = self.client.get_object('workflows', 'wf')
 
         self.assertEqual(200, resp.status)
@@ -72,25 +72,16 @@ class WorkflowTestsV2(base.TestCase):
 
     @test.attr(type='smoke')
     def test_update_workflow(self):
-        self.client.create_workflow('wf')
-        resp, body = self.client.update_workflow('wf')
+        self.client.create_workflow()
+        resp, body = self.client.update_workflow()
 
         self.assertEqual(200, resp.status)
-        self.assertEqual('wfupdated', body['name'])
-
-    @test.attr(type='smoke')
-    def test_upload_workflow_definition(self):
-        self.client.create_workflow('test_wf')
-        resp, body = self.client.upload_workflow_definition('test_wf')
-
-        self.assertEqual(200, resp.status)
-        self.assertIsNotNone(body)
+        self.assertEqual('wf', body['workflows'][0]['name'])
 
     @test.attr(type='smoke')
     def test_get_workflow_definition(self):
-        self.client.create_workflow('test')
-        self.client.upload_workflow_definition('test')
-        resp, body = self.client.get_workflow_definition('test')
+        self.client.create_workflow()
+        resp, body = self.client.get_workflow_definition('wf')
 
         self.assertEqual(200, resp.status)
         self.assertIsNotNone(body)

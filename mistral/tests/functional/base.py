@@ -88,7 +88,7 @@ class MistralClientV1(MistralClientBase):
         return resp, json.loads(body)
 
     def update_workbook(self, name):
-        post_body = '{"name": "%s"}' % (name + 'updated')
+        post_body = '{"name": "%s"}' % name
         resp, body = self.put('workbooks/{name}'.format(name=name),
                               post_body)
         return resp, json.loads(body)
@@ -202,15 +202,17 @@ class MistralClientV2(MistralClientBase):
     _version = 2
 
     def create_workbook(self, name):
-        post_body = '{"name": "%s", "tags": "tag"}' % name
-        resp, body = self.post('workbooks', post_body)
+        text = get_resource('resources/wb_v2.yaml')
+        post_body = {"definition": "%s" % text}
+        resp, body = self.post('workbooks', json.dumps(post_body))
 
         return resp, json.loads(body)
 
     def update_workbook(self, name):
-        post_body = '{"name": "%s", "tags": "tag"}' % (name + 'updated')
-        resp, body = self.put('workbooks/{name}'.format(name=name),
-                              post_body)
+        text = get_resource('resources/wb_v2.yaml')
+        post_body = {"definition": "%s" % text}
+        resp, body = self.put('workbooks',
+                              json.dumps(post_body))
 
         return resp, json.loads(body)
 
@@ -219,42 +221,30 @@ class MistralClientV2(MistralClientBase):
 
     def upload_workbook_definition(self, name):
         text = get_resource('resources/wb_v2.yaml')
-        post_body = {"name": "%s" % name,
-                     "tags": "tag",
-                     "definition": "%s" % text}
-        resp, body = self.put('workbooks/{name}'.format(name=name),
+        post_body = {"definition": "%s" % text}
+        resp, body = self.put('workbooks',
                               json.dumps(post_body))
 
         return resp, json.loads(body)
 
-    def create_workflow(self, name):
+    def create_workflow(self):
         text = get_resource('resources/wf_v2.yaml')
-        post_body = {"name": "%s" % name,
-                     "definition": "%s" % text,
-                     "tags": "tag"}
-        resp, body = self.post('workflows', json.dumps(post_body))
+        post_body = {"definition": "%s" % text}
+        resp, body = self.post('workflows',
+                               json.dumps(post_body))
 
         return resp, json.loads(body)
 
-    def update_workflow(self, name):
-        post_body = '{"name": "%s", "tags": "tag"}' % (name + 'updated')
-        resp, body = self.put('workflows/{name}'.format(name=name),
-                              post_body)
+    def update_workflow(self):
+        text = get_resource('resources/wf_v2.yaml')
+        post_body = {"definition": "%s" % text}
+        resp, body = self.put('workflows',
+                              json.dumps(post_body))
 
         return resp, json.loads(body)
 
     def get_workflow_definition(self, name):
         return self.get('workflows/{name}'.format(name=name))
-
-    def upload_workflow_definition(self, name):
-        text = get_resource('resources/wf_v2.yaml')
-        post_body = {"name": "%s" % name,
-                     "tags": "tag",
-                     "definition": "%s" % text}
-        resp, body = self.put('workflows/{name}'.format(name=name),
-                              json.dumps(post_body))
-
-        return resp, json.loads(body)
 
     def create_execution(self, wf_name, post_body=None):
         if post_body is None:
