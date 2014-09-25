@@ -26,6 +26,7 @@ class WorkflowSpec(base.BaseSpec):
             "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
+            "tags": {"type": "array"},
             "type": {"enum": ["reverse", "direct"]},
             "task-defaults": {"type": "object"},
             "input": {"type": ["array", "null"]},
@@ -45,6 +46,7 @@ class WorkflowSpec(base.BaseSpec):
 
         self._name = data['name']
         self._description = data.get('description')
+        self._tags = data.get('tags', [])
         self._type = data['type']
         self._input = data.get('input', [])
         self._output = data.get('output', {})
@@ -60,6 +62,9 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_description(self):
         return self._description
+
+    def get_tags(self):
+        return self._tags
 
     def get_type(self):
         return self._type

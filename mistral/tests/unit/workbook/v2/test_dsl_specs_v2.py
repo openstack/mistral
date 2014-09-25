@@ -28,6 +28,7 @@ tags: [test, v2]
 actions:
   action1:
     description: This is a test ad-hoc action
+    tags: [test, v2]
     base: std.echo
     base-input:
         output: "Hello {$.name}!"
@@ -35,12 +36,14 @@ actions:
 
   action2:
     description: This is a test ad-hoc action with base params
+    tags: [test, v2]
     base: std.echo output="Echo output"
     output: $
 
 workflows:
   wf1:
     description: This is a test workflow
+    tags: [test, v2]
     type: reverse
 
     input:
@@ -64,6 +67,7 @@ workflows:
         action: std.echo output="Thanks {$.name}!"
 
   wf2:
+    tags: [test, v2]
     type: direct
 
     task-defaults:
@@ -139,6 +143,7 @@ class DSLv2ModelTest(base.BaseTest):
             'This is a test ad-hoc action',
             action_spec.get_description()
         )
+        self.assertListEqual(['test', 'v2'], action_spec.get_tags())
         self.assertEqual('std.echo', action_spec.get_base())
         self.assertDictEqual(
             {'output': 'Hello {$.name}!'},
@@ -159,6 +164,7 @@ class DSLv2ModelTest(base.BaseTest):
             'This is a test workflow',
             wf1_spec.get_description()
         )
+        self.assertListEqual(['test', 'v2'], wf1_spec.get_tags())
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertEqual(2, len(wf1_spec.get_tasks()))
 
@@ -200,6 +206,7 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual('2.0', wf2_spec.get_version())
         self.assertEqual('wf2', wf2_spec.get_name())
+        self.assertListEqual(['test', 'v2'], wf2_spec.get_tags())
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(6, len(wf2_spec.get_tasks()))
 
