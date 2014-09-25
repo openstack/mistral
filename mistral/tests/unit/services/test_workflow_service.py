@@ -31,6 +31,7 @@ WORKFLOW_LIST = """
 version: '2.0'
 
 wf1:
+  tags: [test, v2]
   type: reverse
   input:
     - param1
@@ -86,6 +87,7 @@ class WorkflowServiceTest(base.DbTestCase):
         wf1_spec = spec_parser.get_workflow_spec(wf1_db.spec)
 
         self.assertEqual('wf1', wf1_spec.get_name())
+        self.assertListEqual(['test', 'v2'], wf1_spec.get_tags())
         self.assertEqual('reverse', wf1_spec.get_type())
 
         # Workflow 2.
@@ -116,5 +118,6 @@ class WorkflowServiceTest(base.DbTestCase):
         wf1_spec = spec_parser.get_workflow_spec(wf1_db.spec)
 
         self.assertEqual('wf1', wf1_spec.get_name())
+        self.assertListEqual([], wf1_spec.get_tags())
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertListEqual(['param1', 'param2'], wf1_spec.get_input())

@@ -32,6 +32,7 @@ ACTION_LIST = """
 version: '2.0'
 
 action1:
+  tags: [test, v2]
   base: std.echo output='Hi'
   output:
     result: $
@@ -72,6 +73,7 @@ class ActionServiceTest(base.DbTestCase):
         action1_spec = spec_parser.get_action_spec(action1_db.spec)
 
         self.assertEqual('action1', action1_spec.get_name())
+        self.assertListEqual(['test', 'v2'], action1_spec.get_tags())
         self.assertEqual('std.echo', action1_spec.get_base())
         self.assertDictEqual({'output': 'Hi'}, action1_spec.get_base_input())
 
@@ -103,6 +105,7 @@ class ActionServiceTest(base.DbTestCase):
         action1_spec = spec_parser.get_action_spec(action1_db.spec)
 
         self.assertEqual('action1', action1_spec.get_name())
+        self.assertListEqual([], action1_spec.get_tags())
         self.assertEqual('std.echo', action1_spec.get_base())
         self.assertDictEqual({'output': 'Hi'}, action1_spec.get_base_input())
         self.assertListEqual(['param1'], action1_spec.get_input())
