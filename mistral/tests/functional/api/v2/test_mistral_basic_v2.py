@@ -22,15 +22,22 @@ class WorkbookTestsV2(test_mistral_basic.WorkbookTestsV1):
 
     _version = 2
 
+    def tearDown(self):
+        for wf in self.client.workflows:
+            self.client.delete_obj('workflows', wf)
+            self.client.workflows.remove(wf)
+
+        super(WorkbookTestsV2, self).tearDown()
+
 
 class WorkflowTestsV2(base.TestCase):
 
     _version = 2
 
     def tearDown(self):
-        _, wfs = self.client.get_list_obj('workflows')
-        for wf in wfs['workflows']:
-            self.client.delete_obj('workflows', wf['name'])
+        for wf in self.client.workflows:
+            self.client.delete_obj('workflows', wf)
+            self.client.workflows.remove(wf)
 
         super(WorkflowTestsV2, self).tearDown()
 
@@ -56,6 +63,8 @@ class WorkflowTestsV2(base.TestCase):
         self.assertIn('wf', names)
 
         self.client.delete_obj('workflows', 'wf')
+        self.client.workflows.remove('wf')
+
         _, body = self.client.get_list_obj('workflows')
 
         names = [body['workflows'][i]['name']
@@ -96,3 +105,10 @@ class ExecutionTestsV2(test_mistral_basic.ExecutionTestsV1):
 
         self.entity_type = 'workflow_name'
         self.entity_name = 'test.test'
+
+    def tearDown(self):
+        for wf in self.client.workflows:
+            self.client.delete_obj('workflows', wf)
+            self.client.workflows.remove(wf)
+
+        super(ExecutionTestsV2, self).tearDown()

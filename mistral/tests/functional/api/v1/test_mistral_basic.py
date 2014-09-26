@@ -50,6 +50,8 @@ class WorkbookTestsV1(base.TestCase):
         self.assertEqual('test', body['workbooks'][0]['name'])
 
         self.client.delete_obj('workbooks', 'test')
+        self.client.workbooks.remove('test')
+
         _, body = self.client.get_list_obj('workbooks')
 
         self.assertEqual([], body['workbooks'])
@@ -107,6 +109,7 @@ class WorkbookTestsV1(base.TestCase):
                           'test')
 
         self.client.delete_obj('workbooks', 'test')
+        self.client.workbooks.remove('test')
         _, body = self.client.get_list_obj('workbooks')
 
         self.assertEqual([], body['workbooks'])
@@ -127,9 +130,9 @@ class ExecutionTestsV1(base.TestCase):
     def tearDown(self):
         super(ExecutionTestsV1, self).tearDown()
 
-        _, executions = self.client.get_list_obj('executions')
-        for ex in executions['executions']:
-            self.client.delete_obj('executions', '{0}'.format(ex['id']))
+        for ex in self.client.executions:
+            self.client.delete_obj('executions', ex)
+            self.client.executions.remove(ex)
 
     @test.attr(type='positive')
     def test_create_execution(self):

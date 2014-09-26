@@ -69,6 +69,10 @@ class MistralClientBase(rest_client.RestClient):
 
         self.endpoint_url = 'publicURL'
 
+        self.workbooks = []
+        self.executions = []
+        self.workflows = []
+
     def get_list_obj(self, name):
         resp, body = self.get(name)
         return resp, json.loads(body)
@@ -88,6 +92,9 @@ class MistralClientV1(MistralClientBase):
     def create_workbook(self, name):
         post_body = '{"name": "%s"}' % name
         resp, body = self.post('workbooks', post_body)
+
+        self.workbooks.append(name)
+
         return resp, json.loads(body)
 
     def update_workbook(self, name):
@@ -121,6 +128,8 @@ class MistralClientV1(MistralClientBase):
 
         rest, body = self.post('workbooks/{name}/executions'.format(
             name=workbook_name), json.dumps(body))
+
+        self.executions.append(json.loads(body)['id'])
 
         return rest, json.loads(body)
 
@@ -209,6 +218,11 @@ class MistralClientV2(MistralClientBase):
         post_body = {"definition": "%s" % text}
         resp, body = self.post('workbooks', json.dumps(post_body))
 
+        self.workbooks.append(json.loads(body)['name'])
+
+        _, wfs = self.get('workflows')
+        self.workflows.append(json.loads(wfs)['workflows'][0]['name'])
+
         return resp, json.loads(body)
 
     def update_workbook(self, name):
@@ -236,6 +250,8 @@ class MistralClientV2(MistralClientBase):
         resp, body = self.post('workflows',
                                json.dumps(post_body))
 
+        self.workflows.append(json.loads(body)['workflows'][0]['name'])
+
         return resp, json.loads(body)
 
     def update_workflow(self):
@@ -255,6 +271,8 @@ class MistralClientV2(MistralClientBase):
         else:
             body = post_body
         rest, body = self.post('executions', body)
+
+        self.executions.append(json.loads(body)['id'])
 
         return rest, json.loads(body)
 
@@ -313,9 +331,9 @@ class TestCase(tempest.test.BaseTestCase):
     def tearDown(self):
         super(TestCase, self).tearDown()
 
-        _, items = self.client.get_list_obj('workbooks')
-        for i in items['workbooks']:
-            self.client.delete_obj('workbooks', i['name'])
+        for wb in self.client.workbooks:
+            self.client.delete_obj('workbooks', wb)
+            self.client.workbooks.remove(wb)
 
 
 class TestCaseAdvanced(TestCase):
@@ -335,13 +353,12 @@ class TestCaseAdvanced(TestCase):
         self.client.create_workbook(self.workbook_name)
 
     def tearDown(self):
-        _, items = self.client.get_list_obj('workbooks')
-        for i in items['workbooks']:
-            self.client.delete_obj('workbooks', i['name'])
+        for wb in self.client.workbooks:
+            self.client.delete_obj('workbooks', wb)
+            self.client.workbooks.remove(wb)
 
-        _, executions = self.client.get_list_obj('executions')
-
-        for ex in executions['executions']:
-            self.client.delete_obj('executions', '{0}'.format(ex['id']))
+        for ex in self.client.executions:
+            self.client.delete_obj('executions', ex)
+            self.client.executions.remove(ex)
 
         super(TestCaseAdvanced, self).tearDown()
