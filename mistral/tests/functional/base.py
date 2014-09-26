@@ -14,8 +14,11 @@
 #    under the License.
 
 import json
+import mock
+import os
 import time
 
+from tempest import auth
 from tempest import clients
 from tempest.common import rest_client
 from tempest import config
@@ -266,6 +269,24 @@ class MistralClientV2(MistralClientBase):
         return resp, json.loads(body)
 
 
+class AuthProv(auth.KeystoneV2AuthProvider):
+
+    def __init__(self):
+        self.alt_part = None
+
+    def auth_request(self, method, url, *args, **kwargs):
+        req_url, headers, body = super(AuthProv, self).auth_request(
+            method, url, *args, **kwargs)
+        return 'http://localhost:8989/{0}/{1}'.format(
+            os.environ['VERSION'], url), headers, body
+
+    def get_auth(self):
+        return 'mock_str', 'mock_str'
+
+    def base_url(self, *args, **kwargs):
+        return ''
+
+
 class TestCase(tempest.test.BaseTestCase):
 
     @classmethod
@@ -275,7 +296,12 @@ class TestCase(tempest.test.BaseTestCase):
         """
         super(TestCase, cls).setUpClass()
 
-        cls.mgr = clients.Manager()
+        if 'WITHOUT_AUTH' in os.environ:
+            cls.mgr = mock.MagicMock()
+            cls.mgr.auth_provider = AuthProv()
+        else:
+            cls.mgr = clients.Manager()
+
         if cls._version == 1:
             cls.client = MistralClientV1(cls.mgr.auth_provider)
         if cls._version == 2:

@@ -77,4 +77,13 @@ To run the examples find them in mistral-extra repository (https://github.com/st
 Tests
 -----
 
-Information about automated tests for Mistral can be found here: https://wiki.openstack.org/wiki/Mistral/Testing
+There is an ability to run part of functional tests in non-openstack mode locally. To do this:
+
+    # set *auth_enable=false* in the mistral.conf and restart Mistral
+    # execute:
+
+        bash run_functional_tests.sh
+
+To run tests for only one version need to specify it: bash run_functional_tests.sh v1
+
+More information about automated tests for Mistral can be found here: https://wiki.openstack.org/wiki/Mistral/Testing
