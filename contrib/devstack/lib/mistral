@@ -110,7 +110,6 @@ function configure_mistral {
 
     # Run all Mistral processes as a single process
     iniset $MISTRAL_CONF_FILE DEFAULT server all
-    iniset $MISTRAL_CONF_FILE DEFAULT rpc_backend fake
 
     # Mistral Configuration
     #-------------------------
@@ -124,6 +123,7 @@ function configure_mistral {
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
 
     # Setup RabbitMQ credentials
+    iniset $MISTRAL_CONF_FILE DEFAULT rabbit_userid $RABBIT_USERID
     iniset $MISTRAL_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
 
     # Configure the database.

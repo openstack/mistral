@@ -67,7 +67,7 @@ engine_opts = [
                help='Name of the engine node. This can be an opaque '
                     'identifier. It is not necessarily a hostname, '
                     'FQDN, or IP address.'),
-    cfg.StrOpt('topic', default='engine',
+    cfg.StrOpt('topic', default='mistral_engine',
                help='The message topic that the engine listens on.'),
     cfg.StrOpt('version', default='1.0',
                help='The version of the engine.')
@@ -78,7 +78,7 @@ executor_opts = [
                help='Name of the executor node. This can be an opaque '
                     'identifier. It is not necessarily a hostname, '
                     'FQDN, or IP address.'),
-    cfg.StrOpt('topic', default='executor',
+    cfg.StrOpt('topic', default='mistral_executor',
                help='The message topic that the executor listens on.'),
     cfg.StrOpt('version', default='1.0',
                help='The version of the executor.')

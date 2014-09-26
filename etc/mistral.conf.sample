@@ -462,7 +462,7 @@
 #host=0.0.0.0
 
 # The message topic that the engine listens on. (string value)
-#topic=engine
+#topic=mistral_engine
 
 # The version of the engine. (string value)
 #version=1.0
@@ -481,7 +481,7 @@
 
 # The message topic that the executor listens on. (string
 # value)
-#topic=executor
+#topic=mistral_executor
 
 # The version of the executor. (string value)
 #version=1.0
