@@ -128,11 +128,6 @@ class SubworkflowsTest(base.EngineTestCase):
 
         exec1_db = db_api.get_execution(exec1_db.id)
 
-        self.assertEqual(
-            "'Bonnie & Clyde' is a cool movie!",
-            exec1_db.context['slogan']
-        )
-
         self.assertDictEqual(
             {
                 'slogan': "'Bonnie & Clyde' is a cool movie!"

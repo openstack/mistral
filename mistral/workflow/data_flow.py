@@ -44,7 +44,7 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
     ]
 
     task_db.in_context = utils.merge_dicts(
-        exec_db.context,
+        copy.copy(exec_db.context),
         _evaluate_upstream_context(upstream_db_tasks)
     )
 
