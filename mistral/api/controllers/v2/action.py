@@ -36,6 +36,7 @@ class Action(resource.Resource):
     name = wtypes.text
 
     description = wtypes.text
+    tags = [wtypes.text]
     definition = wtypes.text
     scope = SCOPE_TYPES
 

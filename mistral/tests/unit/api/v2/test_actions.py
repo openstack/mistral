@@ -29,6 +29,7 @@ version: '2.0'
 
 my_action:
   description: My super cool action.
+  tags: ['test', 'v2']
   base: std.echo
   base-input:
     output: "{$.str1}{$.str2}"
@@ -48,6 +49,7 @@ ACTION = {
     'id': '123',
     'name': 'my_action',
     'description': 'My super cool action.',
+    'tags': ['test', 'v2'],
     'definition': ACTION_DEFINITION
 }
 
