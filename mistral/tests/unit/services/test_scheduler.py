@@ -21,6 +21,13 @@ from mistral.services import scheduler
 from mistral.tests import base
 from mistral.workflow import utils as wf_utils
 
+# TODO(rakhmerov): This test is fragile because it's fully based on delays.
+# TODO(rakhmerov): Think how to redesign it.
+
+FACTORY_METHOD_NAME = ('mistral.tests.unit.services.test_scheduler.'
+                       'factory_method')
+TARGET_METHOD_NAME = FACTORY_METHOD_NAME
+
 
 def factory_method():
     pass
@@ -30,27 +37,31 @@ class SchedulerServiceTest(base.DbTestCase):
     def setUp(self):
         super(SchedulerServiceTest, self).setUp()
 
-        thread_group = scheduler.setup()
-        self.addCleanup(thread_group.stop)
+        self.thread_group = scheduler.setup()
 
-    @mock.patch('mistral.tests.unit.services.test_scheduler.factory_method')
+        self.addCleanup(self.thread_group.stop)
+
+    @mock.patch(FACTORY_METHOD_NAME)
     def test_scheduler_with_factory(self, factory):
-        factory_method = ('mistral.tests.unit.services.'
-                          'test_scheduler.factory_method')
         target_method = 'run_something'
         method_args = {'name': 'task', 'id': '123'}
         delay = 0.5
 
-        scheduler.schedule_call(factory_method,
-                                target_method,
-                                delay,
-                                **method_args)
+        scheduler.schedule_call(
+            FACTORY_METHOD_NAME,
+            target_method,
+            delay,
+            **method_args
+        )
 
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
-        calls = db_api.get_delayed_calls_to_start(time_filter)
+        calls = db_api.get_delayed_calls_to_start(
+            datetime.datetime.now() + datetime.timedelta(seconds=1)
+        )
 
-        call = self._assert_single_item(calls,
-                                        target_method_name=target_method)
+        call = self._assert_single_item(
+            calls,
+            target_method_name=target_method
+        )
 
         self.assertIn('name', call['method_arguments'])
 
@@ -63,23 +74,25 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertEqual(0, len(calls))
 
-    @mock.patch('mistral.tests.unit.services.test_scheduler.factory_method')
+    @mock.patch(TARGET_METHOD_NAME)
     def test_scheduler_without_factory(self, method):
-        target_method = ('mistral.tests.unit.services.'
-                         'test_scheduler.factory_method')
         method_args = {'name': 'task', 'id': '321'}
         delay = 0.5
 
-        scheduler.schedule_call(None,
-                                target_method,
-                                delay,
-                                **method_args)
+        scheduler.schedule_call(
+            None,
+            TARGET_METHOD_NAME,
+            delay,
+            **method_args
+        )
 
         time_filter = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
-        call = self._assert_single_item(calls,
-                                        target_method_name=target_method)
+        call = self._assert_single_item(
+            calls,
+            target_method_name=TARGET_METHOD_NAME
+        )
 
         self.assertIn('name', call['method_arguments'])
 
@@ -92,10 +105,8 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertEqual(0, len(calls))
 
-    @mock.patch('mistral.tests.unit.services.test_scheduler.factory_method')
+    @mock.patch(FACTORY_METHOD_NAME)
     def test_scheduler_with_serializer(self, factory):
-        factory_method = ('mistral.tests.unit.services.'
-                          'test_scheduler.factory_method')
         target_method = 'run_something'
 
         task_result = wf_utils.TaskResult('data', 'error')
@@ -103,26 +114,33 @@ class SchedulerServiceTest(base.DbTestCase):
         method_args = {
             'name': 'task',
             'id': '123',
-            'result': task_result}
+            'result': task_result
+        }
 
-        serializers_map = {
+        serializers = {
             'result': 'mistral.workflow.utils.TaskResultSerializer'
         }
 
         delay = 0.5
 
-        scheduler.schedule_call(factory_method,
-                                target_method,
-                                delay,
-                                serializers=serializers_map,
-                                **method_args)
+        scheduler.schedule_call(
+            FACTORY_METHOD_NAME,
+            target_method,
+            delay,
+            serializers=serializers,
+            **method_args
+        )
 
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=0.5)
-        calls = db_api.get_delayed_calls_to_start(time_filter)
+        calls = db_api.get_delayed_calls_to_start(
+            datetime.datetime.now() + datetime.timedelta(seconds=0.5)
+        )
 
         self.assertEqual(1, len(calls))
-        call = self._assert_single_item(calls,
-                                        target_method_name=target_method)
+
+        call = self._assert_single_item(
+            calls,
+            target_method_name=target_method
+        )
 
         self.assertIn('name', call['method_arguments'])
 
@@ -134,7 +152,8 @@ class SchedulerServiceTest(base.DbTestCase):
         self.assertEqual('data', result.data)
         self.assertEqual('error', result.error)
 
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
-        calls = db_api.get_delayed_calls_to_start(time_filter)
+        calls = db_api.get_delayed_calls_to_start(
+            datetime.datetime.now() + datetime.timedelta(seconds=1)
+        )
 
         self.assertEqual(0, len(calls))

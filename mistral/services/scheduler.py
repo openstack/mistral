@@ -1,6 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -44,12 +44,11 @@ def schedule_call(factory_method_path, target_method_name,
       Serializer for the object type must implement serializer interface
        in mistral/utils/serializer.py
     :param method_args: Target method keyword arguments.
-    :return: None
     """
     ctx = context.ctx().to_dict() if context.has_ctx() else {}
 
-    execution_time = (datetime.datetime.now()
-                      + datetime.timedelta(seconds=run_after))
+    execution_time = (datetime.datetime.now() +
+                      datetime.timedelta(seconds=run_after))
 
     if serializers:
         for arg_name, serializer_path in serializers.items():
@@ -63,8 +62,9 @@ def schedule_call(factory_method_path, target_method_name,
                 raise ImportError("Cannot import class %s: %s"
                                   % (serializer_path, e))
 
-            serialized = serializer.serialize(method_args[arg_name])
-            method_args[arg_name] = serialized
+            method_args[arg_name] = serializer.serialize(
+                method_args[arg_name]
+            )
 
     values = {
         'factory_method_path': factory_method_path,
@@ -83,22 +83,21 @@ class CallScheduler(periodic_task.PeriodicTasks):
     def run_delayed_calls(self, ctx=None):
         LOG.debug('Processing next delayed calls.')
 
-        datetime_filter = (datetime.datetime.now()
-                           + datetime.timedelta(seconds=1))
+        datetime_filter = (datetime.datetime.now() +
+                           datetime.timedelta(seconds=1))
         delayed_calls = db_api.get_delayed_calls_to_start(datetime_filter)
 
         for call in delayed_calls:
-            ctx = context.MistralContext(call.auth_context)
-            context.set_ctx(ctx)
+            context.set_ctx(context.MistralContext(call.auth_context))
 
             if call.factory_method_path:
                 factory = importutils.import_class(call.factory_method_path)
-                target_object = factory()
-                target_method = getattr(target_object,
-                                        call.target_method_name)
+
+                target_method = getattr(factory(), call.target_method_name)
             else:
                 target_method = importutils.import_class(
-                    call.target_method_name)
+                    call.target_method_name
+                )
 
             method_args = copy.copy(call.method_arguments)
 
@@ -115,8 +114,9 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 # Call the method.
                 target_method(**method_args)
             except Exception as e:
-                LOG.debug("Exception was thrown during the "
-                          "delayed call %s - %s", call, e)
+                LOG.debug(
+                    "Delayed call failed [call=%s, exception=%s]", call, e
+                )
             finally:
                 # After call, delete this delayed call from DB.
                 db_api.delete_delayed_call(call.id)
@@ -124,12 +124,12 @@ class CallScheduler(periodic_task.PeriodicTasks):
 
 def setup():
     tg = threadgroup.ThreadGroup()
-    pt = CallScheduler()
 
     tg.add_dynamic_timer(
-        pt.run_periodic_tasks,
+        CallScheduler().run_periodic_tasks,
         initial_delay=None,
         periodic_interval_max=1,
-        context=None)
+        context=None
+    )
 
     return tg
