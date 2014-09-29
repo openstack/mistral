@@ -25,6 +25,7 @@ class ActionSpec(base.BaseSpec):
             "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
+            "tags": {"type": "array"},
             "base": {"type": "string"},
             "base-input": {"type": "object"},
             "input": {"type": "array"},
@@ -41,6 +42,7 @@ class ActionSpec(base.BaseSpec):
 
         self._name = data['name']
         self._description = data.get('description')
+        self._tags = data.get('tags', [])
         self._base = data['base']
         self._base_input = data.get('base-input', {})
         self._input = data.get('input', [])
@@ -55,6 +57,9 @@ class ActionSpec(base.BaseSpec):
 
     def get_description(self):
         return self._description
+
+    def get_tags(self):
+        return self._tags
 
     def get_base(self):
         return self._base
