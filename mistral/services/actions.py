@@ -50,6 +50,7 @@ def create_action(action_spec, definition):
     values = {
         'name': action_spec.get_name(),
         'description': action_spec.get_description(),
+        'tags': action_spec.get_tags(),
         'definition': definition,
         'spec': action_spec.to_dict(),
         'is_system': False
@@ -72,6 +73,7 @@ def create_or_update_action(action_spec, definition):
     values = {
         'name': action_spec.get_name(),
         'description': action_spec.get_description(),
+        'tags': action_spec.get_tags(),
         'definition': definition,
         'spec': action_spec.to_dict(),
         'is_system': False

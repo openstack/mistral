@@ -47,6 +47,7 @@ def update_workflows(definition):
 def create_workflow(wf_spec, definition):
     values = {
         'name': wf_spec.get_name(),
+        'tags': wf_spec.get_tags(),
         'definition': definition,
         'spec': wf_spec.to_dict()
     }
@@ -59,6 +60,7 @@ def create_workflow(wf_spec, definition):
 def create_or_update_workflow(wf_spec, definition):
     values = {
         'name': wf_spec.get_name(),
+        'tags': wf_spec.get_tags(),
         'definition': definition,
         'spec': wf_spec.to_dict()
     }
