@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+# TODO(rakhmerov): Deprecated in favor of package 'mistral.engine1'.
+
 import abc
 import copy
 

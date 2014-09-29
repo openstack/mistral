@@ -25,8 +25,6 @@ from mistral.utils import rest_utils
 
 LOG = logging.getLogger(__name__)
 
-# TODO(rakhmerov): Fix DB access when listeners are implemented.
-
 
 class Event(resource.Resource):
     """Event descriptor."""

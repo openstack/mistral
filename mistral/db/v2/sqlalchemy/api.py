@@ -50,7 +50,6 @@ def drop_db():
     global _facade
 
     try:
-        # TODO(rakhmerov): How to setup for multiple versions?
         models.Workbook.metadata.drop_all(b.get_engine())
         _facade = None
     except Exception as e:

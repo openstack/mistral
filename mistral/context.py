@@ -25,8 +25,6 @@ from mistral import utils
 
 LOG = logging.getLogger(__name__)
 
-# TODO(rakhmerov): refactor all threadlocal things with mistral.utils
-
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 
 
@@ -64,6 +62,7 @@ class BaseContext(object):
 
 
 class MistralContext(BaseContext):
+    # Use set([...]) since set literals are not supported in Python 2.6.
     _elements = set([
         "user_id",
         "project_id",
@@ -160,8 +159,7 @@ class RpcContextSerializer(messaging.Serializer):
 
 class ContextHook(hooks.PecanHook):
     def before(self, state):
-        request_ctx = context_from_headers(state.request.headers)
-        set_ctx(request_ctx)
+        set_ctx(context_from_headers(state.request.headers))
 
     def after(self, state):
         set_ctx(None)

@@ -66,10 +66,12 @@ def setup(transport):
         user_id=None,
         project_id=None,
         auth_token=None,
-        is_admin=True)
+        is_admin=True
+    )
 
     tg.add_dynamic_timer(
         pt.run_periodic_tasks,
         initial_delay=None,
         periodic_interval_max=1,
-        context=ctx)
+        context=ctx
+    )
