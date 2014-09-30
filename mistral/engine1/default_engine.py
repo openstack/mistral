@@ -46,6 +46,11 @@ class DefaultEngine(base.Engine):
 
     @u.log_exec(LOG)
     def start_workflow(self, workflow_name, workflow_input, **params):
+        WF_TRACE.info(
+            "Starting the execution of workflow '%s'"
+            % workflow_name
+        )
+
         with db_api.transaction():
             wf_db = db_api.get_workflow(workflow_name)
 
@@ -161,6 +166,13 @@ class DefaultEngine(base.Engine):
     @u.log_exec(LOG)
     def run_task(self, task_id):
         with db_api.transaction():
+            task_db = db_api.get_task(task_id)
+
+            WF_TRACE.info(
+                "Task '%s' [%s -> %s]"
+                % (task_db.name, task_db.state, states.RUNNING)
+            )
+
             task_db = db_api.update_task(task_id, {'state': states.RUNNING})
             task_spec = spec_parser.get_task_spec(task_db.spec)
 
