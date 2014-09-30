@@ -11,7 +11,7 @@
 # MISTRAL_CONFIG_GENERATOR_EXCLUDED_FILES: list of files to remove from automatic listing.
 
 print_hint() {
-    echo "Try \`${0##*/} --help' for more information." >&2
+    echo "Try '${0##*/} --help' for more information." >&2
 }
 
 PARSED_OPTIONS=$(getopt -n "${0##*/}" -o hb:p:m:l:o: \
@@ -37,17 +37,17 @@ while true; do
             ;;
         -b|--base-dir)
             shift
-            BASEDIR=`echo $1 | sed -e 's/\/*$//g'`
+            BASEDIR=$(echo $1 | sed -e 's/\/*$//g')
             shift
             ;;
         -p|--package-name)
             shift
-            PACKAGENAME=`echo $1`
+            PACKAGENAME=$(echo $1)
             shift
             ;;
         -o|--output-dir)
             shift
-            OUTPUTDIR=`echo $1 | sed -e 's/\/*$//g'`
+            OUTPUTDIR=$(echo $1 | sed -e 's/\/*$//g')
             shift
             ;;
         -m|--module)
@@ -66,7 +66,7 @@ while true; do
     esac
 done
 
-BASEDIR=${BASEDIR:-`pwd`}
+BASEDIR=${BASEDIR:-$(pwd)}
 if ! [ -d $BASEDIR ]
 then
     echo "${0##*/}: missing project base directory" >&2 ; print_hint ; exit 1
@@ -90,16 +90,16 @@ then
     OUTPUTDIR=$OUTPUTDIR/$PACKAGENAME
 elif ! [ -d $OUTPUTDIR ]
 then
-    echo "${0##*/}: cannot access \`$OUTPUTDIR': No such file or directory" >&2
+    echo "${0##*/}: cannot access '$OUTPUTDIR': No such file or directory" >&2
     exit 1
 fi
 
-BASEDIRESC=`echo $BASEDIR | sed -e 's/\//\\\\\//g'`
+BASEDIRESC=$(echo $BASEDIR | sed -e 's/\//\\\\\//g')
 find $TARGETDIR -type f -name "*.pyc" -delete
 FILES=$(find $TARGETDIR -type f -name "*.py" ! -path "*/tests/*" \
         -exec grep -l "Opt(" {} + | sed -e "s/^$BASEDIRESC\///g" | sort -u)
 
-RC_FILE="`dirname $0`/oslo.config.generator.rc"
+RC_FILE="$(dirname $0)/oslo.config.generator.rc"
 if test -r "$RC_FILE"
 then
     source "$RC_FILE"

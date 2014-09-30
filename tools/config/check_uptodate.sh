@@ -12,7 +12,7 @@ else
     exit 1
 fi
 
-TEMPDIR=`mktemp -d /tmp/${PROJECT_NAME}.XXXXXX`
+TEMPDIR=$(mktemp -d /tmp/${PROJECT_NAME}.XXXXXX)
 trap "rm -rf $TEMPDIR" EXIT
 
 tools/config/generate_sample.sh -b ./ -p ${PROJECT_NAME} -o ${TEMPDIR}

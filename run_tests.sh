@@ -128,15 +128,15 @@ function run_tests {
 
   # Just run the test suites in current environment
   set +e
-  testrargs=`echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/'`
+  testrargs=$(echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/')
   TESTRTESTS="$TESTRTESTS --testr-args='--subunit $testropts $testrargs'"
-  OS_TEST_PATH=`echo $testrargs|grep -o 'mistral\.tests[^[:space:]:]*\+'|tr . /`
+  OS_TEST_PATH=$(echo $testrargs|grep -o 'mistral\.tests[^[:space:]:]*\+'|tr . /)
   if [ -d "$OS_TEST_PATH" ]; then
       wrapper="OS_TEST_PATH=$OS_TEST_PATH $wrapper"
   elif [ -d "$(dirname $OS_TEST_PATH)" ]; then
       wrapper="OS_TEST_PATH=$(dirname $OS_TEST_PATH) $wrapper"
   fi
-  echo "Running \`${wrapper} $TESTRTESTS\`"
+  echo "Running ${wrapper} $TESTRTESTS"
   bash -c "${wrapper} $TESTRTESTS | ${wrapper} subunit2pyunit"
   RESULT=$?
   set -e
@@ -154,7 +154,7 @@ function run_tests {
 }
 
 function copy_subunit_log {
-  LOGNAME=`cat .testrepository/next-stream`
+  LOGNAME=$(cat .testrepository/next-stream)
   LOGNAME=$(($LOGNAME - 1))
   LOGNAME=".testrepository/${LOGNAME}"
   cp $LOGNAME subunit.log
