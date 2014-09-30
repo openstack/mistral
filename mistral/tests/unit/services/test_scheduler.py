@@ -21,8 +21,6 @@ from mistral.services import scheduler
 from mistral.tests import base
 from mistral.workflow import utils as wf_utils
 
-# TODO(rakhmerov): This test is fragile because it's fully based on delays.
-# TODO(rakhmerov): Think how to redesign it.
 
 FACTORY_METHOD_NAME = ('mistral.tests.unit.services.test_scheduler.'
                        'factory_method')
@@ -30,7 +28,11 @@ TARGET_METHOD_NAME = FACTORY_METHOD_NAME
 
 
 def factory_method():
-    pass
+    return type(
+        'something',
+        (object,),
+        {'run_something': lambda name, id: id}
+    )
 
 
 class SchedulerServiceTest(base.DbTestCase):
@@ -134,8 +136,6 @@ class SchedulerServiceTest(base.DbTestCase):
         calls = db_api.get_delayed_calls_to_start(
             datetime.datetime.now() + datetime.timedelta(seconds=0.5)
         )
-
-        self.assertEqual(1, len(calls))
 
         call = self._assert_single_item(
             calls,
