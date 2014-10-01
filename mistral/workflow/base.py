@@ -16,7 +16,6 @@ import abc
 
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -91,11 +90,6 @@ class WorkflowHandler(object):
                     self._set_execution_state(states.SUCCESS)
 
                 task_out_ctx = data_flow.evaluate_outbound_context(task_db)
-
-                self.exec_db.context = utils.merge_dicts(
-                    self.exec_db.context,
-                    task_out_ctx
-                )
 
                 self.exec_db.output = data_flow.evaluate_workflow_output(
                     self.wf_spec,
