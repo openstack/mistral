@@ -34,6 +34,7 @@ class Action(resource.Resource):
 
     id = wtypes.text
     name = wtypes.text
+    is_system = bool
 
     description = wtypes.text
     tags = [wtypes.text]

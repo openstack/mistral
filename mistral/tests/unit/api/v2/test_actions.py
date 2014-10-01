@@ -48,6 +48,7 @@ std.echo:
 ACTION = {
     'id': '123',
     'name': 'my_action',
+    'is_system': False,
     'description': 'My super cool action.',
     'tags': ['test', 'v2'],
     'definition': ACTION_DEFINITION
