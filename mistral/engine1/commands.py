@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import abc
+from oslo.config import cfg
 import six
 
 from mistral.db.v2 import api as db_api
@@ -26,6 +27,12 @@ from mistral.workflow import data_flow
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
+WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
+
+
+def _log_execution_state_change(name, from_state, to_state):
+    WF_TRACE.info("Execution of workflow '%s' [%s -> %s]"
+                  % (name, from_state, to_state))
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -97,8 +104,16 @@ class RunTask(EngineCommand):
             return
 
         if self.task_spec.get_action_name():
+            WF_TRACE.info("Task '%s' is RUNNING [action_name = %s]"
+                          % (self.task_db.name,
+                             self.task_spec.get_action_name()))
+
             self._run_action()
         elif self.task_spec.get_workflow_name():
+            WF_TRACE.info("Task '%s' is RUNNING [workflow_name = %s]"
+                          % (self.task_db.name,
+                             self.task_spec.get_workflow_name()))
+
             self._run_workflow()
 
     def _run_action(self):
@@ -176,6 +191,12 @@ class RunTask(EngineCommand):
 
 class FailWorkflow(EngineCommand):
     def run(self, exec_db, wf_handler, cause_task_db=None):
+        _log_execution_state_change(
+            exec_db.wf_name,
+            exec_db.state,
+            states.ERROR
+        )
+
         exec_db.state = states.ERROR
 
         return False
@@ -183,6 +204,12 @@ class FailWorkflow(EngineCommand):
 
 class SucceedWorkflow(EngineCommand):
     def run(self, exec_db, wf_handler, cause_task_db=None):
+        _log_execution_state_change(
+            exec_db.wf_name,
+            exec_db.state,
+            states.SUCCESS
+        )
+
         exec_db.state = states.SUCCESS
 
         return False
@@ -190,6 +217,12 @@ class SucceedWorkflow(EngineCommand):
 
 class PauseWorkflow(EngineCommand):
     def run(self, exec_db, wf_handler, cause_task_db=None):
+        _log_execution_state_change(
+            exec_db.wf_name,
+            exec_db.state,
+            states.PAUSED
+        )
+
         wf_handler.pause_workflow()
 
         return False

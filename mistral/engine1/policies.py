@@ -131,6 +131,11 @@ class WaitBeforePolicy(base.TaskPolicy):
 
         if policy_context.get('skip'):
             # Unset state 'DELAYED'.
+            WF_TRACE.info(
+                "Task '%s' [%s -> %s]"
+                % (task_db.name, states.DELAYED, states.RUNNING)
+            )
+
             task_db.state = states.RUNNING
 
             return
@@ -169,6 +174,12 @@ class WaitAfterPolicy(base.TaskPolicy):
             # Need to avoid terminal states.
             if not states.is_finished(task_db.state):
                 # Unset state 'DELAYED'.
+
+                WF_TRACE.info(
+                    "Task '%s' [%s -> %s]"
+                    % (task_db.name, states.DELAYED, states.RUNNING)
+                )
+
                 task_db.state = states.RUNNING
 
             return
@@ -223,6 +234,11 @@ class RetryPolicy(base.TaskPolicy):
 
         if state != states.ERROR:
             return
+
+        WF_TRACE.info(
+            "Task '%s' [%s -> ERROR]"
+            % (task_db.name, task_db.state)
+        )
 
         outbound_context = task_db.output
 
@@ -282,6 +298,11 @@ def fail_task_if_incomplete(task_id, timeout):
         msg = "Task timed out [task=%s, timeout(s)=%s]." % (task_id, timeout)
 
         WF_TRACE.info(msg)
+
+        WF_TRACE.info(
+            "Task '%s' [%s -> ERROR]"
+            % (task_db.name, task_db.state)
+        )
 
         rpc.get_engine_client().on_task_result(
             task_id,

@@ -14,6 +14,8 @@
 
 import abc
 
+from oslo.config import cfg
+
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workbook import parser as spec_parser
@@ -21,6 +23,7 @@ from mistral.workflow import data_flow
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
+WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class WorkflowHandler(object):
@@ -67,9 +70,17 @@ class WorkflowHandler(object):
         if states.is_finished(task_db.state):
             return []
 
+        wf_trace_msg = "Task '%s' [%s -> " % (task_db.name, task_db.state)
+
         task_db.state = \
             states.ERROR if raw_result.is_error() else states.SUCCESS
         task_spec = self.wf_spec.get_tasks()[task_db.name]
+
+        wf_trace_msg += "%s" % task_db.state
+        if task_db.state == states.ERROR:
+            WF_TRACE.info(wf_trace_msg + ", error = %s]" % raw_result.error)
+        else:
+            WF_TRACE.info(wf_trace_msg + ", result = %s]" % raw_result.data)
 
         task_db.output =\
             data_flow.evaluate_task_output(task_spec, raw_result)
