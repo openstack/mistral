@@ -107,6 +107,7 @@ workflows:
 
       task8:
         workflow: wf2 expr_list=["$.value", "{$.key}"] expr={$.value}
+        targets: [nova]
 """
 
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
@@ -273,6 +274,8 @@ class DSLv2ModelTest(base.BaseTest):
             },
             task8_spec.get_input()
         )
+
+        self.assertEqual(['nova'], task8_spec.get_targets())
 
     def test_adhoc_action_with_base_in_one_string(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)

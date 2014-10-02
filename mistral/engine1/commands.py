@@ -152,11 +152,14 @@ class RunTask(EngineCommand):
             else:
                 action_input = {}
 
+        targets = self.task_spec.get_targets()
+
         rpc.get_executor_client().run_action(
             self.task_db.id,
             action_db.action_class,
             action_db.attributes or {},
-            action_input
+            action_input,
+            targets
         )
 
     def _run_workflow(self):

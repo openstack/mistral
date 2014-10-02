@@ -285,14 +285,15 @@ class ExecutorClient(base.Executor):
             auth_ctx.JsonPayloadSerializer()
         )
 
+        self.topic = cfg.CONF.executor.topic
         self._client = messaging.RPCClient(
             transport,
-            messaging.Target(topic=cfg.CONF.executor.topic),
+            messaging.Target(),
             serializer=serializer
         )
 
     def run_action(self, task_id, action_class_str, attributes,
-                   action_params):
+                   action_params, targets=None):
         """Sends a request to run action to executor."""
 
         kwargs = {
@@ -302,4 +303,15 @@ class ExecutorClient(base.Executor):
             'params': action_params
         }
 
-        return self._client.cast(auth_ctx.ctx(), 'run_action', **kwargs)
+        if targets:
+            for target in targets:
+                self._cast_run_action(self.topic, target, **kwargs)
+        else:
+            self._cast_run_action(self.topic, **kwargs)
+
+    def _cast_run_action(self, topic, target=None, **kwargs):
+        self._client.prepare(topic=topic, server=target).cast(
+            auth_ctx.ctx(),
+            'run_action',
+            **kwargs
+        )

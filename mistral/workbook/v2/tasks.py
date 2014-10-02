@@ -33,6 +33,7 @@ class TaskSpec(base.BaseSpec):
             "input": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
+            "targets": {"type": ["array", "null"]},
             "requires": {"type": ["string", "array", "null"]},
             "on-complete": {"type": ["array", "null"]},
             "on-success": {"type": ["array", "null"]},
@@ -57,6 +58,7 @@ class TaskSpec(base.BaseSpec):
             'policies',
             task_policies.TaskPoliciesSpec
         )
+        self._targets = data.get('targets', [])
         self._requires = data.get('requires', [])
         self._on_complete = self._as_list_of_tuples('on-complete')
         self._on_success = self._as_list_of_tuples('on-success')
@@ -102,6 +104,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_policies(self):
         return self._policies
+
+    def get_targets(self):
+        return self._targets
 
     def get_publish(self):
         return self._publish
