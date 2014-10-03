@@ -53,7 +53,7 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
         # TODO(rakhmerov): Think if Data Flow should be a part of wf handler.
         task_db.in_context = utils.merge_dicts(
             task_db.in_context,
-            copy.copy(cause_task_db.output)
+            evaluate_outbound_context(cause_task_db)
         )
 
     task_db.input = evaluate_task_input(
