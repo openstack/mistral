@@ -34,18 +34,28 @@ class Execution(resource.Resource):
     """Execution resource."""
 
     id = wtypes.text
+    "id is immutable and auto assigned."
+
     workflow_name = wtypes.text
+    "reference to workflow definition"
+
     params = wtypes.text
+    "params define workflow type specific parameters. For example, reverse \
+    workflow takes one parameter 'task_name' that defines a target task."
 
     state = wtypes.text
-    # Context is a JSON object but since WSME doesn't support arbitrary
-    # dictionaries we have to use text type convert to json and back manually.
+    "state can be one of: RUNNING, SUCCESS, ERROR, PAUSED"
+
     input = wtypes.text
+    "input is a JSON structure containing workflow input values."
     output = wtypes.text
+    "output is a workflow output."
 
     created_at = wtypes.text
     updated_at = wtypes.text
 
+    # Context is a JSON object but since WSME doesn't support arbitrary
+    # dictionaries we have to use text type convert to json and back manually.
     def to_dict(self):
         d = super(Execution, self).to_dict()
 
@@ -110,10 +120,15 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution)
     def put(self, id, execution):
-        """Update the specified Execution."""
+        """Update the specified Execution.
+
+        :param id: execution ID.
+        :param execution: Execution objects
+        """
         LOG.debug("Update execution [id=%s, execution=%s]" %
                   (id, execution))
 
+        # TODO(dzimine): Why update execution? We must only pause and resume.
         db_model = db_api.update_execution(id, execution.to_dict())
 
         return Execution.from_dict(db_model.to_dict())
@@ -121,7 +136,10 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, body=Execution, status_code=201)
     def post(self, execution):
-        """Create a new Execution."""
+        """Create a new Execution.
+
+        :param execution: Execution object with input content.
+        """
         LOG.debug("Create execution [execution=%s]" % execution)
 
         engine = rpc.get_engine_client()

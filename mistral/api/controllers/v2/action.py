@@ -30,7 +30,13 @@ SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 
 
 class Action(resource.Resource):
-    """Action resource."""
+    """Action resource.
+
+    NOTE: *name* is immutable. Note that name and description get inferred
+    from action definition when Mistral service receives a POST request.
+    So they can't be changed in another way.
+
+    """
 
     id = wtypes.text
     name = wtypes.text
@@ -49,7 +55,7 @@ class Action(resource.Resource):
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='flow',
-                   definition='---',
+                   definition='HERE GOES ACTION DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
                    created_at='1970-01-01T00:00:00.000000',

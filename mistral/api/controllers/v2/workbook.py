@@ -35,8 +35,10 @@ class Workbook(resource.Resource):
     name = wtypes.text
 
     definition = wtypes.text
+    "workbook definition in Mistral v2 DSL"
     tags = [wtypes.text]
     scope = SCOPE_TYPES
+    "'private' or 'public'"
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -45,7 +47,8 @@ class Workbook(resource.Resource):
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='book',
-                   definition='---',
+                   definition='HERE GOES'
+                        'WORKBOOK DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
                    created_at='1970-01-01T00:00:00.000000',

@@ -28,7 +28,7 @@ extensions = [
     'wsmeext.sphinxext',
 ]
 
-wsme_protocols = ['restjson', 'restxml']
+wsme_protocols = ['restjson']
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
 # text edit cycles.

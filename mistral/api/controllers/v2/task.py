@@ -45,8 +45,10 @@ class Task(resource.Resource):
     execution_id = wtypes.text
 
     state = wtypes.text
-    result = wtypes.text
+    "state can take one of the following values: \
+    IDLE, RUNNING, SUCCESS, ERROR, DELAYED"
 
+    result = wtypes.text
     input = wtypes.text
     output = wtypes.text
 

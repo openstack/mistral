@@ -36,8 +36,10 @@ class Workflow(resource.Resource):
     input = wtypes.text
 
     definition = wtypes.text
+    "Workflow definition in Mistral v2 DSL"
     tags = [wtypes.text]
     scope = SCOPE_TYPES
+    "'private' or 'public'"
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -47,7 +49,8 @@ class Workflow(resource.Resource):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='flow',
                    input='param1, param2',
-                   definition='---',
+                   definition='HERE GOES'
+                        'WORKFLOW DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
                    created_at='1970-01-01T00:00:00.000000',

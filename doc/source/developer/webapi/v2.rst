@@ -1,3 +1,102 @@
 V2 API
 ======
 
+.. warning:: (2014-10-5): API described in this document might slightly change within a short period of time (2-3 weeks) and should be now considered experimental. Mistral team is now actively working on stabilization.
+
+This API describes the ways of interacting with Mistral service via HTTP protocol using Representational State Transfer concept (ReST).
+
+
+Basics
+-------
+
+
+Media Types
+^^^^^^^^^^^^
+
+Currently this API relies on JSON to represent states of REST resources.
+
+Error States
+^^^^^^^^^^^^
+
+The common HTTP Response Status Codes (https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.
+
+Application Root [/]
+^^^^^^^^^^^^^^^^^^^^^
+Application Root provides links to all possible API methods for Mistral. URLs for other resources described below are relative to Application Root.
+
+API v2 Root [/v2/]
+^^^^^^^^^^^^^^^^^^^
+All API v2 urls are relative to API v2 root.
+
+Workbooks
+----------
+
+.. autotype:: mistral.api.controllers.v2.workbook.Workbook
+   :members:
+
+`name` is immutable. tags is a list of values associated with a workbook that a user can use to group workbooks by some criteria (deployment workbooks, Big Data processing workbooks etc.). Note that name and tags get inferred from workbook definition when Mistral service receives a POST request. So they can't be changed in another way.
+
+.. autotype:: mistral.api.controllers.v2.workbook.Workbooks
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.workbook:WorkbooksController
+   :webprefix: /v2/workbooks
+
+
+Workflows
+----------
+
+.. autotype:: mistral.api.controllers.v2.workflow.Workflow
+   :members:
+
+`name` is immutable. tags is a list of values associated with a workflow that a user can use to group workflows by some criteria. Note that name and tags get inferred from workflow definition when Mistral service receives a POST request. So they can't be changed in another way.
+
+.. autotype:: mistral.api.controllers.v2.workflow.Workflows
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.workflow:WorkflowsController
+   :webprefix: /v2/workflows
+
+Actions
+--------
+
+.. autotype:: mistral.api.controllers.v2.action.Action
+   :members:
+
+.. autotype:: mistral.api.controllers.v2.action.Actions
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.action:ActionsController
+   :webprefix: /v2/actions
+
+
+Executions
+------------
+
+.. autotype:: mistral.api.controllers.v2.execution.Execution
+   :members:
+
+.. autotype:: mistral.api.controllers.v2.execution.Executions
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.execution:ExecutionsController
+    :webprefix: /v2/executions
+
+
+Tasks
+------------
+
+When a workflow starts Mistral creates an execution. It in turn consists of a set of tasks. So Task is an instance of a task described in a Workflow that belongs to a particular execution.
+
+
+.. autotype:: mistral.api.controllers.v2.task.Task
+   :members:
+
+.. autotype:: mistral.api.controllers.v2.task.Tasks
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.task:TasksController
+    :webprefix: /v2/tasks
+
+.. rest-controller:: mistral.api.controllers.v2.task:ExecutionTasksController
+    :webprefix: /v2/executions
