@@ -1,5 +1,5 @@
-V1 API
-======
+V1 API (deprecated)
+===================
 
 .. autotype:: mistral.api.controllers.resource.Link
    :members:
