@@ -18,13 +18,14 @@ import abc
 class ActionGenerator(object):
     """Action generator.
 
-    Action generator uses some data to build Action class
+    Action generator uses some data to build Action classes
     dynamically.
     """
     @abc.abstractmethod
-    def create_action_classes(self, *args, **kwargs):
+    def create_actions(self, *args, **kwargs):
         """Constructs classes of needed action.
 
-        return: dict of action names and Action classes.
+        return: list of actions dicts containing name, class,
+        description and parameter info.
         """
         pass

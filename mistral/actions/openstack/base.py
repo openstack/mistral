@@ -41,18 +41,33 @@ class OpenStackAction(base.Action):
         """
         pass
 
-    def _get_client_method(self):
-        hierarchy_list = self.client_method_name.split('.')
-        attribute = self._get_client()
+    @classmethod
+    def _get_client_method(cls, client):
+        hierarchy_list = cls.client_method_name.split('.')
+        attribute = client
 
         for attr in hierarchy_list:
             attribute = getattr(attribute, attr)
 
         return attribute
 
+    @classmethod
+    def _get_fake_client(cls):
+        """Returns python-client instance which initiated via wrong args.
+
+        It is needed for getting client-method args and description for
+        saving into DB.
+        """
+        # Default is simple _client_class instance
+        return cls._client_class()
+
+    @classmethod
+    def get_fake_client_method(cls):
+        return cls._get_client_method(cls._get_fake_client())
+
     def run(self):
         try:
-            method = self._get_client_method()
+            method = self._get_client_method(self._get_client())
 
             return method(**self._kwargs_for_run)
         except Exception as e:

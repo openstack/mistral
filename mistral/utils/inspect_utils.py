@@ -43,7 +43,8 @@ def get_arg_list_as_str(func):
     defs = list(argspec.defaults or [])
 
     args = argspec.args
-    args.remove('self')
+    if 'self' in args:
+        args.remove('self')
 
     diff_args_defs = len(args) - len(defs)
     arg_str_list = []
