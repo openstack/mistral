@@ -16,7 +16,7 @@
 
 """Access Control API server."""
 
-from keystoneclient.middleware import auth_token
+from keystonemiddleware import auth_token
 from oslo.config import cfg
 
 

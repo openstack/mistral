@@ -15,7 +15,7 @@
 import datetime
 import uuid
 
-from keystoneclient.middleware import auth_token
+from keystonemiddleware import auth_token
 import mock
 from oslo.config import cfg
 import pecan
@@ -88,7 +88,7 @@ class TestKeystoneMiddleware(base.FunctionalTest):
         auth_token.AuthProtocol, '_get_user_token_from_header',
         mock.MagicMock(return_value=''))
     @mock.patch.object(
-        auth_token.AuthProtocol, '_validate_user_token',
+        auth_token.AuthProtocol, '_validate_token',
         mock.MagicMock(return_value=PKI_TOKEN_VERIFIED))
     @mock.patch.object(
         db_api, "workbook_get",
