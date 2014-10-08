@@ -47,19 +47,7 @@ def update_actions(definition):
 
 
 def create_action(action_spec, definition):
-    values = {
-        'name': action_spec.get_name(),
-        'description': action_spec.get_description(),
-        'tags': action_spec.get_tags(),
-        'definition': definition,
-        'spec': action_spec.to_dict(),
-        'is_system': False,
-        'input': ", ".join(action_spec.get_input())
-    }
-
-    _add_security_info(values)
-
-    return db_api.create_action(values)
+    return db_api.create_action(_get_action_values(action_spec, definition))
 
 
 def create_or_update_action(action_spec, definition):
@@ -71,6 +59,12 @@ def create_or_update_action(action_spec, definition):
             action.name
         )
 
+    values = _get_action_values(action_spec, definition)
+
+    return db_api.create_or_update_action(values['name'], values)
+
+
+def _get_action_values(action_spec, definition):
     values = {
         'name': action_spec.get_name(),
         'description': action_spec.get_description(),
@@ -83,7 +77,7 @@ def create_or_update_action(action_spec, definition):
 
     _add_security_info(values)
 
-    return db_api.create_or_update_action(values['name'], values)
+    return values
 
 
 def _add_security_info(values):
