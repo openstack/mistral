@@ -48,12 +48,11 @@ workflows:
 
     input:
       - name
-      - age
 
     tasks:
       task1:
         description: This is a test task
-        action: ns1.action1 name="{$.name}"
+        action: action1 name="{$.name}"
         policies:
           wait-before: 2
           wait-after: 5
@@ -176,7 +175,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', task1_spec.get_version())
         self.assertEqual('task1', task1_spec.get_name())
         self.assertEqual('This is a test task', task1_spec.get_description())
-        self.assertEqual('ns1.action1', task1_spec.get_action_name())
+        self.assertEqual('action1', task1_spec.get_action_name())
         self.assertEqual({'name': '{$.name}'}, task1_spec.get_input())
 
         policies = task1_spec.get_policies()
