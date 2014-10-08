@@ -53,7 +53,8 @@ def create_action(action_spec, definition):
         'tags': action_spec.get_tags(),
         'definition': definition,
         'spec': action_spec.to_dict(),
-        'is_system': False
+        'is_system': False,
+        'input': ", ".join(action_spec.get_input())
     }
 
     _add_security_info(values)
@@ -76,7 +77,8 @@ def create_or_update_action(action_spec, definition):
         'tags': action_spec.get_tags(),
         'definition': definition,
         'spec': action_spec.to_dict(),
-        'is_system': False
+        'is_system': False,
+        'input': ", ".join(action_spec.get_input())
     }
 
     _add_security_info(values)
