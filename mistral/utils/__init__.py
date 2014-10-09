@@ -15,10 +15,14 @@
 #    limitations under the License.
 
 import logging
+import os
+from os import path
 import threading
 
-
 from eventlet import corolocal
+import pkg_resources as pkg
+
+from mistral import version
 
 # Thread local storage.
 _th_loc_storage = threading.local()
@@ -120,3 +124,13 @@ def merge_dicts(left, right):
                 merge_dicts(left_v, v)
 
     return left
+
+
+def get_file_list(directory):
+    base_path = pkg.resource_filename(
+        version.version_info.package,
+        directory
+    )
+
+    return [path.join(base_path, f) for f in os.listdir(base_path)
+            if path.isfile(path.join(base_path, f))]

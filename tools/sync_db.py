@@ -18,6 +18,7 @@ from mistral.db.v2 import api as db_api
 from mistral import config
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager
+from mistral.services import workflows
 
 
 CONF = cfg.CONF
@@ -36,6 +37,7 @@ def main():
     db_api.setup_db()
 
     action_manager.sync_db()
+    workflows.sync_db()
 
 
 if __name__ == '__main__':

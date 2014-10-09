@@ -172,8 +172,12 @@ def _get_workbooks(**kwargs):
 def _get_workbook(name):
     query = b.model_query(models.Workbook)
 
-    return query.filter_by(name=name,
-                           project_id=context.ctx().project_id).first()
+    project_id = context.ctx().project_id if context.has_ctx() else None
+
+    proj = query.filter_by(name=name, project_id=project_id)
+    public = query.filter_by(name=name, scope='public')
+
+    return proj.union(public).first()
 
 
 @b.session_aware()
@@ -206,7 +210,7 @@ def create_workflow(values, session=None):
     wf = models.Workflow()
 
     wf.update(values.copy())
-    wf['project_id'] = context.ctx().project_id
+    wf['project_id'] = context.ctx().project_id if context.has_ctx() else None
 
     try:
         wf.save(session=session)
@@ -226,7 +230,7 @@ def update_workflow(name, values, session=None):
             "Workflow not found [workflow_name=%s]" % name)
 
     wf.update(values.copy())
-    wf['project_id'] = context.ctx().project_id
+    wf['project_id'] = context.ctx().project_id if context.has_ctx() else None
 
     return wf
 
@@ -273,8 +277,12 @@ def _get_workflows(**kwargs):
 def _get_workflow(name):
     query = b.model_query(models.Workflow)
 
-    return query.filter_by(name=name,
-                           project_id=context.ctx().project_id).first()
+    project_id = context.ctx().project_id if context.has_ctx() else None
+
+    proj = query.filter_by(name=name, project_id=project_id)
+    public = query.filter_by(name=name, scope='public')
+
+    return proj.union(public).first()
 
 
 # Executions.

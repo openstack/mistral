@@ -22,12 +22,23 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
+from mistral.services import actions
+from mistral import utils
 from mistral.utils import inspect_utils as i_utils
 
 
 LOG = logging.getLogger(__name__)
 
+ACTIONS_PATH = '../resources/actions'
 _ACTION_CTX_PARAM = 'action_context'
+
+
+def register_standard_actions():
+    action_paths = utils.get_file_list(ACTIONS_PATH)
+
+    for action_path in action_paths:
+        action_definition = open(action_path).read()
+        actions.update_actions(action_definition, scope='public')
 
 
 def get_registered_actions(**kwargs):
@@ -60,6 +71,7 @@ def _clear_system_action_db():
 def sync_db():
     _clear_system_action_db()
     register_action_classes()
+    register_standard_actions()
 
 
 def _register_dynamic_action_classes():

@@ -21,19 +21,19 @@ from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
 
-def create_actions(definition):
+def create_actions(definition, scope='private'):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
     db_actions = []
 
     with db_api.transaction():
         for action_spec in action_list_spec.get_actions():
-            db_actions.append(create_action(action_spec, definition))
+            db_actions.append(create_action(action_spec, definition, scope))
 
     return db_actions
 
 
-def update_actions(definition):
+def update_actions(definition, scope='private'):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
     db_actions = []
@@ -41,16 +41,21 @@ def update_actions(definition):
     with db_api.transaction():
         for action_spec in action_list_spec.get_actions():
             db_actions.append(create_or_update_action(action_spec,
-                                                      definition))
+                                                      definition,
+                                                      scope))
 
     return db_actions
 
 
-def create_action(action_spec, definition):
-    return db_api.create_action(_get_action_values(action_spec, definition))
+def create_action(action_spec, definition, scope):
+    return db_api.create_action(_get_action_values(
+        action_spec,
+        definition,
+        scope
+    ))
 
 
-def create_or_update_action(action_spec, definition):
+def create_or_update_action(action_spec, definition, scope):
     action = db_api.load_action(action_spec.get_name())
 
     if action and action.is_system:
@@ -59,12 +64,12 @@ def create_or_update_action(action_spec, definition):
             action.name
         )
 
-    values = _get_action_values(action_spec, definition)
+    values = _get_action_values(action_spec, definition, scope)
 
     return db_api.create_or_update_action(values['name'], values)
 
 
-def _get_action_values(action_spec, definition):
+def _get_action_values(action_spec, definition, scope):
     values = {
         'name': action_spec.get_name(),
         'description': action_spec.get_description(),
@@ -72,7 +77,8 @@ def _get_action_values(action_spec, definition):
         'definition': definition,
         'spec': action_spec.to_dict(),
         'is_system': False,
-        'input': ", ".join(action_spec.get_input())
+        'input': ", ".join(action_spec.get_input()),
+        'scope': scope
     }
 
     _add_security_info(values)
@@ -81,7 +87,7 @@ def _get_action_values(action_spec, definition):
 
 
 def _add_security_info(values):
-    if cfg.CONF.pecan.auth_enable:
+    if cfg.CONF.pecan.auth_enable and not values['name'].startswith('std.'):
         values.update({
             'trust_id': trusts.create_trust().id,
             'project_id': context.ctx().project_id
