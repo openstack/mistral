@@ -72,11 +72,33 @@ class YaqlEvaluatorTest(base.BaseTest):
         self.assertEqual(item, {'name': 'ubuntu'})
 
     def test_function_length(self):
+        # Lists.
         self.assertEqual(3, expr.evaluate('$.length()', [1, 2, 3]))
         self.assertEqual(2, expr.evaluate('$.length()', ['one', 'two']))
         self.assertEqual(4, expr.evaluate(
             '$.array.length()',
             {'array': ['1', '2', '3', '4']})
+        )
+
+        # Strings.
+        self.assertEqual(3, expr.evaluate('$.length()', '123'))
+        self.assertEqual(2, expr.evaluate('$.length()', '12'))
+        self.assertEqual(
+            4,
+            expr.evaluate('$.string.length()', {'string': '1234'})
+        )
+
+        # Generators.
+        self.assertEqual(
+            2,
+            expr.evaluate(
+                "$[$.state = 'active'].length()",
+                [
+                    {'state': 'active'},
+                    {'state': 'active'},
+                    {'state': 'passive'}
+                ]
+            )
         )
 
 

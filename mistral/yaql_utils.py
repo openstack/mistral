@@ -14,11 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import collections
+import six
+import types
 import yaql
+from yaql import context as ctx
 
 
 def create_yaql_context():
-
     ctx = yaql.create_context()
 
     _register_functions(ctx)
@@ -27,11 +30,17 @@ def create_yaql_context():
 
 
 def _register_functions(yaql_ctx):
-    yaql_ctx.register_function(length, 'length')
-    yaql_ctx.register_function(length, 'size')
+    yaql_ctx.register_function(_generator_length, 'length')
+    yaql_ctx.register_function(_string_and_iterable_length, 'length')
 
 
 # Additional convenience YAQL functions.
 
-def length(a):
-    return len(a())
+@ctx.EvalArg('a', arg_type=(six.string_types, collections.Iterable))
+def _string_and_iterable_length(a):
+    return len(a)
+
+
+@ctx.EvalArg('a', arg_type=types.GeneratorType)
+def _generator_length(a):
+    return sum(1 for i in a)
