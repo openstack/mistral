@@ -16,6 +16,7 @@ import inspect
 
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
+from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient.v1_1 import client as novaclient
@@ -52,6 +53,10 @@ class GlanceAction(base.OpenStackAction):
 
         return self._client_class(endpoint_url, token=ctx.auth_token)
 
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class("")
+
 
 class KeystoneAction(base.OpenStackAction):
     _client_class = keystoneclient.Client
@@ -62,6 +67,19 @@ class KeystoneAction(base.OpenStackAction):
 
         return self._client_class(token=ctx.auth_token,
                                   auth_url=auth_url)
+
+    @classmethod
+    def _get_fake_client(cls):
+        # Here we need to replace httpclient authenticate method temporarily
+        authenticate = httpclient.HTTPClient.authenticate
+
+        httpclient.HTTPClient.authenticate = lambda x: True
+        fake_client = cls._client_class()
+
+        # Once we get fake client, return back authenticate method
+        httpclient.HTTPClient.authenticate = authenticate
+
+        return fake_client
 
 
 class HeatAction(base.OpenStackAction):
@@ -76,9 +94,13 @@ class HeatAction(base.OpenStackAction):
                                   token=ctx.auth_token,
                                   username=ctx.user_name)
 
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class("")
+
     def run(self):
         try:
-            method = self._get_client_method()
+            method = self._get_client_method(self._get_client())
             result = method(**self._kwargs_for_run)
             if inspect.isgenerator(result):
                 return [v for v in result]

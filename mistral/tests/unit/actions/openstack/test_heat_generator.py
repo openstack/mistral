@@ -12,21 +12,21 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslotest import base
-
 from mistral.actions.openstack.action_generator import generators
 from mistral.actions.openstack import actions
+from mistral.tests import base
 
 
-class HeatGeneratorTest(base.BaseTestCase):
+class HeatGeneratorTest(base.BaseTest):
     def test_generator(self):
         action_name = "heat.stacks_list"
         generator = generators.HeatActionGenerator
-        action_classes = generator.create_action_classes()
-        short_action_name = action_name.split(".")[1]
-        action_class = action_classes[short_action_name]
+        action_classes = generator.create_actions()
+        action = self._assert_single_item(
+            action_classes,
+            name=action_name
+        )
 
         self.assertIsNotNone(generator)
-        self.assertIn(short_action_name, action_classes)
-        self.assertTrue(issubclass(action_class, actions.HeatAction))
-        self.assertEqual("stacks.list", action_class.client_method_name)
+        self.assertTrue(issubclass(action['class'], actions.HeatAction))
+        self.assertEqual("stacks.list", action['class'].client_method_name)

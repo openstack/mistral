@@ -18,6 +18,8 @@ from oslo.config import cfg
 import pkg_resources as pkg
 
 from mistral.actions import action_generator
+from mistral.openstack.common import log as logging
+from mistral.utils import inspect_utils as i_u
 from mistral import version
 
 os_actions_mapping_path = cfg.StrOpt('openstack_actions_mapping_path',
@@ -26,7 +28,27 @@ os_actions_mapping_path = cfg.StrOpt('openstack_actions_mapping_path',
 
 CONF = cfg.CONF
 CONF.register_opt(os_actions_mapping_path)
+LOG = logging.getLogger(__name__)
 MAPPING_PATH = CONF.openstack_actions_mapping_path
+
+
+def get_mapping():
+    def delete_comment(map_part):
+        for key, value in map_part.items():
+            if isinstance(value, dict):
+                delete_comment(value)
+        if '_comment' in map_part:
+            del map_part['_comment']
+
+    mapping = json.loads(open(pkg.resource_filename(
+                         version.version_info.package,
+                         MAPPING_PATH)).read())
+
+    for k, v in mapping.items():
+        if isinstance(v, dict):
+            delete_comment(v)
+
+    return mapping
 
 
 class OpenStackActionGenerator(action_generator.ActionGenerator):
@@ -51,15 +73,35 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
         return action_class
 
     @classmethod
-    def create_action_classes(cls):
-        mapping = json.loads(open(pkg.resource_filename(
-                             version.version_info.package,
-                             MAPPING_PATH)).read())
+    def create_actions(cls):
+        mapping = get_mapping()
         method_dict = mapping[cls.action_namespace]
 
-        action_classes = {}
+        action_classes = []
 
         for action_name, method_name in method_dict.items():
-            action_classes[action_name] = cls.create_action_class(method_name)
+            clazz = cls.create_action_class(method_name)
+
+            try:
+                client_method = clazz.get_fake_client_method()
+            except Exception as e:
+                LOG.debug("Failed to get fake client method: %s" % e)
+                client_method = None
+
+            if client_method:
+                arg_list = i_u.get_arg_list_as_str(client_method)
+                description = i_u.get_docstring(client_method)
+            else:
+                arg_list = ''
+                description = None
+
+            action_classes.append(
+                {
+                    'class': clazz,
+                    'name': "%s.%s" % (cls.action_namespace, action_name),
+                    'description': description,
+                    'arg_list': arg_list,
+                }
+            )
 
         return action_classes

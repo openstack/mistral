@@ -149,7 +149,7 @@ class Action(mb.MistralModelBase):
     name = sa.Column(sa.String(200))
     description = sa.Column(sa.Text())
     tags = sa.Column(st.JsonListType())
-    input = sa.Column(sa.String(240))
+    input = sa.Column(sa.Text())
 
     # Ad-hoc action properties.
     definition = sa.Column(sa.Text(), nullable=True)

@@ -64,23 +64,22 @@ def sync_db():
 
 def _register_dynamic_action_classes():
     for generator in generator_factory.all_generators():
-        action_classes = generator.create_action_classes()
+        actions = generator.create_actions()
 
         module = generator.base_action_class.__module__
         class_name = generator.base_action_class.__name__
 
         action_class_str = "%s.%s" % (module, class_name)
 
-        for action_name, action in action_classes.items():
-            full_action_name =\
-                "%s.%s" % (generator.action_namespace, action_name)
-
-            attrs = i_utils.get_public_fields(action)
+        for action in actions:
+            attrs = i_utils.get_public_fields(action['class'])
 
             _register_action_in_db(
-                full_action_name,
+                action['name'],
                 action_class_str,
-                attrs
+                attrs,
+                action['description'],
+                action['arg_list']
             )
 
 
