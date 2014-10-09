@@ -88,8 +88,8 @@ def evaluate_task_output(task_spec, raw_result):
     # Evaluate 'publish' clause using raw result as a context.
     output = expr.evaluate_recursively(publish_dict, raw_result.data) or {}
 
-    # Add raw task result to task output under key 'task'
-    output['task'] = {task_spec.get_name(): raw_result.data}
+    # Add same result to task output under key 'task'.
+    output['task'] = {task_spec.get_name(): copy.copy(output)}
 
     return output
 

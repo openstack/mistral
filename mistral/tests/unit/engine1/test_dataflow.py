@@ -79,7 +79,7 @@ class DataFlowEngineTest(base.EngineTestCase):
         self.assertDictEqual(
             {
                 'task': {
-                    'task3': 'Hi, Morpheus!',
+                    'task3': {'result': 'Hi, Morpheus!'},
                 },
                 'result': 'Hi, Morpheus!',
             },

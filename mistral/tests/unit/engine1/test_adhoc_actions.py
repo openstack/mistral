@@ -49,8 +49,8 @@ workflows:
       - str1
       - str2
     output:
-      workflow_result: $.result # This access to execution context variables
-      concat_task_result: $.task.concat # This access to task raw result
+      workflow_result: $.result # Access to execution context variables
+      concat_task_result: $.task.concat # Access to the same but via 'task'
 
     tasks:
       concat:
@@ -83,7 +83,7 @@ class AdhocActionsTest(base.EngineTestCase):
         self.assertDictEqual(
             {
                 'workflow_result': 'a+b and a+b',
-                'concat_task_result': 'a+b and a+b'
+                'concat_task_result': {'result': 'a+b and a+b'}
             },
             exec_db.output
         )

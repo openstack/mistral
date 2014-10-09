@@ -92,7 +92,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', exec_db.output['task']['task1'])
+        self.assertEqual('a', exec_db.output['task']['task1']['result1'])
         self._assert_dict_contains_subset({'result1': 'a'}, exec_db.output)
 
     def test_start_task2(self):
@@ -129,7 +129,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', exec_db.output['task']['task1'])
-        self.assertEqual('a & b', exec_db.output['task']['task2'])
+        self.assertEqual('a', exec_db.output['task']['task1']['result1'])
+        self.assertEqual('a & b', exec_db.output['task']['task2']['result2'])
         self._assert_dict_contains_subset({'result1': 'a'}, exec_db.output)
         self._assert_dict_contains_subset({'result2': 'a & b'}, exec_db.output)
