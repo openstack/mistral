@@ -138,3 +138,11 @@ class YaqlEvaluatorTest(base.BaseTest):
             },
             applied
         )
+
+    def test_function_length(self):
+        self.assertEqual(3, expr.evaluate('$.length()', [1, 2, 3]))
+        self.assertEqual(2, expr.evaluate('$.length()', ['one', 'two']))
+        self.assertEqual(4, expr.evaluate(
+            '$.array.length()',
+            {'array': ['1', '2', '3', '4']})
+        )

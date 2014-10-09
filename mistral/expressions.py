@@ -21,6 +21,7 @@ import six
 import yaql
 
 from mistral.openstack.common import log as logging
+from mistral import yaql_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -56,11 +57,14 @@ class Evaluator(object):
 
 class YAQLEvaluator(Evaluator):
     @classmethod
-    def evaluate(cls, expression, context):
+    def evaluate(cls, expression, data_context):
         LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]"
-                  % (expression, context))
+                  % (expression, data_context))
 
-        return yaql.parse(expression).evaluate(context)
+        return yaql.parse(expression).evaluate(
+            data=data_context,
+            context=yaql_utils.create_yaql_context()
+        )
 
     @classmethod
     def is_expression(cls, s):
@@ -74,10 +78,10 @@ class InlineYAQLEvaluator(YAQLEvaluator):
     find_expression_pattern = re.compile("\{\$\.*[^\}]*\}")
 
     @classmethod
-    def evaluate(cls, expression, context):
+    def evaluate(cls, expression, data_context):
         if super(InlineYAQLEvaluator, cls).is_expression(expression):
             return super(InlineYAQLEvaluator,
-                         cls).evaluate(expression, context)
+                         cls).evaluate(expression, data_context)
 
         result = expression
         found_expressions = cls.find_inline_expressions(expression)
@@ -86,7 +90,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
             for expr in found_expressions:
                 trim_expr = expr.strip("{}")
                 evaluated = super(InlineYAQLEvaluator,
-                                  cls).evaluate(trim_expr, context)
+                                  cls).evaluate(trim_expr, data_context)
 
                 replacement = str(evaluated) if evaluated else expr
                 result = result.replace(expr, replacement)
