@@ -91,23 +91,23 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         ctx = data_flow.evaluate_outbound_context(task_db)
 
-        if t_state == states.ERROR:
-            on_error = self.get_on_error_clause(t_name)
-
-            if on_error:
-                commands = self._get_next_commands(on_error, ctx)
-
-        elif t_state == states.SUCCESS:
-            on_success = self.get_on_success_clause(t_name)
-
-            if on_success:
-                commands = self._get_next_commands(on_success, ctx)
-
         if states.is_finished(t_state):
             on_complete = self.get_on_complete_clause(t_name)
 
             if on_complete:
                 commands += self._get_next_commands(on_complete, ctx)
+
+        if t_state == states.ERROR:
+            on_error = self.get_on_error_clause(t_name)
+
+            if on_error:
+                commands += self._get_next_commands(on_error, ctx)
+
+        elif t_state == states.SUCCESS:
+            on_success = self.get_on_success_clause(t_name)
+
+            if on_success:
+                commands += self._get_next_commands(on_success, ctx)
 
         LOG.debug("Found commands: %s" % commands)
 
