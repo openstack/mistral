@@ -131,13 +131,13 @@ def add_openstack_data_to_context(workflow_db, context):
         context = {}
 
     if CONF.pecan.auth_enable:
-        workbook_ctx = trusts.create_context(
+        wf_ctx = trusts.create_context(
             workflow_db.trust_id,
             workflow_db.project_id
         )
 
-        if workbook_ctx:
-            context.update({'openstack': workbook_ctx.to_dict()})
+        if wf_ctx:
+            context.update({'openstack': wf_ctx.to_dict()})
 
     return context
 

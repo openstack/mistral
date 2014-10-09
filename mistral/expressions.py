@@ -61,10 +61,14 @@ class YAQLEvaluator(Evaluator):
         LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]"
                   % (expression, data_context))
 
-        return yaql.parse(expression).evaluate(
+        result = yaql.parse(expression).evaluate(
             data=data_context,
             context=yaql_utils.create_yaql_context()
         )
+
+        LOG.debug("YAQL expression result: %s" % result)
+
+        return result
 
     @classmethod
     def is_expression(cls, s):
@@ -79,6 +83,11 @@ class InlineYAQLEvaluator(YAQLEvaluator):
 
     @classmethod
     def evaluate(cls, expression, data_context):
+        LOG.debug(
+            "Evaluating inline YAQL expression [expression='%s', context=%s]"
+            % (expression, data_context)
+        )
+
         if super(InlineYAQLEvaluator, cls).is_expression(expression):
             return super(InlineYAQLEvaluator,
                          cls).evaluate(expression, data_context)
@@ -89,11 +98,16 @@ class InlineYAQLEvaluator(YAQLEvaluator):
         if found_expressions:
             for expr in found_expressions:
                 trim_expr = expr.strip("{}")
-                evaluated = super(InlineYAQLEvaluator,
-                                  cls).evaluate(trim_expr, data_context)
 
-                replacement = str(evaluated) if evaluated else expr
+                evaluated = super(InlineYAQLEvaluator, cls).evaluate(
+                    trim_expr,
+                    data_context
+                )
+
+                replacement = str(evaluated)
                 result = result.replace(expr, replacement)
+
+        LOG.debug("Inline YAQL expression result: %s" % result)
 
         return result
 

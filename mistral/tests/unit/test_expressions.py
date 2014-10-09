@@ -38,6 +38,7 @@ SERVERS = {
 class YaqlEvaluatorTest(base.BaseTest):
     def setUp(self):
         super(YaqlEvaluatorTest, self).setUp()
+
         self._evaluator = expr.YAQLEvaluator()
 
     def test_expression_result(self):
@@ -70,6 +71,56 @@ class YaqlEvaluatorTest(base.BaseTest):
         item = list(res)[0]
         self.assertEqual(item, {'name': 'ubuntu'})
 
+    def test_function_length(self):
+        self.assertEqual(3, expr.evaluate('$.length()', [1, 2, 3]))
+        self.assertEqual(2, expr.evaluate('$.length()', ['one', 'two']))
+        self.assertEqual(4, expr.evaluate(
+            '$.array.length()',
+            {'array': ['1', '2', '3', '4']})
+        )
+
+
+class InlineYAQLEvaluatorTest(base.BaseTest):
+    def setUp(self):
+        super(InlineYAQLEvaluatorTest, self).setUp()
+
+        self._evaluator = expr.InlineYAQLEvaluator()
+
+    def test_multiple_placeholders(self):
+        expr_str = """
+            Statistics for tenant "{$.project_id}"
+
+            Number of virtual machines: {$.vm_count}
+            Number of active virtual machines: {$.active_vm_count}
+            Number of networks: {$.net_count}
+
+            -- Sincerely, Mistral Team.
+        """
+
+        result = self._evaluator.evaluate(
+            expr_str,
+            {
+                'project_id': '1-2-3-4',
+                'vm_count': 28,
+                'active_vm_count': 0,
+                'net_count': 1
+            }
+        )
+
+        expected_result = """
+            Statistics for tenant "1-2-3-4"
+
+            Number of virtual machines: 28
+            Number of active virtual machines: 0
+            Number of networks: 1
+
+            -- Sincerely, Mistral Team.
+        """
+
+        self.assertEqual(expected_result, result)
+
+
+class ExpressionsTest(base.BaseTest):
     def test_evaluate_recursively(self):
         task_spec_dict = {
             'parameters': {
@@ -81,11 +132,10 @@ class YaqlEvaluatorTest(base.BaseTest):
                 'new_key11': 'new_key1'
             }
         }
+
         modified_task = expr.evaluate_recursively(
             task_spec_dict,
-            {
-                'param2': 'val32'
-            }
+            {'param2': 'val32'}
         )
 
         self.assertDictEqual(
@@ -137,12 +187,4 @@ class YaqlEvaluatorTest(base.BaseTest):
                 "token": "123"
             },
             applied
-        )
-
-    def test_function_length(self):
-        self.assertEqual(3, expr.evaluate('$.length()', [1, 2, 3]))
-        self.assertEqual(2, expr.evaluate('$.length()', ['one', 'two']))
-        self.assertEqual(4, expr.evaluate(
-            '$.array.length()',
-            {'array': ['1', '2', '3', '4']})
         )
