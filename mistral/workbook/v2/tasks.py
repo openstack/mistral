@@ -31,6 +31,7 @@ class TaskSpec(base.BaseSpec):
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "input": {"type": ["object", "null"]},
+            "for-each": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
             "targets": {"type": ["array", "null"]},
@@ -53,6 +54,7 @@ class TaskSpec(base.BaseSpec):
         self._action = data.get('action')
         self._workflow = data.get('workflow')
         self._input = data.get('input', {})
+        self._for_each = data.get('for-each', {})
         self._publish = data.get('publish', {})
         self._policies = self._spec_property(
             'policies',
@@ -101,6 +103,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_input(self):
         return self._input
+
+    def get_for_each(self):
+        return self._for_each
 
     def get_policies(self):
         return self._policies

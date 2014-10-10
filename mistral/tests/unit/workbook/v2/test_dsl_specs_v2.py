@@ -102,6 +102,8 @@ workflows:
         action: std.echo output="Task 6 echo"
 
       task7:
+        for-each:
+          vm_info: $.vms
         workflow: wf2 is_true=true object_list=[1, null, "str"]
 
       task8:
@@ -262,6 +264,11 @@ class DSLv2ModelTest(base.BaseTest):
                 'object_list': [1, None, 'str'],
             },
             task7_spec.get_input()
+        )
+
+        self.assertEqual(
+            {'vm_info': '$.vms'},
+            task7_spec.get_for_each()
         )
 
         task8_spec = wf2_spec.get_tasks().get('task8')
