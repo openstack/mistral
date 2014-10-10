@@ -41,14 +41,16 @@ WF_DB = models.Workflow(
     name='flow',
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
+    spec={'input': ['param', 'param2']}
 )
 
 WF = {
     'name': 'flow',
     'definition': WF_DEFINITION,
     'created_at': '1970-01-01 00:00:00',
-    'updated_at': '1970-01-01 00:00:00'
+    'updated_at': '1970-01-01 00:00:00',
+    'input': 'param, param2'
 }
 
 UPDATED_WF_DEFINITION = """

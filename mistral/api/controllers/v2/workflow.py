@@ -33,6 +33,7 @@ class Workflow(resource.Resource):
 
     id = wtypes.text
     name = wtypes.text
+    input = wtypes.text
 
     definition = wtypes.text
     tags = [wtypes.text]
@@ -45,11 +46,25 @@ class Workflow(resource.Resource):
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='flow',
+                   input='param1, param2',
                    definition='---',
                    tags=['large', 'expensive'],
                    scope='private',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
+
+    @classmethod
+    def from_dict(cls, d):
+        e = cls()
+
+        for key, val in d.items():
+            if hasattr(e, key):
+                setattr(e, key, val)
+
+        input = d['spec'].get('input')
+        setattr(e, 'input', ", ".join(input) if input else None)
+
+        return e
 
 
 class Workflows(resource.Resource):
