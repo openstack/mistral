@@ -21,6 +21,7 @@ import copy
 from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
+from mistral.openstack.common import timeutils
 from mistral.tests import base as test_base
 
 
@@ -755,6 +756,118 @@ class ActionTest(test_base.DbTestCase):
         self.assertIn('Action ', s)
         self.assertIn("'description': 'Action #1'", s)
         self.assertIn("'name': 'action1'", s)
+
+
+CRON_TRIGGERS = [
+    {
+        'name': 'trigger1',
+        'pattern': '* * * * *',
+        'workflow_id': None,
+        'workflow_input': {},
+        'next_execution_time': timeutils.utcnow(),
+        'scope': 'private',
+        'project_id': '5-6-7-8'
+    },
+    {
+        'name': 'trigger2',
+        'pattern': '* * * * *',
+        'workflow_id': None,
+        'workflow_input': {},
+        'next_execution_time': timeutils.utcnow(),
+        'scope': 'private',
+        'project_id': '5-6-7-8'
+    },
+]
+
+
+class CronTriggerTest(test_base.DbTestCase):
+    def setUp(self):
+        super(CronTriggerTest, self).setUp()
+
+        self.wf = db_api.create_workflow({'name': 'my_wf'})
+
+        for ct in CRON_TRIGGERS:
+            ct['workflow_id'] = self.wf.id
+
+    def test_create_and_get_and_load_cron_trigger(self):
+        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        fetched = db_api.get_cron_trigger(created.name)
+
+        self.assertEqual(created, fetched)
+
+        fetched = db_api.load_cron_trigger(created.name)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_cron_trigger("not-existing-trigger"))
+
+    def test_update_cron_trigger(self):
+        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        updated = db_api.update_cron_trigger(
+            created.name,
+            {'pattern': '*/1 * * * *'}
+        )
+
+        self.assertEqual('*/1 * * * *', updated.pattern)
+
+        fetched = db_api.get_cron_trigger(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_create_or_update_cron_trigger(self):
+        name = 'not-existing-id'
+
+        self.assertIsNone(db_api.load_cron_trigger(name))
+
+        created = db_api.create_or_update_cron_trigger(name, CRON_TRIGGERS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.name)
+
+        updated = db_api.create_or_update_cron_trigger(
+            created.name,
+            {'pattern': '*/1 * * * *'}
+        )
+
+        self.assertEqual('*/1 * * * *', updated.pattern)
+
+        fetched = db_api.get_cron_trigger(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_cron_triggers(self):
+        created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+        created1 = db_api.create_cron_trigger(CRON_TRIGGERS[1])
+
+        fetched = db_api.get_cron_triggers(pattern='* * * * *')
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_delete_cron_trigger(self):
+        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        fetched = db_api.get_cron_trigger(created.name)
+
+        self.assertEqual(created, fetched)
+
+        db_api.delete_cron_trigger(created.name)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_cron_trigger,
+            created.name
+        )
+
+    def test_cron_trigger_repr(self):
+        s = db_api.create_cron_trigger(CRON_TRIGGERS[0]).__repr__()
+
+        self.assertIn('CronTrigger ', s)
+        self.assertIn("'pattern': '* * * * *'", s)
+        self.assertIn("'name': 'trigger1'", s)
 
 
 class TXTest(test_base.DbTestCase):

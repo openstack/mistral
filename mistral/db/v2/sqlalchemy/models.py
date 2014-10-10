@@ -164,3 +164,28 @@ class Action(mb.MistralModelBase):
     scope = sa.Column(sa.String(80))
     project_id = sa.Column(sa.String(80))
     trust_id = sa.Column(sa.String(80))
+
+
+class CronTrigger(mb.MistralModelBase):
+    """Contains info about cron triggers."""
+
+    __tablename__ = 'cron_triggers_v2'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name', 'project_id'),
+    )
+
+    id = mb.id_column()
+    name = sa.Column(sa.String(200))
+    pattern = sa.Column(sa.String(100))
+    next_execution_time = sa.Column(sa.DateTime, nullable=False)
+
+    workflow_id = sa.Column(sa.String(36), sa.ForeignKey('workflows_v2.id'))
+    workflow = relationship('Workflow', lazy='joined')
+
+    workflow_input = sa.Column(st.JsonDictType())
+
+    # Security properties.
+    scope = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80))
+    trust_id = sa.Column(sa.String(80))

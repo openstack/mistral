@@ -92,14 +92,13 @@ def _delete_all(model, session=None, **kwargs):
 def _get_collection_sorted_by_name(model, **kwargs):
     query = b.model_query(model)
 
-    proj = query.filter_by(project_id=context.ctx().project_id,
-                           **kwargs)
+    proj = query.filter_by(project_id=context.ctx().project_id, **kwargs)
     public = query.filter_by(scope='public', **kwargs)
 
     return proj.union(public).order_by(model.name).all()
 
-# Workbooks.
 
+# Workbooks.
 
 def get_workbook(name):
     wb = _get_workbook(name)
@@ -491,8 +490,8 @@ def _get_delayed_call(delayed_call_id, session=None):
 
     return query.filter_by(id=delayed_call_id).first()
 
-# Actions.
 
+# Actions.
 
 def get_action(name):
     action = _get_action(name)
@@ -574,5 +573,91 @@ def _get_action(name):
 
 def _get_actions(**kwargs):
     query = b.model_query(models.Action)
+
+    return query.filter_by(**kwargs).all()
+
+
+# Cron triggers.
+
+def get_cron_trigger(name):
+    cron_trigger = _get_cron_trigger(name)
+
+    if not cron_trigger:
+        raise exc.NotFoundException(
+            "Cron trigger not found [name=%s]" % name)
+
+    return cron_trigger
+
+
+def load_cron_trigger(name):
+    return _get_cron_trigger(name)
+
+
+def get_cron_triggers(**kwargs):
+    return _get_collection_sorted_by_name(models.CronTrigger, **kwargs)
+
+
+@b.session_aware()
+def create_cron_trigger(values, session=None):
+    cron_trigger = models.CronTrigger()
+
+    cron_trigger.update(values)
+
+    try:
+        cron_trigger.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry("Duplicate entry for cron trigger %s: %s"
+                                   % (cron_trigger.name, e.columns))
+
+    return cron_trigger
+
+
+@b.session_aware()
+def update_cron_trigger(name, values, session=None):
+    cron_trigger = _get_cron_trigger(name)
+
+    if not cron_trigger:
+        raise exc.NotFoundException(
+            "Cron trigger not found [name=%s]" % name)
+
+    cron_trigger.update(values.copy())
+
+    return cron_trigger
+
+
+@b.session_aware()
+def create_or_update_cron_trigger(name, values, session=None):
+    cron_trigger = _get_cron_trigger(name)
+
+    if not cron_trigger:
+        return create_cron_trigger(values)
+    else:
+        return update_cron_trigger(name, values)
+
+
+@b.session_aware()
+def delete_cron_trigger(name, session=None):
+    cron_trigger = _get_cron_trigger(name)
+
+    if not cron_trigger:
+        raise exc.NotFoundException(
+            "Cron trigger not found [name=%s]" % name)
+
+    session.delete(cron_trigger)
+
+
+@b.session_aware()
+def delete_cron_triggers(**kwargs):
+    return _delete_all(models.CronTrigger, **kwargs)
+
+
+def _get_cron_trigger(name):
+    query = b.model_query(models.CronTrigger)
+
+    return query.filter_by(name=name).first()
+
+
+def _get_cron_triggers(**kwargs):
+    query = b.model_query(models.CronTrigger)
 
     return query.filter_by(**kwargs).all()
