@@ -645,20 +645,23 @@ class TaskTest(test_base.DbTestCase):
         self.assertIn("'state': 'IDLE'", s)
         self.assertIn("'name': 'my_task1'", s)
 
+
 ACTIONS = [
     {
         'name': 'action1',
         'description': 'Action #1',
         'is_system': True,
         'action_class': 'mypackage.my_module.Action1',
-        'attributes': None
+        'attributes': None,
+        'project_id': '5-6-7-8'
     },
     {
         'name': 'action2',
         'description': 'Action #2',
         'is_system': True,
         'action_class': 'mypackage.my_module.Action2',
-        'attributes': None
+        'attributes': None,
+        'project_id': '5-6-7-8'
     },
 ]
 

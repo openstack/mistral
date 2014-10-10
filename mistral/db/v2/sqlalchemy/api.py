@@ -89,7 +89,17 @@ def _delete_all(model, session=None, **kwargs):
     query.delete()
 
 
+def _get_collection_sorted_by_name(model, **kwargs):
+    query = b.model_query(model)
+
+    proj = query.filter_by(project_id=context.ctx().project_id,
+                           **kwargs)
+    public = query.filter_by(scope='public', **kwargs)
+
+    return proj.union(public).order_by(model.name).all()
+
 # Workbooks.
+
 
 def get_workbook(name):
     wb = _get_workbook(name)
@@ -106,7 +116,7 @@ def load_workbook(name):
 
 
 def get_workbooks(**kwargs):
-    return _get_workbooks(**kwargs)
+    return _get_collection_sorted_by_name(models.Workbook, **kwargs)
 
 
 @b.session_aware()
@@ -160,15 +170,6 @@ def delete_workbook(name, session=None):
     session.delete(wb)
 
 
-def _get_workbooks(**kwargs):
-    query = b.model_query(models.Workbook)
-    proj = query.filter_by(project_id=context.ctx().project_id,
-                           **kwargs)
-    public = query.filter_by(scope='public', **kwargs)
-
-    return proj.union(public).all()
-
-
 def _get_workbook(name):
     query = b.model_query(models.Workbook)
 
@@ -202,7 +203,7 @@ def load_workflow(name):
 
 
 def get_workflows(**kwargs):
-    return _get_workflows(**kwargs)
+    return _get_collection_sorted_by_name(models.Workflow, **kwargs)
 
 
 @b.session_aware()
@@ -259,19 +260,6 @@ def delete_workflow(name, session=None):
 @b.session_aware()
 def delete_workflows(**kwargs):
     return _delete_all(models.Workflow, **kwargs)
-
-
-def _get_workflows(**kwargs):
-    query = b.model_query(models.Workflow)
-
-    # TODO(rakhmerov): I think DB layer shouldn't do this.
-    #  It's not its responsibility. Additional security filtering should
-    #  be applied in upper layers.
-    proj = query.filter_by(project_id=context.ctx().project_id,
-                           **kwargs)
-    public = query.filter_by(scope='public', **kwargs)
-
-    return proj.union(public).all()
 
 
 def _get_workflow(name):
@@ -521,7 +509,7 @@ def load_action(name):
 
 
 def get_actions(**kwargs):
-    return _get_actions(**kwargs)
+    return _get_collection_sorted_by_name(models.Action, **kwargs)
 
 
 @b.session_aware()

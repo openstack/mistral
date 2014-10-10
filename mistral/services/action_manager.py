@@ -53,7 +53,8 @@ def _register_action_in_db(name, action_class, attributes,
         'attributes': attributes,
         'description': description,
         'input': input_str,
-        'is_system': True
+        'is_system': True,
+        'scope': 'public'
     }
 
     try:
