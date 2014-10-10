@@ -13,15 +13,17 @@
 #    limitations under the License.
 
 import abc
+import copy
 from oslo.config import cfg
 import six
 
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import policies
 from mistral.engine1 import rpc
-from mistral.engine1 import utils
+from mistral.engine1 import utils as e_utils
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
+from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -122,7 +124,7 @@ class RunTask(EngineCommand):
 
         action_spec_name = self.task_spec.get_action_name()
 
-        action_db = utils.resolve_action(
+        action_db = e_utils.resolve_action(
             exec_db.wf_name,
             wf_spec.get_name(),
             action_spec_name
@@ -136,7 +138,7 @@ class RunTask(EngineCommand):
 
             base_name = action_spec.get_base()
 
-            action_db = utils.resolve_action(
+            action_db = e_utils.resolve_action(
                 exec_db.wf_name,
                 wf_spec.get_name(),
                 base_name
@@ -152,7 +154,13 @@ class RunTask(EngineCommand):
             else:
                 action_input = {}
 
-        targets = self.task_spec.get_targets()
+        targets = expr.evaluate_recursively(
+            self.task_spec.get_targets(),
+            utils.merge_dicts(
+                copy.copy(self.task_db.input),
+                copy.copy(self.task_db.in_context)
+            )
+        )
 
         rpc.get_executor_client().run_action(
             self.task_db.id,
@@ -168,7 +176,7 @@ class RunTask(EngineCommand):
 
         wf_spec_name = self.task_spec.get_workflow_name()
 
-        wf_db = utils.resolve_workflow(
+        wf_db = e_utils.resolve_workflow(
             parent_exec_db.wf_name,
             parent_wf_spec.get_name(),
             wf_spec_name
