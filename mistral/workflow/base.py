@@ -85,13 +85,13 @@ class WorkflowHandler(object):
         task_db.output =\
             data_flow.evaluate_task_output(task_spec, raw_result)
 
-        if task_db.state == states.ERROR and not task_spec.get_on_error():
+        commands = self._find_next_commands(task_db)
+
+        if task_db.state == states.ERROR and not commands:
             if not self.is_paused_or_finished():
                 self._set_execution_state(states.ERROR)
 
             return []
-
-        commands = self._find_next_commands(task_db)
 
         if len(commands) == 0:
             # If there are no running tasks at this point we can conclude that
