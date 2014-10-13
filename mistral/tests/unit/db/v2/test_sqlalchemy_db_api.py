@@ -762,6 +762,7 @@ CRON_TRIGGERS = [
     {
         'name': 'trigger1',
         'pattern': '* * * * *',
+        'workflow_name': 'my_wf',
         'workflow_id': None,
         'workflow_input': {},
         'next_execution_time': timeutils.utcnow(),
@@ -771,6 +772,7 @@ CRON_TRIGGERS = [
     {
         'name': 'trigger2',
         'pattern': '* * * * *',
+        'workflow_name': 'my_wf',
         'workflow_id': None,
         'workflow_input': {},
         'next_execution_time': timeutils.utcnow(),
