@@ -598,6 +598,16 @@ def get_cron_triggers(**kwargs):
 
 
 @b.session_aware()
+def get_next_cron_triggers(time, session=None):
+    query = b.model_query(models.CronTrigger)
+
+    query = query.filter(models.CronTrigger.next_execution_time < time)
+    query = query.order_by(models.CronTrigger.next_execution_time)
+
+    return query.all()
+
+
+@b.session_aware()
 def create_cron_trigger(values, session=None):
     cron_trigger = models.CronTrigger()
 

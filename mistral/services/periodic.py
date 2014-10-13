@@ -15,15 +15,16 @@
 #    limitations under the License.
 
 from mistral import context
-from mistral.db.v1 import api as db_api
+from mistral.db.v1 import api as db_api_v1
+from mistral.db.v2 import api as db_api_v2
 from mistral import engine
+from mistral.engine1 import rpc
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral.services import triggers
 from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
-
 
 LOG = log.getLogger(__name__)
 
@@ -37,24 +38,57 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
         self.engine = engine.EngineClient(self.transport)
 
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
-    def scheduler_triggers(self, ctx):
-        LOG.debug('Processing next Scheduler triggers.')
+    def process_cron_triggers_v1(self, ctx):
+        LOG.debug('Processing cron triggers.')
 
-        for trigger in triggers.get_next_triggers():
+        for t in triggers.get_next_triggers_v1():
             # Setup admin context before schedule triggers.
-            context.set_ctx(ctx)
-
-            wb = db_api.workbook_get(trigger['workbook_name'])
+            wb = db_api_v1.workbook_get(t['workbook_name'])
 
             context.set_ctx(trusts.create_context(wb.trust_id, wb.project_id))
 
             try:
                 task = spec_parser.get_workbook_spec_from_yaml(
-                    wb['definition']).get_trigger_task_name(trigger['name'])
+                    wb['definition']).get_trigger_task_name(t['name'])
 
                 self.engine.start_workflow_execution(wb['name'], task)
             finally:
-                triggers.set_next_execution_time(trigger)
+                next_time = triggers.get_next_execution_time(
+                    t['pattern'],
+                    t['next_execution_time']
+                )
+
+                db_api_v1.trigger_update(
+                    t['id'],
+                    {'next_execution_time': next_time}
+                )
+
+                context.set_ctx(None)
+
+    @periodic_task.periodic_task(spacing=1, run_immediately=True)
+    def process_cron_triggers_v2(self, ctx):
+        LOG.debug('Processing cron triggers.')
+
+        for t in triggers.get_next_cron_triggers():
+            # Setup admin context before schedule triggers.
+            context.set_ctx(trusts.create_context(t.trust_id, t.project_id))
+
+            try:
+                rpc.get_engine_client().start_workflow(
+                    t.workflow.name,
+                    t.workflow_input
+                )
+            finally:
+                next_time = triggers.get_next_execution_time(
+                    t.pattern,
+                    t.next_execution_time
+                )
+
+                db_api_v2.update_cron_trigger(
+                    t.name,
+                    {'next_execution_time': next_time}
+                )
+
                 context.set_ctx(None)
 
 

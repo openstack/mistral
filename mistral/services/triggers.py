@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2014 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,36 +14,30 @@
 
 from croniter import croniter
 import datetime
-from mistral.db.v1 import api as db_api
+from mistral.db.v1 import api as db_api_v1
+from mistral.db.v2 import api as db_api_v2
 from mistral.workbook import parser as spec_parser
 
 
-def get_next_triggers():
-    return db_api.get_next_triggers(datetime.datetime.now() +
-                                    datetime.timedelta(0, 2))
-
-
-def set_next_execution_time(trigger):
-    base = trigger['next_execution_time']
-    cron = croniter(trigger['pattern'], base)
-
-    return db_api.trigger_update(trigger['id'], {
-        'next_execution_time': cron.get_next(datetime.datetime)
-    })
-
-
-def _get_next_execution_time(pattern, start_time):
+def get_next_execution_time(pattern, start_time):
     return croniter(pattern, start_time).get_next(datetime.datetime)
 
 
-def create_trigger(name, pattern, workbook_name, start_time=None):
+# Triggers v1.
+
+def get_next_triggers_v1():
+    return db_api_v1.get_next_triggers(datetime.datetime.now() +
+                                       datetime.timedelta(0, 2))
+
+
+def create_trigger_v1(name, pattern, workbook_name, start_time=None):
     if not start_time:
         start_time = datetime.datetime.now()
 
-    return db_api.trigger_create({
+    return db_api_v1.trigger_create({
         "name": name,
         "pattern": pattern,
-        "next_execution_time": _get_next_execution_time(pattern, start_time),
+        "next_execution_time": get_next_execution_time(pattern, start_time),
         "workbook_name": workbook_name
     })
 
@@ -65,7 +57,7 @@ def create_associated_triggers(db_workbook):
 
     for e in triggers:
         pattern = e['parameters']['cron-pattern']
-        next_time = _get_next_execution_time(pattern, datetime.datetime.now())
+        next_time = get_next_execution_time(pattern, datetime.datetime.now())
         db_triggers.append({
             "name": e['name'],
             "pattern": pattern,
@@ -73,12 +65,35 @@ def create_associated_triggers(db_workbook):
             "workbook_name": db_workbook.name
         })
 
-    db_api.start_tx()
-
-    try:
+    with db_api_v1.transaction():
         for e in db_triggers:
-            db_api.trigger_create(e)
+            db_api_v1.trigger_create(e)
 
-        db_api.commit_tx()
-    finally:
-        db_api.end_tx()
+
+# Triggers v2.
+
+def get_next_cron_triggers():
+    return db_api_v2.get_next_cron_triggers(
+        datetime.datetime.now() + datetime.timedelta(0, 2)
+    )
+
+
+def create_cron_trigger(name, pattern, workflow_name, workflow_input,
+                        start_time=None):
+    if not start_time:
+        start_time = datetime.datetime.now()
+
+    with db_api_v2.transaction():
+        wf = db_api_v2.get_workflow(workflow_name)
+
+        next_time = get_next_execution_time(pattern, start_time)
+
+        trig = db_api_v2.create_cron_trigger({
+            'name': name,
+            'pattern': pattern,
+            'next_execution_time': next_time,
+            'workflow_id': wf.id,
+            'workflow_input': workflow_input
+        })
+
+    return trig

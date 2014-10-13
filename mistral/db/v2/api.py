@@ -270,6 +270,10 @@ def get_cron_triggers(**kwargs):
     return IMPL.get_cron_triggers(**kwargs)
 
 
+def get_next_cron_triggers(time):
+    return IMPL.get_next_cron_triggers(time)
+
+
 def create_cron_trigger(values):
     return IMPL.create_cron_trigger(values)
 
