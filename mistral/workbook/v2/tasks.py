@@ -66,6 +66,7 @@ class TaskSpec(base.BaseSpec):
         self._on_success = self._as_list_of_tuples('on-success')
         self._on_error = self._as_list_of_tuples('on-error')
 
+        self._process_for_each()
         self._process_action_and_workflow()
 
     def _process_action_and_workflow(self):
@@ -88,6 +89,14 @@ class TaskSpec(base.BaseSpec):
                 self._workflow)
 
         utils.merge_dicts(self._input, params)
+
+    def _process_for_each(self):
+        if self._for_each:
+            for key, value in self._for_each.items():
+                if not isinstance(value, (list, six.string_types)):
+                    msg = ("Items of task property 'for-each' can only be "
+                           "a list or an expression string: %s" % self._data)
+                    raise exc.InvalidModelException(msg)
 
     def get_name(self):
         return self._name
