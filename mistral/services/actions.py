@@ -48,11 +48,9 @@ def update_actions(definition, scope='private'):
 
 
 def create_action(action_spec, definition, scope):
-    return db_api.create_action(_get_action_values(
-        action_spec,
-        definition,
-        scope
-    ))
+    return db_api.create_action(
+        _get_action_values(action_spec, definition, scope)
+    )
 
 
 def create_or_update_action(action_spec, definition, scope):
