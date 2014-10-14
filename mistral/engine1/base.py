@@ -49,10 +49,9 @@ class Engine(object):
 
     @abc.abstractmethod
     def run_task(self, task_id):
-        """Runs task with id=task_id.
+        """Runs task with given id..
 
-        :param task_id:
-        :return:
+        :param task_id: Task id.
         """
         raise NotImplementedError
 

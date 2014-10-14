@@ -25,8 +25,11 @@ from oslo.config import cfg
 from mistral.actions.openstack import base
 from mistral import context
 from mistral import exceptions as exc
+from mistral.openstack.common import log
 from mistral.utils.openstack import keystone as keystone_utils
 
+
+LOG = log.getLogger(__name__)
 
 CONF = cfg.CONF
 
@@ -36,12 +39,20 @@ class NovaAction(base.OpenStackAction):
 
     def _get_client(self):
         ctx = context.ctx()
-        auth_url = keystone_utils.get_keystone_url_v2()
 
-        return self._client_class(username=ctx.user_name,
-                                  auth_token=ctx.auth_token,
-                                  tenant_id=ctx.project_id,
-                                  auth_url=auth_url)
+        LOG.debug("Nova action security context: %s" % ctx)
+
+        client = self._client_class(
+            username=None,
+            api_key=None,
+            endpoint_type='publicURL',
+            service_type='compute',
+            auth_token=ctx.auth_token,
+            tenant_id=ctx.project_id,
+            auth_url=keystone_utils.get_keystone_url_v2()
+        )
+
+        return client
 
 
 class GlanceAction(base.OpenStackAction):
@@ -49,9 +60,13 @@ class GlanceAction(base.OpenStackAction):
 
     def _get_client(self):
         ctx = context.ctx()
-        endpoint_url = keystone_utils.get_endpoint_for_project('glance')
 
-        return self._client_class(endpoint_url, token=ctx.auth_token)
+        LOG.debug("Glance action security context: %s" % ctx)
+
+        return self._client_class(
+            keystone_utils.get_endpoint_for_project('glance'),
+            token=ctx.auth_token
+        )
 
     @classmethod
     def _get_fake_client(cls):
@@ -63,10 +78,13 @@ class KeystoneAction(base.OpenStackAction):
 
     def _get_client(self):
         ctx = context.ctx()
-        auth_url = CONF.keystone_authtoken.auth_uri
 
-        return self._client_class(token=ctx.auth_token,
-                                  auth_url=auth_url)
+        LOG.debug("Keystone action security context: %s" % ctx)
+
+        return self._client_class(
+            token=ctx.auth_token,
+            auth_url=CONF.keystone_authtoken.auth_uri
+        )
 
     @classmethod
     def _get_fake_client(cls):
@@ -87,12 +105,17 @@ class HeatAction(base.OpenStackAction):
 
     def _get_client(self):
         ctx = context.ctx()
+
+        LOG.debug("Heat action security context: %s" % ctx)
+
         endpoint_url_tmpl = keystone_utils.get_endpoint_for_project('heat')
         endpoint_url = endpoint_url_tmpl % {'tenant_id': ctx.project_id}
 
-        return self._client_class(endpoint_url,
-                                  token=ctx.auth_token,
-                                  username=ctx.user_name)
+        return self._client_class(
+            endpoint_url,
+            token=ctx.auth_token,
+            username=ctx.user_name
+        )
 
     @classmethod
     def _get_fake_client(cls):
@@ -115,9 +138,11 @@ class NeutronAction(base.OpenStackAction):
 
     def _get_client(self):
         ctx = context.ctx()
-        auth_url = CONF.keystone_authtoken.auth_uri
-        endpoint_url = keystone_utils.get_endpoint_for_project('neutron')
 
-        return self._client_class(endpoint_url=endpoint_url,
-                                  token=ctx.auth_token,
-                                  auth_url=auth_url)
+        LOG.debug("Neutron action security context: %s" % ctx)
+
+        return self._client_class(
+            endpoint_url=keystone_utils.get_endpoint_for_project('neutron'),
+            token=ctx.auth_token,
+            auth_url=CONF.keystone_authtoken.auth_uri
+        )
