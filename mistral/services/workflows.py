@@ -64,7 +64,7 @@ def update_workflows(definition, scope='private'):
     return db_wfs
 
 
-def _create_workflow(wf_spec, definition, scope):
+def _get_workflow_values(wf_spec, definition, scope):
     values = {
         'name': wf_spec.get_name(),
         'tags': wf_spec.get_tags(),
@@ -75,19 +75,17 @@ def _create_workflow(wf_spec, definition, scope):
 
     _add_security_info(values)
 
-    return db_api.create_workflow(values)
+    return values
+
+
+def _create_workflow(wf_spec, definition, scope):
+    return db_api.create_workflow(
+        _get_workflow_values(wf_spec, definition, scope)
+    )
 
 
 def _create_or_update_workflow(wf_spec, definition, scope):
-    values = {
-        'name': wf_spec.get_name(),
-        'tags': wf_spec.get_tags(),
-        'definition': definition,
-        'spec': wf_spec.to_dict(),
-        'scope': scope
-    }
-
-    _add_security_info(values)
+    values = _get_workflow_values(wf_spec, definition, scope)
 
     return db_api.create_or_update_workflow(values['name'], values)
 
