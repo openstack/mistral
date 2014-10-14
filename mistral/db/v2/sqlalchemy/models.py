@@ -179,6 +179,7 @@ class CronTrigger(mb.MistralModelBase):
     name = sa.Column(sa.String(200))
     pattern = sa.Column(sa.String(100))
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
+    workflow_name = sa.Column(sa.String(80))
 
     workflow_id = sa.Column(sa.String(36), sa.ForeignKey('workflows_v2.id'))
     workflow = relationship('Workflow', lazy='joined')
@@ -189,3 +190,10 @@ class CronTrigger(mb.MistralModelBase):
     scope = sa.Column(sa.String(80))
     project_id = sa.Column(sa.String(80))
     trust_id = sa.Column(sa.String(80))
+
+    def to_dict(self):
+        d = super(CronTrigger, self).to_dict()
+
+        mb.datetime_to_str(d, 'next_execution_time')
+
+        return d
