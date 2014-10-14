@@ -18,6 +18,7 @@ from oslo.config import cfg
 
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -78,9 +79,12 @@ class WorkflowHandler(object):
 
         wf_trace_msg += "%s" % task_db.state
         if task_db.state == states.ERROR:
-            WF_TRACE.info(wf_trace_msg + ", error = %s]" % raw_result.error)
+            wf_trace_msg += ", error = %s]" % utils.cut(raw_result.error)
+            WF_TRACE.info(wf_trace_msg)
         else:
-            WF_TRACE.info(wf_trace_msg + ", result = %s]" % raw_result.data)
+            wf_trace_msg += ", result = %s]" % utils.cut(raw_result.data)
+
+        WF_TRACE.info(wf_trace_msg)
 
         task_db.output =\
             data_flow.evaluate_task_output(task_spec, raw_result)

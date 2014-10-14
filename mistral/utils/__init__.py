@@ -134,3 +134,15 @@ def get_file_list(directory):
 
     return [path.join(base_path, f) for f in os.listdir(base_path)
             if path.isfile(path.join(base_path, f))]
+
+
+def cut(data, length=100):
+    if not data:
+        return data
+
+    string = str(data)
+
+    if len(string) > length:
+        return "%s..." % string[:length]
+    else:
+        return string
