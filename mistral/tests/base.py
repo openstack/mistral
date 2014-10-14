@@ -209,9 +209,10 @@ class DbTestCase(BaseTest):
 
         with db_api_v2.transaction():
             db_api_v2.delete_workbooks()
-            db_api_v2.delete_executions()
-            db_api_v2.delete_workflows()
             db_api_v2.delete_tasks()
+            db_api_v2.delete_executions()
+            db_api_v2.delete_cron_triggers()
+            db_api_v2.delete_workflows()
 
     def setUp(self):
         super(DbTestCase, self).setUp()

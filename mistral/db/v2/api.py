@@ -253,3 +253,38 @@ def delete_action(name):
 
 def delete_actions(**kwargs):
     return IMPL.delete_actions(**kwargs)
+
+
+# Cron triggers.
+
+def get_cron_trigger(name):
+    return IMPL.get_cron_trigger(name)
+
+
+def load_cron_trigger(name):
+    """Unlike get_cron_trigger this method is allowed to return None."""
+    return IMPL.load_cron_trigger(name)
+
+
+def get_cron_triggers(**kwargs):
+    return IMPL.get_cron_triggers(**kwargs)
+
+
+def create_cron_trigger(values):
+    return IMPL.create_cron_trigger(values)
+
+
+def update_cron_trigger(name, values):
+    return IMPL.update_cron_trigger(name, values)
+
+
+def create_or_update_cron_trigger(name, values):
+    return IMPL.create_or_update_cron_trigger(name, values)
+
+
+def delete_cron_trigger(name):
+    return IMPL.delete_cron_trigger(name)
+
+
+def delete_cron_triggers(**kwargs):
+    return IMPL.delete_cron_triggers(**kwargs)
