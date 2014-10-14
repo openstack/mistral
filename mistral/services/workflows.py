@@ -73,7 +73,7 @@ def _get_workflow_values(wf_spec, definition, scope):
         'scope': scope
     }
 
-    _add_security_info(values)
+    _add_security_info(values, scope)
 
     return values
 
@@ -90,8 +90,8 @@ def _create_or_update_workflow(wf_spec, definition, scope):
     return db_api.create_or_update_workflow(values['name'], values)
 
 
-def _add_security_info(values):
-    if cfg.CONF.pecan.auth_enable and not values['name'].startswith('std.'):
+def _add_security_info(values, scope):
+    if cfg.CONF.pecan.auth_enable and scope == 'private':
         values.update({
             'trust_id': trusts.create_trust().id,
             'project_id': context.ctx().project_id
