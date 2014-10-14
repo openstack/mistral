@@ -17,6 +17,7 @@
 import copy
 from oslo.config import cfg
 
+from mistral import context as auth_ctx
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import trusts
@@ -131,10 +132,15 @@ def add_openstack_data_to_context(workflow_db, context):
         context = {}
 
     if CONF.pecan.auth_enable:
-        wf_ctx = trusts.create_context(
-            workflow_db.trust_id,
-            workflow_db.project_id
-        )
+        wf_ctx = auth_ctx.ctx()
+
+        if not wf_ctx:
+            wf_ctx = trusts.create_context(
+                workflow_db.trust_id,
+                workflow_db.project_id
+            )
+
+        LOG.debug('Data flow security context: %s' % wf_ctx)
 
         if wf_ctx:
             context.update({'openstack': wf_ctx.to_dict()})

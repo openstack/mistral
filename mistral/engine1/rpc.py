@@ -56,7 +56,6 @@ def get_executor_client():
     return _EXECUTOR_CLIENT
 
 
-# TODO(rakhmerov): Take care of request context
 class EngineServer(object):
     """RPC Engine server."""
 
@@ -99,11 +98,17 @@ class EngineServer(object):
         return self._engine.on_task_result(task_id, task_result)
 
     def run_task(self, rpc_ctx, task_id):
-        """Runs task with id=task_id.
+        """Runs task with given id..
 
-        :param task_id:
-        :return:
+        :param rpc_ctx: RPC request context.
+        :param task_id: Task id.
         """
+
+        LOG.info(
+            "Received RPC request 'run_task'[rpc_ctx=%s, task_id=%s]" %
+            (rpc_ctx, task_id)
+        )
+
         return self._engine.run_task(task_id)
 
     def pause_workflow(self, rpc_ctx, execution_id):
@@ -203,10 +208,9 @@ class EngineClient(base.Engine):
         )
 
     def run_task(self, task_id):
-        """Runs task with id=task_id.
+        """Runs task with given id.
 
-        :param task_id:
-        :return:
+        :param task_id: Task id.
         """
         return self._client.call(auth_ctx.ctx(),
                                  'run_task',

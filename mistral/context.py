@@ -141,11 +141,13 @@ class RpcContextSerializer(messaging.Serializer):
     def serialize_entity(self, context, entity):
         if not self._base:
             return entity
+
         return self._base.serialize_entity(context, entity)
 
     def deserialize_entity(self, context, entity):
         if not self._base:
             return entity
+
         return self._base.deserialize_entity(context, entity)
 
     def serialize_context(self, context):
@@ -154,6 +156,7 @@ class RpcContextSerializer(messaging.Serializer):
     def deserialize_context(self, context):
         ctx = MistralContext(**context)
         set_ctx(ctx)
+
         return ctx
 
 
