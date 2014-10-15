@@ -179,7 +179,10 @@ class RunTask(EngineCommand):
                     action_db.attributes or {},
                     expr.evaluate_recursively(
                         self.task_spec.get_input(),
-                        a_input
+                        utils.merge_dicts(
+                            copy.copy(a_input),
+                            copy.copy(self.task_db.in_context)
+                        )
                     ),
                     targets
                 )

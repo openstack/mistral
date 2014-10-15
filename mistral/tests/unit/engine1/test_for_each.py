@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
@@ -50,6 +52,30 @@ workflows:
 
 """
 
+WORKBOOK_WITH_STATIC_VAR = """
+---
+version: "2.0"
+
+name: wb1
+
+workflows:
+  for_each:
+    type: direct
+
+    input:
+     - names_info
+     - greeting
+
+    tasks:
+      task1:
+        for-each:
+          name_info: $.names_info
+        action: std.echo output="{$.greeting}, {$.name_info.name}!"
+        publish:
+          result: $
+"""
+
+
 WORKFLOW_INPUT = {
     'names_info': [
         {'name': 'John'},
@@ -84,6 +110,36 @@ class ForEachEngineTest(base.EngineTestCase):
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
         self.assertIn('Mistral', result)
+
+        self.assertEqual(1, len(tasks))
+        self.assertEqual(states.SUCCESS, task1.state)
+
+    def test_for_each_static_var(self):
+        wb_service.create_workbook_v2(
+            {'definition': WORKBOOK_WITH_STATIC_VAR}
+        )
+
+        wf_input = copy.copy(WORKFLOW_INPUT)
+        wf_input.update({'greeting': 'Hello'})
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb1.for_each', wf_input)
+
+        self._await(
+            lambda: self.is_execution_success(exec_db.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+        task1 = self._assert_single_item(tasks, name='task1')
+        result = task1.output['result']
+
+        self.assertTrue(isinstance(result, list))
+
+        self.assertIn('Hello, John!', result)
+        self.assertIn('Hello, Ivan!', result)
+        self.assertIn('Hello, Mistral!', result)
 
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
