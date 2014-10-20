@@ -82,3 +82,38 @@ class HTTPActionTest(base.BaseTest):
             allow_redirects=True,
             proxies=None
         )
+
+    @mock.patch.object(requests, "request")
+    def test_http_action_with_auth(self, mocked_method):
+        mocked_method.return_value = get_fake_response()
+
+        action = std.HTTPAction(
+            url=URL,
+            method="POST",
+            body=DATA,
+            auth="user:password")
+
+        data_str = json.dumps(DATA)
+
+        self.assertEqual(data_str, action.body)
+        self.assertEqual(URL, action.url)
+
+        result = action.run()
+
+        self.assertIsInstance(result, dict)
+        self.assertEqual(DATA, result['content'])
+        self.assertIn('headers', result)
+        self.assertEqual(200, result['status'])
+
+        mocked_method.assert_called_with(
+            "POST",
+            URL,
+            data=data_str,
+            headers=None,
+            cookies=None,
+            params=None,
+            timeout=None,
+            auth=('user', 'password'),
+            allow_redirects=None,
+            proxies=None
+        )
