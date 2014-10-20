@@ -132,7 +132,7 @@ class ExecutionTestsV1(base.TestCase):
 
         for ex in self.client.executions:
             self.client.delete_obj('executions', ex)
-            self.client.executions.remove(ex)
+        self.client.executions = []
 
     @test.attr(type='positive')
     def test_create_execution(self):

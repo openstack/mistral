@@ -72,6 +72,7 @@ class MistralClientBase(rest_client.RestClient):
         self.workbooks = []
         self.executions = []
         self.workflows = []
+        self.triggers = []
 
     def get_list_obj(self, name):
         resp, body = self.get(name)
@@ -286,6 +287,21 @@ class MistralClientV2(MistralClientBase):
 
         return resp, json.loads(body)
 
+    def create_trigger(self, name, pattern, wf_name, wf_input=None):
+        post_body = {
+            'name': name,
+            'pattern': pattern,
+            'workflow_name': wf_name,
+        }
+        if wf_input:
+            post_body.update({'workflow_input': json.dumps(wf_input)})
+
+        rest, body = self.post('cron_triggers', json.dumps(post_body))
+
+        self.triggers.append(name)
+
+        return rest, json.loads(body)
+
 
 class AuthProv(auth.KeystoneV2AuthProvider):
 
@@ -333,7 +349,7 @@ class TestCase(tempest.test.BaseTestCase):
 
         for wb in self.client.workbooks:
             self.client.delete_obj('workbooks', wb)
-            self.client.workbooks.remove(wb)
+        self.client.workbooks = []
 
 
 class TestCaseAdvanced(TestCase):
@@ -355,10 +371,10 @@ class TestCaseAdvanced(TestCase):
     def tearDown(self):
         for wb in self.client.workbooks:
             self.client.delete_obj('workbooks', wb)
-            self.client.workbooks.remove(wb)
+        self.client.workbooks = []
 
         for ex in self.client.executions:
             self.client.delete_obj('executions', ex)
-            self.client.executions.remove(ex)
+        self.client.executions = []
 
         super(TestCaseAdvanced, self).tearDown()
