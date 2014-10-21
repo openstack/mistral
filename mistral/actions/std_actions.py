@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2014 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -164,9 +165,9 @@ class MistralHTTPAction(HTTPAction):
                  proxies=None):
         headers = headers or {}
         headers.update({
-            'Mistral-Workbook-Name': action_context['workbook_name'],
-            'Mistral-Execution-Id': action_context['execution_id'],
-            'Mistral-Task-Id': action_context['task_id'],
+            'Mistral-Workflow-Name': action_context.get('workflow_name'),
+            'Mistral-Execution-Id': action_context.get('execution_id'),
+            'Mistral-Task-Id': action_context.get('task_id'),
         })
 
         super(MistralHTTPAction, self).__init__(

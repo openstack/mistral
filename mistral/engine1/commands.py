@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2014 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,10 +24,12 @@ from mistral.engine1 import rpc
 from mistral.engine1 import utils as e_utils
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager as a_m
 from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
+
 
 LOG = logging.getLogger(__name__)
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
@@ -161,6 +164,10 @@ class RunTask(EngineCommand):
                 copy.copy(self.task_db.in_context)
             )
         )
+
+        if a_m.has_action_context(
+                action_db.action_class, action_db.attributes or {}):
+            action_input.update(a_m.get_action_context(self.task_db))
 
         rpc.get_executor_client().run_action(
             self.task_db.id,

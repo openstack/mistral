@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2014 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -135,24 +136,21 @@ def get_action_class(action_full_name):
                                                      action_db.attributes)
 
 
-def _get_action_context(db_task, openstack_context):
-    result = {
-        'workbook_name': db_task['workbook_name'],
-        'execution_id': db_task['execution_id'],
-        'task_id': db_task['id'],
-        'task_name': db_task['name'],
-        'task_tags': db_task['tags'],
+def get_action_context(task_db):
+    return {
+        _ACTION_CTX_PARAM: {
+            'workflow_name': task_db.execution.wf_name,
+            'execution_id': task_db.execution_id,
+            'task_id': task_db.id,
+            'task_name': task_db.name,
+            'task_tags': task_db.tags
+        }
     }
 
-    if openstack_context:
-        result.update({'openstack': openstack_context})
 
-    return result
-
-
-def _has_action_context_param(action_cls):
+def has_action_context(action, attributes):
+    action_cls = action_factory.construct_action_class(action, attributes)
     arg_spec = inspect.getargspec(action_cls.__init__)
-
     return _ACTION_CTX_PARAM in arg_spec.args
 
 
