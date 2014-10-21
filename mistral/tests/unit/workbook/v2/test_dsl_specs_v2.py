@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 
@@ -110,6 +111,25 @@ workflows:
         workflow: wf2 expr_list=["$.value", "{$.key}"] expr={$.value}
         targets: [nova]
 """
+
+
+INVALID_WB = """
+version: 2.0
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hey!"
+        for-each:
+          vms: 3
+
+"""
+
 
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
 # TODO(rakhmerov): Add negative tests.
@@ -292,6 +312,14 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual("std.echo", action_spec.get_base())
         self.assertEqual({'output': 'Echo output'},
                          action_spec.get_base_input())
+
+    def test_invalid_for_each(self):
+        exc = self.assertRaises(
+            exceptions.InvalidModelException,
+            spec_parser.get_workbook_spec_from_yaml,
+            INVALID_WB
+        )
+        self.assertIn("for-each", str(exc))
 
     def test_to_dict(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
