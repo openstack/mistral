@@ -85,13 +85,18 @@ class HTTPAction(base.Action):
                  timeout=None,
                  allow_redirects=None,
                  proxies=None):
+
+        if auth and len(auth.split(':')) == 2:
+            self.auth = (auth.split(':')[0], auth.split(':')[1])
+        else:
+            self.auth = auth
+
         self.url = url
         self.method = method
         self.params = params
         self.body = json.dumps(body) if isinstance(body, dict) else body
         self.headers = headers
         self.cookies = cookies
-        self.auth = auth
         self.timeout = timeout
         self.allow_redirects = allow_redirects
         self.proxies = proxies
