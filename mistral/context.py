@@ -15,6 +15,8 @@
 #    limitations under the License.
 
 import eventlet
+from keystoneclient.v3 import client as keystone_client
+from oslo.config import cfg
 from oslo import messaging
 from pecan import hooks
 
@@ -24,6 +26,8 @@ from mistral.openstack.common import log as logging
 from mistral import utils
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
 
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 
@@ -124,6 +128,25 @@ def context_from_headers(headers):
         user_name=headers.get('X-User-Name'),
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(",")
+    )
+
+
+def context_from_config():
+    keystone = keystone_client.Client(
+        username=CONF.keystone_authtoken.admin_user,
+        password=CONF.keystone_authtoken.admin_password,
+        tenant_name=CONF.keystone_authtoken.admin_tenant_name,
+        auth_url=CONF.keystone_authtoken.auth_uri
+    )
+
+    keystone.authenticate()
+
+    return MistralContext(
+        user_id=keystone.user_id,
+        project_id=keystone.project_id,
+        auth_token=keystone.auth_token,
+        project_name=CONF.keystone_authtoken.admin_tenant_name,
+        user_name=CONF.keystone_authtoken.admin_user
     )
 
 
