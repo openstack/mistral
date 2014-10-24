@@ -221,7 +221,7 @@ class DbTestCase(BaseTest):
 
         self.ctx = auth_context.MistralContext(
             user_id='1-2-3-4',
-            project_id='5-6-7-8',
+            project_id='<default-project>',
             user_name='test-user',
             project_name='test-project',
             is_admin=False

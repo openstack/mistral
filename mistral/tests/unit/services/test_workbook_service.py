@@ -17,7 +17,7 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
-from mistral.tests.unit.engine1 import base
+from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ workflows:
 """
 
 
-class WorkbookServiceTest(base.EngineTestCase):
+class WorkbookServiceTest(base.DbTestCase):
     def test_create_workbook(self):
         wb_db = wb_service.create_workbook_v2({'definition': WORKBOOK})
 
