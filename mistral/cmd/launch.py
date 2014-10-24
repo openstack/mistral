@@ -128,6 +128,8 @@ def launch_any(transport, options):
     threads = [eventlet.spawn(LAUNCH_OPTIONS[option], transport)
                for option in options]
 
+    print('Server started.')
+
     [thread.wait() for thread in threads]
 
 
@@ -140,9 +142,33 @@ LAUNCH_OPTIONS = {
 }
 
 
+MISTRAL_TITLE = """
+|\\\    //| //   // |||||| |||\\\       /\      ||
+||\\\  //||    //     ||   ||  ||     //\\\     ||
+|| \\\// || || ||     ||   || //     //  \\\    ||
+||  \/  || ||  \\\    ||   || \\\    //-||-\\\   ||
+||      || ||   ||   ||   ||  ||  //      \\\  ||
+||      || || _//    ||   ||  || //        \\\ |||||
+
+Mistral Workflow Service, version 0.1, 2014
+"""
+
+
+def print_server_info():
+    print(MISTRAL_TITLE)
+
+    comp_str = "[%s]" % ','.join(LAUNCH_OPTIONS) \
+        if cfg.CONF.server == ['all'] else cfg.CONF.server
+
+    print('Launching server components %s...' % comp_str)
+
+
 def main():
     try:
         config.parse_args()
+
+        print_server_info()
+
         logging.setup('Mistral')
 
         # Please refer to the oslo.messaging documentation for transport
