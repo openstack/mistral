@@ -23,6 +23,7 @@ import sqlalchemy as sa
 
 from mistral import context
 from mistral.db.sqlalchemy import base as b
+from mistral.db import v2 as db_base
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -86,13 +87,6 @@ def transaction():
         end_tx()
 
 
-def _get_project_id():
-    if CONF.pecan.auth_enable and context.has_ctx():
-        return context.ctx().project_id
-    else:
-        return b.DEFAULT_PROJECT_ID
-
-
 def _delete_all(model, session=None, **kwargs):
     query = b.model_query(model).filter_by(**kwargs)
     query.delete()
@@ -101,19 +95,37 @@ def _delete_all(model, session=None, **kwargs):
 def _get_collection_sorted_by_name(model, **kwargs):
     query = b.model_query(model)
 
-    proj = query.filter_by(project_id=_get_project_id(), **kwargs)
+    proj = query.filter_by(
+        project_id=db_base.get_project_id(),
+        **kwargs
+    )
     public = query.filter_by(scope='public', **kwargs)
 
     return proj.union(public).order_by(model.name).all()
 
 
+def _get_collection(model, **kwargs):
+    query = b.model_query(model)
+
+    return query.filter_by(
+        project_id=db_base.get_project_id(),
+        **kwargs
+    ).all()
+
+
 def _get_db_object_by_name(model, name):
     query = b.model_query(model)
 
-    proj = query.filter_by(name=name, project_id=_get_project_id())
+    proj = query.filter_by(name=name, project_id=db_base.get_project_id())
     public = query.filter_by(name=name, scope='public')
 
     return proj.union(public).first()
+
+
+def _get_db_object_by_id(model, id):
+    query = b.model_query(model)
+
+    return query.filter_by(id=id, project_id=db_base.get_project_id()).first()
 
 
 # Workbooks.
@@ -221,7 +233,7 @@ def create_workflow(values, session=None):
     wf = models.Workflow()
 
     wf.update(values.copy())
-    wf['project_id'] = _get_project_id()
+    wf['project_id'] = db_base.get_project_id()
 
     try:
         wf.save(session=session)
@@ -241,7 +253,7 @@ def update_workflow(name, values, session=None):
             "Workflow not found [workflow_name=%s]" % name)
 
     wf.update(values.copy())
-    wf['project_id'] = _get_project_id()
+    wf['project_id'] = db_base.get_project_id()
 
     return wf
 
@@ -356,15 +368,11 @@ def delete_executions(**kwargs):
 
 
 def _get_executions(**kwargs):
-    query = b.model_query(models.Execution)
-
-    return query.filter_by(**kwargs).all()
+    return _get_collection(models.Execution, **kwargs)
 
 
 def _get_execution(id):
-    query = b.model_query(models.Execution)
-
-    return query.filter_by(id=id).first()
+    return _get_db_object_by_id(models.Execution, id)
 
 
 # Tasks.
@@ -442,15 +450,11 @@ def delete_tasks(**kwargs):
 
 
 def _get_task(id):
-    query = b.model_query(models.Task)
-
-    return query.filter_by(id=id).first()
+    return _get_db_object_by_id(models.Task, id)
 
 
 def _get_tasks(**kwargs):
-    query = b.model_query(models.Task)
-
-    return query.filter_by(**kwargs).all()
+    return _get_collection(models.Task, **kwargs)
 
 
 # Delayed calls.

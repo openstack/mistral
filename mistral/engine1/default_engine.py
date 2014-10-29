@@ -15,6 +15,7 @@
 import copy
 from oslo.config import cfg
 
+from mistral.db import v2 as db_base
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
 from mistral.engine1 import commands
@@ -150,7 +151,8 @@ class DefaultEngine(base.Engine):
             'input': wf_input or {},
             'output': {},
             'context': copy.copy(wf_input) or {},
-            'parent_task_id': params.get('parent_task_id')
+            'parent_task_id': params.get('parent_task_id'),
+            'project_id': db_base.get_project_id()
         })
 
         data_flow.add_openstack_data_to_context(wf_db, exec_db.context)

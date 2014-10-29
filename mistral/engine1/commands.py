@@ -101,7 +101,8 @@ class RunTask(EngineCommand):
             'in_context': None,
             'output': None,
             'runtime_context': None,
-            'wf_name': exec_db.wf_name
+            'wf_name': exec_db.wf_name,
+            'project_id': exec_db.project_id
         })
 
     def _run_task(self):
