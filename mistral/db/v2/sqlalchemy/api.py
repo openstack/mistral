@@ -107,6 +107,15 @@ def _get_collection_sorted_by_name(model, **kwargs):
     return proj.union(public).order_by(model.name).all()
 
 
+def _get_db_object_by_name(model, name):
+    query = b.model_query(model)
+
+    proj = query.filter_by(name=name, project_id=_get_project_id())
+    public = query.filter_by(name=name, scope='public')
+
+    return proj.union(public).first()
+
+
 # Workbooks.
 
 def get_workbook(name):
@@ -179,12 +188,7 @@ def delete_workbook(name, session=None):
 
 
 def _get_workbook(name):
-    query = b.model_query(models.Workbook)
-
-    proj = query.filter_by(name=name, project_id=_get_project_id())
-    public = query.filter_by(name=name, scope='public')
-
-    return proj.union(public).first()
+    return _get_db_object_by_name(models.Workbook, name)
 
 
 @b.session_aware()
@@ -269,12 +273,7 @@ def delete_workflows(**kwargs):
 
 
 def _get_workflow(name):
-    query = b.model_query(models.Workflow)
-
-    proj = query.filter_by(name=name, project_id=_get_project_id())
-    public = query.filter_by(name=name, scope='public')
-
-    return proj.union(public).first()
+    return _get_db_object_by_name(models.Workflow, name)
 
 
 # Executions.
@@ -571,12 +570,7 @@ def delete_actions(**kwargs):
 
 
 def _get_action(name):
-    query = b.model_query(models.Action)
-
-    proj = query.filter_by(name=name, project_id=_get_project_id())
-    public = query.filter_by(name=name, scope='public')
-
-    return proj.union(public).first()
+    return _get_db_object_by_name(models.Action, name)
 
 
 # Cron triggers.
@@ -664,12 +658,7 @@ def delete_cron_triggers(**kwargs):
 
 
 def _get_cron_trigger(name):
-    query = b.model_query(models.CronTrigger)
-
-    proj = query.filter_by(name=name, project_id=_get_project_id())
-    public = query.filter_by(name=name, scope='public')
-
-    return proj.union(public).first()
+    return _get_db_object_by_name(models.CronTrigger, name)
 
 
 def _get_cron_triggers(**kwargs):
