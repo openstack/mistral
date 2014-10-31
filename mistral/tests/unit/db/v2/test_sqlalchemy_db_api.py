@@ -18,6 +18,8 @@
 
 import copy
 
+from oslo.config import cfg
+
 from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
@@ -50,7 +52,16 @@ WORKBOOKS = [
 ]
 
 
-class WorkbookTest(test_base.DbTestCase):
+class SQLAlchemyTest(test_base.DbTestCase):
+    def setUp(self):
+        super(SQLAlchemyTest, self).setUp()
+
+        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        self.addCleanup(cfg.CONF.set_default, 'auth_enable', False,
+                        group='pecan')
+
+
+class WorkbookTest(SQLAlchemyTest):
     def test_create_and_get_and_load_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
@@ -63,6 +74,16 @@ class WorkbookTest(test_base.DbTestCase):
         self.assertEqual(created, fetched)
 
         self.assertIsNone(db_api.load_workbook("not-existing-wb"))
+
+    def test_create_workbook_duplicate_without_auth(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        db_api.create_workbook(WORKBOOKS[0])
+
+        self.assertRaises(
+            exc.DBDuplicateEntry,
+            db_api.create_workbook,
+            WORKBOOKS[0]
+        )
 
     def test_update_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
@@ -238,7 +259,7 @@ WORKFLOWS = [
 ]
 
 
-class WorkflowTest(test_base.DbTestCase):
+class WorkflowTest(SQLAlchemyTest):
     def test_create_and_get_and_load_workflow(self):
         created = db_api.create_workflow(WORKFLOWS[0])
 
@@ -251,6 +272,16 @@ class WorkflowTest(test_base.DbTestCase):
         self.assertEqual(created, fetched)
 
         self.assertIsNone(db_api.load_workflow("not-existing-wf"))
+
+    def test_create_workflow_duplicate_without_auth(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        db_api.create_workflow(WORKFLOWS[0])
+
+        self.assertRaises(
+            exc.DBDuplicateEntry,
+            db_api.create_workflow,
+            WORKFLOWS[0]
+        )
 
     def test_update_workflow(self):
         created = db_api.create_workflow(WORKFLOWS[0])
@@ -403,7 +434,7 @@ EXECUTIONS = [
 ]
 
 
-class ExecutionTest(test_base.DbTestCase):
+class ExecutionTest(SQLAlchemyTest):
     def test_create_and_get_and_load_execution(self):
         created = db_api.create_execution(EXECUTIONS[0])
 
@@ -527,7 +558,7 @@ TASKS = [
 ]
 
 
-class TaskTest(test_base.DbTestCase):
+class TaskTest(SQLAlchemyTest):
     def test_create_and_get_and_load_task(self):
         ex = db_api.create_execution(EXECUTIONS[0])
 
@@ -654,7 +685,7 @@ ACTIONS = [
         'is_system': True,
         'action_class': 'mypackage.my_module.Action1',
         'attributes': None,
-        'project_id': '5-6-7-8'
+        'project_id': '<default-project>'
     },
     {
         'name': 'action2',
@@ -662,12 +693,12 @@ ACTIONS = [
         'is_system': True,
         'action_class': 'mypackage.my_module.Action2',
         'attributes': None,
-        'project_id': '5-6-7-8'
+        'project_id': '<default-project>'
     },
 ]
 
 
-class ActionTest(test_base.DbTestCase):
+class ActionTest(SQLAlchemyTest):
     def setUp(self):
         super(ActionTest, self).setUp()
 
@@ -685,6 +716,16 @@ class ActionTest(test_base.DbTestCase):
         self.assertEqual(created, fetched)
 
         self.assertIsNone(db_api.load_action("not-existing-id"))
+
+    def test_create_action_duplicate_without_auth(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        db_api.create_action(ACTIONS[0])
+
+        self.assertRaises(
+            exc.DBDuplicateEntry,
+            db_api.create_action,
+            ACTIONS[0]
+        )
 
     def test_update_action(self):
         created = db_api.create_action(ACTIONS[0])
@@ -767,7 +808,7 @@ CRON_TRIGGERS = [
         'workflow_input': {},
         'next_execution_time': timeutils.utcnow(),
         'scope': 'private',
-        'project_id': '5-6-7-8'
+        'project_id': '<default-project>'
     },
     {
         'name': 'trigger2',
@@ -777,12 +818,12 @@ CRON_TRIGGERS = [
         'workflow_input': {},
         'next_execution_time': timeutils.utcnow(),
         'scope': 'private',
-        'project_id': '5-6-7-8'
+        'project_id': '<default-project>'
     },
 ]
 
 
-class CronTriggerTest(test_base.DbTestCase):
+class CronTriggerTest(SQLAlchemyTest):
     def setUp(self):
         super(CronTriggerTest, self).setUp()
 
@@ -803,6 +844,16 @@ class CronTriggerTest(test_base.DbTestCase):
         self.assertEqual(created, fetched)
 
         self.assertIsNone(db_api.load_cron_trigger("not-existing-trigger"))
+
+    def test_create_cron_trigger_duplicate_without_auth(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        self.assertRaises(
+            exc.DBDuplicateEntry,
+            db_api.create_cron_trigger,
+            CRON_TRIGGERS[0]
+        )
 
     def test_update_cron_trigger(self):
         created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
@@ -872,7 +923,7 @@ class CronTriggerTest(test_base.DbTestCase):
         self.assertIn("'name': 'trigger1'", s)
 
 
-class TXTest(test_base.DbTestCase):
+class TXTest(SQLAlchemyTest):
     def test_rollback(self):
         db_api.start_tx()
 

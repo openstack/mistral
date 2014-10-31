@@ -17,6 +17,7 @@
 import contextlib
 import sys
 
+from oslo.config import cfg
 from oslo.db import exception as db_exc
 import sqlalchemy as sa
 
@@ -27,6 +28,7 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -84,6 +86,13 @@ def transaction():
         end_tx()
 
 
+def _get_project_id():
+    if CONF.pecan.auth_enable and context.has_ctx():
+        return context.ctx().project_id
+    else:
+        return b.DEFAULT_PROJECT_ID
+
+
 def _delete_all(model, session=None, **kwargs):
     query = b.model_query(model).filter_by(**kwargs)
     query.delete()
@@ -92,7 +101,7 @@ def _delete_all(model, session=None, **kwargs):
 def _get_collection_sorted_by_name(model, **kwargs):
     query = b.model_query(model)
 
-    proj = query.filter_by(project_id=context.ctx().project_id, **kwargs)
+    proj = query.filter_by(project_id=_get_project_id(), **kwargs)
     public = query.filter_by(scope='public', **kwargs)
 
     return proj.union(public).order_by(model.name).all()
@@ -172,9 +181,7 @@ def delete_workbook(name, session=None):
 def _get_workbook(name):
     query = b.model_query(models.Workbook)
 
-    project_id = context.ctx().project_id if context.has_ctx() else None
-
-    proj = query.filter_by(name=name, project_id=project_id)
+    proj = query.filter_by(name=name, project_id=_get_project_id())
     public = query.filter_by(name=name, scope='public')
 
     return proj.union(public).first()
@@ -210,7 +217,7 @@ def create_workflow(values, session=None):
     wf = models.Workflow()
 
     wf.update(values.copy())
-    wf['project_id'] = context.ctx().project_id if context.has_ctx() else None
+    wf['project_id'] = _get_project_id()
 
     try:
         wf.save(session=session)
@@ -230,7 +237,7 @@ def update_workflow(name, values, session=None):
             "Workflow not found [workflow_name=%s]" % name)
 
     wf.update(values.copy())
-    wf['project_id'] = context.ctx().project_id if context.has_ctx() else None
+    wf['project_id'] = _get_project_id()
 
     return wf
 
@@ -264,9 +271,7 @@ def delete_workflows(**kwargs):
 def _get_workflow(name):
     query = b.model_query(models.Workflow)
 
-    project_id = context.ctx().project_id if context.has_ctx() else None
-
-    proj = query.filter_by(name=name, project_id=project_id)
+    proj = query.filter_by(name=name, project_id=_get_project_id())
     public = query.filter_by(name=name, scope='public')
 
     return proj.union(public).first()
@@ -568,13 +573,10 @@ def delete_actions(**kwargs):
 def _get_action(name):
     query = b.model_query(models.Action)
 
-    return query.filter_by(name=name).first()
+    proj = query.filter_by(name=name, project_id=_get_project_id())
+    public = query.filter_by(name=name, scope='public')
 
-
-def _get_actions(**kwargs):
-    query = b.model_query(models.Action)
-
-    return query.filter_by(**kwargs).all()
+    return proj.union(public).first()
 
 
 # Cron triggers.
@@ -664,7 +666,10 @@ def delete_cron_triggers(**kwargs):
 def _get_cron_trigger(name):
     query = b.model_query(models.CronTrigger)
 
-    return query.filter_by(name=name).first()
+    proj = query.filter_by(name=name, project_id=_get_project_id())
+    public = query.filter_by(name=name, scope='public')
+
+    return proj.union(public).first()
 
 
 def _get_cron_triggers(**kwargs):

@@ -18,6 +18,7 @@ import json
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 
+from mistral.db.sqlalchemy import base
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 
@@ -39,7 +40,7 @@ class Workbook(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
@@ -60,7 +61,7 @@ class Workflow(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
@@ -162,7 +163,7 @@ class Action(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
@@ -188,7 +189,7 @@ class CronTrigger(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
     def to_dict(self):
