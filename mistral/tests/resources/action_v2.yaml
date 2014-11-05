@@ -1,0 +1,21 @@
+---
+version: "2.0"
+
+greeting:
+  description: "This action says 'Hello'"
+  tags: [hello]
+  base: std.echo
+  base-input:
+    output: 'Hello,  {$.name}'
+  input:
+    - name
+  output:
+    string: $.output
+
+farewell:
+  base: std.echo
+  base-input:
+    output: 'Bye!'
+  output:
+    info: $.output
+

@@ -73,6 +73,7 @@ class MistralClientBase(rest_client.RestClient):
         self.executions = []
         self.workflows = []
         self.triggers = []
+        self.actions = []
 
     def get_list_obj(self, name):
         resp, body = self.get(name)
@@ -287,7 +288,7 @@ class MistralClientV2(MistralClientBase):
 
         return resp, json.loads(body)
 
-    def create_trigger(self, name, pattern, wf_name, wf_input=None):
+    def create_cron_trigger(self, name, pattern, wf_name, wf_input=None):
         post_body = {
             'name': name,
             'pattern': pattern,
@@ -301,6 +302,27 @@ class MistralClientV2(MistralClientBase):
         self.triggers.append(name)
 
         return rest, json.loads(body)
+
+    def create_action(self, text):
+        post_body = {"definition": "%s" % text}
+        resp, body = self.post('actions',
+                               json.dumps(post_body))
+        self.actions.extend(
+            [action['name'] for action in json.loads(body)['actions']])
+
+        return resp, json.loads(body)
+
+    def update_action(self, text):
+        post_body = {"definition": "%s" % text}
+        resp, body = self.put('actions',
+                              json.dumps(post_body))
+
+        return resp, json.loads(body)
+
+    def get_action_definition(self, name):
+        resp, body = self.get("actions/%s" % name)
+
+        return resp, json.loads(body)['definition']
 
 
 class AuthProv(auth.KeystoneV2AuthProvider):
