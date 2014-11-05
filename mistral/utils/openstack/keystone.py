@@ -55,11 +55,15 @@ def client_for_trusts(trust_id):
     return _admin_client(trust_id=trust_id)
 
 
-def get_endpoint_for_project(service_name):
+def get_endpoint_for_project(service_name=None, service_type=None):
     admin_project_name = CONF.keystone_authtoken.admin_tenant_name
     keystone_client = _admin_client(project_name=admin_project_name)
     service_list = keystone_client.services.list()
-    service_id = [s.id for s in service_list if s.name == service_name][0]
+
+    if service_name:
+        service_id = [s.id for s in service_list if s.name == service_name][0]
+    elif service_type:
+        service_id = [s.id for s in service_list if s.type == service_type][0]
 
     return keystone_client.endpoints.find(service_id=service_id,
                                           interface='public').url

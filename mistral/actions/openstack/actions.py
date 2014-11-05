@@ -14,6 +14,7 @@
 
 import inspect
 
+from cinderclient.v1 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
 from keystoneclient import httpclient
@@ -146,3 +147,31 @@ class NeutronAction(base.OpenStackAction):
             token=ctx.auth_token,
             auth_url=CONF.keystone_authtoken.auth_uri
         )
+
+
+class CinderAction(base.OpenStackAction):
+    _client_class = cinderclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Cinder action security context: %s" % ctx)
+        cinder_url = keystone_utils.get_endpoint_for_project(
+            service_type='volume'
+        )
+        cinder_url = cinder_url % {'tenant_id': ctx.project_id}
+
+        client = self._client_class(
+            ctx.user_name,
+            ctx.auth_token,
+            project_id=ctx.project_id,
+            auth_url=cinder_url,
+        )
+        client.client.auth_token = ctx.auth_token
+        client.client.management_url = cinder_url
+
+        return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()

@@ -78,3 +78,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().show_network.called)
         mocked().show_network.assert_called_once_with(id="1234-abcd")
+
+    @mock.patch.object(actions.CinderAction, '_get_client')
+    def test_cinder_action(self, mocked):
+        method_name = "volumes.get"
+        action_class = actions.CinderAction
+        action_class.client_method_name = method_name
+        params = {'volume': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().volumes.get.called)
+        mocked().volumes.get.assert_called_once_with(volume="1234-abcd")

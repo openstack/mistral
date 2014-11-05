@@ -39,3 +39,8 @@ class HeatActionGenerator(base.OpenStackActionGenerator):
 class NeutronActionGenerator(base.OpenStackActionGenerator):
     action_namespace = "neutron"
     base_action_class = actions.NeutronAction
+
+
+class CinderActionGenerator(base.OpenStackActionGenerator):
+    action_namespace = "cinder"
+    base_action_class = actions.CinderAction

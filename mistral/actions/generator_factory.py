@@ -21,5 +21,6 @@ def all_generators():
         generators.GlanceActionGenerator,
         generators.KeystoneActionGenerator,
         generators.HeatActionGenerator,
-        generators.NeutronActionGenerator
+        generators.NeutronActionGenerator,
+        generators.CinderActionGenerator
     ]
