@@ -93,6 +93,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         task_db = exec_db.tasks[0]
 
+        self.assertEqual('wb.wf1', task_db.wf_name)
         self.assertEqual('task1', task_db.name)
         self.assertEqual(states.RUNNING, task_db.state)
         self.assertIsNotNone(task_db.spec)
