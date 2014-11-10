@@ -15,7 +15,6 @@
 #    limitations under the License.
 
 import json
-import operator
 
 from pecan import rest
 from wsme import types as wtypes
@@ -140,11 +139,8 @@ class TasksController(rest.RestController):
         """Return all tasks within the execution."""
         LOG.debug("Fetch tasks")
 
-        db_models = [task.to_dict() for task in db_api.get_tasks()]
-
-        tasks = sorted(db_models, key=operator.itemgetter('created_at'))
-
-        tasks = [Task.from_dict(task) for task in tasks]
+        tasks = [Task.from_dict(db_model.to_dict())
+                 for db_model in db_api.get_tasks()]
 
         return Tasks(tasks=tasks)
 

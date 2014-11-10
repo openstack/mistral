@@ -104,13 +104,13 @@ def _get_collection_sorted_by_name(model, **kwargs):
     return proj.union(public).order_by(model.name).all()
 
 
-def _get_collection(model, **kwargs):
+def _get_collection_sorted_by_time(model, **kwargs):
     query = b.model_query(model)
 
     return query.filter_by(
         project_id=db_base.get_project_id(),
         **kwargs
-    ).all()
+    ).order_by(model.created_at).all()
 
 
 def _get_db_object_by_name(model, name):
@@ -368,7 +368,7 @@ def delete_executions(**kwargs):
 
 
 def _get_executions(**kwargs):
-    return _get_collection(models.Execution, **kwargs)
+    return _get_collection_sorted_by_time(models.Execution, **kwargs)
 
 
 def _get_execution(id):
@@ -454,7 +454,7 @@ def _get_task(id):
 
 
 def _get_tasks(**kwargs):
-    return _get_collection(models.Task, **kwargs)
+    return _get_collection_sorted_by_time(models.Task, **kwargs)
 
 
 # Delayed calls.
