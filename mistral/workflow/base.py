@@ -17,6 +17,7 @@ import copy
 
 from oslo.config import cfg
 
+from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
@@ -96,6 +97,9 @@ class WorkflowHandler(object):
             wf_trace_msg += ", result = %s]" % utils.cut(raw_result.data)
 
         WF_TRACE.info(wf_trace_msg)
+
+        if self.is_paused_or_finished():
+            return []
 
         commands = self._find_next_commands(task_db)
 
@@ -184,6 +188,64 @@ class WorkflowHandler(object):
         """
         raise NotImplementedError
 
+    def _find_commands_to_resume(self, tasks):
+        """Finds commands that should run after pause.
+
+        :param tasks: List of task_db instances.
+        :return: List of engine commands.
+        """
+        def filter_task_cmds(cmds):
+            return [cmd for cmd in cmds
+                    if isinstance(cmd, commands.RunTask)]
+
+        def get_tasks_to_schedule(task_db, schedule_tasks):
+            """Finds tasks that should run after given task and searches them
+            in DB. If there are no tasks in the DB, it should be scheduled
+            now. If there are tasks in the DB, continue search to next tasks
+            in workflow if this task is finished. If this task is not
+            finished - do nothing.
+
+            :param task_db: Task DB.
+            :param schedule_tasks: Task names from previous iteration.
+            :return: List of task names that should be scheduled.
+            """
+            next_cmds = filter_task_cmds(self._find_next_commands(task_db))
+            next_t_names = [cmd.task_spec.get_name() for cmd in next_cmds]
+
+            if states.is_finished(task_db.state):
+                for task_name in next_t_names:
+                    t_db = [t for t in tasks if t.name == task_name]
+                    t_db = t_db[0] if t_db else None
+
+                    if not t_db:
+                        schedule_tasks += [task_name]
+                        return schedule_tasks
+                    schedule_tasks = get_tasks_to_schedule(
+                        t_db,
+                        schedule_tasks
+                    )
+
+            return schedule_tasks
+
+        params = self.exec_db.start_params
+        start_task_cmds = filter_task_cmds(
+            self.start_workflow(**params if params else {})
+        )
+
+        task_names = []
+        for cmd in start_task_cmds:
+            task_db = [t for t in tasks
+                       if t.name == cmd.task_spec.get_name()][0]
+            task_names += get_tasks_to_schedule(task_db, [])
+
+        schedule_cmds = []
+        for t_name in task_names:
+            schedule_cmds += [commands.RunTask(
+                self.wf_spec.get_tasks()[t_name]
+            )]
+
+        return schedule_cmds
+
     def is_paused_or_finished(self):
         return states.is_paused_or_finished(self.exec_db.state)
 
@@ -203,7 +265,10 @@ class WorkflowHandler(object):
         """
         self._set_execution_state(states.RUNNING)
 
-        # TODO(rakhmerov): A concrete handler should also find tasks to run.
+        tasks = self.exec_db.tasks
+
+        if not all([t.state == states.RUNNING for t in tasks]):
+            return self._find_commands_to_resume(tasks)
 
         return []
 

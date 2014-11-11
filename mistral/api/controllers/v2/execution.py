@@ -23,8 +23,10 @@ from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import task
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import rpc
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
+from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
@@ -127,11 +129,31 @@ class ExecutionsController(rest.RestController):
         """
         LOG.debug("Update execution [id=%s, execution=%s]" %
                   (id, execution))
+        db_api.ensure_execution_exists(id)
 
-        # TODO(dzimine): Why update execution? We must only pause and resume.
-        db_model = db_api.update_execution(id, execution.to_dict())
+        # Currently we can change only state.
+        if not execution.state:
+            raise exc.DataAccessException(
+                "Only state of execution can change. "
+                "Missing 'state' property."
+            )
 
-        return Execution.from_dict(db_model.to_dict())
+        new_state = execution.state
+
+        if new_state == states.PAUSED:
+            exec_db = rpc.get_engine_client().pause_workflow(id)
+        elif new_state == states.RUNNING:
+            exec_db = rpc.get_engine_client().resume_workflow(id)
+        else:
+            # To prevent changing state in other cases throw a message.
+            raise exc.DataAccessException(
+                "Error. Can not change state to %s. "
+                "Only valid states '%s' or '%s' allowed."
+                % (new_state, states.RUNNING, states.PAUSED)
+            )
+
+        return Execution.from_dict(exec_db if isinstance(exec_db, dict)
+                                   else exec_db.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, body=Execution, status_code=201)
