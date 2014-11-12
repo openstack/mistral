@@ -7,6 +7,13 @@ Task Orchestration and Scheduling service for OpenStack cloud
 Installation
 ------------
 
+**Devstack installation**
+
+Information about how to install Mistral with devstack can be found here_: https://github.com/stackforge/mistral/tree/master/contrib/devstack
+
+
+**Local installation**
+
 First of all, in a shell run:
 
     tox
@@ -79,10 +86,8 @@ Tests
 
 There is an ability to run part of functional tests in non-openstack mode locally. To do this:
 
-    # set *auth_enable=false* in the mistral.conf and restart Mistral
-    # execute:
-
-        bash run_functional_tests.sh
+    1. set *auth_enable=false* in the mistral.conf and restart Mistral
+    2. execute: *./run_functional_tests.sh*
 
 To run tests for only one version need to specify it: bash run_functional_tests.sh v1
 

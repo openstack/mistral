@@ -1,15 +1,24 @@
 1. Follow Devstack documentation to setup a host for Devstack. Then clone
-   Devstack source code.
+   Devstack source code::
+
+      $ git clone https://github.com/openstack-dev/devstack
+
+2. Clone Mistral source code::
+
+      $ git clone https://github.com/stackforge/mistral
 
 2. Copy Mistral integration scripts to Devstack::
 
-      $ cp lib/mistral ${DEVSTACK_DIR}/lib
-      $ cp extras.d/70-mistral.sh ${DEVSTACK_DIR}/extras.d
+      $ cp mistral/contrib/devstack/lib/mistral ${DEVSTACK_DIR}/lib
+      $ cp mistral/contrib/devstack/extras.d/70-mistral.sh ${DEVSTACK_DIR}/extras.d/
 
-3. Create a ``local.conf`` file as input to devstack.
+3. Create/modify a ``localrc`` file as input to devstack.
 
-4. The Mistral service is not enabled by default, so it must be
-   enabled in ``local.conf`` before running ``stack.sh``. This example ``local.conf``
+      $ cd devstack
+      $ touch localrc
+
+4. The Mistral service is not enabled by default, so it must be enabled in ``localrc``
+   before running ``stack.sh``. This example of ``localrc``
    file shows all of the settings required for Mistral::
 
       # Enable Mistral
@@ -21,3 +30,9 @@
 5. Deploy your OpenStack Cloud with Mistral::
 
    $ ./stack.sh
+
+
+Note: 
+1. All needed Mistral keystone endpoints will be automatically created
+during installation.
+2. Python-mistralclient also will be automatically cloned and installed.
