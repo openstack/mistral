@@ -32,7 +32,7 @@ class InspectUtilsTest(base.BaseTest):
         self.assertEqual(http_action_params, parameters_str)
 
     def test_get_parameters_str_all_mandatory(self):
-        action_class = std_actions.SendEmailAction
+        action_class = std_actions.SSHAction
         parameters_str = i_u.get_arg_list_as_str(action_class.__init__)
 
-        self.assertEqual("params, settings", parameters_str)
+        self.assertEqual("cmd, host, username, password", parameters_str)

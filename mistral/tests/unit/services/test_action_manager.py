@@ -29,7 +29,13 @@ class ActionManagerTest(base.DbTestCase):
         )
 
         self.assertEqual(http_action_input, std_http.input)
-        self.assertEqual("params, settings", std_email.input)
+
+        std_email_input = (
+            "from_addr, to_addrs, smtp_server, "
+            "smtp_password, subject=None, body=None"
+        )
+
+        self.assertEqual(std_email_input, std_email.input)
 
     def test_action_description(self):
         std_http = db_api.get_action("std.http")
