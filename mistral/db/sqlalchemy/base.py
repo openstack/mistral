@@ -28,7 +28,6 @@ LOG = logging.getLogger(__name__)
 options.set_defaults(cfg.CONF, sqlite_db="mistral.sqlite")
 
 _DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
-DEFAULT_PROJECT_ID = "<default-project>"
 
 _facade = None
 

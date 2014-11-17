@@ -18,9 +18,9 @@ import json
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 
-from mistral.db.sqlalchemy import base
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
+from mistral.db import v2 as db_base
 
 
 class Workbook(mb.MistralModelBase):
@@ -40,7 +40,7 @@ class Workbook(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
@@ -61,7 +61,7 @@ class Workflow(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
@@ -81,6 +81,9 @@ class Execution(mb.MistralModelBase):
     # Can't use ForeignKey constraint here because SqlAlchemy will detect
     # a circular dependency and raise an error.
     parent_task_id = sa.Column(sa.String(36))
+
+    # Security properties.
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
 
 
 class Task(mb.MistralModelBase):
@@ -110,6 +113,9 @@ class Task(mb.MistralModelBase):
     # Relations.
     execution_id = sa.Column(sa.String(36), sa.ForeignKey('executions_v2.id'))
     execution = relationship('Execution', backref="tasks", lazy='joined')
+
+    # Security properties.
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
 
     def to_dict(self):
         d = super(Task, self).to_dict()
@@ -163,7 +169,7 @@ class Action(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
@@ -189,7 +195,7 @@ class CronTrigger(mb.MistralModelBase):
 
     # Security properties.
     scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=base.DEFAULT_PROJECT_ID)
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
     def to_dict(self):
