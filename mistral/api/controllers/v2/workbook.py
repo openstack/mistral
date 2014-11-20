@@ -14,11 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import pecan
+from pecan import hooks
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks
@@ -65,7 +68,9 @@ class Workbooks(resource.Resource):
         return cls(workbooks=[Workbook.sample()])
 
 
-class WorkbooksController(rest.RestController):
+class WorkbooksController(rest.RestController, hooks.HookController):
+    __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
+
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
@@ -76,25 +81,28 @@ class WorkbooksController(rest.RestController):
 
         return Workbook.from_dict(db_model.to_dict())
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workbook, body=Workbook)
-    def put(self, workbook):
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def put(self):
         """Update a workbook."""
-        LOG.debug("Update workbook [workbook=%s]" % workbook)
+        definition = pecan.request.text
+        LOG.debug("Update workbook [definition=%s]" % definition)
 
-        db_model = workbooks.update_workbook_v2(workbook.to_dict())
+        wb_db = workbooks.update_workbook_v2({'definition': definition})
 
-        return Workbook.from_dict(db_model.to_dict())
+        return Workbook.from_dict(wb_db.to_dict()).to_string()
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
-    def post(self, workbook):
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def post(self):
         """Create a new workbook."""
-        LOG.debug("Create workbook [workbook=%s]" % workbook)
+        definition = pecan.request.text
+        LOG.debug("Create workbook [definition=%s]" % definition)
 
-        db_model = workbooks.create_workbook_v2(workbook.to_dict())
+        wb_db = workbooks.create_workbook_v2({'definition': definition})
+        pecan.response.status = 201
 
-        return Workbook.from_dict(db_model.to_dict())
+        return Workbook.from_dict(wb_db.to_dict()).to_string()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

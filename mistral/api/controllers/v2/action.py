@@ -14,11 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import pecan
+from pecan import hooks
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -62,7 +65,7 @@ class Action(resource.Resource):
                    updated_at='1970-01-01T00:00:00.000000')
 
 
-class Actions(resource.Resource):
+class Actions(resource.ResourceList):
     """A collection of Actions."""
 
     actions = [Action]
@@ -72,7 +75,12 @@ class Actions(resource.Resource):
         return cls(actions=[Action.sample()])
 
 
-class ActionsController(rest.RestController):
+class ActionsController(rest.RestController, hooks.HookController):
+    # TODO(nmakhotkin): Have a discussion with pecan/WSME folks in order
+    # to have requests and response of different content types. Then
+    # delete ContentTypeHook.
+    __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
+
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Action, wtypes.text)
     def get(self, name):
@@ -83,39 +91,43 @@ class ActionsController(rest.RestController):
 
         return Action.from_dict(db_model.to_dict())
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Actions, body=Action)
-    def put(self, action):
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def put(self):
         """Update one or more actions.
 
-        NOTE: Field 'definition' is allowed to have definitions
+        NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be updated.
         """
-        LOG.debug("Update action(s) [definition=%s]" % action.definition)
+        definition = pecan.request.text
+        LOG.debug("Update action(s) [definition=%s]" % definition)
 
-        db_models = actions.update_actions(action.definition)
+        db_acts = actions.update_actions(definition)
+        models_dicts = [db_act.to_dict() for db_act in db_acts]
 
-        actions_list = [Action.from_dict(db_model.to_dict())
-                        for db_model in db_models]
+        action_list = [Action.from_dict(act) for act in models_dicts]
 
-        return Actions(actions=actions_list)
+        return Actions(actions=action_list).to_string()
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Actions, body=Action, status_code=201)
-    def post(self, action):
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def post(self):
         """Create a new action.
 
-        NOTE: Field 'definition' is allowed to have definitions
+        NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be created.
         """
-        LOG.debug("Create action(s) [definition=%s]" % action.definition)
+        definition = pecan.request.text
+        pecan.response.status = 201
 
-        db_models = actions.create_actions(action.definition)
+        LOG.debug("Create action(s) [definition=%s]" % definition)
 
-        actions_list = [Action.from_dict(db_model.to_dict())
-                        for db_model in db_models]
+        db_acts = actions.create_actions(definition)
+        models_dicts = [db_act.to_dict() for db_act in db_acts]
 
-        return Actions(actions=actions_list)
+        action_list = [Action.from_dict(act) for act in models_dicts]
+
+        return Actions(actions=action_list).to_string()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

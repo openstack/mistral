@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
+
 from wsme import types as wtypes
 
 
@@ -57,6 +59,27 @@ class Resource(wtypes.Base):
             res += "%s='%s'" % (attr.name, getattr(self, attr.name))
 
         return res + "]"
+
+    def to_string(self):
+        return json.dumps(self.to_dict())
+
+
+class ResourceList(Resource):
+    """Resource containing the list of other resources."""
+
+    def to_dict(self):
+        d = {}
+
+        for attr in self._wsme_attributes:
+            attr_val = getattr(self, attr.name)
+
+            if isinstance(attr_val, list):
+                if isinstance(attr_val[0], Resource):
+                    d[attr.name] = [v.to_dict() for v in attr_val]
+            elif not isinstance(attr_val, wtypes.UnsetType):
+                d[attr.name] = attr_val
+
+        return d
 
 
 class Link(Resource):

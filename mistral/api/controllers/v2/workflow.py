@@ -14,11 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import pecan
+from pecan import hooks
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.services import workflows
@@ -70,7 +73,7 @@ class Workflow(resource.Resource):
         return e
 
 
-class Workflows(resource.Resource):
+class Workflows(resource.ResourceList):
     """A collection of workflows."""
 
     workflows = [Workflow]
@@ -80,7 +83,12 @@ class Workflows(resource.Resource):
         return cls(workflows=[Workflow.sample()])
 
 
-class WorkflowsController(rest.RestController):
+class WorkflowsController(rest.RestController, hooks.HookController):
+    # TODO(nmakhotkin): Have a discussion with pecan/WSME folks in order
+    # to have requests and response of different content types. Then
+    # delete ContentTypeHook.
+    __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
+
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflow, wtypes.text)
     def get(self, name):
@@ -91,41 +99,46 @@ class WorkflowsController(rest.RestController):
 
         return Workflow.from_dict(db_model.to_dict())
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workflows, body=Workflow)
-    def put(self, workflow):
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def put(self):
         """Update one or more workflows.
 
-        NOTE: Field 'definition' is allowed to have definitions
+        NOTE: The text is allowed to have definitions
             of multiple workflows. In this case they all will be updated.
         """
-        LOG.debug("Update workflow(s) [definition=%s]" % workflow.definition)
+        definition = pecan.request.text
 
-        db_models = workflows.update_workflows(workflow.definition)
+        LOG.debug("Update workflow(s) [definition=%s]" % definition)
 
-        workflows_list = [Workflow.from_dict(db_model.to_dict())
-                          for db_model in db_models]
+        db_wfs = workflows.update_workflows(definition)
+        models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
 
-        return Workflows(workflows=workflows_list)
+        workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workflows, body=Workflow, status_code=201)
-    def post(self, workflow):
+        return Workflows(workflows=workflow_list).to_string()
+
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def post(self):
         """Create a new workflow.
 
-        NOTE: Field 'definition' is allowed to have definitions
+        NOTE: The text is allowed to have definitions
             of multiple workflows. In this case they all will be created.
         """
-        LOG.debug("Create workflow(s) [definition=%s]" % workflow.definition)
+        definition = pecan.request.text
+        pecan.response.status = 201
 
-        db_models = workflows.create_workflows(workflow.definition)
+        LOG.debug("Create workflow(s) [definition=%s]" % definition)
 
-        workflows_list = [Workflow.from_dict(db_model.to_dict())
-                          for db_model in db_models]
+        db_wfs = workflows.create_workflows(definition)
+        models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
 
-        return Workflows(workflows=workflows_list)
+        workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]
 
-    @rest_utils.wrap_wsme_controller_exception
+        return Workflows(workflows=workflow_list).to_string()
+
+    @rest_utils.wrap_pecan_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workflow."""
