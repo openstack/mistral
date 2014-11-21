@@ -171,13 +171,45 @@ class RunTask(EngineCommand):
                 action_db.action_class, action_db.attributes or {}):
             action_input.update(a_m.get_action_context(self.task_db))
 
-        rpc.get_executor_client().run_action(
-            self.task_db.id,
-            action_db.action_class,
-            action_db.attributes or {},
-            action_input,
-            targets
-        )
+        for_each = self.task_spec.get_for_each()
+        if for_each:
+            action_input_collection = self._calc_for_each_input(action_input)
+            for a_input in action_input_collection:
+                rpc.get_executor_client().run_action(
+                    self.task_db.id,
+                    action_db.action_class,
+                    action_db.attributes or {},
+                    expr.evaluate_recursively(
+                        self.task_spec.get_input(),
+                        a_input
+                    ),
+                    targets
+                )
+
+        else:
+            rpc.get_executor_client().run_action(
+                self.task_db.id,
+                action_db.action_class,
+                action_db.attributes or {},
+                action_input,
+                targets
+            )
+
+    def _calc_for_each_input(self, action_input):
+        # In case of for-each iterate over action_input and send
+        # each part of data to executor.
+        # Calculate action input collection for separating input.
+        action_input_collection = []
+        for key, value in action_input.items():
+            for index, item in enumerate(value):
+                iter_context = {key: item}
+
+                if index >= len(action_input_collection):
+                    action_input_collection.append(iter_context)
+                else:
+                    action_input_collection[index].update(iter_context)
+
+        return action_input_collection
 
     def _run_workflow(self):
         parent_exec_db = self.task_db.execution

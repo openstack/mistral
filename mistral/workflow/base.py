@@ -1,6 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -13,10 +13,12 @@
 #    limitations under the License.
 
 import abc
+import copy
 
 from oslo.config import cfg
 
 from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral import utils
 from mistral.workbook import parser as spec_parser
@@ -73,9 +75,18 @@ class WorkflowHandler(object):
 
         wf_trace_msg = "Task '%s' [%s -> " % (task_db.name, task_db.state)
 
-        task_db.state = \
-            states.ERROR if raw_result.is_error() else states.SUCCESS
         task_spec = self.wf_spec.get_tasks()[task_db.name]
+
+        task_db.output = self._determine_task_output(
+            task_spec,
+            task_db,
+            raw_result
+        )
+        task_db.state = self._determine_task_state(
+            task_db,
+            task_spec,
+            raw_result
+        )
 
         wf_trace_msg += "%s" % task_db.state
         if task_db.state == states.ERROR:
@@ -85,9 +96,6 @@ class WorkflowHandler(object):
             wf_trace_msg += ", result = %s]" % utils.cut(raw_result.data)
 
         WF_TRACE.info(wf_trace_msg)
-
-        task_db.output =\
-            data_flow.evaluate_task_output(task_spec, raw_result)
 
         commands = self._find_next_commands(task_db)
 
@@ -112,6 +120,58 @@ class WorkflowHandler(object):
                 )
 
         return commands
+
+    def _determine_task_output(self, task_spec, task_db, raw_result):
+        for_each = task_spec.get_for_each()
+        t_name = task_spec.get_name()
+        if for_each:
+            # Calc output for for-each (only list form is used).
+            out_key = (task_spec.get_publish().keys()[0]
+                       if task_spec.get_publish() else None)
+
+            output = expr.evaluate_recursively(
+                task_spec.get_publish(),
+                raw_result.data
+            )
+
+            if not task_db.output:
+                task_db.output = {}
+
+            task_output = copy.copy(task_db.output)
+            if out_key:
+                if out_key in task_output:
+                    task_output[out_key].append(output[out_key])
+                else:
+                    task_output[out_key] = [output[out_key]]
+                # Add same result to task output under key 'task'.
+                task_output['task'] = {
+                    t_name: task_output[out_key]
+                }
+            else:
+                if 'task' not in task_output:
+                    task_output.update({'task': {t_name: [output]}})
+                else:
+                    task_output['task'][t_name].append(output)
+
+            return task_output
+        else:
+            return data_flow.evaluate_task_output(
+                task_spec,
+                raw_result
+            )
+
+    def _determine_task_state(self, task_db, task_spec, raw_result):
+        state = states.ERROR if raw_result.is_error() else states.SUCCESS
+
+        for_each = task_spec.get_for_each()
+        if for_each:
+            # Check if all iterations are completed.
+            iterations_count = len(task_db.input[for_each.keys()[0]])
+
+            if len(task_db.output['task'][task_db.name]) < iterations_count:
+                state = states.RUNNING
+
+        return state
 
     @abc.abstractmethod
     def _find_next_commands(self, task_db):
