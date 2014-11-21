@@ -193,19 +193,19 @@ class MistralHTTPAction(HTTPAction):
 
 
 class SendEmailAction(base.Action):
-    def __init__(self, params, settings):
+    def __init__(self, from_addr, to_addrs, smtp_server,
+                 smtp_password, subject=None, body=None):
         # TODO(dzimine): validate parameters
 
         # Task invocation parameters.
-        self.to = ', '.join(params['to'])
-        self.subject = params['subject']
-        self.body = params['body']
+        self.to = ', '.join(to_addrs)
+        self.subject = subject or "<No subject>"
+        self.body = body
 
         # Action provider settings.
-        self.smtp_server = settings['smtp_server']
-        self.sender = settings['from']
-        self.password = settings['password'] \
-            if 'password' in settings else None
+        self.smtp_server = smtp_server
+        self.sender = from_addr
+        self.password = smtp_password
 
     def run(self):
         LOG.info("Sending email message "
