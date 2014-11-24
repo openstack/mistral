@@ -12,12 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo.config import cfg
-
-from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.services import trusts
+from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
 
@@ -79,14 +76,6 @@ def _get_action_values(action_spec, definition, scope):
         'scope': scope
     }
 
-    _add_security_info(values)
+    security.add_security_info(values)
 
     return values
-
-
-def _add_security_info(values):
-    if cfg.CONF.pecan.auth_enable and not values['name'].startswith('std.'):
-        values.update({
-            'trust_id': trusts.create_trust().id,
-            'project_id': context.ctx().project_id
-        })

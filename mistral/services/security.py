@@ -14,9 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# TODO(rakhmerov): Is this module properly named and placed?
-# According to its interface it may be called 'security'.
-
 from oslo.config import cfg
 
 from mistral import context
@@ -76,3 +73,11 @@ def delete_trust(workbook):
 
     keystone_client = keystone.client_for_trusts(workbook.trust_id)
     keystone_client.trusts.delete(workbook.trust_id)
+
+
+def add_security_info(secure_object_values, scope='private'):
+    if cfg.CONF.pecan.auth_enable and scope == 'private':
+        secure_object_values.update({
+            'trust_id': create_trust().id,
+            'project_id': context.ctx().project_id
+        })

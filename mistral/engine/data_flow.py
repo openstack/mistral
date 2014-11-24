@@ -25,7 +25,7 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
-from mistral.services import trusts
+from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
 
@@ -164,7 +164,7 @@ def add_openstack_data_to_context(context, db_workbook):
         context = {}
 
     if CONF.pecan.auth_enable:
-        workbook_ctx = trusts.create_context(
+        workbook_ctx = security.create_context(
             db_workbook.trust_id, db_workbook.project_id
         )
 

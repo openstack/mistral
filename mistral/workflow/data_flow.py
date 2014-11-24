@@ -20,7 +20,7 @@ from oslo.config import cfg
 from mistral import context as auth_ctx
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
-from mistral.services import trusts
+from mistral.services import security
 from mistral import utils
 
 
@@ -142,7 +142,7 @@ def add_openstack_data_to_context(workflow_db, context):
         wf_ctx = auth_ctx.ctx()
 
         if not wf_ctx:
-            wf_ctx = trusts.create_context(
+            wf_ctx = security.create_context(
                 workflow_db.trust_id,
                 workflow_db.project_id
             )
