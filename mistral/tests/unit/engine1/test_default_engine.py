@@ -65,7 +65,7 @@ class DefaultEngineTest(base.DbTestCase):
     def setUp(self):
         super(DefaultEngineTest, self).setUp()
 
-        wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_service.create_workbook_v2(WORKBOOK)
 
         # Note: For purposes of this test we can easily use
         # simple magic mocks for engine and executor clients

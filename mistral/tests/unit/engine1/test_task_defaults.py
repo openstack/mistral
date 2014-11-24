@@ -58,7 +58,7 @@ workflows:
 
 class TaskDefaultsEngineTest(base.EngineTestCase):
     def test_task_defaults_on_error(self):
-        wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})

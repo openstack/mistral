@@ -74,11 +74,7 @@ class SubworkflowsTest(base.EngineTestCase):
     def setUp(self):
         super(SubworkflowsTest, self).setUp()
 
-        wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2(WORKBOOK)
 
     def test_subworkflow_success(self):
         exec1_db = self.engine.start_workflow('my_wb.wf2', None)

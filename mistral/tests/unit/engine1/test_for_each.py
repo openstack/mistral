@@ -87,7 +87,7 @@ WORKFLOW_INPUT = {
 
 class ForEachEngineTest(base.EngineTestCase):
     def test_for_each_simple(self):
-        wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb1.for_each', WORKFLOW_INPUT)
@@ -115,9 +115,7 @@ class ForEachEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1.state)
 
     def test_for_each_static_var(self):
-        wb_service.create_workbook_v2(
-            {'definition': WORKBOOK_WITH_STATIC_VAR}
-        )
+        wb_service.create_workbook_v2(WORKBOOK_WITH_STATIC_VAR)
 
         wf_input = copy.copy(WORKFLOW_INPUT)
         wf_input.update({'greeting': 'Hello'})

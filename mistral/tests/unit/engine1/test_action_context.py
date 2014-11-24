@@ -72,11 +72,14 @@ class ActionContextTest(base.EngineTestCase):
         std_actions.MistralHTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
     def test_action_context(self):
-        wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_service.create_workbook_v2(WORKBOOK)
+
         exec_db = self.engine.start_workflow('wb.wf1', {})
+
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         exec_db = db_api.get_execution(exec_db.id)
+
         self.assertEqual(states.SUCCESS, exec_db.state)
         task = self._assert_single_item(exec_db.tasks, name='task1')
 

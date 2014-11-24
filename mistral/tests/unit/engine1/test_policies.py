@@ -250,7 +250,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertIsInstance(p, policies.TimeoutPolicy)
 
     def test_wait_before_policy(self):
-        wb_service.create_workbook_v2({'definition': WAIT_BEFORE_WB})
+        wb_service.create_workbook_v2(WAIT_BEFORE_WB)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
@@ -275,7 +275,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, exec_db.state)
 
     def test_wait_after_policy(self):
-        wb_service.create_workbook_v2({'definition': WAIT_AFTER_WB})
+        wb_service.create_workbook_v2(WAIT_AFTER_WB)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
@@ -301,7 +301,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, exec_db.state)
 
     def test_retry_policy(self):
-        wb_service.create_workbook_v2({'definition': RETRY_WB})
+        wb_service.create_workbook_v2(RETRY_WB)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
@@ -335,7 +335,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, exec_db.state)
 
     def test_timeout_policy(self):
-        wb_service.create_workbook_v2({'definition': TIMEOUT_WB})
+        wb_service.create_workbook_v2(TIMEOUT_WB)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
@@ -364,7 +364,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, exec_db.state)
 
     def test_timeout_policy_success_after_timeout(self):
-        wb_service.create_workbook_v2({'definition': TIMEOUT_WB2})
+        wb_service.create_workbook_v2(TIMEOUT_WB2)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})

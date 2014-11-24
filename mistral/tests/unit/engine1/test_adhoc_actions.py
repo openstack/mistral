@@ -64,11 +64,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def setUp(self):
         super(AdhocActionsTest, self).setUp()
 
-        wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2(WORKBOOK)
 
     def test_run_workflow_with_adhoc_action(self):
         exec_db = self.engine.start_workflow(

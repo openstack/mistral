@@ -57,11 +57,7 @@ class SimpleEngineInstructionsTest(base.EngineTestCase):
     def setUp(self):
         super(SimpleEngineInstructionsTest, self).setUp()
 
-        wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK1,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2(WORKBOOK1)
 
     def test_fail(self):
         exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
@@ -139,11 +135,7 @@ class SimpleEngineWorkflowLevelInstructionsTest(base.EngineTestCase):
     def setUp(self):
         super(SimpleEngineWorkflowLevelInstructionsTest, self).setUp()
 
-        wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK2,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2(WORKBOOK2)
 
     def test_fail(self):
         exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
@@ -253,11 +245,7 @@ class OrderEngineInstructionsTest(base.EngineTestCase):
     def setUp(self):
         super(OrderEngineInstructionsTest, self).setUp()
 
-        wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK3,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2(WORKBOOK3)
 
     def test_fail_first(self):
         exec_db = self.engine.start_workflow('my_wb.fail_first_wf', None)
