@@ -38,8 +38,6 @@ cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
-# TODO(rakhmerov): Add necessary logging including WF_TRACE.
-
 
 class DefaultEngine(base.Engine):
     def __init__(self, engine_client):
@@ -69,9 +67,9 @@ class DefaultEngine(base.Engine):
             wf_handler = wfh_factory.create_workflow_handler(exec_db, wf_spec)
 
             # Calculate commands to process next.
-            commands = wf_handler.start_workflow(**params)
+            cmds = wf_handler.start_workflow(**params)
 
-            self._run_commands(commands, exec_db, wf_handler)
+            self._run_commands(cmds, exec_db, wf_handler)
 
         return exec_db
 
@@ -95,9 +93,9 @@ class DefaultEngine(base.Engine):
                 return task_db
 
             # Calculate commands to process next.
-            commands = wf_handler.on_task_result(task_db, raw_result)
+            cmds = wf_handler.on_task_result(task_db, raw_result)
 
-            self._run_commands(commands, exec_db, wf_handler, task_db)
+            self._run_commands(cmds, exec_db, wf_handler, task_db)
 
             self._check_subworkflow_completion(exec_db)
 
@@ -122,9 +120,9 @@ class DefaultEngine(base.Engine):
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
             # Calculate commands to process next.
-            commands = wf_handler.resume_workflow()
+            cmds = wf_handler.resume_workflow()
 
-            self._run_commands(commands, exec_db, wf_handler)
+            self._run_commands(cmds, exec_db, wf_handler)
 
         return exec_db
 
@@ -133,11 +131,11 @@ class DefaultEngine(base.Engine):
         raise NotImplementedError
 
     @staticmethod
-    def _run_commands(commands, exec_db, wf_handler, cause_task_db=None):
-        if not commands:
+    def _run_commands(cmds, exec_db, wf_handler, cause_task_db=None):
+        if not cmds:
             return
 
-        for cmd in commands:
+        for cmd in cmds:
             if not cmd.run(exec_db, wf_handler, cause_task_db):
                 break
 
