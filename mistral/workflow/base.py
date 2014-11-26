@@ -219,11 +219,11 @@ class WorkflowHandler(object):
 
                     if not t_db:
                         schedule_tasks += [task_name]
-                        return schedule_tasks
-                    schedule_tasks = get_tasks_to_schedule(
-                        t_db,
-                        schedule_tasks
-                    )
+                    else:
+                        schedule_tasks += get_tasks_to_schedule(
+                            t_db,
+                            schedule_tasks
+                        )
 
             return schedule_tasks
 
@@ -233,12 +233,14 @@ class WorkflowHandler(object):
         )
 
         task_names = []
+
         for cmd in start_task_cmds:
             task_db = [t for t in tasks
                        if t.name == cmd.task_spec.get_name()][0]
             task_names += get_tasks_to_schedule(task_db, [])
 
         schedule_cmds = []
+
         for t_name in task_names:
             schedule_cmds += [commands.RunTask(
                 self.wf_spec.get_tasks()[t_name]
@@ -285,6 +287,8 @@ class WorkflowHandler(object):
         cur_state = self.exec_db.state
 
         if states.is_valid_transition(cur_state, state):
+            WF_TRACE.info("Execution of workflow '%s' [%s -> %s]"
+                          % (self.exec_db.wf_name, cur_state, state))
             self.exec_db.state = state
         else:
             msg = "Can't change workflow state [execution=%s," \

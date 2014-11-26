@@ -272,11 +272,6 @@ class SucceedWorkflow(EngineCommand):
 
 class PauseWorkflow(EngineCommand):
     def run(self, exec_db, wf_handler, cause_task_db=None):
-        _log_execution_state_change(
-            exec_db.wf_name,
-            exec_db.state,
-            states.PAUSED
-        )
 
         wf_handler.pause_workflow()
 
