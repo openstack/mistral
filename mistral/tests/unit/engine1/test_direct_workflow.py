@@ -22,6 +22,7 @@ from mistral.tests.unit.engine1 import base
 # TODO(nmakhotkin) Need to write more tests.
 
 LOG = logging.getLogger(__name__)
+
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
@@ -89,6 +90,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         exec_db = db_api.get_execution(exec_db.id)
 
         tasks = exec_db.tasks
+
         task3 = self._assert_single_item(tasks, name='task3')
         task4 = self._assert_single_item(tasks, name='task4')
 

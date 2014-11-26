@@ -21,6 +21,7 @@ from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
 
 LOG = logging.getLogger(__name__)
+
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
@@ -28,7 +29,9 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb
+
 workflows:
   wf1:
     type: direct
@@ -72,9 +75,32 @@ class DataFlowEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, exec_db.state)
 
         tasks = exec_db.tasks
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
         task3 = self._assert_single_item(tasks, name='task3')
 
         self.assertEqual(states.SUCCESS, task3.state)
+
+        self.assertDictEqual(
+            {
+                'task': {
+                    'task1': {'hi': 'Hi,'},
+                },
+                'hi': 'Hi,',
+            },
+            task1.output
+        )
+
+        self.assertDictEqual(
+            {
+                'task': {
+                    'task2': {'username': 'Morpheus'},
+                },
+                'username': 'Morpheus',
+            },
+            task2.output
+        )
 
         self.assertDictEqual(
             {

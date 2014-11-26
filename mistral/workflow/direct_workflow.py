@@ -88,7 +88,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         Expression 'on_complete' is not mutually exclusive to 'on_success'
          and 'on_error'.
         :param task_db: Task DB model.
-        :param remove_incomplete_joins: True if incomplete "join"
+        :param remove_unsatisfied_joins: True if incomplete "join"
             tasks must be excluded from the list of commands.
         :return: List of task specifications.
         """

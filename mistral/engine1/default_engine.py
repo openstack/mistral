@@ -69,7 +69,9 @@ class DefaultEngine(base.Engine):
             # Calculate commands to process next.
             cmds = wf_handler.start_workflow(**params)
 
-            self._run_commands(cmds, exec_db, wf_handler)
+            self._run_local_commands(cmds, exec_db, wf_handler)
+
+        self._run_remote_commands(cmds, exec_db, wf_handler)
 
         return exec_db
 
@@ -95,9 +97,16 @@ class DefaultEngine(base.Engine):
             # Calculate commands to process next.
             cmds = wf_handler.on_task_result(task_db, raw_result)
 
-            self._run_commands(cmds, exec_db, wf_handler, task_db)
+            self._run_local_commands(
+                cmds,
+                exec_db,
+                wf_handler,
+                task_db
+            )
 
-            self._check_subworkflow_completion(exec_db)
+        self._run_remote_commands(cmds, exec_db, wf_handler)
+
+        self._check_subworkflow_completion(exec_db)
 
         return task_db
 
@@ -122,7 +131,9 @@ class DefaultEngine(base.Engine):
             # Calculate commands to process next.
             cmds = wf_handler.resume_workflow()
 
-            self._run_commands(cmds, exec_db, wf_handler)
+            self._run_local_commands(cmds, exec_db, wf_handler)
+
+        self._run_remote_commands(cmds, exec_db, wf_handler)
 
         return exec_db
 
@@ -131,13 +142,26 @@ class DefaultEngine(base.Engine):
         raise NotImplementedError
 
     @staticmethod
-    def _run_commands(cmds, exec_db, wf_handler, cause_task_db=None):
+    def _run_local_commands(cmds, exec_db, wf_handler, cause_task_db=None):
         if not cmds:
             return
 
         for cmd in cmds:
-            if not cmd.run(exec_db, wf_handler, cause_task_db):
-                break
+            if not cmd.run_local(exec_db, wf_handler, cause_task_db):
+                return False
+
+        return True
+
+    @staticmethod
+    def _run_remote_commands(cmds, exec_db, wf_handler, cause_task_db=None):
+        if not cmds:
+            return
+
+        for cmd in cmds:
+            if not cmd.run_remote(exec_db, wf_handler, cause_task_db):
+                return False
+
+        return True
 
     @staticmethod
     def _create_db_execution(wf_db, wf_spec, wf_input, params):
@@ -180,7 +204,11 @@ class DefaultEngine(base.Engine):
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
-            commands.RunTask(task_spec, task_db).run(exec_db, wf_handler)
+            cmd = commands.RunTask(task_spec, task_db)\
+
+            cmd.run_local(exec_db, wf_handler)
+
+        cmd.run_remote(exec_db, wf_handler)
 
     def _check_subworkflow_completion(self, exec_db):
         if not exec_db.parent_task_id:

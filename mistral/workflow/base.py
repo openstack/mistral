@@ -129,7 +129,8 @@ class WorkflowHandler(object):
 
         return cmds
 
-    def _determine_task_output(self, task_spec, task_db, raw_result):
+    @staticmethod
+    def _determine_task_output(task_spec, task_db, raw_result):
         for_each = task_spec.get_for_each()
         t_name = task_spec.get_name()
 
@@ -172,7 +173,8 @@ class WorkflowHandler(object):
         else:
             return data_flow.evaluate_task_output(task_spec, raw_result)
 
-    def _determine_task_state(self, task_db, task_spec, raw_result):
+    @staticmethod
+    def _determine_task_state(task_db, task_spec, raw_result):
         state = states.ERROR if raw_result.is_error() else states.SUCCESS
 
         for_each = task_spec.get_for_each()

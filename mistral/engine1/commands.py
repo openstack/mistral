@@ -44,9 +44,13 @@ def _log_execution_state_change(name, from_state, to_state):
 class EngineCommand(object):
     """Engine command interface."""
 
-    @abc.abstractmethod
-    def run(self, exec_db, wf_handler, cause_task_db=None):
-        """Runs the command.
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+        """Runs local part of the command.
+
+        "Local" means that the code can be performed within a scope
+        of an opened DB transaction. For example, for all commands
+        that simply change a state of execution (e.g. depending on
+        some conditions) it's enough to implement only this method.
 
         :param exec_db: Workflow execution DB object.
         :param wf_handler: Workflow handler currently being used.
@@ -54,12 +58,32 @@ class EngineCommand(object):
         :return False if engine should stop further command processing,
             True otherwise.
         """
-        raise NotImplementedError
+        return True
+
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+        """Runs remote part of the command.
+
+        "Remote" means that the code cannot be performed within a scope
+        of an opened DB transaction. All commands that deal with remote
+        invocations should implement this method. However, they may also
+        need to implement "run_local" if they need to do something with
+        DB state of execution and/or tasks.
+
+        :param exec_db: Workflow execution DB object.
+        :param wf_handler: Workflow handler currently being used.
+        :param cause_task_db: Task that caused the command to run.
+        :return False if engine should stop further command processing,
+            True otherwise.
+        """
+        return True
 
 
 class Noop(EngineCommand):
     """No-op command."""
-    def run(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+        pass
+
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
         pass
 
 
@@ -68,12 +92,14 @@ class RunTask(EngineCommand):
         self.task_spec = task_spec
         self.task_db = task_db
 
-    def run(self, exec_db, wf_handler, cause_task_db=None):
+        if task_db:
+            self.exec_db = task_db.execution
+
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
         LOG.debug('Running workflow task: %s' % self.task_spec)
 
         self._prepare_task(exec_db, wf_handler, cause_task_db)
         self._before_task_start(wf_handler.wf_spec)
-        self._run_task()
 
         return True
 
@@ -82,6 +108,7 @@ class RunTask(EngineCommand):
             return
 
         self.task_db = self._create_db_task(exec_db)
+        self.exec_db = self.task_db.execution
 
         # Evaluate Data Flow properties ('input', 'in_context').
         data_flow.prepare_db_task(
@@ -111,6 +138,11 @@ class RunTask(EngineCommand):
             'project_id': exec_db.project_id
         })
 
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+        self._run_task()
+
+        return True
+
     def _run_task(self):
         # Policies could possibly change task state.
         if self.task_db.state != states.RUNNING:
@@ -130,7 +162,7 @@ class RunTask(EngineCommand):
             self._run_workflow()
 
     def _run_action(self):
-        exec_db = self.task_db.execution
+        exec_db = self.exec_db
         wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
 
         action_spec_name = self.task_spec.get_action_name()
@@ -178,8 +210,10 @@ class RunTask(EngineCommand):
             action_input.update(a_m.get_action_context(self.task_db))
 
         for_each = self.task_spec.get_for_each()
+
         if for_each:
             action_input_collection = self._calc_for_each_input(action_input)
+
             for a_input in action_input_collection:
                 rpc.get_executor_client().run_action(
                     self.task_db.id,
@@ -204,11 +238,13 @@ class RunTask(EngineCommand):
                 targets
             )
 
-    def _calc_for_each_input(self, action_input):
+    @staticmethod
+    def _calc_for_each_input(action_input):
         # In case of for-each iterate over action_input and send
         # each part of data to executor.
         # Calculate action input collection for separating input.
         action_input_collection = []
+
         for key, value in action_input.items():
             for index, item in enumerate(value):
                 iter_context = {key: item}
@@ -221,7 +257,7 @@ class RunTask(EngineCommand):
         return action_input_collection
 
     def _run_workflow(self):
-        parent_exec_db = self.task_db.execution
+        parent_exec_db = self.exec_db
         parent_wf_spec = spec_parser.get_workflow_spec(parent_exec_db.wf_spec)
 
         wf_spec_name = self.task_spec.get_workflow_name()
@@ -251,7 +287,7 @@ class RunTask(EngineCommand):
 
 
 class FailWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
         _log_execution_state_change(
             exec_db.wf_name,
             exec_db.state,
@@ -262,9 +298,12 @@ class FailWorkflow(EngineCommand):
 
         return False
 
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+        return False
+
 
 class SucceedWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
         _log_execution_state_change(
             exec_db.wf_name,
             exec_db.state,
@@ -275,18 +314,32 @@ class SucceedWorkflow(EngineCommand):
 
         return False
 
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+        return False
+
 
 class PauseWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+        _log_execution_state_change(
+            exec_db.wf_name,
+            exec_db.state,
+            states.PAUSED
+        )
 
         wf_handler.pause_workflow()
 
         return False
 
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+        return False
+
 
 class RollbackWorkflow(EngineCommand):
-    def run(self, exec_db, wf_handler, cause_task_db=None):
-        pass
+    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+        return True
+
+    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+        return True
 
 
 RESERVED_COMMANDS = {

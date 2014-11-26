@@ -28,6 +28,8 @@ from mistral import utils
 from mistral.utils import inspect_utils as i_utils
 
 
+# TODO(rakhmerov): Make methods more consistent and granular.
+
 LOG = logging.getLogger(__name__)
 
 ACTIONS_PATH = '../resources/actions'
@@ -48,11 +50,11 @@ def get_registered_actions(**kwargs):
     return db_api.get_actions(**kwargs)
 
 
-def _register_action_in_db(name, action_class, attributes,
-                           description=None, input_str=None):
+def register_action_class(name, action_class_str, attributes,
+                          description=None, input_str=None):
     values = {
         'name': name,
-        'action_class': action_class,
+        'action_class': action_class_str,
         'attributes': attributes,
         'description': description,
         'input': input_str,
@@ -74,6 +76,7 @@ def _clear_system_action_db():
 
 def sync_db():
     _clear_system_action_db()
+
     register_action_classes()
     register_standard_actions()
 
@@ -90,7 +93,7 @@ def _register_dynamic_action_classes():
         for action in actions:
             attrs = i_utils.get_public_fields(action['class'])
 
-            _register_action_in_db(
+            register_action_class(
                 action['name'],
                 action_class_str,
                 attrs,
@@ -114,9 +117,13 @@ def register_action_classes():
 
             attrs = i_utils.get_public_fields(mgr[name].plugin)
 
-            _register_action_in_db(name, action_class_str, attrs,
-                                   description=description,
-                                   input_str=input_str)
+            register_action_class(
+                name,
+                action_class_str,
+                attrs,
+                description=description,
+                input_str=input_str
+            )
 
         _register_dynamic_action_classes()
 
@@ -134,8 +141,10 @@ def get_action_class(action_full_name):
     action_db = get_action_db(action_full_name)
 
     if action_db:
-        return action_factory.construct_action_class(action_db.action_class,
-                                                     action_db.attributes)
+        return action_factory.construct_action_class(
+            action_db.action_class,
+            action_db.attributes
+        )
 
 
 def get_action_context(task_db):
