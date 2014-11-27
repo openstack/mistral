@@ -37,7 +37,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
     @test.attr(type='openstack')
     def test_nova_actions(self):
         nova_wb = base.get_resource(
-            'resources/openstack/nova_actions.yaml')
+            'openstack/nova_actions.yaml')
         self.client.prepare_workbook(self.workbook_name, nova_wb)
 
         context = {
@@ -66,7 +66,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
     @test.attr(type='openstack')
     def test_keystone_actions(self):
         keystone_wb = base.get_resource(
-            'resources/openstack/keystone_actions.yaml')
+            'openstack/keystone_actions.yaml')
         self.client.prepare_workbook(self.workbook_name,
                                      keystone_wb)
         _, execution = self.client.create_execution_wait_success(
@@ -86,7 +86,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
     @test.attr(type='openstack')
     def test_glance_actions(self):
         glance_wb = base.get_resource(
-            'resources/openstack/glance_actions.yaml')
+            'openstack/glance_actions.yaml')
         self.client.prepare_workbook(self.workbook_name,
                                      glance_wb)
 

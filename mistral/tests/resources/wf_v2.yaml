@@ -6,5 +6,21 @@ wf:
   tasks:
     hello:
       action: std.echo output="Hello"
+      policies:
+        wait-before: 1
       publish:
         result: $
+
+wf1:
+  type: reverse
+  input:
+    - farewell
+  tasks:
+    addressee:
+      action: std.echo output="John"
+      publish:
+        name: $
+    goodbye:
+      action: std.echo output="{$.farewell}, {$.name}"
+      requires: [addressee]
+

@@ -1,5 +1,4 @@
-# Copyright 2013 Mirantis, Inc.
-# All Rights Reserved.
+# Copyright 2013 Mirantis, Inc. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -32,23 +31,23 @@ def get_resource(path):
     main_package = 'mistral/tests'
     dir_path = __file__[0:__file__.find(main_package) + len(main_package) + 1]
 
-    return open(dir_path + path).read()
+    return open(dir_path + 'resources/' + path).read()
 
 
 def find_items(items, **props):
-        def _matches(item, **props):
-            for prop_name, prop_val in props.iteritems():
-                if item[prop_name] != prop_val:
-                    return False
+    def _matches(item, **props):
+        for prop_name, prop_val in props.iteritems():
+            if item[prop_name] != prop_val:
+                return False
 
-            return True
+        return True
 
-        filtered = filter(lambda item: _matches(item, **props), items)
+    filtered = filter(lambda item: _matches(item, **props), items)
 
-        if len(filtered) == 1:
-            return filtered[0]
+    if len(filtered) == 1:
+        return filtered[0]
 
-        return filtered
+    return filtered
 
 
 class MistralClientBase(rest_client.RestClient):
@@ -113,7 +112,7 @@ class MistralClientV1(MistralClientBase):
     def upload_workbook_definition(self, name):
         headers = {'Content-Type': 'text/plain',
                    'X-Auth-Token': self.auth_provider.get_token()}
-        text = get_resource('resources/wb_v1.yaml')
+        text = get_resource('wb_v1.yaml')
 
         return self.put('workbooks/{name}/definition'.format(name=name),
                         text, headers)
@@ -215,76 +214,59 @@ class MistralClientV2(MistralClientBase):
 
     _version = 2
 
-    def create_workbook(self, name):
-        text = get_resource('resources/wb_v2.yaml')
-        post_body = {"definition": "%s" % text}
-        resp, body = self.post('workbooks', json.dumps(post_body))
+    def post_request(self, url, file_name):
+        text = get_resource(file_name)
+        headers = {"headers": "Content-Type:text/plain"}
+        return self.post(url, text, headers=headers)
 
-        self.workbooks.append(json.loads(body)['name'])
-
-        _, wfs = self.get('workflows')
-        self.workflows.append(json.loads(wfs)['workflows'][0]['name'])
-
-        return resp, json.loads(body)
-
-    def update_workbook(self, name):
-        text = get_resource('resources/wb_v2.yaml')
-        post_body = {"definition": "%s" % text}
-        resp, body = self.put('workbooks',
-                              json.dumps(post_body))
+    def update_request(self, url, file_name):
+        text = get_resource(file_name)
+        headers = {"headers": "Content-Type:text/plain"}
+        resp, body = self.put(url, text, headers=headers)
 
         return resp, json.loads(body)
 
-    def get_workbook_definition(self, name):
-        return self.get('workbooks/{name}'.format(name=name))
+    def get_definition(self, item, name):
+        resp, body = self.get("%s/%s" % (item, name))
 
-    def upload_workbook_definition(self, name):
-        text = get_resource('resources/wb_v2.yaml')
-        post_body = {"definition": "%s" % text}
-        resp, body = self.put('workbooks',
-                              json.dumps(post_body))
+        return resp, json.loads(body)['definition']
 
-        return resp, json.loads(body)
+    def create_workbook(self, yaml_file):
+        resp, body = self.post_request('workbooks', yaml_file)
 
-    def create_workflow(self):
-        text = get_resource('resources/wf_v2.yaml')
-        post_body = {"definition": "%s" % text}
-        resp, body = self.post('workflows',
-                               json.dumps(post_body))
+        wb_name = json.loads(body)['name']
+        self.workbooks.append(wb_name)
 
-        self.workflows.append(json.loads(body)['workflows'][0]['name'])
+        _, wfs = self.get_list_obj('workflows')
+        for wf in wfs['workflows']:
+            if wf['name'].startswith(wb_name):
+                self.workflows.append(wf['name'])
 
         return resp, json.loads(body)
 
-    def update_workflow(self):
-        text = get_resource('resources/wf_v2.yaml')
-        post_body = {"definition": "%s" % text}
-        resp, body = self.put('workflows',
-                              json.dumps(post_body))
+    def create_workflow(self, yaml_file):
+        resp, body = self.post_request('workflows', yaml_file)
+
+        for wf in json.loads(body)['workflows']:
+            self.workflows.append(wf['name'])
 
         return resp, json.loads(body)
 
-    def get_workflow_definition(self, name):
-        return self.get('workflows/{name}'.format(name=name))
+    def create_execution(self, wf_name, wf_input=None, params=None):
+        body = {"workflow_name": "%s" % wf_name}
+        if wf_input:
+            body.update({'input': json.dumps(wf_input)})
+        if params:
+            body.update({'params': json.dumps(params)})
 
-    def create_execution(self, wf_name, post_body=None):
-        if post_body is None:
-            body = '{"workflow_name": "%s"}' % wf_name
-        else:
-            body = post_body
-        rest, body = self.post('executions', body)
+        resp, body = self.post('executions', json.dumps(body))
 
         self.executions.append(json.loads(body)['id'])
 
-        return rest, json.loads(body)
+        return resp, json.loads(body)
 
     def update_execution(self, execution_id, put_body):
-        return self.put('executions/{execution}'.format(
-            execution=execution_id), json.dumps(put_body))
-
-    def update_task(self, task_id, put_body):
-        resp, body = self.put('tasks/{task}'.format(
-            task=task_id), json.dumps(put_body))
+        resp, body = self.put('executions/%s' % execution_id, put_body)
 
         return resp, json.loads(body)
 
@@ -303,26 +285,13 @@ class MistralClientV2(MistralClientBase):
 
         return rest, json.loads(body)
 
-    def create_action(self, text):
-        post_body = {"definition": "%s" % text}
-        resp, body = self.post('actions',
-                               json.dumps(post_body))
+    def create_action(self, yaml_file):
+        resp, body = self.post_request('actions', yaml_file)
+
         self.actions.extend(
             [action['name'] for action in json.loads(body)['actions']])
 
         return resp, json.loads(body)
-
-    def update_action(self, text):
-        post_body = {"definition": "%s" % text}
-        resp, body = self.put('actions',
-                              json.dumps(post_body))
-
-        return resp, json.loads(body)
-
-    def get_action_definition(self, name):
-        resp, body = self.get("actions/%s" % name)
-
-        return resp, json.loads(body)['definition']
 
 
 class AuthProv(auth.KeystoneV2AuthProvider):
