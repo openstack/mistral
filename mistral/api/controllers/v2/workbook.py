@@ -88,7 +88,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         definition = pecan.request.text
         LOG.debug("Update workbook [definition=%s]" % definition)
 
-        wb_db = workbooks.update_workbook_v2({'definition': definition})
+        wb_db = workbooks.update_workbook_v2(definition)
 
         return Workbook.from_dict(wb_db.to_dict()).to_string()
 
@@ -99,7 +99,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         definition = pecan.request.text
         LOG.debug("Create workbook [definition=%s]" % definition)
 
-        wb_db = workbooks.create_workbook_v2({'definition': definition})
+        wb_db = workbooks.create_workbook_v2(definition)
         pecan.response.status = 201
 
         return Workbook.from_dict(wb_db.to_dict()).to_string()

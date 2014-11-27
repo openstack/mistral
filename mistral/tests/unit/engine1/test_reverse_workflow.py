@@ -58,11 +58,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
     def setUp(self):
         super(ReverseWorkflowEngineTest, self).setUp()
 
-        wb_service.create_workbook_v2({
-            'name': 'my_wb',
-            'definition': WORKBOOK,
-            'tags': ['test']
-        })
+        wb_service.create_workbook_v2(WORKBOOK)
 
     def test_start_task1(self):
         wf_input = {'param1': 'a', 'param2': 'b'}

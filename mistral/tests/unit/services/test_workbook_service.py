@@ -108,7 +108,7 @@ workflows:
 
 class WorkbookServiceTest(base.DbTestCase):
     def test_create_workbook(self):
-        wb_db = wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_db = wb_service.create_workbook_v2(WORKBOOK)
 
         self.assertIsNotNone(wb_db)
         self.assertEqual('my_wb', wb_db.name)
@@ -150,15 +150,13 @@ class WorkbookServiceTest(base.DbTestCase):
 
     def test_update_workbook(self):
         # Create workbook.
-        wb_db = wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_db = wb_service.create_workbook_v2(WORKBOOK)
 
         self.assertIsNotNone(wb_db)
         self.assertEqual(2, len(db_api.get_workflows()))
 
         # Update workbook.
-        wb_db = wb_service.update_workbook_v2(
-            {'definition': UPDATED_WORKBOOK}
-        )
+        wb_db = wb_service.update_workbook_v2(UPDATED_WORKBOOK)
 
         self.assertIsNotNone(wb_db)
         self.assertEqual('my_wb', wb_db.name)

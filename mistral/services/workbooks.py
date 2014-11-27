@@ -24,8 +24,8 @@ from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
 
-def create_workbook_v1(values):
-    _add_security_info(values)
+def create_workbook_v1(values, scope='private'):
+    _add_security_info(values, scope)
 
     return db_api_v1.workbook_create(values)
 
@@ -39,27 +39,32 @@ def update_workbook_v1(workbook_name, values):
     return wb_db
 
 
-def create_workbook_v2(values):
-    _add_security_info(values)
-    _update_specification(values)
-    _infer_data_from_specification(values)
+def create_workbook_v2(definition, scope='private'):
+    wb_values = _get_workbook_values(
+        spec_parser.get_workbook_spec_from_yaml(definition),
+        definition,
+        scope
+    )
 
     with db_api_v2.transaction():
-        wb_db = db_api_v2.create_workbook(values)
+        wb_db = db_api_v2.create_workbook(wb_values)
 
-        _on_workbook_update(wb_db, values)
+        _on_workbook_update(wb_db, wb_values)
 
     return wb_db
 
 
-def update_workbook_v2(values):
-    _update_specification(values)
-    _infer_data_from_specification(values)
+def update_workbook_v2(definition, scope='private'):
+    wb_values = _get_workbook_values(
+        spec_parser.get_workbook_spec_from_yaml(definition),
+        definition,
+        scope
+    )
 
     with db_api_v2.transaction():
-        wb_db = db_api_v2.update_workbook(values['name'], values)
+        wb_db = db_api_v2.update_workbook(wb_values['name'], wb_values)
 
-        _on_workbook_update(wb_db, values)
+        _on_workbook_update(wb_db, wb_values)
 
     return wb_db
 
@@ -104,24 +109,24 @@ def _create_or_update_workflows(wb_db, workflows_spec):
             db_api_v2.create_or_update_workflow(wf_name, values)
 
 
-def _add_security_info(values):
-    if cfg.CONF.pecan.auth_enable:
+def _get_workbook_values(wb_spec, definition, scope):
+    values = {
+        'name': wb_spec.get_name(),
+        'tags': wb_spec.get_tags(),
+        'definition': definition,
+        'spec': wb_spec.to_dict(),
+        'scope': scope
+    }
+
+    _add_security_info(values, scope)
+
+    return values
+
+
+# TODO(rakhmerov): needs to be generalized (repeats for other services).
+def _add_security_info(values, scope):
+    if cfg.CONF.pecan.auth_enable and scope == 'private':
         values.update({
             'trust_id': trusts.create_trust().id,
             'project_id': context.ctx().project_id
         })
-
-
-def _update_specification(values):
-    # No need to do anything if specification gets pushed explicitly.
-    if 'spec' in values:
-        return
-
-    if 'definition' in values:
-        spec = spec_parser.get_workbook_spec_from_yaml(values['definition'])
-        values['spec'] = spec.to_dict()
-
-
-def _infer_data_from_specification(values):
-    values['name'] = values['spec']['name']
-    values['tags'] = values['spec'].get('tags', [])

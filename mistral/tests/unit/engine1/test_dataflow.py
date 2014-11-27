@@ -57,7 +57,7 @@ workflows:
 
 class DataFlowEngineTest(base.EngineTestCase):
     def test_trivial_dataflow(self):
-        wb_service.create_workbook_v2({'definition': WORKBOOK})
+        wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
