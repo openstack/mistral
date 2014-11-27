@@ -14,12 +14,10 @@
 
 from croniter import croniter
 import datetime
-from oslo.config import cfg
 
-from mistral import context
 from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
-from mistral.services import trusts
+from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
 
@@ -102,16 +100,8 @@ def create_cron_trigger(name, pattern, workflow_name, workflow_input,
             'scope': 'private'
         }
 
-        _add_security_info(values)
+        security.add_security_info(values)
 
         trig = db_api_v2.create_cron_trigger(values)
 
     return trig
-
-
-def _add_security_info(values):
-    if cfg.CONF.pecan.auth_enable:
-        values.update({
-            'trust_id': trusts.create_trust().id,
-            'project_id': context.ctx().project_id
-        })

@@ -14,18 +14,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo.config import cfg
-
-from mistral import context
 from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
+from mistral.services import security
 from mistral.services import triggers
-from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
 
 def create_workbook_v1(values, scope='private'):
-    _add_security_info(values, scope)
+    security.add_security_info(values, scope)
 
     return db_api_v1.workbook_create(values)
 
@@ -118,15 +115,6 @@ def _get_workbook_values(wb_spec, definition, scope):
         'scope': scope
     }
 
-    _add_security_info(values, scope)
+    security.add_security_info(values, scope)
 
     return values
-
-
-# TODO(rakhmerov): needs to be generalized (repeats for other services).
-def _add_security_info(values, scope):
-    if cfg.CONF.pecan.auth_enable and scope == 'private':
-        values.update({
-            'trust_id': trusts.create_trust().id,
-            'project_id': context.ctx().project_id
-        })

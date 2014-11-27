@@ -12,20 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo.config import cfg
-
-from mistral import context
 from mistral.db.v2 import api as db_api
-from mistral.services import trusts
+from mistral.services import security
 from mistral import utils
 from mistral.workbook import parser as spec_parser
 
 
-WORKFLOWS_PATH = '../resources/workflows'
+STD_WF_PATH = '../resources/workflows'
 
 
 def register_standard_workflows():
-    workflow_paths = utils.get_file_list(WORKFLOWS_PATH)
+    workflow_paths = utils.get_file_list(STD_WF_PATH)
 
     for wf_path in workflow_paths:
         workflow_definition = open(wf_path).read()
@@ -73,7 +70,7 @@ def _get_workflow_values(wf_spec, definition, scope):
         'scope': scope
     }
 
-    _add_security_info(values, scope)
+    security.add_security_info(values, scope)
 
     return values
 
@@ -88,11 +85,3 @@ def _create_or_update_workflow(wf_spec, definition, scope):
     values = _get_workflow_values(wf_spec, definition, scope)
 
     return db_api.create_or_update_workflow(values['name'], values)
-
-
-def _add_security_info(values, scope):
-    if cfg.CONF.pecan.auth_enable and scope == 'private':
-        values.update({
-            'trust_id': trusts.create_trust().id,
-            'project_id': context.ctx().project_id
-        })

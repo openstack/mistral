@@ -22,8 +22,8 @@ from mistral.engine1 import rpc
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
+from mistral.services import security
 from mistral.services import triggers
-from mistral.services import trusts
 from mistral.workbook import parser as spec_parser
 
 LOG = log.getLogger(__name__)
@@ -45,7 +45,9 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             # Setup admin context before schedule triggers.
             wb = db_api_v1.workbook_get(t['workbook_name'])
 
-            auth_ctx.set_ctx(trusts.create_context(wb.trust_id, wb.project_id))
+            auth_ctx.set_ctx(
+                security.create_context(wb.trust_id, wb.project_id)
+            )
 
             try:
                 task = spec_parser.get_workbook_spec_from_yaml(
@@ -71,7 +73,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
         for t in triggers.get_next_cron_triggers():
             # Setup admin context before schedule triggers.
-            ctx = trusts.create_context(t.trust_id, t.project_id)
+            ctx = security.create_context(t.trust_id, t.project_id)
 
             auth_ctx.set_ctx(ctx)
 

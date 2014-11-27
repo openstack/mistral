@@ -69,7 +69,7 @@ class TestWorkbooksController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "workbook_create",
                        base.create_mock_workbook(WORKBOOKS[0]))
-    @mock.patch("mistral.services.trusts.create_trust",
+    @mock.patch("mistral.services.security.create_trust",
                 mock.MagicMock(return_value=WORKBOOKS[0]))
     def test_post(self):
         resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0])
@@ -79,7 +79,7 @@ class TestWorkbooksController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "workbook_create",
                        mock.MagicMock(side_effect=exceptions.DBDuplicateEntry))
-    @mock.patch("mistral.services.workbooks._add_security_info",
+    @mock.patch("mistral.services.security.add_security_info",
                 mock.MagicMock(return_value=None))
     def test_post_dup(self):
         resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0],
