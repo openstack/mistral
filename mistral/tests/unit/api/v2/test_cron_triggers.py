@@ -59,7 +59,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
 
 
-class TestActionsController(base.FunctionalTest):
+class TestCronTriggerController(base.FunctionalTest):
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     def test_get(self):
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
@@ -97,6 +97,18 @@ class TestActionsController(base.FunctionalTest):
     def test_post_dup(self):
         resp = self.app.post_json(
             '/v2/cron_triggers', TRIGGER, expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 409)
+
+    @mock.patch.object(db_api, "get_workflow", MOCK_WF)
+    @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)
+    def test_post_same_wf_and_input(self):
+        trig = TRIGGER.copy()
+        trig['name'] = 'some_trigger_name'
+
+        resp = self.app.post_json(
+            '/v2/cron_triggers', trig, expect_errors=True
         )
 
         self.assertEqual(resp.status_int, 409)

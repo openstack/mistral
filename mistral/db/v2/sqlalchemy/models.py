@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import hashlib
 import json
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship
@@ -173,6 +174,12 @@ class Action(mb.MistralModelBase):
     trust_id = sa.Column(sa.String(80))
 
 
+def calc_hash(context):
+    d = context.current_parameters['workflow_input'] or {}
+
+    return hashlib.sha256(json.dumps(sorted(d.items()))).hexdigest()
+
+
 class CronTrigger(mb.MistralModelBase):
     """Contains info about cron triggers."""
 
@@ -180,6 +187,9 @@ class CronTrigger(mb.MistralModelBase):
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
+        sa.UniqueConstraint(
+            'workflow_input_hash', 'workflow_name', 'pattern', 'project_id'
+        )
     )
 
     id = mb.id_column()
@@ -192,6 +202,7 @@ class CronTrigger(mb.MistralModelBase):
     workflow = relationship('Workflow', lazy='joined')
 
     workflow_input = sa.Column(st.JsonDictType())
+    workflow_input_hash = sa.Column(sa.CHAR(64), default=calc_hash)
 
     # Security properties.
     scope = sa.Column(sa.String(80))
