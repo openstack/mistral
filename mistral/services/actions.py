@@ -76,6 +76,6 @@ def _get_action_values(action_spec, definition, scope):
         'scope': scope
     }
 
-    security.add_security_info(values)
+    security.add_security_info(values, scope)
 
     return values
