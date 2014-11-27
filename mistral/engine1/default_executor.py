@@ -20,6 +20,7 @@ from mistral.actions import action_factory as a_f
 from mistral.engine1 import base
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 
 
@@ -40,11 +41,15 @@ class DefaultExecutor(base.Executor):
         :param action_params: Action parameters.
         """
 
+        def send_error_to_engine(error_msg):
+            self._engine_client.on_task_result(
+                task_id, wf_utils.TaskResult(error=error_msg)
+            )
+
         action_cls = a_f.construct_action_class(action_class_str, attributes)
 
         try:
             action = action_cls(**action_params)
-
             result = action.run()
 
             if action.is_sync():
@@ -52,14 +57,21 @@ class DefaultExecutor(base.Executor):
                     task_id,
                     wf_utils.TaskResult(data=result)
                 )
-        except exc.ActionException as e:
-            LOG.exception(
-                "Failed to run action [task_id=%s, action_cls='%s',"
-                " params='%s']\n %s" %
-                (task_id, action_cls, action_params, e)
-            )
+            return
+        except TypeError as e:
+            msg = ("Failed to initialize action %s. Action init params = %s."
+                   " Actual init params = %s. More info: %s"
+                   % (action_class_str, i_u.get_arg_list(action_cls.__init__),
+                      action_params.keys(), e))
+            LOG.warn(msg)
 
-            self._engine_client.on_task_result(
-                task_id,
-                wf_utils.TaskResult(error=str(e))
-            )
+        except exc.ActionException as e:
+            msg = ("Failed to run action [task_id=%s, action_cls='%s',"
+                   " params='%s']\n %s"
+                   % (task_id, action_cls, action_params, e))
+            LOG.exception(msg)
+        except Exception as e:
+            msg = str(e)
+
+        # Send error info to engine.
+        send_error_to_engine(msg)

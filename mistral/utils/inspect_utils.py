@@ -38,13 +38,22 @@ def get_docstring(obj):
     return inspect.getdoc(obj)
 
 
+def get_arg_list(func):
+    argspec = inspect.getargspec(func)
+
+    args = argspec.args
+
+    if 'self' in args:
+        args.remove('self')
+
+    return args
+
+
 def get_arg_list_as_str(func):
     argspec = inspect.getargspec(func)
     defs = list(argspec.defaults or [])
 
-    args = argspec.args
-    if 'self' in args:
-        args.remove('self')
+    args = get_arg_list(func)
 
     diff_args_defs = len(args) - len(defs)
     arg_str_list = []
