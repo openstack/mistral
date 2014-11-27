@@ -110,20 +110,22 @@ class TestActionsController(base.FunctionalTest):
     @mock.patch.object(db_api, "get_action", MOCK_ACTION)
     @mock.patch.object(db_api, "create_or_update_action", MOCK_UPDATED_ACTION)
     def test_put(self):
-        resp = self.app.put_json('/v2/actions', UPDATED_ACTION)
+        resp = self.app.put(
+            '/v2/actions',
+            UPDATED_ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
 
         self.assertEqual(resp.status_int, 200)
 
-        self.assertDictEqual(
-            {'actions': [UPDATED_ACTION]},
-            resp.json
-        )
+        self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
 
     @mock.patch.object(db_api, "create_or_update_action", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json(
+        resp = self.app.put(
             '/v2/actions',
-            UPDATED_ACTION,
+            UPDATED_ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
 
@@ -131,27 +133,29 @@ class TestActionsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "get_action", MOCK_SYSTEM_ACTION)
     def test_put_system(self):
-        resp = self.app.put_json(
+        resp = self.app.put(
             '/v2/actions',
-            SYSTEM_ACTION,
+            SYSTEM_ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
 
         self.assertEqual(resp.status_int, 400)
         self.assertIn('Attempt to modify a system action: std.echo',
-                      resp.json['faultstring'])
+                      resp.text)
 
     @mock.patch.object(db_api, "create_action")
     def test_post(self, mock_mtd):
         mock_mtd.return_value = ACTION_DB
 
-        resp = self.app.post_json('/v2/actions', ACTION)
+        resp = self.app.post(
+            '/v2/actions',
+            ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(
-            {'actions': [ACTION]},
-            resp.json
-        )
+        self.assertEqual({"actions": [ACTION]}, resp.json)
 
         mock_mtd.assert_called_once()
 
@@ -166,8 +170,11 @@ class TestActionsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "create_action", MOCK_DUPLICATE)
     def test_post_dup(self):
-        resp = self.app.post_json(
-            '/v2/actions', ACTION, expect_errors=True
+        resp = self.app.post(
+            '/v2/actions',
+            ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
         )
 
         self.assertEqual(resp.status_int, 409)

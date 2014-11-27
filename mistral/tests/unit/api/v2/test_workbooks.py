@@ -24,10 +24,14 @@ from mistral import exceptions as exc
 from mistral.services import workbooks
 from mistral.tests.unit.api import base
 
+WORKBOOK_DEF = '---'
+
+UPDATED_WORKBOOK_DEF = '---\nVersion: 2.0'
+
 WORKBOOK_DB = models.Workbook(
     id='123',
     name='book',
-    definition='---',
+    definition=WORKBOOK_DEF,
     tags=['deployment', 'demo'],
     scope="public",
     created_at=datetime.datetime(1970, 1, 1),
@@ -37,7 +41,7 @@ WORKBOOK_DB = models.Workbook(
 WORKBOOK = {
     'id': '123',
     'name': 'book',
-    'definition': '---',
+    'definition': WORKBOOK_DEF,
     'tags': ['deployment', 'demo'],
     'scope': 'public',
     'created_at': '1970-01-01 00:00:00',
@@ -45,9 +49,9 @@ WORKBOOK = {
 }
 
 UPDATED_WORKBOOK_DB = copy.copy(WORKBOOK_DB)
-UPDATED_WORKBOOK_DB['definition'] = '---\nVersion: 2.0'
+UPDATED_WORKBOOK_DB['definition'] = UPDATED_WORKBOOK_DEF
 UPDATED_WORKBOOK = copy.copy(WORKBOOK)
-UPDATED_WORKBOOK['definition'] = '---\nVersion: 2.0'
+UPDATED_WORKBOOK['definition'] = UPDATED_WORKBOOK_DEF
 
 MOCK_WORKBOOK = mock.MagicMock(return_value=WORKBOOK_DB)
 MOCK_WORKBOOKS = mock.MagicMock(return_value=[WORKBOOK_DB])
@@ -74,29 +78,45 @@ class TestWorkbooksController(base.FunctionalTest):
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_UPDATED_WORKBOOK)
     def test_put(self):
-        resp = self.app.put_json('/v2/workbooks', UPDATED_WORKBOOK)
+        resp = self.app.put(
+            '/v2/workbooks',
+            UPDATED_WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'}
+        )
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_WORKBOOK, resp.json)
+        self.assertEqual(UPDATED_WORKBOOK, resp.json)
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json('/v2/workbooks', UPDATED_WORKBOOK,
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/workbooks',
+            UPDATED_WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_WORKBOOK)
     def test_post(self):
-        resp = self.app.post_json('/v2/workbooks', WORKBOOK)
+        resp = self.app.post(
+            '/v2/workbooks',
+            WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'}
+        )
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(WORKBOOK, resp.json)
+        self.assertEqual(WORKBOOK, resp.json)
 
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_DUPLICATE)
     def test_post_dup(self):
-        resp = self.app.post_json('/v2/workbooks', WORKBOOK,
-                                  expect_errors=True)
+        resp = self.app.post(
+            '/v2/workbooks',
+            WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 409)
 

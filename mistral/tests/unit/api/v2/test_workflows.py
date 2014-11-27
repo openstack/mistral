@@ -98,22 +98,24 @@ class TestWorkflowsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "create_or_update_workflow", MOCK_UPDATED_WF)
     def test_put(self):
-        resp = self.app.put_json('/v2/workflows', UPDATED_WF)
+        resp = self.app.put(
+            '/v2/workflows',
+            UPDATED_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
 
         self.maxDiff = None
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(
-            {'workflows': [UPDATED_WF]},
-            resp.json
-        )
+        self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
     @mock.patch.object(db_api, "create_or_update_workflow", MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json(
+        resp = self.app.put(
             '/v2/workflows',
-            UPDATED_WF,
-            expect_errors=True
+            UPDATED_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True,
         )
 
         self.assertEqual(resp.status_int, 404)
@@ -122,13 +124,14 @@ class TestWorkflowsController(base.FunctionalTest):
     def test_post(self, mock_mtd):
         mock_mtd.return_value = WF_DB
 
-        resp = self.app.post_json('/v2/workflows', WF)
+        resp = self.app.post(
+            '/v2/workflows',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(
-            {'workflows': [WF]},
-            resp.json
-        )
+        self.assertDictEqual({'workflows': [WF]}, resp.json)
 
         mock_mtd.assert_called_once()
 
@@ -139,7 +142,12 @@ class TestWorkflowsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "create_workflow", MOCK_DUPLICATE)
     def test_post_dup(self):
-        resp = self.app.post_json('/v2/workflows', WF, expect_errors=True)
+        resp = self.app.post(
+            '/v2/workflows',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 409)
 
