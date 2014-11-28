@@ -17,13 +17,13 @@
 # TODO(rakhmerov): Add checks for timestamps.
 
 import copy
+import datetime
 
 from oslo.config import cfg
 
 from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
-from mistral.openstack.common import timeutils
 from mistral.tests import base as test_base
 
 
@@ -806,7 +806,8 @@ CRON_TRIGGERS = [
         'workflow_name': 'my_wf',
         'workflow_id': None,
         'workflow_input': {},
-        'next_execution_time': timeutils.utcnow(),
+        'next_execution_time':
+        datetime.datetime.now() + datetime.timedelta(days=1),
         'scope': 'private',
         'project_id': '<default-project>'
     },
@@ -816,7 +817,8 @@ CRON_TRIGGERS = [
         'workflow_name': 'my_wf',
         'workflow_id': None,
         'workflow_input': {},
-        'next_execution_time': timeutils.utcnow(),
+        'next_execution_time':
+        datetime.datetime.now() + datetime.timedelta(days=1),
         'scope': 'private',
         'project_id': '<default-project>'
     },
