@@ -14,6 +14,7 @@
 
 from oslo.config import cfg
 
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
 from mistral.tests import base
@@ -76,6 +77,18 @@ wf1:
 """
 
 
+INVALID_WORKFLOW = """
+---
+verstion: '2.0'
+
+wf:
+  type: direct
+  tasks:
+    task1:
+      action: std.echo output="Task 1"
+"""
+
+
 class WorkflowServiceTest(base.DbTestCase):
     def test_create_workflows(self):
         db_wfs = wf_service.create_workflows(WORKFLOW_LIST)
@@ -121,3 +134,12 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertListEqual([], wf1_spec.get_tags())
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertListEqual(['param1', 'param2'], wf1_spec.get_input())
+
+    def test_invalid_workflow_list(self):
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            wf_service.create_workflows,
+            INVALID_WORKFLOW
+        )
+
+        self.assertIn("Invalid workflow definition", exception.message)

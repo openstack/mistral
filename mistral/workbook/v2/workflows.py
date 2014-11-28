@@ -109,6 +109,13 @@ class WorkflowListSpec(base.BaseSpec):
             if k == 'version':
                 continue
 
+            if not isinstance(v, dict):
+                raise exc.InvalidModelException(
+                    "Invalid workflow definition. Please make sure your "
+                    "workflow matches a dictionary type and there is no "
+                    "typo in keyword 'version'"
+                )
+
             v['name'] = k
             self._inject_version([k])
 
