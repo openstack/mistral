@@ -31,7 +31,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_reverse_flow(self):
         text = base.get_resource(
-            'resources/data_flow/task_with_diamond_dependencies.yaml')
+            'data_flow/task_with_diamond_dependencies.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(
@@ -63,7 +63,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_task_with_two_dependencies(self):
         text = base.get_resource(
-            'resources/data_flow/task_with_two_dependencies.yaml')
+            'data_flow/task_with_two_dependencies.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(
@@ -88,7 +88,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_direct_flow_tasks_on_success(self):
         text = base.get_resource(
-            'resources/data_flow/three_subsequent_tasks.yaml')
+            'data_flow/three_subsequent_tasks.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(
@@ -113,7 +113,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_two_dependent_tasks(self):
         text = base.get_resource(
-            'resources/data_flow/two_dependent_tasks.yaml')
+            'data_flow/two_dependent_tasks.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(
@@ -133,7 +133,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_two_subsequent_tasks(self):
         text = base.get_resource(
-            'resources/data_flow/two_subsequent_tasks.yaml')
+            'data_flow/two_subsequent_tasks.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(
@@ -154,7 +154,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_mixed_workflow(self):
         text = base.get_resource(
-            'resources/test_mixed_flow.yaml')
+            'test_mixed_flow.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(
@@ -182,7 +182,7 @@ class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
     def test_direct_workflow_all_keywords(self):
         text = base.get_resource(
-            'resources/test_direct_flow_all_keywords.yaml')
+            'test_direct_flow_all_keywords.yaml')
         self.client.prepare_workbook('test', text)
 
         _, ex = self.client.create_execution_wait_success(

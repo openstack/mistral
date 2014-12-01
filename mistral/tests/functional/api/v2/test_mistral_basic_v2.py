@@ -15,11 +15,10 @@
 from tempest import exceptions
 from tempest import test
 
-from mistral.tests.functional.api.v1 import test_mistral_basic
 from mistral.tests.functional import base
 
 
-class WorkbookTestsV2(test_mistral_basic.WorkbookTestsV1):
+class WorkbookTestsV2(base.TestCase):
 
     _version = 2
 
@@ -29,6 +28,93 @@ class WorkbookTestsV2(test_mistral_basic.WorkbookTestsV1):
         self.client.workflows = []
 
         super(WorkbookTestsV2, self).tearDown()
+
+    @test.attr(type='smoke')
+    def test_get_list_workbooks(self):
+        resp, body = self.client.get_list_obj('workbooks')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual([], body['workbooks'])
+
+    @test.attr(type='sanity')
+    def test_create_and_delete_workbook(self):
+        resp, body = self.client.create_workbook('wb_v2.yaml')
+        name = body['name']
+        self.assertEqual(201, resp.status)
+
+        resp, body = self.client.get_list_obj('workbooks')
+        self.assertEqual(200, resp.status)
+        self.assertEqual(name, body['workbooks'][0]['name'])
+
+        self.client.delete_obj('workbooks', name)
+        self.client.workbooks.remove(name)
+
+        _, body = self.client.get_list_obj('workbooks')
+        self.assertEqual([], body['workbooks'])
+
+    @test.attr(type='sanity')
+    def test_get_workbook(self):
+        _, body = self.client.create_workbook('wb_v2.yaml')
+        name = body['name']
+
+        resp, body = self.client.get_object('workbooks', name)
+        self.assertEqual(200, resp.status)
+        self.assertEqual(name, body['name'])
+
+    @test.attr(type='sanity')
+    def test_update_workbook(self):
+        _, body = self.client.create_workbook('wb_v2.yaml')
+        name = body['name']
+        resp, body = self.client.update_request('workbooks', 'wb_v2.yaml')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(name, body['name'])
+
+    @test.attr(type='sanity')
+    def test_get_workbook_definition(self):
+        _, body = self.client.create_workbook('wb_v2.yaml')
+        name = body['name']
+        resp, body = self.client.get_definition('workbooks', name)
+
+        self.assertEqual(200, resp.status)
+        self.assertIsNotNone(body)
+
+    @test.attr(type='negative')
+    def test_get_nonexistent_workbook_definition(self):
+        self.assertRaises(exceptions.NotFound,
+                          self.client.get_definition,
+                          'workbooks', 'nonexist')
+
+    @test.attr(type='negative')
+    def test_get_nonexistent_workbook(self):
+        self.assertRaises(exceptions.NotFound, self.client.get_object,
+                          'workbooks', 'nonexist')
+
+    @test.attr(type='negative')
+    def test_double_create_workbook(self):
+        _, body = self.client.create_workbook('wb_v2.yaml')
+        name = body['name']
+        self.assertRaises(exceptions.Conflict,
+                          self.client.create_workbook,
+                          'wb_v2.yaml')
+
+        self.client.delete_obj('workbooks', name)
+        self.client.workbooks.remove(name)
+        _, body = self.client.get_list_obj('workbooks')
+
+        self.assertEqual([], body['workbooks'])
+
+    @test.attr(type='negative')
+    def test_create_wb_with_invalid_def(self):
+        self.assertRaises(exceptions.ServerFault,
+                          self.client.create_workbook,
+                          'wb_v1.yaml')
+
+    @test.attr(type='negative')
+    def test_update_wb_with_invalid_def(self):
+        self.assertRaises(exceptions.ServerFault,
+                          self.client.update_request,
+                          'workbooks', 'wb_v1.yaml')
 
 
 class WorkflowTestsV2(base.TestCase):
@@ -45,65 +131,121 @@ class WorkflowTestsV2(base.TestCase):
     @test.attr(type='smoke')
     def test_get_list_workflows(self):
         resp, body = self.client.get_list_obj('workflows')
-
         self.assertEqual(200, resp.status)
-        self.assertEqual([], body['workflows'])
 
-    @test.attr(type='smoke')
+        names = [wf['name'] for wf in body['workflows']]
+
+        self.assertIn('std.create_instance', names)
+
+    @test.attr(type='sanity')
     def test_create_and_delete_workflow(self):
-        resp, body = self.client.create_workflow()
+        resp, body = self.client.create_workflow('wf_v2.yaml')
+        name = body['workflows'][0]['name']
 
         self.assertEqual(201, resp.status)
-        self.assertEqual('wf', body['workflows'][0]['name'])
 
         resp, body = self.client.get_list_obj('workflows')
-
         self.assertEqual(200, resp.status)
-        names = [wf['name'] for wf in body['workflows']]
-        self.assertIn('wf', names)
 
-        self.client.delete_obj('workflows', 'wf')
-        self.client.workflows.remove('wf')
+        names = [wf['name'] for wf in body['workflows']]
+        self.assertIn(name, names)
+
+        self.client.delete_obj('workflows', name)
+        self.client.workflows.remove(name)
 
         _, body = self.client.get_list_obj('workflows')
 
         names = [wf['name'] for wf in body['workflows']]
-        self.assertNotIn('wf', names)
+        self.assertNotIn(name, names)
 
-    @test.attr(type='smoke')
+    @test.attr(type='sanity')
     def test_get_workflow(self):
-        self.client.create_workflow()
-        resp, body = self.client.get_object('workflows', 'wf')
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        name = body['workflows'][0]['name']
+
+        resp, body = self.client.get_object('workflows', name)
 
         self.assertEqual(200, resp.status)
-        self.assertEqual('wf', body['name'])
+        self.assertEqual(name, body['name'])
 
-    @test.attr(type='smoke')
+    @test.attr(type='sanity')
     def test_update_workflow(self):
-        self.client.create_workflow()
-        resp, body = self.client.update_workflow()
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        name = body['workflows'][0]['name']
+
+        resp, body = self.client.update_request('workflows', 'wf_v2.yaml')
 
         self.assertEqual(200, resp.status)
-        self.assertEqual('wf', body['workflows'][0]['name'])
+        self.assertEqual(name, body['workflows'][0]['name'])
 
-    @test.attr(type='smoke')
+    @test.attr(type='sanity')
     def test_get_workflow_definition(self):
-        self.client.create_workflow()
-        resp, body = self.client.get_workflow_definition('wf')
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        name = body['workflows'][0]['name']
+
+        resp, body = self.client.get_definition('workflows', name)
 
         self.assertEqual(200, resp.status)
         self.assertIsNotNone(body)
 
+    @test.attr(type='sanity')
+    def test_get_workflow_uploaded_in_wb(self):
+        _, body = self.client.create_workbook('wb_v2.yaml')
+        wb_name = body['name']
 
-class ExecutionTestsV2(test_mistral_basic.ExecutionTestsV1):
+        _, body = self.client.get_list_obj('workflows')
+        wf_names = [wf['name'] for wf in body['workflows']
+                    if wf['name'].startswith(wb_name)]
+
+        self.assertNotEmpty(wf_names)
+
+    @test.attr(type='negative')
+    def test_get_nonexistent_workflow_definition(self):
+        self.assertRaises(exceptions.NotFound,
+                          self.client.get_definition,
+                          'workflows', 'nonexist')
+
+    @test.attr(type='negative')
+    def test_get_nonexistent_workflow(self):
+        self.assertRaises(exceptions.NotFound, self.client.get_object,
+                          'workflows', 'nonexist')
+
+    @test.attr(type='negative')
+    def test_double_create_workflows(self):
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        self.assertRaises(exceptions.Conflict,
+                          self.client.create_workflow,
+                          'wf_v2.yaml')
+
+    @test.attr(type='negative')
+    def test_create_wf_with_invalid_def(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_workflow,
+                          'wb_v1.yaml')
+
+    @test.attr(type='negative')
+    def test_update_wf_with_invalid_def(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.update_request,
+                          'workflows', 'wb_v1.yaml')
+
+    @test.attr(type='negative')
+    def test_delete_nonexistent_wf(self):
+        self.assertRaises(exceptions.NotFound,
+                          self.client.delete_obj,
+                          'workflows', 'nonexist')
+
+
+class ExecutionTestsV2(base.TestCase):
 
     _version = 2
 
     def setUp(self):
         super(ExecutionTestsV2, self).setUp()
 
-        self.entity_type = 'workflow_name'
-        self.entity_name = 'test.test'
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        self.direct_wf = body['workflows'][0]['name']
+        self.reverse_wf = body['workflows'][1]
 
     def tearDown(self):
         for wf in self.client.workflows:
@@ -111,6 +253,106 @@ class ExecutionTestsV2(test_mistral_basic.ExecutionTestsV1):
         self.client.workflows = []
 
         super(ExecutionTestsV2, self).tearDown()
+
+    @test.attr(type='smoke')
+    def test_get_list_executions(self):
+        resp, _ = self.client.get_list_obj('executions')
+        self.assertEqual(200, resp.status)
+
+    @test.attr(type='sanity')
+    def test_create_execution_for_direct_wf(self):
+        resp, body = self.client.create_execution(self.direct_wf)
+        exec_id = body['id']
+        self.assertEqual(201, resp.status)
+        self.assertEqual(self.direct_wf, body['workflow_name'])
+        self.assertEqual('RUNNING', body['state'])
+
+        resp, body = self.client.get_list_obj('executions')
+        self.assertIn(exec_id,
+                      [ex_id['id'] for ex_id in body['executions']])
+
+    @test.attr(type='sanity')
+    def test_create_execution_for_reverse_wf(self):
+        resp, body = self.client.create_execution(
+            self.reverse_wf['name'],
+            {self.reverse_wf['input']: "Bye"},
+            {"task_name": "goodbye"})
+
+        exec_id = body['id']
+        self.assertEqual(201, resp.status)
+        self.assertEqual(self.reverse_wf['name'], body['workflow_name'])
+        self.assertEqual('RUNNING', body['state'])
+
+        resp, body = self.client.get_list_obj('executions')
+        self.assertIn(exec_id,
+                      [ex_id['id'] for ex_id in body['executions']])
+
+        resp, body = self.client.get_object('executions', exec_id)
+        while body['state'] != 'SUCCESS':
+            resp, body = self.client.get_object('executions', exec_id)
+            self.assertEqual(200, resp.status)
+        self.assertEqual('SUCCESS', body['state'])
+
+    @test.attr(type='sanity')
+    def test_get_execution(self):
+        _, execution = self.client.create_execution(self.direct_wf)
+
+        resp, body = self.client.get_object('executions', execution['id'])
+
+        del execution['state']
+        del body['state']
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(execution['id'], body['id'])
+
+    @test.attr(type='sanity')
+    def test_update_execution(self):
+        _, execution = self.client.create_execution(self.direct_wf)
+        resp, body = self.client.update_execution(
+            execution['id'], '{"state": "PAUSED"}')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual('PAUSED', body['state'])
+
+    @test.attr(type='negative')
+    def test_get_nonexistent_execution(self):
+        self.assertRaises(exceptions.NotFound, self.client.get_object,
+                          'executions', '1a2b3c')
+
+    @test.attr(type='negative')
+    def test_update_nonexistent_execution(self):
+        put_body = '{"state": "STOPPED"}'
+
+        self.assertRaises(exceptions.NotFound,
+                          self.client.update_execution,
+                          '1a2b3c', put_body)
+
+    @test.attr(type='negative')
+    def test_delete_nonexistent_execution(self):
+        self.assertRaises(exceptions.NotFound,
+                          self.client.delete_obj,
+                          'executions', 'nonexist')
+
+    @test.attr(type='negative')
+    def test_create_ex_for_nonexistent_wf(self):
+        self.assertRaises(exceptions.NotFound,
+                          self.client.create_execution,
+                          'nonexist')
+
+    @test.attr(type='negative')
+    def test_create_execution_for_reverse_wf_invalid_start_task(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_execution,
+                          self.reverse_wf['name'],
+                          {self.reverse_wf['input']: "Bye"},
+                          {"task_name": "nonexist"})
+
+    @test.attr(type='negative')
+    def test_create_execution_forgot_input_params(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_execution,
+                          self.reverse_wf['name'],
+                          params={"task_name": "nonexist"})
 
 
 class CronTriggerTestsV2(base.TestCase):
@@ -120,7 +362,7 @@ class CronTriggerTestsV2(base.TestCase):
     def setUp(self):
         super(CronTriggerTestsV2, self).setUp()
 
-        _, body = self.client.create_workflow()
+        _, body = self.client.create_workflow('wf_v2.yaml')
         self.wf_name = body['workflows'][0]['name']
 
     def tearDown(self):
@@ -272,91 +514,68 @@ class ActionTestsV2(base.TestCase):
 
     @test.attr(type='sanity')
     def test_create_and_delete_few_actions(self):
-        text = base.get_resource('resources/action_v2.yaml')
-        action1_name = 'greeting'
-        action2_name = 'farewell'
-
-        resp, body = self.client.create_action(text)
+        resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
-        actions = [action['name'] for action in body['actions']]
-        self.assertIn(action1_name, actions)
-        self.assertIn(action2_name, actions)
+        created_acts = [action['name'] for action in body['actions']]
 
         resp, body = self.client.get_list_obj('actions')
         self.assertEqual(200, resp.status)
 
         actions = [action['name'] for action in body['actions']]
-        self.assertIn(action1_name, actions)
-        self.assertIn(action2_name, actions)
 
-        self.client.delete_obj('actions', action1_name)
-        self.client.delete_obj('actions', action2_name)
+        for act in created_acts:
+            self.assertIn(act, actions)
+            self.client.delete_obj('actions', act)
 
         _, body = self.client.get_list_obj('actions')
-
         actions = [action['name'] for action in body['actions']]
-        self.assertNotIn(action1_name, actions)
-        self.assertNotIn(action2_name, actions)
-        self.client.actions.remove(action1_name)
-        self.client.actions.remove(action2_name)
+
+        for act in created_acts:
+            self.assertNotIn(act, actions)
+            self.client.actions.remove(act)
 
     @test.attr(type='sanity')
     def test_get_action(self):
-        text = base.get_resource('resources/action_v2.yaml')
-        action1_name = 'greeting'
-        self.client.create_action(text)
-
-        resp, body = self.client.get_object('actions', action1_name)
+        _, body = self.client.create_action('action_v2.yaml')
+        action_name = body['actions'][0]['name']
+        resp, body = self.client.get_object('actions', action_name)
 
         self.assertEqual(200, resp.status)
-        self.assertEqual(action1_name, body['name'])
+        self.assertEqual(action_name, body['name'])
 
     @test.attr(type='sanity')
     def test_update_action(self):
-        text = base.get_resource('resources/action_v2.yaml')
-        act1_name = 'greeting'
-        act2_name = 'farewell'
+        _, body = self.client.create_action('action_v2.yaml')
+        action = body['actions'][0]['name']
 
-        resp, body = self.client.create_action(text)
-        act1_created_at = self.get_field_value(
-            body=body, act_name=act1_name, field='created_at')
-        act2_created_at = self.get_field_value(
-            body=body, act_name=act2_name, field='created_at')
+        act_created_at = self.get_field_value(
+            body=body, act_name=action, field='created_at')
 
         self.assertNotIn('updated at', body['actions'])
 
-        resp, body = self.client.update_action(text)
+        resp, body = self.client.update_request('actions', 'action_v2.yaml')
         self.assertEqual(200, resp.status)
 
-        actions = [action['name'] for action in body['actions']]
-        self.assertIn(act1_name, actions)
-        self.assertIn(act2_name, actions)
+        actions = [act['name'] for act in body['actions']]
+        self.assertIn(action, actions)
 
-        updated1_created_at = self.get_field_value(
-            body=body, act_name=act1_name, field='created_at')
-        updated2_created_at = self.get_field_value(
-            body=body, act_name=act2_name, field='created_at')
+        updated_act_created_at = self.get_field_value(
+            body=body, act_name=action, field='created_at')
 
-        self.assertEqual(act1_created_at.split(".")[0], updated1_created_at)
-        self.assertEqual(act2_created_at.split(".")[0], updated2_created_at)
+        self.assertEqual(act_created_at.split(".")[0], updated_act_created_at)
         self.assertTrue(all(['updated_at' in item
                              for item in body['actions']]))
 
     @test.attr(type='sanity')
     def test_get_action_definition(self):
-        text = base.get_resource('resources/action_v2.yaml')
-        action1_name = 'greeting'
-        action2_name = 'farewell'
-        self.client.create_action(text)
+        _, body = self.client.create_action('action_v2.yaml')
+        act_name = body['actions'][0]['name']
 
-        resp, body = self.client.get_action_definition(action1_name)
+        resp, body = self.client.get_definition('actions', act_name)
         self.assertEqual(200, resp.status)
         self.assertIsNotNone(body)
-
-        resp, body = self.client.get_action_definition(action2_name)
-        self.assertEqual(200, resp.status)
-        self.assertIsNotNone(body)
+        self.assertIn(act_name, body)
 
     @test.attr(type='negative')
     def test_get_nonexistent_action(self):
@@ -366,22 +585,22 @@ class ActionTestsV2(base.TestCase):
 
     @test.attr(type='negative')
     def test_double_creation(self):
-        text = base.get_resource('resources/action_v2.yaml')
-        self.client.create_action(text)
+        self.client.create_action('action_v2.yaml')
 
         self.assertRaises(exceptions.Conflict,
                           self.client.create_action,
-                          text)
+                          'action_v2.yaml')
 
     @test.attr(type='negative')
     def test_create_action_invalid_def(self):
         self.assertRaises(exceptions.ServerFault,
-                          self.client.create_action, "")
+                          self.client.create_action, 'wb_v2.yaml')
 
     @test.attr(type='negative')
     def test_update_action_invalid_def(self):
         self.assertRaises(exceptions.ServerFault,
-                          self.client.update_action, "")
+                          self.client.update_request,
+                          'actions', 'wb_v2.yaml')
 
     @test.attr(type='negative')
     def test_delete_nonexistent_action(self):
@@ -394,3 +613,36 @@ class ActionTestsV2(base.TestCase):
         self.assertRaises(exceptions.BadRequest,
                           self.client.delete_obj,
                           'actions', 'nova.servers_create')
+
+
+class TasksTestsV2(base.TestCase):
+
+    _version = 2
+
+    def setUp(self):
+        super(TasksTestsV2, self).setUp()
+
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        self.direct_wf = body['workflows'][0]['name']
+        _, execution = self.client.create_execution(self.direct_wf)
+
+    def tearDown(self):
+        for wf in self.client.workflows:
+            self.client.delete_obj('workflows', wf)
+        self.client.workflows = []
+
+        super(TasksTestsV2, self).tearDown()
+
+    @test.attr(type='smoke')
+    def test_get_tasks_list(self):
+        resp, body = self.client.get_list_obj('tasks')
+
+        self.assertEqual(200, resp.status)
+        self.assertNotEmpty(body['tasks'])
+
+    @test.attr(type='sanity')
+    def test_get_task(self):
+        resp, body = self.client.get_list_obj('tasks')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(self.direct_wf, body['tasks'][-1]['wf_name'])
