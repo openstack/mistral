@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
@@ -60,7 +59,6 @@ wf:
 
 
 class JoinEngineTest(base.EngineTestCase):
-    @testtools.skip("Implement 'join'")
     def test_full_join(self):
         wf_service.create_workflows(WF)
 

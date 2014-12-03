@@ -25,6 +25,7 @@ from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
@@ -71,7 +72,7 @@ class WorkflowHandler(object):
         """
 
         # Ignore if task already completed.
-        if states.is_finished(task_db.state):
+        if states.is_completed(task_db.state):
             return []
 
         wf_trace_msg = "Task '%s' [%s -> " % (task_db.name, task_db.state)
@@ -91,6 +92,7 @@ class WorkflowHandler(object):
         )
 
         wf_trace_msg += "%s" % task_db.state
+
         if task_db.state == states.ERROR:
             wf_trace_msg += ", error = %s]" % utils.cut(raw_result.error)
             WF_TRACE.info(wf_trace_msg)
@@ -113,7 +115,7 @@ class WorkflowHandler(object):
         if len(commands) == 0:
             # If there are no running tasks at this point we can conclude that
             # the workflow has finished.
-            if not self._find_running_tasks():
+            if not wf_utils.find_running_tasks(self.exec_db):
                 if not self.is_paused_or_finished():
                     self._set_execution_state(states.SUCCESS)
 
@@ -129,6 +131,7 @@ class WorkflowHandler(object):
     def _determine_task_output(self, task_spec, task_db, raw_result):
         for_each = task_spec.get_for_each()
         t_name = task_spec.get_name()
+
         if for_each:
             # Calc output for for-each (only list form is used).
             out_key = (task_spec.get_publish().keys()[0]
@@ -145,6 +148,7 @@ class WorkflowHandler(object):
                 task_db.output = {}
 
             task_output = copy.copy(task_db.output)
+
             if out_key:
                 if out_key in task_output:
                     task_output[out_key].append(
@@ -152,6 +156,7 @@ class WorkflowHandler(object):
                     )
                 else:
                     task_output[out_key] = [output.get(out_key) or e_data]
+
                 # Add same result to task output under key 'task'.
                 task_output['task'] = {
                     t_name: task_output[out_key]
@@ -164,15 +169,13 @@ class WorkflowHandler(object):
 
             return task_output
         else:
-            return data_flow.evaluate_task_output(
-                task_spec,
-                raw_result
-            )
+            return data_flow.evaluate_task_output(task_spec, raw_result)
 
     def _determine_task_state(self, task_db, task_spec, raw_result):
         state = states.ERROR if raw_result.is_error() else states.SUCCESS
 
         for_each = task_spec.get_for_each()
+
         if for_each:
             # Check if all iterations are completed.
             iterations_count = len(task_db.input[for_each.keys()[0]])
@@ -217,7 +220,7 @@ class WorkflowHandler(object):
             next_cmds = filter_task_cmds(self._find_next_commands(task_db))
             next_t_names = [cmd.task_spec.get_name() for cmd in next_cmds]
 
-            if states.is_finished(task_db.state):
+            if states.is_completed(task_db.state):
                 for task_name in next_t_names:
                     t_db = [t for t in tasks if t.name == task_name]
                     t_db = t_db[0] if t_db else None
@@ -254,7 +257,7 @@ class WorkflowHandler(object):
         return schedule_cmds
 
     def is_paused_or_finished(self):
-        return states.is_paused_or_finished(self.exec_db.state)
+        return states.is_paused_or_completed(self.exec_db.state)
 
     def pause_workflow(self):
         """Stops workflow this handler is associated with.
@@ -299,10 +302,6 @@ class WorkflowHandler(object):
             msg = "Can't change workflow state [execution=%s," \
                   " state=%s -> %s]" % (self.exec_db, cur_state, state)
             raise exc.WorkflowException(msg)
-
-    def _find_running_tasks(self):
-        return [t_db for t_db in self.exec_db.tasks
-                if t_db.state == states.RUNNING]
 
 
 class FlowControl(object):

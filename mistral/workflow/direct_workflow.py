@@ -18,6 +18,7 @@ from mistral.openstack.common import log as logging
 from mistral.workflow import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -42,9 +43,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         return self._find_start_commands()
 
     def get_upstream_tasks(self, task_spec):
-        # TODO(rakhmerov): For direct workflow it's pretty hard to do
-        #  so we may need to get rid of it at all.
-        return []
+        # TODO(rakhmerov): Temporary solution, account conditions.
+        return self._find_inbound_task_specs(task_spec)
 
     def _find_start_commands(self):
         start_task_specs = []
@@ -61,6 +61,12 @@ class DirectWorkflowHandler(base.WorkflowHandler):
                 return True
 
         return False
+
+    def _find_inbound_task_specs(self, task_spec):
+        return [
+            t_s for t_s in self.wf_spec.get_tasks()
+            if self._transition_exists(t_s.get_name(), task_spec.get_name())
+        ]
 
     def _transition_exists(self, from_task_name, to_task_name):
         t_names = set()
@@ -91,7 +97,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         ctx = data_flow.evaluate_outbound_context(task_db)
 
-        if states.is_finished(t_state):
+        if states.is_completed(t_state):
             on_complete = self.get_on_complete_clause(t_name)
 
             if on_complete:
@@ -111,7 +117,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         LOG.debug("Found commands: %s" % commands)
 
-        return commands
+        return self._remove_incomplete_joins(commands)
 
     @staticmethod
     def _remove_task_from_clause(on_clause, t_name):
@@ -164,11 +170,39 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         for t_name, condition in cmd_conditions:
             if not condition or expr.evaluate(condition, ctx):
-                commands.append(self.build_command(t_name))
+                commands.append(self._build_command(t_name))
 
         return commands
 
-    def build_command(self, cmd_name):
+    def _build_command(self, cmd_name):
         cmd = commands.get_reserved_command(cmd_name)
 
         return cmd or commands.RunTask(self.wf_spec.get_tasks()[cmd_name])
+
+    def _remove_incomplete_joins(self, cmds):
+        return filter(lambda cmd: not self._is_incomplete_join(cmd), cmds)
+
+    def _is_incomplete_join(self, cmd):
+        if not isinstance(cmd, commands.RunTask):
+            return False
+
+        task_spec = cmd.task_spec
+
+        join_expr = task_spec.get_join()
+
+        if not join_expr or join_expr != 'all':
+            # TODO(rakhmerov): Implement partial join.
+            return False
+
+        in_task_specs = self._find_inbound_task_specs(task_spec)
+
+        if not in_task_specs:
+            return False
+
+        for in_t_s in in_task_specs:
+            in_t_db = wf_utils.find_db_task(self.exec_db, in_t_s)
+
+            if not in_t_db or in_t_db.state != states.SUCCESS:
+                return True
+
+        return False

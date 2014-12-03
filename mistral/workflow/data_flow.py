@@ -22,6 +22,7 @@ from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import security
 from mistral import utils
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -39,10 +40,10 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
     :param exec_db: Execution DB model.
     """
 
-    upstream_db_tasks = [
-        filter(lambda t: t.name == t_spec.get_name(), exec_db.tasks)[0]
-        for t_spec in upstream_task_specs
-    ]
+    upstream_db_tasks = wf_utils.find_db_tasks(
+        exec_db,
+        upstream_task_specs
+    )
 
     task_db.in_context = utils.merge_dicts(
         copy.copy(exec_db.context),
