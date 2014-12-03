@@ -32,7 +32,7 @@ actions:
     tags: [test, v2]
     base: std.echo
     base-input:
-        output: "Hello {$.name}!"
+      output: Hello {$.name}!
     output: $
 
   action2:
@@ -106,10 +106,24 @@ workflows:
         for-each:
           vm_info: $.vms
         workflow: wf2 is_true=true object_list=[1, null, "str"]
+        on-complete:
+          - task9
+          - task10
 
       task8:
         workflow: wf2 expr_list=["$.value", "{$.key}"] expr={$.value}
         targets: [nova]
+        on-complete:
+          - task9
+          - task10
+
+      task9:
+        join: all
+        action: std.echo output="Task 9 echo"
+
+      task10:
+        join: ['task8']
+        action: std.echo output="Task 10 echo"
 """
 
 
@@ -230,7 +244,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertListEqual(['test', 'v2'], wf2_spec.get_tags())
         self.assertEqual('direct', wf2_spec.get_type())
-        self.assertEqual(6, len(wf2_spec.get_tasks()))
+        self.assertEqual(8, len(wf2_spec.get_tasks()))
 
         task_defaults_spec = wf2_spec.get_task_defaults()
 
@@ -302,6 +316,14 @@ class DSLv2ModelTest(base.BaseTest):
         )
 
         self.assertEqual(['nova'], task8_spec.get_targets())
+
+        task9_spec = wf2_spec.get_tasks().get('task9')
+
+        self.assertEqual('all', task9_spec.get_join())
+
+        task10_spec = wf2_spec.get_tasks().get('task10')
+
+        self.assertListEqual(['task8'], task10_spec.get_join())
 
     def test_adhoc_action_with_base_in_one_string(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
