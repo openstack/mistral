@@ -69,6 +69,26 @@ class NoOpAction(base.Action):
         return None
 
 
+class FailAction(base.Action):
+    """'Always fail' action.
+
+    This action just always throws an instance of ActionException.
+    This behavior is useful in a number of cases, especially if we need to
+    test a scenario where some of workflow tasks fail.
+    """
+
+    def __init__(self):
+        pass
+
+    def run(self):
+        LOG.info('Running fail action.')
+
+        raise exc.ActionException('Fail action expected exception.')
+
+    def test(self):
+        raise exc.ActionException('Fail action expected exception.')
+
+
 class HTTPAction(base.Action):
     """Constructs an HTTP action.
 
@@ -172,6 +192,10 @@ class HTTPAction(base.Action):
 
         return {'content': content, 'headers': headers, 'status': status}
 
+    def test(self):
+        # TODO(rakhmerov): Implement.
+        return None
+
 
 class MistralHTTPAction(HTTPAction):
     def __init__(self,
@@ -208,6 +232,9 @@ class MistralHTTPAction(HTTPAction):
 
     def is_sync(self):
         return False
+
+    def test(self):
+        return None
 
 
 class SendEmailAction(base.Action):
@@ -289,3 +316,7 @@ class SSHAction(base.Action):
             return result
         except Exception as e:
             return raise_exc(parent_exc=e)
+
+    def test(self):
+        # TODO(rakhmerov): Implement.
+        return None
