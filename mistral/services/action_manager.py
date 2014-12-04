@@ -34,6 +34,8 @@ ACTIONS_PATH = '../resources/actions'
 _ACTION_CTX_PARAM = 'action_context'
 
 
+# TODO(rakhmerov): It's confusing because we have std.xxx actions and actions
+# TODO(rakhmerov): under '../resources/actions' that we also call standard.
 def register_standard_actions():
     action_paths = utils.get_file_list(ACTIONS_PATH)
 
@@ -151,6 +153,7 @@ def get_action_context(task_db):
 def has_action_context(action, attributes):
     action_cls = action_factory.construct_action_class(action, attributes)
     arg_spec = inspect.getargspec(action_cls.__init__)
+
     return _ACTION_CTX_PARAM in arg_spec.args
 
 

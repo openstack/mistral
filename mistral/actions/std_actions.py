@@ -51,6 +51,24 @@ class EchoAction(base.Action):
         return 'Echo'
 
 
+class NoOpAction(base.Action):
+    """No-operation action.
+
+    This action does nothing. It can be mostly useful for testing and
+    debugging purposes.
+    """
+    def __init__(self):
+        pass
+
+    def run(self):
+        LOG.info('Running no-op action')
+
+        return None
+
+    def test(self):
+        return None
+
+
 class HTTPAction(base.Action):
     """Constructs an HTTP action.
 
