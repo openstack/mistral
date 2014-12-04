@@ -49,10 +49,10 @@ EXEC = {
 }
 
 UPDATED_EXEC_DB = copy.copy(EXEC_DB)
-UPDATED_EXEC_DB['state'] = 'STOPPED'
+UPDATED_EXEC_DB['state'] = states.PAUSED
 
 UPDATED_EXEC = copy.copy(EXEC)
-UPDATED_EXEC['state'] = 'STOPPED'
+UPDATED_EXEC['state'] = states.PAUSED
 
 MOCK_EXECUTION = mock.MagicMock(return_value=EXEC_DB)
 MOCK_EXECUTIONS = mock.MagicMock(return_value=[EXEC_DB])
@@ -77,7 +77,9 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, 'update_execution', MOCK_UPDATED_EXECUTION)
+    @mock.patch.object(db_api, 'ensure_execution_exists', MOCK_EXECUTION)
+    @mock.patch.object(rpc.EngineClient, 'pause_workflow',
+                       MOCK_UPDATED_EXECUTION)
     def test_put(self):
         resp = self.app.put_json('/v2/executions/123', UPDATED_EXEC)
 
@@ -86,8 +88,11 @@ class TestExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(db_api, 'update_execution', MOCK_NOT_FOUND)
     def test_put_not_found(self):
-        resp = self.app.put_json('/v2/executions/123', dict(state='STOPPED'),
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/executions/123',
+            dict(state=states.PAUSED),
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 404)
 
