@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-WF = """
+WF_FULL_JOIN = """
 ---
 version: "2.0"
 
@@ -58,16 +58,45 @@ wf:
 """
 
 
+WF_FULL_JOIN_WITH_ERRORS = """
+---
+version: "2.0"
+
+wf:
+  type: direct
+
+  output:
+    result: $.result3
+
+  tasks:
+    task1:
+      action: std.echo output=1
+      publish:
+        result1: $
+      on-complete:
+        - task3
+
+    task2:
+      action: std.fail
+      on-error:
+        - task3
+
+    task3:
+      join: all
+      action: std.echo output="{$.result1}-{$.result1}"
+      publish:
+        result3: $
+"""
+
+
 class JoinEngineTest(base.EngineTestCase):
-    def test_full_join(self):
-        wf_service.create_workflows(WF)
+    def test_full_join_without_errors(self):
+        wf_service.create_workflows(WF_FULL_JOIN)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('wf', {})
 
-        self._await(
-            lambda: self.is_execution_success(exec_db.id),
-        )
+        self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
@@ -83,6 +112,29 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
 
         self.assertDictEqual({'result': '1,2'}, exec_db.output)
+
+    def test_full_join_with_errors(self):
+        wf_service.create_workflows(WF_FULL_JOIN_WITH_ERRORS)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.ERROR, task2.state)
+        self.assertEqual(states.SUCCESS, task3.state)
+
+        self.assertDictEqual({'result': '1-1'}, exec_db.output)
 
     def test_partial_join(self):
         # TODO(rakhmerov): Implement.

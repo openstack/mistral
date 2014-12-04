@@ -90,7 +90,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         :param task_db: Task DB model.
         :return: List of task specifications.
         """
-        commands = []
+        cmds = []
 
         t_name = task_db.name
         t_state = task_db.state
@@ -101,23 +101,26 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             on_complete = self.get_on_complete_clause(t_name)
 
             if on_complete:
-                commands += self._get_next_commands(on_complete, ctx)
+                cmds += self._get_next_commands(on_complete, ctx)
 
         if t_state == states.ERROR:
             on_error = self.get_on_error_clause(t_name)
 
             if on_error:
-                commands += self._get_next_commands(on_error, ctx)
+                cmds += self._get_next_commands(on_error, ctx)
 
         elif t_state == states.SUCCESS:
             on_success = self.get_on_success_clause(t_name)
 
             if on_success:
-                commands += self._get_next_commands(on_success, ctx)
+                cmds += self._get_next_commands(on_success, ctx)
 
-        LOG.debug("Found commands: %s" % commands)
+        LOG.debug("Found commands: %s" % cmds)
 
-        return self._remove_incomplete_joins(commands)
+        return self._remove_incomplete_joins(cmds)
+
+    def _is_error_handled(self, task_db):
+        return self.get_on_error_clause(task_db.name)
 
     @staticmethod
     def _remove_task_from_clause(on_clause, t_name):
@@ -166,13 +169,13 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         return result
 
     def _get_next_commands(self, cmd_conditions, ctx):
-        commands = []
+        cmds = []
 
         for t_name, condition in cmd_conditions:
             if not condition or expr.evaluate(condition, ctx):
-                commands.append(self._build_command(t_name))
+                cmds.append(self._build_command(t_name))
 
-        return commands
+        return cmds
 
     def _build_command(self, cmd_name):
         cmd = commands.get_reserved_command(cmd_name)
@@ -202,7 +205,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         for in_t_s in in_task_specs:
             in_t_db = wf_utils.find_db_task(self.exec_db, in_t_s)
 
-            if not in_t_db or in_t_db.state != states.SUCCESS:
+            if not in_t_db or not states.is_completed(in_t_db.state):
                 return True
 
         return False
