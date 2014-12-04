@@ -83,6 +83,7 @@ class WorkflowHandler(object):
             task_db,
             raw_result
         )
+
         task_db.state = self._determine_task_state(
             task_db,
             task_spec,
@@ -133,9 +134,11 @@ class WorkflowHandler(object):
             out_key = (task_spec.get_publish().keys()[0]
                        if task_spec.get_publish() else None)
 
+            # TODO(nmakhotkin): Simplify calculating task output.
+            e_data = raw_result.error
             output = expr.evaluate_recursively(
                 task_spec.get_publish(),
-                raw_result.data
+                raw_result.data or {}
             )
 
             if not task_db.output:
@@ -144,18 +147,20 @@ class WorkflowHandler(object):
             task_output = copy.copy(task_db.output)
             if out_key:
                 if out_key in task_output:
-                    task_output[out_key].append(output[out_key])
+                    task_output[out_key].append(
+                        output.get(out_key) or e_data
+                    )
                 else:
-                    task_output[out_key] = [output[out_key]]
+                    task_output[out_key] = [output.get(out_key) or e_data]
                 # Add same result to task output under key 'task'.
                 task_output['task'] = {
                     t_name: task_output[out_key]
                 }
             else:
                 if 'task' not in task_output:
-                    task_output.update({'task': {t_name: [output]}})
+                    task_output.update({'task': {t_name: [output or e_data]}})
                 else:
-                    task_output['task'][t_name].append(output)
+                    task_output['task'][t_name].append(output or e_data)
 
             return task_output
         else:

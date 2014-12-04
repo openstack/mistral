@@ -97,7 +97,9 @@ def evaluate_task_output(task_spec, raw_result):
     output = expr.evaluate_recursively(publish_dict, raw_result.data) or {}
 
     # Add same result to task output under key 'task'.
-    output['task'] = {task_spec.get_name(): copy.copy(output)}
+    output['task'] = {
+        task_spec.get_name(): copy.copy(output) or raw_result.error
+    }
 
     return output
 

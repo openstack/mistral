@@ -204,7 +204,7 @@ class DefaultEngineTest(base.DbTestCase):
         self._assert_dict_contains_subset(in_context, task2_db.in_context)
         self.assertIn('__execution', task_db.in_context)
         self.assertDictEqual({'output': 'Hi'}, task2_db.input)
-        self.assertDictEqual({'task': {'task2': {}}}, task2_db.output)
+        self.assertDictEqual({'task': {'task2': None}}, task2_db.output)
 
         self.assertEqual(2, len(exec_db.tasks))
 

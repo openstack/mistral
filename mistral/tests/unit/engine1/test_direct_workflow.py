@@ -59,6 +59,23 @@ workflows:
 """
 
 
+WORKBOOK_WRONG_TASK_INPUT = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf:
+    type: direct
+
+    tasks:
+      task1:
+        description: That should lead to workflow fail.
+        action: std.echo outpu="Echo"
+"""
+
+
 class DirectWorkflowEngineTest(base.EngineTestCase):
     def test_direct_workflow_on_closures(self):
         wb_service.create_workbook_v2(WORKBOOK)
@@ -84,4 +101,22 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         )
         self._await(
             lambda: self.is_task_success(task4.id)
+        )
+
+    def test_wrong_task_input(self):
+        wb_service.create_workbook_v2(WORKBOOK_WRONG_TASK_INPUT)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb.wf', {})
+
+        self._await(
+            lambda: self.is_execution_error(exec_db.id)
+        )
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = exec_db.tasks[0]
+
+        self.assertIn(
+            "Failed to initialize action",
+            task_db.output['task'][task_db.name]
         )
