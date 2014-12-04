@@ -28,6 +28,7 @@ class TaskSpec(base.BaseSpec):
             "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
+            "join": {"type": ["string", "array"]},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "input": {"type": ["object", "null"]},
@@ -51,6 +52,7 @@ class TaskSpec(base.BaseSpec):
 
         self._name = data['name']
         self._description = data.get('description')
+        self._join = data.get('join')
         self._action = data.get('action')
         self._workflow = data.get('workflow')
         self._input = data.get('input', {})
@@ -103,6 +105,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_description(self):
         return self._description
+
+    def get_join(self):
+        return self._join
 
     def get_action_name(self):
         return self._action if self._action else None
