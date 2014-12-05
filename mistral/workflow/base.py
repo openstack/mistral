@@ -207,8 +207,7 @@ class WorkflowHandler(object):
         :return: List of engine commands.
         """
         def filter_task_cmds(cmds):
-            return [cmd for cmd in cmds
-                    if isinstance(cmd, commands.RunTask)]
+            return [cmd for cmd in cmds if isinstance(cmd, commands.RunTask)]
 
         def get_tasks_to_schedule(task_db, schedule_tasks):
             """Finds tasks that should run after given task and searches them
