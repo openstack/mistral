@@ -88,6 +88,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         Expression 'on_complete' is not mutually exclusive to 'on_success'
          and 'on_error'.
         :param task_db: Task DB model.
+        :param remove_incomplete_joins: True if incomplete "join"
+            tasks must be excluded from the list of commands.
         :return: List of task specifications.
         """
         cmds = []
@@ -196,8 +198,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         join_expr = task_spec.get_join()
 
-        if not join_expr or join_expr != 'all':
-            # TODO(rakhmerov): Implement partial join.
+        if not join_expr:
             return False
 
         in_task_specs = self._find_inbound_task_specs(task_spec)
@@ -205,9 +206,16 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         if not in_task_specs:
             return False
 
-        for in_t_s in in_task_specs:
-            if not self._triggers_join(task_spec, in_t_s):
-                return True
+        # We need to count a number of triggering inbound transitions.
+        num = len([1 for in_t_s in in_task_specs
+                   if self._triggers_join(task_spec, in_t_s)])
+
+        # If "join" is configured as a number.
+        if isinstance(join_expr, int) and num < join_expr:
+            return True
+
+        if join_expr == 'all' and len(in_task_specs) > num:
+            return True
 
         return False
 
