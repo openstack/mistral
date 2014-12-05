@@ -285,7 +285,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         task2 = self._assert_single_item(exec_db.tasks, name="task2")
 
         # Task2 is not finished yet.
-        self.assertFalse(states.is_finished(task2.state))
+        self.assertFalse(states.is_completed(task2.state))
 
         self.engine.resume_workflow(exec_db.id)
         exec_db = db_api.get_execution(exec_db.id)

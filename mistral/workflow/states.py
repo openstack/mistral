@@ -43,12 +43,12 @@ def is_invalid(state):
     return not is_valid(state)
 
 
-def is_finished(state):
+def is_completed(state):
     return state in [SUCCESS, ERROR]
 
 
-def is_paused_or_finished(state):
-    return state == PAUSED or is_finished(state)
+def is_paused_or_completed(state):
+    return state == PAUSED or is_completed(state)
 
 
 def is_valid_transition(from_state, to_state):

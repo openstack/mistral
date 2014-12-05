@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from mistral.utils import serializer
+from mistral.workflow import states
 
 
 class TaskResult(object):
@@ -42,3 +43,20 @@ class TaskResultSerializer(serializer.Serializer):
 
     def deserialize(self, entity):
         return TaskResult(entity['data'], entity['error'])
+
+
+def find_db_task(exec_db, task_spec):
+    db_tasks = [
+        t_db for t_db in exec_db.tasks
+        if t_db.name == task_spec.get_name()
+    ]
+
+    return db_tasks[0] if len(db_tasks) > 0 else None
+
+
+def find_db_tasks(exec_db, task_specs):
+    return filter(None, [find_db_task(exec_db, t_s) for t_s in task_specs])
+
+
+def find_running_tasks(exec_db):
+    return [t_db for t_db in exec_db.tasks if t_db.state == states.RUNNING]
