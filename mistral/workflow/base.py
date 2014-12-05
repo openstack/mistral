@@ -101,22 +101,23 @@ class WorkflowHandler(object):
 
         WF_TRACE.info(wf_trace_msg)
 
-        if self.is_paused_or_finished():
+        if self.is_paused_or_completed():
             return []
 
-        commands = self._find_next_commands(task_db)
+        cmds = self._find_next_commands(task_db)
 
-        if task_db.state == states.ERROR and not commands:
-            if not self.is_paused_or_finished():
+        if (task_db.state == states.ERROR and
+                not self._is_error_handled(task_db)):
+            if not self.is_paused_or_completed():
                 self._set_execution_state(states.ERROR)
 
             return []
 
-        if len(commands) == 0:
+        if len(cmds) == 0:
             # If there are no running tasks at this point we can conclude that
             # the workflow has finished.
             if not wf_utils.find_running_tasks(self.exec_db):
-                if not self.is_paused_or_finished():
+                if not self.is_paused_or_completed():
                     self._set_execution_state(states.SUCCESS)
 
                 task_out_ctx = data_flow.evaluate_outbound_context(task_db)
@@ -126,7 +127,7 @@ class WorkflowHandler(object):
                     task_out_ctx
                 )
 
-        return commands
+        return cmds
 
     def _determine_task_output(self, task_spec, task_db, raw_result):
         for_each = task_spec.get_for_each()
@@ -196,6 +197,9 @@ class WorkflowHandler(object):
         """
         raise NotImplementedError
 
+    def _is_error_handled(self, task_db):
+        return False
+
     def _find_commands_to_resume(self, tasks):
         """Finds commands that should run after pause.
 
@@ -256,7 +260,7 @@ class WorkflowHandler(object):
 
         return schedule_cmds
 
-    def is_paused_or_finished(self):
+    def is_paused_or_completed(self):
         return states.is_paused_or_completed(self.exec_db.state)
 
     def pause_workflow(self):
