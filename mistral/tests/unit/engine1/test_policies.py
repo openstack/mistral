@@ -153,11 +153,6 @@ workflows:
         policies:
           timeout: 2
         input:
-          # We need to fix this
-          action_context:
-            workbook_name: wb
-            execution_id: 123
-            task_id: 3121
           url: http://google.com
           method: GET
         on-error:
@@ -265,14 +260,7 @@ class PoliciesTest(base.EngineTestCase):
             task_db.runtime_context
         )
 
-        self._await(
-            lambda: self.is_execution_success(exec_db.id),
-        )
-
-        exec_db = db_api.get_execution(exec_db.id)
-
-        self.assertIsNotNone(exec_db)
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self._await(lambda: self.is_execution_success(exec_db.id))
 
     def test_wait_after_policy(self):
         wb_service.create_workbook_v2(WAIT_AFTER_WB)
@@ -291,14 +279,7 @@ class PoliciesTest(base.EngineTestCase):
             lambda: self.is_task_delayed(task_db.id),
             delay=0.5
         )
-        self._await(
-            lambda: self.is_task_success(task_db.id),
-        )
-
-        exec_db = db_api.get_execution(exec_db.id)
-
-        self.assertIsNotNone(exec_db)
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self._await(lambda: self.is_task_success(task_db.id))
 
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB)
@@ -317,12 +298,9 @@ class PoliciesTest(base.EngineTestCase):
             lambda: self.is_task_delayed(task_db.id),
             delay=0.5
         )
-        self._await(
-            lambda: self.is_task_error(task_db.id),
-        )
-        self._await(
-            lambda: self.is_execution_error(exec_db.id),
-        )
+        self._await(lambda: self.is_task_error(task_db.id))
+
+        self._await(lambda: self.is_execution_error(exec_db.id))
 
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.tasks[0]
@@ -331,8 +309,6 @@ class PoliciesTest(base.EngineTestCase):
             1,
             task_db.runtime_context["retry_task_policy"]["retry_no"]
         )
-        self.assertIsNotNone(exec_db)
-        self.assertEqual(states.ERROR, exec_db.state)
 
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB)
@@ -346,22 +322,15 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, task_db.state)
 
-        self._await(
-            lambda: self.is_task_error(task_db.id),
-        )
+        self._await(lambda: self.is_task_error(task_db.id))
 
         exec_db = db_api.get_execution(exec_db.id)
-        task_db = exec_db.tasks[0]
+        task_db = self._assert_single_item(exec_db.tasks, name="task1")
 
         self.assertEqual(states.ERROR, task_db.state)
         self.assertIsNotNone(exec_db)
 
-        self._await(
-            lambda: self.is_execution_success(exec_db.id),
-        )
-
-        exec_db = db_api.get_execution(exec_db.id)
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self._await(lambda: self.is_execution_success(exec_db.id))
 
     def test_timeout_policy_success_after_timeout(self):
         wb_service.create_workbook_v2(TIMEOUT_WB2)
@@ -375,9 +344,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, task_db.state)
 
-        self._await(
-            lambda: self.is_execution_error(exec_db.id),
-        )
+        self._await(lambda: self.is_execution_error(exec_db.id))
 
         # Wait until timeout exceeds.
         self._sleep(2)
@@ -387,4 +354,3 @@ class PoliciesTest(base.EngineTestCase):
 
         # Make sure that engine did not create extra tasks.
         self.assertEqual(1, len(tasks_db))
-        self.assertEqual(states.ERROR, tasks_db[0].state)
