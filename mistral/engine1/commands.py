@@ -57,6 +57,12 @@ class EngineCommand(object):
         raise NotImplementedError
 
 
+class Noop(EngineCommand):
+    """No-op command."""
+    def run(self, exec_db, wf_handler, cause_task_db=None):
+        pass
+
+
 class RunTask(EngineCommand):
     def __init__(self, task_spec, task_db=None):
         self.task_spec = task_spec
@@ -284,6 +290,7 @@ class RollbackWorkflow(EngineCommand):
 
 
 RESERVED_COMMANDS = {
+    'noop': Noop,
     'fail': FailWorkflow,
     'succeed': SucceedWorkflow,
     'pause': PauseWorkflow,
