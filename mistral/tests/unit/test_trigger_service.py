@@ -122,7 +122,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         t_s.create_cron_trigger(
             'test2',
-            '*/5 * * * *',
+            '*/1 * * * *',
             self.wf.name,
             {},
             datetime.datetime(2010, 8, 22)
@@ -130,7 +130,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         t_s.create_cron_trigger(
             'test3',
-            '*/5 * * * *',
+            '*/2 * * * *',
             self.wf.name,
             {},
             datetime.datetime(2010, 9, 21)
@@ -138,7 +138,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         t_s.create_cron_trigger(
             'test4',
-            '*/5 * * * *',
+            '*/3 * * * *',
             self.wf.name,
             {},
             datetime.datetime.now() + datetime.timedelta(0, 50)

@@ -816,7 +816,7 @@ CRON_TRIGGERS = [
         'pattern': '* * * * *',
         'workflow_name': 'my_wf',
         'workflow_id': None,
-        'workflow_input': {},
+        'workflow_input': {'param': 'val'},
         'next_execution_time':
         datetime.datetime.now() + datetime.timedelta(days=1),
         'scope': 'private',
