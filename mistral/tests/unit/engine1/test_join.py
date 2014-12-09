@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from oslo.config import cfg
+import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
@@ -170,6 +171,52 @@ wf:
         result4: $
 """
 
+WF_PARTIAL_JOIN_TRIGGERS_ONCE = """
+---
+version: 2.0
+
+wf:
+  type: direct
+
+  output:
+    result: $.result4
+
+  tasks:
+    task1:
+      action: std.noop
+      publish:
+        result1: 1
+      on-complete:
+        - task5
+
+    task2:
+      action: std.noop
+      publish:
+        result2: 2
+      on-complete:
+        - task5
+
+    task3:
+      action: std.noop
+      publish:
+        result3: 3
+      on-complete:
+        - task5
+
+    task4:
+      action: std.noop
+      publish:
+        result4: 4
+      on-complete:
+        - task5
+
+    task5:
+      join: 2
+      action: std.echo output="{$.result1},{$.result2},{$.result3},{$.result4}"
+      publish:
+        result5: $
+"""
+
 
 class JoinEngineTest(base.EngineTestCase):
     def test_full_join_without_errors(self):
@@ -277,3 +324,37 @@ class JoinEngineTest(base.EngineTestCase):
         )
 
         self.assertDictEqual({'result': '1,2'}, exec_db.output)
+
+    @testtools.skip('TODO: Fix direct workflow to trigger joins only once')
+    def test_partial_join_triggers_once(self):
+        wf_service.create_workflows(WF_PARTIAL_JOIN_TRIGGERS_ONCE)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        # TODO(rakhmerov): This now fails because "join" triggers 3 times.
+        self.assertEqual(5, len(tasks))
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+        task4 = self._assert_single_item(tasks, name='task4')
+        task5 = self._assert_single_item(tasks, name='task5')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.SUCCESS, task2.state)
+        self.assertEqual(states.SUCCESS, task3.state)
+        self.assertEqual(states.SUCCESS, task4.state)
+        self.assertEqual(states.SUCCESS, task5.state)
+
+        result5 = task5.output['result5']
+
+        self.assertIsNotNone(result5)
+        self.assertEqual(2, result5.count('None'))
