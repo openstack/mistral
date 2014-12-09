@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
@@ -166,11 +165,9 @@ wf:
 
     task4:
       join: 2
-      action: std.noop
+      action: std.echo output="{$.result1},{$.result2}"
       publish:
-        result4:
-          - $.result1
-          - $.result2
+        result4: $
 
     task5:
       action: std.noop
@@ -249,7 +246,6 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertDictEqual({'result': 4}, exec_db.output)
 
-    @testtools.skip("Implement partial join.")
     def test_partial_join(self):
         wf_service.create_workflows(WF_PARTIAL_JOIN)
 
@@ -275,4 +271,10 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task4.state)
         self.assertEqual(states.SUCCESS, task5.state)
 
-        self.assertDictEqual({'result': [1, 2]}, exec_db.output)
+        self.assertDictEqual(
+            {
+                'result4': '1,2',
+                'task': {'task4': {'result4': '1,2'}}
+            },
+            task4.output
+        )
