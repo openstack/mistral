@@ -82,7 +82,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return to_task_name in t_names
 
-    def _find_next_commands(self, task_db, remove_incomplete_joins=True):
+    def _find_next_commands(self, task_db, remove_unsatisfied_joins=True):
         """Finds commands that should run after completing given task.
 
         Expression 'on_complete' is not mutually exclusive to 'on_success'
@@ -119,8 +119,13 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         LOG.debug("Found commands: %s" % cmds)
 
-        if remove_incomplete_joins:
-            return self._remove_incomplete_joins(cmds)
+        # We need to remove all "join" tasks that have already started
+        # (or even completed) to prevent running "join" tasks more than
+        # once.
+        cmds = self._remove_started_joins(cmds)
+
+        if remove_unsatisfied_joins:
+            return self._remove_unsatisfied_joins(cmds)
         else:
             return cmds
 
@@ -187,10 +192,20 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return cmd or commands.RunTask(self.wf_spec.get_tasks()[cmd_name])
 
-    def _remove_incomplete_joins(self, cmds):
-        return filter(lambda cmd: not self._is_incomplete_join(cmd), cmds)
+    def _remove_started_joins(self, cmds):
+        return filter(lambda cmd: not self._is_started_join(cmd), cmds)
 
-    def _is_incomplete_join(self, cmd):
+    def _is_started_join(self, cmd):
+        if not isinstance(cmd, commands.RunTask):
+            return False
+
+        return (cmd.task_spec.get_join()
+                and wf_utils.find_db_task(self.exec_db, cmd.task_spec))
+
+    def _remove_unsatisfied_joins(self, cmds):
+        return filter(lambda cmd: not self._is_unsatisfied_join(cmd), cmds)
+
+    def _is_unsatisfied_join(self, cmd):
         if not isinstance(cmd, commands.RunTask):
             return False
 

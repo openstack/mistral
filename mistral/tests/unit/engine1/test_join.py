@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
@@ -325,7 +324,6 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertDictEqual({'result': '1,2'}, exec_db.output)
 
-    @testtools.skip('TODO: Fix direct workflow to trigger joins only once')
     def test_partial_join_triggers_once(self):
         wf_service.create_workflows(WF_PARTIAL_JOIN_TRIGGERS_ONCE)
 
@@ -339,7 +337,6 @@ class JoinEngineTest(base.EngineTestCase):
 
         tasks = exec_db.tasks
 
-        # TODO(rakhmerov): This now fails because "join" triggers 3 times.
         self.assertEqual(5, len(tasks))
 
         task1 = self._assert_single_item(tasks, name='task1')
