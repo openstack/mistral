@@ -68,20 +68,42 @@ class TaskSpec(base.BaseSpec):
         self._on_success = self._as_list_of_tuples('on-success')
         self._on_error = self._as_list_of_tuples('on-error')
 
-        self._process_for_each()
         self._process_action_and_workflow()
 
-    def _process_action_and_workflow(self):
-        if self._action and self._workflow:
+    def validate(self):
+        super(TaskSpec, self).validate()
+
+        if 'join' in self._data:
+            join = self._data.get('join')
+
+            if not (isinstance(join, int) or join in ['all', 'one']):
+                msg = ("Task property 'join' is only allowed to be an"
+                       " integer, 'all' or 'one': %s" % self._data)
+                raise exc.InvalidModelException(msg)
+
+        action = self._data.get('action')
+        workflow = self._data.get('workflow')
+
+        if action and workflow:
             msg = ("Task properties 'action' and 'workflow' can't be"
-                   " specified both:" % self._data)
+                   " specified both: %s" % self._data)
             raise exc.InvalidModelException(msg)
 
-        if not self._action and not self._workflow:
+        if not action and not workflow:
             msg = ("One of task properties 'action' or 'workflow' must be"
-                   " specified:" % self._data)
+                   " specified: %s" % self._data)
             raise exc.InvalidModelException(msg)
 
+        for_each = self._data.get('for-each')
+
+        if for_each:
+            for _, v in for_each.iteritems():
+                if not isinstance(v, (list, six.string_types)):
+                    msg = ("Items of task property 'for-each' can only be "
+                           "a list or an expression string: %s" % self._data)
+                    raise exc.InvalidModelException(msg)
+
+    def _process_action_and_workflow(self):
         params = {}
 
         if self._action:
@@ -91,14 +113,6 @@ class TaskSpec(base.BaseSpec):
                 self._workflow)
 
         utils.merge_dicts(self._input, params)
-
-    def _process_for_each(self):
-        if self._for_each:
-            for key, value in self._for_each.items():
-                if not isinstance(value, (list, six.string_types)):
-                    msg = ("Items of task property 'for-each' can only be "
-                           "a list or an expression string: %s" % self._data)
-                    raise exc.InvalidModelException(msg)
 
     def get_name(self):
         return self._name
