@@ -161,16 +161,13 @@ wf:
       on-success:
         - task4
       on-error:
-        - task5
+        - noop
 
     task4:
       join: 2
       action: std.echo output="{$.result1},{$.result2}"
       publish:
         result4: $
-
-    task5:
-      action: std.noop
 """
 
 
@@ -259,17 +256,17 @@ class JoinEngineTest(base.EngineTestCase):
 
         tasks = exec_db.tasks
 
+        self.assertEqual(4, len(tasks))
+
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
         task3 = self._assert_single_item(tasks, name='task3')
         task4 = self._assert_single_item(tasks, name='task4')
-        task5 = self._assert_single_item(tasks, name='task5')
 
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
         self.assertEqual(states.ERROR, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
-        self.assertEqual(states.SUCCESS, task5.state)
 
         self.assertDictEqual(
             {
@@ -278,3 +275,5 @@ class JoinEngineTest(base.EngineTestCase):
             },
             task4.output
         )
+
+        self.assertDictEqual({'result': '1,2'}, exec_db.output)
