@@ -232,6 +232,9 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         if join_expr == 'all' and len(in_task_specs) > num:
             return True
 
+        if join_expr == 'one' and num == 0:
+            return True
+
         return False
 
     def _triggers_join(self, join_task_spec, inbound_task_spec):

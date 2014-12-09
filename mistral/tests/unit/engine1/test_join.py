@@ -216,6 +216,45 @@ wf:
         result5: $
 """
 
+WF_DISCRIMINATOR = """
+---
+version: 2.0
+
+wf:
+  type: direct
+
+  output:
+    result: $.result4
+
+  tasks:
+    task1:
+      action: std.noop
+      publish:
+        result1: 1
+      on-complete:
+        - task4
+
+    task2:
+      action: std.noop
+      publish:
+        result2: 2
+      on-complete:
+        - task4
+
+    task3:
+      action: std.noop
+      publish:
+        result3: 3
+      on-complete:
+        - task4
+
+    task4:
+      join: one
+      action: std.echo output="{$.result1},{$.result2},{$.result3}"
+      publish:
+        result4: $
+"""
+
 
 class JoinEngineTest(base.EngineTestCase):
     def test_full_join_without_errors(self):
@@ -355,3 +394,33 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertIsNotNone(result5)
         self.assertEqual(2, result5.count('None'))
+
+    def test_discriminator(self):
+        wf_service.create_workflows(WF_DISCRIMINATOR)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        self.assertEqual(4, len(tasks))
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+        task4 = self._assert_single_item(tasks, name='task4')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.SUCCESS, task2.state)
+        self.assertEqual(states.SUCCESS, task3.state)
+        self.assertEqual(states.SUCCESS, task4.state)
+
+        result4 = task4.output['result4']
+
+        self.assertIsNotNone(result4)
+        self.assertEqual(2, result4.count('None'))
