@@ -26,6 +26,7 @@ from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
 from mistral import utils
+from mistral.utils import for_each_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -212,8 +213,9 @@ class RunTask(EngineCommand):
         for_each = self.task_spec.get_for_each()
 
         if for_each:
-            action_input_collection = self._calc_for_each_input(action_input)
-
+            action_input_collection = for_each_utils.calc_for_each_input(
+                action_input
+            )
             for a_input in action_input_collection:
                 rpc.get_executor_client().run_action(
                     self.task_db.id,
@@ -237,24 +239,6 @@ class RunTask(EngineCommand):
                 action_input,
                 targets
             )
-
-    @staticmethod
-    def _calc_for_each_input(action_input):
-        # In case of for-each iterate over action_input and send
-        # each part of data to executor.
-        # Calculate action input collection for separating input.
-        action_input_collection = []
-
-        for key, value in action_input.items():
-            for index, item in enumerate(value):
-                iter_context = {key: item}
-
-                if index >= len(action_input_collection):
-                    action_input_collection.append(iter_context)
-                else:
-                    action_input_collection[index].update(iter_context)
-
-        return action_input_collection
 
     def _run_workflow(self):
         parent_exec_db = self.exec_db
