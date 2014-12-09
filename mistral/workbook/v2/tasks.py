@@ -28,7 +28,7 @@ class TaskSpec(base.BaseSpec):
             "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
-            "join": {"type": ["string", "integer", "array"]},
+            "join": {"type": ["string", "integer"]},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "input": {"type": ["object", "null"]},
@@ -73,13 +73,13 @@ class TaskSpec(base.BaseSpec):
 
     def _process_action_and_workflow(self):
         if self._action and self._workflow:
-            msg = "Task properties 'action' and 'workflow' can't be" \
-                  " specified both:" % self._data
+            msg = ("Task properties 'action' and 'workflow' can't be"
+                   " specified both:" % self._data)
             raise exc.InvalidModelException(msg)
 
         if not self._action and not self._workflow:
-            msg = "One of task properties 'action' or 'workflow' must be" \
-                  " specified:" % self._data
+            msg = ("One of task properties 'action' or 'workflow' must be"
+                   " specified:" % self._data)
             raise exc.InvalidModelException(msg)
 
         params = {}
