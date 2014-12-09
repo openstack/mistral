@@ -124,6 +124,10 @@ workflows:
       task10:
         join: ['task8']
         action: std.echo output="Task 10 echo"
+
+      task11:
+        join: 2
+        action: std.echo output="Task 10 echo"
 """
 
 
@@ -244,7 +248,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertListEqual(['test', 'v2'], wf2_spec.get_tags())
         self.assertEqual('direct', wf2_spec.get_type())
-        self.assertEqual(8, len(wf2_spec.get_tasks()))
+        self.assertEqual(9, len(wf2_spec.get_tasks()))
 
         task_defaults_spec = wf2_spec.get_task_defaults()
 
@@ -324,6 +328,10 @@ class DSLv2ModelTest(base.BaseTest):
         task10_spec = wf2_spec.get_tasks().get('task10')
 
         self.assertListEqual(['task8'], task10_spec.get_join())
+
+        task11_spec = wf2_spec.get_tasks().get('task11')
+
+        self.assertEqual(2, task11_spec.get_join())
 
     def test_adhoc_action_with_base_in_one_string(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)

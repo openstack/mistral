@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from oslo.config import cfg
+import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
@@ -126,6 +127,55 @@ wf:
         result4: $
 """
 
+WF_PARTIAL_JOIN = """
+---
+version: 2.0
+
+wf:
+  type: direct
+
+  output:
+    result: $.result4
+
+  tasks:
+    task1:
+      action: std.echo output=1
+      publish:
+        result1: $
+      on-complete:
+        - task4
+
+    task2:
+      action: std.echo output=2
+      publish:
+        result2: $
+      on-complete:
+        - task4
+
+    task3:
+      action: std.fail
+      description: |
+        Always fails and 'on-success' never gets triggered.
+        However, 'task4' will run since its join cardinality
+        is 2 which means 'task1' and 'task2' completion is
+        enough to trigger it.
+      on-success:
+        - task4
+      on-error:
+        - task5
+
+    task4:
+      join: 2
+      action: std.noop
+      publish:
+        result4:
+          - $.result1
+          - $.result2
+
+    task5:
+      action: std.noop
+"""
+
 
 class JoinEngineTest(base.EngineTestCase):
     def test_full_join_without_errors(self):
@@ -199,6 +249,30 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertDictEqual({'result': 4}, exec_db.output)
 
+    @testtools.skip("Implement partial join.")
     def test_partial_join(self):
-        # TODO(rakhmerov): Implement.
-        pass
+        wf_service.create_workflows(WF_PARTIAL_JOIN)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+        task4 = self._assert_single_item(tasks, name='task4')
+        task5 = self._assert_single_item(tasks, name='task5')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.SUCCESS, task2.state)
+        self.assertEqual(states.ERROR, task3.state)
+        self.assertEqual(states.SUCCESS, task4.state)
+        self.assertEqual(states.SUCCESS, task5.state)
+
+        self.assertDictEqual({'result': [1, 2]}, exec_db.output)

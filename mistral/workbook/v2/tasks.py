@@ -28,7 +28,7 @@ class TaskSpec(base.BaseSpec):
             "version": {"type": "string"},
             "name": {"type": "string"},
             "description": {"type": "string"},
-            "join": {"type": ["string", "array"]},
+            "join": {"type": ["string", "integer", "array"]},
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "input": {"type": ["object", "null"]},
