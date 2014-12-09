@@ -83,9 +83,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(
-            lambda: self.is_execution_error(exec_db.id)
-        )
+        self._await(lambda: self.is_execution_error(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
@@ -96,12 +94,8 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        self._await(
-            lambda: self.is_task_success(task3.id)
-        )
-        self._await(
-            lambda: self.is_task_success(task4.id)
-        )
+        self._await(lambda: self.is_task_success(task3.id))
+        self._await(lambda: self.is_task_success(task4.id))
 
     def test_wrong_task_input(self):
         wb_service.create_workbook_v2(WORKBOOK_WRONG_TASK_INPUT)
@@ -109,9 +103,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf', {})
 
-        self._await(
-            lambda: self.is_execution_error(exec_db.id)
-        )
+        self._await(lambda: self.is_execution_error(exec_db.id))
 
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.tasks[0]

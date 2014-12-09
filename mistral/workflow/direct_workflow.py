@@ -82,7 +82,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return to_task_name in t_names
 
-    def _find_next_commands(self, task_db):
+    def _find_next_commands(self, task_db, remove_incomplete_joins=True):
         """Finds commands that should run after completing given task.
 
         Expression 'on_complete' is not mutually exclusive to 'on_success'
@@ -117,7 +117,10 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         LOG.debug("Found commands: %s" % cmds)
 
-        return self._remove_incomplete_joins(cmds)
+        if remove_incomplete_joins:
+            return self._remove_incomplete_joins(cmds)
+        else:
+            return cmds
 
     def _is_error_handled(self, task_db):
         return self.get_on_error_clause(task_db.name)
@@ -203,9 +206,22 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             return False
 
         for in_t_s in in_task_specs:
-            in_t_db = wf_utils.find_db_task(self.exec_db, in_t_s)
-
-            if not in_t_db or not states.is_completed(in_t_db.state):
+            if not self._triggers_join(task_spec, in_t_s):
                 return True
 
         return False
+
+    def _triggers_join(self, join_task_spec, inbound_task_spec):
+        in_t_db = wf_utils.find_db_task(self.exec_db, inbound_task_spec)
+
+        if not in_t_db or not states.is_completed(in_t_db.state):
+            return False
+
+        def is_join_task(cmd):
+            return (isinstance(cmd, commands.RunTask)
+                    and cmd.task_spec == join_task_spec)
+
+        return filter(
+            lambda cmd: is_join_task(cmd),
+            self._find_next_commands(in_t_db, False)
+        )
