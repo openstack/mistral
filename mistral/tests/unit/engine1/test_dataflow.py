@@ -52,16 +52,19 @@ workflows:
           - task3
 
       task3:
-        action: std.echo output="{$.hi} {$.username}!"
+        action: std.echo output="{$.hi} {$.username}.Nebuchadnezzar!"
         publish:
           result: $
 """
 
 
 class DataFlowEngineTest(base.EngineTestCase):
-    def test_trivial_dataflow(self):
+    def setUp(self):
+        super(DataFlowEngineTest, self).setUp()
+
         wb_service.create_workbook_v2(WORKBOOK)
 
+    def test_trivial_dataflow(self):
         # Start workflow.
         exec_db = self.engine.start_workflow('wb.wf1', {})
 
@@ -105,9 +108,9 @@ class DataFlowEngineTest(base.EngineTestCase):
         self.assertDictEqual(
             {
                 'task': {
-                    'task3': {'result': 'Hi, Morpheus!'},
+                    'task3': {'result': 'Hi, Morpheus.Nebuchadnezzar!'},
                 },
-                'result': 'Hi, Morpheus!',
+                'result': 'Hi, Morpheus.Nebuchadnezzar!',
             },
             task3.output
         )
