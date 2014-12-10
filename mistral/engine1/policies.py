@@ -17,12 +17,12 @@
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import states
 from mistral.engine1 import base
 from mistral.engine1 import rpc
 from mistral import expressions
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
+from mistral.workflow import states
 from mistral.workflow import utils
 
 
@@ -53,7 +53,8 @@ def get_policy_factories():
         build_wait_before_policy,
         build_wait_after_policy,
         build_retry_policy,
-        build_timeout_policy
+        build_timeout_policy,
+        build_pause_before_policy
     ]
 
 
@@ -113,6 +114,16 @@ def build_timeout_policy(policies_spec):
     timeout_policy = policies_spec.get_timeout()
 
     return TimeoutPolicy(timeout_policy) if timeout_policy > 0 else None
+
+
+def build_pause_before_policy(policies_spec):
+    if not policies_spec:
+        return None
+
+    pause_before_policy = policies_spec.get_pause_before()
+
+    return PauseBeforePolicy(pause_before_policy) \
+        if pause_before_policy else None
 
 
 def _ensure_context_has_key(runtime_context, key):
@@ -184,7 +195,7 @@ class WaitAfterPolicy(base.TaskPolicy):
 
         if policy_context.get('skip'):
             # Need to avoid terminal states.
-            if not states.is_finished(task_db.state):
+            if not states.is_completed(task_db.state):
                 # Unset state 'DELAYED'.
 
                 WF_TRACE.info(
@@ -304,10 +315,27 @@ class TimeoutPolicy(base.TaskPolicy):
                       % (task_db.id, self.delay))
 
 
+class PauseBeforePolicy(base.TaskPolicy):
+    def __init__(self, expression):
+        self.expr = expression
+
+    def before_task_start(self, task_db, task_spec):
+        if not expressions.evaluate(self.expr, task_db.in_context):
+            return
+
+        WF_TRACE.info(
+            "Worflow paused before task '%s' [%s -> %s]" %
+            (task_db.name, task_db.execution.state, states.PAUSED)
+        )
+
+        task_db.execution.state = states.PAUSED
+        task_db.state = states.IDLE
+
+
 def fail_task_if_incomplete(task_id, timeout):
     task_db = db_api.get_task(task_id)
 
-    if not states.is_finished(task_db.state):
+    if not states.is_completed(task_db.state):
         msg = "Task timed out [task=%s, timeout(s)=%s]." % (task_id, timeout)
 
         WF_TRACE.info(msg)

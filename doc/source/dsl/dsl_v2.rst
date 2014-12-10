@@ -175,24 +175,33 @@ YAML example
 | ``  policies:``
 | ``    wait-before: 2``
 | ``    wait-after: 4``
+| ``    pause-before: $.my_expr``
 | ``    timeout: 30``
 | ``    retry:``
 | ``      count: 10``
 | ``      delay: 20``
-| ``      break-on: $.my_var = true``
+| ``      break-on: $.my_var = True``
 
 'wait-before'
-             
+
 
 Defines a delay in seconds that Mistral Engine should wait before
 starting a task.
 
 'wait-after'
-            
+
 
 Defines a delay in seconds that Mistral Engine should wait after a task
 has completed before starting next tasks defined in 'on-success',
 'on-error' or 'on-complete'.
+
+'pause-before'
+
+
+The Mistral Engine will pause the workflow and its task with the 'pause-before'
+policy before executing it.  The workflow and task will be paused until a
+resume signal is received.  This policy accepts a YAQL expression which will
+cause the policy to be applied only if the expression evaluates to 'True'.
 
 'timeout'
          
@@ -201,7 +210,7 @@ Defines a period of time in seconds after which a task will be failed
 automatically by engine if hasn't completed.
 
 'retry'
-       
+
 
 Defines a pattern how task should be repeated in case of an error.
 
@@ -210,7 +219,7 @@ Defines a pattern how task should be repeated in case of an error.
 -  **delay** - Defines a delay in seconds between subsequent task
    iterations.
 -  **break-on** - Defines a YAQL expression that will break iteration
-   loop if it evaluates to 'true'. If it fires then the task is
+   loop if it evaluates to 'True'. If it fires then the task is
    considered successful.
 
 Simplified Input Syntax
@@ -333,7 +342,7 @@ task'. When Mistral Engine starts a workflow it recursively identifies
 all the dependencies that need to be completed first.
 
 | |Figure 2. Mistral Reverse Workflow.|
-   
+
    Figure 2. Mistral Reverse Workflow.
 
 Figure 2 explains how reverse workflow works. In the example, task

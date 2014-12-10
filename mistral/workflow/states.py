@@ -47,6 +47,10 @@ def is_completed(state):
     return state in [SUCCESS, ERROR]
 
 
+def is_idle(state):
+    return state == IDLE
+
+
 def is_paused_or_completed(state):
     return state == PAUSED or is_completed(state)
 

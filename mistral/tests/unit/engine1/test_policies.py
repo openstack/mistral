@@ -182,6 +182,26 @@ workflows:
 """
 
 
+PAUSE_BEFORE_WB = """
+---
+version: '2.0'
+name: wb
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        policies:
+          pause-before: True
+        on-success:
+          - task2
+      task2:
+        action: std.echo output="Bye!"
+"""
+
+
 class PoliciesTest(base.EngineTestCase):
     def setUp(self):
         super(PoliciesTest, self).setUp()
@@ -354,3 +374,30 @@ class PoliciesTest(base.EngineTestCase):
 
         # Make sure that engine did not create extra tasks.
         self.assertEqual(1, len(tasks_db))
+
+    def test_pause_before_policy(self):
+        wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb.wf1', {})
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = self._assert_single_item(exec_db.tasks, name="task1")
+
+        self.assertEqual(states.IDLE, task_db.state)
+
+        self._await(lambda: self.is_execution_paused(exec_db.id))
+
+        self.engine.resume_workflow(exec_db.id)
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = self._assert_single_item(exec_db.tasks, name="task1")
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = self._assert_single_item(exec_db.tasks, name="task1")
+        next_task_db = self._assert_single_item(exec_db.tasks, name="task2")
+
+        self.assertEqual(states.SUCCESS, task_db.state)
+        self.assertEqual(states.SUCCESS, next_task_db.state)
