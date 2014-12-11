@@ -118,8 +118,8 @@ class WorkbookTasksController(TasksController):
     @wsme_pecan.wsexpose(Task, wtypes.text, wtypes.text, wtypes.text)
     def get(self, workbook_name, execution_id, id):
         """Return the specified task."""
-        LOG.debug("Fetch task [workbook_name=%s, execution_id=%s, id=%s]" %
-                  (workbook_name, execution_id, id))
+        LOG.info("Fetch task [workbook_name=%s, execution_id=%s, id=%s]" %
+                 (workbook_name, execution_id, id))
 
         return self._get(id)
 
@@ -128,9 +128,9 @@ class WorkbookTasksController(TasksController):
                          body=Task)
     def put(self, workbook_name, execution_id, id, task):
         """Update the specified task."""
-        LOG.debug("Update task "
-                  "[workbook_name=%s, execution_id=%s, id=%s, task=%s]" %
-                  (workbook_name, execution_id, id, task))
+        LOG.info("Update task "
+                 "[workbook_name=%s, execution_id=%s, id=%s, task=%s]" %
+                 (workbook_name, execution_id, id, task))
 
         return self._put(id, task)
 
@@ -140,8 +140,8 @@ class WorkbookTasksController(TasksController):
         """Return all tasks within the execution."""
         db_api.ensure_execution_exists(execution_id)
 
-        LOG.debug("Fetch tasks [workbook_name=%s, execution_id=%s]" %
-                  (workbook_name, execution_id))
+        LOG.info("Fetch tasks [workbook_name=%s, execution_id=%s]" %
+                 (workbook_name, execution_id))
 
         return self._get_all(workbook_name=workbook_name,
                              execution_id=execution_id)
@@ -152,8 +152,8 @@ class ExecutionTasksController(TasksController):
     @wsme_pecan.wsexpose(Task, wtypes.text, wtypes.text)
     def get(self, execution_id, id):
         """Return the specified task."""
-        LOG.debug("Fetch task [execution_id=%s, id=%s]" %
-                  (execution_id, id))
+        LOG.info("Fetch task [execution_id=%s, id=%s]" %
+                 (execution_id, id))
 
         return self._get(id)
 
@@ -162,16 +162,16 @@ class ExecutionTasksController(TasksController):
                          body=Task)
     def put(self, execution_id, id, task):
         """Update the specified task."""
-        LOG.debug("Update task "
-                  "[execution_id=%s, id=%s, task=%s]" %
-                  (execution_id, id, task))
+        LOG.info("Update task "
+                 "[execution_id=%s, id=%s, task=%s]" %
+                 (execution_id, id, task))
 
         return self._put(id, task)
 
     @wsme_pecan.wsexpose(Tasks, wtypes.text)
     def get_all(self, execution_id):
         """Return all tasks within the execution."""
-        LOG.debug("Fetch tasks [execution_id=%s]" % execution_id)
+        LOG.info("Fetch tasks [execution_id=%s]" % execution_id)
 
         return self._get_all(execution_id=execution_id)
 
@@ -181,7 +181,7 @@ class RootTasksController(TasksController):
     @wsme_pecan.wsexpose(Task, wtypes.text)
     def get(self, id):
         """Return the specified task."""
-        LOG.debug("Fetch task [id=%s]" % id)
+        LOG.info("Fetch task [id=%s]" % id)
 
         return self._get(id)
 
@@ -190,15 +190,15 @@ class RootTasksController(TasksController):
                          body=Task)
     def put(self, id, task):
         """Update the specified task."""
-        LOG.debug("Update task "
-                  "[id=%s, task=%s]" %
-                  (id, task))
+        LOG.info("Update task "
+                 "[id=%s, task=%s]" %
+                 (id, task))
 
         return self._put(id, task)
 
     @wsme_pecan.wsexpose(Tasks)
     def get_all(self):
         """Return all tasks within the execution."""
-        LOG.debug("Fetch tasks")
+        LOG.info("Fetch tasks")
 
         return self._get_all()

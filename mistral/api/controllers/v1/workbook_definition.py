@@ -30,8 +30,8 @@ class WorkbookDefinitionController(pecan.rest.RestController):
     @pecan.expose()
     def get(self, workbook_name):
         """Return the workbook definition."""
-        LOG.debug("Fetch workbook definition [workbook_name=%s]" %
-                  workbook_name)
+        LOG.info("Fetch workbook definition [workbook_name=%s]" %
+                 workbook_name)
 
         return db_api.workbook_get(workbook_name).definition
 
@@ -41,8 +41,8 @@ class WorkbookDefinitionController(pecan.rest.RestController):
         """Update workbook definition."""
         text = pecan.request.text
 
-        LOG.debug("Update workbook definition [workbook_name=%s, text=%s]" %
-                  (workbook_name, text))
+        LOG.info("Update workbook definition [workbook_name=%s, text=%s]" %
+                 (workbook_name, text))
 
         wb = workbooks.update_workbook_v1(workbook_name, {'definition': text})
 

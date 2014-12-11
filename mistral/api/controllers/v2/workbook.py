@@ -75,7 +75,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
         """Return the named workbook."""
-        LOG.debug("Fetch workbook [name=%s]" % name)
+        LOG.info("Fetch workbook [name=%s]" % name)
 
         db_model = db_api.get_workbook(name)
 
@@ -86,7 +86,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     def put(self):
         """Update a workbook."""
         definition = pecan.request.text
-        LOG.debug("Update workbook [definition=%s]" % definition)
+        LOG.info("Update workbook [definition=%s]" % definition)
 
         wb_db = workbooks.update_workbook_v2(definition)
 
@@ -97,7 +97,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     def post(self):
         """Create a new workbook."""
         definition = pecan.request.text
-        LOG.debug("Create workbook [definition=%s]" % definition)
+        LOG.info("Create workbook [definition=%s]" % definition)
 
         wb_db = workbooks.create_workbook_v2(definition)
         pecan.response.status = 201
@@ -108,7 +108,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workbook."""
-        LOG.debug("Delete workbook [name=%s]" % name)
+        LOG.info("Delete workbook [name=%s]" % name)
 
         db_api.delete_workbook(name)
 
@@ -119,7 +119,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
-        LOG.debug("Fetch workbooks.")
+        LOG.info("Fetch workbooks.")
 
         workbooks_list = [Workbook.from_dict(db_model.to_dict())
                           for db_model in db_api.get_workbooks()]

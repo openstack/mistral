@@ -77,16 +77,16 @@ class ListenersController(rest.RestController):
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text)
     def get(self, workbook_name, id):
         """Return the specified listener."""
-        LOG.debug("Fetch listener [workbook_name=%s, id=%s]" %
-                  (workbook_name, id))
+        LOG.info("Fetch listener [workbook_name=%s, id=%s]" %
+                 (workbook_name, id))
 
         return Listener.from_dict(db_api.listener_get(workbook_name, id))
 
     @wsme_pecan.wsexpose(Listener, wtypes.text, wtypes.text, body=Listener)
     def put(self, workbook_name, id, listener):
         """Update the specified listener."""
-        LOG.debug("Update listener [workbook_name=%s, id=%s, listener=%s]" %
-                  (workbook_name, id, listener))
+        LOG.info("Update listener [workbook_name=%s, id=%s, listener=%s]" %
+                 (workbook_name, id, listener))
 
         values = db_api.listener_update(workbook_name, id, listener.to_dict())
 
@@ -96,8 +96,8 @@ class ListenersController(rest.RestController):
     @wsme_pecan.wsexpose(Listener, wtypes.text, body=Listener, status_code=201)
     def post(self, workbook_name, listener):
         """Create a new listener."""
-        LOG.debug("Create listener [workbook_name=%s, listener=%s]" %
-                  (workbook_name, listener))
+        LOG.info("Create listener [workbook_name=%s, listener=%s]" %
+                 (workbook_name, listener))
 
         values = db_api.listener_create(workbook_name, listener.to_dict())
 
@@ -107,15 +107,15 @@ class ListenersController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, workbook_name, id):
         """Delete the specified listener."""
-        LOG.debug("Delete listener [workbook_name=%s, id=%s]" %
-                  (workbook_name, id))
+        LOG.info("Delete listener [workbook_name=%s, id=%s]" %
+                 (workbook_name, id))
 
         db_api.listener_delete(workbook_name, id)
 
     @wsme_pecan.wsexpose(Listeners, wtypes.text)
     def get_all(self, workbook_name):
         """Return all listeners."""
-        LOG.debug("Fetch listeners [workbook_name=%s]" % workbook_name)
+        LOG.info("Fetch listeners [workbook_name=%s]" % workbook_name)
 
         listeners = [Listener.from_dict(values)
                      for values in db_api.listeners_get(workbook_name)]

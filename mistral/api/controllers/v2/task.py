@@ -101,7 +101,7 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Task, wtypes.text)
     def get(self, id):
         """Return the specified task."""
-        LOG.debug("Fetch task [id=%s]" % id)
+        LOG.info("Fetch task [id=%s]" % id)
 
         db_model = db_api.get_task(id)
 
@@ -111,7 +111,7 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Task, wtypes.text, body=Task)
     def put(self, id, task):
         """Update the specified task."""
-        LOG.debug("Update task [id=%s, task=%s]" % (id, task))
+        LOG.info("Update task [id=%s, task=%s]" % (id, task))
 
         # Client must provide a valid json. It shouldn't  necessarily be an
         # object but it should be json complaint so strings have to be escaped.
@@ -137,7 +137,7 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks)
     def get_all(self):
         """Return all tasks within the execution."""
-        LOG.debug("Fetch tasks")
+        LOG.info("Fetch tasks")
 
         tasks = [Task.from_dict(db_model.to_dict())
                  for db_model in db_api.get_tasks()]
@@ -149,7 +149,7 @@ class ExecutionTasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks, wtypes.text)
     def get_all(self, execution_id):
         """Return all tasks within the execution."""
-        LOG.debug("Fetch tasks")
+        LOG.info("Fetch tasks")
 
         tasks = [Task.from_dict(db_model.to_dict())
                  for db_model in db_api.get_tasks(execution_id=execution_id)]

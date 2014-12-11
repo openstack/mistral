@@ -65,7 +65,7 @@ class WorkbooksController(rest.RestController):
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
         """Return the named workbook."""
-        LOG.debug("Fetch workbook [name=%s]" % name)
+        LOG.info("Fetch workbook [name=%s]" % name)
 
         db_model = db_api.workbook_get(name)
 
@@ -75,7 +75,7 @@ class WorkbooksController(rest.RestController):
     @wsme_pecan.wsexpose(Workbook, wtypes.text, body=Workbook)
     def put(self, name, workbook):
         """Update the named workbook."""
-        LOG.debug("Update workbook [name=%s, workbook=%s]" % (name, workbook))
+        LOG.info("Update workbook [name=%s, workbook=%s]" % (name, workbook))
 
         db_model = db_api.workbook_update(name, workbook.to_dict())
 
@@ -85,7 +85,7 @@ class WorkbooksController(rest.RestController):
     @wsme_pecan.wsexpose(Workbook, body=Workbook, status_code=201)
     def post(self, workbook):
         """Create a new workbook."""
-        LOG.debug("Create workbook [workbook=%s]" % workbook)
+        LOG.info("Create workbook [workbook=%s]" % workbook)
 
         db_model = workbooks.create_workbook_v1(workbook.to_dict())
 
@@ -95,7 +95,7 @@ class WorkbooksController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workbook."""
-        LOG.debug("Delete workbook [name=%s]" % name)
+        LOG.info("Delete workbook [name=%s]" % name)
         db_api.workbook_delete(name)
 
     @wsme_pecan.wsexpose(Workbooks)
@@ -105,7 +105,7 @@ class WorkbooksController(rest.RestController):
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
-        LOG.debug("Fetch workbooks.")
+        LOG.info("Fetch workbooks.")
 
         workbooks_list = [Workbook.from_dict(db_model.to_dict())
                           for db_model in db_api.workbooks_get()]

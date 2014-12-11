@@ -85,7 +85,7 @@ class ActionsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(Action, wtypes.text)
     def get(self, name):
         """Return the named action."""
-        LOG.debug("Fetch action [name=%s]" % name)
+        LOG.info("Fetch action [name=%s]" % name)
 
         db_model = db_api.get_action(name)
 
@@ -100,7 +100,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             of multiple actions. In this case they all will be updated.
         """
         definition = pecan.request.text
-        LOG.debug("Update action(s) [definition=%s]" % definition)
+        LOG.info("Update action(s) [definition=%s]" % definition)
 
         db_acts = actions.update_actions(definition)
         models_dicts = [db_act.to_dict() for db_act in db_acts]
@@ -120,7 +120,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         definition = pecan.request.text
         pecan.response.status = 201
 
-        LOG.debug("Create action(s) [definition=%s]" % definition)
+        LOG.info("Create action(s) [definition=%s]" % definition)
 
         db_acts = actions.create_actions(definition)
         models_dicts = [db_act.to_dict() for db_act in db_acts]
@@ -133,7 +133,7 @@ class ActionsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named action."""
-        LOG.debug("Delete action [name=%s]" % name)
+        LOG.info("Delete action [name=%s]" % name)
 
         with db_api.transaction():
             db_model = db_api.get_action(name)
@@ -151,7 +151,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
-        LOG.debug("Fetch actions.")
+        LOG.info("Fetch actions.")
 
         action_list = [Action.from_dict(db_model.to_dict())
                        for db_model in db_api.get_actions()]
