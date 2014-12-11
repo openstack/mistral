@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime as dt
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
@@ -118,6 +119,23 @@ wf:
       requires: [task1]
 """
 
+REVERSE_WF_WAIT = """
+---
+version: '2.0'
+
+wf:
+  type: reverse
+
+  task-defaults:
+    policies:
+      wait-before: 1
+      wait-after: 1
+
+  tasks:
+    task1:
+      action: std.echo output=1
+"""
+
 
 class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
     def setUp(self):
@@ -168,3 +186,28 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(tasks))
 
         self._assert_single_item(tasks, name='task1', state=states.ERROR)
+
+    def test_task_defaults_wait_policies(self):
+        wf_service.create_workflows(REVERSE_WF_WAIT)
+
+        time_before = dt.datetime.now()
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {}, task_name='task1')
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Workflow must work at least 2 seconds (1+1).
+        self.assertGreater(
+            (dt.datetime.now() - time_before).total_seconds(),
+            2
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        self.assertEqual(1, len(tasks))
+
+        self._assert_single_item(tasks, name='task1', state=states.SUCCESS)
