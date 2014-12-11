@@ -87,10 +87,12 @@ executor_opts = [
                help='The version of the executor.')
 ]
 
-wf_trace_log_name_opt = cfg.StrOpt('workflow_trace_log_name',
-                                   default='workflow_trace',
-                                   help='Logger name for pretty '
-                                   'workflow trace output.')
+wf_trace_log_name_opt = cfg.StrOpt(
+    'workflow_trace_log_name',
+    default='workflow_trace',
+    help='Logger name for pretty '
+    'workflow trace output.'
+)
 
 CONF = cfg.CONF
 
@@ -118,24 +120,33 @@ CONF.import_opt('syslog_log_facility', 'mistral.openstack.common.log')
 # some are in oslo logging already, this is just making sure it stays this
 # way.
 default_log_levels = cfg.CONF.default_log_levels
-logs_to_quieten = ['sqlalchemy=WARN',
-                   'oslo.messaging=INFO',
-                   'iso8601=WARN',
-                   'eventlet.wsgi.server=WARN',
-                   'stevedore=INFO',
-                   'mistral.openstack.common.loopingcall=INFO',
-                   'mistral.openstack.common.periodic_task=INFO',
-                   'mistral.services.periodic=INFO']
+
+logs_to_quieten = [
+    'sqlalchemy=WARN',
+    'oslo.messaging=INFO',
+    'iso8601=WARN',
+    'eventlet.wsgi.server=WARN',
+    'stevedore=INFO',
+    'mistral.openstack.common.loopingcall=INFO',
+    'mistral.openstack.common.periodic_task=INFO',
+    'mistral.services.periodic=INFO'
+]
+
 for chatty in logs_to_quieten:
     if chatty not in default_log_levels:
         default_log_levels.append(chatty)
-cfg.set_defaults(log.log_opts,
-                 default_log_levels=default_log_levels)
+
+cfg.set_defaults(
+    log.log_opts,
+    default_log_levels=default_log_levels
+)
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
-    CONF(args=args,
-         project='mistral',
-         version=version,
-         usage=usage,
-         default_config_files=default_config_files)
+    CONF(
+        args=args,
+        project='mistral',
+        version=version,
+        usage=usage,
+        default_config_files=default_config_files
+    )
