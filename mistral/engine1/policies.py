@@ -73,18 +73,27 @@ def construct_policies_list(policies_spec, wf_policies):
 
 
 def build_wait_before_policy(policies_spec):
+    if not policies_spec:
+        return None
+
     wait_before = policies_spec.get_wait_before()
 
     return WaitBeforePolicy(wait_before) if wait_before > 0 else None
 
 
 def build_wait_after_policy(policies_spec):
+    if not policies_spec:
+        return None
+
     wait_after = policies_spec.get_wait_after()
 
     return WaitAfterPolicy(wait_after) if wait_after > 0 else None
 
 
 def build_retry_policy(policies_spec):
+    if not policies_spec:
+        return None
+
     retry = policies_spec.get_retry()
 
     if not retry:
@@ -98,6 +107,9 @@ def build_retry_policy(policies_spec):
 
 
 def build_timeout_policy(policies_spec):
+    if not policies_spec:
+        return None
+
     timeout_policy = policies_spec.get_timeout()
 
     return TimeoutPolicy(timeout_policy) if timeout_policy > 0 else None
@@ -243,11 +255,12 @@ class RetryPolicy(base.TaskPolicy):
         outbound_context = task_db.output
 
         policy_context = runtime_context[context_key]
+
         retry_no = 0
 
-        if "retry_no" in policy_context:
-            retry_no = policy_context["retry_no"]
-            del policy_context["retry_no"]
+        if 'retry_no' in policy_context:
+            retry_no = policy_context['retry_no']
+            del policy_context['retry_no']
 
         retries_remain = retry_no + 1 < self.count
 
@@ -260,9 +273,8 @@ class RetryPolicy(base.TaskPolicy):
             return
 
         task_db.state = states.DELAYED
-        retry_no += 1
-        policy_context.update({'retry_no': retry_no})
-        runtime_context.update({context_key: policy_context})
+
+        policy_context['retry_no'] = retry_no + 1
 
         _log_task_delay(task_db.name, state, self.delay)
 

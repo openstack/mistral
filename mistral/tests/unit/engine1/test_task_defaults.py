@@ -17,63 +17,116 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
 from mistral.openstack.common import log as logging
-from mistral.services import workbooks as wb_service
+from mistral.services import scheduler
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine1 import base
 
-# TODO(nmakhotkin) Need to write more tests.
 
 LOG = logging.getLogger(__name__)
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-WORKBOOK = """
+DIRECT_WF_ON_ERROR = """
 ---
 version: '2.0'
 
-name: wb
+wf:
+  type: direct
 
-workflows:
-  wf1:
-    type: direct
+  task-defaults:
+    on-error:
+      - task3
 
-    task-defaults:
-      on-error:
-        - task3
+  tasks:
+    task1:
+      description: That should lead to transition to task3.
+      action: std.http url="http://some_url"
+      on-success:
+        - task2
 
-    tasks:
-      task1:
-        description: That should lead to transition to task3.
-        action: std.http url="http://some_url"
-        on-success:
-          - task2
+    task2:
+      action: std.echo output="Morpheus"
 
-      task2:
-        action: std.echo output="Morpheus"
-
-      task3:
-        action: std.echo output="output"
+    task3:
+      action: std.echo output="output"
 """
 
 
-class TaskDefaultsEngineTest(base.EngineTestCase):
+class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
     def test_task_defaults_on_error(self):
-        wb_service.create_workbook_v2(WORKBOOK)
+        wf_service.create_workflows(DIRECT_WF_ON_ERROR)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        exec_db = self.engine.start_workflow('wf', {})
 
-        self._await(
-            lambda: self.is_execution_success(exec_db.id),
-        )
+        self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
 
         tasks = exec_db.tasks
+
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
 
         self.assertEqual(2, len(tasks))
         self.assertEqual(states.ERROR, task1.state)
         self.assertEqual(states.SUCCESS, task3.state)
+
+
+REVERSE_WF_RETRY = """
+---
+version: '2.0'
+
+wf:
+  type: reverse
+
+  task-defaults:
+    policies:
+      retry:
+        count: 2
+        delay: 1
+
+  tasks:
+    task1:
+      action: std.fail
+
+    task2:
+      action: std.echo output=2
+      requires: [task1]
+"""
+
+
+class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
+    def setUp(self):
+        super(TaskDefaultsReverseWorkflowEngineTest, self).setUp()
+
+        thread_group = scheduler.setup()
+
+        self.addCleanup(thread_group.stop)
+
+    def test_task_defaults_retry_policy(self):
+        wf_service.create_workflows(REVERSE_WF_RETRY)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {}, task_name='task2')
+
+        self._await(lambda: self.is_execution_error(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        self.assertEqual(1, len(tasks))
+
+        task1 = self._assert_single_item(
+            tasks,
+            name='task1',
+            state=states.ERROR
+        )
+
+        self.assertTrue(
+            task1.runtime_context['retry_task_policy']['retry_no'] > 0
+        )
