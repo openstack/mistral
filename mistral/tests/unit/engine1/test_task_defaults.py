@@ -98,6 +98,27 @@ wf:
 """
 
 
+REVERSE_WF_TIMEOUT = """
+---
+version: '2.0'
+
+wf:
+  type: reverse
+
+  task-defaults:
+    policies:
+      timeout: 1
+
+  tasks:
+    task1:
+      action: std.async_noop
+
+    task2:
+      action: std.echo output=2
+      requires: [task1]
+"""
+
+
 class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
     def setUp(self):
         super(TaskDefaultsReverseWorkflowEngineTest, self).setUp()
@@ -130,3 +151,20 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertTrue(
             task1.runtime_context['retry_task_policy']['retry_no'] > 0
         )
+
+    def test_task_defaults_timeout_policy(self):
+        wf_service.create_workflows(REVERSE_WF_TIMEOUT)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {}, task_name='task2')
+
+        self._await(lambda: self.is_execution_error(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+
+        self.assertEqual(1, len(tasks))
+
+        self._assert_single_item(tasks, name='task1', state=states.ERROR)
