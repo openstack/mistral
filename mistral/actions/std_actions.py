@@ -69,6 +69,12 @@ class NoOpAction(base.Action):
         return None
 
 
+class AsyncNoOpAction(NoOpAction):
+    """Asynchronous no-operation action."""
+    def is_sync(self):
+        return False
+
+
 class FailAction(base.Action):
     """'Always fail' action.
 
