@@ -13,15 +13,14 @@
 #    limitations under the License.
 
 import abc
-import copy
 
 from oslo.config import cfg
 
 from mistral.engine1 import commands
 from mistral import exceptions as exc
-from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral import utils
+from mistral.utils import for_each_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -132,44 +131,11 @@ class WorkflowHandler(object):
     @staticmethod
     def _determine_task_output(task_spec, task_db, raw_result):
         for_each = task_spec.get_for_each()
-        t_name = task_spec.get_name()
 
         if for_each:
-            # Calc output for for-each (only list form is used).
-            out_key = (task_spec.get_publish().keys()[0]
-                       if task_spec.get_publish() else None)
-
-            # TODO(nmakhotkin): Simplify calculating task output.
-            e_data = raw_result.error
-            output = expr.evaluate_recursively(
-                task_spec.get_publish(),
-                raw_result.data or {}
+            return for_each_utils.get_for_each_output(
+                task_db, task_spec, raw_result
             )
-
-            if not task_db.output:
-                task_db.output = {}
-
-            task_output = copy.copy(task_db.output)
-
-            if out_key:
-                if out_key in task_output:
-                    task_output[out_key].append(
-                        output.get(out_key) or e_data
-                    )
-                else:
-                    task_output[out_key] = [output.get(out_key) or e_data]
-
-                # Add same result to task output under key 'task'.
-                task_output['task'] = {
-                    t_name: task_output[out_key]
-                }
-            else:
-                if 'task' not in task_output:
-                    task_output.update({'task': {t_name: [output or e_data]}})
-                else:
-                    task_output['task'][t_name].append(output or e_data)
-
-            return task_output
         else:
             return data_flow.evaluate_task_output(task_spec, raw_result)
 
