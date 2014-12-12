@@ -93,7 +93,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(Workflow, wtypes.text)
     def get(self, name):
         """Return the named workflow."""
-        LOG.debug("Fetch workflow [name=%s]" % name)
+        LOG.info("Fetch workflow [name=%s]" % name)
 
         db_model = db_api.get_workflow(name)
 
@@ -109,7 +109,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         definition = pecan.request.text
 
-        LOG.debug("Update workflow(s) [definition=%s]" % definition)
+        LOG.info("Update workflow(s) [definition=%s]" % definition)
 
         db_wfs = workflows.update_workflows(definition)
         models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
@@ -129,7 +129,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         definition = pecan.request.text
         pecan.response.status = 201
 
-        LOG.debug("Create workflow(s) [definition=%s]" % definition)
+        LOG.info("Create workflow(s) [definition=%s]" % definition)
 
         db_wfs = workflows.create_workflows(definition)
         models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
@@ -142,7 +142,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workflow."""
-        LOG.debug("Delete workflow [name=%s]" % name)
+        LOG.info("Delete workflow [name=%s]" % name)
 
         db_api.delete_workflow(name)
 
@@ -153,7 +153,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
-        LOG.debug("Fetch workflows.")
+        LOG.info("Fetch workflows.")
 
         workflows_list = [Workflow.from_dict(db_model.to_dict())
                           for db_model in db_api.get_workflows()]

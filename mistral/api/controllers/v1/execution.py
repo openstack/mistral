@@ -109,8 +109,8 @@ class WorkbookExecutionsController(ExecutionsController):
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text)
     def get(self, workbook_name, id):
         """Return the specified Execution."""
-        LOG.debug("Fetch execution [workbook_name=%s, id=%s]" %
-                  (workbook_name, id))
+        LOG.info("Fetch execution [workbook_name=%s, id=%s]" %
+                 (workbook_name, id))
 
         return self._get(id)
 
@@ -118,8 +118,8 @@ class WorkbookExecutionsController(ExecutionsController):
     @wsme_pecan.wsexpose(Execution, wtypes.text, wtypes.text, body=Execution)
     def put(self, workbook_name, id, execution):
         """Update the specified Execution."""
-        LOG.debug("Update execution [workbook_name=%s, id=%s, execution=%s]" %
-                  (workbook_name, id, execution))
+        LOG.info("Update execution [workbook_name=%s, id=%s, execution=%s]" %
+                 (workbook_name, id, execution))
 
         return self._put(id, execution)
 
@@ -128,8 +128,8 @@ class WorkbookExecutionsController(ExecutionsController):
                          status_code=201)
     def post(self, workbook_name, execution):
         """Create a new Execution."""
-        LOG.debug("Create execution [workbook_name=%s, execution=%s]" %
-                  (workbook_name, execution))
+        LOG.info("Create execution [workbook_name=%s, execution=%s]" %
+                 (workbook_name, execution))
 
         if (db_api.workbook_get(workbook_name)
                 and db_api.workbook_definition_get(workbook_name)):
@@ -152,15 +152,15 @@ class WorkbookExecutionsController(ExecutionsController):
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, workbook_name, id):
         """Delete the specified Execution."""
-        LOG.debug("Delete execution [workbook_name=%s, id=%s]" %
-                  (workbook_name, id))
+        LOG.info("Delete execution [workbook_name=%s, id=%s]" %
+                 (workbook_name, id))
 
         return self._delete(id)
 
     @wsme_pecan.wsexpose(Executions, wtypes.text)
     def get_all(self, workbook_name):
         """Return all Executions."""
-        LOG.debug("Fetch executions [workbook_name=%s]" % workbook_name)
+        LOG.info("Fetch executions [workbook_name=%s]" % workbook_name)
 
         if db_api.workbook_get(workbook_name):
             return self._get_all(workbook_name=workbook_name)
@@ -173,7 +173,7 @@ class RootExecutionsController(ExecutionsController):
     @wsme_pecan.wsexpose(Execution, wtypes.text)
     def get(self, id):
         """Return the specified Execution."""
-        LOG.debug("Fetch execution [id=%s]" % id)
+        LOG.info("Fetch execution [id=%s]" % id)
 
         return self._get(id)
 
@@ -181,8 +181,8 @@ class RootExecutionsController(ExecutionsController):
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution)
     def put(self, id, execution):
         """Update the specified Execution."""
-        LOG.debug("Update execution [id=%s, execution=%s]" %
-                  (id, execution))
+        LOG.info("Update execution [id=%s, execution=%s]" %
+                 (id, execution))
 
         return self._put(id, execution)
 
@@ -190,13 +190,13 @@ class RootExecutionsController(ExecutionsController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, id):
         """Delete the specified Execution."""
-        LOG.debug("Delete execution [id=%s]" % id)
+        LOG.info("Delete execution [id=%s]" % id)
 
         return self._delete(id)
 
     @wsme_pecan.wsexpose(Executions)
     def get_all(self):
         """Return all Executions."""
-        LOG.debug("Fetch executions")
+        LOG.info("Fetch executions")
 
         return self._get_all()

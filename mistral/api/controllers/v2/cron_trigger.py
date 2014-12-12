@@ -92,7 +92,7 @@ class CronTriggersController(rest.RestController):
     def get(self, name):
         """Returns the named cron_trigger."""
 
-        LOG.debug('Fetch cron trigger [name=%s]' % name)
+        LOG.info('Fetch cron trigger [name=%s]' % name)
 
         db_model = db_api.get_cron_trigger(name)
 
@@ -103,7 +103,7 @@ class CronTriggersController(rest.RestController):
     def post(self, cron_trigger):
         """Creates a new cron trigger."""
 
-        LOG.debug('Create cron trigger: %s' % cron_trigger)
+        LOG.info('Create cron trigger: %s' % cron_trigger)
 
         values = cron_trigger.to_dict()
 
@@ -120,7 +120,7 @@ class CronTriggersController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete cron trigger."""
-        LOG.debug("Delete cron trigger [name=%s]" % name)
+        LOG.info("Delete cron trigger [name=%s]" % name)
 
         db_api.delete_cron_trigger(name)
 
@@ -128,7 +128,7 @@ class CronTriggersController(rest.RestController):
     def get_all(self):
         """Return all cron triggers."""
 
-        LOG.debug("Fetch cron triggers.")
+        LOG.info("Fetch cron triggers.")
 
         _list = [
             CronTrigger.from_dict(db_model.to_dict())

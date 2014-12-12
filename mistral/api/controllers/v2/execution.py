@@ -115,7 +115,7 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(Execution, wtypes.text)
     def get(self, id):
         """Return the specified Execution."""
-        LOG.debug("Fetch execution [id=%s]" % id)
+        LOG.info("Fetch execution [id=%s]" % id)
 
         return Execution.from_dict(db_api.get_execution(id).to_dict())
 
@@ -127,8 +127,8 @@ class ExecutionsController(rest.RestController):
         :param id: execution ID.
         :param execution: Execution objects
         """
-        LOG.debug("Update execution [id=%s, execution=%s]" %
-                  (id, execution))
+        LOG.info("Update execution [id=%s, execution=%s]" %
+                 (id, execution))
         db_api.ensure_execution_exists(id)
 
         # Currently we can change only state.
@@ -162,7 +162,7 @@ class ExecutionsController(rest.RestController):
 
         :param execution: Execution object with input content.
         """
-        LOG.debug("Create execution [execution=%s]" % execution)
+        LOG.info("Create execution [execution=%s]" % execution)
 
         engine = rpc.get_engine_client()
         exec_dict = execution.to_dict()
@@ -179,14 +179,14 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, id):
         """Delete the specified Execution."""
-        LOG.debug("Delete execution [id=%s]" % id)
+        LOG.info("Delete execution [id=%s]" % id)
 
         return db_api.delete_execution(id)
 
     @wsme_pecan.wsexpose(Executions)
     def get_all(self):
         """Return all Executions."""
-        LOG.debug("Fetch executions")
+        LOG.info("Fetch executions")
 
         executions = [Execution.from_dict(db_model.to_dict())
                       for db_model in db_api.get_executions()]
