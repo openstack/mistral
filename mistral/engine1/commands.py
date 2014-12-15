@@ -26,9 +26,9 @@ from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
 from mistral import utils
-from mistral.utils import for_each_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
+from mistral.workflow import for_each
 from mistral.workflow import states
 
 
@@ -210,10 +210,10 @@ class RunTask(EngineCommand):
                 action_db.action_class, action_db.attributes or {}):
             action_input.update(a_m.get_action_context(self.task_db))
 
-        for_each = self.task_spec.get_for_each()
+        for_each_spec = self.task_spec.get_for_each()
 
-        if for_each:
-            action_input_collection = for_each_utils.calc_for_each_input(
+        if for_each_spec:
+            action_input_collection = for_each.calc_for_each_input(
                 action_input
             )
             for a_input in action_input_collection:
