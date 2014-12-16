@@ -43,6 +43,8 @@ class NovaAction(base.OpenStackAction):
 
         LOG.debug("Nova action security context: %s" % ctx)
 
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+
         client = self._client_class(
             username=None,
             api_key=None,
@@ -50,7 +52,8 @@ class NovaAction(base.OpenStackAction):
             service_type='compute',
             auth_token=ctx.auth_token,
             tenant_id=ctx.project_id,
-            auth_url=keystone_utils.get_keystone_url_v2()
+            region_name=keystone_endpoint.region,
+            auth_url=keystone_endpoint.url
         )
 
         return client
@@ -64,8 +67,11 @@ class GlanceAction(base.OpenStackAction):
 
         LOG.debug("Glance action security context: %s" % ctx)
 
+        glance_endpoint = keystone_utils.get_endpoint_for_project('glance')
+
         return self._client_class(
-            keystone_utils.get_endpoint_for_project('glance'),
+            glance_endpoint.url,
+            region_name=glance_endpoint.region,
             token=ctx.auth_token
         )
 
@@ -109,11 +115,13 @@ class HeatAction(base.OpenStackAction):
 
         LOG.debug("Heat action security context: %s" % ctx)
 
-        endpoint_url_tmpl = keystone_utils.get_endpoint_for_project('heat')
-        endpoint_url = endpoint_url_tmpl % {'tenant_id': ctx.project_id}
+        heat_endpoint = keystone_utils.get_endpoint_for_project('heat')
+
+        endpoint_url = heat_endpoint.url % {'tenant_id': ctx.project_id}
 
         return self._client_class(
             endpoint_url,
+            region_name=heat_endpoint.region,
             token=ctx.auth_token,
             username=ctx.user_name
         )
@@ -142,8 +150,11 @@ class NeutronAction(base.OpenStackAction):
 
         LOG.debug("Neutron action security context: %s" % ctx)
 
+        neutron_endpoint = keystone_utils.get_endpoint_for_project('neutron')
+
         return self._client_class(
-            endpoint_url=keystone_utils.get_endpoint_for_project('neutron'),
+            endpoint_url=neutron_endpoint.url,
+            region_name=neutron_endpoint.region,
             token=ctx.auth_token,
             auth_url=CONF.keystone_authtoken.auth_uri
         )
@@ -156,17 +167,21 @@ class CinderAction(base.OpenStackAction):
         ctx = context.ctx()
 
         LOG.debug("Cinder action security context: %s" % ctx)
-        cinder_url = keystone_utils.get_endpoint_for_project(
+
+        cinder_endpoint = keystone_utils.get_endpoint_for_project(
             service_type='volume'
         )
-        cinder_url = cinder_url % {'tenant_id': ctx.project_id}
+
+        cinder_url = cinder_endpoint.url % {'tenant_id': ctx.project_id}
 
         client = self._client_class(
             ctx.user_name,
             ctx.auth_token,
             project_id=ctx.project_id,
             auth_url=cinder_url,
+            region_name=cinder_endpoint.region
         )
+
         client.client.auth_token = ctx.auth_token
         client.client.management_url = cinder_url
 

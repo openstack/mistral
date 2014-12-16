@@ -25,26 +25,32 @@ def client():
     ctx = context.ctx()
     auth_url = CONF.keystone_authtoken.auth_uri
 
-    keystone = ks_client.Client(username=ctx.user_name,
-                                token=ctx.auth_token,
-                                tenant_id=ctx.project_id,
-                                auth_url=auth_url)
-    keystone.management_url = auth_url
+    cl = ks_client.Client(
+        username=ctx.user_name,
+        token=ctx.auth_token,
+        tenant_id=ctx.project_id,
+        auth_url=auth_url
+    )
 
-    return keystone
+    cl.management_url = auth_url
+
+    return cl
 
 
 def _admin_client(trust_id=None, project_name=None):
     auth_url = CONF.keystone_authtoken.auth_uri
 
-    client = ks_client.Client(username=CONF.keystone_authtoken.admin_user,
-                              password=CONF.keystone_authtoken.admin_password,
-                              project_name=project_name,
-                              auth_url=auth_url,
-                              trust_id=trust_id)
-    client.management_url = auth_url
+    cl = ks_client.Client(
+        username=CONF.keystone_authtoken.admin_user,
+        password=CONF.keystone_authtoken.admin_password,
+        project_name=project_name,
+        auth_url=auth_url,
+        trust_id=trust_id
+    )
 
-    return client
+    cl.management_url = auth_url
+
+    return cl
 
 
 def client_for_admin(project_name):
@@ -64,10 +70,30 @@ def get_endpoint_for_project(service_name=None, service_type=None):
         service_id = [s.id for s in service_list if s.name == service_name][0]
     elif service_type:
         service_id = [s.id for s in service_list if s.type == service_type][0]
+    else:
+        raise Exception(
+            "Either 'service_name' or 'service_type' must be provided."
+        )
 
-    return keystone_client.endpoints.find(service_id=service_id,
-                                          interface='public').url
+    endpoints = keystone_client.endpoints.list(
+        service=service_id,
+        interface='public'
+    )
+
+    if not endpoints:
+        raise Exception(
+            "No endpoints found [service_name=%s, service_type=%s]"
+            % (service_name, service_type)
+        )
+
+    # TODO(rakhmerov): We may have more than one endpoint because of regions
+    # TODO(rakhmerov): and ideally we need a config option for region
+    return endpoints[0]
+
+
+def get_keystone_endpoint_v2():
+    return get_endpoint_for_project('keystone')
 
 
 def get_keystone_url_v2():
-    return get_endpoint_for_project('keystone')
+    return get_endpoint_for_project('keystone').url
