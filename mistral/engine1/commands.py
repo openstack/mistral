@@ -198,8 +198,8 @@ class RunTask(EngineCommand):
             else:
                 action_input = {}
 
-        targets = expr.evaluate_recursively(
-            self.task_spec.get_targets(),
+        target = expr.evaluate_recursively(
+            self.task_spec.get_target(),
             utils.merge_dicts(
                 copy.copy(self.task_db.input),
                 copy.copy(self.task_db.in_context)
@@ -228,7 +228,7 @@ class RunTask(EngineCommand):
                             copy.copy(self.task_db.in_context)
                         )
                     ),
-                    targets
+                    target
                 )
 
         else:
@@ -237,7 +237,7 @@ class RunTask(EngineCommand):
                 action_db.action_class,
                 action_db.attributes or {},
                 action_input,
-                targets
+                target
             )
 
     def _run_workflow(self):

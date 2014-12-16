@@ -112,7 +112,7 @@ workflows:
 
       task8:
         workflow: wf2 expr_list=["$.value", "{$.key}"] expr={$.value}
-        targets: [nova]
+        target: nova
         on-complete:
           - task9
           - task10
@@ -319,7 +319,7 @@ class DSLv2ModelTest(base.BaseTest):
             task8_spec.get_input()
         )
 
-        self.assertEqual(['nova'], task8_spec.get_targets())
+        self.assertEqual('nova', task8_spec.get_target())
 
         task9_spec = wf2_spec.get_tasks().get('task9')
 

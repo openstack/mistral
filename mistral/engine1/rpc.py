@@ -297,7 +297,7 @@ class ExecutorClient(base.Executor):
         )
 
     def run_action(self, task_id, action_class_str, attributes,
-                   action_params, targets=None):
+                   action_params, target=None):
         """Sends a request to run action to executor."""
 
         kwargs = {
@@ -307,9 +307,8 @@ class ExecutorClient(base.Executor):
             'params': action_params
         }
 
-        if targets:
-            for target in targets:
-                self._cast_run_action(self.topic, target, **kwargs)
+        if target:
+            self._cast_run_action(self.topic, target, **kwargs)
         else:
             self._cast_run_action(self.topic, **kwargs)
 
