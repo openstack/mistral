@@ -21,8 +21,8 @@ from mistral import exceptions as exc
 
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
-PARAMS_PTRN = re.compile("([\w]+)=(\"[^=]*\"|\'[^=]*'|"
-                         "\{[^=]*\}|\[[^=]*\]|[\.,:\w\d\.]*)")
+PARAMS_PTRN = re.compile("([\w]+)=(\"[^\"]*\"\s*|'[^']*'\s*|"
+                         "\{[^}]*\}\s*|\[.*\]\s*|[\.,:\w\d\.]+)")
 
 
 class BaseSpec(object):
@@ -98,6 +98,7 @@ class BaseSpec(object):
         params = {}
         for k, v in re.findall(PARAMS_PTRN, cmd_str):
             # Remove embracing quotes.
+            v = v.strip()
             if v[0] == '"' or v[0] == "'":
                 v = v[1:-1]
             else:
