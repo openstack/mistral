@@ -275,6 +275,7 @@ class RetryPolicy(base.TaskPolicy):
         task_db.state = states.DELAYED
 
         policy_context['retry_no'] = retry_no + 1
+        runtime_context[context_key] = policy_context
 
         _log_task_delay(task_db.name, state, self.delay)
 
