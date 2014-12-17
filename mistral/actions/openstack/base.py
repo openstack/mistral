@@ -71,11 +71,14 @@ class OpenStackAction(base.Action):
 
             return method(**self._kwargs_for_run)
         except Exception as e:
+            e_str = '%s: %s' % (type(e), e.message)
+
             raise exc.ActionException(
                 "%s.%s failed: %s" %
-                (self.__class__.__name__, self.client_method_name, e)
+                (self.__class__.__name__, self.client_method_name, e_str)
             )
 
     def test(self):
-        return dict(zip(self._kwargs_for_run,
-                        ['test'] * len(self._kwargs_for_run)))
+        return dict(
+            zip(self._kwargs_for_run, ['test'] * len(self._kwargs_for_run))
+        )
