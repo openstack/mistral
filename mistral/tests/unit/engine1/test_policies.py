@@ -131,8 +131,8 @@ workflows:
         action: std.http url="http://some_non-existing_host"
         policies:
           retry:
-            count: 2
-            delay: 2
+            count: 3
+            delay: 1
             break-on: $.my_val = 10
 """
 
@@ -306,7 +306,7 @@ class PoliciesTest(base.EngineTestCase):
         task_db = exec_db.tasks[0]
 
         self.assertEqual(
-            1,
+            2,
             task_db.runtime_context["retry_task_policy"]["retry_no"]
         )
 
