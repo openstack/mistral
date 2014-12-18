@@ -2,14 +2,14 @@
 keys=workflow_trace,root
 
 [handlers]
-keys=consoleHandler, prettyFileHandler, fileHandler
+keys=consoleHandler, wfTraceFileHandler, fileHandler
 
 [formatters]
-keys=simpleFormatter
+keys=wfFormatter, simpleFormatter, verboseFormatter
 
 [logger_workflow_trace]
 level=INFO
-handlers=consoleHandler, fileHandler
+handlers=consoleHandler, wfTraceFileHandler
 qualname=workflow_trace
 
 [logger_root]
@@ -19,8 +19,8 @@ handlers=fileHandler
 [handler_fileHandler]
 class=FileHandler
 level=INFO
-formatter=simpleFormatter
-args=("/tmp/mistral.log",)
+formatter=verboseFormatter
+args=("/var/log/mistral.log",)
 
 [handler_consoleHandler]
 class=StreamHandler
@@ -28,13 +28,20 @@ level=INFO
 formatter=simpleFormatter
 args=(sys.stdout,)
 
-[handler_prettyFileHandler]
+[handler_wfTraceFileHandler]
 class=FileHandler
 level=INFO
-formatter=simpleFormatter
-args=("/tmp/mistral_wf_trace.log",)
+formatter=wfFormatter
+args=("/var/log/mistral_wf_trace.log",)
 
+[formatter_verboseFormatter]
+format=%(asctime)s %(thread)s %(levelname)s %(module)s [-] %(message)s
+datefmt=
 
 [formatter_simpleFormatter]
-format=%(asctime)s - WF - %(message)s
-datefmt=%y-%m-%d %H:%M:%S
+format=%(asctime)s %(levelname)s [-] %(message)s
+datefmt=
+
+[formatter_wfFormatter]
+format=%(asctime)s WF [-] %(message)s
+datefmt=

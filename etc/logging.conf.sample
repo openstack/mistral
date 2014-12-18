@@ -21,12 +21,12 @@ args=(sys.stdout,)
 class=FileHandler
 level=INFO
 formatter=verboseFormatter
-args=("/tmp/mistral.log",)
+args=("/var/log/mistral.log",)
 
 [formatter_verboseFormatter]
-format=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+format=%(asctime)s %(thread)s %(levelname)s %(module)s [-] %(message)s
 datefmt=
 
 [formatter_simpleFormatter]
-format=%(asctime)s - %(levelname)s - %(message)s
+format=%(asctime)s %(levelname)s [-] %(message)s
 datefmt=
