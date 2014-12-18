@@ -20,9 +20,9 @@ from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils
-from mistral.utils import for_each_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
+from mistral.workflow import for_each
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
@@ -130,10 +130,10 @@ class WorkflowHandler(object):
 
     @staticmethod
     def _determine_task_output(task_spec, task_db, raw_result):
-        for_each = task_spec.get_for_each()
+        for_each_spec = task_spec.get_for_each()
 
-        if for_each:
-            return for_each_utils.get_for_each_output(
+        if for_each_spec:
+            return for_each.get_for_each_output(
                 task_db, task_spec, raw_result
             )
         else:
@@ -143,13 +143,11 @@ class WorkflowHandler(object):
     def _determine_task_state(task_db, task_spec, raw_result):
         state = states.ERROR if raw_result.is_error() else states.SUCCESS
 
-        for_each = task_spec.get_for_each()
+        for_each_spec = task_spec.get_for_each()
 
-        if for_each:
+        if for_each_spec:
             # Check if all iterations are completed.
-            iterations_count = len(task_db.input[for_each.keys()[0]])
-
-            if len(task_db.output['task'][task_db.name]) < iterations_count:
+            if for_each.is_iteration_incomplete(task_db, task_spec):
                 state = states.RUNNING
 
         return state

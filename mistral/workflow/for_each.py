@@ -18,14 +18,41 @@ from mistral import expressions as expr
 
 
 def get_for_each_output(task_db, task_spec, raw_result):
+    """Returns output from task markered as for-each
+
+     Examples of output:
+       1. Without publish clause:
+          {
+            "task": {
+              "task1": [None]
+            }
+          }
+       Note: In this case we don't create any specific
+       output to prevent generating large data in DB.
+
+       Note: None here used for calculating number of
+       finished iterations.
+
+       2. With publish clause and specific output key:
+          {
+            "result": [
+              "output1",
+              "output2"
+            ],
+            "task": {
+              "task1": {
+                "result": [
+                  "output1",
+                  "output2"
+                ]
+              }
+            }
+          }
+    """
     t_name = task_db.name
+    e_data = raw_result.error
 
     # Calc output for for-each (only list form is used).
-    out_key = (task_spec.get_publish().keys()[0]
-               if task_spec.get_publish() else None)
-
-    # TODO(nmakhotkin): Simplify calculating task output.
-    e_data = raw_result.error
     output = expr.evaluate_recursively(
         task_spec.get_publish(),
         raw_result.data or {}
@@ -35,6 +62,8 @@ def get_for_each_output(task_db, task_spec, raw_result):
         task_db.output = {}
 
     task_output = copy.copy(task_db.output)
+
+    out_key = _get_output_key(task_spec)
 
     if out_key:
         if out_key in task_output:
@@ -46,13 +75,15 @@ def get_for_each_output(task_db, task_spec, raw_result):
 
         # Add same result to task output under key 'task'.
         task_output['task'] = {
-            t_name: task_output[out_key]
+            t_name: {
+                out_key: task_output[out_key]
+            }
         }
     else:
         if 'task' not in task_output:
-            task_output.update({'task': {t_name: [output or e_data]}})
+            task_output.update({'task': {t_name: [None or e_data]}})
         else:
-            task_output['task'][t_name].append(output or e_data)
+            task_output['task'][t_name].append(None or e_data)
 
     return task_output
 
@@ -73,3 +104,22 @@ def calc_for_each_input(action_input):
                 action_input_collection[index].update(iter_context)
 
     return action_input_collection
+
+
+def _get_output_key(task_spec):
+    return (task_spec.get_publish().keys()[0]
+            if task_spec.get_publish() else None)
+
+
+def is_iteration_incomplete(task_db, task_spec):
+    for_each_spec = task_spec.get_for_each()
+    main_key = for_each_spec.keys()[0]
+    iterations_count = len(task_db.input[main_key])
+    output_key = _get_output_key(task_spec)
+
+    if output_key:
+        index = len(task_db.output['task'][task_db.name][output_key])
+    else:
+        index = len(task_db.output['task'][task_db.name])
+
+    return True if index < iterations_count else False
