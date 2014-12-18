@@ -128,6 +128,9 @@ workflows:
       task11:
         join: one
         action: std.echo output="Task 11 echo"
+
+      task12:
+        action: std.http url="http://site.com?q={$.query}" params=""
 """
 
 
@@ -248,7 +251,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertListEqual(['test', 'v2'], wf2_spec.get_tags())
         self.assertEqual('direct', wf2_spec.get_type())
-        self.assertEqual(9, len(wf2_spec.get_tasks()))
+        self.assertEqual(10, len(wf2_spec.get_tasks()))
 
         task_defaults_spec = wf2_spec.get_task_defaults()
 
@@ -332,6 +335,13 @@ class DSLv2ModelTest(base.BaseTest):
         task11_spec = wf2_spec.get_tasks().get('task11')
 
         self.assertEqual('one', task11_spec.get_join())
+
+        task12_spec = wf2_spec.get_tasks().get('task12')
+
+        self.assertDictEqual(
+            {'url': 'http://site.com?q={$.query}', 'params': ''},
+            task12_spec.get_input()
+        )
 
     def test_adhoc_action_with_base_in_one_string(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
