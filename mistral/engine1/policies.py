@@ -122,8 +122,8 @@ def build_pause_before_policy(policies_spec):
 
     pause_before_policy = policies_spec.get_pause_before()
 
-    return PauseBeforePolicy(pause_before_policy) \
-        if pause_before_policy else None
+    return (PauseBeforePolicy(pause_before_policy)
+            if pause_before_policy else None)
 
 
 def _ensure_context_has_key(runtime_context, key):
