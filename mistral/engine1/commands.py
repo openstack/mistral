@@ -97,12 +97,21 @@ class RunTask(EngineCommand):
             self.exec_db = task_db.execution
 
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
+        if self.task_db and self.task_db.state == states.IDLE:
+            LOG.debug('Resuming workflow task: %s' % self.task_spec)
+            self.task_db.state = states.RUNNING
+
+            return True
+
         LOG.debug('Running workflow task: %s' % self.task_spec)
 
         self._prepare_task(exec_db, wf_handler, cause_task_db)
         self._before_task_start(wf_handler.wf_spec)
 
-        return True
+        if exec_db.state == states.RUNNING:
+            return True
+
+        return False
 
     def _prepare_task(self, exec_db, wf_handler, cause_task_db):
         if self.task_db:

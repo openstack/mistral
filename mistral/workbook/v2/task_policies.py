@@ -25,6 +25,7 @@ class TaskPoliciesSpec(base.BaseSpec):
             "wait-before": {"type": "integer"},
             "wait-after": {"type": "integer"},
             "timeout": {"type": "integer"},
+            "pause-before": {"type": "boolean"},
         },
         "additionalProperties": False
     }
@@ -36,6 +37,7 @@ class TaskPoliciesSpec(base.BaseSpec):
         self._wait_before = data.get("wait-before", 0)
         self._wait_after = data.get("wait-after", 0)
         self._timeout = data.get("timeout", 0)
+        self._pause_before = data.get("pause-before", False)
 
     def get_retry(self):
         return self._retry
@@ -48,3 +50,6 @@ class TaskPoliciesSpec(base.BaseSpec):
 
     def get_timeout(self):
         return self._timeout
+
+    def get_pause_before(self):
+        return self._pause_before

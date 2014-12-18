@@ -175,12 +175,12 @@ class WorkflowHandler(object):
         def filter_task_cmds(cmds):
             return [cmd for cmd in cmds if isinstance(cmd, commands.RunTask)]
 
-        def get_tasks_to_schedule(task_db, schedule_tasks):
+        def get_tasks_to_schedule(task_db, schedule_tasks, schedule_cmds):
             """Finds tasks that should run after given task and searches them
             in DB. If there are no tasks in the DB, it should be scheduled
             now. If there are tasks in the DB, continue search to next tasks
-            in workflow if this task is finished. If this task is not
-            finished - do nothing.
+            in workflow if this task is finished. If this task is in IDLE
+            state, schedule it for resume.
 
             :param task_db: Task DB.
             :param schedule_tasks: Task names from previous iteration.
@@ -196,32 +196,31 @@ class WorkflowHandler(object):
 
                     if not t_db:
                         schedule_tasks += [task_name]
+                        task_spec = self.wf_spec.get_tasks()[task_name]
+                        schedule_cmds += [commands.RunTask(task_spec)]
                     else:
                         schedule_tasks += get_tasks_to_schedule(
                             t_db,
-                            schedule_tasks
+                            schedule_tasks,
+                            schedule_cmds
                         )
+            elif states.is_idle(task_db.state):
+                idle_task_spec = self.wf_spec.get_tasks()[task_db.name]
+                schedule_cmds += [commands.RunTask(idle_task_spec, task_db)]
 
-            return schedule_tasks
+            return schedule_cmds
 
         params = self.exec_db.start_params
         start_task_cmds = filter_task_cmds(
             self.start_workflow(**params if params else {})
         )
 
-        task_names = []
+        schedule_cmds = []
 
         for cmd in start_task_cmds:
             task_db = [t for t in tasks
                        if t.name == cmd.task_spec.get_name()][0]
-            task_names += get_tasks_to_schedule(task_db, [])
-
-        schedule_cmds = []
-
-        for t_name in task_names:
-            schedule_cmds += [commands.RunTask(
-                self.wf_spec.get_tasks()[t_name]
-            )]
+            schedule_cmds += get_tasks_to_schedule(task_db, [], [])
 
         return schedule_cmds
 
