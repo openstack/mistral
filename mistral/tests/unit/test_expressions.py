@@ -72,6 +72,7 @@ class YaqlEvaluatorTest(base.BaseTest):
 
     def test_function_length(self):
         # Lists.
+        self.assertEqual(0, expr.evaluate('$.length()', []))
         self.assertEqual(3, expr.evaluate('$.length()', [1, 2, 3]))
         self.assertEqual(2, expr.evaluate('$.length()', ['one', 'two']))
         self.assertEqual(4, expr.evaluate(
@@ -98,6 +99,11 @@ class YaqlEvaluatorTest(base.BaseTest):
                     {'state': 'passive'}
                 ]
             )
+        )
+
+        self.assertEqual(
+            0,
+            expr.evaluate("$[$.state = 'active'].length()", [])
         )
 
 
