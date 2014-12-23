@@ -131,6 +131,9 @@ workflows:
 
       task12:
         action: std.http url="http://site.com?q={$.query}" params=""
+
+      task13:
+        description: No-op task
 """
 
 
@@ -251,7 +254,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertListEqual(['test', 'v2'], wf2_spec.get_tags())
         self.assertEqual('direct', wf2_spec.get_type())
-        self.assertEqual(10, len(wf2_spec.get_tasks()))
+        self.assertEqual(11, len(wf2_spec.get_tasks()))
 
         task_defaults_spec = wf2_spec.get_task_defaults()
 
@@ -343,13 +346,18 @@ class DSLv2ModelTest(base.BaseTest):
             task12_spec.get_input()
         )
 
+        task13_spec = wf2_spec.get_tasks().get('task13')
+
+        self.assertEqual('std.noop', task13_spec.get_action_name())
+        self.assertEqual('No-op task', task13_spec.get_description())
+
     def test_adhoc_action_with_base_in_one_string(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
 
         act_specs = wb_spec.get_actions()
         action_spec = act_specs.get("action2")
 
-        self.assertEqual("std.echo", action_spec.get_base())
+        self.assertEqual('std.echo', action_spec.get_base())
         self.assertEqual({'output': 'Echo output'},
                          action_spec.get_base_input())
 

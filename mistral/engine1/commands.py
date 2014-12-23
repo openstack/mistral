@@ -158,16 +158,16 @@ class RunTask(EngineCommand):
         if self.task_db.state != states.RUNNING:
             return
 
+        task_name = self.task_db.name
+
         if self.task_spec.get_action_name():
             WF_TRACE.info("Task '%s' is RUNNING [action_name = %s]"
-                          % (self.task_db.name,
-                             self.task_spec.get_action_name()))
+                          % (task_name, self.task_spec.get_action_name()))
 
             self._run_action()
         elif self.task_spec.get_workflow_name():
             WF_TRACE.info("Task '%s' is RUNNING [workflow_name = %s]"
-                          % (self.task_db.name,
-                             self.task_spec.get_workflow_name()))
+                          % (task_name, self.task_spec.get_workflow_name()))
 
             self._run_workflow()
 
