@@ -89,11 +89,6 @@ class TaskSpec(base.BaseSpec):
                    " specified both: %s" % self._data)
             raise exc.InvalidModelException(msg)
 
-        if not action and not workflow:
-            msg = ("One of task properties 'action' or 'workflow' must be"
-                   " specified: %s" % self._data)
-            raise exc.InvalidModelException(msg)
-
         for_each = self._data.get('for-each')
 
         if for_each:
@@ -111,6 +106,8 @@ class TaskSpec(base.BaseSpec):
         elif self._workflow:
             self._workflow, params = self._parse_cmd_and_input(
                 self._workflow)
+        else:
+            self._action = 'std.noop'
 
         utils.merge_dicts(self._input, params)
 
