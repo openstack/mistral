@@ -19,13 +19,17 @@ The list of needed packages is shown below:
 7. **libyaml-dev**
 8. **libssl-dev**
 
-**Mistral can be used without authentication at all or it can works with OpenStack**
-*In case of OpenStack, it works **only on Keystone v3**, make sure Keystone v3 is installed.*
+In case of ubuntu, just run::
+
+    apt-get install python-dev python-setuptools libffi-dev libxslt1-dev libxml2-dev libyaml-dev libssl-dev
+
+**Mistral can be used without authentication at all or it can works with OpenStack.**
+In case of OpenStack, it works **only on Keystone v3**, make sure **Keystone v3** is installed.
 
 Installation
 ------------
 
-First of all, clone the repo and go to the repo directory:
+First of all, clone the repo and go to the repo directory::
 
     git clone https://github.com/stackforge/mistral.git
     cd mistral
@@ -35,17 +39,17 @@ First of all, clone the repo and go to the repo directory:
 
 Information about how to install Mistral with devstack can be found here: https://github.com/stackforge/mistral/tree/master/contrib/devstack
 
-**Virtualenv installation**
+**Virtualenv installation**::
 
     tox
 
 This will install necessary virtual environments and run all the project tests. Installing virtual environments may take significant time (~10-15 mins).
 
-**Local installation**
+**Local installation**::
 
     pip install -e .
 
-  or
+or::
 
     python setup.py install
 
@@ -55,33 +59,26 @@ Configuring Mistral
 
 Mistral configuration is needed for getting it work correctly either with real OpenStack environment or without OpenStack environment.
 
-1. Copy mistral.conf:
+1. Copy mistral.conf::
 
     cp etc/mistral.conf.sample etc/mistral.conf
 
-    *Note: mistral.conf.sample is the example configuration file.*
+  *Note: mistral.conf.sample is the example configuration file.*
 
 2. Edit file *etc/mistral.conf*
-3. **If you are not using OpenStack, skip this item.** Provide valid keystone auth properties:
+3. **If you are not using OpenStack, skip this item.** Provide valid keystone auth properties::
 
     [keystone_authtoken]
-
     auth_uri = http://<Keystone-host>:5000/v3
-
     identity_uri = http://<Keystone-host:35357/
-
     auth_version = v3
-
     admin_user = <user>
-
     admin_password = <password>
-
     admin_tenant_name = <tenant>
 
-4. **If you don't use OpenStack**, provide *auth_enable = False* in config file:
+4. **If you don't use OpenStack**, provide *auth_enable = False* in config file::
 
     [pecan]
-
     auth_enable = False
 
 5. Also, configure rabbit properties: *rabbit_userid*, *rabbit_password*, *rabbit_host* in section *default*.
@@ -89,15 +86,15 @@ Mistral configuration is needed for getting it work correctly either with real O
 6. Configure database. **SQLite can't be used in production.** Use *MySQL* or *PostreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
 
 * Make sure you have installed **mysql-server** package on your Mistral machine.
-* Install *MySQL driver* for python:
+* Install *MySQL driver* for python::
 
     pip install mysql-python
 
-or, if you work in virtualenv, run
+  or, if you work in virtualenv, run::
 
     tox -evenv -- pip install mysql-python
 
-* Create the database and grant privileges:
+* Create the database and grant privileges::
 
     mysql -u root -p
 
@@ -105,10 +102,9 @@ or, if you work in virtualenv, run
     USE mistral
     GRANT ALL ON mistral.* TO 'root'@'localhost';
 
-* Configure connection in Mistral config:
+* Configure connection in Mistral config::
 
     [database]
-
     connection = mysql://root:@localhost:3306/mistral
 
 Before the first run
@@ -116,46 +112,45 @@ Before the first run
 
 Before starting Mistral server, run sync_db script. It prepares the DB, creates in it all standard actions and standard workflows which Mistral provides for all mistral users.
 
-  **If you use virtualenv:**
+**If you use virtualenv**::
 
     tools/sync_db.sh --config-file path_to_config*
 
-  **Or run sync_db directly:**
+**Or run sync_db directly**::
 
     python tools/sync_db.py --config-file path_to_config*
 
-  *Note: After local installation you will see **mistral-server** command in your environment*.
+*Note: After local installation you will see **mistral-server** command in your environment*.
 
 
 Running Mistral API server
 --------------------------
 
-To run Mistral API server perform the following command in a shell:
+To run Mistral API server perform the following command in a shell::
 
     tox -evenv -- python mistral/cmd/launch.py --server api --config-file path_to_config*
 
 Running Mistral Engines
 -----------------------
 
-To run Mistral Engine perform the following command in a shell:
+To run Mistral Engine perform the following command in a shell::
 
     tox -evenv -- python mistral/cmd/launch.py --server engine --config-file path_to_config*
 
 Running Mistral Task Executors
 ------------------------------
-To run Mistral Task Executor instance perform the following command in a shell:
+To run Mistral Task Executor instance perform the following command in a shell::
 
     tox -evenv -- python mistral/cmd/launch.py --server executor --config-file path_to_config
 
 Note that at least one Engine instance and one Executor instance should be running so that workflow tasks are processed by Mistral.
 
-If it is needed to run some tasks on specific executor then *task affinity* feature can be used to send these tasks directly to this executor. In configuration file edit section "executor" *host* property:
+If it is needed to run some tasks on specific executor then *task affinity* feature can be used to send these tasks directly to this executor. In configuration file edit section "executor" *host* property::
 
     [executor]
-
     host = my_favorite_executor
 
-Then start (restart) executor. Use *targets* task property to specify this executor:
+Then start (restart) executor. Use *targets* task property to specify this executor::
 
     ... Workflow YAML ...
     task1:
@@ -165,7 +160,7 @@ Then start (restart) executor. Use *targets* task property to specify this execu
 
 Running Multiple Mistral Servers Under the Same Process
 -------------------------------------------------------
-To run more than one server (API, Engine, or Task Executor) on the same process, perform the following command in a shell:
+To run more than one server (API, Engine, or Task Executor) on the same process, perform the following command in a shell::
 
     tox -evenv -- python mistral/cmd/launch.py --server api,engine --config-file path_to_config
 
@@ -202,8 +197,10 @@ Tests
 
 There is an ability to run part of functional tests in non-openstack mode locally. To do this:
 
-    1. set *auth_enable=false* in the mistral.conf and restart Mistral
-    2. execute: *./run_functional_tests.sh*
+1. set *auth_enable = False* in the *mistral.conf* and restart Mistral
+2. execute::
+
+    ./run_functional_tests.sh
 
 To run tests for only one version need to specify it: bash run_functional_tests.sh v1
 
