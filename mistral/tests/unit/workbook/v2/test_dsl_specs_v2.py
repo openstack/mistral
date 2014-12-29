@@ -103,7 +103,7 @@ workflows:
         action: std.echo output="Task 6 echo"
 
       task7:
-        for-each:
+        with-items:
           vm_info: $.vms
         workflow: wf2 is_true=true object_list=[1, null, "str"]
         on-complete:
@@ -149,7 +149,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hey!"
-        for-each:
+        with-items:
           vms: 3
 
 """
@@ -312,7 +312,7 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual(
             {'vm_info': '$.vms'},
-            task7_spec.get_for_each()
+            task7_spec.get_with_items()
         )
 
         task8_spec = wf2_spec.get_tasks().get('task8')
@@ -361,13 +361,13 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual({'output': 'Echo output'},
                          action_spec.get_base_input())
 
-    def test_invalid_for_each(self):
+    def test_invalid_with_items_spec(self):
         exc = self.assertRaises(
             exceptions.InvalidModelException,
             spec_parser.get_workbook_spec_from_yaml,
             INVALID_WB
         )
-        self.assertIn("for-each", str(exc))
+        self.assertIn("with-items", str(exc))
 
     def test_to_dict(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)

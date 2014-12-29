@@ -17,8 +17,8 @@ import copy
 from mistral import expressions as expr
 
 
-def get_for_each_output(task_db, task_spec, raw_result):
-    """Returns output from task markered as for-each
+def get_output(task_db, task_spec, raw_result):
+    """Returns output from task markered as with-items
 
      Examples of output:
        1. Without publish clause:
@@ -52,7 +52,7 @@ def get_for_each_output(task_db, task_spec, raw_result):
     t_name = task_db.name
     e_data = raw_result.error
 
-    # Calc output for for-each (only list form is used).
+    # Calc output for with-items (only list form is used).
     output = expr.evaluate_recursively(
         task_spec.get_publish(),
         raw_result.data or {}
@@ -88,8 +88,8 @@ def get_for_each_output(task_db, task_spec, raw_result):
     return task_output
 
 
-def calc_for_each_input(action_input):
-    # In case of for-each iterate over action_input and send
+def calc_input(action_input):
+    # In case of with-items iterate over action_input and send
     # each part of data to executor.
     # Calculate action input collection for separating input.
     action_input_collection = []
@@ -112,8 +112,8 @@ def _get_output_key(task_spec):
 
 
 def is_iteration_incomplete(task_db, task_spec):
-    for_each_spec = task_spec.get_for_each()
-    main_key = for_each_spec.keys()[0]
+    with_items_spec = task_spec.get_with_items()
+    main_key = with_items_spec.keys()[0]
     iterations_count = len(task_db.input[main_key])
     output_key = _get_output_key(task_spec)
 

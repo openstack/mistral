@@ -17,16 +17,16 @@
 from mistral.db.v2.sqlalchemy import models
 from mistral.tests import base
 from mistral.workbook.v2 import tasks
-from mistral.workflow import for_each
 from mistral.workflow import utils
+from mistral.workflow import with_items
 
 
 TASK_DICT = {
     "name": "task1",
     "version": "2.0",
     "action": "std.echo",
-    "for-each": {
-        "array_for_each": "$.array"
+    "with-items": {
+        "item": "$.array"
     },
     "input": {
         "array": "$.my_array"
@@ -39,7 +39,7 @@ TASK_DB = models.Task(
 )
 
 
-class ForEachCalculationsTest(base.BaseTest):
+class WithItemsCalculationsTest(base.BaseTest):
     def test_calculate_output_with_key(self):
         task_dict = TASK_DICT.copy()
         task_dict['publish'] = {"result": "$"}
@@ -47,7 +47,7 @@ class ForEachCalculationsTest(base.BaseTest):
         task_spec = tasks.TaskSpec(task_dict)
         raw_result = utils.TaskResult(data="output!")
 
-        output = for_each.get_for_each_output(TASK_DB, task_spec, raw_result)
+        output = with_items.get_output(TASK_DB, task_spec, raw_result)
 
         self.assertDictEqual(
             {
@@ -62,7 +62,7 @@ class ForEachCalculationsTest(base.BaseTest):
 
     def test_calculate_output_without_key(self):
         raw_result = utils.TaskResult(data="output!")
-        output = for_each.get_for_each_output(TASK_DB, TASK_SPEC, raw_result)
+        output = with_items.get_output(TASK_DB, TASK_SPEC, raw_result)
 
         self.assertDictEqual(
             {
@@ -81,7 +81,7 @@ class ForEachCalculationsTest(base.BaseTest):
                 {'name': 'Mistral'}
             ]
         }
-        action_input_collection = for_each.calc_for_each_input(a_input)
+        action_input_collection = with_items.calc_input(a_input)
 
         self.assertListEqual(
             [

@@ -36,7 +36,7 @@ version: "2.0"
 name: wb1
 
 workflows:
-  for_each:
+  with_items:
     type: direct
 
     input:
@@ -44,7 +44,7 @@ workflows:
 
     tasks:
       task1:
-        for-each:
+        with-items:
           name_info: $.names_info
         action: std.echo output={$.name_info.name}
         publish:
@@ -59,7 +59,7 @@ version: "2.0"
 name: wb1
 
 workflows:
-  for_each:
+  with_items:
     type: direct
 
     input:
@@ -68,7 +68,7 @@ workflows:
 
     tasks:
       task1:
-        for-each:
+        with-items:
           name_info: $.names_info
         action: std.echo output="{$.greeting}, {$.name_info.name}!"
         publish:
@@ -86,11 +86,11 @@ WORKFLOW_INPUT = {
 
 
 class ForEachEngineTest(base.EngineTestCase):
-    def test_for_each_simple(self):
+    def test_with_items_simple(self):
         wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb1.for_each', WORKFLOW_INPUT)
+        exec_db = self.engine.start_workflow('wb1.with_items', WORKFLOW_INPUT)
 
         self._await(
             lambda: self.is_execution_success(exec_db.id),
@@ -114,13 +114,13 @@ class ForEachEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
 
-    def test_for_each_static_var(self):
+    def test_with_items_static_var(self):
         wb_service.create_workbook_v2(WORKBOOK_WITH_STATIC_VAR)
 
         wf_input = copy.copy(WORKFLOW_INPUT)
         wf_input.update({'greeting': 'Hello'})
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb1.for_each', wf_input)
+        exec_db = self.engine.start_workflow('wb1.with_items', wf_input)
 
         self._await(
             lambda: self.is_execution_success(exec_db.id),

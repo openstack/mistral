@@ -32,7 +32,7 @@ class TaskSpec(base.BaseSpec):
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "input": {"type": ["object", "null"]},
-            "for-each": {"type": ["object", "null"]},
+            "with-items": {"type": ["object", "null"]},
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
             "target": {"type": ["string", "null"]},
@@ -56,7 +56,7 @@ class TaskSpec(base.BaseSpec):
         self._action = data.get('action')
         self._workflow = data.get('workflow')
         self._input = data.get('input', {})
-        self._for_each = data.get('for-each', {})
+        self._with_items = data.get('with-items', {})
         self._publish = data.get('publish', {})
         self._policies = self._spec_property(
             'policies',
@@ -89,12 +89,12 @@ class TaskSpec(base.BaseSpec):
                    " specified both: %s" % self._data)
             raise exc.InvalidModelException(msg)
 
-        for_each = self._data.get('for-each')
+        with_items = self._data.get('with-items')
 
-        if for_each:
-            for _, v in for_each.iteritems():
+        if with_items:
+            for _, v in with_items.iteritems():
                 if not isinstance(v, (list, six.string_types)):
-                    msg = ("Items of task property 'for-each' can only be "
+                    msg = ("Items of task property 'with-items' can only be "
                            "a list or an expression string: %s" % self._data)
                     raise exc.InvalidModelException(msg)
 
@@ -129,8 +129,8 @@ class TaskSpec(base.BaseSpec):
     def get_input(self):
         return self._input
 
-    def get_for_each(self):
-        return self._for_each
+    def get_with_items(self):
+        return self._with_items
 
     def get_policies(self):
         return self._policies

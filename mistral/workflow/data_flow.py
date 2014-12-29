@@ -65,12 +65,12 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
 
 
 def evaluate_task_input(task_spec, context):
-    for_each = task_spec.get_for_each()
+    with_items = task_spec.get_with_items()
 
-    # Do not evaluate input in case of for-each task.
-    # Instead of it, input is considered as data defined in for-each.
-    if for_each:
-        return expr.evaluate_recursively(for_each, context or {})
+    # Do not evaluate input in case of with-items task.
+    # Instead of it, input is considered as data defined in with-items.
+    if with_items:
+        return expr.evaluate_recursively(with_items, context or {})
     else:
         return expr.evaluate_recursively(task_spec.get_input(), context)
 

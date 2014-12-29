@@ -28,8 +28,8 @@ from mistral.services import action_manager as a_m
 from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
-from mistral.workflow import for_each
 from mistral.workflow import states
+from mistral.workflow import with_items
 
 
 LOG = logging.getLogger(__name__)
@@ -219,12 +219,11 @@ class RunTask(EngineCommand):
                 action_db.action_class, action_db.attributes or {}):
             action_input.update(a_m.get_action_context(self.task_db))
 
-        for_each_spec = self.task_spec.get_for_each()
+        with_items_spec = self.task_spec.get_with_items()
 
-        if for_each_spec:
-            action_input_collection = for_each.calc_for_each_input(
-                action_input
-            )
+        if with_items_spec:
+            action_input_collection = with_items.calc_input(action_input)
+
             for a_input in action_input_collection:
                 rpc.get_executor_client().run_action(
                     self.task_db.id,
