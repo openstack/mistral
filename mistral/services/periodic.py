@@ -39,12 +39,11 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v1(self, ctx):
-        LOG.debug('Processing cron triggers.')
 
         for t in triggers.get_next_triggers_v1():
+            LOG.debug("Processing cron trigger %s" % t)
             # Setup admin context before schedule triggers.
             wb = db_api_v1.workbook_get(t['workbook_name'])
-
             auth_ctx.set_ctx(
                 security.create_context(wb.trust_id, wb.project_id)
             )
@@ -69,12 +68,11 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
-        LOG.debug('Processing cron triggers.')
 
         for t in triggers.get_next_cron_triggers():
+            LOG.debug("Processing cron trigger: %s" % t)
             # Setup admin context before schedule triggers.
             ctx = security.create_context(t.trust_id, t.project_id)
-
             auth_ctx.set_ctx(ctx)
 
             LOG.debug("Cron trigger security context: %s" % ctx)

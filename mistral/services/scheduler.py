@@ -81,13 +81,13 @@ def schedule_call(factory_method_path, target_method_name,
 class CallScheduler(periodic_task.PeriodicTasks):
     @periodic_task.periodic_task(spacing=1)
     def run_delayed_calls(self, ctx=None):
-        LOG.debug('Processing next delayed calls.')
 
         datetime_filter = (datetime.datetime.now() +
                            datetime.timedelta(seconds=1))
         delayed_calls = db_api.get_delayed_calls_to_start(datetime_filter)
 
         for call in delayed_calls:
+            LOG.debug('Processing next delayed call: %s', call)
             context.set_ctx(context.MistralContext(call.auth_context))
 
             if call.factory_method_path:
