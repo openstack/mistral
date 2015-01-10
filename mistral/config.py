@@ -50,10 +50,6 @@ pecan_opts = [
                 help='Enables user authentication in pecan.')
 ]
 
-db_opts = [
-    # TODO(everyone): add DB properties.
-]
-
 use_debugger = cfg.BoolOpt(
     "use-debugger",
     default=False,
@@ -99,7 +95,6 @@ CONF = cfg.CONF
 CONF.register_opts(api_opts, group='api')
 CONF.register_opts(engine_opts, group='engine')
 CONF.register_opts(pecan_opts, group='pecan')
-CONF.register_opts(db_opts, group='database')
 CONF.register_opts(executor_opts, group='executor')
 CONF.register_opt(wf_trace_log_name_opt)
 
@@ -107,6 +102,7 @@ CONF.register_cli_opt(use_debugger)
 CONF.register_cli_opt(launch_opt)
 
 CONF.import_opt('verbose', 'mistral.openstack.common.log')
+CONF.set_default('verbose', True)
 CONF.import_opt('debug', 'mistral.openstack.common.log')
 CONF.import_opt('log_dir', 'mistral.openstack.common.log')
 CONF.import_opt('log_file', 'mistral.openstack.common.log')
