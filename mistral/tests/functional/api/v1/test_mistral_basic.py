@@ -23,7 +23,7 @@ from mistral.tests.functional import base
 
 class WorkbookTestsV1(base.TestCase):
 
-    _version = 1
+    _service = 'workflow'
 
     @test.attr(type='smoke')
     def test_get_list_obj(self):
@@ -117,7 +117,7 @@ class WorkbookTestsV1(base.TestCase):
 
 class ExecutionTestsV1(base.TestCase):
 
-    _version = 1
+    _service = 'workflow'
 
     def setUp(self):
         super(ExecutionTestsV1, self).setUp()

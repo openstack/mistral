@@ -52,18 +52,14 @@ def find_items(items, **props):
 
 class MistralClientBase(rest_client.RestClient):
 
-    _version = None
+    def __init__(self, auth_provider, service_type):
+        super(MistralClientBase, self).__init__(
+            auth_provider=auth_provider,
+            service=service_type,
+            region=CONF.identity.region)
 
-    def __init__(self, auth_provider):
-        super(MistralClientBase, self).__init__(auth_provider)
-
-        if self._version == 1:
-            self.service = 'workflow'
-        elif self._version == 2:
-            self.service = 'workflowv2'
-        else:
-            msg = ("Invalid parameter 'version'. "
-                   "Use version=1 or version=2.")
+        if service_type not in ('workflow', 'workflowv2'):
+            msg = ("Invalid parameter 'service_type'. ")
             raise exceptions.UnprocessableEntity(msg)
 
         self.endpoint_url = 'publicURL'
@@ -87,8 +83,6 @@ class MistralClientBase(rest_client.RestClient):
 
 
 class MistralClientV1(MistralClientBase):
-
-    _version = 1
 
     def create_workbook(self, name):
         post_body = '{"name": "%s"}' % name
@@ -212,8 +206,6 @@ class MistralClientV1(MistralClientBase):
 
 class MistralClientV2(MistralClientBase):
 
-    _version = 2
-
     def post_request(self, url, file_name):
         text = get_resource(file_name)
         headers = {"headers": "Content-Type:text/plain"}
@@ -327,10 +319,12 @@ class TestCase(tempest.test.BaseTestCase):
         else:
             cls.mgr = clients.Manager()
 
-        if cls._version == 1:
-            cls.client = MistralClientV1(cls.mgr.auth_provider)
-        if cls._version == 2:
-            cls.client = MistralClientV2(cls.mgr.auth_provider)
+        if cls._service == 'workflow':
+            cls.client = MistralClientV1(
+                cls.mgr.auth_provider, cls._service)
+        if cls._service == 'workflowv2':
+            cls.client = MistralClientV2(
+                cls.mgr.auth_provider, cls._service)
 
     def setUp(self):
         super(TestCase, self).setUp()
