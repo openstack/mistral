@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 from mistral.db.v2.sqlalchemy import models
+from mistral import exceptions as exc
 from mistral.tests import base
 from mistral.workbook.v2 import tasks
 from mistral.workflow import utils
@@ -115,3 +116,40 @@ class WithItemsCalculationsTest(base.BaseTest):
             ],
             action_input_collection
         )
+
+    def test_calculate_input_wrong_array_length(self):
+        with_items_input = {
+            'name_info': [
+                {'name': 'John'},
+                {'name': 'Ivan'},
+                {'name': 'Mistral'}
+            ],
+            'server_info': [
+                'server1',
+                'server2'
+            ]
+        }
+        exception = self.assertRaises(
+            exc.InputException,
+            with_items.calc_input,
+            with_items_input
+        )
+
+        self.assertIn("the same length", exception.message)
+
+    def test_calculate_input_not_list(self):
+        with_items_input = {
+            'name_info': [
+                {'name': 'John'},
+                {'name': 'Ivan'},
+                {'name': 'Mistral'}
+            ],
+            'server_info': 'some_string'
+        }
+        exception = self.assertRaises(
+            exc.InputException,
+            with_items.calc_input,
+            with_items_input
+        )
+
+        self.assertIn("List type", exception.message)
