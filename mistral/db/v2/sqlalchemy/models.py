@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -167,6 +166,27 @@ class Action(mb.MistralModelBase):
     action_class = sa.Column(sa.String(200))
     attributes = sa.Column(st.JsonDictType())
     is_system = sa.Column(sa.Boolean())
+
+    # Security properties.
+    scope = sa.Column(sa.String(80))
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
+    trust_id = sa.Column(sa.String(80))
+
+
+class Environment(mb.MistralModelBase):
+    """Contains environment variables for workflow execution."""
+
+    __tablename__ = 'environments_v2'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name', 'project_id'),
+    )
+
+    # Main properties.
+    id = mb.id_column()
+    name = sa.Column(sa.String(200))
+    description = sa.Column(sa.Text())
+    variables = sa.Column(st.JsonDictType())
 
     # Security properties.
     scope = sa.Column(sa.String(80))

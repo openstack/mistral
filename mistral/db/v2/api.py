@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -292,3 +291,38 @@ def delete_cron_trigger(name):
 
 def delete_cron_triggers(**kwargs):
     return IMPL.delete_cron_triggers(**kwargs)
+
+
+# Environments.
+
+def get_environment(name):
+    return IMPL.get_environment(name)
+
+
+def load_environment(name):
+    """Unlike get_environment this method is allowed to return None."""
+    return IMPL.load_environment(name)
+
+
+def get_environments():
+    return IMPL.get_environments()
+
+
+def create_environment(values):
+    return IMPL.create_environment(values)
+
+
+def update_environment(name, values):
+    return IMPL.update_environment(name, values)
+
+
+def create_or_update_environment(name, values):
+    return IMPL.create_or_update_environment(name, values)
+
+
+def delete_environment(name):
+    IMPL.delete_environment(name)
+
+
+def delete_environments(**kwargs):
+    IMPL.delete_environments(**kwargs)
