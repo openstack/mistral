@@ -25,7 +25,8 @@ from mistral import utils
 
 LOG = logging.getLogger(__name__)
 
-options.set_defaults(cfg.CONF, sqlite_db="mistral.sqlite")
+# Note(dzimine): sqlite only works for basic testing.
+options.set_defaults(cfg.CONF, connection="sqlite:///mistral.sqlite")
 
 _DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
 

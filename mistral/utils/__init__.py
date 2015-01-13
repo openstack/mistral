@@ -78,7 +78,7 @@ def set_thread_local(var_name, val):
 
 def log_exec(logger, level=logging.DEBUG):
     """Decorator for logging function execution.
-        By default, target function execution is logged with INFO level.
+        By default, target function execution is logged with DEBUG level.
     """
 
     def _decorator(func):
