@@ -25,7 +25,7 @@ CONF = cfg.CONF
 
 class OpenStackActionsTest(base.TestCaseAdvanced):
 
-    _version = 1
+    _service = 'workflow'
 
     @classmethod
     def setUpClass(cls):

@@ -20,7 +20,7 @@ from mistral.tests.functional import base
 
 class WorkbookTestsV2(base.TestCase):
 
-    _version = 2
+    _service = 'workflowv2'
 
     def tearDown(self):
         for wf in self.client.workflows:
@@ -119,7 +119,7 @@ class WorkbookTestsV2(base.TestCase):
 
 class WorkflowTestsV2(base.TestCase):
 
-    _version = 2
+    _service = 'workflowv2'
 
     def tearDown(self):
         for wf in self.client.workflows:
@@ -238,7 +238,7 @@ class WorkflowTestsV2(base.TestCase):
 
 class ExecutionTestsV2(base.TestCase):
 
-    _version = 2
+    _service = 'workflowv2'
 
     def setUp(self):
         super(ExecutionTestsV2, self).setUp()
@@ -357,7 +357,7 @@ class ExecutionTestsV2(base.TestCase):
 
 class CronTriggerTestsV2(base.TestCase):
 
-    _version = 2
+    _service = 'workflowv2'
 
     def setUp(self):
         super(CronTriggerTestsV2, self).setUp()
@@ -491,7 +491,7 @@ class CronTriggerTestsV2(base.TestCase):
 
 class ActionTestsV2(base.TestCase):
 
-    _version = 2
+    _service = 'workflowv2'
 
     def get_field_value(self, body, act_name, field):
         return [body['actions'][i][field]
@@ -617,7 +617,7 @@ class ActionTestsV2(base.TestCase):
 
 class TasksTestsV2(base.TestCase):
 
-    _version = 2
+    _service = 'workflowv2'
 
     def setUp(self):
         super(TasksTestsV2, self).setUp()

@@ -27,7 +27,7 @@ CONTEXT = {
 
 class MistralWorkflowExecutionTests(base.TestCaseAdvanced):
 
-    _version = 1
+    _service = 'workflow'
 
     def test_reverse_flow(self):
         text = base.get_resource(
