@@ -231,12 +231,30 @@ class WorkflowHandler(object):
     def is_paused_or_completed(self):
         return states.is_paused_or_completed(self.exec_db.state)
 
+    def succeed_workflow(self):
+        """Completes workflow with SUCCESS status.
+
+        :return: Execution object.
+        """
+        self._set_execution_state(states.SUCCESS)
+
+        return self.exec_db
+
     def pause_workflow(self):
-        """Stops workflow this handler is associated with.
+        """Pauses workflow this handler is associated with.
 
         :return: Execution object.
         """
         self._set_execution_state(states.PAUSED)
+
+        return self.exec_db
+
+    def fail_workflow(self):
+        """Stops workflow with ERROR state.
+
+        :return: Execution object.
+        """
+        self._set_execution_state(states.ERROR)
 
         return self.exec_db
 

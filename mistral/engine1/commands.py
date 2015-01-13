@@ -36,11 +36,6 @@ LOG = logging.getLogger(__name__)
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
-def _log_execution_state_change(name, from_state, to_state):
-    WF_TRACE.info("Execution of workflow '%s' [%s -> %s]"
-                  % (name, from_state, to_state))
-
-
 @six.add_metaclass(abc.ABCMeta)
 class EngineCommand(object):
     """Engine command interface."""
@@ -280,14 +275,7 @@ class RunTask(EngineCommand):
 
 class FailWorkflow(EngineCommand):
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
-        _log_execution_state_change(
-            exec_db.wf_name,
-            exec_db.state,
-            states.ERROR
-        )
-
-        exec_db.state = states.ERROR
-
+        wf_handler.fail_workflow()
         return False
 
     def run_remote(self, exec_db, wf_handler, cause_task_db=None):
@@ -296,14 +284,7 @@ class FailWorkflow(EngineCommand):
 
 class SucceedWorkflow(EngineCommand):
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
-        _log_execution_state_change(
-            exec_db.wf_name,
-            exec_db.state,
-            states.SUCCESS
-        )
-
-        exec_db.state = states.SUCCESS
-
+        wf_handler.succeed_workflow()
         return False
 
     def run_remote(self, exec_db, wf_handler, cause_task_db=None):
@@ -312,14 +293,7 @@ class SucceedWorkflow(EngineCommand):
 
 class PauseWorkflow(EngineCommand):
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
-        _log_execution_state_change(
-            exec_db.wf_name,
-            exec_db.state,
-            states.PAUSED
-        )
-
         wf_handler.pause_workflow()
-
         return False
 
     def run_remote(self, exec_db, wf_handler, cause_task_db=None):
