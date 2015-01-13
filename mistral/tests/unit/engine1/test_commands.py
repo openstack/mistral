@@ -53,9 +53,9 @@ workflows:
 """
 
 
-class SimpleEngineInstructionsTest(base.EngineTestCase):
+class SimpleEngineCommandsTest(base.EngineTestCase):
     def setUp(self):
-        super(SimpleEngineInstructionsTest, self).setUp()
+        super(SimpleEngineCommandsTest, self).setUp()
 
         wb_service.create_workbook_v2(WORKBOOK1)
 
@@ -131,9 +131,9 @@ workflows:
 """
 
 
-class SimpleEngineWorkflowLevelInstructionsTest(base.EngineTestCase):
+class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
     def setUp(self):
-        super(SimpleEngineWorkflowLevelInstructionsTest, self).setUp()
+        super(SimpleEngineWorkflowLevelCommandsTest, self).setUp()
 
         wb_service.create_workbook_v2(WORKBOOK2)
 
@@ -241,9 +241,9 @@ workflows:
 """
 
 
-class OrderEngineInstructionsTest(base.EngineTestCase):
+class OrderEngineCommandsTest(base.EngineTestCase):
     def setUp(self):
-        super(OrderEngineInstructionsTest, self).setUp()
+        super(OrderEngineCommandsTest, self).setUp()
 
         wb_service.create_workbook_v2(WORKBOOK3)
 
