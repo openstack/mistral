@@ -44,8 +44,7 @@ workflows:
 
     tasks:
       task1:
-        with-items:
-          name_info: $.names_info
+        with-items: name_info in $.names_info
         action: std.echo output={$.name_info.name}
         publish:
           result: $
@@ -68,11 +67,36 @@ workflows:
 
     tasks:
       task1:
-        with-items:
-          name_info: $.names_info
+        with-items: name_info in $.names_info
         action: std.echo output="{$.greeting}, {$.name_info.name}!"
         publish:
           result: $
+"""
+
+
+WORKBOOK_MULTI_ARRAY = """
+---
+version: "2.0"
+
+name: wb1
+
+workflows:
+  with_items:
+    type: direct
+
+    input:
+     - arrayI
+     - arrayJ
+
+    tasks:
+      task1:
+        with-items:
+          - itemX in $.arrayI
+          - itemY in $.arrayJ
+        action: std.echo output="{$.itemX} {$.itemY}"
+        publish:
+          result: $
+
 """
 
 
@@ -85,7 +109,7 @@ WORKFLOW_INPUT = {
 }
 
 
-class ForEachEngineTest(base.EngineTestCase):
+class WithItemsEngineTest(base.EngineTestCase):
     def test_with_items_simple(self):
         wb_service.create_workbook_v2(WORKBOOK)
 
@@ -138,6 +162,36 @@ class ForEachEngineTest(base.EngineTestCase):
         self.assertIn('Hello, John!', result)
         self.assertIn('Hello, Ivan!', result)
         self.assertIn('Hello, Mistral!', result)
+
+        self.assertEqual(1, len(tasks))
+        self.assertEqual(states.SUCCESS, task1.state)
+
+    def test_with_items_multi_array(self):
+        wb_service.create_workbook_v2(WORKBOOK_MULTI_ARRAY)
+
+        wf_input = {'arrayI': ['a', 'b', 'c'], 'arrayJ': [1, 2, 3]}
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb1.with_items', wf_input)
+
+        self._await(
+            lambda: self.is_execution_success(exec_db.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        tasks = exec_db.tasks
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        # Since we know that we can receive results in random order,
+        # check is not depend on order of items.
+        result = task1.output['result']
+        self.assertTrue(isinstance(result, list))
+
+        self.assertIn('a 1', result)
+        self.assertIn('b 2', result)
+        self.assertIn('c 3', result)
 
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)

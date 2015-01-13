@@ -26,9 +26,9 @@ TASK_DICT = {
     "name": "task1",
     "version": "2.0",
     "action": "std.echo",
-    "with-items": {
-        "item": "$.array"
-    },
+    "with-items": [
+        "item in $.array"
+    ],
     "input": {
         "array": "$.my_array"
     }
