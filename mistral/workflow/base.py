@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -134,10 +135,10 @@ class WorkflowHandler(object):
 
         if with_items_spec:
             return with_items.get_output(
-                task_db, task_spec, raw_result
-            )
+                task_db, task_spec, raw_result)
         else:
-            return data_flow.evaluate_task_output(task_spec, raw_result)
+            return data_flow.evaluate_task_output(
+                task_db, task_spec, raw_result)
 
     @staticmethod
     def _determine_task_state(task_db, task_spec, raw_result):
