@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -91,8 +92,10 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(2, len(db_execs))
 
         # Execution 2.
-        exec2_db = db_execs[0] if db_execs[0].id != exec1_db.id \
-            else db_execs[1]
+        if db_execs[0].id != exec1_db.id:
+            exec2_db = db_execs[0]
+        else:
+            exec2_db = db_execs[1]
 
         self.assertEqual(project_id, exec2_db.project_id)
         self.assertIsNotNone(exec2_db.parent_task_id)
@@ -156,11 +159,49 @@ class SubworkflowsTest(base.EngineTestCase):
 
         self.assertEqual(2, len(db_execs))
 
-        exec2_db = db_execs[0] if db_execs[0].id != exec1_db.id \
-            else db_execs[1]
+        if db_execs[0].id != exec1_db.id:
+            exec2_db = db_execs[0]
+        else:
+            exec2_db = db_execs[1]
 
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_error(exec2_db.id))
 
         # Wait till workflow 'wf2' is completed, its state must be ERROR.
         self._await(lambda: self.is_execution_error(exec1_db.id))
+
+    def test_subworkflow_environment_inheritance(self):
+        env = {'key1': 'abc'}
+        exec1_db = self.engine.start_workflow('my_wb.wf2',
+                                              None,
+                                              environment=env)
+
+        # Execution 1.
+        self.assertIsNotNone(exec1_db)
+        self.assertDictEqual({}, exec1_db.input)
+        self.assertDictEqual({'environment': env}, exec1_db.start_params)
+
+        db_execs = db_api.get_executions()
+
+        self.assertEqual(2, len(db_execs))
+
+        # Execution 2.
+        if db_execs[0].id != exec1_db.id:
+            exec2_db = db_execs[0]
+        else:
+            exec2_db = db_execs[1]
+
+        expected_start_params = {
+            'task_name': 'task2',
+            'parent_task_id': exec2_db.parent_task_id,
+            'environment': env
+        }
+
+        self.assertIsNotNone(exec2_db.parent_task_id)
+        self.assertDictEqual(exec2_db.start_params, expected_start_params)
+
+        # Wait till workflow 'wf1' is completed.
+        self._await(lambda: self.is_execution_success(exec2_db.id))
+
+        # Wait till workflow 'wf2' is completed.
+        self._await(lambda: self.is_execution_success(exec1_db.id))

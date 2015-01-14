@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -83,6 +82,11 @@ class Execution(resource.Resource):
                     val = json.dumps(val)
                 setattr(e, key, val)
 
+        params = d.get('start_params', {})
+
+        if params:
+            setattr(e, 'params', json.dumps(params))
+
         setattr(e, 'workflow_name', d['wf_name'])
 
         return e
@@ -94,6 +98,7 @@ class Execution(resource.Resource):
                    state='SUCCESS',
                    input='{}',
                    output='{}',
+                   params='{"environment": {"k1": "abc", "k2": 123}}',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
 

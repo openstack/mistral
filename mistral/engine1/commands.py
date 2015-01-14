@@ -1,5 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
-# Copyright 2014 - StackStorm, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -260,6 +260,10 @@ class RunTask(EngineCommand):
         wf_input = self.task_db.input
 
         start_params = {'parent_task_id': self.task_db.id}
+
+        if 'environment' in parent_exec_db.start_params:
+            environment = parent_exec_db.start_params['environment']
+            start_params['environment'] = environment
 
         for k, v in wf_input.items():
             if k not in wf_spec.get_input():

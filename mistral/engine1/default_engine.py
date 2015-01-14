@@ -1,6 +1,7 @@
-# Copyright 2014 - Mirantis, Inc.
+# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+#    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -49,6 +50,8 @@ class DefaultEngine(base.Engine):
             "Starting the execution of workflow '%s'"
             % workflow_name
         )
+
+        params = self._canonize_workflow_params(params)
 
         with db_api.transaction():
             wf_db = db_api.get_workflow(workflow_name)
@@ -140,6 +143,23 @@ class DefaultEngine(base.Engine):
     def rollback_workflow(self, execution_id):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
+
+    @staticmethod
+    def _canonize_workflow_params(params):
+
+        # Resolve environment parameter.
+        env = params.get('environment', {})
+
+        if not isinstance(env, dict) and not isinstance(env, basestring):
+            raise ValueError('Unexpected type for environment. '
+                             '[environment=%s]' % str(env))
+
+        if isinstance(env, basestring):
+            env_db = db_api.get_environment(env)
+            env = env_db.variables
+            params['environment'] = env
+
+        return params
 
     @staticmethod
     def _run_local_commands(cmds, exec_db, wf_handler, cause_task_db=None):

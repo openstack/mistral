@@ -27,7 +27,7 @@ from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 
 
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 VARIABLES = {
     'host': 'localhost',
@@ -47,8 +47,8 @@ ENVIRONMENT = {
     'description': 'my test settings',
     'variables': json.dumps(VARIABLES),
     'scope': 'private',
-    'created_at': '2015-01-01 00:00:00',
-    'updated_at': '2015-01-01 00:00:00'
+    'created_at': str(datetime.datetime.utcnow()),
+    'updated_at': str(datetime.datetime.utcnow())
 }
 
 ENVIRONMENT_DB = db.Environment(

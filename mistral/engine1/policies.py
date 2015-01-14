@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +25,7 @@ from mistral.workflow import states
 from mistral.workflow import utils
 
 
+cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'

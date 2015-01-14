@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,6 +14,9 @@
 #    limitations under the License.
 
 import copy
+import datetime
+import uuid
+
 import mock
 from oslo.config import cfg
 
@@ -57,6 +61,36 @@ workflows:
         requires: [task1]
 
 """
+
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+
+ENVIRONMENT = {
+    'id': str(uuid.uuid4()),
+    'name': 'test',
+    'description': 'my test settings',
+    'variables': {
+        'key1': 'abc',
+        'key2': 123
+    },
+    'scope': 'private',
+    'created_at': str(datetime.datetime.utcnow()),
+    'updated_at': str(datetime.datetime.utcnow())
+}
+
+ENVIRONMENT_DB = models.Environment(
+    id=ENVIRONMENT['id'],
+    name=ENVIRONMENT['name'],
+    description=ENVIRONMENT['description'],
+    variables=ENVIRONMENT['variables'],
+    scope=ENVIRONMENT['scope'],
+    created_at=datetime.datetime.strptime(ENVIRONMENT['created_at'],
+                                          DATETIME_FORMAT),
+    updated_at=datetime.datetime.strptime(ENVIRONMENT['updated_at'],
+                                          DATETIME_FORMAT)
+)
+
+MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
+MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 
 # TODO(rakhmerov): Add more advanced tests including various capabilities.
 
@@ -103,6 +137,58 @@ class DefaultEngineTest(base.DbTestCase):
         self._assert_dict_contains_subset(wf_input, task_db.in_context)
         self.assertIn('__execution', task_db.in_context)
         self.assertDictEqual({'output': 'Hey'}, task_db.input)
+
+    def test_start_workflow_with_adhoc_env(self):
+        wf_input = {'param1': '$.__env.key1', 'param2': '$.__env.key2'}
+        env = ENVIRONMENT['variables']
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow(
+            'wb.wf1',
+            wf_input,
+            environment=env,
+            task_name='task2')
+
+        self.assertIsNotNone(exec_db)
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertDictEqual(exec_db.start_params.get('environment', {}), env)
+
+    @mock.patch.object(db_api, "get_environment", MOCK_ENVIRONMENT)
+    def test_start_workflow_with_saved_env(self):
+        wf_input = {'param1': '$.__env.key1', 'param2': '$.__env.key2'}
+        env = ENVIRONMENT['variables']
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow(
+            'wb.wf1',
+            wf_input,
+            environment='test',
+            task_name='task2')
+
+        self.assertIsNotNone(exec_db)
+
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertDictEqual(exec_db.start_params.get('environment', {}), env)
+
+    @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
+    def test_start_workflow_env_not_found(self):
+        self.assertRaises(exc.NotFoundException,
+                          self.engine.start_workflow,
+                          'wb.wf1',
+                          {'param1': '$.__env.key1'},
+                          environment='foo',
+                          task_name='task2')
+
+    def test_start_workflow_with_env_type_error(self):
+        self.assertRaises(ValueError,
+                          self.engine.start_workflow,
+                          'wb.wf1',
+                          {'param1': '$.__env.key1'},
+                          environment=True,
+                          task_name='task2')
 
     def test_start_workflow_missing_parameters(self):
         self.assertRaises(
