@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -669,3 +668,95 @@ def _get_cron_triggers(**kwargs):
     query = b.model_query(models.CronTrigger)
 
     return query.filter_by(**kwargs).all()
+
+
+# Environments.
+
+def get_environment(name):
+    env = _get_environment(name)
+
+    if not env:
+        raise exc.NotFoundException(
+            "Environment not found [environment_name=%s]" % name)
+
+    return env
+
+
+def load_environment(name):
+    return _get_environment(name)
+
+
+def get_environments(**kwargs):
+    return _get_collection_sorted_by_name(models.Environment, **kwargs)
+
+
+@b.session_aware()
+def create_environment(values, session=None):
+    env = models.Environment()
+
+    env.update(values)
+
+    # Default environment to private unless specified.
+    if not getattr(env, 'scope', None):
+        env['scope'] = 'private'
+
+    if context.ctx().project_id:
+        env['project_id'] = context.ctx().project_id
+
+    try:
+        env.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry("Duplicate entry for Environment: %s"
+                                   % e.columns)
+
+    return env
+
+
+@b.session_aware()
+def update_environment(name, values, session=None):
+    env = _get_environment(name)
+
+    if not env:
+        raise exc.NotFoundException(
+            "Environment not found [environment_name=%s]" % name)
+
+    env.update(values)
+
+    # Default environment to private unless specified.
+    if not getattr(env, 'scope', None):
+        env['scope'] = 'private'
+
+    if context.ctx().project_id:
+        env['project_id'] = context.ctx().project_id
+
+    return env
+
+
+@b.session_aware()
+def create_or_update_environment(name, values, session=None):
+    env = _get_environment(name)
+
+    if not env:
+        return create_environment(values)
+    else:
+        return update_environment(name, values)
+
+
+@b.session_aware()
+def delete_environment(name, session=None):
+    env = _get_environment(name)
+
+    if not env:
+        raise exc.NotFoundException(
+            "Environment not found [environment_name=%s]" % name)
+
+    session.delete(env)
+
+
+def _get_environment(name):
+    return _get_db_object_by_name(models.Environment, name)
+
+
+@b.session_aware()
+def delete_environments(**kwargs):
+    return _delete_all(models.Environment, **kwargs)

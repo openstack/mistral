@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -923,6 +922,133 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertIn('CronTrigger ', s)
         self.assertIn("'pattern': '* * * * *'", s)
         self.assertIn("'name': 'trigger1'", s)
+
+
+ENVIRONMENTS = [
+    {
+        'name': 'env1',
+        'description': 'Test Environment #1',
+        'scope': 'private',
+        'variables': {
+            'server': 'localhost',
+            'database': 'test',
+            'timeout': 600,
+            'verbose': True
+        }
+    },
+    {
+        'name': 'env2',
+        'description': 'Test Environment #2',
+        'scope': 'public',
+        'variables': {
+            'server': '127.0.0.1',
+            'database': 'temp',
+            'timeout': 300,
+            'verbose': False
+        }
+    }
+]
+
+
+class EnvironmentTest(SQLAlchemyTest):
+    def setUp(self):
+        super(EnvironmentTest, self).setUp()
+
+        db_api.delete_environments()
+
+    def test_create_and_get_and_load_environment(self):
+        created = db_api.create_environment(ENVIRONMENTS[0])
+
+        fetched = db_api.get_environment(created.name)
+
+        self.assertEqual(created, fetched)
+
+        fetched = db_api.load_environment(created.name)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_environment("not-existing-id"))
+
+    def test_create_environment_duplicate_without_auth(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        db_api.create_environment(ENVIRONMENTS[0])
+
+        self.assertRaises(
+            exc.DBDuplicateEntry,
+            db_api.create_environment,
+            ENVIRONMENTS[0]
+        )
+
+    def test_update_environment(self):
+        created = db_api.create_environment(ENVIRONMENTS[0])
+
+        updated = db_api.update_environment(
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual('my new desc', updated.description)
+
+        fetched = db_api.get_environment(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_create_or_update_environment(self):
+        name = 'not-existing-id'
+
+        self.assertIsNone(db_api.load_environment(name))
+
+        created = db_api.create_or_update_environment(name, ENVIRONMENTS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.name)
+
+        updated = db_api.create_or_update_environment(
+            created.name,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual('my new desc', updated.description)
+        self.assertEqual(
+            'my new desc',
+            db_api.load_environment(updated.name).description
+        )
+
+        fetched = db_api.get_environment(created.name)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_environments(self):
+        created0 = db_api.create_environment(ENVIRONMENTS[0])
+        created1 = db_api.create_environment(ENVIRONMENTS[1])
+
+        fetched = db_api.get_environments()
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_delete_environment(self):
+        created = db_api.create_environment(ENVIRONMENTS[0])
+
+        fetched = db_api.get_environment(created.name)
+
+        self.assertEqual(created, fetched)
+
+        db_api.delete_environment(created.name)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_environment,
+            created.name
+        )
+
+    def test_environment_repr(self):
+        s = db_api.create_environment(ENVIRONMENTS[0]).__repr__()
+
+        self.assertIn('Environment ', s)
+        self.assertIn("'description': 'Test Environment #1'", s)
+        self.assertIn("'name': 'env1'", s)
 
 
 class TXTest(SQLAlchemyTest):

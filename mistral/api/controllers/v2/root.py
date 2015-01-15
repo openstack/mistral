@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -21,6 +20,7 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action
 from mistral.api.controllers.v2 import cron_trigger
+from mistral.api.controllers.v2 import environment
 from mistral.api.controllers.v2 import execution
 from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import workbook
@@ -49,6 +49,7 @@ class Controller(object):
     executions = execution.ExecutionsController()
     tasks = task.TasksController()
     cron_triggers = cron_trigger.CronTriggersController()
+    environments = environment.EnvironmentController()
 
     @wsme_pecan.wsexpose(RootResource)
     def index(self):
