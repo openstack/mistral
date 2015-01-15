@@ -22,6 +22,8 @@ import sqlalchemy as sa
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
 
+from mistral.db import v2 as db_base
+
 
 def _generate_unicode_uuid():
     return unicode(str(uuid.uuid4()))
@@ -68,6 +70,13 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
     def __repr__(self):
         return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
+
+
+class MistralSecureModelMixin(object):
+    """Mixin adding model properties related to security."""
+
+    scope = sa.Column(sa.String(80), default="private")
+    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
 
 
 def datetime_to_str(dct, attr_name):

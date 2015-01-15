@@ -37,9 +37,13 @@ def update_actions(definition, scope='private'):
 
     with db_api.transaction():
         for action_spec in action_list_spec.get_actions():
-            db_actions.append(create_or_update_action(action_spec,
-                                                      definition,
-                                                      scope))
+            db_actions.append(
+                create_or_update_action(
+                    action_spec,
+                    definition,
+                    scope
+                )
+            )
 
     return db_actions
 
@@ -76,6 +80,6 @@ def _get_action_values(action_spec, definition, scope):
         'scope': scope
     }
 
-    security.add_security_info(values, scope)
+    security.add_project_id(values, scope)
 
     return values

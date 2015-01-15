@@ -70,7 +70,8 @@ def _get_workflow_values(wf_spec, definition, scope):
         'scope': scope
     }
 
-    security.add_security_info(values, scope)
+    security.add_project_id(values, scope)
+    security.add_trust_id(values)
 
     return values
 

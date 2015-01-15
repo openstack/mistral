@@ -75,9 +75,15 @@ def delete_trust(workbook):
     keystone_client.trusts.delete(workbook.trust_id)
 
 
-def add_security_info(secure_object_values, scope='private'):
+def add_project_id(secure_object_values, scope='private'):
     if cfg.CONF.pecan.auth_enable and scope == 'private':
         secure_object_values.update({
-            'trust_id': create_trust().id,
             'project_id': context.ctx().project_id
+        })
+
+
+def add_trust_id(secure_object_values):
+    if cfg.CONF.pecan.auth_enable:
+        secure_object_values.update({
+            'trust_id': create_trust().id
         })

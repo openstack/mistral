@@ -22,7 +22,7 @@ from mistral.workbook import parser as spec_parser
 
 
 def create_workbook_v1(values, scope='private'):
-    security.add_security_info(values, scope)
+    security.add_project_id(values, scope)
 
     return db_api_v1.workbook_create(values)
 
@@ -83,7 +83,6 @@ def _create_or_update_actions(wb_db, actions_spec):
                 'spec': action_spec.to_dict(),
                 'is_system': False,
                 'scope': wb_db.scope,
-                'trust_id': wb_db.trust_id,
                 'project_id': wb_db.project_id
             }
 
@@ -99,9 +98,10 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'name': wf_name,
                 'spec': wf_spec.to_dict(),
                 'scope': wb_db.scope,
-                'trust_id': wb_db.trust_id,
                 'project_id': wb_db.project_id
             }
+
+            security.add_trust_id(values)
 
             db_api_v2.create_or_update_workflow(wf_name, values)
 
@@ -115,6 +115,6 @@ def _get_workbook_values(wb_spec, definition, scope):
         'scope': scope
     }
 
-    security.add_security_info(values, scope)
+    security.add_project_id(values, scope)
 
     return values
