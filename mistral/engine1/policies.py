@@ -54,7 +54,8 @@ def get_policy_factories():
         build_wait_after_policy,
         build_retry_policy,
         build_timeout_policy,
-        build_pause_before_policy
+        build_pause_before_policy,
+        build_concurrency_policy
     ]
 
 
@@ -124,6 +125,16 @@ def build_pause_before_policy(policies_spec):
 
     return (PauseBeforePolicy(pause_before_policy)
             if pause_before_policy else None)
+
+
+def build_concurrency_policy(policies_spec):
+    if not policies_spec:
+        return None
+
+    concurrency_policy = policies_spec.get_concurrency()
+
+    return (ConcurrencyPolicy(concurrency_policy)
+            if concurrency_policy else None)
 
 
 def _ensure_context_has_key(runtime_context, key):
@@ -324,12 +335,28 @@ class PauseBeforePolicy(base.TaskPolicy):
             return
 
         WF_TRACE.info(
-            "Worflow paused before task '%s' [%s -> %s]" %
+            "Workflow paused before task '%s' [%s -> %s]" %
             (task_db.name, task_db.execution.state, states.PAUSED)
         )
 
         task_db.execution.state = states.PAUSED
         task_db.state = states.IDLE
+
+
+class ConcurrencyPolicy(base.TaskPolicy):
+    def __init__(self, concurrency):
+        self.concurrency = concurrency
+
+    def before_task_start(self, task_db, task_spec):
+        context_key = 'concurrency'
+
+        runtime_context = _ensure_context_has_key(
+            task_db.runtime_context,
+            context_key
+        )
+
+        runtime_context[context_key] = self.concurrency
+        task_db.runtime_context = runtime_context
 
 
 def fail_task_if_incomplete(task_id, timeout):
