@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -34,6 +33,7 @@ EXEC_DB = models.Execution(
     state=states.RUNNING,
     input={'foo': 'bar'},
     output={},
+    start_params={'environment': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )
@@ -42,6 +42,7 @@ EXEC = {
     'id': '123',
     'input': '{"foo": "bar"}',
     'output': '{}',
+    'params': '{"environment": {"k1": "abc"}}',
     'state': 'RUNNING',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
@@ -109,7 +110,8 @@ class TestExecutionsController(base.FunctionalTest):
 
         f.assert_called_once_with(
             exec_dict['workflow_name'],
-            exec_dict['input']
+            exec_dict['input'],
+            **exec_dict['params']
         )
 
     @mock.patch.object(rpc.EngineClient, 'start_workflow', MOCK_ACTION_EXC)
