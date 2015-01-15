@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -84,9 +83,10 @@ def _evaluate_upstream_context(upstream_db_tasks):
     return ctx
 
 
-def evaluate_task_output(task_spec, raw_result):
+def evaluate_task_output(task_db, task_spec, raw_result):
     """Evaluates task output given a raw task result from action/workflow.
 
+    :param task_db: DB task
     :param task_spec: Task specification
     :param raw_result: Raw task result that comes from action/workflow
         (before publisher). Instance of mistral.workflow.base.TaskResult
@@ -94,8 +94,13 @@ def evaluate_task_output(task_spec, raw_result):
     """
     publish_dict = task_spec.get_publish()
 
-    # Evaluate 'publish' clause using raw result as a context.
-    output = expr.evaluate_recursively(publish_dict, raw_result.data) or {}
+    # Combine the raw result with the environment variables as the context
+    # for evaulating the 'publish' clause.
+    out_context = copy.deepcopy(raw_result.data) or {}
+    if (task_db.in_context and '__env' in task_db.in_context and
+            isinstance(out_context, dict)):
+        out_context['__env'] = task_db.in_context['__env']
+    output = expr.evaluate_recursively(publish_dict, out_context) or {}
 
     # Add same result to task output under key 'task'.
     output['task'] = {
@@ -168,5 +173,18 @@ def add_execution_to_context(exec_db, context):
         'start_params': exec_db.start_params,
         'input': exec_db.input
     }
+
+    return context
+
+
+def add_environment_to_context(exec_db, context):
+    if context is None:
+        context = {}
+
+    # If env variables are provided, add an evaluated copy into the context.
+    if 'environment' in exec_db.start_params:
+        env = copy.deepcopy(exec_db.start_params['environment'])
+        # An env variable can be an expression of other env variables.
+        context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 
     return context

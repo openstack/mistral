@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -210,3 +209,26 @@ class ExpressionsTest(base.BaseTest):
             },
             applied
         )
+
+    def test_evaluate_recursively_environment(self):
+        environment = {
+            'host': 'vm1234.example.com',
+            'db': 'test',
+            'timeout': 600,
+            'verbose': True,
+            '__actions': {
+                'std.sql': {
+                    'conn': 'mysql://admin:secrete@{$.__env.host}/{$.__env.db}'
+                }
+            }
+        }
+
+        context = {
+            '__env': environment
+        }
+
+        defaults = context['__env']['__actions']['std.sql']
+        applied = expr.evaluate_recursively(defaults, context)
+        expected = 'mysql://admin:secrete@vm1234.example.com/test'
+
+        self.assertEqual(applied['conn'], expected)
