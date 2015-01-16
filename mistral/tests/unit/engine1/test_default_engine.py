@@ -97,7 +97,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual('task1', task_db.name)
         self.assertEqual(states.RUNNING, task_db.state)
         self.assertIsNotNone(task_db.spec)
-        self.assertIsNone(task_db.runtime_context)
+        self.assertDictEqual({}, task_db.runtime_context)
 
         # Data Flow properties.
         self._assert_dict_contains_subset(wf_input, task_db.in_context)
@@ -145,7 +145,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual('task1', task_db.name)
         self.assertEqual(states.RUNNING, task_db.state)
         self.assertIsNotNone(task_db.spec)
-        self.assertIsNone(task_db.runtime_context)
+        self.assertDictEqual({}, task_db.runtime_context)
         self._assert_dict_contains_subset(wf_input, task_db.in_context)
         self.assertIn('__execution', task_db.in_context)
         self.assertDictEqual({'output': 'Hey'}, task_db.input)

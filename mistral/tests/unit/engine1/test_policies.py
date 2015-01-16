@@ -309,7 +309,7 @@ class PoliciesTest(base.EngineTestCase):
         task_db = exec_db.tasks[0]
 
         self.assertEqual(states.RUNNING, task_db.state)
-        self.assertIsNone(task_db.runtime_context)
+        self.assertDictEqual({}, task_db.runtime_context)
 
         self._await(
             lambda: self.is_task_delayed(task_db.id),
@@ -328,7 +328,7 @@ class PoliciesTest(base.EngineTestCase):
         task_db = exec_db.tasks[0]
 
         self.assertEqual(states.RUNNING, task_db.state)
-        self.assertIsNone(task_db.runtime_context)
+        self.assertDictEqual({}, task_db.runtime_context)
 
         self._await(
             lambda: self.is_task_delayed(task_db.id),

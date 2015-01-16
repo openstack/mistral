@@ -89,6 +89,59 @@ def get_output(task_db, task_spec, raw_result):
     return task_output
 
 
+def _get_context(task_db):
+    return task_db.runtime_context['with_items']
+
+
+def get_count(task_db):
+    return _get_context(task_db)['count']
+
+
+def get_index(task_db):
+    return _get_context(task_db)['index']
+
+
+def get_concurrency_spec(task_spec):
+    policies = task_spec.get_policies()
+
+    if policies:
+        return policies.get_concurrency()
+
+
+def get_indexes_for_loop(task_db, task_spec):
+    concurrency_spec = get_concurrency_spec(task_spec)
+    concurrency = task_db.runtime_context['concurrency']
+    index = get_index(task_db)
+
+    number_to_execute = (get_count(task_db) - index
+                         if not concurrency_spec else concurrency)
+
+    return index, index + number_to_execute
+
+
+def do_step(task_db):
+    with_items_context = _get_context(task_db)
+
+    if with_items_context['capacity'] > 0:
+        with_items_context['capacity'] -= 1
+    with_items_context['index'] += 1
+
+    task_db.runtime_context.update({'with_items': with_items_context})
+
+
+def prepare_runtime_context(task_db, task_spec):
+    runtime_context = task_db.runtime_context
+    with_items_spec = task_spec.get_with_items()
+
+    if with_items_spec:
+        # Prepare current indexes and parallel limitation.
+        runtime_context['with_items'] = {
+            'capacity': get_concurrency_spec(task_spec),
+            'index': 0,
+            'count': len(task_db.input[with_items_spec.keys()[0]])
+        }
+
+
 def calc_input(with_items_input):
     """Calculate action input collection for separating each action input.
 
@@ -150,15 +203,7 @@ def _get_output_key(task_spec):
             if task_spec.get_publish() else None)
 
 
-def is_iteration_incomplete(task_db, task_spec):
-    with_items_spec = task_spec.get_with_items()
-    main_key = with_items_spec.keys()[0]
-    iterations_count = len(task_db.input[main_key])
-    output_key = _get_output_key(task_spec)
-
-    if output_key:
-        index = len(task_db.output['task'][task_db.name][output_key])
-    else:
-        index = len(task_db.output['task'][task_db.name])
-
-    return True if index < iterations_count else False
+def is_iterations_incomplete(task_db):
+    if get_index(task_db) < get_count(task_db):
+        return True
+    return False

@@ -23,6 +23,7 @@ from mistral.openstack.common import log as logging
 from mistral.services import security
 from mistral import utils
 from mistral.workflow import utils as wf_utils
+from mistral.workflow import with_items
 
 
 LOG = logging.getLogger(__name__)
@@ -62,6 +63,14 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
         task_spec,
         task_db.in_context
     )
+
+    _prepare_runtime_context(task_db, task_spec)
+
+
+def _prepare_runtime_context(task_db, task_spec):
+    task_db.runtime_context = task_db.runtime_context or {}
+
+    with_items.prepare_runtime_context(task_db, task_spec)
 
 
 def evaluate_task_input(task_spec, context):
