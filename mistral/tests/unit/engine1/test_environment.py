@@ -21,6 +21,7 @@ from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
 
+
 LOG = logging.getLogger(__name__)
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -33,38 +34,47 @@ TARGET = '10.1.15.251'
 WORKBOOK = """
 ---
 version: '2.0'
+
 name: my_wb
+
 workflows:
   wf1:
     type: reverse
+
     input:
       - param1
       - param2
+
     output:
       final_result: $.final_result
+
     tasks:
       task1:
         action: std.echo output='{$.param1}'
         target: $.__env.var1
         publish:
           result1: $
+
       task2:
+        requires: [task1]
         action: std.echo output="'{$.result1} & {$.param2}'"
         target: $.__env.var1
         publish:
           final_result: $
-        requires: [task1]
+
   wf2:
     type: direct
+
     output:
       slogan: $.slogan
+
     tasks:
       task1:
         workflow: wf1
         input:
-            param1: $.__env.var2
-            param2: $.__env.var3
-            task_name: "task2"
+          param1: $.__env.var2
+          param2: $.__env.var3
+          task_name: task2
         publish:
           slogan: "{$.final_result} is a cool {$.__env.var4}!"
 """
@@ -94,9 +104,11 @@ class SubworkflowsTest(base.EngineTestCase):
 
     @mock.patch.object(rpc.ExecutorClient, 'run_action', MOCK_RUN_AT_TARGET)
     def _test_subworkflow(self, env):
-        exec1_db = self.engine.start_workflow('my_wb.wf2',
-                                              None,
-                                              environment=env)
+        exec1_db = self.engine.start_workflow(
+            'my_wb.wf2',
+            None,
+            environment=env
+        )
 
         # Execution 1.
         self.assertIsNotNone(exec1_db)
@@ -148,13 +160,18 @@ class SubworkflowsTest(base.EngineTestCase):
 
         # Check if target is resolved.
         tasks_exec2 = db_api.get_tasks(execution_id=exec2_db.id)
-        self._assert_single_item(tasks_exec2, name="task1")
-        self._assert_single_item(tasks_exec2, name="task2")
+
+        self._assert_single_item(tasks_exec2, name='task1')
+        self._assert_single_item(tasks_exec2, name='task2')
 
         for task in tasks_exec2:
             rpc.ExecutorClient.run_action.assert_any_call(
-                task.id, 'mistral.actions.std_actions.EchoAction', {},
-                task.input, TARGET)
+                task.id,
+                'mistral.actions.std_actions.EchoAction',
+                {},
+                task.input,
+                TARGET
+            )
 
     def test_subworkflow_env_task_input(self):
         env = {
