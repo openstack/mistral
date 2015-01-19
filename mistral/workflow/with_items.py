@@ -88,13 +88,33 @@ def get_output(task_db, task_spec, raw_result):
     return task_output
 
 
-def calc_input(action_input):
-    # In case of with-items iterate over action_input and send
-    # each part of data to executor.
-    # Calculate action input collection for separating input.
+def calc_input(with_items_input):
+    """Calculate action input collection for separating each action input.
+
+    Example:
+      DSL:
+        with_items:
+          - itemX in $.arrayI
+          - itemY in $.arrayJ
+
+      Assume arrayI = [1, 2], arrayJ = ['a', 'b'].
+      with_items_input = {
+        "itemX": [1, 2],
+        "itemY": ['a', 'b']
+      }
+
+      Then we get separated input:
+      action_input_collection = [
+        {'itemX': 1, 'itemY': 'a'},
+        {'itemX': 2, 'itemY': 'b'}
+      ]
+
+    :param with_items_input: Dict containing mapped variables to their arrays.
+    :return: list containing dicts of each action input.
+    """
     action_input_collection = []
 
-    for key, value in action_input.items():
+    for key, value in with_items_input.items():
         for index, item in enumerate(value):
             iter_context = {key: item}
 

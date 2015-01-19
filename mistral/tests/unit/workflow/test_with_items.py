@@ -74,20 +74,44 @@ class WithItemsCalculationsTest(base.BaseTest):
         )
 
     def test_calculate_input(self):
-        a_input = {
+        with_items_input = {
             'name_info': [
                 {'name': 'John'},
                 {'name': 'Ivan'},
                 {'name': 'Mistral'}
             ]
         }
-        action_input_collection = with_items.calc_input(a_input)
+        action_input_collection = with_items.calc_input(with_items_input)
 
         self.assertListEqual(
             [
                 {'name_info': {'name': 'John'}},
                 {'name_info': {'name': 'Ivan'}},
                 {'name_info': {'name': 'Mistral'}}
+            ],
+            action_input_collection
+        )
+
+    def test_calculate_input_multiple_array(self):
+        with_items_input = {
+            'name_info': [
+                {'name': 'John'},
+                {'name': 'Ivan'},
+                {'name': 'Mistral'}
+            ],
+            'server_info': [
+                'server1',
+                'server2',
+                'server3'
+            ]
+        }
+        action_input_collection = with_items.calc_input(with_items_input)
+
+        self.assertListEqual(
+            [
+                {'name_info': {'name': 'John'}, 'server_info': 'server1'},
+                {'name_info': {'name': 'Ivan'}, 'server_info': 'server2'},
+                {'name_info': {'name': 'Mistral'}, 'server_info': 'server3'},
             ],
             action_input_collection
         )
