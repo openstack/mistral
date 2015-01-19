@@ -21,6 +21,7 @@ import datetime
 from oslo.config import cfg
 
 from mistral import context as auth_context
+from mistral.db import v2 as db_base
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.tests import base as test_base
@@ -330,6 +331,12 @@ class WorkflowTest(SQLAlchemyTest):
     def test_get_workflows(self):
         created0 = db_api.create_workflow(WORKFLOWS[0])
         created1 = db_api.create_workflow(WORKFLOWS[1])
+
+        fetched0 = db_api.load_workflow(created0.name)
+        fetched1 = db_api.load_workflow(created1.name)
+
+        self.assertEqual(db_base.get_project_id(), fetched0.project_id)
+        self.assertEqual(db_base.get_project_id(), fetched1.project_id)
 
         fetched = db_api.get_workflows()
 

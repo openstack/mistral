@@ -1,4 +1,4 @@
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,7 @@ from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 
 
-class Workbook(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class Workbook(mb.MistralSecureModelBase):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks_v2'
@@ -38,7 +38,7 @@ class Workbook(mb.MistralModelBase, mb.MistralSecureModelMixin):
     tags = sa.Column(st.JsonListType())
 
 
-class Workflow(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class Workflow(mb.MistralSecureModelBase):
     """Contains info about workflow (including definition in Mistral DSL)."""
 
     __tablename__ = 'workflows_v2'
@@ -56,7 +56,7 @@ class Workflow(mb.MistralModelBase, mb.MistralSecureModelMixin):
     trust_id = sa.Column(sa.String(80))
 
 
-class Execution(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class Execution(mb.MistralSecureModelBase):
     """Contains workflow execution information."""
 
     __tablename__ = 'executions_v2'
@@ -74,7 +74,7 @@ class Execution(mb.MistralModelBase, mb.MistralSecureModelMixin):
     parent_task_id = sa.Column(sa.String(36))
 
 
-class Task(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class Task(mb.MistralSecureModelBase):
     """Contains task runtime information."""
 
     __tablename__ = 'tasks_v2'
@@ -127,7 +127,7 @@ class DelayedCall(mb.MistralModelBase):
     execution_time = sa.Column(sa.DateTime, nullable=False)
 
 
-class Action(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class Action(mb.MistralSecureModelBase):
     """Contains info about registered Actions."""
 
     __tablename__ = 'actions_v2'
@@ -153,7 +153,7 @@ class Action(mb.MistralModelBase, mb.MistralSecureModelMixin):
     is_system = sa.Column(sa.Boolean())
 
 
-class Environment(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class Environment(mb.MistralSecureModelBase):
     """Contains environment variables for workflow execution."""
 
     __tablename__ = 'environments_v2'
@@ -175,7 +175,7 @@ def _calc_workflow_input_hash(context):
     return hashlib.sha256(json.dumps(sorted(d.items()))).hexdigest()
 
 
-class CronTrigger(mb.MistralModelBase, mb.MistralSecureModelMixin):
+class CronTrigger(mb.MistralSecureModelBase):
     """Contains info about cron triggers."""
 
     __tablename__ = 'cron_triggers_v2'
@@ -208,3 +208,7 @@ class CronTrigger(mb.MistralModelBase, mb.MistralSecureModelMixin):
         mb.datetime_to_str(d, 'next_execution_time')
 
         return d
+
+
+# Register all hooks related to secure models.
+mb.register_secure_model_hooks()

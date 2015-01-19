@@ -17,6 +17,10 @@ from oslo.config import cfg
 from mistral import context as auth_context
 
 
+# Make sure to import 'auth_enable' option before using it.
+cfg.CONF.import_opt('auth_enable', 'mistral.config', group='pecan')
+
+
 CONF = cfg.CONF
 DEFAULT_PROJECT_ID = "<default-project>"
 
