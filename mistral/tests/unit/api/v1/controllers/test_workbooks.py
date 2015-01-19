@@ -79,8 +79,6 @@ class TestWorkbooksController(base.FunctionalTest):
 
     @mock.patch.object(db_api, "workbook_create",
                        mock.MagicMock(side_effect=exceptions.DBDuplicateEntry))
-    @mock.patch("mistral.services.security.add_project_id",
-                mock.MagicMock(return_value=None))
     def test_post_dup(self):
         resp = self.app.post_json('/v1/workbooks', WORKBOOKS[0],
                                   expect_errors=True)
