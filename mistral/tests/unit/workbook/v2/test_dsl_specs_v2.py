@@ -103,14 +103,16 @@ workflows:
         action: std.echo output="Task 6 echo"
 
       task7:
-        with-items:
-          vm_info: $.vms
+        with-items: vm_info in $.vms
         workflow: wf2 is_true=true object_list=[1, null, "str"]
         on-complete:
           - task9
           - task10
 
       task8:
+        with-items:
+         - itemX in $.arrayI
+         - itemY in $.arrayJ
         workflow: wf2 expr_list=["$.value", "{$.key}"] expr={$.value}
         target: nova
         on-complete:
@@ -150,7 +152,7 @@ workflows:
       task1:
         action: std.echo output="Hey!"
         with-items:
-          vms: 3
+          - vms 3
 
 """
 
@@ -318,6 +320,11 @@ class DSLv2ModelTest(base.BaseTest):
         task8_spec = wf2_spec.get_tasks().get('task8')
 
         self.assertEqual(
+            {"itemX": '$.arrayI', "itemY": '$.arrayJ'},
+            task8_spec.get_with_items()
+        )
+
+        self.assertEqual(
             {
                 'expr_list': ['$.value', '{$.key}'],
                 'expr': '{$.value}',
@@ -367,7 +374,7 @@ class DSLv2ModelTest(base.BaseTest):
             spec_parser.get_workbook_spec_from_yaml,
             INVALID_WB
         )
-        self.assertIn("with-items", str(exc))
+        self.assertIn("Wrong format of 'with-items'", str(exc))
 
     def test_to_dict(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)

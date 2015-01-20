@@ -12,12 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import re
 import six
 
 from mistral import exceptions as exc
 from mistral import utils
 from mistral.workbook import base
 from mistral.workbook.v2 import task_policies
+
+
+WITH_ITEMS_PTRN = re.compile("\s*([\w\d_\-]+)\s*in\s*(\[.+\]|\$\..+)")
 
 
 class TaskSpec(base.BaseSpec):
@@ -32,7 +36,7 @@ class TaskSpec(base.BaseSpec):
             "action": {"type": ["string", "null"]},
             "workflow": {"type": ["string", "null"]},
             "input": {"type": ["object", "null"]},
-            "with-items": {"type": ["object", "null"]},
+            "with-items": {"type": ["string", "array", "null"]},
             "publish": {"type": ["object", "null"]},
             "policies": {"type": ["object", "null"]},
             "target": {"type": ["string", "null"]},
@@ -56,7 +60,7 @@ class TaskSpec(base.BaseSpec):
         self._action = data.get('action')
         self._workflow = data.get('workflow')
         self._input = data.get('input', {})
-        self._with_items = data.get('with-items', {})
+        self._with_items = self._transform_with_items()
         self._publish = data.get('publish', {})
         self._policies = self._spec_property(
             'policies',
@@ -89,14 +93,32 @@ class TaskSpec(base.BaseSpec):
                    " specified both: %s" % self._data)
             raise exc.InvalidModelException(msg)
 
-        with_items = self._data.get('with-items')
+        self._transform_with_items()
 
-        if with_items:
-            for _, v in with_items.iteritems():
-                if not isinstance(v, (list, six.string_types)):
-                    msg = ("Items of task property 'with-items' can only be "
-                           "a list or an expression string: %s" % self._data)
-                    raise exc.InvalidModelException(msg)
+    def _transform_with_items(self):
+        raw = self._data.get('with-items', [])
+        with_items = {}
+
+        if isinstance(raw, six.string_types):
+            raw = [raw]
+
+        for item in raw:
+            if not isinstance(item, six.string_types):
+                raise exc.InvalidModelException("'with-items' elements should"
+                                                " be strings: %s" % self._data)
+
+            match = re.match(WITH_ITEMS_PTRN, item)
+
+            if not match:
+                msg = ("Wrong format of 'with-items' property. Please use "
+                       "format 'var in {[some, list] | $.array}: "
+                       "%s" % self._data)
+                raise exc.InvalidModelException(msg)
+
+            var_name, array = match.groups()
+            with_items[var_name] = array
+
+        return with_items
 
     def _process_action_and_workflow(self):
         params = {}
