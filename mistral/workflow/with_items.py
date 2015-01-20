@@ -14,6 +14,7 @@
 
 import copy
 
+from mistral import exceptions as exc
 from mistral import expressions as expr
 
 
@@ -112,6 +113,8 @@ def calc_input(with_items_input):
     :param with_items_input: Dict containing mapped variables to their arrays.
     :return: list containing dicts of each action input.
     """
+    validate_input(with_items_input)
+
     action_input_collection = []
 
     for key, value in with_items_input.items():
@@ -124,6 +127,22 @@ def calc_input(with_items_input):
                 action_input_collection[index].update(iter_context)
 
     return action_input_collection
+
+
+def validate_input(with_items_input):
+    # Take only mapped values and check them.
+    values = with_items_input.values()
+
+    if not all([isinstance(v, list) for v in values]):
+        raise exc.InputException(
+            "Wrong input format for: %s. List type is"
+            " expected for each value." % with_items_input)
+
+    required_len = len(values[0])
+    if not all(len(v) == required_len for v in values):
+        raise exc.InputException(
+            "Wrong input format for: %s. All arrays must"
+            " have the same length." % with_items_input)
 
 
 def _get_output_key(task_spec):

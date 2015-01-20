@@ -89,6 +89,10 @@ class WorkflowInputException(MistralException):
     http_code = 400
 
 
+class InputException(MistralException):
+    http_code = 400
+
+
 class ApplicationContextNotFoundException(MistralException):
     http_code = 400
     message = "Application context not found"
