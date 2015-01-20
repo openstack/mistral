@@ -87,6 +87,8 @@ class WorkbookTest(SQLAlchemyTest):
     def test_update_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_workbook(
             created.name,
             {'definition': 'my new definition'}
@@ -97,6 +99,7 @@ class WorkbookTest(SQLAlchemyTest):
         fetched = db_api.get_workbook(created['name'])
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_workbook(self):
         name = WORKBOOKS[0]['name']
@@ -285,6 +288,8 @@ class WorkflowTest(SQLAlchemyTest):
     def test_update_workflow(self):
         created = db_api.create_workflow(WORKFLOWS[0])
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_workflow(
             created['name'],
             {'definition': 'my new definition'}
@@ -295,6 +300,7 @@ class WorkflowTest(SQLAlchemyTest):
         fetched = db_api.get_workflow(created.name)
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_workflow(self):
         name = WORKFLOWS[0]['name']
@@ -450,6 +456,8 @@ class ExecutionTest(SQLAlchemyTest):
     def test_update_execution(self):
         created = db_api.create_execution(EXECUTIONS[0])
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_execution(created.id, {'state': 'RUNNING'})
 
         self.assertEqual('RUNNING', updated.state)
@@ -461,6 +469,7 @@ class ExecutionTest(SQLAlchemyTest):
         fetched = db_api.get_execution(created.id)
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_execution(self):
         id = 'not-existing-id'
@@ -584,16 +593,19 @@ class TaskTest(SQLAlchemyTest):
 
         created = db_api.create_task(values)
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_task(
             created.id,
-            {'description': 'my new desc'}
+            {'wf_name': 'new_wf'}
         )
 
-        self.assertEqual('my new desc', updated.description)
+        self.assertEqual('new_wf', updated.wf_name)
 
         fetched = db_api.get_task(created.id)
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_task(self):
         id = 'not-existing-id'
@@ -729,6 +741,8 @@ class ActionTest(SQLAlchemyTest):
     def test_update_action(self):
         created = db_api.create_action(ACTIONS[0])
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_action(
             created.name,
             {'description': 'my new desc'}
@@ -739,6 +753,7 @@ class ActionTest(SQLAlchemyTest):
         fetched = db_api.get_action(created.name)
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_action(self):
         name = 'not-existing-id'
@@ -859,6 +874,8 @@ class CronTriggerTest(SQLAlchemyTest):
     def test_update_cron_trigger(self):
         created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_cron_trigger(
             created.name,
             {'pattern': '*/1 * * * *'}
@@ -869,6 +886,7 @@ class CronTriggerTest(SQLAlchemyTest):
         fetched = db_api.get_cron_trigger(created.name)
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_cron_trigger(self):
         name = 'not-existing-id'
@@ -982,6 +1000,8 @@ class EnvironmentTest(SQLAlchemyTest):
     def test_update_environment(self):
         created = db_api.create_environment(ENVIRONMENTS[0])
 
+        self.assertIsNone(created.updated_at)
+
         updated = db_api.update_environment(
             created.name,
             {'description': 'my new desc'}
@@ -992,6 +1012,7 @@ class EnvironmentTest(SQLAlchemyTest):
         fetched = db_api.get_environment(created.name)
 
         self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_environment(self):
         name = 'not-existing-id'
