@@ -101,6 +101,6 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         self.assertEqual('SUCCESS', execution['state'])
 
         output = json.loads(final_task['output'])
-        _, image = self.images_client.get_image(output['image_id'])
+        image = self.images_client.get_image(output['image_id'])
 
         self.assertEqual(output['image_name'], image['name'])

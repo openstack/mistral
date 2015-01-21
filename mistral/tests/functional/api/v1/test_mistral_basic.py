@@ -15,8 +15,8 @@
 import json
 import uuid
 
-from tempest import exceptions
 from tempest import test
+from tempest_lib import exceptions
 
 from mistral.tests.functional import base
 

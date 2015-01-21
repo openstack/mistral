@@ -19,10 +19,11 @@ import time
 
 from tempest import auth
 from tempest import clients
-from tempest.common import rest_client
 from tempest import config
-from tempest import exceptions
-import tempest.test
+from tempest import test as test
+from tempest_lib.common import rest_client
+from tempest_lib import exceptions
+
 
 CONF = config.CONF
 
@@ -304,7 +305,7 @@ class AuthProv(auth.KeystoneV2AuthProvider):
         return ''
 
 
-class TestCase(tempest.test.BaseTestCase):
+class TestCase(test.BaseTestCase):
 
     @classmethod
     def setUpClass(cls):
