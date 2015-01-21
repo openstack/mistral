@@ -195,7 +195,7 @@ class DefaultEngine(base.Engine):
             'parent_task_id': params.get('parent_task_id'),
         })
 
-        data_flow.add_openstack_data_to_context(wf_db, exec_db.context)
+        data_flow.add_openstack_data_to_context(exec_db.context)
         data_flow.add_execution_to_context(exec_db, exec_db.context)
         data_flow.add_environment_to_context(exec_db, exec_db.context)
 

@@ -39,7 +39,6 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v1(self, ctx):
-
         for t in triggers.get_next_triggers_v1():
             LOG.debug("Processing cron trigger %s" % t)
             # Setup admin context before schedule triggers.
@@ -68,7 +67,6 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
-
         for t in triggers.get_next_cron_triggers():
             LOG.debug("Processing cron trigger: %s" % t)
             # Setup admin context before schedule triggers.

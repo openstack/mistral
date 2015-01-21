@@ -17,6 +17,7 @@ import datetime
 
 from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
+from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
 
@@ -98,6 +99,8 @@ def create_cron_trigger(name, pattern, workflow_name, workflow_input,
             'workflow_input': workflow_input,
             'scope': 'private'
         }
+
+        security.add_trust_id(values)
 
         trig = db_api_v2.create_cron_trigger(values)
 
