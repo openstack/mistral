@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import sys
-
 import eventlet
 from oslo.config import cfg
 from oslo import messaging
@@ -27,14 +25,6 @@ from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workflow import states
 
-
-eventlet.monkey_patch(
-    os=True,
-    select=True,
-    socket=True,
-    thread=False if '--use-debugger' in sys.argv else True,
-    time=True
-)
 
 LOG = logging.getLogger(__name__)
 

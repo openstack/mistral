@@ -45,7 +45,7 @@ ENVIRONMENT = {
     'id': str(uuid.uuid4()),
     'name': 'test',
     'description': 'my test settings',
-    'variables': json.dumps(VARIABLES),
+    'variables': VARIABLES,
     'scope': 'private',
     'created_at': str(datetime.datetime.utcnow()),
     'updated_at': str(datetime.datetime.utcnow())
@@ -81,34 +81,50 @@ MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
 
+def _convert_vars_to_dict(env_dict):
+    """Converts 'variables' in the given environment dict into dictionary."""
+    if ('variables' in env_dict and
+            isinstance(env_dict.get('variables'), basestring)):
+        env_dict['variables'] = json.loads(env_dict['variables'])
+
+    return env_dict
+
+
+def _convert_vars_to_string(env_dict):
+    """Converts 'variables' in the given environment dict into string."""
+    if ('variables' in env_dict and
+            isinstance(env_dict.get('variables'), dict)):
+        env_dict['variables'] = json.dumps(env_dict['variables'])
+
+    return env_dict
+
+
 class TestEnvironmentController(base.FunctionalTest):
 
-    def _assert_dict_equal(self, actual, expected):
-        self.assertIsInstance(actual, dict)
+    def _assert_dict_equal(self, expected, actual):
         self.assertIsInstance(expected, dict)
+        self.assertIsInstance(actual, dict)
 
-        if (actual.get('variables') and
-                isinstance(actual.get('variables'), basestring)):
-            actual['variables'] = json.loads(actual['variables'])
+        _convert_vars_to_dict(expected)
+        _convert_vars_to_dict(actual)
 
-        if (expected.get('variables') and
-                isinstance(expected.get('variables'), basestring)):
-            expected['variables'] = json.loads(expected['variables'])
-
-        self.assertDictEqual(actual, expected)
+        self.assertDictEqual(expected, actual)
 
     def test_resource(self):
         resource = api.Environment(**copy.deepcopy(ENVIRONMENT))
 
-        actual = resource.to_dict()
-        expected = copy.deepcopy(ENVIRONMENT)
-
-        self._assert_dict_equal(actual, expected)
+        self._assert_dict_equal(
+            copy.deepcopy(ENVIRONMENT),
+            resource.to_dict()
+        )
 
     def test_resource_to_db_model(self):
-        resource = api.Environment(**copy.deepcopy(ENVIRONMENT))
+        resource = api.Environment(
+            **_convert_vars_to_string(copy.deepcopy(ENVIRONMENT))
+        )
 
         values = resource.to_dict()
+
         values['variables'] = json.loads(values['variables'])
         values['created_at'] = datetime.datetime.strptime(
             values['created_at'], DATETIME_FORMAT)
@@ -116,82 +132,86 @@ class TestEnvironmentController(base.FunctionalTest):
             values['updated_at'], DATETIME_FORMAT)
 
         db_model = db.Environment(**values)
-        with db_api.transaction():
-            db_api.create_environment(db_model)
 
-        self.assertEqual(db_model.id, values['id'])
-        self.assertEqual(db_model.name, values['name'])
+        db_api.create_environment(db_model)
+
+        self.assertEqual(values['id'], db_model.id)
+        self.assertEqual(values['name'], db_model.name)
         self.assertIsNone(db_model.project_id)
-        self.assertEqual(db_model.description, values['description'])
-        self.assertDictEqual(db_model.variables, values['variables'])
-        self.assertEqual(db_model.created_at, values['created_at'])
-        self.assertEqual(db_model.updated_at, values['updated_at'])
+        self.assertEqual(values['description'], db_model.description)
+        self.assertDictEqual(values['variables'], db_model.variables)
+        self.assertEqual(values['created_at'], db_model.created_at)
+        self.assertEqual(values['updated_at'], db_model.updated_at)
 
     @mock.patch.object(db_api, 'get_environments', MOCK_ENVIRONMENTS)
     def test_get_all(self):
         resp = self.app.get('/v2/environments')
 
-        self.assertEqual(resp.status_int, 200)
-        self.assertEqual(len(resp.json['environments']), 1)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(1, len(resp.json['environments']))
 
     def test_get_all_empty(self):
         resp = self.app.get('/v2/environments')
 
-        self.assertEqual(resp.status_int, 200)
-        self.assertEqual(len(resp.json['environments']), 0)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(0, len(resp.json['environments']))
 
     @mock.patch.object(db_api, 'get_environment', MOCK_ENVIRONMENT)
     def test_get(self):
         resp = self.app.get('/v2/environments/123')
 
-        self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(ENVIRONMENT, resp.json)
+        self.assertEqual(200, resp.status_int)
+        self._assert_dict_equal(ENVIRONMENT, resp.json)
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/environments/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, 'create_environment', MOCK_ENVIRONMENT)
     def test_post(self):
         resp = self.app.post_json(
             '/v2/environments',
-            copy.deepcopy(ENVIRONMENT))
+            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT))
+        )
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
 
-        self._assert_dict_equal(resp.json, copy.deepcopy(ENVIRONMENT))
+        self._assert_dict_equal(copy.deepcopy(ENVIRONMENT), resp.json)
 
     @mock.patch.object(db_api, 'create_environment', MOCK_DUPLICATE)
     def test_post_dup(self):
         resp = self.app.post_json(
             '/v2/environments',
-            copy.deepcopy(ENVIRONMENT),
-            expect_errors=True)
+            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT)),
+            expect_errors=True
+        )
 
-        self.assertEqual(resp.status_int, 409)
+        self.assertEqual(409, resp.status_int)
 
     @mock.patch.object(db_api, 'create_environment', MOCK_ENVIRONMENT)
     def test_post_default_scope(self):
-        env = copy.deepcopy(ENVIRONMENT)
+        env = _convert_vars_to_string(copy.deepcopy(ENVIRONMENT))
+
         del env['scope']
 
         resp = self.app.post_json('/v2/environments', env)
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
 
-        self._assert_dict_equal(resp.json, copy.deepcopy(ENVIRONMENT))
+        self._assert_dict_equal(copy.deepcopy(ENVIRONMENT), resp.json)
 
     @mock.patch.object(db_api, 'update_environment', MOCK_UPDATED_ENVIRONMENT)
     def test_put(self):
         resp = self.app.put_json(
             '/v2/environments',
-            copy.deepcopy(UPDATED_ENVIRONMENT))
+            copy.deepcopy(UPDATED_ENVIRONMENT)
+        )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self._assert_dict_equal(resp.json, copy.deepcopy(UPDATED_ENVIRONMENT))
+        self._assert_dict_equal(copy.deepcopy(UPDATED_ENVIRONMENT), resp.json)
 
     @mock.patch.object(db_api, 'update_environment', MOCK_UPDATED_ENVIRONMENT)
     def test_put_default_scope(self):
@@ -200,27 +220,28 @@ class TestEnvironmentController(base.FunctionalTest):
 
         resp = self.app.put_json('/v2/environments', env)
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self._assert_dict_equal(resp.json, copy.deepcopy(UPDATED_ENVIRONMENT))
+        self._assert_dict_equal(copy.deepcopy(UPDATED_ENVIRONMENT), resp.json)
 
     @mock.patch.object(db_api, 'update_environment', MOCK_NOT_FOUND)
     def test_put_not_found(self):
         resp = self.app.put_json(
             '/v2/environments/test',
             copy.deepcopy(UPDATED_ENVIRONMENT),
-            expect_errors=True)
+            expect_errors=True
+        )
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, 'delete_environment', MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/environments/123')
 
-        self.assertEqual(resp.status_int, 204)
+        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, 'delete_environment', MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/environments/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
