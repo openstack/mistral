@@ -98,21 +98,30 @@ def evaluate_task_output(task_db, task_spec, raw_result):
     :param task_spec: Task specification
     :param raw_result: Raw task result that comes from action/workflow
         (before publisher). Instance of mistral.workflow.base.TaskResult
-    :return: Complete task output that goes to Data Flow context.
+    :return: Complete task output that goes to Data Flow context for SUCCESS
+        or raw error for ERRROR
     """
+
+    if raw_result.is_error():
+        return {'error': raw_result.error,
+                'task': {task_db.name: raw_result.error}}
+
     publish_dict = task_spec.get_publish()
 
     # Combine the raw result with the environment variables as the context
     # for evaulating the 'publish' clause.
-    out_context = copy.deepcopy(raw_result.data) or {}
-    if (task_db.in_context and '__env' in task_db.in_context and
-            isinstance(out_context, dict)):
-        out_context['__env'] = task_db.in_context['__env']
-    output = expr.evaluate_recursively(publish_dict, out_context) or {}
+    context = copy.deepcopy(raw_result.data) or {}
+    if (task_db.in_context
+            and '__env' in task_db.in_context
+            and isinstance(context, dict)):
+        context['__env'] = task_db.in_context['__env']
+
+    output = expr.evaluate_recursively(publish_dict, context)
 
     # Add same result to task output under key 'task'.
+    # TODO(dzimine): Move this transofrmation to evaluate_outbound_context
     output['task'] = {
-        task_spec.get_name(): copy.copy(output) or raw_result.error
+        task_db.name: copy.copy(output) or None
     }
 
     return output

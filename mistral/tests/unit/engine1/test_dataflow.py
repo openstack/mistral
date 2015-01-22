@@ -12,13 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import states
+from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
-from mistral.tests.unit.engine1 import base
+from mistral.tests import base as testbase
+from mistral.tests.unit.engine1 import base as testengine1
+from mistral.workflow import data_flow
+from mistral.workflow import states
+from mistral.workflow import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -58,7 +63,7 @@ workflows:
 """
 
 
-class DataFlowEngineTest(base.EngineTestCase):
+class DataFlowEngineTest(testengine1.EngineTestCase):
     def setUp(self):
         super(DataFlowEngineTest, self).setUp()
 
@@ -114,3 +119,66 @@ class DataFlowEngineTest(base.EngineTestCase):
             },
             task3.output
         )
+
+
+class DataFlowTest(testbase.BaseTest):
+    def test_evaluate_task_output_simple(self):
+        """Test simplest green-path scenario:
+        action status is SUCCESS, action output is string
+        published variables are static (no expression),
+        environment __env is absent.
+
+        Expected to get publish variables AS IS.
+        """
+        publish_dict = {'foo': 'bar'}
+        action_output = "string data"
+        task_db = models.Task(name="task1")
+        task_spec = mock.MagicMock()
+        task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
+        raw_result = utils.TaskResult(data=action_output, error=None)
+
+        res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
+
+        self.assertEqual(res['foo'], "bar")
+        self.assertEqual(res['task']['task1'], publish_dict)
+
+    def test_evaluate_task_output(self):
+        """Test green-path scenario with evaluations
+        action status is SUCCESS, action output is dict
+        published variables with expression,
+        environment __env is present.
+
+        Expected to get resolved publish variables.
+        """
+        publish_dict = {'a': '{$.akey}', 'e': "$.__env.ekey"}
+        action_output = {'akey': "adata"}
+        env = {'ekey': "edata"}
+        task_db = models.Task(name="task1")
+        task_db.in_context = {'__env': env}
+        task_spec = mock.MagicMock()
+        task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
+        raw_result = utils.TaskResult(data=action_output, error=None)
+
+        res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
+        self.assertEqual(res['a'], "adata")
+        self.assertEqual(res['e'], "edata")
+        self.assertEqual(res['task']['task1'], {'a': "adata", 'e': 'edata'})
+
+    def test_evaluate_task_output_with_error(self):
+        """Test handling ERROR in action
+        action status is ERROR, action output is error string
+        published variables should not evaluate,
+
+        Expected to get action error.
+        """
+        publish_dict = {'foo': '$.akey'}
+        action_output = "error data"
+        task_db = models.Task(name="task1")
+        task_spec = mock.MagicMock()
+        task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
+        raw_result = utils.TaskResult(data=None, error=action_output)
+
+        res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
+
+        self.assertDictEqual(
+            res, {'error': action_output, 'task': {'task1': action_output}})
