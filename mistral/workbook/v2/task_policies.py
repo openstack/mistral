@@ -26,6 +26,7 @@ class TaskPoliciesSpec(base.BaseSpec):
             "wait-after": {"type": "integer"},
             "timeout": {"type": "integer"},
             "pause-before": {"type": "boolean"},
+            "concurrency": {"type": "integer"},
         },
         "additionalProperties": False
     }
@@ -38,6 +39,7 @@ class TaskPoliciesSpec(base.BaseSpec):
         self._wait_after = data.get("wait-after", 0)
         self._timeout = data.get("timeout", 0)
         self._pause_before = data.get("pause-before", False)
+        self._concurrency = data.get("concurrency", 0)
 
     def get_retry(self):
         return self._retry
@@ -53,3 +55,6 @@ class TaskPoliciesSpec(base.BaseSpec):
 
     def get_pause_before(self):
         return self._pause_before
+
+    def get_concurrency(self):
+        return self._concurrency

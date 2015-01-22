@@ -202,6 +202,22 @@ workflows:
 """
 
 
+CONCURRENCY_WB = """
+---
+version: '2.0'
+name: wb
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        policies:
+          concurrency: 4
+"""
+
+
 class PoliciesTest(base.EngineTestCase):
     def setUp(self):
         super(PoliciesTest, self).setUp()
@@ -401,3 +417,20 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task_db.state)
         self.assertEqual(states.SUCCESS, next_task_db.state)
+
+    def test_concurrency_is_in_runtime_context(self):
+        wb_service.create_workbook_v2(CONCURRENCY_WB)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb.wf1', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = self._assert_single_item(exec_db.tasks, name="task1")
+
+        self.assertEqual(states.SUCCESS, task_db.state)
+
+        runtime_context = task_db.runtime_context
+
+        self.assertEqual(4, runtime_context['concurrency'])

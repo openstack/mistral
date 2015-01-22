@@ -61,6 +61,7 @@ workflows:
             count: 10
             delay: 30
             break-on: $.my_val = 10
+          concurrency: 3
 
       task2:
         requires: [task1]
@@ -231,6 +232,7 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual(2, policies.get_wait_before())
         self.assertEqual(5, policies.get_wait_after())
+        self.assertEqual(3, policies.get_concurrency())
 
         retry_spec = policies.get_retry()
 
