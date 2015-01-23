@@ -19,7 +19,6 @@ from oslo.config import cfg
 from mistral import context as auth_ctx
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
-from mistral.services import security
 from mistral import utils
 from mistral.workflow import utils as wf_utils
 from mistral.workflow import with_items
@@ -151,23 +150,17 @@ def evaluate_outbound_context(task_db):
     )
 
 
-def add_openstack_data_to_context(workflow_db, context):
+def add_openstack_data_to_context(context):
     if context is None:
         context = {}
 
     if CONF.pecan.auth_enable:
-        wf_ctx = auth_ctx.ctx()
+        exec_ctx = auth_ctx.ctx()
 
-        if not wf_ctx:
-            wf_ctx = security.create_context(
-                workflow_db.trust_id,
-                workflow_db.project_id
-            )
+        LOG.debug('Data flow security context: %s' % exec_ctx)
 
-        LOG.debug('Data flow security context: %s' % wf_ctx)
-
-        if wf_ctx:
-            context.update({'openstack': wf_ctx.to_dict()})
+        if exec_ctx:
+            context.update({'openstack': exec_ctx.to_dict()})
 
     return context
 

@@ -13,8 +13,10 @@
 #    limitations under the License.
 
 import datetime
+import mock
 from oslo.config import cfg
 
+from mistral.services import security
 from mistral.services import triggers as t_s
 from mistral.services import workflows
 from mistral.tests import base
@@ -110,6 +112,25 @@ class TriggerServiceV2Test(base.DbTestCase):
         )
 
         self.assertEqual(datetime.datetime(2010, 8, 25, 0, 10), next_time)
+
+    @mock.patch.object(security, 'create_trust',
+                       type('trust', (object,), {'id': 'my_trust_id'}))
+    def test_create_trust_in_trigger(self):
+        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        self.addCleanup(
+            cfg.CONF.set_default, 'auth_enable',
+            False, group='pecan'
+        )
+
+        trigger = t_s.create_cron_trigger(
+            'test',
+            '*/2 * * * *',
+            self.wf.name,
+            {},
+            datetime.datetime(2010, 8, 25)
+        )
+
+        self.assertEqual('my_trust_id', trigger.trust_id)
 
     def test_get_trigger_in_correct_orders(self):
         t_s.create_cron_trigger(

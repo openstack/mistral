@@ -53,8 +53,6 @@ class Workflow(mb.MistralSecureModelBase):
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
 
-    trust_id = sa.Column(sa.String(80))
-
 
 class Execution(mb.MistralSecureModelBase):
     """Contains workflow execution information."""
@@ -72,6 +70,9 @@ class Execution(mb.MistralSecureModelBase):
     # Can't use ForeignKey constraint here because SqlAlchemy will detect
     # a circular dependency and raise an error.
     parent_task_id = sa.Column(sa.String(36))
+
+    # TODO(nmakhotkin): It's not used now, must be fixed later.
+    trust_id = sa.Column(sa.String(80))
 
 
 class Task(mb.MistralSecureModelBase):
@@ -201,6 +202,8 @@ class CronTrigger(mb.MistralSecureModelBase):
         sa.CHAR(64),
         default=_calc_workflow_input_hash
     )
+
+    trust_id = sa.Column(sa.String(80))
 
     def to_dict(self):
         d = super(CronTrigger, self).to_dict()

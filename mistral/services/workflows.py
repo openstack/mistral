@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api
-from mistral.services import security
 from mistral import utils
 from mistral.workbook import parser as spec_parser
 
@@ -69,8 +68,6 @@ def _get_workflow_values(wf_spec, definition, scope):
         'spec': wf_spec.to_dict(),
         'scope': scope
     }
-
-    security.add_trust_id(values)
 
     return values
 
