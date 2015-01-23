@@ -21,6 +21,7 @@ from oslo.db import exception as db_exc
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b
+from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -84,45 +85,40 @@ def transaction():
         end_tx()
 
 
+def _secure_query(model):
+    query = b.model_query(model)
+
+    if issubclass(model, mb.MistralSecureModelBase):
+        query = query.filter(
+            sa.or_(
+                model.project_id == security.get_project_id(),
+                model.scope == 'public'
+            )
+        )
+
+    return query
+
+
 def _delete_all(model, session=None, **kwargs):
-    query = b.model_query(model).filter_by(**kwargs)
-    query.delete()
+    _secure_query(model).filter_by(**kwargs).delete()
 
 
 def _get_collection_sorted_by_name(model, **kwargs):
-    query = b.model_query(model)
-
-    proj = query.filter_by(
-        project_id=security.get_project_id(),
-        **kwargs
-    )
-    public = query.filter_by(scope='public', **kwargs)
-
-    return proj.union(public).order_by(model.name).all()
+    return _secure_query(model).filter_by(**kwargs).order_by(model.name).all()
 
 
 def _get_collection_sorted_by_time(model, **kwargs):
-    query = b.model_query(model)
+    query = _secure_query(model)
 
-    return query.filter_by(
-        project_id=security.get_project_id(),
-        **kwargs
-    ).order_by(model.created_at).all()
+    return query.filter_by(**kwargs).order_by(model.created_at).all()
 
 
 def _get_db_object_by_name(model, name):
-    query = b.model_query(model)
-
-    private = query.filter_by(name=name, project_id=security.get_project_id())
-    public = query.filter_by(name=name, scope='public')
-
-    return private.union(public).first()
+    return _secure_query(model).filter_by(name=name).first()
 
 
 def _get_db_object_by_id(model, id):
-    query = b.model_query(model)
-
-    return query.filter_by(id=id, project_id=security.get_project_id()).first()
+    return _secure_query(model).filter_by(id=id).first()
 
 
 # Workbooks.
