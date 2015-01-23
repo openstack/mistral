@@ -19,6 +19,7 @@ import uuid
 
 from oslo.db.sqlalchemy import models as oslo_models
 import sqlalchemy as sa
+from sqlalchemy import event
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
 
@@ -72,16 +73,36 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
         return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
 
 
-class MistralSecureModelMixin(object):
-    """Mixin adding model properties related to security."""
-
-    scope = sa.Column(sa.String(80), default="private")
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
-
-
 def datetime_to_str(dct, attr_name):
     if dct.get(attr_name) is not None:
         dct[attr_name] = dct[attr_name].isoformat(' ')
 
 
 MistralModelBase = declarative.declarative_base(cls=_MistralModelBase)
+
+
+# Secure model related stuff.
+
+
+class MistralSecureModelBase(MistralModelBase):
+    """Mixin adding model properties related to security."""
+
+    __abstract__ = True
+
+    scope = sa.Column(sa.String(80), default='private')
+    project_id = sa.Column(sa.String(80), default=db_base.get_project_id)
+
+
+def _set_project_id(target, value, oldvalue, initiator):
+    return db_base.get_project_id()
+
+
+def register_secure_model_hooks():
+    # Make sure 'project_id' is always properly set.
+    for sec_model_class in MistralSecureModelBase.__subclasses__():
+        event.listen(
+            sec_model_class.project_id,
+            'set',
+            _set_project_id,
+            retval=True
+        )

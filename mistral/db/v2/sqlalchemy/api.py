@@ -1,4 +1,4 @@
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ from oslo.config import cfg
 from oslo.db import exception as db_exc
 import sqlalchemy as sa
 
-from mistral import context
 from mistral.db.sqlalchemy import base as b
 from mistral.db import v2 as db_base
 from mistral.db.v2.sqlalchemy import models
@@ -115,10 +114,10 @@ def _get_collection_sorted_by_time(model, **kwargs):
 def _get_db_object_by_name(model, name):
     query = b.model_query(model)
 
-    proj = query.filter_by(name=name, project_id=db_base.get_project_id())
+    private = query.filter_by(name=name, project_id=db_base.get_project_id())
     public = query.filter_by(name=name, scope='public')
 
-    return proj.union(public).first()
+    return private.union(public).first()
 
 
 def _get_db_object_by_id(model, id):
@@ -153,9 +152,6 @@ def create_workbook(values, session=None):
 
     wb.update(values.copy())
 
-    # TODO(rakhmerov): It needs to be refactored.
-    wb['project_id'] = context.ctx().project_id
-
     try:
         wb.save(session=session)
     except db_exc.DBDuplicateEntry as e:
@@ -174,8 +170,6 @@ def update_workbook(name, values, session=None):
             "Workbook not found [workbook_name=%s]" % name)
 
     wb.update(values.copy())
-    # TODO(rakhmerov): It needs to be refactored.
-    wb['project_id'] = context.ctx().project_id
 
     return wb
 
@@ -236,9 +230,6 @@ def create_workflow(values, session=None):
 
     wf.update(values.copy())
 
-    # TODO(rakhmerov): It needs to be refactored.
-    wf['project_id'] = db_base.get_project_id()
-
     try:
         wf.save(session=session)
     except db_exc.DBDuplicateEntry as e:
@@ -257,8 +248,6 @@ def update_workflow(name, values, session=None):
             "Workflow not found [workflow_name=%s]" % name)
 
     wf.update(values.copy())
-    # TODO(rakhmerov): It needs to be refactored.
-    wf['project_id'] = db_base.get_project_id()
 
     return wf
 
@@ -702,13 +691,6 @@ def create_environment(values, session=None):
 
     env.update(values)
 
-    # Default environment to private unless specified.
-    if not getattr(env, 'scope', None):
-        env['scope'] = 'private'
-
-    if context.ctx().project_id:
-        env['project_id'] = context.ctx().project_id
-
     try:
         env.save(session=session)
     except db_exc.DBDuplicateEntry as e:
@@ -731,9 +713,6 @@ def update_environment(name, values, session=None):
     # Default environment to private unless specified.
     if not getattr(env, 'scope', None):
         env['scope'] = 'private'
-
-    if context.ctx().project_id:
-        env['project_id'] = context.ctx().project_id
 
     return env
 
