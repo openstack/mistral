@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ from mistral.workbook import parser as spec_parser
 
 
 def create_workbook_v1(values, scope='private'):
-    security.add_project_id(values, scope)
-
     return db_api_v1.workbook_create(values)
 
 
@@ -114,7 +112,5 @@ def _get_workbook_values(wb_spec, definition, scope):
         'spec': wb_spec.to_dict(),
         'scope': scope
     }
-
-    security.add_project_id(values, scope)
 
     return values

@@ -1,4 +1,4 @@
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
 
@@ -79,7 +78,5 @@ def _get_action_values(action_spec, definition, scope):
         'input': ", ".join(action_spec.get_input()),
         'scope': scope
     }
-
-    security.add_project_id(values, scope)
 
     return values

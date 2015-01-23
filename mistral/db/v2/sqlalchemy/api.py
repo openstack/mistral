@@ -21,11 +21,10 @@ from oslo.db import exception as db_exc
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b
-from mistral.db import v2 as db_base
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-
+from mistral.services import security
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -94,7 +93,7 @@ def _get_collection_sorted_by_name(model, **kwargs):
     query = b.model_query(model)
 
     proj = query.filter_by(
-        project_id=db_base.get_project_id(),
+        project_id=security.get_project_id(),
         **kwargs
     )
     public = query.filter_by(scope='public', **kwargs)
@@ -106,7 +105,7 @@ def _get_collection_sorted_by_time(model, **kwargs):
     query = b.model_query(model)
 
     return query.filter_by(
-        project_id=db_base.get_project_id(),
+        project_id=security.get_project_id(),
         **kwargs
     ).order_by(model.created_at).all()
 
@@ -114,7 +113,7 @@ def _get_collection_sorted_by_time(model, **kwargs):
 def _get_db_object_by_name(model, name):
     query = b.model_query(model)
 
-    private = query.filter_by(name=name, project_id=db_base.get_project_id())
+    private = query.filter_by(name=name, project_id=security.get_project_id())
     public = query.filter_by(name=name, scope='public')
 
     return private.union(public).first()
@@ -123,7 +122,7 @@ def _get_db_object_by_name(model, name):
 def _get_db_object_by_id(model, id):
     query = b.model_query(model)
 
-    return query.filter_by(id=id, project_id=db_base.get_project_id()).first()
+    return query.filter_by(id=id, project_id=security.get_project_id()).first()
 
 
 # Workbooks.

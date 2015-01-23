@@ -23,7 +23,7 @@ from sqlalchemy import event
 from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
 
-from mistral.db import v2 as db_base
+from mistral.services import security
 
 
 def _generate_unicode_uuid():
@@ -90,11 +90,11 @@ class MistralSecureModelBase(MistralModelBase):
     __abstract__ = True
 
     scope = sa.Column(sa.String(80), default='private')
-    project_id = sa.Column(sa.String(80), default=db_base.get_project_id)
+    project_id = sa.Column(sa.String(80), default=security.get_project_id)
 
 
 def _set_project_id(target, value, oldvalue, initiator):
-    return db_base.get_project_id()
+    return security.get_project_id()
 
 
 def register_secure_model_hooks():

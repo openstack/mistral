@@ -16,17 +16,31 @@
 
 from oslo.config import cfg
 
-from mistral import context
+from mistral import context as auth_ctx
 from mistral.utils.openstack import keystone
 
 
 CONF = cfg.CONF
 
+# Make sure to import 'auth_enable' option before using it.
+# TODO(rakhmerov): Try to find a better solution.
+CONF.import_opt('auth_enable', 'mistral.config', group='pecan')
+
+
+DEFAULT_PROJECT_ID = "<default-project>"
+
+
+def get_project_id():
+    if CONF.pecan.auth_enable and auth_ctx.has_ctx():
+        return auth_ctx.ctx().project_id
+    else:
+        return DEFAULT_PROJECT_ID
+
 
 def create_trust():
     client = keystone.client()
 
-    ctx = context.ctx()
+    ctx = auth_ctx.ctx()
 
     trustee_id = keystone.client_for_admin(
         CONF.keystone_authtoken.admin_tenant_name).user_id
@@ -53,13 +67,13 @@ def create_context(trust_id, project_id):
     if CONF.pecan.auth_enable:
         client = keystone.client_for_trusts(trust_id)
 
-        return context.MistralContext(
+        return auth_ctx.MistralContext(
             user_id=client.user_id,
             project_id=project_id,
             auth_token=client.auth_token
         )
 
-    return context.MistralContext(
+    return auth_ctx.MistralContext(
         user_id=None,
         project_id=None,
         auth_token=None,
@@ -73,13 +87,6 @@ def delete_trust(workbook):
 
     keystone_client = keystone.client_for_trusts(workbook.trust_id)
     keystone_client.trusts.delete(workbook.trust_id)
-
-
-def add_project_id(secure_object_values, scope='private'):
-    if cfg.CONF.pecan.auth_enable and scope == 'private':
-        secure_object_values.update({
-            'project_id': context.ctx().project_id
-        })
 
 
 def add_trust_id(secure_object_values):
