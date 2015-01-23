@@ -20,10 +20,9 @@ from sqlalchemy.orm import relationship
 
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
-from mistral.db import v2 as db_base
 
 
-class Workbook(mb.MistralModelBase):
+class Workbook(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks_v2'
@@ -38,13 +37,8 @@ class Workbook(mb.MistralModelBase):
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
 
-    # Security properties.
-    scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
-    trust_id = sa.Column(sa.String(80))
 
-
-class Workflow(mb.MistralModelBase):
+class Workflow(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains info about workflow (including definition in Mistral DSL)."""
 
     __tablename__ = 'workflows_v2'
@@ -59,13 +53,10 @@ class Workflow(mb.MistralModelBase):
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
 
-    # Security properties.
-    scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
     trust_id = sa.Column(sa.String(80))
 
 
-class Execution(mb.MistralModelBase):
+class Execution(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains workflow execution information."""
 
     __tablename__ = 'executions_v2'
@@ -82,11 +73,8 @@ class Execution(mb.MistralModelBase):
     # a circular dependency and raise an error.
     parent_task_id = sa.Column(sa.String(36))
 
-    # Security properties.
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
 
-
-class Task(mb.MistralModelBase):
+class Task(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains task runtime information."""
 
     __tablename__ = 'tasks_v2'
@@ -114,9 +102,6 @@ class Task(mb.MistralModelBase):
     execution_id = sa.Column(sa.String(36), sa.ForeignKey('executions_v2.id'))
     execution = relationship('Execution', backref="tasks", lazy='joined')
 
-    # Security properties.
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
-
     def to_dict(self):
         d = super(Task, self).to_dict()
 
@@ -142,7 +127,7 @@ class DelayedCall(mb.MistralModelBase):
     execution_time = sa.Column(sa.DateTime, nullable=False)
 
 
-class Action(mb.MistralModelBase):
+class Action(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains info about registered Actions."""
 
     __tablename__ = 'actions_v2'
@@ -167,13 +152,8 @@ class Action(mb.MistralModelBase):
     attributes = sa.Column(st.JsonDictType())
     is_system = sa.Column(sa.Boolean())
 
-    # Security properties.
-    scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
-    trust_id = sa.Column(sa.String(80))
 
-
-class Environment(mb.MistralModelBase):
+class Environment(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains environment variables for workflow execution."""
 
     __tablename__ = 'environments_v2'
@@ -188,19 +168,14 @@ class Environment(mb.MistralModelBase):
     description = sa.Column(sa.Text())
     variables = sa.Column(st.JsonDictType())
 
-    # Security properties.
-    scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
-    trust_id = sa.Column(sa.String(80))
 
-
-def calc_hash(context):
+def _calc_workflow_input_hash(context):
     d = context.current_parameters['workflow_input'] or {}
 
     return hashlib.sha256(json.dumps(sorted(d.items()))).hexdigest()
 
 
-class CronTrigger(mb.MistralModelBase):
+class CronTrigger(mb.MistralModelBase, mb.MistralSecureModelMixin):
     """Contains info about cron triggers."""
 
     __tablename__ = 'cron_triggers_v2'
@@ -222,12 +197,10 @@ class CronTrigger(mb.MistralModelBase):
     workflow = relationship('Workflow', lazy='joined')
 
     workflow_input = sa.Column(st.JsonDictType())
-    workflow_input_hash = sa.Column(sa.CHAR(64), default=calc_hash)
-
-    # Security properties.
-    scope = sa.Column(sa.String(80))
-    project_id = sa.Column(sa.String(80), default=db_base.DEFAULT_PROJECT_ID)
-    trust_id = sa.Column(sa.String(80))
+    workflow_input_hash = sa.Column(
+        sa.CHAR(64),
+        default=_calc_workflow_input_hash
+    )
 
     def to_dict(self):
         d = super(CronTrigger, self).to_dict()

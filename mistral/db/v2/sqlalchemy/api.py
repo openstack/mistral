@@ -152,6 +152,8 @@ def create_workbook(values, session=None):
     wb = models.Workbook()
 
     wb.update(values.copy())
+
+    # TODO(rakhmerov): It needs to be refactored.
     wb['project_id'] = context.ctx().project_id
 
     try:
@@ -172,6 +174,7 @@ def update_workbook(name, values, session=None):
             "Workbook not found [workbook_name=%s]" % name)
 
     wb.update(values.copy())
+    # TODO(rakhmerov): It needs to be refactored.
     wb['project_id'] = context.ctx().project_id
 
     return wb
@@ -232,6 +235,8 @@ def create_workflow(values, session=None):
     wf = models.Workflow()
 
     wf.update(values.copy())
+
+    # TODO(rakhmerov): It needs to be refactored.
     wf['project_id'] = db_base.get_project_id()
 
     try:
@@ -252,6 +257,7 @@ def update_workflow(name, values, session=None):
             "Workflow not found [workflow_name=%s]" % name)
 
     wf.update(values.copy())
+    # TODO(rakhmerov): It needs to be refactored.
     wf['project_id'] = db_base.get_project_id()
 
     return wf

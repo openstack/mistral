@@ -100,7 +100,7 @@ def create_cron_trigger(name, pattern, workflow_name, workflow_input,
             'scope': 'private'
         }
 
-        security.add_security_info(values)
+        security.add_project_id(values)
 
         trig = db_api_v2.create_cron_trigger(values)
 
