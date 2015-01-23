@@ -125,6 +125,10 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         tasks = exec_db.tasks
         task1 = self._assert_single_item(tasks, name='task1')
+        with_items_context = task1.runtime_context['with_items']
+
+        self.assertEqual(3, with_items_context['count'])
+        self.assertEqual(3, with_items_context['index'])
 
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.

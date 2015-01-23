@@ -147,8 +147,11 @@ class WorkflowHandler(object):
         with_items_spec = task_spec.get_with_items()
 
         if with_items_spec:
+            # Change the index.
+            with_items.do_step(task_db)
+
             # Check if all iterations are completed.
-            if with_items.is_iteration_incomplete(task_db, task_spec):
+            if with_items.is_iterations_incomplete(task_db):
                 state = states.RUNNING
 
         return state
