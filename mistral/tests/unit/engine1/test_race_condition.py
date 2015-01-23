@@ -49,7 +49,7 @@ wf:
     task1:
       action: std.block
       publish:
-        result: $
+        result: $.task1
 """
 
 WF_SHORT_ACTION = """
@@ -79,7 +79,7 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result1: $
+        result1: $.task1
 
     task2:
       action: std.block
@@ -202,7 +202,6 @@ class LongActionTest(base.EngineTestCase):
         self.assertDictEqual(
             {
                 'result1': 1,
-                'task': {'task1': {'result1': 1}}
             },
             task1.output
         )

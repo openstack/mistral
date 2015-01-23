@@ -120,11 +120,9 @@ class WorkflowHandler(object):
                 if not self.is_paused_or_completed():
                     self._set_execution_state(states.SUCCESS)
 
-                task_out_ctx = data_flow.evaluate_outbound_context(task_db)
-
                 self.exec_db.output = data_flow.evaluate_workflow_output(
                     self.wf_spec,
-                    task_out_ctx
+                    data_flow.evaluate_task_outbound_context(task_db)
                 )
 
         return cmds

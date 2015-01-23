@@ -43,14 +43,14 @@ wf:
     task1:
       action: std.echo output={$.num1}
       publish:
-        result1: $
+        result1: $.task1
       on-complete:
         - task3
 
     task2:
       action: std.echo output={$.num2}
       publish:
-        result2: $
+        result2: $.task2
       on-complete:
         - task3
 
@@ -66,12 +66,12 @@ wf:
     task4:
       action: std.echo output=4
       publish:
-        result4: $
+        result4: $.task4
 
     task5:
       action: std.echo output=5
       publish:
-        result5: $
+        result5: $.task5
 """
 
 

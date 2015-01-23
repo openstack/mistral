@@ -54,7 +54,7 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
         # TODO(rakhmerov): Think if Data Flow should be a part of wf handler.
         task_db.in_context = utils.merge_dicts(
             task_db.in_context,
-            evaluate_outbound_context(cause_task_db)
+            evaluate_task_outbound_context(cause_task_db)
         )
 
     task_db.input = evaluate_task_input(
@@ -86,7 +86,7 @@ def _evaluate_upstream_context(upstream_db_tasks):
     ctx = {}
 
     for t_db in upstream_db_tasks:
-        utils.merge_dicts(ctx, evaluate_outbound_context(t_db))
+        utils.merge_dicts(ctx, evaluate_task_outbound_context(t_db))
 
     return ctx
 
@@ -99,32 +99,51 @@ def evaluate_task_output(task_db, task_spec, raw_result):
     :param raw_result: Raw task result that comes from action/workflow
         (before publisher). Instance of mistral.workflow.base.TaskResult
     :return: Complete task output that goes to Data Flow context for SUCCESS
-        or raw error for ERRROR
+        or raw error for ERROR
     """
 
     if raw_result.is_error():
-        return {'error': raw_result.error,
-                'task': {task_db.name: raw_result.error}}
+        return {
+            'error': raw_result.error,
+            'task': {task_db.name: raw_result.error}
+        }
 
-    publish_dict = task_spec.get_publish()
+    # Expression context is task inbound context + action/workflow result
+    # accessible under key task name key.
+    expr_ctx = copy.deepcopy(task_db.in_context) or {}
 
-    # Combine the raw result with the environment variables as the context
-    # for evaulating the 'publish' clause.
-    context = copy.deepcopy(raw_result.data) or {}
-    if (task_db.in_context
-            and '__env' in task_db.in_context
-            and isinstance(context, dict)):
-        context['__env'] = task_db.in_context['__env']
+    if task_db.name in expr_ctx:
+        LOG.warning(
+            'Shadowing context variable with task name while publishing: %s' %
+            task_db.name
+        )
 
-    output = expr.evaluate_recursively(publish_dict, context)
+    expr_ctx[task_db.name] = copy.deepcopy(raw_result.data) or {}
 
-    # Add same result to task output under key 'task'.
-    # TODO(dzimine): Move this transofrmation to evaluate_outbound_context
-    output['task'] = {
-        task_db.name: copy.copy(output) or None
-    }
+    return expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
 
-    return output
+
+def evaluate_task_outbound_context(task_db):
+    """Evaluates task outbound Data Flow context.
+
+    This method assumes that complete task output (after publisher etc.)
+    has already been evaluated.
+    :param task_db: DB task.
+    :return: Outbound task Data Flow context.
+    """
+
+    in_context = copy.deepcopy(dict(task_db.in_context)) \
+        if task_db.in_context is not None else {}
+
+    out_ctx = utils.merge_dicts(in_context, task_db.output)
+
+    # Add task output under key 'task.taskName'.
+    out_ctx = utils.merge_dicts(
+        out_ctx,
+        {task_db.name: copy.deepcopy(task_db.output) or None}
+    )
+
+    return out_ctx
 
 
 def evaluate_workflow_output(wf_spec, context):
@@ -139,24 +158,6 @@ def evaluate_workflow_output(wf_spec, context):
     output = expr.evaluate_recursively(output_dict, context)
 
     return output or context
-
-
-def evaluate_outbound_context(task_db):
-    """Evaluates task outbound Data Flow context.
-
-    This method assumes that complete task output (after publisher etc.)
-    has already been evaluated.
-    :param task_db: DB task.
-    :return: Outbound task Data Flow context.
-    """
-
-    in_context = copy.deepcopy(dict(task_db.in_context)) \
-        if task_db.in_context is not None else {}
-
-    return utils.merge_dicts(
-        in_context,
-        task_db.output
-    )
 
 
 def add_openstack_data_to_context(context):

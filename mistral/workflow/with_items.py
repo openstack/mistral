@@ -18,6 +18,7 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 
 
+# TODO(rakhmerov): Partially duplicates data_flow.evaluate_task_output
 def get_output(task_db, task_spec, raw_result):
     """Returns output from task markered as with-items
 
@@ -50,14 +51,14 @@ def get_output(task_db, task_spec, raw_result):
             }
           }
     """
-    t_name = task_db.name
     e_data = raw_result.error
 
+    expr_ctx = copy.deepcopy(task_db.in_context) or {}
+
+    expr_ctx[task_db.name] = copy.deepcopy(raw_result.data) or {}
+
     # Calc output for with-items (only list form is used).
-    output = expr.evaluate_recursively(
-        task_spec.get_publish(),
-        raw_result.data or {}
-    )
+    output = expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
 
     if not task_db.output:
         task_db.output = {}
@@ -75,16 +76,16 @@ def get_output(task_db, task_spec, raw_result):
             task_output[out_key] = [output.get(out_key) or e_data]
 
         # Add same result to task output under key 'task'.
-        task_output['task'] = {
-            t_name: {
-                out_key: task_output[out_key]
-            }
-        }
-    else:
-        if 'task' not in task_output:
-            task_output.update({'task': {t_name: [None or e_data]}})
-        else:
-            task_output['task'][t_name].append(None or e_data)
+        # TODO(rakhmerov): Fix this during output/result refactoring.
+        # task_output[t_name] =
+        #     {
+        #         out_key: task_output[out_key]
+        #     }
+    # else:
+    #     if 'task' not in task_output:
+    #         task_output.update({'task': {t_name: [None or e_data]}})
+    #     else:
+    #         task_output['task'][t_name].append(None or e_data)
 
     return task_output
 
@@ -104,8 +105,7 @@ def get_index(task_db):
 def get_concurrency_spec(task_spec):
     policies = task_spec.get_policies()
 
-    if policies:
-        return policies.get_concurrency()
+    return policies.get_concurrency() if policies else None
 
 
 def get_indexes_for_loop(task_db, task_spec):
@@ -124,6 +124,7 @@ def do_step(task_db):
 
     if with_items_context['capacity'] > 0:
         with_items_context['capacity'] -= 1
+
     with_items_context['index'] += 1
 
     task_db.runtime_context.update({'with_items': with_items_context})
@@ -189,13 +190,16 @@ def validate_input(with_items_input):
     if not all([isinstance(v, list) for v in values]):
         raise exc.InputException(
             "Wrong input format for: %s. List type is"
-            " expected for each value." % with_items_input)
+            " expected for each value." % with_items_input
+        )
 
     required_len = len(values[0])
+
     if not all(len(v) == required_len for v in values):
         raise exc.InputException(
             "Wrong input format for: %s. All arrays must"
-            " have the same length." % with_items_input)
+            " have the same length." % with_items_input
+        )
 
 
 def _get_output_key(task_spec):
@@ -204,6 +208,4 @@ def _get_output_key(task_spec):
 
 
 def is_iterations_incomplete(task_db):
-    if get_index(task_db) < get_count(task_db):
-        return True
-    return False
+    return get_index(task_db) < get_count(task_db)

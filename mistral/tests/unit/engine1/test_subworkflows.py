@@ -50,12 +50,12 @@ workflows:
       task1:
         action: std.echo output='{$.param1}'
         publish:
-          result1: $
+          result1: $.task1
 
       task2:
         action: std.echo output="'{$.param1} & {$.param2}'"
         publish:
-          final_result: $
+          final_result: $.task2
         requires: [task1]
 
   wf2:
@@ -67,7 +67,7 @@ workflows:
       task1:
         workflow: wf1 param1='Bonnie' param2='Clyde' task_name='task2'
         publish:
-          slogan: "{$.final_result} is a cool movie!"
+          slogan: "{$.task1.final_result} is a cool movie!"
 """
 
 

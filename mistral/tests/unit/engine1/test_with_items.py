@@ -47,7 +47,7 @@ workflows:
         with-items: name_info in $.names_info
         action: std.echo output={$.name_info.name}
         publish:
-          result: $
+          result: $.task1
 
 """
 
@@ -70,7 +70,7 @@ workflows:
         with-items: name_info in $.names_info
         action: std.echo output="{$.greeting}, {$.name_info.name}!"
         publish:
-          result: $
+          result: $.task1
 """
 
 
@@ -95,7 +95,7 @@ workflows:
           - itemY in $.arrayJ
         action: std.echo output="{$.itemX} {$.itemY}"
         publish:
-          result: $
+          result: $.task1
 
 """
 
@@ -133,6 +133,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
         result = task1.output['result']
+
         self.assertTrue(isinstance(result, list))
 
         self.assertIn('John', result)

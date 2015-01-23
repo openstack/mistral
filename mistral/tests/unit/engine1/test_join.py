@@ -39,14 +39,14 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result1: $
+        result1: $.task1
       on-complete:
         - task3
 
     task2:
       action: std.echo output=2
       publish:
-        result2: $
+        result2: $.task2
       on-complete:
         - task3
 
@@ -54,7 +54,7 @@ wf:
       join: all
       action: std.echo output="{$.result1},{$.result2}"
       publish:
-        result3: $
+        result3: $.task3
 """
 
 
@@ -72,7 +72,7 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result1: $
+        result1: $.task1
       on-complete:
         - task3
 
@@ -85,7 +85,7 @@ wf:
       join: all
       action: std.echo output="{$.result1}-{$.result1}"
       publish:
-        result3: $
+        result3: $.task3
 """
 
 WF_FULL_JOIN_WITH_CONDITIONS = """
@@ -102,14 +102,14 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result1: $
+        result1: $.task1
       on-complete:
         - task3
 
     task2:
       action: std.echo output=2
       publish:
-        result2: $
+        result2: $.task2
       on-complete:
         - task3: $.result2 = 11111
         - task4: $.result2 = 2
@@ -118,12 +118,12 @@ wf:
       join: all
       action: std.echo output="{$.result1}-{$.result1}"
       publish:
-        result3: $
+        result3: $.task3
 
     task4:
       action: std.echo output=4
       publish:
-        result4: $
+        result4: $.task4
 """
 
 WF_PARTIAL_JOIN = """
@@ -140,14 +140,14 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result1: $
+        result1: $.task1
       on-complete:
         - task4
 
     task2:
       action: std.echo output=2
       publish:
-        result2: $
+        result2: $.task2
       on-complete:
         - task4
 
@@ -167,7 +167,7 @@ wf:
       join: 2
       action: std.echo output="{$.result1},{$.result2}"
       publish:
-        result4: $
+        result4: $.task4
 """
 
 WF_PARTIAL_JOIN_TRIGGERS_ONCE = """
@@ -213,7 +213,7 @@ wf:
       join: 2
       action: std.echo output="{$.result1},{$.result2},{$.result3},{$.result4}"
       publish:
-        result5: $
+        result5: $.task5
 """
 
 WF_DISCRIMINATOR = """
@@ -252,7 +252,7 @@ wf:
       join: one
       action: std.echo output="{$.result1},{$.result2},{$.result3}"
       publish:
-        result4: $
+        result4: $.task4
 """
 
 
@@ -356,7 +356,6 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual(
             {
                 'result4': '1,2',
-                'task': {'task4': {'result4': '1,2'}}
             },
             task4.output
         )

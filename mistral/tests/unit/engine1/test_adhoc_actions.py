@@ -50,13 +50,13 @@ workflows:
       - str2
     output:
       workflow_result: $.result # Access to execution context variables
-      concat_task_result: $.task.concat # Access to the same but via 'task'
+      concat_task_result: $.concat # Access to the same but via task name
 
     tasks:
       concat:
         action: concat_twice s1={$.str1} s2={$.str2}
         publish:
-          result: $
+          result: $.concat
 """
 
 
@@ -75,6 +75,8 @@ class AdhocActionsTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         exec_db = db_api.get_execution(exec_db.id)
+
+        self.maxDiff = None
 
         self.assertDictEqual(
             {

@@ -44,12 +44,12 @@ workflows:
       task1:
         action: std.echo output='{$.param1}'
         publish:
-          result1: $
+          result1: $.task1
 
       task2:
         action: std.echo output="{$.result1} & {$.param2}"
         publish:
-          result2: $
+          result2: $.task2
         requires: [task1]
 """
 
@@ -88,7 +88,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', exec_db.output['task']['task1']['result1'])
+        self.assertEqual('a', exec_db.output['task1']['result1'])
         self._assert_dict_contains_subset({'result1': 'a'}, exec_db.output)
 
     def test_start_task2(self):
@@ -125,7 +125,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', exec_db.output['task']['task1']['result1'])
-        self.assertEqual('a & b', exec_db.output['task']['task2']['result2'])
+        self.assertEqual('a', exec_db.output['task1']['result1'])
+        self.assertEqual('a & b', exec_db.output['task2']['result2'])
         self._assert_dict_contains_subset({'result1': 'a'}, exec_db.output)
         self._assert_dict_contains_subset({'result2': 'a & b'}, exec_db.output)
