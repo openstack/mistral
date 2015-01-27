@@ -19,8 +19,8 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
-from mistral.tests import base as testbase
-from mistral.tests.unit.engine1 import base as testengine1
+from mistral.tests import base as test_base
+from mistral.tests.unit.engine1 import base as engine_test_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils
@@ -43,27 +43,26 @@ workflows:
 
     tasks:
       task1:
-        action: std.echo output="Hi,"
+        action: std.echo output="Hi"
         publish:
-          hi: $
+          hi: $.task1
         on-success:
           - task2
 
       task2:
         action: std.echo output="Morpheus"
         publish:
-          username: $
+          to: $.task2
         on-success:
           - task3
 
       task3:
-        action: std.echo output="{$.hi} {$.username}.Nebuchadnezzar!"
         publish:
-          result: $
+          result: "{$.hi}, {$.to}! Sincerely, your {$.__env.from}."
 """
 
 
-class DataFlowEngineTest(testengine1.EngineTestCase):
+class DataFlowEngineTest(engine_test_base.EngineTestCase):
     def setUp(self):
         super(DataFlowEngineTest, self).setUp()
 
@@ -71,11 +70,13 @@ class DataFlowEngineTest(testengine1.EngineTestCase):
 
     def test_trivial_dataflow(self):
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
-
-        self._await(
-            lambda: self.is_execution_success(exec_db.id),
+        exec_db = self.engine.start_workflow(
+            'wb.wf1',
+            {},
+            environment={'from': 'Neo'}
         )
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
@@ -89,39 +90,15 @@ class DataFlowEngineTest(testengine1.EngineTestCase):
         task3 = self._assert_single_item(tasks, name='task3')
 
         self.assertEqual(states.SUCCESS, task3.state)
-
+        self.assertDictEqual({'hi': 'Hi'}, task1.output)
+        self.assertDictEqual({'to': 'Morpheus'}, task2.output)
         self.assertDictEqual(
-            {
-                'task': {
-                    'task1': {'hi': 'Hi,'},
-                },
-                'hi': 'Hi,',
-            },
-            task1.output
-        )
-
-        self.assertDictEqual(
-            {
-                'task': {
-                    'task2': {'username': 'Morpheus'},
-                },
-                'username': 'Morpheus',
-            },
-            task2.output
-        )
-
-        self.assertDictEqual(
-            {
-                'task': {
-                    'task3': {'result': 'Hi, Morpheus.Nebuchadnezzar!'},
-                },
-                'result': 'Hi, Morpheus.Nebuchadnezzar!',
-            },
+            {'result': 'Hi, Morpheus! Sincerely, your Neo.'},
             task3.output
         )
 
 
-class DataFlowTest(testbase.BaseTest):
+class DataFlowTest(test_base.BaseTest):
     def test_evaluate_task_output_simple(self):
         """Test simplest green-path scenario:
         action status is SUCCESS, action output is string
@@ -131,16 +108,15 @@ class DataFlowTest(testbase.BaseTest):
         Expected to get publish variables AS IS.
         """
         publish_dict = {'foo': 'bar'}
-        action_output = "string data"
-        task_db = models.Task(name="task1")
+        action_output = 'string data'
+        task_db = models.Task(name='task1')
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
         raw_result = utils.TaskResult(data=action_output, error=None)
 
         res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
 
-        self.assertEqual(res['foo'], "bar")
-        self.assertEqual(res['task']['task1'], publish_dict)
+        self.assertEqual(res['foo'], 'bar')
 
     def test_evaluate_task_output(self):
         """Test green-path scenario with evaluations
@@ -150,19 +126,39 @@ class DataFlowTest(testbase.BaseTest):
 
         Expected to get resolved publish variables.
         """
-        publish_dict = {'a': '{$.akey}', 'e': "$.__env.ekey"}
-        action_output = {'akey': "adata"}
-        env = {'ekey': "edata"}
-        task_db = models.Task(name="task1")
-        task_db.in_context = {'__env': env}
+        in_context = {
+            'var': 'val',
+            '__env': {'ekey': 'edata'}
+        }
+
+        action_output = {'akey': 'adata'}
+
+        publish = {
+            'v': '{$.var}',
+            'e': '$.__env.ekey',
+            'a': '{$.task1.akey}'
+        }
+
+        task_db = models.Task(name='task1')
+        task_db.in_context = in_context
+
         task_spec = mock.MagicMock()
-        task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
+        task_spec.get_publish = mock.MagicMock(return_value=publish)
+
         raw_result = utils.TaskResult(data=action_output, error=None)
 
         res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
-        self.assertEqual(res['a'], "adata")
-        self.assertEqual(res['e'], "edata")
-        self.assertEqual(res['task']['task1'], {'a': "adata", 'e': 'edata'})
+
+        self.assertEqual(3, len(res))
+
+        # Resolved from inbound context.
+        self.assertEqual(res['v'], 'val')
+
+        # Resolved from environment.
+        self.assertEqual(res['e'], 'edata')
+
+        # Resolved from action output.
+        self.assertEqual(res['a'], 'adata')
 
     def test_evaluate_task_output_with_error(self):
         """Test handling ERROR in action
@@ -171,14 +167,22 @@ class DataFlowTest(testbase.BaseTest):
 
         Expected to get action error.
         """
-        publish_dict = {'foo': '$.akey'}
-        action_output = "error data"
-        task_db = models.Task(name="task1")
+        publish = {'foo': '$.akey'}
+        action_output = 'error data'
+
+        task_db = models.Task(name='task1')
+
         task_spec = mock.MagicMock()
-        task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
+        task_spec.get_publish = mock.MagicMock(return_value=publish)
+
         raw_result = utils.TaskResult(data=None, error=action_output)
 
         res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
 
         self.assertDictEqual(
-            res, {'error': action_output, 'task': {'task1': action_output}})
+            res,
+            {
+                'error': action_output,
+                'task': {'task1': action_output}
+            }
+        )

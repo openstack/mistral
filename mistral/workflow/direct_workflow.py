@@ -97,7 +97,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         t_name = task_db.name
         t_state = task_db.state
 
-        ctx = data_flow.evaluate_outbound_context(task_db)
+        ctx = data_flow.evaluate_task_outbound_context(task_db)
 
         if states.is_completed(t_state):
             on_complete = self.get_on_complete_clause(t_name)
