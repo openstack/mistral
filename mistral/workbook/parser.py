@@ -42,7 +42,9 @@ def parse_yaml(text):
     try:
         return yaml.safe_load(text)
     except error.YAMLError as e:
-        raise RuntimeError("Definition could not be parsed: %s\n" % e)
+        raise exc.DSLParsingException(
+            "Definition could not be parsed: %s\n" % e
+        )
 
 
 def _get_spec_version(spec_dict):

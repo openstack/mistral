@@ -158,6 +158,23 @@ workflows:
 """
 
 
+INVALID_WF = """
+--
+version: 2.0
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hey!"
+
+"""
+
+
 # TODO(rakhmerov): Add more tests when v2 spec is complete.
 # TODO(rakhmerov): Add negative tests.
 
@@ -377,6 +394,14 @@ class DSLv2ModelTest(base.BaseTest):
             INVALID_WB
         )
         self.assertIn("Wrong format of 'with-items'", str(exc))
+
+    def test_invalid_wf_spec(self):
+        exc = self.assertRaises(
+            exceptions.DSLParsingException,
+            spec_parser.get_workflow_spec_from_yaml,
+            INVALID_WF
+        )
+        self.assertIn("Definition could not be parsed", str(exc))
 
     def test_to_dict(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
