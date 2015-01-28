@@ -148,6 +148,44 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
 
 
 class ExpressionsTest(base.BaseTest):
+    def test_evaluate_complex_expressions(self):
+        data = {
+            'a': 1,
+            'b': 2,
+            'c': 3,
+            'd': True,
+            'e': False,
+            'f': 10.1,
+            'g': 10,
+            'h': [1, 2, 3, 4, 5],
+            'i': 'We are OpenStack!',
+            'j': 'World',
+            'k': 'Mistral',
+            'l': 'awesome',
+            'm': 'the way we roll'
+        }
+
+        test_cases = [
+            ('{$.a + $.b * $.c}', '7'),
+            ('{($.a + $.b) * $.c}', '9'),
+            ('{$.d and $.e}', 'False'),
+            ('{$.f > $.g}', 'True'),
+            ('{$.h.length() >= 5}', 'True'),
+            ('{$.h.length() >= $.b + $.c}', 'True'),
+            ('{100 in $.h}', 'False'),
+            ('{$.a in $.h}', 'True'),
+            ('{''OpenStack'' in $.i}', 'True'),
+            ('Hello, {$.j}!', 'Hello, World!'),
+            ('{$.k} is {$.l}!', 'Mistral is awesome!'),
+            ('This is {$.m}.', 'This is the way we roll.'),
+            ('{1 + 1 = 3}', 'False')
+        ]
+
+        for expression, expected in test_cases:
+            actual = expr.evaluate_recursively(expression, data)
+
+            self.assertEqual(actual, expected)
+
     def test_evaluate_recursively(self):
         task_spec_dict = {
             'parameters': {

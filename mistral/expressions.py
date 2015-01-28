@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -73,13 +72,17 @@ class YAQLEvaluator(Evaluator):
     @classmethod
     def is_expression(cls, s):
         # TODO(rakhmerov): It should be generalized since it may not be YAQL.
-        return s and s.startswith('$')
+        # If there is at least one dollar sign in the string,
+        # then treat the string as a YAQL expression.
+        return s and '$' in s
 
 
 class InlineYAQLEvaluator(YAQLEvaluator):
-    # Put YAQL-specific regexp pattern here.
-    # Use form {$.any_symbols_except'}'} to find an expression.
-    find_expression_pattern = re.compile("\{\$\.*[^\}]*\}")
+    # This regular expression will look for multiple occurrences of YAQL
+    # expressions in between curly braces (i.e. {any_symbols_except'}'})
+    # within a string.
+    regex_yaql_expr = '(\{\.*[^\}]*\}*)'
+    find_expression_pattern = re.compile(regex_yaql_expr)
 
     @classmethod
     def evaluate(cls, expression, data_context):
@@ -88,24 +91,21 @@ class InlineYAQLEvaluator(YAQLEvaluator):
             % (expression, data_context)
         )
 
-        if super(InlineYAQLEvaluator, cls).is_expression(expression):
-            return super(InlineYAQLEvaluator,
-                         cls).evaluate(expression, data_context)
-
         result = expression
         found_expressions = cls.find_inline_expressions(expression)
 
         if found_expressions:
             for expr in found_expressions:
                 trim_expr = expr.strip("{}")
-
-                evaluated = super(InlineYAQLEvaluator, cls).evaluate(
-                    trim_expr,
-                    data_context
-                )
-
-                replacement = str(evaluated)
-                result = result.replace(expr, replacement)
+                evaluated = super(InlineYAQLEvaluator,
+                                  cls).evaluate(trim_expr, data_context)
+                result = result.replace(expr, str(evaluated))
+        else:
+            # If there is no inline YAQL expressions found, then
+            # pass the entire string to the parent YAQL evaluator.
+            if super(InlineYAQLEvaluator, cls).is_expression(expression):
+                return super(InlineYAQLEvaluator,
+                             cls).evaluate(expression, data_context)
 
         LOG.debug("Inline YAQL expression result: %s" % result)
 
