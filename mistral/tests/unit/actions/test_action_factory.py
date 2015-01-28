@@ -93,6 +93,7 @@ class ActionFactoryTest(base.DbTestCase):
         self._assert_single_item(action_list, name="std.http")
         self._assert_single_item(action_list, name="std.mistral_http")
         self._assert_single_item(action_list, name="std.ssh")
+        self._assert_single_item(action_list, name="std.javascript")
 
         self._assert_single_item(action_list, name="nova.servers_get")
         self._assert_single_item(action_list, name="nova.volumes_delete")
@@ -110,6 +111,8 @@ class ActionFactoryTest(base.DbTestCase):
                          a_m.get_action_class("std.mistral_http"))
         self.assertEqual(std.SendEmailAction,
                          a_m.get_action_class("std.email"))
+        self.assertEqual(std.JavaScriptAction,
+                         a_m.get_action_class("std.javascript"))
 
     def test_resolve_adhoc_action_name(self):
         wb = spec_parser.get_workbook_spec_from_yaml(

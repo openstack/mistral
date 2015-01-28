@@ -23,6 +23,7 @@ import smtplib
 from mistral.actions import base
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.utils import javascript
 from mistral.utils import ssh_utils
 
 
@@ -326,3 +327,20 @@ class SSHAction(base.Action):
     def test(self):
         # TODO(rakhmerov): Implement.
         return None
+
+
+class JavaScriptAction(base.Action):
+    """Evaluates given JavaScript.
+
+    """
+    def __init__(self, script):
+        self.script = script
+
+    def run(self):
+        try:
+            return javascript.evaluate(self.script)
+        except Exception as e:
+            raise exc.ActionException("JavaScriptAction failed: %s" % str(e))
+
+    def test(self):
+        return self.script
