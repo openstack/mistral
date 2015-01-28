@@ -14,11 +14,12 @@
 
 import mock
 from oslo.config import cfg
+import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
-from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests import base as test_base
 from mistral.tests.unit.engine1 import base as engine_test_base
 from mistral.workflow import data_flow
@@ -31,47 +32,60 @@ LOG = logging.getLogger(__name__)
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-WORKBOOK = """
+SIMPLE_WF = """
 ---
 version: '2.0'
 
-name: wb
+wf:
+  type: direct
 
-workflows:
-  wf1:
-    type: direct
+  tasks:
+    task1:
+      action: std.echo output="Hi"
+      publish:
+        hi: $.task1
+      on-success:
+        - task2
 
-    tasks:
-      task1:
-        action: std.echo output="Hi"
-        publish:
-          hi: $.task1
-        on-success:
-          - task2
+    task2:
+      action: std.echo output="Morpheus"
+      publish:
+        to: $.task2
+      on-success:
+        - task3
 
-      task2:
-        action: std.echo output="Morpheus"
-        publish:
-          to: $.task2
-        on-success:
-          - task3
+    task3:
+      publish:
+        result: "{$.hi}, {$.to}! Sincerely, your {$.__env.from}."
+"""
 
-      task3:
-        publish:
-          result: "{$.hi}, {$.to}! Sincerely, your {$.__env.from}."
+PARALLEL_TASKS_WF = """
+---
+version: 2.0
+
+wf:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.echo output=1
+      publish:
+        var1: $.task1
+
+    task2:
+      action: std.echo output=2
+      publish:
+        var2: $.task2
 """
 
 
 class DataFlowEngineTest(engine_test_base.EngineTestCase):
-    def setUp(self):
-        super(DataFlowEngineTest, self).setUp()
-
-        wb_service.create_workbook_v2(WORKBOOK)
-
     def test_trivial_dataflow(self):
+        wf_service.create_workflows(SIMPLE_WF)
+
         # Start workflow.
         exec_db = self.engine.start_workflow(
-            'wb.wf1',
+            'wf',
             {},
             environment={'from': 'Neo'}
         )
@@ -96,6 +110,37 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             {'result': 'Hi, Morpheus! Sincerely, your Neo.'},
             task3.output
         )
+
+    # TODO(rakhmerov): https://bugs.launchpad.net/mistral/+bug/1414821.
+    @testtools.skip('Make it work.')
+    def test_parallel_tasks(self):
+        wf_service.create_workflows(PARALLEL_TASKS_WF)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(states.SUCCESS, exec_db.state)
+
+        tasks = exec_db.tasks
+
+        self.assertEqual(2, len(tasks))
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.SUCCESS, task2.state)
+
+        self.assertDictEqual({'var1': 1}, task1.output)
+        self.assertDictEqual({'var2': 2}, task2.output)
+
+        self.assertEqual(1, exec_db.output['var1'])
+        self.assertEqual(2, exec_db.output['var2'])
 
 
 class DataFlowTest(test_base.BaseTest):

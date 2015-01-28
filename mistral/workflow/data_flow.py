@@ -157,6 +157,8 @@ def evaluate_workflow_output(wf_spec, context):
     # Evaluate 'publish' clause using raw result as a context.
     output = expr.evaluate_recursively(output_dict, context)
 
+    # TODO(rakhmerov): Many don't like that we return the whole context
+    # TODO(rakhmerov): if 'output' is not explicitly defined.
     return output or context
 
 

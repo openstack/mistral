@@ -120,6 +120,9 @@ class WorkflowHandler(object):
                 if not self.is_paused_or_completed():
                     self._set_execution_state(states.SUCCESS)
 
+                # TODO(rakhmerov): It's not enough just to take last task's
+                # TODO(rakhmerov): context. It doesn't work for parallel tasks.
+
                 self.exec_db.output = data_flow.evaluate_workflow_output(
                     self.wf_spec,
                     data_flow.evaluate_task_outbound_context(task_db)
