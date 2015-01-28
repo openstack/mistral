@@ -166,6 +166,13 @@ class RunTask(EngineCommand):
 
             self._run_workflow()
 
+    def _get_action_defaults(self):
+        env = self.task_db.in_context.get('__env', {})
+        actions = env.get('__actions', {})
+        defaults = actions.get(self.task_spec.get_action_name(), {})
+
+        return defaults
+
     def _run_action(self):
         exec_db = self.exec_db
         wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
@@ -179,6 +186,7 @@ class RunTask(EngineCommand):
         )
 
         action_input = self.task_db.input or {}
+        action_defaults = self._get_action_defaults()
 
         if action_db.spec:
             # Ad-hoc action.
@@ -220,17 +228,16 @@ class RunTask(EngineCommand):
             action_input_collection = with_items.calc_input(action_input)
 
             for a_input in action_input_collection:
+                evaluated_input = expr.evaluate_recursively(
+                    self.task_spec.get_input(),
+                    utils.merge_dicts(copy.copy(a_input),
+                                      copy.copy(self.task_db.in_context)))
+
                 rpc.get_executor_client().run_action(
                     self.task_db.id,
                     action_db.action_class,
                     action_db.attributes or {},
-                    expr.evaluate_recursively(
-                        self.task_spec.get_input(),
-                        utils.merge_dicts(
-                            copy.copy(a_input),
-                            copy.copy(self.task_db.in_context)
-                        )
-                    ),
+                    utils.merge_dicts(evaluated_input, action_defaults),
                     target
                 )
 
@@ -239,7 +246,7 @@ class RunTask(EngineCommand):
                 self.task_db.id,
                 action_db.action_class,
                 action_db.attributes or {},
-                action_input,
+                utils.merge_dicts(action_input, action_defaults),
                 target
             )
 
