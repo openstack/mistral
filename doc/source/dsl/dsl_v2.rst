@@ -1,12 +1,12 @@
 Mistral DSL v2 specification
-----------------------------
+============================
 
 **NOTE**: DSL described in this document might slightly change within a
 short period of time (2-3 weeks) and should be now considered
 **experimental**. Mistral team is now actively working on stabilization.
 
 Introduction
-~~~~~~~~~~~~
+------------
 
 Current document fully describes Domain Specific Language (DSL) version
 2 of Mistral Workflow Service. Since version 1 issued in May 2014
@@ -29,7 +29,7 @@ described in details next:
 -  `Triggers <#Triggers>`__
 
 Prerequisites
-~~~~~~~~~~~~~
+-------------
 
 Mistral DSL is fully based on YAML and knowledge of YAML is a plus for
 better understanding of the material in this specification. It also
@@ -41,7 +41,7 @@ workflow, action and trigger definitions.
    https://pypi.python.org/pypi/yaql/0.3
 
 Workflows
-~~~~~~~~~
+---------
 
 Workflow is the main building block of Mistral DSL, the reason why the
 project exists. Workflow represents a process that can be described in a
@@ -50,7 +50,7 @@ user. Each workflow consists of tasks (at least one) describing what
 exact steps should be made during workflow execution.
 
 YAML example
-''''''''''''
+^^^^^^^^^^^^
 
 | ``---``
 | ``version: '2.0'``
@@ -123,8 +123,8 @@ different types:
 
 .. code-block:: yaml
 
- action_based_task:
-  action: std.http url='openstack.org'
+  action_based_task:
+     action: std.http url='openstack.org'
   workflow_based_task:
      workflow: backup_vm_workflow vm_id={$.vm_id}
 
@@ -387,8 +387,9 @@ Reverse Workflow Task Attributes
 -  **requires** - List of tasks which should be executed before this
    task. *Optional*.
 
+
 Actions
-~~~~~~~
+-------
 
 Action defines what exactly needs to be done when task starts. Action is
 similar to a regular function in general purpose programming language
@@ -585,7 +586,7 @@ Attributes
    referenced in YAQL as '$.'.
 
 Triggers [coming soon...]
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 
 **NOTE**: Triggers are not yet implemented as part of version 0.1, they
 will go into in one of the next builds, likely 0.2
@@ -630,7 +631,7 @@ mailing list
 `openstack-dev@lists.openstack.org <mailto:openstack-dev@lists.openstack.org?subject=%5Bopenstack-dev%5D%5Bmistral%5D>`__.
 
 Workbooks
-~~~~~~~~~
+---------
 
 As mentioned before, workbooks still exist in Mistral DSL version 2 but
 purely for convenience. Using workbooks users can combine multiple
@@ -655,7 +656,8 @@ let's take a look at the figure below.
 
 | |Figure 3. Mistral Workbook Namespacing.|
 |  So after a workbook has been uploaded its workflows, actions and
-triggers become independent objects but with slightly different names.
+   triggers become independent objects but with slightly different
+   names.
 
 YAML example
 ^^^^^^^^^^^^
@@ -715,4 +717,4 @@ Attributes
 
 .. |Figure 1. Mistral Direct Workflow.| image:: /img/Mistral_direct_workflow.png
 .. |Figure 2. Mistral Reverse Workflow.| image:: /img/Mistral_reverse_workflow.png
-.. |Figure 3. Mistral Workbook Namespacing.| image:: /img/mistral_workbook_namespacing.png
+.. |Figure 3. Mistral Workbook Namespacing.| image:: /img/Mistral_workbook_namespacing.png
