@@ -333,12 +333,18 @@ class JavaScriptAction(base.Action):
     """Evaluates given JavaScript.
 
     """
-    def __init__(self, script):
+    def __init__(self, script, context=None):
         self.script = script
+        self.context = context
 
     def run(self):
         try:
-            return javascript.evaluate(self.script)
+            script = """function f() {
+                %s
+            }
+            f()
+            """ % self.script
+            return javascript.evaluate(script, self.context)
         except Exception as e:
             raise exc.ActionException("JavaScriptAction failed: %s" % str(e))
 

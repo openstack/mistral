@@ -159,11 +159,15 @@ def get_action_context(task_db):
     }
 
 
-def has_action_context(action, attributes):
+def _has_argument(action, attributes, argument_name):
     action_cls = action_factory.construct_action_class(action, attributes)
     arg_spec = inspect.getargspec(action_cls.__init__)
 
-    return _ACTION_CTX_PARAM in arg_spec.args
+    return argument_name in arg_spec.args
+
+
+def has_action_context(action, attributes):
+    return _has_argument(action, attributes, _ACTION_CTX_PARAM)
 
 
 def resolve_adhoc_action_name(workbook, action_name):

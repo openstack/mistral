@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import abc
+import json
 
 from mistral import exceptions as exc
 from mistral.openstack.common import importutils
@@ -24,24 +25,29 @@ _PYV8 = importutils.try_import('PyV8')
 class JSEvaluator(object):
     @classmethod
     @abc.abstractmethod
-    def evaluate(cls, script):
+    def evaluate(cls, script, context):
+        """Executes given JavaScript.
+        """
         pass
 
 
 class V8Evaluator(JSEvaluator):
     @classmethod
-    def evaluate(cls, script):
+    def evaluate(cls, script, context):
         if not _PYV8:
             raise exc.MistralException(
                 "PyV8 module is not available. Please install PyV8."
             )
 
         with _PYV8.JSContext() as ctx:
+            # Prepare data context and way for interaction with it.
+            ctx.eval('$ = %s' % json.dumps(context))
+
             return ctx.eval(script)
 
 # TODO(nmakhotkin) Make it configurable.
 EVALUATOR = V8Evaluator
 
 
-def evaluate(script):
-    return EVALUATOR.evaluate(script)
+def evaluate(script, context):
+    return EVALUATOR.evaluate(script, context)
