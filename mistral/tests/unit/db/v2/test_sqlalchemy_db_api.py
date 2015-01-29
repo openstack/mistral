@@ -1,4 +1,4 @@
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ from oslo.config import cfg
 
 from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests import base as test_base
@@ -592,6 +593,44 @@ class TaskTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_task("not-existing-id"))
 
+    def test_action_invocations(self):
+        # Store one task with two invocations.
+        with db_api.transaction():
+            ex = db_api.create_execution(EXECUTIONS[0])
+
+            values = copy.copy(TASKS[0])
+            values.update({'execution_id': ex.id})
+
+            task = db_api.create_task(values)
+
+            self.assertEqual(0, len(task.invocations))
+
+            inv1 = db_models.ActionInvocation()
+            inv2 = db_models.ActionInvocation()
+
+            task.invocations.append(inv1)
+            task.invocations.append(inv2)
+
+            self.assertEqual(2, len(task.invocations))
+
+        # Make sure associated objects were saved.
+        with db_api.transaction():
+            task = db_api.get_task(task.id)
+
+            self.assertEqual(2, len(task.invocations))
+
+        # Remove associated objects from collection.
+        with db_api.transaction():
+            task = db_api.get_task(task.id)
+
+            del task.invocations[:]
+
+        # Make sure associated objects were deleted.
+        with db_api.transaction():
+            task = db_api.get_task(task.id)
+
+            self.assertEqual(0, len(task.invocations))
+
     def test_update_task(self):
         ex = db_api.create_execution(EXECUTIONS[0])
 
@@ -602,10 +641,7 @@ class TaskTest(SQLAlchemyTest):
 
         self.assertIsNone(created.updated_at)
 
-        updated = db_api.update_task(
-            created.id,
-            {'wf_name': 'new_wf'}
-        )
+        updated = db_api.update_task(created.id, {'wf_name': 'new_wf'})
 
         self.assertEqual('new_wf', updated.wf_name)
 

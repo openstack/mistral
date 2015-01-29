@@ -446,6 +446,14 @@ def _get_tasks(**kwargs):
     return _get_collection_sorted_by_time(models.Task, **kwargs)
 
 
+# Action invocations.
+
+
+@b.session_aware()
+def delete_action_invocations(**kwargs):
+    return _delete_all(models.ActionInvocation, **kwargs)
+
+
 # Delayed calls.
 
 @b.session_aware()

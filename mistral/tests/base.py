@@ -209,6 +209,7 @@ class DbTestCase(BaseTest):
 
         with db_api_v2.transaction():
             db_api_v2.delete_workbooks()
+            db_api_v2.delete_action_invocations()
             db_api_v2.delete_tasks()
             db_api_v2.delete_executions()
             db_api_v2.delete_cron_triggers()

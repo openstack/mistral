@@ -19,6 +19,7 @@
 #
 
 import sqlalchemy as sa
+from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import mutable
 
 from mistral.openstack.common import jsonutils
@@ -109,3 +110,8 @@ def JsonDictType():
 def JsonListType():
     """Returns an SQLAlchemy Column Type suitable to store a Json array."""
     return MutableList.as_mutable(JsonEncoded)
+
+
+def LongText():
+    # TODO(rakhmerov): Need to do for postgres.
+    return sa.Text().with_variant(mysql.LONGTEXT(), 'mysql')

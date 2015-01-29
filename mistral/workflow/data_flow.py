@@ -91,6 +91,8 @@ def _evaluate_upstream_context(upstream_db_tasks):
     return ctx
 
 
+# TODO(rakhmerov): This method should utilize task invocations and calculate
+# effective task output.
 def evaluate_task_output(task_db, task_spec, raw_result):
     """Evaluates task output given a raw task result from action/workflow.
 

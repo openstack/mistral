@@ -204,6 +204,13 @@ def delete_tasks(**kwargs):
     return IMPL.delete_tasks(**kwargs)
 
 
+# Action invocations.
+
+
+def delete_action_invocations(**kwargs):
+    return IMPL.delete_action_invocations(**kwargs)
+
+
 # Delayed calls.
 
 
