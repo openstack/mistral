@@ -237,7 +237,9 @@ class RunTask(EngineCommand):
                     self.task_db.id,
                     action_db.action_class,
                     action_db.attributes or {},
-                    utils.merge_dicts(evaluated_input, action_defaults),
+                    utils.merge_dicts(evaluated_input,
+                                      action_defaults,
+                                      overwrite=False),
                     target
                 )
 
@@ -246,7 +248,9 @@ class RunTask(EngineCommand):
                 self.task_db.id,
                 action_db.action_class,
                 action_db.attributes or {},
-                utils.merge_dicts(action_input, action_defaults),
+                utils.merge_dicts(action_input,
+                                  action_defaults,
+                                  overwrite=False),
                 target
             )
 

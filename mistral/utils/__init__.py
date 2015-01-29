@@ -100,12 +100,13 @@ def log_exec(logger, level=logging.DEBUG):
     return _decorator
 
 
-def merge_dicts(left, right):
+def merge_dicts(left, right, overwrite=True):
     """Merges two dictionaries.
 
     Values of right dictionary recursively get merged into left dictionary.
     :param left: Left dictionary.
     :param right: Right dictionary.
+    :param overwrite: If False, left value will not be overwritten if exists.
     """
 
     if left is None:
@@ -121,7 +122,9 @@ def merge_dicts(left, right):
             left_v = left[k]
 
             if isinstance(left_v, dict) and isinstance(v, dict):
-                merge_dicts(left_v, v)
+                merge_dicts(left_v, v, overwrite=overwrite)
+            elif overwrite:
+                left[k] = v
 
     return left
 

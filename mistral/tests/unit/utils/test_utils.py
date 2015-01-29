@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,8 +13,29 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from mistral.tests import base
 from mistral import utils
+
+LEFT = {
+    'key1': {
+        'key11': "val11"
+    },
+    'key2': 'val2'
+}
+
+RIGHT = {
+    'key1': {
+        'key11': "val111111",
+        'key12': "val12",
+        'key13': {
+            'key131': 'val131'
+        }
+    },
+    'key2': 'val2222',
+    'key3': 'val3'
+}
 
 
 class UtilsTest(base.BaseTest):
@@ -23,14 +43,10 @@ class UtilsTest(base.BaseTest):
         super(UtilsTest, self).setUp()
 
     def test_merge_dicts(self):
-        left = {
-            'key1': {
-                'key11': "val11"
-            },
-            'key2': 'val2'
-        }
+        left = copy.deepcopy(LEFT)
+        right = copy.deepcopy(RIGHT)
 
-        right = {
+        expected = {
             'key1': {
                 'key11': "val111111",
                 'key12': "val12",
@@ -44,17 +60,24 @@ class UtilsTest(base.BaseTest):
 
         utils.merge_dicts(left, right)
 
-        self.assertDictEqual(
-            {
-                'key1': {
-                    'key11': "val11",
-                    'key12': "val12",
-                    'key13': {
-                        'key131': 'val131'
-                    }
-                },
-                'key2': 'val2',
-                'key3': 'val3'
+        self.assertDictEqual(left, expected)
+
+    def test_merge_dicts_overwrite_false(self):
+        left = copy.deepcopy(LEFT)
+        right = copy.deepcopy(RIGHT)
+
+        expected = {
+            'key1': {
+                'key11': "val11",
+                'key12': "val12",
+                'key13': {
+                    'key131': 'val131'
+                }
             },
-            left
-        )
+            'key2': 'val2',
+            'key3': 'val3'
+        }
+
+        utils.merge_dicts(left, right, overwrite=False)
+
+        self.assertDictEqual(left, expected)

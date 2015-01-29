@@ -78,6 +78,40 @@ wf:
         var2: $.task2
 """
 
+VAR_OVERWRITE_WF = """
+---
+version: '2.0'
+
+wf:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.echo output="Hi"
+      publish:
+        greeting: $.task1
+      on-success:
+        - task2
+
+    task2:
+      action: std.echo output="Yo"
+      publish:
+        greeting: $.task2
+      on-success:
+        - task3
+
+    task3:
+      action: std.echo output="Morpheus"
+      publish:
+        to: $.task3
+      on-success:
+        - task4
+
+    task4:
+      publish:
+        result: "{$.greeting}, {$.to}! Sincerely, your {$.__env.from}."
+"""
+
 
 class DataFlowEngineTest(engine_test_base.EngineTestCase):
     def test_trivial_dataflow(self):
@@ -141,6 +175,39 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertEqual(1, exec_db.output['var1'])
         self.assertEqual(2, exec_db.output['var2'])
+
+    def test_sequential_tasks_publishing_same_var(self):
+        wf_service.create_workflows(VAR_OVERWRITE_WF)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow(
+            'wf',
+            {},
+            environment={'from': 'Neo'}
+        )
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(states.SUCCESS, exec_db.state)
+
+        tasks = exec_db.tasks
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+        task4 = self._assert_single_item(tasks, name='task4')
+
+        self.assertEqual(states.SUCCESS, task4.state)
+        self.assertDictEqual({'greeting': 'Hi'}, task1.output)
+        self.assertDictEqual({'greeting': 'Yo'}, task2.output)
+        self.assertDictEqual({'to': 'Morpheus'}, task3.output)
+        self.assertDictEqual(
+            {'result': 'Yo, Morpheus! Sincerely, your Neo.'},
+            task4.output
+        )
 
 
 class DataFlowTest(test_base.BaseTest):
