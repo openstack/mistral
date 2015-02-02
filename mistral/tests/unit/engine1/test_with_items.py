@@ -1,4 +1,4 @@
-# Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from mistral.engine import states
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
+from mistral.workflow import utils as wf_utils
 
 # TODO(nmakhotkin) Need to write more tests.
 
@@ -100,11 +101,39 @@ workflows:
 """
 
 
+WORKBOOK_ACTION_CONTEXT = """
+---
+version: "2.0"
+name: wb1
+
+workflows:
+  wf1_with_items:
+    type: direct
+    input:
+      - links
+    tasks:
+      task1:
+        with-items: link in $.links
+        action: std.mistral_http url={$.link}
+        publish:
+          result: $.task1
+"""
+
+
 WORKFLOW_INPUT = {
     'names_info': [
         {'name': 'John'},
         {'name': 'Ivan'},
         {'name': 'Mistral'}
+    ]
+}
+
+
+WF_INPUT_URLS = {
+    'links': [
+        'http://google.com',
+        'http://openstack.org',
+        'http://google.com'
     ]
 }
 
@@ -200,3 +229,36 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
+
+    def test_with_items_action_context(self):
+        wb_service.create_workbook_v2(WORKBOOK_ACTION_CONTEXT)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow(
+            'wb1.wf1_with_items', WF_INPUT_URLS
+        )
+
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = exec_db.tasks[0]
+
+        self.engine.on_task_result(task_db.id, wf_utils.TaskResult("Ivan"))
+        self.engine.on_task_result(task_db.id, wf_utils.TaskResult("John"))
+        self.engine.on_task_result(task_db.id, wf_utils.TaskResult("Mistral"))
+
+        self._await(
+            lambda: self.is_execution_success(exec_db.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        task_db = db_api.get_task(task_db.id)
+        result = task_db.output['result']
+
+        self.assertTrue(isinstance(result, list))
+
+        self.assertIn('John', result)
+        self.assertIn('Ivan', result)
+        self.assertIn('Mistral', result)
+
+        self.assertEqual(states.SUCCESS, task_db.state)

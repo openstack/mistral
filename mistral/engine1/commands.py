@@ -225,6 +225,7 @@ class RunTask(EngineCommand):
         with_items_spec = self.task_spec.get_with_items()
 
         if with_items_spec:
+            action_context = action_input.pop('action_context', None)
             action_input_collection = with_items.calc_input(action_input)
 
             for a_input in action_input_collection:
@@ -232,6 +233,9 @@ class RunTask(EngineCommand):
                     self.task_spec.get_input(),
                     utils.merge_dicts(copy.copy(a_input),
                                       copy.copy(self.task_db.in_context)))
+
+                if action_context:
+                    evaluated_input['action_context'] = action_context
 
                 rpc.get_executor_client().run_action(
                     self.task_db.id,
