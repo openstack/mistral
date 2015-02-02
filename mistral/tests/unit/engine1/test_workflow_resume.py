@@ -12,9 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.engine1 import default_engine as de
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral.services import workbooks as wb_service
@@ -300,3 +303,28 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, exec_db.state)
         self.assertEqual(4, len(exec_db.tasks))
+
+    @mock.patch.object(de.DefaultEngine, '_fail_workflow')
+    def test_resume_fails(self, mock_fw):
+        # Start and pause workflow.
+        wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
+        exec_db = self.engine.start_workflow('wb.wf1', {})
+
+        self._await(lambda: self.is_execution_paused(exec_db.id))
+
+        exec_db = db_api.get_execution(exec_db.id)
+        self.assertEqual(states.PAUSED, exec_db.state)
+
+        # Simulate failure and check if it is handled.
+        err = exc.MistralException('foo')
+        with mock.patch.object(
+                de.DefaultEngine,
+                '_run_remote_commands',
+                side_effect=err):
+
+            self.assertRaises(
+                exc.MistralException,
+                self.engine.resume_workflow,
+                exec_db.id
+            )
+            mock_fw.assert_called_once_with(exec_db.id, err)
