@@ -35,14 +35,14 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_task_result(self, task_id, raw_result):
-        """Accepts workflow task raw result and continues the workflow.
+    def on_task_result(self, task_id, result):
+        """Accepts workflow task result and continues the workflow.
 
-        Task result here is a raw task result which comes from a corresponding
-        action/workflow associated which the task is associated with.
+        Task result here is a result which comes from a action/workflow
+        associated which the task.
         :param task_id: Task id.
-        :param raw_result: Raw task result that comes from action/workflow
-        (before publisher). Instance of mistral.workflow.base.TaskResult
+        :param result: Action/workflow result. Instance of
+            mistral.workflow.base.TaskResult
         :return:
         """
         raise NotImplementedError
@@ -118,12 +118,12 @@ class TaskPolicy(object):
         # No-op by default.
         pass
 
-    def after_task_complete(self, task_db, task_spec, raw_result):
+    def after_task_complete(self, task_db, task_spec, result):
         """Called right after task completes.
 
         :param task_db: Completed task DB model.
         :param task_spec: Completed task specification.
-        :param raw_result: TaskResult instance passed to on_task_result.
+        :param result: TaskResult instance passed to on_task_result.
          It is needed for analysis of result and scheduling task again.
         """
         # No-op by default.

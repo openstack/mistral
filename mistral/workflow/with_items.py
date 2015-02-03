@@ -18,11 +18,13 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 
 
-# TODO(rakhmerov): Partially duplicates data_flow.evaluate_task_output
-def get_output(task_db, task_spec, raw_result):
-    """Returns output from task markered as with-items
+# TODO(rakhmerov): Partially duplicates data_flow.evaluate_task_result
+# TODO(rakhmerov): Method now looks confusing because it's called 'get_result'
+# and has 'result' parameter, but it's temporary, needs to be refactored.
+def get_result(task_db, task_spec, result):
+    """Returns result from task markered as with-items
 
-     Examples of output:
+     Examples of result:
        1. Without publish clause:
           {
             "task": {
@@ -30,64 +32,64 @@ def get_output(task_db, task_spec, raw_result):
             }
           }
        Note: In this case we don't create any specific
-       output to prevent generating large data in DB.
+       result to prevent generating large data in DB.
 
        Note: None here used for calculating number of
        finished iterations.
 
-       2. With publish clause and specific output key:
+       2. With publish clause and specific result key:
           {
             "result": [
-              "output1",
-              "output2"
+              "result1",
+              "result2"
             ],
             "task": {
               "task1": {
                 "result": [
-                  "output1",
-                  "output2"
+                  "result1",
+                  "result2"
                 ]
               }
             }
           }
     """
-    e_data = raw_result.error
+    e_data = result.error
 
     expr_ctx = copy.deepcopy(task_db.in_context) or {}
 
-    expr_ctx[task_db.name] = copy.deepcopy(raw_result.data) or {}
+    expr_ctx[task_db.name] = copy.deepcopy(result.data) or {}
 
-    # Calc output for with-items (only list form is used).
-    output = expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
+    # Calc result for with-items (only list form is used).
+    result = expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
 
-    if not task_db.output:
-        task_db.output = {}
+    if not task_db.result:
+        task_db.result = {}
 
-    task_output = copy.copy(task_db.output)
+    task_result = copy.copy(task_db.result)
 
-    out_key = _get_output_key(task_spec)
+    res_key = _get_result_key(task_spec)
 
-    if out_key:
-        if out_key in task_output:
-            task_output[out_key].append(
-                output.get(out_key) or e_data
+    if res_key:
+        if res_key in task_result:
+            task_result[res_key].append(
+                result.get(res_key) or e_data
             )
         else:
-            task_output[out_key] = [output.get(out_key) or e_data]
+            task_result[res_key] = [result.get(res_key) or e_data]
 
-        # Add same result to task output under key 'task'.
-        # TODO(rakhmerov): Fix this during output/result refactoring.
-        # task_output[t_name] =
+        # Add same result to task result under key 'task'.
+        # TODO(rakhmerov): Fix this during task result refactoring.
+        # task_result[t_name] =
         #     {
-        #         out_key: task_output[out_key]
+        #         res_key: task_result[res_key]
         #     }
     # else:
-    #     if 'task' not in task_output:
-    #         task_output.update({'task': {t_name: [None or e_data]}})
+    #     if 'task' not in task_result:
+    #         task_result.update({'task': {t_name: [None or e_data]}})
     #     else:
-    #         task_output['task'][t_name].append(None or e_data)
+    #         task_result['task'][t_name].append(None or e_data)
 
-    return task_output
+    return task_result
 
 
 def _get_context(task_db):
@@ -202,7 +204,7 @@ def validate_input(with_items_input):
         )
 
 
-def _get_output_key(task_spec):
+def _get_result_key(task_spec):
     return (task_spec.get_publish().keys()[0]
             if task_spec.get_publish() else None)
 

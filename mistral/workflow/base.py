@@ -59,14 +59,15 @@ class WorkflowHandler(object):
         """
         raise NotImplementedError
 
-    def on_task_result(self, task_db, raw_result):
+    def on_task_result(self, task_db, result):
         """Handles event of arriving a task result.
 
         Given task result performs analysis of the workflow execution and
-        identifies tasks that can be scheduled for execution.
+        identifies commands (including tasks) that can be scheduled for
+        execution.
         :param task_db: Task that the result corresponds to.
-        :param raw_result: Raw task result that comes from action/workflow
-        (before publisher). Instance of mistral.workflow.utils.TaskResult
+        :param result: Task action/workflow result.
+            Instance of mistral.workflow.utils.TaskResult
         :return List of engine commands that needs to be performed.
         """
 
@@ -78,24 +79,22 @@ class WorkflowHandler(object):
 
         task_spec = self.wf_spec.get_tasks()[task_db.name]
 
-        task_db.output = self._determine_task_output(
-            task_spec,
-            task_db,
-            raw_result
-        )
+        task_db.state = self._determine_task_state(task_db, task_spec, result)
 
-        task_db.state = self._determine_task_state(
-            task_db,
+        # TODO(rakhmerov): This needs to be fixed (the method should work
+        # differently).
+        task_db.result = self._determine_task_result(
             task_spec,
-            raw_result
+            task_db,
+            result
         )
 
         wf_trace_msg += "%s" % task_db.state
 
         if task_db.state == states.ERROR:
-            wf_trace_msg += ", error = %s]" % utils.cut(raw_result.error)
+            wf_trace_msg += ", error = %s]" % utils.cut(result.error)
         else:
-            wf_trace_msg += ", result = %s]" % utils.cut(raw_result.data)
+            wf_trace_msg += ", result = %s]" % utils.cut(result.data)
 
         wf_trace.info(task_db, wf_trace_msg)
 
@@ -108,7 +107,8 @@ class WorkflowHandler(object):
                 not self._is_error_handled(task_db)):
             if not self.is_paused_or_completed():
                 # TODO(dzimine): pass task_db.result when Model refactored.
-                msg = str(task_db.output.get('error', "Unknown"))
+                msg = str(task_db.result.get('error', "Unknown"))
+
                 self._set_execution_state(
                     states.ERROR,
                     "Failure caused by error in task '%s': %s"
@@ -132,23 +132,19 @@ class WorkflowHandler(object):
         return cmds
 
     @staticmethod
-    def _determine_task_output(task_spec, task_db, raw_result):
-        with_items_spec = task_spec.get_with_items()
-
-        if with_items_spec:
-            return with_items.get_output(
-                task_db, task_spec, raw_result)
+    def _determine_task_result(task_spec, task_db, result):
+        # TODO(rakhmerov): Think how 'with-items' can be better encapsulated.
+        if task_spec.get_with_items():
+            return with_items.get_result(task_db, task_spec, result)
         else:
-            return data_flow.evaluate_task_output(
-                task_db, task_spec, raw_result)
+            return data_flow.evaluate_task_result(task_db, task_spec, result)
 
     @staticmethod
-    def _determine_task_state(task_db, task_spec, raw_result):
-        state = states.ERROR if raw_result.is_error() else states.SUCCESS
+    def _determine_task_state(task_db, task_spec, result):
+        state = states.ERROR if result.is_error() else states.SUCCESS
 
-        with_items_spec = task_spec.get_with_items()
-
-        if with_items_spec:
+        # TODO(rakhmerov): Think how 'with-items' can be better encapsulated.
+        if task_spec.get_with_items():
             # Change the index.
             with_items.do_step(task_db)
 

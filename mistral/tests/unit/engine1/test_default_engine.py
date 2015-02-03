@@ -250,7 +250,7 @@ class DefaultEngineTest(base.DbTestCase):
         self._assert_dict_contains_subset(wf_input, task1_db.in_context)
         self.assertIn('__execution', task_db.in_context)
         self.assertDictEqual({'output': 'Hey'}, task1_db.input)
-        self.assertDictEqual({'result': 'Hey'}, task1_db.output)
+        self.assertDictEqual({'result': 'Hey'}, task1_db.result)
 
         exec_db = db_api.get_execution(exec_db.id)
 
@@ -279,12 +279,12 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(states.SUCCESS, task2_db.state)
 
         in_context = copy.deepcopy(wf_input)
-        in_context.update(task1_db.output)
+        in_context.update(task1_db.result)
 
         self._assert_dict_contains_subset(in_context, task2_db.in_context)
         self.assertIn('__execution', task_db.in_context)
         self.assertDictEqual({'output': 'Hi'}, task2_db.input)
-        self.assertDictEqual({}, task2_db.output)
+        self.assertDictEqual({}, task2_db.result)
 
         self.assertEqual(2, len(exec_db.tasks))
 

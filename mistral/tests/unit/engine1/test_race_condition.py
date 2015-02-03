@@ -203,5 +203,5 @@ class LongActionTest(base.EngineTestCase):
             {
                 'result1': 1,
             },
-            task1.output
+            task1.result
         )

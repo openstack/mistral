@@ -93,21 +93,23 @@ def _evaluate_upstream_context(upstream_db_tasks):
 
 # TODO(rakhmerov): This method should utilize task invocations and calculate
 # effective task output.
-def evaluate_task_output(task_db, task_spec, raw_result):
-    """Evaluates task output given a raw task result from action/workflow.
+# TODO(rakhmerov): Now this method doesn't make a lot of sense because we
+# treat action/workflow as a task result so we need to calculate only
+# what could be called "effective task result"
+def evaluate_task_result(task_db, task_spec, result):
+    """Evaluates task result given a result from action/workflow.
 
     :param task_db: DB task
     :param task_spec: Task specification
-    :param raw_result: Raw task result that comes from action/workflow
-        (before publisher). Instance of mistral.workflow.base.TaskResult
-    :return: Complete task output that goes to Data Flow context for SUCCESS
-        or raw error for ERROR
+    :param result: Task action/workflow result. Instance of
+        mistral.workflow.base.TaskResult
+    :return: Complete task result.
     """
 
-    if raw_result.is_error():
+    if result.is_error():
         return {
-            'error': raw_result.error,
-            'task': {task_db.name: raw_result.error}
+            'error': result.error,
+            'task': {task_db.name: result.error}
         }
 
     # Expression context is task inbound context + action/workflow result
@@ -120,9 +122,22 @@ def evaluate_task_output(task_db, task_spec, raw_result):
             task_db.name
         )
 
-    expr_ctx[task_db.name] = copy.deepcopy(raw_result.data) or {}
+    expr_ctx[task_db.name] = copy.deepcopy(result.data) or {}
 
     return expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
+
+
+def evaluate_effective_task_result(task_db, task_spec):
+    """Evaluates effective (final) task result.
+
+    Based on existing task invocations this method calculates
+    task final result that's supposed to be accessibly by users.
+    :param task_db: DB task.
+    :param task_spec: Task specification.
+    :return: Effective (final) task result.
+    """
+    # TODO(rakhmerov): Implement
+    pass
 
 
 def evaluate_task_outbound_context(task_db):
@@ -137,12 +152,12 @@ def evaluate_task_outbound_context(task_db):
     in_context = (copy.deepcopy(dict(task_db.in_context))
                   if task_db.in_context is not None else {})
 
-    out_ctx = utils.merge_dicts(in_context, task_db.output)
+    out_ctx = utils.merge_dicts(in_context, task_db.result)
 
     # Add task output under key 'task.taskName'.
     out_ctx = utils.merge_dicts(
         out_ctx,
-        {task_db.name: copy.deepcopy(task_db.output) or None}
+        {task_db.name: copy.deepcopy(task_db.result) or None}
     )
 
     return out_ctx
@@ -156,7 +171,7 @@ def evaluate_workflow_output(wf_spec, context):
     """
     output_dict = wf_spec.get_output()
 
-    # Evaluate 'publish' clause using raw result as a context.
+    # Evaluate workflow 'publish' clause using the final workflow context.
     output = expr.evaluate_recursively(output_dict, context)
 
     # TODO(rakhmerov): Many don't like that we return the whole context

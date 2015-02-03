@@ -234,8 +234,10 @@ class RunTask(EngineCommand):
             for a_input in action_input_collection:
                 evaluated_input = expr.evaluate_recursively(
                     self.task_spec.get_input(),
-                    utils.merge_dicts(copy.copy(a_input),
-                                      copy.copy(self.task_db.in_context)))
+                    utils.merge_dicts(
+                        copy.copy(a_input),
+                        copy.copy(self.task_db.in_context))
+                )
 
                 if action_context:
                     evaluated_input['action_context'] = action_context
@@ -244,9 +246,11 @@ class RunTask(EngineCommand):
                     self.task_db.id,
                     action_db.action_class,
                     action_db.attributes or {},
-                    utils.merge_dicts(evaluated_input,
-                                      action_defaults,
-                                      overwrite=False),
+                    utils.merge_dicts(
+                        evaluated_input,
+                        action_defaults,
+                        overwrite=False
+                    ),
                     target
                 )
 
@@ -255,9 +259,11 @@ class RunTask(EngineCommand):
                 self.task_db.id,
                 action_db.action_class,
                 action_db.attributes or {},
-                utils.merge_dicts(action_input,
-                                  action_defaults,
-                                  overwrite=False),
+                utils.merge_dicts(
+                    action_input,
+                    action_defaults,
+                    overwrite=False
+                ),
                 target
             )
 

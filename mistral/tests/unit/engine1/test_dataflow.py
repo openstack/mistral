@@ -185,11 +185,11 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         task3 = self._assert_single_item(tasks, name='task3')
 
         self.assertEqual(states.SUCCESS, task3.state)
-        self.assertDictEqual({'hi': 'Hi'}, task1.output)
-        self.assertDictEqual({'to': 'Morpheus'}, task2.output)
+        self.assertDictEqual({'hi': 'Hi'}, task1.result)
+        self.assertDictEqual({'to': 'Morpheus'}, task2.result)
         self.assertDictEqual(
             {'result': 'Hi, Morpheus! Sincerely, your Neo.'},
-            task3.output
+            task3.result
         )
 
     def test_parallel_tasks(self):
@@ -215,8 +215,8 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
 
-        self.assertDictEqual({'var1': 1}, task1.output)
-        self.assertDictEqual({'var2': 2}, task2.output)
+        self.assertDictEqual({'var1': 1}, task1.result)
+        self.assertDictEqual({'var2': 2}, task2.result)
 
         self.assertEqual(1, exec_db.output['var1'])
         self.assertEqual(2, exec_db.output['var2'])
@@ -252,11 +252,11 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task2.state)
         self.assertEqual(states.SUCCESS, task21.state)
 
-        self.assertDictEqual({'var1': 1}, task1.output)
-        self.assertDictEqual({'var12': 12}, task12.output)
-        self.assertDictEqual({'var14': 14}, task14.output)
-        self.assertDictEqual({'var2': 2}, task2.output)
-        self.assertDictEqual({'var21': 21}, task21.output)
+        self.assertDictEqual({'var1': 1}, task1.result)
+        self.assertDictEqual({'var12': 12}, task12.result)
+        self.assertDictEqual({'var14': 14}, task14.result)
+        self.assertDictEqual({'var2': 2}, task2.result)
+        self.assertDictEqual({'var21': 21}, task21.result)
 
         self.assertEqual(1, exec_db.output['var1'])
         self.assertEqual(12, exec_db.output['var12'])
@@ -290,17 +290,17 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         task4 = self._assert_single_item(tasks, name='task4')
 
         self.assertEqual(states.SUCCESS, task4.state)
-        self.assertDictEqual({'greeting': 'Hi'}, task1.output)
-        self.assertDictEqual({'greeting': 'Yo'}, task2.output)
-        self.assertDictEqual({'to': 'Morpheus'}, task3.output)
+        self.assertDictEqual({'greeting': 'Hi'}, task1.result)
+        self.assertDictEqual({'greeting': 'Yo'}, task2.result)
+        self.assertDictEqual({'to': 'Morpheus'}, task3.result)
         self.assertDictEqual(
             {'result': 'Yo, Morpheus! Sincerely, your Neo.'},
-            task4.output
+            task4.result
         )
 
 
 class DataFlowTest(test_base.BaseTest):
-    def test_evaluate_task_output_simple(self):
+    def test_evaluate_task_result_simple(self):
         """Test simplest green-path scenario:
         action status is SUCCESS, action output is string
         published variables are static (no expression),
@@ -310,16 +310,21 @@ class DataFlowTest(test_base.BaseTest):
         """
         publish_dict = {'foo': 'bar'}
         action_output = 'string data'
+
         task_db = models.Task(name='task1')
+
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
-        raw_result = utils.TaskResult(data=action_output, error=None)
 
-        res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
+        res = data_flow.evaluate_task_result(
+            task_db,
+            task_spec,
+            utils.TaskResult(data=action_output, error=None)
+        )
 
         self.assertEqual(res['foo'], 'bar')
 
-    def test_evaluate_task_output(self):
+    def test_evaluate_task_result(self):
         """Test green-path scenario with evaluations
         action status is SUCCESS, action output is dict
         published variables with expression,
@@ -346,9 +351,11 @@ class DataFlowTest(test_base.BaseTest):
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish)
 
-        raw_result = utils.TaskResult(data=action_output, error=None)
-
-        res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
+        res = data_flow.evaluate_task_result(
+            task_db,
+            task_spec,
+            utils.TaskResult(data=action_output, error=None)
+        )
 
         self.assertEqual(3, len(res))
 
@@ -361,7 +368,7 @@ class DataFlowTest(test_base.BaseTest):
         # Resolved from action output.
         self.assertEqual(res['a'], 'adata')
 
-    def test_evaluate_task_output_with_error(self):
+    def test_evaluate_task_result_with_error(self):
         """Test handling ERROR in action
         action status is ERROR, action output is error string
         published variables should not evaluate,
@@ -376,9 +383,11 @@ class DataFlowTest(test_base.BaseTest):
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish)
 
-        raw_result = utils.TaskResult(data=None, error=action_output)
-
-        res = data_flow.evaluate_task_output(task_db, task_spec, raw_result)
+        res = data_flow.evaluate_task_result(
+            task_db,
+            task_spec,
+            utils.TaskResult(data=None, error=action_output)
+        )
 
         self.assertDictEqual(
             res,

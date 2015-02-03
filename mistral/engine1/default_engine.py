@@ -43,8 +43,9 @@ class DefaultEngine(base.Engine):
 
     @u.log_exec(LOG)
     def start_workflow(self, workflow_name, workflow_input, **params):
+        exec_id = None
+
         try:
-            execution_id = None
             params = self._canonize_workflow_params(params)
 
             with db_api.transaction():
@@ -60,7 +61,7 @@ class DefaultEngine(base.Engine):
                     workflow_input,
                     params
                 )
-                execution_id = exec_db.id
+                exec_id = exec_db.id
 
                 u.wf_trace.info(
                     exec_db,
@@ -80,33 +81,34 @@ class DefaultEngine(base.Engine):
             self._run_remote_commands(cmds, exec_db, wf_handler)
 
         except Exception as e:
-            LOG.error("Failed to start workflow '%s' id=%s: %s\n%s",
-                      workflow_name, execution_id, e, traceback.format_exc())
-            self._fail_workflow(execution_id, e)
+            LOG.error(
+                "Failed to start workflow '%s' id=%s: %s\n%s",
+                workflow_name, exec_id, e, traceback.format_exc()
+            )
+            self._fail_workflow(exec_id, e)
             raise e
 
         return exec_db
 
     @u.log_exec(LOG)
-    def on_task_result(self, task_id, raw_result):
-        try:
-            task_name = "Unknown"
-            execution_id = None
+    def on_task_result(self, task_id, result):
+        task_name = "Unknown"
+        exec_id = None
 
+        try:
             with db_api.transaction():
                 task_db = db_api.get_task(task_id)
                 task_name = task_db.name
                 exec_db = db_api.get_execution(task_db.execution_id)
-                execution_id = exec_db.id
+                exec_id = exec_db.id
 
-                raw_result = utils.transform_result(
-                    exec_db, task_db, raw_result)
+                result = utils.transform_result(exec_db, task_db, result)
                 wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
                 self._after_task_complete(
                     task_db,
                     spec_parser.get_task_spec(task_db.spec),
-                    raw_result,
+                    result,
                     wf_handler.wf_spec
                 )
 
@@ -114,7 +116,7 @@ class DefaultEngine(base.Engine):
                     return task_db
 
                 # Calculate commands to process next.
-                cmds = wf_handler.on_task_result(task_db, raw_result)
+                cmds = wf_handler.on_task_result(task_db, result)
 
                 self._run_local_commands(
                     cmds,
@@ -127,21 +129,25 @@ class DefaultEngine(base.Engine):
             self._check_subworkflow_completion(exec_db)
 
         except Exception as e:
-            LOG.error("Failed to handle results for task '%s' id=%s: %s\n%s",
-                      task_name, task_id, e, traceback.format_exc())
+            LOG.error(
+                "Failed to handle results for task '%s' id=%s: %s\n%s",
+                task_name, task_id, e, traceback.format_exc()
+            )
             # TODO(dzimine): try to find out which command caused failure.
-            self._fail_workflow(execution_id, e)
+            self._fail_workflow(exec_id, e)
             raise e
 
         return task_db
 
     @u.log_exec(LOG)
     def run_task(self, task_id):
-        try:
-            execution_id = None
+        task_name = "Unknown"
+        exec_id = None
 
+        try:
             with db_api.transaction():
                 task_db = db_api.get_task(task_id)
+                task_name = task_db.name
 
                 u.wf_trace.info(
                     task_db,
@@ -157,7 +163,7 @@ class DefaultEngine(base.Engine):
                 task_spec = spec_parser.get_task_spec(task_db.spec)
 
                 exec_db = task_db.execution
-                execution_id = exec_db.id
+                exec_id = exec_db.id
 
                 wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
@@ -168,9 +174,11 @@ class DefaultEngine(base.Engine):
             cmd.run_remote(exec_db, wf_handler)
 
         except Exception as e:
-            LOG.error("Failed to run task '%s': %s\n%s",
-                      task_db.name, e, traceback.format_exc())
-            self._fail_workflow(execution_id, e, task_id)
+            LOG.error(
+                "Failed to run task '%s': %s\n%s",
+                task_name, e, traceback.format_exc()
+            )
+            self._fail_workflow(exec_id, e, task_id)
             raise e
 
     @u.log_exec(LOG)
@@ -213,21 +221,22 @@ class DefaultEngine(base.Engine):
             err_msg = str(err)
 
             exec_db = db_api.load_execution(execution_id)
+
             if exec_db is None:
                 LOG.error("Cant fail workflow execution id='%s': not found.",
                           execution_id)
                 return
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
+
             wf_handler.fail_workflow(err_msg)
 
             if task_id:
-                task_db = db_api.get_task(task_id)
                 # Note(dzimine): Don't call self.engine_client:
                 # 1) to avoid computing and triggering next tasks
                 # 2) to avoid a loop in case of error in transport
                 wf_handler.on_task_result(
-                    task_db,
+                    db_api.get_task(task_id),
                     wf_utils.TaskResult(error=err_msg)
                 )
 
@@ -239,7 +248,6 @@ class DefaultEngine(base.Engine):
 
     @staticmethod
     def _canonize_workflow_params(params):
-
         # Resolve environment parameter.
         env = params.get('env', {})
 
@@ -296,9 +304,9 @@ class DefaultEngine(base.Engine):
         return exec_db
 
     @staticmethod
-    def _after_task_complete(task_db, task_spec, raw_result, wf_spec):
+    def _after_task_complete(task_db, task_spec, result, wf_spec):
         for p in policies.build_policies(task_spec.get_policies(), wf_spec):
-            p.after_task_complete(task_db, task_spec, raw_result)
+            p.after_task_complete(task_db, task_spec, result)
 
     def _check_subworkflow_completion(self, exec_db):
         if not exec_db.parent_task_id:

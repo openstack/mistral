@@ -94,7 +94,8 @@ class Task(mb.MistralSecureModelBase):
     in_context = sa.Column(st.JsonDictType())
     input = sa.Column(st.JsonDictType())
     # TODO(rakhmerov): Do we just need to use invocation instead of output?
-    output = sa.Column(st.JsonDictType())
+    result = sa.Column(st.JsonDictType())
+    published = sa.Column(st.JsonDictType())
 
     # Runtime context like iteration_no of a repeater.
     # Effectively internal engine properties which will be used to determine
@@ -112,16 +113,6 @@ class Task(mb.MistralSecureModelBase):
         lazy='joined'
     )
 
-    def to_dict(self):
-        d = super(Task, self).to_dict()
-
-        d['result'] = json.dumps(
-            d['output'].get('task', {}).get(d['name'], {})
-            if d['output'] else {}
-        )
-
-        return d
-
 
 class ActionInvocation(mb.MistralSecureModelBase):
     """Contains task action invocation information."""
@@ -133,7 +124,7 @@ class ActionInvocation(mb.MistralSecureModelBase):
     state = sa.Column(sa.String(20))
 
     # Note: Corresponds to MySQL 'LONGTEXT' type which is of unlimited size.
-    output = sa.orm.deferred(sa.Column(st.LongText()))
+    result = sa.orm.deferred(sa.Column(st.LongText()))
 
     # Relations.
     task_id = sa.Column(sa.String(36), sa.ForeignKey('tasks_v2.id'))

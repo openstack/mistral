@@ -357,7 +357,7 @@ class JoinEngineTest(base.EngineTestCase):
             {
                 'result4': '1,2',
             },
-            task4.output
+            task4.result
         )
 
         self.assertDictEqual({'result': '1,2'}, exec_db.output)
@@ -389,7 +389,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task4.state)
         self.assertEqual(states.SUCCESS, task5.state)
 
-        result5 = task5.output['result5']
+        result5 = task5.result['result5']
 
         self.assertIsNotNone(result5)
         self.assertEqual(2, result5.count('None'))
@@ -419,7 +419,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        result4 = task4.output['result4']
+        result4 = task4.result['result4']
 
         self.assertIsNotNone(result4)
         self.assertEqual(2, result4.count('None'))

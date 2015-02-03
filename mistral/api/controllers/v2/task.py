@@ -49,7 +49,6 @@ class Task(resource.Resource):
 
     result = wtypes.text
     input = wtypes.text
-    output = wtypes.text
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -62,7 +61,7 @@ class Task(resource.Resource):
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit.
                 if val is not None and (
-                        key == 'input' or key == 'output'):
+                        key == 'input' or key == 'result'):
                     val = json.dumps(val)
                 setattr(e, key, val)
 
@@ -124,13 +123,13 @@ class TasksController(rest.RestController):
                 raise exc.InvalidResultException(str(e))
 
         if task.state == states.ERROR:
-            raw_result = wf_utils.TaskResult(error=result)
+            task_result = wf_utils.TaskResult(error=result)
         else:
-            raw_result = wf_utils.TaskResult(data=result)
+            task_result = wf_utils.TaskResult(data=result)
 
         engine = rpc.get_engine_client()
 
-        values = engine.on_task_result(id, raw_result)
+        values = engine.on_task_result(id, task_result)
 
         return Task.from_dict(values)
 

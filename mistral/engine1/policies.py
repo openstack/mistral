@@ -189,7 +189,7 @@ class WaitAfterPolicy(base.TaskPolicy):
     def __init__(self, delay):
         self.delay = delay
 
-    def after_task_complete(self, task_db, task_spec, raw_result):
+    def after_task_complete(self, task_db, task_spec, result):
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -224,7 +224,7 @@ class WaitAfterPolicy(base.TaskPolicy):
         task_db.state = states.DELAYED
 
         serializers = {
-            'raw_result': 'mistral.workflow.utils.TaskResultSerializer'
+            'result': 'mistral.workflow.utils.TaskResultSerializer'
         }
 
         scheduler.schedule_call(
@@ -233,7 +233,7 @@ class WaitAfterPolicy(base.TaskPolicy):
             self.delay,
             serializers,
             task_id=task_db.id,
-            raw_result=raw_result
+            result=result
         )
 
 
@@ -243,7 +243,7 @@ class RetryPolicy(base.TaskPolicy):
         self.delay = delay
         self.break_on = break_on
 
-    def after_task_complete(self, task_db, task_spec, raw_result):
+    def after_task_complete(self, task_db, task_spec, result):
         """Possible Cases:
 
         1. state = SUCCESS
@@ -262,7 +262,7 @@ class RetryPolicy(base.TaskPolicy):
 
         task_db.runtime_context = runtime_context
 
-        state = states.ERROR if raw_result.is_error() else states.SUCCESS
+        state = states.ERROR if result.is_error() else states.SUCCESS
 
         if state != states.ERROR:
             return
@@ -273,7 +273,7 @@ class RetryPolicy(base.TaskPolicy):
             % (task_db.name, task_db.state)
         )
 
-        outbound_context = task_db.output
+        outbound_context = task_db.result
 
         policy_context = runtime_context[context_key]
 

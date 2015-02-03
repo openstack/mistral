@@ -38,7 +38,7 @@ TASK_SPEC = tasks.TaskSpec(TASK_DICT)
 
 TASK_DB = models.Task(
     name='task1',
-    output=None,
+    result=None,
 )
 
 
@@ -48,15 +48,21 @@ class WithItemsCalculationsTest(base.BaseTest):
         task_dict['publish'] = {'result': '{$.task1}'}
 
         task_spec = tasks.TaskSpec(task_dict)
-        raw_result = utils.TaskResult(data='output!')
 
-        output = with_items.get_output(TASK_DB, task_spec, raw_result)
+        output = with_items.get_result(
+            TASK_DB,
+            task_spec,
+            utils.TaskResult(data='output!')
+        )
 
         self.assertDictEqual({'result': ['output!']}, output)
 
     def test_calculate_output_without_key(self):
-        raw_result = utils.TaskResult(data='output!')
-        output = with_items.get_output(TASK_DB, TASK_SPEC, raw_result)
+        output = with_items.get_result(
+            TASK_DB,
+            TASK_SPEC,
+            utils.TaskResult(data='output!')
+        )
 
         # TODO(rakhmerov): Fix during result/output refactoring.
         self.assertDictEqual({}, output)

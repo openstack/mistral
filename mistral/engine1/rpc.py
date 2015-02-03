@@ -184,11 +184,11 @@ class EngineClient(base.Engine):
             params=params
         )
 
-    def on_task_result(self, task_id, raw_result):
+    def on_task_result(self, task_id, result):
         """Conveys task result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
-        state of a task once task action has been performed. One of the
+        state of a task once task action has executed. One of the
         clients of this method is Mistral REST API server that receives
         task result from the outside action handlers.
 
@@ -203,8 +203,8 @@ class EngineClient(base.Engine):
             auth_ctx.ctx(),
             'on_task_result',
             task_id=task_id,
-            result_data=raw_result.data,
-            result_error=raw_result.error
+            result_data=result.data,
+            result_error=result.error
         )
 
     def run_task(self, task_id):

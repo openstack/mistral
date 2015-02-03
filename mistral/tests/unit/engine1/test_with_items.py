@@ -161,7 +161,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
-        result = task1.output['result']
+        result = task1.result['result']
 
         self.assertTrue(isinstance(result, list))
 
@@ -189,7 +189,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         tasks = exec_db.tasks
         task1 = self._assert_single_item(tasks, name='task1')
-        result = task1.output['result']
+        result = task1.result['result']
 
         self.assertTrue(isinstance(result, list))
 
@@ -220,7 +220,8 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
-        result = task1.output['result']
+        result = task1.result['result']
+
         self.assertTrue(isinstance(result, list))
 
         self.assertIn('a 1', result)
@@ -253,7 +254,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         exec_db = db_api.get_execution(exec_db.id)
 
         task_db = db_api.get_task(task_db.id)
-        result = task_db.output['result']
+        result = task_db.result['result']
 
         self.assertTrue(isinstance(result, list))
 

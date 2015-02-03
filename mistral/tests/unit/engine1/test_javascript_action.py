@@ -104,4 +104,4 @@ class JavaScriptEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_db.state)
         self.assertDictEqual({}, task_db.runtime_context)
 
-        self.assertEqual(500, task_db.output['result'])
+        self.assertEqual(500, task_db.result['result'])

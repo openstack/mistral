@@ -39,7 +39,7 @@ TASK_DB = models.Task(
     tags=['a', 'b'],
     in_context={},
     input={},
-    output={},
+    result={},
     runtime_context={},
     execution_id='123',
     created_at=datetime.datetime(1970, 1, 1),
@@ -53,7 +53,6 @@ TASK = {
     'state': 'RUNNING',
     'result': '{}',
     'input': '{}',
-    'output': '{}',
     'execution_id': '123',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'

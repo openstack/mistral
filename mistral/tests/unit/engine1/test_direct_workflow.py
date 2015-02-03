@@ -110,15 +110,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertIn(
             "Failed to initialize action",
-            task_db2.output['task'][task_db2.name]
+            task_db2.result['task'][task_db2.name]
         )
         self.assertIn(
             "unexpected keyword argument",
-            task_db2.output['task'][task_db2.name]
+            task_db2.result['task'][task_db2.name]
         )
 
         self.assertTrue(exec_db.state, states.ERROR)
-        self.assertIn(task_db2.output['error'], exec_db.state_info)
+        self.assertIn(task_db2.result['error'], exec_db.state_info)
 
     def test_wrong_first_task_input(self):
         WORKFLOW_WRONG_FIRST_TASK_INPUT = """
@@ -136,15 +136,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertIn(
             "Failed to initialize action",
-            task_db.output['task'][task_db.name]
+            task_db.result['task'][task_db.name]
         )
         self.assertIn(
             "unexpected keyword argument",
-            task_db.output['task'][task_db.name]
+            task_db.result['task'][task_db.name]
         )
 
         self.assertTrue(exec_db.state, states.ERROR)
-        self.assertIn(task_db.output['error'], exec_db.state_info)
+        self.assertIn(task_db.result['error'], exec_db.state_info)
 
     def test_wrong_action(self):
         WORKFLOW_WRONG_ACTION = """

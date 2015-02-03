@@ -105,9 +105,19 @@ def resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
     return wf_db
 
 
-def transform_result(exec_db, task_db, raw_result):
-    if raw_result.is_error():
-        return raw_result
+def transform_result(exec_db, task_db, result):
+    """Transforms task result accounting for ad-hoc actions.
+
+    In case if the given result is an action result and action is
+    an ad-hoc action the method transforms the result according to
+    ad-hoc action configuration.
+
+    :param exec_db: Execution DB model.
+    :param task_db: Task DB model.
+    :param result: Result of task action/workflow.
+    """
+    if result.is_error():
+        return result
 
     action_spec_name = spec_parser.get_task_spec(
         task_db.spec).get_action_name()
@@ -120,14 +130,14 @@ def transform_result(exec_db, task_db, raw_result):
             exec_db.wf_name,
             wf_spec_name,
             action_spec_name,
-            raw_result
+            result
         )
 
-    return raw_result
+    return result
 
 
 def transform_action_result(wf_name, wf_spec_name, action_spec_name,
-                            raw_result):
+                            result):
     action_db = resolve_action(
         wf_name,
         wf_spec_name,
@@ -135,14 +145,14 @@ def transform_action_result(wf_name, wf_spec_name, action_spec_name,
     )
 
     if not action_db.spec:
-        return raw_result
+        return result
 
     transformer = spec_parser.get_action_spec(action_db.spec).get_output()
 
     if transformer is None:
-        return raw_result
+        return result
 
     return wf_utils.TaskResult(
-        data=expr.evaluate_recursively(transformer, raw_result.data),
-        error=raw_result.error
+        data=expr.evaluate_recursively(transformer, result.data),
+        error=result.error
     )
