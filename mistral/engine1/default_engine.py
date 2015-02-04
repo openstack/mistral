@@ -147,7 +147,7 @@ class DefaultEngine(base.Engine):
     def _canonize_workflow_params(params):
 
         # Resolve environment parameter.
-        env = params.get('environment', {})
+        env = params.get('env', {})
 
         if not isinstance(env, dict) and not isinstance(env, basestring):
             raise ValueError('Unexpected type for environment. '
@@ -156,7 +156,7 @@ class DefaultEngine(base.Engine):
         if isinstance(env, basestring):
             env_db = db_api.get_environment(env)
             env = env_db.variables
-            params['environment'] = env
+            params['env'] = env
 
         return params
 

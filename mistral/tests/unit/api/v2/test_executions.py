@@ -33,7 +33,7 @@ EXEC_DB = models.Execution(
     state=states.RUNNING,
     input={'foo': 'bar'},
     output={},
-    start_params={'environment': {'k1': 'abc'}},
+    start_params={'env': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )
@@ -42,7 +42,7 @@ EXEC = {
     'id': '123',
     'input': '{"foo": "bar"}',
     'output': '{}',
-    'params': '{"environment": {"k1": "abc"}}',
+    'params': '{"env": {"k1": "abc"}}',
     'state': 'RUNNING',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',

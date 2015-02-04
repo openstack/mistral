@@ -272,9 +272,9 @@ class RunTask(EngineCommand):
 
         start_params = {'parent_task_id': self.task_db.id}
 
-        if 'environment' in parent_exec_db.start_params:
-            environment = parent_exec_db.start_params['environment']
-            start_params['environment'] = environment
+        if 'env' in parent_exec_db.start_params:
+            environment = parent_exec_db.start_params['env']
+            start_params['env'] = environment
 
         for k, v in wf_input.items():
             if k not in wf_spec.get_input():

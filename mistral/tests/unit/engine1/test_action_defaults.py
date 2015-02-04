@@ -122,7 +122,7 @@ class ActionDefaultTest(base.EngineTestCase):
     def test_action_defaults_from_env(self):
         wf_service.create_workflows(WORKFLOW1)
 
-        exec_db = self.engine.start_workflow('wf1', None, environment=ENV)
+        exec_db = self.engine.start_workflow('wf1', None, env=ENV)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
@@ -146,7 +146,7 @@ class ActionDefaultTest(base.EngineTestCase):
     def test_action_defaults_from_env_not_applied(self):
         wf_service.create_workflows(WORKFLOW2)
 
-        exec_db = self.engine.start_workflow('wf2', None, environment=ENV)
+        exec_db = self.engine.start_workflow('wf2', None, env=ENV)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
@@ -179,7 +179,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         exec_db = self.engine.start_workflow('wf1_with_items',
                                              wf_input,
-                                             environment=ENV)
+                                             env=ENV)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
@@ -215,7 +215,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         exec_db = self.engine.start_workflow('wf2_with_items',
                                              wf_input,
-                                             environment=ENV)
+                                             env=ENV)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 

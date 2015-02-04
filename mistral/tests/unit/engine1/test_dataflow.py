@@ -121,7 +121,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         exec_db = self.engine.start_workflow(
             'wf',
             {},
-            environment={'from': 'Neo'}
+            env={'from': 'Neo'}
         )
 
         self._await(lambda: self.is_execution_success(exec_db.id))
@@ -183,7 +183,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         exec_db = self.engine.start_workflow(
             'wf',
             {},
-            environment={'from': 'Neo'}
+            env={'from': 'Neo'}
         )
 
         self._await(lambda: self.is_execution_success(exec_db.id))

@@ -196,8 +196,8 @@ def add_environment_to_context(exec_db, context):
         context = {}
 
     # If env variables are provided, add an evaluated copy into the context.
-    if 'environment' in exec_db.start_params:
-        env = copy.deepcopy(exec_db.start_params['environment'])
+    if 'env' in exec_db.start_params:
+        env = copy.deepcopy(exec_db.start_params['env'])
         # An env variable can be an expression of other env variables.
         context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 

@@ -146,14 +146,14 @@ class DefaultEngineTest(base.DbTestCase):
         exec_db = self.engine.start_workflow(
             'wb.wf1',
             wf_input,
-            environment=env,
+            env=env,
             task_name='task2')
 
         self.assertIsNotNone(exec_db)
 
         exec_db = db_api.get_execution(exec_db.id)
 
-        self.assertDictEqual(exec_db.start_params.get('environment', {}), env)
+        self.assertDictEqual(exec_db.start_params.get('env', {}), env)
 
     @mock.patch.object(db_api, "get_environment", MOCK_ENVIRONMENT)
     def test_start_workflow_with_saved_env(self):
@@ -164,14 +164,14 @@ class DefaultEngineTest(base.DbTestCase):
         exec_db = self.engine.start_workflow(
             'wb.wf1',
             wf_input,
-            environment='test',
+            env='test',
             task_name='task2')
 
         self.assertIsNotNone(exec_db)
 
         exec_db = db_api.get_execution(exec_db.id)
 
-        self.assertDictEqual(exec_db.start_params.get('environment', {}), env)
+        self.assertDictEqual(exec_db.start_params.get('env', {}), env)
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_start_workflow_env_not_found(self):
@@ -179,7 +179,7 @@ class DefaultEngineTest(base.DbTestCase):
                           self.engine.start_workflow,
                           'wb.wf1',
                           {'param1': '$.__env.key1'},
-                          environment='foo',
+                          env='foo',
                           task_name='task2')
 
     def test_start_workflow_with_env_type_error(self):
@@ -187,7 +187,7 @@ class DefaultEngineTest(base.DbTestCase):
                           self.engine.start_workflow,
                           'wb.wf1',
                           {'param1': '$.__env.key1'},
-                          environment=True,
+                          env=True,
                           task_name='task2')
 
     def test_start_workflow_missing_parameters(self):

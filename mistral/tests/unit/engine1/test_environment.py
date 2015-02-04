@@ -107,13 +107,13 @@ class SubworkflowsTest(base.EngineTestCase):
         exec1_db = self.engine.start_workflow(
             'my_wb.wf2',
             None,
-            environment=env
+            env=env
         )
 
         # Execution 1.
         self.assertIsNotNone(exec1_db)
         self.assertDictEqual({}, exec1_db.input)
-        self.assertDictEqual({'environment': env}, exec1_db.start_params)
+        self.assertDictEqual({'env': env}, exec1_db.start_params)
 
         db_execs = db_api.get_executions()
 
@@ -128,7 +128,7 @@ class SubworkflowsTest(base.EngineTestCase):
         expected_start_params = {
             'task_name': 'task2',
             'parent_task_id': exec2_db.parent_task_id,
-            'environment': env
+            'env': env
         }
 
         expected_wf1_input = {

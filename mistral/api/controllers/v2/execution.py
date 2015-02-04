@@ -98,7 +98,7 @@ class Execution(resource.Resource):
                    state='SUCCESS',
                    input='{}',
                    output='{}',
-                   params='{"environment": {"k1": "abc", "k2": 123}}',
+                   params='{"env": {"k1": "abc", "k2": 123}}',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
 
