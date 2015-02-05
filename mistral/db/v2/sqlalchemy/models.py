@@ -64,6 +64,7 @@ class Execution(mb.MistralSecureModelBase):
     wf_spec = sa.Column(st.JsonDictType())
     start_params = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
+    state_info = sa.Column(sa.Text(), nullable=True)
     input = sa.Column(st.JsonDictType())
     output = sa.Column(st.JsonDictType())
     context = sa.Column(st.JsonDictType())

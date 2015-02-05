@@ -47,6 +47,9 @@ class Execution(resource.Resource):
     state = wtypes.text
     "state can be one of: RUNNING, SUCCESS, ERROR, PAUSED"
 
+    state_info = wtypes.text
+    "an optional state information string"
+
     input = wtypes.text
     "input is a JSON structure containing workflow input values."
     output = wtypes.text

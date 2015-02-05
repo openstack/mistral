@@ -109,7 +109,13 @@ class WorkflowHandler(object):
         if (task_db.state == states.ERROR and
                 not self._is_error_handled(task_db)):
             if not self.is_paused_or_completed():
-                self._set_execution_state(states.ERROR)
+                # TODO(dzimine): pass task_db.result when Model refactored.
+                msg = str(task_db.output.get('error', "Unknown"))
+                self._set_execution_state(
+                    states.ERROR,
+                    "Failure caused by error in task '%s': %s"
+                    % (task_db.name, msg)
+                )
 
             return []
 
@@ -254,12 +260,12 @@ class WorkflowHandler(object):
 
         return self.exec_db
 
-    def fail_workflow(self):
+    def fail_workflow(self, err_msg=None):
         """Stops workflow with ERROR state.
 
         :return: Execution object.
         """
-        self._set_execution_state(states.ERROR)
+        self._set_execution_state(states.ERROR, err_msg)
 
         return self.exec_db
 
@@ -286,13 +292,14 @@ class WorkflowHandler(object):
         """
         raise NotImplementedError
 
-    def _set_execution_state(self, state):
+    def _set_execution_state(self, state, state_info=None):
         cur_state = self.exec_db.state
 
         if states.is_valid_transition(cur_state, state):
             WF_TRACE.info("Execution of workflow '%s' [%s -> %s]"
                           % (self.exec_db.wf_name, cur_state, state))
             self.exec_db.state = state
+            self.exec_db.state_info = state_info
         else:
             msg = "Can't change workflow state [execution=%s," \
                   " state=%s -> %s]" % (self.exec_db, cur_state, state)
