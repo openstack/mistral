@@ -298,6 +298,14 @@ class SendEmailAction(base.Action):
 
 
 class SSHAction(base.Action):
+    """Runs Secure Shell (SSH) command on provided single or multiple hosts.
+
+    It is allowed to provide either a single host or a list of hosts in
+    action parameter 'host'. In case of a single host the action result
+    will be a single value, otherwise a list of results provided in the
+    same order as provided hosts.
+    """
+
     def __init__(self, cmd, host, username, password):
         self.cmd = cmd
         self.host = host
@@ -313,12 +321,25 @@ class SSHAction(base.Action):
             raise exc.ActionException(message)
 
         try:
-            status_code, result = ssh_utils.execute_command(self.cmd,
-                                                            self.host,
-                                                            self.username,
-                                                            self.password)
-            if status_code > 0:
-                return raise_exc()
+            results = []
+
+            if not isinstance(self.host, list):
+                self.host = [self.host]
+
+            for host_name in self.host:
+                status_code, result = ssh_utils.execute_command(
+                    self.cmd,
+                    host_name,
+                    self.username,
+                    self.password)
+
+                if status_code > 0:
+                    return raise_exc()
+                else:
+                    results.append(result)
+
+            if len(results) > 1:
+                return results
 
             return result
         except Exception as e:
