@@ -89,8 +89,8 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
 
         # Get action name. Unwrap ad-hoc and reevaluate params if
         # necessary.
-        action_name = spec_parser.get_task_spec(task.task_spec)\
-            .get_full_action_name()
+        action_name = spec_parser.get_task_spec(
+            task.task_spec).get_full_action_name()
 
         openstack_ctx = context.get('openstack')
 
@@ -103,8 +103,8 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
             action = a_m.resolve_adhoc_action_name(workbook, action_name)
 
             if not action:
-                msg = 'Unknown action [workbook=%s, action=%s]' % \
-                      (workbook, action_name)
+                msg = ('Unknown action [workbook=%s, action=%s]' %
+                       (workbook, action_name))
                 raise exc.ActionException(msg)
 
             action_params = a_m.convert_adhoc_action_params(workbook,
@@ -113,8 +113,8 @@ def prepare_tasks(tasks_to_start, context, workbook, tasks):
             action_name = action
 
         if _has_action_context_param(a_m.get_action_class(action_name)):
-            action_params[_ACTION_CTX_PARAM] = \
-                _get_action_context(task, openstack_ctx)
+            action_params[_ACTION_CTX_PARAM] = _get_action_context(
+                task, openstack_ctx)
 
         results.append((task.id, action_name, action_params))
 

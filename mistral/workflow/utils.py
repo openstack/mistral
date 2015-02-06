@@ -24,8 +24,8 @@ class TaskResult(object):
         self.error = error
 
     def __repr__(self):
-        return 'TaskResult [data=%s, error=%s]' % \
-               (repr(self.data), repr(self.error))
+        return 'TaskResult [data=%s, error=%s]' % (
+            repr(self.data), repr(self.error))
 
     def is_error(self):
         return self.error is not None

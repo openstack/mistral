@@ -142,10 +142,10 @@ class TestExecutor(base.DbTestCase):
                               action_name=action_name,
                               params=params)
 
-        engine.EngineClient.convey_task_result\
-            .assert_called_once_with(task_id,
-                                     states.SUCCESS,
-                                     action.return_value)
+        engine.EngineClient.convey_task_result.assert_called_once_with(
+            task_id,
+            states.SUCCESS,
+            action.return_value)
 
     @mock.patch.object(engine.EngineClient, 'convey_task_result',
                        mock.MagicMock())
@@ -187,7 +187,5 @@ class TestExecutor(base.DbTestCase):
                                   params=params)
             self.assertTrue(log.called, "Exception must be logged")
 
-        engine.EngineClient.convey_task_result\
-            .assert_called_once_with(task_id,
-                                     states.ERROR,
-                                     None)
+        engine.EngineClient.convey_task_result.assert_called_once_with(
+            task_id, states.ERROR, None)

@@ -70,8 +70,8 @@ def set_thread_local(var_name, val):
     if val:
         gl_storage = _get_greenlet_local_storage()
         if not gl_storage:
-            gl_storage = \
-                _th_loc_storage.greenlet_locals[corolocal.get_ident()] = {}
+            gl_storage = _th_loc_storage.greenlet_locals[
+                corolocal.get_ident()] = {}
 
         gl_storage[var_name] = val
 
@@ -83,11 +83,11 @@ def log_exec(logger, level=logging.DEBUG):
 
     def _decorator(func):
         def _logged(*args, **kw):
-            params_repr = "[args=%s, kw=%s]" % (str(args), str(kw)) \
-                if len(args) > 0 or len(kw) > 0 else ""
+            params_repr = ("[args=%s, kw=%s]" % (str(args), str(kw))
+                           if len(args) > 0 or len(kw) > 0 else "")
 
-            func_repr = "Called method [name=%s, doc='%s', params=%s]" % \
-                        (func.__name__, func.__doc__, params_repr)
+            func_repr = ("Called method [name=%s, doc='%s', params=%s]" %
+                         (func.__name__, func.__doc__, params_repr))
 
             logger.log(level, func_repr)
 

@@ -337,5 +337,5 @@ RESERVED_COMMANDS = {
 
 
 def get_reserved_command(cmd_name):
-    return RESERVED_COMMANDS[cmd_name]() if cmd_name in RESERVED_COMMANDS \
-        else None
+    return (RESERVED_COMMANDS[cmd_name]()
+            if cmd_name in RESERVED_COMMANDS else None)

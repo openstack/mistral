@@ -93,8 +93,8 @@ class BaseTest(base.BaseTestCase):
     def _assert_multiple_items(self, items, count, **props):
         def _matches(item, **props):
             for prop_name, prop_val in props.iteritems():
-                v = item[prop_name] if isinstance(item, dict) \
-                    else getattr(item, prop_name)
+                v = item[prop_name] if isinstance(
+                    item, dict) else getattr(item, prop_name)
 
                 if v != prop_val:
                     return False

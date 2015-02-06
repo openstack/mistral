@@ -36,8 +36,8 @@ TRIGGER = {
 }
 
 trigger_values = copy.copy(TRIGGER)
-trigger_values['workflow_input'] = \
-    json.loads(trigger_values['workflow_input'])
+trigger_values['workflow_input'] = json.loads(
+    trigger_values['workflow_input'])
 
 TRIGGER_DB = models.CronTrigger()
 TRIGGER_DB.update(trigger_values)

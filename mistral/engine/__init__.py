@@ -188,15 +188,15 @@ class Engine(object):
                 WF_TRACE.info("Task '%s' [%s -> %s, result = %s]" %
                               (task.name, task.state, state, result))
 
-            action_name = spec_parser.get_task_spec(task.task_spec)\
-                .get_full_action_name()
+            action_name = spec_parser.get_task_spec(
+                task.task_spec).get_full_action_name()
 
             if not a_m.get_action_class(action_name):
                 action = a_m.resolve_adhoc_action_name(workbook, action_name)
 
                 if not action:
-                    msg = 'Unknown action [workbook=%s, action=%s]' % \
-                          (workbook, action_name)
+                    msg = 'Unknown action [workbook=%s, action=%s]' % (
+                        workbook, action_name)
                     raise exc.ActionException(msg)
 
                 result = a_m.convert_adhoc_action_result(workbook,
