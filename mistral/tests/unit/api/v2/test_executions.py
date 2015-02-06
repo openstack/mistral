@@ -87,6 +87,24 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_EXEC, resp.json)
 
+    @mock.patch.object(db_api, 'ensure_execution_exists', MOCK_EXECUTION)
+    def test_put_stop(self):
+        update_exec = copy.copy(EXEC)
+        update_exec['state'] = states.ERROR
+        update_exec['state_info'] = "Force"
+
+        with mock.patch.object(rpc.EngineClient, 'stop_workflow') as mock_pw:
+            exec_db = copy.copy(EXEC_DB)
+            exec_db['state'] = states.ERROR
+            exec_db['state_info'] = "Force"
+            mock_pw.return_value = exec_db
+
+            resp = self.app.put_json('/v2/executions/123', update_exec)
+
+            self.assertEqual(resp.status_int, 200)
+            self.assertDictEqual(update_exec, resp.json)
+            mock_pw.assert_called_once_with('123', 'ERROR', "Force")
+
     @mock.patch.object(db_api, 'update_execution', MOCK_NOT_FOUND)
     def test_put_not_found(self):
         resp = self.app.put_json(

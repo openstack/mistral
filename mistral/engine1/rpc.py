@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -139,6 +140,29 @@ class EngineServer(object):
 
         return self._engine.resume_workflow(execution_id)
 
+    def stop_workflow(self, rpc_ctx, execution_id, state, message=None):
+        """Receives calls over RPC to stop workflows on engine.
+
+        Sets execution state to SUCCESS or ERROR. No more tasks will be
+        scheduled. Running tasks won't be killed, but their results
+        will be ignored.
+
+        :param rpc_ctx: RPC request context.
+        :param execution_id: Workflow execution id.
+        :param state: State assigned to the workflow. Permitted states are
+            SUCCESS or ERROR.
+        :param message: Optional information string.
+
+        :return: Workflow execution.
+        """
+
+        LOG.info(
+            "Received RPC request 'stop_workflow'[rpc_ctx=%s, execution_id=%s,"
+            " state=%s, message=%s]" % (rpc_ctx, execution_id, state, message)
+        )
+
+        return self._engine.stop_workflow(execution_id, state, message)
+
     def rollback_workflow(self, rpc_ctx, execution_id):
         """Receives calls over RPC to rollback workflows on engine.
 
@@ -238,6 +262,27 @@ class EngineClient(base.Engine):
             auth_ctx.ctx(),
             'resume_workflow',
             execution_id=execution_id
+        )
+
+    def stop_workflow(self, execution_id, state, message=None):
+        """Stops workflow execution with given status.
+
+        Once stopped, the workflow is complete with SUCCESS or ERROR,
+        and can not be resumed.
+
+        :param execution_id: Workflow execution id
+        :param state: State assigned to the workflow: SUCCESS or ERROR
+        :param message: Optional information string
+
+        :return: Workflow execution, model.Execution
+        """
+
+        return self._client.call(
+            auth_ctx.ctx(),
+            'stop_workflow',
+            execution_id=execution_id,
+            state=state,
+            message=message
         )
 
     def rollback_workflow(self, execution_id):

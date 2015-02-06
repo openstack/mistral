@@ -215,8 +215,21 @@ class DefaultEngine(base.Engine):
 
         return exec_db
 
-    # TODO(dzimine): make public, add to RPC, expose in API
+    @u.log_exec(LOG)
+    def stop_workflow(self, execution_id, state, message=None):
+        with db_api.transaction():
+            exec_db = db_api.get_execution(execution_id)
+            wf_handler = wfh_factory.create_workflow_handler(exec_db)
+
+            return wf_handler.stop_workflow(state, message)
+
+    @u.log_exec(LOG)
+    def rollback_workflow(self, execution_id):
+        # TODO(rakhmerov): Implement.
+        raise NotImplementedError
+
     def _fail_workflow(self, execution_id, err, task_id=None):
+        """Private helper to fail workflow on exceptions."""
         with db_api.transaction():
             err_msg = str(err)
 
@@ -228,8 +241,7 @@ class DefaultEngine(base.Engine):
                 return
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
-
-            wf_handler.fail_workflow(err_msg)
+            wf_handler.stop_workflow(states.ERROR, err_msg)
 
             if task_id:
                 # Note(dzimine): Don't call self.engine_client:
@@ -239,12 +251,6 @@ class DefaultEngine(base.Engine):
                     db_api.get_task(task_id),
                     wf_utils.TaskResult(error=err_msg)
                 )
-
-        return exec_db
-
-    def rollback_workflow(self, execution_id):
-        # TODO(rakhmerov): Implement.
-        raise NotImplementedError
 
     @staticmethod
     def _canonize_workflow_params(params):

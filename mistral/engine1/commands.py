@@ -303,7 +303,7 @@ class RunTask(EngineCommand):
 
 class FailWorkflow(EngineCommand):
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
-        wf_handler.fail_workflow()
+        wf_handler.stop_workflow(states.ERROR)
         return False
 
     def run_remote(self, exec_db, wf_handler, cause_task_db=None):
@@ -312,7 +312,7 @@ class FailWorkflow(EngineCommand):
 
 class SucceedWorkflow(EngineCommand):
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
-        wf_handler.succeed_workflow()
+        wf_handler.stop_workflow(states.SUCCESS)
         return False
 
     def run_remote(self, exec_db, wf_handler, cause_task_db=None):

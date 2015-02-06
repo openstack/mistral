@@ -74,6 +74,19 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def stop_workflow(self, execution_id, state, message):
+        """Stops workflow execution.
+
+        :param execution_id: Workflow execution id.
+        :param state: State assigned to the workflow. Permitted states are
+            SUCCESS or ERROR.
+        :param message: Optional information string.
+
+        :return: Workflow execution.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def rollback_workflow(self, execution_id):
         """Rolls back workflow execution.
 

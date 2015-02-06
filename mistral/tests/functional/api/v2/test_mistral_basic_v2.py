@@ -307,13 +307,23 @@ class ExecutionTestsV2(base.TestCase):
         self.assertEqual(execution['id'], body['id'])
 
     @test.attr(type='sanity')
-    def test_update_execution(self):
+    def test_update_execution_pause(self):
         _, execution = self.client.create_execution(self.direct_wf)
         resp, body = self.client.update_execution(
             execution['id'], '{"state": "PAUSED"}')
 
         self.assertEqual(200, resp.status)
         self.assertEqual('PAUSED', body['state'])
+
+    @test.attr(type='sanity')
+    def test_update_execution_fail(self):
+        _, execution = self.client.create_execution(self.direct_wf)
+        resp, body = self.client.update_execution(
+            execution['id'], '{"state": "ERROR", "state_info": "Forced"}')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual('ERROR', body['state'])
+        self.assertEqual('Forced', body['state_info'])
 
     @test.attr(type='negative')
     def test_get_nonexistent_execution(self):

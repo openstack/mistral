@@ -1,0 +1,64 @@
+# Copyright 2015 - StackStorm, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+from mistral.db.v2 import api as db_api
+from mistral.services import scheduler
+from mistral.services import workflows as wf_service
+from mistral.tests.unit.engine1 import base
+from mistral.workflow import states
+
+
+class WorkflowStopTest(base.EngineTestCase):
+    def setUp(self):
+        super(WorkflowStopTest, self).setUp()
+
+        WORKFLOW = """
+        version: '2.0'
+
+        wf:
+          type: direct
+          tasks:
+            task1:
+              action: std.echo output="Echo"
+              on-complete:
+                - task2
+
+            task2:
+              action: std.echo output="foo"
+              policies:
+                wait-before: 3
+        """
+        wf_service.create_workflows(WORKFLOW)
+
+        # Note(dzimine): scheduler.setup is nessessary for wait- policies.
+        thread_group = scheduler.setup()
+        self.addCleanup(thread_group.stop)
+
+        self.exec_id = self.engine.start_workflow('wf', {}).id
+
+    def test_stop_failed(self):
+        self.engine.stop_workflow(self.exec_id, states.SUCCESS, "Force stop")
+
+        self._await(lambda: self.is_execution_success(self.exec_id))
+        exec_db = db_api.get_execution(self.exec_id)
+        self.assertEqual(states.SUCCESS, exec_db.state)
+        self.assertEqual("Force stop", exec_db.state_info)
+
+    def test_stop_succeeded(self):
+        self.engine.stop_workflow(self.exec_id, states.ERROR, "Failure")
+
+        self._await(lambda: self.is_execution_error(self.exec_id))
+        exec_db = db_api.get_execution(self.exec_id)
+        self.assertEqual(states.ERROR, exec_db.state)
+        self.assertEqual("Failure", exec_db.state_info)

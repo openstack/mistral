@@ -92,8 +92,6 @@ ENVIRONMENT_DB = models.Environment(
 MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 
-# TODO(rakhmerov): Add more advanced tests including various capabilities.
-
 
 class DefaultEngineTest(base.DbTestCase):
     def setUp(self):
@@ -291,9 +289,48 @@ class DefaultEngineTest(base.DbTestCase):
         self._assert_single_item(exec_db.tasks, name='task1')
         self._assert_single_item(exec_db.tasks, name='task2')
 
-    def test_stop_workflow(self):
-        # TODO(akhmerov): Implement.
-        pass
+    def test_stop_workflow_fail(self):
+        # Start workflow.
+        exec_db = self.engine.start_workflow(
+            'wb.wf1', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+        # Re-read execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.engine.stop_workflow(exec_db.id, 'ERROR', "Stop this!")
+
+        # Re-read from DB again
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual('ERROR', exec_db.state)
+        self.assertEqual("Stop this!", exec_db.state_info)
+
+    def test_stop_workflow_succeed(self):
+        # Start workflow.
+        exec_db = self.engine.start_workflow(
+            'wb.wf1', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+        # Re-read execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.engine.stop_workflow(exec_db.id, 'SUCCESS', "Like this, done")
+
+        # Re-read from DB again
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual('SUCCESS', exec_db.state)
+        self.assertEqual("Like this, done", exec_db.state_info)
+
+    def test_stop_workflow_bad_status(self):
+        exec_db = self.engine.start_workflow(
+            'wb.wf1', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+        # Re-read execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertRaises(
+            exc.WorkflowException,
+            self.engine.stop_workflow,
+            exec_db.id,
+            'PAUSE'
+        )
 
     def test_resume_workflow(self):
         # TODO(akhmerov): Implement.
