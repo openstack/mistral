@@ -21,8 +21,22 @@ from mistral import exceptions as exc
 
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
-PARAMS_PTRN = re.compile("([\w]+)=(\"[^\"]*\"\s*|'[^']*'\s*|"
-                         "\{[^}]*\}\s*|\[.*\]\s*|[\.,:\w\d\.]+)")
+
+_ALL_IN_BRACES = "\{[^}]*\}\s*"
+_ALL_IN_BRACKETS = "\[.*\]\s*"
+_ALL_IN_QUOTES = "\"[^\"]*\"\s*"
+_ALL_IN_APOSTROPHES = "'[^']*'\s*"
+_DIGITS = "\d+"
+_TRUE = "true"
+_FALSE = "false"
+_NULL = "null"
+
+ALL = (
+    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, _ALL_IN_BRACES,
+    _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
+)
+
+PARAMS_PTRN = re.compile("([\w]+)=(%s)" % "|".join(ALL))
 
 
 class BaseSpec(object):
