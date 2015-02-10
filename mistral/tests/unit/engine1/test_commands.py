@@ -43,9 +43,9 @@ workflows:
       task1:
         action: std.echo output='1'
         on-complete:
-          - fail: $.my_var = 1
-          - succeed: $.my_var = 2
-          - pause: $.my_var = 3
+          - fail: "{$.my_var = 1}"
+          - succeed: "{$.my_var = 2}"
+          - pause: "{$.my_var = 3}"
           - task2
 
       task2:
@@ -116,11 +116,11 @@ workflows:
 
     task-defaults:
       on-complete:
-        - fail: $.my_var = 1
-        - succeed: $.my_var = 2
-        - pause: $.my_var = 3
-        - rollback: $.my_var = 3
-        - task2: $.my_var = 4 # (Never happens in this test)
+        - fail: "{$.my_var = 1}"
+        - succeed: "{$.my_var = 2}"
+        - pause: "{$.my_var = 3}"
+        - rollback: "{$.my_var = 3}"
+        - task2: "{$.my_var = 4}" # (Never happens in this test)
 
     tasks:
       task1:

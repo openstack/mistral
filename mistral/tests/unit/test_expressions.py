@@ -72,26 +72,28 @@ class YaqlEvaluatorTest(base.BaseTest):
 
     def test_function_length(self):
         # Lists.
-        self.assertEqual(0, expr.evaluate('$.length()', []))
-        self.assertEqual(3, expr.evaluate('$.length()', [1, 2, 3]))
-        self.assertEqual(2, expr.evaluate('$.length()', ['one', 'two']))
-        self.assertEqual(4, expr.evaluate(
+        self.assertEqual(0, self._evaluator.evaluate('$.length()', []))
+        self.assertEqual(3, self._evaluator.evaluate('$.length()', [1, 2, 3]))
+        self.assertEqual(
+            2, self._evaluator.evaluate('$.length()', ['one', 'two'])
+        )
+        self.assertEqual(4, self._evaluator.evaluate(
             '$.array.length()',
             {'array': ['1', '2', '3', '4']})
         )
 
         # Strings.
-        self.assertEqual(3, expr.evaluate('$.length()', '123'))
-        self.assertEqual(2, expr.evaluate('$.length()', '12'))
+        self.assertEqual(3, self._evaluator.evaluate('$.length()', '123'))
+        self.assertEqual(2, self._evaluator.evaluate('$.length()', '12'))
         self.assertEqual(
             4,
-            expr.evaluate('$.string.length()', {'string': '1234'})
+            self._evaluator.evaluate('$.string.length()', {'string': '1234'})
         )
 
         # Generators.
         self.assertEqual(
             2,
-            expr.evaluate(
+            self._evaluator.evaluate(
                 "$[$.state = 'active'].length()",
                 [
                     {'state': 'active'},
@@ -103,7 +105,7 @@ class YaqlEvaluatorTest(base.BaseTest):
 
         self.assertEqual(
             0,
-            expr.evaluate("$[$.state = 'active'].length()", [])
+            self._evaluator.evaluate("$[$.state = 'active'].length()", [])
         )
 
 
@@ -166,19 +168,19 @@ class ExpressionsTest(base.BaseTest):
         }
 
         test_cases = [
-            ('{$.a + $.b * $.c}', '7'),
-            ('{($.a + $.b) * $.c}', '9'),
-            ('{$.d and $.e}', 'False'),
-            ('{$.f > $.g}', 'True'),
-            ('{$.h.length() >= 5}', 'True'),
-            ('{$.h.length() >= $.b + $.c}', 'True'),
-            ('{100 in $.h}', 'False'),
-            ('{$.a in $.h}', 'True'),
-            ('{''OpenStack'' in $.i}', 'True'),
+            ('{$.a + $.b * $.c}', 7),
+            ('{($.a + $.b) * $.c}', 9),
+            ('{$.d and $.e}', False),
+            ('{$.f > $.g}', True),
+            ('{$.h.length() >= 5}', True),
+            ('{$.h.length() >= $.b + $.c}', True),
+            ('{100 in $.h}', False),
+            ('{$.a in $.h}', True),
+            ('{''OpenStack'' in $.i}', True),
             ('Hello, {$.j}!', 'Hello, World!'),
             ('{$.k} is {$.l}!', 'Mistral is awesome!'),
             ('This is {$.m}.', 'This is the way we roll.'),
-            ('{1 + 1 = 3}', 'False')
+            ('{1 + 1 = 3}', False)
         ]
 
         for expression, expected in test_cases:
@@ -190,7 +192,7 @@ class ExpressionsTest(base.BaseTest):
         task_spec_dict = {
             'parameters': {
                 'p1': 'My string',
-                'p2': '$.param2',
+                'p2': '{$.param2}',
                 'p3': ''
             },
             'publish': {
@@ -226,7 +228,7 @@ class ExpressionsTest(base.BaseTest):
         data = {
             "parameters": {
                 "parameter1": {
-                    "name1": "$.auth_token",
+                    "name1": "{$.auth_token}",
                     "name2": "val_name2"
                 },
                 "param2": [
@@ -235,7 +237,7 @@ class ExpressionsTest(base.BaseTest):
                     "/servers/{$.project_id}/bla"
                 ]
             },
-            "token": "$.auth_token"
+            "token": "{$.auth_token}"
         }
 
         applied = expr.evaluate_recursively(data, context)

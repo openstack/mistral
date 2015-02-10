@@ -7,7 +7,7 @@ Namespaces:
           url: http://path_to_service/action_url
           method: GET
         output:
-          output: $
+          output: "{$}"
 
 Workflow:
   tasks:

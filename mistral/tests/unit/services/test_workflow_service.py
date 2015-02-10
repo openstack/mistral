@@ -37,18 +37,18 @@ wf1:
   input:
     - param1
   output:
-    result: $.result
+    result: "{$.result}"
 
   tasks:
     task1:
       action: std.echo output="{$.param1}"
       publish:
-        result: $
+        result: "{$}"
 
 wf2:
   type: direct
   output:
-    result: $.result
+    result: "{$.result}"
 
   tasks:
     task1:
@@ -67,13 +67,13 @@ wf1:
     - param1
     - param2
   output:
-    result: $.result
+    result: "{$.result}"
 
   tasks:
     task1:
       action: std.echo output="{$.param1}{$.param2}"
       publish:
-        result: $
+        result: "{$}"
 """
 
 

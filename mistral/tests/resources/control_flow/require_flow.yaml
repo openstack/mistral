@@ -9,13 +9,13 @@ Namespaces:
           - left
           - right
         output:
-          string: $.output
+          string: "{$.output}"
       start:
         class: std.echo
         base-parameters:
           output: 'Starting...'
         output:
-          info: $.output
+          info: "{$.output}"
 
 Workflow:
   tasks:
@@ -31,4 +31,4 @@ Workflow:
       action: MyActions.concat
       parameters:
         left: Greetings
-        right: {$.string}
+        right: "{$.string}"

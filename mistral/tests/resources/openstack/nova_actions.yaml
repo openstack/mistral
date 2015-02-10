@@ -3,17 +3,17 @@ Workflow:
     server_create:
       action: nova.servers_create
       parameters:
-        name: $.server_name
-        image: $.image_ref
-        flavor: $.flavor_ref
+        name: "{$.server_name}"
+        image: "{$.image_ref}"
+        flavor: "{$.flavor_ref}"
       publish:
-        server_id: $.id
+        server_id: "{$.id}"
       on-success: check_server_exists
 
     check_server_exists:
       action: nova.servers_get
       parameters:
-        server: $.server_id
+        server: "{$.server_id}"
       publish:
         server_exists: True
       on-success:
@@ -25,7 +25,7 @@ Workflow:
         delay: 5
         count: 15
       parameters:
-        id: $.server_id
+        id: "{$.server_id}"
         status: 'ACTIVE'
       publish:
-        instance_id: $.id
+        instance_id: "{$.id}"

@@ -21,7 +21,9 @@ from mistral.workbook import base
 from mistral.workbook.v2 import task_policies
 
 
-WITH_ITEMS_PTRN = re.compile("\s*([\w\d_\-]+)\s*in\s*(\[.+\]|\$\..+)")
+WITH_ITEMS_PTRN = re.compile(
+    "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % base.ALL_IN_BRACES
+)
 
 
 class TaskSpec(base.BaseSpec):
@@ -111,7 +113,7 @@ class TaskSpec(base.BaseSpec):
 
             if not match:
                 msg = ("Wrong format of 'with-items' property. Please use "
-                       "format 'var in {[some, list] | $.array}: "
+                       "format 'var in {[some, list] | {$.array} }: "
                        "%s" % self._data)
                 raise exc.InvalidModelException(msg)
 

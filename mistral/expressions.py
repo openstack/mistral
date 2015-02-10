@@ -72,16 +72,15 @@ class YAQLEvaluator(Evaluator):
     @classmethod
     def is_expression(cls, s):
         # TODO(rakhmerov): It should be generalized since it may not be YAQL.
-        # If there is at least one dollar sign in the string,
-        # then treat the string as a YAQL expression.
-        return s and '$' in s
+        # Treat any string as a YAQL expression.
+        return isinstance(s, six.string_types)
 
 
 class InlineYAQLEvaluator(YAQLEvaluator):
     # This regular expression will look for multiple occurrences of YAQL
     # expressions in between curly braces (i.e. {any_symbols_except'}'})
     # within a string.
-    regex_yaql_expr = '(\{\.*[^\}]*\}*)'
+    regex_yaql_expr = '(\{[^\s][^}]*\})'
     find_expression_pattern = re.compile(regex_yaql_expr)
 
     @classmethod
@@ -93,19 +92,15 @@ class InlineYAQLEvaluator(YAQLEvaluator):
 
         result = expression
         found_expressions = cls.find_inline_expressions(expression)
-
         if found_expressions:
             for expr in found_expressions:
                 trim_expr = expr.strip("{}")
                 evaluated = super(InlineYAQLEvaluator,
                                   cls).evaluate(trim_expr, data_context)
-                result = result.replace(expr, str(evaluated))
-        else:
-            # If there is no inline YAQL expressions found, then
-            # pass the entire string to the parent YAQL evaluator.
-            if super(InlineYAQLEvaluator, cls).is_expression(expression):
-                return super(InlineYAQLEvaluator,
-                             cls).evaluate(expression, data_context)
+                if len(expression) == len(expr):
+                    result = evaluated
+                else:
+                    result = result.replace(expr, str(evaluated))
 
         LOG.debug("Inline YAQL expression result: %s" % result)
 

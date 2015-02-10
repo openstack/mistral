@@ -9,7 +9,7 @@ Namespaces:
           - left
           - right
         output:
-          string: $.output
+          string: "{$.output}"
 
 Workflow:
   tasks:

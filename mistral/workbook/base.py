@@ -22,7 +22,7 @@ from mistral import exceptions as exc
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
 
-_ALL_IN_BRACES = "\{[^}]*\}\s*"
+ALL_IN_BRACES = "\{[^}]*\}\s*"
 _ALL_IN_BRACKETS = "\[.*\]\s*"
 _ALL_IN_QUOTES = "\"[^\"]*\"\s*"
 _ALL_IN_APOSTROPHES = "'[^']*'\s*"
@@ -32,7 +32,7 @@ _FALSE = "false"
 _NULL = "null"
 
 ALL = (
-    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, _ALL_IN_BRACES,
+    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, ALL_IN_BRACES,
     _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
 )
 

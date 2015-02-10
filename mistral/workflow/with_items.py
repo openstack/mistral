@@ -149,8 +149,8 @@ def calc_input(with_items_input):
     Example:
       DSL:
         with_items:
-          - itemX in $.arrayI
-          - itemY in $.arrayJ
+          - itemX in {$.arrayI}
+          - itemY in {$.arrayJ}
 
       Assume arrayI = [1, 2], arrayJ = ['a', 'b'].
       with_items_input = {

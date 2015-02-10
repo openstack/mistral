@@ -6,7 +6,7 @@ Namespaces:
         base-parameters:
           output: Cheers!
         output:
-          greeting: $
+          greeting: "{$}"
 
 Workflow:
   tasks:
@@ -15,4 +15,4 @@ Workflow:
       retry:
         count: 5
       publish:
-        st_output: $.greeting
+        st_output: "{$.greeting}"

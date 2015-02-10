@@ -46,34 +46,34 @@ workflows:
       - param2
 
     output:
-      final_result: $.final_result
+      final_result: "{$.final_result}"
 
     tasks:
       task1:
         action: std.echo output='{$.param1}'
-        target: $.__env.var1
+        target: "{$.__env.var1}"
         publish:
-          result1: $.task1
+          result1: "{$.task1}"
 
       task2:
         requires: [task1]
         action: std.echo output="'{$.result1} & {$.param2}'"
-        target: $.__env.var1
+        target: "{$.__env.var1}"
         publish:
-          final_result: $.task2
+          final_result: "{$.task2}"
 
   wf2:
     type: direct
 
     output:
-      slogan: $.slogan
+      slogan: "{$.slogan}"
 
     tasks:
       task1:
         workflow: wf1
         input:
-          param1: $.__env.var2
-          param2: $.__env.var3
+          param1: "{$.__env.var2}"
+          param2: "{$.__env.var3}"
           task_name: task2
         publish:
           slogan: "{$.task1.final_result} is a cool {$.__env.var4}!"

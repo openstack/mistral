@@ -46,11 +46,11 @@ TASK = {
         'action': 'std.echo',
         'parameters': {
             'p1': 'My string',
-            'p2': '$.param3.param32',
+            'p2': '{$.param3.param32}',
             'p3': ''
         },
         'publish': {
-            'new_key11': '$.new_key1'
+            'new_key11': '{$.new_key1}'
         }
     },
     'in_context': CONTEXT
