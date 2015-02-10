@@ -13,28 +13,24 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo.config import cfg
-
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
 from mistral.engine1 import rpc
 from mistral import expressions
-from mistral.openstack.common import log as logging
 from mistral.services import scheduler
+from mistral.utils import wf_trace
 from mistral.workflow import states
 from mistral.workflow import utils
 
 
-cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
-WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
-
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
 
 
-def _log_task_delay(task_name, state_from, delay_sec):
-    WF_TRACE.info(
+def _log_task_delay(task_db, delay_sec):
+    wf_trace.info(
+        task_db,
         "Task '%s' [%s -> %s, delay = %s sec]" %
-        (task_name, state_from, states.DELAYED, delay_sec)
+        (task_db.name, task_db.state, states.DELAYED, delay_sec)
     )
 
 
@@ -165,7 +161,8 @@ class WaitBeforePolicy(base.TaskPolicy):
 
         if policy_context.get('skip'):
             # Unset state 'DELAYED'.
-            WF_TRACE.info(
+            wf_trace.info(
+                task_db,
                 "Task '%s' [%s -> %s]"
                 % (task_db.name, states.DELAYED, states.RUNNING)
             )
@@ -176,7 +173,7 @@ class WaitBeforePolicy(base.TaskPolicy):
 
         policy_context.update({'skip': True})
 
-        _log_task_delay(task_db.name, task_db.state, self.delay)
+        _log_task_delay(task_db, self.delay)
 
         task_db.state = states.DELAYED
 
@@ -209,7 +206,8 @@ class WaitAfterPolicy(base.TaskPolicy):
             if not states.is_completed(task_db.state):
                 # Unset state 'DELAYED'.
 
-                WF_TRACE.info(
+                wf_trace.info(
+                    task_db,
                     "Task '%s' [%s -> %s]"
                     % (task_db.name, states.DELAYED, states.RUNNING)
                 )
@@ -220,7 +218,7 @@ class WaitAfterPolicy(base.TaskPolicy):
 
         policy_context.update({'skip': True})
 
-        _log_task_delay(task_db.name, task_db.state, self.delay)
+        _log_task_delay(task_db, self.delay)
 
         # Set task state to 'DELAYED'.
         task_db.state = states.DELAYED
@@ -269,7 +267,8 @@ class RetryPolicy(base.TaskPolicy):
         if state != states.ERROR:
             return
 
-        WF_TRACE.info(
+        wf_trace.info(
+            task_db,
             "Task '%s' [%s -> ERROR]"
             % (task_db.name, task_db.state)
         )
@@ -299,7 +298,7 @@ class RetryPolicy(base.TaskPolicy):
         policy_context['retry_no'] = retry_no + 1
         runtime_context[context_key] = policy_context
 
-        _log_task_delay(task_db.name, state, self.delay)
+        _log_task_delay(task_db, self.delay)
 
         scheduler.schedule_call(
             _ENGINE_CLIENT_PATH,
@@ -322,8 +321,11 @@ class TimeoutPolicy(base.TaskPolicy):
             timeout=self.delay
         )
 
-        WF_TRACE.info("Timeout check scheduled [task=%s, timeout(s)=%s]."
-                      % (task_db.id, self.delay))
+        wf_trace.info(
+            task_db,
+            "Timeout check scheduled [task=%s, timeout(s)=%s]." %
+            (task_db.id, self.delay)
+        )
 
 
 class PauseBeforePolicy(base.TaskPolicy):
@@ -334,7 +336,8 @@ class PauseBeforePolicy(base.TaskPolicy):
         if not expressions.evaluate(self.expr, task_db.in_context):
             return
 
-        WF_TRACE.info(
+        wf_trace.info(
+            task_db,
             "Workflow paused before task '%s' [%s -> %s]" %
             (task_db.name, task_db.execution.state, states.PAUSED)
         )
@@ -365,9 +368,10 @@ def fail_task_if_incomplete(task_id, timeout):
     if not states.is_completed(task_db.state):
         msg = "Task timed out [task=%s, timeout(s)=%s]." % (task_id, timeout)
 
-        WF_TRACE.info(msg)
+        wf_trace.info(task_db, msg)
 
-        WF_TRACE.info(
+        wf_trace.info(
+            task_db,
             "Task '%s' [%s -> ERROR]"
             % (task_db.name, task_db.state)
         )

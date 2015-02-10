@@ -15,7 +15,6 @@
 
 import abc
 import copy
-from oslo.config import cfg
 import six
 
 from mistral.db.v2 import api as db_api
@@ -33,7 +32,6 @@ from mistral.workflow import with_items
 
 
 LOG = logging.getLogger(__name__)
-WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -156,13 +154,18 @@ class RunTask(EngineCommand):
         task_name = self.task_db.name
 
         if self.task_spec.get_action_name():
-            WF_TRACE.info("Task '%s' is RUNNING [action_name = %s]"
-                          % (task_name, self.task_spec.get_action_name()))
+            utils.wf_trace.info(
+                self.task_db,
+                "Task '%s' is RUNNING [action_name = %s]" %
+                (task_name, self.task_spec.get_action_name())
+            )
 
             self._run_action()
         elif self.task_spec.get_workflow_name():
-            WF_TRACE.info("Task '%s' is RUNNING [workflow_name = %s]"
-                          % (task_name, self.task_spec.get_workflow_name()))
+            utils.wf_trace.info(
+                self.task_db,
+                "Task '%s' is RUNNING [workflow_name = %s]" %
+                (task_name, self.task_spec.get_workflow_name()))
 
             self._run_workflow()
 
