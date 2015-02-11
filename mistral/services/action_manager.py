@@ -174,17 +174,17 @@ def resolve_adhoc_action_name(workbook, action_name):
     action_spec = workbook.get_action(action_name)
 
     if not action_spec:
-        msg = 'Ad-hoc action class is not registered ' \
-              '[workbook=%s, action=%s, action_spec=%s]' % \
-              (workbook, action_name, action_spec)
+        msg = ('Ad-hoc action class is not registered '
+               '[workbook=%s, action=%s, action_spec=%s]' %
+               (workbook, action_name, action_spec))
         raise exc.ActionException(msg)
 
     base_cls = get_action_class(action_spec.clazz)
 
     if not base_cls:
-        msg = 'Ad-hoc action base class is not registered ' \
-              '[workbook=%s, action=%s, base_class=%s]' % \
-              (workbook, action_name, base_cls)
+        msg = ('Ad-hoc action base class is not registered '
+               '[workbook=%s, action=%s, base_class=%s]' %
+               (workbook, action_name, base_cls))
         raise exc.ActionException(msg)
 
     return action_spec.clazz

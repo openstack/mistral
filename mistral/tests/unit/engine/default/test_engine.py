@@ -74,11 +74,11 @@ class TestEngine(base.EngineTestCase):
         task = db_api.tasks_get(workbook_name=WB_NAME,
                                 execution_id=execution['id'])[0]
 
-        executor.ExecutorClient.handle_task \
-            .assert_called_once_with(auth_context.ctx(),
-                                     params={'output': 'Stormin Stanley'},
-                                     task_id=task['id'],
-                                     action_name='std.echo')
+        executor.ExecutorClient.handle_task.assert_called_once_with(
+            auth_context.ctx(),
+            params={'output': 'Stormin Stanley'},
+            task_id=task['id'],
+            action_name='std.echo')
 
         self.engine.convey_task_result(task['id'],
                                        states.SUCCESS,

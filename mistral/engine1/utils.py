@@ -109,11 +109,11 @@ def transform_result(exec_db, task_db, raw_result):
     if raw_result.is_error():
         return raw_result
 
-    action_spec_name =\
-        spec_parser.get_task_spec(task_db.spec).get_action_name()
+    action_spec_name = spec_parser.get_task_spec(
+        task_db.spec).get_action_name()
 
-    wf_spec_name = \
-        spec_parser.get_workflow_spec(exec_db.wf_spec).get_name()
+    wf_spec_name = spec_parser.get_workflow_spec(
+        exec_db.wf_spec).get_name()
 
     if action_spec_name:
         return transform_action_result(

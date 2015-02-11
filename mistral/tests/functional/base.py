@@ -180,15 +180,15 @@ class MistralClientV1(MistralClientBase):
 
         while ex_body['state'] != 'SUCCESS':
             if time.time() - start_time > timeout:
-                msg = "Execution exceeds timeout {0} to change state " \
-                      "to SUCCESS. Execution: {1}".format(timeout, ex_body)
+                msg = ("Execution exceeds timeout {0} to change state "
+                       "to SUCCESS. Execution: {1}".format(timeout, ex_body))
                 raise exceptions.TimeoutException(msg)
 
             _, ex_body = self.get_object('executions', ex_body['id'])
 
             if ex_body['state'] not in expected_states:
-                msg = "Execution state %s is not in expected " \
-                      "states: %s" % (ex_body['state'], expected_states)
+                msg = ("Execution state %s is not in expected "
+                       "states: %s" % (ex_body['state'], expected_states))
                 raise exceptions.TempestException(msg)
 
             time.sleep(2)

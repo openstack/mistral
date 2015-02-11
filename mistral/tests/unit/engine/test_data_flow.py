@@ -107,10 +107,10 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        build_full_name_task = \
-            self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task = \
-            self._assert_single_item(tasks, name='build_greeting')
+        build_full_name_task = self._assert_single_item(
+            tasks, name='build_full_name')
+        build_greeting_task = self._assert_single_item(
+            tasks, name='build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
@@ -175,12 +175,12 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        build_full_name_task = \
-            self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task = \
-            self._assert_single_item(tasks, name='build_greeting')
-        send_greeting_task = \
-            self._assert_single_item(tasks, name='send_greeting')
+        build_full_name_task = self._assert_single_item(
+            tasks, name='build_full_name')
+        build_greeting_task = self._assert_single_item(
+            tasks, name='build_greeting')
+        send_greeting_task = self._assert_single_item(
+            tasks, name='send_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
@@ -312,10 +312,10 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(2, len(tasks))
 
-        build_full_name_task = \
-            self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task = \
-            self._assert_single_item(tasks, name='build_greeting')
+        build_full_name_task = self._assert_single_item(
+            tasks, name='build_full_name')
+        build_greeting_task = self._assert_single_item(
+            tasks, name='build_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])
@@ -385,12 +385,12 @@ class DataFlowTest(base.EngineTestCase):
 
         self.assertEqual(3, len(tasks))
 
-        build_full_name_task = \
-            self._assert_single_item(tasks, name='build_full_name')
-        build_greeting_task = \
-            self._assert_single_item(tasks, name='build_greeting')
-        send_greeting_task = \
-            self._assert_single_item(tasks, name='send_greeting')
+        build_full_name_task = self._assert_single_item(
+            tasks, name='build_full_name')
+        build_greeting_task = self._assert_single_item(
+            tasks, name='build_greeting')
+        send_greeting_task = self._assert_single_item(
+            tasks, name='send_greeting')
 
         # Check the first task.
         self.assertEqual(states.SUCCESS, build_full_name_task['state'])

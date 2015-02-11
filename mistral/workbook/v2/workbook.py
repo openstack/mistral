@@ -46,8 +46,8 @@ class WorkbookSpec(base.BaseSpec):
         self._description = data.get('description')
         self._tags = data.get('tags', [])
         self._actions = self._spec_property('actions', act.ActionSpecList)
-        self._workflows = \
-            self._spec_property('workflows', wf.WorkflowSpecList)
+        self._workflows = self._spec_property(
+            'workflows', wf.WorkflowSpecList)
         self._triggers = self._spec_property('triggers', tr.TriggerSpecList)
 
     def get_name(self):

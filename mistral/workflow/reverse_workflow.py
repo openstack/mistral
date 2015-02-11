@@ -42,8 +42,8 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         task_spec = self.wf_spec.get_tasks().get(task_name)
 
         if not task_spec:
-            msg = 'Invalid task name [wf_spec=%s, task_name=%s]' % \
-                  (self.wf_spec, task_name)
+            msg = 'Invalid task name [wf_spec=%s, task_name=%s]' % (
+                self.wf_spec, task_name)
             raise exc.WorkflowException(msg)
 
         task_specs = self._find_tasks_without_dependencies(task_spec)

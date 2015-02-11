@@ -61,8 +61,8 @@ def get_task_runtime(task_spec, state=states.IDLE, outbound_context=None,
     retry_count, break_on, delay = task_spec.get_retry_parameters()
 
     retries_remain = retry_no + 1 < retry_count
-    break_early = expressions.evaluate(break_on, outbound_context) if \
-        break_on and outbound_context else False
+    break_early = (expressions.evaluate(break_on, outbound_context)
+                   if break_on and outbound_context else False)
 
     if retries_remain and not break_early:
         state = states.DELAYED if delay > 0 else states.IDLE

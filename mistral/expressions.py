@@ -127,8 +127,8 @@ _EVALUATOR = InlineYAQLEvaluator
 def evaluate(expression, context):
     # Check if the passed value is expression so we don't need to do this
     # every time on a caller side.
-    if not isinstance(expression, six.string_types) or \
-            not _EVALUATOR.is_expression(expression):
+    if (not isinstance(expression, six.string_types) or
+            not _EVALUATOR.is_expression(expression)):
         return expression
 
     return _EVALUATOR.evaluate(expression, context)

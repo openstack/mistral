@@ -132,8 +132,8 @@ def evaluate_task_outbound_context(task_db):
     :return: Outbound task Data Flow context.
     """
 
-    in_context = copy.deepcopy(dict(task_db.in_context)) \
-        if task_db.in_context is not None else {}
+    in_context = (copy.deepcopy(dict(task_db.in_context))
+                  if task_db.in_context is not None else {})
 
     out_ctx = utils.merge_dicts(in_context, task_db.output)
 

@@ -301,8 +301,9 @@ class WorkflowHandler(object):
             self.exec_db.state = state
             self.exec_db.state_info = state_info
         else:
-            msg = "Can't change workflow state [execution=%s," \
-                  " state=%s -> %s]" % (self.exec_db, cur_state, state)
+            msg = ("Can't change workflow state "
+                   "[execution=%s, state=%s -> %s]" %
+                   (self.exec_db, cur_state, state))
             raise exc.WorkflowException(msg)
 
 
