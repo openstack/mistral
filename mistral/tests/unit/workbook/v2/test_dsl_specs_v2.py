@@ -105,7 +105,7 @@ workflows:
 
       task7:
         with-items: vm_info in $.vms
-        workflow: wf2 is_true=true object_list=[1, null, "str"]
+        workflow: wf2 is_true=true object_list=[1, null, "str"] is_string="50"
         on-complete:
           - task9
           - task10
@@ -327,6 +327,7 @@ class DSLv2ModelTest(base.BaseTest):
             {
                 'is_true': True,
                 'object_list': [1, None, 'str'],
+                'is_string': '50'
             },
             task7_spec.get_input()
         )
