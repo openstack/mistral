@@ -91,7 +91,8 @@ class KeystoneAction(base.OpenStackAction):
         return self._client_class(
             token=ctx.auth_token,
             auth_url=CONF.keystone_authtoken.auth_uri,
-            project_id=ctx.project_id
+            project_id=ctx.project_id,
+            cacert=CONF.keystone_authtoken.cafile
         )
 
     @classmethod
