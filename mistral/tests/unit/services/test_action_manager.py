@@ -25,7 +25,7 @@ class ActionManagerTest(base.DbTestCase):
             "url, method=GET, params=None, body=None, "
             "headers=None, cookies=None, auth=None, "
             "timeout=None, allow_redirects=None, "
-            "proxies=None"
+            "proxies=None, verify=None"
         )
 
         self.assertEqual(http_action_input, std_http.input)

@@ -92,4 +92,4 @@ class ActionContextTest(base.EngineTestCase):
         requests.request.assert_called_with(
             'GET', 'https://wiki.openstack.org/wiki/mistral',
             params=None, data=None, headers=headers, cookies=None, auth=None,
-            timeout=None, allow_redirects=None, proxies=None)
+            timeout=None, allow_redirects=None, proxies=None, verify=None)
