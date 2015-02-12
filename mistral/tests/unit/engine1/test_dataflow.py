@@ -14,7 +14,6 @@
 
 import mock
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -32,7 +31,7 @@ LOG = logging.getLogger(__name__)
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-SIMPLE_WF = """
+LINEAR_WF = """
 ---
 version: '2.0'
 
@@ -114,8 +113,8 @@ wf:
 
 
 class DataFlowEngineTest(engine_test_base.EngineTestCase):
-    def test_trivial_dataflow(self):
-        wf_service.create_workflows(SIMPLE_WF)
+    def test_linear_dataflow(self):
+        wf_service.create_workflows(LINEAR_WF)
 
         # Start workflow.
         exec_db = self.engine.start_workflow(
@@ -145,8 +144,6 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task3.output
         )
 
-    # TODO(rakhmerov): https://bugs.launchpad.net/mistral/+bug/1414821.
-    @testtools.skip('Make it work.')
     def test_parallel_tasks(self):
         wf_service.create_workflows(PARALLEL_TASKS_WF)
 

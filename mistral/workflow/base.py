@@ -124,12 +124,9 @@ class WorkflowHandler(object):
                 if not self.is_paused_or_completed():
                     self._set_execution_state(states.SUCCESS)
 
-                # TODO(rakhmerov): It's not enough just to take last task's
-                # TODO(rakhmerov): context. It doesn't work for parallel tasks.
-
                 self.exec_db.output = data_flow.evaluate_workflow_output(
                     self.wf_spec,
-                    data_flow.evaluate_task_outbound_context(task_db)
+                    self._evaluate_workflow_final_context(task_db)
                 )
 
         return cmds
@@ -160,6 +157,15 @@ class WorkflowHandler(object):
                 state = states.RUNNING
 
         return state
+
+    @abc.abstractmethod
+    def _evaluate_workflow_final_context(self, cause_task_db):
+        """Evaluates final workflow context assuming that workflow has finished.
+
+        :param cause_task_db: Task that caused workflow completion.
+        :return: Final workflow context.
+        """
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _find_next_commands(self, task_db):
