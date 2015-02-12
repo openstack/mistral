@@ -7,7 +7,7 @@ Namespaces:
           url: http://path_to_service/action_url
           method: GET
         output:
-          output: $
+          output: "{$}"
 
 Workflow:
   tasks:
@@ -16,4 +16,4 @@ Workflow:
       retry:
         count: 5
       publish:
-        rt_output: $.output
+        rt_output: "{$.output}"

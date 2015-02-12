@@ -44,12 +44,12 @@ workflows:
       task1:
         action: std.echo output='{$.param1}'
         publish:
-          result1: $.task1
+          result1: "{$.task1}"
 
       task2:
         action: std.echo output="{$.result1} & {$.param2}"
         publish:
-          result2: $.task2
+          result2: "{$.task2}"
         requires: [task1]
 """
 

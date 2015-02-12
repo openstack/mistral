@@ -43,14 +43,14 @@ wf:
     task1:
       action: std.echo output="Hi"
       publish:
-        hi: $.task1
+        hi: "{$.task1}"
       on-success:
         - task2
 
     task2:
       action: std.echo output="Morpheus"
       publish:
-        to: $.task2
+        to: "{$.task2}"
       on-success:
         - task3
 
@@ -70,12 +70,12 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        var1: $.task1
+        var1: "{$.task1}"
 
     task2:
       action: std.echo output=2
       publish:
-        var2: $.task2
+        var2: "{$.task2}"
 """
 
 VAR_OVERWRITE_WF = """
@@ -89,21 +89,21 @@ wf:
     task1:
       action: std.echo output="Hi"
       publish:
-        greeting: $.task1
+        greeting: "{$.task1}"
       on-success:
         - task2
 
     task2:
       action: std.echo output="Yo"
       publish:
-        greeting: $.task2
+        greeting: "{$.task2}"
       on-success:
         - task3
 
     task3:
       action: std.echo output="Morpheus"
       publish:
-        to: $.task3
+        to: "{$.task3}"
       on-success:
         - task4
 
@@ -247,7 +247,7 @@ class DataFlowTest(test_base.BaseTest):
 
         publish = {
             'v': '{$.var}',
-            'e': '$.__env.ekey',
+            'e': '{$.__env.ekey}',
             'a': '{$.task1.akey}'
         }
 
@@ -279,7 +279,7 @@ class DataFlowTest(test_base.BaseTest):
 
         Expected to get action error.
         """
-        publish = {'foo': '$.akey'}
+        publish = {'foo': '{$.akey}'}
         action_output = 'error data'
 
         task_db = models.Task(name='task1')

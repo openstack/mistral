@@ -46,18 +46,18 @@ workflows:
     input:
       - param1
     output:
-      result: $.result
+      result: "{$.result}"
 
     tasks:
       task1:
         action: std.echo output="{$.param1}"
         publish:
-          result: $
+          result: "{$}"
 
   wf2:
     type: direct
     output:
-      result: $.result
+      result: "{$.result}"
 
     tasks:
       task1:
@@ -83,7 +83,7 @@ workflows:
   wf1:
     type: direct
     output:
-      result: $.result
+      result: "{$.result}"
 
     tasks:
       task1:
@@ -96,13 +96,13 @@ workflows:
     input:
       - param1
     output:
-      result: $.result
+      result: "{$.result}"
 
     tasks:
       task1:
         action: std.echo output="{$.param1}"
         publish:
-          result: $
+          result: "{$}"
 """
 
 

@@ -7,14 +7,14 @@ Namespaces:
           url: http://path_to_service/action_url
           method: GET
         output:
-          output: $
+          output: "{$}"
 
 Workflow:
   tasks:
     no_retry_task:
       action: MyService.some-action
       publish:
-        n_rt_output: $.output
+        n_rt_output: "{$.output}"
       on-success: delay_retry_task
 
     delay_retry_task:

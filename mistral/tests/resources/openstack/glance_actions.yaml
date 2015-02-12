@@ -3,13 +3,13 @@ Workflow:
     image_list:
       action: glance.images_list
       publish:
-        image_id: $[0].id
+        image_id: "{$[0].id}"
       on-success: image_get
 
     image_get:
       action: glance.images_get
       parameters:
-        image_id: $.image_id
+        image_id: "{$.image_id}"
       publish:
-        image_id: $.id
-        image_name: $.name
+        image_id: "{$.id}"
+        image_name: "{$.name}"

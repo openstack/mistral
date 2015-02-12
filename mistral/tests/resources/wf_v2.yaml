@@ -10,7 +10,7 @@ wf:
       policies:
         wait-before: 1
       publish:
-        result: {$.hello}
+        result: "{$.hello}"
 
 wf1:
   type: reverse
@@ -21,7 +21,7 @@ wf1:
     addressee:
       action: std.echo output="John"
       publish:
-        name: $.adressee
+        name: "{$.adressee}"
 
     goodbye:
       action: std.echo output="{$.farewell}, {$.name}"

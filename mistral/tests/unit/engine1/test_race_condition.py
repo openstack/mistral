@@ -43,13 +43,13 @@ wf:
     method. And we need to check that engine handles this situation.
 
   output:
-    result: $.result
+    result: "{$.result}"
 
   tasks:
     task1:
       action: std.block
       publish:
-        result: $.task1
+        result: "{$.task1}"
 """
 
 WF_SHORT_ACTION = """
@@ -73,13 +73,13 @@ wf:
     methods ends.
 
   output:
-    result: $.result
+    result: "{$.result}"
 
   tasks:
     task1:
       action: std.echo output=1
       publish:
-        result1: $.task1
+        result1: "{$.task1}"
 
     task2:
       action: std.block
