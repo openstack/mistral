@@ -18,6 +18,7 @@ from networkx.algorithms import traversal
 from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.workflow import base
+from mistral.workflow import data_flow
 from mistral.workflow import states
 
 
@@ -56,6 +57,9 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
     def get_upstream_tasks(self, task_spec):
         return [self.wf_spec.get_tasks()[t_name]
                 for t_name in task_spec.get_requires() or []]
+
+    def _evaluate_workflow_final_context(self, cause_task_db):
+        return data_flow.evaluate_task_outbound_context(cause_task_db)
 
     def _find_next_commands(self, task_db):
         """Finds all tasks with resolved dependencies and return them

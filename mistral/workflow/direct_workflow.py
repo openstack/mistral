@@ -15,6 +15,7 @@
 from mistral.engine1 import commands
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
+from mistral import utils
 from mistral.workflow import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -68,6 +69,12 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             if self._transition_exists(t_s.get_name(), task_spec.get_name())
         ]
 
+    def _find_outbound_task_specs(self, task_spec):
+        return [
+            t_s for t_s in self.wf_spec.get_tasks()
+            if self._transition_exists(task_spec.get_name(), t_s.get_name())
+        ]
+
     def _transition_exists(self, from_task_name, to_task_name):
         t_names = set()
 
@@ -81,6 +88,32 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             t_names.add(tup[0])
 
         return to_task_name in t_names
+
+    def _evaluate_workflow_final_context(self, cause_task_db):
+        ctx = {}
+
+        for t_db in self._find_end_tasks():
+            ctx = utils.merge_dicts(
+                ctx,
+                data_flow.evaluate_task_outbound_context(t_db)
+            )
+
+        return ctx
+
+    def _find_end_tasks(self):
+        return filter(
+            lambda t_db: not self._has_outbound_tasks(t_db),
+            wf_utils.find_completed_tasks(self.exec_db)
+        )
+
+    def _has_outbound_tasks(self, task_db):
+        t_specs = self._find_outbound_task_specs(
+            self.wf_spec.get_tasks()[task_db.name]
+        )
+
+        return any(
+            [wf_utils.find_db_task(self.exec_db, t_s) for t_s in t_specs]
+        )
 
     def _find_next_commands(self, task_db, remove_unsatisfied_joins=True):
         """Finds commands that should run after completing given task.

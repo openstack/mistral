@@ -60,3 +60,8 @@ def find_db_tasks(exec_db, task_specs):
 
 def find_running_tasks(exec_db):
     return [t_db for t_db in exec_db.tasks if t_db.state == states.RUNNING]
+
+
+def find_completed_tasks(exec_db):
+    # TODO(rakhmerov): do we need to care about ERROR state?
+    return [t_db for t_db in exec_db.tasks if t_db.state == states.SUCCESS]
