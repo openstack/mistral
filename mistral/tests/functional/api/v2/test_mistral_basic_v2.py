@@ -13,6 +13,7 @@
 # under the License.
 
 from tempest import test
+from tempest_lib import decorators
 from tempest_lib import exceptions
 
 from mistral.tests.functional import base
@@ -467,7 +468,7 @@ class CronTriggerTestsV2(base.TestCase):
                           self.client.create_cron_trigger,
                           tr_name, '5 * * * *', self.wf_name)
 
-    @test.skip_because(bug="1383146")
+    @decorators.skip_because(bug="1383146")
     @test.attr(type='negative')
     def test_create_two_cron_triggers_with_same_pattern(self):
         self.client.create_trigger(
