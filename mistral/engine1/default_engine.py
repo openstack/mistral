@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import copy
-from oslo.config import cfg
 import traceback
 
 from mistral.db.v2 import api as db_api
@@ -30,14 +29,12 @@ from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 from mistral.workflow import workflow_handler_factory as wfh_factory
 
+
 LOG = logging.getLogger(__name__)
 
 # Submodules of mistral.engine will throw NoSuchOptError if configuration
 # options required at top level of this  __init__.py are not imported before
 # the submodules are referenced.
-cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
-
-WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class DefaultEngine(base.Engine):
@@ -46,10 +43,6 @@ class DefaultEngine(base.Engine):
 
     @u.log_exec(LOG)
     def start_workflow(self, workflow_name, workflow_input, **params):
-        WF_TRACE.info(
-            "Starting the execution of workflow '%s'"
-            % workflow_name
-        )
         try:
             execution_id = None
             params = self._canonize_workflow_params(params)
@@ -68,6 +61,11 @@ class DefaultEngine(base.Engine):
                     params
                 )
                 execution_id = exec_db.id
+
+                u.wf_trace.info(
+                    exec_db,
+                    "Starting the execution of workflow '%s'" % workflow_name
+                )
 
                 wf_handler = wfh_factory.create_workflow_handler(
                     exec_db,
@@ -145,7 +143,8 @@ class DefaultEngine(base.Engine):
             with db_api.transaction():
                 task_db = db_api.get_task(task_id)
 
-                WF_TRACE.info(
+                u.wf_trace.info(
+                    task_db,
                     "Task '%s' [%s -> %s]"
                     % (task_db.name, task_db.state, states.RUNNING)
                 )

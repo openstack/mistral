@@ -15,20 +15,19 @@
 
 import abc
 
-from oslo.config import cfg
-
 from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils
+from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 from mistral.workflow import with_items
 
+
 LOG = logging.getLogger(__name__)
-WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 
 class WorkflowHandler(object):
@@ -95,11 +94,10 @@ class WorkflowHandler(object):
 
         if task_db.state == states.ERROR:
             wf_trace_msg += ", error = %s]" % utils.cut(raw_result.error)
-            WF_TRACE.info(wf_trace_msg)
         else:
             wf_trace_msg += ", result = %s]" % utils.cut(raw_result.data)
 
-        WF_TRACE.info(wf_trace_msg)
+        wf_trace.info(task_db, wf_trace_msg)
 
         if self.is_paused_or_completed():
             return []
@@ -296,7 +294,7 @@ class WorkflowHandler(object):
         cur_state = self.exec_db.state
 
         if states.is_valid_transition(cur_state, state):
-            WF_TRACE.info("Execution of workflow '%s' [%s -> %s]"
+            wf_trace.info(self.exec_db, "Execution of workflow '%s' [%s -> %s]"
                           % (self.exec_db.wf_name, cur_state, state))
             self.exec_db.state = state
             self.exec_db.state_info = state_info
