@@ -77,6 +77,54 @@ wf:
         var2: "{$.task2}"
 """
 
+PARALLEL_TASKS_COMPLEX_WF = """
+---
+version: 2.0
+
+wf:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.noop
+      publish:
+        var1: 1
+      on-complete:
+        - task12
+
+    task12:
+      action: std.noop
+      publish:
+        var12: 12
+      on-complete:
+        - task13
+        - task14
+
+    task13:
+      action: std.fail
+      description: |
+        Since this task fails we expect that 'var13' won't go into context.
+        Only 'var14'.
+      publish:
+        var13: 13
+      on-error:
+        - noop
+
+    task14:
+      publish:
+        var14: 14
+
+    task2:
+      publish:
+        var2: 2
+      on-complete:
+        - task21
+
+    task21:
+      publish:
+        var21: 21
+"""
+
 VAR_OVERWRITE_WF = """
 ---
 version: '2.0'
@@ -172,6 +220,50 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertEqual(1, exec_db.output['var1'])
         self.assertEqual(2, exec_db.output['var2'])
+
+    def test_parallel_tasks_complex(self):
+        wf_service.create_workflows(PARALLEL_TASKS_COMPLEX_WF)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+
+        self.assertEqual(states.SUCCESS, exec_db.state)
+
+        tasks = exec_db.tasks
+
+        self.assertEqual(6, len(tasks))
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task12 = self._assert_single_item(tasks, name='task12')
+        task13 = self._assert_single_item(tasks, name='task13')
+        task14 = self._assert_single_item(tasks, name='task14')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task21 = self._assert_single_item(tasks, name='task21')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.SUCCESS, task12.state)
+        self.assertEqual(states.ERROR, task13.state)
+        self.assertEqual(states.SUCCESS, task14.state)
+        self.assertEqual(states.SUCCESS, task2.state)
+        self.assertEqual(states.SUCCESS, task21.state)
+
+        self.assertDictEqual({'var1': 1}, task1.output)
+        self.assertDictEqual({'var12': 12}, task12.output)
+        self.assertDictEqual({'var14': 14}, task14.output)
+        self.assertDictEqual({'var2': 2}, task2.output)
+        self.assertDictEqual({'var21': 21}, task21.output)
+
+        self.assertEqual(1, exec_db.output['var1'])
+        self.assertEqual(12, exec_db.output['var12'])
+        self.assertFalse('var13' in exec_db.output)
+        self.assertEqual(14, exec_db.output['var14'])
+        self.assertEqual(2, exec_db.output['var2'])
+        self.assertEqual(21, exec_db.output['var21'])
 
     def test_sequential_tasks_publishing_same_var(self):
         wf_service.create_workflows(VAR_OVERWRITE_WF)
