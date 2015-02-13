@@ -103,7 +103,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def _find_end_tasks(self):
         return filter(
             lambda t_db: not self._has_outbound_tasks(t_db),
-            wf_utils.find_completed_tasks(self.exec_db)
+            wf_utils.find_successful_tasks(self.exec_db)
         )
 
     def _has_outbound_tasks(self, task_db):
