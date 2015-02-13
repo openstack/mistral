@@ -75,9 +75,9 @@ class WorkflowHandler(object):
         if states.is_completed(task_db.state):
             return []
 
-        wf_trace_msg = "Task '%s' [%s -> " % (task_db.name, task_db.state)
-
         task_spec = self.wf_spec.get_tasks()[task_db.name]
+
+        prev_state = task_db.state
 
         task_db.state = self._determine_task_state(task_db, task_spec, result)
 
@@ -89,14 +89,7 @@ class WorkflowHandler(object):
             result
         )
 
-        wf_trace_msg += "%s" % task_db.state
-
-        if task_db.state == states.ERROR:
-            wf_trace_msg += ", error = %s]" % utils.cut(result.error)
-        else:
-            wf_trace_msg += ", result = %s]" % utils.cut(result.data)
-
-        wf_trace.info(task_db, wf_trace_msg)
+        self._log_result(task_db, prev_state, task_db.state, result)
 
         if self.is_paused_or_completed():
             return []
@@ -117,19 +110,31 @@ class WorkflowHandler(object):
 
             return []
 
-        if len(cmds) == 0:
+        if not cmds and not wf_utils.find_running_tasks(self.exec_db):
             # If there are no running tasks at this point we can conclude that
             # the workflow has finished.
-            if not wf_utils.find_running_tasks(self.exec_db):
-                if not self.is_paused_or_completed():
-                    self._set_execution_state(states.SUCCESS)
+            if not self.is_paused_or_completed():
+                self._set_execution_state(states.SUCCESS)
 
-                self.exec_db.output = data_flow.evaluate_workflow_output(
-                    self.wf_spec,
-                    self._evaluate_workflow_final_context(task_db)
-                )
+            self.exec_db.output = data_flow.evaluate_workflow_output(
+                self.wf_spec,
+                self._evaluate_workflow_final_context(task_db)
+            )
 
         return cmds
+
+    def _log_result(self, task_db, from_state, to_state, result):
+        def _result_msg():
+            if task_db.state == states.ERROR:
+                return "error = %s" % utils.cut(result.error)
+
+            return "result = %s" % utils.cut(result.data)
+
+        wf_trace.info(
+            self.exec_db,
+            "Task '%s' [%s -> %s, %s]" %
+            (task_db.name, from_state, to_state, _result_msg())
+        )
 
     @staticmethod
     def _determine_task_result(task_spec, task_db, result):
@@ -296,8 +301,11 @@ class WorkflowHandler(object):
         cur_state = self.exec_db.state
 
         if states.is_valid_transition(cur_state, state):
-            wf_trace.info(self.exec_db, "Execution of workflow '%s' [%s -> %s]"
-                          % (self.exec_db.wf_name, cur_state, state))
+            wf_trace.info(
+                self.exec_db,
+                "Execution of workflow '%s' [%s -> %s]"
+                % (self.exec_db.wf_name, cur_state, state)
+            )
             self.exec_db.state = state
             self.exec_db.state_info = state_info
         else:

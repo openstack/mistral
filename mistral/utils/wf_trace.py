@@ -31,6 +31,7 @@ def info(obj, msg, *args, **kvargs):
     """
     exec_id = ''
     task_id = ''
+
     if type(obj) is models.Task:
         exec_id = obj.execution_id
         task_id = obj.id
