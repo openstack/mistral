@@ -17,6 +17,7 @@
 from mistral import exceptions
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
+from mistral.workbook.v2 import tasks
 
 VALID_WB = """
 ---
@@ -172,6 +173,62 @@ workflows:
       task1:
         action: std.echo output="Hey!"
 
+"""
+
+DIRECT_WF = """
+---
+version: '2.0'
+wf_direct:
+  type: direct
+  tasks:
+    task1:
+      action: std.noop
+      on-complete:
+        - task2
+    task2:
+      action: std.noop
+"""
+
+BAD_DIRECT_WF = """
+---
+version: '2.0'
+wf_direct_bad:
+  type: direct
+  tasks:
+    task1:
+      action: std.noop
+    task2:
+      action: std.noop
+      requires:
+        - task1
+"""
+
+REVERSE_WF = """
+---
+version: '2.0'
+wf_reverse:
+  type: reverse
+  tasks:
+    task1:
+      action: std.noop
+    task2:
+      action: std.noop
+      requires:
+        - task1
+"""
+
+BAD_REVERSE_WF = """
+---
+version: '2.0'
+wf_reverse_bad:
+  type: reverse
+  tasks:
+    task1:
+      action: std.noop
+      on-complete:
+        - task2
+    task2:
+      action: std.noop
 """
 
 
@@ -412,3 +469,39 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', d['version'])
         self.assertEqual('2.0', d['workflows']['version'])
         self.assertEqual('2.0', d['workflows']['wf1']['version'])
+
+    def test_direct_workflow_task(self):
+        wfs_spec = spec_parser.get_workflow_list_spec_from_yaml(DIRECT_WF)
+
+        self.assertEqual(1, len(wfs_spec.get_workflows()))
+        self.assertEqual('wf_direct', wfs_spec.get_workflows()[0].get_name())
+        self.assertEqual('direct', wfs_spec.get_workflows()[0].get_type())
+        self.assertIsInstance(wfs_spec.get_workflows()[0].get_tasks(),
+                              tasks.DirectWfTaskSpecList)
+
+    def test_direct_workflow_invalid_task(self):
+        exception = self.assertRaises(
+            exceptions.InvalidModelException,
+            spec_parser.get_workflow_list_spec_from_yaml,
+            BAD_DIRECT_WF
+        )
+
+        self.assertIn("Invalid DSL", exception.message)
+
+    def test_reverse_workflow_task(self):
+        wfs_spec = spec_parser.get_workflow_list_spec_from_yaml(REVERSE_WF)
+
+        self.assertEqual(1, len(wfs_spec.get_workflows()))
+        self.assertEqual('wf_reverse', wfs_spec.get_workflows()[0].get_name())
+        self.assertEqual('reverse', wfs_spec.get_workflows()[0].get_type())
+        self.assertIsInstance(wfs_spec.get_workflows()[0].get_tasks(),
+                              tasks.ReverseWfTaskSpecList)
+
+    def test_reverse_workflow_invalid_task(self):
+        exception = self.assertRaises(
+            exceptions.InvalidModelException,
+            spec_parser.get_workflow_list_spec_from_yaml,
+            BAD_REVERSE_WF
+        )
+
+        self.assertIn("Invalid DSL", exception.message)
