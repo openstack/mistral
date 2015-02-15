@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2015 - Huawei Technologies Co. Ltd
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -81,3 +82,18 @@ class UtilsTest(base.BaseTest):
         utils.merge_dicts(left, right, overwrite=False)
 
         self.assertDictEqual(left, expected)
+
+    def test_itersubclasses(self):
+        class A(object):
+            pass
+
+        class B(A):
+            pass
+
+        class C(A):
+            pass
+
+        class D(C):
+            pass
+
+        self.assertEqual([B, C, D], list(utils.iter_subclasses(A)))

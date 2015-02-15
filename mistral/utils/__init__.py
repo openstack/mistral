@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Huawei Technologies Co. Ltd
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -149,3 +150,24 @@ def cut(data, length=100):
         return "%s..." % string[:length]
     else:
         return string
+
+
+def iter_subclasses(cls, _seen=None):
+    """Generator over all subclasses of a given class in depth first order."""
+
+    if not isinstance(cls, type):
+        raise TypeError('iter_subclasses must be called with new-style class'
+                        ', not %.100r' % cls)
+    _seen = _seen or set()
+
+    try:
+        subs = cls.__subclasses__()
+    except TypeError:   # fails only when cls is type
+        subs = cls.__subclasses__(cls)
+
+    for sub in subs:
+        if sub not in _seen:
+            _seen.add(sub)
+            yield sub
+            for _sub in iter_subclasses(sub, _seen):
+                yield _sub

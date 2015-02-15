@@ -218,10 +218,27 @@ class TaskSpecList(base.BaseSpecList):
     item_class = TaskSpec
     _version = '2.0'
 
+    @staticmethod
+    def get_class(wf_type):
+        """Gets a task specification list class by given workflow type.
+
+        :param wf_type: Workflow type
+        :returns: Task specification list class
+        """
+        for spec_list_cls in utils.iter_subclasses(TaskSpecList):
+            if wf_type == spec_list_cls.__type__:
+                return spec_list_cls
+
+        msg = ("Can not find task list specification with workflow type:"
+               " %s" % wf_type)
+        raise exc.NotFoundException(msg)
+
 
 class DirectWfTaskSpecList(TaskSpecList):
+    __type__ = 'direct'
     item_class = DirectWorkflowTaskSpec
 
 
 class ReverseWfTaskSpecList(TaskSpecList):
+    __type__ = 'reverse'
     item_class = ReverseWorkflowTaskSpec

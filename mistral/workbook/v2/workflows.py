@@ -57,8 +57,8 @@ class WorkflowSpec(base.BaseSpec):
         )
         self._tasks = self._spec_property(
             'tasks',
-            tasks.DirectWfTaskSpecList if self._type == 'direct' else
-            tasks.ReverseWfTaskSpecList)
+            tasks.TaskSpecList.get_class(self._type)
+        )
 
     def get_name(self):
         return self._name
