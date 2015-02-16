@@ -131,6 +131,9 @@ class BaseSpec(object):
     def get_version(self):
         return self._version
 
+    def __repr__(self):
+        return "%s %s" % (self.__class__.__name__, self.to_dict())
+
 
 class BaseSpecList(object):
     item_class = None
