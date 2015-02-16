@@ -118,6 +118,8 @@ class HTTPAction(base.Action):
         redirect following is allowed.
     :param proxies: (optional) Dictionary mapping protocol to the URL of
         the proxy.
+    :param verify: (optional) if ``True``, the SSL cert will be verified.
+        A CA_BUNDLE path can also be provided.
     """
 
     def __init__(self,
@@ -130,7 +132,8 @@ class HTTPAction(base.Action):
                  auth=None,
                  timeout=None,
                  allow_redirects=None,
-                 proxies=None):
+                 proxies=None,
+                 verify=None):
 
         if auth and len(auth.split(':')) == 2:
             self.auth = (auth.split(':')[0], auth.split(':')[1])
@@ -146,12 +149,13 @@ class HTTPAction(base.Action):
         self.timeout = timeout
         self.allow_redirects = allow_redirects
         self.proxies = proxies
+        self.verify = verify
 
     def run(self):
         LOG.info("Running HTTP action "
                  "[url=%s, method=%s, params=%s, body=%s, headers=%s,"
                  " cookies=%s, auth=%s, timeout=%s, allow_redirects=%s,"
-                 " proxies=%s]" %
+                 " proxies=%s, verify=%s]" %
                  (self.url,
                   self.method,
                   self.params,
@@ -161,7 +165,8 @@ class HTTPAction(base.Action):
                   self.auth,
                   self.timeout,
                   self.allow_redirects,
-                  self.proxies))
+                  self.proxies,
+                  self.verify))
 
         try:
             resp = requests.request(
@@ -174,7 +179,8 @@ class HTTPAction(base.Action):
                 auth=self.auth,
                 timeout=self.timeout,
                 allow_redirects=self.allow_redirects,
-                proxies=self.proxies
+                proxies=self.proxies,
+                verify=self.verify
             )
         except Exception as e:
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
@@ -216,7 +222,8 @@ class MistralHTTPAction(HTTPAction):
                  auth=None,
                  timeout=None,
                  allow_redirects=None,
-                 proxies=None):
+                 proxies=None,
+                 verify=None):
         headers = headers or {}
         headers.update({
             'Mistral-Workflow-Name': action_context.get('workflow_name'),
@@ -235,6 +242,7 @@ class MistralHTTPAction(HTTPAction):
             timeout,
             allow_redirects,
             proxies,
+            verify,
         )
 
     def is_sync(self):

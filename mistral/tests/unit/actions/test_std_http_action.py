@@ -80,7 +80,8 @@ class HTTPActionTest(base.BaseTest):
             timeout=20,
             auth=None,
             allow_redirects=True,
-            proxies=None
+            proxies=None,
+            verify=None
         )
 
     @mock.patch.object(requests, "request")
@@ -115,5 +116,6 @@ class HTTPActionTest(base.BaseTest):
             timeout=None,
             auth=('user', 'password'),
             allow_redirects=None,
-            proxies=None
+            proxies=None,
+            verify=None
         )

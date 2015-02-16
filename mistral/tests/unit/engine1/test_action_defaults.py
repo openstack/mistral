@@ -134,7 +134,8 @@ class ActionDefaultTest(base.EngineTestCase):
         requests.request.assert_called_with(
             'GET', 'https://api.library.org/books',
             params=None, data=None, headers=None, cookies=None,
-            allow_redirects=None, proxies=None, auth=EXPECTED_ENV_AUTH,
+            allow_redirects=None, proxies=None, verify=None,
+            auth=EXPECTED_ENV_AUTH,
             timeout=ENV['__actions']['std.http']['timeout'])
 
     @mock.patch.object(
@@ -158,7 +159,8 @@ class ActionDefaultTest(base.EngineTestCase):
         requests.request.assert_called_with(
             'GET', 'https://api.library.org/books',
             params=None, data=None, headers=None, cookies=None,
-            allow_redirects=None, proxies=None, auth=EXPECTED_ENV_AUTH,
+            allow_redirects=None, proxies=None, verify=None,
+            auth=EXPECTED_ENV_AUTH,
             timeout=60)
 
     @mock.patch.object(
@@ -191,7 +193,7 @@ class ActionDefaultTest(base.EngineTestCase):
         calls = [mock.call('GET', url, params=None, data=None,
                            headers=None, cookies=None,
                            allow_redirects=None, proxies=None,
-                           auth=EXPECTED_ENV_AUTH,
+                           auth=EXPECTED_ENV_AUTH, verify=None,
                            timeout=ENV['__actions']['std.http']['timeout'])
                  for url in wf_input['links']]
 
@@ -227,7 +229,8 @@ class ActionDefaultTest(base.EngineTestCase):
         calls = [mock.call('GET', url, params=None, data=None,
                            headers=None, cookies=None,
                            allow_redirects=None, proxies=None,
-                           auth=EXPECTED_ENV_AUTH, timeout=60)
+                           auth=EXPECTED_ENV_AUTH, verify=None,
+                           timeout=60)
                  for url in wf_input['links']]
 
         requests.request.assert_has_calls(calls, any_order=True)
