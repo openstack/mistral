@@ -57,7 +57,7 @@ class OpenStackActionsTest(base.TestCaseAdvanced):
         self.assertEqual('SUCCESS', execution['state'])
 
         server_id = json.loads(final_task['output'])['instance_id']
-        _, server = self.server_client.get_server(server_id)
+        server = self.server_client.get_server(server_id)
 
         self.assertEqual('ACTIVE', server['status'])
 
