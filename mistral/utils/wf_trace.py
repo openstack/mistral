@@ -32,10 +32,10 @@ def info(obj, msg, *args, **kvargs):
     exec_id = ''
     task_id = ''
 
-    if type(obj) is models.Task:
+    if type(obj) is models.TaskExecution:
         exec_id = obj.execution_id
         task_id = obj.id
-    elif type(obj) is models.Execution:
+    elif type(obj) is models.WorkflowExecution:
         exec_id = obj.id
 
     msg = '%s (execution_id=%s task_id=%s)' % (msg, exec_id, task_id)

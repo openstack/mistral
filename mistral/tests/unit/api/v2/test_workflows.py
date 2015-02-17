@@ -37,7 +37,7 @@ flow:
       action: std.echo output="Hi"
 """
 
-WF_DB = models.Workflow(
+WF_DB = models.WorkflowDefinition(
     name='flow',
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),

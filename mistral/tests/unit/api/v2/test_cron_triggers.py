@@ -23,7 +23,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 
-WF = models.Workflow()
+WF = models.WorkflowDefinition()
 WF.update({'id': '1-2-3-4', 'name': 'my_wf'})
 
 TRIGGER = {

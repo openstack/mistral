@@ -28,7 +28,7 @@ WORKBOOK_DEF = '---'
 
 UPDATED_WORKBOOK_DEF = '---\nVersion: 2.0'
 
-WORKBOOK_DB = models.Workbook(
+WORKBOOK_DB = models.WorkbookDefinition(
     id='123',
     name='book',
     definition=WORKBOOK_DEF,

@@ -238,7 +238,7 @@ class WorkbookTest(SQLAlchemyTest):
     def test_workbook_repr(self):
         s = db_api.create_workbook(WORKBOOKS[0]).__repr__()
 
-        self.assertIn('Workbook ', s)
+        self.assertIn('WorkbookDefinition ', s)
         self.assertIn("'name': 'my_workbook1'", s)
 
 WORKFLOWS = [
@@ -423,7 +423,7 @@ class WorkflowTest(SQLAlchemyTest):
     def test_workflow_repr(self):
         s = db_api.create_workflow(WORKFLOWS[0]).__repr__()
 
-        self.assertIn('Workflow ', s)
+        self.assertIn('WorkflowDefinition ', s)
         self.assertIn("'name': 'my_wf1'", s)
 
 
@@ -593,7 +593,7 @@ class TaskTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_task("not-existing-id"))
 
-    def test_action_invocations(self):
+    def test_action_executions(self):
         # Store one task with two invocations.
         with db_api.transaction():
             ex = db_api.create_execution(EXECUTIONS[0])
@@ -603,33 +603,33 @@ class TaskTest(SQLAlchemyTest):
 
             task = db_api.create_task(values)
 
-            self.assertEqual(0, len(task.invocations))
+            self.assertEqual(0, len(task.action_executions))
 
-            inv1 = db_models.ActionInvocation()
-            inv2 = db_models.ActionInvocation()
+            a_ex1 = db_models.ActionExecution()
+            a_ex2 = db_models.ActionExecution()
 
-            task.invocations.append(inv1)
-            task.invocations.append(inv2)
+            task.action_executions.append(a_ex1)
+            task.action_executions.append(a_ex2)
 
-            self.assertEqual(2, len(task.invocations))
+            self.assertEqual(2, len(task.action_executions))
 
         # Make sure associated objects were saved.
         with db_api.transaction():
             task = db_api.get_task(task.id)
 
-            self.assertEqual(2, len(task.invocations))
+            self.assertEqual(2, len(task.action_executions))
 
         # Remove associated objects from collection.
         with db_api.transaction():
             task = db_api.get_task(task.id)
 
-            del task.invocations[:]
+            del task.action_executions[:]
 
         # Make sure associated objects were deleted.
         with db_api.transaction():
             task = db_api.get_task(task.id)
 
-            self.assertEqual(0, len(task.invocations))
+            self.assertEqual(0, len(task.action_executions))
 
     def test_update_task(self):
         ex = db_api.create_execution(EXECUTIONS[0])
@@ -727,7 +727,7 @@ class TaskTest(SQLAlchemyTest):
 
         s = db_api.create_task(values).__repr__()
 
-        self.assertIn('Task ', s)
+        self.assertIn('TaskExecution ', s)
         self.assertIn("'state': 'IDLE'", s)
         self.assertIn("'name': 'my_task1'", s)
 

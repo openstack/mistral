@@ -57,7 +57,7 @@ class DirectWorkflowHandlerTest(base.BaseTest):
 
         wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
 
-        exec_db = models.Execution()
+        exec_db = models.WorkflowExecution()
         exec_db.update({
             'id': '1-2-3-4',
             'wf_spec': wb_spec.get_workflows().get('wf1').to_dict(),
@@ -71,7 +71,7 @@ class DirectWorkflowHandlerTest(base.BaseTest):
     def _create_db_task(self, id, name, state):
         tasks_spec = self.wb_spec.get_workflows()['wf1'].get_tasks()
 
-        task_db = models.Task()
+        task_db = models.TaskExecution()
         task_db.update({
             'id': id,
             'name': name,
