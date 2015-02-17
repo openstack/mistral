@@ -119,7 +119,10 @@ class HeatAction(base.OpenStackAction):
 
         heat_endpoint = keystone_utils.get_endpoint_for_project('heat')
 
-        endpoint_url = heat_endpoint.url % {'tenant_id': ctx.project_id}
+        endpoint_url = keystone_utils.format_url(
+            heat_endpoint.url,
+            {'tenant_id': ctx.project_id}
+        )
 
         return self._client_class(
             endpoint_url,
@@ -174,7 +177,10 @@ class CinderAction(base.OpenStackAction):
             service_type='volume'
         )
 
-        cinder_url = cinder_endpoint.url % {'tenant_id': ctx.project_id}
+        cinder_url = keystone_utils.format_url(
+            cinder_endpoint.url,
+            {'tenant_id': ctx.project_id}
+        )
 
         client = self._client_class(
             ctx.user_name,

@@ -97,3 +97,10 @@ def get_keystone_endpoint_v2():
 
 def get_keystone_url_v2():
     return get_endpoint_for_project('keystone').url
+
+
+def format_url(url_template, values):
+    # Since we can't use keystone module, we can do similar thing:
+    # see https://github.com/openstack/keystone/blob/master/keystone/
+    # catalog/core.py#L42-L60
+    return url_template.replace('$(', '%(') % values
