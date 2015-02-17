@@ -104,3 +104,12 @@ def format_url(url_template, values):
     # see https://github.com/openstack/keystone/blob/master/keystone/
     # catalog/core.py#L42-L60
     return url_template.replace('$(', '%(') % values
+
+
+def is_token_trust_scoped(auth_token):
+    admin_project_name = CONF.keystone_authtoken.admin_tenant_name
+    keystone_client = _admin_client(project_name=admin_project_name)
+
+    token_info = keystone_client.tokens.validate(auth_token)
+
+    return 'OS-TRUST:trust' in token_info
