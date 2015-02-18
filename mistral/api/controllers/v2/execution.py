@@ -147,17 +147,20 @@ class ExecutionsController(rest.RestController):
             )
 
         new_state = execution.state
+        msg = execution.state_info
 
         if new_state == states.PAUSED:
             exec_db = rpc.get_engine_client().pause_workflow(id)
         elif new_state == states.RUNNING:
             exec_db = rpc.get_engine_client().resume_workflow(id)
+        elif new_state in [states.SUCCESS, states.ERROR]:
+            exec_db = rpc.get_engine_client().stop_workflow(id, new_state, msg)
         else:
             # To prevent changing state in other cases throw a message.
             raise exc.DataAccessException(
-                "Error. Can not change state to %s. "
-                "Only valid states '%s' or '%s' allowed."
-                % (new_state, states.RUNNING, states.PAUSED)
+                "Can not change state to %s. Allowed states are: '%s" %
+                (new_state, ", ".join([states.RUNNING, states.PAUSED,
+                 states.SUCCESS, states.ERROR]))
             )
 
         return Execution.from_dict(exec_db if isinstance(exec_db, dict)

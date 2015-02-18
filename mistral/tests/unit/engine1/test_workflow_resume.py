@@ -18,7 +18,6 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import default_engine as de
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
@@ -26,7 +25,6 @@ from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils
 
-LOG = logging.getLogger(__name__)
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')

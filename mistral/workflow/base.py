@@ -247,12 +247,26 @@ class WorkflowHandler(object):
     def is_paused_or_completed(self):
         return states.is_paused_or_completed(self.exec_db.state)
 
-    def succeed_workflow(self):
-        """Completes workflow with SUCCESS status.
+    def stop_workflow(self, state, message=None):
+        """Completes workflow as succeeded or failed.
+
+        Sets execution state to SUCCESS or ERROR. No more tasks will be
+        scheduled. Running tasks won't be killed, but their results
+        will be ignored.
+
+        :param state: 'SUCCESS' or 'ERROR'
+        :param message: State info text with context of the operation.
 
         :return: Execution object.
         """
-        self._set_execution_state(states.SUCCESS)
+        if state not in [states.SUCCESS, states.ERROR]:
+            msg = ("Illegal state %s: provided while stopping workflow "
+                   "execution id=%s. State can be  %s or %s. "
+                   "Stop request IGNORED." %
+                   (state, self.exec_db.id, states.SUCCESS, states.ERROR))
+            raise exc.WorkflowException(msg)
+
+        self._set_execution_state(state, message)
 
         return self.exec_db
 
@@ -262,15 +276,6 @@ class WorkflowHandler(object):
         :return: Execution object.
         """
         self._set_execution_state(states.PAUSED)
-
-        return self.exec_db
-
-    def fail_workflow(self, err_msg=None):
-        """Stops workflow with ERROR state.
-
-        :return: Execution object.
-        """
-        self._set_execution_state(states.ERROR, err_msg)
 
         return self.exec_db
 
@@ -309,9 +314,9 @@ class WorkflowHandler(object):
             self.exec_db.state = state
             self.exec_db.state_info = state_info
         else:
-            msg = ("Can't change workflow state "
-                   "[execution=%s, state=%s -> %s]" %
-                   (self.exec_db, cur_state, state))
+            msg = ("Can't change workflow execution state from %s to %s. "
+                   "[workflow=%s, execution_id=%s]" %
+                   (cur_state, state, self.exec_db.wf_name, self.exec_db.id))
             raise exc.WorkflowException(msg)
 
 
