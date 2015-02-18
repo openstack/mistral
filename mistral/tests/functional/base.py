@@ -82,6 +82,28 @@ class MistralClientBase(rest_client.RestClient):
         resp, body = self.get('{obj}/{id}'.format(obj=obj, id=id))
         return resp, json.loads(body)
 
+    def wait_execution_success(self, ex_body, timeout=180):
+        start_time = time.time()
+
+        expected_states = ['SUCCESS', 'RUNNING']
+
+        while ex_body['state'] != 'SUCCESS':
+            if time.time() - start_time > timeout:
+                msg = ("Execution exceeds timeout {0} to change state "
+                       "to SUCCESS. Execution: {1}".format(timeout, ex_body))
+                raise exceptions.TimeoutException(msg)
+
+            _, ex_body = self.get_object('executions', ex_body['id'])
+
+            if ex_body['state'] not in expected_states:
+                msg = ("Execution state %s is not in expected "
+                       "states: %s" % (ex_body['state'], expected_states))
+                raise exceptions.TempestException(msg)
+
+            time.sleep(2)
+
+        return True
+
 
 class MistralClientV1(MistralClientBase):
 
@@ -174,24 +196,9 @@ class MistralClientV1(MistralClientBase):
 
         resp, ex_body = self.create_execution(workbook_name, body)
 
-        start_time = time.time()
+        self.wait_execution_success(ex_body, timeout)
 
-        expected_states = ['SUCCESS', 'RUNNING']
-
-        while ex_body['state'] != 'SUCCESS':
-            if time.time() - start_time > timeout:
-                msg = ("Execution exceeds timeout {0} to change state "
-                       "to SUCCESS. Execution: {1}".format(timeout, ex_body))
-                raise exceptions.TimeoutException(msg)
-
-            _, ex_body = self.get_object('executions', ex_body['id'])
-
-            if ex_body['state'] not in expected_states:
-                msg = ("Execution state %s is not in expected "
-                       "states: %s" % (ex_body['state'], expected_states))
-                raise exceptions.TempestException(msg)
-
-            time.sleep(2)
+        resp, ex_body = self.get_object('executions', ex_body['id'])
 
         return resp, ex_body
 
@@ -285,6 +292,11 @@ class MistralClientV2(MistralClientBase):
             [action['name'] for action in json.loads(body)['actions']])
 
         return resp, json.loads(body)
+
+    def get_wf_tasks(self, wf_name):
+        all_tasks = self.get_list_obj('tasks')[1]['tasks']
+
+        return [t for t in all_tasks if t['wf_name'] == wf_name]
 
 
 class AuthProv(auth.KeystoneV2AuthProvider):
