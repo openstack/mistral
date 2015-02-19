@@ -76,6 +76,7 @@ class MistralContext(BaseContext):
         "project_name",
         "roles",
         "is_admin",
+        "is_trust_scoped",
     ])
 
     def __repr__(self):
@@ -127,7 +128,8 @@ def context_from_headers(headers):
         service_catalog=headers.get('X-Service-Catalog'),
         user_name=headers.get('X-User-Name'),
         project_name=headers.get('X-Project-Name'),
-        roles=headers.get('X-Roles', "").split(",")
+        roles=headers.get('X-Roles', "").split(","),
+        is_trust_scoped=False,
     )
 
 
@@ -136,7 +138,8 @@ def context_from_config():
         username=CONF.keystone_authtoken.admin_user,
         password=CONF.keystone_authtoken.admin_password,
         tenant_name=CONF.keystone_authtoken.admin_tenant_name,
-        auth_url=CONF.keystone_authtoken.auth_uri
+        auth_url=CONF.keystone_authtoken.auth_uri,
+        is_trust_scoped=False,
     )
 
     keystone.authenticate()
@@ -146,7 +149,8 @@ def context_from_config():
         project_id=keystone.project_id,
         auth_token=keystone.auth_token,
         project_name=CONF.keystone_authtoken.admin_tenant_name,
-        user_name=CONF.keystone_authtoken.admin_user
+        user_name=CONF.keystone_authtoken.admin_user,
+        is_trust_scoped=False,
     )
 
 

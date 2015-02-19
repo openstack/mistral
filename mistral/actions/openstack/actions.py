@@ -44,6 +44,7 @@ class NovaAction(base.OpenStackAction):
         LOG.debug("Nova action security context: %s" % ctx)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        nova_endpoint = keystone_utils.get_endpoint_for_project('nova')
 
         client = self._client_class(
             username=None,
@@ -54,6 +55,11 @@ class NovaAction(base.OpenStackAction):
             tenant_id=ctx.project_id,
             region_name=keystone_endpoint.region,
             auth_url=keystone_endpoint.url
+        )
+
+        client.client.management_url = keystone_utils.format_url(
+            nova_endpoint.url,
+            {'tenant_id': ctx.project_id}
         )
 
         return client
@@ -88,12 +94,23 @@ class KeystoneAction(base.OpenStackAction):
 
         LOG.debug("Keystone action security context: %s" % ctx)
 
-        return self._client_class(
-            token=ctx.auth_token,
-            auth_url=CONF.keystone_authtoken.auth_uri,
-            project_id=ctx.project_id,
-            cacert=CONF.keystone_authtoken.cafile
-        )
+        kwargs = {
+            'token': ctx.auth_token,
+            'auth_url': CONF.keystone_authtoken.auth_uri,
+            'project_id': ctx.project_id,
+            'cacert': CONF.keystone_authtoken.cafile,
+        }
+
+        # In case of trust-scoped token explicitly pass endpoint parameter.
+        if (ctx.is_trust_scoped
+                or keystone_utils.is_token_trust_scoped(ctx.auth_token)):
+            kwargs['endpoint'] = CONF.keystone_authtoken.auth_uri
+
+        client = self._client_class(**kwargs)
+
+        client.management_url = CONF.keystone_authtoken.auth_uri
+
+        return client
 
     @classmethod
     def _get_fake_client(cls):
