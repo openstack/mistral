@@ -33,14 +33,14 @@ actions:
     tags: [test, v2]
     base: std.echo
     base-input:
-      output: Hello {$.name}!
-    output: "{$}"
+      output: Hello <% $.name %>!
+    output: <% $ %>
 
   action2:
     description: This is a test ad-hoc action with base params
     tags: [test, v2]
     base: std.echo output="Echo output"
-    output: "{$}"
+    output: <% $ %>
 
 workflows:
   wf1:
@@ -54,19 +54,19 @@ workflows:
     tasks:
       task1:
         description: This is a test task
-        action: action1 name="{$.name}"
+        action: action1 name=<% $.name %>
         policies:
           wait-before: 2
           wait-after: 5
           retry:
             count: 10
             delay: 30
-            break-on: "{$.my_val = 10}"
+            break-on: <% $.my_val = 10 %>
           concurrency: 3
 
       task2:
         requires: [task1]
-        action: std.echo output="Thanks {$.name}!"
+        action: std.echo output="Thanks <% $.name %>!"
 
   wf2:
     tags: [test, v2]
@@ -77,9 +77,9 @@ workflows:
         retry:
           count: 10
           delay: 30
-          break-on: "{$.my_val = 10}"
+          break-on: <% $.my_val = 10 %>
       on-error:
-        - fail: "{$.my_val = 0}"
+        - fail: <% $.my_val = 0 %>
       on-success:
         - pause
       on-complete:
@@ -89,11 +89,11 @@ workflows:
       task3:
         workflow: wf1 name="John Doe" age=32 param1=null param2=false
         on-error:
-          - task4: "{$.my_val = 1}"
+          - task4: <% $.my_val = 1 %>
         on-success:
-          - task5: "{$.my_val = 2}"
+          - task5: <% $.my_val = 2 %>
         on-complete:
-          - task6: "{$.my_val = 3}"
+          - task6: <% $.my_val = 3 %>
 
       task4:
         action: std.echo output="Task 4 echo"
@@ -105,7 +105,7 @@ workflows:
         action: std.echo output="Task 6 echo"
 
       task7:
-        with-items: vm_info in {$.vms}
+        with-items: vm_info in <% $.vms %>
         workflow: wf2 is_true=true object_list=[1, null, "str"] is_string="50"
         on-complete:
           - task9
@@ -113,9 +113,9 @@ workflows:
 
       task8:
         with-items:
-         - itemX in {$.arrayI}
-         - itemY in {$.arrayJ}
-        workflow: wf2 expr_list=["{$.value}", "{$.key}"] expr={$.value}
+         - itemX in <% $.arrayI %>
+         - itemY in <% $.arrayJ %>
+        workflow: wf2 expr_list=["<% $.v %>", "<% $.k %>"] expr=<% $.value %>
         target: nova
         on-complete:
           - task9
@@ -134,7 +134,7 @@ workflows:
         action: std.echo output="Task 11 echo"
 
       task12:
-        action: std.http url="http://site.com?q={$.query}" params=""
+        action: std.http url="http://site.com?q=<% $.query %>" params=""
 
       task13:
         description: No-op task
@@ -269,11 +269,11 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertListEqual(['test', 'v2'], action_spec.get_tags())
         self.assertEqual('std.echo', action_spec.get_base())
         self.assertDictEqual(
-            {'output': 'Hello {$.name}!'},
+            {'output': 'Hello <% $.name %>!'},
             action_spec.get_base_input()
         )
         self.assertListEqual([], action_spec.get_input())
-        self.assertEqual('{$}', action_spec.get_output())
+        self.assertEqual('<% $ %>', action_spec.get_output())
 
         # Workflows.
 
@@ -300,7 +300,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('task1', task1_spec.get_name())
         self.assertEqual('This is a test task', task1_spec.get_description())
         self.assertEqual('action1', task1_spec.get_action_name())
-        self.assertEqual({'name': '{$.name}'}, task1_spec.get_input())
+        self.assertEqual({'name': '<% $.name %>'}, task1_spec.get_input())
 
         policies = task1_spec.get_policies()
 
@@ -312,7 +312,7 @@ class DSLv2ModelTest(base.BaseTest):
 
         self.assertEqual(10, retry_spec.get_count())
         self.assertEqual(30, retry_spec.get_delay())
-        self.assertEqual('{$.my_val = 10}', retry_spec.get_break_on())
+        self.assertEqual('<% $.my_val = 10 %>', retry_spec.get_break_on())
 
         task2_spec = wf1_spec.get_tasks().get('task2')
 
@@ -322,7 +322,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('std.echo', task2_spec.get_action_name())
         self.assertIsNone(task2_spec.get_workflow_name())
         self.assertEqual(
-            {'output': 'Thanks {$.name}!'},
+            {'output': 'Thanks <% $.name %>!'},
             task2_spec.get_input()
         )
 
@@ -337,7 +337,7 @@ class DSLv2ModelTest(base.BaseTest):
         task_defaults_spec = wf2_spec.get_task_defaults()
 
         self.assertListEqual(
-            [('fail', '{$.my_val = 0}')],
+            [('fail', '<% $.my_val = 0 %>')],
             task_defaults_spec.get_on_error()
         )
         self.assertListEqual(
@@ -366,15 +366,15 @@ class DSLv2ModelTest(base.BaseTest):
             task3_spec.get_input()
         )
         self.assertListEqual(
-            [('task4', '{$.my_val = 1}')],
+            [('task4', '<% $.my_val = 1 %>')],
             task3_spec.get_on_error()
         )
         self.assertListEqual(
-            [('task5', '{$.my_val = 2}')],
+            [('task5', '<% $.my_val = 2 %>')],
             task3_spec.get_on_success()
         )
         self.assertListEqual(
-            [('task6', '{$.my_val = 3}')],
+            [('task6', '<% $.my_val = 3 %>')],
             task3_spec.get_on_complete()
         )
 
@@ -390,21 +390,21 @@ class DSLv2ModelTest(base.BaseTest):
         )
 
         self.assertEqual(
-            {'vm_info': '{$.vms}'},
+            {'vm_info': '<% $.vms %>'},
             task7_spec.get_with_items()
         )
 
         task8_spec = wf2_spec.get_tasks().get('task8')
 
         self.assertEqual(
-            {"itemX": '{$.arrayI}', "itemY": '{$.arrayJ}'},
+            {"itemX": '<% $.arrayI %>', "itemY": '<% $.arrayJ %>'},
             task8_spec.get_with_items()
         )
 
         self.assertEqual(
             {
-                'expr_list': ['{$.value}', '{$.key}'],
-                'expr': '{$.value}',
+                'expr_list': ['<% $.v %>', '<% $.k %>'],
+                'expr': '<% $.value %>',
             },
             task8_spec.get_input()
         )
@@ -426,7 +426,7 @@ class DSLv2ModelTest(base.BaseTest):
         task12_spec = wf2_spec.get_tasks().get('task12')
 
         self.assertDictEqual(
-            {'url': 'http://site.com?q={$.query}', 'params': ''},
+            {'url': 'http://site.com?q=<% $.query %>', 'params': ''},
             task12_spec.get_input()
         )
 

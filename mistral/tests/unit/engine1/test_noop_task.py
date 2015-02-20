@@ -37,20 +37,20 @@ wf:
     - num2
 
   output:
-    result: "{$.result4},{$.result5}"
+    result: "<% $.result4 %>,<% $.result5 %>"
 
   tasks:
     task1:
-      action: std.echo output={$.num1}
+      action: std.echo output=<% $.num1 %>
       publish:
-        result1: "{$.task1}"
+        result1: <% $.task1 %>
       on-complete:
         - task3
 
     task2:
-      action: std.echo output={$.num2}
+      action: std.echo output=<% $.num2 %>
       publish:
-        result2: "{$.task2}"
+        result2: <% $.task2 %>
       on-complete:
         - task3
 
@@ -60,18 +60,18 @@ wf:
         task and serves just a decision point in the workflow.
       join: all
       on-complete:
-        - task4: "{$.num1 + $.num2 = 2}"
-        - task5: "{$.num1 + $.num2 = 3}"
+        - task4: <% $.num1 + $.num2 = 2 %>
+        - task5: <% $.num1 + $.num2 = 3 %>
 
     task4:
       action: std.echo output=4
       publish:
-        result4: "{$.task4}"
+        result4: <% $.task4 %>
 
     task5:
       action: std.echo output=5
       publish:
-        result5: "{$.task5}"
+        result5: <% $.task5 %>
 """
 
 

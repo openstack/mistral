@@ -4,7 +4,7 @@ Namespaces:
     base-parameters:
       method: GET
       headers:
-        X-Auth-Token: "{$.auth_token}"
+        X-Auth-Token: <% $.auth_token %>
 
     actions:
       async-action:

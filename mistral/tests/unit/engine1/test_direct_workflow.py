@@ -203,12 +203,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
           tasks:
             task1:
               action: std.echo output="Echo"
-              # publish: {wrong yaql}
+              # publish: <% wrong yaql %>
               on-complete:
                 - task2
 
             task2:
-              action: std.echo output="{wrong yaql}"
+              action: std.echo output=<% wrong yaql %>
         """
         exec_db = self._run_workflow(WORKFLOW_MESSED_YAQL)
 
@@ -222,7 +222,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
           type: direct
           tasks:
             task1:
-              action: std.echo output="{wrong(yaql)}"
+              action: std.echo output=<% wrong(yaql) %>
         """
         wf_service.create_workflows(WORKFLOW_MESSED_YAQL_IN_FIRST_TASK)
 

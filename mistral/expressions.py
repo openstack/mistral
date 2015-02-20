@@ -76,12 +76,13 @@ class YAQLEvaluator(Evaluator):
         return isinstance(s, six.string_types)
 
 
+INLINE_YAQL_REGEXP = '<%.*?%>'
+
+
 class InlineYAQLEvaluator(YAQLEvaluator):
     # This regular expression will look for multiple occurrences of YAQL
-    # expressions in between curly braces (i.e. {any_symbols_except'}'})
-    # within a string.
-    regex_yaql_expr = '(\{[^\s][^}]*\})'
-    find_expression_pattern = re.compile(regex_yaql_expr)
+    # expressions in '<% %>' (i.e. <% any_symbols %>) within a string.
+    find_expression_pattern = re.compile(INLINE_YAQL_REGEXP)
 
     @classmethod
     def evaluate(cls, expression, data_context):
@@ -94,7 +95,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
         found_expressions = cls.find_inline_expressions(expression)
         if found_expressions:
             for expr in found_expressions:
-                trim_expr = expr.strip("{}")
+                trim_expr = expr.strip("<%>")
                 evaluated = super(InlineYAQLEvaluator,
                                   cls).evaluate(trim_expr, data_context)
                 if len(expression) == len(expr):

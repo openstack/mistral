@@ -6,7 +6,7 @@ Namespaces:
         base-parameters:
           url: http://path_to_nova/url_for_create
         output:
-          vm_id: "{$.base_output.server_id}"
+          vm_id: <% $.base_output.server_id %>
 
 Workflow:
   tasks:

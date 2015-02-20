@@ -44,30 +44,30 @@ workflows:
       - param1
       - param2
     output:
-      final_result: "{$.final_result}"
+      final_result: <% $.final_result %>
 
     tasks:
       task1:
-        action: std.echo output='{$.param1}'
+        action: std.echo output=<% $.param1 %>
         publish:
-          result1: "{$.task1}"
+          result1: <% $.task1 %>
 
       task2:
-        action: std.echo output="'{$.param1} & {$.param2}'"
+        action: std.echo output="'<% $.param1 %> & <% $.param2 %>'"
         publish:
-          final_result: "{$.task2}"
+          final_result: <% $.task2 %>
         requires: [task1]
 
   wf2:
     type: direct
     output:
-      slogan: "{$.slogan}"
+      slogan: <% $.slogan %>
 
     tasks:
       task1:
         workflow: wf1 param1='Bonnie' param2='Clyde' task_name='task2'
         publish:
-          slogan: "{$.task1.final_result} is a cool movie!"
+          slogan: "<% $.task1.final_result %> is a cool movie!"
 """
 
 

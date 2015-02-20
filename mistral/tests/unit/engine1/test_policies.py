@@ -48,7 +48,7 @@ workflows:
           retry:
             count: 5
             delay: 10
-            break-on: "{$.my_val = 10}"
+            break-on: <% $.my_val = 10 %>
 """
 
 
@@ -133,7 +133,7 @@ workflows:
           retry:
             count: 3
             delay: 1
-            break-on: "{$.my_val = 10}"
+            break-on: <% $.my_val = 10 %>
 """
 
 
@@ -248,7 +248,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertIsInstance(p, policies.RetryPolicy)
         self.assertEqual(5, p.count)
-        self.assertEqual('{$.my_val = 10}', p.break_on)
+        self.assertEqual('<% $.my_val = 10 %>', p.break_on)
 
         p = self._assert_single_item(arr, delay=7)
 
