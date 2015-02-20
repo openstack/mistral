@@ -7,12 +7,12 @@ Namespaces:
       concat:
         class: std.echo
         base-parameters:
-          output: '{$.left} {$.right}'
+          output: '<% $.left %> <% $.right %>'
         parameters:
           - left
           - right
         output:
-          string: "{$}"
+          string: <% $ %>
 
 Workflow:
   #  context = {
@@ -31,32 +31,32 @@ Workflow:
     build_full_name:
       action: MyService.concat
       parameters:
-        left: "{$.person.first_name}"
-        right: "{$.person.last_name}"
+        left: <% $.person.first_name %>
+        right: <% $.person.last_name %>
       publish:
-        full_name: "{$.string}"
+        full_name: <% $.string %>
 
     build_greeting:
       requires: [build_full_name]
       action: MyService.concat
       parameters:
         left: Dear
-        right: "{$.full_name}"
+        right: <% $.full_name %>
       publish:
-        greeting: "{$.string}"
+        greeting: <% $.string %>
 
     build_address:
       requires: [build_full_name]
       action: MyService.concat
       parameters:
         left: To
-        right: "{$.full_name}"
+        right: <% $.full_name %>
       publish:
-        address: "{$.string}"
+        address: <% $.string %>
 
     send_greeting:
       requires: [build_address, build_greeting]
       action: MyService.concat
       parameters:
-        left: '{$.address}.'
-        right: '{$.greeting},..'
+        left: '<% $.address %>.'
+        right: '<% $.greeting %>,..'

@@ -7,19 +7,19 @@ Namespaces:
       build_full_name:
         class: std.echo
         base-parameters:
-          output: '{$.first_name} {$.last_name}'
+          output: '<% $.first_name %> <% $.last_name %>'
         parameters:
           - first_name
           - last_name
         output:
-          full_name: "{$}"
+          full_name: <% $ %>
 
       build_greeting:
         class: std.echo
         base-parameters:
           output: Cheers!
         output:
-          greeting: "{$}"
+          greeting: <% $ %>
 
       send_greeting:
         class: std.echo
@@ -29,7 +29,7 @@ Namespaces:
           - f_name
           - greet_msg
         output:
-          greeting_sent: "{$}"
+          greeting_sent: <% $ %>
 
 Workflow:
   #  context = {
@@ -48,20 +48,20 @@ Workflow:
     build_full_name:
       action: MyService.build_full_name
       parameters:
-        first_name: "{$.person.first_name}"
-        last_name: "{$.person.last_name}"
+        first_name: <% $.person.first_name %>
+        last_name: <% $.person.last_name %>
       publish:
-        f_name: "{$.full_name}"
+        f_name: <% $.full_name %>
 
     build_greeting:
       requires: [build_full_name]
       action: MyService.build_greeting
       publish:
-        greet_msg: "{$.greeting}"
+        greet_msg: <% $.greeting %>
 
     send_greeting:
       requires: [build_full_name, build_greeting]
       action: MyService.send_greeting
       parameters:
-        f_name: "{$.f_name}"
-        greet_msg: "{$.greet_msg}"
+        f_name: <% $.f_name %>
+        greet_msg: <% $.greet_msg %>

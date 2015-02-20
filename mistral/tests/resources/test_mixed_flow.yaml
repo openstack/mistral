@@ -4,12 +4,12 @@ Namespaces:
       concat:
         class: std.echo
         base-parameters:
-          output: '{$.left} {$.right}'
+          output: '<% $.left %> <% $.right %>'
         parameters:
           - left
           - right
         output:
-          string: "{$}"
+          string: <% $ %>
 
 Workflow:
   tasks:
@@ -19,22 +19,22 @@ Workflow:
         left: workflow
         right: is
       publish:
-        result1: "{$.string}"
+        result1: <% $.string %>
 
     task2:
       requires: [task1]
       action: MyService.concat
       parameters:
-        left: "{$.result1}"
+        left: <% $.result1 %>
         right:  complete
       publish:
-        result2: "{$.string}"
+        result2: <% $.string %>
       on-success: task3
 
     task3:
       action: MyService.concat
       parameters:
-        left: "{$.result2}"
+        left: <% $.result2 %>
         right: '!'
       publish:
-        result3: "{$.string}"
+        result3: <% $.string %>

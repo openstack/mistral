@@ -42,20 +42,20 @@ wf:
     task1:
       action: std.echo output="Hi"
       publish:
-        hi: "{$.task1}"
+        hi: <% $.task1 %>
       on-success:
         - task2
 
     task2:
       action: std.echo output="Morpheus"
       publish:
-        to: "{$.task2}"
+        to: <% $.task2 %>
       on-success:
         - task3
 
     task3:
       publish:
-        result: "{$.hi}, {$.to}! Sincerely, your {$.__env.from}."
+        result: "<% $.hi %>, <% $.to %>! Sincerely, your <% $.__env.from %>."
 """
 
 PARALLEL_TASKS_WF = """
@@ -69,12 +69,12 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        var1: "{$.task1}"
+        var1: <% $.task1 %>
 
     task2:
       action: std.echo output=2
       publish:
-        var2: "{$.task2}"
+        var2: <% $.task2 %>
 """
 
 PARALLEL_TASKS_COMPLEX_WF = """
@@ -136,27 +136,27 @@ wf:
     task1:
       action: std.echo output="Hi"
       publish:
-        greeting: "{$.task1}"
+        greeting: <% $.task1 %>
       on-success:
         - task2
 
     task2:
       action: std.echo output="Yo"
       publish:
-        greeting: "{$.task2}"
+        greeting: <% $.task2 %>
       on-success:
         - task3
 
     task3:
       action: std.echo output="Morpheus"
       publish:
-        to: "{$.task3}"
+        to: <% $.task3 %>
       on-success:
         - task4
 
     task4:
       publish:
-        result: "{$.greeting}, {$.to}! Sincerely, your {$.__env.from}."
+        result: "<% $.greeting %>, <% $.to %>! Your <% $.__env.from %>."
 """
 
 
@@ -294,7 +294,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'greeting': 'Yo'}, task2.result)
         self.assertDictEqual({'to': 'Morpheus'}, task3.result)
         self.assertDictEqual(
-            {'result': 'Yo, Morpheus! Sincerely, your Neo.'},
+            {'result': 'Yo, Morpheus! Your Neo.'},
             task4.result
         )
 
@@ -340,9 +340,9 @@ class DataFlowTest(test_base.BaseTest):
         action_output = {'akey': 'adata'}
 
         publish = {
-            'v': '{$.var}',
-            'e': '{$.__env.ekey}',
-            'a': '{$.task1.akey}'
+            'v': '<% $.var %>',
+            'e': '<% $.__env.ekey %>',
+            'a': '<% $.task1.akey %>'
         }
 
         task_db = models.Task(name='task1')
@@ -375,7 +375,7 @@ class DataFlowTest(test_base.BaseTest):
 
         Expected to get action error.
         """
-        publish = {'foo': '{$.akey}'}
+        publish = {'foo': '<% $.akey %>'}
         action_output = 'error data'
 
         task_db = models.Task(name='task1')

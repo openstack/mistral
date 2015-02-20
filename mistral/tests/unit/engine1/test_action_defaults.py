@@ -52,7 +52,7 @@ wf1:
     task1:
       action: std.http url="https://api.library.org/books"
       publish:
-        result: "{$}"
+        result: <% $ %>
 """
 
 WORKFLOW2 = """
@@ -64,7 +64,7 @@ wf2:
     task1:
       action: std.http url="https://api.library.org/books" timeout=60
       publish:
-        result: "{$}"
+        result: <% $ %>
 """
 
 WORKFLOW1_WITH_ITEMS = """
@@ -76,10 +76,10 @@ wf1_with_items:
     - links
   tasks:
     task1:
-      with-items: link in {$.links}
-      action: std.http url={$.link}
+      with-items: link in <% $.links %>
+      action: std.http url=<% $.link %>
       publish:
-        result: "{$}"
+        result: <% $ %>
 """
 
 WORKFLOW2_WITH_ITEMS = """
@@ -91,10 +91,10 @@ wf2_with_items:
     - links
   tasks:
     task1:
-      with-items: link in {$.links}
-      action: std.http url={$.link} timeout=60
+      with-items: link in <% $.links %>
+      action: std.http url=<% $.link %> timeout=60
       publish:
-        result: "{$}"
+        result: <% $ %>
 """
 
 

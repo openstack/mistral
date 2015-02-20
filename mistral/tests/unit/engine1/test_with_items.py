@@ -45,10 +45,10 @@ workflows:
 
     tasks:
       task1:
-        with-items: name_info in {$.names_info}
-        action: std.echo output={$.name_info.name}
+        with-items: name_info in <% $.names_info %>
+        action: std.echo output=<% $.name_info.name %>
         publish:
-          result: "{$.task1}"
+          result: <% $.task1 %>
 
 """
 
@@ -68,10 +68,10 @@ workflows:
 
     tasks:
       task1:
-        with-items: name_info in {$.names_info}
-        action: std.echo output="{$.greeting}, {$.name_info.name}!"
+        with-items: name_info in <% $.names_info %>
+        action: std.echo output="<% $.greeting %>, <% $.name_info.name %>!"
         publish:
-          result: "{$.task1}"
+          result: <% $.task1 %>
 """
 
 
@@ -92,11 +92,11 @@ workflows:
     tasks:
       task1:
         with-items:
-          - itemX in {$.arrayI}
-          - itemY in {$.arrayJ}
-        action: std.echo output="{$.itemX} {$.itemY}"
+          - itemX in <% $.arrayI %>
+          - itemY in <% $.arrayJ %>
+        action: std.echo output="<% $.itemX %> <% $.itemY %>"
         publish:
-          result: "{$.task1}"
+          result: <% $.task1 %>
 
 """
 
@@ -113,10 +113,10 @@ workflows:
       - links
     tasks:
       task1:
-        with-items: link in {$.links}
-        action: std.mistral_http url={$.link}
+        with-items: link in <% $.links %>
+        action: std.mistral_http url=<% $.link %>
         publish:
-          result: "{$.task1}"
+          result: <% $.task1 %>
 """
 
 

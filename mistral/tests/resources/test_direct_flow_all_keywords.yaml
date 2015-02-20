@@ -4,7 +4,7 @@ Namespaces:
     base-parameters:
       method: GET
       headers:
-        X-Auth-Token: "{$.auth_token}"
+        X-Auth-Token: <% $.auth_token %>
 
     actions:
       create-vm:
@@ -21,12 +21,12 @@ Namespaces:
       concat:
         class: std.echo
         base-parameters:
-          output: '{$.left} {$.right}'
+          output: '<% $.left %> <% $.right %>'
         parameters:
           - left
           - right
         output:
-          string: "{$}"
+          string: <% $ %>
 
 Workflow:
   tasks:
@@ -43,7 +43,7 @@ Workflow:
         left: workflow
         right: is
       publish:
-        result2: "{$.string}"
+        result2: <% $.string %>
       on-finish: task3
 
     task3:
@@ -56,8 +56,8 @@ Workflow:
     task4:
       action: Echo.concat
       parameters:
-        left: "{$.result2}"
+        left: <% $.result2 %>
         right: complete!
       publish:
-        result4: "{$.string}"
+        result4: <% $.string %>
 

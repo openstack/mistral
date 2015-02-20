@@ -27,10 +27,10 @@ TASK_DICT = {
     'version': '2.0',
     'action': 'std.echo',
     'with-items': [
-        'item in {$.array}'
+        'item in <% $.array %>'
     ],
     'input': {
-        'array': '{$.my_array}'
+        'array': '<% $.my_array %>'
     }
 }
 
@@ -45,7 +45,7 @@ TASK_DB = models.Task(
 class WithItemsCalculationsTest(base.BaseTest):
     def test_calculate_output_with_key(self):
         task_dict = TASK_DICT.copy()
-        task_dict['publish'] = {'result': '{$.task1}'}
+        task_dict['publish'] = {'result': '<% $.task1 %>'}
 
         task_spec = tasks.TaskSpec(task_dict)
 

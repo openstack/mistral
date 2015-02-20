@@ -36,11 +36,11 @@ actions:
   concat_twice:
     base: std.echo
     base-input:
-      output: "{$.s1}+{$.s2}"
+      output: "<% $.s1 %>+<% $.s2 %>"
     input:
       - s1
       - s2
-    output: "{$} and {$}"
+    output: "<% $ %> and <% $ %>"
 
 workflows:
   wf1:
@@ -49,14 +49,14 @@ workflows:
       - str1
       - str2
     output:
-      workflow_result: "{$.result}" # Access to execution context variables
-      concat_task_result: "{$.concat}" # Access to the same but via task name
+      workflow_result: <% $.result %> # Access to execution context variables
+      concat_task_result: <% $.concat %> # Access to the same but via task name
 
     tasks:
       concat:
-        action: concat_twice s1={$.str1} s2={$.str2}
+        action: concat_twice s1=<% $.str1 %> s2=<% $.str2 %>
         publish:
-          result: "{$.concat}"
+          result: <% $.concat %>
 """
 
 

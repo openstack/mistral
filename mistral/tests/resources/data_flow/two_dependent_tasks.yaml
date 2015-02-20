@@ -7,21 +7,21 @@ Namespaces:
       build_full_name:
         class: std.echo
         base-parameters:
-          output: '{$.first_name} {$.last_name}'
+          output: '<% $.first_name %> <% $.last_name %>'
         parameters:
           - first_name
           - last_name
         output:
-          full_name: "{$}"
+          full_name: <% $ %>
 
       build_greeting:
         class: std.echo
         base-parameters:
-          output: 'Hello, {$.full_name}!'
+          output: 'Hello, <% $.full_name %>!'
         parameters:
           - full_name
         output:
-          greeting: "{$}"
+          greeting: <% $ %>
 
 
 Workflow:
@@ -41,13 +41,13 @@ Workflow:
     build_full_name:
       action: MyService.build_full_name
       parameters:
-        first_name: "{$.person.first_name}"
-        last_name: "{$.person.last_name}"
+        first_name: <% $.person.first_name %>
+        last_name: <% $.person.last_name %>
       publish:
-        f_name: "{$.full_name}"
+        f_name: <% $.full_name %>
 
     build_greeting:
       requires: [build_full_name]
       action: MyService.build_greeting
       parameters:
-        full_name: "{$.f_name}"
+        full_name: <% $.f_name %>

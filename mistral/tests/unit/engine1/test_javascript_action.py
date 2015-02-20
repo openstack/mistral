@@ -53,10 +53,10 @@ workflows:
           # Skip this '$' sign until bug
           # https://bugs.launchpad.net/mistral/+bug/1415886 is resolved.
           # return $['num'] * 10
-          context: "{$}"
+          context: <% $ %>
 
         publish:
-          result: "{$.task1}"
+          result: <% $.task1 %>
 
 """
 

@@ -18,11 +18,12 @@ import re
 import six
 
 from mistral import exceptions as exc
+from mistral import expressions as expr
 
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
 
-ALL_IN_BRACES = "\{[^}]*\}\s*"
+INLINE_YAQL = expr.INLINE_YAQL_REGEXP
 _ALL_IN_BRACKETS = "\[.*\]\s*"
 _ALL_IN_QUOTES = "\"[^\"]*\"\s*"
 _ALL_IN_APOSTROPHES = "'[^']*'\s*"
@@ -32,7 +33,7 @@ _FALSE = "false"
 _NULL = "null"
 
 ALL = (
-    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, ALL_IN_BRACES,
+    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, INLINE_YAQL,
     _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
 )
 

@@ -117,11 +117,11 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
 
     def test_multiple_placeholders(self):
         expr_str = """
-            Statistics for tenant "{$.project_id}"
+            Statistics for tenant "<% $.project_id %>"
 
-            Number of virtual machines: {$.vm_count}
-            Number of active virtual machines: {$.active_vm_count}
-            Number of networks: {$.net_count}
+            Number of virtual machines: <% $.vm_count %>
+            Number of active virtual machines: <% $.active_vm_count %>
+            Number of networks: <% $.net_count %>
 
             -- Sincerely, Mistral Team.
         """
@@ -168,19 +168,19 @@ class ExpressionsTest(base.BaseTest):
         }
 
         test_cases = [
-            ('{$.a + $.b * $.c}', 7),
-            ('{($.a + $.b) * $.c}', 9),
-            ('{$.d and $.e}', False),
-            ('{$.f > $.g}', True),
-            ('{$.h.length() >= 5}', True),
-            ('{$.h.length() >= $.b + $.c}', True),
-            ('{100 in $.h}', False),
-            ('{$.a in $.h}', True),
-            ('{''OpenStack'' in $.i}', True),
-            ('Hello, {$.j}!', 'Hello, World!'),
-            ('{$.k} is {$.l}!', 'Mistral is awesome!'),
-            ('This is {$.m}.', 'This is the way we roll.'),
-            ('{1 + 1 = 3}', False)
+            ('<% $.a + $.b * $.c %>', 7),
+            ('<%($.a + $.b) * $.c %>', 9),
+            ('<% $.d and $.e %>', False),
+            ('<% $.f > $.g %>', True),
+            ('<% $.h.length() >= 5 %>', True),
+            ('<% $.h.length() >= $.b + $.c %>', True),
+            ('<% 100 in $.h %>', False),
+            ('<% $.a in $.h%>', True),
+            ('<% ''OpenStack'' in $.i %>', True),
+            ('Hello, <% $.j %>!', 'Hello, World!'),
+            ('<% $.k %> is <% $.l %>!', 'Mistral is awesome!'),
+            ('This is <% $.m %>.', 'This is the way we roll.'),
+            ('<% 1 + 1 = 3 %>', False)
         ]
 
         for expression, expected in test_cases:
@@ -192,7 +192,7 @@ class ExpressionsTest(base.BaseTest):
         task_spec_dict = {
             'parameters': {
                 'p1': 'My string',
-                'p2': '{$.param2}',
+                'p2': '<% $.param2 %>',
                 'p3': ''
             },
             'publish': {
@@ -228,16 +228,16 @@ class ExpressionsTest(base.BaseTest):
         data = {
             "parameters": {
                 "parameter1": {
-                    "name1": "{$.auth_token}",
+                    "name1": "<% $.auth_token %>",
                     "name2": "val_name2"
                 },
                 "param2": [
                     "var1",
                     "var2",
-                    "/servers/{$.project_id}/bla"
+                    "/servers/<% $.project_id %>/bla"
                 ]
             },
-            "token": "{$.auth_token}"
+            "token": "<% $.auth_token %>"
         }
 
         applied = expr.evaluate_recursively(data, context)
@@ -264,7 +264,8 @@ class ExpressionsTest(base.BaseTest):
             'verbose': True,
             '__actions': {
                 'std.sql': {
-                    'conn': 'mysql://admin:secrete@{$.__env.host}/{$.__env.db}'
+                    'conn': 'mysql://admin:secrete@<% $.__env.host %>'
+                            '/<% $.__env.db %>'
                 }
             }
         }

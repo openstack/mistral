@@ -64,11 +64,11 @@ DB_TASK_ADHOC = {
         'namespace': 'my_namespace',
         'class': 'std.echo',
         'base-parameters': {
-            'output': '{$.first} and {$.second}'
+            'output': '<% $.first %> and <% $.second %>'
         },
         'parameters': ['first', 'second'],
         'output': {
-            'res': '{$}'
+            'res': '<% $ %>'
         }
     },
     'name': 'my_task',
