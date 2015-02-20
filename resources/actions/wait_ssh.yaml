@@ -5,9 +5,9 @@ std.wait_ssh:
     description: Simple SSH command.
     base: std.ssh
     base-input:
-      host: $.host
-      username: $.username
-      password: $.password
+      host: <% $.host %>
+      username: <% $.username %>
+      password: <% $.password %>
       cmd: 'ls -l'
     input:
      - host

@@ -19,17 +19,17 @@ std.create_instance:
       - delete_vm
 
   output:
-    ip: $.vm_ip
-    id: $.vm_id
-    name: $.name
-    status: $.status
+    ip: <% $.vm_ip %>
+    id: <% $.vm_id %>
+    name: <% $.name %>
+    status: <% $.status %>
 
   tasks:
     create_vm:
       description: Initial request to create a VM.
       action: nova.servers_create name={$.name} image={$.image_id} flavor={$.flavor_id}
       publish:
-        vm_id: $.id
+        vm_id: <% $.create_vm.id %>
       on-success:
         - search_for_ip
 
@@ -37,25 +37,25 @@ std.create_instance:
       description: Gets first free ip from Nova floating IPs.
       action: nova.floating_ips_findall instance_id=null
       publish:
-        vm_ip: $[0].ip
+        vm_ip: <% $.search_for_ip[0].ip %>
       on-success:
         - wait_vm_active
 
     wait_vm_active:
       description: Waits till VM is ACTIVE.
-      action: nova.servers_find id={$.vm_id} status="ACTIVE"
+      action: nova.servers_find id=<% $.vm_id %> status="ACTIVE"
       policies:
         retry:
           count: 10
           delay: 10
       publish:
-        status: $.status
+        status: <% $.wait_vm_active.status %>
       on-success:
         - associate_ip
 
     associate_ip:
       description: Associate server with one of floating IPs.
-      action: nova.servers_add_floating_ip server={$.vm_id} address={$.vm_ip}
+      action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
       policies:
         wait-after: 5
       on-success:
@@ -63,7 +63,7 @@ std.create_instance:
 
     wait_ssh:
       description: Wait till operating system on the VM is up (SSH command).
-      action: std.wait_ssh username={$.ssh_username} password={$.ssh_password} host={$.vm_ip}
+      action: std.wait_ssh username=<% $.ssh_username %> password=<% $.ssh_password %> host=<% $.vm_ip %>
       policies:
         retry:
           count: 10
@@ -71,6 +71,6 @@ std.create_instance:
 
     delete_vm:
       description: Destroy VM.
-      workflow: std.delete_instance instance_id={$.vm_id}
+      workflow: std.delete_instance instance_id=<% $.vm_id %>
       on-complete:
         - fail
