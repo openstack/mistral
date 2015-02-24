@@ -27,7 +27,7 @@ std.create_instance:
   tasks:
     create_vm:
       description: Initial request to create a VM.
-      action: nova.servers_create name={$.name} image={$.image_id} flavor={$.flavor_id}
+      action: nova.servers_create name=<% $.name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
       publish:
         vm_id: <% $.create_vm.id %>
       on-success:
