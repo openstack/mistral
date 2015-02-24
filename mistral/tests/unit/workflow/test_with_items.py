@@ -36,7 +36,7 @@ TASK_DICT = {
 
 TASK_SPEC = tasks.TaskSpec(TASK_DICT)
 
-TASK_DB = models.Task(
+TASK_DB = models.TaskExecution(
     name='task1',
     result=None,
 )

@@ -311,7 +311,7 @@ class DataFlowTest(test_base.BaseTest):
         publish_dict = {'foo': 'bar'}
         action_output = 'string data'
 
-        task_db = models.Task(name='task1')
+        task_db = models.TaskExecution(name='task1')
 
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
@@ -345,7 +345,7 @@ class DataFlowTest(test_base.BaseTest):
             'a': '<% $.task1.akey %>'
         }
 
-        task_db = models.Task(name='task1')
+        task_db = models.TaskExecution(name='task1')
         task_db.in_context = in_context
 
         task_spec = mock.MagicMock()
@@ -378,7 +378,7 @@ class DataFlowTest(test_base.BaseTest):
         publish = {'foo': '<% $.akey %>'}
         action_output = 'error data'
 
-        task_db = models.Task(name='task1')
+        task_db = models.TaskExecution(name='task1')
 
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish)

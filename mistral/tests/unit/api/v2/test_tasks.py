@@ -29,7 +29,7 @@ from mistral.workflow import utils as wf_utils
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
-TASK_DB = models.Task(
+TASK_DB = models.TaskExecution(
     id='123',
     name='task',
     wf_name='flow',

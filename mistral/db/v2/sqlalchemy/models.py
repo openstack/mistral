@@ -22,7 +22,10 @@ from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 
 
-class Workbook(mb.MistralSecureModelBase):
+# Definition objects.
+
+
+class WorkbookDefinition(mb.MistralSecureModelBase):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks_v2'
@@ -38,7 +41,7 @@ class Workbook(mb.MistralSecureModelBase):
     tags = sa.Column(st.JsonListType())
 
 
-class Workflow(mb.MistralSecureModelBase):
+class WorkflowDefinition(mb.MistralSecureModelBase):
     """Contains info about workflow (including definition in Mistral DSL)."""
 
     __tablename__ = 'workflows_v2'
@@ -54,7 +57,33 @@ class Workflow(mb.MistralSecureModelBase):
     tags = sa.Column(st.JsonListType())
 
 
-class Execution(mb.MistralSecureModelBase):
+class ActionDefinition(mb.MistralSecureModelBase):
+    """Contains info about registered Actions."""
+
+    __tablename__ = 'actions_v2'
+
+    __table_args__ = (
+        sa.UniqueConstraint('name', 'project_id'),
+    )
+
+    # Main properties.
+    id = mb.id_column()
+    name = sa.Column(sa.String(200))
+    description = sa.Column(sa.Text())
+    tags = sa.Column(st.JsonListType())
+    input = sa.Column(sa.Text())
+
+    # Ad-hoc action properties.
+    definition = sa.Column(sa.Text(), nullable=True)
+    spec = sa.Column(st.JsonDictType())
+
+    # Service properties.
+    action_class = sa.Column(sa.String(200))
+    attributes = sa.Column(st.JsonDictType())
+    is_system = sa.Column(sa.Boolean())
+
+
+class WorkflowExecution(mb.MistralSecureModelBase):
     """Contains workflow execution information."""
 
     __tablename__ = 'executions_v2'
@@ -76,7 +105,7 @@ class Execution(mb.MistralSecureModelBase):
     trust_id = sa.Column(sa.String(80))
 
 
-class Task(mb.MistralSecureModelBase):
+class TaskExecution(mb.MistralSecureModelBase):
     """Contains task runtime information."""
 
     __tablename__ = 'tasks_v2'
@@ -104,17 +133,21 @@ class Task(mb.MistralSecureModelBase):
 
     # Relations.
     execution_id = sa.Column(sa.String(36), sa.ForeignKey('executions_v2.id'))
-    execution = relationship('Execution', backref="tasks", lazy='joined')
+    execution = relationship(
+        'mistral.db.v2.sqlalchemy.models.WorkflowExecution',
+        backref="tasks",
+        lazy='joined'
+    )
 
-    invocations = relationship(
-        'ActionInvocation',
+    action_executions = relationship(
+        'ActionExecution',
         backref='task',
         cascade='all, delete-orphan',
         lazy='joined'
     )
 
 
-class ActionInvocation(mb.MistralSecureModelBase):
+class ActionExecution(mb.MistralSecureModelBase):
     """Contains task action invocation information."""
 
     __tablename__ = 'action_invocations_v2'
@@ -142,32 +175,6 @@ class DelayedCall(mb.MistralModelBase):
     serializers = sa.Column(st.JsonDictType())
     auth_context = sa.Column(st.JsonDictType())
     execution_time = sa.Column(sa.DateTime, nullable=False)
-
-
-class Action(mb.MistralSecureModelBase):
-    """Contains info about registered Actions."""
-
-    __tablename__ = 'actions_v2'
-
-    __table_args__ = (
-        sa.UniqueConstraint('name', 'project_id'),
-    )
-
-    # Main properties.
-    id = mb.id_column()
-    name = sa.Column(sa.String(200))
-    description = sa.Column(sa.Text())
-    tags = sa.Column(st.JsonListType())
-    input = sa.Column(sa.Text())
-
-    # Ad-hoc action properties.
-    definition = sa.Column(sa.Text(), nullable=True)
-    spec = sa.Column(st.JsonDictType())
-
-    # Service properties.
-    action_class = sa.Column(sa.String(200))
-    attributes = sa.Column(st.JsonDictType())
-    is_system = sa.Column(sa.Boolean())
 
 
 class Environment(mb.MistralSecureModelBase):
@@ -211,7 +218,7 @@ class CronTrigger(mb.MistralSecureModelBase):
     workflow_name = sa.Column(sa.String(80))
 
     workflow_id = sa.Column(sa.String(36), sa.ForeignKey('workflows_v2.id'))
-    workflow = relationship('Workflow', lazy='joined')
+    workflow = relationship('WorkflowDefinition', lazy='joined')
 
     workflow_input = sa.Column(st.JsonDictType())
     workflow_input_hash = sa.Column(

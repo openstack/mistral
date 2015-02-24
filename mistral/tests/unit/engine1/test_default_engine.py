@@ -246,7 +246,7 @@ class DefaultEngineTest(base.DbTestCase):
             wf_utils.TaskResult(data='Hey')
         )
 
-        self.assertIsInstance(task1_db, models.Task)
+        self.assertIsInstance(task1_db, models.TaskExecution)
         self.assertEqual('task1', task1_db.name)
         self.assertEqual(states.SUCCESS, task1_db.state)
 
@@ -278,7 +278,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.SUCCESS, exec_db.state)
 
-        self.assertIsInstance(task2_db, models.Task)
+        self.assertIsInstance(task2_db, models.TaskExecution)
         self.assertEqual('task2', task2_db.name)
         self.assertEqual(states.SUCCESS, task2_db.state)
 

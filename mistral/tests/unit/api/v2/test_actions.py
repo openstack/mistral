@@ -61,10 +61,10 @@ SYSTEM_ACTION = {
     'definition': SYSTEM_ACTION_DEFINITION
 }
 
-ACTION_DB = models.Action()
+ACTION_DB = models.ActionDefinition()
 ACTION_DB.update(ACTION)
 
-SYSTEM_ACTION_DB = models.Action()
+SYSTEM_ACTION_DB = models.ActionDefinition()
 SYSTEM_ACTION_DB.update(SYSTEM_ACTION)
 
 UPDATED_ACTION_DEFINITION = """

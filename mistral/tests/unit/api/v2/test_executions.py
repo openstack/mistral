@@ -26,7 +26,7 @@ from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral.workflow import states
 
-EXEC_DB = models.Execution(
+EXEC_DB = models.WorkflowExecution(
     id='123',
     wf_name='some',
     wf_spec={'name': 'some'},

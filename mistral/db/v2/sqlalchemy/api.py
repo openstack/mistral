@@ -42,7 +42,7 @@ def get_backend():
 
 def setup_db():
     try:
-        models.Workbook.metadata.create_all(b.get_engine())
+        models.WorkbookDefinition.metadata.create_all(b.get_engine())
     except sa.exc.OperationalError as e:
         raise exc.DBException("Failed to setup database: %s" % e)
 
@@ -51,7 +51,7 @@ def drop_db():
     global _facade
 
     try:
-        models.Workbook.metadata.drop_all(b.get_engine())
+        models.WorkbookDefinition.metadata.drop_all(b.get_engine())
         _facade = None
     except Exception as e:
         raise exc.DBException("Failed to drop database: %s" % e)
@@ -138,12 +138,12 @@ def load_workbook(name):
 
 
 def get_workbooks(**kwargs):
-    return _get_collection_sorted_by_name(models.Workbook, **kwargs)
+    return _get_collection_sorted_by_name(models.WorkbookDefinition, **kwargs)
 
 
 @b.session_aware()
 def create_workbook(values, session=None):
-    wb = models.Workbook()
+    wb = models.WorkbookDefinition()
 
     wb.update(values.copy())
 
@@ -191,12 +191,12 @@ def delete_workbook(name, session=None):
 
 
 def _get_workbook(name):
-    return _get_db_object_by_name(models.Workbook, name)
+    return _get_db_object_by_name(models.WorkbookDefinition, name)
 
 
 @b.session_aware()
 def delete_workbooks(**kwargs):
-    return _delete_all(models.Workbook, **kwargs)
+    return _delete_all(models.WorkbookDefinition, **kwargs)
 
 
 # Workflows.
@@ -216,12 +216,12 @@ def load_workflow(name):
 
 
 def get_workflows(**kwargs):
-    return _get_collection_sorted_by_name(models.Workflow, **kwargs)
+    return _get_collection_sorted_by_name(models.WorkflowDefinition, **kwargs)
 
 
 @b.session_aware()
 def create_workflow(values, session=None):
-    wf = models.Workflow()
+    wf = models.WorkflowDefinition()
 
     wf.update(values.copy())
 
@@ -270,11 +270,11 @@ def delete_workflow(name, session=None):
 
 @b.session_aware()
 def delete_workflows(**kwargs):
-    return _delete_all(models.Workflow, **kwargs)
+    return _delete_all(models.WorkflowDefinition, **kwargs)
 
 
 def _get_workflow(name):
-    return _get_db_object_by_name(models.Workflow, name)
+    return _get_db_object_by_name(models.WorkflowDefinition, name)
 
 
 # Executions.
@@ -303,7 +303,7 @@ def get_executions(**kwargs):
 
 @b.session_aware()
 def create_execution(values, session=None):
-    execution = models.Execution()
+    execution = models.WorkflowExecution()
 
     execution.update(values.copy())
 
@@ -352,16 +352,16 @@ def delete_execution(id, session=None):
 
 @b.session_aware()
 def delete_executions(**kwargs):
-    _delete_all(models.Task)
-    return _delete_all(models.Execution, **kwargs)
+    _delete_all(models.TaskExecution)
+    return _delete_all(models.WorkflowExecution, **kwargs)
 
 
 def _get_executions(**kwargs):
-    return _get_collection_sorted_by_time(models.Execution, **kwargs)
+    return _get_collection_sorted_by_time(models.WorkflowExecution, **kwargs)
 
 
 def _get_execution(id):
-    return _get_db_object_by_id(models.Execution, id)
+    return _get_db_object_by_id(models.WorkflowExecution, id)
 
 
 # Tasks.
@@ -386,7 +386,7 @@ def get_tasks(**kwargs):
 
 @b.session_aware()
 def create_task(values, session=None):
-    task = models.Task()
+    task = models.TaskExecution()
 
     task.update(values)
 
@@ -435,15 +435,15 @@ def delete_task(id, session=None):
 
 @b.session_aware()
 def delete_tasks(**kwargs):
-    return _delete_all(models.Task, **kwargs)
+    return _delete_all(models.TaskExecution, **kwargs)
 
 
 def _get_task(id):
-    return _get_db_object_by_id(models.Task, id)
+    return _get_db_object_by_id(models.TaskExecution, id)
 
 
 def _get_tasks(**kwargs):
-    return _get_collection_sorted_by_time(models.Task, **kwargs)
+    return _get_collection_sorted_by_time(models.TaskExecution, **kwargs)
 
 
 # Action invocations.
@@ -451,7 +451,7 @@ def _get_tasks(**kwargs):
 
 @b.session_aware()
 def delete_action_invocations(**kwargs):
-    return _delete_all(models.ActionInvocation, **kwargs)
+    return _delete_all(models.ActionExecution, **kwargs)
 
 
 # Delayed calls.
@@ -516,12 +516,12 @@ def load_action(name):
 
 
 def get_actions(**kwargs):
-    return _get_collection_sorted_by_name(models.Action, **kwargs)
+    return _get_collection_sorted_by_name(models.ActionDefinition, **kwargs)
 
 
 @b.session_aware()
 def create_action(values, session=None):
-    action = models.Action()
+    action = models.ActionDefinition()
 
     action.update(values)
 
@@ -570,11 +570,11 @@ def delete_action(name, session=None):
 
 @b.session_aware()
 def delete_actions(**kwargs):
-    return _delete_all(models.Action, **kwargs)
+    return _delete_all(models.ActionDefinition, **kwargs)
 
 
 def _get_action(name):
-    return _get_db_object_by_name(models.Action, name)
+    return _get_db_object_by_name(models.ActionDefinition, name)
 
 
 # Cron triggers.
