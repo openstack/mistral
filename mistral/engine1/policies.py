@@ -293,12 +293,12 @@ class RetryPolicy(base.TaskPolicy):
         if not retries_remain or break_early:
             return
 
+        _log_task_delay(task_db, self.delay)
+
         task_db.state = states.DELAYED
 
         policy_context['retry_no'] = retry_no + 1
         runtime_context[context_key] = policy_context
-
-        _log_task_delay(task_db, self.delay)
 
         scheduler.schedule_call(
             _ENGINE_CLIENT_PATH,
