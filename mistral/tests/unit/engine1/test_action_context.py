@@ -78,18 +78,27 @@ class ActionContextTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.SUCCESS, exec_db.state)
-        task = self._assert_single_item(exec_db.tasks, name='task1')
+        task = self._assert_single_item(exec_db.task_executions, name='task1')
 
         headers = {
-            'Mistral-Workflow-Name': exec_db.wf_name,
+            'Mistral-Workflow-Name': exec_db.workflow_name,
             'Mistral-Task-Id': task.id,
             'Mistral-Execution-Id': exec_db.id
         }
 
         requests.request.assert_called_with(
-            'GET', 'https://wiki.openstack.org/wiki/mistral',
-            params=None, data=None, headers=headers, cookies=None, auth=None,
-            timeout=None, allow_redirects=None, proxies=None, verify=None)
+            'GET',
+            'https://wiki.openstack.org/wiki/mistral',
+            params=None,
+            data=None,
+            headers=headers,
+            cookies=None,
+            auth=None,
+            timeout=None,
+            allow_redirects=None,
+            proxies=None,
+            verify=None
+        )

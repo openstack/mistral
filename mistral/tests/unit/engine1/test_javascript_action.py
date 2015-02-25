@@ -79,8 +79,8 @@ class JavaScriptEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
-        task_db = exec_db.tasks[0]
+        exec_db = db_api.get_workflow_execution(exec_db.id)
+        task_db = exec_db.task_executions[0]
 
         self.assertEqual(states.SUCCESS, task_db.state)
         self.assertDictEqual({}, task_db.runtime_context)
@@ -98,8 +98,8 @@ class JavaScriptEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
-        task_db = exec_db.tasks[0]
+        exec_db = db_api.get_workflow_execution(exec_db.id)
+        task_db = exec_db.task_executions[0]
 
         self.assertEqual(states.SUCCESS, task_db.state)
         self.assertDictEqual({}, task_db.runtime_context)

@@ -77,13 +77,13 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
-        self.assertEqual(1, len(db_api.get_tasks()))
+        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(db_api.get_task_executions()))
 
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -108,19 +108,19 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(2, len(exec_db.tasks))
-        self.assertEqual(2, len(db_api.get_tasks()))
+        self.assertEqual(2, len(exec_db.task_executions))
+        self.assertEqual(2, len(db_api.get_task_executions()))
 
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task2',
             state=states.SUCCESS
         )

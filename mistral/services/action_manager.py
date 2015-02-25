@@ -47,7 +47,7 @@ def register_standard_actions():
 
 
 def get_registered_actions(**kwargs):
-    return db_api.get_actions(**kwargs)
+    return db_api.get_action_definitions(**kwargs)
 
 
 def register_action_class(name, action_class_str, attributes,
@@ -65,13 +65,13 @@ def register_action_class(name, action_class_str, attributes,
     try:
         LOG.debug("Registering action in DB: %s" % name)
 
-        db_api.create_action(values)
+        db_api.create_action_definition(values)
     except exc.DBDuplicateEntry:
         LOG.debug("Action %s already exists in DB." % name)
 
 
 def _clear_system_action_db():
-    db_api.delete_actions(is_system=True)
+    db_api.delete_action_definitions(is_system=True)
 
 
 def sync_db():
@@ -129,7 +129,7 @@ def register_action_classes():
 
 
 def get_action_db(action_name):
-    return db_api.load_action(action_name)
+    return db_api.load_action_definition(action_name)
 
 
 def get_action_class(action_full_name):
@@ -150,8 +150,8 @@ def get_action_class(action_full_name):
 def get_action_context(task_db):
     return {
         _ACTION_CTX_PARAM: {
-            'workflow_name': task_db.execution.wf_name,
-            'execution_id': task_db.execution_id,
+            'workflow_name': task_db.workflow_name,
+            'workflow_execution_id': task_db.workflow_execution_id,
             'task_id': task_db.id,
             'task_name': task_db.name,
             'task_tags': task_db.tags

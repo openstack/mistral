@@ -33,7 +33,7 @@ def info(obj, msg, *args, **kvargs):
     task_id = ''
 
     if type(obj) is models.TaskExecution:
-        exec_id = obj.execution_id
+        exec_id = obj.workflow_execution_id
         task_id = obj.id
     elif type(obj) is models.WorkflowExecution:
         exec_id = obj.id

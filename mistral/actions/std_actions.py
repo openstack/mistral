@@ -224,11 +224,14 @@ class MistralHTTPAction(HTTPAction):
                  allow_redirects=None,
                  proxies=None,
                  verify=None):
+
+        a_ctx = action_context
+
         headers = headers or {}
         headers.update({
-            'Mistral-Workflow-Name': action_context.get('workflow_name'),
-            'Mistral-Execution-Id': action_context.get('execution_id'),
-            'Mistral-Task-Id': action_context.get('task_id'),
+            'Mistral-Workflow-Name': a_ctx.get('workflow_name'),
+            'Mistral-Execution-Id': a_ctx.get('workflow_execution_id'),
+            'Mistral-Task-Id': a_ctx.get('task_id'),
         })
 
         super(MistralHTTPAction, self).__init__(

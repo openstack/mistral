@@ -78,7 +78,7 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         resolved_task_specs = []
         success_task_names = set()
 
-        for t in self.exec_db.tasks:
+        for t in self.exec_db.task_executions:
             if t.state == states.SUCCESS:
                 success_task_names.add(t.name)
 
@@ -145,6 +145,8 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         return dep_t_specs
 
     def _find_db_task(self, name):
-        db_tasks = filter(lambda t: t.name == name, self.exec_db.tasks)
+        db_tasks = filter(
+            lambda t: t.name == name, self.exec_db.task_executions
+        )
 
         return db_tasks[0] if db_tasks else None

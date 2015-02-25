@@ -48,13 +48,13 @@ def update_actions(definition, scope='private'):
 
 
 def create_action(action_spec, definition, scope):
-    return db_api.create_action(
+    return db_api.create_action_definition(
         _get_action_values(action_spec, definition, scope)
     )
 
 
 def create_or_update_action(action_spec, definition, scope):
-    action = db_api.load_action(action_spec.get_name())
+    action = db_api.load_action_definition(action_spec.get_name())
 
     if action and action.is_system:
         raise exc.InvalidActionException(
@@ -64,7 +64,7 @@ def create_or_update_action(action_spec, definition, scope):
 
     values = _get_action_values(action_spec, definition, scope)
 
-    return db_api.create_or_update_action(values['name'], values)
+    return db_api.create_or_update_action_definition(values['name'], values)
 
 
 def _get_action_values(action_spec, definition, scope):

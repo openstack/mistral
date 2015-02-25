@@ -76,7 +76,7 @@ class TestCronTriggerController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "get_workflow", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger")
     def test_post(self, mock_mtd):
         mock_mtd.return_value = TRIGGER_DB
@@ -92,7 +92,7 @@ class TestCronTriggerController(base.FunctionalTest):
 
         self.assertEqual('* * * * *', values['pattern'])
 
-    @mock.patch.object(db_api, "get_workflow", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)
     def test_post_dup(self):
         resp = self.app.post_json(
@@ -101,7 +101,7 @@ class TestCronTriggerController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 409)
 
-    @mock.patch.object(db_api, "get_workflow", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)
     def test_post_same_wf_and_input(self):
         trig = TRIGGER.copy()

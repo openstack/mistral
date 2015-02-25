@@ -64,11 +64,11 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_error(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -78,11 +78,11 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -92,11 +92,11 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -142,11 +142,11 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_error(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -156,11 +156,11 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -170,11 +170,11 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -252,11 +252,11 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_error(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -266,15 +266,18 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_error(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
-        task2_db = self._assert_single_item(exec_db.tasks, name='task2')
+        task2_db = self._assert_single_item(
+            exec_db.task_executions,
+            name='task2'
+        )
 
         self._await(lambda: self.is_task_success(task2_db.id))
         self._await(lambda: self.is_execution_error(exec_db.id))
@@ -284,11 +287,11 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -298,15 +301,18 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
         self._assert_single_item(
-            exec_db.tasks,
+            exec_db.task_executions,
             name='task1',
             state=states.SUCCESS
         )
-        task2_db = self._assert_single_item(exec_db.tasks, name='task2')
+        task2_db = self._assert_single_item(
+            exec_db.task_executions,
+            name='task2'
+        )
 
         self._await(lambda: self.is_task_error(task2_db.id))
         self._await(lambda: self.is_execution_success(exec_db.id))

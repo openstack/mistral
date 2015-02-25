@@ -73,7 +73,7 @@ def _get_workflow_values(wf_spec, definition, scope):
 
 
 def _create_workflow(wf_spec, definition, scope):
-    return db_api.create_workflow(
+    return db_api.create_workflow_definition(
         _get_workflow_values(wf_spec, definition, scope)
     )
 
@@ -81,4 +81,4 @@ def _create_workflow(wf_spec, definition, scope):
 def _create_or_update_workflow(wf_spec, definition, scope):
     values = _get_workflow_values(wf_spec, definition, scope)
 
-    return db_api.create_or_update_workflow(values['name'], values)
+    return db_api.create_or_update_workflow_definition(values['name'], values)

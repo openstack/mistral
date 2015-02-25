@@ -95,7 +95,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """Return the named workflow."""
         LOG.info("Fetch workflow [name=%s]" % name)
 
-        db_model = db_api.get_workflow(name)
+        db_model = db_api.get_workflow_definition(name)
 
         return Workflow.from_dict(db_model.to_dict())
 
@@ -144,7 +144,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """Delete the named workflow."""
         LOG.info("Delete workflow [name=%s]" % name)
 
-        db_api.delete_workflow(name)
+        db_api.delete_workflow_definition(name)
 
     @wsme_pecan.wsexpose(Workflows)
     def get_all(self):
@@ -156,6 +156,6 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         LOG.info("Fetch workflows.")
 
         workflows_list = [Workflow.from_dict(db_model.to_dict())
-                          for db_model in db_api.get_workflows()]
+                          for db_model in db_api.get_workflow_definitions()]
 
         return Workflows(workflows=workflows_list)

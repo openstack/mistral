@@ -28,9 +28,10 @@ from mistral.workflow import states
 
 EXEC_DB = models.WorkflowExecution(
     id='123',
-    wf_name='some',
-    wf_spec={'name': 'some'},
+    workflow_name='some',
+    spec={'name': 'some'},
     state=states.RUNNING,
+    state_info=None,
     input={'foo': 'bar'},
     output={},
     start_params={'env': {'k1': 'abc'}},
@@ -44,6 +45,7 @@ EXEC = {
     'output': '{}',
     'params': '{"env": {"k1": "abc"}}',
     'state': 'RUNNING',
+    'state_info': None,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'workflow_name': 'some'
@@ -65,20 +67,26 @@ MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
 
 
 class TestExecutionsController(base.FunctionalTest):
-    @mock.patch.object(db_api, 'get_execution', MOCK_EXECUTION)
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_EXECUTION)
     def test_get(self):
         resp = self.app.get('/v2/executions/123')
+
+        self.maxDiff = None
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(EXEC, resp.json)
 
-    @mock.patch.object(db_api, 'get_execution', MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/executions/123', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, 'ensure_execution_exists', MOCK_EXECUTION)
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        MOCK_EXECUTION
+    )
     @mock.patch.object(rpc.EngineClient, 'pause_workflow',
                        MOCK_UPDATED_EXECUTION)
     def test_put(self):
@@ -87,7 +95,11 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(UPDATED_EXEC, resp.json)
 
-    @mock.patch.object(db_api, 'ensure_execution_exists', MOCK_EXECUTION)
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        MOCK_EXECUTION
+    )
     def test_put_stop(self):
         update_exec = copy.copy(EXEC)
         update_exec['state'] = states.ERROR
@@ -105,7 +117,7 @@ class TestExecutionsController(base.FunctionalTest):
             self.assertDictEqual(update_exec, resp.json)
             mock_pw.assert_called_once_with('123', 'ERROR', "Force")
 
-    @mock.patch.object(db_api, 'update_execution', MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, 'update_workflow_execution', MOCK_NOT_FOUND)
     def test_put_not_found(self):
         resp = self.app.put_json(
             '/v2/executions/123',
@@ -139,19 +151,19 @@ class TestExecutionsController(base.FunctionalTest):
                                     EXEC)
         self.assertIn('Bad response: 400', context.message)
 
-    @mock.patch.object(db_api, 'delete_execution', MOCK_DELETE)
+    @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/executions/123')
 
         self.assertEqual(resp.status_int, 204)
 
-    @mock.patch.object(db_api, 'delete_execution', MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/executions/123', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, 'get_executions', MOCK_EXECUTIONS)
+    @mock.patch.object(db_api, 'get_workflow_executions', MOCK_EXECUTIONS)
     def test_get_all(self):
         resp = self.app.get('/v2/executions')
 
@@ -160,7 +172,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(len(resp.json['executions']), 1)
         self.assertDictEqual(EXEC, resp.json['executions'][0])
 
-    @mock.patch.object(db_api, 'get_executions', MOCK_EMPTY)
+    @mock.patch.object(db_api, 'get_workflow_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/executions')
 

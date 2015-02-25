@@ -150,9 +150,9 @@ class WithItemsEngineTest(base.EngineTestCase):
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
         with_items_context = task1.runtime_context['with_items']
 
@@ -185,9 +185,9 @@ class WithItemsEngineTest(base.EngineTestCase):
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
         result = task1.result['result']
 
@@ -213,9 +213,9 @@ class WithItemsEngineTest(base.EngineTestCase):
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
 
         # Since we know that we can receive results in random order,
@@ -239,8 +239,8 @@ class WithItemsEngineTest(base.EngineTestCase):
             'wb1.wf1_with_items', WF_INPUT_URLS
         )
 
-        exec_db = db_api.get_execution(exec_db.id)
-        task_db = exec_db.tasks[0]
+        exec_db = db_api.get_workflow_execution(exec_db.id)
+        task_db = exec_db.task_executions[0]
 
         self.engine.on_task_result(task_db.id, wf_utils.TaskResult("Ivan"))
         self.engine.on_task_result(task_db.id, wf_utils.TaskResult("John"))
@@ -251,9 +251,9 @@ class WithItemsEngineTest(base.EngineTestCase):
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        task_db = db_api.get_task(task_db.id)
+        task_db = db_api.get_task_execution(task_db.id)
         result = task_db.result['result']
 
         self.assertTrue(isinstance(result, list))

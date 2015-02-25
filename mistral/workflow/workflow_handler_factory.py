@@ -22,7 +22,7 @@ from mistral.workflow import reverse_workflow
 
 def create_workflow_handler(exec_db, wf_spec=None):
     if not wf_spec:
-        wf_spec = spec_parser.get_workflow_spec(exec_db['wf_spec'])
+        wf_spec = spec_parser.get_workflow_spec(exec_db.spec)
 
     handler_cls = _select_workflow_handler(wf_spec)
 

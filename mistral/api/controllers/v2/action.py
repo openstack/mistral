@@ -87,7 +87,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         """Return the named action."""
         LOG.info("Fetch action [name=%s]" % name)
 
-        db_model = db_api.get_action(name)
+        db_model = db_api.get_action_definition(name)
 
         return Action.from_dict(db_model.to_dict())
 
@@ -136,13 +136,13 @@ class ActionsController(rest.RestController, hooks.HookController):
         LOG.info("Delete action [name=%s]" % name)
 
         with db_api.transaction():
-            db_model = db_api.get_action(name)
+            db_model = db_api.get_action_definition(name)
 
             if db_model.is_system:
                 msg = "Attempt to delete a system action: %s" % name
                 raise exc.DataAccessException(msg)
 
-            db_api.delete_action(name)
+            db_api.delete_action_definition(name)
 
     @wsme_pecan.wsexpose(Actions)
     def get_all(self):
@@ -154,6 +154,6 @@ class ActionsController(rest.RestController, hooks.HookController):
         LOG.info("Fetch actions.")
 
         action_list = [Action.from_dict(db_model.to_dict())
-                       for db_model in db_api.get_actions()]
+                       for db_model in db_api.get_action_definitions()]
 
         return Actions(actions=action_list)

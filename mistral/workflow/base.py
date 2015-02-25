@@ -45,7 +45,7 @@ class WorkflowHandler(object):
         :param exec_db: Execution.
         """
         self.exec_db = exec_db
-        self.wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
+        self.wf_spec = spec_parser.get_workflow_spec(exec_db.spec)
 
     @abc.abstractmethod
     def start_workflow(self, **params):
@@ -286,7 +286,7 @@ class WorkflowHandler(object):
         """
         self._set_execution_state(states.RUNNING)
 
-        tasks = self.exec_db.tasks
+        tasks = self.exec_db.task_executions
 
         if not all([t.state == states.RUNNING for t in tasks]):
             return self._find_commands_to_resume(tasks)
@@ -309,7 +309,7 @@ class WorkflowHandler(object):
             wf_trace.info(
                 self.exec_db,
                 "Execution of workflow '%s' [%s -> %s]"
-                % (self.exec_db.wf_name, cur_state, state)
+                % (self.exec_db.workflow_name, cur_state, state)
             )
             self.exec_db.state = state
             self.exec_db.state_info = state_info

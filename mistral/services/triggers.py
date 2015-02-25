@@ -86,7 +86,7 @@ def create_cron_trigger(name, pattern, workflow_name, workflow_input,
         start_time = datetime.datetime.now()
 
     with db_api_v2.transaction():
-        wf = db_api_v2.get_workflow(workflow_name)
+        wf = db_api_v2.get_workflow_definition(workflow_name)
 
         next_time = get_next_execution_time(pattern, start_time)
 

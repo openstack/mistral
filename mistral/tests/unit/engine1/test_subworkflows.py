@@ -87,7 +87,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictEqual({}, exec1_db.input)
         self.assertDictEqual({}, exec1_db.start_params)
 
-        db_execs = db_api.get_executions()
+        db_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(db_execs))
 
@@ -98,11 +98,11 @@ class SubworkflowsTest(base.EngineTestCase):
             exec2_db = db_execs[1]
 
         self.assertEqual(project_id, exec2_db.project_id)
-        self.assertIsNotNone(exec2_db.parent_task_id)
+        self.assertIsNotNone(exec2_db.task_execution_id)
         self.assertDictEqual(
             {
                 'task_name': 'task2',
-                'parent_task_id': exec2_db.parent_task_id
+                'parent_task_id': exec2_db.task_execution_id
             },
             exec2_db.start_params
         )
@@ -117,7 +117,7 @@ class SubworkflowsTest(base.EngineTestCase):
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_success(exec2_db.id))
 
-        exec2_db = db_api.get_execution(exec2_db.id)
+        exec2_db = db_api.get_workflow_execution(exec2_db.id)
 
         self.assertDictEqual(
             {
@@ -129,7 +129,7 @@ class SubworkflowsTest(base.EngineTestCase):
         # Wait till workflow 'wf2' is completed.
         self._await(lambda: self.is_execution_success(exec1_db.id))
 
-        exec1_db = db_api.get_execution(exec1_db.id)
+        exec1_db = db_api.get_workflow_execution(exec1_db.id)
 
         self.assertDictEqual(
             {
@@ -139,8 +139,12 @@ class SubworkflowsTest(base.EngineTestCase):
         )
 
         # Check project_id in tasks.
-        tasks_exec1 = db_api.get_tasks(execution_id=exec1_db.id)
-        tasks_exec2 = db_api.get_tasks(execution_id=exec2_db.id)
+        tasks_exec1 = db_api.get_task_executions(
+            workflow_execution_id=exec1_db.id
+        )
+        tasks_exec2 = db_api.get_task_executions(
+            workflow_execution_id=exec2_db.id
+        )
 
         task1_exec1 = self._assert_single_item(tasks_exec1, name="task1")
         task1_exec2 = self._assert_single_item(tasks_exec2, name="task1")
@@ -155,7 +159,7 @@ class SubworkflowsTest(base.EngineTestCase):
     def test_subworkflow_error(self):
         exec1_db = self.engine.start_workflow('my_wb.wf2', None)
 
-        db_execs = db_api.get_executions()
+        db_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(db_execs))
 
@@ -181,7 +185,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictEqual({}, exec1_db.input)
         self.assertDictEqual({'env': env}, exec1_db.start_params)
 
-        db_execs = db_api.get_executions()
+        db_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(db_execs))
 
@@ -193,11 +197,11 @@ class SubworkflowsTest(base.EngineTestCase):
 
         expected_start_params = {
             'task_name': 'task2',
-            'parent_task_id': exec2_db.parent_task_id,
+            'parent_task_id': exec2_db.task_execution_id,
             'env': env
         }
 
-        self.assertIsNotNone(exec2_db.parent_task_id)
+        self.assertIsNotNone(exec2_db.task_execution_id)
         self.assertDictEqual(exec2_db.start_params, expected_start_params)
 
         # Wait till workflow 'wf1' is completed.

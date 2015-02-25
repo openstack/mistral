@@ -195,7 +195,7 @@ def add_execution_to_context(exec_db, context):
 
     context['__execution'] = {
         'id': exec_db.id,
-        'wf_spec': exec_db['wf_spec'],
+        'spec': exec_db.spec,
         'start_params': exec_db.start_params,
         'input': exec_db.input
     }

@@ -32,7 +32,7 @@ from mistral.workflow import utils as wf_utils
 TASK_DB = models.TaskExecution(
     id='123',
     name='task',
-    wf_name='flow',
+    workflow_name='flow',
     spec={},
     action_spec={},
     state=states.RUNNING,
@@ -41,7 +41,7 @@ TASK_DB = models.TaskExecution(
     input={},
     result={},
     runtime_context={},
-    execution_id='123',
+    workflow_execution_id='123',
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )
@@ -49,11 +49,11 @@ TASK_DB = models.TaskExecution(
 TASK = {
     'id': '123',
     'name': 'task',
-    'wf_name': 'flow',
+    'workflow_name': 'flow',
     'state': 'RUNNING',
     'result': '{}',
     'input': '{}',
-    'execution_id': '123',
+    'workflow_execution_id': '123',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'
 }
@@ -80,14 +80,16 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 
 
 class TestTasksController(base.FunctionalTest):
-    @mock.patch.object(db_api, 'get_task', MOCK_TASK)
+    @mock.patch.object(db_api, 'get_task_execution', MOCK_TASK)
     def test_get(self):
         resp = self.app.get('/v2/tasks/123')
+
+        self.maxDiff = None
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(TASK, resp.json)
 
-    @mock.patch.object(db_api, 'get_task', MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, 'get_task_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/tasks/123', expect_errors=True)
 
@@ -138,7 +140,7 @@ class TestTasksController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
 
-    @mock.patch.object(db_api, 'get_tasks', MOCK_TASKS)
+    @mock.patch.object(db_api, 'get_task_executions', MOCK_TASKS)
     def test_get_all(self):
         resp = self.app.get('/v2/tasks')
 
@@ -147,7 +149,7 @@ class TestTasksController(base.FunctionalTest):
         self.assertEqual(len(resp.json['tasks']), 1)
         self.assertDictEqual(TASK, resp.json['tasks'][0])
 
-    @mock.patch.object(db_api, 'get_tasks', MOCK_EMPTY)
+    @mock.patch.object(db_api, 'get_task_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/tasks')
 

@@ -83,20 +83,22 @@ MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
 
 
 class TestWorkflowsController(base.FunctionalTest):
-    @mock.patch.object(db_api, "get_workflow", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     def test_get(self):
         resp = self.app.get('/v2/workflows/123')
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(WF, resp.json)
 
-    @mock.patch.object(db_api, "get_workflow", MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "create_or_update_workflow", MOCK_UPDATED_WF)
+    @mock.patch.object(
+        db_api, "create_or_update_workflow_definition", MOCK_UPDATED_WF
+    )
     def test_put(self):
         resp = self.app.put(
             '/v2/workflows',
@@ -109,7 +111,9 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
-    @mock.patch.object(db_api, "create_or_update_workflow", MOCK_NOT_FOUND)
+    @mock.patch.object(
+        db_api, "create_or_update_workflow_definition", MOCK_NOT_FOUND
+    )
     def test_put_not_found(self):
         resp = self.app.put(
             '/v2/workflows',
@@ -120,7 +124,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "create_workflow")
+    @mock.patch.object(db_api, "create_workflow_definition")
     def test_post(self, mock_mtd):
         mock_mtd.return_value = WF_DB
 
@@ -140,7 +144,7 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertIsNotNone(spec)
         self.assertEqual(WF_DB.name, spec['name'])
 
-    @mock.patch.object(db_api, "create_workflow", MOCK_DUPLICATE)
+    @mock.patch.object(db_api, "create_workflow_definition", MOCK_DUPLICATE)
     def test_post_dup(self):
         resp = self.app.post(
             '/v2/workflows',
@@ -151,19 +155,19 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 409)
 
-    @mock.patch.object(db_api, "delete_workflow", MOCK_DELETE)
+    @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/workflows/123')
 
         self.assertEqual(resp.status_int, 204)
 
-    @mock.patch.object(db_api, "delete_workflow", MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, "delete_workflow_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "get_workflows", MOCK_WFS)
+    @mock.patch.object(db_api, "get_workflow_definitions", MOCK_WFS)
     def test_get_all(self):
         resp = self.app.get('/v2/workflows')
 
@@ -172,7 +176,7 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(len(resp.json['workflows']), 1)
         self.assertDictEqual(WF, resp.json['workflows'][0])
 
-    @mock.patch.object(db_api, "get_workflows", MOCK_EMPTY)
+    @mock.patch.object(db_api, "get_workflow_definitions", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/workflows')
 

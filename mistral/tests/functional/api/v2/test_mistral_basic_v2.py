@@ -656,4 +656,4 @@ class TasksTestsV2(base.TestCase):
         resp, body = self.client.get_list_obj('tasks')
 
         self.assertEqual(200, resp.status)
-        self.assertEqual(self.direct_wf, body['tasks'][-1]['wf_name'])
+        self.assertEqual(self.direct_wf, body['tasks'][-1]['workflow_name'])

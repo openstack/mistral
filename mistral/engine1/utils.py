@@ -66,10 +66,10 @@ def resolve_action(wf_name, wf_spec_name, action_spec_name):
 
         action_full_name = "%s.%s" % (wb_name, action_spec_name)
 
-        action_db = db_api.load_action(action_full_name)
+        action_db = db_api.load_action_definition(action_full_name)
 
     if not action_db:
-        action_db = db_api.load_action(action_spec_name)
+        action_db = db_api.load_action_definition(action_spec_name)
 
     if not action_db:
         raise exc.InvalidActionException(
@@ -92,10 +92,10 @@ def resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
 
         wf_full_name = "%s.%s" % (wb_name, wf_spec_name)
 
-        wf_db = db_api.load_workflow(wf_full_name)
+        wf_db = db_api.load_workflow_definition(wf_full_name)
 
     if not wf_db:
-        wf_db = db_api.load_workflow(wf_spec_name)
+        wf_db = db_api.load_workflow_definition(wf_spec_name)
 
     if not wf_db:
         raise exc.WorkflowException(
@@ -122,12 +122,11 @@ def transform_result(exec_db, task_db, result):
     action_spec_name = spec_parser.get_task_spec(
         task_db.spec).get_action_name()
 
-    wf_spec_name = spec_parser.get_workflow_spec(
-        exec_db.wf_spec).get_name()
+    wf_spec_name = spec_parser.get_workflow_spec(exec_db.spec).get_name()
 
     if action_spec_name:
         return transform_action_result(
-            exec_db.wf_name,
+            exec_db.workflow_name,
             wf_spec_name,
             action_spec_name,
             result

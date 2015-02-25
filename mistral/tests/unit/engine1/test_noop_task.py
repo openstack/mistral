@@ -85,9 +85,9 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -112,9 +112,9 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(4, len(tasks))
 

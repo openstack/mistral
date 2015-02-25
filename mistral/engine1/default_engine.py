@@ -49,7 +49,7 @@ class DefaultEngine(base.Engine):
             params = self._canonize_workflow_params(params)
 
             with db_api.transaction():
-                wf_db = db_api.get_workflow(workflow_name)
+                wf_db = db_api.get_workflow_definition(workflow_name)
 
                 wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
 
@@ -97,9 +97,11 @@ class DefaultEngine(base.Engine):
 
         try:
             with db_api.transaction():
-                task_db = db_api.get_task(task_id)
+                task_db = db_api.get_task_execution(task_id)
                 task_name = task_db.name
-                exec_db = db_api.get_execution(task_db.execution_id)
+                exec_db = db_api.get_workflow_execution(
+                    task_db.workflow_execution_id
+                )
                 exec_id = exec_db.id
 
                 result = utils.transform_result(exec_db, task_db, result)
@@ -146,7 +148,7 @@ class DefaultEngine(base.Engine):
 
         try:
             with db_api.transaction():
-                task_db = db_api.get_task(task_id)
+                task_db = db_api.get_task_execution(task_id)
                 task_name = task_db.name
 
                 u.wf_trace.info(
@@ -155,14 +157,14 @@ class DefaultEngine(base.Engine):
                     % (task_db.name, task_db.state, states.RUNNING)
                 )
 
-                task_db = db_api.update_task(
+                task_db = db_api.update_task_execution(
                     task_id,
                     {'state': states.RUNNING}
                 )
 
                 task_spec = spec_parser.get_task_spec(task_db.spec)
 
-                exec_db = task_db.execution
+                exec_db = task_db.workflow_execution
                 exec_id = exec_db.id
 
                 wf_handler = wfh_factory.create_workflow_handler(exec_db)
@@ -184,7 +186,7 @@ class DefaultEngine(base.Engine):
     @u.log_exec(LOG)
     def pause_workflow(self, execution_id):
         with db_api.transaction():
-            exec_db = db_api.get_execution(execution_id)
+            exec_db = db_api.get_workflow_execution(execution_id)
 
             wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
@@ -196,7 +198,7 @@ class DefaultEngine(base.Engine):
     def resume_workflow(self, execution_id):
         try:
             with db_api.transaction():
-                exec_db = db_api.get_execution(execution_id)
+                exec_db = db_api.get_workflow_execution(execution_id)
 
                 wf_handler = wfh_factory.create_workflow_handler(exec_db)
 
@@ -233,7 +235,7 @@ class DefaultEngine(base.Engine):
         with db_api.transaction():
             err_msg = str(err)
 
-            exec_db = db_api.load_execution(execution_id)
+            exec_db = db_api.load_workflow_execution(execution_id)
 
             if exec_db is None:
                 LOG.error("Cant fail workflow execution id='%s': not found.",
@@ -248,7 +250,7 @@ class DefaultEngine(base.Engine):
                 # 1) to avoid computing and triggering next tasks
                 # 2) to avoid a loop in case of error in transport
                 wf_handler.on_task_result(
-                    db_api.get_task(task_id),
+                    db_api.get_task_execution(task_id),
                     wf_utils.TaskResult(error=err_msg)
                 )
 
@@ -292,15 +294,15 @@ class DefaultEngine(base.Engine):
 
     @staticmethod
     def _create_db_execution(wf_db, wf_spec, wf_input, params):
-        exec_db = db_api.create_execution({
-            'wf_name': wf_db.name,
-            'wf_spec': wf_spec.to_dict(),
+        exec_db = db_api.create_workflow_execution({
+            'workflow_name': wf_db.name,
+            'spec': wf_spec.to_dict(),
             'start_params': params or {},
             'state': states.RUNNING,
             'input': wf_input or {},
             'output': {},
             'context': copy.copy(wf_input) or {},
-            'parent_task_id': params.get('parent_task_id'),
+            'task_execution_id': params.get('parent_task_id'),
         })
 
         data_flow.add_openstack_data_to_context(exec_db.context)
@@ -315,18 +317,18 @@ class DefaultEngine(base.Engine):
             p.after_task_complete(task_db, task_spec, result)
 
     def _check_subworkflow_completion(self, exec_db):
-        if not exec_db.parent_task_id:
+        if not exec_db.task_execution_id:
             return
 
         if exec_db.state == states.SUCCESS:
             self._engine_client.on_task_result(
-                exec_db.parent_task_id,
+                exec_db.task_execution_id,
                 wf_utils.TaskResult(data=exec_db.output)
             )
         elif exec_db.state == states.ERROR:
             err_msg = 'Failed subworkflow [execution_id=%s]' % exec_db.id
 
             self._engine_client.on_task_result(
-                exec_db.parent_task_id,
+                exec_db.task_execution_id,
                 wf_utils.TaskResult(error=err_msg)
             )

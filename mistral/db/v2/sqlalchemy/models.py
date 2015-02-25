@@ -17,6 +17,8 @@ import hashlib
 import json
 import sqlalchemy as sa
 from sqlalchemy import event
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from mistral.db.sqlalchemy import model_base as mb
@@ -27,7 +29,18 @@ from mistral import utils
 # Definition objects.
 
 
-class WorkbookDefinition(mb.MistralSecureModelBase):
+class Definition(mb.MistralSecureModelBase):
+    __abstract__ = True
+
+    id = mb.id_column()
+    name = sa.Column(sa.String(80))
+    definition = sa.Column(sa.Text(), nullable=True)
+    spec = sa.Column(st.JsonDictType())
+    tags = sa.Column(st.JsonListType())
+
+
+# There's no WorkbookExecution so we safely omit "Definition" in the name.
+class Workbook(Definition):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks_v2'
@@ -36,48 +49,29 @@ class WorkbookDefinition(mb.MistralSecureModelBase):
         sa.UniqueConstraint('name', 'project_id'),
     )
 
-    id = mb.id_column()
-    name = sa.Column(sa.String(80))
-    definition = sa.Column(sa.Text(), nullable=True)
-    spec = sa.Column(st.JsonDictType())
-    tags = sa.Column(st.JsonListType())
 
-
-class WorkflowDefinition(mb.MistralSecureModelBase):
+class WorkflowDefinition(Definition):
     """Contains info about workflow (including definition in Mistral DSL)."""
 
-    __tablename__ = 'workflows_v2'
+    __tablename__ = 'workflow_definitions_v2'
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
     )
 
-    id = mb.id_column()
-    name = sa.Column(sa.String(80))
-    definition = sa.Column(sa.Text(), nullable=True)
-    spec = sa.Column(st.JsonDictType())
-    tags = sa.Column(st.JsonListType())
 
-
-class ActionDefinition(mb.MistralSecureModelBase):
+class ActionDefinition(Definition):
     """Contains info about registered Actions."""
 
-    __tablename__ = 'actions_v2'
+    __tablename__ = 'action_definitions_v2'
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
     )
 
     # Main properties.
-    id = mb.id_column()
-    name = sa.Column(sa.String(200))
     description = sa.Column(sa.Text())
-    tags = sa.Column(st.JsonListType())
     input = sa.Column(sa.Text())
-
-    # Ad-hoc action properties.
-    definition = sa.Column(sa.Text(), nullable=True)
-    spec = sa.Column(st.JsonDictType())
 
     # Service properties.
     action_class = sa.Column(sa.String(200))
@@ -85,56 +79,94 @@ class ActionDefinition(mb.MistralSecureModelBase):
     is_system = sa.Column(sa.Boolean())
 
 
-class WorkflowExecution(mb.MistralSecureModelBase):
-    """Contains workflow execution information."""
+# Execution objects.
+
+class Execution(mb.MistralSecureModelBase):
+    """Abstract execution object."""
 
     __tablename__ = 'executions_v2'
 
-    id = mb.id_column()
-    wf_name = sa.Column(sa.String(80))
-    wf_spec = sa.Column(st.JsonDictType())
-    start_params = sa.Column(st.JsonDictType())
-    state = sa.Column(sa.String(20))
-    state_info = sa.Column(
-        sa.String(1024),
-        nullable=True)
-    input = sa.Column(st.JsonDictType())
-    output = sa.Column(st.JsonDictType())
-    context = sa.Column(st.JsonDictType())
-    # Can't use ForeignKey constraint here because SqlAlchemy will detect
-    # a circular dependency and raise an error.
-    parent_task_id = sa.Column(sa.String(36))
+    type = sa.Column(sa.String(50))
 
-    # TODO(nmakhotkin): It's not used now, must be fixed later.
-    trust_id = sa.Column(sa.String(80))
-
-event.listen(
-    # Catch and trim WorkflowExecution.state_info to always fit allocated size.
-    WorkflowExecution.state_info,
-    'set',
-    lambda t, v, o, i: utils.cut(v, 1020),
-    retval=True
-)
-
-
-class TaskExecution(mb.MistralSecureModelBase):
-    """Contains task runtime information."""
-
-    __tablename__ = 'tasks_v2'
+    __mapper_args__ = {
+        'polymorphic_on': type,
+        'polymorphic_identity': 'execution'
+    }
 
     # Main properties.
     id = mb.id_column()
-    name = sa.Column(sa.String(80))
-    wf_name = sa.Column(sa.String(80))
+
+    workflow_name = sa.Column(sa.String(80))
     spec = sa.Column(st.JsonDictType())
-    action_spec = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
+    state_info = sa.Column(sa.String(1024), nullable=True)
     tags = sa.Column(st.JsonListType())
 
+
+class ActionExecution(Execution):
+    """Contains action execution information."""
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'action_execution'
+    }
+
+    # Main properties.
+    accepted = sa.Column(sa.Boolean(), default=False)
+
+    # TODO(rakhmerov): We have to use @declared_attr here temporarily to
+    # resolve naming conflict with TaskExecution.
+    @declared_attr
+    def input(cls):
+        "'input' column, if not present already."
+        return Execution.__table__.c.get(
+            'input',
+            sa.Column(st.JsonDictType(), nullable=True)
+        )
+
+    # Note: Corresponds to MySQL 'LONGTEXT' type which is of unlimited size.
+    # TODO(rakhmerov): Change to LongText after refactoring.
+    output = sa.Column(st.JsonDictType(), nullable=True)
+    # output = sa.orm.deferred(sa.Column(st.LongText(), nullable=True))
+
+
+class WorkflowExecution(ActionExecution):
+    """Contains workflow execution information."""
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'workflow_execution'
+    }
+
+    # Main properties.
+    start_params = sa.Column(st.JsonDictType())
+
+    # TODO(rakhmerov): We need to get rid of this field at all.
+    context = sa.Column(st.JsonDictType())
+
+
+class TaskExecution(Execution):
+    """Contains task runtime information."""
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'task_execution'
+    }
+
+    # Main properties.
+    name = sa.Column(sa.String(80))
+    action_spec = sa.Column(st.JsonDictType())
+
     # Data Flow properties.
+
+    # TODO(rakhmerov): 'input' is obsolete and must be removed later.
+    @declared_attr
+    def input(cls):
+        "'input' column, if not present already."
+        return Execution.__table__.c.get(
+            'input',
+            sa.Column(st.JsonDictType(), nullable=True)
+        )
+
     in_context = sa.Column(st.JsonDictType())
-    input = sa.Column(st.JsonDictType())
-    # TODO(rakhmerov): Do we just need to use invocation instead of output?
+    # TODO(rakhmerov): We need to use action executions in the future.
     result = sa.Column(st.JsonDictType())
     published = sa.Column(st.JsonDictType())
 
@@ -143,36 +175,49 @@ class TaskExecution(mb.MistralSecureModelBase):
     # execution of a task.
     runtime_context = sa.Column(st.JsonDictType())
 
-    # Relations.
-    execution_id = sa.Column(sa.String(36), sa.ForeignKey('executions_v2.id'))
-    execution = relationship(
-        'mistral.db.v2.sqlalchemy.models.WorkflowExecution',
-        backref="tasks",
-        lazy='joined'
+
+for cls in utils.iter_subclasses(Execution):
+    event.listen(
+        # Catch and trim Execution.state_info to always fit allocated size.
+        cls.state_info,
+        'set',
+        lambda t, v, o, i: utils.cut(v, 1020),
+        retval=True
     )
 
-    action_executions = relationship(
-        'ActionExecution',
-        backref='task',
-        cascade='all, delete-orphan',
-        lazy='joined'
-    )
+# Many-to-one for 'Execution' and 'TaskExecution'.
+
+Execution.task_execution_id = sa.Column(
+    sa.String(36),
+    sa.ForeignKey(TaskExecution.id),
+    nullable=True
+)
+
+TaskExecution.executions = relationship(
+    Execution,
+    backref=backref('task_execution', remote_side=[TaskExecution.id]),
+    cascade='all, delete-orphan',
+    foreign_keys=Execution.task_execution_id,
+    lazy='select'
+)
+
+# Many-to-one for 'TaskExecution' and 'WorkflowExecution'.
+
+TaskExecution.workflow_execution_id = sa.Column(
+    sa.String(36),
+    sa.ForeignKey(WorkflowExecution.id)
+)
+
+WorkflowExecution.task_executions = relationship(
+    TaskExecution,
+    backref=backref('workflow_execution', remote_side=[WorkflowExecution.id]),
+    cascade='all, delete-orphan',
+    foreign_keys=TaskExecution.workflow_execution_id,
+    lazy='select'
+)
 
 
-class ActionExecution(mb.MistralSecureModelBase):
-    """Contains task action invocation information."""
-
-    __tablename__ = 'action_invocations_v2'
-
-    # Main properties.
-    id = mb.id_column()
-    state = sa.Column(sa.String(20))
-
-    # Note: Corresponds to MySQL 'LONGTEXT' type which is of unlimited size.
-    result = sa.orm.deferred(sa.Column(st.LongText()))
-
-    # Relations.
-    task_id = sa.Column(sa.String(36), sa.ForeignKey('tasks_v2.id'))
+# Other objects.
 
 
 class DelayedCall(mb.MistralModelBase):
@@ -229,7 +274,10 @@ class CronTrigger(mb.MistralSecureModelBase):
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
     workflow_name = sa.Column(sa.String(80))
 
-    workflow_id = sa.Column(sa.String(36), sa.ForeignKey('workflows_v2.id'))
+    workflow_id = sa.Column(
+        sa.String(36),
+        sa.ForeignKey(WorkflowDefinition.id)
+    )
     workflow = relationship('WorkflowDefinition', lazy='joined')
 
     workflow_input = sa.Column(st.JsonDictType())

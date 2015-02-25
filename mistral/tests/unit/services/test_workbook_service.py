@@ -116,7 +116,7 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertIsNotNone(wb_db.spec)
         self.assertListEqual(['test'], wb_db.tags)
 
-        db_actions = db_api.get_actions(name='my_wb.concat')
+        db_actions = db_api.get_action_definitions(name='my_wb.concat')
 
         self.assertEqual(1, len(db_actions))
 
@@ -130,7 +130,7 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertEqual('concat', action_spec.get_name())
         self.assertEqual('std.echo', action_spec.get_base())
 
-        db_wfs = db_api.get_workflows()
+        db_wfs = db_api.get_workflow_definitions()
 
         self.assertEqual(2, len(db_wfs))
 
@@ -153,7 +153,7 @@ class WorkbookServiceTest(base.DbTestCase):
         wb_db = wb_service.create_workbook_v2(WORKBOOK)
 
         self.assertIsNotNone(wb_db)
-        self.assertEqual(2, len(db_api.get_workflows()))
+        self.assertEqual(2, len(db_api.get_workflow_definitions()))
 
         # Update workbook.
         wb_db = wb_service.update_workbook_v2(UPDATED_WORKBOOK)
@@ -163,7 +163,7 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertEqual(UPDATED_WORKBOOK, wb_db.definition)
         self.assertListEqual(['test'], wb_db.tags)
 
-        db_wfs = db_api.get_workflows()
+        db_wfs = db_api.get_workflow_definitions()
 
         self.assertEqual(2, len(db_wfs))
 

@@ -18,8 +18,8 @@ from mistral.tests import base
 
 class ActionManagerTest(base.DbTestCase):
     def test_action_input(self):
-        std_http = db_api.get_action("std.http")
-        std_email = db_api.get_action("std.email")
+        std_http = db_api.get_action_definition("std.http")
+        std_email = db_api.get_action_definition("std.email")
 
         http_action_input = (
             "url, method=GET, params=None, body=None, "
@@ -38,8 +38,8 @@ class ActionManagerTest(base.DbTestCase):
         self.assertEqual(std_email_input, std_email.input)
 
     def test_action_description(self):
-        std_http = db_api.get_action("std.http")
-        std_echo = db_api.get_action("std.echo")
+        std_http = db_api.get_action_definition("std.http")
+        std_echo = db_api.get_action_definition("std.echo")
 
         self.assertIn("Constructs an HTTP action", std_http.description)
         self.assertIn("param body: (optional) Dictionary, bytes",

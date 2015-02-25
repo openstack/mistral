@@ -347,10 +347,10 @@ class PauseBeforePolicy(base.TaskPolicy):
         wf_trace.info(
             task_db,
             "Workflow paused before task '%s' [%s -> %s]" %
-            (task_db.name, task_db.execution.state, states.PAUSED)
+            (task_db.name, task_db.workflow_execution.state, states.PAUSED)
         )
 
-        task_db.execution.state = states.PAUSED
+        task_db.workflow_execution.state = states.PAUSED
         task_db.state = states.IDLE
 
 
@@ -372,7 +372,7 @@ class ConcurrencyPolicy(base.TaskPolicy):
 
 
 def fail_task_if_incomplete(task_id, timeout):
-    task_db = db_api.get_task(task_id)
+    task_db = db_api.get_task_execution(task_id)
 
     if not states.is_completed(task_db.state):
         msg = "Task timed out [task=%s, timeout(s)=%s]." % (task_id, timeout)

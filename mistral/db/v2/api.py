@@ -94,43 +94,78 @@ def delete_workbook(name):
 def delete_workbooks(**kwargs):
     IMPL.delete_workbooks(**kwargs)
 
-# Workflows.
+
+# Workflow definitions.
+
+def get_workflow_definition(name):
+    return IMPL.get_workflow_definition(name)
 
 
-def get_workflow(name):
-    return IMPL.get_workflow(name)
+def load_workflow_definition(name):
+    """Unlike get_workflow_definition this method is allowed to return None."""
+    return IMPL.load_workflow_definition(name)
 
 
-def load_workflow(name):
-    """Unlike get_workflow this method is allowed to return None."""
-    return IMPL.load_workflow(name)
+def get_workflow_definitions():
+    return IMPL.get_workflow_definitions()
 
 
-def get_workflows():
-    return IMPL.get_workflows()
+def create_workflow_definition(values):
+    return IMPL.create_workflow_definition(values)
 
 
-def create_workflow(values):
-    return IMPL.create_workflow(values)
+def update_workflow_definition(name, values):
+    return IMPL.update_workflow_definition(name, values)
 
 
-def update_workflow(name, values):
-    return IMPL.update_workflow(name, values)
+def create_or_update_workflow_definition(name, values):
+    return IMPL.create_or_update_workflow_definition(name, values)
 
 
-def create_or_update_workflow(name, values):
-    return IMPL.create_or_update_workflow(name, values)
+def delete_workflow_definition(name):
+    IMPL.delete_workflow_definition(name)
 
 
-def delete_workflow(name):
-    IMPL.delete_workflow(name)
+def delete_workflow_definitions(**kwargs):
+    IMPL.delete_workflow_definitions(**kwargs)
 
 
-def delete_workflows(**kwargs):
-    IMPL.delete_workflows(**kwargs)
+# Action definitions.
+
+def get_action_definition(name):
+    return IMPL.get_action_definition(name)
 
 
-# Executions.
+def load_action_definition(name):
+    """Unlike get_action_definition this method is allowed to return None."""
+    return IMPL.load_action_definition(name)
+
+
+def get_action_definitions(**kwargs):
+    return IMPL.get_action_definitions(**kwargs)
+
+
+def create_action_definition(values):
+    return IMPL.create_action_definition(values)
+
+
+def update_action_definition(name, values):
+    return IMPL.update_action_definition(name, values)
+
+
+def create_or_update_action_definition(name, values):
+    return IMPL.create_or_update_action_definition(name, values)
+
+
+def delete_action_definition(name):
+    return IMPL.delete_action_definition(name)
+
+
+def delete_action_definitions(**kwargs):
+    return IMPL.delete_action_definitions(**kwargs)
+
+
+# Common executions.
 
 def get_execution(id):
     return IMPL.get_execution(id)
@@ -169,46 +204,78 @@ def delete_executions(**kwargs):
     IMPL.delete_executions(**kwargs)
 
 
-# Tasks.
+# Workflow executions.
 
-def get_task(id):
-    return IMPL.get_task(id)
-
-
-def load_task(name):
-    """Unlike get_task this method is allowed to return None."""
-    return IMPL.load_task(name)
+def get_workflow_execution(id):
+    return IMPL.get_workflow_execution(id)
 
 
-def get_tasks(**kwargs):
-    return IMPL.get_tasks(**kwargs)
+def load_workflow_execution(name):
+    """Unlike get_execution this method is allowed to return None."""
+    return IMPL.load_workflow_execution(name)
 
 
-def create_task(values):
-    return IMPL.create_task(values)
+def get_workflow_executions(**kwargs):
+    return IMPL.get_workflow_executions(**kwargs)
 
 
-def update_task(id, values):
-    return IMPL.update_task(id, values)
+def ensure_workflow_execution_exists(id):
+    return IMPL.ensure_workflow_execution_exists(id)
 
 
-def create_or_update_task(id, values):
-    return IMPL.create_or_update_task(id, values)
+def create_workflow_execution(values):
+    return IMPL.create_workflow_execution(values)
 
 
-def delete_task(id):
-    return IMPL.delete_task(id)
+def update_workflow_execution(id, values):
+    return IMPL.update_workflow_execution(id, values)
 
 
-def delete_tasks(**kwargs):
-    return IMPL.delete_tasks(**kwargs)
+def create_or_update_workflow_execution(id, values):
+    return IMPL.create_or_update_workflow_execution(id, values)
 
 
-# Action invocations.
+def delete_workflow_execution(id):
+    return IMPL.delete_workflow_execution(id)
 
 
-def delete_action_invocations(**kwargs):
-    return IMPL.delete_action_invocations(**kwargs)
+def delete_workflow_executions(**kwargs):
+    IMPL.delete_workflow_executions(**kwargs)
+
+
+# Tasks executions.
+
+def get_task_execution(id):
+    return IMPL.get_task_execution(id)
+
+
+def load_task_execution(name):
+    """Unlike get_task_execution this method is allowed to return None."""
+    return IMPL.load_task_execution(name)
+
+
+def get_task_executions(**kwargs):
+    return IMPL.get_task_executions(**kwargs)
+
+
+def create_task_execution(values):
+    return IMPL.create_task_execution(values)
+
+
+def update_task_execution(id, values):
+    return IMPL.update_task_execution(id, values)
+
+
+def create_or_update_task_execution(id, values):
+    return IMPL.create_or_update_task_execution(id, values)
+
+
+def delete_task_execution(id):
+    return IMPL.delete_task_execution(id)
+
+
+def delete_task_executions(**kwargs):
+    return IMPL.delete_task_executions(**kwargs)
 
 
 # Delayed calls.
@@ -224,41 +291,6 @@ def delete_delayed_call(id):
 
 def get_delayed_calls_to_start(time):
     return IMPL.get_delayed_calls_to_start(time)
-
-
-# Actions.
-
-def get_action(name):
-    return IMPL.get_action(name)
-
-
-def load_action(name):
-    """Unlike get_action this method is allowed to return None."""
-    return IMPL.load_action(name)
-
-
-def get_actions(**kwargs):
-    return IMPL.get_actions(**kwargs)
-
-
-def create_action(values):
-    return IMPL.create_action(values)
-
-
-def update_action(name, values):
-    return IMPL.update_action(name, values)
-
-
-def create_or_update_action(name, values):
-    return IMPL.create_or_update_action(name, values)
-
-
-def delete_action(name):
-    return IMPL.delete_action(name)
-
-
-def delete_actions(**kwargs):
-    return IMPL.delete_actions(**kwargs)
 
 
 # Cron triggers.

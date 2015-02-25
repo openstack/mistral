@@ -50,16 +50,16 @@ def create_workbook_v2(definition, scope='private'):
 
 
 def update_workbook_v2(definition, scope='private'):
-    wb_values = _get_workbook_values(
+    values = _get_workbook_values(
         spec_parser.get_workbook_spec_from_yaml(definition),
         definition,
         scope
     )
 
     with db_api_v2.transaction():
-        wb_db = db_api_v2.update_workbook(wb_values['name'], wb_values)
+        wb_db = db_api_v2.update_workbook(values['name'], values)
 
-        _on_workbook_update(wb_db, wb_values)
+        _on_workbook_update(wb_db, values)
 
     return wb_db
 
@@ -84,7 +84,7 @@ def _create_or_update_actions(wb_db, actions_spec):
                 'project_id': wb_db.project_id
             }
 
-            db_api_v2.create_or_update_action(action_name, values)
+            db_api_v2.create_or_update_action_definition(action_name, values)
 
 
 def _create_or_update_workflows(wb_db, workflows_spec):
@@ -101,7 +101,7 @@ def _create_or_update_workflows(wb_db, workflows_spec):
 
             security.add_trust_id(values)
 
-            db_api_v2.create_or_update_workflow(wf_name, values)
+            db_api_v2.create_or_update_workflow_definition(wf_name, values)
 
 
 def _get_workbook_values(wb_spec, definition, scope):

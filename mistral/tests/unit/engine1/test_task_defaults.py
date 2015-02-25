@@ -64,9 +64,9 @@ class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
@@ -154,9 +154,9 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_error(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(1, len(tasks))
 
@@ -179,9 +179,9 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_error(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(1, len(tasks))
 
@@ -204,9 +204,9 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(1, len(tasks))
 

@@ -74,7 +74,7 @@ class AdhocActionsTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.maxDiff = None
 

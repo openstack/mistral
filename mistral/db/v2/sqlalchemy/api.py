@@ -42,7 +42,7 @@ def get_backend():
 
 def setup_db():
     try:
-        models.WorkbookDefinition.metadata.create_all(b.get_engine())
+        models.Workbook.metadata.create_all(b.get_engine())
     except sa.exc.OperationalError as e:
         raise exc.DBException("Failed to setup database: %s" % e)
 
@@ -51,7 +51,7 @@ def drop_db():
     global _facade
 
     try:
-        models.WorkbookDefinition.metadata.drop_all(b.get_engine())
+        models.Workbook.metadata.drop_all(b.get_engine())
         _facade = None
     except Exception as e:
         raise exc.DBException("Failed to drop database: %s" % e)
@@ -121,7 +121,7 @@ def _get_db_object_by_id(model, id):
     return _secure_query(model).filter_by(id=id).first()
 
 
-# Workbooks.
+# Workbook definitions.
 
 def get_workbook(name):
     wb = _get_workbook(name)
@@ -138,20 +138,21 @@ def load_workbook(name):
 
 
 def get_workbooks(**kwargs):
-    return _get_collection_sorted_by_name(models.WorkbookDefinition, **kwargs)
+    return _get_collection_sorted_by_name(models.Workbook, **kwargs)
 
 
 @b.session_aware()
 def create_workbook(values, session=None):
-    wb = models.WorkbookDefinition()
+    wb = models.Workbook()
 
     wb.update(values.copy())
 
     try:
         wb.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Workbook: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for WorkbookDefinition: %s" % e.columns
+        )
 
     return wb
 
@@ -171,9 +172,7 @@ def update_workbook(name, values, session=None):
 
 @b.session_aware()
 def create_or_update_workbook(name, values, session=None):
-    wb = _get_workbook(name)
-
-    if not wb:
+    if not _get_workbook(name):
         return create_workbook(values)
     else:
         return update_workbook(name, values)
@@ -191,36 +190,37 @@ def delete_workbook(name, session=None):
 
 
 def _get_workbook(name):
-    return _get_db_object_by_name(models.WorkbookDefinition, name)
+    return _get_db_object_by_name(models.Workbook, name)
 
 
 @b.session_aware()
 def delete_workbooks(**kwargs):
-    return _delete_all(models.WorkbookDefinition, **kwargs)
+    return _delete_all(models.Workbook, **kwargs)
 
 
-# Workflows.
+# Workflow definitions.
 
-def get_workflow(name):
-    wf = _get_workflow(name)
+def get_workflow_definition(name):
+    wf = _get_workflow_definition(name)
 
     if not wf:
         raise exc.NotFoundException(
-            "Workflow not found [workflow_name=%s]" % name)
+            "Workflow not found [workflow_name=%s]" % name
+        )
 
     return wf
 
 
-def load_workflow(name):
-    return _get_workflow(name)
+def load_workflow_definition(name):
+    return _get_workflow_definition(name)
 
 
-def get_workflows(**kwargs):
+def get_workflow_definitions(**kwargs):
     return _get_collection_sorted_by_name(models.WorkflowDefinition, **kwargs)
 
 
 @b.session_aware()
-def create_workflow(values, session=None):
+def create_workflow_definition(values, session=None):
     wf = models.WorkflowDefinition()
 
     wf.update(values.copy())
@@ -228,15 +228,16 @@ def create_workflow(values, session=None):
     try:
         wf.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for workflow: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for WorkflowDefinition: %s" % e.columns
+        )
 
     return wf
 
 
 @b.session_aware()
-def update_workflow(name, values, session=None):
-    wf = _get_workflow(name)
+def update_workflow_definition(name, values, session=None):
+    wf = _get_workflow_definition(name)
 
     if not wf:
         raise exc.NotFoundException(
@@ -248,43 +249,122 @@ def update_workflow(name, values, session=None):
 
 
 @b.session_aware()
-def create_or_update_workflow(name, values, session=None):
-    wf = _get_workflow(name)
-
-    if not wf:
-        return create_workflow(values)
+def create_or_update_workflow_definition(name, values, session=None):
+    if not _get_workflow_definition(name):
+        return create_workflow_definition(values)
     else:
-        return update_workflow(name, values)
+        return update_workflow_definition(name, values)
 
 
 @b.session_aware()
-def delete_workflow(name, session=None):
-    wf = _get_workflow(name)
+def delete_workflow_definition(name, session=None):
+    wf = _get_workflow_definition(name)
 
     if not wf:
         raise exc.NotFoundException(
-            "Workflow not found [workflow_name=%s]" % name)
+            "Workflow not found [workflow_name=%s]" % name
+        )
 
     session.delete(wf)
 
 
 @b.session_aware()
-def delete_workflows(**kwargs):
+def delete_workflow_definitions(**kwargs):
     return _delete_all(models.WorkflowDefinition, **kwargs)
 
 
-def _get_workflow(name):
+def _get_workflow_definition(name):
     return _get_db_object_by_name(models.WorkflowDefinition, name)
 
 
-# Executions.
+# Action definitions.
+
+def get_action_definition(name):
+    a_def = _get_action_definition(name)
+
+    if not a_def:
+        raise exc.NotFoundException(
+            "Action definition not found [action_name=%s]" % name
+        )
+
+    return a_def
+
+
+def load_action_definition(name):
+    return _get_action_definition(name)
+
+
+def get_action_definitions(**kwargs):
+    return _get_collection_sorted_by_name(models.ActionDefinition, **kwargs)
+
+
+@b.session_aware()
+def create_action_definition(values, session=None):
+    a_def = models.ActionDefinition()
+
+    a_def.update(values)
+
+    try:
+        a_def.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for action %s: %s" % (a_def.name, e.columns)
+        )
+
+    return a_def
+
+
+@b.session_aware()
+def update_action_definition(name, values, session=None):
+    a_def = _get_action_definition(name)
+
+    if not a_def:
+        raise exc.NotFoundException(
+            "Action definition not found [action_name=%s]" % name)
+
+    a_def.update(values.copy())
+
+    return a_def
+
+
+@b.session_aware()
+def create_or_update_action_definition(name, values, session=None):
+    if not _get_action_definition(name):
+        return create_action_definition(values)
+    else:
+        return update_action_definition(name, values)
+
+
+@b.session_aware()
+def delete_action_definition(name, session=None):
+    a_def = _get_action_definition(name)
+
+    if not a_def:
+        raise exc.NotFoundException(
+            "Action definition not found [action_name=%s]" % name
+        )
+
+    session.delete(a_def)
+
+
+@b.session_aware()
+def delete_action_definitions(**kwargs):
+    return _delete_all(models.ActionDefinition, **kwargs)
+
+
+def _get_action_definition(name):
+    return _get_db_object_by_name(models.ActionDefinition, name)
+
+
+# Common executions.
 
 def get_execution(id):
     execution = _get_execution(id)
 
     if not execution:
         raise exc.NotFoundException(
-            "Execution not found [execution_id=%s]" % id)
+            "Execution not found [execution_id=%s]" % id
+        )
 
     return execution
 
@@ -303,37 +383,37 @@ def get_executions(**kwargs):
 
 @b.session_aware()
 def create_execution(values, session=None):
-    execution = models.WorkflowExecution()
+    ex = models.Execution()
 
-    execution.update(values.copy())
+    ex.update(values.copy())
 
     try:
-        execution.save(session=session)
+        ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Execution: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for Execution: %s" % e.columns
+        )
 
-    return execution
+    return ex
 
 
 @b.session_aware()
 def update_execution(id, values, session=None):
-    execution = _get_execution(id)
+    ex = _get_execution(id)
 
-    if not execution:
+    if not ex:
         raise exc.NotFoundException(
-            "Execution not found [execution_id=%s]" % id)
+            "Execution not found [execution_id=%s]" % id
+        )
 
-    execution.update(values.copy())
+    ex.update(values.copy())
 
-    return execution
+    return ex
 
 
 @b.session_aware()
 def create_or_update_execution(id, values, session=None):
-    execution = _get_execution(id)
-
-    if not execution:
+    if not _get_execution(id):
         return create_execution(values)
     else:
         return update_execution(id, values)
@@ -341,117 +421,188 @@ def create_or_update_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_execution(id, session=None):
-    execution = _get_execution(id)
+    ex = _get_execution(id)
 
-    if not execution:
+    if not ex:
         raise exc.NotFoundException(
             "Execution not found [execution_id=%s]" % id)
 
-    session.delete(execution)
+    session.delete(ex)
 
 
 @b.session_aware()
 def delete_executions(**kwargs):
-    _delete_all(models.TaskExecution)
-    return _delete_all(models.WorkflowExecution, **kwargs)
+    return _delete_all(models.Execution, **kwargs)
 
 
 def _get_executions(**kwargs):
-    return _get_collection_sorted_by_time(models.WorkflowExecution, **kwargs)
+    return _get_collection_sorted_by_time(models.Execution, **kwargs)
 
 
 def _get_execution(id):
+    return _get_db_object_by_id(models.Execution, id)
+
+
+# Workflow executions.
+
+def get_workflow_execution(id):
+    wf_ex = _get_workflow_execution(id)
+
+    if not wf_ex:
+        raise exc.NotFoundException(
+            "Execution not found [execution_id=%s]" % id)
+
+    return wf_ex
+
+
+def load_workflow_execution(id):
+    return _get_workflow_execution(id)
+
+
+def ensure_workflow_execution_exists(id):
+    get_workflow_execution(id)
+
+
+def get_workflow_executions(**kwargs):
+    return _get_workflow_executions(**kwargs)
+
+
+@b.session_aware()
+def create_workflow_execution(values, session=None):
+    wf_ex = models.WorkflowExecution()
+
+    wf_ex.update(values.copy())
+
+    try:
+        wf_ex.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry("Duplicate entry for Execution: %s"
+                                   % e.columns)
+
+    return wf_ex
+
+
+@b.session_aware()
+def update_workflow_execution(id, values, session=None):
+    wf_ex = _get_workflow_execution(id)
+
+    if not wf_ex:
+        raise exc.NotFoundException(
+            "Execution not found [execution_id=%s]" % id)
+
+    wf_ex.update(values.copy())
+
+    return wf_ex
+
+
+@b.session_aware()
+def create_or_update_workflow_execution(id, values, session=None):
+    if not _get_workflow_execution(id):
+        return create_workflow_execution(values)
+    else:
+        return update_workflow_execution(id, values)
+
+
+@b.session_aware()
+def delete_workflow_execution(id, session=None):
+    wf_ex = _get_workflow_execution(id)
+
+    if not wf_ex:
+        raise exc.NotFoundException(
+            "Execution not found [execution_id=%s]" % id)
+
+    session.delete(wf_ex)
+
+
+@b.session_aware()
+def delete_workflow_executions(**kwargs):
+    return _delete_all(models.WorkflowExecution, **kwargs)
+
+
+def _get_workflow_executions(**kwargs):
+    return _get_collection_sorted_by_time(models.WorkflowExecution, **kwargs)
+
+
+def _get_workflow_execution(id):
     return _get_db_object_by_id(models.WorkflowExecution, id)
 
 
-# Tasks.
+# Tasks executions.
 
-def get_task(id):
-    task = _get_task(id)
+def get_task_execution(id):
+    task_ex = _get_task_execution(id)
 
-    if not task:
-        raise exc.NotFoundException(
-            "Task not found [task_id=%s]" % id)
+    if not task_ex:
+        raise exc.NotFoundException("Task not found [task_id=%s]" % id)
 
-    return task
-
-
-def load_task(id):
-    return _get_task(id)
+    return task_ex
 
 
-def get_tasks(**kwargs):
-    return _get_tasks(**kwargs)
+def load_task_execution(id):
+    return _get_task_execution(id)
+
+
+def get_task_executions(**kwargs):
+    return _get_task_executions(**kwargs)
 
 
 @b.session_aware()
-def create_task(values, session=None):
-    task = models.TaskExecution()
+def create_task_execution(values, session=None):
+    task_ex = models.TaskExecution()
 
-    task.update(values)
+    task_ex.update(values)
 
     try:
-        task.save(session=session)
+        task_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Task: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntry("Duplicate entry for Task: %s" % e.columns)
 
-    return task
+    return task_ex
 
 
 @b.session_aware()
-def update_task(id, values, session=None):
-    task = _get_task(id)
+def update_task_execution(id, values, session=None):
+    task_ex = _get_task_execution(id)
 
-    if not task:
+    if not task_ex:
         raise exc.NotFoundException(
             "Task not found [task_id=%s]" % id)
 
-    task.update(values.copy())
+    task_ex.update(values.copy())
 
-    return task
+    return task_ex
 
 
 @b.session_aware()
-def create_or_update_task(id, values, session=None):
-    task = _get_task(id)
-
-    if not task:
-        return create_task(values)
+def create_or_update_task_execution(id, values, session=None):
+    if not _get_task_execution(id):
+        return create_task_execution(values)
     else:
-        return update_task(id, values)
+        return update_task_execution(id, values)
 
 
 @b.session_aware()
-def delete_task(id, session=None):
-    task = _get_task(id)
+def delete_task_execution(id, session=None):
+    task_ex = _get_task_execution(id)
 
-    if not task:
+    if not task_ex:
         raise exc.NotFoundException(
             "Task not found [task_id=%s]" % id)
 
-    session.delete(task)
+    session.delete(task_ex)
 
 
 @b.session_aware()
-def delete_tasks(**kwargs):
+def delete_task_executions(**kwargs):
     return _delete_all(models.TaskExecution, **kwargs)
 
 
-def _get_task(id):
+def _get_task_execution(id):
     return _get_db_object_by_id(models.TaskExecution, id)
 
 
-def _get_tasks(**kwargs):
+def _get_task_executions(**kwargs):
     return _get_collection_sorted_by_time(models.TaskExecution, **kwargs)
-
-
-# Action invocations.
-
-
-@b.session_aware()
-def delete_action_invocations(**kwargs):
-    return _delete_all(models.ActionExecution, **kwargs)
 
 
 # Delayed calls.
@@ -497,84 +648,6 @@ def _get_delayed_call(delayed_call_id, session=None):
     query = b.model_query(models.DelayedCall)
 
     return query.filter_by(id=delayed_call_id).first()
-
-
-# Actions.
-
-def get_action(name):
-    action = _get_action(name)
-
-    if not action:
-        raise exc.NotFoundException(
-            "Action not found [action_name=%s]" % name)
-
-    return action
-
-
-def load_action(name):
-    return _get_action(name)
-
-
-def get_actions(**kwargs):
-    return _get_collection_sorted_by_name(models.ActionDefinition, **kwargs)
-
-
-@b.session_aware()
-def create_action(values, session=None):
-    action = models.ActionDefinition()
-
-    action.update(values)
-
-    try:
-        action.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for action %s: %s"
-                                   % (action.name, e.columns))
-
-    return action
-
-
-@b.session_aware()
-def update_action(name, values, session=None):
-    action = _get_action(name)
-
-    if not action:
-        raise exc.NotFoundException(
-            "Action not found [action_name=%s]" % name)
-
-    action.update(values.copy())
-
-    return action
-
-
-@b.session_aware()
-def create_or_update_action(name, values, session=None):
-    action = _get_action(name)
-
-    if not action:
-        return create_action(values)
-    else:
-        return update_action(name, values)
-
-
-@b.session_aware()
-def delete_action(name, session=None):
-    action = _get_action(name)
-
-    if not action:
-        raise exc.NotFoundException(
-            "Action not found [action_name=%s]" % name)
-
-    session.delete(action)
-
-
-@b.session_aware()
-def delete_actions(**kwargs):
-    return _delete_all(models.ActionDefinition, **kwargs)
-
-
-def _get_action(name):
-    return _get_db_object_by_name(models.ActionDefinition, name)
 
 
 # Cron triggers.

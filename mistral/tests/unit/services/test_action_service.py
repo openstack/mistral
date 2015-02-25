@@ -60,8 +60,8 @@ class ActionServiceTest(base.DbTestCase):
     def setUp(self):
         super(ActionServiceTest, self).setUp()
 
-        self.addCleanup(db_api.delete_actions, name='action1')
-        self.addCleanup(db_api.delete_actions, name='action2')
+        self.addCleanup(db_api.delete_action_definitions, name='action1')
+        self.addCleanup(db_api.delete_action_definitions, name='action2')
 
     def test_create_actions(self):
         db_actions = action_service.create_actions(ACTION_LIST)

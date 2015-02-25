@@ -119,13 +119,13 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIn('__execution', exec_db.context)
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
 
-        task_db = exec_db.tasks[0]
+        task_db = exec_db.task_executions[0]
 
-        self.assertEqual('wb.wf1', task_db.wf_name)
+        self.assertEqual('wb.wf1', task_db.workflow_name)
         self.assertEqual('task1', task_db.name)
         self.assertEqual(states.RUNNING, task_db.state)
         self.assertIsNotNone(task_db.spec)
@@ -152,7 +152,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(exec_db)
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertDictEqual(exec_db.start_params.get('env', {}), env)
 
@@ -173,7 +173,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(exec_db)
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertDictEqual(exec_db.start_params.get('env', {}), env)
 
@@ -226,11 +226,11 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(states.RUNNING, exec_db.state)
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
 
-        task_db = exec_db.tasks[0]
+        task_db = exec_db.task_executions[0]
 
         self.assertEqual('task1', task_db.name)
         self.assertEqual(states.RUNNING, task_db.state)
@@ -242,7 +242,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Finish 'task1'.
         task1_db = self.engine.on_task_result(
-            exec_db.tasks[0].id,
+            exec_db.task_executions[0].id,
             wf_utils.TaskResult(data='Hey')
         )
 
@@ -256,14 +256,17 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({'output': 'Hey'}, task1_db.input)
         self.assertDictEqual({'result': 'Hey'}, task1_db.result)
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.RUNNING, exec_db.state)
 
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
 
-        task2_db = self._assert_single_item(exec_db.tasks, name='task2')
+        task2_db = self._assert_single_item(
+            exec_db.task_executions,
+            name='task2'
+        )
 
         self.assertEqual(states.RUNNING, task2_db.state)
 
@@ -273,7 +276,7 @@ class DefaultEngineTest(base.DbTestCase):
             wf_utils.TaskResult(data='Hi')
         )
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertIsNotNone(exec_db)
         self.assertEqual(states.SUCCESS, exec_db.state)
@@ -290,10 +293,10 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({'output': 'Hi'}, task2_db.input)
         self.assertDictEqual({}, task2_db.result)
 
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
 
-        self._assert_single_item(exec_db.tasks, name='task1')
-        self._assert_single_item(exec_db.tasks, name='task2')
+        self._assert_single_item(exec_db.task_executions, name='task1')
+        self._assert_single_item(exec_db.task_executions, name='task2')
 
     def test_stop_workflow_fail(self):
         # Start workflow.

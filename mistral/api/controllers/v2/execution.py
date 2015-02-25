@@ -90,8 +90,6 @@ class Execution(resource.Resource):
         if params:
             setattr(e, 'params', json.dumps(params))
 
-        setattr(e, 'workflow_name', d['wf_name'])
-
         return e
 
     @classmethod
@@ -125,7 +123,7 @@ class ExecutionsController(rest.RestController):
         """Return the specified Execution."""
         LOG.info("Fetch execution [id=%s]" % id)
 
-        return Execution.from_dict(db_api.get_execution(id).to_dict())
+        return Execution.from_dict(db_api.get_workflow_execution(id).to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution)
@@ -137,7 +135,7 @@ class ExecutionsController(rest.RestController):
         """
         LOG.info("Update execution [id=%s, execution=%s]" %
                  (id, execution))
-        db_api.ensure_execution_exists(id)
+        db_api.ensure_workflow_execution_exists(id)
 
         # Currently we can change only state.
         if not execution.state:
@@ -192,7 +190,7 @@ class ExecutionsController(rest.RestController):
         """Delete the specified Execution."""
         LOG.info("Delete execution [id=%s]" % id)
 
-        return db_api.delete_execution(id)
+        return db_api.delete_workflow_execution(id)
 
     @wsme_pecan.wsexpose(Executions)
     def get_all(self):
@@ -200,6 +198,6 @@ class ExecutionsController(rest.RestController):
         LOG.info("Fetch executions")
 
         executions = [Execution.from_dict(db_model.to_dict())
-                      for db_model in db_api.get_executions()]
+                      for db_model in db_api.get_workflow_executions()]
 
         return Executions(executions=executions)

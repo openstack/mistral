@@ -47,8 +47,8 @@ class TaskResultSerializer(serializer.Serializer):
 
 def find_db_task(exec_db, task_spec):
     db_tasks = [
-        t_db for t_db in exec_db.tasks
-        if t_db.name == task_spec.get_name()
+        t for t in exec_db.task_executions
+        if t.name == task_spec.get_name()
     ]
 
     return db_tasks[0] if len(db_tasks) > 0 else None
@@ -59,16 +59,18 @@ def find_db_tasks(exec_db, task_specs):
 
 
 def find_running_tasks(exec_db):
-    return [t_db for t_db in exec_db.tasks if t_db.state == states.RUNNING]
+    return [t for t in exec_db.task_executions if t.state == states.RUNNING]
 
 
 def find_completed_tasks(exec_db):
-    return [t_db for t_db in exec_db.tasks if states.is_completed(t_db.state)]
+    return [
+        t for t in exec_db.task_executions if states.is_completed(t.state)
+    ]
 
 
 def find_successful_tasks(exec_db):
-    return [t_db for t_db in exec_db.tasks if t_db.state == states.SUCCESS]
+    return [t for t in exec_db.task_executions if t.state == states.SUCCESS]
 
 
 def find_error_tasks(exec_db):
-    return [t_db for t_db in exec_db.tasks if t_db.state == states.ERROR]
+    return [t for t in exec_db.task_executions if t.state == states.ERROR]

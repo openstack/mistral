@@ -87,7 +87,7 @@ class RunTask(EngineCommand):
         self.task_db = task_db
 
         if task_db:
-            self.exec_db = task_db.execution
+            self.exec_db = task_db.workflow_execution
 
     def run_local(self, exec_db, wf_handler, cause_task_db=None):
         if self.task_db and self.task_db.state == states.IDLE:
@@ -111,7 +111,7 @@ class RunTask(EngineCommand):
             return
 
         self.task_db = self._create_db_task(exec_db)
-        self.exec_db = self.task_db.execution
+        self.exec_db = self.task_db.workflow_execution
 
         # Evaluate Data Flow properties ('input', 'in_context').
         data_flow.prepare_db_task(
@@ -128,8 +128,8 @@ class RunTask(EngineCommand):
             p.before_task_start(self.task_db, self.task_spec)
 
     def _create_db_task(self, exec_db):
-        return db_api.create_task({
-            'execution_id': exec_db.id,
+        return db_api.create_task_execution({
+            'workflow_execution_id': exec_db.id,
             'name': self.task_spec.get_name(),
             'state': states.RUNNING,
             'spec': self.task_spec.to_dict(),
@@ -137,7 +137,7 @@ class RunTask(EngineCommand):
             'in_context': None,
             'output': None,
             'runtime_context': None,
-            'wf_name': exec_db.wf_name,
+            'workflow_name': exec_db.workflow_name,
             'project_id': exec_db.project_id
         })
 
@@ -178,12 +178,12 @@ class RunTask(EngineCommand):
 
     def _run_action(self):
         exec_db = self.exec_db
-        wf_spec = spec_parser.get_workflow_spec(exec_db.wf_spec)
+        wf_spec = spec_parser.get_workflow_spec(exec_db.spec)
 
         action_spec_name = self.task_spec.get_action_name()
 
         action_db = e_utils.resolve_action(
-            exec_db.wf_name,
+            exec_db.workflow_name,
             wf_spec.get_name(),
             action_spec_name
         )
@@ -198,7 +198,7 @@ class RunTask(EngineCommand):
             base_name = action_spec.get_base()
 
             action_db = e_utils.resolve_action(
-                exec_db.wf_name,
+                exec_db.workflow_name,
                 wf_spec.get_name(),
                 base_name
             )
@@ -269,12 +269,12 @@ class RunTask(EngineCommand):
 
     def _run_workflow(self):
         parent_exec_db = self.exec_db
-        parent_wf_spec = spec_parser.get_workflow_spec(parent_exec_db.wf_spec)
+        parent_wf_spec = spec_parser.get_workflow_spec(parent_exec_db.spec)
 
         wf_spec_name = self.task_spec.get_workflow_name()
 
         wf_db = e_utils.resolve_workflow(
-            parent_exec_db.wf_name,
+            parent_exec_db.workflow_name,
             parent_wf_spec.get_name(),
             wf_spec_name
         )

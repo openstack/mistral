@@ -176,21 +176,21 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.PAUSED, exec_db.state)
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
 
         self.engine.resume_workflow(exec_db.id)
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.RUNNING, exec_db.state)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.SUCCESS, exec_db.state)
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
 
     def test_resume_reverse(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK_REVERSE)
@@ -204,21 +204,21 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
 
         self.engine.pause_workflow(exec_db.id)
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.PAUSED, exec_db.state)
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
 
         self.engine.resume_workflow(exec_db.id)
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.RUNNING, exec_db.state)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.SUCCESS, exec_db.state)
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
 
     def test_resume_two_branches(self):
         wb_service.create_workbook_v2(WORKBOOK_TWO_BRANCHES)
@@ -228,23 +228,23 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.PAUSED, exec_db.state)
-        self.assertEqual(1, len(exec_db.tasks))
+        self.assertEqual(1, len(exec_db.task_executions))
 
         self.engine.resume_workflow(exec_db.id)
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.RUNNING, exec_db.state)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.SUCCESS, exec_db.state)
 
         # We can see 3 tasks in execution.
-        self.assertEqual(3, len(exec_db.tasks))
+        self.assertEqual(3, len(exec_db.task_executions))
 
     def test_resume_two_start_tasks(self):
         wb_service.create_workbook_v2(WORKBOOK_TWO_START_TASKS)
@@ -254,21 +254,21 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.PAUSED, exec_db.state)
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
 
         self.engine.resume_workflow(exec_db.id)
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.RUNNING, exec_db.state)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.SUCCESS, exec_db.state)
-        self.assertEqual(3, len(exec_db.tasks))
+        self.assertEqual(3, len(exec_db.task_executions))
 
     def test_resume_different_task_states(self):
         wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
@@ -278,18 +278,18 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.PAUSED, exec_db.state)
-        self.assertEqual(2, len(exec_db.tasks))
+        self.assertEqual(2, len(exec_db.task_executions))
 
-        task2 = self._assert_single_item(exec_db.tasks, name="task2")
+        task2 = self._assert_single_item(exec_db.task_executions, name='task2')
 
         # Task2 is not finished yet.
         self.assertFalse(states.is_completed(task2.state))
 
         self.engine.resume_workflow(exec_db.id)
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.RUNNING, exec_db.state)
 
@@ -297,10 +297,10 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.engine.on_task_result(task2.id, utils.TaskResult())
 
         self._await(lambda: self.is_execution_success(exec_db.id))
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
         self.assertEqual(states.SUCCESS, exec_db.state)
-        self.assertEqual(4, len(exec_db.tasks))
+        self.assertEqual(4, len(exec_db.task_executions))
 
     @mock.patch.object(de.DefaultEngine, '_fail_workflow')
     def test_resume_fails(self, mock_fw):
@@ -310,7 +310,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(exec_db.id))
 
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
         self.assertEqual(states.PAUSED, exec_db.state)
 
         # Simulate failure and check if it is handled.

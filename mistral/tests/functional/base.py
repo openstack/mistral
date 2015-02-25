@@ -296,7 +296,7 @@ class MistralClientV2(MistralClientBase):
     def get_wf_tasks(self, wf_name):
         all_tasks = self.get_list_obj('tasks')[1]['tasks']
 
-        return [t for t in all_tasks if t['wf_name'] == wf_name]
+        return [t for t in all_tasks if t['workflow_name'] == wf_name]
 
 
 class AuthProv(auth.KeystoneV2AuthProvider):

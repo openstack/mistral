@@ -52,7 +52,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         exec_db = models.WorkflowExecution()
         exec_db.update({
             'id': '1-2-3-4',
-            'wf_spec': wb_spec.get_workflows().get('wf1').to_dict(),
+            'spec': wb_spec.get_workflows().get('wf1').to_dict(),
             'state': states.IDLE
         })
 
@@ -71,7 +71,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
             'state': state
         })
 
-        self.exec_db.tasks.append(task_db)
+        self.exec_db.task_executions.append(task_db)
 
         return task_db
 

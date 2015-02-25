@@ -269,9 +269,9 @@ class JoinEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -292,9 +292,9 @@ class JoinEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -315,9 +315,9 @@ class JoinEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(3, len(tasks))
 
@@ -340,9 +340,9 @@ class JoinEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -374,8 +374,9 @@ class JoinEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
-        tasks = exec_db.tasks
+        exec_db = db_api.get_workflow_execution(exec_db.id)
+
+        tasks = exec_db.task_executions
 
         self.assertEqual(5, len(tasks))
 
@@ -405,9 +406,9 @@ class JoinEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_success(exec_db.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -428,7 +429,7 @@ class JoinEngineTest(base.EngineTestCase):
 
     def test_full_join_parallel_published_vars(self):
         wfs_tasks_join_complex = """---
-        version: "2.0"
+        version: 2.0
 
         main:
           type: direct
@@ -436,6 +437,7 @@ class JoinEngineTest(base.EngineTestCase):
             var1: <% $.var1 %>
             var2: <% $.var2 %>
             is_done: <% $.is_done %>
+
           tasks:
             init:
               publish:

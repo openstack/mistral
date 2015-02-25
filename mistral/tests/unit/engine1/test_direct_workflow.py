@@ -40,7 +40,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         exec_db = self.engine.start_workflow('wf', {})
         self._await(lambda: self.is_execution_error(exec_db.id))
 
-        return db_api.get_execution(exec_db.id)
+        return db_api.get_workflow_execution(exec_db.id)
 
     def test_direct_workflow_on_closures(self):
         WORKFLOW = """
@@ -76,7 +76,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         """
         exec_db = self._run_workflow(WORKFLOW)
 
-        tasks = exec_db.tasks
+        tasks = exec_db.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
         task4 = self._assert_single_item(tasks, name='task4')
@@ -106,7 +106,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo wrong_input="Hahaha"
         """
         exec_db = exec_db = self._run_workflow(WORKFLOW_WRONG_TASK_INPUT)
-        task_db2 = exec_db.tasks[1]
+        task_db2 = exec_db.task_executions[1]
 
         self.assertIn(
             "Failed to initialize action",
@@ -132,7 +132,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo wrong_input="Ha-ha"
         """
         exec_db = self._run_workflow(WORKFLOW_WRONG_FIRST_TASK_INPUT)
-        task_db = exec_db.tasks[0]
+        task_db = exec_db.task_executions[0]
 
         self.assertIn(
             "Failed to initialize action",

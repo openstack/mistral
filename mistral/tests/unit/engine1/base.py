@@ -99,19 +99,19 @@ class EngineTestCase(base.DbTestCase):
         [thread.kill() for thread in self.threads]
 
     def is_execution_success(self, exec_id):
-        return db_api.get_execution(exec_id).state == states.SUCCESS
+        return db_api.get_workflow_execution(exec_id).state == states.SUCCESS
 
     def is_execution_error(self, exec_id):
-        return db_api.get_execution(exec_id).state == states.ERROR
+        return db_api.get_workflow_execution(exec_id).state == states.ERROR
 
     def is_execution_paused(self, exec_id):
-        return db_api.get_execution(exec_id).state == states.PAUSED
+        return db_api.get_workflow_execution(exec_id).state == states.PAUSED
 
     def is_task_success(self, task_id):
-        return db_api.get_task(task_id).state == states.SUCCESS
+        return db_api.get_task_execution(task_id).state == states.SUCCESS
 
     def is_task_error(self, task_id):
-        return db_api.get_task(task_id).state == states.ERROR
+        return db_api.get_task_execution(task_id).state == states.ERROR
 
     def is_task_delayed(self, task_id):
-        return db_api.get_task(task_id).state == states.DELAYED
+        return db_api.get_task_execution(task_id).state == states.DELAYED

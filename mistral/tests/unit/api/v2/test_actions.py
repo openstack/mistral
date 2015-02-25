@@ -94,21 +94,23 @@ MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
 
 
 class TestActionsController(base.FunctionalTest):
-    @mock.patch.object(db_api, "get_action", MOCK_ACTION)
+    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     def test_get(self):
         resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(ACTION, resp.json)
 
-    @mock.patch.object(db_api, "get_action", MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, "get_action_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/actions/my_action', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "get_action", MOCK_ACTION)
-    @mock.patch.object(db_api, "create_or_update_action", MOCK_UPDATED_ACTION)
+    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
+    @mock.patch.object(
+        db_api, "create_or_update_action_definition", MOCK_UPDATED_ACTION
+    )
     def test_put(self):
         resp = self.app.put(
             '/v2/actions',
@@ -120,7 +122,9 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
 
-    @mock.patch.object(db_api, "create_or_update_action", MOCK_NOT_FOUND)
+    @mock.patch.object(
+        db_api, "create_or_update_action_definition", MOCK_NOT_FOUND
+    )
     def test_put_not_found(self):
         resp = self.app.put(
             '/v2/actions',
@@ -131,7 +135,7 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action", MOCK_SYSTEM_ACTION)
+    @mock.patch.object(db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
     def test_put_system(self):
         resp = self.app.put(
             '/v2/actions',
@@ -144,7 +148,7 @@ class TestActionsController(base.FunctionalTest):
         self.assertIn('Attempt to modify a system action: std.echo',
                       resp.text)
 
-    @mock.patch.object(db_api, "create_action")
+    @mock.patch.object(db_api, "create_action_definition")
     def test_post(self, mock_mtd):
         mock_mtd.return_value = ACTION_DB
 
@@ -168,7 +172,7 @@ class TestActionsController(base.FunctionalTest):
         self.assertIsNotNone(spec)
         self.assertEqual(ACTION_DB.name, spec['name'])
 
-    @mock.patch.object(db_api, "create_action", MOCK_DUPLICATE)
+    @mock.patch.object(db_api, "create_action_definition", MOCK_DUPLICATE)
     def test_post_dup(self):
         resp = self.app.post(
             '/v2/actions',
@@ -179,20 +183,20 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 409)
 
-    @mock.patch.object(db_api, "get_action", MOCK_ACTION)
-    @mock.patch.object(db_api, "delete_action", MOCK_DELETE)
+    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
+    @mock.patch.object(db_api, "delete_action_definition", MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/actions/my_action')
 
         self.assertEqual(resp.status_int, 204)
 
-    @mock.patch.object(db_api, "delete_action", MOCK_NOT_FOUND)
+    @mock.patch.object(db_api, "delete_action_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/actions/my_action', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(db_api, "get_action", MOCK_SYSTEM_ACTION)
+    @mock.patch.object(db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
     def test_delete_system(self):
         resp = self.app.delete('/v2/actions/std.echo', expect_errors=True)
 
@@ -200,7 +204,7 @@ class TestActionsController(base.FunctionalTest):
         self.assertIn('Attempt to delete a system action: std.echo',
                       resp.json['faultstring'])
 
-    @mock.patch.object(db_api, "get_actions", MOCK_ACTIONS)
+    @mock.patch.object(db_api, "get_action_definitions", MOCK_ACTIONS)
     def test_get_all(self):
         resp = self.app.get('/v2/actions')
 
@@ -209,7 +213,7 @@ class TestActionsController(base.FunctionalTest):
         self.assertEqual(len(resp.json['actions']), 1)
         self.assertDictEqual(ACTION, resp.json['actions'][0])
 
-    @mock.patch.object(db_api, "get_actions", MOCK_EMPTY)
+    @mock.patch.object(db_api, "get_action_definitions", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/actions')
 

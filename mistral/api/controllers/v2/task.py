@@ -39,9 +39,8 @@ class Task(resource.Resource):
     id = wtypes.text
     name = wtypes.text
 
-    # TODO(rakhmerov): Inconsistent with 'workflow_name' for executions.
-    wf_name = wtypes.text
-    execution_id = wtypes.text
+    workflow_name = wtypes.text
+    workflow_execution_id = wtypes.text
 
     state = wtypes.text
     "state can take one of the following values: \
@@ -71,8 +70,8 @@ class Task(resource.Resource):
     def sample(cls):
         return cls(
             id='123e4567-e89b-12d3-a456-426655440000',
-            wf_name='book',
-            execution_id='123e4567-e89b-12d3-a456-426655440000',
+            workflow_name='flow',
+            workflow_execution_id='123e4567-e89b-12d3-a456-426655440000',
             name='task',
             description='tell when you are done',
             state=states.SUCCESS,
@@ -102,7 +101,7 @@ class TasksController(rest.RestController):
         """Return the specified task."""
         LOG.info("Fetch task [id=%s]" % id)
 
-        db_model = db_api.get_task(id)
+        db_model = db_api.get_task_execution(id)
 
         return Task.from_dict(db_model.to_dict())
 
@@ -139,18 +138,23 @@ class TasksController(rest.RestController):
         LOG.info("Fetch tasks")
 
         tasks = [Task.from_dict(db_model.to_dict())
-                 for db_model in db_api.get_tasks()]
+                 for db_model in db_api.get_task_executions()]
 
         return Tasks(tasks=tasks)
 
 
 class ExecutionTasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks, wtypes.text)
-    def get_all(self, execution_id):
-        """Return all tasks within the execution."""
+    def get_all(self, workflow_execution_id):
+        """Return all tasks within the workflow execution."""
         LOG.info("Fetch tasks")
 
-        tasks = [Task.from_dict(db_model.to_dict())
-                 for db_model in db_api.get_tasks(execution_id=execution_id)]
+        task_execs = db_api.get_task_executions(
+            workflow_execution_id=workflow_execution_id
+        )
 
-        return Tasks(tasks=tasks)
+        return Tasks(
+            tasks=[
+                Task.from_dict(db_model.to_dict()) for db_model in task_execs
+            ]
+        )

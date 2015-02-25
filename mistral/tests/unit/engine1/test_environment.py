@@ -115,7 +115,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictEqual({}, exec1_db.input)
         self.assertDictEqual({'env': env}, exec1_db.start_params)
 
-        db_execs = db_api.get_executions()
+        db_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(db_execs))
 
@@ -127,7 +127,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
         expected_start_params = {
             'task_name': 'task2',
-            'parent_task_id': exec2_db.parent_task_id,
+            'parent_task_id': exec2_db.task_execution_id,
             'env': env
         }
 
@@ -136,14 +136,14 @@ class SubworkflowsTest(base.EngineTestCase):
             'param2': 'Clyde'
         }
 
-        self.assertIsNotNone(exec2_db.parent_task_id)
+        self.assertIsNotNone(exec2_db.task_execution_id)
         self.assertDictEqual(exec2_db.start_params, expected_start_params)
         self.assertDictEqual(exec2_db.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_success(exec2_db.id))
 
-        exec2_db = db_api.get_execution(exec2_db.id)
+        exec2_db = db_api.get_workflow_execution(exec2_db.id)
 
         expected_wf1_output = {'final_result': "'Bonnie & Clyde'"}
 
@@ -152,14 +152,16 @@ class SubworkflowsTest(base.EngineTestCase):
         # Wait till workflow 'wf2' is completed.
         self._await(lambda: self.is_execution_success(exec1_db.id))
 
-        exec1_db = db_api.get_execution(exec1_db.id)
+        exec1_db = db_api.get_workflow_execution(exec1_db.id)
 
         expected_wf2_output = {'slogan': "'Bonnie & Clyde' is a cool movie!"}
 
         self.assertDictEqual(exec1_db.output, expected_wf2_output)
 
         # Check if target is resolved.
-        tasks_exec2 = db_api.get_tasks(execution_id=exec2_db.id)
+        tasks_exec2 = db_api.get_task_executions(
+            workflow_execution_id=exec2_db.id
+        )
 
         self._assert_single_item(tasks_exec2, name='task1')
         self._assert_single_item(tasks_exec2, name='task2')
