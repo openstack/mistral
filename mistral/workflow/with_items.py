@@ -21,7 +21,7 @@ from mistral import expressions as expr
 # TODO(rakhmerov): Partially duplicates data_flow.evaluate_task_result
 # TODO(rakhmerov): Method now looks confusing because it's called 'get_result'
 # and has 'result' parameter, but it's temporary, needs to be refactored.
-def get_result(task_db, task_spec, result):
+def get_result(task_ex, task_spec, result):
     """Returns result from task markered as with-items
 
      Examples of result:
@@ -55,17 +55,17 @@ def get_result(task_db, task_spec, result):
     """
     e_data = result.error
 
-    expr_ctx = copy.deepcopy(task_db.in_context) or {}
+    expr_ctx = copy.deepcopy(task_ex.in_context) or {}
 
-    expr_ctx[task_db.name] = copy.deepcopy(result.data) or {}
+    expr_ctx[task_ex.name] = copy.deepcopy(result.data) or {}
 
     # Calc result for with-items (only list form is used).
     result = expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
 
-    if not task_db.result:
-        task_db.result = {}
+    if not task_ex.result:
+        task_ex.result = {}
 
-    task_result = copy.copy(task_db.result)
+    task_result = copy.copy(task_ex.result)
 
     res_key = _get_result_key(task_spec)
 
@@ -92,16 +92,16 @@ def get_result(task_db, task_spec, result):
     return task_result
 
 
-def _get_context(task_db):
-    return task_db.runtime_context['with_items']
+def _get_context(task_ex):
+    return task_ex.runtime_context['with_items']
 
 
-def get_count(task_db):
-    return _get_context(task_db)['count']
+def get_count(task_ex):
+    return _get_context(task_ex)['count']
 
 
-def get_index(task_db):
-    return _get_context(task_db)['index']
+def get_index(task_ex):
+    return _get_context(task_ex)['index']
 
 
 def get_concurrency_spec(task_spec):
@@ -110,30 +110,30 @@ def get_concurrency_spec(task_spec):
     return policies.get_concurrency() if policies else None
 
 
-def get_indexes_for_loop(task_db, task_spec):
+def get_indexes_for_loop(task_ex, task_spec):
     concurrency_spec = get_concurrency_spec(task_spec)
-    concurrency = task_db.runtime_context['concurrency']
-    index = get_index(task_db)
+    concurrency = task_ex.runtime_context['concurrency']
+    index = get_index(task_ex)
 
-    number_to_execute = (get_count(task_db) - index
+    number_to_execute = (get_count(task_ex) - index
                          if not concurrency_spec else concurrency)
 
     return index, index + number_to_execute
 
 
-def do_step(task_db):
-    with_items_context = _get_context(task_db)
+def do_step(task_ex):
+    with_items_context = _get_context(task_ex)
 
     if with_items_context['capacity'] > 0:
         with_items_context['capacity'] -= 1
 
     with_items_context['index'] += 1
 
-    task_db.runtime_context.update({'with_items': with_items_context})
+    task_ex.runtime_context.update({'with_items': with_items_context})
 
 
-def prepare_runtime_context(task_db, task_spec):
-    runtime_context = task_db.runtime_context
+def prepare_runtime_context(task_ex, task_spec):
+    runtime_context = task_ex.runtime_context
     with_items_spec = task_spec.get_with_items()
 
     if with_items_spec:
@@ -141,7 +141,7 @@ def prepare_runtime_context(task_db, task_spec):
         runtime_context['with_items'] = {
             'capacity': get_concurrency_spec(task_spec),
             'index': 0,
-            'count': len(task_db.input[with_items_spec.keys()[0]])
+            'count': len(task_ex.input[with_items_spec.keys()[0]])
         }
 
 
@@ -209,5 +209,5 @@ def _get_result_key(task_spec):
             if task_spec.get_publish() else None)
 
 
-def is_iterations_incomplete(task_db):
-    return get_index(task_db) < get_count(task_db)
+def is_iterations_incomplete(task_ex):
+    return get_index(task_ex) < get_count(task_ex)

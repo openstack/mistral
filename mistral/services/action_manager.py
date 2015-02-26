@@ -147,14 +147,14 @@ def get_action_class(action_full_name):
         )
 
 
-def get_action_context(task_db):
+def get_action_context(task_ex):
     return {
         _ACTION_CTX_PARAM: {
-            'workflow_name': task_db.workflow_name,
-            'workflow_execution_id': task_db.workflow_execution_id,
-            'task_id': task_db.id,
-            'task_name': task_db.name,
-            'task_tags': task_db.tags
+            'workflow_name': task_ex.workflow_name,
+            'workflow_execution_id': task_ex.workflow_execution_id,
+            'task_id': task_ex.id,
+            'task_name': task_ex.name,
+            'task_tags': task_ex.tags
         }
     }
 

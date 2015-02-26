@@ -122,14 +122,14 @@ class ActionDefaultTest(base.EngineTestCase):
     def test_action_defaults_from_env(self):
         wf_service.create_workflows(WORKFLOW1)
 
-        exec_db = self.engine.start_workflow('wf1', None, env=ENV)
+        wf_ex = self.engine.start_workflow('wf1', None, env=ENV)
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
-        self._assert_single_item(exec_db.task_executions, name='task1')
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self._assert_single_item(wf_ex.task_executions, name='task1')
 
         requests.request.assert_called_with(
             'GET', 'https://api.library.org/books',
@@ -147,14 +147,14 @@ class ActionDefaultTest(base.EngineTestCase):
     def test_action_defaults_from_env_not_applied(self):
         wf_service.create_workflows(WORKFLOW2)
 
-        exec_db = self.engine.start_workflow('wf2', None, env=ENV)
+        wf_ex = self.engine.start_workflow('wf2', None, env=ENV)
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
-        self._assert_single_item(exec_db.task_executions, name='task1')
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self._assert_single_item(wf_ex.task_executions, name='task1')
 
         requests.request.assert_called_with(
             'GET', 'https://api.library.org/books',
@@ -180,18 +180,18 @@ class ActionDefaultTest(base.EngineTestCase):
             ]
         }
 
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'wf1_with_items',
             wf_input,
             env=ENV
         )
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
-        self._assert_single_item(exec_db.task_executions, name='task1')
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self._assert_single_item(wf_ex.task_executions, name='task1')
 
         calls = [mock.call('GET', url, params=None, data=None,
                            headers=None, cookies=None,
@@ -218,18 +218,18 @@ class ActionDefaultTest(base.EngineTestCase):
             ]
         }
 
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'wf2_with_items',
             wf_input,
             env=ENV
         )
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
-        self._assert_single_item(exec_db.task_executions, name='task1')
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self._assert_single_item(wf_ex.task_executions, name='task1')
 
         calls = [mock.call('GET', url, params=None, data=None,
                            headers=None, cookies=None,

@@ -37,10 +37,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
     def _run_workflow(self, worklfow_yaml):
         wf_service.create_workflows(worklfow_yaml)
-        exec_db = self.engine.start_workflow('wf', {})
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        wf_ex = self.engine.start_workflow('wf', {})
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
-        return db_api.get_workflow_execution(exec_db.id)
+        return db_api.get_workflow_execution(wf_ex.id)
 
     def test_direct_workflow_on_closures(self):
         WORKFLOW = """
@@ -74,9 +74,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             never_gets_here:
               action: std.noop
         """
-        exec_db = self._run_workflow(WORKFLOW)
+        wf_ex = self._run_workflow(WORKFLOW)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
         task4 = self._assert_single_item(tasks, name='task4')
@@ -87,7 +87,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_task_success(task3.id))
         self._await(lambda: self.is_task_success(task4.id))
 
-        self.assertTrue(exec_db.state, states.ERROR)
+        self.assertTrue(wf_ex.state, states.ERROR)
 
     def test_wrong_task_input(self):
         WORKFLOW_WRONG_TASK_INPUT = """
@@ -105,20 +105,20 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               description: Wrong task output should lead to workflow failure
               action: std.echo wrong_input="Hahaha"
         """
-        exec_db = exec_db = self._run_workflow(WORKFLOW_WRONG_TASK_INPUT)
-        task_db2 = exec_db.task_executions[1]
+        wf_ex = wf_ex = self._run_workflow(WORKFLOW_WRONG_TASK_INPUT)
+        task_ex2 = wf_ex.task_executions[1]
 
         self.assertIn(
             "Failed to initialize action",
-            task_db2.result['task'][task_db2.name]
+            task_ex2.result['task'][task_ex2.name]
         )
         self.assertIn(
             "unexpected keyword argument",
-            task_db2.result['task'][task_db2.name]
+            task_ex2.result['task'][task_ex2.name]
         )
 
-        self.assertTrue(exec_db.state, states.ERROR)
-        self.assertIn(task_db2.result['error'], exec_db.state_info)
+        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertIn(task_ex2.result['error'], wf_ex.state_info)
 
     def test_wrong_first_task_input(self):
         WORKFLOW_WRONG_FIRST_TASK_INPUT = """
@@ -131,20 +131,20 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task1:
               action: std.echo wrong_input="Ha-ha"
         """
-        exec_db = self._run_workflow(WORKFLOW_WRONG_FIRST_TASK_INPUT)
-        task_db = exec_db.task_executions[0]
+        wf_ex = self._run_workflow(WORKFLOW_WRONG_FIRST_TASK_INPUT)
+        task_ex = wf_ex.task_executions[0]
 
         self.assertIn(
             "Failed to initialize action",
-            task_db.result['task'][task_db.name]
+            task_ex.result['task'][task_ex.name]
         )
         self.assertIn(
             "unexpected keyword argument",
-            task_db.result['task'][task_db.name]
+            task_ex.result['task'][task_ex.name]
         )
 
-        self.assertTrue(exec_db.state, states.ERROR)
-        self.assertIn(task_db.result['error'], exec_db.state_info)
+        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertIn(task_ex.result['error'], wf_ex.state_info)
 
     def test_wrong_action(self):
         WORKFLOW_WRONG_ACTION = """
@@ -161,13 +161,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task2:
               action: action.doesnt_exist
         """
-        exec_db = self._run_workflow(WORKFLOW_WRONG_ACTION)
+        wf_ex = self._run_workflow(WORKFLOW_WRONG_ACTION)
 
         # TODO(dzimine): Catch tasks caused error, and set them to ERROR:
-        # TODO(dzimine): self.assertTrue(task_db.state, states.ERROR)
+        # TODO(dzimine): self.assertTrue(task_ex.state, states.ERROR)
 
-        self.assertTrue(exec_db.state, states.ERROR)
-        self.assertIn("Failed to find action", exec_db.state_info)
+        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertIn("Failed to find action", wf_ex.state_info)
 
     def test_wrong_action_first_task(self):
         WORKFLOW_WRONG_ACTION_FIRST_TASK = """
@@ -210,9 +210,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task2:
               action: std.echo output=<% wrong yaql %>
         """
-        exec_db = self._run_workflow(WORKFLOW_MESSED_YAQL)
+        wf_ex = self._run_workflow(WORKFLOW_MESSED_YAQL)
 
-        self.assertTrue(exec_db.state, states.ERROR)
+        self.assertTrue(wf_ex.state, states.ERROR)
 
     def test_messed_yaql_in_first_task(self):
         WORKFLOW_MESSED_YAQL_IN_FIRST_TASK = """

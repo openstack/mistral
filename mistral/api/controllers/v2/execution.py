@@ -30,6 +30,8 @@ from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
+# TODO(rakhmerov): Make sure to make all needed renaming on public API.
+
 
 class Execution(resource.Resource):
     """Execution resource."""
@@ -148,11 +150,11 @@ class ExecutionsController(rest.RestController):
         msg = execution.state_info
 
         if new_state == states.PAUSED:
-            exec_db = rpc.get_engine_client().pause_workflow(id)
+            wf_ex = rpc.get_engine_client().pause_workflow(id)
         elif new_state == states.RUNNING:
-            exec_db = rpc.get_engine_client().resume_workflow(id)
+            wf_ex = rpc.get_engine_client().resume_workflow(id)
         elif new_state in [states.SUCCESS, states.ERROR]:
-            exec_db = rpc.get_engine_client().stop_workflow(id, new_state, msg)
+            wf_ex = rpc.get_engine_client().stop_workflow(id, new_state, msg)
         else:
             # To prevent changing state in other cases throw a message.
             raise exc.DataAccessException(
@@ -161,8 +163,9 @@ class ExecutionsController(rest.RestController):
                  states.SUCCESS, states.ERROR]))
             )
 
-        return Execution.from_dict(exec_db if isinstance(exec_db, dict)
-                                   else exec_db.to_dict())
+        return Execution.from_dict(
+            wf_ex if isinstance(wf_ex, dict) else wf_ex.to_dict()
+        )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Execution, body=Execution, status_code=201)
@@ -197,7 +200,9 @@ class ExecutionsController(rest.RestController):
         """Return all Executions."""
         LOG.info("Fetch executions")
 
-        executions = [Execution.from_dict(db_model.to_dict())
-                      for db_model in db_api.get_workflow_executions()]
+        wf_executions = [
+            Execution.from_dict(db_model.to_dict())
+            for db_model in db_api.get_workflow_executions()
+        ]
 
-        return Executions(executions=executions)
+        return Executions(executions=wf_executions)

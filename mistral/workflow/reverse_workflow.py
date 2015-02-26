@@ -58,34 +58,34 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         return [self.wf_spec.get_tasks()[t_name]
                 for t_name in task_spec.get_requires() or []]
 
-    def _evaluate_workflow_final_context(self, cause_task_db):
-        return data_flow.evaluate_task_outbound_context(cause_task_db)
+    def _evaluate_workflow_final_context(self, cause_task_ex):
+        return data_flow.evaluate_task_outbound_context(cause_task_ex)
 
-    def _find_next_commands(self, task_db):
+    def _find_next_commands(self, task_ex):
         """Finds all tasks with resolved dependencies and return them
          in the form of engine commands.
 
-        :param task_db: Task DB model causing the operation.
+        :param task_ex: Task DB model causing the operation.
         :return: Tasks with resolved dependencies.
         """
 
         # If cause task is the target task of the workflow then
         # there's no more tasks to start.
-        if self.exec_db.start_params['task_name'] == task_db.name:
+        if self.wf_ex.start_params['task_name'] == task_ex.name:
             return []
 
         # We need to analyse the graph and see which tasks are ready to start.
         resolved_task_specs = []
         success_task_names = set()
 
-        for t in self.exec_db.task_executions:
+        for t in self.wf_ex.task_executions:
             if t.state == states.SUCCESS:
                 success_task_names.add(t.name)
 
         for t_spec in self.wf_spec.get_tasks():
             # Skip task if it doesn't have a direct dependency
             # on the cause task.
-            if task_db.name not in t_spec.get_requires():
+            if task_ex.name not in t_spec.get_requires():
                 continue
 
             if not (set(t_spec.get_requires()) - success_task_names):
@@ -146,7 +146,7 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
 
     def _find_db_task(self, name):
         db_tasks = filter(
-            lambda t: t.name == name, self.exec_db.task_executions
+            lambda t: t.name == name, self.wf_ex.task_executions
         )
 
         return db_tasks[0] if db_tasks else None

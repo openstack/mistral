@@ -143,16 +143,16 @@ class WithItemsEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb1.with_items', WORKFLOW_INPUT)
+        wf_ex = self.engine.start_workflow('wb1.with_items', WORKFLOW_INPUT)
 
         self._await(
-            lambda: self.is_execution_success(exec_db.id),
+            lambda: self.is_execution_success(wf_ex.id),
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
         with_items_context = task1.runtime_context['with_items']
 
@@ -178,16 +178,16 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_input = copy.copy(WORKFLOW_INPUT)
         wf_input.update({'greeting': 'Hello'})
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb1.with_items', wf_input)
+        wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
 
         self._await(
-            lambda: self.is_execution_success(exec_db.id),
+            lambda: self.is_execution_success(wf_ex.id),
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
         result = task1.result['result']
 
@@ -206,16 +206,16 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_input = {'arrayI': ['a', 'b', 'c'], 'arrayJ': [1, 2, 3]}
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb1.with_items', wf_input)
+        wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
 
         self._await(
-            lambda: self.is_execution_success(exec_db.id),
+            lambda: self.is_execution_success(wf_ex.id),
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
 
         # Since we know that we can receive results in random order,
@@ -235,26 +235,26 @@ class WithItemsEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK_ACTION_CONTEXT)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'wb1.wf1_with_items', WF_INPUT_URLS
         )
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.engine.on_task_result(task_db.id, wf_utils.TaskResult("Ivan"))
-        self.engine.on_task_result(task_db.id, wf_utils.TaskResult("John"))
-        self.engine.on_task_result(task_db.id, wf_utils.TaskResult("Mistral"))
+        self.engine.on_task_result(task_ex.id, wf_utils.TaskResult("Ivan"))
+        self.engine.on_task_result(task_ex.id, wf_utils.TaskResult("John"))
+        self.engine.on_task_result(task_ex.id, wf_utils.TaskResult("Mistral"))
 
         self._await(
-            lambda: self.is_execution_success(exec_db.id),
+            lambda: self.is_execution_success(wf_ex.id),
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_db = db_api.get_task_execution(task_db.id)
-        result = task_db.result['result']
+        task_ex = db_api.get_task_execution(task_ex.id)
+        result = task_ex.result['result']
 
         self.assertTrue(isinstance(result, list))
 
@@ -262,4 +262,4 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertIn('Ivan', result)
         self.assertIn('Mistral', result)
 
-        self.assertEqual(states.SUCCESS, task_db.state)
+        self.assertEqual(states.SUCCESS, task_ex.state)

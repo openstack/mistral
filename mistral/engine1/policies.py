@@ -27,11 +27,11 @@ from mistral.workflow import utils
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
 
 
-def _log_task_delay(task_db, delay_sec):
+def _log_task_delay(task_ex, delay_sec):
     wf_trace.info(
-        task_db,
+        task_ex,
         "Task '%s' [%s -> %s, delay = %s sec]" %
-        (task_db.name, task_db.state, states.DELAYED, delay_sec)
+        (task_ex.name, task_ex.state, states.DELAYED, delay_sec)
     )
 
 
@@ -148,42 +148,42 @@ class WaitBeforePolicy(base.TaskPolicy):
     def __init__(self, delay):
         self.delay = delay
 
-    def before_task_start(self, task_db, task_spec):
-        data_flow.evaluate_policy_params(self, task_db.in_context)
+    def before_task_start(self, task_ex, task_spec):
+        data_flow.evaluate_policy_params(self, task_ex.in_context)
         context_key = 'wait_before_policy'
 
         runtime_context = _ensure_context_has_key(
-            task_db.runtime_context,
+            task_ex.runtime_context,
             context_key
         )
 
-        task_db.runtime_context = runtime_context
+        task_ex.runtime_context = runtime_context
 
         policy_context = runtime_context[context_key]
 
         if policy_context.get('skip'):
             # Unset state 'DELAYED'.
             wf_trace.info(
-                task_db,
+                task_ex,
                 "Task '%s' [%s -> %s]"
-                % (task_db.name, states.DELAYED, states.RUNNING)
+                % (task_ex.name, states.DELAYED, states.RUNNING)
             )
 
-            task_db.state = states.RUNNING
+            task_ex.state = states.RUNNING
 
             return
 
         policy_context.update({'skip': True})
 
-        _log_task_delay(task_db, self.delay)
+        _log_task_delay(task_ex, self.delay)
 
-        task_db.state = states.DELAYED
+        task_ex.state = states.DELAYED
 
         scheduler.schedule_call(
             _ENGINE_CLIENT_PATH,
             'run_task',
             self.delay,
-            task_id=task_db.id
+            task_id=task_ex.id
         )
 
 
@@ -191,40 +191,40 @@ class WaitAfterPolicy(base.TaskPolicy):
     def __init__(self, delay):
         self.delay = delay
 
-    def after_task_complete(self, task_db, task_spec, result):
-        data_flow.evaluate_policy_params(self, task_db.in_context)
+    def after_task_complete(self, task_ex, task_spec, result):
+        data_flow.evaluate_policy_params(self, task_ex.in_context)
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
-            task_db.runtime_context,
+            task_ex.runtime_context,
             context_key
         )
 
-        task_db.runtime_context = runtime_context
+        task_ex.runtime_context = runtime_context
 
         policy_context = runtime_context[context_key]
 
         if policy_context.get('skip'):
             # Need to avoid terminal states.
-            if not states.is_completed(task_db.state):
+            if not states.is_completed(task_ex.state):
                 # Unset state 'DELAYED'.
 
                 wf_trace.info(
-                    task_db,
+                    task_ex,
                     "Task '%s' [%s -> %s]"
-                    % (task_db.name, states.DELAYED, states.RUNNING)
+                    % (task_ex.name, states.DELAYED, states.RUNNING)
                 )
 
-                task_db.state = states.RUNNING
+                task_ex.state = states.RUNNING
 
             return
 
         policy_context.update({'skip': True})
 
-        _log_task_delay(task_db, self.delay)
+        _log_task_delay(task_ex, self.delay)
 
         # Set task state to 'DELAYED'.
-        task_db.state = states.DELAYED
+        task_ex.state = states.DELAYED
 
         serializers = {
             'result': 'mistral.workflow.utils.TaskResultSerializer'
@@ -235,7 +235,7 @@ class WaitAfterPolicy(base.TaskPolicy):
             'on_task_result',
             self.delay,
             serializers,
-            task_id=task_db.id,
+            task_id=task_ex.id,
             result=result
         )
 
@@ -246,7 +246,7 @@ class RetryPolicy(base.TaskPolicy):
         self.delay = delay
         self.break_on = break_on
 
-    def after_task_complete(self, task_db, task_spec, result):
+    def after_task_complete(self, task_ex, task_spec, result):
         """Possible Cases:
 
         1. state = SUCCESS
@@ -256,15 +256,15 @@ class RetryPolicy(base.TaskPolicy):
         3. retry:count = 5, current:count = 4, state = ERROR
         Iterations complete therefore state = #{state}, current:count = 4.
         """
-        data_flow.evaluate_policy_params(self, task_db.in_context)
+        data_flow.evaluate_policy_params(self, task_ex.in_context)
         context_key = 'retry_task_policy'
 
         runtime_context = _ensure_context_has_key(
-            task_db.runtime_context,
+            task_ex.runtime_context,
             context_key
         )
 
-        task_db.runtime_context = runtime_context
+        task_ex.runtime_context = runtime_context
 
         state = states.ERROR if result.is_error() else states.SUCCESS
 
@@ -272,12 +272,12 @@ class RetryPolicy(base.TaskPolicy):
             return
 
         wf_trace.info(
-            task_db,
+            task_ex,
             "Task '%s' [%s -> ERROR]"
-            % (task_db.name, task_db.state)
+            % (task_ex.name, task_ex.state)
         )
 
-        outbound_context = task_db.result
+        outbound_context = task_ex.result
 
         policy_context = runtime_context[context_key]
 
@@ -297,9 +297,9 @@ class RetryPolicy(base.TaskPolicy):
         if not retries_remain or break_early:
             return
 
-        _log_task_delay(task_db, self.delay)
+        _log_task_delay(task_ex, self.delay)
 
-        task_db.state = states.DELAYED
+        task_ex.state = states.DELAYED
 
         policy_context['retry_no'] = retry_no + 1
         runtime_context[context_key] = policy_context
@@ -308,7 +308,7 @@ class RetryPolicy(base.TaskPolicy):
             _ENGINE_CLIENT_PATH,
             'run_task',
             self.delay,
-            task_id=task_db.id
+            task_id=task_ex.id
         )
 
 
@@ -316,21 +316,20 @@ class TimeoutPolicy(base.TaskPolicy):
     def __init__(self, timeout_sec):
         self.delay = timeout_sec
 
-    def before_task_start(self, task_db, task_spec):
-        data_flow.evaluate_policy_params(self, task_db.in_context)
-
+    def before_task_start(self, task_ex, task_spec):
+        data_flow.evaluate_policy_params(self, task_ex.in_context)
         scheduler.schedule_call(
             None,
             'mistral.engine1.policies.fail_task_if_incomplete',
             self.delay,
-            task_id=task_db.id,
+            task_id=task_ex.id,
             timeout=self.delay
         )
 
         wf_trace.info(
-            task_db,
+            task_ex,
             "Timeout check scheduled [task=%s, timeout(s)=%s]." %
-            (task_db.id, self.delay)
+            (task_ex.id, self.delay)
         )
 
 
@@ -338,51 +337,51 @@ class PauseBeforePolicy(base.TaskPolicy):
     def __init__(self, expression):
         self.expr = expression
 
-    def before_task_start(self, task_db, task_spec):
-        data_flow.evaluate_policy_params(self, task_db.in_context)
+    def before_task_start(self, task_ex, task_spec):
+        data_flow.evaluate_policy_params(self, task_ex.in_context)
 
-        if not expressions.evaluate(self.expr, task_db.in_context):
+        if not expressions.evaluate(self.expr, task_ex.in_context):
             return
 
         wf_trace.info(
-            task_db,
+            task_ex,
             "Workflow paused before task '%s' [%s -> %s]" %
-            (task_db.name, task_db.workflow_execution.state, states.PAUSED)
+            (task_ex.name, task_ex.workflow_execution.state, states.PAUSED)
         )
 
-        task_db.workflow_execution.state = states.PAUSED
-        task_db.state = states.IDLE
+        task_ex.workflow_execution.state = states.PAUSED
+        task_ex.state = states.IDLE
 
 
 class ConcurrencyPolicy(base.TaskPolicy):
     def __init__(self, concurrency):
         self.concurrency = concurrency
 
-    def before_task_start(self, task_db, task_spec):
-        data_flow.evaluate_policy_params(self, task_db.in_context)
+    def before_task_start(self, task_ex, task_spec):
+        data_flow.evaluate_policy_params(self, task_ex.in_context)
         context_key = 'concurrency'
 
         runtime_context = _ensure_context_has_key(
-            task_db.runtime_context,
+            task_ex.runtime_context,
             context_key
         )
 
         runtime_context[context_key] = self.concurrency
-        task_db.runtime_context = runtime_context
+        task_ex.runtime_context = runtime_context
 
 
 def fail_task_if_incomplete(task_id, timeout):
-    task_db = db_api.get_task_execution(task_id)
+    task_ex = db_api.get_task_execution(task_id)
 
-    if not states.is_completed(task_db.state):
+    if not states.is_completed(task_ex.state):
         msg = "Task timed out [task=%s, timeout(s)=%s]." % (task_id, timeout)
 
-        wf_trace.info(task_db, msg)
+        wf_trace.info(task_ex, msg)
 
         wf_trace.info(
-            task_db,
+            task_ex,
             "Task '%s' [%s -> ERROR]"
-            % (task_db.name, task_db.state)
+            % (task_ex.name, task_ex.state)
         )
 
         rpc.get_engine_client().on_task_result(

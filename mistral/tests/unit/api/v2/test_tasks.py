@@ -29,7 +29,7 @@ from mistral.workflow import utils as wf_utils
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
-TASK_DB = models.TaskExecution(
+task_ex = models.TaskExecution(
     id='123',
     name='task',
     workflow_name='flow',
@@ -58,14 +58,14 @@ TASK = {
     'updated_at': '1970-01-01 00:00:00'
 }
 
-UPDATED_TASK_DB = copy.copy(TASK_DB)
-UPDATED_TASK_DB['state'] = 'SUCCESS'
+UPDATED_task_ex = copy.copy(task_ex)
+UPDATED_task_ex['state'] = 'SUCCESS'
 UPDATED_TASK = copy.copy(TASK)
 UPDATED_TASK['state'] = 'SUCCESS'
 UPDATED_TASK_RES = wf_utils.TaskResult(json.loads(UPDATED_TASK['result']))
 
-ERROR_TASK_DB = copy.copy(TASK_DB)
-ERROR_TASK_DB['state'] = 'ERROR'
+ERROR_task_ex = copy.copy(task_ex)
+ERROR_task_ex['state'] = 'ERROR'
 ERROR_TASK = copy.copy(TASK)
 ERROR_TASK['state'] = 'ERROR'
 ERROR_TASK_RES = wf_utils.TaskResult(None, json.loads(ERROR_TASK['result']))
@@ -73,8 +73,8 @@ ERROR_TASK_RES = wf_utils.TaskResult(None, json.loads(ERROR_TASK['result']))
 BROKEN_TASK = copy.copy(TASK)
 BROKEN_TASK['result'] = 'string not escaped'
 
-MOCK_TASK = mock.MagicMock(return_value=TASK_DB)
-MOCK_TASKS = mock.MagicMock(return_value=[TASK_DB])
+MOCK_TASK = mock.MagicMock(return_value=task_ex)
+MOCK_TASKS = mock.MagicMock(return_value=[task_ex])
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 
@@ -97,7 +97,7 @@ class TestTasksController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'on_task_result')
     def test_put(self, f):
-        f.return_value = UPDATED_TASK_DB.to_dict()
+        f.return_value = UPDATED_task_ex.to_dict()
 
         resp = self.app.put_json('/v2/tasks/123', UPDATED_TASK)
 
@@ -108,7 +108,7 @@ class TestTasksController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'on_task_result')
     def test_put_error(self, f):
-        f.return_value = ERROR_TASK_DB.to_dict()
+        f.return_value = ERROR_task_ex.to_dict()
 
         resp = self.app.put_json('/v2/tasks/123', ERROR_TASK)
 
@@ -135,7 +135,7 @@ class TestTasksController(base.FunctionalTest):
     def test_put_without_result(self, f):
         task = copy.copy(UPDATED_TASK)
         del task['result']
-        f.return_value = UPDATED_TASK_DB.to_dict()
+        f.return_value = UPDATED_task_ex.to_dict()
         resp = self.app.put_json('/v2/tasks/123', task)
 
         self.assertEqual(resp.status_int, 200)

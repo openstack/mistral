@@ -80,14 +80,14 @@ class NoopTaskEngineTest(base.EngineTestCase):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {'num1': 1, 'num2': 1})
+        wf_ex = self.engine.start_workflow('wf', {'num1': 1, 'num2': 1})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -101,20 +101,20 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        self.assertDictEqual({'result': '4,None'}, exec_db.output)
+        self.assertDictEqual({'result': '4,None'}, wf_ex.output)
 
     def test_noop_task2(self):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {'num1': 1, 'num2': 2})
+        wf_ex = self.engine.start_workflow('wf', {'num1': 1, 'num2': 2})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -128,4 +128,4 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task5.state)
 
-        self.assertDictEqual({'result': 'None,5'}, exec_db.output)
+        self.assertDictEqual({'result': 'None,5'}, wf_ex.output)

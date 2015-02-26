@@ -165,20 +165,20 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(LINEAR_WF)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'wf',
             {},
             env={'from': 'Neo'}
         )
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -196,16 +196,16 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(PARALLEL_TASKS_WF)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(2, len(tasks))
 
@@ -218,23 +218,23 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'var1': 1}, task1.result)
         self.assertDictEqual({'var2': 2}, task2.result)
 
-        self.assertEqual(1, exec_db.output['var1'])
-        self.assertEqual(2, exec_db.output['var2'])
+        self.assertEqual(1, wf_ex.output['var1'])
+        self.assertEqual(2, wf_ex.output['var2'])
 
     def test_parallel_tasks_complex(self):
         wf_service.create_workflows(PARALLEL_TASKS_COMPLEX_WF)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(6, len(tasks))
 
@@ -258,31 +258,31 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'var2': 2}, task2.result)
         self.assertDictEqual({'var21': 21}, task21.result)
 
-        self.assertEqual(1, exec_db.output['var1'])
-        self.assertEqual(12, exec_db.output['var12'])
-        self.assertFalse('var13' in exec_db.output)
-        self.assertEqual(14, exec_db.output['var14'])
-        self.assertEqual(2, exec_db.output['var2'])
-        self.assertEqual(21, exec_db.output['var21'])
+        self.assertEqual(1, wf_ex.output['var1'])
+        self.assertEqual(12, wf_ex.output['var12'])
+        self.assertFalse('var13' in wf_ex.output)
+        self.assertEqual(14, wf_ex.output['var14'])
+        self.assertEqual(2, wf_ex.output['var2'])
+        self.assertEqual(21, wf_ex.output['var21'])
 
     def test_sequential_tasks_publishing_same_var(self):
         wf_service.create_workflows(VAR_OVERWRITE_WF)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'wf',
             {},
             env={'from': 'Neo'}
         )
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -311,13 +311,13 @@ class DataFlowTest(test_base.BaseTest):
         publish_dict = {'foo': 'bar'}
         action_output = 'string data'
 
-        task_db = models.TaskExecution(name='task1')
+        task_ex = models.TaskExecution(name='task1')
 
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish_dict)
 
         res = data_flow.evaluate_task_result(
-            task_db,
+            task_ex,
             task_spec,
             utils.TaskResult(data=action_output, error=None)
         )
@@ -345,14 +345,14 @@ class DataFlowTest(test_base.BaseTest):
             'a': '<% $.task1.akey %>'
         }
 
-        task_db = models.TaskExecution(name='task1')
-        task_db.in_context = in_context
+        task_ex = models.TaskExecution(name='task1')
+        task_ex.in_context = in_context
 
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish)
 
         res = data_flow.evaluate_task_result(
-            task_db,
+            task_ex,
             task_spec,
             utils.TaskResult(data=action_output, error=None)
         )
@@ -378,13 +378,13 @@ class DataFlowTest(test_base.BaseTest):
         publish = {'foo': '<% $.akey %>'}
         action_output = 'error data'
 
-        task_db = models.TaskExecution(name='task1')
+        task_ex = models.TaskExecution(name='task1')
 
         task_spec = mock.MagicMock()
         task_spec.get_publish = mock.MagicMock(return_value=publish)
 
         res = data_flow.evaluate_task_result(
-            task_db,
+            task_ex,
             task_spec,
             utils.TaskResult(data=None, error=action_output)
         )

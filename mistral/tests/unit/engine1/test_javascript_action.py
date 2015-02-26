@@ -74,34 +74,34 @@ class JavaScriptEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('test_js.js_test', {'num': 50})
+        wf_ex = self.engine.start_workflow('test_js.js_test', {'num': 50})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.SUCCESS, task_db.state)
-        self.assertDictEqual({}, task_db.runtime_context)
+        self.assertEqual(states.SUCCESS, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
 
-        self.assertEqual(500, task_db.output['num_10_times'])
-        self.assertEqual(100, task_db.output['result'])
+        self.assertEqual(500, task_ex.output['num_10_times'])
+        self.assertEqual(100, task_ex.output['result'])
 
     @mock.patch.object(javascript, 'evaluate', fake_evaluate)
     def test_fake_javascript_action_data_context(self):
         wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('test_js.js_test', {'num': 50})
+        wf_ex = self.engine.start_workflow('test_js.js_test', {'num': 50})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.SUCCESS, task_db.state)
-        self.assertDictEqual({}, task_db.runtime_context)
+        self.assertEqual(states.SUCCESS, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
 
-        self.assertEqual(500, task_db.result['result'])
+        self.assertEqual(500, task_ex.result['result'])

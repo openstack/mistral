@@ -49,52 +49,52 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
 
         wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
 
-        exec_db = models.WorkflowExecution()
-        exec_db.update({
+        wf_ex = models.WorkflowExecution()
+        wf_ex.update({
             'id': '1-2-3-4',
             'spec': wb_spec.get_workflows().get('wf1').to_dict(),
             'state': states.IDLE
         })
 
-        self.exec_db = exec_db
+        self.wf_ex = wf_ex
         self.wb_spec = wb_spec
-        self.handler = r_wf.ReverseWorkflowHandler(exec_db)
+        self.handler = r_wf.ReverseWorkflowHandler(wf_ex)
 
     def _create_db_task(self, id, name, state):
         tasks_spec = self.wb_spec.get_workflows()['wf1'].get_tasks()
 
-        task_db = models.TaskExecution()
-        task_db.update({
+        task_ex = models.TaskExecution()
+        task_ex.update({
             'id': id,
             'name': name,
             'spec': tasks_spec[name].to_dict(),
             'state': state
         })
 
-        self.exec_db.task_executions.append(task_db)
+        self.wf_ex.task_executions.append(task_ex)
 
-        return task_db
+        return task_ex
 
     def test_start_workflow_task2(self):
         commands = self.handler.start_workflow(task_name='task2')
 
         self.assertEqual(1, len(commands))
         self.assertEqual('task1', commands[0].task_spec.get_name())
-        self.assertEqual(states.RUNNING, self.exec_db.state)
+        self.assertEqual(states.RUNNING, self.wf_ex.state)
 
     def test_start_workflow_task1(self):
         commands = self.handler.start_workflow(task_name='task1')
 
         self.assertEqual(1, len(commands))
         self.assertEqual('task1', commands[0].task_spec.get_name())
-        self.assertEqual(states.RUNNING, self.exec_db.state)
+        self.assertEqual(states.RUNNING, self.wf_ex.state)
 
     def test_start_workflow_without_task(self):
         self.assertRaises(exc.WorkflowException, self.handler.start_workflow)
 
     def test_on_task_result(self):
-        self.exec_db.update({'state': states.RUNNING})
-        self.exec_db.update({'start_params': {'task_name': 'task2'}})
+        self.wf_ex.update({'state': states.RUNNING})
+        self.wf_ex.update({'start_params': {'task_name': 'task2'}})
 
         task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
 
@@ -107,7 +107,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
         self.assertEqual(1, len(commands))
         self.assertEqual('task2', commands[0].task_spec.get_name())
 
-        self.assertEqual(states.RUNNING, self.exec_db.state)
+        self.assertEqual(states.RUNNING, self.wf_ex.state)
         self.assertEqual(states.SUCCESS, task1_db.state)
 
         # Emulate finishing 'task2'.
@@ -120,7 +120,7 @@ class ReverseWorkflowHandlerTest(base.BaseTest):
 
         self.assertEqual(0, len(task_specs))
 
-        self.assertEqual(states.SUCCESS, self.exec_db.state)
+        self.assertEqual(states.SUCCESS, self.wf_ex.state)
         self.assertEqual(states.SUCCESS, task1_db.state)
         self.assertEqual(states.SUCCESS, task2_db.state)
 

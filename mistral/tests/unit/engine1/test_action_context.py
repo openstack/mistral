@@ -74,19 +74,19 @@ class ActionContextTest(base.EngineTestCase):
     def test_action_context(self):
         wb_service.create_workbook_v2(WORKBOOK)
 
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, exec_db.state)
-        task = self._assert_single_item(exec_db.task_executions, name='task1')
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        task = self._assert_single_item(wf_ex.task_executions, name='task1')
 
         headers = {
-            'Mistral-Workflow-Name': exec_db.workflow_name,
+            'Mistral-Workflow-Name': wf_ex.workflow_name,
             'Mistral-Task-Id': task.id,
-            'Mistral-Execution-Id': exec_db.id
+            'Mistral-Execution-Id': wf_ex.id
         }
 
         requests.request.assert_called_with(

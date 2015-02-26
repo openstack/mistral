@@ -146,44 +146,44 @@ class LongActionTest(base.EngineTestCase):
 
         self.block_action()
 
-        exec_db = self.engine.start_workflow('wf', None)
+        wf_ex = self.engine.start_workflow('wf', None)
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.RUNNING, exec_db.state)
-        self.assertEqual(states.RUNNING, exec_db.task_executions[0].state)
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.RUNNING, wf_ex.task_executions[0].state)
 
         self.wait_for_action()
 
         # Here's the point when the action is blocked but already running.
         # Do the same check again, it should always pass.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.RUNNING, exec_db.state)
-        self.assertEqual(states.RUNNING, exec_db.task_executions[0].state)
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.RUNNING, wf_ex.task_executions[0].state)
 
         self.unblock_action()
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual({'result': 'test'}, exec_db.output)
+        self.assertDictEqual({'result': 'test'}, wf_ex.output)
 
     def test_short_action(self):
         wf_service.create_workflows(WF_SHORT_ACTION)
 
         self.block_action()
 
-        exec_db = self.engine.start_workflow('wf', None)
+        wf_ex = self.engine.start_workflow('wf', None)
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.RUNNING, exec_db.state)
+        self.assertEqual(states.RUNNING, wf_ex.state)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
-        task1 = self._assert_single_item(exec_db.task_executions, name='task1')
+        task1 = self._assert_single_item(wf_ex.task_executions, name='task1')
         task2 = self._assert_single_item(
             tasks,
             name='task2',
@@ -195,7 +195,7 @@ class LongActionTest(base.EngineTestCase):
         self.unblock_action()
 
         self._await(lambda: self.is_task_success(task2.id))
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         task1 = db_api.get_task_execution(task1.id)
 

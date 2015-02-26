@@ -63,69 +63,69 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
     def test_start_task1(self):
         wf_input = {'param1': 'a', 'param2': 'b'}
 
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
             wf_input,
             task_name='task1'
         )
 
         # Execution 1.
-        self.assertIsNotNone(exec_db)
-        self.assertDictEqual(wf_input, exec_db.input)
-        self.assertDictEqual({'task_name': 'task1'}, exec_db.start_params)
+        self.assertIsNotNone(wf_ex)
+        self.assertDictEqual(wf_input, wf_ex.input)
+        self.assertDictEqual({'task_name': 'task1'}, wf_ex.start_params)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self.assertEqual(1, len(db_api.get_task_executions()))
 
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', exec_db.output['task1']['result1'])
-        self._assert_dict_contains_subset({'result1': 'a'}, exec_db.output)
+        self.assertEqual('a', wf_ex.output['task1']['result1'])
+        self._assert_dict_contains_subset({'result1': 'a'}, wf_ex.output)
 
     def test_start_task2(self):
         wf_input = {'param1': 'a', 'param2': 'b'}
 
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
             wf_input,
             task_name='task2'
         )
 
         # Execution 1.
-        self.assertIsNotNone(exec_db)
-        self.assertDictEqual(wf_input, exec_db.input)
-        self.assertDictEqual({'task_name': 'task2'}, exec_db.start_params)
+        self.assertIsNotNone(wf_ex)
+        self.assertDictEqual(wf_input, wf_ex.input)
+        self.assertDictEqual({'task_name': 'task2'}, wf_ex.start_params)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(exec_db.task_executions))
+        self.assertEqual(2, len(wf_ex.task_executions))
         self.assertEqual(2, len(db_api.get_task_executions()))
 
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task2',
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', exec_db.output['task1']['result1'])
-        self.assertEqual('a & b', exec_db.output['task2']['result2'])
-        self._assert_dict_contains_subset({'result1': 'a'}, exec_db.output)
-        self._assert_dict_contains_subset({'result2': 'a & b'}, exec_db.output)
+        self.assertEqual('a', wf_ex.output['task1']['result1'])
+        self.assertEqual('a & b', wf_ex.output['task2']['result2'])
+        self._assert_dict_contains_subset({'result1': 'a'}, wf_ex.output)
+        self._assert_dict_contains_subset({'result2': 'a & b'}, wf_ex.output)

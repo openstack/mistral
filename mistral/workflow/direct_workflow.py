@@ -89,7 +89,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return to_task_name in t_names
 
-    def _evaluate_workflow_final_context(self, cause_task_db):
+    def _evaluate_workflow_final_context(self, cause_task_ex):
         ctx = {}
 
         for t_db in self._find_end_tasks():
@@ -103,34 +103,34 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     def _find_end_tasks(self):
         return filter(
             lambda t_db: not self._has_outbound_tasks(t_db),
-            wf_utils.find_successful_tasks(self.exec_db)
+            wf_utils.find_successful_tasks(self.wf_ex)
         )
 
-    def _has_outbound_tasks(self, task_db):
+    def _has_outbound_tasks(self, task_ex):
         t_specs = self._find_outbound_task_specs(
-            self.wf_spec.get_tasks()[task_db.name]
+            self.wf_spec.get_tasks()[task_ex.name]
         )
 
         return any(
-            [wf_utils.find_db_task(self.exec_db, t_s) for t_s in t_specs]
+            [wf_utils.find_db_task(self.wf_ex, t_s) for t_s in t_specs]
         )
 
-    def _find_next_commands(self, task_db, remove_unsatisfied_joins=True):
+    def _find_next_commands(self, task_ex, remove_unsatisfied_joins=True):
         """Finds commands that should run after completing given task.
 
         Expression 'on_complete' is not mutually exclusive to 'on_success'
          and 'on_error'.
-        :param task_db: Task DB model.
+        :param task_ex: Task DB model.
         :param remove_unsatisfied_joins: True if incomplete "join"
             tasks must be excluded from the list of commands.
         :return: List of task specifications.
         """
         cmds = []
 
-        t_name = task_db.name
-        t_state = task_db.state
+        t_name = task_ex.name
+        t_state = task_ex.state
 
-        ctx = data_flow.evaluate_task_outbound_context(task_db)
+        ctx = data_flow.evaluate_task_outbound_context(task_ex)
 
         if states.is_completed(t_state):
             on_complete = self.get_on_complete_clause(t_name)
@@ -162,8 +162,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         else:
             return cmds
 
-    def _is_error_handled(self, task_db):
-        return self.get_on_error_clause(task_db.name)
+    def _is_error_handled(self, task_ex):
+        return self.get_on_error_clause(task_ex.name)
 
     @staticmethod
     def _remove_task_from_clause(on_clause, t_name):
@@ -233,7 +233,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             return False
 
         return (cmd.task_spec.get_join()
-                and wf_utils.find_db_task(self.exec_db, cmd.task_spec))
+                and wf_utils.find_db_task(self.wf_ex, cmd.task_spec))
 
     def _remove_unsatisfied_joins(self, cmds):
         return filter(lambda cmd: not self._is_unsatisfied_join(cmd), cmds)
@@ -271,7 +271,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         return False
 
     def _triggers_join(self, join_task_spec, inbound_task_spec):
-        in_t_db = wf_utils.find_db_task(self.exec_db, inbound_task_spec)
+        in_t_db = wf_utils.find_db_task(self.wf_ex, inbound_task_spec)
 
         if not in_t_db or not states.is_completed(in_t_db.state):
             return False

@@ -55,30 +55,30 @@ class DefaultEngine(base.Engine):
 
                 utils.validate_workflow_input(wf_db, wf_spec, workflow_input)
 
-                exec_db = self._create_db_execution(
+                wf_ex = self._create_db_execution(
                     wf_db,
                     wf_spec,
                     workflow_input,
                     params
                 )
-                exec_id = exec_db.id
+                exec_id = wf_ex.id
 
                 u.wf_trace.info(
-                    exec_db,
+                    wf_ex,
                     "Starting the execution of workflow '%s'" % workflow_name
                 )
 
                 wf_handler = wfh_factory.create_workflow_handler(
-                    exec_db,
+                    wf_ex,
                     wf_spec
                 )
 
                 # Calculate commands to process next.
                 cmds = wf_handler.start_workflow(**params)
 
-                self._run_local_commands(cmds, exec_db, wf_handler)
+                self._run_local_commands(cmds, wf_ex, wf_handler)
 
-            self._run_remote_commands(cmds, exec_db, wf_handler)
+            self._run_remote_commands(cmds, wf_ex, wf_handler)
 
         except Exception as e:
             LOG.error(
@@ -88,7 +88,7 @@ class DefaultEngine(base.Engine):
             self._fail_workflow(exec_id, e)
             raise e
 
-        return exec_db
+        return wf_ex
 
     @u.log_exec(LOG)
     def on_task_result(self, task_id, result):
@@ -97,38 +97,38 @@ class DefaultEngine(base.Engine):
 
         try:
             with db_api.transaction():
-                task_db = db_api.get_task_execution(task_id)
-                task_name = task_db.name
-                exec_db = db_api.get_workflow_execution(
-                    task_db.workflow_execution_id
+                task_ex = db_api.get_task_execution(task_id)
+                task_name = task_ex.name
+                wf_ex = db_api.get_workflow_execution(
+                    task_ex.workflow_execution_id
                 )
-                exec_id = exec_db.id
+                exec_id = wf_ex.id
 
-                result = utils.transform_result(exec_db, task_db, result)
-                wf_handler = wfh_factory.create_workflow_handler(exec_db)
+                result = utils.transform_result(wf_ex, task_ex, result)
+                wf_handler = wfh_factory.create_workflow_handler(wf_ex)
 
                 self._after_task_complete(
-                    task_db,
-                    spec_parser.get_task_spec(task_db.spec),
+                    task_ex,
+                    spec_parser.get_task_spec(task_ex.spec),
                     result,
                     wf_handler.wf_spec
                 )
 
-                if task_db.state == states.DELAYED:
-                    return task_db
+                if task_ex.state == states.DELAYED:
+                    return task_ex
 
                 # Calculate commands to process next.
-                cmds = wf_handler.on_task_result(task_db, result)
+                cmds = wf_handler.on_task_result(task_ex, result)
 
                 self._run_local_commands(
                     cmds,
-                    exec_db,
+                    wf_ex,
                     wf_handler,
-                    task_db
+                    task_ex
                 )
 
-            self._run_remote_commands(cmds, exec_db, wf_handler)
-            self._check_subworkflow_completion(exec_db)
+            self._run_remote_commands(cmds, wf_ex, wf_handler)
+            self._check_subworkflow_completion(wf_ex)
 
         except Exception as e:
             LOG.error(
@@ -139,7 +139,7 @@ class DefaultEngine(base.Engine):
             self._fail_workflow(exec_id, e)
             raise e
 
-        return task_db
+        return task_ex
 
     @u.log_exec(LOG)
     def run_task(self, task_id):
@@ -148,32 +148,32 @@ class DefaultEngine(base.Engine):
 
         try:
             with db_api.transaction():
-                task_db = db_api.get_task_execution(task_id)
-                task_name = task_db.name
+                task_ex = db_api.get_task_execution(task_id)
+                task_name = task_ex.name
 
                 u.wf_trace.info(
-                    task_db,
+                    task_ex,
                     "Task '%s' [%s -> %s]"
-                    % (task_db.name, task_db.state, states.RUNNING)
+                    % (task_ex.name, task_ex.state, states.RUNNING)
                 )
 
-                task_db = db_api.update_task_execution(
+                task_ex = db_api.update_task_execution(
                     task_id,
                     {'state': states.RUNNING}
                 )
 
-                task_spec = spec_parser.get_task_spec(task_db.spec)
+                task_spec = spec_parser.get_task_spec(task_ex.spec)
 
-                exec_db = task_db.workflow_execution
-                exec_id = exec_db.id
+                wf_ex = task_ex.workflow_execution
+                exec_id = wf_ex.id
 
-                wf_handler = wfh_factory.create_workflow_handler(exec_db)
+                wf_handler = wfh_factory.create_workflow_handler(wf_ex)
 
-                cmd = commands.RunTask(task_spec, task_db)
+                cmd = commands.RunTask(task_spec, task_ex)
 
-                cmd.run_local(exec_db, wf_handler)
+                cmd.run_local(wf_ex, wf_handler)
 
-            cmd.run_remote(exec_db, wf_handler)
+            cmd.run_remote(wf_ex, wf_handler)
 
         except Exception as e:
             LOG.error(
@@ -186,28 +186,28 @@ class DefaultEngine(base.Engine):
     @u.log_exec(LOG)
     def pause_workflow(self, execution_id):
         with db_api.transaction():
-            exec_db = db_api.get_workflow_execution(execution_id)
+            wf_ex = db_api.get_workflow_execution(execution_id)
 
-            wf_handler = wfh_factory.create_workflow_handler(exec_db)
+            wf_handler = wfh_factory.create_workflow_handler(wf_ex)
 
             wf_handler.pause_workflow()
 
-        return exec_db
+        return wf_ex
 
     @u.log_exec(LOG)
     def resume_workflow(self, execution_id):
         try:
             with db_api.transaction():
-                exec_db = db_api.get_workflow_execution(execution_id)
+                wf_ex = db_api.get_workflow_execution(execution_id)
 
-                wf_handler = wfh_factory.create_workflow_handler(exec_db)
+                wf_handler = wfh_factory.create_workflow_handler(wf_ex)
 
                 # Calculate commands to process next.
                 cmds = wf_handler.resume_workflow()
 
-                self._run_local_commands(cmds, exec_db, wf_handler)
+                self._run_local_commands(cmds, wf_ex, wf_handler)
 
-            self._run_remote_commands(cmds, exec_db, wf_handler)
+            self._run_remote_commands(cmds, wf_ex, wf_handler)
 
         except Exception as e:
             LOG.error("Failed to resume execution id=%s: %s\n%s",
@@ -215,13 +215,13 @@ class DefaultEngine(base.Engine):
             self._fail_workflow(execution_id, e)
             raise e
 
-        return exec_db
+        return wf_ex
 
     @u.log_exec(LOG)
     def stop_workflow(self, execution_id, state, message=None):
         with db_api.transaction():
-            exec_db = db_api.get_execution(execution_id)
-            wf_handler = wfh_factory.create_workflow_handler(exec_db)
+            wf_ex = db_api.get_execution(execution_id)
+            wf_handler = wfh_factory.create_workflow_handler(wf_ex)
 
             return wf_handler.stop_workflow(state, message)
 
@@ -235,14 +235,14 @@ class DefaultEngine(base.Engine):
         with db_api.transaction():
             err_msg = str(err)
 
-            exec_db = db_api.load_workflow_execution(execution_id)
+            wf_ex = db_api.load_workflow_execution(execution_id)
 
-            if exec_db is None:
+            if wf_ex is None:
                 LOG.error("Cant fail workflow execution id='%s': not found.",
                           execution_id)
                 return
 
-            wf_handler = wfh_factory.create_workflow_handler(exec_db)
+            wf_handler = wfh_factory.create_workflow_handler(wf_ex)
             wf_handler.stop_workflow(states.ERROR, err_msg)
 
             if task_id:
@@ -271,30 +271,30 @@ class DefaultEngine(base.Engine):
         return params
 
     @staticmethod
-    def _run_local_commands(cmds, exec_db, wf_handler, cause_task_db=None):
+    def _run_local_commands(cmds, wf_ex, wf_handler, cause_task_ex=None):
         if not cmds:
             return
 
         for cmd in cmds:
-            if not cmd.run_local(exec_db, wf_handler, cause_task_db):
+            if not cmd.run_local(wf_ex, wf_handler, cause_task_ex):
                 return False
 
         return True
 
     @staticmethod
-    def _run_remote_commands(cmds, exec_db, wf_handler, cause_task_db=None):
+    def _run_remote_commands(cmds, wf_ex, wf_handler, cause_task_ex=None):
         if not cmds:
             return
 
         for cmd in cmds:
-            if not cmd.run_remote(exec_db, wf_handler, cause_task_db):
+            if not cmd.run_remote(wf_ex, wf_handler, cause_task_ex):
                 return False
 
         return True
 
     @staticmethod
     def _create_db_execution(wf_db, wf_spec, wf_input, params):
-        exec_db = db_api.create_workflow_execution({
+        wf_ex = db_api.create_workflow_execution({
             'workflow_name': wf_db.name,
             'spec': wf_spec.to_dict(),
             'start_params': params or {},
@@ -305,30 +305,30 @@ class DefaultEngine(base.Engine):
             'task_execution_id': params.get('parent_task_id'),
         })
 
-        data_flow.add_openstack_data_to_context(exec_db.context)
-        data_flow.add_execution_to_context(exec_db, exec_db.context)
-        data_flow.add_environment_to_context(exec_db, exec_db.context)
+        data_flow.add_openstack_data_to_context(wf_ex.context)
+        data_flow.add_execution_to_context(wf_ex, wf_ex.context)
+        data_flow.add_environment_to_context(wf_ex, wf_ex.context)
 
-        return exec_db
+        return wf_ex
 
     @staticmethod
-    def _after_task_complete(task_db, task_spec, result, wf_spec):
+    def _after_task_complete(task_ex, task_spec, result, wf_spec):
         for p in policies.build_policies(task_spec.get_policies(), wf_spec):
-            p.after_task_complete(task_db, task_spec, result)
+            p.after_task_complete(task_ex, task_spec, result)
 
-    def _check_subworkflow_completion(self, exec_db):
-        if not exec_db.task_execution_id:
+    def _check_subworkflow_completion(self, wf_ex):
+        if not wf_ex.task_execution_id:
             return
 
-        if exec_db.state == states.SUCCESS:
+        if wf_ex.state == states.SUCCESS:
             self._engine_client.on_task_result(
-                exec_db.task_execution_id,
-                wf_utils.TaskResult(data=exec_db.output)
+                wf_ex.task_execution_id,
+                wf_utils.TaskResult(data=wf_ex.output)
             )
-        elif exec_db.state == states.ERROR:
-            err_msg = 'Failed subworkflow [execution_id=%s]' % exec_db.id
+        elif wf_ex.state == states.ERROR:
+            err_msg = 'Failed subworkflow [execution_id=%s]' % wf_ex.id
 
             self._engine_client.on_task_result(
-                exec_db.task_execution_id,
+                wf_ex.task_execution_id,
                 wf_utils.TaskResult(error=err_msg)
             )

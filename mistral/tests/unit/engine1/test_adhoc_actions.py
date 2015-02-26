@@ -67,14 +67,14 @@ class AdhocActionsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
     def test_run_workflow_with_adhoc_action(self):
-        exec_db = self.engine.start_workflow(
+        wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
             {'str1': 'a', 'str2': 'b'}
         )
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.maxDiff = None
 
@@ -83,5 +83,5 @@ class AdhocActionsTest(base.EngineTestCase):
                 'workflow_result': 'a+b and a+b',
                 'concat_task_result': {'result': 'a+b and a+b'}
             },
-            exec_db.output
+            wf_ex.output
         )

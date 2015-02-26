@@ -45,32 +45,32 @@ class TaskResultSerializer(serializer.Serializer):
         return TaskResult(entity['data'], entity['error'])
 
 
-def find_db_task(exec_db, task_spec):
+def find_db_task(wf_ex, task_spec):
     db_tasks = [
-        t for t in exec_db.task_executions
+        t for t in wf_ex.task_executions
         if t.name == task_spec.get_name()
     ]
 
     return db_tasks[0] if len(db_tasks) > 0 else None
 
 
-def find_db_tasks(exec_db, task_specs):
-    return filter(None, [find_db_task(exec_db, t_s) for t_s in task_specs])
+def find_db_tasks(wf_ex, task_specs):
+    return filter(None, [find_db_task(wf_ex, t_s) for t_s in task_specs])
 
 
-def find_running_tasks(exec_db):
-    return [t for t in exec_db.task_executions if t.state == states.RUNNING]
+def find_running_tasks(wf_ex):
+    return [t for t in wf_ex.task_executions if t.state == states.RUNNING]
 
 
-def find_completed_tasks(exec_db):
+def find_completed_tasks(wf_ex):
     return [
-        t for t in exec_db.task_executions if states.is_completed(t.state)
+        t for t in wf_ex.task_executions if states.is_completed(t.state)
     ]
 
 
-def find_successful_tasks(exec_db):
-    return [t for t in exec_db.task_executions if t.state == states.SUCCESS]
+def find_successful_tasks(wf_ex):
+    return [t for t in wf_ex.task_executions if t.state == states.SUCCESS]
 
 
-def find_error_tasks(exec_db):
-    return [t for t in exec_db.task_executions if t.state == states.ERROR]
+def find_error_tasks(wf_ex):
+    return [t for t in wf_ex.task_executions if t.state == states.ERROR]

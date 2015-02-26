@@ -59,14 +59,14 @@ class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(DIRECT_WF_ON_ERROR)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
@@ -149,14 +149,14 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(REVERSE_WF_RETRY)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {}, task_name='task2')
+        wf_ex = self.engine.start_workflow('wf', {}, task_name='task2')
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(1, len(tasks))
 
@@ -174,14 +174,14 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(REVERSE_WF_TIMEOUT)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {}, task_name='task2')
+        wf_ex = self.engine.start_workflow('wf', {}, task_name='task2')
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(1, len(tasks))
 
@@ -193,9 +193,9 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         time_before = dt.datetime.now()
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {}, task_name='task1')
+        wf_ex = self.engine.start_workflow('wf', {}, task_name='task1')
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Workflow must work at least 2 seconds (1+1).
         self.assertGreater(
@@ -204,9 +204,9 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         )
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(1, len(tasks))
 

@@ -20,9 +20,9 @@ from mistral.workflow import direct_workflow
 from mistral.workflow import reverse_workflow
 
 
-def create_workflow_handler(exec_db, wf_spec=None):
+def create_workflow_handler(wf_ex, wf_spec=None):
     if not wf_spec:
-        wf_spec = spec_parser.get_workflow_spec(exec_db.spec)
+        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
     handler_cls = _select_workflow_handler(wf_spec)
 
@@ -30,7 +30,7 @@ def create_workflow_handler(exec_db, wf_spec=None):
         msg = 'Failed to find a workflow handler [wf_spec=%s]' % wf_spec
         raise exc.WorkflowException(msg)
 
-    return handler_cls(exec_db)
+    return handler_cls(wf_ex)
 
 
 def _select_workflow_handler(wf_spec):

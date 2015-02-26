@@ -105,28 +105,28 @@ def resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
     return wf_db
 
 
-def transform_result(exec_db, task_db, result):
+def transform_result(wf_ex, task_ex, result):
     """Transforms task result accounting for ad-hoc actions.
 
     In case if the given result is an action result and action is
     an ad-hoc action the method transforms the result according to
     ad-hoc action configuration.
 
-    :param exec_db: Execution DB model.
-    :param task_db: Task DB model.
+    :param wf_ex: Execution DB model.
+    :param task_ex: Task DB model.
     :param result: Result of task action/workflow.
     """
     if result.is_error():
         return result
 
     action_spec_name = spec_parser.get_task_spec(
-        task_db.spec).get_action_name()
+        task_ex.spec).get_action_name()
 
-    wf_spec_name = spec_parser.get_workflow_spec(exec_db.spec).get_name()
+    wf_spec_name = spec_parser.get_workflow_spec(wf_ex.spec).get_name()
 
     if action_spec_name:
         return transform_action_result(
-            exec_db.workflow_name,
+            wf_ex.workflow_name,
             wf_spec_name,
             action_spec_name,
             result

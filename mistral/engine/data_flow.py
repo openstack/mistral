@@ -56,8 +56,8 @@ def _get_action_context(db_task, openstack_context):
     return result
 
 
-def evaluate_task_parameters(task_db, context):
-    params = task_db.task_spec.get('parameters', {})
+def evaluate_task_parameters(task_ex, context):
+    params = task_ex.task_spec.get('parameters', {})
 
     return expr.evaluate_recursively(params, context)
 

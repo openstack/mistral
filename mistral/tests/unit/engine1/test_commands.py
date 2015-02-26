@@ -60,43 +60,43 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK1)
 
     def test_fail(self):
-        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
+        wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
     def test_succeed(self):
-        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
+        wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
     def test_pause(self):
-        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
+        wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
 
-        self._await(lambda: self.is_execution_paused(exec_db.id))
+        self._await(lambda: self.is_execution_paused(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -138,43 +138,43 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK2)
 
     def test_fail(self):
-        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
+        wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
     def test_succeed(self):
-        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
+        wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
     def test_pause(self):
-        exec_db = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
+        wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
 
-        self._await(lambda: self.is_execution_paused(exec_db.id))
+        self._await(lambda: self.is_execution_paused(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
@@ -248,71 +248,71 @@ class OrderEngineCommandsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK3)
 
     def test_fail_first(self):
-        exec_db = self.engine.start_workflow('my_wb.fail_first_wf', None)
+        wf_ex = self.engine.start_workflow('my_wb.fail_first_wf', None)
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
     def test_fail_second(self):
-        exec_db = self.engine.start_workflow('my_wb.fail_second_wf', None)
+        wf_ex = self.engine.start_workflow('my_wb.fail_second_wf', None)
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(exec_db.task_executions))
+        self.assertEqual(2, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
         task2_db = self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task2'
         )
 
         self._await(lambda: self.is_task_success(task2_db.id))
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
     def test_succeed_first(self):
-        exec_db = self.engine.start_workflow('my_wb.succeed_first_wf', None)
+        wf_ex = self.engine.start_workflow('my_wb.succeed_first_wf', None)
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(exec_db.task_executions))
+        self.assertEqual(1, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
     def test_succeed_second(self):
-        exec_db = self.engine.start_workflow('my_wb.succeed_second_wf', None)
+        wf_ex = self.engine.start_workflow('my_wb.succeed_second_wf', None)
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(exec_db.task_executions))
+        self.assertEqual(2, len(wf_ex.task_executions))
         self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
         task2_db = self._assert_single_item(
-            exec_db.task_executions,
+            wf_ex.task_executions,
             name='task2'
         )
 
         self._await(lambda: self.is_task_error(task2_db.id))
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))

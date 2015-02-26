@@ -122,19 +122,19 @@ class TaskPolicy(object):
     to run a task repeatedly if it finishes with a failure.
     """
 
-    def before_task_start(self, task_db, task_spec):
+    def before_task_start(self, task_ex, task_spec):
         """Called right before task start.
 
-        :param task_db: DB model for task that is about to start.
+        :param task_ex: DB model for task that is about to start.
         :param task_spec: Task specification.
         """
         # No-op by default.
         pass
 
-    def after_task_complete(self, task_db, task_spec, result):
+    def after_task_complete(self, task_ex, task_spec, result):
         """Called right after task completes.
 
-        :param task_db: Completed task DB model.
+        :param task_ex: Completed task DB model.
         :param task_spec: Completed task specification.
         :param result: TaskResult instance passed to on_task_result.
          It is needed for analysis of result and scheduling task again.

@@ -36,7 +36,7 @@ TASK_DICT = {
 
 TASK_SPEC = tasks.TaskSpec(TASK_DICT)
 
-TASK_DB = models.TaskExecution(
+task_ex = models.TaskExecution(
     name='task1',
     result=None,
 )
@@ -50,7 +50,7 @@ class WithItemsCalculationsTest(base.BaseTest):
         task_spec = tasks.TaskSpec(task_dict)
 
         output = with_items.get_result(
-            TASK_DB,
+            task_ex,
             task_spec,
             utils.TaskResult(data='output!')
         )
@@ -59,7 +59,7 @@ class WithItemsCalculationsTest(base.BaseTest):
 
     def test_calculate_output_without_key(self):
         output = with_items.get_result(
-            TASK_DB,
+            task_ex,
             TASK_SPEC,
             utils.TaskResult(data='output!')
         )

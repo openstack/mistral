@@ -29,39 +29,39 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
-                    cause_task_db=None):
+def prepare_db_task(task_ex, task_spec, upstream_task_specs, wf_ex,
+                    cause_task_ex=None):
     """Prepare Data Flow properties ('in_context' and 'input')
      of given DB task.
 
-    :param task_db: DB task to prepare.
+    :param task_ex: DB task to prepare.
     :param task_spec: Task specification.
     :param upstream_task_specs: Specifications of workflow upstream tasks.
-    :param exec_db: Execution DB model.
+    :param wf_ex: Execution DB model.
     """
 
     upstream_db_tasks = wf_utils.find_db_tasks(
-        exec_db,
+        wf_ex,
         upstream_task_specs
     )
 
-    task_db.in_context = utils.merge_dicts(
-        copy.copy(exec_db.context),
+    task_ex.in_context = utils.merge_dicts(
+        copy.copy(wf_ex.context),
         _evaluate_upstream_context(upstream_db_tasks)
     )
 
-    task_db.input = evaluate_task_input(
+    task_ex.input = evaluate_task_input(
         task_spec,
-        task_db.in_context
+        task_ex.in_context
     )
 
-    _prepare_runtime_context(task_db, task_spec)
+    _prepare_runtime_context(task_ex, task_spec)
 
 
-def _prepare_runtime_context(task_db, task_spec):
-    task_db.runtime_context = task_db.runtime_context or {}
+def _prepare_runtime_context(task_ex, task_spec):
+    task_ex.runtime_context = task_ex.runtime_context or {}
 
-    with_items.prepare_runtime_context(task_db, task_spec)
+    with_items.prepare_runtime_context(task_ex, task_spec)
 
 
 def evaluate_task_input(task_spec, context):
@@ -91,10 +91,10 @@ def _evaluate_upstream_context(upstream_db_tasks):
 # TODO(rakhmerov): Now this method doesn't make a lot of sense because we
 # treat action/workflow as a task result so we need to calculate only
 # what could be called "effective task result"
-def evaluate_task_result(task_db, task_spec, result):
+def evaluate_task_result(task_ex, task_spec, result):
     """Evaluates task result given a result from action/workflow.
 
-    :param task_db: DB task
+    :param task_ex: DB task
     :param task_spec: Task specification
     :param result: Task action/workflow result. Instance of
         mistral.workflow.base.TaskResult
@@ -104,30 +104,30 @@ def evaluate_task_result(task_db, task_spec, result):
     if result.is_error():
         return {
             'error': result.error,
-            'task': {task_db.name: result.error}
+            'task': {task_ex.name: result.error}
         }
 
     # Expression context is task inbound context + action/workflow result
     # accessible under key task name key.
-    expr_ctx = copy.deepcopy(task_db.in_context) or {}
+    expr_ctx = copy.deepcopy(task_ex.in_context) or {}
 
-    if task_db.name in expr_ctx:
+    if task_ex.name in expr_ctx:
         LOG.warning(
             'Shadowing context variable with task name while publishing: %s' %
-            task_db.name
+            task_ex.name
         )
 
-    expr_ctx[task_db.name] = copy.deepcopy(result.data) or {}
+    expr_ctx[task_ex.name] = copy.deepcopy(result.data) or {}
 
     return expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
 
 
-def evaluate_effective_task_result(task_db, task_spec):
+def evaluate_effective_task_result(task_ex, task_spec):
     """Evaluates effective (final) task result.
 
     Based on existing task invocations this method calculates
     task final result that's supposed to be accessibly by users.
-    :param task_db: DB task.
+    :param task_ex: DB task.
     :param task_spec: Task specification.
     :return: Effective (final) task result.
     """
@@ -135,24 +135,24 @@ def evaluate_effective_task_result(task_db, task_spec):
     pass
 
 
-def evaluate_task_outbound_context(task_db):
+def evaluate_task_outbound_context(task_ex):
     """Evaluates task outbound Data Flow context.
 
     This method assumes that complete task output (after publisher etc.)
     has already been evaluated.
-    :param task_db: DB task.
+    :param task_ex: DB task.
     :return: Outbound task Data Flow context.
     """
 
-    in_context = (copy.deepcopy(dict(task_db.in_context))
-                  if task_db.in_context is not None else {})
+    in_context = (copy.deepcopy(dict(task_ex.in_context))
+                  if task_ex.in_context is not None else {})
 
-    out_ctx = utils.merge_dicts(in_context, task_db.result)
+    out_ctx = utils.merge_dicts(in_context, task_ex.result)
 
     # Add task output under key 'taskName'.
     out_ctx = utils.merge_dicts(
         out_ctx,
-        {task_db.name: copy.deepcopy(task_db.result) or None}
+        {task_ex.name: copy.deepcopy(task_ex.result) or None}
     )
 
     return out_ctx
@@ -189,27 +189,27 @@ def add_openstack_data_to_context(context):
     return context
 
 
-def add_execution_to_context(exec_db, context):
+def add_execution_to_context(wf_ex, context):
     if context is None:
         context = {}
 
     context['__execution'] = {
-        'id': exec_db.id,
-        'spec': exec_db.spec,
-        'start_params': exec_db.start_params,
-        'input': exec_db.input
+        'id': wf_ex.id,
+        'spec': wf_ex.spec,
+        'start_params': wf_ex.start_params,
+        'input': wf_ex.input
     }
 
     return context
 
 
-def add_environment_to_context(exec_db, context):
+def add_environment_to_context(wf_ex, context):
     if context is None:
         context = {}
 
     # If env variables are provided, add an evaluated copy into the context.
-    if 'env' in exec_db.start_params:
-        env = copy.deepcopy(exec_db.start_params['env'])
+    if 'env' in wf_ex.start_params:
+        env = copy.deepcopy(wf_ex.start_params['env'])
         # An env variable can be an expression of other env variables.
         context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 

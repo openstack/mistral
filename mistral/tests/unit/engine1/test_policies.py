@@ -305,19 +305,19 @@ class PoliciesTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WAIT_BEFORE_WB)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.DELAYED, task_db.state)
+        self.assertEqual(states.DELAYED, task_ex.state)
         self.assertDictEqual(
             {'wait_before_policy': {'skip': True}},
-            task_db.runtime_context
+            task_ex.runtime_context
         )
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
     def test_wait_before_policy_from_var(self):
         wb_service.create_workbook_v2(WAIT_BEFORE_FROM_VAR)
@@ -337,94 +337,94 @@ class PoliciesTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WAIT_AFTER_WB)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.RUNNING, task_db.state)
-        self.assertDictEqual({}, task_db.runtime_context)
+        self.assertEqual(states.RUNNING, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
 
         self._await(
-            lambda: self.is_task_delayed(task_db.id),
+            lambda: self.is_task_delayed(task_ex.id),
             delay=0.5
         )
-        self._await(lambda: self.is_task_success(task_db.id))
+        self._await(lambda: self.is_task_success(task_ex.id))
 
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.RUNNING, task_db.state)
-        self.assertDictEqual({}, task_db.runtime_context)
+        self.assertEqual(states.RUNNING, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
 
         self._await(
-            lambda: self.is_task_delayed(task_db.id),
+            lambda: self.is_task_delayed(task_ex.id),
             delay=0.5
         )
-        self._await(lambda: self.is_task_error(task_db.id))
+        self._await(lambda: self.is_task_error(task_ex.id))
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             2,
-            task_db.runtime_context["retry_task_policy"]["retry_no"]
+            task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.RUNNING, task_db.state)
+        self.assertEqual(states.RUNNING, task_ex.state)
 
-        self._await(lambda: self.is_task_error(task_db.id))
+        self._await(lambda: self.is_task_error(task_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = self._assert_single_item(
-            exec_db.task_executions,
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
             name='task1'
         )
 
-        self.assertEqual(states.ERROR, task_db.state)
-        self.assertIsNotNone(exec_db)
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertIsNotNone(wf_ex)
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
     def test_timeout_policy_success_after_timeout(self):
         wb_service.create_workbook_v2(TIMEOUT_WB2)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.RUNNING, task_db.state)
+        self.assertEqual(states.RUNNING, task_ex.state)
 
-        self._await(lambda: self.is_execution_error(exec_db.id))
+        self._await(lambda: self.is_execution_error(wf_ex.id))
 
         # Wait until timeout exceeds.
         self._sleep(2)
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        tasks_db = exec_db.task_executions
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        tasks_db = wf_ex.task_executions
 
         # Make sure that engine did not create extra tasks.
         self.assertEqual(1, len(tasks_db))
@@ -433,54 +433,54 @@ class PoliciesTest(base.EngineTestCase):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = self._assert_single_item(
-            exec_db.task_executions,
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
             name='task1'
         )
 
-        self.assertEqual(states.IDLE, task_db.state)
+        self.assertEqual(states.IDLE, task_ex.state)
 
-        self._await(lambda: self.is_execution_paused(exec_db.id))
+        self._await(lambda: self.is_execution_paused(wf_ex.id))
 
-        self.engine.resume_workflow(exec_db.id)
+        self.engine.resume_workflow(wf_ex.id)
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        self._assert_single_item(exec_db.task_executions, name='task1')
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        self._assert_single_item(wf_ex.task_executions, name='task1')
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = self._assert_single_item(
-            exec_db.task_executions,
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
             name='task1'
         )
-        next_task_db = self._assert_single_item(
-            exec_db.task_executions,
+        next_task_ex = self._assert_single_item(
+            wf_ex.task_executions,
             name='task2'
         )
 
-        self.assertEqual(states.SUCCESS, task_db.state)
-        self.assertEqual(states.SUCCESS, next_task_db.state)
+        self.assertEqual(states.SUCCESS, task_ex.state)
+        self.assertEqual(states.SUCCESS, next_task_ex.state)
 
     def test_concurrency_is_in_runtime_context(self):
         wb_service.create_workbook_v2(CONCURRENCY_WB)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = self._assert_single_item(
-            exec_db.task_executions,
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
             name='task1'
         )
 
-        self.assertEqual(states.SUCCESS, task_db.state)
+        self.assertEqual(states.SUCCESS, task_ex.state)
 
-        runtime_context = task_db.runtime_context
+        runtime_context = task_ex.runtime_context
 
         self.assertEqual(4, runtime_context['concurrency'])

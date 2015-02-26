@@ -38,7 +38,7 @@ LOG = logging.getLogger(__name__)
 class EngineCommand(object):
     """Engine command interface."""
 
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
         """Runs local part of the command.
 
         "Local" means that the code can be performed within a scope
@@ -46,15 +46,15 @@ class EngineCommand(object):
         that simply change a state of execution (e.g. depending on
         some conditions) it's enough to implement only this method.
 
-        :param exec_db: Workflow execution DB object.
+        :param wf_ex: Workflow execution DB object.
         :param wf_handler: Workflow handler currently being used.
-        :param cause_task_db: Task that caused the command to run.
+        :param cause_task_ex: Task that caused the command to run.
         :return False if engine should stop further command processing,
             True otherwise.
         """
         return True
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         """Runs remote part of the command.
 
         "Remote" means that the code cannot be performed within a scope
@@ -63,9 +63,9 @@ class EngineCommand(object):
         need to implement "run_local" if they need to do something with
         DB state of execution and/or tasks.
 
-        :param exec_db: Workflow execution DB object.
+        :param wf_ex: Workflow execution DB object.
         :param wf_handler: Workflow handler currently being used.
-        :param cause_task_db: Task that caused the command to run.
+        :param cause_task_ex: Task that caused the command to run.
         :return False if engine should stop further command processing,
             True otherwise.
         """
@@ -74,62 +74,62 @@ class EngineCommand(object):
 
 class Noop(EngineCommand):
     """No-op command."""
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
         pass
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         pass
 
 
 class RunTask(EngineCommand):
-    def __init__(self, task_spec, task_db=None):
+    def __init__(self, task_spec, task_ex=None):
         self.task_spec = task_spec
-        self.task_db = task_db
+        self.task_ex = task_ex
 
-        if task_db:
-            self.exec_db = task_db.workflow_execution
+        if task_ex:
+            self.wf_ex = task_ex.workflow_execution
 
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
-        if self.task_db and self.task_db.state == states.IDLE:
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
+        if self.task_ex and self.task_ex.state == states.IDLE:
             LOG.debug('Resuming workflow task: %s' % self.task_spec)
-            self.task_db.state = states.RUNNING
+            self.task_ex.state = states.RUNNING
 
             return True
 
         LOG.debug('Running workflow task: %s' % self.task_spec)
 
-        self._prepare_task(exec_db, wf_handler, cause_task_db)
+        self._prepare_task(wf_ex, wf_handler, cause_task_ex)
         self._before_task_start(wf_handler.wf_spec)
 
-        if exec_db.state == states.RUNNING:
+        if wf_ex.state == states.RUNNING:
             return True
 
         return False
 
-    def _prepare_task(self, exec_db, wf_handler, cause_task_db):
-        if self.task_db:
+    def _prepare_task(self, wf_ex, wf_handler, cause_task_ex):
+        if self.task_ex:
             return
 
-        self.task_db = self._create_db_task(exec_db)
-        self.exec_db = self.task_db.workflow_execution
+        self.task_ex = self._create_db_task(wf_ex)
+        self.wf_ex = self.task_ex.workflow_execution
 
         # Evaluate Data Flow properties ('input', 'in_context').
         data_flow.prepare_db_task(
-            self.task_db,
+            self.task_ex,
             self.task_spec,
             wf_handler.get_upstream_tasks(self.task_spec),
-            exec_db,
-            cause_task_db
+            wf_ex,
+            cause_task_ex
         )
 
     def _before_task_start(self, wf_spec):
         for p in policies.build_policies(self.task_spec.get_policies(),
                                          wf_spec):
-            p.before_task_start(self.task_db, self.task_spec)
+            p.before_task_start(self.task_ex, self.task_spec)
 
-    def _create_db_task(self, exec_db):
+    def _create_db_task(self, wf_ex):
         return db_api.create_task_execution({
-            'workflow_execution_id': exec_db.id,
+            'workflow_execution_id': wf_ex.id,
             'name': self.task_spec.get_name(),
             'state': states.RUNNING,
             'spec': self.task_spec.to_dict(),
@@ -137,25 +137,25 @@ class RunTask(EngineCommand):
             'in_context': None,
             'output': None,
             'runtime_context': None,
-            'workflow_name': exec_db.workflow_name,
-            'project_id': exec_db.project_id
+            'workflow_name': wf_ex.workflow_name,
+            'project_id': wf_ex.project_id
         })
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         self._run_task()
 
         return True
 
     def _run_task(self):
         # Policies could possibly change task state.
-        if self.task_db.state != states.RUNNING:
+        if self.task_ex.state != states.RUNNING:
             return
 
-        task_name = self.task_db.name
+        task_name = self.task_ex.name
 
         if self.task_spec.get_action_name():
             utils.wf_trace.info(
-                self.task_db,
+                self.task_ex,
                 "Task '%s' is RUNNING [action_name = %s]" %
                 (task_name, self.task_spec.get_action_name())
             )
@@ -163,32 +163,32 @@ class RunTask(EngineCommand):
             self._run_action()
         elif self.task_spec.get_workflow_name():
             utils.wf_trace.info(
-                self.task_db,
+                self.task_ex,
                 "Task '%s' is RUNNING [workflow_name = %s]" %
                 (task_name, self.task_spec.get_workflow_name()))
 
             self._run_workflow()
 
     def _get_action_defaults(self):
-        env = self.task_db.in_context.get('__env', {})
+        env = self.task_ex.in_context.get('__env', {})
         actions = env.get('__actions', {})
         defaults = actions.get(self.task_spec.get_action_name(), {})
 
         return defaults
 
     def _run_action(self):
-        exec_db = self.exec_db
-        wf_spec = spec_parser.get_workflow_spec(exec_db.spec)
+        wf_ex = self.wf_ex
+        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
         action_spec_name = self.task_spec.get_action_name()
 
         action_db = e_utils.resolve_action(
-            exec_db.workflow_name,
+            wf_ex.workflow_name,
             wf_spec.get_name(),
             action_spec_name
         )
 
-        action_input = self.task_db.input or {}
+        action_input = self.task_ex.input or {}
         action_defaults = self._get_action_defaults()
 
         if action_db.spec:
@@ -198,7 +198,7 @@ class RunTask(EngineCommand):
             base_name = action_spec.get_base()
 
             action_db = e_utils.resolve_action(
-                exec_db.workflow_name,
+                wf_ex.workflow_name,
                 wf_spec.get_name(),
                 base_name
             )
@@ -216,14 +216,14 @@ class RunTask(EngineCommand):
         target = expr.evaluate_recursively(
             self.task_spec.get_target(),
             utils.merge_dicts(
-                copy.copy(self.task_db.input),
-                copy.copy(self.task_db.in_context)
+                copy.copy(self.task_ex.input),
+                copy.copy(self.task_ex.in_context)
             )
         )
 
         if a_m.has_action_context(
                 action_db.action_class, action_db.attributes or {}):
-            action_input.update(a_m.get_action_context(self.task_db))
+            action_input.update(a_m.get_action_context(self.task_ex))
 
         with_items_spec = self.task_spec.get_with_items()
 
@@ -236,14 +236,14 @@ class RunTask(EngineCommand):
                     self.task_spec.get_input(),
                     utils.merge_dicts(
                         copy.copy(a_input),
-                        copy.copy(self.task_db.in_context))
+                        copy.copy(self.task_ex.in_context))
                 )
 
                 if action_context:
                     evaluated_input['action_context'] = action_context
 
                 rpc.get_executor_client().run_action(
-                    self.task_db.id,
+                    self.task_ex.id,
                     action_db.action_class,
                     action_db.attributes or {},
                     utils.merge_dicts(
@@ -256,7 +256,7 @@ class RunTask(EngineCommand):
 
         else:
             rpc.get_executor_client().run_action(
-                self.task_db.id,
+                self.task_ex.id,
                 action_db.action_class,
                 action_db.attributes or {},
                 utils.merge_dicts(
@@ -268,25 +268,25 @@ class RunTask(EngineCommand):
             )
 
     def _run_workflow(self):
-        parent_exec_db = self.exec_db
-        parent_wf_spec = spec_parser.get_workflow_spec(parent_exec_db.spec)
+        parent_wf_ex = self.wf_ex
+        parent_wf_spec = spec_parser.get_workflow_spec(parent_wf_ex.spec)
 
         wf_spec_name = self.task_spec.get_workflow_name()
 
         wf_db = e_utils.resolve_workflow(
-            parent_exec_db.workflow_name,
+            parent_wf_ex.workflow_name,
             parent_wf_spec.get_name(),
             wf_spec_name
         )
 
         wf_spec = spec_parser.get_workflow_spec(wf_db.spec)
 
-        wf_input = self.task_db.input
+        wf_input = self.task_ex.input
 
-        start_params = {'parent_task_id': self.task_db.id}
+        start_params = {'parent_task_id': self.task_ex.id}
 
-        if 'env' in parent_exec_db.start_params:
-            environment = parent_exec_db.start_params['env']
+        if 'env' in parent_wf_ex.start_params:
+            environment = parent_wf_ex.start_params['env']
             start_params['env'] = environment
 
         for k, v in wf_input.items():
@@ -302,37 +302,37 @@ class RunTask(EngineCommand):
 
 
 class FailWorkflow(EngineCommand):
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
         wf_handler.stop_workflow(states.ERROR)
         return False
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         return False
 
 
 class SucceedWorkflow(EngineCommand):
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
         wf_handler.stop_workflow(states.SUCCESS)
         return False
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         return False
 
 
 class PauseWorkflow(EngineCommand):
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
         wf_handler.pause_workflow()
         return False
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         return False
 
 
 class RollbackWorkflow(EngineCommand):
-    def run_local(self, exec_db, wf_handler, cause_task_db=None):
+    def run_local(self, wf_ex, wf_handler, cause_task_ex=None):
         return True
 
-    def run_remote(self, exec_db, wf_handler, cause_task_db=None):
+    def run_remote(self, wf_ex, wf_handler, cause_task_ex=None):
         return True
 
 

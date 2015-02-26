@@ -264,14 +264,14 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(WF_FULL_JOIN)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -281,20 +281,20 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task2.state)
         self.assertEqual(states.SUCCESS, task3.state)
 
-        self.assertDictEqual({'result': '1,2'}, exec_db.output)
+        self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_full_join_with_errors(self):
         wf_service.create_workflows(WF_FULL_JOIN_WITH_ERRORS)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -304,20 +304,20 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task2.state)
         self.assertEqual(states.SUCCESS, task3.state)
 
-        self.assertDictEqual({'result': '1-1'}, exec_db.output)
+        self.assertDictEqual({'result': '1-1'}, wf_ex.output)
 
     def test_full_join_with_conditions(self):
         wf_service.create_workflows(WF_FULL_JOIN_WITH_CONDITIONS)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(3, len(tasks))
 
@@ -329,20 +329,20 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task2.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        self.assertDictEqual({'result': 4}, exec_db.output)
+        self.assertDictEqual({'result': 4}, wf_ex.output)
 
     def test_partial_join(self):
         wf_service.create_workflows(WF_PARTIAL_JOIN)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -363,20 +363,20 @@ class JoinEngineTest(base.EngineTestCase):
             task4.result
         )
 
-        self.assertDictEqual({'result': '1,2'}, exec_db.output)
+        self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_partial_join_triggers_once(self):
         wf_service.create_workflows(WF_PARTIAL_JOIN_TRIGGERS_ONCE)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(5, len(tasks))
 
@@ -401,14 +401,14 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(WF_DISCRIMINATOR)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = exec_db.task_executions
+        tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
