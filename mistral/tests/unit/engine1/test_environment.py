@@ -115,15 +115,15 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictEqual({}, exec1_db.input)
         self.assertDictEqual({'env': env}, exec1_db.start_params)
 
-        db_execs = db_api.get_workflow_executions()
+        wf_execs = db_api.get_workflow_executions()
 
-        self.assertEqual(2, len(db_execs))
+        self.assertEqual(2, len(wf_execs))
 
         # Execution 2.
-        if db_execs[0].id != exec1_db.id:
-            exec2_db = db_execs[0]
+        if wf_execs[0].id != exec1_db.id:
+            exec2_db = wf_execs[0]
         else:
-            exec2_db = db_execs[1]
+            exec2_db = wf_execs[1]
 
         expected_start_params = {
             'task_name': 'task2',

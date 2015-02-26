@@ -89,6 +89,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return to_task_name in t_names
 
+    # TODO(rakhmerov): Need to refactor this method to be able to pass tasks
+    # whose contexts need to be merged.
     def _evaluate_workflow_final_context(self, cause_task_ex):
         ctx = {}
 

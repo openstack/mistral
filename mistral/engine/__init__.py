@@ -347,9 +347,14 @@ class Engine(object):
     def _create_next_tasks(cls, task, workbook):
         tasks = workflow.find_tasks_after_completion(task, workbook)
 
-        db_tasks = cls._create_tasks(tasks, workbook, task.workbook_name,
-                                     task.execution_id)
-        return workflow.find_resolved_tasks(db_tasks)
+        task_execs = cls._create_tasks(
+            tasks,
+            workbook,
+            task.workbook_name,
+            task.execution_id
+        )
+
+        return workflow.find_resolved_tasks(task_execs)
 
     @classmethod
     def _create_tasks(cls, task_list, workbook, workbook_name, execution_id):

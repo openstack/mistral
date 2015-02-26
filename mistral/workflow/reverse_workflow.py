@@ -145,8 +145,8 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         return dep_t_specs
 
     def _find_db_task(self, name):
-        db_tasks = filter(
+        task_execs = filter(
             lambda t: t.name == name, self.wf_ex.task_executions
         )
 
-        return db_tasks[0] if db_tasks else None
+        return task_execs[0] if task_execs else None

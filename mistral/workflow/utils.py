@@ -46,15 +46,15 @@ class TaskResultSerializer(serializer.Serializer):
 
 
 def find_db_task(wf_ex, task_spec):
-    db_tasks = [
+    task_execs = [
         t for t in wf_ex.task_executions
         if t.name == task_spec.get_name()
     ]
 
-    return db_tasks[0] if len(db_tasks) > 0 else None
+    return task_execs[0] if len(task_execs) > 0 else None
 
 
-def find_db_tasks(wf_ex, task_specs):
+def find_task_executions(wf_ex, task_specs):
     return filter(None, [find_db_task(wf_ex, t_s) for t_s in task_specs])
 
 

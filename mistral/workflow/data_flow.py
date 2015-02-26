@@ -40,14 +40,14 @@ def prepare_db_task(task_ex, task_spec, upstream_task_specs, wf_ex,
     :param wf_ex: Execution DB model.
     """
 
-    upstream_db_tasks = wf_utils.find_db_tasks(
+    upstream_task_execs = wf_utils.find_task_executions(
         wf_ex,
         upstream_task_specs
     )
 
     task_ex.in_context = utils.merge_dicts(
         copy.copy(wf_ex.context),
-        _evaluate_upstream_context(upstream_db_tasks)
+        _evaluate_upstream_context(upstream_task_execs)
     )
 
     task_ex.input = evaluate_task_input(
@@ -75,13 +75,13 @@ def evaluate_task_input(task_spec, context):
         return expr.evaluate_recursively(task_spec.get_input(), context)
 
 
-def _evaluate_upstream_context(upstream_db_tasks):
+def _evaluate_upstream_context(upstream_task_execs):
     task_result_ctx = {}
     ctx = {}
 
-    for t_db in upstream_db_tasks:
-        task_result_ctx = utils.merge_dicts(task_result_ctx, t_db.result)
-        utils.merge_dicts(ctx, evaluate_task_outbound_context(t_db))
+    for t_ex in upstream_task_execs:
+        task_result_ctx = utils.merge_dicts(task_result_ctx, t_ex.result)
+        utils.merge_dicts(ctx, evaluate_task_outbound_context(t_ex))
 
     return utils.merge_dicts(ctx, task_result_ctx)
 
