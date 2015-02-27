@@ -33,7 +33,7 @@ class WorkflowSpec(base.BaseSpec):
             "output": {"type": ["string", "object", "array", "null"]},
             "tasks": {"type": "object"},
         },
-        "required": ["version", "name", "type", "tasks"],
+        "required": ["version", "name", "tasks"],
         "additionalProperties": False
     }
 
@@ -47,7 +47,7 @@ class WorkflowSpec(base.BaseSpec):
         self._name = data['name']
         self._description = data.get('description')
         self._tags = data.get('tags', [])
-        self._type = data['type']
+        self._type = data['type'] if 'type' in data else "direct"
         self._input = data.get('input', [])
         self._output = data.get('output', {})
 
