@@ -19,6 +19,7 @@ from mistral.engine1 import rpc
 from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
+from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils
 
@@ -148,6 +149,7 @@ class WaitBeforePolicy(base.TaskPolicy):
         self.delay = delay
 
     def before_task_start(self, task_db, task_spec):
+        data_flow.evaluate_policy_params(self, task_db.in_context)
         context_key = 'wait_before_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -190,6 +192,7 @@ class WaitAfterPolicy(base.TaskPolicy):
         self.delay = delay
 
     def after_task_complete(self, task_db, task_spec, result):
+        data_flow.evaluate_policy_params(self, task_db.in_context)
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -253,6 +256,7 @@ class RetryPolicy(base.TaskPolicy):
         3. retry:count = 5, current:count = 4, state = ERROR
         Iterations complete therefore state = #{state}, current:count = 4.
         """
+        data_flow.evaluate_policy_params(self, task_db.in_context)
         context_key = 'retry_task_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -313,6 +317,8 @@ class TimeoutPolicy(base.TaskPolicy):
         self.delay = timeout_sec
 
     def before_task_start(self, task_db, task_spec):
+        data_flow.evaluate_policy_params(self, task_db.in_context)
+
         scheduler.schedule_call(
             None,
             'mistral.engine1.policies.fail_task_if_incomplete',
@@ -333,6 +339,8 @@ class PauseBeforePolicy(base.TaskPolicy):
         self.expr = expression
 
     def before_task_start(self, task_db, task_spec):
+        data_flow.evaluate_policy_params(self, task_db.in_context)
+
         if not expressions.evaluate(self.expr, task_db.in_context):
             return
 
@@ -351,6 +359,7 @@ class ConcurrencyPolicy(base.TaskPolicy):
         self.concurrency = concurrency
 
     def before_task_start(self, task_db, task_spec):
+        data_flow.evaluate_policy_params(self, task_db.in_context)
         context_key = 'concurrency'
 
         runtime_context = _ensure_context_has_key(

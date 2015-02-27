@@ -98,6 +98,27 @@ workflows:
 """
 
 
+WAIT_BEFORE_FROM_VAR = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    input:
+      - wait_before
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        policies:
+          wait-before: <% $.wait_before %>
+"""
+
+
 WAIT_AFTER_WB = """
 ---
 version: '2.0'
@@ -295,6 +316,20 @@ class PoliciesTest(base.EngineTestCase):
             {'wait_before_policy': {'skip': True}},
             task_db.runtime_context
         )
+
+        self._await(lambda: self.is_execution_success(exec_db.id))
+
+    def test_wait_before_policy_from_var(self):
+        wb_service.create_workbook_v2(WAIT_BEFORE_FROM_VAR)
+
+        # Start workflow.
+        exec_db = self.engine.start_workflow('wb.wf1', {'wait_before': 1})
+
+        # Note: We need to reread execution to access related tasks.
+        exec_db = db_api.get_execution(exec_db.id)
+        task_db = exec_db.tasks[0]
+
+        self.assertEqual(states.DELAYED, task_db.state)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 

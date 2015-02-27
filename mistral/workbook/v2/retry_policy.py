@@ -20,9 +20,9 @@ class RetrySpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "count": {"type": "integer"},
+            "count": {"type": ["string", "integer"]},
             "break-on": {"type": "string"},
-            "delay": {"type": "integer"}
+            "delay": {"type": ["string", "integer"]}
         },
         "required": ["count", "delay"],
         "additionalProperties": False

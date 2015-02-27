@@ -20,6 +20,7 @@ from mistral import context as auth_ctx
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral import utils
+from mistral.utils import inspect_utils
 from mistral.workflow import utils as wf_utils
 from mistral.workflow import with_items
 
@@ -219,3 +220,12 @@ def add_environment_to_context(exec_db, context):
         context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 
     return context
+
+
+def evaluate_policy_params(policy, context):
+    policy_params = inspect_utils.get_public_fields(policy)
+    evaluated_params = expr.evaluate_recursively(
+        policy_params, context
+    )
+    for k, v in evaluated_params.items():
+        setattr(policy, k, v)

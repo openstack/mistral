@@ -22,11 +22,11 @@ class TaskPoliciesSpec(base.BaseSpec):
         "type": "object",
         "properties": {
             "retry": {"type": ["object", "null"]},
-            "wait-before": {"type": "integer"},
-            "wait-after": {"type": "integer"},
-            "timeout": {"type": "integer"},
-            "pause-before": {"type": "boolean"},
-            "concurrency": {"type": "integer"},
+            "wait-before": {"type": ["string", "integer"]},
+            "wait-after": {"type": ["string", "integer"]},
+            "timeout": {"type": ["string", "integer"]},
+            "pause-before": {"type": ["string", "boolean"]},
+            "concurrency": {"type": ["string", "integer"]},
         },
         "additionalProperties": False
     }
