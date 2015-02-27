@@ -50,14 +50,6 @@ def prepare_db_task(task_db, task_spec, upstream_task_specs, exec_db,
         _evaluate_upstream_context(upstream_db_tasks)
     )
 
-    if cause_task_db:
-        # TODO(nmakhotkin): Do it using _evaluate_upstream_context()
-        # TODO(rakhmerov): Think if Data Flow should be a part of wf handler.
-        task_db.in_context = utils.merge_dicts(
-            task_db.in_context,
-            evaluate_task_outbound_context(cause_task_db)
-        )
-
     task_db.input = evaluate_task_input(
         task_spec,
         task_db.in_context
@@ -84,12 +76,14 @@ def evaluate_task_input(task_spec, context):
 
 
 def _evaluate_upstream_context(upstream_db_tasks):
+    task_result_ctx = {}
     ctx = {}
 
     for t_db in upstream_db_tasks:
+        task_result_ctx = utils.merge_dicts(task_result_ctx, t_db.result)
         utils.merge_dicts(ctx, evaluate_task_outbound_context(t_db))
 
-    return ctx
+    return utils.merge_dicts(ctx, task_result_ctx)
 
 
 # TODO(rakhmerov): This method should utilize task invocations and calculate
@@ -155,7 +149,7 @@ def evaluate_task_outbound_context(task_db):
 
     out_ctx = utils.merge_dicts(in_context, task_db.result)
 
-    # Add task output under key 'task.taskName'.
+    # Add task output under key 'taskName'.
     out_ctx = utils.merge_dicts(
         out_ctx,
         {task_db.name: copy.deepcopy(task_db.result) or None}
