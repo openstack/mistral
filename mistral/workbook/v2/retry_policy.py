@@ -12,21 +12,40 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import utils
 from mistral.workbook import base
 
 
 class RetrySpec(base.BaseSpec):
     # See http://json-schema.org
-    _schema = {
+    _retry_schema = {
         "type": "object",
         "properties": {
-            "count": {"type": ["string", "integer"]},
-            "break-on": {"type": "string"},
-            "delay": {"type": ["string", "integer"]}
+            "count": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"$ref": "#/definitions/positiveInteger"}
+                ]
+            },
+            "break-on": {"$ref": "#/definitions/yaql"},
+            "delay": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"$ref": "#/definitions/positiveInteger"}
+                ]
+            },
         },
         "required": ["count", "delay"],
-        "additionalProperties": False
+        "additionalProperties": False,
+        "definitions": {
+            "positiveInteger": {
+                "type": "integer",
+                "minimum": 0
+            }
+        }
     }
+
+    _schema = utils.merge_dicts(_retry_schema, base.BaseSpec._yaql_schema)
 
     def __init__(self, data):
         super(RetrySpec, self).__init__(data)

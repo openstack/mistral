@@ -19,7 +19,6 @@ from mistral.engine1 import rpc
 from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
-from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils
 
@@ -145,11 +144,18 @@ def _ensure_context_has_key(runtime_context, key):
 
 
 class WaitBeforePolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "delay": {"type": "integer"}
+        }
+    }
+
     def __init__(self, delay):
         self.delay = delay
 
     def before_task_start(self, task_ex, task_spec):
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        super(WaitBeforePolicy, self).before_task_start(task_ex, task_spec)
+
         context_key = 'wait_before_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -188,11 +194,19 @@ class WaitBeforePolicy(base.TaskPolicy):
 
 
 class WaitAfterPolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "delay": {"type": "integer"}
+        }
+    }
+
     def __init__(self, delay):
         self.delay = delay
 
     def after_task_complete(self, task_ex, task_spec, result):
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        super(WaitAfterPolicy, self).after_task_complete(
+            task_ex, task_spec, result
+        )
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -241,6 +255,13 @@ class WaitAfterPolicy(base.TaskPolicy):
 
 
 class RetryPolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "delay": {"type": "integer"},
+            "count": {"type": "integer"}
+        }
+    }
+
     def __init__(self, count, delay, break_on):
         self.count = count
         self.delay = delay
@@ -256,7 +277,10 @@ class RetryPolicy(base.TaskPolicy):
         3. retry:count = 5, current:count = 4, state = ERROR
         Iterations complete therefore state = #{state}, current:count = 4.
         """
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        super(RetryPolicy, self).after_task_complete(
+            task_ex, task_spec, result
+        )
+
         context_key = 'retry_task_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -313,11 +337,18 @@ class RetryPolicy(base.TaskPolicy):
 
 
 class TimeoutPolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "delay": {"type": "integer"},
+        }
+    }
+
     def __init__(self, timeout_sec):
         self.delay = timeout_sec
 
     def before_task_start(self, task_ex, task_spec):
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        super(TimeoutPolicy, self).before_task_start(task_ex, task_spec)
+
         scheduler.schedule_call(
             None,
             'mistral.engine1.policies.fail_task_if_incomplete',
@@ -334,11 +365,17 @@ class TimeoutPolicy(base.TaskPolicy):
 
 
 class PauseBeforePolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "expr": {"type": "boolean"},
+        }
+    }
+
     def __init__(self, expression):
         self.expr = expression
 
     def before_task_start(self, task_ex, task_spec):
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        super(PauseBeforePolicy, self).before_task_start(task_ex, task_spec)
 
         if not expressions.evaluate(self.expr, task_ex.in_context):
             return
@@ -354,11 +391,18 @@ class PauseBeforePolicy(base.TaskPolicy):
 
 
 class ConcurrencyPolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "delay": {"concurrency": "integer"},
+        }
+    }
+
     def __init__(self, concurrency):
         self.concurrency = concurrency
 
     def before_task_start(self, task_ex, task_spec):
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        super(ConcurrencyPolicy, self).before_task_start(task_ex, task_spec)
+
         context_key = 'concurrency'
 
         runtime_context = _ensure_context_has_key(

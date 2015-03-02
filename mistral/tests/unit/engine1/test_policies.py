@@ -17,6 +17,7 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
 from mistral.engine1 import policies
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral.services import workbooks as wb_service
@@ -275,6 +276,30 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertIsInstance(p, policies.TimeoutPolicy)
 
+    def test_task_policy_class(self):
+        policy = policies.base.TaskPolicy()
+
+        policy._schema = {
+            "properties": {
+                "delay": {"type": "integer"}
+            }
+        }
+        task_db = type('Task', (object,), {'in_context': {'int_var': 5}})
+        policy.delay = "<% $.int_var %>"
+
+        # Validation is ok.
+        policy.before_task_start(task_db, None)
+
+        policy.delay = "some_string"
+
+        # Validation is failing now.
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            policy.before_task_start, task_db, None
+        )
+
+        self.assertIn("Invalid data type in TaskPolicy", str(exception))
+
     def test_build_policies_with_workflow_defaults(self):
         wb_spec = spec_parser.get_workbook_spec_from_yaml(WB_WITH_DEFAULTS)
         wf_spec = wb_spec.get_workflows()['wf1']
@@ -484,3 +509,29 @@ class PoliciesTest(base.EngineTestCase):
         runtime_context = task_ex.runtime_context
 
         self.assertEqual(4, runtime_context['concurrency'])
+
+    def test_wrong_policy_prop_type(self):
+        wb = """---
+        version: "2.0"
+        name: wb
+        workflows:
+          wf1:
+            type: direct
+            input:
+              - wait_before
+            tasks:
+              task1:
+                action: std.echo output="Hi!"
+                policies:
+                  wait-before: <% $.wait_before %>
+        """
+        wb_service.create_workbook_v2(wb)
+
+        # Start workflow.
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            self.engine.start_workflow,
+            'wb.wf1', {'wait_before': '1'}
+        )
+
+        self.assertIn('Invalid data type in WaitBeforePolicy', str(exception))

@@ -46,6 +46,15 @@ class BaseSpec(object):
         "type": "object",
     }
 
+    _yaql_schema = {
+        "definitions": {
+            "yaql": {
+                "type": "string",
+                "pattern": "^<%.*?%>\\s*$"
+            },
+        }
+    }
+
     _version = "1.0"
 
     def __init__(self, data):

@@ -1,6 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -12,24 +12,58 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import utils
 from mistral.workbook import base
 from mistral.workbook.v2 import retry_policy
 
 
 class TaskPoliciesSpec(base.BaseSpec):
     # See http://json-schema.org
-    _schema = {
+    _policies_schema = {
         "type": "object",
         "properties": {
             "retry": {"type": ["object", "null"]},
-            "wait-before": {"type": ["string", "integer"]},
-            "wait-after": {"type": ["string", "integer"]},
-            "timeout": {"type": ["string", "integer"]},
-            "pause-before": {"type": ["string", "boolean"]},
-            "concurrency": {"type": ["string", "integer"]},
+            "wait-before": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"$ref": "#/definitions/positiveInteger"}
+                ]
+            },
+            "wait-after": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"$ref": "#/definitions/positiveInteger"}
+                ]
+            },
+            "timeout": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"$ref": "#/definitions/positiveInteger"}
+                ]
+            },
+            "pause-before": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"type": "boolean"}
+                ]
+            },
+            "concurrency": {
+                "oneOf": [
+                    {"$ref": "#/definitions/yaql"},
+                    {"$ref": "#/definitions/positiveInteger"}
+                ]
+            },
         },
-        "additionalProperties": False
+        "additionalProperties": False,
+        "definitions": {
+            "positiveInteger": {
+                "type": "integer",
+                "minimum": 0
+            }
+        },
     }
+
+    _schema = utils.merge_dicts(_policies_schema, base.BaseSpec._yaql_schema)
 
     def __init__(self, data):
         super(TaskPoliciesSpec, self).__init__(data)
