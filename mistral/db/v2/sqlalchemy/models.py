@@ -16,10 +16,12 @@
 import hashlib
 import json
 import sqlalchemy as sa
+from sqlalchemy import event
 from sqlalchemy.orm import relationship
 
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
+from mistral import utils
 
 
 # Definition objects.
@@ -93,7 +95,9 @@ class WorkflowExecution(mb.MistralSecureModelBase):
     wf_spec = sa.Column(st.JsonDictType())
     start_params = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
-    state_info = sa.Column(sa.Text(), nullable=True)
+    state_info = sa.Column(
+        sa.String(1024),
+        nullable=True)
     input = sa.Column(st.JsonDictType())
     output = sa.Column(st.JsonDictType())
     context = sa.Column(st.JsonDictType())
@@ -103,6 +107,14 @@ class WorkflowExecution(mb.MistralSecureModelBase):
 
     # TODO(nmakhotkin): It's not used now, must be fixed later.
     trust_id = sa.Column(sa.String(80))
+
+event.listen(
+    # Catch and trim WorkflowExecution.state_info to always fit allocated size.
+    WorkflowExecution.state_info,
+    'set',
+    lambda t, v, o, i: utils.cut(v, 1020),
+    retval=True
+)
 
 
 class TaskExecution(mb.MistralSecureModelBase):

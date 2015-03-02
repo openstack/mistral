@@ -432,6 +432,7 @@ EXECUTIONS = [
         'wf_spec': {},
         'start_params': {'task': 'my_task1'},
         'state': 'IDLE',
+        'state_info': "Running...",
         'created_at': None,
         'updated_at': None,
         'context': None
@@ -440,6 +441,7 @@ EXECUTIONS = [
         'wf_spec': {},
         'start_params': {'task': 'my_task1'},
         'state': 'RUNNING',
+        'state_info': "Running...",
         'created_at': None,
         'updated_at': None,
         'context': {'image_id': '123123'}
@@ -466,7 +468,8 @@ class ExecutionTest(SQLAlchemyTest):
 
         self.assertIsNone(created.updated_at)
 
-        updated = db_api.update_execution(created.id, {'state': 'RUNNING'})
+        updated = db_api.update_execution(
+            created.id, {'state': 'RUNNING', 'state_info': "Running..."})
 
         self.assertEqual('RUNNING', updated.state)
         self.assertEqual(
@@ -528,6 +531,21 @@ class ExecutionTest(SQLAlchemyTest):
             exc.NotFoundException,
             db_api.get_execution,
             created.id
+        )
+
+    def test_trim_status_info(self):
+        created = db_api.create_execution(EXECUTIONS[0])
+
+        self.assertIsNone(created.updated_at)
+
+        updated = db_api.update_execution(
+            created.id, {'state': 'FAILED', 'state_info': ".." * 1024})
+
+        self.assertEqual('FAILED', updated.state)
+        state_info = db_api.load_execution(updated.id).state_info
+        self.assertEqual(
+            1023,
+            len(state_info)
         )
 
     def test_execution_repr(self):
