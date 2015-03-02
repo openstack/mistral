@@ -47,7 +47,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         version: '2.0'
 
         wf:
-          type: direct
+          # type: direct - 'direct' is default
 
           tasks:
             task1:
