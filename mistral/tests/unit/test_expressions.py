@@ -108,6 +108,10 @@ class YaqlEvaluatorTest(base.BaseTest):
             self._evaluator.evaluate("$[$.state = 'active'].length()", [])
         )
 
+    def test_function_string(self):
+        self.assertEqual('3', self._evaluator.evaluate('str($)', '3'))
+        self.assertEqual('3', self._evaluator.evaluate('str($)', 3))
+
 
 class InlineYAQLEvaluatorTest(base.BaseTest):
     def setUp(self):
@@ -147,6 +151,10 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         """
 
         self.assertEqual(expected_result, result)
+
+    def test_function_string(self):
+        self.assertEqual('3', self._evaluator.evaluate('<% str($) %>', '3'))
+        self.assertEqual('3', self._evaluator.evaluate('<% str($) %>', 3))
 
 
 class ExpressionsTest(base.BaseTest):

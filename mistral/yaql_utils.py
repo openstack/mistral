@@ -32,6 +32,7 @@ def create_yaql_context():
 def _register_functions(yaql_ctx):
     yaql_ctx.register_function(_generator_length, 'length')
     yaql_ctx.register_function(_string_and_iterable_length, 'length')
+    yaql_ctx.register_function(to_str, 'str')
 
 
 # Additional convenience YAQL functions.
@@ -44,3 +45,7 @@ def _string_and_iterable_length(a):
 @ctx.EvalArg('a', arg_type=types.GeneratorType)
 def _generator_length(a):
     return sum(1 for i in a)
+
+
+def to_str(value):
+    return str(value())
