@@ -21,6 +21,7 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine1 import base
 from mistral.workbook import parser as spec_parser
 
@@ -535,3 +536,30 @@ class PoliciesTest(base.EngineTestCase):
         )
 
         self.assertIn('Invalid data type in WaitBeforePolicy', str(exception))
+
+    def test_delayed_task_and_correct_finish_workflow(self):
+        wf_delayed_state = """---
+        version: "2.0"
+        wf:
+          type: direct
+          tasks:
+
+            task1:
+              action: std.noop
+              policies:
+                wait-before: 1
+
+            task2:
+              action: std.noop
+        """
+        wf_service.create_workflows(wf_delayed_state)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_execution(wf_ex.id)
+
+        self.assertEqual(2, len(wf_ex.task_executions))

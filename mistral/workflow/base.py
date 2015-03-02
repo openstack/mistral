@@ -110,7 +110,7 @@ class WorkflowHandler(object):
 
             return []
 
-        if not cmds and not wf_utils.find_running_tasks(self.wf_ex):
+        if not cmds and not wf_utils.find_incomplete_tasks(self.wf_ex):
             # If there are no running tasks at this point we can conclude that
             # the workflow has finished.
             if not self.is_paused_or_completed():
