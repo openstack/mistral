@@ -561,9 +561,147 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertIn("'name': 'action1'", s)
 
 
+ACTION_EXECS = [
+    {
+        'spec': None,
+        'state': 'IDLE',
+        'state_info': "Running...",
+        'created_at': None,
+        'updated_at': None,
+        'task_id': None,
+        'tags': [],
+        'accepted': True,
+        'output': {"result": "value"}
+    },
+    {
+        'spec': None,
+        'state': 'ERROR',
+        'state_info': "Failed due to some reason...",
+        'created_at': None,
+        'updated_at': None,
+        'task_id': None,
+        'tags': ['deployment'],
+        'accepted': False,
+        'output': {"result": "value"}
+    }
+]
+
+
+class ActionExecutionTest(SQLAlchemyTest):
+    def test_create_and_get_and_load_action_execution(self):
+        created = db_api.create_action_execution(ACTION_EXECS[0])
+
+        fetched = db_api.get_action_execution(created.id)
+
+        self.assertEqual(created, fetched)
+
+        fetched = db_api.load_action_execution(created.id)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_action_execution("not-existing-id"))
+
+    def test_update_action_execution(self):
+        created = db_api.create_action_execution(ACTION_EXECS[0])
+
+        self.assertIsNone(created.updated_at)
+
+        updated = db_api.update_execution(
+            created.id,
+            {'state': 'RUNNING', 'state_info': "Running..."}
+        )
+
+        self.assertEqual('RUNNING', updated.state)
+        self.assertEqual(
+            'RUNNING',
+            db_api.load_action_execution(updated.id).state
+        )
+
+        fetched = db_api.get_action_execution(created.id)
+
+        self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
+
+    def test_create_or_update_action_execution(self):
+        id = 'not-existing-id'
+
+        self.assertIsNone(db_api.load_action_execution(id))
+
+        created = db_api.create_or_update_action_execution(id, ACTION_EXECS[0])
+
+        self.assertIsNotNone(created)
+        self.assertIsNotNone(created.id)
+
+        updated = db_api.create_or_update_action_execution(
+            created.id,
+            {'state': 'RUNNING'}
+        )
+
+        self.assertEqual('RUNNING', updated.state)
+        self.assertEqual(
+            'RUNNING',
+            db_api.load_action_execution(updated.id).state
+        )
+
+        fetched = db_api.get_action_execution(created.id)
+
+        self.assertEqual(updated, fetched)
+
+    def test_get_action_executions(self):
+        created0 = db_api.create_action_execution(WF_EXECS[0])
+        db_api.create_action_execution(ACTION_EXECS[1])
+
+        fetched = db_api.get_action_executions(
+            state=WF_EXECS[0]['state']
+        )
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
+    def test_delete_action_execution(self):
+        created = db_api.create_action_execution(ACTION_EXECS[0])
+
+        fetched = db_api.get_action_execution(created.id)
+
+        self.assertEqual(created, fetched)
+
+        db_api.delete_action_execution(created.id)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_action_execution,
+            created.id
+        )
+
+    def test_trim_status_info(self):
+        created = db_api.create_action_execution(ACTION_EXECS[0])
+
+        self.assertIsNone(created.updated_at)
+
+        updated = db_api.update_action_execution(
+            created.id,
+            {'state': 'FAILED', 'state_info': ".." * 1024}
+        )
+
+        self.assertEqual('FAILED', updated.state)
+        state_info = db_api.load_action_execution(updated.id).state_info
+        self.assertEqual(
+            1023,
+            len(state_info)
+        )
+
+    def test_action_execution_repr(self):
+        s = db_api.create_action_execution(ACTION_EXECS[0]).__repr__()
+
+        self.assertIn('ActionExecution ', s)
+        self.assertIn("'state': 'IDLE'", s)
+        self.assertIn("'state_info': 'Running...'", s)
+        self.assertIn("'accepted': True", s)
+
+
 WF_EXECS = [
     {
-        'wf_spec': {},
+        'spec': {},
         'start_params': {'task': 'my_task1'},
         'state': 'IDLE',
         'state_info': "Running...",
@@ -574,7 +712,7 @@ WF_EXECS = [
         'trust_id': None
     },
     {
-        'wf_spec': {},
+        'spec': {},
         'start_params': {'task': 'my_task1'},
         'state': 'RUNNING',
         'state_info': "Running...",
