@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +57,45 @@ wf:
     task3:
       publish:
         result: "<% $.hi %>, <% $.to %>! Sincerely, your <% $.__env.from %>."
+"""
+
+LINEAR_WITH_BRANCHES_WF = """
+---
+version: '2.0'
+
+wf:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.echo output="Hi"
+      publish:
+        hi: <% $.task1 %>
+        progress: "completed task1"
+      on-success:
+        - notify
+        - task2
+
+    task2:
+      action: std.echo output="Morpheus"
+      publish:
+        to: <% $.task2 %>
+        progress: "completed task2"
+      on-success:
+        - notify
+        - task3
+
+    task3:
+      publish:
+        result: "<% $.hi %>, <% $.to %>! Sincerely, your <% $.__env.from %>."
+        progress: "completed task3"
+      on-success:
+        - notify
+
+    notify:
+      action: std.echo output=<% $.progress %>
+      publish:
+        progress: <% $.notify %>
 """
 
 PARALLEL_TASKS_WF = """
@@ -191,6 +231,47 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             {'result': 'Hi, Morpheus! Sincerely, your Neo.'},
             task3.result
         )
+
+    def test_linear_with_branches_dataflow(self):
+        wf_service.create_workflows(LINEAR_WITH_BRANCHES_WF)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {},
+            env={'from': 'Neo'}
+        )
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+
+        tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+        notifies = self._assert_multiple_items(tasks, 3, name='notify')
+        notify_results = [notify.result['progress'] for notify in notifies]
+
+        self.assertEqual(states.SUCCESS, task3.state)
+
+        results = [
+            {'hi': 'Hi', 'progress': 'completed task1'},
+            {'to': 'Morpheus', 'progress': 'completed task2'},
+            {'result': 'Hi, Morpheus! Sincerely, your Neo.',
+             'progress': 'completed task3'}
+        ]
+
+        self.assertDictEqual(results[0], task1.result)
+        self.assertDictEqual(results[1], task2.result)
+        self.assertDictEqual(results[2], task3.result)
+        self.assertIn(results[0]['progress'], notify_results)
+        self.assertIn(results[1]['progress'], notify_results)
+        self.assertIn(results[2]['progress'], notify_results)
 
     def test_parallel_tasks(self):
         wf_service.create_workflows(PARALLEL_TASKS_WF)
