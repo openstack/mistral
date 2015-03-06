@@ -87,5 +87,10 @@ def find_successful_tasks(wf_ex):
     return [t for t in wf_ex.task_executions if t.state == states.SUCCESS]
 
 
+def find_incomplete_tasks(wf_ex):
+    return [t for t in wf_ex.task_executions
+            if not states.is_completed(t.state)]
+
+
 def find_error_tasks(wf_ex):
     return [t for t in wf_ex.task_executions if t.state == states.ERROR]
