@@ -40,9 +40,11 @@ def prepare_db_task(task_ex, task_spec, upstream_task_specs, wf_ex,
     :param wf_ex: Execution DB model.
     """
 
-    upstream_task_execs = wf_utils.find_task_executions(
+    upstream_task_execs = wf_utils.find_upstream_task_executions(
         wf_ex,
-        upstream_task_specs
+        task_spec,
+        upstream_task_specs,
+        cause_task_ex=cause_task_ex
     )
 
     task_ex.in_context = utils.merge_dicts(
