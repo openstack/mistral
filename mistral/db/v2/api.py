@@ -204,6 +204,45 @@ def delete_executions(**kwargs):
     IMPL.delete_executions(**kwargs)
 
 
+# Action executions.
+
+def get_action_execution(id):
+    return IMPL.get_action_execution(id)
+
+
+def load_action_execution(name):
+    """Unlike get_action_execution this method is allowed to return None."""
+    return IMPL.load_action_execution(name)
+
+
+def get_action_executions(**kwargs):
+    return IMPL.get_action_executions(**kwargs)
+
+
+def ensure_action_execution_exists(id):
+    return IMPL.ensure_action_execution_exists(id)
+
+
+def create_action_execution(values):
+    return IMPL.create_action_execution(values)
+
+
+def update_action_execution(id, values):
+    return IMPL.update_action_execution(id, values)
+
+
+def create_or_update_action_execution(id, values):
+    return IMPL.create_or_update_action_execution(id, values)
+
+
+def delete_action_execution(id):
+    return IMPL.delete_action_execution(id)
+
+
+def delete_action_executions(**kwargs):
+    IMPL.delete_action_executions(**kwargs)
+
+
 # Workflow executions.
 
 def get_workflow_execution(id):
@@ -211,7 +250,7 @@ def get_workflow_execution(id):
 
 
 def load_workflow_execution(name):
-    """Unlike get_execution this method is allowed to return None."""
+    """Unlike get_workflow_execution this method is allowed to return None."""
     return IMPL.load_workflow_execution(name)
 
 

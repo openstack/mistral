@@ -443,14 +443,100 @@ def _get_execution(id):
     return _get_db_object_by_id(models.Execution, id)
 
 
+# Action executions.
+
+def get_action_execution(id):
+    wf_ex = _get_action_execution(id)
+
+    if not wf_ex:
+        raise exc.NotFoundException(
+            "ActionExecution not found [id=%s]" % id)
+
+    return wf_ex
+
+
+def load_action_execution(id):
+    return _get_action_execution(id)
+
+
+def ensure_action_execution_exists(id):
+    get_action_execution(id)
+
+
+def get_action_executions(**kwargs):
+    return _get_action_executions(**kwargs)
+
+
+@b.session_aware()
+def create_action_execution(values, session=None):
+    wf_ex = models.ActionExecution()
+
+    wf_ex.update(values.copy())
+
+    try:
+        wf_ex.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for ActionExecution: %s" % e.columns
+        )
+
+    return wf_ex
+
+
+@b.session_aware()
+def update_action_execution(id, values, session=None):
+    wf_ex = _get_action_execution(id)
+
+    if not wf_ex:
+        raise exc.NotFoundException(
+            "ActionExecution not found [id=%s]" % id
+        )
+
+    wf_ex.update(values.copy())
+
+    return wf_ex
+
+
+@b.session_aware()
+def create_or_update_action_execution(id, values, session=None):
+    if not _get_action_execution(id):
+        return create_action_execution(values)
+    else:
+        return update_action_execution(id, values)
+
+
+@b.session_aware()
+def delete_action_execution(id, session=None):
+    wf_ex = _get_action_execution(id)
+
+    if not wf_ex:
+        raise exc.NotFoundException(
+            "ActionExecution not found [id=%s]" % id
+        )
+
+    session.delete(wf_ex)
+
+
+@b.session_aware()
+def delete_action_executions(**kwargs):
+    return _delete_all(models.ActionExecution, **kwargs)
+
+
+def _get_action_executions(**kwargs):
+    return _get_collection_sorted_by_time(models.ActionExecution, **kwargs)
+
+
+def _get_action_execution(id):
+    return _get_db_object_by_id(models.ActionExecution, id)
+
+
 # Workflow executions.
 
 def get_workflow_execution(id):
     wf_ex = _get_workflow_execution(id)
 
     if not wf_ex:
-        raise exc.NotFoundException(
-            "Execution not found [execution_id=%s]" % id)
+        raise exc.NotFoundException("WorkflowExecution not found [id=%s]" % id)
 
     return wf_ex
 
@@ -476,8 +562,9 @@ def create_workflow_execution(values, session=None):
     try:
         wf_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Execution: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for WorkflowExecution: %s" % e.columns
+        )
 
     return wf_ex
 
@@ -487,8 +574,7 @@ def update_workflow_execution(id, values, session=None):
     wf_ex = _get_workflow_execution(id)
 
     if not wf_ex:
-        raise exc.NotFoundException(
-            "Execution not found [execution_id=%s]" % id)
+        raise exc.NotFoundException("WorkflowExecution not found [id=%s]" % id)
 
     wf_ex.update(values.copy())
 
@@ -508,8 +594,7 @@ def delete_workflow_execution(id, session=None):
     wf_ex = _get_workflow_execution(id)
 
     if not wf_ex:
-        raise exc.NotFoundException(
-            "Execution not found [execution_id=%s]" % id)
+        raise exc.NotFoundException("WorkflowExecution not found [id=%s]" % id)
 
     session.delete(wf_ex)
 
@@ -533,7 +618,7 @@ def get_task_execution(id):
     task_ex = _get_task_execution(id)
 
     if not task_ex:
-        raise exc.NotFoundException("Task not found [task_id=%s]" % id)
+        raise exc.NotFoundException("Task execution not found [id=%s]" % id)
 
     return task_ex
 
@@ -555,7 +640,9 @@ def create_task_execution(values, session=None):
     try:
         task_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Task: %s" % e.columns)
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for TaskExecution: %s" % e.columns
+        )
 
     return task_ex
 
@@ -565,8 +652,7 @@ def update_task_execution(id, values, session=None):
     task_ex = _get_task_execution(id)
 
     if not task_ex:
-        raise exc.NotFoundException(
-            "Task not found [task_id=%s]" % id)
+        raise exc.NotFoundException("TaskExecution not found [id=%s]" % id)
 
     task_ex.update(values.copy())
 
@@ -586,8 +672,7 @@ def delete_task_execution(id, session=None):
     task_ex = _get_task_execution(id)
 
     if not task_ex:
-        raise exc.NotFoundException(
-            "Task not found [task_id=%s]" % id)
+        raise exc.NotFoundException("TaskExecution not found [id=%s]" % id)
 
     session.delete(task_ex)
 
@@ -622,12 +707,12 @@ def create_delayed_call(values, session=None):
 
 
 @b.session_aware()
-def delete_delayed_call(delayed_call_id, session=None):
-    delayed_call = _get_delayed_call(delayed_call_id)
+def delete_delayed_call(id, session=None):
+    delayed_call = _get_delayed_call(id)
 
     if not delayed_call:
         raise exc.NotFoundException(
-            "DelayedCall not found [delayed_call_id=%s]" % delayed_call_id
+            "DelayedCall not found [id=%s]" % id
         )
 
     session.delete(delayed_call)
@@ -644,10 +729,10 @@ def get_delayed_calls_to_start(time, session=None):
 
 
 @b.session_aware()
-def _get_delayed_call(delayed_call_id, session=None):
+def _get_delayed_call(id, session=None):
     query = b.model_query(models.DelayedCall)
 
-    return query.filter_by(id=delayed_call_id).first()
+    return query.filter_by(id=id).first()
 
 
 # Cron triggers.
@@ -689,8 +774,10 @@ def create_cron_trigger(values, session=None):
     try:
         cron_trigger.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for cron trigger %s: %s"
-                                   % (cron_trigger.name, e.columns))
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for cron trigger %s: %s"
+            % (cron_trigger.name, e.columns)
+        )
 
     return cron_trigger
 
@@ -700,8 +787,7 @@ def update_cron_trigger(name, values, session=None):
     cron_trigger = _get_cron_trigger(name)
 
     if not cron_trigger:
-        raise exc.NotFoundException(
-            "Cron trigger not found [name=%s]" % name)
+        raise exc.NotFoundException("Cron trigger not found [name=%s]" % name)
 
     cron_trigger.update(values.copy())
 
@@ -723,8 +809,7 @@ def delete_cron_trigger(name, session=None):
     cron_trigger = _get_cron_trigger(name)
 
     if not cron_trigger:
-        raise exc.NotFoundException(
-            "Cron trigger not found [name=%s]" % name)
+        raise exc.NotFoundException("Cron trigger not found [name=%s]" % name)
 
     session.delete(cron_trigger)
 
@@ -750,8 +835,7 @@ def get_environment(name):
     env = _get_environment(name)
 
     if not env:
-        raise exc.NotFoundException(
-            "Environment not found [environment_name=%s]" % name)
+        raise exc.NotFoundException("Environment not found [name=%s]" % name)
 
     return env
 
@@ -773,8 +857,9 @@ def create_environment(values, session=None):
     try:
         env.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for Environment: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for Environment: %s" % e.columns
+        )
 
     return env
 
@@ -784,14 +869,9 @@ def update_environment(name, values, session=None):
     env = _get_environment(name)
 
     if not env:
-        raise exc.NotFoundException(
-            "Environment not found [environment_name=%s]" % name)
+        raise exc.NotFoundException("Environment not found [name=%s]" % name)
 
     env.update(values)
-
-    # Default environment to private unless specified.
-    if not getattr(env, 'scope', None):
-        env['scope'] = 'private'
 
     return env
 
@@ -811,8 +891,7 @@ def delete_environment(name, session=None):
     env = _get_environment(name)
 
     if not env:
-        raise exc.NotFoundException(
-            "Environment not found [environment_name=%s]" % name)
+        raise exc.NotFoundException("Environment not found [name=%s]" % name)
 
     session.delete(env)
 

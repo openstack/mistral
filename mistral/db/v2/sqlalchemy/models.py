@@ -111,6 +111,7 @@ class ActionExecution(Execution):
     }
 
     # Main properties.
+    definition_name = sa.Column(sa.String(80))
     accepted = sa.Column(sa.Boolean(), default=False)
 
     # TODO(rakhmerov): We have to use @declared_attr here temporarily to
