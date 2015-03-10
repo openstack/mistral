@@ -19,6 +19,7 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action
+from mistral.api.controllers.v2 import action_execution
 from mistral.api.controllers.v2 import cron_trigger
 from mistral.api.controllers.v2 import environment
 from mistral.api.controllers.v2 import execution
@@ -50,6 +51,7 @@ class Controller(object):
     tasks = task.TasksController()
     cron_triggers = cron_trigger.CronTriggersController()
     environments = environment.EnvironmentController()
+    action_executions = action_execution.ActionExecutionsController()
 
     @wsme_pecan.wsexpose(RootResource)
     def index(self):
