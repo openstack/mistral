@@ -49,10 +49,8 @@ workflows:
           returns 100 (expected result)
         action: std.javascript
         input:
-          script: f = 50 * 10; return f
-          # Skip this '$' sign until bug
-          # https://bugs.launchpad.net/mistral/+bug/1415886 is resolved.
-          # return $['num'] * 10
+          script: |
+            return $['num'] * 10
           context: <% $ %>
 
         publish:
