@@ -17,100 +17,52 @@ import copy
 from oslo.config import cfg
 
 from mistral import context as auth_ctx
+from mistral.db.v2.sqlalchemy import models
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral import utils
 from mistral.utils import inspect_utils
-from mistral.workflow import utils as wf_utils
-from mistral.workflow import with_items
+from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-def prepare_db_task(task_ex, task_spec, upstream_task_specs, wf_ex,
-                    cause_task_ex=None):
-    """Prepare Data Flow properties ('in_context' and 'input')
-     of given DB task.
-
-    :param task_ex: DB task to prepare.
-    :param task_spec: Task specification.
-    :param upstream_task_specs: Specifications of workflow upstream tasks.
-    :param wf_ex: Execution DB model.
-    """
-
-    upstream_task_execs = wf_utils.find_upstream_task_executions(
-        wf_ex,
-        task_spec,
-        upstream_task_specs,
-        cause_task_ex=cause_task_ex
-    )
-
-    task_ex.in_context = utils.merge_dicts(
-        copy.copy(wf_ex.context),
-        _evaluate_upstream_context(upstream_task_execs)
-    )
-
-    task_ex.input = evaluate_task_input(
-        task_spec,
-        task_ex.in_context
-    )
-
-    _prepare_runtime_context(task_ex, task_spec)
-
-
-def _prepare_runtime_context(task_ex, task_spec):
-    task_ex.runtime_context = task_ex.runtime_context or {}
-
-    with_items.prepare_runtime_context(task_ex, task_spec)
-
-
-def evaluate_task_input(task_spec, context):
-    with_items = task_spec.get_with_items()
-
-    # Do not evaluate input in case of with-items task.
-    # Instead of it, input is considered as data defined in with-items.
-    if with_items:
-        return expr.evaluate_recursively(with_items, context or {})
-    else:
-        return expr.evaluate_recursively(task_spec.get_input(), context)
-
-
-def _evaluate_upstream_context(upstream_task_execs):
-    task_result_ctx = {}
+def evaluate_upstream_context(upstream_task_execs):
+    task_published_vars = {}
     ctx = {}
 
     for t_ex in upstream_task_execs:
-        task_result_ctx = utils.merge_dicts(task_result_ctx, t_ex.result)
+        task_published_vars = utils.merge_dicts(
+            task_published_vars,
+            t_ex.published
+        )
         utils.merge_dicts(ctx, evaluate_task_outbound_context(t_ex))
 
-    return utils.merge_dicts(ctx, task_result_ctx)
+    return utils.merge_dicts(ctx, task_published_vars)
 
 
-# TODO(rakhmerov): This method should utilize task invocations and calculate
-# effective task output.
-# TODO(rakhmerov): Now this method doesn't make a lot of sense because we
-# treat action/workflow as a task result so we need to calculate only
-# what could be called "effective task result"
-def evaluate_task_result(task_ex, task_spec, result):
-    """Evaluates task result given a result from action/workflow.
+def _extract_execution_result(ex):
+    if isinstance(ex, models.WorkflowExecution):
+        return ex.output
 
-    :param task_ex: DB task
-    :param task_spec: Task specification
-    :param result: Task action/workflow result. Instance of
-        mistral.workflow.base.TaskResult
-    :return: Complete task result.
-    """
+    return ex.output['result']
 
-    if result.is_error():
-        return {
-            'error': result.error,
-            'task': {task_ex.name: result.error}
-        }
 
-    # Expression context is task inbound context + action/workflow result
-    # accessible under key task name key.
+def get_task_execution_result(task_ex):
+    results = [
+        _extract_execution_result(ex)
+        for ex in task_ex.executions
+        if hasattr(ex, 'output') and ex.accepted
+    ]
+
+    assert len(results) > 0
+
+    return results if len(results) > 1 else results[0]
+
+
+def publish_variables(task_ex, task_spec):
     expr_ctx = copy.deepcopy(task_ex.in_context) or {}
 
     if task_ex.name in expr_ctx:
@@ -119,22 +71,14 @@ def evaluate_task_result(task_ex, task_spec, result):
             task_ex.name
         )
 
-    expr_ctx[task_ex.name] = copy.deepcopy(result.data) or {}
+    task_ex_result = get_task_execution_result(task_ex)
 
-    return expr.evaluate_recursively(task_spec.get_publish(), expr_ctx)
+    expr_ctx[task_ex.name] = copy.deepcopy(task_ex_result) or {}
 
-
-def evaluate_effective_task_result(task_ex, task_spec):
-    """Evaluates effective (final) task result.
-
-    Based on existing task invocations this method calculates
-    task final result that's supposed to be accessibly by users.
-    :param task_ex: DB task.
-    :param task_spec: Task specification.
-    :return: Effective (final) task result.
-    """
-    # TODO(rakhmerov): Implement
-    pass
+    task_ex.published = expr.evaluate_recursively(
+        task_spec.get_publish(),
+        expr_ctx
+    )
 
 
 def evaluate_task_outbound_context(task_ex):
@@ -146,15 +90,22 @@ def evaluate_task_outbound_context(task_ex):
     :return: Outbound task Data Flow context.
     """
 
+    if task_ex.state != states.SUCCESS:
+        return task_ex.in_context
+
     in_context = (copy.deepcopy(dict(task_ex.in_context))
                   if task_ex.in_context is not None else {})
 
-    out_ctx = utils.merge_dicts(in_context, task_ex.result)
+    out_ctx = utils.merge_dicts(in_context, task_ex.published)
 
     # Add task output under key 'taskName'.
+    # TODO(rakhmerov): This must be a different mechanism since
+    # task result may be huge.
+    task_ex_result = get_task_execution_result(task_ex)
+
     out_ctx = utils.merge_dicts(
         out_ctx,
-        {task_ex.name: copy.deepcopy(task_ex.result) or None}
+        {task_ex.name: copy.deepcopy(task_ex_result) or None}
     )
 
     return out_ctx
@@ -198,7 +149,7 @@ def add_execution_to_context(wf_ex, context):
     context['__execution'] = {
         'id': wf_ex.id,
         'spec': wf_ex.spec,
-        'start_params': wf_ex.start_params,
+        'params': wf_ex.params,
         'input': wf_ex.input
     }
 
@@ -210,18 +161,18 @@ def add_environment_to_context(wf_ex, context):
         context = {}
 
     # If env variables are provided, add an evaluated copy into the context.
-    if 'env' in wf_ex.start_params:
-        env = copy.deepcopy(wf_ex.start_params['env'])
+    if 'env' in wf_ex.params:
+        env = copy.deepcopy(wf_ex.params['env'])
         # An env variable can be an expression of other env variables.
         context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 
     return context
 
 
-def evaluate_policy_params(policy, context):
-    policy_params = inspect_utils.get_public_fields(policy)
-    evaluated_params = expr.evaluate_recursively(
-        policy_params, context
-    )
-    for k, v in evaluated_params.items():
-        setattr(policy, k, v)
+def evaluate_object_fields(obj, context):
+    fields = inspect_utils.get_public_fields(obj)
+
+    evaluated_fields = expr.evaluate_recursively(fields, context)
+
+    for k, v in evaluated_fields.items():
+        setattr(obj, k, v)

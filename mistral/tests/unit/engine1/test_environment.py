@@ -16,11 +16,11 @@ import mock
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.engine1 import default_executor
 from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
-
 
 LOG = logging.getLogger(__name__)
 
@@ -63,8 +63,6 @@ workflows:
           final_result: <% $.task2 %>
 
   wf2:
-    type: direct
-
     output:
       slogan: <% $.slogan %>
 
@@ -80,17 +78,17 @@ workflows:
 """
 
 
-def _run_at_target(task_id, action_class_str, attributes,
+def _run_at_target(action_ex_id, action_class_str, attributes,
                    action_params, target=None):
-    kwargs = {
-        'task_id': task_id,
-        'action_class_str': action_class_str,
-        'attributes': attributes,
-        'params': action_params
-    }
+    # We'll just call executor directly for testing purposes.
+    executor = default_executor.DefaultExecutor(rpc.get_engine_client())
 
-    rpc_client = rpc.get_executor_client()
-    rpc_client._cast_run_action(rpc_client.topic, **kwargs)
+    executor.run_action(
+        action_ex_id,
+        action_class_str,
+        attributes,
+        action_params
+    )
 
 
 MOCK_RUN_AT_TARGET = mock.MagicMock(side_effect=_run_at_target)
@@ -104,30 +102,31 @@ class SubworkflowsTest(base.EngineTestCase):
 
     @mock.patch.object(rpc.ExecutorClient, 'run_action', MOCK_RUN_AT_TARGET)
     def _test_subworkflow(self, env):
-        exec1_db = self.engine.start_workflow(
+        wf2_ex = self.engine.start_workflow(
             'my_wb.wf2',
             None,
             env=env
         )
 
-        # Execution 1.
-        self.assertIsNotNone(exec1_db)
-        self.assertDictEqual({}, exec1_db.input)
-        self.assertDictEqual({'env': env}, exec1_db.start_params)
+        # Execution of 'wf2'.
+        self.assertIsNotNone(wf2_ex)
+        self.assertDictEqual({}, wf2_ex.input)
+        self.assertDictEqual({'env': env}, wf2_ex.params)
+
+        self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
         wf_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(wf_execs))
 
-        # Execution 2.
-        if wf_execs[0].id != exec1_db.id:
-            exec2_db = wf_execs[0]
-        else:
-            exec2_db = wf_execs[1]
+        # Execution of 'wf1'.
+
+        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
+        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
 
         expected_start_params = {
             'task_name': 'task2',
-            'parent_task_id': exec2_db.task_execution_id,
+            'task_execution_id': wf1_ex.task_execution_id,
             'env': env
         }
 
@@ -136,42 +135,44 @@ class SubworkflowsTest(base.EngineTestCase):
             'param2': 'Clyde'
         }
 
-        self.assertIsNotNone(exec2_db.task_execution_id)
-        self.assertDictEqual(exec2_db.start_params, expected_start_params)
-        self.assertDictEqual(exec2_db.input, expected_wf1_input)
+        self.assertIsNotNone(wf1_ex.task_execution_id)
+        self.assertDictEqual(wf1_ex.params, expected_start_params)
+        self.assertDictEqual(wf1_ex.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(exec2_db.id))
+        self._await(lambda: self.is_execution_success(wf1_ex.id))
 
-        exec2_db = db_api.get_workflow_execution(exec2_db.id)
+        wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
         expected_wf1_output = {'final_result': "'Bonnie & Clyde'"}
 
-        self.assertDictEqual(exec2_db.output, expected_wf1_output)
+        self.assertDictEqual(wf1_ex.output, expected_wf1_output)
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(exec1_db.id))
+        self._await(lambda: self.is_execution_success(wf2_ex.id))
 
-        exec1_db = db_api.get_workflow_execution(exec1_db.id)
+        wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
 
         expected_wf2_output = {'slogan': "'Bonnie & Clyde' is a cool movie!"}
 
-        self.assertDictEqual(exec1_db.output, expected_wf2_output)
+        self.assertDictEqual(wf2_ex.output, expected_wf2_output)
 
         # Check if target is resolved.
-        tasks_exec2 = db_api.get_task_executions(
-            workflow_execution_id=exec2_db.id
+        wf1_task_execs = db_api.get_task_executions(
+            workflow_execution_id=wf1_ex.id
         )
 
-        self._assert_single_item(tasks_exec2, name='task1')
-        self._assert_single_item(tasks_exec2, name='task2')
+        self._assert_single_item(wf1_task_execs, name='task1')
+        self._assert_single_item(wf1_task_execs, name='task2')
 
-        for task in tasks_exec2:
+        for t_ex in wf1_task_execs:
+            a_ex = t_ex.executions[0]
+
             rpc.ExecutorClient.run_action.assert_any_call(
-                task.id,
+                a_ex.id,
                 'mistral.actions.std_actions.EchoAction',
                 {},
-                task.input,
+                a_ex.input,
                 TARGET
             )
 

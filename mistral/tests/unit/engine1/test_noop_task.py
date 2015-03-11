@@ -27,7 +27,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WF = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct

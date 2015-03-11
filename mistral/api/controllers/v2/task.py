@@ -122,9 +122,9 @@ class TasksController(rest.RestController):
                 raise exc.InvalidResultException(str(e))
 
         if task.state == states.ERROR:
-            task_result = wf_utils.TaskResult(error=result)
+            task_result = wf_utils.Result(error=result)
         else:
-            task_result = wf_utils.TaskResult(data=result)
+            task_result = wf_utils.Result(data=result)
 
         engine = rpc.get_engine_client()
 

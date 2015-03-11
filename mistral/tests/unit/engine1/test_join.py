@@ -21,247 +21,47 @@ from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine1 import base
 
+
 LOG = logging.getLogger(__name__)
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-WF_FULL_JOIN = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  output:
-    result: <% $.result3 %>
-
-  tasks:
-    task1:
-      action: std.echo output=1
-      publish:
-        result1: <% $.task1 %>
-      on-complete:
-        - task3
-
-    task2:
-      action: std.echo output=2
-      publish:
-        result2: <% $.task2 %>
-      on-complete:
-        - task3
-
-    task3:
-      join: all
-      action: std.echo output="<% $.result1 %>,<% $.result2 %>"
-      publish:
-        result3: <% $.task3 %>
-"""
-
-
-WF_FULL_JOIN_WITH_ERRORS = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  output:
-    result: <% $.result3 %>
-
-  tasks:
-    task1:
-      action: std.echo output=1
-      publish:
-        result1: <% $.task1 %>
-      on-complete:
-        - task3
-
-    task2:
-      action: std.fail
-      on-error:
-        - task3
-
-    task3:
-      join: all
-      action: std.echo output="<% $.result1 %>-<% $.result1 %>"
-      publish:
-        result3: <% $.task3 %>
-"""
-
-WF_FULL_JOIN_WITH_CONDITIONS = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  output:
-    result: <% $.result4 %>
-
-  tasks:
-    task1:
-      action: std.echo output=1
-      publish:
-        result1: <% $.task1 %>
-      on-complete:
-        - task3
-
-    task2:
-      action: std.echo output=2
-      publish:
-        result2: <% $.task2 %>
-      on-complete:
-        - task3: <% $.result2 = 11111 %>
-        - task4: <% $.result2 = 2 %>
-
-    task3:
-      join: all
-      action: std.echo output="<% $.result1 %>-<% $.result1 %>"
-      publish:
-        result3: <% $.task3 %>
-
-    task4:
-      action: std.echo output=4
-      publish:
-        result4: <% $.task4 %>
-"""
-
-WF_PARTIAL_JOIN = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  output:
-    result: <% $.result4 %>
-
-  tasks:
-    task1:
-      action: std.echo output=1
-      publish:
-        result1: <% $.task1 %>
-      on-complete:
-        - task4
-
-    task2:
-      action: std.echo output=2
-      publish:
-        result2: <% $.task2 %>
-      on-complete:
-        - task4
-
-    task3:
-      action: std.fail
-      description: |
-        Always fails and 'on-success' never gets triggered.
-        However, 'task4' will run since its join cardinality
-        is 2 which means 'task1' and 'task2' completion is
-        enough to trigger it.
-      on-success:
-        - task4
-      on-error:
-        - noop
-
-    task4:
-      join: 2
-      action: std.echo output="<% $.result1 %>,<% $.result2 %>"
-      publish:
-        result4: <% $.task4 %>
-"""
-
-WF_PARTIAL_JOIN_TRIGGERS_ONCE = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  output:
-    result: <% $.result4 %>
-
-  tasks:
-    task1:
-      action: std.noop
-      publish:
-        result1: 1
-      on-complete:
-        - task5
-
-    task2:
-      action: std.noop
-      publish:
-        result2: 2
-      on-complete:
-        - task5
-
-    task3:
-      action: std.noop
-      publish:
-        result3: 3
-      on-complete:
-        - task5
-
-    task4:
-      action: std.noop
-      publish:
-        result4: 4
-      on-complete:
-        - task5
-
-    task5:
-      join: 2
-      action: std.echo
-      input:
-        output: <% $.result1 %>,<% $.result2 %>,<% $.result3 %>,<% $.result4 %>
-      publish:
-        result5: <% $.task5 %>
-"""
-
-WF_DISCRIMINATOR = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  output:
-    result: <% $.result4 %>
-
-  tasks:
-    task1:
-      action: std.noop
-      publish:
-        result1: 1
-      on-complete:
-        - task4
-
-    task2:
-      action: std.noop
-      publish:
-        result2: 2
-      on-complete:
-        - task4
-
-    task3:
-      action: std.noop
-      publish:
-        result3: 3
-      on-complete:
-        - task4
-
-    task4:
-      join: one
-      action: std.echo output="<% $.result1 %>,<% $.result2 %>,<% $.result3 %>"
-      publish:
-        result4: <% $.task4 %>
-"""
-
 
 class JoinEngineTest(base.EngineTestCase):
     def test_full_join_without_errors(self):
-        wf_service.create_workflows(WF_FULL_JOIN)
+        wf_full_join = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output:
+            result: <% $.result3 %>
+
+          tasks:
+            task1:
+              action: std.echo output=1
+              publish:
+                result1: <% $.task1 %>
+              on-complete:
+                - task3
+
+            task2:
+              action: std.echo output=2
+              publish:
+                result2: <% $.task2 %>
+              on-complete:
+                - task3
+
+            task3:
+              join: all
+              action: std.echo output="<% $.result1 %>,<% $.result2 %>"
+              publish:
+                result3: <% $.task3 %>
+        """
+
+        wf_service.create_workflows(wf_full_join)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -284,7 +84,36 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_full_join_with_errors(self):
-        wf_service.create_workflows(WF_FULL_JOIN_WITH_ERRORS)
+        wf_full_join_with_errors = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output:
+            result: <% $.result3 %>
+
+          tasks:
+            task1:
+              action: std.echo output=1
+              publish:
+                result1: <% $.task1 %>
+              on-complete:
+                - task3
+
+            task2:
+              action: std.fail
+              on-error:
+                - task3
+
+            task3:
+              join: all
+              action: std.echo output="<% $.result1 %>-<% $.result1 %>"
+              publish:
+                result3: <% $.task3 %>
+        """
+
+        wf_service.create_workflows(wf_full_join_with_errors)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -307,7 +136,44 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual({'result': '1-1'}, wf_ex.output)
 
     def test_full_join_with_conditions(self):
-        wf_service.create_workflows(WF_FULL_JOIN_WITH_CONDITIONS)
+        wf_full_join_with_conditions = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output:
+            result: <% $.result4 %>
+
+          tasks:
+            task1:
+              action: std.echo output=1
+              publish:
+                result1: <% $.task1 %>
+              on-complete:
+                - task3
+
+            task2:
+              action: std.echo output=2
+              publish:
+                result2: <% $.task2 %>
+              on-complete:
+                - task3: <% $.result2 = 11111 %>
+                - task4: <% $.result2 = 2 %>
+
+            task3:
+              join: all
+              action: std.echo output="<% $.result1 %>-<% $.result1 %>"
+              publish:
+                result3: <% $.task3 %>
+
+            task4:
+              action: std.echo output=4
+              publish:
+                result4: <% $.task4 %>
+        """
+
+        wf_service.create_workflows(wf_full_join_with_conditions)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -332,7 +198,50 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual({'result': 4}, wf_ex.output)
 
     def test_partial_join(self):
-        wf_service.create_workflows(WF_PARTIAL_JOIN)
+        wf_partial_join = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output:
+            result: <% $.result4 %>
+
+          tasks:
+            task1:
+              action: std.echo output=1
+              publish:
+                result1: <% $.task1 %>
+              on-complete:
+                - task4
+
+            task2:
+              action: std.echo output=2
+              publish:
+                result2: <% $.task2 %>
+              on-complete:
+                - task4
+
+            task3:
+              action: std.fail
+              description: |
+                Always fails and 'on-success' never gets triggered.
+                However, 'task4' will run since its join cardinality
+                is 2 which means 'task1' and 'task2' completion is
+                enough to trigger it.
+              on-success:
+                - task4
+              on-error:
+                - noop
+
+            task4:
+              join: 2
+              action: std.echo output="<% $.result1 %>,<% $.result2 %>"
+              publish:
+                result4: <% $.task4 %>
+        """
+
+        wf_service.create_workflows(wf_partial_join)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -356,17 +265,58 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        self.assertDictEqual(
-            {
-                'result4': '1,2',
-            },
-            task4.result
-        )
-
+        self.assertDictEqual({'result4': '1,2'}, task4.published)
         self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_partial_join_triggers_once(self):
-        wf_service.create_workflows(WF_PARTIAL_JOIN_TRIGGERS_ONCE)
+        wf_partial_join_triggers_once = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output:
+            result: <% $.result4 %>
+
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                result1: 1
+              on-complete:
+                - task5
+
+            task2:
+              action: std.noop
+              publish:
+                result2: 2
+              on-complete:
+                - task5
+
+            task3:
+              action: std.noop
+              publish:
+                result3: 3
+              on-complete:
+                - task5
+
+            task4:
+              action: std.noop
+              publish:
+                result4: 4
+              on-complete:
+                - task5
+
+            task5:
+              join: 2
+              action: std.echo
+              input:
+                output: <%$.result1%>,<%$.result2%>,<%$.result3%>,<%$.result4%>
+              publish:
+                result5: <% $.task5 %>
+        """
+
+        wf_service.create_workflows(wf_partial_join_triggers_once)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -392,13 +342,53 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task4.state)
         self.assertEqual(states.SUCCESS, task5.state)
 
-        result5 = task5.result['result5']
+        result5 = task5.published['result5']
 
         self.assertIsNotNone(result5)
         self.assertEqual(2, result5.count('None'))
 
     def test_discriminator(self):
-        wf_service.create_workflows(WF_DISCRIMINATOR)
+        wf_discriminator = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output:
+            result: <% $.result4 %>
+
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                result1: 1
+              on-complete:
+                - task4
+
+            task2:
+              action: std.noop
+              publish:
+                result2: 2
+              on-complete:
+                - task4
+
+            task3:
+              action: std.noop
+              publish:
+                result3: 3
+              on-complete:
+                - task4
+
+            task4:
+              join: one
+              action: std.echo
+              input:
+                output: <%$.result1%>,<%$.result2 %>,<%$.result3%>
+              publish:
+                result4: <% $.task4 %>
+        """
+
+        wf_service.create_workflows(wf_discriminator)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -422,7 +412,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        result4 = task4.result['result4']
+        result4 = task4.published['result4']
 
         self.assertIsNotNone(result4)
         self.assertEqual(2, result4.count('None'))
@@ -472,18 +462,19 @@ class JoinEngineTest(base.EngineTestCase):
               action: std.echo output="Doing..."
               on-success:
                 - exit
+
             exit:
               action: std.echo output="Exiting..."
         """
         wf_service.create_workflows(wfs_tasks_join_complex)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('main', {})
+        wf_ex = self.engine.start_workflow('main', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertDictEqual(
             {
@@ -491,7 +482,7 @@ class JoinEngineTest(base.EngineTestCase):
                 'is_done': True,
                 'var2': True
             },
-            exec_db.output
+            wf_ex.output
         )
 
     @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1424461')

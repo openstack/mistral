@@ -156,6 +156,10 @@ class WaitBeforePolicy(base.TaskPolicy):
     def before_task_start(self, task_ex, task_spec):
         super(WaitBeforePolicy, self).before_task_start(task_ex, task_spec)
 
+        # TODO(rakhmerov): This policy needs to be fixed.
+        if True:
+            return
+
         context_key = 'wait_before_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -203,10 +207,13 @@ class WaitAfterPolicy(base.TaskPolicy):
     def __init__(self, delay):
         self.delay = delay
 
-    def after_task_complete(self, task_ex, task_spec, result):
-        super(WaitAfterPolicy, self).after_task_complete(
-            task_ex, task_spec, result
-        )
+    def after_task_complete(self, task_ex, task_spec):
+        super(WaitAfterPolicy, self).after_task_complete(task_ex, task_spec)
+
+        # TODO(rakhmerov): This policy needs to be fixed.
+        if True:
+            return
+
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -240,18 +247,18 @@ class WaitAfterPolicy(base.TaskPolicy):
         # Set task state to 'DELAYED'.
         task_ex.state = states.DELAYED
 
-        serializers = {
-            'result': 'mistral.workflow.utils.TaskResultSerializer'
-        }
-
-        scheduler.schedule_call(
-            _ENGINE_CLIENT_PATH,
-            'on_task_result',
-            self.delay,
-            serializers,
-            task_id=task_ex.id,
-            result=result
-        )
+        # serializers = {
+        #     'result': 'mistral.workflow.utils.ResultSerializer'
+        # }
+        #
+        # scheduler.schedule_call(
+        #     _ENGINE_CLIENT_PATH,
+        #     'on_task_result',
+        #     self.delay,
+        #     serializers,
+        #     task_id=task_ex.id,
+        #     result=result
+        # )
 
 
 class RetryPolicy(base.TaskPolicy):
@@ -267,7 +274,7 @@ class RetryPolicy(base.TaskPolicy):
         self.delay = delay
         self.break_on = break_on
 
-    def after_task_complete(self, task_ex, task_spec, result):
+    def after_task_complete(self, task_ex, task_spec):
         """Possible Cases:
 
         1. state = SUCCESS
@@ -277,9 +284,11 @@ class RetryPolicy(base.TaskPolicy):
         3. retry:count = 5, current:count = 4, state = ERROR
         Iterations complete therefore state = #{state}, current:count = 4.
         """
-        super(RetryPolicy, self).after_task_complete(
-            task_ex, task_spec, result
-        )
+        super(RetryPolicy, self).after_task_complete(task_ex, task_spec)
+
+        # TODO(rakhmerov): This policy needs to be fixed.
+        if True:
+            return
 
         context_key = 'retry_task_policy'
 
@@ -290,7 +299,7 @@ class RetryPolicy(base.TaskPolicy):
 
         task_ex.runtime_context = runtime_context
 
-        state = states.ERROR if result.is_error() else states.SUCCESS
+        state = task_ex.state
 
         if state != states.ERROR:
             return
@@ -339,7 +348,7 @@ class RetryPolicy(base.TaskPolicy):
 class TimeoutPolicy(base.TaskPolicy):
     _schema = {
         "properties": {
-            "delay": {"type": "integer"},
+            "delay": {"type": "integer"}
         }
     }
 
@@ -367,7 +376,7 @@ class TimeoutPolicy(base.TaskPolicy):
 class PauseBeforePolicy(base.TaskPolicy):
     _schema = {
         "properties": {
-            "expr": {"type": "boolean"},
+            "expr": {"type": "boolean"}
         }
     }
 
@@ -390,6 +399,7 @@ class PauseBeforePolicy(base.TaskPolicy):
         task_ex.state = states.IDLE
 
 
+# TODO(rakhmerov): In progress.
 class ConcurrencyPolicy(base.TaskPolicy):
     _schema = {
         "properties": {
@@ -414,21 +424,20 @@ class ConcurrencyPolicy(base.TaskPolicy):
         task_ex.runtime_context = runtime_context
 
 
-def fail_task_if_incomplete(task_id, timeout):
-    task_ex = db_api.get_task_execution(task_id)
+def fail_task_if_incomplete(task_ex_id, timeout):
+    task_ex = db_api.get_task_execution(task_ex_id)
 
     if not states.is_completed(task_ex.state):
-        msg = "Task timed out [task=%s, timeout(s)=%s]." % (task_id, timeout)
+        msg = "Task timed out [id=%s, timeout(s)=%s]." % (task_ex_id, timeout)
 
         wf_trace.info(task_ex, msg)
 
         wf_trace.info(
             task_ex,
-            "Task '%s' [%s -> ERROR]"
-            % (task_ex.name, task_ex.state)
+            "Task '%s' [%s -> ERROR]" % (task_ex.name, task_ex.state)
         )
 
-        rpc.get_engine_client().on_task_result(
-            task_id,
-            utils.TaskResult(error=msg)
+        rpc.get_engine_client().on_action_complete(
+            task_ex_id,
+            utils.Result(error=msg)
         )

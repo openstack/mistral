@@ -34,7 +34,7 @@ WF_EX = models.WorkflowExecution(
     state_info=None,
     input={'foo': 'bar'},
     output={},
-    start_params={'env': {'k1': 'abc'}},
+    params={'env': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1)
 )

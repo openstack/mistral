@@ -33,7 +33,9 @@ from mistral import engine
 from mistral.engine import executor
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager
+from mistral.services import scheduler
 from mistral import version
+
 
 RESOURCES_PATH = 'tests/resources/'
 LOG = logging.getLogger(__name__)
@@ -244,6 +246,11 @@ class EngineTestCase(DbTestCase):
         super(EngineTestCase, self).__init__(*args, **kwargs)
 
         self.engine = engine.EngineClient(self.transport)
+
+    def setUp(self):
+        super(EngineTestCase, self).setUp()
+
+        self.addCleanup(scheduler.stop_all_schedulers)
 
     @classmethod
     def mock_task_result(cls, task_id, state, result):

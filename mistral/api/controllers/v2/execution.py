@@ -83,14 +83,9 @@ class Execution(resource.Resource):
         for key, val in d.items():
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit
-                if key == 'input' or key == 'output' and val is not None:
+                if key in ['input', 'output', 'params'] and val is not None:
                     val = json.dumps(val)
                 setattr(e, key, val)
-
-        params = d.get('start_params', {})
-
-        if params:
-            setattr(e, 'params', json.dumps(params))
 
         return e
 

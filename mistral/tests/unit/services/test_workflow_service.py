@@ -142,4 +142,4 @@ class WorkflowServiceTest(base.DbTestCase):
             INVALID_WORKFLOW
         )
 
-        self.assertIn("Invalid workflow definition", exception.message)
+        self.assertIn("Invalid DSL", exception.message)

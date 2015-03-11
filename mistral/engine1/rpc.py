@@ -82,35 +82,23 @@ class EngineServer(object):
             **params
         )
 
-    def on_task_result(self, rpc_ctx, task_id, result_data, result_error):
-        """Receives calls over RPC to communicate task result to engine.
+    def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
+                           result_error):
+        """Receives RPC calls to communicate action result to engine.
 
         :param rpc_ctx: RPC request context.
-        :return: Task.
+        :param action_ex_id: Action execution id.
+        :return: Action execution.
         """
 
-        task_result = wf_utils.TaskResult(result_data, result_error)
+        result = wf_utils.Result(result_data, result_error)
 
         LOG.info(
-            "Received RPC request 'on_task_result'[rpc_ctx=%s,"
-            " task_id=%s, task_result=%s]" % (rpc_ctx, task_id, task_result)
+            "Received RPC request 'on_action_complete'[rpc_ctx=%s,"
+            " action_ex_id=%s, result=%s]" % (rpc_ctx, action_ex_id, result)
         )
 
-        return self._engine.on_task_result(task_id, task_result)
-
-    def run_task(self, rpc_ctx, task_id):
-        """Runs task with given id..
-
-        :param rpc_ctx: RPC request context.
-        :param task_id: Task id.
-        """
-
-        LOG.info(
-            "Received RPC request 'run_task'[rpc_ctx=%s, task_id=%s]" %
-            (rpc_ctx, task_id)
-        )
-
-        return self._engine.run_task(task_id)
+        return self._engine.on_action_complete(action_ex_id, result)
 
     def pause_workflow(self, rpc_ctx, execution_id):
         """Receives calls over RPC to pause workflows on engine.
@@ -195,7 +183,7 @@ class EngineClient(base.Engine):
             serializer=serializer
         )
 
-    def start_workflow(self, workflow_name, workflow_input, **params):
+    def start_workflow(self, wf_name, wf_input, **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.
@@ -203,18 +191,18 @@ class EngineClient(base.Engine):
         return self._client.call(
             auth_ctx.ctx(),
             'start_workflow',
-            workflow_name=workflow_name,
-            workflow_input=workflow_input or {},
+            workflow_name=wf_name,
+            workflow_input=wf_input or {},
             params=params
         )
 
-    def on_task_result(self, task_id, result):
-        """Conveys task result to Mistral Engine.
+    def on_action_complete(self, action_ex_id, result):
+        """Conveys action result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
-        state of a task once task action has executed. One of the
+        state of a action execution once action has executed. One of the
         clients of this method is Mistral REST API server that receives
-        task result from the outside action handlers.
+        action result from the outside action handlers.
 
         Note: calling this method serves an event notifying Mistral that
         it possibly needs to move the workflow on, i.e. run other workflow
@@ -225,20 +213,11 @@ class EngineClient(base.Engine):
 
         return self._client.call(
             auth_ctx.ctx(),
-            'on_task_result',
-            task_id=task_id,
+            'on_action_complete',
+            action_ex_id=action_ex_id,
             result_data=result.data,
             result_error=result.error
         )
-
-    def run_task(self, task_id):
-        """Runs task with given id.
-
-        :param task_id: Task id.
-        """
-        return self._client.call(auth_ctx.ctx(),
-                                 'run_task',
-                                 task_id=task_id)
 
     def pause_workflow(self, execution_id):
         """Stops the workflow with the given execution id.
@@ -304,21 +283,25 @@ class ExecutorServer(object):
     def __init__(self, executor):
         self._executor = executor
 
-    def run_action(self, rpc_ctx, task_id, action_class_str,
+    def run_action(self, rpc_ctx, action_ex_id, action_class_str,
                    attributes, params):
-        """Receives calls over RPC to run task on engine.
+        """Receives calls over RPC to run action on executor.
 
         :param rpc_ctx: RPC request context dictionary.
         """
 
         LOG.info(
             "Received RPC request 'run_action'[rpc_ctx=%s,"
-            " task_id=%s, action_class=%s, attributes=%s, params=%s]"
-            % (rpc_ctx, task_id, action_class_str, attributes, params)
+            " action_ex_id=%s, action_class=%s, attributes=%s, params=%s]"
+            % (rpc_ctx, action_ex_id, action_class_str, attributes, params)
         )
 
-        self._executor.run_action(task_id, action_class_str,
-                                  attributes, params)
+        self._executor.run_action(
+            action_ex_id,
+            action_class_str,
+            attributes,
+            params
+        )
 
 
 class ExecutorClient(base.Executor):
@@ -341,24 +324,18 @@ class ExecutorClient(base.Executor):
             serializer=serializer
         )
 
-    def run_action(self, task_id, action_class_str, attributes,
+    def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params, target=None):
         """Sends a request to run action to executor."""
 
         kwargs = {
-            'task_id': task_id,
+            'action_ex_id': action_ex_id,
             'action_class_str': action_class_str,
             'attributes': attributes,
             'params': action_params
         }
 
-        if target:
-            self._cast_run_action(self.topic, target, **kwargs)
-        else:
-            self._cast_run_action(self.topic, **kwargs)
-
-    def _cast_run_action(self, topic, target=None, **kwargs):
-        self._client.prepare(topic=topic, server=target).cast(
+        self._client.prepare(topic=self.topic, server=target).cast(
             auth_ctx.ctx(),
             'run_action',
             **kwargs

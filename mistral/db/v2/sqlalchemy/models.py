@@ -17,7 +17,6 @@ import hashlib
 import json
 import sqlalchemy as sa
 from sqlalchemy import event
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
@@ -95,6 +94,7 @@ class Execution(mb.MistralSecureModelBase):
 
     # Main properties.
     id = mb.id_column()
+    name = sa.Column(sa.String(80))
 
     workflow_name = sa.Column(sa.String(80))
     spec = sa.Column(st.JsonDictType())
@@ -111,18 +111,8 @@ class ActionExecution(Execution):
     }
 
     # Main properties.
-    definition_name = sa.Column(sa.String(80))
     accepted = sa.Column(sa.Boolean(), default=False)
-
-    # TODO(rakhmerov): We have to use @declared_attr here temporarily to
-    # resolve naming conflict with TaskExecution.
-    @declared_attr
-    def input(cls):
-        "'input' column, if not present already."
-        return Execution.__table__.c.get(
-            'input',
-            sa.Column(st.JsonDictType(), nullable=True)
-        )
+    input = sa.Column(st.JsonDictType(), nullable=True)
 
     # Note: Corresponds to MySQL 'LONGTEXT' type which is of unlimited size.
     # TODO(rakhmerov): Change to LongText after refactoring.
@@ -138,7 +128,7 @@ class WorkflowExecution(ActionExecution):
     }
 
     # Main properties.
-    start_params = sa.Column(st.JsonDictType())
+    params = sa.Column(st.JsonDictType())
 
     # TODO(rakhmerov): We need to get rid of this field at all.
     context = sa.Column(st.JsonDictType())
@@ -152,23 +142,15 @@ class TaskExecution(Execution):
     }
 
     # Main properties.
-    name = sa.Column(sa.String(80))
     action_spec = sa.Column(st.JsonDictType())
 
+    # Whether the task is fully processed (publishing and calculating commands
+    # after it). It allows to simplify workflow controller implementations
+    # significantly.
+    processed = sa.Column(sa.BOOLEAN, default=False)
+
     # Data Flow properties.
-
-    # TODO(rakhmerov): 'input' is obsolete and must be removed later.
-    @declared_attr
-    def input(cls):
-        "'input' column, if not present already."
-        return Execution.__table__.c.get(
-            'input',
-            sa.Column(st.JsonDictType(), nullable=True)
-        )
-
     in_context = sa.Column(st.JsonDictType())
-    # TODO(rakhmerov): We need to use action executions in the future.
-    result = sa.Column(st.JsonDictType())
     published = sa.Column(st.JsonDictType())
 
     # Runtime context like iteration_no of a repeater.

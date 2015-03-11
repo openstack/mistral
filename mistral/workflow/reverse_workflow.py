@@ -15,17 +15,18 @@
 import networkx as nx
 from networkx.algorithms import traversal
 
-from mistral.engine1 import commands
 from mistral import exceptions as exc
 from mistral.workflow import base
+from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 
-class ReverseWorkflowHandler(base.WorkflowHandler):
-    """'Reverse workflow' handler.
+class ReverseWorkflowController(base.WorkflowController):
+    """'Reverse workflow controller.
 
-    This handler implements the workflow pattern which is based on
+    This controller implements the workflow pattern which is based on
     dependencies between tasks, i.e. each task in a workflow graph
     may be dependent on other tasks. To run this type of workflow
     user must specify a task name that serves a target node in the
@@ -33,75 +34,63 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
     dependencies.
     For example, if there's a workflow consisting of two tasks
     'A' and 'B' where 'A' depends on 'B' and if we specify a target
-    task name 'A' then the handler first will run task 'B' and then,
+    task name 'A' then the controller first will run task 'B' and then,
     when a dependency of 'A' is resolved, will run task 'A'.
     """
 
-    def start_workflow(self, **params):
-        task_name = params.get('task_name')
+    def _find_next_commands(self):
+        """Finds all tasks with resolved dependencies and return them
+         in the form of workflow commands.
+        """
+
+        task_specs = self._find_task_specs_with_satisfied_dependencies()
+
+        return [
+            commands.RunTask(
+                self.wf_ex,
+                t_s,
+                self._get_task_inbound_context(t_s)
+            )
+            for t_s in task_specs
+        ]
+
+    def _get_target_task_specification(self):
+        task_name = self.wf_ex.params.get('task_name')
 
         task_spec = self.wf_spec.get_tasks().get(task_name)
 
         if not task_spec:
-            msg = 'Invalid task name [wf_spec=%s, task_name=%s]' % (
-                self.wf_spec, task_name)
-            raise exc.WorkflowException(msg)
+            raise exc.WorkflowException(
+                'Invalid task name [wf_spec=%s, task_name=%s]' %
+                (self.wf_spec, task_name)
+            )
 
-        task_specs = self._find_tasks_without_dependencies(task_spec)
+        return task_spec
 
-        if len(task_specs) > 0:
-            self._set_execution_state(states.RUNNING)
+    def _get_upstream_task_executions(self, task_spec):
+        t_specs = [
+            self.wf_spec.get_tasks()[t_name]
+            for t_name in task_spec.get_requires()
+            or []
+        ]
 
-        return [commands.RunTask(t_s) for t_s in task_specs]
+        return filter(
+            lambda t_e: t_e.state == states.SUCCESS,
+            wf_utils.find_task_executions(self.wf_ex, t_specs)
+        )
 
-    def get_upstream_tasks(self, task_spec):
-        return [self.wf_spec.get_tasks()[t_name]
-                for t_name in task_spec.get_requires() or []]
+    def evaluate_workflow_final_context(self):
+        return data_flow.evaluate_task_outbound_context(
+            wf_utils.find_task_execution(
+                self.wf_ex,
+                self._get_target_task_specification()
+            )
+        )
 
-    def _evaluate_workflow_final_context(self, cause_task_ex):
-        return data_flow.evaluate_task_outbound_context(cause_task_ex)
-
-    def _find_next_commands(self, task_ex):
-        """Finds all tasks with resolved dependencies and return them
-         in the form of engine commands.
-
-        :param task_ex: Task DB model causing the operation.
-        :return: Tasks with resolved dependencies.
-        """
-
-        # If cause task is the target task of the workflow then
-        # there's no more tasks to start.
-        if self.wf_ex.start_params['task_name'] == task_ex.name:
-            return []
-
-        # We need to analyse the graph and see which tasks are ready to start.
-        resolved_task_specs = []
-        success_task_names = set()
-
-        for t in self.wf_ex.task_executions:
-            if t.state == states.SUCCESS:
-                success_task_names.add(t.name)
-
-        for t_spec in self.wf_spec.get_tasks():
-            # Skip task if it doesn't have a direct dependency
-            # on the cause task.
-            if task_ex.name not in t_spec.get_requires():
-                continue
-
-            if not (set(t_spec.get_requires()) - success_task_names):
-                t_db = self._find_db_task(t_spec.get_name())
-
-                if not t_db or t_db.state == states.IDLE:
-                    resolved_task_specs.append(t_spec)
-
-        return [commands.RunTask(t_s) for t_s in resolved_task_specs]
-
-    def _find_tasks_without_dependencies(self, task_spec):
+    def _find_task_specs_with_satisfied_dependencies(self):
         """Given a target task name finds tasks with no dependencies.
 
-        :param task_spec: Target task specification in the workflow graph
-            that dependencies are unwound from.
-        :return: Tasks with no dependencies.
+        :return: Task specifications with no dependencies.
         """
         tasks_spec = self.wf_spec.get_tasks()
 
@@ -110,10 +99,30 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
         # Unwind tasks from the target task
         # and filter out tasks with dependencies.
         return [
-            t_spec for t_spec in
-            traversal.dfs_postorder_nodes(graph.reverse(), task_spec)
-            if not t_spec.get_requires()
+            t_s for t_s in
+            traversal.dfs_postorder_nodes(
+                graph.reverse(),
+                self._get_target_task_specification()
+            )
+            if self._is_satisfied_task(t_s)
         ]
+
+    def _is_satisfied_task(self, task_spec):
+        task_ex = wf_utils.find_task_execution(self.wf_ex, task_spec)
+
+        if task_ex:
+            return False
+
+        if not task_spec.get_requires():
+            return True
+
+        success_task_names = set()
+
+        for t_ex in self.wf_ex.task_executions:
+            if t_ex.state == states.SUCCESS and not t_ex.processed:
+                success_task_names.add(t_ex.name)
+
+        return not (set(task_spec.get_requires()) - success_task_names)
 
     def _build_graph(self, tasks_spec):
         graph = nx.DiGraph()
@@ -129,7 +138,8 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
 
         return graph
 
-    def _get_dependency_tasks(self, tasks_spec, task_spec):
+    @staticmethod
+    def _get_dependency_tasks(tasks_spec, task_spec):
         dep_task_names = tasks_spec[task_spec.get_name()].get_requires()
 
         if len(dep_task_names) == 0:
@@ -143,10 +153,3 @@ class ReverseWorkflowHandler(base.WorkflowHandler):
                     dep_t_specs.add(t_spec)
 
         return dep_t_specs
-
-    def _find_db_task(self, name):
-        task_execs = filter(
-            lambda t: t.name == name, self.wf_ex.task_executions
-        )
-
-        return task_execs[0] if task_execs else None

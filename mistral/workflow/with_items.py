@@ -18,9 +18,7 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 
 
-# TODO(rakhmerov): Partially duplicates data_flow.evaluate_task_result
-# TODO(rakhmerov): Method now looks confusing because it's called 'get_result'
-# and has 'result' parameter, but it's temporary, needs to be refactored.
+# TODO(rakhmerov): The module should probably go into task_handler.
 def get_result(task_ex, task_spec, result):
     """Returns result from task markered as with-items
 

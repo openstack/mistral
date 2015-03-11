@@ -18,12 +18,12 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import default_engine as de
 from mistral import exceptions as exc
-from mistral.services import scheduler
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils
+
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -44,8 +44,8 @@ workflows:
       task1:
         action: std.echo output="Hi!"
         on-complete:
-          - pause
           - task2
+          - pause
 
       task2:
         action: std.echo output="Task 2"
@@ -88,9 +88,9 @@ workflows:
       task1:
         action: std.echo output="Hi!"
         on-complete:
-          - pause
           - task2
           - task3
+          - pause
 
       task2:
         action: std.echo output="Task 2"
@@ -114,8 +114,8 @@ workflows:
       task1:
         action: std.echo output="Hi!"
         on-complete:
-          - pause
           - task3
+          - pause
 
       task2:
         action: std.echo output="Task 2"
@@ -141,8 +141,8 @@ workflows:
       task1:
         action: std.echo output="Hi!"
         on-complete:
-          - pause
           - task3
+          - pause
 
       task2:
         action: std.mistral_http url="http://google.com"
@@ -165,9 +165,6 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.wb_spec = spec_parser.get_workbook_spec_from_yaml(RESUME_WORKBOOK)
         self.wf_spec = self.wb_spec.get_workflows()['wf1']
 
-        thread_group = scheduler.setup()
-        self.addCleanup(thread_group.stop)
-
     def test_resume_direct(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK)
 
@@ -179,14 +176,14 @@ class WorkflowResumeTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(1, len(wf_ex.task_executions))
+        self.assertEqual(2, len(wf_ex.task_executions))
 
-        self.engine.resume_workflow(wf_ex.id)
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        wf_ex = self.engine.resume_workflow(wf_ex.id)
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(2, len(wf_ex.task_executions))
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -198,18 +195,21 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'resume_reverse.wf',
-            {}, task_name='task2'
+            {},
+            task_name='task2'
         )
 
         # Note: We need to reread execution to access related tasks.
 
         self.engine.pause_workflow(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual(1, len(wf_ex.task_executions))
 
         self.engine.resume_workflow(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -231,14 +231,12 @@ class WorkflowResumeTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(1, len(wf_ex.task_executions))
+        self.assertEqual(3, len(wf_ex.task_executions))
 
-        self.engine.resume_workflow(wf_ex.id)
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        wf_ex = self.engine.resume_workflow(wf_ex.id)
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -257,14 +255,23 @@ class WorkflowResumeTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(2, len(wf_ex.task_executions))
+
+        task_execs = wf_ex.task_executions
+
+        # The exact number of tasks depends on which of two tasks
+        # 'task1' and 'task2' completed earlier.
+        self.assertTrue(len(task_execs) >= 2)
+
+        task1_ex = self._assert_single_item(task_execs, name='task1')
+        task2_ex = self._assert_single_item(task_execs, name='task2')
+
+        self._await(lambda: self.is_task_success(task1_ex.id))
+        self._await(lambda: self.is_task_success(task2_ex.id))
 
         self.engine.resume_workflow(wf_ex.id)
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self._await(lambda: self.is_execution_success(wf_ex.id), 1, 5)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -281,22 +288,29 @@ class WorkflowResumeTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(2, len(wf_ex.task_executions))
 
-        task2 = self._assert_single_item(wf_ex.task_executions, name='task2')
+        task_execs = wf_ex.task_executions
+
+        self.assertEqual(3, len(task_execs))
+
+        task2_ex = self._assert_single_item(task_execs, name='task2')
 
         # Task2 is not finished yet.
-        self.assertFalse(states.is_completed(task2.state))
+        self.assertFalse(states.is_completed(task2_ex.state))
 
-        self.engine.resume_workflow(wf_ex.id)
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        wf_ex = self.engine.resume_workflow(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
 
         # Finish task2.
-        self.engine.on_task_result(task2.id, utils.TaskResult())
+        task2_action_ex = db_api.get_action_executions(
+            task_execution_id=task2_ex.id
+        )[0]
+
+        self.engine.on_action_complete(task2_action_ex.id, utils.Result())
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -306,18 +320,21 @@ class WorkflowResumeTest(base.EngineTestCase):
     def test_resume_fails(self, mock_fw):
         # Start and pause workflow.
         wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
+
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
         self._await(lambda: self.is_execution_paused(wf_ex.id))
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
         self.assertEqual(states.PAUSED, wf_ex.state)
 
         # Simulate failure and check if it is handled.
         err = exc.MistralException('foo')
+
         with mock.patch.object(
-                de.DefaultEngine,
-                '_run_remote_commands',
+                db_api,
+                'get_workflow_execution',
                 side_effect=err):
 
             self.assertRaises(
@@ -325,4 +342,5 @@ class WorkflowResumeTest(base.EngineTestCase):
                 self.engine.resume_workflow,
                 wf_ex.id
             )
+
             mock_fw.assert_called_once_with(wf_ex.id, err)

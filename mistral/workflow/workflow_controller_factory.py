@@ -20,28 +20,28 @@ from mistral.workflow import direct_workflow
 from mistral.workflow import reverse_workflow
 
 
-def create_workflow_handler(wf_ex, wf_spec=None):
+def create_workflow_controller(wf_ex, wf_spec=None):
     if not wf_spec:
         wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-    handler_cls = _select_workflow_handler(wf_spec)
+    cls = _select_workflow_controller(wf_spec)
 
-    if not handler_cls:
-        msg = 'Failed to find a workflow handler [wf_spec=%s]' % wf_spec
+    if not cls:
+        msg = 'Failed to find a workflow controller [wf_spec=%s]' % wf_spec
         raise exc.WorkflowException(msg)
 
-    return handler_cls(wf_ex)
+    return cls(wf_ex)
 
 
-def _select_workflow_handler(wf_spec):
+def _select_workflow_controller(wf_spec):
     # TODO(rakhmerov): This algorithm is actually for DSL v2.
     # TODO(rakhmerov): Take DSL versions into account.
     wf_type = wf_spec.get_type() or 'direct'
 
     if wf_type == 'reverse':
-        return reverse_workflow.ReverseWorkflowHandler
+        return reverse_workflow.ReverseWorkflowController
 
     if wf_type == 'direct':
-        return direct_workflow.DirectWorkflowHandler
+        return direct_workflow.DirectWorkflowController
 
     return None

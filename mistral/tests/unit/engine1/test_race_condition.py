@@ -170,6 +170,7 @@ class LongActionTest(base.EngineTestCase):
 
         self.assertDictEqual({'result': 'test'}, wf_ex.output)
 
+    # TODO(rakhmerov): Should periodically fail now. Fix race condition.
     def test_short_action(self):
         wf_service.create_workflows(WF_SHORT_ACTION)
 
@@ -181,27 +182,25 @@ class LongActionTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, wf_ex.state)
 
-        tasks = wf_ex.task_executions
+        task_execs = wf_ex.task_executions
 
-        task1 = self._assert_single_item(wf_ex.task_executions, name='task1')
-        task2 = self._assert_single_item(
-            tasks,
+        task1_ex = self._assert_single_item(task_execs, name='task1')
+        task2_ex = self._assert_single_item(
+            task_execs,
             name='task2',
             state=states.RUNNING
         )
 
-        self._await(lambda: self.is_task_success(task1.id))
+        self._await(lambda: self.is_task_success(task1_ex.id))
 
         self.unblock_action()
 
-        self._await(lambda: self.is_task_success(task2.id))
+        self._await(lambda: self.is_task_success(task2_ex.id))
         self._await(lambda: self.is_execution_success(wf_ex.id))
 
-        task1 = db_api.get_task_execution(task1.id)
+        task1_ex = db_api.get_task_execution(task1_ex.id)
+        task1_action_ex = db_api.get_action_executions(
+            task_execution_id=task1_ex.id
+        )[0]
 
-        self.assertDictEqual(
-            {
-                'result1': 1,
-            },
-            task1.result
-        )
+        self.assertEqual(1, task1_action_ex.output['result'])

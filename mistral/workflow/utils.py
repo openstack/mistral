@@ -17,7 +17,7 @@ from mistral.workbook.v2 import tasks as v2_tasks_spec
 from mistral.workflow import states
 
 
-class TaskResult(object):
+class Result(object):
     """Explicit data structure containing a result of task execution."""
 
     def __init__(self, data=None, error=None):
@@ -25,7 +25,7 @@ class TaskResult(object):
         self.error = error
 
     def __repr__(self):
-        return 'TaskResult [data=%s, error=%s]' % (
+        return 'Result [data=%s, error=%s]' % (
             repr(self.data), repr(self.error))
 
     def is_error(self):
@@ -38,15 +38,15 @@ class TaskResult(object):
         return self.data == other.data and self.error == other.error
 
 
-class TaskResultSerializer(serializer.Serializer):
+class ResultSerializer(serializer.Serializer):
     def serialize(self, entity):
         return {'data': entity.data, 'error': entity.error}
 
     def deserialize(self, entity):
-        return TaskResult(entity['data'], entity['error'])
+        return Result(entity['data'], entity['error'])
 
 
-def find_db_task(wf_ex, task_spec):
+def find_task_execution(wf_ex, task_spec):
     task_execs = [
         t for t in wf_ex.task_executions
         if t.name == task_spec.get_name()
@@ -70,7 +70,10 @@ def find_upstream_task_executions(wf_ex, task_spec, upstream_task_specs,
 
 
 def find_task_executions(wf_ex, task_specs):
-    return filter(None, [find_db_task(wf_ex, t_s) for t_s in task_specs])
+    return filter(
+        None,
+        [find_task_execution(wf_ex, t_s) for t_s in task_specs]
+    )
 
 
 def find_running_tasks(wf_ex):

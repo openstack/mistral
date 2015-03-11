@@ -81,7 +81,7 @@ class AdhocActionsTest(base.EngineTestCase):
         self.assertDictEqual(
             {
                 'workflow_result': 'a+b and a+b',
-                'concat_task_result': {'result': 'a+b and a+b'}
+                'concat_task_result': 'a+b and a+b'
             },
             wf_ex.output
         )

@@ -78,134 +78,130 @@ class SubworkflowsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
     def test_subworkflow_success(self):
-        exec1_db = self.engine.start_workflow('my_wb.wf2', None)
+        wf2_ex = self.engine.start_workflow('my_wb.wf2', None)
+
         project_id = auth_context.ctx().project_id
 
-        # Execution 1.
-        self.assertEqual(project_id, exec1_db.project_id)
-        self.assertIsNotNone(exec1_db)
-        self.assertDictEqual({}, exec1_db.input)
-        self.assertDictEqual({}, exec1_db.start_params)
+        # Execution of 'wf2'.
+        self.assertEqual(project_id, wf2_ex.project_id)
+        self.assertIsNotNone(wf2_ex)
+        self.assertDictEqual({}, wf2_ex.input)
+        self.assertDictEqual({}, wf2_ex.params)
+
+        self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
         wf_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(wf_execs))
 
-        # Execution 2.
-        if wf_execs[0].id != exec1_db.id:
-            exec2_db = wf_execs[0]
-        else:
-            exec2_db = wf_execs[1]
+        # Execution of 'wf2'.
+        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
 
-        self.assertEqual(project_id, exec2_db.project_id)
-        self.assertIsNotNone(exec2_db.task_execution_id)
+        self.assertEqual(project_id, wf1_ex.project_id)
+        self.assertIsNotNone(wf1_ex.task_execution_id)
         self.assertDictEqual(
             {
                 'task_name': 'task2',
-                'parent_task_id': exec2_db.task_execution_id
+                'task_execution_id': wf1_ex.task_execution_id
             },
-            exec2_db.start_params
+            wf1_ex.params
         )
         self.assertDictEqual(
             {
                 'param1': 'Bonnie',
                 'param2': 'Clyde'
             },
-            exec2_db.input
+            wf1_ex.input
         )
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(exec2_db.id))
+        self._await(lambda: self.is_execution_success(wf1_ex.id))
 
-        exec2_db = db_api.get_workflow_execution(exec2_db.id)
+        wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
         self.assertDictEqual(
-            {
-                'final_result': "'Bonnie & Clyde'"
-            },
-            exec2_db.output
+            {'final_result': "'Bonnie & Clyde'"},
+            wf1_ex.output
         )
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(exec1_db.id))
+        self._await(lambda: self.is_execution_success(wf2_ex.id))
 
-        exec1_db = db_api.get_workflow_execution(exec1_db.id)
+        wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
 
         self.assertDictEqual(
-            {
-                'slogan': "'Bonnie & Clyde' is a cool movie!"
-            },
-            exec1_db.output
+            {'slogan': "'Bonnie & Clyde' is a cool movie!"},
+            wf2_ex.output
         )
 
         # Check project_id in tasks.
-        tasks_exec1 = db_api.get_task_executions(
-            workflow_execution_id=exec1_db.id
+        wf1_task_execs = db_api.get_task_executions(
+            workflow_execution_id=wf1_ex.id
         )
-        tasks_exec2 = db_api.get_task_executions(
-            workflow_execution_id=exec2_db.id
+        wf2_task_execs = db_api.get_task_executions(
+            workflow_execution_id=wf2_ex.id
         )
 
-        task1_exec1 = self._assert_single_item(tasks_exec1, name="task1")
-        task1_exec2 = self._assert_single_item(tasks_exec2, name="task1")
-        task2_exec2 = self._assert_single_item(tasks_exec2, name="task2")
+        wf2_task1_ex = self._assert_single_item(wf1_task_execs, name='task1')
+        wf1_task1_ex = self._assert_single_item(wf2_task_execs, name='task1')
+        wf1_task2_ex = self._assert_single_item(wf1_task_execs, name='task2')
 
-        self.assertEqual(project_id, task1_exec1.project_id)
-        self.assertEqual(project_id, task1_exec2.project_id)
-        self.assertEqual(project_id, task2_exec2.project_id)
+        self.assertEqual(project_id, wf2_task1_ex.project_id)
+        self.assertEqual(project_id, wf1_task1_ex.project_id)
+        self.assertEqual(project_id, wf1_task2_ex.project_id)
 
     @mock.patch.object(std_actions.EchoAction, 'run',
                        mock.MagicMock(side_effect=exc.ActionException))
     def test_subworkflow_error(self):
-        exec1_db = self.engine.start_workflow('my_wb.wf2', None)
+        wf2_ex = self.engine.start_workflow('my_wb.wf2', None)
+
+        self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
         wf_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(wf_execs))
 
-        if wf_execs[0].id != exec1_db.id:
-            exec2_db = wf_execs[0]
-        else:
-            exec2_db = wf_execs[1]
+        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_error(exec2_db.id))
+        self._await(lambda: self.is_execution_error(wf1_ex.id))
 
         # Wait till workflow 'wf2' is completed, its state must be ERROR.
-        self._await(lambda: self.is_execution_error(exec1_db.id))
+        self._await(lambda: self.is_execution_error(wf2_ex.id))
 
     def test_subworkflow_environment_inheritance(self):
         env = {'key1': 'abc'}
-        exec1_db = self.engine.start_workflow('my_wb.wf2',
-                                              None,
-                                              env=env)
 
-        # Execution 1.
-        self.assertIsNotNone(exec1_db)
-        self.assertDictEqual({}, exec1_db.input)
-        self.assertDictEqual({'env': env}, exec1_db.start_params)
+        wf2_ex = self.engine.start_workflow('my_wb.wf2', None, env=env)
+
+        # Execution of 'wf2'.
+        self.assertIsNotNone(wf2_ex)
+        self.assertDictEqual({}, wf2_ex.input)
+        self.assertDictEqual({'env': env}, wf2_ex.params)
+
+        self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
         wf_execs = db_api.get_workflow_executions()
 
         self.assertEqual(2, len(wf_execs))
 
-        # Execution 2.
-        if wf_execs[0].id != exec1_db.id:
-            exec2_db = wf_execs[0]
-        else:
-            exec2_db = wf_execs[1]
+        # Execution of 'wf1'.
+        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
 
         expected_start_params = {
             'task_name': 'task2',
-            'parent_task_id': exec2_db.task_execution_id,
+            'task_execution_id': wf1_ex.task_execution_id,
             'env': env
         }
 
-        self.assertIsNotNone(exec2_db.task_execution_id)
-        self.assertDictEqual(exec2_db.start_params, expected_start_params)
+        self.assertIsNotNone(wf1_ex.task_execution_id)
+        self.assertDictEqual(wf1_ex.params, expected_start_params)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(exec2_db.id))
+        self._await(lambda: self.is_execution_success(wf1_ex.id))
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(exec1_db.id))
+        self._await(lambda: self.is_execution_success(wf2_ex.id))

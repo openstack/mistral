@@ -887,8 +887,6 @@ TASK_EXECS = [
         'state': 'IDLE',
         'tags': ['deployment'],
         'in_context': None,
-        'input': None,
-        'result': None,
         'runtime_context': None,
         'created_at': None,
         'updated_at': None
@@ -902,8 +900,6 @@ TASK_EXECS = [
         'state': 'IDLE',
         'tags': ['deployment'],
         'in_context': {'image_id': '123123'},
-        'input': {'image_id': '123123'},
-        'result': {'vm_id': '343123'},
         'runtime_context': None,
         'created_at': None,
         'updated_at': None

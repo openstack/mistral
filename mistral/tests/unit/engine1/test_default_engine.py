@@ -13,7 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import copy
 import datetime
 import uuid
 
@@ -44,7 +43,7 @@ version: '2.0'
 name: wb
 
 workflows:
-  wf1:
+  wf:
     type: reverse
     input:
       - param1
@@ -54,7 +53,7 @@ workflows:
       task1:
         action: std.echo output=<% $.param1 %>
         publish:
-            result: <% $.task1 %>
+            var: <% $.task1 %>
 
       task2:
         action: std.echo output=<% $.param2 %>
@@ -108,7 +107,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
+            'wb.wf',
             wf_input,
             task_name='task2'
         )
@@ -125,7 +124,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual('wb.wf1', task_ex.workflow_name)
+        self.assertEqual('wb.wf', task_ex.workflow_name)
         self.assertEqual('task1', task_ex.name)
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertIsNotNone(task_ex.spec)
@@ -134,7 +133,17 @@ class DefaultEngineTest(base.DbTestCase):
         # Data Flow properties.
         self._assert_dict_contains_subset(wf_input, task_ex.in_context)
         self.assertIn('__execution', task_ex.in_context)
-        self.assertDictEqual({'output': 'Hey'}, task_ex.input)
+
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task_ex.id
+        )
+
+        self.assertEqual(1, len(action_execs))
+
+        task_action_ex = action_execs[0]
+
+        self.assertIsNotNone(task_action_ex)
+        self.assertDictEqual({'output': 'Hey'}, task_action_ex.input)
 
     def test_start_workflow_with_adhoc_env(self):
         wf_input = {
@@ -145,7 +154,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
+            'wb.wf',
             wf_input,
             env=env,
             task_name='task2')
@@ -154,7 +163,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(wf_ex.start_params.get('env', {}), env)
+        self.assertDictEqual(wf_ex.params.get('env', {}), env)
 
     @mock.patch.object(db_api, "get_environment", MOCK_ENVIRONMENT)
     def test_start_workflow_with_saved_env(self):
@@ -166,7 +175,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
+            'wb.wf',
             wf_input,
             env='test',
             task_name='task2')
@@ -175,13 +184,13 @@ class DefaultEngineTest(base.DbTestCase):
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(wf_ex.start_params.get('env', {}), env)
+        self.assertDictEqual(wf_ex.params.get('env', {}), env)
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_start_workflow_env_not_found(self):
         self.assertRaises(exc.NotFoundException,
                           self.engine.start_workflow,
-                          'wb.wf1',
+                          'wb.wf',
                           {'param1': '<% $.__env.key1 %>'},
                           env='foo',
                           task_name='task2')
@@ -189,7 +198,7 @@ class DefaultEngineTest(base.DbTestCase):
     def test_start_workflow_with_env_type_error(self):
         self.assertRaises(ValueError,
                           self.engine.start_workflow,
-                          'wb.wf1',
+                          'wb.wf',
                           {'param1': '<% $.__env.key1 %>'},
                           env=True,
                           task_name='task2')
@@ -198,7 +207,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertRaises(
             exc.WorkflowInputException,
             self.engine.start_workflow,
-            'wb.wf1',
+            'wb.wf',
             None,
             task_name='task2'
         )
@@ -207,17 +216,17 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertRaises(
             exc.WorkflowInputException,
             self.engine.start_workflow,
-            'wb.wf1',
+            'wb.wf',
             {'param1': 'Hey', 'param2': 'Hi', 'unexpected_param': 'val'},
             task_name='task2'
         )
 
-    def test_on_task_result(self):
+    def test_on_action_complete(self):
         wf_input = {'param1': 'Hey', 'param2': 'Hi'}
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1',
+            'wb.wf',
             wf_input,
             task_name='task2'
         )
@@ -230,31 +239,44 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertEqual(1, len(wf_ex.task_executions))
 
-        task_ex = wf_ex.task_executions[0]
+        task1_ex = wf_ex.task_executions[0]
 
-        self.assertEqual('task1', task_ex.name)
-        self.assertEqual(states.RUNNING, task_ex.state)
-        self.assertIsNotNone(task_ex.spec)
-        self.assertDictEqual({}, task_ex.runtime_context)
-        self._assert_dict_contains_subset(wf_input, task_ex.in_context)
-        self.assertIn('__execution', task_ex.in_context)
-        self.assertDictEqual({'output': 'Hey'}, task_ex.input)
+        self.assertEqual('task1', task1_ex.name)
+        self.assertEqual(states.RUNNING, task1_ex.state)
+        self.assertIsNotNone(task1_ex.spec)
+        self.assertDictEqual({}, task1_ex.runtime_context)
+        self._assert_dict_contains_subset(wf_input, task1_ex.in_context)
+        self.assertIn('__execution', task1_ex.in_context)
 
-        # Finish 'task1'.
-        task1_db = self.engine.on_task_result(
-            wf_ex.task_executions[0].id,
-            wf_utils.TaskResult(data='Hey')
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task1_ex.id
         )
 
-        self.assertIsInstance(task1_db, models.TaskExecution)
-        self.assertEqual('task1', task1_db.name)
-        self.assertEqual(states.SUCCESS, task1_db.state)
+        self.assertEqual(1, len(action_execs))
+
+        task1_action_ex = action_execs[0]
+
+        self.assertIsNotNone(task1_action_ex)
+        self.assertDictEqual({'output': 'Hey'}, task1_action_ex.input)
+
+        # Finish action of 'task1'.
+        task1_action_ex = self.engine.on_action_complete(
+            task1_action_ex.id,
+            wf_utils.Result(data='Hey')
+        )
+
+        self.assertIsInstance(task1_action_ex, models.ActionExecution)
+        self.assertEqual('std.echo', task1_action_ex.name)
+        self.assertEqual(states.SUCCESS, task1_action_ex.state)
 
         # Data Flow properties.
-        self._assert_dict_contains_subset(wf_input, task1_db.in_context)
-        self.assertIn('__execution', task_ex.in_context)
-        self.assertDictEqual({'output': 'Hey'}, task1_db.input)
-        self.assertDictEqual({'result': 'Hey'}, task1_db.result)
+        task1_ex = db_api.get_task_execution(task1_ex.id)  # Re-read the state.
+
+        self._assert_dict_contains_subset(wf_input, task1_ex.in_context)
+        self.assertIn('__execution', task1_ex.in_context)
+        self.assertDictEqual({'var': 'Hey'}, task1_ex.published)
+        self.assertDictEqual({'output': 'Hey'}, task1_action_ex.input)
+        self.assertDictEqual({'result': 'Hey'}, task1_action_ex.output)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -263,17 +285,28 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertEqual(2, len(wf_ex.task_executions))
 
-        task2_db = self._assert_single_item(
+        task2_ex = self._assert_single_item(
             wf_ex.task_executions,
             name='task2'
         )
 
-        self.assertEqual(states.RUNNING, task2_db.state)
+        self.assertEqual(states.RUNNING, task2_ex.state)
+
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task2_ex.id
+        )
+
+        self.assertEqual(1, len(action_execs))
+
+        task2_action_ex = action_execs[0]
+
+        self.assertIsNotNone(task2_action_ex)
+        self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
 
         # Finish 'task2'.
-        task2_db = self.engine.on_task_result(
-            task2_db.id,
-            wf_utils.TaskResult(data='Hi')
+        task2_action_ex = self.engine.on_action_complete(
+            task2_action_ex.id,
+            wf_utils.Result(data='Hi')
         )
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -281,17 +314,20 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.SUCCESS, wf_ex.state)
 
-        self.assertIsInstance(task2_db, models.TaskExecution)
-        self.assertEqual('task2', task2_db.name)
-        self.assertEqual(states.SUCCESS, task2_db.state)
+        self.assertIsInstance(task2_action_ex, models.ActionExecution)
+        self.assertEqual('std.echo', task2_action_ex.name)
+        self.assertEqual(states.SUCCESS, task2_action_ex.state)
 
-        in_context = copy.deepcopy(wf_input)
-        in_context.update(task1_db.result)
-
-        self._assert_dict_contains_subset(in_context, task2_db.in_context)
-        self.assertIn('__execution', task_ex.in_context)
-        self.assertDictEqual({'output': 'Hi'}, task2_db.input)
-        self.assertDictEqual({}, task2_db.result)
+        # Data Flow properties.
+        self._assert_dict_contains_subset(
+            task1_ex.in_context,
+            task2_ex.in_context
+        )
+        self.assertIn('__execution', task1_ex.in_context)
+        self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
+        self.assertDictEqual({}, task2_ex.published)
+        self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
+        self.assertDictEqual({'result': 'Hi'}, task2_action_ex.output)
 
         self.assertEqual(2, len(wf_ex.task_executions))
 
@@ -301,7 +337,7 @@ class DefaultEngineTest(base.DbTestCase):
     def test_stop_workflow_fail(self):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+            'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_execution(wf_ex.id)
 
@@ -316,7 +352,7 @@ class DefaultEngineTest(base.DbTestCase):
     def test_stop_workflow_succeed(self):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf1', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+            'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_execution(wf_ex.id)
 
@@ -330,7 +366,7 @@ class DefaultEngineTest(base.DbTestCase):
 
     def test_stop_workflow_bad_status(self):
         wf_ex = self.engine.start_workflow(
-            'wb.wf1', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+            'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_execution(wf_ex.id)
 

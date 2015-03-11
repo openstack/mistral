@@ -83,8 +83,8 @@ class JavaScriptEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
-        self.assertEqual(500, task_ex.output['num_10_times'])
-        self.assertEqual(100, task_ex.output['result'])
+        self.assertEqual(500, task_ex.published['num_10_times'])
+        self.assertEqual(100, task_ex.published['result'])
 
     @mock.patch.object(javascript, 'evaluate', fake_evaluate)
     def test_fake_javascript_action_data_context(self):
@@ -102,4 +102,4 @@ class JavaScriptEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
-        self.assertEqual(500, task_ex.result['result'])
+        self.assertEqual(500, task_ex.published['result'])

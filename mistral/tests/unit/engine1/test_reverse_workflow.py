@@ -72,7 +72,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         # Execution 1.
         self.assertIsNotNone(wf_ex)
         self.assertDictEqual(wf_input, wf_ex.input)
-        self.assertDictEqual({'task_name': 'task1'}, wf_ex.start_params)
+        self.assertDictEqual({'task_name': 'task1'}, wf_ex.params)
 
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_success(wf_ex.id))
@@ -82,14 +82,14 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(wf_ex.task_executions))
         self.assertEqual(1, len(db_api.get_task_executions()))
 
-        self._assert_single_item(
+        task_ex = self._assert_single_item(
             wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', wf_ex.output['task1']['result1'])
-        self._assert_dict_contains_subset({'result1': 'a'}, wf_ex.output)
+        self.assertDictEqual({'result1': 'a'}, task_ex.published)
+        self.assertEqual('a', wf_ex.output['task1'])
 
     def test_start_task2(self):
         wf_input = {'param1': 'a', 'param2': 'b'}
@@ -103,7 +103,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         # Execution 1.
         self.assertIsNotNone(wf_ex)
         self.assertDictEqual(wf_input, wf_ex.input)
-        self.assertDictEqual({'task_name': 'task2'}, wf_ex.start_params)
+        self.assertDictEqual({'task_name': 'task2'}, wf_ex.params)
 
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_success(wf_ex.id))
@@ -113,19 +113,21 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(2, len(wf_ex.task_executions))
         self.assertEqual(2, len(db_api.get_task_executions()))
 
-        self._assert_single_item(
+        task1_ex = self._assert_single_item(
             wf_ex.task_executions,
             name='task1',
             state=states.SUCCESS
         )
 
-        self._assert_single_item(
+        self.assertDictEqual({'result1': 'a'}, task1_ex.published)
+
+        task2_ex = self._assert_single_item(
             wf_ex.task_executions,
             name='task2',
             state=states.SUCCESS
         )
 
-        self.assertEqual('a', wf_ex.output['task1']['result1'])
-        self.assertEqual('a & b', wf_ex.output['task2']['result2'])
-        self._assert_dict_contains_subset({'result1': 'a'}, wf_ex.output)
-        self._assert_dict_contains_subset({'result2': 'a & b'}, wf_ex.output)
+        self.assertDictEqual({'result2': 'a & b'}, task2_ex.published)
+
+        self.assertEqual('a', wf_ex.output['task1'])
+        self.assertEqual('a & b', wf_ex.output['task2'])

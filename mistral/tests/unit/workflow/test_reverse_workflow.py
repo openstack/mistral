@@ -17,21 +17,22 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
-from mistral.workflow import reverse_workflow as r_wf
+from mistral.workflow import reverse_workflow as reverse_wf
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
 
-WORKBOOK = """
+# TODO(rakhmerov): This workflow is too simple. Add more complicated one.
+
+WB = """
 ---
 version: '2.0'
 
 name: my_wb
 
 workflows:
-  wf1:
+  wf:
     type: reverse
     tasks:
       task1:
@@ -43,91 +44,94 @@ workflows:
 """
 
 
-class ReverseWorkflowHandlerTest(base.BaseTest):
+class ReverseWorkflowControllerTest(base.BaseTest):
     def setUp(self):
-        super(ReverseWorkflowHandlerTest, self).setUp()
+        super(ReverseWorkflowControllerTest, self).setUp()
 
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
+        wb_spec = spec_parser.get_workbook_spec_from_yaml(WB)
 
-        wf_ex = models.WorkflowExecution()
-        wf_ex.update({
-            'id': '1-2-3-4',
-            'spec': wb_spec.get_workflows().get('wf1').to_dict(),
-            'state': states.IDLE
-        })
+        wf_ex = models.WorkflowExecution(
+            id='1-2-3-4',
+            spec=wb_spec.get_workflows().get('wf').to_dict(),
+            state=states.RUNNING,
+            params={}
+        )
 
         self.wf_ex = wf_ex
         self.wb_spec = wb_spec
-        self.handler = r_wf.ReverseWorkflowHandler(wf_ex)
+        self.wf_ctrl = reverse_wf.ReverseWorkflowController(wf_ex)
 
-    def _create_db_task(self, id, name, state):
-        tasks_spec = self.wb_spec.get_workflows()['wf1'].get_tasks()
+    def _create_task_execution(self, name, state):
+        tasks_spec = self.wb_spec.get_workflows()['wf'].get_tasks()
 
-        task_ex = models.TaskExecution()
-        task_ex.update({
-            'id': id,
-            'name': name,
-            'spec': tasks_spec[name].to_dict(),
-            'state': state
-        })
+        task_ex = models.TaskExecution(
+            name=name,
+            spec=tasks_spec[name].to_dict(),
+            state=state
+        )
 
         self.wf_ex.task_executions.append(task_ex)
 
         return task_ex
 
     def test_start_workflow_task2(self):
-        commands = self.handler.start_workflow(task_name='task2')
+        self.wf_ex.params = {'task_name': 'task2'}
 
-        self.assertEqual(1, len(commands))
-        self.assertEqual('task1', commands[0].task_spec.get_name())
-        self.assertEqual(states.RUNNING, self.wf_ex.state)
+        cmds = self.wf_ctrl.continue_workflow()
+
+        self.assertEqual(1, len(cmds))
+        self.assertEqual('task1', cmds[0].task_spec.get_name())
 
     def test_start_workflow_task1(self):
-        commands = self.handler.start_workflow(task_name='task1')
+        self.wf_ex.params = {'task_name': 'task1'}
 
-        self.assertEqual(1, len(commands))
-        self.assertEqual('task1', commands[0].task_spec.get_name())
-        self.assertEqual(states.RUNNING, self.wf_ex.state)
+        cmds = self.wf_ctrl.continue_workflow()
+
+        self.assertEqual(1, len(cmds))
+        self.assertEqual('task1', cmds[0].task_spec.get_name())
 
     def test_start_workflow_without_task(self):
-        self.assertRaises(exc.WorkflowException, self.handler.start_workflow)
-
-    def test_on_task_result(self):
-        self.wf_ex.update({'state': states.RUNNING})
-        self.wf_ex.update({'start_params': {'task_name': 'task2'}})
-
-        task1_db = self._create_db_task('1-1-1-1', 'task1', states.RUNNING)
-
-        # Emulate finishing 'task1'.
-        commands = self.handler.on_task_result(
-            task1_db,
-            wf_utils.TaskResult(data='Hey')
+        self.assertRaises(
+            exc.WorkflowException,
+            self.wf_ctrl.continue_workflow
         )
 
-        self.assertEqual(1, len(commands))
-        self.assertEqual('task2', commands[0].task_spec.get_name())
+    def test_continue_workflow(self):
+        self.wf_ex.params = {'task_name': 'task2'}
 
-        self.assertEqual(states.RUNNING, self.wf_ex.state)
-        self.assertEqual(states.SUCCESS, task1_db.state)
-
-        # Emulate finishing 'task2'.
-        task2_db = self._create_db_task('1-1-1-2', 'task2', states.RUNNING)
-
-        task_specs = self.handler.on_task_result(
-            task2_db,
-            wf_utils.TaskResult(data='Hi!')
+        # Assume task1 completed.
+        task1_ex = self._create_task_execution('task1', states.SUCCESS)
+        task1_ex.executions.append(
+            models.ActionExecution(
+                name='std.echo',
+                workflow_name='wf',
+                state=states.SUCCESS,
+                output={'result': 'Hey'},
+                accepted=True
+            )
         )
 
-        self.assertEqual(0, len(task_specs))
+        cmds = self.wf_ctrl.continue_workflow()
 
-        self.assertEqual(states.SUCCESS, self.wf_ex.state)
-        self.assertEqual(states.SUCCESS, task1_db.state)
-        self.assertEqual(states.SUCCESS, task2_db.state)
+        task1_ex.processed = True
 
-    def test_stop_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
+        self.assertEqual(1, len(cmds))
+        self.assertEqual('task2', cmds[0].task_spec.get_name())
 
-    def test_resume_workflow(self):
-        # TODO(rakhmerov): Implement.
-        pass
+        # Now assume task2 completed.
+        task2_ex = self._create_task_execution('task2', states.SUCCESS)
+        task2_ex.executions.append(
+            models.ActionExecution(
+                name='std.echo',
+                workflow_name='wf',
+                state=states.SUCCESS,
+                output={'result': 'Hi!'},
+                accepted=True
+            )
+        )
+
+        cmds = self.wf_ctrl.continue_workflow()
+
+        task1_ex.processed = True
+
+        self.assertEqual(0, len(cmds))

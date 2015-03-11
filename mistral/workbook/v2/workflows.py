@@ -60,6 +60,14 @@ class WorkflowSpec(base.BaseSpec):
             tasks.TaskSpecList.get_class(self._type)
         )
 
+    def validate(self):
+        super(WorkflowSpec, self).validate()
+
+        if not self._data.get('tasks'):
+            raise exc.InvalidModelException(
+                "Workflow doesn't have any tasks [data=%s]" % self._data
+            )
+
     def get_name(self):
         return self._name
 
@@ -125,6 +133,8 @@ class WorkflowListSpec(base.BaseSpec):
             self._workflows.append(WorkflowSpec(v))
 
     def validate(self):
+        super(WorkflowListSpec, self).validate()
+
         if len(self._data.keys()) < 2:
             raise exc.InvalidModelException(
                 'At least one workflow must be in workflow list [data=%s]' %

@@ -29,34 +29,26 @@ class Engine(object):
     """Engine interface."""
 
     @abc.abstractmethod
-    def start_workflow(self, workflow_name, workflow_input, **params):
+    def start_workflow(self, wf_name, wf_input, **params):
         """Starts the specified workflow.
 
-        :param workflow_name: Workflow name.
-        :param workflow_input: Workflow input data as a dictionary.
+        :param wf_name: Workflow name.
+        :param wf_input: Workflow input data as a dictionary.
         :param params: Additional workflow type specific parameters.
         :return: Workflow execution object.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_task_result(self, task_id, result):
-        """Accepts workflow task result and continues the workflow.
+    def on_action_complete(self, action_ex_id, result):
+        """Accepts action result and continues the workflow.
 
-        Task result here is a result which comes from a action/workflow
-        associated which the task.
-        :param task_id: Task id.
+        Action execution result here is a result which comes from an
+        action/workflow associated which the task.
+        :param action_ex_id: Action execution id.
         :param result: Action/workflow result. Instance of
-            mistral.workflow.base.TaskResult
+            mistral.workflow.base.Result
         :return:
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def run_task(self, task_id):
-        """Runs task with given id..
-
-        :param task_id: Task id.
         """
         raise NotImplementedError
 
@@ -106,11 +98,11 @@ class Executor(object):
     """Action executor interface."""
 
     @abc.abstractmethod
-    def run_action(self, task_id, action_class_str, attributes,
+    def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params):
         """Runs action.
 
-        :param task_id: Corresponding task id.
+        :param action_ex_id: Corresponding action execution id.
         :param action_class_str: Path to action class in dot notation.
         :param attributes: Attributes of action class which will be set to.
         :param action_params: Action parameters.
@@ -134,23 +126,24 @@ class TaskPolicy(object):
         :param task_ex: DB model for task that is about to start.
         :param task_spec: Task specification.
         """
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        # No-op by default.
+        data_flow.evaluate_object_fields(self, task_ex.in_context)
+
         self._validate()
 
-    def after_task_complete(self, task_ex, task_spec, result):
+    def after_task_complete(self, task_ex, task_spec):
         """Called right after task completes.
 
         :param task_ex: Completed task DB model.
         :param task_spec: Completed task specification.
-        :param result: TaskResult instance passed to on_task_result.
-         It is needed for analysis of result and scheduling task again.
         """
-        data_flow.evaluate_policy_params(self, task_ex.in_context)
+        # No-op by default.
+        data_flow.evaluate_object_fields(self, task_ex.in_context)
+
         self._validate()
 
     def _validate(self):
-        """Validation of types after YAQL evaluation.
-        """
+        """Validation of types after YAQL evaluation."""
         props = inspect_utils.get_public_fields(self)
 
         try:

@@ -22,9 +22,9 @@ from mistral.engine1 import default_engine as def_eng
 from mistral.engine1 import default_executor as def_exec
 from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
+from mistral.services import scheduler
 from mistral.tests import base
 from mistral.workflow import states
-
 
 LOG = logging.getLogger(__name__)
 
@@ -90,6 +90,11 @@ class EngineTestCase(base.DbTestCase):
             eventlet.spawn(launch_engine_server, transport, self.engine),
             eventlet.spawn(launch_executor_server, transport, self.executor),
         ]
+
+        # Start scheduler.
+        scheduler_thread_group = scheduler.setup()
+
+        self.addCleanup(scheduler_thread_group.stop)
 
     def tearDown(self):
         super(EngineTestCase, self).tearDown()

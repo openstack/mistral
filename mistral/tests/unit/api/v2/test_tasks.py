@@ -16,7 +16,6 @@
 
 import copy
 import datetime
-import json
 import mock
 
 from mistral.db.v2 import api as db_api
@@ -25,7 +24,6 @@ from mistral.engine1 import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
@@ -38,8 +36,6 @@ task_ex = models.TaskExecution(
     state=states.RUNNING,
     tags=['a', 'b'],
     in_context={},
-    input={},
-    result={},
     runtime_context={},
     workflow_execution_id='123',
     created_at=datetime.datetime(1970, 1, 1),
@@ -51,8 +47,6 @@ TASK = {
     'name': 'task',
     'workflow_name': 'flow',
     'state': 'RUNNING',
-    'result': '{}',
-    'input': '{}',
     'workflow_execution_id': '123',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'
@@ -62,13 +56,11 @@ UPDATED_task_ex = copy.copy(task_ex)
 UPDATED_task_ex['state'] = 'SUCCESS'
 UPDATED_TASK = copy.copy(TASK)
 UPDATED_TASK['state'] = 'SUCCESS'
-UPDATED_TASK_RES = wf_utils.TaskResult(json.loads(UPDATED_TASK['result']))
 
 ERROR_task_ex = copy.copy(task_ex)
 ERROR_task_ex['state'] = 'ERROR'
 ERROR_TASK = copy.copy(TASK)
 ERROR_TASK['state'] = 'ERROR'
-ERROR_TASK_RES = wf_utils.TaskResult(None, json.loads(ERROR_TASK['result']))
 
 BROKEN_TASK = copy.copy(TASK)
 BROKEN_TASK['result'] = 'string not escaped'
@@ -95,50 +87,12 @@ class TestTasksController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
-    @mock.patch.object(rpc.EngineClient, 'on_task_result')
-    def test_put(self, f):
-        f.return_value = UPDATED_task_ex.to_dict()
-
-        resp = self.app.put_json('/v2/tasks/123', UPDATED_TASK)
-
-        self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_TASK, resp.json)
-
-        f.assert_called_once_with(UPDATED_TASK['id'], UPDATED_TASK_RES)
-
-    @mock.patch.object(rpc.EngineClient, 'on_task_result')
-    def test_put_error(self, f):
-        f.return_value = ERROR_task_ex.to_dict()
-
-        resp = self.app.put_json('/v2/tasks/123', ERROR_TASK)
-
-        self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(ERROR_TASK, resp.json)
-
-        f.assert_called_once_with(ERROR_TASK['id'], ERROR_TASK_RES)
-
-    @mock.patch.object(rpc.EngineClient, 'on_task_result', MOCK_NOT_FOUND)
-    def test_put_no_task(self):
-        resp = self.app.put_json('/v2/tasks/123', UPDATED_TASK,
-                                 expect_errors=True)
-
-        self.assertEqual(resp.status_int, 404)
-
-    @mock.patch.object(rpc.EngineClient, 'on_task_result')
+    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
     def test_put_bad_result(self, f):
         resp = self.app.put_json('/v2/tasks/123', BROKEN_TASK,
                                  expect_errors=True)
 
         self.assertEqual(resp.status_int, 400)
-
-    @mock.patch.object(rpc.EngineClient, 'on_task_result')
-    def test_put_without_result(self, f):
-        task = copy.copy(UPDATED_TASK)
-        del task['result']
-        f.return_value = UPDATED_task_ex.to_dict()
-        resp = self.app.put_json('/v2/tasks/123', task)
-
-        self.assertEqual(resp.status_int, 200)
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_TASKS)
     def test_get_all(self):

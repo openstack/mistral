@@ -111,7 +111,7 @@ class SchedulerServiceTest(base.DbTestCase):
     def test_scheduler_with_serializer(self, factory):
         target_method = 'run_something'
 
-        task_result = wf_utils.TaskResult('data', 'error')
+        task_result = wf_utils.Result('data', 'error')
 
         method_args = {
             'name': 'task',
@@ -120,7 +120,7 @@ class SchedulerServiceTest(base.DbTestCase):
         }
 
         serializers = {
-            'result': 'mistral.workflow.utils.TaskResultSerializer'
+            'result': 'mistral.workflow.utils.ResultSerializer'
         }
 
         delay = 1.5
@@ -148,7 +148,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         result = factory().run_something.call_args[1].get('result')
 
-        self.assertIsInstance(result, wf_utils.TaskResult)
+        self.assertIsInstance(result, wf_utils.Result)
         self.assertEqual('data', result.data)
         self.assertEqual('error', result.error)
 

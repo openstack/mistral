@@ -36,10 +36,13 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       task1:
         action: std.mistral_http
@@ -81,11 +84,11 @@ class ActionContextTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-        task = self._assert_single_item(wf_ex.task_executions, name='task1')
+        task_ex = self._assert_single_item(wf_ex.task_executions, name='task1')
 
         headers = {
             'Mistral-Workflow-Name': wf_ex.workflow_name,
-            'Mistral-Task-Id': task.id,
+            'Mistral-Task-Id': task_ex.id,
             'Mistral-Execution-Id': wf_ex.id
         }
 

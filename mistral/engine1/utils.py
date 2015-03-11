@@ -53,7 +53,7 @@ def validate_workflow_input(wf_db, wf_spec, wf_input):
         )
 
 
-def resolve_action(wf_name, wf_spec_name, action_spec_name):
+def resolve_action_definition(wf_name, wf_spec_name, action_spec_name):
     action_db = None
 
     if wf_name != wf_spec_name:
@@ -79,8 +79,9 @@ def resolve_action(wf_name, wf_spec_name, action_spec_name):
     return action_db
 
 
-def resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
-    wf_db = None
+def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,
+                                wf_spec_name):
+    wf_def = None
 
     if parent_wf_name != parent_wf_spec_name:
         # If parent workflow belongs to a workbook then
@@ -92,27 +93,28 @@ def resolve_workflow(parent_wf_name, parent_wf_spec_name, wf_spec_name):
 
         wf_full_name = "%s.%s" % (wb_name, wf_spec_name)
 
-        wf_db = db_api.load_workflow_definition(wf_full_name)
+        wf_def = db_api.load_workflow_definition(wf_full_name)
 
-    if not wf_db:
-        wf_db = db_api.load_workflow_definition(wf_spec_name)
+    if not wf_def:
+        wf_def = db_api.load_workflow_definition(wf_spec_name)
 
-    if not wf_db:
+    if not wf_def:
         raise exc.WorkflowException(
             "Failed to find workflow [name=%s]" % wf_spec_name
         )
 
-    return wf_db
+    return wf_def
 
 
-def transform_result(wf_ex, task_ex, result):
+# TODO(rakhmerov): Think of a better home for this method.
+# Looks like we need a special module for ad-hoc actions.
+def transform_result(task_ex, result):
     """Transforms task result accounting for ad-hoc actions.
 
     In case if the given result is an action result and action is
     an ad-hoc action the method transforms the result according to
     ad-hoc action configuration.
 
-    :param wf_ex: Execution DB model.
     :param task_ex: Task DB model.
     :param result: Result of task action/workflow.
     """
@@ -122,9 +124,10 @@ def transform_result(wf_ex, task_ex, result):
     action_spec_name = spec_parser.get_task_spec(
         task_ex.spec).get_action_name()
 
-    wf_spec_name = spec_parser.get_workflow_spec(wf_ex.spec).get_name()
-
     if action_spec_name:
+        wf_ex = task_ex.workflow_execution
+        wf_spec_name = spec_parser.get_workflow_spec(wf_ex.spec).get_name()
+
         return transform_action_result(
             wf_ex.workflow_name,
             wf_spec_name,
@@ -135,23 +138,23 @@ def transform_result(wf_ex, task_ex, result):
     return result
 
 
-def transform_action_result(wf_name, wf_spec_name, action_spec_name,
-                            result):
-    action_db = resolve_action(
+# TODO(rakhmerov): Should probably go into task handler.
+def transform_action_result(wf_name, wf_spec_name, action_spec_name, result):
+    action_def = resolve_action_definition(
         wf_name,
         wf_spec_name,
         action_spec_name
     )
 
-    if not action_db.spec:
+    if not action_def.spec:
         return result
 
-    transformer = spec_parser.get_action_spec(action_db.spec).get_output()
+    transformer = spec_parser.get_action_spec(action_def.spec).get_output()
 
     if transformer is None:
         return result
 
-    return wf_utils.TaskResult(
+    return wf_utils.Result(
         data=expr.evaluate_recursively(transformer, result.data),
         error=result.error
     )

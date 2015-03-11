@@ -35,15 +35,17 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 class DirectWorkflowEngineTest(base.EngineTestCase):
 
-    def _run_workflow(self, worklfow_yaml):
-        wf_service.create_workflows(worklfow_yaml)
+    def _run_workflow(self, workflow_yaml):
+        wf_service.create_workflows(workflow_yaml)
+
         wf_ex = self.engine.start_workflow('wf', {})
+
         self._await(lambda: self.is_execution_error(wf_ex.id))
 
         return db_api.get_workflow_execution(wf_ex.id)
 
     def test_direct_workflow_on_closures(self):
-        WORKFLOW = """
+        wf = """
         version: '2.0'
 
         wf:
@@ -51,7 +53,8 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
           tasks:
             task1:
-              description: That should lead to workflow fail.
+              description: |
+                Explicit 'fail' command should lead to workflow failure.
               action: std.echo output="Echo"
               on-success:
                 - task2
@@ -63,20 +66,22 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 - never_gets_here
 
             task2:
-              action: std.echo output="Morpheus"
+              action: std.noop
 
             task3:
-              action: std.echo output="output"
+              action: std.noop
 
             task4:
-              action: std.echo output="output"
+              action: std.noop
 
             never_gets_here:
               action: std.noop
         """
-        wf_ex = self._run_workflow(WORKFLOW)
+
+        wf_ex = self._run_workflow(wf)
 
         tasks = wf_ex.task_executions
+
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
         task4 = self._assert_single_item(tasks, name='task4')
@@ -90,7 +95,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertTrue(wf_ex.state, states.ERROR)
 
     def test_wrong_task_input(self):
-        WORKFLOW_WRONG_TASK_INPUT = """
+        wf_wrong_task_input = """
         version: '2.0'
 
         wf:
@@ -101,27 +106,33 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo output="Echo"
               on-complete:
                 - task2
+
             task2:
               description: Wrong task output should lead to workflow failure
               action: std.echo wrong_input="Hahaha"
         """
-        wf_ex = wf_ex = self._run_workflow(WORKFLOW_WRONG_TASK_INPUT)
-        task_ex2 = wf_ex.task_executions[1]
+
+        wf_ex = self._run_workflow(wf_wrong_task_input)
+
+        task_ex = self._assert_single_item(wf_ex.task_executions, name='task2')
+        action_ex = db_api.get_action_executions(
+            task_execution_id=task_ex.id
+        )[0]
 
         self.assertIn(
-            "Failed to initialize action",
-            task_ex2.result['task'][task_ex2.name]
+            'Failed to initialize action',
+            action_ex.output['result']
         )
         self.assertIn(
-            "unexpected keyword argument",
-            task_ex2.result['task'][task_ex2.name]
+            'unexpected keyword argument',
+            action_ex.output['result']
         )
 
         self.assertTrue(wf_ex.state, states.ERROR)
-        self.assertIn(task_ex2.result['error'], wf_ex.state_info)
+        self.assertIn(action_ex.output['result'], wf_ex.state_info)
 
     def test_wrong_first_task_input(self):
-        WORKFLOW_WRONG_FIRST_TASK_INPUT = """
+        wf_invalid_first_task_input = """
         version: '2.0'
 
         wf:
@@ -131,23 +142,28 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task1:
               action: std.echo wrong_input="Ha-ha"
         """
-        wf_ex = self._run_workflow(WORKFLOW_WRONG_FIRST_TASK_INPUT)
+
+        wf_ex = self._run_workflow(wf_invalid_first_task_input)
+
         task_ex = wf_ex.task_executions[0]
+        action_ex = db_api.get_action_executions(
+            task_execution_id=task_ex.id
+        )[0]
 
         self.assertIn(
             "Failed to initialize action",
-            task_ex.result['task'][task_ex.name]
+            action_ex.output['result']
         )
         self.assertIn(
             "unexpected keyword argument",
-            task_ex.result['task'][task_ex.name]
+            action_ex.output['result']
         )
 
         self.assertTrue(wf_ex.state, states.ERROR)
-        self.assertIn(task_ex.result['error'], wf_ex.state_info)
+        self.assertIn(action_ex.output['result'], wf_ex.state_info)
 
     def test_wrong_action(self):
-        WORKFLOW_WRONG_ACTION = """
+        wf_invalid_action = """
         version: '2.0'
 
         wf:
@@ -161,7 +177,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task2:
               action: action.doesnt_exist
         """
-        wf_ex = self._run_workflow(WORKFLOW_WRONG_ACTION)
+        wf_ex = self._run_workflow(wf_invalid_action)
 
         # TODO(dzimine): Catch tasks caused error, and set them to ERROR:
         # TODO(dzimine): self.assertTrue(task_ex.state, states.ERROR)
@@ -170,7 +186,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertIn("Failed to find action", wf_ex.state_info)
 
     def test_wrong_action_first_task(self):
-        WORKFLOW_WRONG_ACTION_FIRST_TASK = """
+        wf_invalid_action_first_task = """
         version: '2.0'
 
         wf:
@@ -179,7 +195,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task1:
               action: wrong.task
         """
-        wf_service.create_workflows(WORKFLOW_WRONG_ACTION_FIRST_TASK)
+        wf_service.create_workflows(wf_invalid_action_first_task)
         with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
             self.assertRaises(
                 exc.InvalidActionException,
@@ -195,7 +211,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             )
 
     def test_messed_yaql(self):
-        WORKFLOW_MESSED_YAQL = """
+        wf_messed_yaql = """
         version: '2.0'
 
         wf:
@@ -210,12 +226,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task2:
               action: std.echo output=<% wrong yaql %>
         """
-        wf_ex = self._run_workflow(WORKFLOW_MESSED_YAQL)
+        wf_ex = self._run_workflow(wf_messed_yaql)
 
         self.assertTrue(wf_ex.state, states.ERROR)
 
     def test_messed_yaql_in_first_task(self):
-        WORKFLOW_MESSED_YAQL_IN_FIRST_TASK = """
+        wf_messed_yaql_in_first_task = """
         version: '2.0'
 
         wf:
@@ -224,7 +240,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task1:
               action: std.echo output=<% wrong(yaql) %>
         """
-        wf_service.create_workflows(WORKFLOW_MESSED_YAQL_IN_FIRST_TASK)
+        wf_service.create_workflows(wf_messed_yaql_in_first_task)
 
         with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
             self.assertRaises(

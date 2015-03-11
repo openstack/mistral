@@ -197,6 +197,7 @@ class HTTPAction(base.Action):
         # Construct all important resp data in readable structure.
         headers = dict(resp.headers.items())
         status = resp.status_code
+
         try:
             content = resp.json()
         except Exception as e:

@@ -12,11 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine1 import commands
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral import utils
 from mistral.workflow import base
+from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
@@ -25,7 +25,7 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
-class DirectWorkflowHandler(base.WorkflowHandler):
+class DirectWorkflowController(base.WorkflowController):
     """'Direct workflow' handler.
 
     This handler implements the workflow pattern which is based on
@@ -38,30 +38,101 @@ class DirectWorkflowHandler(base.WorkflowHandler):
     'A'->'B' and 'A'->'C' evaluate to true.
     """
 
-    def start_workflow(self, **params):
-        self._set_execution_state(states.RUNNING)
+    def _get_upstream_task_executions(self, task_spec):
+        return filter(
+            lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
+            wf_utils.find_task_executions(
+                self.wf_ex,
+                self._find_inbound_task_specs(task_spec)
+            )
+        )
 
-        return self._find_start_commands()
+    def _is_upstream_task_execution(self, t_spec, t_ex_candidate):
+        if not states.is_completed(t_ex_candidate.state):
+            return False
 
-    def get_upstream_tasks(self, task_spec):
-        # TODO(rakhmerov): Temporary solution, account conditions.
-        return self._find_inbound_task_specs(task_spec)
+        if not t_spec.get_join():
+            return not t_ex_candidate.processed
+
+        return self._triggers_join(
+            t_spec,
+            self.wf_spec.get_tasks()[t_ex_candidate.name]
+        )
+
+    def _find_next_commands(self):
+        if not self.wf_ex.task_executions:
+            return self._find_start_commands()
+
+        task_execs = [
+            t_ex for t_ex in self.wf_ex.task_executions
+            if states.is_completed(t_ex.state) and not t_ex.processed
+        ]
+
+        cmds = []
+
+        for t_ex in task_execs:
+            cmds.extend(self._find_next_commands_for_task(t_ex))
+
+        return cmds
 
     def _find_start_commands(self):
-        start_task_specs = []
+        t_specs = []
 
         for t_s in self.wf_spec.get_tasks():
             if not self._has_inbound_transitions(t_s):
-                start_task_specs.append(t_s)
+                t_specs.append(t_s)
 
-        return [commands.RunTask(t_s) for t_s in start_task_specs]
+        return [
+            commands.RunTask(
+                self.wf_ex,
+                t_s,
+                self._get_task_inbound_context(t_s)
+            )
+            for t_s in t_specs
+        ]
+
+    def _find_next_commands_for_task(self, task_ex):
+        """Finds next commands based on the state of the given task.
+
+        :param task_ex: Task execution for which next commands need
+            to be found.
+        :return: List of workflow commands.
+        """
+
+        ctx = data_flow.evaluate_task_outbound_context(task_ex)
+
+        cmds = []
+
+        for t_n in self._find_next_task_names(task_ex, ctx):
+            # If t_s is None we assume that it's one of the reserved
+            # engine commands and in this case we pass the parent task
+            # specification and it's inbound context.
+            t_s = (
+                self.wf_spec.get_tasks()[t_n]
+                or
+                self.wf_spec.get_tasks()[task_ex.name]
+            )
+
+            cmds.append(
+                commands.create_command(
+                    t_n,
+                    self.wf_ex,
+                    t_s,
+                    self._get_task_inbound_context(t_s)
+                )
+            )
+
+        LOG.debug("Found commands: %s" % cmds)
+
+        # We need to remove all "join" tasks that have already started
+        # (or even completed) to prevent running "join" tasks more than
+        # once.
+        cmds = self._remove_started_joins(cmds)
+
+        return self._remove_unsatisfied_joins(cmds)
 
     def _has_inbound_transitions(self, task_spec):
-        for t_s in self.wf_spec.get_tasks():
-            if self._transition_exists(t_s.get_name(), task_spec.get_name()):
-                return True
-
-        return False
+        return len(self._find_inbound_task_specs(task_spec)) > 0
 
     def _find_inbound_task_specs(self, task_spec):
         return [
@@ -91,13 +162,13 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
     # TODO(rakhmerov): Need to refactor this method to be able to pass tasks
     # whose contexts need to be merged.
-    def _evaluate_workflow_final_context(self, cause_task_ex):
+    def evaluate_workflow_final_context(self):
         ctx = {}
 
-        for t_db in self._find_end_tasks():
+        for t_ex in self._find_end_tasks():
             ctx = utils.merge_dicts(
                 ctx,
-                data_flow.evaluate_task_outbound_context(t_db)
+                data_flow.evaluate_task_outbound_context(t_ex)
             )
 
         return ctx
@@ -114,58 +185,8 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         )
 
         return any(
-            [wf_utils.find_db_task(self.wf_ex, t_s) for t_s in t_specs]
+            [wf_utils.find_task_execution(self.wf_ex, t_s) for t_s in t_specs]
         )
-
-    def _find_next_commands(self, task_ex, remove_unsatisfied_joins=True):
-        """Finds commands that should run after completing given task.
-
-        Expression 'on_complete' is not mutually exclusive to 'on_success'
-         and 'on_error'.
-        :param task_ex: Task DB model.
-        :param remove_unsatisfied_joins: True if incomplete "join"
-            tasks must be excluded from the list of commands.
-        :return: List of task specifications.
-        """
-        cmds = []
-
-        t_name = task_ex.name
-        t_state = task_ex.state
-
-        ctx = data_flow.evaluate_task_outbound_context(task_ex)
-
-        if states.is_completed(t_state):
-            on_complete = self.get_on_complete_clause(t_name)
-
-            if on_complete:
-                cmds += self._get_next_commands(on_complete, ctx)
-
-        if t_state == states.ERROR:
-            on_error = self.get_on_error_clause(t_name)
-
-            if on_error:
-                cmds += self._get_next_commands(on_error, ctx)
-
-        elif t_state == states.SUCCESS:
-            on_success = self.get_on_success_clause(t_name)
-
-            if on_success:
-                cmds += self._get_next_commands(on_success, ctx)
-
-        LOG.debug("Found commands: %s" % cmds)
-
-        # We need to remove all "join" tasks that have already started
-        # (or even completed) to prevent running "join" tasks more than
-        # once.
-        cmds = self._remove_started_joins(cmds)
-
-        if remove_unsatisfied_joins:
-            return self._remove_unsatisfied_joins(cmds)
-        else:
-            return cmds
-
-    def _is_error_handled(self, task_ex):
-        return self.get_on_error_clause(task_ex.name)
 
     @staticmethod
     def _remove_task_from_clause(on_clause, t_name):
@@ -213,19 +234,51 @@ class DirectWorkflowHandler(base.WorkflowHandler):
 
         return result
 
-    def _get_next_commands(self, cmd_conditions, ctx):
-        cmds = []
+    def _find_next_task_names(self, task_ex, ctx):
+        t_state = task_ex.state
+        t_name = task_ex.name
 
-        for t_name, condition in cmd_conditions:
-            if not condition or expr.evaluate(condition, ctx):
-                cmds.append(self._build_command(t_name))
+        t_names = []
 
-        return cmds
+        if states.is_completed(t_state):
+            t_names += self._find_next_task_names_for_clause(
+                self.get_on_complete_clause(t_name),
+                ctx
+            )
 
-    def _build_command(self, cmd_name):
-        cmd = commands.get_reserved_command(cmd_name)
+        if t_state == states.ERROR:
+            t_names += self._find_next_task_names_for_clause(
+                self.get_on_error_clause(t_name),
+                ctx
+            )
 
-        return cmd or commands.RunTask(self.wf_spec.get_tasks()[cmd_name])
+        elif t_state == states.SUCCESS:
+            t_names += self._find_next_task_names_for_clause(
+                self.get_on_success_clause(t_name),
+                ctx
+            )
+
+        return t_names
+
+    @staticmethod
+    def _find_next_task_names_for_clause(clause, ctx):
+        """Finds next task(command) names base on given {name: condition}
+         dictionary.
+
+        :param clause: Dictionary {task_name: condition} taken from
+            'on-complete', 'on-success' or 'on-error' clause.
+        :param ctx: Context that clause expressions should be evaluated
+            against of.
+        :return: List of task(command) names.
+        """
+        if not clause:
+            return []
+
+        return [
+            t_name
+            for t_name, condition in clause
+            if not condition or expr.evaluate(condition, ctx)
+        ]
 
     def _remove_started_joins(self, cmds):
         return filter(lambda cmd: not self._is_started_join(cmd), cmds)
@@ -235,7 +288,7 @@ class DirectWorkflowHandler(base.WorkflowHandler):
             return False
 
         return (cmd.task_spec.get_join()
-                and wf_utils.find_db_task(self.wf_ex, cmd.task_spec))
+                and wf_utils.find_task_execution(self.wf_ex, cmd.task_spec))
 
     def _remove_unsatisfied_joins(self, cmds):
         return filter(lambda cmd: not self._is_unsatisfied_join(cmd), cmds)
@@ -273,16 +326,14 @@ class DirectWorkflowHandler(base.WorkflowHandler):
         return False
 
     def _triggers_join(self, join_task_spec, inbound_task_spec):
-        in_t_db = wf_utils.find_db_task(self.wf_ex, inbound_task_spec)
+        in_t_ex = wf_utils.find_task_execution(self.wf_ex, inbound_task_spec)
 
-        if not in_t_db or not states.is_completed(in_t_db.state):
+        if not in_t_ex or not states.is_completed(in_t_ex.state):
             return False
 
-        def is_join_task(cmd):
-            return (isinstance(cmd, commands.RunTask)
-                    and cmd.task_spec == join_task_spec)
-
         return filter(
-            lambda cmd: is_join_task(cmd),
-            self._find_next_commands(in_t_db, False)
+            lambda t_name: join_task_spec.get_name() == t_name,
+            self._find_next_task_names(
+                in_t_ex,
+                data_flow.evaluate_task_outbound_context(in_t_ex))
         )
