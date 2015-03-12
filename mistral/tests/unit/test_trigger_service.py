@@ -95,9 +95,11 @@ class TriggerServiceV2Test(base.DbTestCase):
     def test_trigger_create(self):
         trigger = t_s.create_cron_trigger(
             'test',
-            '*/5 * * * *',
             self.wf.name,
             {},
+            '*/5 * * * *',
+            None,
+            None,
             datetime.datetime(2010, 8, 25)
         )
 
@@ -113,6 +115,22 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         self.assertEqual(datetime.datetime(2010, 8, 25, 0, 10), next_time)
 
+    def test_oneshot_trigger_create(self):
+        trigger = t_s.create_cron_trigger(
+            'test',
+            self.wf.name,
+            {},
+            None,
+            "4242-12-25 13:37",
+            None,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        self.assertEqual(
+            datetime.datetime(4242, 12, 25, 13, 37),
+            trigger.next_execution_time
+        )
+
     @mock.patch.object(security, 'create_trust',
                        type('trust', (object,), {'id': 'my_trust_id'}))
     def test_create_trust_in_trigger(self):
@@ -124,9 +142,11 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         trigger = t_s.create_cron_trigger(
             'test',
-            '*/2 * * * *',
             self.wf.name,
             {},
+            '*/2 * * * *',
+            None,
+            None,
             datetime.datetime(2010, 8, 25)
         )
 
@@ -135,33 +155,41 @@ class TriggerServiceV2Test(base.DbTestCase):
     def test_get_trigger_in_correct_orders(self):
         t_s.create_cron_trigger(
             'test1',
-            '*/5 * * * *',
             self.wf.name,
             {},
+            '*/5 * * * *',
+            None,
+            None,
             datetime.datetime(2010, 8, 25)
         )
 
         t_s.create_cron_trigger(
             'test2',
-            '*/1 * * * *',
             self.wf.name,
             {},
+            '*/1 * * * *',
+            None,
+            None,
             datetime.datetime(2010, 8, 22)
         )
 
         t_s.create_cron_trigger(
             'test3',
-            '*/2 * * * *',
             self.wf.name,
             {},
+            '*/2 * * * *',
+            None,
+            None,
             datetime.datetime(2010, 9, 21)
         )
 
         t_s.create_cron_trigger(
             'test4',
-            '*/3 * * * *',
             self.wf.name,
             {},
+            '*/3 * * * *',
+            None,
+            None,
             datetime.datetime.now() + datetime.timedelta(0, 50)
         )
 

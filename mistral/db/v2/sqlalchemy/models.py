@@ -256,6 +256,7 @@ class CronTrigger(mb.MistralSecureModelBase):
     pattern = sa.Column(sa.String(100))
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
     workflow_name = sa.Column(sa.String(80))
+    remaining_executions = sa.Column(sa.Integer)
 
     workflow_id = sa.Column(
         sa.String(36),

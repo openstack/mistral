@@ -270,11 +270,14 @@ class MistralClientV2(MistralClientBase):
 
         return resp, json.loads(body)
 
-    def create_cron_trigger(self, name, pattern, wf_name, wf_input=None):
+    def create_cron_trigger(self, name, wf_name, wf_input=None, pattern=None,
+                            first_time=None, count=None):
         post_body = {
             'name': name,
-            'pattern': pattern,
             'workflow_name': wf_name,
+            'pattern': pattern,
+            'remaining_executions': count,
+            'first_execution_time': first_time
         }
         if wf_input:
             post_body.update({'workflow_input': json.dumps(wf_input)})

@@ -81,17 +81,23 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                     t.workflow_input
                 )
             finally:
-                next_time = triggers.get_next_execution_time(
-                    t.pattern,
-                    t.next_execution_time
-                )
+                if t.remaining_executions > 0:
+                    t.remaining_executions -= 1
+                if t.remaining_executions == 0:
+                    db_api_v2.delete_cron_trigger(t.name)
+                else:  # if remaining execution = None or > 0
+                    next_time = triggers.get_next_execution_time(
+                        t.pattern,
+                        t.next_execution_time
+                    )
 
-                db_api_v2.update_cron_trigger(
-                    t.name,
-                    {'next_execution_time': next_time}
-                )
+                    db_api_v2.update_cron_trigger(
+                        t.name,
+                        {'next_execution_time': next_time,
+                         'remaining_executions': t.remaining_executions}
+                    )
 
-                auth_ctx.set_ctx(None)
+                    auth_ctx.set_ctx(None)
 
 
 def setup(transport):

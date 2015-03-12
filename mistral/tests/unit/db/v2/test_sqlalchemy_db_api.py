@@ -1083,6 +1083,7 @@ CRON_TRIGGERS = [
         'workflow_input': {},
         'next_execution_time':
         datetime.datetime.now() + datetime.timedelta(days=1),
+        'remaining_executions': 42,
         'scope': 'private',
         'project_id': '<default-project>'
     },
@@ -1094,6 +1095,7 @@ CRON_TRIGGERS = [
         'workflow_input': {'param': 'val'},
         'next_execution_time':
         datetime.datetime.now() + datetime.timedelta(days=1),
+        'remaining_executions': 42,
         'scope': 'private',
         'project_id': '<default-project>'
     },

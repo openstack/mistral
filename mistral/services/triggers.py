@@ -17,6 +17,7 @@ import datetime
 
 from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
+from mistral import exceptions as exc
 from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
@@ -80,20 +81,54 @@ def get_next_cron_triggers():
     )
 
 
-def create_cron_trigger(name, pattern, workflow_name, workflow_input,
-                        start_time=None):
+def validate_cron_trigger_input(pattern, first_time, count):
+    if not (first_time or pattern):
+        raise exc.InvalidModelException("Pattern or first_execution_time must"
+                                        " be specified.")
+    if first_time:
+        if (datetime.datetime.now() + datetime.timedelta(0, 60)) > first_time:
+            raise exc.InvalidModelException("First_execution_time must be at"
+                                            " least one minute in the future.")
+        if not pattern and count > 1:
+            raise exc.InvalidModelException("Pattern must be provided if count"
+                                            " is superior to 1.")
+    if pattern:
+        try:
+            croniter(pattern)
+        except (ValueError, KeyError):
+            raise exc.InvalidModelException("The specified pattern is not"
+                                            " valid: {}".format(pattern))
+
+
+def create_cron_trigger(name, workflow_name, workflow_input, pattern=None,
+                        first_time=None, count=None, start_time=None):
     if not start_time:
         start_time = datetime.datetime.now()
 
+    if type(first_time) in [str, unicode]:
+        try:
+            first_time = datetime.datetime.strptime(first_time,
+                                                    '%Y-%m-%d %H:%M')
+        except ValueError as e:
+            raise exc.InvalidModelException(e.message)
+
+    validate_cron_trigger_input(pattern, first_time, count)
+
+    if first_time:
+        next_time = first_time
+        if not (pattern and count):
+            count = 1
+    else:
+        next_time = get_next_execution_time(pattern, start_time)
+
     with db_api_v2.transaction():
         wf = db_api_v2.get_workflow_definition(workflow_name)
-
-        next_time = get_next_execution_time(pattern, start_time)
 
         values = {
             'name': name,
             'pattern': pattern,
             'next_execution_time': next_time,
+            'remaining_executions': count,
             'workflow_name': workflow_name,
             'workflow_id': wf.id,
             'workflow_input': workflow_input,

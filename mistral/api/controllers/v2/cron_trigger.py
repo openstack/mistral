@@ -32,13 +32,16 @@ class CronTrigger(resource.Resource):
 
     id = wtypes.text
     name = wtypes.text
-    pattern = wtypes.text
     workflow_name = wtypes.text
     workflow_input = wtypes.text
 
     scope = SCOPE_TYPES
 
+    pattern = wtypes.text
+    remaining_executions = wtypes.IntegerType(minimum=1)
+    first_execution_time = wtypes.text
     next_execution_time = wtypes.text
+
     created_at = wtypes.text
     updated_at = wtypes.text
 
@@ -68,10 +71,11 @@ class CronTrigger(resource.Resource):
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='my_trigger',
-                   pattern='* * * * *',
                    workflow_name='my_wf',
                    workflow_input={},
                    scope='private',
+                   pattern='* * * * *',
+                   remaining_executions=42,
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
 
@@ -109,9 +113,11 @@ class CronTriggersController(rest.RestController):
 
         db_model = triggers.create_cron_trigger(
             values['name'],
-            values['pattern'],
             values['workflow_name'],
-            values.get('workflow_input')
+            values.get('workflow_input'),
+            values.get('pattern'),
+            values.get('first_execution_time'),
+            values.get('remaining_executions')
         )
 
         return CronTrigger.from_dict(db_model.to_dict())

@@ -32,7 +32,8 @@ TRIGGER = {
     'pattern': '* * * * *',
     'workflow_name': WF.name,
     'workflow_input': '{}',
-    'scope': 'private'
+    'scope': 'private',
+    'remaining_executions': 42
 }
 
 trigger_values = copy.copy(TRIGGER)
@@ -91,6 +92,7 @@ class TestCronTriggerController(base.FunctionalTest):
         values = mock_mtd.call_args[0][0]
 
         self.assertEqual('* * * * *', values['pattern'])
+        self.assertEqual(42, values['remaining_executions'])
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)

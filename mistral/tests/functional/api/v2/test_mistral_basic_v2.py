@@ -400,9 +400,33 @@ class CronTriggerTestsV2(base.TestCase):
         tr_name = 'trigger'
 
         resp, body = self.client.create_cron_trigger(
-            tr_name, '5 * * * *', self.wf_name)
+            tr_name, self.wf_name, None, '5 * * * *')
         self.assertEqual(201, resp.status)
         self.assertEqual(tr_name, body['name'])
+
+        resp, body = self.client.get_list_obj('cron_triggers')
+        self.assertEqual(200, resp.status)
+
+        trs_names = [tr['name'] for tr in body['cron_triggers']]
+        self.assertIn(tr_name, trs_names)
+
+        self.client.delete_obj('cron_triggers', tr_name)
+        self.client.triggers.remove(tr_name)
+
+        _, body = self.client.get_list_obj('cron_triggers')
+
+        trs_names = [tr['name'] for tr in body['cron_triggers']]
+        self.assertNotIn(tr_name, trs_names)
+
+    @test.attr(type='sanity')
+    def test_create_and_delete_oneshot_cron_triggers(self):
+        tr_name = 'trigger'
+
+        resp, body = self.client.create_cron_trigger(
+            tr_name, self.wf_name, None, None, "4242-12-25 13:37")
+        self.assertEqual(201, resp.status)
+        self.assertEqual(tr_name, body['name'])
+        self.assertEqual("4242-12-25 13:37:00", body['next_execution_time'])
 
         resp, body = self.client.get_list_obj('cron_triggers')
         self.assertEqual(200, resp.status)
@@ -424,12 +448,12 @@ class CronTriggerTestsV2(base.TestCase):
         tr_name_2 = 'trigger2'
 
         resp, body = self.client.create_cron_trigger(
-            tr_name_1, '5 * * * *', self.wf_name)
+            tr_name_1, self.wf_name, None, '5 * * * *')
         self.assertEqual(201, resp.status)
         self.assertEqual(tr_name_1, body['name'])
 
         resp, body = self.client.create_cron_trigger(
-            tr_name_2, '15 * * * *', self.wf_name)
+            tr_name_2, self.wf_name, None, '15 * * * *')
         self.assertEqual(201, resp.status)
         self.assertEqual(tr_name_2, body['name'])
 
@@ -444,7 +468,7 @@ class CronTriggerTestsV2(base.TestCase):
     def test_get_cron_trigger(self):
         tr_name = 'trigger'
         self.client.create_cron_trigger(
-            tr_name, '5 * * * *', self.wf_name)
+            tr_name, self.wf_name, None, '5 * * * *')
 
         resp, body = self.client.get_object('cron_triggers', tr_name)
 
@@ -455,7 +479,38 @@ class CronTriggerTestsV2(base.TestCase):
     def test_create_cron_trigger_nonexistent_wf(self):
         self.assertRaises(exceptions.NotFound,
                           self.client.create_cron_trigger,
-                          'trigger', '5 * * * *', 'nonexist')
+                          'trigger', 'nonexist', None, '5 * * * *')
+
+    @test.attr(type='negative')
+    def test_create_cron_trigger_invalid_count(self):
+        self.assertRaises(exceptions.ServerFault,
+                          self.client.create_cron_trigger,
+                          'trigger', 'nonexist', None, '5 * * * *', None, "q")
+
+    @test.attr(type='negative')
+    def test_create_cron_trigger_negative_count(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_cron_trigger,
+                          'trigger', 'nonexist', None, '5 * * * *', None, -1)
+
+    @test.attr(type='negative')
+    def test_create_cron_trigger_invalid_first_date(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_cron_trigger,
+                          'trigger', 'nonexist', None, '5 * * * *', "q")
+
+    @test.attr(type='negative')
+    def test_create_cron_trigger_count_only(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_cron_trigger,
+                          'trigger', 'nonexist', None, None, None, "42")
+
+    @test.attr(type='negative')
+    def test_create_cron_trigger_date_and_count_without_pattern(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.create_cron_trigger,
+                          'trigger', 'nonexist', None, None,
+                          "4242-12-25 13:37", "42")
 
     @test.attr(type='negative')
     def test_get_nonexistent_cron_trigger(self):
@@ -473,31 +528,31 @@ class CronTriggerTestsV2(base.TestCase):
     def test_create_two_cron_triggers_with_same_name(self):
         tr_name = 'trigger'
         self.client.create_cron_trigger(
-            tr_name, '5 * * * *', self.wf_name)
+            tr_name, self.wf_name, None, '5 * * * *')
         self.assertRaises(exceptions.Conflict,
                           self.client.create_cron_trigger,
-                          tr_name, '5 * * * *', self.wf_name)
+                          tr_name, self.wf_name, None, '5 * * * *')
 
     @decorators.skip_because(bug="1383146")
     @test.attr(type='negative')
     def test_create_two_cron_triggers_with_same_pattern(self):
         self.client.create_trigger(
-            'trigger1', '5 * * * *', self.wf_name)
+            'trigger1', self.wf_name, None, '5 * * * *')
         self.assertRaises(exceptions.Conflict,
                           self.client.create_cron_trigger,
-                          'trigger2', '5 * * * *', self.wf_name)
+                          'trigger2', self.wf_name, None, '5 * * * *')
 
-    @test.attr(type='nagative')
+    @test.attr(type='negative')
     def test_invalid_cron_pattern_not_enough_params(self):
-        self.assertRaises(exceptions.ServerFault,
+        self.assertRaises(exceptions.BadRequest,
                           self.client.create_cron_trigger,
-                          'trigger', '5 *', self.wf_name)
+                          'trigger', self.wf_name, None, '5 *')
 
-    @test.attr(type='nagative')
+    @test.attr(type='negative')
     def test_invalid_cron_pattern_out_of_range(self):
-        self.assertRaises(exceptions.ServerFault,
+        self.assertRaises(exceptions.BadRequest,
                           self.client.create_cron_trigger,
-                          'trigger', '88 * * * *', self.wf_name)
+                          'trigger', self.wf_name, None, '88 * * * *')
 
 
 class ActionTestsV2(base.TestCase):
