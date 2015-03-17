@@ -28,7 +28,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 WF_FULL_JOIN = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct
@@ -61,7 +61,7 @@ wf:
 
 WF_FULL_JOIN_WITH_ERRORS = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct
@@ -91,7 +91,7 @@ wf:
 
 WF_FULL_JOIN_WITH_CONDITIONS = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct
@@ -129,7 +129,7 @@ wf:
 
 WF_PARTIAL_JOIN = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct
@@ -173,7 +173,7 @@ wf:
 
 WF_PARTIAL_JOIN_TRIGGERS_ONCE = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct
@@ -221,7 +221,7 @@ wf:
 
 WF_DISCRIMINATOR = """
 ---
-version: 2.0
+version: '2.0'
 
 wf:
   type: direct
@@ -429,7 +429,7 @@ class JoinEngineTest(base.EngineTestCase):
 
     def test_full_join_parallel_published_vars(self):
         wfs_tasks_join_complex = """---
-        version: 2.0
+        version: '2.0'
 
         main:
           type: direct
