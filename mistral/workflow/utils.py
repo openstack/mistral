@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.utils import serializer
+from mistral.utils import serializers
 from mistral.workbook.v2 import tasks as v2_tasks_spec
 from mistral.workflow import states
 
@@ -38,7 +38,7 @@ class Result(object):
         return self.data == other.data and self.error == other.error
 
 
-class ResultSerializer(serializer.Serializer):
+class ResultSerializer(serializers.Serializer):
     def serialize(self, entity):
         return {'data': entity.data, 'error': entity.error}
 

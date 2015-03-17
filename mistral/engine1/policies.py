@@ -24,6 +24,7 @@ from mistral.workflow import utils
 
 
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
+_RUN_TASK_EXECUTION_PATH = 'mistral.engine1.task_handler.run_task_execution'
 
 
 def _log_task_delay(task_ex, delay_sec):
@@ -156,10 +157,6 @@ class WaitBeforePolicy(base.TaskPolicy):
     def before_task_start(self, task_ex, task_spec):
         super(WaitBeforePolicy, self).before_task_start(task_ex, task_spec)
 
-        # TODO(rakhmerov): This policy needs to be fixed.
-        if True:
-            return
-
         context_key = 'wait_before_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -190,10 +187,10 @@ class WaitBeforePolicy(base.TaskPolicy):
         task_ex.state = states.DELAYED
 
         scheduler.schedule_call(
-            _ENGINE_CLIENT_PATH,
-            'run_task',
+            None,
+            _RUN_TASK_EXECUTION_PATH,
             self.delay,
-            task_id=task_ex.id
+            task_ex_id=task_ex.id,
         )
 
 

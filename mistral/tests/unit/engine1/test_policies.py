@@ -253,7 +253,6 @@ class PoliciesTest(base.EngineTestCase):
         thread_group = scheduler.setup()
         self.addCleanup(thread_group.stop)
 
-    @testtools.skip("Fix policies.")
     def test_build_policies(self):
         arr = policies.build_policies(
             self.task_spec.get_policies(),
@@ -329,7 +328,6 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertIsInstance(p, policies.TimeoutPolicy)
 
-    @testtools.skip("Fix 'wait-before' policy.")
     def test_wait_before_policy(self):
         wb_service.create_workbook_v2(WAIT_BEFORE_WB)
 
@@ -348,7 +346,6 @@ class PoliciesTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
 
-    @testtools.skip("Fix 'wait-before' policy.")
     def test_wait_before_policy_from_var(self):
         wb_service.create_workbook_v2(WAIT_BEFORE_FROM_VAR)
 
