@@ -264,10 +264,6 @@ class RetryPolicy(base.TaskPolicy):
         """
         super(RetryPolicy, self).after_task_complete(task_ex, task_spec)
 
-        # TODO(rakhmerov): This policy needs to be fixed.
-        if True:
-            return
-
         context_key = 'retry_task_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -288,8 +284,6 @@ class RetryPolicy(base.TaskPolicy):
             % (task_ex.name, task_ex.state)
         )
 
-        outbound_context = task_ex.result
-
         policy_context = runtime_context[context_key]
 
         retry_no = 0
@@ -300,12 +294,7 @@ class RetryPolicy(base.TaskPolicy):
 
         retries_remain = retry_no + 1 < self.count
 
-        break_early = (
-            expressions.evaluate(self.break_on, outbound_context)
-            if self.break_on and outbound_context else False
-        )
-
-        if not retries_remain or break_early:
+        if not retries_remain or self.break_on:
             return
 
         _log_task_delay(task_ex, self.delay)
@@ -316,10 +305,10 @@ class RetryPolicy(base.TaskPolicy):
         runtime_context[context_key] = policy_context
 
         scheduler.schedule_call(
-            _ENGINE_CLIENT_PATH,
-            'run_task',
+            None,
+            _RUN_TASK_EXECUTION_PATH,
             self.delay,
-            task_id=task_ex.id
+            task_ex_id=task_ex.id,
         )
 
 

@@ -379,7 +379,6 @@ class PoliciesTest(base.EngineTestCase):
         )
         self._await(lambda: self.is_task_success(task_ex.id))
 
-    @testtools.skip("Fix 'retry' policy.")
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB)
 
