@@ -60,6 +60,8 @@ class DirectWorkflowController(base.WorkflowController):
         )
 
     def _find_next_commands(self):
+        cmds = super(DirectWorkflowController, self)._find_next_commands()
+
         if not self.wf_ex.task_executions:
             return self._find_start_commands()
 
@@ -67,8 +69,6 @@ class DirectWorkflowController(base.WorkflowController):
             t_ex for t_ex in self.wf_ex.task_executions
             if states.is_completed(t_ex.state) and not t_ex.processed
         ]
-
-        cmds = []
 
         for t_ex in task_execs:
             cmds.extend(self._find_next_commands_for_task(t_ex))

@@ -36,7 +36,7 @@ from mistral.workflow import with_items
 LOG = logging.getLogger(__name__)
 
 
-def run_task_execution(task_ex_id):
+def run_existent_task(task_ex_id):
     """This function runs existent task execution.
 
     It is needed mostly by scheduler.
@@ -50,10 +50,10 @@ def run_task_execution(task_ex_id):
     # Explicitly change task state to RUNNING.
     task_ex.state = states.RUNNING
 
-    _run_task_execution(task_ex, task_spec, wf_spec)
+    _run_existent_task(task_ex, task_spec, wf_spec)
 
 
-def _run_task_execution(task_ex, task_spec, wf_spec):
+def _run_existent_task(task_ex, task_spec, wf_spec):
     input_dicts = _get_input_dictionaries(
         wf_spec, task_ex, task_spec, task_ex.in_context
     )
@@ -84,7 +84,7 @@ def run_task(wf_cmd):
     if task_ex.state != states.RUNNING:
         return
 
-    _run_task_execution(task_ex, task_spec, wf_spec)
+    _run_existent_task(task_ex, task_spec, wf_spec)
 
 
 def on_action_complete(action_ex, result):

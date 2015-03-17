@@ -16,14 +16,13 @@
 from mistral.db.v2 import api as db_api
 from mistral.engine1 import base
 from mistral.engine1 import rpc
-from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
 from mistral.workflow import states
 
 
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
-_RUN_TASK_EXECUTION_PATH = 'mistral.engine1.task_handler.run_task_execution'
+_RUN_EXISTENT_TASK_PATH = 'mistral.engine1.task_handler.run_existent_task'
 
 
 def _log_task_delay(task_ex, delay_sec):
@@ -187,7 +186,7 @@ class WaitBeforePolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            _RUN_TASK_EXECUTION_PATH,
+            _RUN_EXISTENT_TASK_PATH,
             self.delay,
             task_ex_id=task_ex.id,
         )
@@ -305,7 +304,7 @@ class RetryPolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            _RUN_TASK_EXECUTION_PATH,
+            _RUN_EXISTENT_TASK_PATH,
             self.delay,
             task_ex_id=task_ex.id,
         )
@@ -352,7 +351,7 @@ class PauseBeforePolicy(base.TaskPolicy):
     def before_task_start(self, task_ex, task_spec):
         super(PauseBeforePolicy, self).before_task_start(task_ex, task_spec)
 
-        if not expressions.evaluate(self.expr, task_ex.in_context):
+        if not self.expr:
             return
 
         wf_trace.info(

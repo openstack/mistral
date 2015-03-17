@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
+from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
 
@@ -45,6 +45,19 @@ class RunTask(WorkflowCommand):
         return (
             "Run task [workflow=%s, task=%s]"
             % (self.wf_ex.name, self.task_spec.get_name())
+        )
+
+
+class RunExistentTask(WorkflowCommand):
+    """Command for running already existent task."""
+
+    def __init__(self, task_ex):
+        wf_ex = task_ex.workflow_execution
+        task_spec = spec_parser.get_task_spec(task_ex.spec)
+        self.task_ex = task_ex
+
+        super(RunExistentTask, self).__init__(
+            wf_ex, task_spec, task_ex.in_context
         )
 
 

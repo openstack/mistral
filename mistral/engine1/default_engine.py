@@ -278,6 +278,8 @@ class DefaultEngine(base.Engine):
         for cmd in wf_cmds:
             if isinstance(cmd, commands.RunTask):
                 task_handler.run_task(cmd)
+            elif isinstance(cmd, commands.RunExistentTask):
+                task_handler.run_existent_task(cmd.task_ex.id)
             elif isinstance(cmd, commands.SetWorkflowState):
                 # TODO(rakhmerov): Special commands should be persisted too.
                 wf_handler.set_execution_state(wf_ex, cmd.new_state)

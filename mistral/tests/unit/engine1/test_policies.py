@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
@@ -446,7 +445,6 @@ class PoliciesTest(base.EngineTestCase):
         # Make sure that engine did not create extra tasks.
         self.assertEqual(1, len(tasks_db))
 
-    @testtools.skip("Fix 'pause-before' policy.")
     def test_pause_before_policy(self):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
 
@@ -462,7 +460,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.IDLE, task_ex.state)
 
         self._await(lambda: self.is_execution_paused(wf_ex.id))
-
+        self._sleep(1)
         self.engine.resume_workflow(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)

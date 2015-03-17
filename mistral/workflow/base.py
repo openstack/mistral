@@ -19,8 +19,10 @@ import copy
 from mistral.openstack.common import log as logging
 from mistral import utils as u
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -99,7 +101,10 @@ class WorkflowController(object):
         workflow controller.
         :return: List of workflow commands.
         """
-        raise NotImplementedError
+        # Add all tasks in IDLE state.
+        idle_tasks = wf_utils.find_tasks_with_state(self.wf_ex, states.IDLE)
+
+        return [commands.RunExistentTask(t) for t in idle_tasks]
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)

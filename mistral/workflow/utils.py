@@ -76,8 +76,12 @@ def find_task_executions(wf_ex, task_specs):
     )
 
 
+def find_tasks_with_state(wf_ex, state):
+    return [t for t in wf_ex.task_executions if t.state == state]
+
+
 def find_running_tasks(wf_ex):
-    return [t for t in wf_ex.task_executions if t.state == states.RUNNING]
+    return find_tasks_with_state(wf_ex, states.RUNNING)
 
 
 def find_completed_tasks(wf_ex):
@@ -87,7 +91,7 @@ def find_completed_tasks(wf_ex):
 
 
 def find_successful_tasks(wf_ex):
-    return [t for t in wf_ex.task_executions if t.state == states.SUCCESS]
+    return find_tasks_with_state(wf_ex, states.SUCCESS)
 
 
 def find_incomplete_tasks(wf_ex):
@@ -96,4 +100,4 @@ def find_incomplete_tasks(wf_ex):
 
 
 def find_error_tasks(wf_ex):
-    return [t for t in wf_ex.task_executions if t.state == states.ERROR]
+    return find_tasks_with_state(wf_ex, states.ERROR)

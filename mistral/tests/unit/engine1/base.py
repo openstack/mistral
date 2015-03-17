@@ -103,20 +103,26 @@ class EngineTestCase(base.DbTestCase):
 
         [thread.kill() for thread in self.threads]
 
-    def is_execution_success(self, exec_id):
-        return db_api.get_workflow_execution(exec_id).state == states.SUCCESS
+    def is_task_in_state(self, task_ex_id, state):
+        return db_api.get_task_execution(task_ex_id).state == state
 
-    def is_execution_error(self, exec_id):
-        return db_api.get_workflow_execution(exec_id).state == states.ERROR
+    def is_execution_in_state(self, wf_ex_id, state):
+        return db_api.get_workflow_execution(wf_ex_id).state == state
 
-    def is_execution_paused(self, exec_id):
-        return db_api.get_workflow_execution(exec_id).state == states.PAUSED
+    def is_execution_success(self, wf_ex_id):
+        return self.is_execution_in_state(wf_ex_id, states.SUCCESS)
 
-    def is_task_success(self, task_id):
-        return db_api.get_task_execution(task_id).state == states.SUCCESS
+    def is_execution_error(self, wf_ex_id):
+        return self.is_execution_in_state(wf_ex_id, states.ERROR)
 
-    def is_task_error(self, task_id):
-        return db_api.get_task_execution(task_id).state == states.ERROR
+    def is_execution_paused(self, wf_ex_id):
+        return self.is_execution_in_state(wf_ex_id, states.PAUSED)
 
-    def is_task_delayed(self, task_id):
-        return db_api.get_task_execution(task_id).state == states.DELAYED
+    def is_task_success(self, task_ex_id):
+        return self.is_task_in_state(task_ex_id, states.SUCCESS)
+
+    def is_task_error(self, task_ex_id):
+        return self.is_task_in_state(task_ex_id, states.ERROR)
+
+    def is_task_delayed(self, task_ex_id):
+        return self.is_task_in_state(task_ex_id, states.DELAYED)
