@@ -89,6 +89,7 @@ class DefaultEngine(base.Engine):
     def on_task_state_change(self, state, task_ex_id):
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex_id)
+            execution = task_ex.executions[-1]
 
             wf_ex_id = task_ex.workflow_execution_id
 
@@ -105,7 +106,7 @@ class DefaultEngine(base.Engine):
 
             task_ex.state = state
 
-            self._on_task_state_change(task_ex, wf_ex)
+            self._on_task_state_change(task_ex, wf_ex, action_ex=execution)
 
     def _on_task_state_change(self, task_ex, wf_ex, action_ex=None):
         task_spec = spec_parser.get_task_spec(task_ex.spec)

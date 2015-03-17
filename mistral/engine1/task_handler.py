@@ -78,7 +78,7 @@ def run_task(wf_cmd):
     # TODO(rakhmerov): 'concurrency' policy should keep a number of running
     # actions/workflows under control so it can't be implemented if it runs
     # before any action executions are created.
-    _before_task_start(task_ex, task_spec, wf_spec)
+    before_task_start(task_ex, task_spec, wf_spec)
 
     # Policies could possibly change task state.
     if task_ex.state != states.RUNNING:
@@ -173,7 +173,7 @@ def _create_action_execution(task_ex, action_def, action_input):
     return action_ex
 
 
-def _before_task_start(task_ex, task_spec, wf_spec):
+def before_task_start(task_ex, task_spec, wf_spec):
     for p in policies.build_policies(task_spec.get_policies(), wf_spec):
         p.before_task_start(task_ex, task_spec)
 

@@ -20,7 +20,6 @@ from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
 from mistral.workflow import states
-from mistral.workflow import utils
 
 
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
@@ -329,7 +328,7 @@ class TimeoutPolicy(base.TaskPolicy):
             None,
             'mistral.engine1.policies.fail_task_if_incomplete',
             self.delay,
-            task_id=task_ex.id,
+            task_ex_id=task_ex.id,
             timeout=self.delay
         )
 
@@ -404,7 +403,7 @@ def fail_task_if_incomplete(task_ex_id, timeout):
             "Task '%s' [%s -> ERROR]" % (task_ex.name, task_ex.state)
         )
 
-        rpc.get_engine_client().on_action_complete(
-            task_ex_id,
-            utils.Result(error=msg)
+        rpc.get_engine_client().on_task_state_change(
+            states.ERROR,
+            task_ex_id
         )

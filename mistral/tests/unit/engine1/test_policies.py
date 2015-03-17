@@ -20,7 +20,6 @@ from mistral.engine import states
 from mistral.engine1 import policies
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
-from mistral.services import scheduler
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine1 import base
@@ -173,19 +172,16 @@ workflows:
 
     tasks:
       task1:
-        action: std.mistral_http
+        action: std.async_noop
         policies:
           timeout: 2
-        input:
-          url: http://google.com
-          method: GET
         on-error:
           - task2
 
       task2:
         action: std.echo output="Hi!"
         policies:
-          timeout: 2
+          timeout: 3
 """
 
 
@@ -201,8 +197,8 @@ workflows:
       task1:
         action: std.echo output="Hi!"
         policies:
-          wait-after: 2
-          timeout: 1
+          wait-after: 4
+          timeout: 3
 """
 
 
@@ -249,9 +245,6 @@ class PoliciesTest(base.EngineTestCase):
         self.wb_spec = spec_parser.get_workbook_spec_from_yaml(WORKBOOK)
         self.wf_spec = self.wb_spec.get_workflows()['wf1']
         self.task_spec = self.wf_spec.get_tasks()['task1']
-
-        thread_group = scheduler.setup()
-        self.addCleanup(thread_group.stop)
 
     def test_build_policies(self):
         arr = policies.build_policies(
@@ -408,7 +401,6 @@ class PoliciesTest(base.EngineTestCase):
             task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
-    @testtools.skip("Fix 'timeout' policy.")
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB)
 
@@ -429,12 +421,8 @@ class PoliciesTest(base.EngineTestCase):
             name='task1'
         )
 
-        self.assertEqual(states.ERROR, task_ex.state)
-        self.assertIsNotNone(wf_ex)
-
         self._await(lambda: self.is_execution_success(wf_ex.id))
 
-    @testtools.skip("Fix 'timeout' policy.")
     def test_timeout_policy_success_after_timeout(self):
         wb_service.create_workbook_v2(TIMEOUT_WB2)
 
