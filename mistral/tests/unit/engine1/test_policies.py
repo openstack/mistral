@@ -360,7 +360,6 @@ class PoliciesTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
-    @testtools.skip("Fix 'wait-after' policy.")
     def test_wait_after_policy(self):
         wb_service.create_workbook_v2(WAIT_AFTER_WB)
 

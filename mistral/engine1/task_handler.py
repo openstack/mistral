@@ -168,7 +168,7 @@ def _before_task_start(task_ex, task_spec, wf_spec):
         p.before_task_start(task_ex, task_spec)
 
 
-def _after_task_complete(task_ex, task_spec, wf_spec):
+def after_task_complete(task_ex, task_spec, wf_spec):
     for p in policies.build_policies(task_spec.get_policies(), wf_spec):
         p.after_task_complete(task_ex, task_spec)
 

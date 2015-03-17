@@ -85,6 +85,53 @@ class DefaultEngine(base.Engine):
             self._fail_workflow(wf_exec_id, e)
             raise e
 
+    def on_task_state_change(self, state, task_ex_id):
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+            wf_ex = db_api.get_workflow_execution(
+                task_ex.workflow_execution_id
+            )
+
+            wf_trace.info(
+                task_ex,
+                "Task '%s' [%s -> %s]"
+                % (task_ex.name, task_ex.state, state)
+            )
+
+            task_ex.state = state
+
+            self._on_task_state_change(task_ex, wf_ex)
+
+    def _on_task_state_change(self, task_ex, wf_ex, action_ex=None):
+        task_spec = spec_parser.get_task_spec(task_ex.spec)
+        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+
+        if states.is_completed(task_ex.state):
+            task_handler.after_task_complete(task_ex, task_spec, wf_spec)
+
+            # Ignore DELAYED state.
+            if task_ex.state == states.DELAYED:
+                return
+
+            wf_ctrl = wfc_factory.create_workflow_controller(wf_ex)
+
+            # Calculate commands to process next.
+            cmds = wf_ctrl.continue_workflow()
+
+            task_ex.processed = True
+
+            if not cmds:
+                if task_ex.state == states.SUCCESS:
+                    if not wf_utils.find_running_tasks(wf_ex):
+                        wf_handler.succeed_workflow(
+                            wf_ex,
+                            wf_ctrl.evaluate_workflow_final_context()
+                        )
+                else:
+                    wf_handler.fail_workflow(wf_ex, task_ex, action_ex)
+            else:
+                self._dispatch_workflow_commands(wf_ex, cmds)
+
     @u.log_exec(LOG)
     def on_action_complete(self, action_ex_id, result):
         wf_exec_id = None
@@ -103,27 +150,7 @@ class DefaultEngine(base.Engine):
                 if states.is_paused_or_completed(wf_ex.state):
                     return action_ex
 
-                if states.is_completed(task_ex.state):
-                    wf_ctrl = wfc_factory.create_workflow_controller(wf_ex)
-
-                    # Calculate commands to process next.
-                    cmds = wf_ctrl.continue_workflow()
-
-                    task_ex.processed = True
-
-                    if not cmds:
-                        # TODO(rakhmerov): Think of a better way to determine
-                        # workflow state than analyzing last task state.
-                        if task_ex.state == states.SUCCESS:
-                            if not wf_utils.find_running_tasks(wf_ex):
-                                wf_handler.succeed_workflow(
-                                    wf_ex,
-                                    wf_ctrl.evaluate_workflow_final_context()
-                                )
-                        else:
-                            wf_handler.fail_workflow(wf_ex, task_ex, action_ex)
-                    else:
-                        self._dispatch_workflow_commands(wf_ex, cmds)
+                self._on_task_state_change(task_ex, wf_ex, action_ex)
 
                 return action_ex
         except Exception as e:

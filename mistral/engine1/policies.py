@@ -207,10 +207,6 @@ class WaitAfterPolicy(base.TaskPolicy):
     def after_task_complete(self, task_ex, task_spec):
         super(WaitAfterPolicy, self).after_task_complete(task_ex, task_spec)
 
-        # TODO(rakhmerov): This policy needs to be fixed.
-        if True:
-            return
-
         context_key = 'wait_after_policy'
 
         runtime_context = _ensure_context_has_key(
@@ -221,41 +217,26 @@ class WaitAfterPolicy(base.TaskPolicy):
         task_ex.runtime_context = runtime_context
 
         policy_context = runtime_context[context_key]
-
         if policy_context.get('skip'):
-            # Need to avoid terminal states.
-            if not states.is_completed(task_ex.state):
-                # Unset state 'DELAYED'.
-
-                wf_trace.info(
-                    task_ex,
-                    "Task '%s' [%s -> %s]"
-                    % (task_ex.name, states.DELAYED, states.RUNNING)
-                )
-
-                task_ex.state = states.RUNNING
-
+            # Skip, already processed.
             return
 
         policy_context.update({'skip': True})
 
         _log_task_delay(task_ex, self.delay)
 
+        state = task_ex.state
         # Set task state to 'DELAYED'.
         task_ex.state = states.DELAYED
 
-        # serializers = {
-        #     'result': 'mistral.workflow.utils.ResultSerializer'
-        # }
-        #
-        # scheduler.schedule_call(
-        #     _ENGINE_CLIENT_PATH,
-        #     'on_task_result',
-        #     self.delay,
-        #     serializers,
-        #     task_id=task_ex.id,
-        #     result=result
-        # )
+        # Schedule to change task state to RUNNING again.
+        scheduler.schedule_call(
+            _ENGINE_CLIENT_PATH,
+            'on_task_state_change',
+            self.delay,
+            state=state,
+            task_ex_id=task_ex.id,
+        )
 
 
 class RetryPolicy(base.TaskPolicy):

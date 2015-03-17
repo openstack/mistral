@@ -39,7 +39,10 @@ def fail_workflow(wf_ex, task_ex, action_ex):
         return
 
     # TODO(rakhmerov): How do we pass task result correctly?.
-    msg = str(action_ex.output.get('result', "Unknown"))
+    if action_ex:
+        msg = str(action_ex.output.get('result', "Unknown"))
+    else:
+        msg = "Unknown"
 
     set_execution_state(
         wf_ex,
