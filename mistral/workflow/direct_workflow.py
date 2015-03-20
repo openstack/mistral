@@ -173,6 +173,13 @@ class DirectWorkflowController(base.WorkflowController):
 
         return ctx
 
+    def all_errors_handled(self):
+        for t_ex in wf_utils.find_error_tasks(self.wf_ex):
+            if not self.get_on_error_clause(t_ex.name):
+                return False
+
+        return True
+
     def _find_end_tasks(self):
         return filter(
             lambda t_db: not self._has_outbound_tasks(t_db),

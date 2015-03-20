@@ -60,6 +60,13 @@ def transaction():
         yield
 
 
+# Locking.
+
+
+def acquire_lock(model, id):
+    IMPL.acquire_lock(model, id)
+
+
 # Workbooks.
 
 def get_workbook(name):

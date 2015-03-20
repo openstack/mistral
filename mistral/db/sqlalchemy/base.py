@@ -18,6 +18,7 @@ from oslo.config import cfg
 from oslo.db import options
 from oslo.db.sqlalchemy import session as db_session
 
+from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils
@@ -111,32 +112,48 @@ def start_tx():
     """Opens new database session and starts new transaction assuming
         there wasn't any opened sessions within the same thread.
     """
-    ses = _get_thread_local_session()
-    if ses:
-        raise exc.DataAccessException("Database transaction has already been"
-                                      " started.")
+    if _get_thread_local_session():
+        raise exc.DataAccessException(
+            "Database transaction has already been started."
+        )
 
     _set_thread_local_session(_get_session())
+
+
+def release_locks_if_sqlite(session):
+    if get_driver_name() == 'sqlite':
+        sqlite_lock.release_locks(session)
 
 
 def commit_tx():
     """Commits previously started database transaction."""
     ses = _get_thread_local_session()
-    if not ses:
-        raise exc.DataAccessException("Nothing to commit. Database transaction"
-                                      " has not been previously started.")
 
-    ses.commit()
+    if not ses:
+        raise exc.DataAccessException(
+            "Nothing to commit. Database transaction"
+            " has not been previously started."
+        )
+
+    try:
+        ses.commit()
+    finally:
+        release_locks_if_sqlite(ses)
 
 
 def rollback_tx():
     """Rolls back previously started database transaction."""
     ses = _get_thread_local_session()
-    if not ses:
-        raise exc.DataAccessException("Nothing to roll back. Database"
-                                      " transaction has not been started.")
 
-    ses.rollback()
+    if not ses:
+        raise exc.DataAccessException(
+            "Nothing to roll back. Database transaction has not been started."
+        )
+
+    try:
+        ses.rollback()
+    finally:
+        release_locks_if_sqlite(ses)
 
 
 def end_tx():
@@ -144,15 +161,22 @@ def end_tx():
         It rolls back all uncommitted changes and closes database session.
     """
     ses = _get_thread_local_session()
+
     if not ses:
-        raise exc.DataAccessException("Database transaction has not been"
-                                      " started.")
+        raise exc.DataAccessException(
+            "Database transaction has not been started."
+        )
 
     if ses.dirty:
-        ses.rollback()
+        rollback_tx()
 
     ses.close()
     _set_thread_local_session(None)
+
+
+@session_aware()
+def get_driver_name(session=None):
+    return session.bind.url.drivername
 
 
 @session_aware()

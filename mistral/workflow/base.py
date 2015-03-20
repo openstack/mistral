@@ -58,6 +58,15 @@ class WorkflowController(object):
         return self._find_next_commands()
 
     @abc.abstractmethod
+    def all_errors_handled(self):
+        """Determines if all errors (if any) are handled.
+
+        :return: True if either there aren't errors at all or all
+            errors are considered handled.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def evaluate_workflow_final_context(self):
         """Evaluates final workflow context assuming that workflow has finished.
 

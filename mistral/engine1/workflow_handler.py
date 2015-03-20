@@ -34,22 +34,11 @@ def succeed_workflow(wf_ex, final_context):
         _schedule_send_result_to_parent_workflow(wf_ex)
 
 
-def fail_workflow(wf_ex, task_ex, action_ex):
+def fail_workflow(wf_ex, state_info):
     if states.is_paused_or_completed(wf_ex.state):
         return
 
-    # TODO(rakhmerov): How do we pass task result correctly?.
-    if action_ex:
-        msg = str(action_ex.output.get('result', "Unknown"))
-    else:
-        msg = "Unknown"
-
-    set_execution_state(
-        wf_ex,
-        states.ERROR,
-        "Failure caused by error in task '%s': %s"
-        % (task_ex.name, msg)
-    )
+    set_execution_state(wf_ex, states.ERROR, state_info)
 
     if wf_ex.task_execution_id:
         _schedule_send_result_to_parent_workflow(wf_ex)

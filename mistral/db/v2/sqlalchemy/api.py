@@ -18,10 +18,12 @@ import sys
 
 from oslo.config import cfg
 from oslo.db import exception as db_exc
+from oslo.utils import timeutils
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
+from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -83,6 +85,19 @@ def transaction():
         commit_tx()
     finally:
         end_tx()
+
+
+@b.session_aware()
+def acquire_lock(model, id, session=None):
+    if b.get_driver_name() != 'sqlite':
+        query = _secure_query(model).filter("id = '%s'" % id)
+
+        query.update(
+            {'updated_at': timeutils.utcnow()},
+            synchronize_session=False
+        )
+    else:
+        sqlite_lock.acquire_lock(id, session)
 
 
 def _secure_query(model):

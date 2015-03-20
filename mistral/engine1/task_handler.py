@@ -144,6 +144,10 @@ def _create_task_execution(wf_ex, task_spec, ctx):
         'project_id': wf_ex.project_id
     })
 
+    # Add to collection explicitly so that it's in a proper
+    # state within the current session.
+    wf_ex.task_executions.append(task_ex)
+
     # TODO(rakhmerov): May be it shouldn't be here. Need to think.
     if task_spec.get_with_items():
         with_items.prepare_runtime_context(task_ex, task_spec)
@@ -152,15 +156,21 @@ def _create_task_execution(wf_ex, task_spec, ctx):
 
 
 def _create_action_execution(task_ex, action_def, action_input):
-    return db_api.create_action_execution({
+    action_ex = db_api.create_action_execution({
         'name': action_def.name,
         'task_execution_id': task_ex.id,
         'workflow_name': task_ex.workflow_name,
         'spec': action_def.spec,
         'project_id': task_ex.project_id,
         'state': states.RUNNING,
-        'input': action_input
-    })
+        'input': action_input}
+    )
+
+    # Add to collection explicitly so that it's in a proper
+    # state within the current session.
+    task_ex.executions.append(action_ex)
+
+    return action_ex
 
 
 def _before_task_start(task_ex, task_spec, wf_spec):

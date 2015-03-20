@@ -17,6 +17,7 @@ import copy
 import traceback
 
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine1 import base
 from mistral.engine1 import task_handler
 from mistral.engine1 import utils
@@ -88,9 +89,13 @@ class DefaultEngine(base.Engine):
     def on_task_state_change(self, state, task_ex_id):
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex_id)
-            wf_ex = db_api.get_workflow_execution(
-                task_ex.workflow_execution_id
-            )
+
+            wf_ex_id = task_ex.workflow_execution_id
+
+            # Must be before loading the object itself (see method doc).
+            self._lock_workflow_execution(wf_ex_id)
+
+            wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
             wf_trace.info(
                 task_ex,
@@ -120,28 +125,47 @@ class DefaultEngine(base.Engine):
 
             task_ex.processed = True
 
-            if not cmds:
-                if task_ex.state == states.SUCCESS:
-                    if not wf_utils.find_running_tasks(wf_ex):
-                        wf_handler.succeed_workflow(
-                            wf_ex,
-                            wf_ctrl.evaluate_workflow_final_context()
-                        )
-                else:
-                    wf_handler.fail_workflow(wf_ex, task_ex, action_ex)
-            else:
-                self._dispatch_workflow_commands(wf_ex, cmds)
+            self._dispatch_workflow_commands(wf_ex, cmds)
+
+            self._check_workflow_completion(wf_ex, action_ex, wf_ctrl)
+
+    @staticmethod
+    def _check_workflow_completion(wf_ex, action_ex, wf_ctrl):
+        if states.is_paused_or_completed(wf_ex.state):
+            return
+
+        if wf_utils.find_incomplete_tasks(wf_ex):
+            return
+
+        if wf_ctrl.all_errors_handled():
+            wf_handler.succeed_workflow(
+                wf_ex,
+                wf_ctrl.evaluate_workflow_final_context()
+            )
+        else:
+            result_str = str(action_ex.output.get('result', "Unknown"))
+
+            state_info = (
+                "Failure caused by error in task '%s': %s" %
+                (action_ex.task_execution.name, result_str)
+            )
+
+            wf_handler.fail_workflow(wf_ex, state_info)
 
     @u.log_exec(LOG)
     def on_action_complete(self, action_ex_id, result):
-        wf_exec_id = None
+        wf_ex_id = None
 
         try:
             with db_api.transaction():
                 action_ex = db_api.get_action_execution(action_ex_id)
 
+                wf_ex_id = action_ex.task_execution.workflow_execution_id
+
+                # Must be before loading the object itself (see method doc).
+                self._lock_workflow_execution(wf_ex_id)
+
                 wf_ex = action_ex.task_execution.workflow_execution
-                wf_exec_id = wf_ex.id
 
                 task_ex = task_handler.on_action_complete(action_ex, result)
 
@@ -160,12 +184,15 @@ class DefaultEngine(base.Engine):
                 "Failed to handle action execution result [id=%s]: %s\n%s",
                 action_ex_id, e, traceback.format_exc()
             )
-            self._fail_workflow(wf_exec_id, e)
+            self._fail_workflow(wf_ex_id, e)
             raise e
 
     @u.log_exec(LOG)
     def pause_workflow(self, execution_id):
         with db_api.transaction():
+            # Must be before loading the object itself (see method doc).
+            self._lock_workflow_execution(execution_id)
+
             wf_ex = db_api.get_workflow_execution(execution_id)
 
             wf_handler.set_execution_state(wf_ex, states.PAUSED)
@@ -176,6 +203,9 @@ class DefaultEngine(base.Engine):
     def resume_workflow(self, execution_id):
         try:
             with db_api.transaction():
+                # Must be before loading the object itself (see method doc).
+                self._lock_workflow_execution(execution_id)
+
                 wf_ex = db_api.get_workflow_execution(execution_id)
 
                 if wf_ex.state != states.PAUSED:
@@ -204,14 +234,14 @@ class DefaultEngine(base.Engine):
                     if states.is_completed(t_ex.state) and not t_ex.processed:
                         t_ex.processed = True
 
+                self._dispatch_workflow_commands(wf_ex, cmds)
+
                 if not cmds:
-                    if not wf_utils.find_running_tasks(wf_ex):
+                    if not wf_utils.find_incomplete_tasks(wf_ex):
                         wf_handler.succeed_workflow(
                             wf_ex,
                             wf_ctrl.evaluate_workflow_final_context()
                         )
-                else:
-                    self._dispatch_workflow_commands(wf_ex, cmds)
 
                 return wf_ex
         except Exception as e:
@@ -225,6 +255,9 @@ class DefaultEngine(base.Engine):
     @u.log_exec(LOG)
     def stop_workflow(self, execution_id, state, message=None):
         with db_api.transaction():
+            # Must be before loading the object itself (see method doc).
+            self._lock_workflow_execution(execution_id)
+
             wf_ex = db_api.get_execution(execution_id)
 
             wf_handler.set_execution_state(wf_ex, state, message)
@@ -280,7 +313,6 @@ class DefaultEngine(base.Engine):
                 action_ex = db_api.get_action_execution(action_ex_id)
 
                 task_handler.on_action_complete(
-                    wf_ex,
                     action_ex,
                     wf_utils.Result(error=err_msg)
                 )
@@ -321,3 +353,12 @@ class DefaultEngine(base.Engine):
         data_flow.add_environment_to_context(wf_ex, wf_ex.context)
 
         return wf_ex
+
+    @staticmethod
+    def _lock_workflow_execution(wf_exec_id):
+        # NOTE: Workflow execution object must be locked before
+        # loading the object itself into the session (either with
+        # 'get_XXX' or 'load_XXX' methods). Otherwise, there can be
+        # multiple parallel transactions that see the same state
+        # and hence the rest of the method logic would not be atomic.
+        db_api.acquire_lock(db_models.WorkflowExecution, wf_exec_id)

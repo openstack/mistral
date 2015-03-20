@@ -87,6 +87,9 @@ class ReverseWorkflowController(base.WorkflowController):
             )
         )
 
+    def all_errors_handled(self):
+        return len(wf_utils.find_error_tasks(self.wf_ex)) == 0
+
     def _find_task_specs_with_satisfied_dependencies(self):
         """Given a target task name finds tasks with no dependencies.
 
