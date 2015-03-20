@@ -57,9 +57,10 @@ def get_task_execution_result(task_ex):
         if hasattr(ex, 'output') and ex.accepted
     ]
 
-    assert len(results) > 0
-
-    return results if len(results) > 1 else results[0]
+    if results:
+        return results if len(results) > 1 else results[0]
+    else:
+        return []
 
 
 def publish_variables(task_ex, task_spec):

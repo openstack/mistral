@@ -23,12 +23,10 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
-from mistral.engine1 import rpc
-from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
+from mistral.workflow import data_flow
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -60,8 +58,7 @@ class Task(resource.Resource):
         for key, val in d.items():
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit.
-                if val is not None and (
-                        key == 'input' or key == 'result'):
+                if val is not None and key == 'input':
                     val = json.dumps(val)
                 setattr(e, key, val)
 
@@ -95,6 +92,25 @@ class Tasks(resource.Resource):
         return cls(tasks=[Task.sample()])
 
 
+def _get_task_resources_with_results(wf_ex_id=None):
+    filters = {}
+
+    if wf_ex_id:
+        filters['workflow_execution_id'] = wf_ex_id
+
+    tasks = []
+    task_execs = db_api.get_task_executions(**filters)
+    for task_ex in task_execs:
+        task = Task.from_dict(task_ex.to_dict())
+        task.result = json.dumps(
+            data_flow.get_task_execution_result(task_ex)
+        )
+
+        tasks += [task]
+
+    return Tasks(tasks=tasks)
+
+
 class TasksController(rest.RestController):
     action_executions = action_execution.TasksActionExecutionController()
 
@@ -104,46 +120,19 @@ class TasksController(rest.RestController):
         """Return the specified task."""
         LOG.info("Fetch task [id=%s]" % id)
 
-        db_model = db_api.get_task_execution(id)
+        task_ex = db_api.get_task_execution(id)
+        task = Task.from_dict(task_ex.to_dict())
 
-        return Task.from_dict(db_model.to_dict())
+        task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
 
-    @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Task, wtypes.text, body=Task)
-    def put(self, id, task):
-        """Update the specified task."""
-        LOG.info("Update task [id=%s, task=%s]" % (id, task))
-
-        # Client must provide a valid json. It shouldn't  necessarily be an
-        # object but it should be json complaint so strings have to be escaped.
-        result = None
-
-        if task.result:
-            try:
-                result = json.loads(task.result)
-            except (ValueError, TypeError) as e:
-                raise exc.InvalidResultException(str(e))
-
-        if task.state == states.ERROR:
-            task_result = wf_utils.Result(error=result)
-        else:
-            task_result = wf_utils.Result(data=result)
-
-        engine = rpc.get_engine_client()
-
-        values = engine.on_task_result(id, task_result)
-
-        return Task.from_dict(values)
+        return task
 
     @wsme_pecan.wsexpose(Tasks)
     def get_all(self):
         """Return all tasks within the execution."""
         LOG.info("Fetch tasks")
 
-        tasks = [Task.from_dict(db_model.to_dict())
-                 for db_model in db_api.get_task_executions()]
-
-        return Tasks(tasks=tasks)
+        return _get_task_resources_with_results()
 
 
 class ExecutionTasksController(rest.RestController):
@@ -152,12 +141,4 @@ class ExecutionTasksController(rest.RestController):
         """Return all tasks within the workflow execution."""
         LOG.info("Fetch tasks")
 
-        task_execs = db_api.get_task_executions(
-            workflow_execution_id=workflow_execution_id
-        )
-
-        return Tasks(
-            tasks=[
-                Task.from_dict(db_model.to_dict()) for db_model in task_execs
-            ]
-        )
+        return _get_task_resources_with_results(workflow_execution_id)
