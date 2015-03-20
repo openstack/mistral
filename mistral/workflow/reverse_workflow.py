@@ -38,6 +38,8 @@ class ReverseWorkflowController(base.WorkflowController):
     when a dependency of 'A' is resolved, will run task 'A'.
     """
 
+    __workflow_type__ = "reverse"
+
     def _find_next_commands(self):
         """Finds all tasks with resolved dependencies and return them
          in the form of workflow commands.

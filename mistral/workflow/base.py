@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2015 - Huawei Technologies Co. Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@
 import abc
 import copy
 
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import utils as u
 from mistral.workbook import parser as spec_parser
@@ -108,3 +110,26 @@ class WorkflowController(object):
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)
+
+    @staticmethod
+    def _get_class(wf_type):
+        """Gets a workflow controller class by given workflow type.
+
+        :param wf_type: Workflow type.
+        :returns: Workflow controller class.
+        """
+        for wf_ctrl_cls in u.iter_subclasses(WorkflowController):
+            if wf_type == wf_ctrl_cls.__workflow_type__:
+                return wf_ctrl_cls
+
+        msg = 'Failed to find a workflow controller [type=%s]' % wf_type
+        raise exc.NotFoundException(msg)
+
+    @staticmethod
+    def get_controller(wf_ex, wf_spec=None):
+        if not wf_spec:
+            wf_spec = spec_parser.get_workflow_spec(wf_ex['spec'])
+
+        ctrl_cls = WorkflowController._get_class(wf_spec.get_type())
+
+        return ctrl_cls(wf_ex)

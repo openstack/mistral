@@ -26,11 +26,11 @@ from mistral.openstack.common import log as logging
 from mistral import utils as u
 from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import base as wf_base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
-from mistral.workflow import workflow_controller_factory as wfc_factory
 
 
 LOG = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class DefaultEngine(base.Engine):
 
                 wf_trace.info(wf_ex, "Starting workflow: '%s'" % wf_name)
 
-                wf_ctrl = wfc_factory.create_workflow_controller(
+                wf_ctrl = wf_base.WorkflowController.get_controller(
                     wf_ex,
                     wf_spec
                 )
@@ -119,7 +119,7 @@ class DefaultEngine(base.Engine):
             if task_ex.state == states.DELAYED:
                 return
 
-            wf_ctrl = wfc_factory.create_workflow_controller(wf_ex)
+            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
 
             # Calculate commands to process next.
             cmds = wf_ctrl.continue_workflow()
@@ -214,7 +214,7 @@ class DefaultEngine(base.Engine):
 
                 wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
-                wf_ctrl = wfc_factory.create_workflow_controller(wf_ex)
+                wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
 
                 # Calculate commands to process next.
                 cmds = wf_ctrl.continue_workflow()

@@ -38,6 +38,8 @@ class DirectWorkflowController(base.WorkflowController):
     'A'->'B' and 'A'->'C' evaluate to true.
     """
 
+    __workflow_type__ = "direct"
+
     def _get_upstream_task_executions(self, task_spec):
         return filter(
             lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
