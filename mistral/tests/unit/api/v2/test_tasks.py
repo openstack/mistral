@@ -16,17 +16,19 @@
 
 import copy
 import datetime
+import json
 import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine1 import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral.workflow import data_flow
 from mistral.workflow import states
 
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
+RESULT = {"some": "result"}
 task_ex = models.TaskExecution(
     id='123',
     name='task',
@@ -49,7 +51,8 @@ TASK = {
     'state': 'RUNNING',
     'workflow_execution_id': '123',
     'created_at': '1970-01-01 00:00:00',
-    'updated_at': '1970-01-01 00:00:00'
+    'updated_at': '1970-01-01 00:00:00',
+    'result': json.dumps(RESULT)
 }
 
 UPDATED_task_ex = copy.copy(task_ex)
@@ -63,7 +66,6 @@ ERROR_TASK = copy.copy(TASK)
 ERROR_TASK['state'] = 'ERROR'
 
 BROKEN_TASK = copy.copy(TASK)
-BROKEN_TASK['result'] = 'string not escaped'
 
 MOCK_TASK = mock.MagicMock(return_value=task_ex)
 MOCK_TASKS = mock.MagicMock(return_value=[task_ex])
@@ -71,12 +73,14 @@ MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 
 
+@mock.patch.object(
+    data_flow,
+    'get_task_execution_result', mock.Mock(return_value=RESULT)
+)
 class TestTasksController(base.FunctionalTest):
     @mock.patch.object(db_api, 'get_task_execution', MOCK_TASK)
     def test_get(self):
         resp = self.app.get('/v2/tasks/123')
-
-        self.maxDiff = None
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(TASK, resp.json)
@@ -86,13 +90,6 @@ class TestTasksController(base.FunctionalTest):
         resp = self.app.get('/v2/tasks/123', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
-
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
-    def test_put_bad_result(self, f):
-        resp = self.app.put_json('/v2/tasks/123', BROKEN_TASK,
-                                 expect_errors=True)
-
-        self.assertEqual(resp.status_int, 400)
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_TASKS)
     def test_get_all(self):
