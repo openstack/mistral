@@ -29,6 +29,7 @@ from mistral.workflow import states
 # TODO(everyone): later we need additional tests verifying all the errors etc.
 
 RESULT = {"some": "result"}
+PUBLISHED = {"var": "val"}
 task_ex = models.TaskExecution(
     id='123',
     name='task',
@@ -41,7 +42,8 @@ task_ex = models.TaskExecution(
     runtime_context={},
     workflow_execution_id='123',
     created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
+    updated_at=datetime.datetime(1970, 1, 1),
+    published=PUBLISHED
 )
 
 TASK = {
@@ -52,7 +54,8 @@ TASK = {
     'workflow_execution_id': '123',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'result': json.dumps(RESULT)
+    'result': json.dumps(RESULT),
+    'published': json.dumps(PUBLISHED)
 }
 
 UPDATED_task_ex = copy.copy(task_ex)

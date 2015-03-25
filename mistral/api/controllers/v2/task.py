@@ -46,7 +46,7 @@ class Task(resource.Resource):
     IDLE, RUNNING, SUCCESS, ERROR, DELAYED"
 
     result = wtypes.text
-    input = wtypes.text
+    published = wtypes.text
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -58,7 +58,7 @@ class Task(resource.Resource):
         for key, val in d.items():
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit.
-                if val is not None and key == 'input':
+                if val is not None and key == 'published':
                     val = json.dumps(val)
                 setattr(e, key, val)
 
