@@ -1,4 +1,5 @@
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2015 - Mirantis, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,20 +25,20 @@ WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 def info(obj, msg, *args, **kvargs):
     """Logs workflow trace record for Execution or Task.
 
-    :param obj: If type is Task or Execution, appends execution_id and task_id
-        to the log message.
+    :param obj: If type is TaskExecution or WorkflowExecution,
+        appends execution_id and task_id to the log message.
 
     The rest of parameters follow logger.info(...)
     """
-    exec_id = ''
-    task_id = ''
+    debug_info = ''
 
     if type(obj) is models.TaskExecution:
         exec_id = obj.workflow_execution_id
         task_id = obj.id
+        debug_info = '(execution_id=%s task_id=%s)' % (exec_id, task_id)
     elif type(obj) is models.WorkflowExecution:
-        exec_id = obj.id
+        debug_info = '(execution_id=%s)' % obj.id
 
-    msg = '%s (execution_id=%s task_id=%s)' % (msg, exec_id, task_id)
+    msg = '%s %s' % (msg, debug_info)
 
     WF_TRACE.info(msg, *args, **kvargs)
