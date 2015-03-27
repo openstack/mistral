@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -53,6 +52,20 @@ UPDATED_WORKBOOK_DB['definition'] = UPDATED_WORKBOOK_DEF
 UPDATED_WORKBOOK = copy.copy(WORKBOOK)
 UPDATED_WORKBOOK['definition'] = UPDATED_WORKBOOK_DEF
 
+INVALID_WB_DEFINITION = """
+---
+version: '2.0'
+name: 'book'
+
+workflows:
+  flow:
+    type: direct
+    tasks:
+      task1:
+        action: std.echo output="Hi"
+        workflow: wf1
+"""
+
 MOCK_WORKBOOK = mock.MagicMock(return_value=WORKBOOK_DB)
 MOCK_WORKBOOKS = mock.MagicMock(return_value=[WORKBOOK_DB])
 MOCK_UPDATED_WORKBOOK = mock.MagicMock(return_value=UPDATED_WORKBOOK_DB)
@@ -98,6 +111,18 @@ class TestWorkbooksController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
+    def test_put_invalid(self):
+        resp = self.app.put(
+            '/v2/workbooks',
+            INVALID_WB_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Task properties 'action' and 'workflow' "
+                      "can't be specified both", resp.body)
+
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_WORKBOOK)
     def test_post(self):
         resp = self.app.post(
@@ -119,6 +144,18 @@ class TestWorkbooksController(base.FunctionalTest):
         )
 
         self.assertEqual(resp.status_int, 409)
+
+    def test_post_invalid(self):
+        resp = self.app.post(
+            '/v2/workbooks',
+            INVALID_WB_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Task properties 'action' and 'workflow' "
+                      "can't be specified both", resp.body)
 
     @mock.patch.object(db_api, "delete_workbook", MOCK_DELETE)
     def test_delete(self):

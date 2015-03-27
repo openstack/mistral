@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,26 +13,30 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook import base
+from mistral.workbook import types
+from mistral.workbook.v2 import base
 from mistral.workbook.v2 import task_policies
 
 
 class TaskDefaultsSpec(base.BaseSpec):
     # See http://json-schema.org
+    _task_policies_schema = task_policies.TaskPoliciesSpec.get_schema(
+        includes=None)
+
     _schema = {
         "type": "object",
         "properties": {
-            "version": {"type": "string"},
-            "policies": {"type": ["object", "null"]},
-            "on-complete": {"type": ["array", "null"]},
-            "on-success": {"type": ["array", "null"]},
-            "on-error": {"type": ["array", "null"]},
+            "policies": _task_policies_schema,
+            "on-complete": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
+            "on-success": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
+            "on-error": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
         },
-        "required": ["version"],
         "additionalProperties": False
     }
 
-    _version = '2.0'
+    @classmethod
+    def get_schema(cls, includes=['definitions']):
+        return super(TaskDefaultsSpec, cls).get_schema(includes)
 
     def __init__(self, data):
         super(TaskDefaultsSpec, self).__init__(data)

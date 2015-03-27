@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,58 +13,57 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import utils
-from mistral.workbook import base
+from mistral.workbook import types
+from mistral.workbook.v2 import base
 from mistral.workbook.v2 import retry_policy
 
 
 class TaskPoliciesSpec(base.BaseSpec):
     # See http://json-schema.org
-    _policies_schema = {
+    _retry_policy_schema = retry_policy.RetrySpec.get_schema(
+        includes=None)
+
+    _schema = {
         "type": "object",
         "properties": {
-            "retry": {"type": ["object", "null"]},
+            "retry": _retry_policy_schema,
             "wait-before": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
-                    {"$ref": "#/definitions/positiveInteger"}
+                    types.YAQL,
+                    types.POSITIVE_INTEGER
                 ]
             },
             "wait-after": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
-                    {"$ref": "#/definitions/positiveInteger"}
+                    types.YAQL,
+                    types.POSITIVE_INTEGER
                 ]
             },
             "timeout": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
-                    {"$ref": "#/definitions/positiveInteger"}
+                    types.YAQL,
+                    types.POSITIVE_INTEGER
                 ]
             },
             "pause-before": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
+                    types.YAQL,
                     {"type": "boolean"}
                 ]
             },
             "concurrency": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
-                    {"$ref": "#/definitions/positiveInteger"}
+                    types.YAQL,
+                    types.POSITIVE_INTEGER
                 ]
             },
         },
-        "additionalProperties": False,
-        "definitions": {
-            "positiveInteger": {
-                "type": "integer",
-                "minimum": 0
-            }
-        },
+        "additionalProperties": False
     }
 
-    _schema = utils.merge_dicts(_policies_schema, base.BaseSpec._yaql_schema)
+    @classmethod
+    def get_schema(cls, includes=['definitions']):
+        return super(TaskPoliciesSpec, cls).get_schema(includes)
 
     def __init__(self, data):
         super(TaskPoliciesSpec, self).__init__(data)

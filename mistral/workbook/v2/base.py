@@ -1,4 +1,3 @@
-# Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,28 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook.v2 import base
+from mistral.workbook import base
+from mistral.workbook import types
 
 
-# TODO(rakhmerov): In progress.
+class BaseSpec(base.BaseSpec):
+    _version = "2.0"
+
+    _meta_schema = {
+        "type": "object",
+        "properties": {
+            "name": types.NONEMPTY_STRING,
+            "version": types.VERSION,
+            "description": types.NONEMPTY_STRING,
+            "tags": types.UNIQUE_STRING_LIST
+        },
+        "required": ["name", "version"]
+    }
 
 
-class TriggerSpec(base.BaseSpec):
-
-    def __init__(self, data):
-        super(TriggerSpec, self).__init__(data)
-        # TODO(rakhmerov): Implement.
+class BaseSpecList(base.BaseSpecList):
+    _version = "2.0"
 
 
-class TriggerSpecList(base.BaseSpecList):
-    item_class = TriggerSpec
+class BaseListSpec(base.BaseListSpec):
+    _version = "2.0"

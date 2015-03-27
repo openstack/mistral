@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,234 +13,22 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import exceptions
-from mistral.tests import base
-from mistral.workbook import parser as spec_parser
-from mistral.workbook.v2 import tasks
+import copy
 
-VALID_WB = """
----
-version: '2.0'
+import yaml
 
-name: my_workbook
-description: This is a test workbook
-tags: [test, v2]
-
-actions:
-  action1:
-    description: This is a test ad-hoc action
-    tags: [test, v2]
-    base: std.echo
-    base-input:
-      output: Hello <% $.name %>!
-    output: <% $ %>
-
-  action2:
-    description: This is a test ad-hoc action with base params
-    tags: [test, v2]
-    base: std.echo output="Echo output"
-    output: <% $ %>
-
-workflows:
-  wf1:
-    description: This is a test workflow
-    tags: [test, v2]
-    type: reverse
-
-    input:
-      - name
-
-    tasks:
-      task1:
-        description: This is a test task
-        action: action1 name=<% $.name %>
-        policies:
-          wait-before: 2
-          wait-after: 5
-          retry:
-            count: 10
-            delay: 30
-            break-on: <% $.my_val = 10 %>
-          concurrency: 3
-
-      task2:
-        requires: [task1]
-        action: std.echo output="Thanks <% $.name %>!"
-
-  wf2:
-    tags: [test, v2]
-    type: direct
-
-    task-defaults:
-      policies:
-        retry:
-          count: 10
-          delay: 30
-          break-on: <% $.my_val = 10 %>
-      on-error:
-        - fail: <% $.my_val = 0 %>
-      on-success:
-        - pause
-      on-complete:
-        - succeed
-
-    tasks:
-      task3:
-        workflow: wf1 name="John Doe" age=32 param1=null param2=false
-        on-error:
-          - task4: <% $.my_val = 1 %>
-        on-success:
-          - task5: <% $.my_val = 2 %>
-        on-complete:
-          - task6: <% $.my_val = 3 %>
-
-      task4:
-        action: std.echo output="Task 4 echo"
-
-      task5:
-        action: std.echo output="Task 5 echo"
-
-      task6:
-        action: std.echo output="Task 6 echo"
-
-      task7:
-        with-items: vm_info in <% $.vms %>
-        workflow: wf2 is_true=true object_list=[1, null, "str"] is_string="50"
-        on-complete:
-          - task9
-          - task10
-
-      task8:
-        with-items:
-         - itemX in <% $.arrayI %>
-         - itemY in <% $.arrayJ %>
-        workflow: wf2 expr_list=["<% $.v %>", "<% $.k %>"] expr=<% $.value %>
-        target: nova
-        on-complete:
-          - task9
-          - task10
-
-      task9:
-        join: all
-        action: std.echo output="Task 9 echo"
-
-      task10:
-        join: 2
-        action: std.echo output="Task 10 echo"
-
-      task11:
-        join: one
-        action: std.echo output="Task 11 echo"
-
-      task12:
-        action: std.http url="http://site.com?q=<% $.query %>" params=""
-
-      task13:
-        description: No-op task
-"""
+from mistral import exceptions as exc
+from mistral.openstack.common import log as logging
+from mistral.tests.unit.workbook.v2 import base
 
 
-INVALID_WB = """
-version: 2.0
-
-name: wb
-
-workflows:
-  wf1:
-    type: direct
-
-    tasks:
-      task1:
-        action: std.echo output="Hey!"
-        with-items:
-          - vms 3
-
-"""
+LOG = logging.getLogger(__name__)
 
 
-INVALID_WF = """
---
-version: 2.0
-
-name: wb
-
-workflows:
-  wf1:
-    type: direct
-
-    tasks:
-      task1:
-        action: std.echo output="Hey!"
-
-"""
-
-DIRECT_WF = """
----
-version: '2.0'
-wf_direct:
-  type: direct
-  tasks:
-    task1:
-      action: std.noop
-      on-complete:
-        - task2
-    task2:
-      action: std.noop
-"""
-
-BAD_DIRECT_WF = """
----
-version: '2.0'
-wf_direct_bad:
-  type: direct
-  tasks:
-    task1:
-      action: std.noop
-    task2:
-      action: std.noop
-      requires:
-        - task1
-"""
-
-REVERSE_WF = """
----
-version: '2.0'
-wf_reverse:
-  type: reverse
-  tasks:
-    task1:
-      action: std.noop
-    task2:
-      action: std.noop
-      requires:
-        - task1
-"""
-
-BAD_REVERSE_WF = """
----
-version: '2.0'
-wf_reverse_bad:
-  type: reverse
-  tasks:
-    task1:
-      action: std.noop
-      on-complete:
-        - task2
-    task2:
-      action: std.noop
-"""
-
-
-# TODO(rakhmerov): Add more tests when v2 spec is complete.
-# TODO(rakhmerov): Add negative tests.
-
-
-class DSLv2ModelTest(base.BaseTest):
-    def setUp(self):
-        super(DSLv2ModelTest, self).setUp()
+class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
 
     def test_build_valid_workbook_spec(self):
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
+        wb_spec = self._parse_dsl_spec(dsl_file='my_workbook.yaml')
 
         # Workbook.
         act_specs = wb_spec.get_actions()
@@ -436,7 +223,7 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('No-op task', task13_spec.get_description())
 
     def test_adhoc_action_with_base_in_one_string(self):
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
+        wb_spec = self._parse_dsl_spec(dsl_file='my_workbook.yaml')
 
         act_specs = wb_spec.get_actions()
         action_spec = act_specs.get("action2")
@@ -445,24 +232,8 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual({'output': 'Echo output'},
                          action_spec.get_base_input())
 
-    def test_invalid_with_items_spec(self):
-        exc = self.assertRaises(
-            exceptions.InvalidModelException,
-            spec_parser.get_workbook_spec_from_yaml,
-            INVALID_WB
-        )
-        self.assertIn("Wrong format of 'with-items'", str(exc))
-
-    def test_invalid_wf_spec(self):
-        exc = self.assertRaises(
-            exceptions.DSLParsingException,
-            spec_parser.get_workflow_spec_from_yaml,
-            INVALID_WF
-        )
-        self.assertIn("Definition could not be parsed", str(exc))
-
-    def test_to_dict(self):
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(VALID_WB)
+    def test_spec_to_dict(self):
+        wb_spec = self._parse_dsl_spec(dsl_file='my_workbook.yaml')
 
         d = wb_spec.to_dict()
 
@@ -470,38 +241,164 @@ class DSLv2ModelTest(base.BaseTest):
         self.assertEqual('2.0', d['workflows']['version'])
         self.assertEqual('2.0', d['workflows']['wf1']['version'])
 
-    def test_direct_workflow_task(self):
-        wfs_spec = spec_parser.get_workflow_list_spec_from_yaml(DIRECT_WF)
+    def test_version_required(self):
+        dsl_dict = copy.deepcopy(self._dsl_blank)
+        dsl_dict.pop('version', None)
 
-        self.assertEqual(1, len(wfs_spec.get_workflows()))
-        self.assertEqual('wf_direct', wfs_spec.get_workflows()[0].get_name())
-        self.assertEqual('direct', wfs_spec.get_workflows()[0].get_type())
-        self.assertIsInstance(wfs_spec.get_workflows()[0].get_tasks(),
-                              tasks.DirectWfTaskSpecList)
+        # TODO(m4dcoder): Check required property error when v1 is deprecated.
+        # The version property is not required for v1 workbook whereas it is
+        # a required property in v2. For backward compatibility, if no version
+        # is not provided, the workbook spec parser defaults to v1 and the
+        # required property exception is not triggered. However, a different
+        # spec validation error returns due to drastically different schema
+        # between workbook versions.
+        self.assertRaises(exc.DSLParsingException,
+                          self._spec_parser,
+                          yaml.safe_dump(dsl_dict))
 
-    def test_direct_workflow_invalid_task(self):
-        exception = self.assertRaises(
-            exceptions.InvalidModelException,
-            spec_parser.get_workflow_list_spec_from_yaml,
-            BAD_DIRECT_WF
-        )
+    def test_version(self):
+        tests = [
+            ({'version': None}, True),
+            ({'version': ''}, True),
+            ({'version': '1.0'}, True),
+            ({'version': '2.0'}, False),
+            ({'version': 2.0}, False),
+            ({'version': 2}, False)
+        ]
 
-        self.assertIn("Invalid DSL", exception.message)
+        for version, expect_error in tests:
+            self._parse_dsl_spec(changes=version,
+                                 expect_error=expect_error)
 
-    def test_reverse_workflow_task(self):
-        wfs_spec = spec_parser.get_workflow_list_spec_from_yaml(REVERSE_WF)
+    def test_name_required(self):
+        dsl_dict = copy.deepcopy(self._dsl_blank)
+        dsl_dict.pop('name', None)
 
-        self.assertEqual(1, len(wfs_spec.get_workflows()))
-        self.assertEqual('wf_reverse', wfs_spec.get_workflows()[0].get_name())
-        self.assertEqual('reverse', wfs_spec.get_workflows()[0].get_type())
-        self.assertIsInstance(wfs_spec.get_workflows()[0].get_tasks(),
-                              tasks.ReverseWfTaskSpecList)
+        exception = self.assertRaises(exc.DSLParsingException,
+                                      self._spec_parser,
+                                      yaml.safe_dump(dsl_dict))
 
-    def test_reverse_workflow_invalid_task(self):
-        exception = self.assertRaises(
-            exceptions.InvalidModelException,
-            spec_parser.get_workflow_list_spec_from_yaml,
-            BAD_REVERSE_WF
-        )
+        self.assertIn("'name' is a required property", exception.message)
 
-        self.assertIn("Invalid DSL", exception.message)
+    def test_name(self):
+        tests = [
+            ({'name': ''}, True),
+            ({'name': None}, True),
+            ({'name': 12345}, True),
+            ({'name': 'foobar'}, False)
+        ]
+
+        for name, expect_error in tests:
+            self._parse_dsl_spec(changes=name,
+                                 expect_error=expect_error)
+
+    def test_description(self):
+        tests = [
+            ({'description': ''}, True),
+            ({'description': None}, True),
+            ({'description': 12345}, True),
+            ({'description': 'This is a test workflow.'}, False)
+        ]
+
+        for description, expect_error in tests:
+            self._parse_dsl_spec(changes=description,
+                                 expect_error=expect_error)
+
+    def test_tags(self):
+        tests = [
+            ({'tags': ''}, True),
+            ({'tags': ['']}, True),
+            ({'tags': None}, True),
+            ({'tags': 12345}, True),
+            ({'tags': ['foo', 'bar']}, False),
+            ({'tags': ['foobar', 'foobar']}, True)
+        ]
+
+        for tags, expect_error in tests:
+            self._parse_dsl_spec(changes=tags,
+                                 expect_error=expect_error)
+
+    def test_actions(self):
+        actions = {
+            'version': '2.0',
+            'noop': {
+                'base': 'std.noop'
+            },
+            'echo': {
+                'base': 'std.echo'
+            }
+        }
+
+        tests = [
+            ({'actions': []}, True),
+            ({'actions': {}}, True),
+            ({'actions': None}, True),
+            ({'actions': {'version': None}}, True),
+            ({'actions': {'version': ''}}, True),
+            ({'actions': {'version': '1.0'}}, True),
+            ({'actions': {'version': '2.0'}}, False),
+            ({'actions': {'version': 2.0}}, False),
+            ({'actions': {'version': 2}}, False),
+            ({'actions': {'noop': actions['noop']}}, False),
+            ({'actions': {'version': '2.0', 'noop': 'std.noop'}}, True),
+            ({'actions': actions}, False)
+        ]
+
+        for adhoc_actions, expect_error in tests:
+            self._parse_dsl_spec(changes=adhoc_actions,
+                                 expect_error=expect_error)
+
+    def test_workflows(self):
+        workflows = {
+            'version': '2.0',
+            'wf1': {
+                'tasks': {
+                    'noop': {
+                        'action': 'std.noop'
+                    }
+                }
+            },
+            'wf2': {
+                'tasks': {
+                    'echo': {
+                        'action': 'std.echo output="This is a test."'
+                    }
+                }
+            }
+        }
+
+        tests = [
+            ({'workflows': []}, True),
+            ({'workflows': {}}, True),
+            ({'workflows': None}, True),
+            ({'workflows': {'version': None}}, True),
+            ({'workflows': {'version': ''}}, True),
+            ({'workflows': {'version': '1.0'}}, True),
+            ({'workflows': {'version': '2.0'}}, False),
+            ({'workflows': {'version': 2.0}}, False),
+            ({'workflows': {'version': 2}}, False),
+            ({'workflows': {'wf1': workflows['wf1']}}, False),
+            ({'workflows': {'version': '2.0', 'wf1': 'wf1'}}, True),
+            ({'workflows': workflows}, False)
+        ]
+
+        for workflows, expect_error in tests:
+            self._parse_dsl_spec(changes=workflows,
+                                 expect_error=expect_error)
+
+    def test_triggers(self):
+        tests = [
+            ({'triggers': []}, True),
+            ({'triggers': {}}, True),
+            ({'triggers': None}, True),
+            ({'triggers': {'version': None}}, True),
+            ({'triggers': {'version': ''}}, True),
+            ({'triggers': {'version': '1.0'}}, True),
+            ({'triggers': {'version': '2.0'}}, False),
+            ({'triggers': {'version': 2.0}}, False),
+            ({'triggers': {'version': 2}}, False)
+        ]
+
+        for triggers, expect_error in tests:
+            self._parse_dsl_spec(changes=triggers,
+                                 expect_error=expect_error)

@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,9 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import exceptions as exc
 from mistral import utils
-from mistral.workbook import base
+from mistral.workbook import types
+from mistral.workbook.v2 import base
 
 
 class ActionSpec(base.BaseSpec):
@@ -22,20 +23,14 @@ class ActionSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "version": {"type": "string"},
-            "name": {"type": "string"},
-            "description": {"type": "string"},
-            "tags": {"type": "array"},
-            "base": {"type": "string"},
-            "base-input": {"type": "object"},
-            "input": {"type": "array"},
-            "output": {"type": ["string", "object", "array", "null"]},
+            "base": types.NONEMPTY_STRING,
+            "base-input": types.NONEMPTY_DICT,
+            "input": types.UNIQUE_STRING_LIST,
+            "output": types.ANY_NULLABLE,
         },
-        "required": ["version", "name", "base"],
+        "required": ["base"],
         "additionalProperties": False
     }
-
-    _version = '2.0'
 
     def __init__(self, data):
         super(ActionSpec, self).__init__(data)
@@ -76,42 +71,10 @@ class ActionSpec(base.BaseSpec):
 
 class ActionSpecList(base.BaseSpecList):
     item_class = ActionSpec
-    _version = '2.0'
 
 
-class ActionListSpec(base.BaseSpec):
-    # See http://json-schema.org
-    _schema = {
-        "type": "object",
-        "properties": {
-            "version": {"type": "string"},
-        },
-        "required": ["version"],
-        "additionalProperties": True
-    }
-
-    _version = '2.0'
-
-    def __init__(self, data):
-        super(ActionListSpec, self).__init__(data)
-
-        self._actions = []
-
-        for k, v in data.iteritems():
-            if k == 'version':
-                continue
-
-            v['name'] = k
-            self._inject_version([k])
-
-            self._actions.append(ActionSpec(v))
-
-    def validate(self):
-        if len(self._data.keys()) < 2:
-            raise exc.InvalidModelException(
-                'At least one action must be in action list [data=%s]' %
-                self._data
-            )
+class ActionListSpec(base.BaseListSpec):
+    item_class = ActionSpec
 
     def get_actions(self):
-        return self._actions
+        return self.get_items()
