@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -73,6 +72,19 @@ UPDATED_WF_DB['definition'] = UPDATED_WF_DEFINITION
 UPDATED_WF = copy.copy(WF)
 UPDATED_WF['definition'] = UPDATED_WF_DEFINITION
 
+INVALID_WF_DEFINITION = """
+---
+version: '2.0'
+
+flow:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.echo output="Hi"
+      workflow: wf1
+"""
+
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
 MOCK_WFS = mock.MagicMock(return_value=[WF_DB])
 MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
@@ -124,6 +136,18 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
+    def test_put_invalid(self):
+        resp = self.app.put(
+            '/v2/workflows',
+            INVALID_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Task properties 'action' and 'workflow' "
+                      "can't be specified both", resp.body)
+
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_post(self, mock_mtd):
         mock_mtd.return_value = WF_DB
@@ -154,6 +178,18 @@ class TestWorkflowsController(base.FunctionalTest):
         )
 
         self.assertEqual(resp.status_int, 409)
+
+    def test_post_invalid(self):
+        resp = self.app.post(
+            '/v2/workflows',
+            INVALID_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Task properties 'action' and 'workflow' "
+                      "can't be specified both", resp.body)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
     def test_delete(self):

@@ -1,0 +1,117 @@
+version: '2.0'
+
+name: my_workbook
+description: This is a test workbook
+tags: [test, v2]
+
+actions:
+  action1:
+    description: This is a test ad-hoc action
+    tags: [test, v2]
+    base: std.echo
+    base-input:
+      output: Hello <% $.name %>!
+    output: <% $ %>
+
+  action2:
+    description: This is a test ad-hoc action with base params
+    tags: [test, v2]
+    base: std.echo output="Echo output"
+    output: <% $ %>
+
+workflows:
+  wf1:
+    description: This is a test workflow
+    tags: [test, v2]
+    type: reverse
+
+    input:
+      - name
+
+    tasks:
+      task1:
+        description: This is a test task
+        action: action1 name=<% $.name %>
+        policies:
+          wait-before: 2
+          wait-after: 5
+          retry:
+            count: 10
+            delay: 30
+            break-on: <% $.my_val = 10 %>
+          concurrency: 3
+
+      task2:
+        requires: [task1]
+        action: std.echo output="Thanks <% $.name %>!"
+
+  wf2:
+    tags: [test, v2]
+    type: direct
+
+    task-defaults:
+      policies:
+        retry:
+          count: 10
+          delay: 30
+          break-on: <% $.my_val = 10 %>
+      on-error:
+        - fail: <% $.my_val = 0 %>
+      on-success:
+        - pause
+      on-complete:
+        - succeed
+
+    tasks:
+      task3:
+        workflow: wf1 name="John Doe" age=32 param1=null param2=false
+        on-error:
+          - task4: <% $.my_val = 1 %>
+        on-success:
+          - task5: <% $.my_val = 2 %>
+        on-complete:
+          - task6: <% $.my_val = 3 %>
+
+      task4:
+        action: std.echo output="Task 4 echo"
+
+      task5:
+        action: std.echo output="Task 5 echo"
+
+      task6:
+        action: std.echo output="Task 6 echo"
+
+      task7:
+        with-items: vm_info in <% $.vms %>
+        workflow: wf2 is_true=true object_list=[1, null, "str"] is_string="50"
+        on-complete:
+          - task9
+          - task10
+
+      task8:
+        with-items:
+         - itemX in <% $.arrayI %>
+         - itemY in <% $.arrayJ %>
+        workflow: wf2 expr_list=["<% $.v %>", "<% $.k %>"] expr=<% $.value %>
+        target: nova
+        on-complete:
+          - task9
+          - task10
+
+      task9:
+        join: all
+        action: std.echo output="Task 9 echo"
+
+      task10:
+        join: 2
+        action: std.echo output="Task 10 echo"
+
+      task11:
+        join: one
+        action: std.echo output="Task 11 echo"
+
+      task12:
+        action: std.http url="http://site.com?q=<% $.query %>" params=""
+
+      task13:
+        description: No-op task

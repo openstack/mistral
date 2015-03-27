@@ -1,4 +1,5 @@
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
 import json
 import jsonschema
 import re
@@ -19,6 +21,8 @@ import six
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral import utils
+from mistral.workbook import types
 
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
@@ -43,19 +47,38 @@ PARAMS_PTRN = re.compile("([\w]+)=(%s)" % "|".join(ALL))
 class BaseSpec(object):
     # See http://json-schema.org
     _schema = {
-        "type": "object",
+        "type": "object"
     }
 
-    _yaql_schema = {
-        "definitions": {
-            "yaql": {
-                "type": "string",
-                "pattern": "^<%.*?%>\\s*$"
-            },
-        }
+    _meta_schema = {
+        "type": "object"
     }
+
+    _definitions = {}
 
     _version = "1.0"
+
+    @classmethod
+    def get_schema(cls, includes=['meta', 'definitions']):
+        schema = copy.deepcopy(cls._schema)
+
+        schema['properties'] = utils.merge_dicts(
+            schema.get('properties', {}),
+            cls._meta_schema.get('properties', {}),
+            overwrite=False)
+
+        if includes and 'meta' in includes:
+            schema['required'] = list(
+                set(schema.get('required', []) +
+                    cls._meta_schema.get('required', [])))
+
+        if includes and 'definitions' in includes:
+            schema['definitions'] = utils.merge_dicts(
+                schema.get('definitions', {}),
+                cls._definitions,
+                overwrite=False)
+
+        return schema
 
     def __init__(self, data):
         self._data = data
@@ -64,7 +87,7 @@ class BaseSpec(object):
 
     def validate(self):
         try:
-            jsonschema.validate(self._data, self._schema)
+            jsonschema.validate(self._data, self.get_schema())
         except jsonschema.ValidationError as e:
             raise exc.InvalidModelException("Invalid DSL: %s" % e)
 
@@ -143,6 +166,41 @@ class BaseSpec(object):
 
     def __repr__(self):
         return "%s %s" % (self.__class__.__name__, self.to_dict())
+
+
+class BaseListSpec(BaseSpec):
+    item_class = None
+
+    _meta_schema = {
+        "type": "object",
+        "properties": {
+            "version": types.VERSION
+        },
+        "required": ["version"]
+    }
+
+    def __init__(self, data):
+        super(BaseListSpec, self).__init__(data)
+
+        self.items = []
+
+        for k, v in data.iteritems():
+            if k != 'version':
+                v['name'] = k
+                self._inject_version([k])
+                self.items.append(self.item_class(v))
+
+    def validate(self):
+        super(BaseListSpec, self).validate()
+
+        if len(self._data.keys()) < 2:
+            raise exc.InvalidModelException(
+                'At least one item must be in the list [data=%s].' %
+                self._data
+            )
+
+    def get_items(self):
+        return self.items
 
 
 class BaseSpecList(object):

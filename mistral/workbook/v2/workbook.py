@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,30 +13,52 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook import base
 from mistral.workbook.v2 import actions as act
+from mistral.workbook.v2 import base
 from mistral.workbook.v2 import triggers as tr
 from mistral.workbook.v2 import workflows as wf
 
 
 class WorkbookSpec(base.BaseSpec):
     # See http://json-schema.org
+
+    _action_schema = act.ActionSpec.get_schema(includes=None)
+
+    _workflow_schema = wf.WorkflowSpec.get_schema(includes=None)
+
+    _trigger_schema = tr.TriggerSpec.get_schema(includes=None)
+
     _schema = {
         "type": "object",
         "properties": {
-            "version": {"value": "2.0"},
-            "name": {"type": "string"},
-            "description": {"type": "string"},
-            "tags": {"type": "array"},
-            "actions": {"type": "object"},
-            "workflows": {"type": "object"},
-            "triggers": {"type": "object"}
+            "version": {"enum": ["2.0", 2.0]},
+            "actions": {
+                "type": "object",
+                "minProperties": 1,
+                "patternProperties": {
+                    "version": {"enum": ["2.0", 2.0]},
+                    "^(?!version)\w+$": _action_schema
+                }
+            },
+            "workflows": {
+                "type": "object",
+                "minProperties": 1,
+                "patternProperties": {
+                    "version": {"enum": ["2.0", 2.0]},
+                    "^(?!version)\w+$": _workflow_schema
+                }
+            },
+            "triggers": {
+                "type": "object",
+                "minProperties": 1,
+                "patternProperties": {
+                    "version": {"enum": ["2.0", 2.0]},
+                    "^(?!version)\w+$": _trigger_schema
+                }
+            }
         },
-        "required": ["name"],
         "additionalProperties": False
     }
-
-    _version = '2.0'
 
     def __init__(self, data):
         super(WorkbookSpec, self).__init__(data)

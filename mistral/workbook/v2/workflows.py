@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,36 +14,50 @@
 #    limitations under the License.
 
 from mistral import exceptions as exc
-from mistral.workbook import base
+from mistral.workbook import types
+from mistral.workbook.v2 import base
 from mistral.workbook.v2 import task_defaults
 from mistral.workbook.v2 import tasks
 
 
 class WorkflowSpec(base.BaseSpec):
     # See http://json-schema.org
+
+    _direct_task_schema = tasks.DirectWorkflowTaskSpec.get_schema(
+        includes=None)
+
+    _reverse_task_schema = tasks.ReverseWorkflowTaskSpec.get_schema(
+        includes=None)
+
+    _task_defaults_schema = task_defaults.TaskDefaultsSpec.get_schema(
+        includes=None)
+
     _schema = {
         "type": "object",
         "properties": {
-            "version": {"type": "string"},
-            "name": {"type": "string"},
-            "description": {"type": "string"},
-            "tags": {"type": "array"},
-            "type": {"enum": ["reverse", "direct"]},
-            "task-defaults": {"type": "object"},
-            "input": {"type": ["array", "null"]},
-            "output": {"type": ["string", "object", "array", "null"]},
-            "tasks": {"type": "object"},
+            "type": types.WORKFLOW_TYPE,
+            "task-defaults": _task_defaults_schema,
+            "input": types.UNIQUE_STRING_LIST,
+            "output": types.NONEMPTY_DICT,
+            "tasks": {
+                "type": "object",
+                "minProperties": 1,
+                "patternProperties": {
+                    "^\w+$": {
+                        "anyOf": [
+                            _direct_task_schema,
+                            _reverse_task_schema
+                        ]
+                    }
+                }
+            },
         },
-        "required": ["version", "name", "tasks"],
+        "required": ["tasks"],
         "additionalProperties": False
     }
 
-    _version = '2.0'
-
     def __init__(self, data):
         super(WorkflowSpec, self).__init__(data)
-
-        self._inject_version(['task-defaults'])
 
         self._name = data['name']
         self._description = data.get('description')
@@ -95,51 +110,10 @@ class WorkflowSpec(base.BaseSpec):
 
 class WorkflowSpecList(base.BaseSpecList):
     item_class = WorkflowSpec
-    _version = '2.0'
 
 
-class WorkflowListSpec(base.BaseSpec):
-    # See http://json-schema.org
-    _schema = {
-        "type": "object",
-        "properties": {
-            "version": {"type": "string"},
-        },
-        "required": ["version"],
-        "additionalProperties": True
-    }
-
-    _version = '2.0'
-
-    def __init__(self, data):
-        super(WorkflowListSpec, self).__init__(data)
-
-        self._workflows = []
-
-        for k, v in data.iteritems():
-            if k == 'version':
-                continue
-
-            if not isinstance(v, dict):
-                raise exc.InvalidModelException(
-                    "Invalid workflow definition. Please make sure your "
-                    "workflow matches a dictionary type and there is no "
-                    "typo in keyword 'version'"
-                )
-
-            v['name'] = k
-            self._inject_version([k])
-
-            self._workflows.append(WorkflowSpec(v))
-
-    def validate(self):
-        super(WorkflowListSpec, self).validate()
-
-        if len(self._data.keys()) < 2:
-            raise exc.InvalidModelException(
-                'At least one workflow must be in workflow list [data=%s]' %
-                self._data
-            )
+class WorkflowListSpec(base.BaseListSpec):
+    item_class = WorkflowSpec
 
     def get_workflows(self):
-        return self._workflows
+        return self.get_items()

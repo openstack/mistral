@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,36 +18,44 @@ import re
 import six
 
 from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral import utils
-from mistral.workbook import base
+from mistral.workbook import types
+from mistral.workbook.v2 import base
 from mistral.workbook.v2 import task_policies
 
 
 WITH_ITEMS_PTRN = re.compile(
-    "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % base.INLINE_YAQL
+    "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % expr.INLINE_YAQL_REGEXP
 )
 
 
 class TaskSpec(base.BaseSpec):
     # See http://json-schema.org
+    _type = None
+
+    _task_policies_schema = task_policies.TaskPoliciesSpec.get_schema(
+        includes=None)
+
     _schema = {
         "type": "object",
         "properties": {
-            "version": {"type": "string"},
-            "name": {"type": "string"},
-            "description": {"type": "string"},
-            "action": {"type": ["string", "null"]},
-            "workflow": {"type": ["string", "null"]},
-            "input": {"type": ["object", "null"]},
-            "with-items": {"type": ["string", "array", "null"]},
-            "publish": {"type": ["object", "null"]},
-            "policies": {"type": ["object", "null"]},
-            "target": {"type": ["string", "null"]},
+            "type": types.WORKFLOW_TYPE,
+            "action": types.NONEMPTY_STRING,
+            "workflow": types.NONEMPTY_STRING,
+            "input": types.NONEMPTY_DICT,
+            "with-items": {
+                "oneOf": [
+                    types.NONEMPTY_STRING,
+                    types.UNIQUE_STRING_LIST
+                ]
+            },
+            "publish": types.NONEMPTY_DICT,
+            "policies": _task_policies_schema,
+            "target": types.NONEMPTY_STRING
         },
-        "required": ["version", "name"],
+        "additionalProperties": False
     }
-
-    _version = '2.0'
 
     def __init__(self, data):
         super(TaskSpec, self).__init__(data)
@@ -64,6 +73,7 @@ class TaskSpec(base.BaseSpec):
         )
         self._target = data.get('target')
 
+        self._inject_type()
         self._process_action_and_workflow()
 
     def validate(self):
@@ -104,6 +114,10 @@ class TaskSpec(base.BaseSpec):
 
         return with_items
 
+    def _inject_type(self):
+        if self._type:
+            self._data['type'] = self._type
+
     def _process_action_and_workflow(self):
         params = {}
 
@@ -122,6 +136,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_description(self):
         return self._description
+
+    def get_type(self):
+        return self._type
 
     def get_action_name(self):
         return self._action if self._action else None
@@ -146,18 +163,26 @@ class TaskSpec(base.BaseSpec):
 
 
 class DirectWorkflowTaskSpec(TaskSpec):
-    _direct_props = {
+    _type = 'direct'
+
+    _direct_workflow_schema = {
+        "type": "object",
         "properties": {
-            "join": {"type": ["string", "integer"]},
-            "on-complete": {"type": ["array", "null"]},
-            "on-success": {"type": ["array", "null"]},
-            "on-error": {"type": ["array", "null"]}
-        },
-        "additionalProperties": False
+            "type": {"enum": [_type]},
+            "join": {
+                "oneOf": [
+                    {"enum": ["all", "one"]},
+                    types.POSITIVE_INTEGER
+                ]
+            },
+            "on-complete": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
+            "on-success": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
+            "on-error": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+        }
     }
 
     _schema = utils.merge_dicts(copy.deepcopy(TaskSpec._schema),
-                                _direct_props)
+                                _direct_workflow_schema)
 
     def __init__(self, data):
         super(DirectWorkflowTaskSpec, self).__init__(data)
@@ -192,15 +217,18 @@ class DirectWorkflowTaskSpec(TaskSpec):
 
 
 class ReverseWorkflowTaskSpec(TaskSpec):
-    _reverse_props = {
+    _type = 'reverse'
+
+    _reverse_workflow_schema = {
+        "type": "object",
         "properties": {
-            "requires": {"type": ["string", "array", "null"]}
-        },
-        "additionalProperties": False
+            "type": {"enum": [_type]},
+            "requires": types.UNIQUE_STRING_LIST
+        }
     }
 
     _schema = utils.merge_dicts(copy.deepcopy(TaskSpec._schema),
-                                _reverse_props)
+                                _reverse_workflow_schema)
 
     def __init__(self, data):
         super(ReverseWorkflowTaskSpec, self).__init__(data)
@@ -216,7 +244,6 @@ class ReverseWorkflowTaskSpec(TaskSpec):
 
 class TaskSpecList(base.BaseSpecList):
     item_class = TaskSpec
-    _version = '2.0'
 
     @staticmethod
     def get_class(wf_type):

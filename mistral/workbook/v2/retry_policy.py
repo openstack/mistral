@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,40 +13,36 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import utils
-from mistral.workbook import base
+from mistral.workbook import types
+from mistral.workbook.v2 import base
 
 
 class RetrySpec(base.BaseSpec):
     # See http://json-schema.org
-    _retry_schema = {
+    _schema = {
         "type": "object",
         "properties": {
             "count": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
-                    {"$ref": "#/definitions/positiveInteger"}
+                    types.YAQL,
+                    types.POSITIVE_INTEGER
                 ]
             },
-            "break-on": {"$ref": "#/definitions/yaql"},
+            "break-on": types.YAQL,
             "delay": {
                 "oneOf": [
-                    {"$ref": "#/definitions/yaql"},
-                    {"$ref": "#/definitions/positiveInteger"}
+                    types.YAQL,
+                    types.POSITIVE_INTEGER
                 ]
             },
         },
         "required": ["count", "delay"],
-        "additionalProperties": False,
-        "definitions": {
-            "positiveInteger": {
-                "type": "integer",
-                "minimum": 0
-            }
-        }
+        "additionalProperties": False
     }
 
-    _schema = utils.merge_dicts(_retry_schema, base.BaseSpec._yaql_schema)
+    @classmethod
+    def get_schema(cls, includes=['definitions']):
+        return super(RetrySpec, cls).get_schema(includes)
 
     def __init__(self, data):
         super(RetrySpec, self).__init__(data)

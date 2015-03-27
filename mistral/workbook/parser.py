@@ -1,4 +1,5 @@
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -54,7 +55,7 @@ def _get_spec_version(spec_dict):
     if 'version' in spec_dict:
         ver = spec_dict['version']
 
-    if str(ver) not in ALL_VERSIONS:
+    if not ver or str(float(ver)) not in ALL_VERSIONS:
         raise exc.DSLParsingException('Unsupported DSL version: %s' % ver)
 
     return ver
@@ -136,7 +137,14 @@ def get_task_spec(spec_dict):
     if _get_spec_version(spec_dict) == V1_0:
         return tasks_v1.TaskSpec(spec_dict)
     else:
-        return tasks_v2.TaskSpec(spec_dict)
+        workflow_type = spec_dict.get('type')
+
+        if workflow_type == 'direct':
+            return tasks_v2.DirectWorkflowTaskSpec(spec_dict)
+        elif workflow_type == 'reverse':
+            return tasks_v2.ReverseWorkflowTaskSpec(spec_dict)
+        else:
+            raise Exception('Unsupported workflow type "%s".' % workflow_type)
 
 
 def get_trigger_spec(spec_dict):
