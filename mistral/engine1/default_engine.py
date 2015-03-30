@@ -86,9 +86,13 @@ class DefaultEngine(base.Engine):
             self._fail_workflow(wf_exec_id, e)
             raise e
 
-    def on_task_state_change(self, state, task_ex_id):
+    def on_task_state_change(self, task_ex_id, state):
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex_id)
+            # TODO(rakhmerov): The method is mostly needed for policy and
+            # we are supposed to get the same action execution as when the
+            # policy worked. But by the moment this method is called the
+            # last execution object may have changed. It's a race condition.
             execution = task_ex.executions[-1]
 
             wf_ex_id = task_ex.workflow_execution_id
@@ -277,9 +281,9 @@ class DefaultEngine(base.Engine):
 
         for cmd in wf_cmds:
             if isinstance(cmd, commands.RunTask):
-                task_handler.run_task(cmd)
-            elif isinstance(cmd, commands.RunExistentTask):
-                task_handler.run_existent_task(cmd.task_ex.id)
+                task_handler.run_new_task(cmd)
+            elif isinstance(cmd, commands.RunExistingTask):
+                task_handler.run_existing_task(cmd.task_ex.id)
             elif isinstance(cmd, commands.SetWorkflowState):
                 # TODO(rakhmerov): Special commands should be persisted too.
                 wf_handler.set_execution_state(wf_ex, cmd.new_state)

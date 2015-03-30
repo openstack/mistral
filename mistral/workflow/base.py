@@ -106,7 +106,7 @@ class WorkflowController(object):
         # Add all tasks in IDLE state.
         idle_tasks = wf_utils.find_tasks_with_state(self.wf_ex, states.IDLE)
 
-        return [commands.RunExistentTask(t) for t in idle_tasks]
+        return [commands.RunExistingTask(t) for t in idle_tasks]
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)

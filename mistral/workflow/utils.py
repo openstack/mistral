@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from mistral.utils import serializers
-from mistral.workbook.v2 import tasks as v2_tasks_spec
 from mistral.workflow import states
 
 
@@ -53,20 +52,6 @@ def find_task_execution(wf_ex, task_spec):
     ]
 
     return task_execs[0] if len(task_execs) > 0 else None
-
-
-def find_upstream_task_executions(wf_ex, task_spec, upstream_task_specs,
-                                  cause_task_ex=None):
-    # For direct workflow, if the current task does not have join, the
-    # task that caused this task execution is the only upstream task.
-    if (isinstance(task_spec, v2_tasks_spec.DirectWorkflowTaskSpec) and
-            not task_spec.get_join() and cause_task_ex):
-        return [cause_task_ex]
-    else:
-        # TODO(m4dcoder): Fix use case where there are parallel branches
-        # that join on a common task separately. Currently, this returns
-        # all tasks that list the common task as a transition.
-        return find_task_executions(wf_ex, upstream_task_specs)
 
 
 def find_task_executions(wf_ex, task_specs):

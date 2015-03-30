@@ -22,7 +22,7 @@ from mistral.workflow import states
 
 
 _ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
-_RUN_EXISTENT_TASK_PATH = 'mistral.engine1.task_handler.run_existent_task'
+_RUN_EXISTING_TASK_PATH = 'mistral.engine1.task_handler.run_existing_task'
 
 
 def _log_task_delay(task_ex, delay_sec):
@@ -186,7 +186,7 @@ class WaitBeforePolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            _RUN_EXISTENT_TASK_PATH,
+            _RUN_EXISTING_TASK_PATH,
             self.delay,
             task_ex_id=task_ex.id,
         )
@@ -304,7 +304,7 @@ class RetryPolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            _RUN_EXISTENT_TASK_PATH,
+            _RUN_EXISTING_TASK_PATH,
             self.delay,
             task_ex_id=task_ex.id,
         )
@@ -403,6 +403,6 @@ def fail_task_if_incomplete(task_ex_id, timeout):
         )
 
         rpc.get_engine_client().on_task_state_change(
-            states.ERROR,
-            task_ex_id
+            task_ex_id,
+            states.ERROR
         )

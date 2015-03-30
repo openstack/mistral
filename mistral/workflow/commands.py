@@ -48,7 +48,7 @@ class RunTask(WorkflowCommand):
         )
 
 
-class RunExistentTask(WorkflowCommand):
+class RunExistingTask(WorkflowCommand):
     """Command for running already existent task."""
 
     def __init__(self, task_ex):
@@ -56,7 +56,7 @@ class RunExistentTask(WorkflowCommand):
         task_spec = spec_parser.get_task_spec(task_ex.spec)
         self.task_ex = task_ex
 
-        super(RunExistentTask, self).__init__(
+        super(RunExistingTask, self).__init__(
             wf_ex, task_spec, task_ex.in_context
         )
 
