@@ -114,10 +114,7 @@ class ActionExecution(Execution):
     accepted = sa.Column(sa.Boolean(), default=False)
     input = sa.Column(st.JsonDictType(), nullable=True)
 
-    # Note: Corresponds to MySQL 'LONGTEXT' type which is of unlimited size.
-    # TODO(rakhmerov): Change to LongText after refactoring.
-    output = sa.Column(st.JsonDictType(), nullable=True)
-    # output = sa.orm.deferred(sa.Column(st.LongText(), nullable=True))
+    output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
 
 
 class WorkflowExecution(ActionExecution):
@@ -150,7 +147,7 @@ class TaskExecution(Execution):
     processed = sa.Column(sa.BOOLEAN, default=False)
 
     # Data Flow properties.
-    in_context = sa.Column(st.JsonDictType())
+    in_context = sa.Column(st.JsonLongDictType())
     published = sa.Column(st.JsonDictType())
 
     # Runtime context like iteration_no of a repeater.

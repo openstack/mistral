@@ -115,3 +115,11 @@ def JsonListType():
 def LongText():
     # TODO(rakhmerov): Need to do for postgres.
     return sa.Text().with_variant(mysql.LONGTEXT(), 'mysql')
+
+
+class JsonEncodedLongText(JsonEncoded):
+    impl = LongText()
+
+
+def JsonLongDictType():
+    return MutableDict.as_mutable(JsonEncodedLongText)
