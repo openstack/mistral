@@ -57,6 +57,11 @@ def _run_existent_task(task_ex, task_spec, wf_spec):
     input_dicts = _get_input_dictionaries(
         wf_spec, task_ex, task_spec, task_ex.in_context
     )
+
+    # TODO(rakhmerov): May be it shouldn't be here. Need to think.
+    if task_spec.get_with_items():
+        with_items.prepare_runtime_context(task_ex, task_spec, input_dicts)
+
     for input_d in input_dicts:
         _run_action_or_workflow(task_ex, task_spec, input_d)
 
@@ -123,8 +128,9 @@ def on_action_complete(action_ex, result):
         if not task_spec.get_with_items():
             _complete_task(task_ex, task_spec, states.SUCCESS)
         else:
-            # TODO(rakhmerov): Implement 'with-items' logic.
-            pass
+            if with_items.iterations_completed(task_ex):
+                _complete_task(task_ex, task_spec, states.SUCCESS)
+
     else:
         _complete_task(task_ex, task_spec, states.ERROR)
 
@@ -147,10 +153,6 @@ def _create_task_execution(wf_ex, task_spec, ctx):
     # Add to collection explicitly so that it's in a proper
     # state within the current session.
     wf_ex.task_executions.append(task_ex)
-
-    # TODO(rakhmerov): May be it shouldn't be here. Need to think.
-    if task_spec.get_with_items():
-        with_items.prepare_runtime_context(task_ex, task_spec)
 
     return task_ex
 
@@ -194,22 +196,82 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
     """
 
     if not task_spec.get_with_items():
-        if task_spec.get_action_name():
-            input_dict = get_action_input(
-                wf_spec,
-                task_ex,
-                task_spec,
-                ctx
-            )
-        elif task_spec.get_workflow_name():
-            input_dict = get_workflow_input(task_spec, ctx)
-        else:
-            raise RuntimeError('Must never happen.')
+        input_dict = _get_workflow_or_action_input(
+            wf_spec,
+            task_ex,
+            task_spec,
+            ctx
+        )
 
         return [input_dict]
     else:
-        # TODO(rakhmerov): Implement 'with-items'.
-        return []
+        return get_with_items_input(wf_spec, task_ex, task_spec, ctx)
+
+
+def _get_workflow_or_action_input(wf_spec, task_ex, task_spec, ctx):
+    if task_spec.get_action_name():
+        return get_action_input(
+            wf_spec,
+            task_ex,
+            task_spec,
+            ctx
+        )
+    elif task_spec.get_workflow_name():
+        return get_workflow_input(task_spec, ctx)
+    else:
+        raise RuntimeError('Must never happen.')
+
+
+def get_with_items_input(wf_spec, task_ex, task_spec, ctx):
+    """Calculate input array for separating each action input.
+
+    Example:
+      DSL:
+        with_items:
+          - itemX in <% $.arrayI %>
+          - itemY in <% $.arrayJ %>
+
+      Assume arrayI = [1, 2], arrayJ = ['a', 'b'].
+      with_items_input = {
+        "itemX": [1, 2],
+        "itemY": ['a', 'b']
+      }
+
+      Then we get separated input:
+      inputs_per_item = [
+        {'itemX': 1, 'itemY': 'a'},
+        {'itemX': 2, 'itemY': 'b'}
+      ]
+
+    :return: list containing dicts of each action input.
+    """
+    with_items_inputs = expr.evaluate_recursively(
+        task_spec.get_with_items(), ctx
+    )
+
+    with_items.validate_input(with_items_inputs)
+
+    inputs_per_item = []
+
+    for key, value in with_items_inputs.items():
+        for index, item in enumerate(value):
+            iter_context = {key: item}
+
+            if index >= len(inputs_per_item):
+                inputs_per_item.append(iter_context)
+            else:
+                inputs_per_item[index].update(iter_context)
+
+    action_inputs = []
+
+    for item_input in inputs_per_item:
+        new_ctx = utils.merge_dicts(item_input, ctx)
+
+        action_inputs.append(_get_workflow_or_action_input(
+            wf_spec, task_ex, task_spec, new_ctx
+        ))
+
+    return action_inputs
 
 
 def get_action_input(wf_spec, task_ex, task_spec, ctx):

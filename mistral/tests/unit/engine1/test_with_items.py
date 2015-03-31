@@ -14,13 +14,13 @@
 
 import copy
 from oslo.config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
+from mistral.workflow import data_flow
 from mistral.workflow import utils as wf_utils
 
 # TODO(nmakhotkin) Need to write more tests.
@@ -48,7 +48,7 @@ workflows:
         with-items: name_info in <% $.names_info %>
         action: std.echo output=<% $.name_info.name %>
         publish:
-          result: <% $.task1 %>
+          result: <% $.task1[0] %>
 
 """
 
@@ -114,7 +114,7 @@ workflows:
     tasks:
       task1:
         with-items: link in <% $.links %>
-        action: std.mistral_http url=<% $.link %>
+        action: std.http url=<% $.link %>
         publish:
           result: <% $.task1 %>
 """
@@ -139,7 +139,6 @@ WF_INPUT_URLS = {
 
 
 class WithItemsEngineTest(base.EngineTestCase):
-    @testtools.skip("Fix 'with-items'.")
     def test_with_items_simple(self):
         wb_service.create_workbook_v2(WORKBOOK)
 
@@ -158,11 +157,10 @@ class WithItemsEngineTest(base.EngineTestCase):
         with_items_context = task1.runtime_context['with_items']
 
         self.assertEqual(3, with_items_context['count'])
-        self.assertEqual(3, with_items_context['index'])
 
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
-        result = task1.result['result']
+        result = data_flow.get_task_execution_result(task1)
 
         self.assertTrue(isinstance(result, list))
 
@@ -170,10 +168,13 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertIn('Ivan', result)
         self.assertIn('Mistral', result)
 
+        published = task1.published
+
+        self.assertIn(published['result'], ['John', 'Ivan', 'Mistral'])
+
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
 
-    @testtools.skip("Fix 'with-items'.")
     def test_with_items_static_var(self):
         wb_service.create_workbook_v2(WORKBOOK_WITH_STATIC_VAR)
 
@@ -191,7 +192,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         tasks = wf_ex.task_executions
         task1 = self._assert_single_item(tasks, name='task1')
-        result = task1.result['result']
+        result = data_flow.get_task_execution_result(task1)
 
         self.assertTrue(isinstance(result, list))
 
@@ -202,7 +203,6 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
 
-    @testtools.skip("Fix 'with-items'.")
     def test_with_items_multi_array(self):
         wb_service.create_workbook_v2(WORKBOOK_MULTI_ARRAY)
 
@@ -223,7 +223,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
-        result = task1.result['result']
+        result = data_flow.get_task_execution_result(task1)
 
         self.assertTrue(isinstance(result, list))
 
@@ -234,7 +234,6 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
 
-    @testtools.skip("Fix 'with-items'.")
     def test_with_items_action_context(self):
         wb_service.create_workbook_v2(WORKBOOK_ACTION_CONTEXT)
 
@@ -246,9 +245,12 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
 
-        self.engine.on_task_result(task_ex.id, wf_utils.Result("Ivan"))
-        self.engine.on_task_result(task_ex.id, wf_utils.Result("John"))
-        self.engine.on_task_result(task_ex.id, wf_utils.Result("Mistral"))
+        act_exs = task_ex.executions
+        self.engine.on_action_complete(act_exs[0].id, wf_utils.Result("Ivan"))
+        self.engine.on_action_complete(act_exs[1].id, wf_utils.Result("John"))
+        self.engine.on_action_complete(
+            act_exs[2].id, wf_utils.Result("Mistral")
+        )
 
         self._await(
             lambda: self.is_execution_success(wf_ex.id),
@@ -258,7 +260,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
-        result = task_ex.result['result']
+        result = data_flow.get_task_execution_result(task_ex)
 
         self.assertTrue(isinstance(result, list))
 
