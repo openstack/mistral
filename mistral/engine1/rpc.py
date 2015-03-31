@@ -82,8 +82,8 @@ class EngineServer(object):
             **params
         )
 
-    def on_task_state_change(self, rpc_ctx, state, task_ex_id):
-        return self._engine.on_task_state_change(state, task_ex_id)
+    def on_task_state_change(self, rpc_ctx, task_ex_id, state):
+        return self._engine.on_task_state_change(task_ex_id, state)
 
     def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
                            result_error):
@@ -199,12 +199,12 @@ class EngineClient(base.Engine):
             params=params
         )
 
-    def on_task_state_change(self, state, task_ex_id):
+    def on_task_state_change(self, task_ex_id, state):
         return self._client.call(
             auth_ctx.ctx(),
             'on_task_state_change',
-            state=state,
             task_ex_id=task_ex_id,
+            state=state
         )
 
     def on_action_complete(self, action_ex_id, result):

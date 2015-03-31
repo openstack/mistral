@@ -36,8 +36,8 @@ from mistral.workflow import with_items
 LOG = logging.getLogger(__name__)
 
 
-def run_existent_task(task_ex_id):
-    """This function runs existent task execution.
+def run_existing_task(task_ex_id):
+    """This function runs existing task execution.
 
     It is needed mostly by scheduler.
     """
@@ -50,10 +50,10 @@ def run_existent_task(task_ex_id):
     # Explicitly change task state to RUNNING.
     task_ex.state = states.RUNNING
 
-    _run_existent_task(task_ex, task_spec, wf_spec)
+    _run_existing_task(task_ex, task_spec, wf_spec)
 
 
-def _run_existent_task(task_ex, task_spec, wf_spec):
+def _run_existing_task(task_ex, task_spec, wf_spec):
     input_dicts = _get_input_dictionaries(
         wf_spec, task_ex, task_spec, task_ex.in_context
     )
@@ -66,7 +66,7 @@ def _run_existent_task(task_ex, task_spec, wf_spec):
         _run_action_or_workflow(task_ex, task_spec, input_d)
 
 
-def run_task(wf_cmd):
+def run_new_task(wf_cmd):
     """Runs a task."""
     ctx = wf_cmd.ctx
     wf_ex = wf_cmd.wf_ex
@@ -89,7 +89,7 @@ def run_task(wf_cmd):
     if task_ex.state != states.RUNNING:
         return
 
-    _run_existent_task(task_ex, task_spec, wf_spec)
+    _run_existing_task(task_ex, task_spec, wf_spec)
 
 
 def on_action_complete(action_ex, result):
@@ -205,24 +205,24 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
 
         return [input_dict]
     else:
-        return get_with_items_input(wf_spec, task_ex, task_spec, ctx)
+        return _get_with_items_input(wf_spec, task_ex, task_spec, ctx)
 
 
 def _get_workflow_or_action_input(wf_spec, task_ex, task_spec, ctx):
     if task_spec.get_action_name():
-        return get_action_input(
+        return _get_action_input(
             wf_spec,
             task_ex,
             task_spec,
             ctx
         )
     elif task_spec.get_workflow_name():
-        return get_workflow_input(task_spec, ctx)
+        return _get_workflow_input(task_spec, ctx)
     else:
         raise RuntimeError('Must never happen.')
 
 
-def get_with_items_input(wf_spec, task_ex, task_spec, ctx):
+def _get_with_items_input(wf_spec, task_ex, task_spec, ctx):
     """Calculate input array for separating each action input.
 
     Example:
@@ -274,7 +274,7 @@ def get_with_items_input(wf_spec, task_ex, task_spec, ctx):
     return action_inputs
 
 
-def get_action_input(wf_spec, task_ex, task_spec, ctx):
+def _get_action_input(wf_spec, task_ex, task_spec, ctx):
     input_dict = expr.evaluate_recursively(task_spec.get_input(), ctx)
 
     action_spec_name = task_spec.get_action_name()
@@ -320,7 +320,7 @@ def get_action_input(wf_spec, task_ex, task_spec, ctx):
     return input_dict
 
 
-def get_workflow_input(task_spec, ctx):
+def _get_workflow_input(task_spec, ctx):
     return expr.evaluate_recursively(task_spec.get_input(), ctx)
 
 
