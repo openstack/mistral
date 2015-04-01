@@ -319,10 +319,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(states.SUCCESS, task2_action_ex.state)
 
         # Data Flow properties.
-        self._assert_dict_contains_subset(
-            task1_ex.in_context,
-            task2_ex.in_context
-        )
+        self.assertIn('__tasks', task2_ex.in_context)
         self.assertIn('__execution', task1_ex.in_context)
         self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
         self.assertDictEqual({}, task2_ex.published)

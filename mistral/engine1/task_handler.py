@@ -194,6 +194,7 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
     In case of 'with-items' the result list will contain input dictionaries
     for all 'with-items' iterations correspondingly.
     """
+    ctx = data_flow.extract_task_result_proxies_to_context(ctx)
 
     if not task_spec.get_with_items():
         input_dict = _get_workflow_or_action_input(

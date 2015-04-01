@@ -148,7 +148,7 @@ class BaseTest(base.BaseTestCase):
 
         self.fail(self._formatMessage(msg, standardMsg))
 
-    def _await(self, predicate, delay=1, timeout=30):
+    def _await(self, predicate, delay=1, timeout=60):
         """Awaits for predicate function to evaluate to True.
 
         If within a configured timeout predicate function hasn't evaluated

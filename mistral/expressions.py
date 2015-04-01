@@ -16,11 +16,13 @@
 import abc
 import copy
 import re
+
 import six
 import yaql
 
 from mistral.openstack.common import log as logging
 from mistral import yaql_utils
+
 
 LOG = logging.getLogger(__name__)
 
