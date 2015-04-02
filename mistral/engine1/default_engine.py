@@ -77,7 +77,7 @@ class DefaultEngine(base.Engine):
                     wf_ctrl.continue_workflow()
                 )
 
-                return wf_ex
+                return wf_ex.get_clone()
         except Exception as e:
             LOG.error(
                 "Failed to start workflow '%s' id=%s: %s\n%s",
@@ -181,7 +181,7 @@ class DefaultEngine(base.Engine):
 
                 self._on_task_state_change(task_ex, wf_ex, action_ex)
 
-                return action_ex
+                return action_ex.get_clone()
         except Exception as e:
             # TODO(dzimine): try to find out which command caused failure.
             # TODO(rakhmerov): Need to refactor logging in a more elegant way.
