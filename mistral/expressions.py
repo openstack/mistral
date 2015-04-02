@@ -15,6 +15,7 @@
 
 import abc
 import copy
+import inspect
 import re
 import six
 import yaql
@@ -67,7 +68,7 @@ class YAQLEvaluator(Evaluator):
 
         LOG.debug("YAQL expression result: %s" % result)
 
-        return result
+        return result if not inspect.isgenerator(result) else list(result)
 
     @classmethod
     def is_expression(cls, s):
@@ -93,6 +94,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
 
         result = expression
         found_expressions = cls.find_inline_expressions(expression)
+
         if found_expressions:
             for expr in found_expressions:
                 trim_expr = expr.strip("<%>")
