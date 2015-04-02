@@ -269,3 +269,50 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertIn('Mistral', result)
 
         self.assertEqual(states.SUCCESS, task_ex.state)
+
+    def test_with_items_empty_list(self):
+        workbook = """---
+        version: "2.0"
+
+        name: wb1
+
+        workflows:
+          with_items:
+            type: direct
+
+            input:
+             - names_info
+
+            tasks:
+              task1:
+                with-items: name_info in <% $.names_info %>
+                action: std.echo output=<% $.name_info.name %>
+                on-success:
+                  - task2
+
+              task2:
+                action: std.echo output="Hi!"
+        """
+        wb_service.create_workbook_v2(workbook)
+
+        # Start workflow.
+        wf_input = {'names_info': []}
+        wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
+
+        self._await(
+            lambda: self.is_execution_success(wf_ex.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+
+        # Since we know that we can receive results in random order,
+        # check is not depend on order of items.
+
+        self.assertEqual(2, len(tasks))
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual(states.SUCCESS, task2.state)
