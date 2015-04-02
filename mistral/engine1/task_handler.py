@@ -479,6 +479,7 @@ def _complete_task(task_ex, task_spec, state):
             task_ex,
             task_spec
         )
+    data_flow.destroy_task_result_if_needed(task_ex, task_spec)
 
 
 def _set_task_state(task_ex, state):

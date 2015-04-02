@@ -42,7 +42,6 @@ class TaskSpecListTest(base.BaseTest):
 
 
 class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
-
     def test_type_injection(self):
         tests = [
             ({'type': 'direct'}, False),
@@ -264,6 +263,25 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             overlay = {'test': {'tasks': {}}}
             utils.merge_dicts(overlay['test'], {'type': 'reverse'})
             utils.merge_dicts(overlay['test']['tasks'], {'email': require})
+            self._parse_dsl_spec(add_tasks=True,
+                                 changes=overlay,
+                                 expect_error=expect_error)
+
+    def test_keep_result(self):
+        tests = [
+            ({'keep-result': ''}, True),
+            ({'keep-result': []}, True),
+            ({'keep-result': 'asd'}, True),
+            ({'keep-result': None}, True),
+            ({'keep-result': 12345}, True),
+            ({'keep-result': True}, False),
+            ({'keep-result': False}, False),
+            ({'keep-result': '<% "a" in $.val %>'}, False)
+        ]
+
+        for keep_result, expect_error in tests:
+            overlay = {'test': {'tasks': {}}}
+            utils.merge_dicts(overlay['test']['tasks'], {'email': keep_result})
             self._parse_dsl_spec(add_tasks=True,
                                  changes=overlay,
                                  expect_error=expect_error)

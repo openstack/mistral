@@ -420,6 +420,45 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task4.published
         )
 
+    def test_destroy_result(self):
+        linear_wf = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.echo output=["Hi", "John Doe!"]
+              publish:
+                hi: <% $.task1 %>
+              keep-result: false
+
+        """
+        wf_service.create_workflows(linear_wf)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        result = data_flow.get_task_execution_result(task1)
+
+        # Published vars are saved.
+        self.assertDictEqual(
+            {'hi': ["Hi", "John Doe!"]},
+            task1.published
+        )
+
+        # But all result is cleared.
+        self.assertIsNone(result)
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):
