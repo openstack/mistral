@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import copy
+import json
 import re
 import six
 
@@ -117,6 +118,15 @@ class TaskSpec(base.BaseSpec):
                 raise exc.InvalidModelException(msg)
 
             var_name, array = match.groups()
+
+            if array.startswith('['):
+                try:
+                    array = json.loads(array)
+                except Exception as e:
+                    msg = ("Invalid array in 'with-items' clause: "
+                           "%s, error: %s" % (array, str(e)))
+                    raise exc.InvalidModelException(msg)
+
             with_items[var_name] = array
 
         return with_items

@@ -17,6 +17,7 @@ from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import states
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine1 import base
@@ -310,9 +311,67 @@ class WithItemsEngineTest(base.EngineTestCase):
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
 
-        # Since we know that we can receive results in random order,
-        # check is not depend on order of items.
-
         self.assertEqual(2, len(tasks))
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
+
+    def test_with_items_plain_list(self):
+        workbook = """---
+        version: "2.0"
+
+        name: wb1
+
+        workflows:
+          with_items:
+            type: direct
+
+            tasks:
+              task1:
+                with-items: i in [1, 2, 3]
+                action: std.echo output=<% $.i %>
+        """
+        wb_service.create_workbook_v2(workbook)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb1.with_items', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+        self.assertEqual(states.SUCCESS, task1.state)
+
+        result = data_flow.get_task_execution_result(task1)
+
+        # Since we know that we can receive results in random order,
+        # check is not depend on order of items.
+        self.assertIn(1, result)
+        self.assertIn(2, result)
+        self.assertIn(3, result)
+
+    def test_with_items_plain_list_wrong(self):
+        workbook = """---
+        version: "2.0"
+
+        name: wb1
+
+        workflows:
+          with_items:
+            type: direct
+
+            tasks:
+              task1:
+                with-items: i in [1,,3]
+                action: std.echo output=<% $.i %>
+
+        """
+
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            wb_service.create_workbook_v2, workbook
+        )
+
+        self.assertIn("Invalid array in 'with-items'", exception.message)
