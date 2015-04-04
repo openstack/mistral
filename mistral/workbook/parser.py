@@ -41,7 +41,7 @@ def parse_yaml(text):
     """
 
     try:
-        return yaml.safe_load(text)
+        return yaml.safe_load(text) or {}
     except error.YAMLError as e:
         raise exc.DSLParsingException(
             "Definition could not be parsed: %s\n" % e
