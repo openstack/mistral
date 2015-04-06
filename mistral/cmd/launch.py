@@ -49,6 +49,7 @@ from mistral.engine1 import default_executor as def_executor
 from mistral.engine1 import rpc
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
+from mistral import version
 
 
 LOG = logging.getLogger(__name__)
@@ -150,8 +151,8 @@ MISTRAL_TITLE = """
 ||      || ||   ||   ||   ||  ||  //      \\\  ||
 ||      || || _//    ||   ||  || //        \\\ |||||
 
-Mistral Workflow Service, version 0.1, 2014
-"""
+Mistral Workflow Service, version %s
+""" % version.version_string()
 
 
 def print_server_info():
