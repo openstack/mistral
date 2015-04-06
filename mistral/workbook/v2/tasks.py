@@ -52,7 +52,13 @@ class TaskSpec(base.BaseSpec):
             },
             "publish": types.NONEMPTY_DICT,
             "policies": _task_policies_schema,
-            "target": types.NONEMPTY_STRING
+            "target": types.NONEMPTY_STRING,
+            "keep-result": {
+                "oneOf": [
+                    types.YAQL,
+                    {"type": "boolean"}
+                ]
+            }
         },
         "additionalProperties": False
     }
@@ -72,6 +78,7 @@ class TaskSpec(base.BaseSpec):
             task_policies.TaskPoliciesSpec
         )
         self._target = data.get('target')
+        self._keep_result = data.get('keep-result', True)
 
         self._inject_type()
         self._process_action_and_workflow()
@@ -160,6 +167,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_publish(self):
         return self._publish
+
+    def get_keep_result(self):
+        return self._keep_result
 
 
 class DirectWorkflowTaskSpec(TaskSpec):

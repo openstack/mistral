@@ -64,7 +64,8 @@ def _extract_execution_result(ex):
     if isinstance(ex, models.WorkflowExecution):
         return ex.output
 
-    return ex.output['result']
+    if ex.output:
+        return ex.output['result']
 
 
 def get_task_execution_result(task_ex):
@@ -128,6 +129,15 @@ def publish_variables(task_ex, task_spec):
         task_spec.get_publish(),
         expr_ctx
     )
+
+
+def destroy_task_result_if_needed(task_ex, task_spec):
+    keep_result = task_spec.get_keep_result()
+
+    if not keep_result:
+        for ex in task_ex.executions:
+            if hasattr(ex, 'output'):
+                ex.output = {}
 
 
 def evaluate_task_outbound_context(task_ex, including_result=True):
