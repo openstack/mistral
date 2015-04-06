@@ -20,63 +20,12 @@ import pecan
 import pecan.testing
 from webtest import app as webtest_app
 
-from mistral.db.v1.sqlalchemy import models
 from mistral.tests import base
 
 # Disable authentication for functional tests.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 __all__ = ['FunctionalTest']
-
-
-# Group of methods to mock DB API calls.
-
-def create_db_workbook(values):
-    wb = models.Workbook()
-    wb.update(values)
-    return wb
-
-
-def create_mock_workbook(values):
-    return mock.MagicMock(return_value=create_db_workbook(values))
-
-
-def create_mock_workbooks(arr_of_values):
-    return mock.MagicMock(
-        return_value=[create_db_workbook(values) for values in arr_of_values]
-    )
-
-
-def create_db_execution(values):
-    ex = models.WorkflowExecution()
-    ex.update(values)
-    return ex
-
-
-def create_mock_execution(values):
-    return mock.MagicMock(return_value=create_db_execution(values))
-
-
-def create_mock_executions(arr_of_values):
-    return mock.MagicMock(
-        return_value=[create_db_execution(values) for values in arr_of_values]
-    )
-
-
-def create_db_task(values):
-    t = models.Task()
-    t.update(values)
-    return t
-
-
-def create_mock_task(values):
-    return mock.MagicMock(return_value=create_db_task(values))
-
-
-def create_mock_tasks(arr_of_values):
-    return mock.MagicMock(
-        return_value=[create_db_task(values) for values in arr_of_values]
-    )
 
 
 class FunctionalTest(base.DbTestCase):

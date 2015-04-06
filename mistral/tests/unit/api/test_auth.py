@@ -15,14 +15,10 @@
 import datetime
 import uuid
 
-from keystonemiddleware import auth_token
-import mock
 from oslo.config import cfg
 import pecan
 import pecan.testing
 
-from mistral.db.v1 import api as db_api
-from mistral.db.v1.sqlalchemy import models
 from mistral.openstack.common import timeutils
 from mistral.tests.unit.api import base
 
@@ -61,12 +57,6 @@ PKI_TOKEN_VERIFIED = {
 }
 
 
-def get_mock_workbook(values):
-    wb = models.Workbook()
-    wb.update(values)
-    return wb
-
-
 class TestKeystoneMiddleware(base.FunctionalTest):
     """Test that the keystone middleware AuthProtocol is executed
     when enabled.
@@ -83,28 +73,3 @@ class TestKeystoneMiddleware(base.FunctionalTest):
                 'auth_enable': cfg.CONF.pecan.auth_enable
             }
         })
-
-    @mock.patch.object(
-        auth_token.AuthProtocol, '_get_user_token_from_header',
-        mock.MagicMock(return_value=''))
-    @mock.patch.object(
-        auth_token.AuthProtocol, '_validate_token',
-        mock.MagicMock(return_value=PKI_TOKEN_VERIFIED))
-    @mock.patch.object(
-        db_api, "workbook_get",
-        mock.MagicMock(return_value=get_mock_workbook(WORKBOOKS[0])))
-    def test_auth_succeed(self):
-        resp = self.app.get('/v1/workbooks/my_workbook')
-        self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(WORKBOOKS[0], resp.json)
-
-    @mock.patch.object(
-        auth_token.AuthProtocol, '_get_user_token_from_header',
-        mock.MagicMock(return_value=''))
-    @mock.patch.object(
-        db_api, "workbook_get",
-        mock.MagicMock(return_value=get_mock_workbook(WORKBOOKS[0])))
-    def test_auth_fail(self):
-        # 401 unauthorized response is expected because the method
-        # _validate_user_token is not mocked in this test.
-        self.assertUnauthorized('/v1/workbooks/my_workbook')

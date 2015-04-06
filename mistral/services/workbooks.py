@@ -14,24 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
 from mistral.services import security
-from mistral.services import triggers
 from mistral.workbook import parser as spec_parser
-
-
-def create_workbook_v1(values, scope='private'):
-    return db_api_v1.workbook_create(values)
-
-
-def update_workbook_v1(workbook_name, values):
-    wb_db = db_api_v1.workbook_update(workbook_name, values)
-
-    if 'definition' in values:
-        triggers.create_associated_triggers(wb_db)
-
-    return wb_db
 
 
 def create_workbook_v2(definition, scope='private'):

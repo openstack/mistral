@@ -17,11 +17,11 @@ from oslo.config import cfg
 import testtools
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import states
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine1 import base
+from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)

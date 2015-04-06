@@ -26,53 +26,6 @@ from mistral.tests import base
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-class TriggerServiceV1Test(base.DbTestCase):
-    def setUp(self):
-        super(TriggerServiceV1Test, self).setUp()
-
-        self.wb_name = 'My workbook'
-
-    def test_trigger_create(self):
-        t = t_s.create_trigger_v1(
-            'test',
-            '*/5 * * * *',
-            self.wb_name,
-            datetime.datetime(2010, 8, 25)
-        )
-
-        self.assertEqual(
-            datetime.datetime(2010, 8, 25, 0, 5),
-            t['next_execution_time']
-        )
-
-        next_time = t_s.get_next_execution_time(
-            t['pattern'],
-            t['next_execution_time']
-        )
-
-        self.assertEqual(
-            datetime.datetime(2010, 8, 25, 0, 10),
-            next_time
-        )
-
-    def test_get_trigger_in_correct_orders(self):
-        start_t = datetime.datetime(2010, 8, 25)
-        t_s.create_trigger_v1('test1', '*/5 * * * *', self.wb_name, start_t)
-
-        start_t = datetime.datetime(2010, 8, 22)
-        t_s.create_trigger_v1('test2', '*/5 * * * *', self.wb_name, start_t)
-
-        start_t = datetime.datetime(2010, 9, 21)
-        t_s.create_trigger_v1('test3', '*/5 * * * *', self.wb_name, start_t)
-
-        start_t = datetime.datetime.now() + datetime.timedelta(0, 50)
-        t_s.create_trigger_v1('test4', '*/5 * * * *', self.wb_name, start_t)
-
-        trigger_names = [t['name'] for t in t_s.get_next_triggers_v1()]
-
-        self.assertEqual(trigger_names, ['test2', 'test1', 'test3'])
-
-
 WORKFLOW_LIST = """
 ---
 version: '2.0'

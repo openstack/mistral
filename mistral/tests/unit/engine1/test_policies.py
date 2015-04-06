@@ -15,7 +15,6 @@
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import states
 from mistral.engine1 import policies
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -23,6 +22,7 @@ from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine1 import base
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 # Use the set_default method to set value otherwise in certain test cases
