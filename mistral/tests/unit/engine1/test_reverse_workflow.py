@@ -89,7 +89,6 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         )
 
         self.assertDictEqual({'result1': 'a'}, task_ex.published)
-        self.assertEqual('a', wf_ex.output['task1'])
 
     def test_start_task2(self):
         wf_input = {'param1': 'a', 'param2': 'b'}
@@ -128,6 +127,3 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         )
 
         self.assertDictEqual({'result2': 'a & b'}, task2_ex.published)
-
-        self.assertEqual('a', wf_ex.output['task1'])
-        self.assertEqual('a & b', wf_ex.output['task2'])

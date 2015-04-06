@@ -373,6 +373,53 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task4.published
         )
 
+    def test_linear_dataflow_implicit_publish(self):
+        linear_wf = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.echo output="Hi"
+              on-success:
+                - task21
+                - task22
+
+            task21:
+              action: std.echo output="Morpheus"
+              on-success:
+                - task4
+
+            task22:
+              action: std.echo output="Neo"
+              on-success:
+                - task4
+
+            task4:
+              join: all
+              publish:
+                result: "<% $.task1 %>, <% $.task21 %>! Your <% $.task22 %>."
+        """
+        wf_service.create_workflows(linear_wf)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task4 = self._assert_single_item(tasks, name='task4')
+
+        self.assertDictEqual(
+            {'result': 'Hi, Morpheus! Your Neo.'},
+            task4.published
+        )
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):
