@@ -62,8 +62,12 @@ def _run_existing_task(task_ex, task_spec, wf_spec):
     if task_spec.get_with_items():
         with_items.prepare_runtime_context(task_ex, task_spec, input_dicts)
 
-    for input_d in input_dicts:
-        _run_action_or_workflow(task_ex, task_spec, input_d)
+    # In some cases we can have no input, e.g. in case of 'with-items'.
+    if input_dicts:
+        for input_d in input_dicts:
+            _run_action_or_workflow(task_ex, task_spec, input_d)
+    else:
+        _schedule_noop_action(task_ex, task_spec)
 
 
 def run_new_task(wf_cmd):
@@ -384,6 +388,32 @@ def _schedule_run_action(task_ex, task_spec, action_input):
             copy.deepcopy(action_input),
             copy.copy(task_ex.in_context)
         )
+    )
+
+    scheduler.schedule_call(
+        None,
+        'mistral.engine1.task_handler.run_action',
+        0,
+        action_ex_id=action_ex.id,
+        target=target
+    )
+
+
+def _schedule_noop_action(task_ex, task_spec):
+    wf_ex = task_ex.workflow_execution
+    wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+
+    action_def = e_utils.resolve_action_definition(
+        wf_ex.workflow_name,
+        wf_spec.get_name(),
+        'std.noop'
+    )
+
+    action_ex = _create_action_execution(task_ex, action_def, {})
+
+    target = expr.evaluate_recursively(
+        task_spec.get_target(),
+        task_ex.in_context
     )
 
     scheduler.schedule_call(
