@@ -22,7 +22,6 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
 from mistral.db.v2 import api as db_api
-# TODO(nmakhotkin) Uncomment these lines after refactoring.
 from mistral.engine1 import rpc
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -96,6 +95,39 @@ class ActionExecutions(resource.Resource):
         return cls(action_executions=[ActionExecution.sample()])
 
 
+def _load_deferred_output_field(action_ex):
+    # We need to refer to this lazy-load field explicitly in
+    # order to make sure that it is correctly loaded.
+    hasattr(action_ex, 'output')
+
+
+def _get_action_execution(id):
+    db_model = db_api.get_action_execution(id)
+
+    _load_deferred_output_field(db_model)
+
+    # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
+    # TODO(nmakhotkin): Use db_model for this instead.
+    return ActionExecution.from_dict(db_model.to_dict())
+
+
+def _get_action_executions(task_execution_id=None):
+    kwargs = {}
+
+    if task_execution_id:
+        kwargs['task_execution_id'] = task_execution_id
+
+    action_executions = []
+
+    for action_ex in db_api.get_action_executions(**kwargs):
+        _load_deferred_output_field(action_ex)
+        action_executions.append(
+            ActionExecution.from_dict(action_ex.to_dict())
+        )
+
+    return ActionExecutions(action_executions=action_executions)
+
+
 class ActionExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text)
@@ -103,9 +135,7 @@ class ActionExecutionsController(rest.RestController):
         """Return the specified action_execution."""
         LOG.info("Fetch action_execution [id=%s]" % id)
 
-        db_model = db_api.get_action_execution(id)
-
-        return ActionExecution.from_dict(db_model.to_dict())
+        return _get_action_execution(id)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text, body=ActionExecution)
@@ -146,10 +176,7 @@ class ActionExecutionsController(rest.RestController):
         """Return all action_executions within the execution."""
         LOG.info("Fetch action_executions")
 
-        action_executions = [ActionExecution.from_dict(db_model.to_dict())
-                             for db_model in db_api.get_action_executions()]
-
-        return ActionExecutions(action_executions=action_executions)
+        return _get_action_executions()
 
 
 class TasksActionExecutionController(rest.RestController):
@@ -158,11 +185,12 @@ class TasksActionExecutionController(rest.RestController):
         """Return all action executions within the task execution."""
         LOG.info("Fetch action executions")
 
-        action_execs = db_api.get_action_executions(
-            task_execution_id=task_execution_id
-        )
+        return _get_action_executions(task_execution_id=task_execution_id)
 
-        return ActionExecutions(
-            action_executions=[ActionExecution.from_dict(db_model.to_dict())
-                               for db_model in action_execs]
-        )
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose(ActionExecution, wtypes.text, wtypes.text)
+    def get(self, task_execution_id, action_ex_id):
+        """Return the specified action_execution."""
+        LOG.info("Fetch action_execution [id=%s]" % action_ex_id)
+
+        return _get_action_execution(action_ex_id)
