@@ -43,9 +43,8 @@ def run_existing_task(task_ex_id):
     """
     task_ex = db_api.get_task_execution(task_ex_id)
     task_spec = spec_parser.get_task_spec(task_ex.spec)
-    wf_spec = spec_parser.get_workflow_spec(
-        db_api.get_workflow_definition(task_ex.workflow_name).spec
-    )
+    wf_def = db_api.get_workflow_definition(task_ex.workflow_name)
+    wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
     # Explicitly change task state to RUNNING.
     task_ex.state = states.RUNNING
@@ -55,7 +54,10 @@ def run_existing_task(task_ex_id):
 
 def _run_existing_task(task_ex, task_spec, wf_spec):
     input_dicts = _get_input_dictionaries(
-        wf_spec, task_ex, task_spec, task_ex.in_context
+        wf_spec,
+        task_ex,
+        task_spec,
+        task_ex.in_context
     )
 
     # TODO(rakhmerov): May be it shouldn't be here. Need to think.
@@ -198,6 +200,7 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
     In case of 'with-items' the result list will contain input dictionaries
     for all 'with-items' iterations correspondingly.
     """
+    # TODO(rakhmerov): Think how to get rid of this.
     ctx = data_flow.extract_task_result_proxies_to_context(ctx)
 
     if not task_spec.get_with_items():
@@ -509,7 +512,9 @@ def _complete_task(task_ex, task_spec, state):
             task_ex,
             task_spec
         )
-    data_flow.destroy_task_result_if_needed(task_ex, task_spec)
+
+    if not task_spec.get_keep_result():
+        data_flow.destroy_task_result(task_ex)
 
 
 def _set_task_state(task_ex, state):

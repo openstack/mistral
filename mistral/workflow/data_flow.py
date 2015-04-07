@@ -32,25 +32,36 @@ CONF = cfg.CONF
 
 
 def evaluate_upstream_context(upstream_task_execs):
-    task_published_vars = {}
+    published_vars = {}
     ctx = {}
 
     for t_ex in upstream_task_execs:
-        task_published_vars = utils.merge_dicts(
-            task_published_vars,
+        # TODO(rakhmerov): These two merges look confusing. So it's a
+        # temporary solution.There's still the bug
+        # https://bugs.launchpad.net/mistral/+bug/1424461 that needs to be
+        # fixed using context variable versioning.
+        published_vars = utils.merge_dicts(
+            published_vars,
             t_ex.published
         )
+
         utils.merge_dicts(
-            ctx, evaluate_task_outbound_context(t_ex, including_result=False)
+            ctx,
+            evaluate_task_outbound_context(t_ex, include_result=False)
         )
 
-    ctx = utils.merge_dicts(ctx, task_published_vars)
+    ctx = utils.merge_dicts(ctx, published_vars)
 
+    # TODO(rakhmerov): IMO, this method shouldn't deal with these task ids or
+    # anything else related to task proxies. Need to refactor.
     return utils.merge_dicts(
-        ctx, _get_task_identifiers_dict(upstream_task_execs)
+        ctx,
+        _get_task_identifiers_dict(upstream_task_execs)
     )
 
 
+# TODO(rakhmerov): Think how to gt rid of this method and the whole trick
+# with upstream tasks. It doesn't look clear from design standpoint.
 def _get_task_identifiers_dict(task_execs):
     tasks = {}
 
@@ -112,9 +123,7 @@ class ProxyAwareDict(dict):
 
 
 def publish_variables(task_ex, task_spec):
-    expr_ctx = extract_task_result_proxies_to_context(
-        copy.deepcopy(task_ex.in_context)
-    )
+    expr_ctx = extract_task_result_proxies_to_context(task_ex.in_context)
 
     if task_ex.name in expr_ctx:
         LOG.warning(
@@ -131,23 +140,20 @@ def publish_variables(task_ex, task_spec):
     )
 
 
-def destroy_task_result_if_needed(task_ex, task_spec):
-    keep_result = task_spec.get_keep_result()
-
-    if not keep_result:
-        for ex in task_ex.executions:
-            if hasattr(ex, 'output'):
-                ex.output = {}
+def destroy_task_result(task_ex):
+    for ex in task_ex.executions:
+        if hasattr(ex, 'output'):
+            ex.output = {}
 
 
-def evaluate_task_outbound_context(task_ex, including_result=True):
+def evaluate_task_outbound_context(task_ex, include_result=True):
     """Evaluates task outbound Data Flow context.
 
     This method assumes that complete task output (after publisher etc.)
     has already been evaluated.
     :param task_ex: DB task.
-    :param including_result: boolean argument, if True - include the
-    TaskResultProxy in outbound context under <task_name> key.
+    :param include_result: boolean argument, if True - include the
+        TaskResultProxy in outbound context under <task_name> key.
     :return: Outbound task Data Flow context.
     """
 
@@ -160,7 +166,7 @@ def evaluate_task_outbound_context(task_ex, including_result=True):
     out_ctx = utils.merge_dicts(in_context, task_ex.published)
 
     # Add task output under key 'taskName'.
-    if including_result:
+    if include_result:
         task_ex_result = TaskResultProxy(task_ex.id)
 
         out_ctx = utils.merge_dicts(
@@ -232,6 +238,8 @@ def add_environment_to_context(wf_ex, context):
     return context
 
 
+# TODO(rakhmerov): Think how to get rid of this method. It should not be
+# exposed in API.
 def extract_task_result_proxies_to_context(ctx):
     ctx = ProxyAwareDict(copy.deepcopy(ctx))
 
