@@ -24,7 +24,7 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
-def validate_workflow_input(wf_db, wf_spec, wf_input):
+def validate_workflow_input(wf_def, wf_spec, wf_input):
     input_param_names = copy.copy((wf_input or {}).keys())
     missing_param_names = []
 
@@ -36,7 +36,7 @@ def validate_workflow_input(wf_db, wf_spec, wf_input):
 
     if missing_param_names or input_param_names:
         msg = 'Invalid workflow input [workflow=%s'
-        msg_props = [wf_db.name]
+        msg_props = [wf_def.name]
 
         if missing_param_names:
             msg += ', missing=%s'
