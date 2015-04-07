@@ -18,9 +18,7 @@ from oslo.config import cfg
 import pecan
 
 from mistral.api import access_control
-from mistral.api.hooks import engine
 from mistral import context as ctx
-from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
 from mistral.services import periodic
 
@@ -41,21 +39,19 @@ def get_pecan_config():
     return pecan.configuration.conf_from_dict(cfg_dict)
 
 
-def setup_app(config=None, transport=None):
+def setup_app(config=None):
     if not config:
         config = get_pecan_config()
 
     app_conf = dict(config.app)
 
-    db_api_v1.setup_db()
     db_api_v2.setup_db()
 
-    periodic.setup(transport)
+    periodic.setup()
 
     app = pecan.make_app(
         app_conf.pop('root'),
-        hooks=lambda: [ctx.ContextHook(),
-                       engine.EngineHook(transport=transport)],
+        hooks=lambda: [ctx.ContextHook()],
         logging=getattr(config, 'logging', {}),
         **app_conf
     )

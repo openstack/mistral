@@ -105,113 +105,6 @@ class MistralClientBase(rest_client.RestClient):
         return True
 
 
-class MistralClientV1(MistralClientBase):
-
-    def create_workbook(self, name):
-        post_body = '{"name": "%s"}' % name
-        resp, body = self.post('workbooks', post_body)
-
-        self.workbooks.append(name)
-
-        return resp, json.loads(body)
-
-    def update_workbook(self, name):
-        post_body = '{"name": "%s"}' % name
-        resp, body = self.put('workbooks/{name}'.format(name=name),
-                              post_body)
-        return resp, json.loads(body)
-
-    def get_workbook_definition(self, name):
-        headers = {'X-Auth-Token': self.auth_provider.get_token()}
-        return self.get('workbooks/{name}/definition'.format(name=name),
-                        headers)
-
-    def upload_workbook_definition(self, name):
-        headers = {'Content-Type': 'text/plain',
-                   'X-Auth-Token': self.auth_provider.get_token()}
-        text = get_resource('wb_v1.yaml')
-
-        return self.put('workbooks/{name}/definition'.format(name=name),
-                        text, headers)
-
-    def create_execution(self, workbook_name, post_body=None):
-        if post_body is None:
-            body = {
-                "workbook_name": workbook_name,
-                "task": 'hello',
-                "context": ''
-            }
-        else:
-            body = post_body
-
-        rest, body = self.post('workbooks/{name}/executions'.format(
-            name=workbook_name), json.dumps(body))
-
-        self.executions.append(json.loads(body)['id'])
-
-        return rest, json.loads(body)
-
-    def update_execution(self, execution_id, put_body):
-        return self.put('executions/{execution}'.format(
-            execution=execution_id), json.dumps(put_body))
-
-    def get_tasks_list(self, workbook_name, execution_id):
-        resp, body = self.get(
-            '/workbooks/{name}/executions/{execution}/tasks'.format(
-                name=workbook_name,
-                execution=execution_id))
-
-        return resp, json.loads(body)['tasks']
-
-    def get_task(self, workbook_name, execution_id, task_id):
-        resp, body = self.get(
-            '/workbooks/{name}/executions/{execution}/tasks/{task}'.format(
-                name=workbook_name,
-                execution=execution_id,
-                task=task_id))
-
-        return resp, json.loads(body)
-
-    def update_task(self, task_id, put_body):
-        resp, body = self.put('tasks/{task}'.format(
-            task=task_id), json.dumps(put_body))
-
-        return resp, json.loads(body)
-
-    def prepare_workbook(self, name, text):
-        headers = {'Content-Type': 'text/plain',
-                   'X-Auth-Token': self.auth_provider.get_token()}
-
-        return self.put('workbooks/{name}/definition'.format(name=name),
-                        text, headers)
-
-    def create_execution_wait_success(self, workbook_name,
-                                      context, task, timeout=180):
-
-        body = {
-            "workbook_name": workbook_name,
-            "task": task,
-            "context": json.dumps(context)
-        }
-
-        resp, ex_body = self.create_execution(workbook_name, body)
-
-        self.wait_execution_success(ex_body, timeout)
-
-        resp, ex_body = self.get_object('executions', ex_body['id'])
-
-        return resp, ex_body
-
-    def get_task_by_name(self, workbook_name, execution_id, name):
-        _, tasks = self.get_tasks_list(workbook_name, execution_id)
-        for task in tasks:
-            if task['name'] == name:
-                _, task_body = self.get_task(
-                    workbook_name, execution_id, task['id'])
-
-                return task_body
-
-
 class MistralClientV2(MistralClientBase):
 
     def post_request(self, url, file_name):
@@ -335,9 +228,6 @@ class TestCase(test.BaseTestCase):
         else:
             cls.mgr = clients.Manager()
 
-        if cls._service == 'workflow':
-            cls.client = MistralClientV1(
-                cls.mgr.auth_provider, cls._service)
         if cls._service == 'workflowv2':
             cls.client = MistralClientV2(
                 cls.mgr.auth_provider, cls._service)

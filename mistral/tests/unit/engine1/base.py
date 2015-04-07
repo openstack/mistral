@@ -76,6 +76,10 @@ class EngineTestCase(base.DbTestCase):
 
         # Set the transport to 'fake' for Engine tests.
         cfg.CONF.set_default('rpc_backend', 'fake')
+
+        # Drop all RPC objects (transport, clients).
+        rpc.cleanup()
+
         transport = rpc.get_transport()
 
         self.engine_client = rpc.EngineClient(transport)
@@ -94,11 +98,10 @@ class EngineTestCase(base.DbTestCase):
         # Start scheduler.
         scheduler_thread_group = scheduler.setup()
 
+        self.addCleanup(self.kill_threads)
         self.addCleanup(scheduler_thread_group.stop)
 
-    def tearDown(self):
-        super(EngineTestCase, self).tearDown()
-
+    def kill_threads(self):
         LOG.info("Finishing engine and executor threads...")
 
         [thread.kill() for thread in self.threads]

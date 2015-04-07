@@ -30,6 +30,18 @@ _ENGINE_CLIENT = None
 _EXECUTOR_CLIENT = None
 
 
+def cleanup():
+    """Intended to be used by tests to recreate all RPC related objects."""
+
+    global _TRANSPORT
+    global _ENGINE_CLIENT
+    global _EXECUTOR_CLIENT
+
+    _TRANSPORT = None
+    _ENGINE_CLIENT = None
+    _EXECUTOR_CLIENT = None
+
+
 def get_transport():
     global _TRANSPORT
 

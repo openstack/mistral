@@ -15,56 +15,18 @@
 #    limitations under the License.
 
 from mistral import context as auth_ctx
-from mistral.db.v1 import api as db_api_v1
 from mistral.db.v2 import api as db_api_v2
-from mistral import engine
 from mistral.engine1 import rpc
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral.services import security
 from mistral.services import triggers
-from mistral.workbook import parser as spec_parser
 
 LOG = log.getLogger(__name__)
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
-
-    def __init__(self, transport=None):
-        super(MistralPeriodicTasks, self).__init__()
-
-        self.transport = engine.get_transport(transport)
-        self.engine = engine.EngineClient(self.transport)
-
-    @periodic_task.periodic_task(spacing=1, run_immediately=True)
-    def process_cron_triggers_v1(self, ctx):
-        for t in triggers.get_next_triggers_v1():
-            LOG.debug("Processing cron trigger %s" % t)
-            # Setup admin context before schedule triggers.
-            wb = db_api_v1.workbook_get(t['workbook_name'])
-            auth_ctx.set_ctx(
-                security.create_context(wb.trust_id, wb.project_id)
-            )
-
-            try:
-                task = spec_parser.get_workbook_spec_from_yaml(
-                    wb['definition']).get_trigger_task_name(t['name'])
-
-                self.engine.start_workflow_execution(wb['name'], task)
-            finally:
-                next_time = triggers.get_next_execution_time(
-                    t['pattern'],
-                    t['next_execution_time']
-                )
-
-                db_api_v1.trigger_update(
-                    t['id'],
-                    {'next_execution_time': next_time}
-                )
-
-                auth_ctx.set_ctx(None)
-
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
         for t in triggers.get_next_cron_triggers():
@@ -100,9 +62,9 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                     auth_ctx.set_ctx(None)
 
 
-def setup(transport):
+def setup():
     tg = threadgroup.ThreadGroup()
-    pt = MistralPeriodicTasks(transport=transport)
+    pt = MistralPeriodicTasks()
 
     ctx = auth_ctx.MistralContext(
         user_id=None,

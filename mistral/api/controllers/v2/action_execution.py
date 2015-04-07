@@ -166,8 +166,7 @@ class ActionExecutionsController(rest.RestController):
                 ([states.SUCCESS, states.ERROR], action_execution.state)
             )
 
-        engine = rpc.get_engine_client()
-        values = engine.on_action_complete(id, result)
+        values = rpc.get_engine_client().on_action_complete(id, result)
 
         return ActionExecution.from_dict(values)
 

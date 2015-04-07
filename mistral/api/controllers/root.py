@@ -19,7 +19,6 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
-from mistral.api.controllers.v1 import root as v1_root
 from mistral.api.controllers.v2 import root as v2_root
 from mistral.openstack.common import log as logging
 
@@ -42,29 +41,28 @@ class APIVersion(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(id='v1.0',
-                   status='CURRENT',
-                   link=resource.Link(target_name='v1',
-                                      href='http://example.com:9777/v1'))
+        return cls(
+            id='v1.0',
+            status='CURRENT',
+            link=resource.Link(
+                target_name='v1',
+                href='http://example.com:9777/v1'
+            )
+        )
 
 
 class RootController(object):
-
-    v1 = v1_root.Controller()
     v2 = v2_root.Controller()
 
     @wsme_pecan.wsexpose([APIVersion])
     def index(self):
         LOG.debug("Fetching API versions.")
 
-        host_url_v1 = '%s/%s' % (pecan.request.host_url, 'v1')
-        api_v1 = APIVersion(id='v1.0',
-                            status='SUPPORTED',
-                            link=resource.Link(href=host_url_v1, target='v1'))
-
         host_url_v2 = '%s/%s' % (pecan.request.host_url, 'v2')
-        api_v2 = APIVersion(id='v2.0',
-                            status='CURRENT',
-                            link=resource.Link(href=host_url_v2, target='v2'))
+        api_v2 = APIVersion(
+            id='v2.0',
+            status='CURRENT',
+            link=resource.Link(href=host_url_v2, target='v2')
+        )
 
-        return [api_v1, api_v2]
+        return [api_v2]
