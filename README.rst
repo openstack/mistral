@@ -145,17 +145,17 @@ To run Mistral Task Executor instance perform the following command in a shell::
 
 Note that at least one Engine instance and one Executor instance should be running so that workflow tasks are processed by Mistral.
 
-If it is needed to run some tasks on specific executor then *task affinity* feature can be used to send these tasks directly to this executor. In configuration file edit section "executor" *host* property::
+If it is needed to run some tasks on specific executor then *task affinity* feature can be used to send these tasks directly to specific executor. In configuration file edit section "executor" *host* property::
 
     [executor]
     host = my_favorite_executor
 
-Then start (restart) executor. Use *targets* task property to specify this executor::
+Then start (restart) executor. Use *target* task property to specify this executor::
 
     ... Workflow YAML ...
     task1:
       ...
-      targets: ["my_favorite_executor"]
+      target: my_favorite_executor
     ... Workflow YAML ...
 
 Running Multiple Mistral Servers Under the Same Process
