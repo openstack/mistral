@@ -276,7 +276,7 @@ class JoinEngineTest(base.EngineTestCase):
           type: direct
 
           output:
-            result: <% $.result4 %>
+            result: <% $.result5 %>
 
           tasks:
             task1:
@@ -311,7 +311,9 @@ class JoinEngineTest(base.EngineTestCase):
               join: 2
               action: std.echo
               input:
-                output: <%$.result1%>,<%$.result2%>,<%$.result3%>,<%$.result4%>
+                output: |
+                  <% result1 in $.keys() %>,<% result2 in $.keys() %>,
+                  <%result3 in $.keys()%>,<%result4 in $.keys()%>
               publish:
                 result5: <% $.task5 %>
         """
@@ -345,7 +347,7 @@ class JoinEngineTest(base.EngineTestCase):
         result5 = task5.published['result5']
 
         self.assertIsNotNone(result5)
-        self.assertEqual(2, result5.count('None'))
+        self.assertEqual(2, result5.count('True'))
 
     def test_discriminator(self):
         wf_discriminator = """---
@@ -383,7 +385,9 @@ class JoinEngineTest(base.EngineTestCase):
               join: one
               action: std.echo
               input:
-                output: <%$.result1%>,<%$.result2 %>,<%$.result3%>
+                output: |
+                  <% result1 in $.keys() %>,<% result2 in $.keys() %>,
+                  <% result3 in $.keys() %>
               publish:
                 result4: <% $.task4 %>
         """
@@ -415,7 +419,7 @@ class JoinEngineTest(base.EngineTestCase):
         result4 = task4.published['result4']
 
         self.assertIsNotNone(result4)
-        self.assertEqual(2, result4.count('None'))
+        self.assertEqual(2, result4.count('False'))
 
     def test_full_join_parallel_published_vars(self):
         wfs_tasks_join_complex = """---

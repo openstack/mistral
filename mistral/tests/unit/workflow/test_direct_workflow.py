@@ -14,6 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
+from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
 from mistral.tests import base
@@ -50,7 +53,7 @@ workflows:
 """
 
 
-class DirectWorkflowControllerTest(base.BaseTest):
+class DirectWorkflowControllerTest(base.DbTestCase):
     def setUp(self):
         super(DirectWorkflowControllerTest, self).setUp()
 
@@ -71,6 +74,7 @@ class DirectWorkflowControllerTest(base.BaseTest):
         tasks_spec = self.wb_spec.get_workflows()['wf'].get_tasks()
 
         task_ex = models.TaskExecution(
+            id=self.getUniqueString('id'),
             name=name,
             spec=tasks_spec[name].to_dict(),
             state=state
@@ -80,7 +84,8 @@ class DirectWorkflowControllerTest(base.BaseTest):
 
         return task_ex
 
-    def test_continue_workflow(self):
+    @mock.patch.object(db_api, 'get_task_execution')
+    def test_continue_workflow(self, get_task_execution):
         # Workflow execution is in initial step. No running tasks.
         cmds = self.wf_ctrl.continue_workflow()
 
@@ -96,6 +101,8 @@ class DirectWorkflowControllerTest(base.BaseTest):
         # Assume that 'task1' completed successfully.
         task1_ex = self._create_task_execution('task1', states.SUCCESS)
         task1_ex.published = {'res1': 'Hey'}
+
+        get_task_execution.return_value = task1_ex
 
         task1_ex.executions.append(
             models.ActionExecution(

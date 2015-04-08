@@ -14,7 +14,6 @@
 
 import mock
 from oslo.config import cfg
-from yaql import exceptions as yaql_exc
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as de
@@ -244,13 +243,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
             self.assertRaises(
-                yaql_exc.YaqlException, self.engine.start_workflow, 'wf', None)
+                exc.YaqlEvaluationException,
+                self.engine.start_workflow, 'wf', None
+            )
 
             mock_fw.assert_called_once()
             self.assertTrue(
                 issubclass(
                     type(mock_fw.call_args[0][1]),
-                    yaql_exc.YaqlException
+                    exc.YaqlEvaluationException
                 ),
                 "Called with a right exception"
             )

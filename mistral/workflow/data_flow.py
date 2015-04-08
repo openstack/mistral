@@ -103,6 +103,9 @@ class TaskResultProxy(object):
     def __str__(self):
         return "%s [task_id = '%s']" % (self.__class__.__name__, self.task_id)
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class ProxyAwareDict(dict):
     def __getitem__(self, item):
@@ -117,6 +120,10 @@ class ProxyAwareDict(dict):
             return self.__getitem__(k)
         except KeyError:
             return d
+
+    def iteritems(self):
+        for k, _ in super(ProxyAwareDict, self).iteritems():
+            yield k, self[k]
 
     def to_builtin_dict(self):
         return {k: self[k] for k, _ in self.iteritems()}
