@@ -4,7 +4,8 @@ Namespaces:
       hello:
         class: std.echo
         base-parameters:
-           output: Hello!
+          output: Hello!
+
 Workflow:
   tasks:
     hello:

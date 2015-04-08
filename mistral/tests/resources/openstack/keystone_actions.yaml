@@ -1,6 +1,0 @@
-Workflow:
-  tasks:
-    get_some_endpoint:
-      action: keystone.service_catalog_get_data
-      publish:
-        endpoint_url: <% $[0].endpoints[0].url %>
