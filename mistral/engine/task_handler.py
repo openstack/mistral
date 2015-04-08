@@ -16,9 +16,9 @@ import copy
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine1 import policies
-from mistral.engine1 import rpc
-from mistral.engine1 import utils as e_utils
+from mistral.engine import policies
+from mistral.engine import rpc
+from mistral.engine import utils as e_utils
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
@@ -395,7 +395,7 @@ def _schedule_run_action(task_ex, task_spec, action_input):
 
     scheduler.schedule_call(
         None,
-        'mistral.engine1.task_handler.run_action',
+        'mistral.engine.task_handler.run_action',
         0,
         action_ex_id=action_ex.id,
         target=target
@@ -421,7 +421,7 @@ def _schedule_noop_action(task_ex, task_spec):
 
     scheduler.schedule_call(
         None,
-        'mistral.engine1.task_handler.run_action',
+        'mistral.engine.task_handler.run_action',
         0,
         action_ex_id=action_ex.id,
         target=target
@@ -467,7 +467,7 @@ def _schedule_run_workflow(task_ex, task_spec, wf_input):
 
     scheduler.schedule_call(
         None,
-        'mistral.engine1.task_handler.run_workflow',
+        'mistral.engine.task_handler.run_workflow',
         0,
         wf_name=wf_def.name,
         wf_input=wf_input,

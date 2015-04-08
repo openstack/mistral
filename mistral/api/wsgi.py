@@ -14,7 +14,7 @@
 
 from mistral.api import app
 from mistral import config
-from mistral.engine1 import rpc
+from mistral.engine import rpc
 
 config.parse_args()
 transport = rpc.get_transport()

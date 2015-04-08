@@ -17,7 +17,7 @@ from oslo.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
-from mistral.tests.unit.engine1 import base
+from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)

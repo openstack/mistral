@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api
-from mistral.engine1 import rpc
+from mistral.engine import rpc
 from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.utils import wf_trace
@@ -47,7 +47,7 @@ def fail_workflow(wf_ex, state_info):
 def _schedule_send_result_to_parent_workflow(wf_ex):
     scheduler.schedule_call(
         None,
-        'mistral.engine1.workflow_handler.send_result_to_parent_workflow',
+        'mistral.engine.workflow_handler.send_result_to_parent_workflow',
         0,
         wf_ex_id=wf_ex.id
     )

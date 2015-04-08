@@ -17,7 +17,7 @@ from oslo.config import cfg
 from oslo import messaging
 
 from mistral import context as auth_ctx
-from mistral.engine1 import base
+from mistral.engine import base
 from mistral.openstack.common import log as logging
 from mistral.workflow import utils as wf_utils
 

@@ -16,10 +16,10 @@ import mock
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine1 import default_engine as de
+from mistral.engine import default_engine as de
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
-from mistral.tests.unit.engine1 import base
+from mistral.tests.unit.engine import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils

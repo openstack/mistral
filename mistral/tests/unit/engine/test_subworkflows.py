@@ -22,7 +22,7 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
-from mistral.tests.unit.engine1 import base
+from mistral.tests.unit.engine import base
 
 LOG = logging.getLogger(__name__)
 

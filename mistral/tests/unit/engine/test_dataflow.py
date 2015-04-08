@@ -20,7 +20,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
 from mistral.tests import base as test_base
-from mistral.tests.unit.engine1 import base as engine_test_base
+from mistral.tests.unit.engine import base as engine_test_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 

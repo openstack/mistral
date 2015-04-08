@@ -18,10 +18,10 @@ import traceback
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
-from mistral.engine1 import base
-from mistral.engine1 import task_handler
-from mistral.engine1 import utils
-from mistral.engine1 import workflow_handler as wf_handler
+from mistral.engine import base
+from mistral.engine import task_handler
+from mistral.engine import utils
+from mistral.engine import workflow_handler as wf_handler
 from mistral.openstack.common import log as logging
 from mistral import utils as u
 from mistral.utils import wf_trace

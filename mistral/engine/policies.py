@@ -14,15 +14,15 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api
-from mistral.engine1 import base
-from mistral.engine1 import rpc
+from mistral.engine import base
+from mistral.engine import rpc
 from mistral.services import scheduler
 from mistral.utils import wf_trace
 from mistral.workflow import states
 
 
-_ENGINE_CLIENT_PATH = 'mistral.engine1.rpc.get_engine_client'
-_RUN_EXISTING_TASK_PATH = 'mistral.engine1.task_handler.run_existing_task'
+_ENGINE_CLIENT_PATH = 'mistral.engine.rpc.get_engine_client'
+_RUN_EXISTING_TASK_PATH = 'mistral.engine.task_handler.run_existing_task'
 
 
 def _log_task_delay(task_ex, delay_sec):
@@ -325,7 +325,7 @@ class TimeoutPolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            'mistral.engine1.policies.fail_task_if_incomplete',
+            'mistral.engine.policies.fail_task_if_incomplete',
             self.delay,
             task_ex_id=task_ex.id,
             timeout=self.delay

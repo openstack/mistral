@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 from mistral.actions import action_factory as a_f
-from mistral.engine1 import base
+from mistral.engine import base
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.utils import inspect_utils as i_u

@@ -16,7 +16,7 @@
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
-from mistral.engine1 import rpc
+from mistral.engine import rpc
 from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup

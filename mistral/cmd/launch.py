@@ -42,9 +42,9 @@ from mistral.api import app
 from mistral import config
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api
-from mistral.engine1 import default_engine as def_eng
-from mistral.engine1 import default_executor as def_executor
-from mistral.engine1 import rpc
+from mistral.engine import default_engine as def_eng
+from mistral.engine import default_executor as def_executor
+from mistral.engine import rpc
 from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral import version

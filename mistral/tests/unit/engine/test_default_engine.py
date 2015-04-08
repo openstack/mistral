@@ -21,7 +21,7 @@ from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine1 import default_engine as d_eng
+from mistral.engine import default_engine as d_eng
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
