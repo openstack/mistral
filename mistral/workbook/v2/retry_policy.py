@@ -51,6 +51,14 @@ class RetrySpec(base.BaseSpec):
         self._count = data['count']
         self._delay = data['delay']
 
+    def validate(self):
+        super(RetrySpec, self).validate()
+
+        # Validate YAQL expressions.
+        self.validate_yaql_expr(self._data.get('count'))
+        self.validate_yaql_expr(self._data.get('delay'))
+        self.validate_yaql_expr(self._data.get('break-on'))
+
     def get_count(self):
         return self._count
 

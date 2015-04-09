@@ -79,6 +79,19 @@ WB_DEF_DSL_PARSE_EXCEPTION = """
 %
 """
 
+WB_DEF_YAQL_PARSE_EXCEPTION = """
+---
+version: '2.0'
+name: 'book'
+
+workflows:
+  flow:
+    type: direct
+    tasks:
+      task1:
+        action: std.echo output=<% * %>
+"""
+
 MOCK_WORKBOOK = mock.MagicMock(return_value=WORKBOOK_DB)
 MOCK_WORKBOOKS = mock.MagicMock(return_value=[WORKBOOK_DB])
 MOCK_UPDATED_WORKBOOK = mock.MagicMock(return_value=UPDATED_WORKBOOK_DB)
@@ -233,6 +246,19 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Definition could not be parsed", resp.json['error'])
+
+    def test_validate_yaql_parse_exception(self):
+        resp = self.app.post(
+            '/v2/workbooks/validate',
+            WB_DEF_YAQL_PARSE_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("unexpected '*' at position 1 of expression",
+                      resp.json['error'])
 
     def test_validate_empty(self):
         resp = self.app.post(

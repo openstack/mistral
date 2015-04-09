@@ -91,6 +91,18 @@ class BaseSpec(object):
         except jsonschema.ValidationError as e:
             raise exc.InvalidModelException("Invalid DSL: %s" % e)
 
+    def validate_yaql_expr(self, dsl_part):
+        if isinstance(dsl_part, six.string_types):
+            expr.validate(dsl_part)
+        elif isinstance(dsl_part, list):
+            for expression in dsl_part:
+                if isinstance(expression, six.string_types):
+                    expr.validate(expression)
+        elif isinstance(dsl_part, dict):
+            for expression in dsl_part.values():
+                if isinstance(expression, six.string_types):
+                    expr.validate(expression)
+
     def _spec_property(self, prop_name, spec_cls):
         prop_val = self._data.get(prop_name)
 

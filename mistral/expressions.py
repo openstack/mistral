@@ -28,6 +28,7 @@ from mistral import yaql_utils
 
 
 LOG = logging.getLogger(__name__)
+YAQL_ENGINE = factory.YaqlFactory().create()
 
 
 class Evaluator(object):
@@ -36,6 +37,16 @@ class Evaluator(object):
     Having this interface gives the flexibility to change the actual expression
     language used in Mistral DSL for conditions, output calculation etc.
     """
+
+    @classmethod
+    @abc.abstractmethod
+    def validate(cls, expression):
+        """Parse and validates the expression.
+
+        :param expression: Expression string
+        :return: True if expression is valid
+        """
+        pass
 
     @classmethod
     @abc.abstractmethod
@@ -61,14 +72,21 @@ class Evaluator(object):
 
 class YAQLEvaluator(Evaluator):
     @classmethod
+    def validate(cls, expression):
+        LOG.debug("Validating YAQL expression [expression='%s']", expression)
+
+        try:
+            YAQL_ENGINE(expression)
+        except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
+            raise exc.YaqlEvaluationException(e.message)
+
+    @classmethod
     def evaluate(cls, expression, data_context):
         LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]"
                   % (expression, data_context))
 
-        engine = factory.YaqlFactory().create()
-
         try:
-            result = engine(expression).evaluate(
+            result = YAQL_ENGINE(expression).evaluate(
                 data=data_context,
                 context=yaql_utils.create_yaql_context()
             )
@@ -96,6 +114,21 @@ class InlineYAQLEvaluator(YAQLEvaluator):
     # This regular expression will look for multiple occurrences of YAQL
     # expressions in '<% %>' (i.e. <% any_symbols %>) within a string.
     find_expression_pattern = re.compile(INLINE_YAQL_REGEXP)
+
+    @classmethod
+    def validate(cls, expression):
+        LOG.debug(
+            "Validating inline YAQL expression [expression='%s']", expression)
+
+        if not isinstance(expression, six.string_types):
+            raise exc.YaqlEvaluationException("Unsupported type '%s'." %
+                                              type(expression))
+
+        found_expressions = cls.find_inline_expressions(expression)
+
+        if found_expressions:
+            [super(InlineYAQLEvaluator, cls).validate(expr.strip("<%>"))
+             for expr in found_expressions]
 
     @classmethod
     def evaluate(cls, expression, data_context):
@@ -132,6 +165,10 @@ class InlineYAQLEvaluator(YAQLEvaluator):
 
 # TODO(rakhmerov): Make it configurable.
 _EVALUATOR = InlineYAQLEvaluator
+
+
+def validate(expression):
+    return _EVALUATOR.validate(expression)
 
 
 def evaluate(expression, context):

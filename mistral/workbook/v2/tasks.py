@@ -97,6 +97,15 @@ class TaskSpec(base.BaseSpec):
 
         self._transform_with_items()
 
+        # Validate YAQL expressions.
+        if action or workflow:
+            inline_params = self._parse_cmd_and_input(action or workflow)[1]
+            self.validate_yaql_expr(inline_params)
+
+        self.validate_yaql_expr(self._data.get('input', {}))
+        self.validate_yaql_expr(self._data.get('publish', {}))
+        self.validate_yaql_expr(self._data.get('keep-result', {}))
+
     def _transform_with_items(self):
         raw = self._data.get('with-items', [])
         with_items = {}
@@ -118,6 +127,10 @@ class TaskSpec(base.BaseSpec):
                 raise exc.InvalidModelException(msg)
 
             var_name, array = match.groups()
+
+            # Validate YAQL expression that may follow after "in" for the
+            # with-items syntax "var in {[some, list] | <% $.array %> }".
+            self.validate_yaql_expr(array)
 
             if array.startswith('['):
                 try:
@@ -222,6 +235,13 @@ class DirectWorkflowTaskSpec(TaskSpec):
                 msg = ("Task property 'join' is only allowed to be an"
                        " integer, 'all' or 'one': %s" % self._data)
                 raise exc.InvalidModelException(msg)
+
+        # Validate YAQL expressions.
+        [self.validate_yaql_expr(transition)
+         for transition in (self._data.get('on-complete', []) +
+                            self._data.get('on-success', []) +
+                            self._data.get('on-error', []))
+         if isinstance(transition, dict)]
 
     def get_join(self):
         return self._join

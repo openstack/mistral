@@ -82,6 +82,26 @@ class YaqlEvaluatorTest(base.BaseTest):
         self.assertEqual('3', self._evaluator.evaluate('str($)', '3'))
         self.assertEqual('3', self._evaluator.evaluate('str($)', 3))
 
+    def test_validate(self):
+        self._evaluator.validate('abc')
+        self._evaluator.validate('1')
+        self._evaluator.validate('1 + 2')
+        self._evaluator.validate('$.a1')
+        self._evaluator.validate('$.a1 * $.a2')
+
+    def test_validate_failed(self):
+        self.assertRaises(exc.YaqlEvaluationException,
+                          self._evaluator.validate,
+                          '*')
+
+        self.assertRaises(exc.YaqlEvaluationException,
+                          self._evaluator.validate,
+                          [1, 2, 3])
+
+        self.assertRaises(exc.YaqlEvaluationException,
+                          self._evaluator.validate,
+                          {'a': 1})
+
 
 class InlineYAQLEvaluatorTest(base.BaseTest):
     def setUp(self):
@@ -125,6 +145,29 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
     def test_function_string(self):
         self.assertEqual('3', self._evaluator.evaluate('<% str($) %>', '3'))
         self.assertEqual('3', self._evaluator.evaluate('<% str($) %>', 3))
+
+    def test_validate(self):
+        self._evaluator.validate('There is no expression.')
+        self._evaluator.validate('<% abc %>')
+        self._evaluator.validate('<% 1 %>')
+        self._evaluator.validate('<% 1 + 2 %>')
+        self._evaluator.validate('<% $.a1 %>')
+        self._evaluator.validate('<% $.a1 * $.a2 %>')
+        self._evaluator.validate('<% $.a1 %> is <% $.a2 %>')
+        self._evaluator.validate('The value is <% $.a1 %>.')
+
+    def test_validate_failed(self):
+        self.assertRaises(exc.YaqlEvaluationException,
+                          self._evaluator.validate,
+                          'The value is <% * %>.')
+
+        self.assertRaises(exc.YaqlEvaluationException,
+                          self._evaluator.validate,
+                          [1, 2, 3])
+
+        self.assertRaises(exc.YaqlEvaluationException,
+                          self._evaluator.validate,
+                          {'a': 1})
 
 
 class ExpressionsTest(base.BaseTest):

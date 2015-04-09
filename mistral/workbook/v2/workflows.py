@@ -83,6 +83,9 @@ class WorkflowSpec(base.BaseSpec):
                 "Workflow doesn't have any tasks [data=%s]" % self._data
             )
 
+        # Validate YAQL expressions.
+        self.validate_yaql_expr(self._data.get('output', {}))
+
     def get_name(self):
         return self._name
 

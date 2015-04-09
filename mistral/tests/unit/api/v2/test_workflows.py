@@ -90,6 +90,18 @@ WF_DEF_DSL_PARSE_EXCEPTION = """
 %
 """
 
+WF_DEF_YAQL_PARSE_EXCEPTION = """
+---
+version: '2.0'
+
+flow:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.echo output=<% * %>
+"""
+
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
 MOCK_WFS = mock.MagicMock(return_value=[WF_DB])
 MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
@@ -259,6 +271,19 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Definition could not be parsed", resp.json['error'])
+
+    def test_validate_yaql_parse_exception(self):
+        resp = self.app.post(
+            '/v2/workflows/validate',
+            WF_DEF_YAQL_PARSE_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("unexpected '*' at position 1 of expression",
+                      resp.json['error'])
 
     def test_validate_empty(self):
         resp = self.app.post(

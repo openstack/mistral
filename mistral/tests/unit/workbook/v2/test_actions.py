@@ -41,6 +41,7 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
             ({'actions': {'a1': {'base': 'std.echo output="foo"'}}}, False),
             ({'actions': {'a1': {'base': 'std.echo output="<% $.x %>"'}}},
              False),
+            ({'actions': {'a1': {'base': 'std.echo output="<% * %>"'}}}, True)
         ]
 
         for actions, expect_error in tests:
@@ -51,7 +52,8 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
         tests = [
             ({'base-input': {}}, True),
             ({'base-input': None}, True),
-            ({'base-input': {'k1': 'v1', 'k2': '<% $.v2 %>'}}, False)
+            ({'base-input': {'k1': 'v1', 'k2': '<% $.v2 %>'}}, False),
+            ({'base-input': {'k1': 'v1', 'k2': '<% * %>'}}, True)
         ]
 
         actions = {
@@ -96,6 +98,7 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
             ({'output': 0.12345}, False),
             ({'output': 'foobar'}, False),
             ({'output': '<% $.x %>'}, False),
+            ({'output': '<% * %>'}, True),
             ({'output': ['v1']}, False),
             ({'output': {'k1': 'v1'}}, False)
         ]
