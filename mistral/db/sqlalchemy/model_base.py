@@ -81,6 +81,19 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
         return d
 
+    def get_clone(self):
+        """Clones current object, loads all fields and returns the result."""
+        m = self.__class__()
+
+        for col in self.__table__.columns:
+            if hasattr(self, col.name):
+                setattr(m, col.name, getattr(self, col.name))
+
+        setattr(m, 'created_at', getattr(self, 'created_at').isoformat(' '))
+        setattr(m, 'updated_at', getattr(self, 'updated_at').isoformat(' '))
+
+        return m
+
     def __repr__(self):
         return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
 
