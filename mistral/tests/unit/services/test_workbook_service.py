@@ -43,6 +43,7 @@ actions:
 workflows:
   wf1:
     type: reverse
+    tags: [wf_test]
     input:
       - param1
     output:
@@ -140,6 +141,8 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf1', wf1_spec.get_name())
         self.assertEqual('reverse', wf1_spec.get_type())
+        self.assertListEqual(['wf_test'], wf1_spec.get_tags())
+        self.assertListEqual(['wf_test'], wf1_db.tags)
 
         # Workflow 2.
         wf2_db = self._assert_single_item(db_wfs, name='my_wb.wf2')
