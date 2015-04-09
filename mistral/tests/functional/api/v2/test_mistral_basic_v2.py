@@ -107,15 +107,20 @@ class WorkbookTestsV2(base.TestCase):
 
     @test.attr(type='negative')
     def test_create_wb_with_invalid_def(self):
-        self.assertRaises(exceptions.ServerFault,
-                          self.client.create_workbook,
-                          'wb_v1.yaml')
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.create_workbook,
+            'wb_v1.yaml'
+        )
 
     @test.attr(type='negative')
     def test_update_wb_with_invalid_def(self):
-        self.assertRaises(exceptions.ServerFault,
-                          self.client.update_request,
-                          'workbooks', 'wb_v1.yaml')
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.update_request,
+            'workbooks',
+            'wb_v1.yaml'
+        )
 
 
 class WorkflowTestsV2(base.TestCase):
