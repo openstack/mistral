@@ -54,7 +54,7 @@ workflows:
 
 RESUME_WORKBOOK_REVERSE = """
 ---
-version: 2.0
+version: '2.0'
 
 name: resume_reverse
 

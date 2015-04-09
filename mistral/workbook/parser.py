@@ -17,20 +17,14 @@ import yaml
 from yaml import error
 
 from mistral import exceptions as exc
-from mistral.workbook.v1 import actions as actions_v1
-from mistral.workbook.v1 import namespaces as ns_v1
-from mistral.workbook.v1 import tasks as tasks_v1
-from mistral.workbook.v1 import workbook as wb_v1
-from mistral.workbook.v1 import workflow as wf_v1
 from mistral.workbook.v2 import actions as actions_v2
 from mistral.workbook.v2 import tasks as tasks_v2
 from mistral.workbook.v2 import workbook as wb_v2
 from mistral.workbook.v2 import workflows as wf_v2
 
-V1_0 = '1.0'
 V2_0 = '2.0'
 
-ALL_VERSIONS = [V1_0, V2_0]
+ALL_VERSIONS = [V2_0]
 
 
 def parse_yaml(text):
@@ -49,8 +43,8 @@ def parse_yaml(text):
 
 
 def _get_spec_version(spec_dict):
-    # If version is not specified it will '1.0' by default.
-    ver = V1_0
+    # If version is not specified it will '2.0' by default.
+    ver = V2_0
 
     if 'version' in spec_dict:
         ver = spec_dict['version']
@@ -66,30 +60,21 @@ def _get_spec_version(spec_dict):
 
 
 def get_workbook_spec(spec_dict):
-    if _get_spec_version(spec_dict) == V1_0:
-        return wb_v1.WorkbookSpec(spec_dict)
-    else:
+    if _get_spec_version(spec_dict) == V2_0:
         return wb_v2.WorkbookSpec(spec_dict)
+
+    return None
 
 
 def get_workbook_spec_from_yaml(text):
-    spec_dict = parse_yaml(text)
-
-    return get_workbook_spec(spec_dict)
-
-
-def get_namespace_spec(spec_dict):
-    if _get_spec_version(spec_dict) == V1_0:
-        return ns_v1.NamespaceSpec(spec_dict)
-    else:
-        return None
+    return get_workbook_spec(parse_yaml(text))
 
 
 def get_action_spec(spec_dict):
-    if _get_spec_version(spec_dict) == V1_0:
-        return actions_v1.ActionSpec(spec_dict)
-    else:
+    if _get_spec_version(spec_dict) == V2_0:
         return actions_v2.ActionSpec(spec_dict)
+
+    return None
 
 
 def get_action_spec_from_yaml(text, action_name):
@@ -105,16 +90,14 @@ def get_action_list_spec(spec_dict):
 
 
 def get_action_list_spec_from_yaml(text):
-    spec_dict = parse_yaml(text)
-
-    return get_action_list_spec(spec_dict)
+    return get_action_list_spec(parse_yaml(text))
 
 
 def get_workflow_spec(spec_dict):
-    if _get_spec_version(spec_dict) == V1_0:
-        return wf_v1.WorkflowSpec(spec_dict)
-    else:
+    if _get_spec_version(spec_dict) == V2_0:
         return wf_v2.WorkflowSpec(spec_dict)
+
+    return None
 
 
 def get_workflow_list_spec(spec_dict):
@@ -134,9 +117,7 @@ def get_workflow_list_spec_from_yaml(text):
 
 
 def get_task_spec(spec_dict):
-    if _get_spec_version(spec_dict) == V1_0:
-        return tasks_v1.TaskSpec(spec_dict)
-    else:
+    if _get_spec_version(spec_dict) == V2_0:
         workflow_type = spec_dict.get('type')
 
         if workflow_type == 'direct':
@@ -146,7 +127,4 @@ def get_task_spec(spec_dict):
         else:
             raise Exception('Unsupported workflow type "%s".' % workflow_type)
 
-
-def get_trigger_spec(spec_dict):
-    # TODO(rakhmerov): Implement.
-    pass
+    return None

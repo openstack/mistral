@@ -1,4 +1,0 @@
-Workflow:
-  tasks:
-    heat_stack_list:
-      action: heat.stacks_list

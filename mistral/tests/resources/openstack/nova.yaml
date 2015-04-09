@@ -1,7 +1,0 @@
-Workflow:
-  tasks:
-    nova_server_findall:
-      action: nova.servers_findall
-      parameters:
-        status: ACTIVE
-        tenant_id: 8e44eb2ce32
