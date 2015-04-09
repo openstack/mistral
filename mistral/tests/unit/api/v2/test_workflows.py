@@ -72,7 +72,7 @@ UPDATED_WF_DB['definition'] = UPDATED_WF_DEFINITION
 UPDATED_WF = copy.copy(WF)
 UPDATED_WF['definition'] = UPDATED_WF_DEFINITION
 
-INVALID_WF_DEFINITION = """
+WF_DEF_INVALID_MODEL_EXCEPTION = """
 ---
 version: '2.0'
 
@@ -83,6 +83,11 @@ flow:
     task1:
       action: std.echo output="Hi"
       workflow: wf1
+"""
+
+WF_DEF_DSL_PARSE_EXCEPTION = """
+---
+%
 """
 
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
@@ -139,7 +144,7 @@ class TestWorkflowsController(base.FunctionalTest):
     def test_put_invalid(self):
         resp = self.app.put(
             '/v2/workflows',
-            INVALID_WF_DEFINITION,
+            WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -182,7 +187,7 @@ class TestWorkflowsController(base.FunctionalTest):
     def test_post_invalid(self):
         resp = self.app.post(
             '/v2/workflows',
-            INVALID_WF_DEFINITION,
+            WF_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -219,3 +224,50 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['workflows']), 0)
+
+    def test_validate(self):
+        resp = self.app.post(
+            '/v2/workflows/validate',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertTrue(resp.json['valid'])
+
+    def test_validate_invalid_model_exception(self):
+        resp = self.app.post(
+            '/v2/workflows/validate',
+            WF_DEF_INVALID_MODEL_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Task properties 'action' and 'workflow' "
+                      "can't be specified both", resp.json['error'])
+
+    def test_validate_dsl_parse_exception(self):
+        resp = self.app.post(
+            '/v2/workflows/validate',
+            WF_DEF_DSL_PARSE_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Definition could not be parsed", resp.json['error'])
+
+    def test_validate_empty(self):
+        resp = self.app.post(
+            '/v2/workflows/validate',
+            '',
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Invalid DSL", resp.json['error'])

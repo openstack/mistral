@@ -23,9 +23,17 @@ from mistral import exceptions as exc
 from mistral.services import workbooks
 from mistral.tests.unit.api import base
 
-WORKBOOK_DEF = '---'
+WORKBOOK_DEF = """
+---
+version: 2.0
+name: 'test'
+"""
 
-UPDATED_WORKBOOK_DEF = '---\nVersion: 2.0'
+UPDATED_WORKBOOK_DEF = """
+---
+version: 2.0
+name: 'book'
+"""
 
 WORKBOOK_DB = models.Workbook(
     id='123',
@@ -52,7 +60,7 @@ UPDATED_WORKBOOK_DB['definition'] = UPDATED_WORKBOOK_DEF
 UPDATED_WORKBOOK = copy.copy(WORKBOOK)
 UPDATED_WORKBOOK['definition'] = UPDATED_WORKBOOK_DEF
 
-INVALID_WB_DEFINITION = """
+WB_DEF_INVALID_MODEL_EXCEPTION = """
 ---
 version: '2.0'
 name: 'book'
@@ -64,6 +72,11 @@ workflows:
       task1:
         action: std.echo output="Hi"
         workflow: wf1
+"""
+
+WB_DEF_DSL_PARSE_EXCEPTION = """
+---
+%
 """
 
 MOCK_WORKBOOK = mock.MagicMock(return_value=WORKBOOK_DB)
@@ -114,7 +127,7 @@ class TestWorkbooksController(base.FunctionalTest):
     def test_put_invalid(self):
         resp = self.app.put(
             '/v2/workbooks',
-            INVALID_WB_DEFINITION,
+            WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -148,7 +161,7 @@ class TestWorkbooksController(base.FunctionalTest):
     def test_post_invalid(self):
         resp = self.app.post(
             '/v2/workbooks',
-            INVALID_WB_DEFINITION,
+            WB_DEF_INVALID_MODEL_EXCEPTION,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -185,3 +198,50 @@ class TestWorkbooksController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['workbooks']), 0)
+
+    def test_validate(self):
+        resp = self.app.post(
+            '/v2/workbooks/validate',
+            WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertTrue(resp.json['valid'])
+
+    def test_validate_invalid_model_exception(self):
+        resp = self.app.post(
+            '/v2/workbooks/validate',
+            WB_DEF_INVALID_MODEL_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Task properties 'action' and 'workflow' "
+                      "can't be specified both", resp.json['error'])
+
+    def test_validate_dsl_parse_exception(self):
+        resp = self.app.post(
+            '/v2/workbooks/validate',
+            WB_DEF_DSL_PARSE_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Definition could not be parsed", resp.json['error'])
+
+    def test_validate_empty(self):
+        resp = self.app.post(
+            '/v2/workbooks/validate',
+            '',
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Invalid DSL", resp.json['error'])
