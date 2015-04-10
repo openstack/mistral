@@ -18,6 +18,7 @@ import uuid
 
 import mock
 from oslo.config import cfg
+from oslo_messaging.rpc import client as rpc_client
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -26,6 +27,7 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests import base
+from mistral.tests.unit.engine import base as eng_test_base
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
@@ -377,3 +379,18 @@ class DefaultEngineTest(base.DbTestCase):
     def test_resume_workflow(self):
         # TODO(akhmerov): Implement.
         pass
+
+
+class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
+    def test_engine_client_remote_error(self):
+        mocked = mock.Mock()
+        mocked.call.side_effect = rpc_client.RemoteError(
+            'WorkflowInputException',
+            'Input is wrong'
+        )
+        self.engine_client._client = mocked
+
+        self.assertRaises(
+            exc.WorkflowInputException,
+            self.engine_client.start_workflow, 'some_wf', {}
+        )

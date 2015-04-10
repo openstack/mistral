@@ -15,9 +15,11 @@
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo_messaging.rpc import client
 
 from mistral import context as auth_ctx
 from mistral.engine import base
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.workflow import utils as wf_utils
 
@@ -181,6 +183,28 @@ class EngineServer(object):
         return self._engine.resume_workflow(execution_id)
 
 
+def wrap_messaging_exception(method):
+    """This decorator unwrap remote error in one of MistralException.
+
+    oslo.messaging has different behavior on raising exceptions
+    when fake or rabbit transports are used. In case of rabbit
+    transport it raises wrapped RemoteError which forwards directly
+    to API. Wrapped RemoteError contains one of MistralException raised
+    remotely on Engine and for correct exception interpretation we
+    need to unwrap and raise given exception and manually send it to
+    API layer.
+    """
+    def decorator(*args, **kwargs):
+        try:
+            return method(*args, **kwargs)
+
+        except client.RemoteError as e:
+            exc_cls = getattr(exc, e.exc_type)
+            raise exc_cls(e.value)
+
+    return decorator
+
+
 class EngineClient(base.Engine):
     """RPC Engine client."""
 
@@ -198,6 +222,7 @@ class EngineClient(base.Engine):
             serializer=serializer
         )
 
+    @wrap_messaging_exception
     def start_workflow(self, wf_name, wf_input, **params):
         """Starts workflow sending a request to engine over RPC.
 
@@ -219,6 +244,7 @@ class EngineClient(base.Engine):
             state=state
         )
 
+    @wrap_messaging_exception
     def on_action_complete(self, action_ex_id, result):
         """Conveys action result to Mistral Engine.
 
@@ -242,6 +268,7 @@ class EngineClient(base.Engine):
             result_error=result.error
         )
 
+    @wrap_messaging_exception
     def pause_workflow(self, execution_id):
         """Stops the workflow with the given execution id.
 
@@ -254,6 +281,7 @@ class EngineClient(base.Engine):
             execution_id=execution_id
         )
 
+    @wrap_messaging_exception
     def resume_workflow(self, execution_id):
         """Resumes the workflow with the given execution id.
 
@@ -266,6 +294,7 @@ class EngineClient(base.Engine):
             execution_id=execution_id
         )
 
+    @wrap_messaging_exception
     def stop_workflow(self, execution_id, state, message=None):
         """Stops workflow execution with given status.
 
@@ -287,6 +316,7 @@ class EngineClient(base.Engine):
             message=message
         )
 
+    @wrap_messaging_exception
     def rollback_workflow(self, execution_id):
         """Rolls back the workflow with the given execution id.
 
