@@ -21,7 +21,7 @@ wf1:
     addressee:
       action: std.echo output="John"
       publish:
-        name: <% $.adressee %>
+        name: <% $.addressee %>
 
     goodbye:
       action: std.echo output="<% $.farewell %>, <% $.name %>"
