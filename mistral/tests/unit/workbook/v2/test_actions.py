@@ -73,7 +73,12 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
             ({'input': ['']}, True),
             ({'input': None}, True),
             ({'input': ['k1', 'k2']}, False),
-            ({'input': ['k1', 12345]}, True)
+            ({'input': ['k1', 12345]}, True),
+            ({'input': ['k1', {'k2': 2}]}, False),
+            ({'input': [{'k1': 1}, {'k2': 2}]}, False),
+            ({'input': [{'k1': None}]}, False),
+            ({'input': [{'k1': 1}, {'k1': 1}]}, True),
+            ({'input': [{'k1': 1, 'k2': 2}]}, True)
         ]
 
         actions = {
