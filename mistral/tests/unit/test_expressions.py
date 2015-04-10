@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.tests import base
 
@@ -58,55 +59,24 @@ class YaqlEvaluatorTest(base.BaseTest):
         res = self._evaluator.evaluate("$.status = 'Invalid value'", DATA)
         self.assertFalse(res)
 
-        res = self._evaluator.evaluate('$.wrong_key', DATA)
-        self.assertIsNone(res)
+        self.assertRaises(
+            exc.YaqlEvaluationException,
+            self._evaluator.evaluate,
+            '$.wrong_key',
+            DATA
+        )
 
         expression_str = 'invalid_expression_string'
         res = self._evaluator.evaluate(expression_str, DATA)
         self.assertEqual(res, expression_str)
 
     def test_select_result(self):
-        res = self._evaluator.evaluate('$.servers[$.name = ubuntu]', SERVERS)
+        res = self._evaluator.evaluate(
+            '$.servers.where($.name = ubuntu)',
+            SERVERS
+        )
         item = list(res)[0]
         self.assertEqual(item, {'name': 'ubuntu'})
-
-    def test_function_length(self):
-        # Lists.
-        self.assertEqual(0, self._evaluator.evaluate('$.length()', []))
-        self.assertEqual(3, self._evaluator.evaluate('$.length()', [1, 2, 3]))
-        self.assertEqual(
-            2, self._evaluator.evaluate('$.length()', ['one', 'two'])
-        )
-        self.assertEqual(4, self._evaluator.evaluate(
-            '$.array.length()',
-            {'array': ['1', '2', '3', '4']})
-        )
-
-        # Strings.
-        self.assertEqual(3, self._evaluator.evaluate('$.length()', '123'))
-        self.assertEqual(2, self._evaluator.evaluate('$.length()', '12'))
-        self.assertEqual(
-            4,
-            self._evaluator.evaluate('$.string.length()', {'string': '1234'})
-        )
-
-        # Generators.
-        self.assertEqual(
-            2,
-            self._evaluator.evaluate(
-                "$[$.state = 'active'].length()",
-                [
-                    {'state': 'active'},
-                    {'state': 'active'},
-                    {'state': 'passive'}
-                ]
-            )
-        )
-
-        self.assertEqual(
-            0,
-            self._evaluator.evaluate("$[$.state = 'active'].length()", [])
-        )
 
     def test_function_string(self):
         self.assertEqual('3', self._evaluator.evaluate('str($)', '3'))
@@ -180,8 +150,8 @@ class ExpressionsTest(base.BaseTest):
             ('<%($.a + $.b) * $.c %>', 9),
             ('<% $.d and $.e %>', False),
             ('<% $.f > $.g %>', True),
-            ('<% $.h.length() >= 5 %>', True),
-            ('<% $.h.length() >= $.b + $.c %>', True),
+            ('<% $.h.len() >= 5 %>', True),
+            ('<% $.h.len() >= $.b + $.c %>', True),
             ('<% 100 in $.h %>', False),
             ('<% $.a in $.h%>', True),
             ('<% ''OpenStack'' in $.i %>', True),

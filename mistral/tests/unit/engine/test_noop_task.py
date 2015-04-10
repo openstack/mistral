@@ -37,7 +37,7 @@ wf:
     - num2
 
   output:
-    result: "<% $.result4 %>,<% $.result5 %>"
+    result: <% $.result %>
 
   tasks:
     task1:
@@ -66,12 +66,12 @@ wf:
     task4:
       action: std.echo output=4
       publish:
-        result4: <% $.task4 %>
+        result: <% $.task4 %>
 
     task5:
       action: std.echo output=5
       publish:
-        result5: <% $.task5 %>
+        result: <% $.task5 %>
 """
 
 
@@ -101,7 +101,7 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        self.assertDictEqual({'result': '4,None'}, wf_ex.output)
+        self.assertDictEqual({'result': 4}, wf_ex.output)
 
     def test_noop_task2(self):
         wf_service.create_workflows(WF)
@@ -128,4 +128,4 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task5.state)
 
-        self.assertDictEqual({'result': 'None,5'}, wf_ex.output)
+        self.assertDictEqual({'result': 5}, wf_ex.output)

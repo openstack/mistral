@@ -155,7 +155,6 @@ workflows:
           retry:
             count: 3
             delay: 1
-            break-on: <% $.my_val = 10 %>
 """
 
 

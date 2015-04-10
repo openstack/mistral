@@ -101,6 +101,11 @@ class DSLParsingException(MistralException):
     http_code = 400
 
 
+class YaqlEvaluationException(DSLParsingException):
+    http_code = 400
+    message = "Can not evaluate YAQL expression"
+
+
 class InvalidModelException(DSLParsingException):
     http_code = 400
     message = "Wrong entity definition"

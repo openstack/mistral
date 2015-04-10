@@ -79,7 +79,7 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result1: <% $.task1 %>
+        result: <% $.task1 %>
 
     task2:
       action: std.block

@@ -19,8 +19,10 @@ import inspect
 import re
 
 import six
-import yaql
+from yaql.language import exceptions as yaql_exc
+from yaql.language import factory
 
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral import yaql_utils
 
@@ -63,10 +65,18 @@ class YAQLEvaluator(Evaluator):
         LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]"
                   % (expression, data_context))
 
-        result = yaql.parse(expression).evaluate(
-            data=data_context,
-            context=yaql_utils.create_yaql_context()
-        )
+        engine = factory.YaqlFactory().create()
+
+        try:
+            result = engine(expression).evaluate(
+                data=data_context,
+                context=yaql_utils.create_yaql_context()
+            )
+        except (KeyError, yaql_exc.YaqlException) as e:
+            raise exc.YaqlEvaluationException(
+                "Can not evaluate YAQL expression: %s, data = %s; error:"
+                " %s" % (expression, data_context, str(e))
+            )
 
         LOG.debug("YAQL expression result: %s" % result)
 
