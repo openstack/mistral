@@ -80,6 +80,15 @@ NONEMPTY_DICT = {
     }
 }
 
+ONE_KEY_DICT = {
+    "type": "object",
+    "minProperties": 1,
+    "maxProperties": 1,
+    "patternProperties": {
+        "^\w+$": ANY_NULLABLE
+    }
+}
+
 STRING_OR_YAQL_CONDITION = {
     "oneOf": [
         NONEMPTY_STRING,
@@ -104,4 +113,18 @@ VERSION = {
 
 WORKFLOW_TYPE = {
     "enum": ["reverse", "direct"]
+}
+
+STRING_OR_ONE_KEY_DICT = {
+    "oneOf": [
+        NONEMPTY_STRING,
+        ONE_KEY_DICT
+    ]
+}
+
+UNIQUE_STRING_OR_ONE_KEY_DICT_LIST = {
+    "type": "array",
+    "items": STRING_OR_ONE_KEY_DICT,
+    "uniqueItems": True,
+    "minItems": 1
 }
