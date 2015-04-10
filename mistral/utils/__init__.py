@@ -20,8 +20,11 @@ import os
 from os import path
 import threading
 
+import eventlet
 from eventlet import corolocal
 import pkg_resources as pkg
+import random
+
 
 from mistral import version
 
@@ -171,3 +174,18 @@ def iter_subclasses(cls, _seen=None):
             yield sub
             for _sub in iter_subclasses(sub, _seen):
                 yield _sub
+
+
+def random_sleep(limit=1):
+    """Sleeps for a random period of time not exceeding the given limit.
+
+    Mostly intended to be used by tests to emulate race conditions.
+
+    :param limit: Float number of seconds that a sleep period must not exceed.
+    """
+
+    seconds = random.Random().randint(0, limit * 1000) * 0.001
+
+    print("Sleep: %s sec..." % seconds)
+
+    eventlet.sleep(seconds)
