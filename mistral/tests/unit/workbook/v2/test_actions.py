@@ -14,7 +14,8 @@
 
 import copy
 
-from mistral.openstack.common import log as logging
+from oslo_log import log as logging
+
 from mistral.tests.unit.workbook.v2 import base
 from mistral import utils
 

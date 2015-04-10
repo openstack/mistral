@@ -15,10 +15,10 @@
 from eventlet import corolocal
 from eventlet import semaphore
 from oslo.config import cfg
+from oslo_log import log as logging
 
 from mistral.actions import base as action_base
 from mistral.db.v2 import api as db_api
-from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base

@@ -15,13 +15,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
 import sys
 
 from eventlet import event
 from eventlet import greenthread
 
 from mistral.openstack.common.gettextutils import _LE, _LW
-from mistral.openstack.common import log as logging
 from mistral.openstack.common import timeutils
 
 LOG = logging.getLogger(__name__)

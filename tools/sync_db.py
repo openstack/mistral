@@ -13,10 +13,10 @@
 #    limitations under the License.
 
 from oslo.config import cfg
+from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral import config
-from mistral.openstack.common import log as logging
 from mistral.services import action_manager
 from mistral.services import workflows
 
@@ -32,7 +32,7 @@ def main():
         print "Usage: sync_db --config-file <path-to-config-file>"
         return exit(1)
 
-    logging.setup('Mistral')
+    logging.setup(CONF, 'Mistral')
 
     db_api.setup_db()
 

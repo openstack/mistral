@@ -20,9 +20,10 @@ import json
 import requests
 import smtplib
 
+from oslo_log import log as logging
+
 from mistral.actions import base
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
 

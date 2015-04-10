@@ -18,13 +18,13 @@ import uuid
 
 import mock
 from oslo.config import cfg
+from oslo_log import log as logging
 from oslo_messaging.rpc import client as rpc_client
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import default_engine as d_eng
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests import base
 from mistral.tests.unit.engine import base as eng_test_base

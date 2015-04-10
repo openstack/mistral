@@ -19,6 +19,7 @@ import sys
 import time
 
 from oslo.config import cfg
+from oslo_log import log as logging
 from oslotest import base
 import testtools.matchers as ttm
 
@@ -26,7 +27,6 @@ from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2 import api as db_api_v2
-from mistral.openstack.common import log as logging
 from mistral.services import action_manager
 from mistral import version
 

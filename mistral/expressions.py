@@ -18,12 +18,12 @@ import copy
 import inspect
 import re
 
+from oslo_log import log as logging
 import six
 import yaql
 from yaql import exceptions as yaql_exc
 
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral import yaql_utils
 
 

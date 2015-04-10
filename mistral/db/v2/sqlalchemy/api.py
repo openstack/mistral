@@ -19,6 +19,7 @@ import sys
 from oslo.config import cfg
 from oslo.db import exception as db_exc
 from oslo.utils import timeutils
+from oslo_log import log as logging
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b
@@ -26,7 +27,6 @@ from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.services import security
 
 CONF = cfg.CONF

@@ -13,11 +13,11 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+from oslo_log import log as logging
 
 from mistral.actions import action_factory as a_f
 from mistral.engine import base
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 

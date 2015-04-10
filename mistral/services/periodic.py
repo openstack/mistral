@@ -14,16 +14,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_log import log as logging
+
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
 from mistral.engine import rpc
-from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 from mistral.services import security
 from mistral.services import triggers
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):

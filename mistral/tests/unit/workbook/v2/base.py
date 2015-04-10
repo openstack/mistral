@@ -14,10 +14,10 @@
 
 import copy
 
+from oslo_log import log as logging
 import yaml
 
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral import utils
 from mistral.workbook import parser as spec_parser

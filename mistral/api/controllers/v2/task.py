@@ -16,6 +16,7 @@
 
 import json
 
+from oslo_log import log as logging
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -23,7 +24,6 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
-from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
 from mistral.workflow import data_flow
 from mistral.workflow import states

@@ -15,16 +15,17 @@
 import copy
 import datetime
 
+from oslo_log import log as logging
+
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import importutils
-from mistral.openstack.common import log
 from mistral.openstack.common import periodic_task
 from mistral.openstack.common import threadgroup
 
 
-LOG = log.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 # {scheduler_instance: thread_group}
 _schedulers = {}

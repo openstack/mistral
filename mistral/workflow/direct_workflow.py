@@ -12,8 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_log import log as logging
+
 from mistral import expressions as expr
-from mistral.openstack.common import log as logging
 from mistral import utils
 from mistral.workflow import base
 from mistral.workflow import commands

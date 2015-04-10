@@ -17,6 +17,7 @@ import contextlib
 import errno
 import fcntl
 import functools
+import logging
 import os
 import shutil
 import subprocess
@@ -30,7 +31,6 @@ from oslo.config import cfg
 
 from mistral.openstack.common import fileutils
 from mistral.openstack.common.gettextutils import _, _LE, _LI
-from mistral.openstack.common import log as logging
 
 
 LOG = logging.getLogger(__name__)

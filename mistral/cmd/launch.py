@@ -36,6 +36,7 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 
 from oslo.config import cfg
 from oslo import messaging
+from oslo_log import log as logging
 from wsgiref import simple_server
 
 from mistral.api import app
@@ -45,11 +46,11 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
 from mistral.engine import default_executor as def_executor
 from mistral.engine import rpc
-from mistral.openstack.common import log as logging
 from mistral.services import scheduler
 from mistral import version
 
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -183,7 +184,7 @@ def main():
 
         print_server_info()
 
-        logging.setup('Mistral')
+        logging.setup(CONF, 'Mistral')
 
         # Please refer to the oslo.messaging documentation for transport
         # configuration. The default transport for oslo.messaging is

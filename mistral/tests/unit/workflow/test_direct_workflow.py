@@ -15,10 +15,10 @@
 #    limitations under the License.
 
 import mock
+from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import direct_workflow as d_wf

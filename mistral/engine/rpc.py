@@ -16,11 +16,11 @@
 from oslo.config import cfg
 from oslo import messaging
 from oslo.messaging.rpc import client
+from oslo_log import log as logging
 
 from mistral import context as auth_ctx
 from mistral.engine import base
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
