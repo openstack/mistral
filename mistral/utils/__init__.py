@@ -189,3 +189,28 @@ def random_sleep(limit=1):
     print("Sleep: %s sec..." % seconds)
 
     eventlet.sleep(seconds)
+
+
+class NotDefined(object):
+    """This class is just a marker of input params without value."""
+
+    pass
+
+
+def get_input_dict(inputs):
+    """Transform input list to dictionary.
+
+    Ensure every input param has a default value(it will be a NotDefined
+    object if it's not provided).
+    """
+    input_dict = {}
+    for x in inputs:
+        if isinstance(x, dict):
+            input_dict.update(x)
+        else:
+            # NOTE(xylan): we put a NotDefined class here as the value of
+            # param without value specified, to distinguish from the valid
+            # values such as None, ''(empty string), etc.
+            input_dict[x] = NotDefined
+
+    return input_dict
