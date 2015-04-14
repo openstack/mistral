@@ -66,8 +66,8 @@ def _run_existing_task(task_ex, task_spec, wf_spec):
 
     # In some cases we can have no input, e.g. in case of 'with-items'.
     if input_dicts:
-        for input_d in input_dicts:
-            _run_action_or_workflow(task_ex, task_spec, input_d)
+        for index, input_d in enumerate(input_dicts):
+            _run_action_or_workflow(task_ex, task_spec, input_d, index)
     else:
         _schedule_noop_action(task_ex, task_spec)
 
@@ -163,7 +163,7 @@ def _create_task_execution(wf_ex, task_spec, ctx):
     return task_ex
 
 
-def _create_action_execution(task_ex, action_def, action_input):
+def _create_action_execution(task_ex, action_def, action_input, index=0):
     action_ex = db_api.create_action_execution({
         'name': action_def.name,
         'task_execution_id': task_ex.id,
@@ -171,7 +171,8 @@ def _create_action_execution(task_ex, action_def, action_input):
         'spec': action_def.spec,
         'project_id': task_ex.project_id,
         'state': states.RUNNING,
-        'input': action_input}
+        'input': action_input,
+        'runtime_context': {'with_items_index': index}}
     )
 
     # Add to collection explicitly so that it's in a proper
@@ -332,7 +333,7 @@ def _get_workflow_input(task_spec, ctx):
     return expr.evaluate_recursively(task_spec.get_input(), ctx)
 
 
-def _run_action_or_workflow(task_ex, task_spec, input_dict):
+def _run_action_or_workflow(task_ex, task_spec, input_dict, index):
     t_name = task_ex.name
 
     if task_spec.get_action_name():
@@ -342,14 +343,14 @@ def _run_action_or_workflow(task_ex, task_spec, input_dict):
             (t_name, task_spec.get_action_name())
         )
 
-        _schedule_run_action(task_ex, task_spec, input_dict)
+        _schedule_run_action(task_ex, task_spec, input_dict, index)
     elif task_spec.get_workflow_name():
         wf_trace.info(
             task_ex,
             "Task '%s' is RUNNING [workflow_name = %s]" %
             (t_name, task_spec.get_workflow_name()))
 
-        _schedule_run_workflow(task_ex, task_spec, input_dict)
+        _schedule_run_workflow(task_ex, task_spec, input_dict, index)
 
 
 def _get_action_defaults(task_ex, task_spec):
@@ -358,7 +359,7 @@ def _get_action_defaults(task_ex, task_spec):
     return actions.get(task_spec.get_action_name(), {})
 
 
-def _schedule_run_action(task_ex, task_spec, action_input):
+def _schedule_run_action(task_ex, task_spec, action_input, index):
     wf_ex = task_ex.workflow_execution
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
@@ -383,7 +384,9 @@ def _schedule_run_action(task_ex, task_spec, action_input):
             base_name
         )
 
-    action_ex = _create_action_execution(task_ex, action_def, action_input)
+    action_ex = _create_action_execution(
+        task_ex, action_def, action_input, index
+    )
 
     target = expr.evaluate_recursively(
         task_spec.get_target(),
@@ -441,7 +444,7 @@ def run_action(action_ex_id, target):
     )
 
 
-def _schedule_run_workflow(task_ex, task_spec, wf_input):
+def _schedule_run_workflow(task_ex, task_spec, wf_input, index):
     parent_wf_ex = task_ex.workflow_execution
     parent_wf_spec = spec_parser.get_workflow_spec(parent_wf_ex.spec)
 
@@ -455,7 +458,10 @@ def _schedule_run_workflow(task_ex, task_spec, wf_input):
 
     wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
-    wf_params = {'task_execution_id': task_ex.id}
+    wf_params = {
+        'task_execution_id': task_ex.id,
+        'with_items_index': index
+    }
 
     if 'env' in parent_wf_ex.params:
         wf_params['env'] = parent_wf_ex.params['env']

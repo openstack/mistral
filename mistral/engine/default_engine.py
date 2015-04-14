@@ -353,6 +353,9 @@ class DefaultEngine(base.Engine):
             'output': {},
             'context': copy.copy(wf_input) or {},
             'task_execution_id': params.get('task_execution_id'),
+            'runtime_context': {
+                'with_items_index': params.get('with_items_index', 0)
+            },
         })
 
         data_flow.add_openstack_data_to_context(wf_ex.context)

@@ -15,11 +15,14 @@
 import copy
 from oslo.config import cfg
 
+from mistral.actions import base as action_base
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
+from mistral.services import action_manager
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
+from mistral import utils
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
@@ -137,6 +140,18 @@ WF_INPUT_URLS = {
         'http://google.com'
     ]
 }
+
+
+class RandomSleepEchoAction(action_base.Action):
+    def __init__(self, output):
+        self.output = output
+
+    def run(self):
+        utils.random_sleep(1)
+        return self.output
+
+    def test(self):
+        utils.random_sleep(1)
 
 
 class WithItemsEngineTest(base.EngineTestCase):
@@ -375,3 +390,51 @@ class WithItemsEngineTest(base.EngineTestCase):
         )
 
         self.assertIn("Invalid array in 'with-items'", exception.message)
+
+    def test_with_items_results_order(self):
+        workbook = """---
+        version: "2.0"
+
+        name: wb1
+
+        workflows:
+          with_items:
+            type: direct
+
+            tasks:
+              task1:
+                with-items: i in [1, 2, 3]
+                action: sleep_echo output=<% $.i %>
+                publish:
+                  one_two_three: <% $.task1 %>
+        """
+        # Register random sleep action in the DB.
+        action_manager.register_action_class(
+            'sleep_echo',
+            '%s.%s' % (
+                RandomSleepEchoAction.__module__,
+                RandomSleepEchoAction.__name__
+            ), {}
+        )
+
+        wb_service.create_workbook_v2(workbook)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb1.with_items', {})
+
+        self._await(
+            lambda: self.is_execution_success(wf_ex.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+
+        published = task1.published
+
+        # Now we can check order of results explicitly.
+        self.assertEqual([1, 2, 3], published['one_two_three'])

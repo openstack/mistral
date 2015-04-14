@@ -294,6 +294,7 @@ class ExecutionTestsV2(base.TestCase):
                       [ex_id['id'] for ex_id in body['executions']])
 
         resp, body = self.client.get_object('executions', exec_id)
+        # TODO(nmakhotkin): Fix this loop. It is infinite now.
         while body['state'] != 'SUCCESS':
             resp, body = self.client.get_object('executions', exec_id)
             self.assertEqual(200, resp.status)
