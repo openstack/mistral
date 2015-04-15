@@ -48,7 +48,7 @@ def execute_command(cmd, host, username, password,
                     get_stderr=False, raise_when_error=True):
     ssh = _connect(host, username, password)
 
-    LOG.debug("Executing command %s")
+    LOG.debug("Executing command %s" % cmd)
 
     try:
         chan = ssh.get_transport().open_session()
