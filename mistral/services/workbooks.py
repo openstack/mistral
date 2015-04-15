@@ -81,7 +81,8 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'name': wf_name,
                 'spec': wf_spec.to_dict(),
                 'scope': wb_db.scope,
-                'project_id': wb_db.project_id
+                'project_id': wb_db.project_id,
+                'tags': wf_spec.get_tags()
             }
 
             security.add_trust_id(values)
