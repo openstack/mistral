@@ -19,6 +19,7 @@ import logging
 import os
 from os import path
 import threading
+import uuid
 
 import eventlet
 from eventlet import corolocal
@@ -28,8 +29,13 @@ import random
 
 from mistral import version
 
+
 # Thread local storage.
 _th_loc_storage = threading.local()
+
+
+def generate_unicode_uuid():
+    return unicode(str(uuid.uuid4()))
 
 
 def _get_greenlet_local_storage():

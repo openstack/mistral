@@ -15,8 +15,6 @@
 #    limitations under the License.
 
 
-import uuid
-
 from oslo.db.sqlalchemy import models as oslo_models
 import sqlalchemy as sa
 from sqlalchemy import event
@@ -27,15 +25,11 @@ from mistral.services import security
 from mistral import utils
 
 
-def _generate_unicode_uuid():
-    return unicode(str(uuid.uuid4()))
-
-
 def id_column():
     return sa.Column(
         sa.String(36),
         primary_key=True,
-        default=_generate_unicode_uuid
+        default=utils.generate_unicode_uuid
     )
 
 

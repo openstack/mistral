@@ -85,11 +85,13 @@ class ActionContextTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
         task_ex = self._assert_single_item(wf_ex.task_executions, name='task1')
+        action_ex = self._assert_single_item(task_ex.executions)
 
         headers = {
             'Mistral-Workflow-Name': wf_ex.workflow_name,
+            'Mistral-Workflow-Execution-Id': wf_ex.id,
             'Mistral-Task-Id': task_ex.id,
-            'Mistral-Execution-Id': wf_ex.id
+            'Mistral-Action-Execution-Id': action_ex.id
         }
 
         requests.request.assert_called_with(

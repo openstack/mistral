@@ -164,7 +164,27 @@ def _create_task_execution(wf_ex, task_spec, ctx):
 
 
 def _create_action_execution(task_ex, action_def, action_input, index=0):
+    # TODO(rakhmerov): We can avoid hitting DB at all when calling something
+    # create_action_execution(), these operations can be just done using
+    # SQLAlchemy session (1-level cache) and session flush (on TX commit) would
+    # send necessary SQL queries to DB. Currently, session flush happens
+    # on every operation which may not be optimal. The problem with using just
+    # session level cache is in generating ids. Ids are generated only on
+    # session flush. And now we have a lot places where we need to have ids
+    # before TX completion.
+
+    # Assign the action execution ID here to minimize database calls.
+    # Otherwise, the input property of the action execution DB object needs
+    # to be updated with the action execution ID after the action execution
+    # DB object is created.
+    action_ex_id = utils.generate_unicode_uuid()
+
+    if a_m.has_action_context(
+            action_def.action_class, action_def.attributes or {}):
+        action_input.update(a_m.get_action_context(task_ex, action_ex_id))
+
     action_ex = db_api.create_action_execution({
+        'id': action_ex_id,
         'name': action_def.name,
         'task_execution_id': task_ex.id,
         'workflow_name': task_ex.workflow_name,
@@ -321,10 +341,6 @@ def _get_action_input(wf_spec, task_ex, task_spec, ctx):
             )
         else:
             input_dict = {}
-
-    if a_m.has_action_context(
-            action_def.action_class, action_def.attributes or {}):
-        input_dict.update(a_m.get_action_context(task_ex))
 
     return input_dict
 
