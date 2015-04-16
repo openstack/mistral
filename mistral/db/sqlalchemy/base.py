@@ -36,10 +36,15 @@ _facade = None
 
 def _get_facade():
     global _facade
+
     if not _facade:
         _facade = db_session.EngineFacade(
-            cfg.CONF.database.connection, sqlite_fk=True, autocommit=False,
-            **dict(cfg.CONF.database.iteritems()))
+            cfg.CONF.database.connection,
+            sqlite_fk=True,
+            autocommit=False,
+            **dict(cfg.CONF.database.iteritems())
+        )
+
     return _facade
 
 

@@ -38,9 +38,9 @@ WF_EXEC = {
 }
 
 
-class WorkflowExecutionTest(test_base.DbTestCase):
+class SQLiteLocksTest(test_base.DbTestCase):
     def setUp(self):
-        super(WorkflowExecutionTest, self).setUp()
+        super(SQLiteLocksTest, self).setUp()
 
         cfg.CONF.set_default('auth_enable', True, group='pecan')
 

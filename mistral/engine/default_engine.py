@@ -20,7 +20,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import base
 from mistral.engine import task_handler
-from mistral.engine import utils
+from mistral.engine import utils as eng_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral.openstack.common import log as logging
 from mistral import utils as u
@@ -55,7 +55,7 @@ class DefaultEngine(base.Engine):
                 wf_def = db_api.get_workflow_definition(wf_name)
                 wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
-                utils.validate_workflow_input(wf_def, wf_spec, wf_input)
+                eng_utils.validate_workflow_input(wf_def, wf_spec, wf_input)
 
                 wf_ex = self._create_workflow_execution(
                     wf_def,
