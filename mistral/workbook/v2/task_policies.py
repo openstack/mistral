@@ -75,6 +75,16 @@ class TaskPoliciesSpec(base.BaseSpec):
         self._pause_before = data.get("pause-before", False)
         self._concurrency = data.get("concurrency", 0)
 
+    def validate(self):
+        super(TaskPoliciesSpec, self).validate()
+
+        # Validate YAQL expressions.
+        self.validate_yaql_expr(self._data.get('wait-before', 0))
+        self.validate_yaql_expr(self._data.get('wait-after', 0))
+        self.validate_yaql_expr(self._data.get('timeout', 0))
+        self.validate_yaql_expr(self._data.get('pause-before', False))
+        self.validate_yaql_expr(self._data.get('concurrency', 0))
+
     def get_retry(self):
         return self._retry
 

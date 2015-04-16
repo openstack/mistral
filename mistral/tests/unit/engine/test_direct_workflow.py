@@ -218,12 +218,11 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
           tasks:
             task1:
               action: std.echo output="Echo"
-              # publish: <% wrong yaql %>
               on-complete:
                 - task2
 
             task2:
-              action: std.echo output=<% wrong yaql %>
+              action: std.echo output=<% wrong(yaql) %>
         """
         wf_ex = self._run_workflow(wf_messed_yaql)
 

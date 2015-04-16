@@ -49,6 +49,16 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._on_success = self._as_list_of_tuples("on-success")
         self._on_error = self._as_list_of_tuples("on-error")
 
+    def validate(self):
+        super(TaskDefaultsSpec, self).validate()
+
+        # Validate YAQL expressions.
+        [self.validate_yaql_expr(transition)
+         for transition in (self._data.get('on-complete', []) +
+                            self._data.get('on-success', []) +
+                            self._data.get('on-error', []))
+         if isinstance(transition, dict)]
+
     def get_policies(self):
         return self._policies
 

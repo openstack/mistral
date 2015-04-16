@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from mistral import utils
 from mistral.workbook import types
 from mistral.workbook.v2 import base
@@ -46,6 +48,18 @@ class ActionSpec(base.BaseSpec):
         self._base, _input = self._parse_cmd_and_input(self._base)
 
         utils.merge_dicts(self._base_input, _input)
+
+    def validate(self):
+        super(ActionSpec, self).validate()
+
+        # Validate YAQL expressions.
+        inline_params = self._parse_cmd_and_input(self._data.get('base'))[1]
+        self.validate_yaql_expr(inline_params)
+
+        self.validate_yaql_expr(self._data.get('base-input', {}))
+
+        if isinstance(self._data.get('output'), six.string_types):
+            self.validate_yaql_expr(self._data.get('output'))
 
     def get_name(self):
         return self._name

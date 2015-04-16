@@ -72,11 +72,13 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'action': 'std.http url="openstack.org" timeout=10'}, False),
             ({'action': 'std.http url=<% $.url %>'}, False),
             ({'action': 'std.http url=<% $.url %> timeout=<% $.t %>'}, False),
+            ({'action': 'std.http url=<% * %>'}, True),
             ({'workflow': 'test.wf'}, False),
             ({'workflow': 'test.wf k1="v1"'}, False),
             ({'workflow': 'test.wf k1="v1" k2="v2"'}, False),
             ({'workflow': 'test.wf k1=<% $.v1 %>'}, False),
             ({'workflow': 'test.wf k1=<% $.v1 %> k2=<% $.v2 %>'}, False),
+            ({'workflow': 'test.wf k1=<% * %>'}, True),
             ({'action': 'std.noop', 'workflow': 'test.wf'}, True),
             ({'action': 123}, True),
             ({'workflow': 123}, True),
@@ -98,7 +100,9 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'input': {}}, True),
             ({'input': None}, True),
             ({'input': {'k1': 'v1'}}, False),
-            ({'input': {'k1': '<% $.v1 %>'}}, False)
+            ({'input': {'k1': '<% $.v1 %>'}}, False),
+            ({'input': {'k1': '<% 1 + 2 %>'}}, False),
+            ({'input': {'k1': '<% * %>'}}, True)
         ]
 
         for task_input, expect_error in tests:
@@ -118,8 +122,12 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'with-items': 'x in y'}, True),
             ({'with-items': '<% $.y %>'}, True),
             ({'with-items': 'x in <% $.y %>'}, False),
+            ({'with-items': ['x in [1, 2, 3]']}, False),
             ({'with-items': ['x in <% $.y %>']}, False),
-            ({'with-items': ['x in <% $.y %>', 'i in <% $.j %>']}, False)
+            ({'with-items': ['x in <% $.y %>', 'i in [1, 2, 3]']}, False),
+            ({'with-items': ['x in <% $.y %>', 'i in <% $.j %>']}, False),
+            ({'with-items': ['x in <% * %>']}, True),
+            ({'with-items': ['x in <% $.y %>', 'i in <% * %>']}, True)
         ]
 
         for with_item, expect_error in tests:
@@ -134,7 +142,9 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'publish': {}}, True),
             ({'publish': None}, True),
             ({'publish': {'k1': 'v1'}}, False),
-            ({'publish': {'k1': '<% $.v1 %>'}}, False)
+            ({'publish': {'k1': '<% $.v1 %>'}}, False),
+            ({'publish': {'k1': '<% 1 + 2 %>'}}, False),
+            ({'publish': {'k1': '<% * %>'}}, True)
         ]
 
         for output, expect_error in tests:
@@ -149,8 +159,12 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'policies': {'retry': {'count': 3, 'delay': 1}}}, False),
             ({'policies': {'retry': {'count': '<% 3 %>', 'delay': 1}}},
              False),
+            ({'policies': {'retry': {'count': '<% * %>', 'delay': 1}}},
+             True),
             ({'policies': {'retry': {'count': 3, 'delay': '<% 1 %>'}}},
              False),
+            ({'policies': {'retry': {'count': 3, 'delay': '<% * %>'}}},
+             True),
             ({'policies': {'retry': {'count': -3, 'delay': 1}}}, True),
             ({'policies': {'retry': {'count': 3, 'delay': -1}}}, True),
             ({'policies': {'retry': {'count': '3', 'delay': 1}}}, True),
@@ -158,24 +172,29 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'policies': {'retry': None}}, True),
             ({'policies': {'wait-before': 1}}, False),
             ({'policies': {'wait-before': '<% 1 %>'}}, False),
+            ({'policies': {'wait-before': '<% * %>'}}, True),
             ({'policies': {'wait-before': -1}}, True),
             ({'policies': {'wait-before': 1.0}}, True),
             ({'policies': {'wait-before': '1'}}, True),
             ({'policies': {'wait-after': 1}}, False),
             ({'policies': {'wait-after': '<% 1 %>'}}, False),
+            ({'policies': {'wait-after': '<% * %>'}}, True),
             ({'policies': {'wait-after': -1}}, True),
             ({'policies': {'wait-after': 1.0}}, True),
             ({'policies': {'wait-after': '1'}}, True),
             ({'policies': {'timeout': 300}}, False),
             ({'policies': {'timeout': '<% 300 %>'}}, False),
+            ({'policies': {'timeout': '<% * %>'}}, True),
             ({'policies': {'timeout': -300}}, True),
             ({'policies': {'timeout': 300.0}}, True),
             ({'policies': {'timeout': '300'}}, True),
             ({'policies': {'pause-before': False}}, False),
             ({'policies': {'pause-before': '<% False %>'}}, False),
+            ({'policies': {'pause-before': '<% * %>'}}, True),
             ({'policies': {'pause-before': 'False'}}, True),
             ({'policies': {'concurrency': 10}}, False),
             ({'policies': {'concurrency': '<% 10 %>'}}, False),
+            ({'policies': {'concurrency': '<% * %>'}}, True),
             ({'policies': {'concurrency': -10}}, True),
             ({'policies': {'concurrency': 10.0}}, True),
             ({'policies': {'concurrency': '10'}}, True)
@@ -192,6 +211,8 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'on-success': ['email']}, False),
             ({'on-success': [{'email': '<% 1 %>'}]}, False),
             ({'on-success': [{'email': '<% 1 %>'}, 'echo']}, False),
+            ({'on-success': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
+            ({'on-success': [{'email': '<% * %>'}]}, True),
             ({'on-success': 'email'}, True),
             ({'on-success': None}, True),
             ({'on-success': ['']}, True),
@@ -201,6 +222,8 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'on-error': ['email']}, False),
             ({'on-error': [{'email': '<% 1 %>'}]}, False),
             ({'on-error': [{'email': '<% 1 %>'}, 'echo']}, False),
+            ({'on-error': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
+            ({'on-error': [{'email': '<% * %>'}]}, True),
             ({'on-error': 'email'}, True),
             ({'on-error': None}, True),
             ({'on-error': ['']}, True),
@@ -210,6 +233,8 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'on-complete': ['email']}, False),
             ({'on-complete': [{'email': '<% 1 %>'}]}, False),
             ({'on-complete': [{'email': '<% 1 %>'}, 'echo']}, False),
+            ({'on-complete': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
+            ({'on-complete': [{'email': '<% * %>'}]}, True),
             ({'on-complete': 'email'}, True),
             ({'on-complete': None}, True),
             ({'on-complete': ['']}, True),
@@ -276,7 +301,9 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'keep-result': 12345}, True),
             ({'keep-result': True}, False),
             ({'keep-result': False}, False),
-            ({'keep-result': '<% "a" in $.val %>'}, False)
+            ({'keep-result': "<% 'a' in $.val %>"}, False),
+            ({'keep-result': '<% 1 + 2 %>'}, False),
+            ({'keep-result': '<% * %>'}, True)
         ]
 
         for keep_result, expect_error in tests:
