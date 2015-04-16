@@ -59,12 +59,7 @@ class YaqlEvaluatorTest(base.BaseTest):
         res = self._evaluator.evaluate("$.status = 'Invalid value'", DATA)
         self.assertFalse(res)
 
-        self.assertRaises(
-            exc.YaqlEvaluationException,
-            self._evaluator.evaluate,
-            '$.wrong_key',
-            DATA
-        )
+        self.assertIsNone(self._evaluator.evaluate('$.wrong_key', DATA))
 
         expression_str = 'invalid_expression_string'
         res = self._evaluator.evaluate(expression_str, DATA)

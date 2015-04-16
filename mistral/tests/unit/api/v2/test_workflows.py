@@ -282,7 +282,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertFalse(resp.json['valid'])
-        self.assertIn("unexpected '*' at position 1 of expression",
+        self.assertIn("unexpected '*' at position 1",
                       resp.json['error'])
 
     def test_validate_empty(self):

@@ -19,8 +19,8 @@ import inspect
 import re
 
 import six
-from yaql.language import exceptions as yaql_exc
-from yaql.language import factory
+import yaql
+from yaql import exceptions as yaql_exc
 
 from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
@@ -28,7 +28,6 @@ from mistral import yaql_utils
 
 
 LOG = logging.getLogger(__name__)
-YAQL_ENGINE = factory.YaqlFactory().create()
 
 
 class Evaluator(object):
@@ -76,7 +75,7 @@ class YAQLEvaluator(Evaluator):
         LOG.debug("Validating YAQL expression [expression='%s']", expression)
 
         try:
-            YAQL_ENGINE(expression)
+            yaql.parse(expression)
         except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
             raise exc.YaqlEvaluationException(e.message)
 
@@ -86,7 +85,7 @@ class YAQLEvaluator(Evaluator):
                   % (expression, data_context))
 
         try:
-            result = YAQL_ENGINE(expression).evaluate(
+            result = yaql.parse(expression).evaluate(
                 data=data_context,
                 context=yaql_utils.create_yaql_context()
             )
