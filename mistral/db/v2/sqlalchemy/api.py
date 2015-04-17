@@ -216,14 +216,14 @@ def delete_workbooks(**kwargs):
 # Workflow definitions.
 
 def get_workflow_definition(name):
-    wf = _get_workflow_definition(name)
+    wf_def = _get_workflow_definition(name)
 
-    if not wf:
+    if not wf_def:
         raise exc.NotFoundException(
             "Workflow not found [workflow_name=%s]" % name
         )
 
-    return wf
+    return wf_def
 
 
 def load_workflow_definition(name):
@@ -236,31 +236,31 @@ def get_workflow_definitions(**kwargs):
 
 @b.session_aware()
 def create_workflow_definition(values, session=None):
-    wf = models.WorkflowDefinition()
+    wf_def = models.WorkflowDefinition()
 
-    wf.update(values.copy())
+    wf_def.update(values.copy())
 
     try:
-        wf.save(session=session)
+        wf_def.save(session=session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntry(
             "Duplicate entry for WorkflowDefinition: %s" % e.columns
         )
 
-    return wf
+    return wf_def
 
 
 @b.session_aware()
 def update_workflow_definition(name, values, session=None):
-    wf = _get_workflow_definition(name)
+    wf_def = _get_workflow_definition(name)
 
-    if not wf:
+    if not wf_def:
         raise exc.NotFoundException(
             "Workflow not found [workflow_name=%s]" % name)
 
-    wf.update(values.copy())
+    wf_def.update(values.copy())
 
-    return wf
+    return wf_def
 
 
 @b.session_aware()
@@ -273,14 +273,14 @@ def create_or_update_workflow_definition(name, values, session=None):
 
 @b.session_aware()
 def delete_workflow_definition(name, session=None):
-    wf = _get_workflow_definition(name)
+    wf_def = _get_workflow_definition(name)
 
-    if not wf:
+    if not wf_def:
         raise exc.NotFoundException(
             "Workflow not found [workflow_name=%s]" % name
         )
 
-    session.delete(wf)
+    session.delete(wf_def)
 
 
 @b.session_aware()
@@ -374,14 +374,14 @@ def _get_action_definition(name):
 # Common executions.
 
 def get_execution(id):
-    execution = _get_execution(id)
+    ex = _get_execution(id)
 
-    if not execution:
+    if not ex:
         raise exc.NotFoundException(
             "Execution not found [execution_id=%s]" % id
         )
 
-    return execution
+    return ex
 
 
 def load_execution(id):
@@ -461,13 +461,13 @@ def _get_execution(id):
 # Action executions.
 
 def get_action_execution(id):
-    wf_ex = _get_action_execution(id)
+    a_ex = _get_action_execution(id)
 
-    if not wf_ex:
+    if not a_ex:
         raise exc.NotFoundException(
             "ActionExecution not found [id=%s]" % id)
 
-    return wf_ex
+    return a_ex
 
 
 def load_action_execution(id):
@@ -484,32 +484,32 @@ def get_action_executions(**kwargs):
 
 @b.session_aware()
 def create_action_execution(values, session=None):
-    wf_ex = models.ActionExecution()
+    a_ex = models.ActionExecution()
 
-    wf_ex.update(values.copy())
+    a_ex.update(values.copy())
 
     try:
-        wf_ex.save(session=session)
+        a_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntry(
             "Duplicate entry for ActionExecution: %s" % e.columns
         )
 
-    return wf_ex
+    return a_ex
 
 
 @b.session_aware()
 def update_action_execution(id, values, session=None):
-    wf_ex = _get_action_execution(id)
+    a_ex = _get_action_execution(id)
 
-    if not wf_ex:
+    if not a_ex:
         raise exc.NotFoundException(
             "ActionExecution not found [id=%s]" % id
         )
 
-    wf_ex.update(values.copy())
+    a_ex.update(values.copy())
 
-    return wf_ex
+    return a_ex
 
 
 @b.session_aware()
@@ -522,14 +522,14 @@ def create_or_update_action_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_action_execution(id, session=None):
-    wf_ex = _get_action_execution(id)
+    a_ex = _get_action_execution(id)
 
-    if not wf_ex:
+    if not a_ex:
         raise exc.NotFoundException(
             "ActionExecution not found [id=%s]" % id
         )
 
-    session.delete(wf_ex)
+    session.delete(a_ex)
 
 
 @b.session_aware()
