@@ -85,10 +85,9 @@ wf:
   type: reverse
 
   task-defaults:
-    policies:
-      retry:
-        count: 2
-        delay: 1
+    retry:
+      count: 2
+      delay: 1
 
   tasks:
     task1:
@@ -108,8 +107,7 @@ wf:
   type: reverse
 
   task-defaults:
-    policies:
-      timeout: 1
+    timeout: 1
 
   tasks:
     task1:
@@ -128,9 +126,8 @@ wf:
   type: reverse
 
   task-defaults:
-    policies:
-      wait-before: 1
-      wait-after: 1
+    wait-before: 1
+    wait-after: 1
 
   tasks:
     task1:
@@ -146,7 +143,6 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         self.addCleanup(thread_group.stop)
 
-    @testtools.skip("Fix 'retry' policy.")
     def test_task_defaults_retry_policy(self):
         wf_service.create_workflows(REVERSE_WF_RETRY)
 
@@ -190,7 +186,6 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         self._assert_single_item(tasks, name='task1', state=states.ERROR)
 
-    @testtools.skip("Fix 'wait' policies.")
     def test_task_defaults_wait_policies(self):
         wf_service.create_workflows(REVERSE_WF_WAIT)
 

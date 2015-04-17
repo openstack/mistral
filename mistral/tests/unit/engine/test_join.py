@@ -255,15 +255,18 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertEqual(4, len(tasks))
 
+        task4 = self._assert_single_item(tasks, name='task4')
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
         task3 = self._assert_single_item(tasks, name='task3')
-        task4 = self._assert_single_item(tasks, name='task4')
 
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
-        self.assertEqual(states.ERROR, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
+
+        # task3 may still be in RUNNING state and we need to make sure
+        # it gets into ERROR state.
+        self._await(lambda: self.is_task_error(task3.id))
 
         self.assertDictEqual({'result4': '1,2'}, task4.published)
         self.assertDictEqual({'result': '1,2'}, wf_ex.output)
@@ -332,17 +335,14 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertEqual(5, len(tasks))
 
-        task1 = self._assert_single_item(tasks, name='task1')
-        task2 = self._assert_single_item(tasks, name='task2')
-        task3 = self._assert_single_item(tasks, name='task3')
-        task4 = self._assert_single_item(tasks, name='task4')
         task5 = self._assert_single_item(tasks, name='task5')
 
-        self.assertEqual(states.SUCCESS, task1.state)
-        self.assertEqual(states.SUCCESS, task2.state)
-        self.assertEqual(states.SUCCESS, task3.state)
-        self.assertEqual(states.SUCCESS, task4.state)
         self.assertEqual(states.SUCCESS, task5.state)
+
+        success_count = sum([1 for t in tasks if t.state == states.SUCCESS])
+
+        # At least task4 and two others must be successfully completed.
+        self.assertTrue(success_count >= 3)
 
         result5 = task5.published['result5']
 
@@ -406,15 +406,14 @@ class JoinEngineTest(base.EngineTestCase):
 
         self.assertEqual(4, len(tasks))
 
-        task1 = self._assert_single_item(tasks, name='task1')
-        task2 = self._assert_single_item(tasks, name='task2')
-        task3 = self._assert_single_item(tasks, name='task3')
         task4 = self._assert_single_item(tasks, name='task4')
 
-        self.assertEqual(states.SUCCESS, task1.state)
-        self.assertEqual(states.SUCCESS, task2.state)
-        self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
+
+        success_count = sum([1 for t in tasks if t.state == states.SUCCESS])
+
+        # At least task4 and one of others must be successfully completed.
+        self.assertTrue(success_count >= 2)
 
         result4 = task4.published['result4']
 

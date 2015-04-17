@@ -15,18 +15,23 @@
 
 from mistral.workbook import types
 from mistral.workbook.v2 import base
-from mistral.workbook.v2 import task_policies
+from mistral.workbook.v2 import policies
 
 
 class TaskDefaultsSpec(base.BaseSpec):
     # See http://json-schema.org
-    _task_policies_schema = task_policies.TaskPoliciesSpec.get_schema(
+    _task_policies_schema = policies.PoliciesSpec.get_schema(
         includes=None)
 
     _schema = {
         "type": "object",
         "properties": {
-            "policies": _task_policies_schema,
+            "retry": policies.RETRY_SCHEMA,
+            "wait-before": policies.WAIT_BEFORE_SCHEMA,
+            "wait-after": policies.WAIT_AFTER_SCHEMA,
+            "timeout": policies.TIMEOUT_SCHEMA,
+            "pause-before": policies.PAUSE_BEFORE_SCHEMA,
+            "concurrency": policies.CONCURRENCY_SCHEMA,
             "on-complete": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
             "on-success": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
             "on-error": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
@@ -41,9 +46,14 @@ class TaskDefaultsSpec(base.BaseSpec):
     def __init__(self, data):
         super(TaskDefaultsSpec, self).__init__(data)
 
-        self._policies = self._spec_property(
-            'policies',
-            task_policies.TaskPoliciesSpec
+        self._policies = self._group_spec(
+            policies.PoliciesSpec,
+            'retry',
+            'wait-before',
+            'wait-after',
+            'timeout',
+            'pause-before',
+            'concurrency'
         )
         self._on_complete = self._as_list_of_tuples("on-complete")
         self._on_success = self._as_list_of_tuples("on-success")

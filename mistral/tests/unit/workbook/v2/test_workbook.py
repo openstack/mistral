@@ -33,7 +33,6 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
         # Workbook.
         act_specs = wb_spec.get_actions()
         wf_specs = wb_spec.get_workflows()
-        tr_specs = wb_spec.get_triggers()
 
         self.assertEqual('2.0', wb_spec.get_version())
         self.assertEqual('my_workbook', wb_spec.get_name())
@@ -41,7 +40,6 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
         self.assertListEqual(['test', 'v2'], wb_spec.get_tags())
         self.assertIsNotNone(act_specs)
         self.assertIsNotNone(wf_specs)
-        self.assertIsNone(tr_specs)
 
         # Actions.
         action_spec = act_specs.get('action1')
@@ -384,21 +382,4 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
 
         for workflows, expect_error in tests:
             self._parse_dsl_spec(changes=workflows,
-                                 expect_error=expect_error)
-
-    def test_triggers(self):
-        tests = [
-            ({'triggers': []}, True),
-            ({'triggers': {}}, True),
-            ({'triggers': None}, True),
-            ({'triggers': {'version': None}}, True),
-            ({'triggers': {'version': ''}}, True),
-            ({'triggers': {'version': '1.0'}}, True),
-            ({'triggers': {'version': '2.0'}}, False),
-            ({'triggers': {'version': 2.0}}, False),
-            ({'triggers': {'version': 2}}, False)
-        ]
-
-        for triggers, expect_error in tests:
-            self._parse_dsl_spec(changes=triggers,
                                  expect_error=expect_error)

@@ -32,14 +32,13 @@ workflows:
       task1:
         description: This is a test task
         action: action1 name=<% $.name %>
-        policies:
-          wait-before: 2
-          wait-after: 5
-          retry:
-            count: 10
-            delay: 30
-            break-on: <% $.my_val = 10 %>
-          concurrency: 3
+        wait-before: 2
+        wait-after: 5
+        retry:
+          count: 10
+          delay: 30
+          break-on: <% $.my_val = 10 %>
+        concurrency: 3
 
       task2:
         requires: [task1]
@@ -50,11 +49,10 @@ workflows:
     type: direct
 
     task-defaults:
-      policies:
-        retry:
-          count: 10
-          delay: 30
-          break-on: <% $.my_val = 10 %>
+      retry:
+        count: 10
+        delay: 30
+        break-on: <% $.my_val = 10 %>
       on-error:
         - fail: <% $.my_val = 0 %>
       on-success:

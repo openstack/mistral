@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api
-from mistral.services import scheduler
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
@@ -36,14 +35,9 @@ class WorkflowStopTest(base.EngineTestCase):
 
             task2:
               action: std.echo output="foo"
-              policies:
-                wait-before: 3
+              wait-before: 3
         """
         wf_service.create_workflows(WORKFLOW)
-
-        # Note(dzimine): scheduler.setup is nessessary for wait- policies.
-        thread_group = scheduler.setup()
-        self.addCleanup(thread_group.stop)
 
         self.exec_id = self.engine.start_workflow('wf', {}).id
 

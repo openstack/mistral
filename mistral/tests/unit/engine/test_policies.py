@@ -42,14 +42,13 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-before: 2
-          wait-after: 5
-          timeout: 7
-          retry:
-            count: 5
-            delay: 10
-            break-on: <% $.my_val = 10 %>
+        wait-before: 2
+        wait-after: 5
+        timeout: 7
+        retry:
+          count: 5
+          delay: 10
+          break-on: <% $.my_val = 10 %>
 """
 
 
@@ -64,19 +63,17 @@ workflows:
     type: direct
 
     task-defaults:
-      policies:
-        wait-before: 2
-        retry:
-          count: 2
-          delay: 1
+      wait-before: 2
+      retry:
+        count: 2
+        delay: 1
 
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-before: 3
-          wait-after: 5
-          timeout: 7
+        wait-before: 3
+        wait-after: 5
+        timeout: 7
 
 """
 
@@ -94,8 +91,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-before: 1
+        wait-before: 1
 """
 
 
@@ -115,8 +111,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-before: <% $.wait_before %>
+        wait-before: <% $.wait_before %>
 """
 
 
@@ -133,8 +128,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-after: 2
+        wait-after: 2
 """
 
 
@@ -151,10 +145,9 @@ workflows:
     tasks:
       task1:
         action: std.http url="http://some_non-existing_host"
-        policies:
-          retry:
-            count: 3
-            delay: 1
+        retry:
+          count: 3
+          delay: 1
 """
 
 
@@ -171,15 +164,13 @@ workflows:
     tasks:
       task1:
         action: std.async_noop
-        policies:
-          timeout: 2
+        timeout: 2
         on-error:
           - task2
 
       task2:
         action: std.echo output="Hi!"
-        policies:
-          timeout: 3
+        timeout: 3
 """
 
 
@@ -194,9 +185,8 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-after: 4
-          timeout: 3
+        wait-after: 4
+        timeout: 3
 """
 
 
@@ -211,8 +201,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          pause-before: True
+        pause-before: True
         on-success:
           - task2
       task2:
@@ -231,8 +220,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          concurrency: 4
+        concurrency: 4
 """
 
 
@@ -512,8 +500,7 @@ class PoliciesTest(base.EngineTestCase):
             tasks:
               task1:
                 action: std.echo output="Hi!"
-                policies:
-                  wait-before: <% $.wait_before %>
+                wait-before: <% $.wait_before %>
         """
         wb_service.create_workbook_v2(wb)
 
@@ -535,8 +522,7 @@ class PoliciesTest(base.EngineTestCase):
 
             task1:
               action: std.noop
-              policies:
-                wait-before: 1
+              wait-before: 1
 
             task2:
               action: std.noop

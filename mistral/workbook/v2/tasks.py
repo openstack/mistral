@@ -23,7 +23,7 @@ from mistral import expressions as expr
 from mistral import utils
 from mistral.workbook import types
 from mistral.workbook.v2 import base
-from mistral.workbook.v2 import task_policies
+from mistral.workbook.v2 import policies
 
 
 WITH_ITEMS_PTRN = re.compile(
@@ -34,9 +34,6 @@ WITH_ITEMS_PTRN = re.compile(
 class TaskSpec(base.BaseSpec):
     # See http://json-schema.org
     _type = None
-
-    _task_policies_schema = task_policies.TaskPoliciesSpec.get_schema(
-        includes=None)
 
     _schema = {
         "type": "object",
@@ -52,14 +49,14 @@ class TaskSpec(base.BaseSpec):
                 ]
             },
             "publish": types.NONEMPTY_DICT,
-            "policies": _task_policies_schema,
+            "retry": policies.RETRY_SCHEMA,
+            "wait-before": policies.WAIT_BEFORE_SCHEMA,
+            "wait-after": policies.WAIT_AFTER_SCHEMA,
+            "timeout": policies.TIMEOUT_SCHEMA,
+            "pause-before": policies.PAUSE_BEFORE_SCHEMA,
+            "concurrency": policies.CONCURRENCY_SCHEMA,
             "target": types.NONEMPTY_STRING,
-            "keep-result": {
-                "oneOf": [
-                    types.YAQL,
-                    {"type": "boolean"}
-                ]
-            }
+            "keep-result": types.YAQL_OR_BOOLEAN
         },
         "additionalProperties": False
     }
@@ -74,9 +71,14 @@ class TaskSpec(base.BaseSpec):
         self._input = data.get('input', {})
         self._with_items = self._transform_with_items()
         self._publish = data.get('publish', {})
-        self._policies = self._spec_property(
-            'policies',
-            task_policies.TaskPoliciesSpec
+        self._policies = self._group_spec(
+            policies.PoliciesSpec,
+            'retry',
+            'wait-before',
+            'wait-after',
+            'timeout',
+            'pause-before',
+            'concurrency'
         )
         self._target = data.get('target')
         self._keep_result = data.get('keep-result', True)

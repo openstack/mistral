@@ -108,6 +108,20 @@ class BaseSpec(object):
 
         return spec_cls(prop_val) if prop_val else None
 
+    def _group_spec(self, spec_cls, *prop_names):
+        if not prop_names:
+            return None
+
+        data = {}
+
+        for prop_name in prop_names:
+            prop_val = self._data.get(prop_name)
+
+            if prop_val:
+                data[prop_name] = prop_val
+
+        return spec_cls(data)
+
     def _inject_version(self, prop_names):
         for prop_name in prop_names:
             prop_data = self._data.get(prop_name)

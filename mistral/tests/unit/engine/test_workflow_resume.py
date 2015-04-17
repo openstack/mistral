@@ -65,8 +65,7 @@ workflows:
     tasks:
       task1:
         action: std.echo output="Hi!"
-        policies:
-          wait-after: 1
+        wait-after: 1
 
       task2:
         action: std.echo output="Task 2"

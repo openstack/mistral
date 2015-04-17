@@ -18,65 +18,45 @@ from mistral.workbook.v2 import base
 from mistral.workbook.v2 import retry_policy
 
 
-class TaskPoliciesSpec(base.BaseSpec):
-    # See http://json-schema.org
-    _retry_policy_schema = retry_policy.RetrySpec.get_schema(
-        includes=None)
+RETRY_SCHEMA = retry_policy.RetrySpec.get_schema(includes=None)
+WAIT_BEFORE_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
+WAIT_AFTER_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
+TIMEOUT_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
+PAUSE_BEFORE_SCHEMA = types.YAQL_OR_BOOLEAN
+CONCURRENCY_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
 
+
+class PoliciesSpec(base.BaseSpec):
+    # See http://json-schema.org
     _schema = {
         "type": "object",
         "properties": {
-            "retry": _retry_policy_schema,
-            "wait-before": {
-                "oneOf": [
-                    types.YAQL,
-                    types.POSITIVE_INTEGER
-                ]
-            },
-            "wait-after": {
-                "oneOf": [
-                    types.YAQL,
-                    types.POSITIVE_INTEGER
-                ]
-            },
-            "timeout": {
-                "oneOf": [
-                    types.YAQL,
-                    types.POSITIVE_INTEGER
-                ]
-            },
-            "pause-before": {
-                "oneOf": [
-                    types.YAQL,
-                    {"type": "boolean"}
-                ]
-            },
-            "concurrency": {
-                "oneOf": [
-                    types.YAQL,
-                    types.POSITIVE_INTEGER
-                ]
-            },
+            "retry": RETRY_SCHEMA,
+            "wait-before": WAIT_BEFORE_SCHEMA,
+            "wait-after": WAIT_AFTER_SCHEMA,
+            "timeout": TIMEOUT_SCHEMA,
+            "pause-before": PAUSE_BEFORE_SCHEMA,
+            "concurrency": CONCURRENCY_SCHEMA,
         },
         "additionalProperties": False
     }
 
     @classmethod
     def get_schema(cls, includes=['definitions']):
-        return super(TaskPoliciesSpec, cls).get_schema(includes)
+        return super(PoliciesSpec, cls).get_schema(includes)
 
     def __init__(self, data):
-        super(TaskPoliciesSpec, self).__init__(data)
+        super(PoliciesSpec, self).__init__(data)
 
         self._retry = self._spec_property('retry', retry_policy.RetrySpec)
-        self._wait_before = data.get("wait-before", 0)
-        self._wait_after = data.get("wait-after", 0)
-        self._timeout = data.get("timeout", 0)
-        self._pause_before = data.get("pause-before", False)
-        self._concurrency = data.get("concurrency", 0)
+        self._wait_before = data.get('wait-before', 0)
+        self._wait_after = data.get('wait-after', 0)
+        self._timeout = data.get('timeout', 0)
+        self._pause_before = data.get('pause-before', False)
+        self._concurrency = data.get('concurrency', 0)
 
     def validate(self):
-        super(TaskPoliciesSpec, self).validate()
+        super(PoliciesSpec, self).validate()
 
         # Validate YAQL expressions.
         self.validate_yaql_expr(self._data.get('wait-before', 0))

@@ -96,6 +96,21 @@ STRING_OR_YAQL_CONDITION = {
     ]
 }
 
+YAQL_OR_POSITIVE_INTEGER = {
+    "oneOf": [
+        YAQL,
+        POSITIVE_INTEGER
+    ]
+}
+
+YAQL_OR_BOOLEAN = {
+    "oneOf": [
+        YAQL,
+        {"type": "boolean"}
+    ]
+}
+
+
 UNIQUE_STRING_OR_YAQL_CONDITION_LIST = {
     "type": "array",
     "items": STRING_OR_YAQL_CONDITION,

@@ -15,7 +15,6 @@
 
 from mistral.workbook.v2 import actions as act
 from mistral.workbook.v2 import base
-from mistral.workbook.v2 import triggers as tr
 from mistral.workbook.v2 import workflows as wf
 
 
@@ -25,8 +24,6 @@ class WorkbookSpec(base.BaseSpec):
     _action_schema = act.ActionSpec.get_schema(includes=None)
 
     _workflow_schema = wf.WorkflowSpec.get_schema(includes=None)
-
-    _trigger_schema = tr.TriggerSpec.get_schema(includes=None)
 
     _schema = {
         "type": "object",
@@ -47,14 +44,6 @@ class WorkbookSpec(base.BaseSpec):
                     "version": {"enum": ["2.0", 2.0]},
                     "^(?!version)\w+$": _workflow_schema
                 }
-            },
-            "triggers": {
-                "type": "object",
-                "minProperties": 1,
-                "patternProperties": {
-                    "version": {"enum": ["2.0", 2.0]},
-                    "^(?!version)\w+$": _trigger_schema
-                }
             }
         },
         "additionalProperties": False
@@ -69,9 +58,7 @@ class WorkbookSpec(base.BaseSpec):
         self._description = data.get('description')
         self._tags = data.get('tags', [])
         self._actions = self._spec_property('actions', act.ActionSpecList)
-        self._workflows = self._spec_property(
-            'workflows', wf.WorkflowSpecList)
-        self._triggers = self._spec_property('triggers', tr.TriggerSpecList)
+        self._workflows = self._spec_property('workflows', wf.WorkflowSpecList)
 
     def get_name(self):
         return self._name
@@ -87,6 +74,3 @@ class WorkbookSpec(base.BaseSpec):
 
     def get_workflows(self):
         return self._workflows
-
-    def get_triggers(self):
-        return self._triggers
