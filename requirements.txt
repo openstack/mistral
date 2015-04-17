@@ -12,10 +12,10 @@ posix_ipc
 croniter>=0.3.4 # MIT License
 requests>=1.2.1,!=2.4.0
 kombu>=2.4.8
-oslo.config>=1.4.0  # Apache-2.0
+oslo.config>=1.4.0,<1.10.0  # Apache-2.0
 oslo.db>=1.0.0  # Apache-2.0
 oslo.messaging>=1.4.0
-oslo.utils>=1.2.0  # Apache-2.0
+oslo.utils>=1.2.0,<1.5.0  # Apache-2.0
 paramiko>=1.13.0
 python-cinderclient>=1.1.0
 python-heatclient>=0.2.9
