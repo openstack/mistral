@@ -132,7 +132,12 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             ({'input': [None]}, True),
             ({'input': ['']}, True),
             ({'input': None}, True),
-            ({'input': []}, True)
+            ({'input': []}, True),
+            ({'input': ['var1', {'var2': 2}]}, False),
+            ({'input': [{'var1': 1}, {'var2': 2}]}, False),
+            ({'input': [{'var1': None}]}, False),
+            ({'input': [{'var1': 1}, {'var1': 1}]}, True),
+            ({'input': [{'var1': 1, 'var2': 2}]}, True)
         ]
 
         for wf_input, expect_error in tests:

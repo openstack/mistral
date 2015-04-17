@@ -27,7 +27,7 @@ class ActionSpec(base.BaseSpec):
         "properties": {
             "base": types.NONEMPTY_STRING,
             "base-input": types.NONEMPTY_DICT,
-            "input": types.UNIQUE_STRING_LIST,
+            "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
             "output": types.ANY_NULLABLE,
         },
         "required": ["base"],

@@ -37,7 +37,7 @@ class WorkflowSpec(base.BaseSpec):
         "properties": {
             "type": types.WORKFLOW_TYPE,
             "task-defaults": _task_defaults_schema,
-            "input": types.UNIQUE_STRING_LIST,
+            "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
             "output": types.NONEMPTY_DICT,
             "tasks": {
                 "type": "object",
