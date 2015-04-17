@@ -13,8 +13,7 @@ std.delete_instance:
     delete_vm:
       description: Destroy VM.
       action: nova.servers_delete server=<% $.instance_id %>
-      policies:
-        wait-after: 10
+      wait-after: 10
       on-success:
         - find_given_vm
 

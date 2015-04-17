@@ -7,8 +7,7 @@ wf:
   tasks:
     hello:
       action: std.echo output="Hello"
-      policies:
-        wait-before: 1
+      wait-before: 1
       publish:
         result: <% $.hello %>
 
@@ -26,4 +25,3 @@ wf1:
     goodbye:
       action: std.echo output="<% $.farewell %>, <% $.name %>"
       requires: [addressee]
-

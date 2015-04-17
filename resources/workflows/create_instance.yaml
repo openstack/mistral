@@ -44,10 +44,9 @@ std.create_instance:
     wait_vm_active:
       description: Waits till VM is ACTIVE.
       action: nova.servers_find id=<% $.vm_id %> status="ACTIVE"
-      policies:
-        retry:
-          count: 10
-          delay: 10
+      retry:
+        count: 10
+        delay: 10
       publish:
         status: <% $.wait_vm_active.status %>
       on-success:
@@ -56,18 +55,16 @@ std.create_instance:
     associate_ip:
       description: Associate server with one of floating IPs.
       action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
-      policies:
-        wait-after: 5
+      wait-after: 5
       on-success:
         - wait_ssh
 
     wait_ssh:
       description: Wait till operating system on the VM is up (SSH command).
       action: std.wait_ssh username=<% $.ssh_username %> password=<% $.ssh_password %> host=<% $.vm_ip %>
-      policies:
-        retry:
-          count: 10
-          delay: 10
+      retry:
+        count: 10
+        delay: 10
 
     delete_vm:
       description: Destroy VM.
