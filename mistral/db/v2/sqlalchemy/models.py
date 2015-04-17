@@ -102,6 +102,11 @@ class Execution(mb.MistralSecureModelBase):
     state_info = sa.Column(sa.String(1024), nullable=True)
     tags = sa.Column(st.JsonListType())
 
+    # Runtime context like iteration_no of a repeater.
+    # Effectively internal engine properties which will be used to determine
+    # execution of a task.
+    runtime_context = sa.Column(st.JsonDictType())
+
 
 class ActionExecution(Execution):
     """Contains action execution information."""
@@ -149,11 +154,6 @@ class TaskExecution(Execution):
     # Data Flow properties.
     in_context = sa.Column(st.JsonLongDictType())
     published = sa.Column(st.JsonDictType())
-
-    # Runtime context like iteration_no of a repeater.
-    # Effectively internal engine properties which will be used to determine
-    # execution of a task.
-    runtime_context = sa.Column(st.JsonDictType())
 
 
 for cls in utils.iter_subclasses(Execution):

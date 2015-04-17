@@ -111,7 +111,7 @@ class SubworkflowsTest(base.EngineTestCase):
         # Execution of 'wf2'.
         self.assertIsNotNone(wf2_ex)
         self.assertDictEqual({}, wf2_ex.input)
-        self.assertDictEqual({'env': env}, wf2_ex.params)
+        self.assertDictContainsSubset({'env': env}, wf2_ex.params)
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
@@ -136,7 +136,7 @@ class SubworkflowsTest(base.EngineTestCase):
         }
 
         self.assertIsNotNone(wf1_ex.task_execution_id)
-        self.assertDictEqual(wf1_ex.params, expected_start_params)
+        self.assertDictContainsSubset(expected_start_params, wf1_ex.params)
         self.assertDictEqual(wf1_ex.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.

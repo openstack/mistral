@@ -110,7 +110,8 @@ class DirectWorkflowControllerTest(base.DbTestCase):
                 workflow_name='wf',
                 state=states.SUCCESS,
                 output={'result': 'Hey'},
-                accepted=True
+                accepted=True,
+                runtime_context={'with_items_index': 0}
             )
         )
 

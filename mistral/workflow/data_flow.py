@@ -80,6 +80,11 @@ def _extract_execution_result(ex):
 
 
 def get_task_execution_result(task_ex):
+    action_execs = task_ex.executions
+    action_execs.sort(
+        key=lambda x: x.runtime_context.get('with_items_index')
+    )
+
     results = [
         _extract_execution_result(ex)
         for ex in task_ex.executions

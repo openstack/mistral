@@ -467,7 +467,8 @@ class DataFlowTest(test_base.BaseTest):
         task_ex.executions.append(models.ActionExecution(
             name='my_action',
             output={'result': 1},
-            accepted=True
+            accepted=True,
+            runtime_context={'with_items_index': 0}
         ))
 
         self.assertEqual(1, data_flow.get_task_execution_result(task_ex))
@@ -475,12 +476,14 @@ class DataFlowTest(test_base.BaseTest):
         task_ex.executions.append(models.ActionExecution(
             name='my_action',
             output={'result': 1},
-            accepted=True
+            accepted=True,
+            runtime_context={'with_items_index': 0}
         ))
         task_ex.executions.append(models.ActionExecution(
             name='my_action',
             output={'result': 1},
-            accepted=False
+            accepted=False,
+            runtime_context={'with_items_index': 0}
         ))
 
         self.assertEqual([1, 1], data_flow.get_task_execution_result(task_ex))
