@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from mistral import exceptions as exc
+from mistral import utils
 from mistral.workbook import types
 from mistral.workbook.v2 import base
 from mistral.workbook.v2 import task_defaults
@@ -63,7 +64,7 @@ class WorkflowSpec(base.BaseSpec):
         self._description = data.get('description')
         self._tags = data.get('tags', [])
         self._type = data['type'] if 'type' in data else "direct"
-        self._input = data.get('input', [])
+        self._input = utils.get_input_dict(data.get('input', []))
         self._output = data.get('output', {})
 
         self._task_defaults = self._spec_property(

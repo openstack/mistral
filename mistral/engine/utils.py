@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - Huawei Technologies Co. Ltd
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,11 +14,13 @@
 #    limitations under the License.
 
 import copy
+import six
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.openstack.common import log as logging
+from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import utils as wf_utils
 
@@ -28,10 +31,10 @@ def validate_workflow_input(wf_def, wf_spec, wf_input):
     input_param_names = copy.copy((wf_input or {}).keys())
     missing_param_names = []
 
-    for p_name in wf_spec.get_input():
-        if p_name not in input_param_names:
+    for p_name, p_value in six.iteritems(wf_spec.get_input()):
+        if p_value is utils.NotDefined and p_name not in input_param_names:
             missing_param_names.append(p_name)
-        else:
+        if p_name in input_param_names:
             input_param_names.remove(p_name)
 
     if missing_param_names or input_param_names:
@@ -51,6 +54,8 @@ def validate_workflow_input(wf_def, wf_spec, wf_input):
         raise exc.WorkflowInputException(
             msg % tuple(msg_props)
         )
+    else:
+        utils.merge_dicts(wf_input, wf_spec.get_input(), overwrite=False)
 
 
 def resolve_action_definition(wf_name, wf_spec_name, action_spec_name):

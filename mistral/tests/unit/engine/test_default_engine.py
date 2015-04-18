@@ -48,7 +48,7 @@ workflows:
   wf:
     type: reverse
     input:
-      - param1
+      - param1: value1
       - param2
 
     tasks:
@@ -146,6 +146,49 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(task_action_ex)
         self.assertDictEqual({'output': 'Hey'}, task_action_ex.input)
+
+    def test_start_workflow_with_input_default(self):
+        wf_input = {'param2': 'value2'}
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wb.wf',
+            wf_input,
+            task_name='task1'
+        )
+
+        self.assertIsNotNone(wf_ex)
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self._assert_dict_contains_subset(wf_input, wf_ex.context)
+        self.assertIn('__execution', wf_ex.context)
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual('wb.wf', task_ex.workflow_name)
+        self.assertEqual('task1', task_ex.name)
+        self.assertEqual(states.RUNNING, task_ex.state)
+        self.assertIsNotNone(task_ex.spec)
+        self.assertDictEqual({}, task_ex.runtime_context)
+
+        # Data Flow properties.
+        self._assert_dict_contains_subset(wf_input, task_ex.in_context)
+        self.assertIn('__execution', task_ex.in_context)
+
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task_ex.id
+        )
+
+        self.assertEqual(1, len(action_execs))
+
+        task_action_ex = action_execs[0]
+
+        self.assertIsNotNone(task_action_ex)
+        self.assertDictEqual({'output': 'value1'}, task_action_ex.input)
 
     def test_start_workflow_with_adhoc_env(self):
         wf_input = {

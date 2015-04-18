@@ -18,6 +18,7 @@ from mistral.db.v2 import api as db_api
 from mistral.openstack.common import log as logging
 from mistral.services import actions as action_service
 from mistral.tests import base
+from mistral import utils
 from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
@@ -96,7 +97,7 @@ class ActionServiceTest(base.DbTestCase):
         self.assertEqual('action1', action1_spec.get_name())
         self.assertEqual('std.echo', action1_spec.get_base())
         self.assertDictEqual({'output': 'Hi'}, action1_spec.get_base_input())
-        self.assertListEqual([], action1_spec.get_input())
+        self.assertDictEqual({}, action1_spec.get_input())
 
         db_actions = action_service.update_actions(UPDATED_ACTION_LIST)
 
@@ -108,4 +109,8 @@ class ActionServiceTest(base.DbTestCase):
         self.assertListEqual([], action1_spec.get_tags())
         self.assertEqual('std.echo', action1_spec.get_base())
         self.assertDictEqual({'output': 'Hi'}, action1_spec.get_base_input())
-        self.assertListEqual(['param1'], action1_spec.get_input())
+        self.assertIn('param1', action1_spec.get_input())
+        self.assertIs(
+            action1_spec.get_input().get('param1'),
+            utils.NotDefined
+        )

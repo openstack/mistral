@@ -18,6 +18,7 @@ from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
 from mistral.tests import base
+from mistral import utils
 from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
@@ -121,7 +122,11 @@ class WorkflowServiceTest(base.DbTestCase):
 
         self.assertEqual('wf1', wf1_spec.get_name())
         self.assertEqual('reverse', wf1_spec.get_type())
-        self.assertListEqual(['param1'], wf1_spec.get_input())
+        self.assertIn('param1', wf1_spec.get_input())
+        self.assertIs(
+            wf1_spec.get_input().get('param1'),
+            utils.NotDefined
+        )
 
         db_wfs = wf_service.update_workflows(UPDATED_WORKFLOW_LIST)
 
@@ -133,7 +138,16 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertEqual('wf1', wf1_spec.get_name())
         self.assertListEqual([], wf1_spec.get_tags())
         self.assertEqual('reverse', wf1_spec.get_type())
-        self.assertListEqual(['param1', 'param2'], wf1_spec.get_input())
+        self.assertIn('param1', wf1_spec.get_input())
+        self.assertIn('param2', wf1_spec.get_input())
+        self.assertIs(
+            wf1_spec.get_input().get('param1'),
+            utils.NotDefined
+        )
+        self.assertIs(
+            wf1_spec.get_input().get('param2'),
+            utils.NotDefined
+        )
 
     def test_invalid_workflow_list(self):
         exception = self.assertRaises(

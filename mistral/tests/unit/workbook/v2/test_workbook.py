@@ -57,7 +57,7 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
             {'output': 'Hello <% $.name %>!'},
             action_spec.get_base_input()
         )
-        self.assertListEqual([], action_spec.get_input())
+        self.assertDictEqual({}, action_spec.get_input())
         self.assertEqual('<% $ %>', action_spec.get_output())
 
         # Workflows.

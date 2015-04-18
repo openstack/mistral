@@ -97,3 +97,12 @@ class UtilsTest(base.BaseTest):
             pass
 
         self.assertEqual([B, C, D], list(utils.iter_subclasses(A)))
+
+    def test_get_input_dict(self):
+        input = ['param1', {'param2': 2}]
+        input_dict = utils.get_input_dict(input)
+
+        self.assertIn('param1', input_dict)
+        self.assertIn('param2', input_dict)
+        self.assertEqual(2, input_dict.get('param2'))
+        self.assertIs(input_dict.get('param1'), utils.NotDefined)
