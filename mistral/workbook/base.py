@@ -151,6 +151,9 @@ class BaseSpec(object):
         if not prop_val:
             return []
 
+        if isinstance(prop_val, six.string_types):
+            return [self._as_tuple(prop_val)]
+
         return [self._as_tuple(item) for item in prop_val]
 
     @staticmethod

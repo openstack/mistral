@@ -23,7 +23,6 @@ from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
-# TODO(nmakhotkin) Need to write more tests.
 
 LOG = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         return db_api.get_workflow_execution(wf_ex.id)
 
     def test_direct_workflow_on_closures(self):
-        wf = """
+        wf_text = """
         version: '2.0'
 
         wf:
@@ -77,7 +76,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.noop
         """
 
-        wf_ex = self._run_workflow(wf)
+        wf_ex = self._run_workflow(wf_text)
 
         tasks = wf_ex.task_executions
 
@@ -94,7 +93,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertTrue(wf_ex.state, states.ERROR)
 
     def test_wrong_task_input(self):
-        wf_wrong_task_input = """
+        wf_text = """
         version: '2.0'
 
         wf:
@@ -111,7 +110,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo wrong_input="Hahaha"
         """
 
-        wf_ex = self._run_workflow(wf_wrong_task_input)
+        wf_ex = self._run_workflow(wf_text)
 
         task_ex = self._assert_single_item(wf_ex.task_executions, name='task2')
         action_ex = db_api.get_action_executions(
@@ -131,7 +130,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertIn(action_ex.output['result'], wf_ex.state_info)
 
     def test_wrong_first_task_input(self):
-        wf_invalid_first_task_input = """
+        wf_text = """
         version: '2.0'
 
         wf:
@@ -142,7 +141,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo wrong_input="Ha-ha"
         """
 
-        wf_ex = self._run_workflow(wf_invalid_first_task_input)
+        wf_ex = self._run_workflow(wf_text)
 
         task_ex = wf_ex.task_executions[0]
         action_ex = db_api.get_action_executions(
@@ -162,11 +161,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertIn(action_ex.output['result'], wf_ex.state_info)
 
     def test_wrong_action(self):
-        wf_invalid_action = """
+        wf_text = """
         version: '2.0'
 
         wf:
           type: direct
+
           tasks:
             task1:
               action: std.echo output="Echo"
@@ -176,7 +176,8 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task2:
               action: action.doesnt_exist
         """
-        wf_ex = self._run_workflow(wf_invalid_action)
+
+        wf_ex = self._run_workflow(wf_text)
 
         # TODO(dzimine): Catch tasks caused error, and set them to ERROR:
         # TODO(dzimine): self.assertTrue(task_ex.state, states.ERROR)
@@ -185,16 +186,19 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertIn("Failed to find action", wf_ex.state_info)
 
     def test_wrong_action_first_task(self):
-        wf_invalid_action_first_task = """
+        wf_text = """
         version: '2.0'
 
         wf:
           type: direct
+
           tasks:
             task1:
               action: wrong.task
         """
-        wf_service.create_workflows(wf_invalid_action_first_task)
+
+        wf_service.create_workflows(wf_text)
+
         with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
             self.assertRaises(
                 exc.InvalidActionException,
@@ -210,11 +214,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             )
 
     def test_messed_yaql(self):
-        wf_messed_yaql = """
+        wf_text = """
         version: '2.0'
 
         wf:
           type: direct
+
           tasks:
             task1:
               action: std.echo output="Echo"
@@ -224,12 +229,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task2:
               action: std.echo output=<% wrong(yaql) %>
         """
-        wf_ex = self._run_workflow(wf_messed_yaql)
+
+        wf_ex = self._run_workflow(wf_text)
 
         self.assertTrue(wf_ex.state, states.ERROR)
 
     def test_messed_yaql_in_first_task(self):
-        wf_messed_yaql_in_first_task = """
+        wf_text = """
         version: '2.0'
 
         wf:
@@ -238,7 +244,8 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             task1:
               action: std.echo output=<% wrong(yaql) %>
         """
-        wf_service.create_workflows(wf_messed_yaql_in_first_task)
+
+        wf_service.create_workflows(wf_text)
 
         with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
             self.assertRaises(
@@ -254,3 +261,33 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 ),
                 "Called with a right exception"
             )
+
+    def test_one_line_syntax_in_on_clauses(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.echo output=1
+              on-success: task2
+
+            task2:
+              action: std.echo output=1
+              on-complete: task3
+
+            task3:
+              action: std.fail
+              on-error: task4
+
+            task4:
+              action: std.echo output=4
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
