@@ -15,6 +15,7 @@
 from oslo.config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.openstack.common import log as logging
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
@@ -38,7 +39,7 @@ actions:
     base-input:
       output: "<% $.s1 %>+<% $.s2 %>"
     input:
-      - s1
+      - s1: "a"
       - s2
     output: "<% $ %> and <% $ %>"
 
@@ -57,6 +58,31 @@ workflows:
         action: concat_twice s1=<% $.str1 %> s2=<% $.str2 %>
         publish:
           result: <% $.concat %>
+
+  wf2:
+    type: direct
+    input:
+      - str1
+      - str2
+    output:
+      workflow_result: <% $.result %> # Access to execution context variables
+      concat_task_result: <% $.concat %> # Access to the same but via task name
+
+    tasks:
+      concat:
+        action: concat_twice s2=<% $.str2 %>
+        publish:
+          result: <% $.concat %>
+
+  wf3:
+    type: direct
+    input:
+      - str1
+      - str2
+
+    tasks:
+      concat:
+        action: concat_twice
 """
 
 
@@ -84,4 +110,32 @@ class AdhocActionsTest(base.EngineTestCase):
                 'concat_task_result': 'a+b and a+b'
             },
             wf_ex.output
+        )
+
+    def test_run_adhoc_action_without_input_value(self):
+        wf_ex = self.engine.start_workflow(
+            'my_wb.wf2',
+            {'str1': 'a', 'str2': 'b'}
+        )
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.maxDiff = None
+
+        self.assertDictEqual(
+            {
+                'workflow_result': 'a+b and a+b',
+                'concat_task_result': 'a+b and a+b'
+            },
+            wf_ex.output
+        )
+
+    def test_run_adhoc_action_without_sufficient_input_value(self):
+        self.assertRaises(
+            exc.InputException,
+            self.engine.start_workflow,
+            'my_wb.wf3',
+            {'str1': 'a', 'str2': 'b'}
         )

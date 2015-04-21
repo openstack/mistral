@@ -55,7 +55,7 @@ class DefaultEngine(base.Engine):
                 wf_def = db_api.get_workflow_definition(wf_name)
                 wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
-                eng_utils.validate_workflow_input(wf_def, wf_spec, wf_input)
+                eng_utils.validate_input(wf_def, wf_spec, wf_input)
 
                 wf_ex = self._create_workflow_execution(
                     wf_def,
