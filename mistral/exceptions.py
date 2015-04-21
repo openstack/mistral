@@ -84,10 +84,6 @@ class WorkflowException(MistralException):
     http_code = 400
 
 
-class WorkflowInputException(MistralException):
-    http_code = 400
-
-
 class InputException(MistralException):
     http_code = 400
 

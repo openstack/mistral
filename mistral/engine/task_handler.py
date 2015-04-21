@@ -332,6 +332,8 @@ def _get_action_input(wf_spec, task_ex, task_spec, ctx):
             base_name
         )
 
+        e_utils.validate_input(action_def, action_spec, input_dict)
+
         base_input = action_spec.get_base_input()
 
         if base_input:
