@@ -250,7 +250,7 @@ class DefaultEngineTest(base.DbTestCase):
 
     def test_start_workflow_missing_parameters(self):
         self.assertRaises(
-            exc.WorkflowInputException,
+            exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
             None,
@@ -259,7 +259,7 @@ class DefaultEngineTest(base.DbTestCase):
 
     def test_start_workflow_unexpected_parameters(self):
         self.assertRaises(
-            exc.WorkflowInputException,
+            exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
             {'param1': 'Hey', 'param2': 'Hi', 'unexpected_param': 'val'},
@@ -428,12 +428,12 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
     def test_engine_client_remote_error(self):
         mocked = mock.Mock()
         mocked.call.side_effect = rpc_client.RemoteError(
-            'WorkflowInputException',
+            'InputException',
             'Input is wrong'
         )
         self.engine_client._client = mocked
 
         self.assertRaises(
-            exc.WorkflowInputException,
+            exc.InputException,
             self.engine_client.start_workflow, 'some_wf', {}
         )

@@ -27,19 +27,19 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
-def validate_workflow_input(wf_def, wf_spec, wf_input):
-    input_param_names = copy.copy((wf_input or {}).keys())
+def validate_input(definition, spec, input):
+    input_param_names = copy.copy((input or {}).keys())
     missing_param_names = []
 
-    for p_name, p_value in six.iteritems(wf_spec.get_input()):
+    for p_name, p_value in six.iteritems(spec.get_input()):
         if p_value is utils.NotDefined and p_name not in input_param_names:
             missing_param_names.append(p_name)
         if p_name in input_param_names:
             input_param_names.remove(p_name)
 
     if missing_param_names or input_param_names:
-        msg = 'Invalid workflow input [workflow=%s'
-        msg_props = [wf_def.name]
+        msg = 'Invalid input [name=%s, class=%s'
+        msg_props = [definition.name, spec.__class__.__name__]
 
         if missing_param_names:
             msg += ', missing=%s'
@@ -51,11 +51,11 @@ def validate_workflow_input(wf_def, wf_spec, wf_input):
 
         msg += ']'
 
-        raise exc.WorkflowInputException(
+        raise exc.InputException(
             msg % tuple(msg_props)
         )
     else:
-        utils.merge_dicts(wf_input, wf_spec.get_input(), overwrite=False)
+        utils.merge_dicts(input, spec.get_input(), overwrite=False)
 
 
 def resolve_action_definition(wf_name, wf_spec_name, action_spec_name):
