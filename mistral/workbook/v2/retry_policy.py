@@ -1,9 +1,9 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
 #        http://www.apache.org/licenses/LICENSE-2.0
 #
@@ -13,13 +13,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from mistral.workbook import types
 from mistral.workbook.v2 import base
 
 
 class RetrySpec(base.BaseSpec):
     # See http://json-schema.org
-    _schema = {
+    _retry_dict_schema = {
         "type": "object",
         "properties": {
             "count": {
@@ -40,16 +42,31 @@ class RetrySpec(base.BaseSpec):
         "additionalProperties": False
     }
 
+    _schema = {
+        "oneOf": [
+            _retry_dict_schema,
+            types.NONEMPTY_STRING
+        ]
+    }
+
     @classmethod
     def get_schema(cls, includes=['definitions']):
         return super(RetrySpec, cls).get_schema(includes)
 
     def __init__(self, data):
+        data = self._transform_retry_one_line(data)
         super(RetrySpec, self).__init__(data)
 
         self._break_on = data.get('break-on')
         self._count = data['count']
         self._delay = data['delay']
+
+    def _transform_retry_one_line(self, retry):
+        if isinstance(retry, six.string_types):
+            _, params = self._parse_cmd_and_input(retry)
+            return params
+
+        return retry
 
     def validate(self):
         super(RetrySpec, self).validate()
