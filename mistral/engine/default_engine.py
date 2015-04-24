@@ -100,7 +100,7 @@ class DefaultEngine(base.Engine):
             # Must be before loading the object itself (see method doc).
             self._lock_workflow_execution(wf_ex_id)
 
-            wf_ex = db_api.get_workflow_execution(wf_ex_id)
+            wf_ex = task_ex.workflow_execution
 
             wf_trace.info(
                 task_ex,

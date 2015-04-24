@@ -111,15 +111,21 @@ class EngineTestCase(base.DbTestCase):
     def print_workflow_executions(self, exc_info):
         print("\nEngine test case exception occurred: %s" % exc_info[1])
         print("Exception type: %s" % exc_info[0])
-        print("\nPrinting failed workflows...")
+        print("\nPrinting workflow executions...")
 
         wf_execs = db_api.get_workflow_executions()
 
         for wf_ex in wf_execs:
-            print("\n%s [state=%s]" % (wf_ex.name, wf_ex.state))
+            print(
+                "\n%s [state=%s, output=%s]" %
+                (wf_ex.name, wf_ex.state, wf_ex.output)
+            )
 
             for t_ex in wf_ex.task_executions:
-                print("\t%s [state=%s]" % (t_ex.name, t_ex.state))
+                print(
+                    "\t%s [state=%s, published=%s]" %
+                    (t_ex.name, t_ex.state, t_ex.published)
+                )
 
     def is_task_in_state(self, task_ex_id, state):
         return db_api.get_task_execution(task_ex_id).state == state

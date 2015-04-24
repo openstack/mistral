@@ -190,7 +190,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             ({'on-success': [{'email': '<% 1 %>'}, 'echo']}, False),
             ({'on-success': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
             ({'on-success': [{'email': '<% * %>'}]}, True),
-            ({'on-success': 'email'}, True),
+            ({'on-success': 'email'}, False),
             ({'on-success': None}, True),
             ({'on-success': ['']}, True),
             ({'on-success': []}, True),
@@ -201,7 +201,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             ({'on-error': [{'email': '<% 1 %>'}, 'echo']}, False),
             ({'on-error': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
             ({'on-error': [{'email': '<% * %>'}]}, True),
-            ({'on-error': 'email'}, True),
+            ({'on-error': 'email'}, False),
             ({'on-error': None}, True),
             ({'on-error': ['']}, True),
             ({'on-error': []}, True),
@@ -212,7 +212,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             ({'on-complete': [{'email': '<% 1 %>'}, 'echo']}, False),
             ({'on-complete': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
             ({'on-complete': [{'email': '<% * %>'}]}, True),
-            ({'on-complete': 'email'}, True),
+            ({'on-complete': 'email'}, False),
             ({'on-complete': None}, True),
             ({'on-complete': ['']}, True),
             ({'on-complete': []}, True),
@@ -260,7 +260,9 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         for default, expect_error in tests:
             overlay = {'test': {'task-defaults': {}}}
+
             utils.merge_dicts(overlay['test']['task-defaults'], default)
+
             self._parse_dsl_spec(add_tasks=True,
                                  changes=overlay,
                                  expect_error=expect_error)
