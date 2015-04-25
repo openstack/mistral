@@ -65,9 +65,9 @@ class DefaultExecutor(base.Executor):
             LOG.warn(msg)
 
         except exc.ActionException as e:
-            msg = ("Failed to run action [task_id=%s, action_cls='%s',"
-                   " params='%s']\n %s"
-                   % (action_ex_id, action_cls, action_params, e))
+            msg = ("Failed to run action [action_ex_id=%s, action_cls='%s',"
+                   " attributes='%s', params='%s']\n %s"
+                   % (action_ex_id, action_cls, attributes, action_params, e))
             LOG.exception(msg)
         except Exception as e:
             msg = str(e)
