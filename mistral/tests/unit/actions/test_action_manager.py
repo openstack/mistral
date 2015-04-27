@@ -23,7 +23,7 @@ from mistral.tests import base
 LOG = logging.getLogger(__name__)
 
 
-class ActionFactoryTest(base.DbTestCase):
+class ActionManagerTest(base.DbTestCase):
     def test_register_standard_actions(self):
         action_list = a_m.get_registered_actions()
 
@@ -44,17 +44,24 @@ class ActionFactoryTest(base.DbTestCase):
         self._assert_single_item(action_list, name="glance.images_delete")
 
     def test_get_action_class(self):
-        self.assertEqual(std.EchoAction, a_m.get_action_class("std.echo"))
-        self.assertEqual(std.HTTPAction, a_m.get_action_class("std.http"))
-        self.assertEqual(
-            std.MistralHTTPAction,
-            a_m.get_action_class("std.mistral_http")
+        self.assertTrue(
+            issubclass(a_m.get_action_class("std.echo"), std.EchoAction)
         )
-        self.assertEqual(
-            std.SendEmailAction,
-            a_m.get_action_class("std.email")
+        self.assertTrue(
+            issubclass(a_m.get_action_class("std.http"), std.HTTPAction)
         )
-        self.assertEqual(
-            std.JavaScriptAction,
-            a_m.get_action_class("std.javascript")
+        self.assertTrue(
+            issubclass(
+                a_m.get_action_class("std.mistral_http"),
+                std.MistralHTTPAction
+            )
+        )
+        self.assertTrue(
+            issubclass(a_m.get_action_class("std.email"), std.SendEmailAction)
+        )
+        self.assertTrue(
+            issubclass(
+                a_m.get_action_class("std.javascript"),
+                std.JavaScriptAction
+            )
         )
