@@ -39,6 +39,7 @@ class ActionExecution(resource.Resource):
     id = wtypes.text
 
     workflow_name = wtypes.text
+    task_name = wtypes.text
     task_execution_id = wtypes.text
 
     state = wtypes.text
@@ -71,6 +72,7 @@ class ActionExecution(resource.Resource):
         return cls(
             id='123e4567-e89b-12d3-a456-426655440000',
             workflow_name='flow',
+            task_name='task1',
             workflow_execution_id='653e4127-e89b-12d3-a456-426655440076',
             task_execution_id='343e45623-e89b-12d3-a456-426655440090',
             state=states.SUCCESS,
@@ -102,17 +104,25 @@ def _load_deferred_output_field(action_ex):
 
 
 def _get_action_execution(id):
-    db_model = db_api.get_action_execution(id)
+    action_ex = db_api.get_action_execution(id)
 
-    _load_deferred_output_field(db_model)
+    return _get_action_execution_resource(action_ex)
+
+
+def _get_action_execution_resource(action_ex):
+    _load_deferred_output_field(action_ex)
 
     # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
     # TODO(nmakhotkin): Use db_model for this instead.
-    return ActionExecution.from_dict(db_model.to_dict())
+    res = ActionExecution.from_dict(action_ex.to_dict())
+
+    setattr(res, 'task_name', action_ex.task_execution.name)
+
+    return res
 
 
 def _get_action_executions(task_execution_id=None):
-    kwargs = {}
+    kwargs = {'type': 'action_execution'}
 
     if task_execution_id:
         kwargs['task_execution_id'] = task_execution_id
@@ -120,9 +130,8 @@ def _get_action_executions(task_execution_id=None):
     action_executions = []
 
     for action_ex in db_api.get_action_executions(**kwargs):
-        _load_deferred_output_field(action_ex)
         action_executions.append(
-            ActionExecution.from_dict(action_ex.to_dict())
+            _get_action_execution_resource(action_ex)
         )
 
     return ActionExecutions(action_executions=action_executions)

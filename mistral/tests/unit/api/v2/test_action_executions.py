@@ -30,6 +30,7 @@ from mistral.workflow import utils as wf_utils
 action_ex = models.ActionExecution(
     id='123',
     workflow_name='flow',
+    task_execution=models.TaskExecution(name='task1'),
     task_execution_id='333',
     state=states.SUCCESS,
     state_info=states.SUCCESS,
@@ -46,6 +47,7 @@ ACTION_EXEC = {
     'id': '123',
     'workflow_name': 'flow',
     'task_execution_id': '333',
+    'task_name': 'task1',
     'state': 'SUCCESS',
     'state_info': 'SUCCESS',
     'tags': ['foo', 'fee'],
@@ -57,14 +59,16 @@ ACTION_EXEC = {
     'updated_at': '1970-01-01 00:00:00'
 }
 
-UPDATED_action_ex = copy.copy(action_ex)
-UPDATED_action_ex['state'] = 'SUCCESS'
+UPDATED_ACTION_EX = copy.copy(action_ex).to_dict()
+UPDATED_ACTION_EX['state'] = 'SUCCESS'
+UPDATED_ACTION_EX['task_name'] = 'task1'
 UPDATED_ACTION = copy.copy(ACTION_EXEC)
 UPDATED_ACTION['state'] = 'SUCCESS'
 UPDATED_ACTION_OUTPUT = UPDATED_ACTION['output']
 
-ERROR_action_ex = copy.copy(action_ex)
-ERROR_action_ex['state'] = 'ERROR'
+ERROR_ACTION_EX = copy.copy(action_ex).to_dict()
+ERROR_ACTION_EX['state'] = 'ERROR'
+ERROR_ACTION_EX['task_name'] = 'task1'
 ERROR_ACTION = copy.copy(ACTION_EXEC)
 ERROR_ACTION['state'] = 'ERROR'
 ERROR_ACTION_RES = ERROR_ACTION['output']
@@ -94,7 +98,7 @@ class TestActionExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
     def test_put(self, f):
-        f.return_value = UPDATED_action_ex.to_dict()
+        f.return_value = UPDATED_ACTION_EX
 
         resp = self.app.put_json('/v2/action_executions/123', UPDATED_ACTION)
 
@@ -108,7 +112,7 @@ class TestActionExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
     def test_put_error(self, f):
-        f.return_value = ERROR_action_ex.to_dict()
+        f.return_value = ERROR_ACTION_EX
 
         resp = self.app.put_json('/v2/action_executions/123', ERROR_ACTION)
 
@@ -141,7 +145,7 @@ class TestActionExecutionsController(base.FunctionalTest):
     def test_put_without_result(self, f):
         action_ex = copy.copy(UPDATED_ACTION)
         del action_ex['output']
-        f.return_value = UPDATED_action_ex.to_dict()
+        f.return_value = UPDATED_ACTION_EX
         resp = self.app.put_json('/v2/action_executions/123', action_ex)
 
         self.assertEqual(resp.status_int, 200)
