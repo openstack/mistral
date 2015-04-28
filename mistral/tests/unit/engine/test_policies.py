@@ -387,6 +387,84 @@ class PoliciesTest(base.EngineTestCase):
             task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
+    def test_retry_policy_break_on(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            input:
+              - var: 4
+            tasks:
+              task1:
+                action: std.fail
+                retry:
+                  count: 3
+                  delay: 1
+                  break-on: <% $.var >= 3 %>
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self._await(lambda: self.is_task_error(task_ex.id))
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(
+            {},
+            task_ex.runtime_context["retry_task_policy"]
+        )
+
+    def test_retry_policy_break_on_not_happened(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            input:
+              - var: 2
+            tasks:
+              task1:
+                action: std.fail
+                retry:
+                  count: 3
+                  delay: 1
+                  break-on: <% $.var >= 3 %>
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self._await(lambda: self.is_task_error(task_ex.id))
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(
+            2,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
+
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB)
 
