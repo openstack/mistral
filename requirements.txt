@@ -28,7 +28,7 @@ networkx>=1.8
 six>=1.7.0
 SQLAlchemy>=0.9.7,<=0.9.99
 stevedore>=1.0.0  # Apache-2.0
-yaql==0.2.4 # This is not in global requirements
+yaql==0.2.6 # This is not in global requirements
 jsonschema>=2.0.0,<3.0.0
 mock>=1.0
 keystonemiddleware>=1.0.0
