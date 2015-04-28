@@ -41,7 +41,7 @@ WF_DB = models.WorkflowDefinition(
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    spec={'input': ['param', 'param2']}
+    spec={'input': ['param1']}
 )
 
 WF = {
@@ -49,7 +49,38 @@ WF = {
     'definition': WF_DEFINITION,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'input': 'param, param2'
+    'input': 'param1'
+}
+
+WF_DEFINITION_WITH_INPUT = """
+---
+version: '2.0'
+
+flow:
+  type: direct
+  input:
+    - param1
+    - param2: 2
+
+  tasks:
+    task1:
+      action: std.echo output="Hi"
+"""
+
+WF_DB_WITH_INPUT = models.WorkflowDefinition(
+    name='flow',
+    definition=WF_DEFINITION_WITH_INPUT,
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1),
+    spec={'input': ['param1', {'param2': 2}]}
+)
+
+WF_WITH_DEFAULT_INPUT = {
+    'name': 'flow',
+    'definition': WF_DEFINITION_WITH_INPUT,
+    'created_at': '1970-01-01 00:00:00',
+    'updated_at': '1970-01-01 00:00:00',
+    'input': 'param1, param2=2'
 }
 
 UPDATED_WF_DEFINITION = """
@@ -103,6 +134,7 @@ flow:
 """
 
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
+MOCK_WF_WITH_INPUT = mock.MagicMock(return_value=WF_DB_WITH_INPUT)
 MOCK_WFS = mock.MagicMock(return_value=[WF_DB])
 MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
@@ -118,6 +150,15 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual(WF, resp.json)
+
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF_WITH_INPUT)
+    def test_get_with_input(self):
+        resp = self.app.get('/v2/workflows/123')
+
+        self.maxDiff = None
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertDictEqual(WF_WITH_DEFAULT_INPUT, resp.json)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -139,6 +180,21 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
+
+    @mock.patch.object(
+        db_api, "create_or_update_workflow_definition", MOCK_WF_WITH_INPUT
+    )
+    def test_put_with_input(self):
+        resp = self.app.put(
+            '/v2/workflows',
+            WF_DEFINITION_WITH_INPUT,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.maxDiff = None
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertDictEqual({'workflows': [WF_WITH_DEFAULT_INPUT]}, resp.json)
 
     @mock.patch.object(
         db_api, "create_or_update_workflow_definition", MOCK_NOT_FOUND
