@@ -68,6 +68,15 @@ def create_or_update_action(action_spec, definition, scope):
 
 
 def _get_action_values(action_spec, definition, scope):
+    action_input = action_spec.to_dict().get('input', [])
+    input_list = []
+    for param in action_input:
+        if isinstance(param, dict):
+            for k, v in param.items():
+                input_list.append("%s=%s" % (k, v))
+        else:
+            input_list.append(param)
+
     values = {
         'name': action_spec.get_name(),
         'description': action_spec.get_description(),
@@ -75,7 +84,7 @@ def _get_action_values(action_spec, definition, scope):
         'definition': definition,
         'spec': action_spec.to_dict(),
         'is_system': False,
-        'input': ", ".join(action_spec.get_input()),
+        'input': ", ".join(input_list) if input_list else None,
         'scope': scope
     }
 

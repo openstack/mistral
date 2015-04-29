@@ -64,13 +64,21 @@ class Workflow(resource.Resource):
     @classmethod
     def from_dict(cls, d):
         e = cls()
+        input_list = []
 
         for key, val in d.items():
             if hasattr(e, key):
                 setattr(e, key, val)
 
-        input = d['spec'].get('input')
-        setattr(e, 'input', ", ".join(input) if input else None)
+        input = d['spec'].get('input', [])
+        for param in input:
+            if isinstance(param, dict):
+                for k, v in param.items():
+                    input_list.append("%s=%s" % (k, v))
+            else:
+                input_list.append(param)
+
+        setattr(e, 'input', ", ".join(input_list) if input_list else None)
 
         return e
 
