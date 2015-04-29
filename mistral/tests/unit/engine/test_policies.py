@@ -209,6 +209,26 @@ workflows:
 """
 
 
+PAUSE_BEFORE_DELAY_WB = """
+---
+version: '2.0'
+name: wb
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        wait-before: 1
+        pause-before: true
+        on-success:
+          - task2
+      task2:
+        action: std.echo output="Bye!"
+"""
+
+
 CONCURRENCY_WB = """
 ---
 version: '2.0'
@@ -562,6 +582,54 @@ class PoliciesTest(base.EngineTestCase):
 
         self._await(lambda: self.is_execution_paused(wf_ex.id))
         self._sleep(1)
+        self.engine.resume_workflow(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        self._assert_single_item(wf_ex.task_executions, name='task1')
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+        next_task_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task2'
+        )
+
+        self.assertEqual(states.SUCCESS, task_ex.state)
+        self.assertEqual(states.SUCCESS, next_task_ex.state)
+
+    def test_pause_before_with_delay_policy(self):
+        wb_service.create_workbook_v2(PAUSE_BEFORE_DELAY_WB)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.IDLE, task_ex.state)
+
+        # Verify wf paused by pause-before
+        self._await(lambda: self.is_execution_paused(wf_ex.id))
+
+        # Allow wait-before to expire
+        self._sleep(2)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        # Verify wf still paused (wait-before didn't reactivate)
+        self._await(lambda: self.is_execution_paused(wf_ex.id))
+
+        task_ex = db_api.get_task_execution(task_ex.id)
+        self.assertEqual(states.IDLE, task_ex.state)
+
         self.engine.resume_workflow(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
