@@ -19,7 +19,10 @@ def construct_action_class(action_class_str, attributes):
     # Rebuild action class and restore attributes.
     action_class = importutils.import_class(action_class_str)
 
-    for name, value in attributes.items():
-        setattr(action_class, name, value)
+    unique_action_class = type(
+        action_class.__name__,
+        (action_class,),
+        attributes
+    )
 
-    return action_class
+    return unique_action_class
