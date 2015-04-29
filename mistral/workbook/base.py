@@ -41,7 +41,7 @@ ALL = (
     _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
 )
 
-PARAMS_PTRN = re.compile("([\w]+)=(%s)" % "|".join(ALL))
+PARAMS_PTRN = re.compile("([-_\w]+)=(%s)" % "|".join(ALL))
 
 
 class BaseSpec(object):
