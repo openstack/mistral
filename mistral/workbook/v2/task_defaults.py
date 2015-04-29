@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from mistral.workbook import types
 from mistral.workbook.v2 import base
 from mistral.workbook.v2 import policies
@@ -23,6 +25,13 @@ class TaskDefaultsSpec(base.BaseSpec):
     _task_policies_schema = policies.PoliciesSpec.get_schema(
         includes=None)
 
+    _on_clause_type = {
+        "oneOf": [
+            types.NONEMPTY_STRING,
+            types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+        ]
+    }
+
     _schema = {
         "type": "object",
         "properties": {
@@ -32,9 +41,9 @@ class TaskDefaultsSpec(base.BaseSpec):
             "timeout": policies.TIMEOUT_SCHEMA,
             "pause-before": policies.PAUSE_BEFORE_SCHEMA,
             "concurrency": policies.CONCURRENCY_SCHEMA,
-            "on-complete": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
-            "on-success": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
-            "on-error": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+            "on-complete": _on_clause_type,
+            "on-success": _on_clause_type,
+            "on-error": _on_clause_type
         },
         "additionalProperties": False
     }
@@ -63,11 +72,15 @@ class TaskDefaultsSpec(base.BaseSpec):
         super(TaskDefaultsSpec, self).validate()
 
         # Validate YAQL expressions.
-        [self.validate_yaql_expr(transition)
-         for transition in (self._data.get('on-complete', []) +
-                            self._data.get('on-success', []) +
-                            self._data.get('on-error', []))
-         if isinstance(transition, dict)]
+        self._validate_transitions('on-complete')
+        self._validate_transitions('on-success')
+        self._validate_transitions('on-error')
+
+    def _validate_transitions(self, on_clause):
+        val = self._data.get(on_clause, [])
+
+        [self.validate_yaql_expr(t)
+         for t in ([val] if isinstance(val, six.string_types) else val)]
 
     def get_policies(self):
         return self._policies

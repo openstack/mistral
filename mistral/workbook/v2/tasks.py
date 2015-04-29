@@ -200,6 +200,13 @@ class TaskSpec(base.BaseSpec):
 class DirectWorkflowTaskSpec(TaskSpec):
     _type = 'direct'
 
+    _on_clause_type = {
+        "oneOf": [
+            types.NONEMPTY_STRING,
+            types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+        ]
+    }
+
     _direct_workflow_schema = {
         "type": "object",
         "properties": {
@@ -210,9 +217,9 @@ class DirectWorkflowTaskSpec(TaskSpec):
                     types.POSITIVE_INTEGER
                 ]
             },
-            "on-complete": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
-            "on-success": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST,
-            "on-error": types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+            "on-complete": _on_clause_type,
+            "on-success": _on_clause_type,
+            "on-error": _on_clause_type
         }
     }
 
@@ -239,11 +246,15 @@ class DirectWorkflowTaskSpec(TaskSpec):
                 raise exc.InvalidModelException(msg)
 
         # Validate YAQL expressions.
-        [self.validate_yaql_expr(transition)
-         for transition in (self._data.get('on-complete', []) +
-                            self._data.get('on-success', []) +
-                            self._data.get('on-error', []))
-         if isinstance(transition, dict)]
+        self._validate_transitions('on-complete')
+        self._validate_transitions('on-success')
+        self._validate_transitions('on-error')
+
+    def _validate_transitions(self, on_clause):
+        val = self._data.get(on_clause, [])
+
+        [self.validate_yaql_expr(t)
+         for t in ([val] if isinstance(val, six.string_types) else val)]
 
     def get_join(self):
         return self._join
