@@ -20,7 +20,7 @@ from heatclient.v1 import client as heatclient
 from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
-from novaclient.v1_1 import client as novaclient
+from novaclient.v2 import client as novaclient
 from oslo.config import cfg
 
 from mistral.actions.openstack import base
