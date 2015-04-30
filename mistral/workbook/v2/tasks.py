@@ -276,7 +276,9 @@ class ReverseWorkflowTaskSpec(TaskSpec):
         "type": "object",
         "properties": {
             "type": {"enum": [_type]},
-            "requires": types.UNIQUE_STRING_LIST
+            "requires": {
+                "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
+            }
         }
     }
 
@@ -289,6 +291,9 @@ class ReverseWorkflowTaskSpec(TaskSpec):
         self._requires = data.get('requires', [])
 
     def get_requires(self):
+        if isinstance(self._requires, six.string_types):
+            return [self._requires]
+
         return self._requires
 
 

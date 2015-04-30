@@ -225,6 +225,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             ({'requires': 12345}, True),
             ({'requires': ['echo']}, False),
             ({'requires': ['echo', 'get']}, False),
+            ({'requires': 'echo'}, False),
             ({'retry': {'count': 3, 'delay': 1}}, False),
             ({'retry': {'count': '<% 3 %>', 'delay': 1}}, False),
             ({'retry': {'count': '<% * %>', 'delay': 1}}, True),

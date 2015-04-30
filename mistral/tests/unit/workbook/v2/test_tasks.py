@@ -283,7 +283,8 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'requires': None}, True),
             ({'requires': 12345}, True),
             ({'requires': ['echo']}, False),
-            ({'requires': ['echo', 'get']}, False)
+            ({'requires': ['echo', 'get']}, False),
+            ({'requires': 'echo'}, False),
         ]
 
         for require, expect_error in tests:

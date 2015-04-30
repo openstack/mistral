@@ -44,7 +44,9 @@ class TaskDefaultsSpec(base.BaseSpec):
             "on-complete": _on_clause_type,
             "on-success": _on_clause_type,
             "on-error": _on_clause_type,
-            "requires": types.UNIQUE_STRING_LIST
+            "requires": {
+                "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
+            }
         },
         "additionalProperties": False
     }
@@ -97,4 +99,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         return self._on_error
 
     def get_requires(self):
+        if isinstance(self._requires, six.string_types):
+            return [self._requires]
+
         return self._requires
