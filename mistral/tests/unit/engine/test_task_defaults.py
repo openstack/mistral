@@ -29,35 +29,34 @@ LOG = logging.getLogger(__name__)
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-DIRECT_WF_ON_ERROR = """
----
-version: '2.0'
-
-wf:
-  type: direct
-
-  task-defaults:
-    on-error:
-      - task3
-
-  tasks:
-    task1:
-      description: That should lead to transition to task3.
-      action: std.http url="http://some_url"
-      on-success:
-        - task2
-
-    task2:
-      action: std.echo output="Morpheus"
-
-    task3:
-      action: std.echo output="output"
-"""
-
 
 class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
     def test_task_defaults_on_error(self):
-        wf_service.create_workflows(DIRECT_WF_ON_ERROR)
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          task-defaults:
+            on-error:
+              - task3
+
+          tasks:
+            task1:
+              description: That should lead to transition to task3.
+              action: std.http url="http://some_url"
+              on-success:
+                - task2
+
+            task2:
+              action: std.echo output="Morpheus"
+
+            task3:
+              action: std.echo output="output"
+        """
+
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -77,64 +76,6 @@ class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
 
 
-REVERSE_WF_RETRY = """
----
-version: '2.0'
-
-wf:
-  type: reverse
-
-  task-defaults:
-    retry:
-      count: 2
-      delay: 1
-
-  tasks:
-    task1:
-      action: std.fail
-
-    task2:
-      action: std.echo output=2
-      requires: [task1]
-"""
-
-
-REVERSE_WF_TIMEOUT = """
----
-version: '2.0'
-
-wf:
-  type: reverse
-
-  task-defaults:
-    timeout: 1
-
-  tasks:
-    task1:
-      action: std.async_noop
-
-    task2:
-      action: std.echo output=2
-      requires: [task1]
-"""
-
-REVERSE_WF_WAIT = """
----
-version: '2.0'
-
-wf:
-  type: reverse
-
-  task-defaults:
-    wait-before: 1
-    wait-after: 1
-
-  tasks:
-    task1:
-      action: std.echo output=1
-"""
-
-
 class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
     def setUp(self):
         super(TaskDefaultsReverseWorkflowEngineTest, self).setUp()
@@ -144,7 +85,27 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self.addCleanup(thread_group.stop)
 
     def test_task_defaults_retry_policy(self):
-        wf_service.create_workflows(REVERSE_WF_RETRY)
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: reverse
+
+          task-defaults:
+            retry:
+              count: 2
+              delay: 1
+
+          tasks:
+            task1:
+              action: std.fail
+
+            task2:
+              action: std.echo output=2
+              requires: [task1]
+        """
+
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {}, task_name='task2')
@@ -170,7 +131,25 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
     @testtools.skip("Fix 'timeout' policy.")
     def test_task_defaults_timeout_policy(self):
-        wf_service.create_workflows(REVERSE_WF_TIMEOUT)
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: reverse
+
+          task-defaults:
+            timeout: 1
+
+          tasks:
+            task1:
+              action: std.async_noop
+
+            task2:
+              action: std.echo output=2
+              requires: [task1]
+        """
+
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {}, task_name='task2')
@@ -187,7 +166,22 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self._assert_single_item(tasks, name='task1', state=states.ERROR)
 
     def test_task_defaults_wait_policies(self):
-        wf_service.create_workflows(REVERSE_WF_WAIT)
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: reverse
+
+          task-defaults:
+            wait-before: 1
+            wait-after: 1
+
+          tasks:
+            task1:
+              action: std.echo output=1
+        """
+
+        wf_service.create_workflows(wf_text)
 
         time_before = dt.datetime.now()
 
@@ -210,3 +204,44 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(1, len(tasks))
 
         self._assert_single_item(tasks, name='task1', state=states.SUCCESS)
+
+    def test_task_defaults_requires(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: reverse
+
+          task-defaults:
+            requires: [always_do]
+
+          tasks:
+            task1:
+              action: std.echo output=1
+
+            task2:
+              action: std.echo output=1
+              requires: [task1]
+
+            always_do:
+              action: std.echo output="Do something"
+
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', {}, task_name='task2')
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+
+        self.assertEqual(3, len(tasks))
+
+        self._assert_single_item(tasks, name='task1', state=states.SUCCESS)
+        self._assert_single_item(tasks, name='task2', state=states.SUCCESS)
+        self._assert_single_item(tasks, name='always_do', state=states.SUCCESS)
