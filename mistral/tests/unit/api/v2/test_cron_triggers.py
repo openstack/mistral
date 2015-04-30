@@ -32,6 +32,7 @@ TRIGGER = {
     'pattern': '* * * * *',
     'workflow_name': WF.name,
     'workflow_input': '{}',
+    'workflow_params': '{}',
     'scope': 'private',
     'remaining_executions': 42
 }
@@ -39,6 +40,9 @@ TRIGGER = {
 trigger_values = copy.copy(TRIGGER)
 trigger_values['workflow_input'] = json.loads(
     trigger_values['workflow_input'])
+
+trigger_values['workflow_params'] = json.loads(
+    trigger_values['workflow_params'])
 
 TRIGGER_DB = models.CronTrigger()
 TRIGGER_DB.update(trigger_values)

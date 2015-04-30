@@ -34,6 +34,7 @@ class CronTrigger(resource.Resource):
     name = wtypes.text
     workflow_name = wtypes.text
     workflow_input = wtypes.text
+    workflow_params = wtypes.text
 
     scope = SCOPE_TYPES
 
@@ -48,10 +49,20 @@ class CronTrigger(resource.Resource):
     def to_dict(self):
         d = super(CronTrigger, self).to_dict()
 
-        if d.get('workflow_input'):
-            d['workflow_input'] = json.loads(d['workflow_input'])
+        self._transform_string_to_dict(
+            d, ['workflow_input', 'workflow_params']
+        )
 
         return d
+
+    def _transform_string_to_dict(self, d, keys):
+        """Transforms values of dict by given key list.
+        :param d: dict to transform.
+        :param keys: list of key names in dict
+        """
+        for k in keys:
+            if d.get(k):
+                d[k] = json.loads(d[k])
 
     @classmethod
     def from_dict(cls, d):
@@ -60,7 +71,8 @@ class CronTrigger(resource.Resource):
         for key, val in d.items():
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit.
-                if key == 'workflow_input' and val is not None:
+                if (key in ['workflow_input', 'workflow_params']
+                        and val is not None):
                     val = json.dumps(val)
 
                 setattr(e, key, val)
@@ -73,6 +85,7 @@ class CronTrigger(resource.Resource):
                    name='my_trigger',
                    workflow_name='my_wf',
                    workflow_input={},
+                   workflow_params={},
                    scope='private',
                    pattern='* * * * *',
                    remaining_executions=42,
@@ -115,6 +128,7 @@ class CronTriggersController(rest.RestController):
             values['name'],
             values['workflow_name'],
             values.get('workflow_input'),
+            values.get('workflow_params'),
             values.get('pattern'),
             values.get('first_execution_time'),
             values.get('remaining_executions')
