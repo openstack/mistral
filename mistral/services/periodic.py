@@ -40,7 +40,8 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             try:
                 rpc.get_engine_client().start_workflow(
                     t.workflow.name,
-                    t.workflow_input
+                    t.workflow_input,
+                    **t.workflow_params
                 )
             finally:
                 if t.remaining_executions > 0:

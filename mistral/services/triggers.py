@@ -1,6 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -51,8 +51,9 @@ def validate_cron_trigger_input(pattern, first_time, count):
                                             " valid: {}".format(pattern))
 
 
-def create_cron_trigger(name, workflow_name, workflow_input, pattern=None,
-                        first_time=None, count=None, start_time=None):
+def create_cron_trigger(name, workflow_name, workflow_input,
+                        workflow_params=None, pattern=None, first_time=None,
+                        count=None, start_time=None):
     if not start_time:
         start_time = datetime.datetime.now()
 
@@ -82,7 +83,8 @@ def create_cron_trigger(name, workflow_name, workflow_input, pattern=None,
             'remaining_executions': count,
             'workflow_name': workflow_name,
             'workflow_id': wf.id,
-            'workflow_input': workflow_input,
+            'workflow_input': workflow_input or {},
+            'workflow_params': workflow_params or {},
             'scope': 'private'
         }
 

@@ -45,7 +45,7 @@ def do_check_migration(config, _cmd):
     do_alembic_command(config, 'branches')
 
 
-def do_upgrade_downgrade(config, cmd):
+def do_upgrade(config, cmd):
     if not CONF.command.revision and not CONF.command.delta:
         raise SystemExit('You must provide a revision or relative delta')
 
@@ -89,7 +89,7 @@ def add_command_parsers(subparsers):
     parser.add_argument('--delta', type=int)
     parser.add_argument('--sql', action='store_true')
     parser.add_argument('revision', nargs='?')
-    parser.set_defaults(func=do_upgrade_downgrade)
+    parser.set_defaults(func=do_upgrade)
 
     parser = subparsers.add_parser('populate')
     parser.set_defaults(func=do_populate)

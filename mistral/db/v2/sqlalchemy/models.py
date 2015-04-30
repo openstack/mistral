@@ -230,10 +230,13 @@ class Environment(mb.MistralSecureModelBase):
     variables = sa.Column(st.JsonDictType())
 
 
-def _calc_workflow_input_hash(context):
-    d = context.current_parameters['workflow_input'] or {}
+def _get_hash_function_by(column_name):
+    def calc_hash(context):
+        d = context.current_parameters[column_name] or {}
 
-    return hashlib.sha256(json.dumps(sorted(d.items()))).hexdigest()
+        return hashlib.sha256(json.dumps(sorted(d.items()))).hexdigest()
+
+    return calc_hash
 
 
 class CronTrigger(mb.MistralSecureModelBase):
@@ -244,7 +247,8 @@ class CronTrigger(mb.MistralSecureModelBase):
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
         sa.UniqueConstraint(
-            'workflow_input_hash', 'workflow_name', 'pattern', 'project_id'
+            'workflow_input_hash', 'workflow_name', 'pattern', 'project_id',
+            'workflow_params_hash'
         )
     )
 
@@ -261,10 +265,15 @@ class CronTrigger(mb.MistralSecureModelBase):
     )
     workflow = relationship('WorkflowDefinition', lazy='joined')
 
+    workflow_params = sa.Column(st.JsonDictType())
+    workflow_params_hash = sa.Column(
+        sa.CHAR(64),
+        default=_get_hash_function_by('workflow_params')
+    )
     workflow_input = sa.Column(st.JsonDictType())
     workflow_input_hash = sa.Column(
         sa.CHAR(64),
-        default=_calc_workflow_input_hash
+        default=_get_hash_function_by('workflow_input')
     )
 
     trust_id = sa.Column(sa.String(80))
