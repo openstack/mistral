@@ -43,7 +43,8 @@ class TaskDefaultsSpec(base.BaseSpec):
             "concurrency": policies.CONCURRENCY_SCHEMA,
             "on-complete": _on_clause_type,
             "on-success": _on_clause_type,
-            "on-error": _on_clause_type
+            "on-error": _on_clause_type,
+            "requires": types.UNIQUE_STRING_LIST
         },
         "additionalProperties": False
     }
@@ -67,6 +68,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._on_complete = self._as_list_of_tuples("on-complete")
         self._on_success = self._as_list_of_tuples("on-success")
         self._on_error = self._as_list_of_tuples("on-error")
+        self._requires = data.get('requires', [])
 
     def validate(self):
         super(TaskDefaultsSpec, self).validate()
@@ -93,3 +95,6 @@ class TaskDefaultsSpec(base.BaseSpec):
 
     def get_on_error(self):
         return self._on_error
+
+    def get_requires(self):
+        return self._requires

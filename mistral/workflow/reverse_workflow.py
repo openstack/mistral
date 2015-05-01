@@ -73,7 +73,7 @@ class ReverseWorkflowController(base.WorkflowController):
     def _get_upstream_task_executions(self, task_spec):
         t_specs = [
             self.wf_spec.get_tasks()[t_name]
-            for t_name in task_spec.get_requires()
+            for t_name in self._get_task_requires(task_spec)
             or []
         ]
 
@@ -119,16 +119,16 @@ class ReverseWorkflowController(base.WorkflowController):
         if task_ex:
             return False
 
-        if not task_spec.get_requires():
+        if not self._get_task_requires(task_spec):
             return True
 
-        success_task_names = set()
+        success_t_names = set()
 
         for t_ex in self.wf_ex.task_executions:
-            if t_ex.state == states.SUCCESS and not t_ex.processed:
-                success_task_names.add(t_ex.name)
+            if t_ex.state == states.SUCCESS:
+                success_t_names.add(t_ex.name)
 
-        return not (set(task_spec.get_requires()) - success_task_names)
+        return not (set(self._get_task_requires(task_spec)) - success_t_names)
 
     def _build_graph(self, tasks_spec):
         graph = nx.DiGraph()
@@ -144,9 +144,8 @@ class ReverseWorkflowController(base.WorkflowController):
 
         return graph
 
-    @staticmethod
-    def _get_dependency_tasks(tasks_spec, task_spec):
-        dep_task_names = tasks_spec[task_spec.get_name()].get_requires()
+    def _get_dependency_tasks(self, tasks_spec, task_spec):
+        dep_task_names = self._get_task_requires(task_spec)
 
         if len(dep_task_names) == 0:
             return []
@@ -159,3 +158,15 @@ class ReverseWorkflowController(base.WorkflowController):
                     dep_t_specs.add(t_spec)
 
         return dep_t_specs
+
+    def _get_task_requires(self, task_spec):
+        requires = set(task_spec.get_requires())
+
+        task_defaults = self.wf_spec.get_task_defaults()
+
+        if task_defaults:
+            requires |= set(task_defaults.get_requires())
+
+        requires.discard(task_spec.get_name())
+
+        return list(requires)

@@ -289,9 +289,6 @@ class ReverseWorkflowTaskSpec(TaskSpec):
         self._requires = data.get('requires', [])
 
     def get_requires(self):
-        if isinstance(self._requires, six.string_types):
-            return [self._requires]
-
         return self._requires
 
 
