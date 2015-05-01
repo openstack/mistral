@@ -51,6 +51,13 @@ workflows:
         publish:
           result2: <% $.task2 %>
         requires: [task1]
+
+      task3:
+        action: std.noop
+
+      task4:
+        action: std.noop
+        requires: task3
 """
 
 
@@ -127,3 +134,21 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         )
 
         self.assertDictEqual({'result2': 'a & b'}, task2_ex.published)
+
+    def test_one_line_requires_syntax(self):
+        wf_input = {'param1': 'a', 'param2': 'b'}
+
+        wf_ex = self.engine.start_workflow(
+            'my_wb.wf1',
+            wf_input,
+            task_name='task4'
+        )
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        tasks = db_api.get_task_executions()
+
+        self.assertEqual(2, len(tasks))
+
+        self._assert_single_item(tasks, name='task4', state=states.SUCCESS)
+        self._assert_single_item(tasks, name='task3', state=states.SUCCESS)
