@@ -77,6 +77,15 @@ class YaqlEvaluatorTest(base.BaseTest):
         self.assertEqual('3', self._evaluator.evaluate('str($)', '3'))
         self.assertEqual('3', self._evaluator.evaluate('str($)', 3))
 
+    def test_function_len(self):
+        self.assertEqual(3, self._evaluator.evaluate('$.len()', 'hey'))
+        data = [{'some': 'thing'}]
+
+        self.assertEqual(
+            1,
+            self._evaluator.evaluate('$[$.some = thing].len()', data)
+        )
+
     def test_validate(self):
         self._evaluator.validate('abc')
         self._evaluator.validate('1')
