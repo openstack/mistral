@@ -17,10 +17,10 @@ import mock
 import os
 import time
 
-from tempest import auth
 from tempest import clients
 from tempest import config
 from tempest import test as test
+from tempest_lib import auth
 from tempest_lib.common import rest_client
 from tempest_lib import exceptions
 
