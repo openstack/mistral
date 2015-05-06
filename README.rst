@@ -120,8 +120,19 @@ Before starting Mistral server, run sync_db script. It prepares the DB, creates 
 
     python tools/sync_db.py --config-file path_to_config*
 
-*Note: After local installation you will see **mistral-server** command in your environment*.
+*Note: After local installation you will see **mistral-server** and **mistral-db-manage** commands in your environment*.
 
+Migrations
+----------
+
+*mistral-db-manage* command can be used for migrations. If Mistral is not installed in system then this script can be
+ found at *mistral/db/sqlalchemy/migration/cli.py*, it can be executed using Python.
+
+For updating the database to the latest revision type::
+
+    mistral-db-manage --config-file <path-to-mistral.conf> upgrade head
+
+For more detailed information about *mistral-db-manage* script please see migration readme here - https://github.com/stackforge/mistral/blob/master/mistral/db/sqlalchemy/migration/alembic_migrations/README.md
 
 Running Mistral API server
 --------------------------
