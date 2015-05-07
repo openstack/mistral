@@ -62,16 +62,16 @@ YAML example
 | ``    - image_ref``
 | ``    - flavor_ref``
 | ``  output: # Output definition``
-| ``    vm_id: $.vm_id``
+| ``    vm_id: <% $.vm_id %>``
 | ``  tasks:``
 | ``    create_server:``
-| ``      action: nova.servers_create name={$.vm_name} image={$.image_ref} flavor={$.flavor_ref}``
+| ``      action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>``
 | ``      publish:``
-| ``        vm_id: $.id``
+| ``        vm_id: <% $.id %>``
 | ``      on-success:``
 | ``        - wait_for_instance``
 | ``    wait_for_instance:``
-| ``      action: nova.servers_find id={$.vm_id} status='ACTIVE'``
+| ``      action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'``
 | ``      policies:``
 | ``        retry:``
 | ``          delay: 5``
@@ -126,7 +126,7 @@ different types:
   action_based_task:
      action: std.http url='openstack.org'
   workflow_based_task:
-     workflow: backup_vm_workflow vm_id={$.vm_id}
+     workflow: backup_vm_workflow vm_id=<% $.vm_id %>
 
 
 Actions will be explained below in a individual paragraph but looking
@@ -151,7 +151,7 @@ attributes:
    string etc, dictionary or list. It can also be a YAQL expression to
    retrieve value from task context or any of the mentioned types
    containing inline YAQL expressions (for example, string
-   "{$.movie\_name} is a cool movie!")
+   "<% $.movie\_name %> is a cool movie!")
 -  **publish** - Dictionary of variables to publish to the workflow
    context. Any JSON-compatible data structure optionally containing
    YAQL expression to select precisely what needs to be published.
@@ -172,15 +172,14 @@ YAML example
 
 | ``my_task:``
 | ``  ...``
-| ``  policies:``
-| ``    wait-before: 2``
-| ``    wait-after: 4``
-| ``    pause-before: $.my_expr``
-| ``    timeout: 30``
-| ``    retry:``
-| ``      count: 10``
-| ``      delay: 20``
-| ``      break-on: $.my_var = True``
+| ``  wait-before: 2``
+| ``  wait-after: 4``
+| ``  pause-before: <% $.my_expr %>``
+| ``  timeout: 30``
+| ``  retry:``
+| ``    count: 10``
+| ``    delay: 20``
+| ``    break-on: <% $.my_var = True %>``
 
 'wait-before'
 
@@ -287,12 +286,12 @@ YAML example
 | ``    - image_id``
 | ``    - flavor_id``
 | ``  output:``
-| ``    result: $.vm_id``
+| ``    result: <% $.vm_id %>``
 | ``  tasks:``
 | ``    create_vm:``
-| ``      action: nova.servers_create name={$.vm_name} image={$.image_id} flavor={$.flavor_id}``
+| ``      action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>``
 | ``      publish:``
-| ``        vm_id: $.id``
+| ``        vm_id: <% $.id %>``
 | ``      on-error:``
 | ``        - send_error_email``
 | ``      on-success:``
@@ -302,7 +301,7 @@ YAML example
 | ``      on_complete:``
 | ``        - fail``
 | ``    send_success_email:``
-| ``      action: send_email to='admin@mysite.org' body='Vm is successfully created and its id: {$.vm_id}'``
+| ``      action: send_email to='admin@mysite.org' body='Vm is successfully created and its id: <% $.vm_id %>'``
 
 Transitions with YAQL expressions
 '''''''''''''''''''''''''''''''''
@@ -316,7 +315,7 @@ access any data produced by upstream tasks. So in the example above task
 | ``create_vm:``
 | ``  ...``
 | ``  on-success:``
-| ``    - send_success_email: $.vm_id != null``
+| ``    - send_success_email: <% $.vm_id != null %>``
 
 And this would tell Mistral to run 'send\_success\_email' task only if
 'vm\_id' variable published by task 'create\_vm' is not empty. YAQL
@@ -364,21 +363,21 @@ YAML example
 | ``    - image_id``
 | ``    - flavor_id``
 | ``  output:``
-| ``    result: $.vm_id``
+| ``    result: <% $.vm_id %>``
 | ``  tasks:``
 | ``    create_vm:``
-| ``      action: nova.servers_create name={$.vm_name} image={$.image_id} flavor={$.flavor_id}``
+| ``      action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>``
 | ``      publish:``
-| ``        vm_id: $.id``
+| ``        vm_id: <% $.id %>``
 | ``    search_for_ip:``
 | ``      action: nova.floating_ips_findall instance_id=null``
 | ``      publish:``
-| ``        vm_ip: $[0].ip``
+| ``        vm_ip: <% $[0].ip %>``
 | ``    associate_ip:``
-| ``      action: nova.servers_add_floating_ip server={$.vm_id} address={$.vm_ip}``
+| ``      action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>``
 | ``      requires: [search_for_ip]``
 | ``    send_email:``
-| ``      action: send_email to='admin@mysite.org' body='Vm is created and id {$.vm_id} and ip address {$.vm_ip}'``
+| ``      action: send_email to='admin@mysite.org' body='Vm is created and id <% $.vm_id %> and ip address <% $.vm_ip %>'``
 | ``      requires: [create_vm, associate_ip]``
 
 Reverse Workflow Task Attributes
@@ -547,7 +546,7 @@ YAML example
 | ``      subject: Something went wrong with your Mistral workflow :(``
 | ``      body: |``
 | ``          Please take a look at Mistral Dashboard to find out what's wrong``
-| ``          with your workflow execution {$.execution_id}.``
+| ``          with your workflow execution <% $.execution_id %>.``
 | ``          Everything's going to be alright!``
 | ``          -- Sincerely, Mistral Team.``
 | ``      settings:``
@@ -562,7 +561,7 @@ it as follows:
 | ``  tasks:``
 | ``    ...``
 | ``    send_error_email``
-| ``      action: error_email execution_id={$.__execution.id}``
+| ``      action: error_email execution_id=<% $.__execution.id %>``
 
 Attributes
 ''''''''''
@@ -695,7 +694,7 @@ YAML example
 | ``    input:``
 | ``      - str1``
 | ``      - str2``
-| ``    base: std.echo output="{$.str1}{$.str2}"``
+| ``    base: std.echo output="<% $.str1 %><% $.str2 %>"``
 
 **Note**: Even though names of objects inside workbooks change upon
 uploading Mistral allows referencing between those objects using local

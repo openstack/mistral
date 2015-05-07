@@ -1,7 +1,7 @@
 How to write an Action Plugin
 =============================
 
-1. Write a class based on mistral.actions.base.Actions
+1. Write a class inherited from mistral.actions.base.Action
 ::
 
  from mistral.actions import base
@@ -24,7 +24,16 @@ How to write an Action Plugin
  mistral.actions =
     example.runner = my.mistral_plugins.somefile:RunnerAction
 
-3. Use your plugin
+3. Reinstall Mistral if it was installed in system (not in virtualenv).
+4. Run Db-sync tool via either::
+
+  *tools/sync_db.sh --config-file <path-to-config>*
+
+or::
+
+ *mistral-db-manage --config-file <path-to-config> populate*
+
+5. Use your plugin
 
  * Now you can call the action "example.runner"
 
@@ -36,3 +45,4 @@ How to write an Action Plugin
        action: example.runner
        parameters:
          param: avalue_to_pass_in
+
