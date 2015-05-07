@@ -89,7 +89,7 @@ class YAQLEvaluator(Evaluator):
                 data=data_context,
                 context=yaql_utils.create_yaql_context()
             )
-        except (KeyError, yaql_exc.YaqlException) as e:
+        except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
             raise exc.YaqlEvaluationException(
                 "Can not evaluate YAQL expression: %s, data = %s; error:"
                 " %s" % (expression, data_context, str(e))
