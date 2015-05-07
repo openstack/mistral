@@ -50,6 +50,7 @@ class OpenStackActionsTestsV2(base.TestCase):
 
         self.assertEqual(executed_task['state'], 'SUCCESS')
 
+    @decorators.skip_because(bug='1422725')
     @test.attr(type='openstack')
     def test_heat_actions(self):
         wf_name = self.wb['name'] + '.heat'
