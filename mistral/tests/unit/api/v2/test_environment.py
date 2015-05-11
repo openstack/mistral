@@ -41,6 +41,26 @@ VARIABLES = {
     }
 }
 
+ENVIRONMENT_FOR_CREATE = {
+    'name': 'test',
+    'description': 'my test settings',
+    'variables': VARIABLES,
+}
+
+ENVIRONMENT_FOR_UPDATE = {
+    'name': 'test',
+    'description': 'my test settings',
+    'variables': VARIABLES,
+    'scope': 'private'
+}
+
+ENVIRONMENT_FOR_UPDATE_NO_SCOPE = {
+    'name': 'test',
+    'description': 'my test settings',
+    'variables': VARIABLES
+}
+
+
 ENVIRONMENT = {
     'id': str(uuid.uuid4()),
     'name': 'test',
@@ -49,6 +69,15 @@ ENVIRONMENT = {
     'scope': 'private',
     'created_at': str(datetime.datetime.utcnow()),
     'updated_at': str(datetime.datetime.utcnow())
+}
+
+ENVIRONMENT_WITH_ILLEGAL_FIELD = {
+    'id': str(uuid.uuid4()),
+    'name': 'test',
+    'description': 'my test settings',
+    'extra_field': 'I can add whatever I want here',
+    'variables': VARIABLES,
+    'scope': 'private',
 }
 
 ENVIRONMENT_DB = db.Environment(
@@ -67,6 +96,8 @@ ENVIRONMENT_DB_DICT = {k: v for k, v in six.iteritems(ENVIRONMENT_DB)}
 
 UPDATED_VARIABLES = copy.deepcopy(VARIABLES)
 UPDATED_VARIABLES['host'] = '127.0.0.1'
+FOR_UPDATED_ENVIRONMENT = copy.deepcopy(ENVIRONMENT_FOR_UPDATE)
+FOR_UPDATED_ENVIRONMENT['variables'] = json.dumps(UPDATED_VARIABLES)
 UPDATED_ENVIRONMENT = copy.deepcopy(ENVIRONMENT)
 UPDATED_ENVIRONMENT['variables'] = json.dumps(UPDATED_VARIABLES)
 UPDATED_ENVIRONMENT_DB = db.Environment(**ENVIRONMENT_DB_DICT)
@@ -173,18 +204,28 @@ class TestEnvironmentController(base.FunctionalTest):
     def test_post(self):
         resp = self.app.post_json(
             '/v2/environments',
-            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT))
+            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
         )
 
         self.assertEqual(201, resp.status_int)
 
         self._assert_dict_equal(copy.deepcopy(ENVIRONMENT), resp.json)
 
+    @mock.patch.object(db_api, 'create_environment', MOCK_ENVIRONMENT)
+    def test_post_with_illegal_field(self):
+        resp = self.app.post_json(
+            '/v2/environments',
+            _convert_vars_to_string(
+                copy.deepcopy(ENVIRONMENT_WITH_ILLEGAL_FIELD)),
+            expect_errors=True
+        )
+        self.assertEqual(400, resp.status_int)
+
     @mock.patch.object(db_api, 'create_environment', MOCK_DUPLICATE)
     def test_post_dup(self):
         resp = self.app.post_json(
             '/v2/environments',
-            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT)),
+            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT_FOR_CREATE)),
             expect_errors=True
         )
 
@@ -192,9 +233,7 @@ class TestEnvironmentController(base.FunctionalTest):
 
     @mock.patch.object(db_api, 'create_environment', MOCK_ENVIRONMENT)
     def test_post_default_scope(self):
-        env = _convert_vars_to_string(copy.deepcopy(ENVIRONMENT))
-
-        del env['scope']
+        env = _convert_vars_to_string(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
 
         resp = self.app.post_json('/v2/environments', env)
 
@@ -206,17 +245,17 @@ class TestEnvironmentController(base.FunctionalTest):
     def test_put(self):
         resp = self.app.put_json(
             '/v2/environments',
-            copy.deepcopy(UPDATED_ENVIRONMENT)
+            copy.deepcopy(FOR_UPDATED_ENVIRONMENT)
         )
 
         self.assertEqual(200, resp.status_int)
 
-        self._assert_dict_equal(copy.deepcopy(UPDATED_ENVIRONMENT), resp.json)
+        self._assert_dict_equal(UPDATED_ENVIRONMENT, resp.json)
 
     @mock.patch.object(db_api, 'update_environment', MOCK_UPDATED_ENVIRONMENT)
     def test_put_default_scope(self):
-        env = copy.deepcopy(UPDATED_ENVIRONMENT)
-        env['scope'] = None
+        env = copy.deepcopy(ENVIRONMENT_FOR_UPDATE_NO_SCOPE)
+        env['variables'] = json.dumps(env)
 
         resp = self.app.put_json('/v2/environments', env)
 
@@ -228,7 +267,7 @@ class TestEnvironmentController(base.FunctionalTest):
     def test_put_not_found(self):
         resp = self.app.put_json(
             '/v2/environments/test',
-            copy.deepcopy(UPDATED_ENVIRONMENT),
+            copy.deepcopy(FOR_UPDATED_ENVIRONMENT),
             expect_errors=True
         )
 
