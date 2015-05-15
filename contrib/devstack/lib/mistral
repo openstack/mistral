@@ -155,6 +155,9 @@ function install_mistral {
     # both functions (setup_develop and setup_package) are defined at:
     # http://git.openstack.org/cgit/openstack-dev/devstack/tree/functions-common
     setup_package $MISTRAL_DIR -e
+    
+    # installing python-nose.
+    real_install_package python-nose
 }
 
 function install_mistral_pythonclient {
