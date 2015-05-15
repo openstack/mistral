@@ -45,11 +45,11 @@ def build_policies(policies_spec, wf_spec):
 
 def get_policy_factories():
     return [
+        build_pause_before_policy,
         build_wait_before_policy,
         build_wait_after_policy,
         build_retry_policy,
         build_timeout_policy,
-        build_pause_before_policy,
         build_concurrency_policy
     ]
 
@@ -178,18 +178,18 @@ class WaitBeforePolicy(base.TaskPolicy):
 
             return
 
-        policy_context.update({'skip': True})
+        if task_ex.state != states.IDLE:
+            policy_context.update({'skip': True})
+            _log_task_delay(task_ex, self.delay)
 
-        _log_task_delay(task_ex, self.delay)
+            task_ex.state = states.DELAYED
 
-        task_ex.state = states.DELAYED
-
-        scheduler.schedule_call(
-            None,
-            _RUN_EXISTING_TASK_PATH,
-            self.delay,
-            task_ex_id=task_ex.id,
-        )
+            scheduler.schedule_call(
+                None,
+                _RUN_EXISTING_TASK_PATH,
+                self.delay,
+                task_ex_id=task_ex.id,
+            )
 
 
 class WaitAfterPolicy(base.TaskPolicy):
