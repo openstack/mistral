@@ -262,6 +262,27 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 "Called with a right exception"
             )
 
+    def test_mismatched_yaql_in_first_task(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          input:
+            - var
+          tasks:
+            task1:
+              action: std.echo output=<% $.var + $.var2 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        exception = self.assertRaises(
+            exc.YaqlEvaluationException,
+            self.engine.start_workflow, 'wf', {'var': 2}
+        )
+
+        self.assertIn("Can not evaluate YAQL expression", exception.message)
+
     def test_one_line_syntax_in_on_clauses(self):
         wf_text = """
         version: '2.0'
