@@ -22,6 +22,7 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exceptions
 from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
 
@@ -119,7 +120,10 @@ class EnvironmentController(rest.RestController):
     def post(self, environment):
         """Create a new environment."""
         LOG.info("Create environment [env=%s]" % environment)
-
+        self._validate_environment(
+            json.loads(wsme_pecan.pecan.request.body),
+            ['name', 'description', 'variables']
+        )
         db_model = db_api.create_environment(environment.to_dict())
 
         return Environment(**db_model.to_dict())
@@ -129,11 +133,18 @@ class EnvironmentController(rest.RestController):
     def put(self, environment):
         """Update an environment."""
         if not environment.name:
-            raise ValueError('Name of the environment is not provided.')
+            raise exceptions.InputException(
+                'Name of the environment is not provided.'
+            )
 
         LOG.info("Update environment [name=%s, env=%s]" %
                  (environment.name, environment))
-
+        definition = json.loads(wsme_pecan.pecan.request.body)
+        definition.pop('name')
+        self._validate_environment(
+            definition,
+            ['description', 'variables', 'scope']
+        )
         db_model = db_api.update_environment(environment.name,
                                              environment.to_dict())
 
@@ -146,3 +157,11 @@ class EnvironmentController(rest.RestController):
         LOG.info("Delete environment [name=%s]" % name)
 
         db_api.delete_environment(name)
+
+    def _validate_environment(self, env_dict, legal_keys):
+        if env_dict is not None:
+            if set(env_dict) - set(legal_keys):
+                raise exceptions.InputException(
+                    "Please, check your environment definition. Only: "
+                    + "%s are allowed as definition keys" %
+                    legal_keys)
