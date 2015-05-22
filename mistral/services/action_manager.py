@@ -31,7 +31,7 @@ from mistral.utils import inspect_utils as i_utils
 
 LOG = logging.getLogger(__name__)
 
-ACTIONS_PATH = '../resources/actions'
+ACTIONS_PATH = 'resources/actions'
 _ACTION_CTX_PARAM = 'action_context'
 
 
