@@ -140,10 +140,7 @@ def commit_tx():
             " has not been previously started."
         )
 
-    try:
-        ses.commit()
-    finally:
-        release_locks_if_sqlite(ses)
+    ses.commit()
 
 
 def rollback_tx():
@@ -155,10 +152,7 @@ def rollback_tx():
             "Nothing to roll back. Database transaction has not been started."
         )
 
-    try:
-        ses.rollback()
-    finally:
-        release_locks_if_sqlite(ses)
+    ses.rollback()
 
 
 def end_tx():
@@ -174,6 +168,8 @@ def end_tx():
 
     if ses.dirty:
         rollback_tx()
+
+    release_locks_if_sqlite(ses)
 
     ses.close()
     _set_thread_local_session(None)

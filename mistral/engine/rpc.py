@@ -15,7 +15,7 @@
 
 from oslo.config import cfg
 from oslo import messaging
-from oslo_messaging.rpc import client
+from oslo.messaging.rpc import client
 
 from mistral import context as auth_ctx
 from mistral.engine import base

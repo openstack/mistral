@@ -489,7 +489,7 @@ class CronTriggerTestsV2(base.TestCase):
 
     @test.attr(type='negative')
     def test_create_cron_trigger_invalid_count(self):
-        self.assertRaises(exceptions.ServerFault,
+        self.assertRaises(exceptions.BadRequest,
                           self.client.create_cron_trigger,
                           'trigger', 'nonexist', None, '5 * * * *', None, "q")
 

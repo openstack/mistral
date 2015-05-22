@@ -32,7 +32,6 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowEngineTest(base.EngineTestCase):
-
     def _run_workflow(self, workflow_yaml):
         wf_service.create_workflows(workflow_yaml)
 
@@ -91,6 +90,39 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self._await(lambda: self.is_task_success(task4.id))
 
         self.assertTrue(wf_ex.state, states.ERROR)
+
+    def test_direct_workflow_change_state_after_success(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="Echo"
+              on-success:
+                - task2
+
+            task2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        self.assertEqual(
+            states.SUCCESS,
+            self.engine.resume_workflow(wf_ex.id).state
+        )
+        self.assertRaises(
+            exc.WorkflowException,
+            self.engine.pause_workflow, wf_ex.id
+        )
+        self.assertEqual(
+            states.SUCCESS,
+            self.engine.stop_workflow(wf_ex.id, states.ERROR).state
+        )
 
     def test_wrong_task_input(self):
         wf_text = """

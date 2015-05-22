@@ -214,7 +214,7 @@ class DefaultEngine(base.Engine):
                 wf_ex = db_api.get_workflow_execution(execution_id)
 
                 if wf_ex.state != states.PAUSED:
-                    return
+                    return wf_ex
 
                 wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
@@ -279,13 +279,13 @@ class DefaultEngine(base.Engine):
                 LOG.warn(
                     "Failed to get final context for %s: %s" % (wf_ex, e)
                 )
-            wf_handler.succeed_workflow(
+            return wf_handler.succeed_workflow(
                 wf_ex,
                 final_context,
                 message
             )
         elif state == states.ERROR:
-            wf_handler.fail_workflow(wf_ex, message)
+            return wf_handler.fail_workflow(wf_ex, message)
 
         return wf_ex
 
