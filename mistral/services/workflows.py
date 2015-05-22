@@ -17,7 +17,7 @@ from mistral import utils
 from mistral.workbook import parser as spec_parser
 
 
-STD_WF_PATH = '../resources/workflows'
+STD_WF_PATH = 'resources/workflows'
 
 
 def register_standard_workflows():
