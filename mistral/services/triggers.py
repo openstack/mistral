@@ -15,9 +15,11 @@
 from croniter import croniter
 import datetime
 
-from mistral.db.v2 import api as db_api_v2
+from mistral.db.v2 import api as db_api
+from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
 from mistral.services import security
+from mistral.workbook import parser
 
 
 def get_next_execution_time(pattern, start_time):
@@ -27,7 +29,7 @@ def get_next_execution_time(pattern, start_time):
 # Triggers v2.
 
 def get_next_cron_triggers():
-    return db_api_v2.get_next_cron_triggers(
+    return db_api.get_next_cron_triggers(
         datetime.datetime.now() + datetime.timedelta(0, 2)
     )
 
@@ -73,8 +75,14 @@ def create_cron_trigger(name, workflow_name, workflow_input,
     else:
         next_time = get_next_execution_time(pattern, start_time)
 
-    with db_api_v2.transaction():
-        wf = db_api_v2.get_workflow_definition(workflow_name)
+    with db_api.transaction():
+        wf_def = db_api.get_workflow_definition(workflow_name)
+
+        eng_utils.validate_input(
+            wf_def,
+            parser.get_workflow_spec(wf_def.spec),
+            workflow_input or {}
+        )
 
         values = {
             'name': name,
@@ -82,7 +90,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
             'next_execution_time': next_time,
             'remaining_executions': count,
             'workflow_name': workflow_name,
-            'workflow_id': wf.id,
+            'workflow_id': wf_def.id,
             'workflow_input': workflow_input or {},
             'workflow_params': workflow_params or {},
             'scope': 'private'
@@ -90,6 +98,6 @@ def create_cron_trigger(name, workflow_name, workflow_input,
 
         security.add_trust_id(values)
 
-        trig = db_api_v2.create_cron_trigger(values)
+        trig = db_api.create_cron_trigger(values)
 
     return trig
