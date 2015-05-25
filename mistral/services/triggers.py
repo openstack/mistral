@@ -87,6 +87,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
         values = {
             'name': name,
             'pattern': pattern,
+            'first_execution_time': first_time,
             'next_execution_time': next_time,
             'remaining_executions': count,
             'workflow_name': workflow_name,

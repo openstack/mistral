@@ -248,13 +248,19 @@ class CronTrigger(mb.MistralSecureModelBase):
         sa.UniqueConstraint('name', 'project_id'),
         sa.UniqueConstraint(
             'workflow_input_hash', 'workflow_name', 'pattern', 'project_id',
-            'workflow_params_hash'
+            'workflow_params_hash', 'remaining_executions',
+            'first_execution_time'
         )
     )
 
     id = mb.id_column()
     name = sa.Column(sa.String(200))
-    pattern = sa.Column(sa.String(100))
+    pattern = sa.Column(
+        sa.String(100),
+        nullable=True,
+        default='0 0 30 2 0'  # Set default to 'never'.
+    )
+    first_execution_time = sa.Column(sa.DateTime, nullable=True)
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
     workflow_name = sa.Column(sa.String(80))
     remaining_executions = sa.Column(sa.Integer)
@@ -281,6 +287,7 @@ class CronTrigger(mb.MistralSecureModelBase):
     def to_dict(self):
         d = super(CronTrigger, self).to_dict()
 
+        mb.datetime_to_str(d, 'first_execution_time')
         mb.datetime_to_str(d, 'next_execution_time')
 
         return d

@@ -793,6 +793,12 @@ def create_cron_trigger(values, session=None):
             "Duplicate entry for cron trigger %s: %s"
             % (cron_trigger.name, e.columns)
         )
+    # TODO(nmakhotkin): Remove this 'except' after fixing
+    # https://bugs.launchpad.net/oslo.db/+bug/1458583.
+    except db_exc.DBError as e:
+        raise exc.DBDuplicateEntry(
+            "Duplicate entry for cron trigger: %s" % e
+        )
 
     return cron_trigger
 

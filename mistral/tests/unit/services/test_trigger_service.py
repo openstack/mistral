@@ -70,6 +70,57 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         self.assertEqual(datetime.datetime(2010, 8, 25, 0, 10), next_time)
 
+    def test_trigger_create_the_same_first_time_or_count(self):
+        t_s.create_cron_trigger(
+            'test',
+            self.wf.name,
+            {},
+            {},
+            '*/5 * * * *',
+            "4242-12-25 13:37",
+            2,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        t_s.create_cron_trigger(
+            'test2',
+            self.wf.name,
+            {},
+            {},
+            '*/5 * * * *',
+            "4242-12-25 13:37",
+            4,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        t_s.create_cron_trigger(
+            'test3',
+            self.wf.name,
+            {},
+            {},
+            '*/5 * * * *',
+            "5353-12-25 13:37",
+            2,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        # Creations above should be ok.
+
+        # But creation with the same count and first time
+        # simultaneously leads to error.
+        self.assertRaises(
+            exc.DBDuplicateEntry,
+            t_s.create_cron_trigger,
+            'test4',
+            self.wf.name,
+            {},
+            {},
+            '*/5 * * * *',
+            "4242-12-25 13:37",
+            2,
+            None
+        )
+
     def test_trigger_create_wrong_workflow_input(self):
         wf_with_input = """---
         version: '2.0'
