@@ -116,23 +116,28 @@ class DirectWorkflowController(base.WorkflowController):
                 self.wf_spec.get_tasks()[task_ex.name]
             )
 
-            cmds.append(
-                commands.create_command(
-                    t_n,
-                    self.wf_ex,
-                    t_s,
-                    self._get_task_inbound_context(t_s)
-                )
+            cmd = commands.create_command(
+                t_n,
+                self.wf_ex,
+                t_s,
+                self._get_task_inbound_context(t_s)
             )
 
-        LOG.debug("Found commands: %s" % cmds)
+            # NOTE(xylan): Decide whether or not a join task should run
+            # immediately
+            if self._is_unsatisfied_join(cmd):
+                cmd.wait_flag = True
+
+            cmds.append(cmd)
 
         # We need to remove all "join" tasks that have already started
         # (or even completed) to prevent running "join" tasks more than
         # once.
         cmds = self._remove_started_joins(cmds)
 
-        return self._remove_unsatisfied_joins(cmds)
+        LOG.debug("Found commands: %s" % cmds)
+
+        return cmds
 
     def _has_inbound_transitions(self, task_spec):
         return len(self._find_inbound_task_specs(task_spec)) > 0
@@ -294,14 +299,15 @@ class DirectWorkflowController(base.WorkflowController):
         return filter(lambda cmd: not self._is_started_join(cmd), cmds)
 
     def _is_started_join(self, cmd):
-        if not isinstance(cmd, commands.RunTask):
+        if not (isinstance(cmd, commands.RunTask) and
+                cmd.task_spec.get_join()):
             return False
 
-        return (cmd.task_spec.get_join()
-                and wf_utils.find_task_execution(self.wf_ex, cmd.task_spec))
-
-    def _remove_unsatisfied_joins(self, cmds):
-        return filter(lambda cmd: not self._is_unsatisfied_join(cmd), cmds)
+        return wf_utils.find_task_execution_not_state(
+            self.wf_ex,
+            cmd.task_spec,
+            states.WAITING
+        )
 
     def _is_unsatisfied_join(self, cmd):
         if not isinstance(cmd, commands.RunTask):

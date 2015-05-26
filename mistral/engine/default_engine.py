@@ -354,7 +354,9 @@ class DefaultEngine(base.Engine):
             return
 
         for cmd in wf_cmds:
-            if isinstance(cmd, commands.RunTask):
+            if isinstance(cmd, commands.RunTask) and cmd.is_waiting():
+                task_handler.defer_task(cmd)
+            elif isinstance(cmd, commands.RunTask):
                 task_handler.run_new_task(cmd)
             elif isinstance(cmd, commands.RunExistingTask):
                 task_handler.run_existing_task(cmd.task_ex.id)
