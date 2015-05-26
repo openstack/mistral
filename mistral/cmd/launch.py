@@ -157,9 +157,29 @@ def print_server_info():
     print('Launching server components %s...' % comp_str)
 
 
+def get_properly_ordered_parameters():
+    """In oslo it's important the order of the launch parameters.
+    if --config-file came after the command line parameters the command
+    line parameters are ignored.
+    So to make user command line parameters are never ignored this method
+    moves --config-file to be always first.
+    """
+    args = sys.argv[1:]
+
+    for arg in sys.argv[1:]:
+        if arg == '--config-file' or arg.startswith('--config-file='):
+            conf_file_value = args[args.index(arg) + 1]
+            args.remove(conf_file_value)
+            args.remove(arg)
+            args.insert(0, arg)
+            args.insert(1, conf_file_value)
+
+    return args
+
+
 def main():
     try:
-        config.parse_args()
+        config.parse_args(get_properly_ordered_parameters())
 
         print_server_info()
 
