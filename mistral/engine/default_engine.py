@@ -265,17 +265,36 @@ class DefaultEngine(base.Engine):
 
             wf_ex = db_api.get_execution(execution_id)
 
-            wf_handler.set_execution_state(wf_ex, state, message)
+            return self._stop_workflow(wf_ex, state, message)
 
-            return wf_ex
+    @staticmethod
+    def _stop_workflow(wf_ex, state, message=None):
+        if state == states.SUCCESS:
+            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+
+            final_context = {}
+            try:
+                final_context = wf_ctrl.evaluate_workflow_final_context()
+            except Exception as e:
+                LOG.warn(
+                    "Failed to get final context for %s: %s" % (wf_ex, e)
+                )
+            wf_handler.succeed_workflow(
+                wf_ex,
+                final_context,
+                message
+            )
+        elif state == states.ERROR:
+            wf_handler.fail_workflow(wf_ex, message)
+
+        return wf_ex
 
     @u.log_exec(LOG)
     def rollback_workflow(self, execution_id):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    @staticmethod
-    def _dispatch_workflow_commands(wf_ex, wf_cmds):
+    def _dispatch_workflow_commands(self, wf_ex, wf_cmds):
         if not wf_cmds:
             return
 
@@ -285,8 +304,10 @@ class DefaultEngine(base.Engine):
             elif isinstance(cmd, commands.RunExistingTask):
                 task_handler.run_existing_task(cmd.task_ex.id)
             elif isinstance(cmd, commands.SetWorkflowState):
-                # TODO(rakhmerov): Special commands should be persisted too.
-                wf_handler.set_execution_state(wf_ex, cmd.new_state)
+                if states.is_completed(cmd.new_state):
+                    self._stop_workflow(cmd.wf_ex, cmd.new_state, cmd.msg)
+                else:
+                    wf_handler.set_execution_state(wf_ex, cmd.new_state)
             elif isinstance(cmd, commands.Noop):
                 # Do nothing.
                 pass
