@@ -18,6 +18,8 @@
 Configuration options registration and useful routines.
 """
 
+import itertools
+
 from oslo.config import cfg
 
 from mistral.openstack.common import log
@@ -55,9 +57,9 @@ use_debugger = cfg.BoolOpt(
     "use-debugger",
     default=False,
     help='Enables debugger. Note that using this option changes how the '
-    'eventlet library is used to support async IO. This could result '
-    'in failures that do not occur under normal operation. '
-    'Use at your own risk.'
+         'eventlet library is used to support async IO. This could result '
+         'in failures that do not occur under normal operation. '
+         'Use at your own risk.'
 )
 
 engine_opts = [
@@ -88,19 +90,28 @@ wf_trace_log_name_opt = cfg.StrOpt(
     'workflow_trace_log_name',
     default='workflow_trace',
     help='Logger name for pretty '
-    'workflow trace output.'
+         'workflow trace output.'
 )
 
 CONF = cfg.CONF
 
-CONF.register_opts(api_opts, group='api')
-CONF.register_opts(engine_opts, group='engine')
-CONF.register_opts(pecan_opts, group='pecan')
-CONF.register_opts(executor_opts, group='executor')
+API_GROUP = 'api'
+ENGINE_GROUP = 'engine'
+EXECUTOR_GROUP = 'executor'
+PECAN_GROUP = 'pecan'
+
+CONF.register_opts(api_opts, group=API_GROUP)
+CONF.register_opts(engine_opts, group=ENGINE_GROUP)
+CONF.register_opts(pecan_opts, group=PECAN_GROUP)
+CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
 CONF.register_opt(wf_trace_log_name_opt)
 
-CONF.register_cli_opt(use_debugger)
-CONF.register_cli_opt(launch_opt)
+CLI_OPTS = [
+    use_debugger,
+    launch_opt
+]
+
+CONF.register_cli_opts(CLI_OPTS)
 
 CONF.import_opt('verbose', 'mistral.openstack.common.log')
 CONF.set_default('verbose', True)
@@ -137,6 +148,19 @@ cfg.set_defaults(
     log.log_opts,
     default_log_levels=default_log_levels
 )
+
+
+def list_opts():
+    return [
+        (API_GROUP, api_opts),
+        (ENGINE_GROUP, engine_opts),
+        (EXECUTOR_GROUP, executor_opts),
+        (PECAN_GROUP, pecan_opts),
+        (None, itertools.chain(
+            CLI_OPTS,
+            [wf_trace_log_name_opt]
+        ))
+    ]
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
