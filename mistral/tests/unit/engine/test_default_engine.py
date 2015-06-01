@@ -412,11 +412,9 @@ class DefaultEngineTest(base.DbTestCase):
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_execution(wf_ex.id)
 
-        self.assertRaises(
-            exc.WorkflowException,
-            self.engine.stop_workflow,
-            wf_ex.id,
-            'PAUSE'
+        self.assertNotEqual(
+            'PAUSE',
+            self.engine.stop_workflow(wf_ex.id, 'PAUSE')
         )
 
     def test_resume_workflow(self):

@@ -23,8 +23,8 @@ from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
 
-def succeed_workflow(wf_ex, final_context):
-    set_execution_state(wf_ex, states.SUCCESS)
+def succeed_workflow(wf_ex, final_context, state_info=None):
+    set_execution_state(wf_ex, states.SUCCESS, state_info)
 
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
