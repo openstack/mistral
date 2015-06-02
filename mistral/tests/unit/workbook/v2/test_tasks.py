@@ -157,6 +157,13 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
     def test_policies(self):
         tests = [
             ({'retry': {'count': 3, 'delay': 1}}, False),
+            ({'retry': {
+                'continue-on': '<% 1 %>', 'delay': 2,
+                'break-on': '<% 1 %>', 'count': 2
+            }}, False),
+            ({'retry': {
+                'count': 3, 'delay': 1, 'continue-on': '<% 1 %>'
+            }}, False),
             ({'retry': {'count': '<% 3 %>', 'delay': 1}}, False),
             ({'retry': {'count': '<% * %>', 'delay': 1}}, True),
             ({'retry': {'count': 3, 'delay': '<% 1 %>'}}, False),

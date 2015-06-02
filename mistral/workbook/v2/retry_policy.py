@@ -31,6 +31,7 @@ class RetrySpec(base.BaseSpec):
                 ]
             },
             "break-on": types.YAQL,
+            "continue-on": types.YAQL,
             "delay": {
                 "oneOf": [
                     types.YAQL,
@@ -38,7 +39,7 @@ class RetrySpec(base.BaseSpec):
                 ]
             },
         },
-        "required": ["count", "delay"],
+        "required": ["delay", "count"],
         "additionalProperties": False
     }
 
@@ -58,7 +59,8 @@ class RetrySpec(base.BaseSpec):
         super(RetrySpec, self).__init__(data)
 
         self._break_on = data.get('break-on')
-        self._count = data['count']
+        self._count = data.get('count')
+        self._continue_on = data.get('continue-on')
         self._delay = data['delay']
 
     def _transform_retry_one_line(self, retry):
@@ -75,6 +77,7 @@ class RetrySpec(base.BaseSpec):
         self.validate_yaql_expr(self._data.get('count'))
         self.validate_yaql_expr(self._data.get('delay'))
         self.validate_yaql_expr(self._data.get('break-on'))
+        self.validate_yaql_expr(self._data.get('continue-on'))
 
     def get_count(self):
         return self._count
