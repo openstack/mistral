@@ -79,6 +79,11 @@ def _extract_execution_result(ex):
         return ex.output['result']
 
 
+def invalidate_task_execution_result(task_ex):
+    for ex in task_ex.executions:
+        ex.accepted = False
+
+
 def get_task_execution_result(task_ex):
     action_execs = task_ex.executions
     action_execs.sort(

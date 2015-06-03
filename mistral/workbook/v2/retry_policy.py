@@ -85,5 +85,8 @@ class RetrySpec(base.BaseSpec):
     def get_break_on(self):
         return self._break_on
 
+    def get_continue_on(self):
+        return self._continue_on
+
     def get_delay(self):
         return self._delay
