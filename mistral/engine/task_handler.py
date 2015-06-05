@@ -18,11 +18,11 @@ from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
+from mistral.engine import action_handler
 from mistral.engine import policies
 from mistral.engine import rpc
 from mistral.engine import utils as e_utils
 from mistral import expressions as expr
-from mistral.services import action_manager as a_m
 from mistral.services import scheduler
 from mistral import utils
 from mistral.utils import wf_trace
@@ -119,7 +119,7 @@ def on_action_complete(action_ex, result):
             isinstance(action_ex, models.WorkflowExecution)):
         return task_ex
 
-    result = e_utils.transform_result(task_ex, result)
+    result = action_handler.transform_result(result, task_ex)
 
     wf_ex = task_ex.workflow_execution
 
@@ -162,45 +162,6 @@ def _create_task_execution(wf_ex, task_spec, ctx):
     wf_ex.task_executions.append(task_ex)
 
     return task_ex
-
-
-def _create_action_execution(task_ex, action_def, action_input, index=0):
-    # TODO(rakhmerov): We can avoid hitting DB at all when calling something
-    # create_action_execution(), these operations can be just done using
-    # SQLAlchemy session (1-level cache) and session flush (on TX commit) would
-    # send necessary SQL queries to DB. Currently, session flush happens
-    # on every operation which may not be optimal. The problem with using just
-    # session level cache is in generating ids. Ids are generated only on
-    # session flush. And now we have a lot places where we need to have ids
-    # before TX completion.
-
-    # Assign the action execution ID here to minimize database calls.
-    # Otherwise, the input property of the action execution DB object needs
-    # to be updated with the action execution ID after the action execution
-    # DB object is created.
-    action_ex_id = utils.generate_unicode_uuid()
-
-    if a_m.has_action_context(
-            action_def.action_class, action_def.attributes or {}):
-        action_input.update(a_m.get_action_context(task_ex, action_ex_id))
-
-    action_ex = db_api.create_action_execution({
-        'id': action_ex_id,
-        'name': action_def.name,
-        'task_execution_id': task_ex.id,
-        'workflow_name': task_ex.workflow_name,
-        'spec': action_def.spec,
-        'project_id': task_ex.project_id,
-        'state': states.RUNNING,
-        'input': action_input,
-        'runtime_context': {'with_items_index': index}}
-    )
-
-    # Add to collection explicitly so that it's in a proper
-    # state within the current session.
-    task_ex.executions.append(action_ex)
-
-    return action_ex
 
 
 def before_task_start(task_ex, task_spec, wf_spec):
@@ -309,10 +270,10 @@ def _get_action_input(wf_spec, task_ex, task_spec, ctx):
 
     action_spec_name = task_spec.get_action_name()
 
-    action_def = e_utils.resolve_action_definition(
+    action_def = action_handler.resolve_action_definition(
+        action_spec_name,
         task_ex.workflow_name,
-        wf_spec.get_name(),
-        action_spec_name
+        wf_spec.get_name()
     )
 
     input_dict = utils.merge_dicts(
@@ -327,10 +288,10 @@ def _get_action_input(wf_spec, task_ex, task_spec, ctx):
 
         base_name = action_spec.get_base()
 
-        action_def = e_utils.resolve_action_definition(
+        action_def = action_handler.resolve_action_definition(
+            base_name,
             task_ex.workflow_name,
-            wf_spec.get_name(),
-            base_name
+            wf_spec.get_name()
         )
 
         e_utils.validate_input(action_def, action_spec, input_dict)
@@ -384,27 +345,14 @@ def _schedule_run_action(task_ex, task_spec, action_input, index):
 
     action_spec_name = task_spec.get_action_name()
 
-    # TODO(rakhmerov): Refactor ad-hoc actions and isolate them.
-    action_def = e_utils.resolve_action_definition(
-        wf_ex.workflow_name,
-        wf_spec.get_name(),
-        action_spec_name
+    action_def = action_handler.resolve_definition(
+        action_spec_name,
+        task_ex,
+        wf_spec
     )
 
-    if action_def.spec:
-        # Ad-hoc action.
-        action_spec = spec_parser.get_action_spec(action_def.spec)
-
-        base_name = action_spec.get_base()
-
-        action_def = e_utils.resolve_action_definition(
-            task_ex.workflow_name,
-            wf_spec.get_name(),
-            base_name
-        )
-
-    action_ex = _create_action_execution(
-        task_ex, action_def, action_input, index
+    action_ex = action_handler.create_action_execution(
+        action_def, action_input, task_ex, index
     )
 
     target = expr.evaluate_recursively(
@@ -417,7 +365,7 @@ def _schedule_run_action(task_ex, task_spec, action_input, index):
 
     scheduler.schedule_call(
         None,
-        'mistral.engine.task_handler.run_action',
+        'mistral.engine.action_handler.run_existing_action',
         0,
         action_ex_id=action_ex.id,
         target=target
@@ -428,13 +376,13 @@ def _schedule_noop_action(task_ex, task_spec):
     wf_ex = task_ex.workflow_execution
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-    action_def = e_utils.resolve_action_definition(
+    action_def = action_handler.resolve_action_definition(
+        'std.noop',
         wf_ex.workflow_name,
-        wf_spec.get_name(),
-        'std.noop'
+        wf_spec.get_name()
     )
 
-    action_ex = _create_action_execution(task_ex, action_def, {})
+    action_ex = action_handler.create_action_execution(action_def, {}, task_ex)
 
     target = expr.evaluate_recursively(
         task_spec.get_target(),
@@ -443,23 +391,10 @@ def _schedule_noop_action(task_ex, task_spec):
 
     scheduler.schedule_call(
         None,
-        'mistral.engine.task_handler.run_action',
+        'mistral.engine.action_handler.run_existing_action',
         0,
         action_ex_id=action_ex.id,
         target=target
-    )
-
-
-def run_action(action_ex_id, target):
-    action_ex = db_api.get_action_execution(action_ex_id)
-    action_def = db_api.get_action_definition(action_ex.name)
-
-    rpc.get_executor_client().run_action(
-        action_ex.id,
-        action_def.action_class,
-        action_def.attributes or {},
-        action_ex.input,
-        target
     )
 
 
