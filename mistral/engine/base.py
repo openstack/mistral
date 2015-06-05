@@ -41,6 +41,19 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def start_action(self, action_name, action_input,
+                     description=None, **params):
+        """Starts the specific action.
+
+        :param action_name: Action name.
+        :param action_input: Action input data as a dictionary.
+        :param description: Execution description.
+        :param params: Additional options for action running.
+        :return: Action execution object.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def on_action_complete(self, action_ex_id, result):
         """Accepts action result and continues the workflow.
 

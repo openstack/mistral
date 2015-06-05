@@ -84,7 +84,12 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
                 setattr(m, col.name, getattr(self, col.name))
 
         setattr(m, 'created_at', getattr(self, 'created_at').isoformat(' '))
-        setattr(m, 'updated_at', getattr(self, 'updated_at').isoformat(' '))
+
+        updated_at = getattr(self, 'updated_at')
+        # NOTE(nmakhotkin): 'updated_at' field is empty for just created
+        # object since it has not updated yet.
+        if updated_at:
+            setattr(m, 'updated_at', updated_at.isoformat(' '))
 
         return m
 

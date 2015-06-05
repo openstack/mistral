@@ -20,10 +20,12 @@ from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
+from mistral.engine import action_handler
 from mistral.engine import base
 from mistral.engine import task_handler
 from mistral.engine import utils as eng_utils
 from mistral.engine import workflow_handler as wf_handler
+from mistral.services import action_manager as a_m
 from mistral import utils as u
 from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
@@ -56,7 +58,7 @@ class DefaultEngine(base.Engine):
                 wf_def = db_api.get_workflow_definition(wf_name)
                 wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
-                eng_utils.validate_input(wf_def, wf_spec, wf_input)
+                eng_utils.validate_input(wf_def, wf_input, wf_spec)
 
                 wf_ex = self._create_workflow_execution(
                     wf_def,
@@ -87,6 +89,50 @@ class DefaultEngine(base.Engine):
             )
             self._fail_workflow(wf_exec_id, e)
             raise e
+
+    @u.log_exec(LOG)
+    def start_action(self, action_name, action_input,
+                     description=None, **params):
+        with db_api.transaction():
+            action_def = action_handler.resolve_definition(action_name)
+            resolved_action_input = action_handler.get_action_input(
+                action_name,
+                action_input
+            )
+            action = a_m.get_action_class(action_def.name)(
+                **resolved_action_input
+            )
+
+            # If we see action is asynchronous, then we enforce 'save_result'.
+            if params.get('save_result') or not action.is_sync():
+                action_ex = action_handler.create_action_execution(
+                    action_def,
+                    resolved_action_input,
+                    description=description
+                )
+
+                action_handler.run_action(
+                    action_def,
+                    resolved_action_input,
+                    action_ex.id,
+                    params.get('target')
+                )
+
+                return action_ex
+            else:
+                result = action_handler.run_action(
+                    action_def,
+                    resolved_action_input,
+                    target=params.get('target'),
+                    async=False
+                )
+
+                return db_models.ActionExecution(
+                    name=action_name,
+                    description=description,
+                    input=action_input,
+                    output={'result': result}
+                )
 
     def on_task_state_change(self, task_ex_id, state):
         with db_api.transaction():
@@ -166,6 +212,13 @@ class DefaultEngine(base.Engine):
         try:
             with db_api.transaction():
                 action_ex = db_api.get_action_execution(action_ex_id)
+
+                # In case of single action execution there is no
+                # assigned task execution.
+                if not action_ex.task_execution:
+                    return action_handler.store_action_result(
+                        action_ex, result
+                    ).get_clone()
 
                 wf_ex_id = action_ex.task_execution.workflow_execution_id
 

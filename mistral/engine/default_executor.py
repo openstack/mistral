@@ -40,10 +40,11 @@ class DefaultExecutor(base.Executor):
         """
 
         def send_error_to_engine(error_msg):
-            self._engine_client.on_action_complete(
-                action_ex_id,
-                wf_utils.Result(error=error_msg)
-            )
+            if action_ex_id:
+                self._engine_client.on_action_complete(
+                    action_ex_id,
+                    wf_utils.Result(error=error_msg)
+                )
 
         action_cls = a_f.construct_action_class(action_class_str, attributes)
 
@@ -51,12 +52,13 @@ class DefaultExecutor(base.Executor):
             action = action_cls(**action_params)
             result = action.run()
 
-            if action.is_sync():
+            if action.is_sync() and action_ex_id:
                 self._engine_client.on_action_complete(
                     action_ex_id,
                     wf_utils.Result(data=result)
                 )
-            return
+
+            return result
         except TypeError as e:
             msg = ("Failed to initialize action %s. Action init params = %s."
                    " Actual init params = %s. More info: %s"

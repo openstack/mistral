@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api_v2
+from mistral.services import actions
 from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
@@ -61,10 +62,16 @@ def _create_or_update_actions(wb_db, actions_spec):
         for action_spec in actions_spec:
             action_name = '%s.%s' % (wb_db.name, action_spec.get_name())
 
+            input_list = actions.get_input_list(
+                action_spec.to_dict().get('input', [])
+            )
             values = {
                 'name': action_name,
                 'spec': action_spec.to_dict(),
+                'tags': action_spec.get_tags(),
+                'description': action_spec.get_description(),
                 'is_system': False,
+                'input': ', '.join(input_list) if input_list else None,
                 'scope': wb_db.scope,
                 'project_id': wb_db.project_id
             }

@@ -80,8 +80,8 @@ def create_cron_trigger(name, workflow_name, workflow_input,
 
         eng_utils.validate_input(
             wf_def,
-            parser.get_workflow_spec(wf_def.spec),
-            workflow_input or {}
+            workflow_input or {},
+            parser.get_workflow_spec(wf_def.spec)
         )
 
         values = {

@@ -159,6 +159,12 @@ def get_action_context(task_ex, action_ex_id):
     }
 
 
+def get_empty_action_context():
+    return {
+        _ACTION_CTX_PARAM: {}
+    }
+
+
 def _has_argument(action, attributes, argument_name):
     action_cls = action_factory.construct_action_class(action, attributes)
     arg_spec = inspect.getargspec(action_cls.__init__)

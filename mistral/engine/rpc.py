@@ -98,6 +98,30 @@ class EngineServer(object):
             **params
         )
 
+    def start_action(self, rpc_ctx, action_name,
+                     action_input, description, params):
+        """Receives calls over RPC to start actions on engine.
+
+        :param rpc_ctx: RPC request context.
+        :param action_name: name of the Action.
+        :param action_input: input dictionary for Action.
+        :param description: description of new Action execution.
+        :param params: extra parameters to run Action.
+        :return: Action execution.
+        """
+        LOG.info(
+            "Received RPC request 'start_action'[rpc_ctx=%s,"
+            " name=%s, input=%s, description=%s, params=%s]"
+            % (rpc_ctx, action_name, action_input, description, params)
+        )
+
+        return self._engine.start_action(
+            action_name,
+            action_input,
+            description,
+            **params
+        )
+
     def on_task_state_change(self, rpc_ctx, task_ex_id, state):
         return self._engine.on_task_state_change(task_ex_id, state)
 
@@ -239,6 +263,22 @@ class EngineClient(base.Engine):
             params=params
         )
 
+    @wrap_messaging_exception
+    def start_action(self, action_name, action_input,
+                     description=None, **params):
+        """Starts action sending a request to engine over RPC.
+
+        :return: Action execution.
+        """
+        return self._client.call(
+            auth_ctx.ctx(),
+            'start_action',
+            action_name=action_name,
+            action_input=action_input or {},
+            description=description,
+            params=params
+        )
+
     def on_task_state_change(self, task_ex_id, state):
         return self._client.call(
             auth_ctx.ctx(),
@@ -352,7 +392,7 @@ class ExecutorServer(object):
             % (rpc_ctx, action_ex_id, action_class_str, attributes, params)
         )
 
-        self._executor.run_action(
+        return self._executor.run_action(
             action_ex_id,
             action_class_str,
             attributes,
@@ -381,7 +421,7 @@ class ExecutorClient(base.Executor):
         )
 
     def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params, target=None):
+                   action_params, target=None, async=True):
         """Sends a request to run action to executor."""
 
         kwargs = {
@@ -391,7 +431,11 @@ class ExecutorClient(base.Executor):
             'params': action_params
         }
 
-        self._client.prepare(topic=self.topic, server=target).cast(
+        call_ctx = self._client.prepare(topic=self.topic, server=target)
+
+        rpc_client_method = call_ctx.cast if async else call_ctx.call
+
+        return rpc_client_method(
             auth_ctx.ctx(),
             'run_action',
             **kwargs

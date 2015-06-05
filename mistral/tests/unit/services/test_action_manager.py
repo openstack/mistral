@@ -22,17 +22,17 @@ class ActionManagerTest(base.DbTestCase):
         std_email = db_api.get_action_definition("std.email")
 
         http_action_input = (
-            "url, method=GET, params=None, body=None, "
-            "headers=None, cookies=None, auth=None, "
-            "timeout=None, allow_redirects=None, "
-            "proxies=None, verify=None"
+            'url, method="GET", params=null, body=null, '
+            'headers=null, cookies=null, auth=null, '
+            'timeout=null, allow_redirects=null, '
+            'proxies=null, verify=null'
         )
 
         self.assertEqual(http_action_input, std_http.input)
 
         std_email_input = (
             "from_addr, to_addrs, smtp_server, "
-            "smtp_password, subject=None, body=None"
+            "smtp_password, subject=null, body=null"
         )
 
         self.assertEqual(std_email_input, std_email.input)

@@ -23,10 +23,10 @@ class InspectUtilsTest(base.BaseTest):
         parameters_str = i_u.get_arg_list_as_str(action_class.__init__)
 
         http_action_params = (
-            "url, method=GET, params=None, body=None, "
-            "headers=None, cookies=None, auth=None, "
-            "timeout=None, allow_redirects=None, "
-            "proxies=None, verify=None"
+            'url, method="GET", params=null, body=null, '
+            'headers=null, cookies=null, auth=null, '
+            'timeout=null, allow_redirects=null, '
+            'proxies=null, verify=null'
         )
 
         self.assertEqual(http_action_params, parameters_str)
