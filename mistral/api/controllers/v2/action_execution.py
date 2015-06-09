@@ -17,6 +17,7 @@
 import json
 
 from oslo_log import log as logging
+import pecan
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -47,6 +48,7 @@ class ActionExecution(resource.Resource):
     state_info = wtypes.text
     tags = [wtypes.text]
     name = wtypes.text
+    description = wtypes.text
     accepted = bool
     input = wtypes.text
     output = wtypes.text
@@ -78,7 +80,8 @@ class ActionExecution(resource.Resource):
             state=states.SUCCESS,
             state_info=states.SUCCESS,
             tags=['foo', 'fee'],
-            definition_name='std.echo',
+            name='std.echo',
+            description='My running action',
             accepted=True,
             input='{"first_name": "John", "last_name": "Doe"}',
             output='{"some_output": "Hello, John Doe!"}',
@@ -116,7 +119,9 @@ def _get_action_execution_resource(action_ex):
     # TODO(nmakhotkin): Use db_model for this instead.
     res = ActionExecution.from_dict(action_ex.to_dict())
 
-    setattr(res, 'task_name', action_ex.task_execution.name)
+    task_name = (action_ex.task_execution.name
+                 if action_ex.task_execution else None)
+    setattr(res, 'task_name', task_name)
 
     return res
 
@@ -145,6 +150,47 @@ class ActionExecutionsController(rest.RestController):
         LOG.info("Fetch action_execution [id=%s]" % id)
 
         return _get_action_execution(id)
+
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose({wtypes.text: wtypes.text},
+                         body=ActionExecution, status_code=201)
+    def post(self, action_execution):
+        """Create new action_execution."""
+        body = json.loads(pecan.request.body)
+
+        LOG.info("Create action_execution [action_execution=%s]" % body)
+
+        action_input = action_execution.input or None
+        description = action_execution.description or None
+
+        if action_input:
+            try:
+                action_input = json.loads(action_execution.input)
+
+                if not isinstance(action_input, dict):
+                    raise TypeError("Input should be dict type.")
+            except (TypeError, ValueError) as e:
+                raise exc.InputException(
+                    "Input should be JSON-serialized dict string. Actual: %s, "
+                    "error: %s" % (action_execution.input, e)
+                )
+
+        name = action_execution.name
+        params = body.get('params', {})
+
+        if not name:
+            raise exc.InputException(
+                "Please provide at least action name to run action."
+            )
+
+        action_ex = rpc.get_engine_client().start_action(
+            name,
+            action_input,
+            description=description,
+            **params
+        )
+
+        return ActionExecution.from_dict(action_ex).to_dict()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text, body=ActionExecution)

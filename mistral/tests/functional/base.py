@@ -110,6 +110,13 @@ class MistralClientV2(MistralClientBase):
     def post_request(self, url, file_name):
         text = get_resource(file_name)
         headers = {"headers": "Content-Type:text/plain"}
+
+        return self.post(url, text, headers=headers)
+
+    def post_json(self, url, obj):
+        text = json.dumps(obj)
+        headers = {"Content-Type": "application/json"}
+
         return self.post(url, text, headers=headers)
 
     def update_request(self, url, file_name):
