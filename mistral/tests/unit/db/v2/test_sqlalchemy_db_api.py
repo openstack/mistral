@@ -709,7 +709,8 @@ WF_EXECS = [
         'updated_at': None,
         'context': None,
         'task_id': None,
-        'trust_id': None
+        'trust_id': None,
+        'description': None,
     },
     {
         'spec': {},
@@ -720,7 +721,8 @@ WF_EXECS = [
         'updated_at': None,
         'context': {'image_id': '123123'},
         'task_id': None,
-        'trust_id': None
+        'trust_id': None,
+        'description': None,
     }
 ]
 
