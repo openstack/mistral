@@ -503,6 +503,7 @@ def run_workflow(wf_name, wf_input, wf_params):
     rpc.get_engine_client().start_workflow(
         wf_name,
         wf_input,
+        "sub-workflow execution",
         **wf_params
     )
 

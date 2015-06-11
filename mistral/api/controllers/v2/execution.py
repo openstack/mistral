@@ -42,6 +42,9 @@ class Execution(resource.Resource):
     workflow_name = wtypes.text
     "reference to workflow definition"
 
+    description = wtypes.text
+    "description of workflow execution."
+
     params = wtypes.text
     "params define workflow type specific parameters. For example, reverse \
     workflow takes one parameter 'task_name' that defines a target task."
@@ -93,6 +96,7 @@ class Execution(resource.Resource):
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    workflow_name='flow',
+                   description='this is the first execution.',
                    state='SUCCESS',
                    input='{}',
                    output='{}',
@@ -134,17 +138,25 @@ class ExecutionsController(rest.RestController):
                  (id, execution))
         db_api.ensure_workflow_execution_exists(id)
 
-        # Currently we can change only state.
-        if not execution.state:
-            raise exc.DataAccessException(
-                "Only state of execution can change. "
-                "Missing 'state' property."
-            )
-
         new_state = execution.state
+        new_description = execution.description
         msg = execution.state_info
 
-        if new_state == states.PAUSED:
+        # Currently we can change only state or description.
+        if (not (new_state or new_description) or
+                (new_state and new_description)):
+            raise exc.DataAccessException(
+                "Only state or description of execution can be changed. "
+                "But they can not be changed at the same time."
+            )
+
+        if new_description:
+            wf_ex = db_api.update_workflow_execution(
+                id,
+                description=new_description
+            )
+
+        elif new_state == states.PAUSED:
             wf_ex = rpc.get_engine_client().pause_workflow(id)
         elif new_state == states.RUNNING:
             wf_ex = rpc.get_engine_client().resume_workflow(id)
@@ -177,6 +189,7 @@ class ExecutionsController(rest.RestController):
         result = engine.start_workflow(
             exec_dict['workflow_name'],
             exec_dict.get('input'),
+            exec_dict.get('description', ''),
             **exec_dict.get('params') or {}
         )
 

@@ -45,7 +45,7 @@ class DefaultEngine(base.Engine):
         self._engine_client = engine_client
 
     @u.log_exec(LOG)
-    def start_workflow(self, wf_name, wf_input, **params):
+    def start_workflow(self, wf_name, wf_input, description='', **params):
         wf_exec_id = None
 
         try:
@@ -61,6 +61,7 @@ class DefaultEngine(base.Engine):
                     wf_def,
                     wf_spec,
                     wf_input,
+                    description,
                     params
                 )
                 wf_exec_id = wf_ex.id
@@ -363,9 +364,11 @@ class DefaultEngine(base.Engine):
         return params
 
     @staticmethod
-    def _create_workflow_execution(wf_def, wf_spec, wf_input, params):
+    def _create_workflow_execution(wf_def, wf_spec, wf_input, description,
+                                   params):
         wf_ex = db_api.create_workflow_execution({
             'name': wf_def.name,
+            'description': description,
             'workflow_name': wf_def.name,
             'spec': wf_spec.to_dict(),
             'params': params or {},

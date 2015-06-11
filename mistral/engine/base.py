@@ -29,11 +29,12 @@ class Engine(object):
     """Engine interface."""
 
     @abc.abstractmethod
-    def start_workflow(self, wf_name, wf_input, **params):
+    def start_workflow(self, wf_name, wf_input, description='', **params):
         """Starts the specified workflow.
 
         :param wf_name: Workflow name.
         :param wf_input: Workflow input data as a dictionary.
+        :param description: Execution description.
         :param params: Additional workflow type specific parameters.
         :return: Workflow execution object.
         """

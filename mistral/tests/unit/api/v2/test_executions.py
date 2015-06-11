@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2015 Huawei Technologies Co., Ltd.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -29,6 +30,7 @@ from mistral.workflow import states
 WF_EX = models.WorkflowExecution(
     id='123',
     workflow_name='some',
+    description='execution description.',
     spec={'name': 'some'},
     state=states.RUNNING,
     state_info=None,
@@ -48,7 +50,7 @@ WF_EX_JSON = {
     'state_info': None,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'workflow_name': 'some'
+    'workflow_name': 'some',
 }
 
 UPDATED_WF_EX = copy.copy(WF_EX)
@@ -56,6 +58,9 @@ UPDATED_WF_EX['state'] = states.PAUSED
 
 UPDATED_WF_EX_JSON = copy.copy(WF_EX_JSON)
 UPDATED_WF_EX_JSON['state'] = states.PAUSED
+
+WF_EX_JSON_WITH_DESC = copy.copy(WF_EX_JSON)
+WF_EX_JSON_WITH_DESC['description'] = "execution description."
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 MOCK_WF_EXECUTIONS = mock.MagicMock(return_value=[WF_EX])
@@ -74,7 +79,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.maxDiff = None
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(WF_EX_JSON, resp.json)
+        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -92,8 +97,11 @@ class TestExecutionsController(base.FunctionalTest):
     def test_put(self):
         resp = self.app.put_json('/v2/executions/123', UPDATED_WF_EX_JSON)
 
+        UPDATED_WF_EX_WITH_DESC = copy.copy(UPDATED_WF_EX_JSON)
+        UPDATED_WF_EX_WITH_DESC['description'] = 'execution description.'
+
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(UPDATED_WF_EX_JSON, resp.json)
+        self.assertDictEqual(UPDATED_WF_EX_WITH_DESC, resp.json)
 
     @mock.patch.object(
         db_api,
@@ -113,6 +121,8 @@ class TestExecutionsController(base.FunctionalTest):
 
             resp = self.app.put_json('/v2/executions/123', update_exec)
 
+            update_exec['description'] = "execution description."
+
             self.assertEqual(resp.status_int, 200)
             self.assertDictEqual(update_exec, resp.json)
             mock_pw.assert_called_once_with('123', 'ERROR', "Force")
@@ -127,20 +137,29 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 404)
 
+    def test_put_both_state_and_description(self):
+        self.assertRaises(
+            webtest_app.AppError,
+            self.app.put_json,
+            '/v2/executions/123',
+            WF_EX_JSON_WITH_DESC
+        )
+
     @mock.patch.object(rpc.EngineClient, 'start_workflow')
     def test_post(self, f):
         f.return_value = WF_EX.to_dict()
 
-        resp = self.app.post_json('/v2/executions', WF_EX_JSON)
+        resp = self.app.post_json('/v2/executions', WF_EX_JSON_WITH_DESC)
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(WF_EX_JSON, resp.json)
+        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
 
-        exec_dict = execution.Execution(**WF_EX_JSON).to_dict()
+        exec_dict = execution.Execution(**WF_EX_JSON_WITH_DESC).to_dict()
 
         f.assert_called_once_with(
             exec_dict['workflow_name'],
             exec_dict['input'],
+            exec_dict['description'],
             **exec_dict['params']
         )
 
@@ -170,7 +189,7 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['executions']), 1)
-        self.assertDictEqual(WF_EX_JSON, resp.json['executions'][0])
+        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json['executions'][0])
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_EMPTY)
     def test_get_all_empty(self):

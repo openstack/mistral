@@ -111,11 +111,13 @@ class DefaultEngineTest(base.DbTestCase):
         wf_ex = self.engine.start_workflow(
             'wb.wf',
             wf_input,
+            'my execution',
             task_name='task2'
         )
 
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual('my execution', wf_ex.description)
         self._assert_dict_contains_subset(wf_input, wf_ex.context)
         self.assertIn('__execution', wf_ex.context)
 
@@ -433,5 +435,8 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
 
         self.assertRaises(
             exc.InputException,
-            self.engine_client.start_workflow, 'some_wf', {}
+            self.engine_client.start_workflow,
+            'some_wf',
+            {},
+            'some_description'
         )

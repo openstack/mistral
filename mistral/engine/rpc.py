@@ -77,7 +77,8 @@ class EngineServer(object):
     def __init__(self, engine):
         self._engine = engine
 
-    def start_workflow(self, rpc_ctx, workflow_name, workflow_input, params):
+    def start_workflow(self, rpc_ctx, workflow_name, workflow_input,
+                       description, params):
         """Receives calls over RPC to start workflows on engine.
 
         :param rpc_ctx: RPC request context.
@@ -86,13 +87,14 @@ class EngineServer(object):
 
         LOG.info(
             "Received RPC request 'start_workflow'[rpc_ctx=%s,"
-            " workflow_name=%s, workflow_input=%s, params=%s]"
-            % (rpc_ctx, workflow_name, workflow_input, params)
+            " workflow_name=%s, workflow_input=%s, description=%s, params=%s]"
+            % (rpc_ctx, workflow_name, workflow_input, description, params)
         )
 
         return self._engine.start_workflow(
             workflow_name,
             workflow_input,
+            description,
             **params
         )
 
@@ -223,7 +225,7 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
-    def start_workflow(self, wf_name, wf_input, **params):
+    def start_workflow(self, wf_name, wf_input, exec_desc, **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.
@@ -233,6 +235,7 @@ class EngineClient(base.Engine):
             'start_workflow',
             workflow_name=wf_name,
             workflow_input=wf_input or {},
+            description=exec_desc,
             params=params
         )
 
