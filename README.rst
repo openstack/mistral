@@ -105,7 +105,7 @@ Mistral configuration is needed for getting it work correctly either with real O
 * Configure connection in Mistral config::
 
     [database]
-    connection = mysql://root:@localhost:3306/mistral
+    connection = mysql://root:<password>@localhost:3306/mistral
 
 Before the first run
 --------------------
