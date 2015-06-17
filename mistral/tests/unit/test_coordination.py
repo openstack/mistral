@@ -12,15 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo_config import cfg
 
+from mistral import coordination
 from mistral.tests import base
-from mistral.utils import coordination
 
 
-class CoordinationTest(base.BaseTest):
+class ServiceCoordinatorTest(base.BaseTest):
     def setUp(self):
-        super(CoordinationTest, self).setUp()
+        super(ServiceCoordinatorTest, self).setUp()
 
     def test_start(self):
         cfg.CONF.set_default(
@@ -116,3 +117,31 @@ class CoordinationTest(base.BaseTest):
 
         self.assertEqual(0, len(members_after))
         self.assertEqual(set([]), members_after)
+
+
+class ServiceTest(base.BaseTest):
+    def setUp(self):
+        super(ServiceTest, self).setUp()
+
+        # Re-intialize the global service coordinator object, in order to use
+        # new coordination configuration.
+        coordination.cleanup_service_coordinator()
+
+    @mock.patch('mistral.utils.get_process_identifier', return_value='fake_id')
+    def test_register_membership(self, mock_get_identifier):
+        cfg.CONF.set_default('backend_url', 'zake://', 'coordination')
+
+        srv = coordination.Service('fake_group')
+        srv.register_membership()
+
+        self.addCleanup(srv.stop)
+
+        srv_coordinator = coordination.get_service_coordinator()
+
+        self.assertIsNotNone(srv_coordinator)
+        self.assertTrue(srv_coordinator.is_active())
+
+        members = srv_coordinator.get_members('fake_group')
+
+        mock_get_identifier.assert_called_once_with()
+        self.assertEqual(set(['fake_id']), members)

@@ -14,8 +14,10 @@
 
 import six
 
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log
+from oslo_service import threadgroup
 from retrying import retry
 import tooz.coordination
 
@@ -23,6 +25,8 @@ from mistral import utils
 
 
 LOG = log.getLogger(__name__)
+
+_SERVICE_COORDINATOR = None
 
 
 class ServiceCoordinator(object):
@@ -143,3 +147,56 @@ class ServiceCoordinator(object):
             LOG.warning('Group %s does not exist.', group_id)
 
             return []
+
+
+def cleanup_service_coordinator():
+    """Intends to be used by tests to recreate service coordinator."""
+
+    global _SERVICE_COORDINATOR
+
+    _SERVICE_COORDINATOR = None
+
+
+def get_service_coordinator(my_id=None):
+    global _SERVICE_COORDINATOR
+
+    if not _SERVICE_COORDINATOR:
+        _SERVICE_COORDINATOR = ServiceCoordinator(my_id=my_id)
+        _SERVICE_COORDINATOR.start()
+
+    return _SERVICE_COORDINATOR
+
+
+class Service(object):
+    def __init__(self, group_type):
+        self.group_type = group_type
+        self._tg = None
+
+    @lockutils.synchronized('service_coordinator')
+    def register_membership(self):
+        """Registers group membership.
+
+        Because this method will be invoked on each service startup almost at
+        the same time, so it must be synchronized, in case all the services
+        are started within same process.
+        """
+
+        service_coordinator = get_service_coordinator()
+
+        if service_coordinator.is_active():
+            service_coordinator.join_group(self.group_type)
+
+            self._tg = threadgroup.ThreadGroup()
+
+            self._tg.add_timer(
+                cfg.CONF.coordination.heartbeat_interval,
+                service_coordinator.heartbeat
+            )
+
+    def stop(self):
+        service_coordinator = get_service_coordinator()
+
+        if service_coordinator.is_active():
+            self._tg.stop()
+
+            service_coordinator.stop()

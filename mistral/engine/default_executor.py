@@ -13,9 +13,11 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+
 from oslo_log import log as logging
 
 from mistral.actions import action_factory as a_f
+from mistral import coordination
 from mistral.engine import base
 from mistral import exceptions as exc
 from mistral.utils import inspect_utils as i_u
@@ -25,9 +27,11 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
-class DefaultExecutor(base.Executor):
+class DefaultExecutor(base.Executor, coordination.Service):
     def __init__(self, engine_client):
         self._engine_client = engine_client
+
+        coordination.Service.__init__(self, 'executor_group')
 
     def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params):
