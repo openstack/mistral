@@ -96,18 +96,29 @@ wf_trace_log_name_opt = cfg.StrOpt(
          'workflow trace output.'
 )
 
+coordination_opts = [
+    cfg.StrOpt('backend_url',
+               default=None,
+               help='The backend URL to be used for coordination'),
+    cfg.FloatOpt('heartbeat_interval',
+                 default=5.0,
+                 help='Number of seconds between heartbeats for coordination.')
+]
+
 CONF = cfg.CONF
 
 API_GROUP = 'api'
 ENGINE_GROUP = 'engine'
 EXECUTOR_GROUP = 'executor'
 PECAN_GROUP = 'pecan'
+COORDINATION_GROUP = 'coordination'
 
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
 CONF.register_opt(wf_trace_log_name_opt)
+CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 
 CLI_OPTS = [
     use_debugger,
@@ -134,6 +145,7 @@ def list_opts():
         (ENGINE_GROUP, engine_opts),
         (EXECUTOR_GROUP, executor_opts),
         (PECAN_GROUP, pecan_opts),
+        (COORDINATION_GROUP, coordination_opts),
         (None, itertools.chain(
             CLI_OPTS,
             [wf_trace_log_name_opt]
