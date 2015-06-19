@@ -23,6 +23,7 @@ from mistral.api.controllers.v2 import action_execution
 from mistral.api.controllers.v2 import cron_trigger
 from mistral.api.controllers.v2 import environment
 from mistral.api.controllers.v2 import execution
+from mistral.api.controllers.v2 import service
 from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import workbook
 from mistral.api.controllers.v2 import workflow
@@ -52,6 +53,7 @@ class Controller(object):
     cron_triggers = cron_trigger.CronTriggersController()
     environments = environment.EnvironmentController()
     action_executions = action_execution.ActionExecutionsController()
+    services = service.ServicesController()
 
     @wsme_pecan.wsexpose(RootResource)
     def index(self):

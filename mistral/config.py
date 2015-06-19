@@ -128,6 +128,7 @@ CLI_OPTS = [
 CONF.register_cli_opts(CLI_OPTS)
 
 _DEFAULT_LOG_LEVELS = [
+    'amqp=WARN',
     'sqlalchemy=WARN',
     'oslo_messaging=INFO',
     'iso8601=WARN',
@@ -135,7 +136,8 @@ _DEFAULT_LOG_LEVELS = [
     'stevedore=INFO',
     'oslo_service.periodic_task=INFO',
     'oslo_service.loopingcall=INFO',
-    'mistral.services.periodic=INFO'
+    'mistral.services.periodic=INFO',
+    'kazoo.client=WARN'
 ]
 
 
