@@ -153,7 +153,7 @@ class ExecutionsController(rest.RestController):
         if new_description:
             wf_ex = db_api.update_workflow_execution(
                 id,
-                description=new_description
+                {"description": new_description}
             )
 
         elif new_state == states.PAUSED:

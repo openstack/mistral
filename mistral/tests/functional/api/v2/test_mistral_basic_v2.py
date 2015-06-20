@@ -322,6 +322,15 @@ class ExecutionTestsV2(base.TestCase):
         self.assertEqual('PAUSED', body['state'])
 
     @test.attr(type='sanity')
+    def test_update_execution_description(self):
+        _, execution = self.client.create_execution(self.direct_wf)
+        resp, body = self.client.update_execution(
+            execution['id'], '{"description": "description"}')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual('description', body['description'])
+
+    @test.attr(type='sanity')
     def test_update_execution_fail(self):
         _, execution = self.client.create_execution(self.direct_wf)
         resp, body = self.client.update_execution(

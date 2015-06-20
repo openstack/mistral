@@ -145,6 +145,18 @@ class TestExecutionsController(base.FunctionalTest):
             WF_EX_JSON_WITH_DESC
         )
 
+    @mock.patch('mistral.db.v2.api.ensure_workflow_execution_exists')
+    @mock.patch('mistral.db.v2.api.update_workflow_execution',
+                return_value=WF_EX)
+    def test_put_description(self, mock_update, mock_ensure):
+        update_params = {'description': 'execution description.'}
+
+        resp = self.app.put_json('/v2/executions/123', update_params)
+
+        self.assertEqual(resp.status_int, 200)
+        mock_ensure.assert_called_once_with('123')
+        mock_update.assert_called_once_with('123', update_params)
+
     @mock.patch.object(rpc.EngineClient, 'start_workflow')
     def test_post(self, f):
         f.return_value = WF_EX.to_dict()
