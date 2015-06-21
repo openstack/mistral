@@ -16,8 +16,10 @@
 from mistral.db.v2 import api as db_api
 from mistral.engine import base
 from mistral.engine import rpc
+from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
+from mistral.workflow import data_flow
 from mistral.workflow import states
 
 
@@ -99,7 +101,8 @@ def build_retry_policy(policies_spec):
     return RetryPolicy(
         retry.get_count(),
         retry.get_delay(),
-        retry.get_break_on()
+        retry.get_break_on(),
+        retry.get_continue_on()
     )
 
 
@@ -245,16 +248,23 @@ class RetryPolicy(base.TaskPolicy):
         }
     }
 
-    def __init__(self, count, delay, break_on):
+    def __init__(self, count, delay, break_on, continue_on):
         self.count = count
         self.delay = delay
         self.break_on = break_on
+        self._continue_on = continue_on
 
     def after_task_complete(self, task_ex, task_spec):
         """Possible Cases:
 
         1. state = SUCCESS
-           No need to move to next iteration.
+           if continue_on is not specified,
+           no need to move to next iteration;
+           if current:count achieve retry:count then policy
+           breaks the loop (regardless on continue-on condition);
+           otherwise - check continue_on condition and if
+           it is True - schedule the next iteration,
+           otherwise policy breaks the loop.
         2. retry:count = 5, current:count = 2, state = ERROR,
            state = IDLE/DELAYED, current:count = 3
         3. retry:count = 5, current:count = 4, state = ERROR
@@ -269,18 +279,17 @@ class RetryPolicy(base.TaskPolicy):
             context_key
         )
 
+        continue_on = expressions.evaluate(
+            self._continue_on,
+            data_flow.evaluate_task_outbound_context(task_ex)
+        )
+
         task_ex.runtime_context = runtime_context
 
         state = task_ex.state
 
-        if state != states.ERROR:
+        if not states.is_completed(state):
             return
-
-        wf_trace.info(
-            task_ex,
-            "Task '%s' [%s -> ERROR]"
-            % (task_ex.name, task_ex.state)
-        )
 
         policy_context = runtime_context[context_key]
 
@@ -292,11 +301,15 @@ class RetryPolicy(base.TaskPolicy):
 
         retries_remain = retry_no + 1 < self.count
 
-        if not retries_remain or self.break_on:
+        continue_triggered = self._continue_on and not continue_on
+        break_triggered = task_ex.state == states.ERROR and self.break_on
+
+        if not retries_remain or break_triggered or continue_triggered:
             return
 
         _log_task_delay(task_ex, self.delay)
 
+        data_flow.invalidate_task_execution_result(task_ex)
         task_ex.state = states.DELAYED
 
         policy_context['retry_no'] = retry_no + 1
