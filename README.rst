@@ -31,13 +31,13 @@ Installation
 
 First of all, clone the repo and go to the repo directory::
 
-    git clone https://github.com/stackforge/mistral.git
+    git clone https://github.com/openstack/mistral.git
     cd mistral
 
 
 **Devstack installation**
 
-Information about how to install Mistral with devstack can be found here: https://github.com/stackforge/mistral/tree/master/contrib/devstack
+Information about how to install Mistral with devstack can be found here: https://github.com/openstack/mistral/tree/master/contrib/devstack
 
 **Virtualenv installation**::
 
@@ -85,32 +85,44 @@ Mistral configuration is needed for getting it work correctly either with real O
 
 6. Configure database. **SQLite can't be used in production.** Use *MySQL* or *PostreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
 
-* Make sure you have installed **mysql-server** package on your Mistral machine.
-* Install *MySQL driver* for python::
+    * Make sure you have installed **mysql-server** package on your Mistral machine.
+    * Install *MySQL driver* for python::
 
-    pip install mysql-python
+        pip install mysql-python
 
-  or, if you work in virtualenv, run::
+      or, if you work in virtualenv, run::
 
-    tox -evenv -- pip install mysql-python
+        tox -evenv -- pip install mysql-python
 
-* Create the database and grant privileges::
+    * Create the database and grant privileges::
 
-    mysql -u root -p
+        mysql -u root -p
 
-    CREATE DATABASE mistral;
-    USE mistral
-    GRANT ALL ON mistral.* TO 'root'@'localhost';
+        CREATE DATABASE mistral;
+        USE mistral
+        GRANT ALL ON mistral.* TO 'root'@'localhost';
 
-* Configure connection in Mistral config::
+    * Configure connection in Mistral config::
 
-    [database]
-    connection = mysql://root:<password>@localhost:3306/mistral
+        [database]
+        connection = mysql://root:<password>@localhost:3306/mistral
 
 Before the first run
 --------------------
 
-Before starting Mistral server, run sync_db script. It prepares the DB, creates in it all standard actions and standard workflows which Mistral provides for all mistral users.
+After local installation you will see *mistral-server* and *mistral-db-manage* commands in your environment.
+
+*mistral-db-manage* command can be used for migrations. If Mistral is not installed in system then this script can be found at *mistral/db/sqlalchemy/migration/cli.py*, it can be executed using Python.
+
+For updating the database to the latest revision type::
+
+    mistral-db-manage --config-file <path-to-mistral.conf> upgrade head
+
+For more detailed information about *mistral-db-manage* script please see migration readme `here <https://github.com/openstack/mistral/blob/master/mistral/db/sqlalchemy/migration/alembic_migrations/README.md>`__.
+
+| NOTE: For users want a dry run with SQLite database backend(not used in production), *mistral-db-manage* is not recommended for database initialization because of `SQLite limitations <http://www.sqlite.org/omitted.html>`_. Please use sync_db script described below instead for database initilization.
+
+Before starting Mistral server, run sync_db script. It prepares the DB, creates in it with all standard actions and standard workflows which Mistral provides for all mistral users.
 
 **If you use virtualenv**::
 
@@ -119,20 +131,6 @@ Before starting Mistral server, run sync_db script. It prepares the DB, creates 
 **Or run sync_db directly**::
 
     python tools/sync_db.py --config-file path_to_config*
-
-*Note: After local installation you will see **mistral-server** and **mistral-db-manage** commands in your environment*.
-
-Migrations
-----------
-
-*mistral-db-manage* command can be used for migrations. If Mistral is not installed in system then this script can be
- found at *mistral/db/sqlalchemy/migration/cli.py*, it can be executed using Python.
-
-For updating the database to the latest revision type::
-
-    mistral-db-manage --config-file <path-to-mistral.conf> upgrade head
-
-For more detailed information about *mistral-db-manage* script please see migration readme here - https://github.com/stackforge/mistral/blob/master/mistral/db/sqlalchemy/migration/alembic_migrations/README.md
 
 Running Mistral API server
 --------------------------
@@ -180,8 +178,7 @@ The --server command line option can be a comma delimited list. The valid option
 Mistral client
 --------------
 
-Python-mistralclient is available here - https://github.com/stackforge/python-mistralclient
-
+Python-mistralclient is available `here <https://github.com/openstack/python-mistralclient>`__.
 
 Debugging
 ---------
@@ -201,7 +198,7 @@ and run in pdb, PyDev or PyCharm::
 Running examples
 ----------------
 
-To run the examples find them in mistral-extra repository (https://github.com/stackforge/mistral-extra) and follow the instructions on each example.
+To run the examples find them in mistral-extra repository (https://github.com/openstack/mistral-extra) and follow the instructions on each example.
 
 Tests
 -----
