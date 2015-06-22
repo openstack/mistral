@@ -17,8 +17,9 @@
 import abc
 import copy
 
+from oslo_log import log as logging
+
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral import utils as u
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import commands

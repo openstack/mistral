@@ -15,11 +15,11 @@
 
 import contextlib
 import errno
+import logging
 import os
 import tempfile
 
 from mistral.openstack.common import excutils
-from mistral.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
 

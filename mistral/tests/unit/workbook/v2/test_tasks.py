@@ -13,8 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_log import log as logging
+
 from mistral import exceptions
-from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.tests.unit.workbook.v2 import base as v2_base
 from mistral import utils

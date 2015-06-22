@@ -14,13 +14,14 @@
 
 import copy
 
+from oslo_log import log as logging
+
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
 from mistral.engine import rpc
 from mistral.engine import utils as e_utils
 from mistral import expressions as expr
-from mistral.openstack.common import log as logging
 from mistral.services import action_manager as a_m
 from mistral.services import scheduler
 from mistral import utils

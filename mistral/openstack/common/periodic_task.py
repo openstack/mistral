@@ -11,13 +11,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import logging
 import time
 
 from oslo.config import cfg
 import six
 
 from mistral.openstack.common.gettextutils import _, _LE, _LI
-from mistral.openstack.common import log as logging
 
 
 periodic_opts = [

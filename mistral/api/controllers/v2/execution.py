@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import json
+from oslo_log import log as logging
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -23,7 +24,6 @@ from mistral.api.controllers.v2 import task
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.utils import rest_utils
 from mistral.workflow import states
 

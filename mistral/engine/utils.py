@@ -16,10 +16,11 @@
 import copy
 import six
 
+from oslo_log import log as logging
+
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
-from mistral.openstack.common import log as logging
 from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import utils as wf_utils

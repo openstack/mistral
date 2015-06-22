@@ -14,11 +14,11 @@
 
 import mock
 from oslo.config import cfg
+from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as de
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states

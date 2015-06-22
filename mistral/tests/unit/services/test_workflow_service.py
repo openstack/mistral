@@ -13,9 +13,9 @@
 #    limitations under the License.
 
 from oslo.config import cfg
+from oslo_log import log as logging
 
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.services import workflows as wf_service
 from mistral.tests import base
 from mistral import utils

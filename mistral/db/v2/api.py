@@ -16,8 +16,7 @@
 import contextlib
 
 from oslo.db import api as db_api
-
-from mistral.openstack.common import log as logging
+from oslo_log import log as logging
 
 _BACKEND_MAPPING = {
     'sqlalchemy': 'mistral.db.v2.sqlalchemy.api',

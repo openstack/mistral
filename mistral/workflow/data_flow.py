@@ -16,12 +16,12 @@
 import copy
 
 from oslo.config import cfg
+from oslo_log import log as logging
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import expressions as expr
-from mistral.openstack.common import log as logging
 from mistral import utils
 from mistral.utils import inspect_utils
 from mistral.workflow import states

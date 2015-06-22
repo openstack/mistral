@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_log import log as logging
 import pecan
 from pecan import hooks
 from pecan import rest
@@ -23,7 +24,6 @@ from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
-from mistral.openstack.common import log as logging
 from mistral.services import workbooks
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser

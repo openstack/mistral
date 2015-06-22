@@ -12,9 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_log import log as logging
+
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import reverse_workflow as reverse_wf

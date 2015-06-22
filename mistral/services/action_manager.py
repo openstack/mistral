@@ -15,13 +15,13 @@
 
 import inspect
 
+from oslo_log import log as logging
 from stevedore import extension
 
 from mistral.actions import action_factory
 from mistral.actions import generator_factory
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral.services import actions
 from mistral import utils
 from mistral.utils import inspect_utils as i_utils

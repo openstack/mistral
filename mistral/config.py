@@ -21,8 +21,8 @@ Configuration options registration and useful routines.
 import itertools
 
 from oslo.config import cfg
+from oslo_log import log
 
-from mistral.openstack.common import log
 from mistral import version
 
 
@@ -113,23 +113,7 @@ CLI_OPTS = [
 
 CONF.register_cli_opts(CLI_OPTS)
 
-CONF.import_opt('verbose', 'mistral.openstack.common.log')
-CONF.set_default('verbose', True)
-CONF.import_opt('debug', 'mistral.openstack.common.log')
-CONF.import_opt('log_dir', 'mistral.openstack.common.log')
-CONF.import_opt('log_file', 'mistral.openstack.common.log')
-CONF.import_opt('log_config_append', 'mistral.openstack.common.log')
-CONF.import_opt('log_format', 'mistral.openstack.common.log')
-CONF.import_opt('log_date_format', 'mistral.openstack.common.log')
-CONF.import_opt('use_syslog', 'mistral.openstack.common.log')
-CONF.import_opt('syslog_log_facility', 'mistral.openstack.common.log')
-
-# Extend oslo default_log_levels to include some that are useful for mistral
-# some are in oslo logging already, this is just making sure it stays this
-# way.
-default_log_levels = cfg.CONF.default_log_levels
-
-logs_to_quieten = [
+_DEFAULT_LOG_LEVELS = [
     'sqlalchemy=WARN',
     'oslo.messaging=INFO',
     'iso8601=WARN',
@@ -139,15 +123,6 @@ logs_to_quieten = [
     'mistral.openstack.common.periodic_task=INFO',
     'mistral.services.periodic=INFO'
 ]
-
-for chatty in logs_to_quieten:
-    if chatty not in default_log_levels:
-        default_log_levels.append(chatty)
-
-cfg.set_defaults(
-    log.log_opts,
-    default_log_levels=default_log_levels
-)
 
 
 def list_opts():
@@ -164,6 +139,8 @@ def list_opts():
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
+    log.set_defaults(default_log_levels=_DEFAULT_LOG_LEVELS)
+    log.register_options(CONF)
     CONF(
         args=args,
         project='mistral',

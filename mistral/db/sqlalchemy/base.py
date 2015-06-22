@@ -17,10 +17,10 @@
 from oslo.config import cfg
 from oslo.db import options
 from oslo.db.sqlalchemy import session as db_session
+from oslo_log import log as logging
 
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
-from mistral.openstack.common import log as logging
 from mistral import utils
 
 
