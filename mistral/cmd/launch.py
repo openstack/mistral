@@ -17,6 +17,7 @@ import sys
 
 import eventlet
 
+
 eventlet.monkey_patch(
     os=True,
     select=True,
@@ -54,7 +55,7 @@ from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
 from mistral.engine import default_executor as def_executor
-from mistral.engine import rpc
+from mistral.engine.rpc import rpc
 from mistral.services import expiration_policy
 from mistral.services import scheduler
 from mistral.utils import profiler

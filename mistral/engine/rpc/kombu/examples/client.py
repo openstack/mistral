@@ -12,25 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine.rpc_direct.kombu import kombu_server
+from mistral.engine.rpc.kombu import kombu_client
 
 
-# Simple example of endpoint of RPC server, which just
-# calculates given fibonacci number.
-class MyServer(object):
-    cache = {0: 0, 1: 1}
-
-    def fib(self, rpc_ctx, n):
-        if self.cache.get(n) is None:
-            self.cache[n] = (self.fib(rpc_ctx, n - 1)
-                             + self.fib(rpc_ctx, n - 2))
-        return self.cache[n]
-
-    def get_name(self, rpc_ctx):
-        return self.__class__.__name__
-
-
-# Example of using Kombu based RPC server.
+# Example of using Kombu based RPC client.
 def main():
     conf = {
         'user_id': 'guest',
@@ -42,9 +27,15 @@ def main():
         'port': 5672,
         'virtual_host': '/'
     }
-    rpc_server = kombu_server.KombuRPCServer(conf)
-    rpc_server.register_endpoint(MyServer())
-    rpc_server.run()
+    kombu_rpc = kombu_client.KombuRPCClient(conf)
+
+    print(" [x] Requesting ...")
+
+    ctx = type('context', (object,), {'to_dict': lambda self: {}})()
+
+    response = kombu_rpc.sync_call(ctx, 'fib', n=44)
+
+    print(" [.] Got %r" % (response,))
 
 
 if __name__ == '__main__':

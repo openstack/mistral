@@ -19,8 +19,8 @@ import kombu
 from oslo_log import log as logging
 
 from mistral import context as auth_context
-from mistral.engine.rpc_direct import base as rpc_base
-from mistral.engine.rpc_direct.kombu import base as kombu_base
+from mistral.engine.rpc import base as rpc_base
+from mistral.engine.rpc.kombu import base as kombu_base
 from mistral import exceptions as exc
 
 

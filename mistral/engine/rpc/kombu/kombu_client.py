@@ -18,8 +18,8 @@ import time
 import kombu
 from oslo_log import log as logging
 
-from mistral.engine.rpc_direct import base as rpc_base
-from mistral.engine.rpc_direct.kombu import base as kombu_base
+from mistral.engine.rpc import base as rpc_base
+from mistral.engine.rpc.kombu import base as kombu_base
 from mistral import exceptions as exc
 from mistral import utils
 

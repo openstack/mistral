@@ -17,6 +17,7 @@
 import copy
 import datetime
 import json
+
 import mock
 import uuid
 from webtest import app as webtest_app
@@ -24,11 +25,12 @@ from webtest import app as webtest_app
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import api as sql_db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine import rpc
+from mistral.engine.rpc import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral import utils
 from mistral.workflow import states
+
 
 WF_EX = models.WorkflowExecution(
     id='123e4567-e89b-12d3-a456-426655440000',

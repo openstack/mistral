@@ -23,7 +23,7 @@ import six
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import dispatcher
-from mistral.engine import rpc
+from mistral.engine.rpc import rpc
 from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
 from mistral.services import scheduler
