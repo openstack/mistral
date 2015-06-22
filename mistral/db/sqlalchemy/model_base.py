@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 
-from oslo.db.sqlalchemy import models as oslo_models
+from oslo_db.sqlalchemy import models as oslo_models
 import sqlalchemy as sa
 from sqlalchemy import event
 from sqlalchemy.ext import declarative

@@ -18,7 +18,7 @@ import pkg_resources as pkg
 import sys
 import time
 
-from oslo.config import cfg
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslotest import base
 import testtools.matchers as ttm

@@ -15,7 +15,7 @@
 
 
 import eventlet
-from oslo.config import cfg
+from oslo_config import cfg
 import random
 
 from mistral.db.sqlalchemy import sqlite_lock

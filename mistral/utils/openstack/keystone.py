@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from keystoneclient.v3 import client as ks_client
-from oslo.config import cfg
+from oslo_config import cfg
 
 from mistral import context
 

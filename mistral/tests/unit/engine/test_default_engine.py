@@ -17,7 +17,7 @@ import datetime
 import uuid
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_messaging.rpc import client as rpc_client
 

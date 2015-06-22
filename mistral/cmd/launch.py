@@ -34,9 +34,9 @@ POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
 if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
     sys.path.insert(0, POSSIBLE_TOPDIR)
 
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging as messaging
 from wsgiref import simple_server
 
 from mistral.api import app

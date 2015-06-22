@@ -16,10 +16,10 @@
 import contextlib
 import sys
 
-from oslo.config import cfg
-from oslo.db import exception as db_exc
-from oslo.utils import timeutils
+from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from oslo_utils import timeutils
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b

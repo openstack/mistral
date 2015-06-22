@@ -13,9 +13,9 @@
 #    limitations under the License.
 
 import eventlet
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging as messaging
 
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api

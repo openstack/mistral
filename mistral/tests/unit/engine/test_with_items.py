@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import copy
-from oslo.config import cfg
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral.actions import base as action_base

@@ -18,7 +18,7 @@
 import copy
 import datetime
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api

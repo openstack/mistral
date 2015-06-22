@@ -15,7 +15,7 @@
 #    limitations under the License.
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 import pecan
 import pecan.testing
 from webtest import app as webtest_app

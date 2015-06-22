@@ -14,9 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo.config import cfg
-from oslo.db import options
-from oslo.db.sqlalchemy import session as db_session
+from oslo_config import cfg
+from oslo_db import options
+from oslo_db.sqlalchemy import session as db_session
 from oslo_log import log as logging
 
 from mistral.db.sqlalchemy import sqlite_lock

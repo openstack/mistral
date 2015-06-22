@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as de

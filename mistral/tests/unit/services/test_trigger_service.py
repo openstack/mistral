@@ -14,7 +14,7 @@
 
 import datetime
 import mock
-from oslo.config import cfg
+from oslo_config import cfg
 
 from mistral import exceptions as exc
 from mistral.services import security

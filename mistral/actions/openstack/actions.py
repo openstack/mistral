@@ -21,7 +21,7 @@ from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient.v2 import client as novaclient
-from oslo.config import cfg
+from oslo_config import cfg
 from oslo_log import log
 
 from mistral.actions.openstack import base

@@ -15,7 +15,7 @@
 
 import contextlib
 
-from oslo.db import api as db_api
+from oslo_db import api as db_api
 from oslo_log import log as logging
 
 _BACKEND_MAPPING = {

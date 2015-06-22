@@ -16,8 +16,8 @@
 
 import eventlet
 from keystoneclient.v3 import client as keystone_client
-from oslo.config import cfg
-from oslo import messaging
+from oslo_config import cfg
+import oslo_messaging as messaging
 from pecan import hooks
 
 from mistral import exceptions as exc

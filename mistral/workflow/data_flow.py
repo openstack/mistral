@@ -15,7 +15,7 @@
 
 import copy
 
-from oslo.config import cfg
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral import context as auth_ctx

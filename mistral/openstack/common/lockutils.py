@@ -27,7 +27,7 @@ import threading
 import time
 import weakref
 
-from oslo.config import cfg
+from oslo_config import cfg
 
 from mistral.openstack.common import fileutils
 from mistral.openstack.common.gettextutils import _, _LE, _LI

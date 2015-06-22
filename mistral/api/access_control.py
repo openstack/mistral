@@ -17,7 +17,7 @@
 """Access Control API server."""
 
 from keystonemiddleware import auth_token
-from oslo.config import cfg
+from oslo_config import cfg
 
 
 _ENFORCER = None
