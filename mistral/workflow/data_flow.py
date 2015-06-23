@@ -97,9 +97,21 @@ def get_task_execution_result(task_ex):
     ]
 
     if results:
+        # TODO(Guy): For now we can't use task specification due to a bug
+        # TODO(Guy): 1468419 "version field doesn't get injected properly"
+        if _is_with_items_task(task_ex.runtime_context):
+            return results
+
         return results if len(results) > 1 else results[0]
     else:
         return []
+
+
+def _is_with_items_task(task_rt_ctx):
+    if task_rt_ctx and "with_items" in task_rt_ctx:
+        return True
+
+    return False
 
 
 class TaskResultProxy(object):

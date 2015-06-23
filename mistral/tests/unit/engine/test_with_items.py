@@ -141,6 +141,12 @@ WF_INPUT_URLS = {
     ]
 }
 
+WORKFLOW_INPUT_ONE_ITEM = {
+    'names_info': [
+        {'name': 'Guy'}
+    ]
+}
+
 
 class RandomSleepEchoAction(action_base.Action):
     def __init__(self, output):
@@ -439,3 +445,33 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         # Now we can check order of results explicitly.
         self.assertEqual([1, 2, 3], published['one_two_three'])
+
+    def test_with_items_results_one_item_as_list(self):
+        wb_service.create_workbook_v2(WORKBOOK)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb1.with_items',
+                                           WORKFLOW_INPUT_ONE_ITEM)
+
+        self._await(
+            lambda: self.is_execution_success(wf_ex.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        result = data_flow.get_task_execution_result(task1)
+
+        self.assertTrue(isinstance(result, list))
+
+        self.assertIn('Guy', result)
+
+        published = task1.published
+
+        self.assertIn(published['result'], ['Guy'])
+
+        self.assertEqual(1, len(tasks))
+        self.assertEqual(states.SUCCESS, task1.state)
