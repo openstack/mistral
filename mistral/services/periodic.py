@@ -42,7 +42,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                 rpc.get_engine_client().start_workflow(
                     t.workflow.name,
                     t.workflow_input,
-                    description="workflow execution by cron trigger.",
+                    "workflow execution by cron trigger.",
                     **t.workflow_params
                 )
             finally:
