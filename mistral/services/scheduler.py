@@ -15,17 +15,20 @@
 import copy
 import datetime
 
+from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_service import periodic_task
+from oslo_service import threadgroup
+from oslo_utils import importutils
 
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.openstack.common import importutils
-from mistral.openstack.common import periodic_task
-from mistral.openstack.common import threadgroup
 
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
 
 # {scheduler_instance: thread_group}
 _schedulers = {}
@@ -145,7 +148,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
 def setup():
     tg = threadgroup.ThreadGroup()
 
-    scheduler = CallScheduler()
+    scheduler = CallScheduler(CONF)
 
     tg.add_dynamic_timer(
         scheduler.run_periodic_tasks,

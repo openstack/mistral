@@ -19,9 +19,9 @@ from alembic import command as alembic_cmd
 from alembic import config as alembic_cfg
 from alembic import util as alembic_u
 from oslo_config import cfg
+from oslo_utils import importutils
 import six
 
-from mistral.openstack.common import importutils
 from mistral.services import action_manager
 from mistral.services import workflows
 

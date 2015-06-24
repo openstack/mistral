@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.openstack.common import importutils
+from oslo_utils import importutils
 
 
 def construct_action_class(action_class_str, attributes):

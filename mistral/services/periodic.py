@@ -14,17 +14,20 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_service import periodic_task
+from oslo_service import threadgroup
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
 from mistral.engine import rpc
-from mistral.openstack.common import periodic_task
-from mistral.openstack.common import threadgroup
 from mistral.services import security
 from mistral.services import triggers
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
@@ -67,7 +70,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
 def setup():
     tg = threadgroup.ThreadGroup()
-    pt = MistralPeriodicTasks()
+    pt = MistralPeriodicTasks(CONF)
 
     ctx = auth_ctx.MistralContext(
         user_id=None,

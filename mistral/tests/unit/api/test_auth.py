@@ -16,10 +16,10 @@ import datetime
 import uuid
 
 from oslo_config import cfg
+from oslo_utils import timeutils
 import pecan
 import pecan.testing
 
-from mistral.openstack.common import timeutils
 from mistral.tests.unit.api import base
 
 

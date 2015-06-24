@@ -115,12 +115,11 @@ CONF.register_cli_opts(CLI_OPTS)
 
 _DEFAULT_LOG_LEVELS = [
     'sqlalchemy=WARN',
-    'oslo.messaging=INFO',
+    'oslo_messaging=INFO',
     'iso8601=WARN',
     'eventlet.wsgi.server=WARN',
     'stevedore=INFO',
-    'mistral.openstack.common.loopingcall=INFO',
-    'mistral.openstack.common.periodic_task=INFO',
+    'oslo_service.periodic_task=INFO',
     'mistral.services.periodic=INFO'
 ]
 
