@@ -15,8 +15,9 @@
 import abc
 import json
 
+from oslo_utils import importutils
+
 from mistral import exceptions as exc
-from mistral.openstack.common import importutils
 
 
 _PYV8 = importutils.try_import('PyV8')

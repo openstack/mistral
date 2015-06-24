@@ -167,7 +167,7 @@ function run_pep8 {
 }
 
 
-TESTRTESTS="python -m mistral.openstack.common.lockutils python setup.py testr"
+TESTRTESTS="python setup.py testr"
 
 if [ $never_venv -eq 0 ]
 then

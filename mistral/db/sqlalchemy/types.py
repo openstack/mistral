@@ -18,11 +18,10 @@
 #   expressed by json-strings
 #
 
+from oslo_serialization import jsonutils
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import mutable
-
-from mistral.openstack.common import jsonutils
 
 
 class JsonEncoded(sa.TypeDecorator):

@@ -18,10 +18,10 @@ import eventlet
 from keystoneclient.v3 import client as keystone_client
 from oslo_config import cfg
 import oslo_messaging as messaging
+from oslo_serialization import jsonutils
 from pecan import hooks
 
 from mistral import exceptions as exc
-from mistral.openstack.common import jsonutils
 from mistral import utils
 
 
