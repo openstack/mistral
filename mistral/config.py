@@ -120,6 +120,7 @@ _DEFAULT_LOG_LEVELS = [
     'eventlet.wsgi.server=WARN',
     'stevedore=INFO',
     'oslo_service.periodic_task=INFO',
+    'oslo_service.loopingcall=INFO',
     'mistral.services.periodic=INFO'
 ]
 
