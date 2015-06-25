@@ -118,7 +118,7 @@ class DefaultEngine(base.Engine):
                     params.get('target')
                 )
 
-                return action_ex
+                return action_ex.get_clone()
             else:
                 result = action_handler.run_action(
                     action_def,
