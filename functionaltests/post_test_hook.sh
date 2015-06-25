@@ -22,7 +22,7 @@ cd /opt/stack/new/
 echo "Repository: $ZUUL_PROJECT"
 
 #Run API tests only for mistral repository
-if [[ "$ZUUL_PROJECT" == "stackforge/mistral" ]]; then
+if [[ "$ZUUL_PROJECT" == "openstack/mistral" ]]; then
     cd mistral/
     echo "Run mistral API tests"
     sudo bash ./functionaltests/run_tests.sh
