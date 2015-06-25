@@ -91,8 +91,7 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
             if changes:
                 utils.merge_dicts(dsl_dict, changes)
 
-            dsl_yaml = yaml.safe_dump(dsl_dict,
-                                      default_flow_style=False)
+            dsl_yaml = yaml.safe_dump(dsl_dict, default_flow_style=False)
 
         if not expect_error:
             return self._spec_parser(dsl_yaml)

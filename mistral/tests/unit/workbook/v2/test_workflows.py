@@ -164,6 +164,24 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
                                  changes=overlay,
                                  expect_error=expect_error)
 
+    def test_vars(self):
+        tests = [
+            ({'vars': {'v1': 'a', 'v2': 1, 'v3': True, 'v4': None}}, False),
+            ({'vars': {'v1': '<% $.input_var1 %>'}}, False),
+            ({'vars': {'v1': '<% 1 + 2 %>'}}, False),
+            ({'vars': {'v1': '<% * %>'}}, True),
+            ({'vars': []}, True),
+            ({'vars': 'whatever'}, True),
+            ({'vars': None}, True),
+            ({'vars': {}}, True)
+        ]
+
+        for wf_vars, expect_error in tests:
+            overlay = {'test': wf_vars}
+            self._parse_dsl_spec(add_tasks=True,
+                                 changes=overlay,
+                                 expect_error=expect_error)
+
     def test_tasks_required(self):
         exception = self._parse_dsl_spec(add_tasks=False,
                                          expect_error=True)
