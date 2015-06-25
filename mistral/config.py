@@ -46,6 +46,13 @@ api_opts = [
     )
 ]
 
+rpc_impl_opt = cfg.StrOpt(
+    'rpc_implementation',
+    default='oslo',
+    choices=['oslo', 'kombu'],
+    help='Specifies RPC implementation for RPC client and server.'
+)
+
 pecan_opts = [
     cfg.StrOpt(
         'root',
@@ -188,6 +195,7 @@ CONF.register_opts(execution_expiration_policy_opts,
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
+CONF.register_opt(rpc_impl_opt)
 
 
 CLI_OPTS = [
@@ -224,6 +232,7 @@ def list_opts():
             CLI_OPTS,
             [
                 wf_trace_log_name_opt,
+                rpc_impl_opt
             ]
         ))
     ]
