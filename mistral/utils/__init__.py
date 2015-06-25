@@ -15,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
 from os import path
@@ -201,6 +202,26 @@ class NotDefined(object):
     """This class is just a marker of input params without value."""
 
     pass
+
+
+def get_input_dict_from_input_string(input_string):
+    if not input_string:
+        return {}
+
+    raw_inputs = input_string.split(',')
+
+    inputs = []
+
+    for raw in raw_inputs:
+        input = raw.strip()
+        name_value = input.split('=')
+
+        if len(name_value) > 1:
+            inputs += [{name_value[0]: json.loads(name_value[1])}]
+        else:
+            inputs += [name_value[0]]
+
+    return get_input_dict(inputs)
 
 
 def get_input_dict(inputs):

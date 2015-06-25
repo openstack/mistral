@@ -79,7 +79,7 @@ workflows:
 
 
 def _run_at_target(action_ex_id, action_class_str, attributes,
-                   action_params, target=None):
+                   action_params, target=None, async=True):
     # We'll just call executor directly for testing purposes.
     executor = default_executor.DefaultExecutor(rpc.get_engine_client())
 
@@ -104,7 +104,7 @@ class SubworkflowsTest(base.EngineTestCase):
     def _test_subworkflow(self, env):
         wf2_ex = self.engine.start_workflow(
             'my_wb.wf2',
-            None,
+            {},
             env=env
         )
 
@@ -173,7 +173,8 @@ class SubworkflowsTest(base.EngineTestCase):
                 'mistral.actions.std_actions.EchoAction',
                 {},
                 a_ex.input,
-                TARGET
+                TARGET,
+                True
             )
 
     def test_subworkflow_env_task_input(self):

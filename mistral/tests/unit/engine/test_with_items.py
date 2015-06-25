@@ -414,7 +414,8 @@ class WithItemsEngineTest(base.EngineTestCase):
             '%s.%s' % (
                 RandomSleepEchoAction.__module__,
                 RandomSleepEchoAction.__name__
-            ), {}
+            ), {},
+            input_str="output"
         )
 
         wb_service.create_workbook_v2(workbook)

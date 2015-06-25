@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import inspect
+import json
 
 
 def get_public_fields(obj):
@@ -61,8 +62,12 @@ def get_arg_list_as_str(func):
 
     for index, default in enumerate(args):
         if index >= diff_args_defs:
-            arg_str_list.append("%s=%s" % (args[index],
-                                           defs[index - diff_args_defs]))
+            arg_str_list.append(
+                "%s=%s" % (
+                    args[index],
+                    json.dumps(defs[index - diff_args_defs])
+                )
+            )
         else:
             arg_str_list.append("%s" % args[index])
 

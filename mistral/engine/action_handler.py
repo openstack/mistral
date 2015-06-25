@@ -15,17 +15,20 @@
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
+from mistral.engine import utils as e_utils
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.services import action_manager as a_m
 from mistral.services import security
 from mistral import utils
+from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
 
-def create_action_execution(action_def, action_input, task_ex=None, index=0):
+def create_action_execution(action_def, action_input, task_ex=None,
+                            index=0, description=''):
     # TODO(rakhmerov): We can avoid hitting DB at all when calling something
     # create_action_execution(), these operations can be just done using
     # SQLAlchemy session (1-level cache) and session flush (on TX commit) would
@@ -51,7 +54,8 @@ def create_action_execution(action_def, action_input, task_ex=None, index=0):
         'spec': action_def.spec,
         'state': states.RUNNING,
         'input': action_input,
-        'runtime_context': {'with_items_index': index}
+        'runtime_context': {'with_items_index': index},
+        'description': description
     }
 
     if task_ex:
@@ -75,13 +79,102 @@ def create_action_execution(action_def, action_input, task_ex=None, index=0):
     return action_ex
 
 
-def run_action(action_def, action_input, action_ex_id=None, target=None):
-    rpc.get_executor_client().run_action(
+def _inject_action_ctx_for_validating(action_def, input_dict):
+    if a_m.has_action_context(action_def.action_class, action_def.attributes):
+        input_dict.update(a_m.get_empty_action_context())
+
+
+def get_action_input(action_name, input_dict, wf_name=None, wf_spec=None):
+    action_def = resolve_action_definition(
+        action_name,
+        wf_name,
+        wf_spec.get_name() if wf_spec else None
+    )
+
+    if action_def.action_class:
+        _inject_action_ctx_for_validating(action_def, input_dict)
+    e_utils.validate_input(action_def, input_dict)
+
+    if action_def.spec:
+        # Ad-hoc action.
+        return _get_adhoc_action_input(
+            action_def,
+            input_dict,
+            wf_name,
+            wf_spec
+        )
+
+    return input_dict
+
+
+def _get_adhoc_action_input(action_def, input_dict,
+                            wf_name=None, wf_spec=None):
+    action_spec = spec_parser.get_action_spec(action_def.spec)
+
+    base_name = action_spec.get_base()
+
+    action_def = resolve_action_definition(
+        base_name,
+        wf_name if wf_name else None,
+        wf_spec.get_name() if wf_spec else None
+    )
+
+    _inject_action_ctx_for_validating(action_def, input_dict)
+    e_utils.validate_input(action_def, input_dict, action_spec)
+
+    base_input = action_spec.get_base_input()
+
+    if base_input:
+        input_dict = expr.evaluate_recursively(
+            base_input,
+            input_dict
+        )
+    else:
+        input_dict = {}
+
+    return input_dict
+
+
+def run_action(action_def, action_input,
+               action_ex_id=None, target=None, async=True):
+    return rpc.get_executor_client().run_action(
         action_ex_id,
         action_def.action_class,
         action_def.attributes or {},
         action_input,
-        target
+        target,
+        async
+    )
+
+
+def store_action_result(action_ex, result):
+    prev_state = action_ex.state
+
+    if result.is_success():
+        action_ex.state = states.SUCCESS
+        action_ex.output = {'result': result.data}
+        action_ex.accepted = True
+    else:
+        action_ex.state = states.ERROR
+        action_ex.output = {'result': result.error}
+        action_ex.accepted = False
+
+    _log_action_result(action_ex, prev_state, action_ex.state, result)
+
+    return action_ex
+
+
+def _log_action_result(action_ex, from_state, to_state, result):
+    def _result_msg():
+        if action_ex.state == states.ERROR:
+            return "error = %s" % utils.cut(result.error)
+
+        return "result = %s" % utils.cut(result.data)
+
+    wf_trace.info(
+        None,
+        "Action execution '%s' [%s -> %s, %s]" %
+        (action_ex.name, from_state, to_state, _result_msg())
     )
 
 
@@ -117,8 +210,8 @@ def resolve_definition(action_name, task_ex=None, wf_spec=None):
 
         action_def = resolve_action_definition(
             base_name,
-            task_ex.workflow_name,
-            wf_spec.get_name()
+            task_ex.workflow_name if task_ex else None,
+            wf_spec.get_name() if wf_spec else None
         )
 
     return action_def

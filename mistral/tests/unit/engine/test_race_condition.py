@@ -126,7 +126,8 @@ class LongActionTest(base.EngineTestCase):
         a_m.register_action_class(
             'std.block',
             '%s.%s' % (BlockingAction.__module__, BlockingAction.__name__),
-            None
+            {},
+            input_str=""
         )
 
     @staticmethod

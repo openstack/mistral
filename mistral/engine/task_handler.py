@@ -126,7 +126,7 @@ def on_action_complete(action_ex, result):
     # Ignore workflow executions because they're handled during
     # workflow completion
     if not isinstance(action_ex, models.WorkflowExecution):
-        _store_action_result(wf_ex, action_ex, result)
+        action_handler.store_action_result(action_ex, result)
 
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
     task_spec = wf_spec.get_tasks()[task_ex.name]
@@ -270,43 +270,18 @@ def _get_action_input(wf_spec, task_ex, task_spec, ctx):
 
     action_spec_name = task_spec.get_action_name()
 
-    action_def = action_handler.resolve_action_definition(
-        action_spec_name,
-        task_ex.workflow_name,
-        wf_spec.get_name()
-    )
-
     input_dict = utils.merge_dicts(
         input_dict,
         _get_action_defaults(task_ex, task_spec),
         overwrite=False
     )
 
-    if action_def.spec:
-        # Ad-hoc action.
-        action_spec = spec_parser.get_action_spec(action_def.spec)
-
-        base_name = action_spec.get_base()
-
-        action_def = action_handler.resolve_action_definition(
-            base_name,
-            task_ex.workflow_name,
-            wf_spec.get_name()
-        )
-
-        e_utils.validate_input(action_def, action_spec, input_dict)
-
-        base_input = action_spec.get_base_input()
-
-        if base_input:
-            input_dict = expr.evaluate_recursively(
-                base_input,
-                input_dict
-            )
-        else:
-            input_dict = {}
-
-    return input_dict
+    return action_handler.get_action_input(
+        action_spec_name,
+        input_dict,
+        task_ex.workflow_name,
+        wf_spec
+    )
 
 
 def _get_workflow_input(task_spec, ctx):
@@ -444,23 +419,6 @@ def run_workflow(wf_name, wf_input, wf_params):
     )
 
 
-def _store_action_result(wf_ex, action_ex, result):
-    prev_state = action_ex.state
-
-    if result.is_success():
-        action_ex.state = states.SUCCESS
-        action_ex.output = {'result': result.data}
-        action_ex.accepted = True
-    else:
-        action_ex.state = states.ERROR
-        action_ex.output = {'result': result.error}
-        action_ex.accepted = False
-
-    _log_action_result(wf_ex, action_ex, prev_state, action_ex.state, result)
-
-    return action_ex.state
-
-
 def _complete_task(task_ex, task_spec, state):
     # Ignore if task already completed.
     if states.is_completed(task_ex.state):
@@ -487,17 +445,3 @@ def _set_task_state(task_ex, state):
     )
 
     task_ex.state = state
-
-
-def _log_action_result(wf_ex, action_ex, from_state, to_state, result):
-    def _result_msg():
-        if action_ex.state == states.ERROR:
-            return "error = %s" % utils.cut(result.error)
-
-        return "result = %s" % utils.cut(result.data)
-
-    wf_trace.info(
-        wf_ex,
-        "Action execution '%s' [%s -> %s, %s]" %
-        (action_ex.name, from_state, to_state, _result_msg())
-    )

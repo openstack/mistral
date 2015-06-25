@@ -144,22 +144,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self._run_workflow(wf_text)
 
-        task_ex = self._assert_single_item(wf_ex.task_executions, name='task2')
-        action_ex = db_api.get_action_executions(
-            task_execution_id=task_ex.id
-        )[0]
-
         self.assertIn(
-            'Failed to initialize action',
-            action_ex.output['result']
-        )
-        self.assertIn(
-            'unexpected keyword argument',
-            action_ex.output['result']
+            'Invalid input',
+            wf_ex.state_info
         )
 
         self.assertTrue(wf_ex.state, states.ERROR)
-        self.assertIn(action_ex.output['result'], wf_ex.state_info)
 
     def test_wrong_first_task_input(self):
         wf_text = """
@@ -173,24 +163,11 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo wrong_input="Ha-ha"
         """
 
-        wf_ex = self._run_workflow(wf_text)
-
-        task_ex = wf_ex.task_executions[0]
-        action_ex = db_api.get_action_executions(
-            task_execution_id=task_ex.id
-        )[0]
-
-        self.assertIn(
-            "Failed to initialize action",
-            action_ex.output['result']
+        self.assertRaises(
+            exc.InputException,
+            self._run_workflow,
+            wf_text
         )
-        self.assertIn(
-            "unexpected keyword argument",
-            action_ex.output['result']
-        )
-
-        self.assertTrue(wf_ex.state, states.ERROR)
-        self.assertIn(action_ex.output['result'], wf_ex.state_info)
 
     def test_wrong_action(self):
         wf_text = """
