@@ -436,10 +436,10 @@ class DefaultEngine(base.Engine):
             },
         })
 
-        data_flow.add_openstack_data_to_context(wf_ex.context)
-        data_flow.add_execution_to_context(wf_ex, wf_ex.context)
-        data_flow.add_environment_to_context(wf_ex, wf_ex.context)
-        data_flow.add_workflow_variables_to_context(wf_spec, wf_ex.context)
+        data_flow.add_openstack_data_to_context(wf_ex)
+        data_flow.add_execution_to_context(wf_ex)
+        data_flow.add_environment_to_context(wf_ex)
+        data_flow.add_workflow_variables_to_context(wf_ex, wf_spec)
 
         return wf_ex
 

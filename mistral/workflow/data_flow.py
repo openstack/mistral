@@ -225,9 +225,8 @@ def evaluate_workflow_output(wf_spec, context):
     return ProxyAwareDict(output or context).to_builtin_dict()
 
 
-def add_openstack_data_to_context(context):
-    if context is None:
-        context = {}
+def add_openstack_data_to_context(wf_ex):
+    wf_ex.context = wf_ex.context or {}
 
     if CONF.pecan.auth_enable:
         exec_ctx = auth_ctx.ctx()
@@ -235,45 +234,36 @@ def add_openstack_data_to_context(context):
         LOG.debug('Data flow security context: %s' % exec_ctx)
 
         if exec_ctx:
-            context.update({'openstack': exec_ctx.to_dict()})
-
-    return context
+            wf_ex.context.update({'openstack': exec_ctx.to_dict()})
 
 
-def add_execution_to_context(wf_ex, context):
-    if context is None:
-        context = {}
+def add_execution_to_context(wf_ex):
+    wf_ex.context = wf_ex.context or {}
 
-    context['__execution'] = {
+    wf_ex.context['__execution'] = {
         'id': wf_ex.id,
         'spec': wf_ex.spec,
         'params': wf_ex.params,
         'input': wf_ex.input
     }
 
-    return context
 
-
-def add_environment_to_context(wf_ex, context):
-    if context is None:
-        context = {}
+def add_environment_to_context(wf_ex):
+    wf_ex.context = wf_ex.context or {}
 
     # If env variables are provided, add an evaluated copy into the context.
     if 'env' in wf_ex.params:
         env = copy.deepcopy(wf_ex.params['env'])
         # An env variable can be an expression of other env variables.
-        context['__env'] = expr.evaluate_recursively(env, {'__env': env})
-
-    return context
+        wf_ex.context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 
 
-def add_workflow_variables_to_context(wf_spec, context):
-    if context is None:
-        context = {}
+def add_workflow_variables_to_context(wf_ex, wf_spec):
+    wf_ex.context = wf_ex.context or {}
 
     return utils.merge_dicts(
-        context,
-        expr.evaluate_recursively(wf_spec.get_vars(), context)
+        wf_ex.context,
+        expr.evaluate_recursively(wf_spec.get_vars(), wf_ex.context)
     )
 
 
