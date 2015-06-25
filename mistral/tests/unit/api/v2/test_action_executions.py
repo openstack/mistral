@@ -16,6 +16,7 @@
 
 import copy
 import datetime
+import json
 import mock
 
 from mistral.db.v2 import api as db_api
@@ -36,6 +37,7 @@ action_ex = models.ActionExecution(
     state_info=states.SUCCESS,
     tags=['foo', 'fee'],
     name='std.echo',
+    description='something',
     accepted=True,
     input={},
     output={},
@@ -52,6 +54,7 @@ ACTION_EXEC = {
     'state_info': 'SUCCESS',
     'tags': ['foo', 'fee'],
     'name': 'std.echo',
+    'description': 'something',
     'accepted': True,
     'input': '{}',
     'output': '{}',
@@ -95,6 +98,73 @@ class TestActionExecutionsController(base.FunctionalTest):
         resp = self.app.get('/v2/action_executions/123', expect_errors=True)
 
         self.assertEqual(resp.status_int, 404)
+
+    @mock.patch.object(rpc.EngineClient, 'start_action')
+    def test_post(self, f):
+        f.return_value = action_ex.to_dict()
+
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {
+                'name': 'std.echo',
+                'input': '{}',
+                'params': {'save_result': True}
+            }
+        )
+
+        self.assertEqual(resp.status_int, 201)
+
+        action_exec = ACTION_EXEC
+        del action_exec['task_name']
+
+        self.assertDictEqual(ACTION_EXEC, resp.json)
+
+        f.assert_called_once_with(
+            ACTION_EXEC['name'],
+            json.loads(ACTION_EXEC['input']),
+            description=None,
+            save_result=True
+        )
+
+    @mock.patch.object(rpc.EngineClient, 'start_action')
+    def test_post_without_input(self, f):
+        f.return_value = action_ex.to_dict()
+        f.return_value['output'] = {'result': '"123"'}
+
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {'name': 'nova.servers_list'}
+        )
+
+        self.assertEqual(resp.status_int, 201)
+        self.assertDictEqual(
+            {'result': '"123"'},
+            json.loads(resp.json['output'])
+        )
+
+        f.assert_called_once_with(
+            'nova.servers_list',
+            None,
+            description=None
+        )
+
+    def test_post_bad_result(self):
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {'input': 'null'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+    def test_post_bad_input(self):
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {'input': None},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
     def test_put(self, f):

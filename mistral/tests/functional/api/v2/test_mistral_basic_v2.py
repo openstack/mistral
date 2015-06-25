@@ -12,6 +12,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import json
+
 from tempest import test
 from tempest_lib import decorators
 from tempest_lib import exceptions
@@ -727,3 +729,55 @@ class TasksTestsV2(base.TestCase):
 
         self.assertEqual(200, resp.status)
         self.assertEqual(self.direct_wf, body['tasks'][-1]['workflow_name'])
+
+
+# TODO(namkhotkin) Need more tests on action executions.
+class ActionExecutionTestsV2(base.TestCase):
+
+    _service = 'workflowv2'
+
+    @test.attr(type='sanity')
+    def test_run_action_execution(self):
+        resp, body = self.client.post_json(
+            'action_executions',
+            {
+                'name': 'std.echo',
+                'input': '{"output": "Hello, Mistral!"}'
+            }
+        )
+
+        self.assertEqual(201, resp.status)
+        body = json.loads(body)
+        output = json.loads(body['output'])
+        self.assertDictEqual(
+            {'result': 'Hello, Mistral!'},
+            output
+        )
+
+    @test.attr(type='sanity')
+    def test_create_action_execution(self):
+        resp, body = self.client.post_json(
+            'action_executions',
+            {
+                'name': 'std.echo',
+                'input': '{"output": "Hello, Mistral!"}',
+                'params': {"save_result": True}
+            }
+        )
+
+        self.assertEqual(201, resp.status)
+        body = json.loads(body)
+
+        self.assertEqual('RUNNING', body['state'])
+
+        # We must reread action execution in order to get actual
+        # state and output.
+        resp, body = self.client.get('action_executions/%s' % body['id'])
+        body = json.loads(body)
+        output = json.loads(body['output'])
+
+        self.assertEqual('SUCCESS', body['state'])
+        self.assertDictEqual(
+            {'result': 'Hello, Mistral!'},
+            output
+        )

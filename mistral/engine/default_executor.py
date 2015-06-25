@@ -39,12 +39,14 @@ class DefaultExecutor(base.Executor):
         :param action_params: Action parameters.
         """
 
-        def send_error_to_engine(error_msg):
+        def send_error_back(error_msg):
             if action_ex_id:
                 self._engine_client.on_action_complete(
                     action_ex_id,
                     wf_utils.Result(error=error_msg)
                 )
+            else:
+                return error_msg
 
         action_cls = a_f.construct_action_class(action_class_str, attributes)
 
@@ -75,4 +77,4 @@ class DefaultExecutor(base.Executor):
             msg = str(e)
 
         # Send error info to engine.
-        send_error_to_engine(msg)
+        return send_error_back(msg)
