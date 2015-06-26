@@ -19,7 +19,9 @@ import datetime
 import json
 
 import mock
+
 from oslo_config import cfg
+import oslo_messaging
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -28,6 +30,9 @@ from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
+
+# This line is needed for correct initialization of messaging config.
+oslo_messaging.get_transport(cfg.CONF)
 
 
 ACTION_EX_DB = models.ActionExecution(
@@ -146,6 +151,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
 
+@mock.patch.object(rpc, '_IMPL_CLIENT', mock.Mock())
 class TestActionExecutionsController(base.APITest):
     def setUp(self):
         super(TestActionExecutionsController, self).setUp()

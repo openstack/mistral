@@ -99,11 +99,10 @@ class EngineTestCase(base.DbTestCase):
 
         # Drop all RPC objects (transport, clients).
         rpc.cleanup()
-
         transport = rpc.get_transport()
 
-        self.engine_client = rpc.EngineClient(transport)
-        self.executor_client = rpc.ExecutorClient(transport)
+        self.engine_client = rpc.get_engine_client()
+        self.executor_client = rpc.get_executor_client()
 
         self.engine = def_eng.DefaultEngine(self.engine_client)
         self.executor = def_exec.DefaultExecutor(self.engine_client)

@@ -19,7 +19,15 @@ from oslo_config import cfg
 CONF = cfg.CONF
 
 
-def get_rabbit_info_from_oslo(additional_conf):
+def get_rpc_info_from_oslo(additional_conf=None):
+    if CONF.rpc_backend in ['rabbit', 'fake']:
+        return _get_rabbit_info_from_oslo(additional_conf)
+    else:
+        # TODO(nmakhotkin) Implement.
+        raise NotImplementedError
+
+
+def _get_rabbit_info_from_oslo(additional_conf):
     return {
         'user_id': CONF.oslo_messaging_rabbit.rabbit_userid,
         'password': CONF.oslo_messaging_rabbit.rabbit_password,
