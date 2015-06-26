@@ -40,6 +40,7 @@ class WorkflowSpec(base.BaseSpec):
             "task-defaults": _task_defaults_schema,
             "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
             "output": types.NONEMPTY_DICT,
+            "vars": types.NONEMPTY_DICT,
             "tasks": {
                 "type": "object",
                 "minProperties": 1,
@@ -66,6 +67,7 @@ class WorkflowSpec(base.BaseSpec):
         self._type = data['type'] if 'type' in data else "direct"
         self._input = utils.get_input_dict(data.get('input', []))
         self._output = data.get('output', {})
+        self._vars = data.get('vars', {})
 
         self._task_defaults = self._spec_property(
             'task-defaults',
@@ -86,6 +88,7 @@ class WorkflowSpec(base.BaseSpec):
 
         # Validate YAQL expressions.
         self.validate_yaql_expr(self._data.get('output', {}))
+        self.validate_yaql_expr(self._data.get('vars', {}))
 
     def get_name(self):
         return self._name
@@ -104,6 +107,9 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_output(self):
         return self._output
+
+    def get_vars(self):
+        return self._vars
 
     def get_task_defaults(self):
         return self._task_defaults
