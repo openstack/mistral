@@ -267,6 +267,16 @@ def add_environment_to_context(wf_ex, context):
     return context
 
 
+def add_workflow_variables_to_context(wf_spec, context):
+    if context is None:
+        context = {}
+
+    return utils.merge_dicts(
+        context,
+        expr.evaluate_recursively(wf_spec.get_vars(), context)
+    )
+
+
 # TODO(rakhmerov): Think how to get rid of this method. It should not be
 # exposed in API.
 def extract_task_result_proxies_to_context(ctx):
