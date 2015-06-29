@@ -162,7 +162,7 @@ function install_mistral {
 
 function install_mistral_pythonclient {
     git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
-    git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d 2015.1.0b1 2015.1.0b2 2015.1.0b3 2015.1.0rc1 2015.1.0
+    git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d 2015.1.0b1 2015.1.0b2 2015.1.0b3 2015.1.0rc1 2015.1.0 1.0.0.0b1
     setup_package $MISTRAL_PYTHONCLIENT_DIR -e
 }
 
