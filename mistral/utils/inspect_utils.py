@@ -71,4 +71,7 @@ def get_arg_list_as_str(func):
         else:
             arg_str_list.append("%s" % args[index])
 
+    if argspec.keywords:
+        arg_str_list.append("**%s" % argspec.keywords)
+
     return ", ".join(arg_str_list)

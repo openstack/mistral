@@ -38,6 +38,12 @@ class ActionManagerTest(base.DbTestCase):
         self._assert_single_item(action_list, name="nova.servers_get")
         self._assert_single_item(action_list, name="nova.volumes_delete")
 
+        server_find_action = self._assert_single_item(
+            action_list,
+            name="nova.servers_find"
+        )
+        self.assertIn('**', server_find_action.input)
+
         self._assert_single_item(action_list, name="keystone.users_list")
         self._assert_single_item(action_list, name="keystone.trusts_create")
 

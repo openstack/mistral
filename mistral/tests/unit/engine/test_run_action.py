@@ -12,9 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import actions
 from mistral.tests.unit.engine import base
@@ -103,3 +105,40 @@ class RunActionEngineTest(base.EngineTestCase):
         )
 
         self.assertIn('concat', exception.message)
+
+    @mock.patch('mistral.engine.action_handler.resolve_action_definition')
+    @mock.patch('mistral.engine.utils.validate_input')
+    @mock.patch('mistral.services.action_manager.get_action_class')
+    @mock.patch('mistral.engine.action_handler.run_action')
+    def test_run_action_with_kwargs_input(self, run_mock, class_mock,
+                                          validate_mock, def_mock):
+        action_def = models.ActionDefinition()
+        action_def.update({
+            'name': 'fake_action',
+            'action_class': '',
+            'attributes': {},
+            'description': '',
+            'input': '**kwargs',
+            'is_system': True,
+            'scope': 'public'
+        })
+        def_mock.return_value = action_def
+
+        class_ret = mock.MagicMock()
+        class_mock.return_value = class_ret
+
+        self.engine.start_action('fake_action', {'input': 'Hello'})
+
+        self.assertEqual(2, def_mock.call_count)
+        def_mock.assert_called_with('fake_action', None, None)
+
+        self.assertEqual(0, validate_mock.call_count)
+
+        class_ret.assert_called_once_with(input='Hello')
+
+        run_mock.assert_called_once_with(
+            action_def,
+            {'input': 'Hello'},
+            target=None,
+            async=False
+        )
