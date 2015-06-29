@@ -252,7 +252,7 @@ class RetryPolicy(base.TaskPolicy):
         self.count = count
         self.delay = delay
         self.break_on = break_on
-        self._continue_on = continue_on
+        self._continue_on_clause = continue_on
 
     def after_task_complete(self, task_ex, task_spec):
         """Possible Cases:
@@ -279,8 +279,8 @@ class RetryPolicy(base.TaskPolicy):
             context_key
         )
 
-        continue_on = expressions.evaluate(
-            self._continue_on,
+        continue_on_evaluation = expressions.evaluate(
+            self._continue_on_clause,
             data_flow.evaluate_task_outbound_context(task_ex)
         )
 
@@ -301,10 +301,14 @@ class RetryPolicy(base.TaskPolicy):
 
         retries_remain = retry_no + 1 < self.count
 
-        continue_triggered = self._continue_on and not continue_on
+        stop_continue_flag = (task_ex.state == states.SUCCESS and
+                              not self._continue_on_clause)
+        stop_continue_flag = (stop_continue_flag or
+                              (self._continue_on_clause and
+                               not continue_on_evaluation))
         break_triggered = task_ex.state == states.ERROR and self.break_on
 
-        if not retries_remain or break_triggered or continue_triggered:
+        if not retries_remain or break_triggered or stop_continue_flag:
             return
 
         _log_task_delay(task_ex, self.delay)
