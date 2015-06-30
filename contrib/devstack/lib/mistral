@@ -21,10 +21,10 @@ set -o xtrace
 # --------
 
 # Set up default repos
-MISTRAL_REPO=${MISTRAL_REPO:-${GIT_BASE}/stackforge/mistral.git}
+MISTRAL_REPO=${MISTRAL_REPO:-${GIT_BASE}/openstack/mistral.git}
 MISTRAL_BRANCH=${MISTRAL_BRANCH:-master}
 
-MISTRAL_PYTHONCLIENT_REPO=${MISTRAL_PYTHONCLIENT_REPO:-${GIT_BASE}/stackforge/python-mistralclient.git}
+MISTRAL_PYTHONCLIENT_REPO=${MISTRAL_PYTHONCLIENT_REPO:-${GIT_BASE}/openstack/python-mistralclient.git}
 MISTRAL_PYTHONCLIENT_BRANCH=${MISTRAL_PYTHONCLIENT_BRANCH:-$MISTRAL_BRANCH}
 MISTRAL_PYTHONCLIENT_DIR=$DEST/python-mistralclient
 
