@@ -93,7 +93,11 @@ def get_action_input(action_name, input_dict, wf_name=None, wf_spec=None):
 
     if action_def.action_class:
         _inject_action_ctx_for_validating(action_def, input_dict)
-    e_utils.validate_input(action_def, input_dict)
+
+    # NOTE(xylan): Don't validate action input if action initialization method
+    # contains ** argument.
+    if '**' not in action_def.input:
+        e_utils.validate_input(action_def, input_dict)
 
     if action_def.spec:
         # Ad-hoc action.
