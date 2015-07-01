@@ -54,6 +54,24 @@ def find_task_execution(wf_ex, task_spec):
     return task_execs[0] if len(task_execs) > 0 else None
 
 
+def find_task_execution_not_state(wf_ex, task_spec, state):
+    task_execs = [
+        t for t in wf_ex.task_executions
+        if t.name == task_spec.get_name() and t.state != state
+    ]
+
+    return task_execs[0] if len(task_execs) > 0 else None
+
+
+def find_task_execution_with_state(wf_ex, task_spec, state):
+    task_execs = [
+        t for t in wf_ex.task_executions
+        if t.name == task_spec.get_name() and t.state == state
+    ]
+
+    return task_execs[0] if len(task_execs) > 0 else None
+
+
 def find_task_executions(wf_ex, task_specs):
     return filter(
         None,

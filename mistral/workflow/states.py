@@ -17,16 +17,18 @@
 """Valid task and workflow states."""
 
 IDLE = 'IDLE'
+WAITING = 'WAITING'
 RUNNING = 'RUNNING'
 PAUSED = 'PAUSED'
 DELAYED = 'DELAYED'
 SUCCESS = 'SUCCESS'
 ERROR = 'ERROR'
 
-_ALL = [IDLE, RUNNING, SUCCESS, ERROR, PAUSED, DELAYED]
+_ALL = [IDLE, WAITING, RUNNING, SUCCESS, ERROR, PAUSED, DELAYED]
 
 _VALID_TRANSITIONS = {
     IDLE: [RUNNING, ERROR],
+    WAITING: [RUNNING],
     RUNNING: [PAUSED, DELAYED, SUCCESS, ERROR],
     PAUSED: [RUNNING, ERROR],
     DELAYED: [RUNNING, ERROR],
@@ -45,6 +47,10 @@ def is_invalid(state):
 
 def is_completed(state):
     return state in [SUCCESS, ERROR]
+
+
+def is_waiting(state):
+    return state == WAITING
 
 
 def is_idle(state):

@@ -29,6 +29,7 @@ from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 from mistral.workflow import with_items
 
 
@@ -73,6 +74,16 @@ def _run_existing_task(task_ex, task_spec, wf_spec):
         _schedule_noop_action(task_ex, task_spec)
 
 
+def defer_task(wf_cmd):
+    """Defers a task"""
+    ctx = wf_cmd.ctx
+    wf_ex = wf_cmd.wf_ex
+    task_spec = wf_cmd.task_spec
+
+    if not wf_utils.find_task_execution(wf_ex, task_spec):
+        _create_task_execution(wf_ex, task_spec, ctx, state=states.WAITING)
+
+
 def run_new_task(wf_cmd):
     """Runs a task."""
     ctx = wf_cmd.ctx
@@ -80,12 +91,24 @@ def run_new_task(wf_cmd):
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
     task_spec = wf_cmd.task_spec
 
-    LOG.debug(
-        'Starting workflow task [workflow=%s, task_spec=%s]' %
-        (wf_ex.name, task_spec)
+    # NOTE(xylan): Need to think how to get rid of this weird judgment to keep
+    # it more consistent with the function name.
+    task_ex = wf_utils.find_task_execution_with_state(
+        wf_ex,
+        task_spec,
+        states.WAITING
     )
 
-    task_ex = _create_task_execution(wf_ex, task_spec, ctx)
+    if task_ex:
+        _set_task_state(task_ex, states.RUNNING)
+        task_ex.in_context = ctx
+    else:
+        task_ex = _create_task_execution(wf_ex, task_spec, ctx)
+
+    LOG.debug(
+        'Starting workflow task [workflow=%s, task_spec=%s, init_state=%s]' %
+        (wf_ex.name, task_spec, task_ex.state)
+    )
 
     # TODO(rakhmerov): 'concurrency' policy should keep a number of running
     # actions/workflows under control so it can't be implemented if it runs
@@ -144,12 +167,12 @@ def on_action_complete(action_ex, result):
     return task_ex
 
 
-def _create_task_execution(wf_ex, task_spec, ctx):
+def _create_task_execution(wf_ex, task_spec, ctx, state=states.RUNNING):
     task_ex = db_api.create_task_execution({
         'name': task_spec.get_name(),
         'workflow_execution_id': wf_ex.id,
         'workflow_name': wf_ex.workflow_name,
-        'state': states.RUNNING,
+        'state': state,
         'spec': task_spec.to_dict(),
         'in_context': ctx,
         'published': {},

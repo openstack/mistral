@@ -71,3 +71,11 @@ class StatesModuleTest(base.BaseTest):
         self.assertFalse(s.is_valid_transition(s.ERROR, s.DELAYED))
         self.assertFalse(s.is_valid_transition(s.ERROR, s.SUCCESS))
         self.assertFalse(s.is_valid_transition(s.ERROR, s.IDLE))
+
+        # From WAITING
+        self.assertTrue(s.is_valid_transition(s.WAITING, s.RUNNING))
+        self.assertFalse(s.is_valid_transition(s.WAITING, s.SUCCESS))
+        self.assertFalse(s.is_valid_transition(s.WAITING, s.PAUSED))
+        self.assertFalse(s.is_valid_transition(s.WAITING, s.DELAYED))
+        self.assertFalse(s.is_valid_transition(s.WAITING, s.IDLE))
+        self.assertFalse(s.is_valid_transition(s.WAITING, s.ERROR))

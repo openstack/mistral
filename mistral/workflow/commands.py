@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from mistral.workbook import parser as spec_parser
+from mistral.workbook.v2 import tasks
 from mistral.workflow import states
 
 
@@ -41,10 +42,19 @@ class Noop(WorkflowCommand):
 class RunTask(WorkflowCommand):
     """Instruction to run a workflow task."""
 
+    def __init__(self, wf_ex, task_spec, ctx):
+        super(RunTask, self).__init__(wf_ex, task_spec, ctx)
+        self.wait_flag = False
+
+    def is_waiting(self):
+        return (self.wait_flag and
+                isinstance(self.task_spec, tasks.DirectWorkflowTaskSpec) and
+                self.task_spec.get_join())
+
     def __repr__(self):
         return (
-            "Run task [workflow=%s, task=%s]"
-            % (self.wf_ex.name, self.task_spec.get_name())
+            "Run task [workflow=%s, task=%s, waif_flag=%s]"
+            % (self.wf_ex.name, self.task_spec.get_name(), self.wait_flag)
         )
 
 
