@@ -196,7 +196,8 @@ class DefaultEngine(base.Engine):
                 wf_ctrl.evaluate_workflow_final_context()
             )
         else:
-            result_str = str(action_ex.output.get('result', "Unknown"))
+            result_str = (str(action_ex.output.get('result', 'Unknown'))
+                          if action_ex.output else 'Unknown')
 
             state_info = (
                 "Failure caused by error in task '%s': %s" %

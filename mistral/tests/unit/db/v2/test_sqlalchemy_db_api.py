@@ -164,15 +164,7 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(created, fetched[0])
 
         # Create a new user.
-        ctx = auth_context.MistralContext(
-            user_id='9-0-44-5',
-            project_id='99-88-33',
-            user_name='test-user',
-            project_name='test-another',
-            is_admin=False
-        )
-
-        auth_context.set_ctx(ctx)
+        auth_context.set_ctx(test_base.get_context(default=False))
 
         created = db_api.create_workbook(WORKBOOKS[1])
         fetched = db_api.get_workbooks()
@@ -191,15 +183,7 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[0])
 
         # Create a new user.
-        ctx = auth_context.MistralContext(
-            user_id='9-0-44-5',
-            project_id='99-88-33',
-            user_name='test-user',
-            project_name='test-another',
-            is_admin=False
-        )
-
-        auth_context.set_ctx(ctx)
+        auth_context.set_ctx(test_base.get_context(default=False))
 
         fetched = db_api.get_workbooks()
 
@@ -222,15 +206,7 @@ class WorkbookTest(SQLAlchemyTest):
                             auth_context.ctx().project_id)
 
         # Create a new user.
-        ctx = auth_context.MistralContext(
-            user_id='9-0-44-5',
-            project_id='99-88-33',
-            user_name='test-user',
-            project_name='test-another',
-            is_admin=False
-        )
-
-        auth_context.set_ctx(ctx)
+        auth_context.set_ctx(test_base.get_context(default=False))
 
         fetched = db_api.get_workbooks()
 
@@ -378,15 +354,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[0])
 
         # Create a new user.
-        ctx = auth_context.MistralContext(
-            user_id='9-0-44-5',
-            project_id='99-88-33',
-            user_name='test-user',
-            project_name='test-another',
-            is_admin=False
-        )
-
-        auth_context.set_ctx(ctx)
+        auth_context.set_ctx(test_base.get_context(default=False))
 
         fetched = db_api.get_workflow_definitions()
 
@@ -411,15 +379,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         )
 
         # Create a new user.
-        ctx = auth_context.MistralContext(
-            user_id='9-0-44-5',
-            project_id='99-88-33',
-            user_name='test-user',
-            project_name='test-another',
-            is_admin=False
-        )
-
-        auth_context.set_ctx(ctx)
+        auth_context.set_ctx(test_base.get_context(default=False))
 
         fetched = db_api.get_workflow_definitions()
 

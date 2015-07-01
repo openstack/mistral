@@ -16,7 +16,8 @@
 
 import eventlet
 from eventlet import semaphore
-from oslo_config import cfg
+from oslo.config import cfg
+import testtools
 
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.tests import base as test_base
@@ -36,6 +37,9 @@ WF_EXEC = {
 }
 
 
+@testtools.skipIf(
+    'sqlite' not in cfg.CONF.database.connection,
+    'SQLite is not used for the database backend.')
 class SQLiteTransactionsTest(test_base.DbTestCase):
     """The purpose of this test is to research transactions of SQLite."""
 

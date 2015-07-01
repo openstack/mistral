@@ -17,6 +17,7 @@
 import eventlet
 from oslo_config import cfg
 import random
+import testtools
 
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2.sqlalchemy import api as db_api
@@ -38,6 +39,9 @@ WF_EXEC = {
 }
 
 
+@testtools.skipIf(
+    'sqlite' not in cfg.CONF.database.connection,
+    'Not using SQLite for DB backend.')
 class SQLiteLocksTest(test_base.DbTestCase):
     def setUp(self):
         super(SQLiteLocksTest, self).setUp()

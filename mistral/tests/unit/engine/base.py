@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -39,7 +40,7 @@ def launch_engine_server(transport, engine):
         transport,
         target,
         [rpc.EngineServer(engine)],
-        executor='eventlet',
+        executor='blocking',
         serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
     )
 
@@ -57,7 +58,7 @@ def launch_executor_server(transport, executor):
         transport,
         target,
         [rpc.ExecutorServer(executor)],
-        executor='eventlet',
+        executor='blocking',
         serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
     )
 

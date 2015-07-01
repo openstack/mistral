@@ -30,6 +30,7 @@ nosetests.xml
 cover/*
 .testrepository/
 subunit.log
+.mistral.conf
 
 # Translations
 *.mo

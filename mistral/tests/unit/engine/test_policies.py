@@ -186,9 +186,8 @@ workflows:
 
     tasks:
       task1:
-        action: std.echo output="Hi!"
-        wait-after: 4
-        timeout: 3
+        action: std.async_noop
+        timeout: 1
 """
 
 
@@ -760,7 +759,7 @@ class PoliciesTest(base.EngineTestCase):
         self._await(lambda: self.is_execution_error(wf_ex.id))
 
         # Wait until timeout exceeds.
-        self._sleep(2)
+        self._sleep(1)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         tasks_db = wf_ex.task_executions

@@ -94,7 +94,7 @@ def acquire_lock(model, id, session=None):
 
         query.update(
             {'updated_at': timeutils.utcnow()},
-            synchronize_session=False
+            synchronize_session='fetch',
         )
     else:
         sqlite_lock.acquire_lock(id, session)
