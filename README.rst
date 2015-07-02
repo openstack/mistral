@@ -81,9 +81,16 @@ Mistral configuration is needed for getting it work correctly either with real O
     [pecan]
     auth_enable = False
 
-5. Also, configure rabbit properties: *rabbit_userid*, *rabbit_password*, *rabbit_host* in section *default*.
+5. **If you are not using OpenStack, skip this item.** Register Mistral service and Mistral endpoints on Keystone::
 
-6. Configure database. **SQLite can't be used in production.** Use *MySQL* or *PostreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
+    $ MISTRAL_URL="http://[host]:[port]/v2"
+    $ keystone service-create --name mistral --type workflowv2
+    $ keystone endpoint-create --service_id mistral --publicurl $MISTRAL_URL \
+      --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
+
+6. Also, configure rabbit properties: *rabbit_userid*, *rabbit_password*, *rabbit_host* in section *default*.
+
+7. Configure database. **SQLite can't be used in production.** Use *MySQL* or *PostreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
 
     * Make sure you have installed **mysql-server** package on your Mistral machine.
     * Install *MySQL driver* for python::
