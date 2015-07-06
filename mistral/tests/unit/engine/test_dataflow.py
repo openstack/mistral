@@ -462,7 +462,15 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):
-        task_ex = models.TaskExecution(name='task1')
+        task_ex = models.TaskExecution(
+            name='task1',
+            spec={
+                "version": '2.0',
+                'name': 'task1',
+                'with-items': 'var in [1]',
+                'type': 'direct'
+            }
+        )
 
         task_ex.executions.append(models.ActionExecution(
             name='my_action',
@@ -471,7 +479,7 @@ class DataFlowTest(test_base.BaseTest):
             runtime_context={'with_items_index': 0}
         ))
 
-        self.assertEqual(1, data_flow.get_task_execution_result(task_ex))
+        self.assertEqual([1], data_flow.get_task_execution_result(task_ex))
 
         task_ex.executions.append(models.ActionExecution(
             name='my_action',

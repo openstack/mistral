@@ -24,6 +24,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import expressions as expr
 from mistral import utils
 from mistral.utils import inspect_utils
+from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
 
@@ -96,22 +97,12 @@ def get_task_execution_result(task_ex):
         if hasattr(ex, 'output') and ex.accepted
     ]
 
-    if results:
-        # TODO(Guy): For now we can't use task specification due to a bug
-        # TODO(Guy): 1468419 "version field doesn't get injected properly"
-        if _is_with_items_task(task_ex.runtime_context):
-            return results
+    task_spec = spec_parser.get_task_spec(task_ex.spec)
 
-        return results if len(results) > 1 else results[0]
-    else:
-        return []
+    if task_spec.get_with_items():
+        return results
 
-
-def _is_with_items_task(task_rt_ctx):
-    if task_rt_ctx and "with_items" in task_rt_ctx:
-        return True
-
-    return False
+    return results[0] if len(results) == 1 else results
 
 
 class TaskResultProxy(object):
