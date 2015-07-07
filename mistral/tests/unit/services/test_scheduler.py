@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -26,6 +27,9 @@ FACTORY_METHOD_NAME = ('mistral.tests.unit.services.test_scheduler.'
                        'factory_method')
 TARGET_METHOD_NAME = FACTORY_METHOD_NAME
 
+DELAY = 1.5
+WAIT = DELAY * 3
+
 
 def factory_method():
     return type(
@@ -47,12 +51,11 @@ class SchedulerServiceTest(base.DbTestCase):
     def test_scheduler_with_factory(self, factory):
         target_method = 'run_something'
         method_args = {'name': 'task', 'id': '123'}
-        delay = 1.5
 
         scheduler.schedule_call(
             FACTORY_METHOD_NAME,
             target_method,
-            delay,
+            DELAY,
             **method_args
         )
 
@@ -67,7 +70,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertIn('name', call['method_arguments'])
 
-        eventlet.sleep(delay)
+        eventlet.sleep(WAIT)
 
         factory().run_something.assert_called_once_with(name='task', id='123')
 
@@ -79,12 +82,11 @@ class SchedulerServiceTest(base.DbTestCase):
     @mock.patch(TARGET_METHOD_NAME)
     def test_scheduler_without_factory(self, method):
         method_args = {'name': 'task', 'id': '321'}
-        delay = 1.5
 
         scheduler.schedule_call(
             None,
             TARGET_METHOD_NAME,
-            delay,
+            DELAY,
             **method_args
         )
 
@@ -98,7 +100,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertIn('name', call['method_arguments'])
 
-        eventlet.sleep(delay)
+        eventlet.sleep(WAIT)
 
         method.assert_called_once_with(name='task', id='321')
 
@@ -123,18 +125,16 @@ class SchedulerServiceTest(base.DbTestCase):
             'result': 'mistral.workflow.utils.ResultSerializer'
         }
 
-        delay = 1.5
-
         scheduler.schedule_call(
             FACTORY_METHOD_NAME,
             target_method,
-            delay,
+            DELAY,
             serializers=serializers,
             **method_args
         )
 
         calls = db_api.get_delayed_calls_to_start(
-            datetime.datetime.now() + datetime.timedelta(seconds=2)
+            datetime.datetime.now() + datetime.timedelta(seconds=WAIT)
         )
 
         call = self._assert_single_item(
@@ -144,7 +144,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertIn('name', call['method_arguments'])
 
-        eventlet.sleep(delay)
+        eventlet.sleep(WAIT)
 
         result = factory().run_something.call_args[1].get('result')
 
@@ -167,12 +167,11 @@ class SchedulerServiceTest(base.DbTestCase):
         self.addCleanup(stop_thread_groups)
 
         method_args = {'name': 'task', 'id': '321'}
-        delay = 1.5
 
         scheduler.schedule_call(
             None,
             TARGET_METHOD_NAME,
-            delay,
+            DELAY,
             **method_args
         )
 
@@ -181,7 +180,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self._assert_single_item(calls, target_method_name=TARGET_METHOD_NAME)
 
-        eventlet.sleep(delay)
+        eventlet.sleep(WAIT)
 
         method.assert_called_once_with(name='task', id='321')
 

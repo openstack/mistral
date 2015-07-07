@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -101,10 +102,10 @@ class CallScheduler(periodic_task.PeriodicTasks):
         #
         # 'REPEATABLE-READ' is by default in MySQL and
         # 'READ-COMMITTED is by default in PostgreSQL.
-        with db_api.transaction():
-            delayed_calls = db_api.get_delayed_calls_to_start(time_filter)
+        delayed_calls = []
 
-            for call in delayed_calls:
+        with db_api.transaction():
+            for call in db_api.get_delayed_calls_to_start(time_filter):
                 # Delete this delayed call from DB before the making call in
                 # order to prevent calling from parallel transaction.
                 db_api.delete_delayed_call(call.id)
@@ -136,6 +137,16 @@ class CallScheduler(periodic_task.PeriodicTasks):
                         )
 
                         method_args[arg_name] = deserialized
+
+                delayed_calls.append((target_method, method_args))
+
+        # TODO(m4dcoder): Troubleshoot deadlocks with PostgreSQL and MySQL.
+        # The queries in the target method such as
+        # mistral.engine.task_handler.run_action can deadlock
+        # with delete_delayed_call. Please keep the scope of the
+        # transaction short.
+        for (target_method, method_args) in delayed_calls:
+            with db_api.transaction():
                 try:
                     # Call the method.
                     target_method(**method_args)

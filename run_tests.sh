@@ -24,6 +24,8 @@ function usage {
   echo "                               Default: .venv"
   echo "  --tools-path <dir>          Location of the tools directory"
   echo "                               Default: \$(pwd)"
+  echo "  --db-type <name>            Database type"
+  echo "                               Default: sqlite"
   echo ""
   echo "Note: with no options specified, the script will try to run the tests in a virtual environment,"
   echo "      If no virtualenv is found, the script will ask if you would like to create one.  If you "
@@ -59,6 +61,10 @@ function process_options {
         (( i++ ))
         tools_path=${!i}
         ;;
+      --db-type)
+        (( i++ ))
+        db_type=${!i}
+        ;;
       -*) testropts="$testropts ${!i}";;
       *) testrargs="$testrargs ${!i}"
     esac
@@ -66,6 +72,7 @@ function process_options {
   done
 }
 
+db_type=${db_type:-sqlite}
 tool_path=${tools_path:-$(pwd)}
 venv_path=${venv_path:-$(pwd)}
 venv_dir=${venv_name:-.venv}
@@ -101,6 +108,48 @@ if [ $no_site_packages -eq 1 ]; then
   installvenvopts="--no-site-packages"
 fi
 
+
+function setup_db {
+    case ${db_type} in
+        sqlite )
+            rm -f tests.sqlite
+            ;;
+        postgresql )
+            echo "Setting up Mistral DB in PostgreSQL"
+
+            # Create the user and database.
+            # Assume trust is setup on localhost in the postgresql config file.
+            sudo -u postgres psql -c "DROP DATABASE IF EXISTS mistral;"
+            sudo -u postgres psql -c "DROP USER IF EXISTS mistral;"
+            sudo -u postgres psql -c "CREATE USER mistral WITH ENCRYPTED PASSWORD 'm1stral';"
+            sudo -u postgres psql -c "CREATE DATABASE mistral OWNER mistral;"
+            ;;
+    esac
+}
+
+function setup_db_pylib {
+    case ${db_type} in
+        postgresql )
+            echo "Installing python library for PostgreSQL."
+            ${wrapper} pip install psycopg2
+            ;;
+    esac
+}
+
+function setup_db_cfg {
+    case ${db_type} in
+        sqlite )
+            rm -f .mistral.conf
+            ;;
+        postgresql )
+            cp ./etc/mistral.conf.sample.postgresql .mistral.conf
+            ;;
+    esac
+}
+
+function cleanup {
+    rm -f .mistral.conf
+}
 
 function run_tests {
   # Cleanup *pyc
@@ -142,6 +191,7 @@ function run_tests {
   set -e
 
   copy_subunit_log
+  cleanup
 
   if [ $coverage -eq 1 ]; then
     echo "Generating coverage report in covhtml/"
@@ -210,9 +260,11 @@ if [ $just_pep8 -eq 1 ]; then
 fi
 
 if [ $recreate_db -eq 1 ]; then
-    rm -f tests.sqlite
+    setup_db
 fi
 
+setup_db_pylib
+setup_db_cfg
 run_tests
 
 # NOTE(sirp): we only want to run pep8 when we're running the full-test suite,
