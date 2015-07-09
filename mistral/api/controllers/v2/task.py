@@ -99,14 +99,15 @@ def _get_task_resources_with_results(wf_ex_id=None):
         filters['workflow_execution_id'] = wf_ex_id
 
     tasks = []
-    task_execs = db_api.get_task_executions(**filters)
-    for task_ex in task_execs:
-        task = Task.from_dict(task_ex.to_dict())
-        task.result = json.dumps(
-            data_flow.get_task_execution_result(task_ex)
-        )
+    with db_api.transaction():
+        task_execs = db_api.get_task_executions(**filters)
+        for task_ex in task_execs:
+            task = Task.from_dict(task_ex.to_dict())
+            task.result = json.dumps(
+                data_flow.get_task_execution_result(task_ex)
+            )
 
-        tasks += [task]
+            tasks += [task]
 
     return Tasks(tasks=tasks)
 
