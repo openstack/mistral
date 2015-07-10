@@ -91,7 +91,7 @@ class TestCronTriggerController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(TRIGGER, resp.json)
 
-        mock_mtd.assert_called_once()
+        self.assertEqual(1, mock_mtd.call_count)
 
         values = mock_mtd.call_args[0][0]
 
