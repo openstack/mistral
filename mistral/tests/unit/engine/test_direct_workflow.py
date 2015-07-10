@@ -213,7 +213,8 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 exc.InvalidActionException,
                 self.engine.start_workflow, 'wf', None)
 
-            mock_fw.assert_called_once()
+            self.assertEqual(1, mock_fw.call_count)
+
             self.assertTrue(
                 issubclass(
                     type(mock_fw.call_args[0][1]),
@@ -262,7 +263,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 self.engine.start_workflow, 'wf', None
             )
 
-            mock_fw.assert_called_once()
+            self.assertEqual(1, mock_fw.call_count)
             self.assertTrue(
                 issubclass(
                     type(mock_fw.call_args[0][1]),
