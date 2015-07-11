@@ -16,7 +16,7 @@
 
 import eventlet
 from eventlet import semaphore
-from oslo.config import cfg
+from oslo_config import cfg
 import testtools
 
 from mistral.db.v2.sqlalchemy import api as db_api
