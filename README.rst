@@ -114,6 +114,9 @@ Mistral configuration is needed for getting it work correctly either with real O
         [database]
         connection = mysql://root:<password>@localhost:3306/mistral
 
+8. **If you are not using OpenStack, skip this item.** Update *mistral/actions/openstack/mapping.json* file which contains all allowed OpenStack actions,
+according to the specific client versions of OpenStack projects in your deployment. Please find more detailed infomation in *tools/get_action_list.py* script.
+
 Before the first run
 --------------------
 
