@@ -51,7 +51,7 @@ def setup_app(config=None):
 
     app = pecan.make_app(
         app_conf.pop('root'),
-        hooks=lambda: [ctx.ContextHook()],
+        hooks=lambda: [ctx.ContextHook(), ctx.AuthHook()],
         logging=getattr(config, 'logging', {}),
         **app_conf
     )

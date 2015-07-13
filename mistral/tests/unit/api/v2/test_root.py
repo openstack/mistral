@@ -16,6 +16,7 @@
 
 from mistral.openstack.common import jsonutils
 from mistral.tests.unit.api import base
+from mistral.tests.unit.api import test_auth
 
 
 class TestRootController(base.FunctionalTest):
@@ -31,4 +32,44 @@ class TestRootController(base.FunctionalTest):
         self.assertEqual(
             data[0]['link'],
             {'href': 'http://localhost/v2', 'target': 'v2'}
+        )
+
+    def test_v2_root(self):
+        resp = self.app.get('/v2/', headers={'Accept': 'application/json'})
+
+        self.assertEqual(resp.status_int, 200)
+
+        data = jsonutils.loads(resp.body.decode())
+
+        self.assertEqual(
+            'http://localhost/v2',
+            data['uri']
+        )
+
+
+class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
+    def test_index(self):
+        resp = self.app.get('/', headers={'Accept': 'application/json'})
+
+        self.assertEqual(resp.status_int, 200)
+
+        data = jsonutils.loads(resp.body.decode())
+
+        self.assertEqual(data[0]['id'], 'v2.0')
+        self.assertEqual(data[0]['status'], 'CURRENT')
+        self.assertEqual(
+            data[0]['link'],
+            {'href': 'http://localhost/v2', 'target': 'v2'}
+        )
+
+    def test_v2_root(self):
+        resp = self.app.get('/v2/', headers={'Accept': 'application/json'})
+
+        self.assertEqual(resp.status_int, 200)
+
+        data = jsonutils.loads(resp.body.decode())
+
+        self.assertEqual(
+            'http://localhost/v2',
+            data['uri']
         )
