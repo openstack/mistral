@@ -25,7 +25,7 @@ def register_standard_workflows():
 
     for wf_path in workflow_paths:
         workflow_definition = open(wf_path).read()
-        update_workflows(workflow_definition, scope='public')
+        create_workflows(workflow_definition, scope='public')
 
 
 def sync_db():
@@ -51,7 +51,7 @@ def update_workflows(definition, scope='private'):
 
     with db_api.transaction():
         for wf_spec in wf_list_spec.get_workflows():
-            db_wfs.append(_create_or_update_workflow(
+            db_wfs.append(_update_workflow(
                 wf_spec,
                 definition,
                 scope
@@ -78,7 +78,7 @@ def _create_workflow(wf_spec, definition, scope):
     )
 
 
-def _create_or_update_workflow(wf_spec, definition, scope):
+def _update_workflow(wf_spec, definition, scope):
     values = _get_workflow_values(wf_spec, definition, scope)
 
-    return db_api.create_or_update_workflow_definition(values['name'], values)
+    return db_api.update_workflow_definition(values['name'], values)
