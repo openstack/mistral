@@ -20,8 +20,8 @@ import testtools
 
 from mistral.actions import base as action_base
 from mistral.db.v2 import api as db_api
-from mistral.services import action_manager as a_m
 from mistral.services import workflows as wf_service
+from mistral.tests import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -48,7 +48,7 @@ wf:
 
   tasks:
     task1:
-      action: std.block
+      action: test.block
       publish:
         result: <% $.task1 %>
 """
@@ -83,7 +83,7 @@ wf:
         result: <% $.task1 %>
 
     task2:
-      action: std.block
+      action: test.block
 """
 
 ACTION_SEMAPHORE = None
@@ -124,12 +124,7 @@ class LongActionTest(base.EngineTestCase):
         ACTION_SEMAPHORE = semaphore.Semaphore(1)
         TEST_SEMAPHORE = semaphore.Semaphore(0)
 
-        a_m.register_action_class(
-            'std.block',
-            '%s.%s' % (BlockingAction.__module__, BlockingAction.__name__),
-            {},
-            input_str=""
-        )
+        test_base.register_action_class('test.block', BlockingAction)
 
     @staticmethod
     def block_action():

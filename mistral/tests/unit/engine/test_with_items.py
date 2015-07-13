@@ -19,8 +19,8 @@ from oslo_log import log as logging
 from mistral.actions import base as action_base
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.services import action_manager
 from mistral.services import workbooks as wb_service
+from mistral.tests import base as test_base
 from mistral.tests.unit.engine import base
 from mistral import utils
 from mistral.workflow import data_flow
@@ -415,14 +415,7 @@ class WithItemsEngineTest(base.EngineTestCase):
                   one_two_three: <% $.task1 %>
         """
         # Register random sleep action in the DB.
-        action_manager.register_action_class(
-            'sleep_echo',
-            '%s.%s' % (
-                RandomSleepEchoAction.__module__,
-                RandomSleepEchoAction.__name__
-            ), {},
-            input_str="output"
-        )
+        test_base.register_action_class('sleep_echo', RandomSleepEchoAction)
 
         wb_service.create_workbook_v2(workbook)
 

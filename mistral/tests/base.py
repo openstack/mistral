@@ -30,6 +30,7 @@ from mistral.db.v2 import api as db_api_v2
 from mistral.services import action_manager
 from mistral.services import security
 from mistral.tests import config as test_config
+from mistral.utils import inspect_utils as i_utils
 from mistral import version
 
 
@@ -63,6 +64,15 @@ def get_context(default=True, admin=False):
             project_name='test-another',
             is_admin=admin
         )
+
+
+def register_action_class(name, cls, attributes=None, desc=None):
+    action_manager.register_action_class(
+        name,
+        '%s.%s' % (cls.__module__, cls.__name__),
+        attributes or {},
+        input_str=i_utils.get_arg_list_as_str(cls.__init__)
+    )
 
 
 class BaseTest(base.BaseTestCase):
