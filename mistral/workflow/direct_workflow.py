@@ -14,6 +14,7 @@
 
 from oslo_log import log as logging
 
+from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral import utils
 from mistral.workflow import base
@@ -107,14 +108,12 @@ class DirectWorkflowController(base.WorkflowController):
         cmds = []
 
         for t_n in self._find_next_task_names(task_ex, ctx):
-            # If t_s is None we assume that it's one of the reserved
-            # engine commands and in this case we pass the parent task
-            # specification and it's inbound context.
-            t_s = (
-                self.wf_spec.get_tasks()[t_n]
-                or
-                self.wf_spec.get_tasks()[task_ex.name]
-            )
+            t_s = self.wf_spec.get_tasks()[t_n]
+
+            if not (t_s or t_n in commands.RESERVED_CMDS):
+                raise exc.WorkflowException("Task '%s' not found." % t_n)
+            elif not t_s:
+                t_s = self.wf_spec.get_tasks()[task_ex.name]
 
             cmd = commands.create_command(
                 t_n,

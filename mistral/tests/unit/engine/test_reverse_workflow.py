@@ -16,7 +16,9 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -134,6 +136,28 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         )
 
         self.assertDictEqual({'result2': 'a & b'}, task2_ex.published)
+
+    def test_reverse_workflow_wrong_task_name(self):
+        wf_text = """---
+        version: '2.0'
+        wf_wrong_task:
+          type: reverse
+          tasks:
+            task2:
+              requires: [wrong_name]
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        exception = self.assertRaises(
+            exc.WorkflowException,
+            self.engine.start_workflow,
+            "wf_wrong_task",
+            {},
+            task_name='task2'
+        )
+
+        self.assertIn("wrong_name", exception.message)
 
     def test_one_line_requires_syntax(self):
         wf_input = {'param1': 'a', 'param2': 'b'}
