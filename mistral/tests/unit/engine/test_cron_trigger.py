@@ -70,3 +70,27 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         # Checking the workflow was executed, by
         # verifying that the next execution time changed.
         self.assertNotEqual(next_execution_before, next_execution_after)
+
+    def test_workflow_without_auth(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        wf = workflows.create_workflows(WORKFLOW_LIST)[0]
+
+        t_s.create_cron_trigger(
+            'test',
+            wf.name,
+            {},
+            {},
+            '* * * * * */1',
+            None,
+            None,
+            None
+        )
+        m_p_t = periodic.MistralPeriodicTasks(cfg.CONF)
+        next_cron_trigger = t_s.get_next_cron_triggers()[0]
+        next_execution_before = next_cron_trigger.next_execution_time
+        m_p_t.process_cron_triggers_v2(None)
+
+        next_cron_trigger = t_s.get_next_cron_triggers()[0]
+        next_execution_after = next_cron_trigger.next_execution_time
+
+        self.assertNotEqual(next_execution_before, next_execution_after)
