@@ -47,12 +47,21 @@ class Action(object):
     def run(self):
         """Run action logic.
 
-        :return: result of the action. Note that for asynchronous actions
+        :return: Result of the action. Note that for asynchronous actions
         it should always be None, however, if even it's not None it will be
         ignored by a caller.
 
-        In case if action failed this method must throw a ActionException
-        to indicate that.
+        Result can be of two types:
+        1) Any serializable value meaningful from a user perspective (such
+        as string, number or dict).
+        2) Instance of {mistral.workflow.utils.Result} which has field "data"
+        for success result and field "error" for keeping so called "error
+        result" like HTTP error code and similar. Using the second type
+        allows to communicate a result even in case of error and hence to have
+        conditions in "on-error" clause of direct workflows. Depending on
+        particular action semantics one or another option may be preferable.
+        In case if action failed and there's no need to communicate any error
+        result this method should throw a ActionException.
         """
         pass
 
