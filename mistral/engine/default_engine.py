@@ -218,7 +218,8 @@ class DefaultEngine(base.Engine):
                 # assigned task execution.
                 if not action_ex.task_execution:
                     return action_handler.store_action_result(
-                        action_ex, result
+                        action_ex,
+                        result
                     ).get_clone()
 
                 wf_ex_id = action_ex.task_execution.workflow_execution_id

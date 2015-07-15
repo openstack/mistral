@@ -14,7 +14,6 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import testtools
 
 from mistral.actions import base as actions_base
 from mistral.db.v2 import api as db_api
@@ -22,6 +21,7 @@ from mistral.services import workflows as wf_service
 from mistral.tests import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -31,15 +31,18 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class MyAction(actions_base.Action):
-    def __init__(self, error_result):
+    def __init__(self, success_result, error_result):
+        self.success_result = success_result
         self.error_result = error_result
 
     def run(self):
-        # TODO(rakhmerov): The current state of the code shows that action
-        # contract is not complete if we want to handle wf errors (like
-        # http status codes) because action should be able to pass a result
-        # type (success / error) as well as the result itself. This is TBD.
-        return {'error_result': self.error_result}
+        return wf_utils.Result(
+            data=self.success_result,
+            error=self.error_result
+        )
+
+    def test(self):
+        raise NotImplementedError
 
 
 class ErrorResultTest(base.EngineTestCase):
@@ -48,18 +51,23 @@ class ErrorResultTest(base.EngineTestCase):
 
         test_base.register_action_class('my_action', MyAction)
 
-    @testtools.skip('Make it work.')
     def test_error_result(self):
         wf_text = """---
         version: '2.0'
 
         wf:
           input:
+            - success_result
             - error_result
 
           tasks:
             task1:
-              action: my_action error_result=<% $.error_result %>
+              action: my_action
+              input:
+                success_result: <% $.success_result %>
+                error_result: <% $.error_result %>
+              publish:
+                p_var: <% $.task1.some_field %>
               on-error:
                 - task2: <% $.task1 = 2 %>
                 - task3: <% $.task1 = 3 %>
@@ -74,7 +82,13 @@ class ErrorResultTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {'error_result': 2})
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {
+                'success_result': None,
+                'error_result': 2
+            }
+        )
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
 
@@ -90,3 +104,7 @@ class ErrorResultTest(base.EngineTestCase):
 
         self.assertEqual(states.ERROR, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
+
+        # "publish" clause is ignored in case of ERROR so task execution field
+        # must be empty.
+        self.assertDictEqual({}, task1.published)

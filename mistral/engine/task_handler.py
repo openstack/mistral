@@ -147,22 +147,21 @@ def on_action_complete(action_ex, result):
     wf_ex = task_ex.workflow_execution
 
     # Ignore workflow executions because they're handled during
-    # workflow completion
+    # workflow completion.
     if not isinstance(action_ex, models.WorkflowExecution):
         action_handler.store_action_result(action_ex, result)
 
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
     task_spec = wf_spec.get_tasks()[task_ex.name]
 
-    if result.is_success():
-        if not task_spec.get_with_items():
-            _complete_task(task_ex, task_spec, states.SUCCESS)
-        else:
-            if with_items.iterations_completed(task_ex):
-                _complete_task(task_ex, task_spec, states.SUCCESS)
+    task_state = states.SUCCESS if result.is_success() else states.ERROR
 
+    if not task_spec.get_with_items():
+        _complete_task(task_ex, task_spec, task_state)
     else:
-        _complete_task(task_ex, task_spec, states.ERROR)
+        if (task_state == states.ERROR or
+                with_items.iterations_completed(task_ex)):
+            _complete_task(task_ex, task_spec, task_state)
 
     return task_ex
 
@@ -449,11 +448,10 @@ def _complete_task(task_ex, task_spec, state):
 
     _set_task_state(task_ex, state)
 
-    if task_ex.state == states.SUCCESS:
-        data_flow.publish_variables(
-            task_ex,
-            task_spec
-        )
+    data_flow.publish_variables(
+        task_ex,
+        task_spec
+    )
 
     if not task_spec.get_keep_result():
         data_flow.destroy_task_result(task_ex)

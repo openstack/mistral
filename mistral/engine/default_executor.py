@@ -52,13 +52,17 @@ class DefaultExecutor(base.Executor):
 
         try:
             action = action_cls(**action_params)
+
             result = action.run()
 
             if action.is_sync() and action_ex_id:
-                self._engine_client.on_action_complete(
-                    action_ex_id,
-                    wf_utils.Result(data=result)
-                )
+                # Note: it's made for backwards compatibility with already
+                # existing Mistral actions which don't return result as
+                # instance of workflow.utils.Result.
+                if not isinstance(result, wf_utils.Result):
+                    result = wf_utils.Result(data=result)
+
+                self._engine_client.on_action_complete(action_ex_id, result)
 
             return result
         except TypeError as e:

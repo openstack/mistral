@@ -249,7 +249,7 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
-    def start_workflow(self, wf_name, wf_input, description, **params):
+    def start_workflow(self, wf_name, wf_input, description='', **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.

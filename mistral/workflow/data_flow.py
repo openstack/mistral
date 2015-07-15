@@ -143,6 +143,9 @@ class ProxyAwareDict(dict):
 
 
 def publish_variables(task_ex, task_spec):
+    if task_ex.state != states.SUCCESS:
+        return
+
     expr_ctx = extract_task_result_proxies_to_context(task_ex.in_context)
 
     if task_ex.name in expr_ctx:
@@ -176,9 +179,6 @@ def evaluate_task_outbound_context(task_ex, include_result=True):
         TaskResultProxy in outbound context under <task_name> key.
     :return: Outbound task Data Flow context.
     """
-
-    if task_ex.state != states.SUCCESS:
-        return task_ex.in_context
 
     in_context = (copy.deepcopy(dict(task_ex.in_context))
                   if task_ex.in_context is not None else {})
