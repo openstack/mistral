@@ -77,6 +77,17 @@ wf1:
         result: "{$}"
 """
 
+WORKFLOW = """
+---
+version: '2.0'
+
+list_servers:
+
+  tasks:
+    list_servers:
+      action: nova.servers_list
+
+"""
 
 INVALID_WORKFLOW = """
 ---
@@ -148,6 +159,15 @@ class WorkflowServiceTest(base.DbTestCase):
             wf1_spec.get_input().get('param2'),
             utils.NotDefined
         )
+
+    def test_update_non_existing_workflow_failed(self):
+        exception = self.assertRaises(
+            exc.NotFoundException,
+            wf_service.update_workflows,
+            WORKFLOW
+        )
+
+        self.assertIn("Workflow not found", exception.message)
 
     def test_invalid_workflow_list(self):
         exception = self.assertRaises(

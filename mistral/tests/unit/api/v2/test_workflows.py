@@ -167,7 +167,7 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 404)
 
     @mock.patch.object(
-        db_api, "create_or_update_workflow_definition", MOCK_UPDATED_WF
+        db_api, "update_workflow_definition", MOCK_UPDATED_WF
     )
     def test_put(self):
         resp = self.app.put(
@@ -182,7 +182,7 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
     @mock.patch.object(
-        db_api, "create_or_update_workflow_definition", MOCK_WF_WITH_INPUT
+        db_api, "update_workflow_definition", MOCK_WF_WITH_INPUT
     )
     def test_put_with_input(self):
         resp = self.app.put(
@@ -197,7 +197,7 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertDictEqual({'workflows': [WF_WITH_DEFAULT_INPUT]}, resp.json)
 
     @mock.patch.object(
-        db_api, "create_or_update_workflow_definition", MOCK_NOT_FOUND
+        db_api, "update_workflow_definition", MOCK_NOT_FOUND
     )
     def test_put_not_found(self):
         resp = self.app.put(
