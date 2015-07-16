@@ -59,9 +59,13 @@ class NotFoundException(MistralException):
     message = "Object not found"
 
 
-class DBDuplicateEntry(MistralException):
+class DBDuplicateEntryException(MistralException):
     http_code = 409
     message = "Database object already exists"
+
+
+class DBQueryEntryException(MistralException):
+    http_code = 400
 
 
 class ActionException(MistralException):

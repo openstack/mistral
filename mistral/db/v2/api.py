@@ -107,13 +107,26 @@ def get_workflow_definition(name):
     return IMPL.get_workflow_definition(name)
 
 
+def get_workflow_definition_by_id(id):
+    return IMPL.get_workflow_definition_by_id(id)
+
+
 def load_workflow_definition(name):
     """Unlike get_workflow_definition this method is allowed to return None."""
     return IMPL.load_workflow_definition(name)
 
 
-def get_workflow_definitions():
-    return IMPL.get_workflow_definitions()
+# NOTE(xylan): We just leave filter param here for future usage
+def get_workflow_definitions(filters=None, limit=None, marker=None,
+                             sort_keys=None, sort_dirs=None, **kwargs):
+    return IMPL.get_workflow_definitions(
+        filters=filters,
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        **kwargs
+    )
 
 
 def create_workflow_definition(values):

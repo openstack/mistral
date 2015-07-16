@@ -109,7 +109,7 @@ class UtilsTest(base.BaseTest):
 
     def test_get_input_dict_from_input_string(self):
         input_string = 'param1, param2=2, param3="var3"'
-        input_dict = utils.get_input_dict_from_input_string(input_string)
+        input_dict = utils.get_dict_from_string(input_string)
 
         self.assertIn('param1', input_dict)
         self.assertIn('param2', input_dict)

@@ -21,6 +21,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral import utils
 
 WF_DEFINITION = """
 ---
@@ -37,6 +38,7 @@ flow:
 """
 
 WF_DB = models.WorkflowDefinition(
+    id='123e4567-e89b-12d3-a456-426655440000',
     name='flow',
     definition=WF_DEFINITION,
     created_at=datetime.datetime(1970, 1, 1),
@@ -45,6 +47,7 @@ WF_DB = models.WorkflowDefinition(
 )
 
 WF = {
+    'id': '123e4567-e89b-12d3-a456-426655440000',
     'name': 'flow',
     'definition': WF_DEFINITION,
     'created_at': '1970-01-01 00:00:00',
@@ -140,7 +143,7 @@ MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
-MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
+MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 
 class TestWorkflowsController(base.FunctionalTest):
@@ -292,6 +295,75 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['workflows']), 0)
+
+    @mock.patch.object(db_api, "get_workflow_definitions", MOCK_WFS)
+    def test_get_all_pagination(self):
+        resp = self.app.get(
+            '/v2/workflows?limit=1&sort_keys=id,name')
+
+        self.assertEqual(resp.status_int, 200)
+
+        self.assertIn('next', resp.json)
+
+        self.assertEqual(len(resp.json['workflows']), 1)
+        self.assertDictEqual(WF, resp.json['workflows'][0])
+
+        param_dict = utils.get_dict_from_string(
+            resp.json['next'].split('?')[1],
+            delimiter='&'
+        )
+
+        expected_dict = {
+            'marker': '123e4567-e89b-12d3-a456-426655440000',
+            'limit': 1,
+            'sort_keys': 'id,name',
+            'sort_dirs': 'asc,asc'
+        }
+
+        self.assertDictEqual(expected_dict, param_dict)
+
+    def test_get_all_pagination_limit_negative(self):
+        resp = self.app.get(
+            '/v2/workflows?limit=-1&sort_keys=id,name&sort_dirs=asc,asc',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn("Limit must be positive", resp.body)
+
+    def test_get_all_pagination_limit_not_integer(self):
+        resp = self.app.get(
+            '/v2/workflows?limit=1.1&sort_keys=id,name&sort_dirs=asc,asc',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn("unable to convert to int", resp.body)
+
+    def test_get_all_pagination_invalid_sort_dirs_length(self):
+        resp = self.app.get(
+            '/v2/workflows?limit=1&sort_keys=id,name&sort_dirs=asc,asc,asc',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn(
+            "Length of sort_keys must be equal or greater than sort_dirs",
+            resp.body
+        )
+
+    def test_get_all_pagination_unknown_direction(self):
+        resp = self.app.get(
+            '/v2/workflows?limit=1&sort_keys=id&sort_dirs=nonexist',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn("Unknown sort direction", resp.body)
 
     def test_validate(self):
         resp = self.app.post(

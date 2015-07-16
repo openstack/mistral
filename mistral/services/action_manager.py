@@ -65,7 +65,7 @@ def register_action_class(name, action_class_str, attributes,
         LOG.debug("Registering action in DB: %s" % name)
 
         db_api.create_action_definition(values)
-    except exc.DBDuplicateEntry:
+    except exc.DBDuplicateEntryException:
         LOG.debug("Action %s already exists in DB." % name)
 
 

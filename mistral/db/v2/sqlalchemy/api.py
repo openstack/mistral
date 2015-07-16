@@ -19,6 +19,7 @@ import sys
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_db import sqlalchemy as oslo_sqlalchemy
+from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import timeutils
 import sqlalchemy as sa
@@ -115,6 +116,23 @@ def _secure_query(model):
     return query
 
 
+def _paginate_query(model, limit=None, marker=None, sort_keys=None,
+                    sort_dirs=None, query=None):
+    if not query:
+        query = _secure_query(model)
+
+    query = db_utils.paginate_query(
+        query,
+        model,
+        limit,
+        sort_keys if sort_keys else {},
+        marker=marker,
+        sort_dirs=sort_dirs
+    )
+
+    return query.all()
+
+
 def _delete_all(model, session=None, **kwargs):
     _secure_query(model).filter_by(**kwargs).delete()
 
@@ -166,7 +184,7 @@ def create_workbook(values, session=None):
     try:
         wb.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for WorkbookDefinition: %s" % e.columns
         )
 
@@ -216,6 +234,7 @@ def delete_workbooks(**kwargs):
 
 # Workflow definitions.
 
+
 def get_workflow_definition(name):
     wf_def = _get_workflow_definition(name)
 
@@ -227,12 +246,40 @@ def get_workflow_definition(name):
     return wf_def
 
 
+def get_workflow_definition_by_id(id):
+    wf_def = _get_workflow_definition_by_id(id)
+
+    if not wf_def:
+        raise exc.NotFoundException(
+            "Workflow not found [workflow_id=%s]" % id
+        )
+
+    return wf_def
+
+
 def load_workflow_definition(name):
     return _get_workflow_definition(name)
 
 
-def get_workflow_definitions(**kwargs):
-    return _get_collection_sorted_by_name(models.WorkflowDefinition, **kwargs)
+# NOTE(xylan): We just leave filter param here for future usage
+def get_workflow_definitions(filters=None, limit=None, marker=None,
+                             sort_keys=None, sort_dirs=None, **kwargs):
+    query = _secure_query(models.WorkflowDefinition)
+
+    try:
+        return _paginate_query(
+            models.WorkflowDefinition,
+            limit,
+            marker,
+            sort_keys,
+            sort_dirs,
+            query
+        )
+    except Exception as e:
+        raise exc.DBQueryEntryException(
+            "Failed when quering database, error type: %s, "
+            "error message: %s" % (e.__class__.__name__, e.message)
+        )
 
 
 @b.session_aware()
@@ -244,7 +291,7 @@ def create_workflow_definition(values, session=None):
     try:
         wf_def.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for WorkflowDefinition: %s" % e.columns
         )
 
@@ -293,6 +340,10 @@ def _get_workflow_definition(name):
     return _get_db_object_by_name(models.WorkflowDefinition, name)
 
 
+def _get_workflow_definition_by_id(id):
+    return _get_db_object_by_id(models.WorkflowDefinition, id)
+
+
 # Action definitions.
 
 def get_action_definition(name):
@@ -323,7 +374,7 @@ def create_action_definition(values, session=None):
     try:
         a_def.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for action %s: %s" % (a_def.name, e.columns)
         )
 
@@ -406,7 +457,7 @@ def create_execution(values, session=None):
     try:
         ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for Execution: %s" % e.columns
         )
 
@@ -492,7 +543,7 @@ def create_action_execution(values, session=None):
     try:
         a_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for ActionExecution: %s" % e.columns
         )
 
@@ -578,7 +629,7 @@ def create_workflow_execution(values, session=None):
     try:
         wf_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for WorkflowExecution: %s" % e.columns
         )
 
@@ -656,7 +707,7 @@ def create_task_execution(values, session=None):
     try:
         task_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for TaskExecution: %s" % e.columns
         )
 
@@ -716,8 +767,9 @@ def create_delayed_call(values, session=None):
     try:
         delayed_call.save(session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry("Duplicate entry for DelayedCall: %s"
-                                   % e.columns)
+        raise exc.DBDuplicateEntryException(
+            "Duplicate entry for DelayedCall: %s" % e.columns
+        )
 
     return delayed_call
 
@@ -846,14 +898,14 @@ def create_cron_trigger(values, session=None):
     try:
         cron_trigger.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for cron trigger %s: %s"
             % (cron_trigger.name, e.columns)
         )
     # TODO(nmakhotkin): Remove this 'except' after fixing
     # https://bugs.launchpad.net/oslo.db/+bug/1458583.
     except db_exc.DBError as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for cron trigger: %s" % e
         )
 
@@ -935,7 +987,7 @@ def create_environment(values, session=None):
     try:
         env.save(session=session)
     except db_exc.DBDuplicateEntry as e:
-        raise exc.DBDuplicateEntry(
+        raise exc.DBDuplicateEntryException(
             "Duplicate entry for Environment: %s" % e.columns
         )
 

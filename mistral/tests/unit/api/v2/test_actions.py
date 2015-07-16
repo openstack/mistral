@@ -90,7 +90,7 @@ MOCK_UPDATED_ACTION = mock.MagicMock(return_value=UPDATED_ACTION_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
-MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntry())
+MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 
 class TestActionsController(base.FunctionalTest):
