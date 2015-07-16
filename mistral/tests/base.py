@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import pkg_resources as pkg
 import sys
 import time
@@ -73,6 +74,25 @@ def register_action_class(name, cls, attributes=None, desc=None):
         attributes or {},
         input_str=i_utils.get_arg_list_as_str(cls.__init__)
     )
+
+
+class FakeHTTPResponse(object):
+    def __init__(self, text, status_code, reason=None, headers=None,
+                 history=None, encoding='utf8', url='', cookies=None,
+                 elapsed=0):
+        self.text = text
+        self.content = text
+        self.status_code = status_code
+        self.reason = reason
+        self.headers = headers or {}
+        self.history = history
+        self.encoding = encoding
+        self.url = url
+        self.cookies = cookies
+        self.elapsed = elapsed
+
+    def json(self):
+        return json.loads(self.text)
 
 
 class BaseTest(base.BaseTestCase):

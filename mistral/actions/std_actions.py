@@ -26,7 +26,7 @@ from mistral.actions import base
 from mistral import exceptions as exc
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
-
+from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -186,26 +186,33 @@ class HTTPAction(base.Action):
         except Exception as e:
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
 
-        LOG.info("HTTP action response:\n%s\n%s" %
-                 (resp.status_code, resp.content))
+        LOG.info(
+            "HTTP action response:\n%s\n%s" % (resp.status_code, resp.content)
+        )
 
-        # TODO(everyone): Not sure we need to have this check here in base HTTP
-        #                 action.
-        if resp.status_code not in range(200, 307):
-            raise exc.ActionException("Received error HTTP code: %s" %
-                                      resp.status_code)
-
-        # Construct all important resp data in readable structure.
-        headers = dict(resp.headers.items())
-        status = resp.status_code
-
+        # Represent important resp data as a dictionary.
         try:
             content = resp.json()
         except Exception as e:
             LOG.debug("HTTP action response is not json.")
             content = resp.content
 
-        return {'content': content, 'headers': headers, 'status': status}
+        _result = {
+            'content': content,
+            'status': resp.status_code,
+            'headers': dict(resp.headers.items()),
+            'url': resp.url,
+            'history': resp.history,
+            'encoding': resp.encoding,
+            'reason': resp.reason,
+            'cookies': resp.cookies,
+            'elapsed': resp.elapsed
+        }
+
+        if resp.status_code not in range(200, 307):
+            return wf_utils.Result(error=_result)
+
+        return _result
 
     def test(self):
         # TODO(rakhmerov): Implement.

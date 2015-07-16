@@ -21,42 +21,48 @@ import requests
 
 from mistral.actions import std_actions as std
 from mistral.tests import base
+from mistral.workflow import utils as wf_utils
 
 
-URL = "http://some_url"
+URL = 'http://some_url'
 
 DATA = {
-    "server": {
-        "id": "12345",
-        "metadata": {
-            "name": "super_server"
+    'server': {
+        'id': '12345',
+        'metadata': {
+            'name': 'super_server'
         }
     }
 }
 
 
-def get_fake_response():
-    response = mock.Mock()
+def get_success_fake_response():
+    return base.FakeHTTPResponse(
+        json.dumps(DATA),
+        200,
+        headers={'Content-Type': 'application/json'}
+    )
 
-    response.content = json.dumps(DATA)
-    response.json = mock.MagicMock(return_value=DATA)
-    response.headers = {'Content-Type': 'application/json'}
-    response.status_code = 200
 
-    return response
+def get_error_fake_response():
+    return base.FakeHTTPResponse(
+        json.dumps(DATA),
+        401
+    )
 
 
 class HTTPActionTest(base.BaseTest):
-    @mock.patch.object(requests, "request")
+    @mock.patch.object(requests, 'request')
     def test_http_action(self, mocked_method):
-        mocked_method.return_value = get_fake_response()
+        mocked_method.return_value = get_success_fake_response()
 
         action = std.HTTPAction(
             url=URL,
-            method="POST",
+            method='POST',
             body=DATA,
             timeout=20,
-            allow_redirects=True)
+            allow_redirects=True
+        )
 
         DATA_STR = json.dumps(DATA)
 
@@ -71,7 +77,7 @@ class HTTPActionTest(base.BaseTest):
         self.assertEqual(200, result['status'])
 
         mocked_method.assert_called_with(
-            "POST",
+            'POST',
             URL,
             data=DATA_STR,
             headers=None,
@@ -84,15 +90,52 @@ class HTTPActionTest(base.BaseTest):
             verify=None
         )
 
-    @mock.patch.object(requests, "request")
-    def test_http_action_with_auth(self, mocked_method):
-        mocked_method.return_value = get_fake_response()
+    @mock.patch.object(requests, 'request')
+    def test_http_action_error_result(self, mocked_method):
+        mocked_method.return_value = get_error_fake_response()
 
         action = std.HTTPAction(
             url=URL,
-            method="POST",
+            method='POST',
             body=DATA,
-            auth="user:password")
+            timeout=20,
+            allow_redirects=True
+        )
+
+        DATA_STR = json.dumps(DATA)
+
+        self.assertEqual(DATA_STR, action.body)
+        self.assertEqual(URL, action.url)
+
+        result = action.run()
+
+        self.assertIsInstance(result, wf_utils.Result)
+        self.assertEqual(401, result.error['status'])
+
+        mocked_method.assert_called_with(
+            'POST',
+            URL,
+            data=DATA_STR,
+            headers=None,
+            cookies=None,
+            params=None,
+            timeout=20,
+            auth=None,
+            allow_redirects=True,
+            proxies=None,
+            verify=None
+        )
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_with_auth(self, mocked_method):
+        mocked_method.return_value = get_success_fake_response()
+
+        action = std.HTTPAction(
+            url=URL,
+            method='POST',
+            body=DATA,
+            auth='user:password'
+        )
 
         data_str = json.dumps(DATA)
 
@@ -107,7 +150,7 @@ class HTTPActionTest(base.BaseTest):
         self.assertEqual(200, result['status'])
 
         mocked_method.assert_called_with(
-            "POST",
+            'POST',
             URL,
             data=data_str,
             headers=None,
