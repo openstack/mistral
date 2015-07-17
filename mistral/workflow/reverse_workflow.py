@@ -113,7 +113,18 @@ class ReverseWorkflowController(base.WorkflowController):
             if self._is_satisfied_task(t_s)
         ]
 
+    def _task_exists(self, task_name):
+        return self.wf_spec.get_tasks()[task_name] is not None
+
     def _is_satisfied_task(self, task_spec):
+        task_requires = self._get_task_requires(task_spec)
+
+        for req in task_requires:
+            if not self._task_exists(req):
+                raise exc.WorkflowException(
+                    "Task '%s' not found." % req
+                )
+
         task_ex = wf_utils.find_task_execution(self.wf_ex, task_spec)
 
         if task_ex:
