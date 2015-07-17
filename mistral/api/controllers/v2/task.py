@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,7 +23,10 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
+from mistral.engine import rpc
+from mistral import exceptions as exc
 from mistral.utils import rest_utils
+from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
 
@@ -91,22 +93,22 @@ class Tasks(resource.Resource):
         return cls(tasks=[Task.sample()])
 
 
+def _get_task_resource_with_result(task_ex):
+    task = Task.from_dict(task_ex.to_dict())
+    task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
+
+    return task
+
+
 def _get_task_resources_with_results(wf_ex_id=None):
     filters = {}
 
     if wf_ex_id:
         filters['workflow_execution_id'] = wf_ex_id
 
-    tasks = []
     with db_api.transaction():
-        task_execs = db_api.get_task_executions(**filters)
-        for task_ex in task_execs:
-            task = Task.from_dict(task_ex.to_dict())
-            task.result = json.dumps(
-                data_flow.get_task_execution_result(task_ex)
-            )
-
-            tasks += [task]
+        task_exs = db_api.get_task_executions(**filters)
+        tasks = [_get_task_resource_with_result(t_e) for t_e in task_exs]
 
     return Tasks(tasks=tasks)
 
@@ -121,11 +123,8 @@ class TasksController(rest.RestController):
         LOG.info("Fetch task [id=%s]" % id)
 
         task_ex = db_api.get_task_execution(id)
-        task = Task.from_dict(task_ex.to_dict())
 
-        task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
-
-        return task
+        return _get_task_resource_with_result(task_ex)
 
     @wsme_pecan.wsexpose(Tasks)
     def get_all(self):
@@ -133,6 +132,52 @@ class TasksController(rest.RestController):
         LOG.info("Fetch tasks")
 
         return _get_task_resources_with_results()
+
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose(Task, wtypes.text, bool, body=Task)
+    def put(self, id, reset, task):
+        """Update the specified task execution.
+
+        :param id: Task execution ID.
+        :param task: Task execution object.
+        """
+        LOG.info("Update task execution [id=%s, task=%s]" % (id, task))
+
+        task_ex = db_api.get_task_execution(id)
+        task_spec = spec_parser.get_task_spec(task_ex.spec)
+        task_name = task.name or None
+
+        if task_name and task_name != task_ex.name:
+            raise exc.WorkflowException('Task name does not match.')
+
+        wf_ex = db_api.get_workflow_execution(task_ex.workflow_execution_id)
+        wf_name = task.workflow_name or None
+
+        if wf_name and wf_name != wf_ex.name:
+            raise exc.WorkflowException('Workflow name does not match.')
+
+        if task.state != states.RUNNING:
+            raise exc.WorkflowException('Invalid task state. Only updating '
+                                        'task to rerun is supported.')
+
+        if task_ex.state != states.ERROR:
+            raise exc.WorkflowException('The current task execution must be '
+                                        'in ERROR for rerun. Only updating '
+                                        'task to rerun is supported.')
+
+        if not task_spec.get_with_items() and not reset:
+            raise exc.WorkflowException('Only with-items task has the '
+                                        'option to not reset.')
+
+        rpc.get_engine_client().rerun_workflow(
+            wf_ex.id,
+            task_ex.id,
+            reset
+        )
+
+        task_ex = db_api.get_task_execution(id)
+
+        return _get_task_resource_with_result(task_ex)
 
 
 class ExecutionTasksController(rest.RestController):
