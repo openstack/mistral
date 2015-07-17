@@ -25,7 +25,12 @@ _ENFORCER = None
 
 def setup(app):
     if cfg.CONF.pecan.auth_enable:
-        return auth_token.AuthProtocol(app, dict(cfg.CONF.keystone_authtoken))
+        conf = dict(cfg.CONF.keystone_authtoken)
+
+        # Change auth decisions of requests to the app itself.
+        conf.update({'delay_auth_decision': True})
+
+        return auth_token.AuthProtocol(app, conf)
     else:
         return app
 

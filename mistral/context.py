@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright 2013 - Mirantis, Inc.
 #
@@ -19,6 +18,7 @@ from keystoneclient.v3 import client as keystone_client
 from oslo_config import cfg
 import oslo_messaging as messaging
 from oslo_serialization import jsonutils
+import pecan
 from pecan import hooks
 
 from mistral import exceptions as exc
@@ -28,6 +28,7 @@ from mistral import utils
 CONF = cfg.CONF
 
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
+ALLOWED_WITHOUT_AUTH = ['/', '/v2/']
 
 
 class BaseContext(object):
@@ -157,7 +158,6 @@ class JsonPayloadSerializer(messaging.NoOpSerializer):
 
 
 class RpcContextSerializer(messaging.Serializer):
-
     def __init__(self, base=None):
         self._base = base or messaging.NoOpSerializer()
 
@@ -181,6 +181,33 @@ class RpcContextSerializer(messaging.Serializer):
         set_ctx(ctx)
 
         return ctx
+
+
+class AuthHook(hooks.PecanHook):
+    def before(self, state):
+        if state.request.path in ALLOWED_WITHOUT_AUTH:
+            return
+
+        if CONF.pecan.auth_enable:
+            # Note(nmakhotkin): Since we have deferred authentication,
+            # need to check for auth manually (check for corresponding
+            # headers according to keystonemiddleware docs.
+            identity_status = state.request.headers.get('X-Identity-Status')
+            service_identity_status = state.request.headers.get(
+                'X-Service-Identity-Status'
+            )
+
+            if (identity_status == 'Confirmed'
+                    or service_identity_status == 'Confirmed'):
+                return
+
+            if state.request.headers.get('X-Auth-Token'):
+                msg = ("Auth token is invalid: %s"
+                       % state.request.headers['X-Auth-Token'])
+            else:
+                msg = 'Authentication required'
+
+            pecan.abort(status_code=401, detail=msg)
 
 
 class ContextHook(hooks.PecanHook):
