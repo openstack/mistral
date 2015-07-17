@@ -157,11 +157,11 @@ def store_action_result(action_ex, result):
     if result.is_success():
         action_ex.state = states.SUCCESS
         action_ex.output = {'result': result.data}
-        action_ex.accepted = True
     else:
         action_ex.state = states.ERROR
         action_ex.output = {'result': result.error}
-        action_ex.accepted = False
+
+    action_ex.accepted = True
 
     _log_action_result(action_ex, prev_state, action_ex.state, result)
 
