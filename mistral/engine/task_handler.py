@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@ from mistral.engine import action_handler
 from mistral.engine import policies
 from mistral.engine import rpc
 from mistral.engine import utils as e_utils
+from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.services import scheduler
 from mistral import utils
@@ -38,7 +40,7 @@ from mistral.workflow import with_items
 LOG = logging.getLogger(__name__)
 
 
-def run_existing_task(task_ex_id):
+def run_existing_task(task_ex_id, reset=True):
     """This function runs existing task execution.
 
     It is needed mostly by scheduler.
@@ -48,8 +50,34 @@ def run_existing_task(task_ex_id):
     wf_def = db_api.get_workflow_definition(task_ex.workflow_name)
     wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
+    # Throw exception if the existing task already succeeded.
+    if task_ex.state == states.SUCCESS:
+        raise exc.EngineException('Reruning existing task that already '
+                                  'succeeded is not supported.')
+
+    # Exit if the existing task failed and reset is not instructed.
+    # For a with-items task without reset, re-running the existing
+    # task will re-run the failed and unstarted items.
+    if (task_ex.state == states.ERROR and not reset and
+            not task_spec.get_with_items()):
+        return
+
+    # Reset state of processed task and related action executions.
+    if reset:
+        action_exs = task_ex.executions
+    else:
+        action_exs = db_api.get_action_executions(
+            task_execution_id=task_ex.id,
+            state=states.ERROR,
+            accepted=True
+        )
+
+    for action_ex in action_exs:
+        action_ex.accepted = False
+
     # Explicitly change task state to RUNNING.
     task_ex.state = states.RUNNING
+    task_ex.processed = False
 
     _run_existing_task(task_ex, task_spec, wf_spec)
 
@@ -66,10 +94,23 @@ def _run_existing_task(task_ex, task_spec, wf_spec):
     if task_spec.get_with_items():
         with_items.prepare_runtime_context(task_ex, task_spec, input_dicts)
 
+    action_exs = db_api.get_action_executions(
+        task_execution_id=task_ex.id,
+        state=states.SUCCESS,
+        accepted=True
+    )
+
+    with_items_indices = [
+        action_ex.runtime_context['with_items_index']
+        for action_ex in action_exs
+        if 'with_items_index' in action_ex.runtime_context
+    ]
+
     # In some cases we can have no input, e.g. in case of 'with-items'.
     if input_dicts:
         for index, input_d in enumerate(input_dicts):
-            _run_action_or_workflow(task_ex, task_spec, input_d, index)
+            if index not in with_items_indices:
+                _run_action_or_workflow(task_ex, task_spec, input_d, index)
     else:
         _schedule_noop_action(task_ex, task_spec)
 

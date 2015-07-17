@@ -33,7 +33,7 @@ _VALID_TRANSITIONS = {
     PAUSED: [RUNNING, ERROR],
     DELAYED: [RUNNING, ERROR],
     SUCCESS: [],
-    ERROR: []
+    ERROR: [RUNNING]
 }
 
 
