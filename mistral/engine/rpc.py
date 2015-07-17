@@ -157,19 +157,37 @@ class EngineServer(object):
 
         return self._engine.pause_workflow(execution_id)
 
-    def resume_workflow(self, rpc_ctx, execution_id):
-        """Receives calls over RPC to resume workflows on engine.
+    def rerun_workflow(self, rpc_ctx, wf_ex_id, task_ex_id, reset=True):
+        """Receives calls over RPC to rerun workflows on engine.
 
         :param rpc_ctx: RPC request context.
+        :param wf_ex_id: Workflow execution id.
+        :param task_ex_id: Task execution id.
+        :param reset: If true, then purge action execution for the task.
         :return: Workflow execution.
         """
 
         LOG.info(
-            "Received RPC request 'resume_workflow'[rpc_ctx=%s,"
-            " execution_id=%s]" % (rpc_ctx, execution_id)
+            "Received RPC request 'rerun_workflow'[rpc_ctx=%s, "
+            "wf_ex_id=%s, task_ex_id=%s]" % (rpc_ctx, wf_ex_id, task_ex_id)
         )
 
-        return self._engine.resume_workflow(execution_id)
+        return self._engine.rerun_workflow(wf_ex_id, task_ex_id, reset)
+
+    def resume_workflow(self, rpc_ctx, wf_ex_id):
+        """Receives calls over RPC to resume workflows on engine.
+
+        :param rpc_ctx: RPC request context.
+        :param wf_ex_id: Workflow execution id.
+        :return: Workflow execution.
+        """
+
+        LOG.info(
+            "Received RPC request 'resume_workflow'[rpc_ctx=%s, "
+            "wf_ex_id=%s]" % (rpc_ctx, wf_ex_id)
+        )
+
+        return self._engine.resume_workflow(wf_ex_id)
 
     def stop_workflow(self, rpc_ctx, execution_id, state, message=None):
         """Receives calls over RPC to stop workflows on engine.
@@ -325,16 +343,36 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
-    def resume_workflow(self, execution_id):
+    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True):
+        """Rerun the workflow with the given execution id
+        at the specific task execution id.
+
+        :param wf_ex_id: Workflow execution id.
+        :param task_ex_id: Task execution id.
+        :param reset: If true, then purge action execution for the task.
+        :return: Workflow execution.
+        """
+
+        return self._client.call(
+            auth_ctx.ctx(),
+            'rerun_workflow',
+            wf_ex_id=wf_ex_id,
+            task_ex_id=task_ex_id,
+            reset=reset
+        )
+
+    @wrap_messaging_exception
+    def resume_workflow(self, wf_ex_id):
         """Resumes the workflow with the given execution id.
 
+        :param wf_ex_id: Workflow execution id.
         :return: Workflow execution.
         """
 
         return self._client.call(
             auth_ctx.ctx(),
             'resume_workflow',
-            execution_id=execution_id
+            wf_ex_id=wf_ex_id
         )
 
     @wrap_messaging_exception

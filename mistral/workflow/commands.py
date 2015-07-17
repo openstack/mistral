@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -61,10 +62,11 @@ class RunTask(WorkflowCommand):
 class RunExistingTask(WorkflowCommand):
     """Command for running already existent task."""
 
-    def __init__(self, task_ex):
+    def __init__(self, task_ex, reset=True):
         wf_ex = task_ex.workflow_execution
         task_spec = spec_parser.get_task_spec(task_ex.spec)
         self.task_ex = task_ex
+        self.reset = reset
 
         super(RunExistingTask, self).__init__(
             wf_ex, task_spec, task_ex.in_context
