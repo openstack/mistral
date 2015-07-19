@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
-
 import mock
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -23,6 +21,7 @@ import testtools
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
+from mistral.tests import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -98,24 +97,11 @@ wf2_with_items:
 """
 
 
-class FakeResponse(object):
-
-    def __init__(self, text, status_code, reason):
-        self.text = text
-        self.content = text
-        self.headers = {}
-        self.status_code = status_code
-        self.reason = reason
-
-    def json(self):
-        return json.loads(self.text)
-
-
 class ActionDefaultTest(base.EngineTestCase):
 
     @mock.patch.object(
         requests, 'request',
-        mock.MagicMock(return_value=FakeResponse('', 200, 'OK')))
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
     @mock.patch.object(
         std_actions.HTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
@@ -140,7 +126,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
     @mock.patch.object(
         requests, 'request',
-        mock.MagicMock(return_value=FakeResponse('', 200, 'OK')))
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
     @mock.patch.object(
         std_actions.HTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
@@ -166,7 +152,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
     @mock.patch.object(
         requests, 'request',
-        mock.MagicMock(return_value=FakeResponse('', 200, 'OK')))
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
     @mock.patch.object(
         std_actions.HTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
@@ -205,7 +191,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
     @mock.patch.object(
         requests, 'request',
-        mock.MagicMock(return_value=FakeResponse('', 200, 'OK')))
+        mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
     @mock.patch.object(
         std_actions.HTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
