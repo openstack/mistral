@@ -104,3 +104,25 @@ def find_incomplete_tasks(wf_ex):
 
 def find_error_tasks(wf_ex):
     return find_tasks_with_state(wf_ex, states.ERROR)
+
+
+def construct_fail_info_message(wf_ctrl, wf_ex):
+    # Try to find where error is exactly.
+    failed_tasks = filter(
+        lambda t: not wf_ctrl.is_error_handled_for(t),
+        find_error_tasks(wf_ex)
+    )
+
+    errors = []
+
+    for t in failed_tasks:
+        errors += [
+            ("error in task '%s': "
+             "%s" % (t.name, str(ex.output.get('result', 'Unknown')))
+             if ex.output else 'Unknown')
+            for ex in t.executions
+        ]
+
+    state_info = "Failure caused by %s" % ';\n '.join(errors)
+
+    return state_info

@@ -90,6 +90,9 @@ class ReverseWorkflowController(base.WorkflowController):
             )
         )
 
+    def is_error_handled_for(self, task_ex):
+        return task_ex.state != states.ERROR
+
     def all_errors_handled(self):
         return len(wf_utils.find_error_tasks(self.wf_ex)) == 0
 
