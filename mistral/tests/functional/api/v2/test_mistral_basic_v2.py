@@ -755,6 +755,21 @@ class ActionExecutionTestsV2(base.TestCase):
         )
 
     @test.attr(type='sanity')
+    def test_run_action_std_http(self):
+        resp, body = self.client.post_json(
+            'action_executions',
+            {
+                'name': 'std.http',
+                'input': '{"url": "http://wiki.openstack.org"}'
+            }
+        )
+
+        self.assertEqual(201, resp.status)
+        body = json.loads(body)
+        output = json.loads(body['output'])
+        self.assertIsInstance(output['result'], dict)
+
+    @test.attr(type='sanity')
     def test_create_action_execution(self):
         resp, body = self.client.post_json(
             'action_executions',

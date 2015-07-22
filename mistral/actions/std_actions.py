@@ -205,8 +205,8 @@ class HTTPAction(base.Action):
             'history': resp.history,
             'encoding': resp.encoding,
             'reason': resp.reason,
-            'cookies': resp.cookies,
-            'elapsed': resp.elapsed
+            'cookies': dict(resp.cookies.items()),
+            'elapsed': resp.elapsed.total_seconds()
         }
 
         if resp.status_code not in range(200, 307):
