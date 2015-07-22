@@ -767,7 +767,22 @@ class ActionExecutionTestsV2(base.TestCase):
         self.assertEqual(201, resp.status)
         body = json.loads(body)
         output = json.loads(body['output'])
-        self.assertIsInstance(output['result'], dict)
+        self.assertTrue(output['result']['status'] in range(200, 307))
+
+    @test.attr(type='sanity')
+    def test_run_action_std_http_error(self):
+        resp, body = self.client.post_json(
+            'action_executions',
+            {
+                'name': 'std.http',
+                'input': '{"url": "http://www.google.ru/not-found-test"}'
+            }
+        )
+
+        self.assertEqual(201, resp.status)
+        body = json.loads(body)
+        output = json.loads(body['output'])
+        self.assertEqual(404, output['result']['status'])
 
     @test.attr(type='sanity')
     def test_create_action_execution(self):

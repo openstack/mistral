@@ -120,7 +120,7 @@ class DefaultEngine(base.Engine):
 
                 return action_ex.get_clone()
             else:
-                result = action_handler.run_action(
+                output = action_handler.run_action(
                     action_def,
                     resolved_action_input,
                     target=params.get('target'),
@@ -131,7 +131,7 @@ class DefaultEngine(base.Engine):
                     name=action_name,
                     description=description,
                     input=action_input,
-                    output={'result': result}
+                    output=output
                 )
 
     def on_task_state_change(self, task_ex_id, state):
