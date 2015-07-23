@@ -72,7 +72,10 @@ engine_opts = [
     cfg.StrOpt('topic', default='mistral_engine',
                help='The message topic that the engine listens on.'),
     cfg.StrOpt('version', default='1.0',
-               help='The version of the engine.')
+               help='The version of the engine.'),
+    cfg.IntOpt('execution_field_size_limit_kb', default=1024,
+               help='The default maximum size in KB of large text fields '
+                    'of runtime execution objects. Use -1 for no limit.'),
 ]
 
 executor_opts = [

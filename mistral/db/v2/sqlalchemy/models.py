@@ -19,13 +19,20 @@ import sqlalchemy as sa
 from sqlalchemy import event
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
+import sys
+
+from oslo_config import cfg
+from oslo_log import log as logging
 
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
+from mistral import exceptions as exc
 from mistral import utils
 
 
 # Definition objects.
+
+LOG = logging.getLogger(__name__)
 
 
 class Definition(mb.MistralSecureModelBase):
@@ -106,7 +113,7 @@ class Execution(mb.MistralSecureModelBase):
     # Runtime context like iteration_no of a repeater.
     # Effectively internal engine properties which will be used to determine
     # execution of a task.
-    runtime_context = sa.Column(st.JsonDictType())
+    runtime_context = sa.Column(st.JsonLongDictType())
 
 
 class ActionExecution(Execution):
@@ -118,7 +125,7 @@ class ActionExecution(Execution):
 
     # Main properties.
     accepted = sa.Column(sa.Boolean(), default=False)
-    input = sa.Column(st.JsonDictType(), nullable=True)
+    input = sa.Column(st.JsonLongDictType(), nullable=True)
 
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
 
@@ -131,10 +138,10 @@ class WorkflowExecution(ActionExecution):
     }
 
     # Main properties.
-    params = sa.Column(st.JsonDictType())
+    params = sa.Column(st.JsonLongDictType())
 
     # TODO(rakhmerov): We need to get rid of this field at all.
-    context = sa.Column(st.JsonDictType())
+    context = sa.Column(st.JsonLongDictType())
 
 
 class TaskExecution(Execution):
@@ -145,7 +152,7 @@ class TaskExecution(Execution):
     }
 
     # Main properties.
-    action_spec = sa.Column(st.JsonDictType())
+    action_spec = sa.Column(st.JsonLongDictType())
 
     # Whether the task is fully processed (publishing and calculating commands
     # after it). It allows to simplify workflow controller implementations
@@ -154,7 +161,7 @@ class TaskExecution(Execution):
 
     # Data Flow properties.
     in_context = sa.Column(st.JsonLongDictType())
-    published = sa.Column(st.JsonDictType())
+    published = sa.Column(st.JsonLongDictType())
 
 
 for cls in utils.iter_subclasses(Execution):
@@ -165,6 +172,40 @@ for cls in utils.iter_subclasses(Execution):
         lambda t, v, o, i: utils.cut(v, 1020),
         retval=True
     )
+
+
+def validate_long_type_length(cls, field_name, value):
+    """Makes sure the value does not exceeds the maximum size."""
+    if value:
+        # Get the configured limit.
+        size_limit_kb = cfg.CONF.engine.execution_field_size_limit_kb
+
+        # If the size is unlimited.
+        if (size_limit_kb < 0):
+            return
+
+        size_kb = sys.getsizeof(str(value)) / 1024
+        if (size_kb > size_limit_kb):
+            LOG.error(
+                "Size limit %dKB exceed for class [%s], "
+                "field %s of size %dKB.",
+                size_limit_kb, str(cls), field_name, size_kb
+            )
+            raise exc.SizeLimitExceededException(field_name, size_kb,
+                                                 size_limit_kb)
+
+
+def register_length_validator(attr_name):
+    """Register an event listener on the attribute that will
+    validate the size every time a 'set' occurs.
+    """
+    for cls in utils.iter_subclasses(Execution):
+        if hasattr(cls, attr_name):
+            event.listen(
+                getattr(cls, attr_name),
+                'set',
+                lambda t, v, o, i: validate_long_type_length(cls, attr_name, v)
+            )
 
 # Many-to-one for 'Execution' and 'TaskExecution'.
 
@@ -296,3 +337,8 @@ class CronTrigger(mb.MistralSecureModelBase):
 
 # Register all hooks related to secure models.
 mb.register_secure_model_hooks()
+
+# Register an event listener to verify that the size of all the long columns
+# affected by the user do not exceed the limit configuration.
+for attr_name in ['input', 'output', 'params', 'published']:
+    register_length_validator(attr_name)
