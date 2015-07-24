@@ -142,9 +142,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             task_ex = db_api.get_task_execution(task_ex_id)
             # TODO(rakhmerov): The method is mostly needed for policy and
             # we are supposed to get the same action execution as when the
-            # policy worked. But by the moment this method is called the
-            # last execution object may have changed. It's a race condition.
-            execution = task_ex.executions[-1]
+            # policy worked.
 
             wf_ex_id = task_ex.workflow_execution_id
 
@@ -161,13 +159,13 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             task_ex.state = state
 
-            self._on_task_state_change(task_ex, wf_ex, action_ex=execution)
+            self._on_task_state_change(task_ex, wf_ex)
 
-    def _on_task_state_change(self, task_ex, wf_ex, action_ex=None):
+    def _on_task_state_change(self, task_ex, wf_ex):
         task_spec = spec_parser.get_task_spec(task_ex.spec)
         wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-        if states.is_completed(task_ex.state):
+        if task_handler.is_task_completed(task_ex, task_spec):
             task_handler.after_task_complete(task_ex, task_spec, wf_spec)
 
             # Ignore DELAYED state.
@@ -184,6 +182,11 @@ class DefaultEngine(base.Engine, coordination.Service):
             self._dispatch_workflow_commands(wf_ex, cmds)
 
             self._check_workflow_completion(wf_ex, wf_ctrl)
+        elif task_handler.need_to_continue(task_ex, task_spec):
+            # Re-run existing task.
+            cmds = [commands.RunExistingTask(task_ex, reset=False)]
+
+            self._dispatch_workflow_commands(wf_ex, cmds)
 
     @staticmethod
     def _check_workflow_completion(wf_ex, wf_ctrl):
@@ -233,7 +236,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                 if states.is_paused_or_completed(wf_ex.state):
                     return action_ex
 
-                self._on_task_state_change(task_ex, wf_ex, action_ex)
+                self._on_task_state_change(task_ex, wf_ex)
 
                 return action_ex.get_clone()
         except Exception as e:
