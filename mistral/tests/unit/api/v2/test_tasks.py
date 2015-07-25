@@ -43,7 +43,8 @@ task_ex = models.TaskExecution(
     workflow_execution_id='123',
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    published=PUBLISHED
+    published=PUBLISHED,
+    processed=True
 )
 
 TASK = {
@@ -55,7 +56,8 @@ TASK = {
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'result': json.dumps(RESULT),
-    'published': json.dumps(PUBLISHED)
+    'published': json.dumps(PUBLISHED),
+    'processed': True
 }
 
 UPDATED_task_ex = copy.copy(task_ex)
