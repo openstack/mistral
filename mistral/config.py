@@ -89,6 +89,21 @@ executor_opts = [
                help='The version of the executor.')
 ]
 
+execution_expiration_policy_opts = [
+    cfg.IntOpt('evaluation_interval', default=None,
+               help='How often will the executions be evaluated '
+                    '(in minutes). For example for value 120 the interval '
+                    'will be 2 hours (every 2 hours).'),
+
+    cfg.IntOpt('older_than', default=None,
+               help='Evaluate from which time remove executions in minutes. '
+                    'For example when older_than = 60, remove all executions '
+                    'that finished a 60 minutes ago or more. '
+                    'Minimum value is 1. '
+                    'Note that only final state execution will remove '
+                    '( SUCCESS / ERROR ).')
+]
+
 wf_trace_log_name_opt = cfg.StrOpt(
     'workflow_trace_log_name',
     default='workflow_trace',
@@ -112,11 +127,14 @@ ENGINE_GROUP = 'engine'
 EXECUTOR_GROUP = 'executor'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
+EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
+CONF.register_opts(execution_expiration_policy_opts,
+                   group=EXECUTION_EXPIRATION_POLICY_GROUP)
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 
@@ -146,6 +164,7 @@ def list_opts():
         (EXECUTOR_GROUP, executor_opts),
         (PECAN_GROUP, pecan_opts),
         (COORDINATION_GROUP, coordination_opts),
+        (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
         (None, itertools.chain(
             CLI_OPTS,
             [wf_trace_log_name_opt]

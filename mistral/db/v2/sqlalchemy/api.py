@@ -744,6 +744,24 @@ def get_delayed_calls_to_start(time, session=None):
 
 
 @b.session_aware()
+def get_expired_executions(time, session=None):
+    query = b.model_query(models.WorkflowExecution)
+
+    # Only WorkflowExecution that are not a child of other WorkflowExecution.
+    query = query.filter(models.WorkflowExecution.
+                         task_execution_id == sa.null())
+    query = query.filter(models.WorkflowExecution.updated_at < time)
+    query = query.filter(
+        sa.or_(
+            models.WorkflowExecution.state == "SUCCESS",
+            models.WorkflowExecution.state == "ERROR"
+        )
+    )
+
+    return query.all()
+
+
+@b.session_aware()
 def _get_delayed_call(id, session=None):
     query = b.model_query(models.DelayedCall)
 

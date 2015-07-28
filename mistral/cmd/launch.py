@@ -46,6 +46,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
 from mistral.engine import default_executor as def_executor
 from mistral.engine import rpc
+from mistral.services import expiration_policy
 from mistral.services import scheduler
 from mistral import version
 
@@ -89,6 +90,9 @@ def launch_engine(transport):
     # Setup scheduler in engine.
     db_api.setup_db()
     scheduler.setup()
+
+    # Setup expiration policy
+    expiration_policy.setup()
 
     server = messaging.get_rpc_server(
         transport,
