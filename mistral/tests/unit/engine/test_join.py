@@ -319,8 +319,8 @@ class JoinEngineTest(base.EngineTestCase):
               action: std.echo
               input:
                 output: |
-                  <% result1 in $ %>,<% result2 in $ %>,
-                  <% result3 in $ %>,<% result4 in $ %>
+                  <% result1 in $.keys() %>,<% result2 in $.keys() %>,
+                  <% result3 in $.keys() %>,<% result4 in $.keys() %>
               publish:
                 result5: <% $.task5 %>
         """
@@ -390,8 +390,8 @@ class JoinEngineTest(base.EngineTestCase):
               action: std.echo
               input:
                 output: |
-                  <% result1 in $ %>,<% result2 in $ %>,
-                  <% result3 in $ %>
+                  <% result1 in $.keys() %>,<% result2 in $.keys() %>,
+                  <% result3 in $.keys() %>
               publish:
                 result4: <% $.task4 %>
         """

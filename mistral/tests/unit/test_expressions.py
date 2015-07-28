@@ -59,7 +59,12 @@ class YaqlEvaluatorTest(base.BaseTest):
         res = self._evaluator.evaluate("$.status = 'Invalid value'", DATA)
         self.assertFalse(res)
 
-        self.assertIsNone(self._evaluator.evaluate('$.wrong_key', DATA))
+        self.assertRaises(
+            exc.YaqlEvaluationException,
+            self._evaluator.evaluate,
+            '$.wrong_key',
+            DATA
+        )
 
         expression_str = 'invalid_expression_string'
         res = self._evaluator.evaluate(expression_str, DATA)
@@ -78,12 +83,12 @@ class YaqlEvaluatorTest(base.BaseTest):
         self.assertEqual('3', self._evaluator.evaluate('str($)', 3))
 
     def test_function_len(self):
-        self.assertEqual(3, self._evaluator.evaluate('$.len()', 'hey'))
+        self.assertEqual(3, self._evaluator.evaluate('len($)', 'hey'))
         data = [{'some': 'thing'}]
 
         self.assertEqual(
             1,
-            self._evaluator.evaluate('$[$.some = thing].len()', data)
+            self._evaluator.evaluate('$.where($.some = thing).len()', data)
         )
 
     def test_validate(self):
@@ -289,8 +294,8 @@ class ExpressionsTest(base.BaseTest):
             'verbose': True,
             '__actions': {
                 'std.sql': {
-                    'conn': 'mysql://admin:secrete@<% $.__env.host %>'
-                            '/<% $.__env.db %>'
+                    'conn': 'mysql://admin:secrete@<% env().host %>'
+                            '/<% env().db %>'
                 }
             }
         }

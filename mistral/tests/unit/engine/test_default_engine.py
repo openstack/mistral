@@ -194,8 +194,8 @@ class DefaultEngineTest(base.DbTestCase):
 
     def test_start_workflow_with_adhoc_env(self):
         wf_input = {
-            'param1': '<% $.__env.key1 %>',
-            'param2': '<% $.__env.key2 %>'
+            'param1': '<% env().key1 %>',
+            'param2': '<% env().key2 %>'
         }
         env = ENVIRONMENT['variables']
 
@@ -215,8 +215,8 @@ class DefaultEngineTest(base.DbTestCase):
     @mock.patch.object(db_api, "get_environment", MOCK_ENVIRONMENT)
     def test_start_workflow_with_saved_env(self):
         wf_input = {
-            'param1': '<% $.__env.key1 %>',
-            'param2': '<% $.__env.key2 %>'
+            'param1': '<% env().key1 %>',
+            'param2': '<% env().key2 %>'
         }
         env = ENVIRONMENT['variables']
 
@@ -238,7 +238,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertRaises(exc.NotFoundException,
                           self.engine.start_workflow,
                           'wb.wf',
-                          {'param1': '<% $.__env.key1 %>'},
+                          {'param1': '<% env().key1 %>'},
                           env='foo',
                           task_name='task2')
 
@@ -246,7 +246,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertRaises(ValueError,
                           self.engine.start_workflow,
                           'wb.wf',
-                          {'param1': '<% $.__env.key1 %>'},
+                          {'param1': '<% env().key1 %>'},
                           env=True,
                           task_name='task2')
 

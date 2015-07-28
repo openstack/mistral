@@ -57,7 +57,7 @@ workflows:
     type: direct
     tasks:
       t1:
-        with-items: i in <% range(0, 3).list() %>
+        with-items: i in <% list(range(0, 3)) %>
         action: std.echo output="Task 1.<% $.i %>"
         publish:
           v1: <% $.t1 %>

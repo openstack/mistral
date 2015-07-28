@@ -56,7 +56,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
             task3:
               publish:
-                result: "<% $.hi %>, <% $.to %>! Your <% $.__env.from %>."
+                result: "<% $.hi %>, <% $.to %>! Your <% env().from %>."
         """
 
         wf_service.create_workflows(linear_wf)
@@ -113,7 +113,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
             task3:
               publish:
-                result: "<% $.hi %>, <% $.to %>! Your <% $.__env.from %>."
+                result: "<% $.hi %>, <% $.to %>! Your <% env().from %>."
                 progress: "completed task3"
               on-success:
                 - notify
@@ -338,7 +338,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
             task4:
               publish:
-                result: "<% $.greeting %>, <% $.to %>! <% $.__env.from %>."
+                result: "<% $.greeting %>, <% $.to %>! <% env().from %>."
         """
 
         wf_service.create_workflows(var_overwrite_wf)

@@ -37,5 +37,5 @@ six>=1.9.0
 SQLAlchemy<1.1.0,>=0.9.7
 stevedore>=1.5.0 # Apache-2.0
 WSME>=0.7
-yaql>=0.2.7,!=0.3.0  # Apache 2.0 License
+yaql>=1.0.0  # Apache 2.0 License
 tooz>=0.16.0 # Apache-2.0
