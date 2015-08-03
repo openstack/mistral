@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 import json
 import pkg_resources as pkg
 import sys
@@ -79,7 +80,7 @@ def register_action_class(name, cls, attributes=None, desc=None):
 class FakeHTTPResponse(object):
     def __init__(self, text, status_code, reason=None, headers=None,
                  history=None, encoding='utf8', url='', cookies=None,
-                 elapsed=0):
+                 elapsed=None):
         self.text = text
         self.content = text
         self.status_code = status_code
@@ -88,8 +89,8 @@ class FakeHTTPResponse(object):
         self.history = history
         self.encoding = encoding
         self.url = url
-        self.cookies = cookies
-        self.elapsed = elapsed
+        self.cookies = cookies or {}
+        self.elapsed = elapsed or datetime.timedelta(milliseconds=123)
 
     def json(self):
         return json.loads(self.text)
