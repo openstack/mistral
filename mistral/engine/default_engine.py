@@ -35,8 +35,8 @@ from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
-
 LOG = logging.getLogger(__name__)
+
 
 # Submodules of mistral.engine will throw NoSuchOptError if configuration
 # options required at top level of this  __init__.py are not imported before
@@ -180,10 +180,10 @@ class DefaultEngine(base.Engine):
 
             self._dispatch_workflow_commands(wf_ex, cmds)
 
-            self._check_workflow_completion(wf_ex, action_ex, wf_ctrl)
+            self._check_workflow_completion(wf_ex, wf_ctrl)
 
     @staticmethod
-    def _check_workflow_completion(wf_ex, action_ex, wf_ctrl):
+    def _check_workflow_completion(wf_ex, wf_ctrl):
         if states.is_paused_or_completed(wf_ex.state):
             return
 
@@ -196,13 +196,7 @@ class DefaultEngine(base.Engine):
                 wf_ctrl.evaluate_workflow_final_context()
             )
         else:
-            result_str = (str(action_ex.output.get('result', 'Unknown'))
-                          if action_ex.output else 'Unknown')
-
-            state_info = (
-                "Failure caused by error in task '%s': %s" %
-                (action_ex.task_execution.name, result_str)
-            )
+            state_info = wf_utils.construct_fail_info_message(wf_ctrl, wf_ex)
 
             wf_handler.fail_workflow(wf_ex, state_info)
 

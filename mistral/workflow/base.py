@@ -63,6 +63,15 @@ class WorkflowController(object):
         return self._find_next_commands()
 
     @abc.abstractmethod
+    def is_error_handled_for(self, task_ex):
+        """Determines if error is handled for specific task.
+
+        :return: True if either there is no error at all or
+            error is considered handled.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def all_errors_handled(self):
         """Determines if all errors (if any) are handled.
 

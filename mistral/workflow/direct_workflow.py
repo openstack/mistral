@@ -180,6 +180,9 @@ class DirectWorkflowController(base.WorkflowController):
 
         return ctx
 
+    def is_error_handled_for(self, task_ex):
+        return bool(self.get_on_error_clause(task_ex.name))
+
     def all_errors_handled(self):
         for t_ex in wf_utils.find_error_tasks(self.wf_ex):
             if not self.get_on_error_clause(t_ex.name):
