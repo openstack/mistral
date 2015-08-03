@@ -123,6 +123,7 @@ class RunActionEngineTest(base.EngineTestCase):
             'scope': 'public'
         })
         def_mock.return_value = action_def
+        run_mock.return_value = {'result': 'Hello'}
 
         class_ret = mock.MagicMock()
         class_mock.return_value = class_ret

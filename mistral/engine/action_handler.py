@@ -141,7 +141,7 @@ def _get_adhoc_action_input(action_def, input_dict,
 
 def run_action(action_def, action_input,
                action_ex_id=None, target=None, async=True):
-    return rpc.get_executor_client().run_action(
+    action_result = rpc.get_executor_client().run_action(
         action_ex_id,
         action_def.action_class,
         action_def.attributes or {},
@@ -150,16 +150,28 @@ def run_action(action_def, action_input,
         async
     )
 
+    if action_result:
+        return _get_action_output(action_result)
+
+
+def _get_action_output(result):
+    """Returns action output.
+
+    :param result: ActionResult instance or ActionResult dict
+    :return: dict containing result.
+    """
+    if isinstance(result, dict):
+        result = wf_utils.Result(result.get('data'), result.get('error'))
+
+    return ({'result': result.data}
+            if result.is_success() else {'result': result.error})
+
 
 def store_action_result(action_ex, result):
     prev_state = action_ex.state
 
-    if result.is_success():
-        action_ex.state = states.SUCCESS
-        action_ex.output = {'result': result.data}
-    else:
-        action_ex.state = states.ERROR
-        action_ex.output = {'result': result.error}
+    action_ex.state = states.SUCCESS if result.is_success() else states.ERROR
+    action_ex.output = _get_action_output(result)
 
     action_ex.accepted = True
 
