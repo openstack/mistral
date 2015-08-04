@@ -27,11 +27,11 @@ How to write an Action Plugin
 3. Reinstall Mistral if it was installed in system (not in virtualenv).
 4. Run Db-sync tool via either::
 
-  *tools/sync_db.sh --config-file <path-to-config>*
+    *tools/sync_db.sh --config-file <path-to-config>*
 
 or::
 
- *mistral-db-manage --config-file <path-to-config> populate*
+    *mistral-db-manage --config-file <path-to-config> populate*
 
 5. Use your plugin
 
