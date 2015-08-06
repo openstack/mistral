@@ -26,6 +26,8 @@ function usage {
   echo "                               Default: \$(pwd)"
   echo "  --db-type <name>            Database type"
   echo "                               Default: sqlite"
+  echo "  --parallel <bool>           Determines whether the tests are run in one thread or not"
+  echo "                               Default: false"
   echo ""
   echo "Note: with no options specified, the script will try to run the tests in a virtual environment,"
   echo "      If no virtualenv is found, the script will ask if you would like to create one.  If you "
@@ -65,6 +67,10 @@ function process_options {
         (( i++ ))
         db_type=${!i}
         ;;
+      --parallel)
+        (( i++ ))
+        parallel=${!i}
+        ;;
       -*) testropts="$testropts ${!i}";;
       *) testrargs="$testrargs ${!i}"
     esac
@@ -73,6 +79,7 @@ function process_options {
 }
 
 db_type=${db_type:-sqlite}
+parallel=${parallel:-false}
 tool_path=${tools_path:-$(pwd)}
 venv_path=${venv_path:-$(pwd)}
 venv_dir=${venv_name:-.venv}
@@ -96,6 +103,8 @@ LANG=en_US.UTF-8
 LANGUAGE=en_US:en
 LC_ALL=C
 
+ZUUL_PROJECT=${ZUUL_PROJECT:-""}
+
 process_options $@
 # Make our paths available to other scripts we call
 export venv_path
@@ -117,12 +126,25 @@ function setup_db {
         postgresql )
             echo "Setting up Mistral DB in PostgreSQL"
 
-            # Create the user and database.
-            # Assume trust is setup on localhost in the postgresql config file.
-            sudo -u postgres psql -c "DROP DATABASE IF EXISTS mistral;"
-            sudo -u postgres psql -c "DROP USER IF EXISTS mistral;"
-            sudo -u postgres psql -c "CREATE USER mistral WITH ENCRYPTED PASSWORD 'm1stral';"
-            sudo -u postgres psql -c "CREATE DATABASE mistral OWNER mistral;"
+            # If ZUUL_PROJECT is specified it means that this script is executing on
+            # Jenkins gate, so we should use already created postgresql db
+            if ! [ -n "$ZUUL_PROJECT"]
+            then
+              echo "PostgreSQL is initialized. 'openstack_citest' db will be used."
+              dbname="openstack_citest"
+              username="openstack_citest"
+              password="openstack_citest"
+            else
+              # Create the user and database.
+              # Assume trust is setup on localhost in the postgresql config file.
+              dbname="mistral"
+              username="mistral"
+              password="m1stral"
+              sudo -u postgres psql -c "DROP DATABASE IF EXISTS $dbname;"
+              sudo -u postgres psql -c "DROP USER IF EXISTS $username;"
+              sudo -u postgres psql -c "CREATE USER $username WITH ENCRYPTED PASSWORD '$password';"
+              sudo -u postgres psql -c "CREATE DATABASE $dbname OWNER $username;"
+            fi
             ;;
     esac
 }
@@ -143,7 +165,7 @@ function setup_db_cfg {
             ;;
         postgresql )
             oslo-config-generator --config-file ./tools/config/config-generator.mistral.conf --output-file .mistral.conf
-            sed -i "s/#connection = <None>/connection = postgresql:\/\/mistral:m1stral@localhost\/mistral/g" .mistral.conf
+            sed -i "s/#connection = <None>/connection = postgresql:\/\/$username:$password@localhost\/$dbname/g" .mistral.conf
             ;;
     esac
 }
@@ -179,7 +201,13 @@ function run_tests {
   # Just run the test suites in current environment
   set +e
   testrargs=$(echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/')
-  TESTRTESTS="$TESTRTESTS --testr-args='--subunit $testropts $testrargs'"
+  if [ $parallel = true ]
+  then
+    runoptions="--subunit"
+  else
+    runoptions="--concurrency=1 --subunit"
+  fi
+  TESTRTESTS="$TESTRTESTS --testr-args='$runoptions $testropts $testrargs'"
   OS_TEST_PATH=$(echo $testrargs|grep -o 'mistral\.tests[^[:space:]:]*\+'|tr . /)
   if [ -d "$OS_TEST_PATH" ]; then
       wrapper="OS_TEST_PATH=$OS_TEST_PATH $wrapper"
