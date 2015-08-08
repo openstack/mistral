@@ -15,7 +15,15 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../..'))
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('./'))
 # -- General configuration ----------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -24,11 +32,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.autohttp.flask',
     'sphinxcontrib.pecanwsme.rest',
-    'oslosphinx',
     'wsmeext.sphinxext',
 ]
 
+if not on_rtd:
+    extensions.append('oslosphinx')
+
 wsme_protocols = ['restjson']
+
+# Add any paths that contain templates here, relative to this directory.
+templates_path = ['_templates']
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
 # text edit cycles.
@@ -41,8 +54,19 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'mistral'
+project = u'Mistral'
 copyright = u'2014, Mistral Contributors'
+
+# The version info for the project you're documenting, acts as replacement for
+# |version| and |release|, also used in various other places throughout the
+# built documents.
+from mistral.version import version_info
+release = version_info.release_string()
+version = version_info.version_string()
+
+# If true, sectionauthor and moduleauthor directives will be shown in the
+# output. They are ignored by default.
+show_authors = False
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
@@ -56,20 +80,40 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output --------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  Major themes that come with
-# Sphinx are currently 'default' and 'sphinxdoc'.
-# html_theme_path = ["."]
-# html_theme = '_theme'
+# The theme to use for HTML and HTML Help pages.  See the documentation for
+# a list of builtin themes.
 # html_static_path = ['_static']
+
+if on_rtd:
+    html_theme_path = ['.']
+    html_theme = 'sphinx_rtd_theme'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project
+
+# The name for this set of Sphinx documents. If None, it defaults to
+# "<project> v<release> documentation".
+html_title = 'Mistral'
+
+# Custom sidebar templates, maps document names to template names.
+html_sidebars = {
+    'index': [
+        'sidebarlinks.html', 'localtoc.html', 'searchbox.html', 'sourcelink.html'
+    ],
+    '**': [
+        'localtoc.html', 'relations.html',
+        'searchbox.html', 'sourcelink.html'
+    ]
+}
 
 # -- Options for manual page output -------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = []
+man_pages = [
+    ('index', 'mistral', u'Mistral',
+     [u'OpenStack Foundation'], 1)
+]
 
 # If true, show URL addresses after external links.
 man_show_urls = True

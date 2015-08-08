@@ -1,5 +1,5 @@
-REST API
-========
+REST API Specification
+======================
 
 .. toctree::
    :maxdepth: 2

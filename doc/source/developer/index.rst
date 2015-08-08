@@ -5,4 +5,6 @@ Developer's Reference
    :maxdepth: 3
 
    webapi/index
-   writing_a_plugin_action
+   creating_custom_action
+   devstack
+   troubleshooting
