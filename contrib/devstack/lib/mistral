@@ -104,8 +104,8 @@ function mkdir_chown_stack {
 function configure_mistral {
     mkdir_chown_stack "$MISTRAL_CONF_DIR"
 
-    # Copy over Mistral configuration file and configure common parameters.
-    cp $MISTRAL_DIR/etc/mistral.conf.sample $MISTRAL_CONF_FILE
+    # Generate Mistral configuration file and configure common parameters.
+    oslo-config-generator --config-file $MISTRAL_DIR/tools/config/config-generator.mistral.conf --output-file $MISTRAL_CONF_FILE
     iniset $MISTRAL_CONF_FILE DEFAULT debug $MISTRAL_DEBUG
 
     # Run all Mistral processes as a single process

@@ -142,7 +142,8 @@ function setup_db_cfg {
             rm -f .mistral.conf
             ;;
         postgresql )
-            cp ./etc/mistral.conf.sample.postgresql .mistral.conf
+            oslo-config-generator --config-file ./tools/config/config-generator.mistral.conf --output-file .mistral.conf
+            sed -i "s/#connection = <None>/connection = postgresql:\/\/mistral:m1stral@localhost\/mistral/g" .mistral.conf
             ;;
     esac
 }

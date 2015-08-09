@@ -59,11 +59,9 @@ Configuring Mistral
 
 Mistral configuration is needed for getting it work correctly either with real OpenStack environment or without OpenStack environment.
 
-1. Copy mistral.conf::
+1. Generate mistral.conf::
 
-    cp etc/mistral.conf.sample etc/mistral.conf
-
-  *Note: mistral.conf.sample is the example configuration file.*
+    oslo-config-generator --config-file tools/config/config-generator.mistral.conf --output-file etc/mistral.conf
 
 2. Edit file *etc/mistral.conf*
 3. **If you are not using OpenStack, skip this item.** Provide valid keystone auth properties::
@@ -88,9 +86,9 @@ Mistral configuration is needed for getting it work correctly either with real O
     $ keystone endpoint-create --service_id mistral --publicurl $MISTRAL_URL \
       --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
 
-6. Also, configure rabbit properties: *rabbit_userid*, *rabbit_password*, *rabbit_host* in section *default*.
+6. Also, configure rabbit properties: *rabbit_userid*, *rabbit_password*, *rabbit_host* in section *oslo_messaging_rabbit*.
 
-7. Configure database. **SQLite can't be used in production.** Use *MySQL* or *PostreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
+7. Configure database. **SQLite can't be used in production.** Use *MySQL* or *PostgreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
 
     * Make sure you have installed **mysql-server** package on your Mistral machine.
     * Install *MySQL driver* for python::
@@ -112,7 +110,11 @@ Mistral configuration is needed for getting it work correctly either with real O
     * Configure connection in Mistral config::
 
         [database]
-        connection = mysql://root:<password>@localhost:3306/mistral
+        connection = mysql://<user>:<password>@localhost:3306/mistral
+
+      NOTE: If *PostgreSQL* is used, configure connection item as below::
+
+        connection = postgresql://<user>:<password>@localhost:5432/mistral
 
 8. **If you are not using OpenStack, skip this item.** Update *mistral/actions/openstack/mapping.json* file which contains all allowed OpenStack actions,
 according to the specific client versions of OpenStack projects in your deployment. Please find more detailed infomation in *tools/get_action_list.py* script.
