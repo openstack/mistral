@@ -37,7 +37,6 @@ _schedulers = {}
 
 def schedule_call(factory_method_path, target_method_name,
                   run_after, serializers=None, **method_args):
-
     """Add this call specification to DB, and then after run_after
     seconds service CallScheduler invokes the target_method.
 
@@ -62,9 +61,10 @@ def schedule_call(factory_method_path, target_method_name,
     if serializers:
         for arg_name, serializer_path in serializers.items():
             if arg_name not in method_args:
-                raise exc.MistralException("Serializable method argument %s"
-                                           " not found in method_args=%s"
-                                           % (arg_name, method_args))
+                raise exc.MistralException(
+                    "Serializable method argument %s"
+                    " not found in method_args=%s"
+                    % (arg_name, method_args))
             try:
                 serializer = importutils.import_class(serializer_path)()
             except ImportError as e:
@@ -81,7 +81,8 @@ def schedule_call(factory_method_path, target_method_name,
         'execution_time': execution_time,
         'auth_context': ctx,
         'serializers': serializers,
-        'method_arguments': method_args
+        'method_arguments': method_args,
+        'processing': False
     }
 
     db_api.create_delayed_call(values)
@@ -91,7 +92,8 @@ class CallScheduler(periodic_task.PeriodicTasks):
     # TODO(rakhmerov): Think how to make 'spacing' configurable.
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def run_delayed_calls(self, ctx=None):
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        time_filter = datetime.datetime.now() + datetime.timedelta(
+            seconds=1)
 
         # Wrap delayed calls processing in transaction to
         # guarantee that calls will be processed just once.
@@ -105,54 +107,77 @@ class CallScheduler(periodic_task.PeriodicTasks):
         delayed_calls = []
 
         with db_api.transaction():
-            for call in db_api.get_delayed_calls_to_start(time_filter):
-                # Delete this delayed call from DB before the making call in
-                # order to prevent calling from parallel transaction.
-                db_api.delete_delayed_call(call.id)
+            candidate_calls = db_api.get_delayed_calls_to_start(
+                time_filter
+            )
+            calls_to_make = []
 
-                LOG.debug('Processing next delayed call: %s', call)
+            for call in candidate_calls:
+                # Mark this delayed call has been processed in order to
+                # prevent calling from parallel transaction.
+                result, number_of_updated = db_api.update_delayed_call(
+                    id=call.id,
+                    values={'processing': True},
+                    query_filter={"processing": False}
+                )
 
-                context.set_ctx(context.MistralContext(call.auth_context))
+                # If number_of_updated != 1 other scheduler already
+                # updated.
+                if number_of_updated == 1:
+                    calls_to_make.append(result)
 
-                if call.factory_method_path:
-                    factory = importutils.import_class(
-                        call.factory_method_path
+        for call in calls_to_make:
+            LOG.debug('Processing next delayed call: %s', call)
+
+            context.set_ctx(context.MistralContext(call.auth_context))
+
+            if call.factory_method_path:
+                factory = importutils.import_class(
+                    call.factory_method_path
+                )
+
+                target_method = getattr(factory(), call.target_method_name)
+            else:
+                target_method = importutils.import_class(
+                    call.target_method_name
+                )
+
+            method_args = copy.copy(call.method_arguments)
+
+            if call.serializers:
+                # Deserialize arguments.
+                for arg_name, ser_path in call.serializers.items():
+                    serializer = importutils.import_class(ser_path)()
+
+                    deserialized = serializer.deserialize(
+                        method_args[arg_name]
                     )
 
-                    target_method = getattr(factory(), call.target_method_name)
-                else:
-                    target_method = importutils.import_class(
-                        call.target_method_name
-                    )
+                    method_args[arg_name] = deserialized
 
-                method_args = copy.copy(call.method_arguments)
+            delayed_calls.append((target_method, method_args))
 
-                if call.serializers:
-                    # Deserialize arguments.
-                    for arg_name, ser_path in call.serializers.items():
-                        serializer = importutils.import_class(ser_path)()
-
-                        deserialized = serializer.deserialize(
-                            method_args[arg_name]
-                        )
-
-                        method_args[arg_name] = deserialized
-
-                delayed_calls.append((target_method, method_args))
-
-        # TODO(m4dcoder): Troubleshoot deadlocks with PostgreSQL and MySQL.
-        # The queries in the target method such as
-        # mistral.engine.task_handler.run_action can deadlock
-        # with delete_delayed_call. Please keep the scope of the
-        # transaction short.
         for (target_method, method_args) in delayed_calls:
+            # Transaction is needed here because some of the
+            # target_method can use the DB
             with db_api.transaction():
                 try:
                     # Call the method.
                     target_method(**method_args)
                 except Exception as e:
-                    LOG.debug(
-                        "Delayed call failed [call=%s, exception=%s]", call, e
+                    LOG.error(
+                        "Delayed call failed [exception=%s]", e
+                    )
+
+        with db_api.transaction():
+            for call in calls_to_make:
+                try:
+                    # Delete calls that were processed.
+                    db_api.delete_delayed_call(call.id)
+                except Exception as e:
+                    LOG.error(
+                        "failed to delete call [call=%s, "
+                        "exception=%s]", call, e
                     )
 
 

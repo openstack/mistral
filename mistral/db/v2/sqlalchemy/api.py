@@ -18,6 +18,7 @@ import sys
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_db import sqlalchemy as oslo_sqlalchemy
 from oslo_log import log as logging
 from oslo_utils import timeutils
 import sqlalchemy as sa
@@ -738,9 +739,47 @@ def get_delayed_calls_to_start(time, session=None):
     query = b.model_query(models.DelayedCall)
 
     query = query.filter(models.DelayedCall.execution_time < time)
+    query = query.filter_by(processing=False)
     query = query.order_by(models.DelayedCall.execution_time)
 
     return query.all()
+
+
+@b.session_aware()
+def update_delayed_call(id, values, query_filter=None, session=None):
+    if query_filter:
+        try:
+            specimen = models.DelayedCall(id=id, **query_filter)
+            delayed_call = b.model_query(
+                models.DelayedCall).update_on_match(specimen=specimen,
+                                                    surrogate_key='id',
+                                                    values=values)
+            return delayed_call, 1
+
+        except oslo_sqlalchemy.update_match.NoRowsMatched as e:
+            LOG.debug(
+                "No rows matched for update call [id=%s, values=%s, "
+                "query_filter=%s,"
+                "exception=%s]", id, values, query_filter, e
+            )
+
+            return None, 0
+
+    else:
+        delayed_call = get_delayed_call(id=id, session=session)
+        delayed_call.update(values)
+
+        return delayed_call, len(session.dirty)
+
+
+@b.session_aware()
+def get_delayed_call(id, session=None):
+    delayed_call = _get_delayed_call(id=id, session=session)
+
+    if not delayed_call:
+        raise exc.NotFoundException("Delayed Call not found [id=%s]" % id)
+
+    return delayed_call
 
 
 @b.session_aware()

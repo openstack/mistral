@@ -325,6 +325,9 @@ def delete_task_executions(**kwargs):
 
 # Delayed calls.
 
+def get_delayed_calls_to_start(time):
+    return IMPL.get_delayed_calls_to_start(time)
+
 
 def create_delayed_call(values):
     return IMPL.create_delayed_call(values)
@@ -334,8 +337,12 @@ def delete_delayed_call(id):
     return IMPL.delete_delayed_call(id)
 
 
-def get_delayed_calls_to_start(time):
-    return IMPL.get_delayed_calls_to_start(time)
+def update_delayed_call(id, values, query_filter=None):
+    return IMPL.update_delayed_call(id, values, query_filter)
+
+
+def get_delayed_call(id):
+    return IMPL.get_delayed_call(id)
 
 
 # Cron triggers.

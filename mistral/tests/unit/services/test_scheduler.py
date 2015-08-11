@@ -18,6 +18,7 @@ import eventlet
 import mock
 
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.tests import base
 from mistral.workflow import utils as wf_utils
@@ -26,6 +27,8 @@ from mistral.workflow import utils as wf_utils
 FACTORY_METHOD_NAME = ('mistral.tests.unit.services.test_scheduler.'
                        'factory_method')
 TARGET_METHOD_NAME = FACTORY_METHOD_NAME
+FAILED_TO_SEND_TARGET_NAME = ('mistral.tests.unit.services.test_scheduler.'
+                              'failed_to_send')
 
 DELAY = 1.5
 WAIT = DELAY * 3
@@ -37,6 +40,16 @@ def factory_method():
         (object,),
         {'run_something': lambda name, id: id}
     )
+
+
+def failed_to_send():
+    raise exc.EngineException("Test")
+
+
+def update_call_failed(id, values):
+    return None, 0
+
+MOCK_UPDATE_CALL_FAILED = mock.MagicMock(side_effect=update_call_failed)
 
 
 class SchedulerServiceTest(base.DbTestCase):
@@ -188,3 +201,85 @@ class SchedulerServiceTest(base.DbTestCase):
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
         self.assertEqual(0, len(calls))
+
+    @mock.patch(TARGET_METHOD_NAME)
+    def test_scheduler_delete_calls(self, method):
+        def stop_thread_groups():
+            [tg.stop() for tg in self.tgs]
+
+        self.tgs = [scheduler.setup(), scheduler.setup()]
+        self.addCleanup(stop_thread_groups)
+
+        method_args = {'name': 'task', 'id': '321'}
+
+        scheduler.schedule_call(
+            None,
+            TARGET_METHOD_NAME,
+            DELAY,
+            **method_args
+        )
+
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=2)
+        calls = db_api.get_delayed_calls_to_start(time_filter)
+
+        self._assert_single_item(calls, target_method_name=TARGET_METHOD_NAME)
+
+        eventlet.sleep(WAIT)
+
+        self.assertRaises(exc.NotFoundException,
+                          db_api.get_delayed_call,
+                          calls[0].id
+                          )
+
+    @mock.patch(TARGET_METHOD_NAME)
+    def test_processing_true_does_not_return_in_get_delayed_calls_to_start(
+            self,
+            method):
+        execution_time = (datetime.datetime.now() +
+                          datetime.timedelta(seconds=DELAY))
+
+        values = {
+            'factory_method_path': None,
+            'target_method_name': TARGET_METHOD_NAME,
+            'execution_time': execution_time,
+            'auth_context': None,
+            'serializers': None,
+            'method_arguments': None,
+            'processing': True
+        }
+
+        call = db_api.create_delayed_call(values)
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=10)
+        calls = db_api.get_delayed_calls_to_start(time_filter)
+
+        self.assertEqual(0, len(calls))
+
+        db_api.delete_delayed_call(call.id)
+
+    @mock.patch.object(db_api, 'update_delayed_call', MOCK_UPDATE_CALL_FAILED)
+    def test_scheduler_doesnt_handel_calls_the_failed_on_update(self):
+        def stop_thread_groups():
+            [tg.stop() for tg in self.tgs]
+
+        self.tgs = [scheduler.setup(), scheduler.setup()]
+        self.addCleanup(stop_thread_groups)
+
+        method_args = {'name': 'task', 'id': '321'}
+
+        scheduler.schedule_call(
+            None,
+            TARGET_METHOD_NAME,
+            DELAY,
+            **method_args
+        )
+
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=2)
+        calls = db_api.get_delayed_calls_to_start(time_filter)
+
+        eventlet.sleep(WAIT)
+
+        # If the scheduler does handel calls that failed on update
+        # NotFoundException will raise.
+        db_api.get_delayed_call(calls[0].id)
+
+        db_api.delete_delayed_call(calls[0].id)
