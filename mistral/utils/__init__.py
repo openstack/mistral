@@ -19,6 +19,7 @@ import json
 import logging
 import os
 from os import path
+import socket
 import threading
 import uuid
 
@@ -241,3 +242,9 @@ def get_input_dict(inputs):
             input_dict[x] = NotDefined
 
     return input_dict
+
+
+def get_process_identifier():
+    """Gets current running process identifier."""
+
+    return "%s_%s" % (socket.gethostname(), os.getpid())

@@ -119,3 +119,7 @@ class SizeLimitExceededException(MistralException):
         super(SizeLimitExceededException, self).__init__(
             "Size of '%s' is %dKB which exceeds the limit of %dKB"
             % (field_name, size_kb, size_limit_kb))
+
+
+class CoordinationException(MistralException):
+    http_code = 500
