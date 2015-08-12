@@ -16,8 +16,8 @@
 
 
 import datetime
-from mistral.context import ctx
 
+from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral.services import expiration_policy
 from mistral.tests.unit.api import base
@@ -76,8 +76,28 @@ def _load_executions():
         db_api.create_workflow_execution(wf_exec)
 
 
+def _switch_context(project_id, is_admin):
+
+    _ctx = ctx.MistralContext(
+        user_id=None,
+        project_id=project_id,
+        auth_token=None,
+        is_admin=is_admin
+    )
+
+    ctx.set_ctx(_ctx)
+
+
 class ExpirationPolicyTest(base.FunctionalTest):
     def test_expiration_policy_for_executions(self):
+        # Delete execution uses a secured filtering and we need
+        # to verify that admin able to do that for other projects.
+        cfg.CONF.set_default('auth_enable', True, group='pecan')
+
+        # Since we are removing other projects execution,
+        # we want to load the executions with other project_id.
+        _switch_context('non_admin_project', False)
+
         _load_executions()
 
         now = datetime.datetime.now()
@@ -94,6 +114,9 @@ class ExpirationPolicyTest(base.FunctionalTest):
         # Should be only 3, the RUNNING execution shouldn't return,
         # So the child wf (that has parent task id).
         self.assertEqual(len(execs), 3)
+
+        # Switch context to Admin since expiration policy running as Admin.
+        _switch_context(None, True)
 
         _set_expiration_policy_config(1, 10)
         expiration_policy.run_execution_expiration_policy(self, ctx)
@@ -139,6 +162,11 @@ class ExpirationPolicyTest(base.FunctionalTest):
     def tearDown(self):
         """Restores the size limit config to default."""
         super(ExpirationPolicyTest, self).tearDown()
+
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
+        ctx.set_ctx(None)
+
         _set_expiration_policy_config(None, None)
 
 

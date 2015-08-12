@@ -71,6 +71,15 @@ def run_execution_expiration_policy(self, ctx):
         # filters params and not specific method that filter by time.
         for execution in db_api.get_expired_executions(exp_time):
             try:
+                # Setup project_id for _secure_query delete execution.
+                ctx = auth_ctx.MistralContext(
+                    user_id=None,
+                    project_id=execution.project_id,
+                    auth_token=None,
+                    is_admin=True
+                )
+                auth_ctx.set_ctx(ctx)
+
                 LOG.debug('DELETE execution id : %s from date : %s '
                           'according to expiration policy',
                           execution.id,
@@ -80,6 +89,8 @@ def run_execution_expiration_policy(self, ctx):
                 msg = "Failed to delete [execution_id=%s]\n %s" \
                       % (execution.id, traceback.format_exc(e))
                 LOG.warning(msg)
+            finally:
+                auth_ctx.set_ctx(None)
 
 
 def setup():
