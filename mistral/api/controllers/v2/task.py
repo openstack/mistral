@@ -47,6 +47,7 @@ class Task(resource.Resource):
 
     result = wtypes.text
     published = wtypes.text
+    processed = bool
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -71,12 +72,10 @@ class Task(resource.Resource):
             workflow_name='flow',
             workflow_execution_id='123e4567-e89b-12d3-a456-426655440000',
             name='task',
-            description='tell when you are done',
             state=states.SUCCESS,
-            tags=['foo', 'fee'],
-            input='{"first_name": "John", "last_name": "Doe"}',
-            output='{"task": {"build_greeting": '
-                   '{"greeting": "Hello, John Doe!"}}}',
+            result='task result',
+            published='{key: value}',
+            processed=True,
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000'
         )
