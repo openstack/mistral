@@ -15,12 +15,14 @@
 import mock
 from oslo_config import cfg
 
+from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import actions
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -54,7 +56,7 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.assertEqual('Hello!', action_ex.output['result'])
 
-    def test_run_action_async(self):
+    def test_run_action_save_result(self):
         # Start action.
         action_ex = self.engine.start_action(
             'std.echo',
@@ -74,6 +76,59 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, action_ex.state)
         self.assertEqual({'result': 'Hello!'}, action_ex.output)
+
+    def test_run_action_async(self):
+        action_ex = self.engine.start_action('std.async_noop', {})
+
+        is_action_ex_running = (
+            lambda: db_api.get_action_execution(
+                action_ex.id
+            ).state == states.RUNNING
+        )
+
+        self._await(is_action_ex_running)
+
+        action_ex = db_api.get_action_execution(action_ex.id)
+
+        self.assertEqual(states.RUNNING, action_ex.state)
+
+    @mock.patch.object(
+        std_actions.AsyncNoOpAction, 'run',
+        mock.MagicMock(side_effect=exc.ActionException('Invoke failed.')))
+    def test_run_action_async_invoke_failure(self):
+        action_ex = self.engine.start_action('std.async_noop', {})
+
+        is_action_ex_error = (
+            lambda: db_api.get_action_execution(
+                action_ex.id
+            ).state == states.ERROR
+        )
+
+        self._await(is_action_ex_error)
+
+        action_ex = db_api.get_action_execution(action_ex.id)
+
+        self.assertEqual(states.ERROR, action_ex.state)
+        self.assertIn('Invoke failed.', action_ex.output.get('result', ''))
+
+    @mock.patch.object(
+        std_actions.AsyncNoOpAction, 'run',
+        mock.MagicMock(return_value=wf_utils.Result(error='Invoke erred.')))
+    def test_run_action_async_invoke_with_error(self):
+        action_ex = self.engine.start_action('std.async_noop', {})
+
+        is_action_ex_error = (
+            lambda: db_api.get_action_execution(
+                action_ex.id
+            ).state == states.ERROR
+        )
+
+        self._await(is_action_ex_error)
+
+        action_ex = db_api.get_action_execution(action_ex.id)
+
+        self.assertEqual(states.ERROR, action_ex.state)
+        self.assertIn('Invoke erred.', action_ex.output.get('result', ''))
 
     def test_run_action_adhoc(self):
         # Start action and see the result.

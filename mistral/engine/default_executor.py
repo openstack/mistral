@@ -65,7 +65,7 @@ class DefaultExecutor(base.Executor, coordination.Service):
             if not isinstance(result, wf_utils.Result):
                 result = wf_utils.Result(data=result)
 
-            if action.is_sync() and action_ex_id:
+            if action_ex_id and (action.is_sync() or result.is_error()):
                 self._engine_client.on_action_complete(action_ex_id, result)
 
             return result
