@@ -258,57 +258,86 @@ class DefaultEngine(base.Engine, coordination.Service):
 
         return wf_ex
 
+    def _continue_workflow(self, wf_ex, task_ex=None, reset=True):
+        wf_handler.set_execution_state(wf_ex, states.RUNNING)
+
+        wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+
+        # Calculate commands to process next.
+        cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset)
+
+        # When resuming a workflow we need to ignore all 'pause'
+        # commands because workflow controller takes tasks that
+        # completed within the period when the workflow was pause.
+        cmds = filter(
+            lambda c: not isinstance(c, commands.PauseWorkflow),
+            cmds
+        )
+
+        # Since there's no explicit task causing the operation
+        # we need to mark all not processed tasks as processed
+        # because workflow controller takes only completed tasks
+        # with flag 'processed' equal to False.
+        for t_ex in wf_ex.task_executions:
+            if states.is_completed(t_ex.state) and not t_ex.processed:
+                t_ex.processed = True
+
+        self._dispatch_workflow_commands(wf_ex, cmds)
+
+        if not cmds:
+            if not wf_utils.find_incomplete_tasks(wf_ex):
+                wf_handler.succeed_workflow(
+                    wf_ex,
+                    wf_ctrl.evaluate_workflow_final_context()
+                )
+
+        return wf_ex.get_clone()
+
     @u.log_exec(LOG)
-    def resume_workflow(self, execution_id):
+    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True):
         try:
             with db_api.transaction():
                 # Must be before loading the object itself (see method doc).
-                self._lock_workflow_execution(execution_id)
+                self._lock_workflow_execution(wf_ex_id)
 
-                wf_ex = db_api.get_workflow_execution(execution_id)
+                task_ex = db_api.get_task_execution(task_ex_id)
+
+                if task_ex.workflow_execution.id != wf_ex_id:
+                    raise ValueError('Workflow execution ID does not match.')
+
+                wf_ex = task_ex.workflow_execution
+
+                if wf_ex.state == states.PAUSED:
+                    return wf_ex.get_clone()
+
+                return self._continue_workflow(wf_ex, task_ex, reset)
+        except Exception as e:
+            LOG.error(
+                "Failed to rerun execution id=%s at task=%s: %s\n%s",
+                wf_ex_id, task_ex_id, e, traceback.format_exc()
+            )
+            self._fail_workflow(wf_ex_id, e)
+            raise e
+
+    @u.log_exec(LOG)
+    def resume_workflow(self, wf_ex_id):
+        try:
+            with db_api.transaction():
+                # Must be before loading the object itself (see method doc).
+                self._lock_workflow_execution(wf_ex_id)
+
+                wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
                 if wf_ex.state != states.PAUSED:
-                    return wf_ex
+                    return wf_ex.get_clone()
 
-                wf_handler.set_execution_state(wf_ex, states.RUNNING)
-
-                wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
-
-                # Calculate commands to process next.
-                cmds = wf_ctrl.continue_workflow()
-
-                # When resuming a workflow we need to ignore all 'pause'
-                # commands because workflow controller takes tasks that
-                # completed within the period when the workflow was pause.
-                cmds = filter(
-                    lambda c: not isinstance(c, commands.PauseWorkflow),
-                    cmds
-                )
-
-                # Since there's no explicit task causing the operation
-                # we need to mark all not processed tasks as processed
-                # because workflow controller takes only completed tasks
-                # with flag 'processed' equal to False.
-                for t_ex in wf_ex.task_executions:
-                    if states.is_completed(t_ex.state) and not t_ex.processed:
-                        t_ex.processed = True
-
-                self._dispatch_workflow_commands(wf_ex, cmds)
-
-                if not cmds:
-                    if not wf_utils.find_incomplete_tasks(wf_ex):
-                        wf_handler.succeed_workflow(
-                            wf_ex,
-                            wf_ctrl.evaluate_workflow_final_context()
-                        )
-
-                return wf_ex
+                return self._continue_workflow(wf_ex)
         except Exception as e:
             LOG.error(
                 "Failed to resume execution id=%s: %s\n%s",
-                execution_id, e, traceback.format_exc()
+                wf_ex_id, e, traceback.format_exc()
             )
-            self._fail_workflow(execution_id, e)
+            self._fail_workflow(wf_ex_id, e)
             raise e
 
     @u.log_exec(LOG)
@@ -358,7 +387,10 @@ class DefaultEngine(base.Engine, coordination.Service):
             elif isinstance(cmd, commands.RunTask):
                 task_handler.run_new_task(cmd)
             elif isinstance(cmd, commands.RunExistingTask):
-                task_handler.run_existing_task(cmd.task_ex.id)
+                task_handler.run_existing_task(
+                    cmd.task_ex.id,
+                    reset=cmd.reset
+                )
             elif isinstance(cmd, commands.SetWorkflowState):
                 if states.is_completed(cmd.new_state):
                     self._stop_workflow(cmd.wf_ex, cmd.new_state, cmd.msg)

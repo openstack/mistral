@@ -48,17 +48,23 @@ class WorkflowController(object):
         self.wf_ex = wf_ex
         self.wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-    def continue_workflow(self):
+    def continue_workflow(self, task_ex=None, reset=True):
         """Calculates a list of commands to continue the workflow.
 
         Given a workflow specification this method makes required analysis
         according to this workflow type rules and identifies a list of
         commands needed to continue the workflow.
+
+        :param: task_ex: Task execution to rerun.
+        :param: reset: If true, then purge action executions for the tasks.
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
         """
         if self._is_paused_or_completed():
             return []
+
+        if task_ex:
+            return self._get_rerun_commands([task_ex], reset)
 
         return self._find_next_commands()
 
@@ -117,6 +123,19 @@ class WorkflowController(object):
         idle_tasks = wf_utils.find_tasks_with_state(self.wf_ex, states.IDLE)
 
         return [commands.RunExistingTask(t) for t in idle_tasks]
+
+    def _get_rerun_commands(self, task_exs, reset=True):
+        """Get commands to rerun existing task executions.
+
+        :param task_exs: List of task executions.
+        :param reset: If true, then purge action executions for the tasks.
+        :return: List of workflow commands.
+        """
+        cmds = [commands.RunExistingTask(t_e, reset) for t_e in task_exs]
+
+        LOG.debug("Found commands: %s" % cmds)
+
+        return cmds
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)

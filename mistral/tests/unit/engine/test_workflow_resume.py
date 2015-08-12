@@ -177,7 +177,9 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual(2, len(wf_ex.task_executions))
 
-        wf_ex = self.engine.resume_workflow(wf_ex.id)
+        self.engine.resume_workflow(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(2, len(wf_ex.task_executions))
 
