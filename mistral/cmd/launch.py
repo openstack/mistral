@@ -52,6 +52,7 @@ from mistral import version
 
 
 CONF = cfg.CONF
+
 LOG = logging.getLogger(__name__)
 
 
@@ -72,6 +73,8 @@ def launch_executor(transport):
         executor='eventlet',
         serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
     )
+
+    executor_v2.register_membership()
 
     server.start()
     server.wait()
@@ -101,6 +104,8 @@ def launch_engine(transport):
         executor='eventlet',
         serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
     )
+
+    engine_v2.register_membership()
 
     server.start()
     server.wait()
