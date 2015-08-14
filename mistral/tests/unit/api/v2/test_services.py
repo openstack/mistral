@@ -12,7 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo_config import cfg
+import tooz.coordination
 from webtest import app as webtest_app
 
 from mistral import coordination
@@ -38,7 +40,7 @@ class TestServicesController(base.FunctionalTest):
         srv_ret = [{"name": "service1", "type": "api_group"}]
         self.assertItemsEqual(srv_ret, resp.json['services'])
 
-    def test_get_all_raise(self):
+    def test_get_all_without_backend(self):
         cfg.CONF.set_default('backend_url', None, 'coordination')
 
         coordination.cleanup_service_coordinator()
@@ -51,3 +53,22 @@ class TestServicesController(base.FunctionalTest):
         )
 
         self.assertIn('Service API is not supported', context.message)
+
+    @mock.patch('mistral.coordination.ServiceCoordinator.get_members',
+                side_effect=tooz.coordination.ToozError('error message'))
+    def test_get_all_with_get_members_error(self, mock_get_members):
+        cfg.CONF.set_default('backend_url', 'zake://', 'coordination')
+
+        coordination.cleanup_service_coordinator()
+        coordination.get_service_coordinator()
+
+        context = self.assertRaises(
+            webtest_app.AppError,
+            self.app.get,
+            '/v2/services',
+        )
+
+        self.assertIn(
+            'Failed to get service members from coordination backend',
+            context.message
+        )

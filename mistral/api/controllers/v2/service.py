@@ -15,6 +15,8 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 from pecan import rest
+import six
+import tooz.coordination
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -72,11 +74,19 @@ class ServicesController(rest.RestController):
         services_list = []
         service_group = ['%s_group' % i for i in launch.LAUNCH_OPTIONS]
 
-        for group in service_group:
-            members = service_coordinator.get_members(group)
-            services_list.extend(
-                [Service.from_dict({'type': group, 'name': member})
-                 for member in members]
+        try:
+            for group in service_group:
+                members = service_coordinator.get_members(group)
+                services_list.extend(
+                    [Service.from_dict({'type': group, 'name': member})
+                     for member in members]
+                )
+        except tooz.coordination.ToozError as e:
+            # In the scenario of network interruption or manually shutdown
+            # connection shutdown, ToozError will be raised.
+            raise exc.CoordinationException(
+                "Failed to get service members from coordination backend. %s"
+                % six.text_type(e)
             )
 
         return Services(services=services_list)

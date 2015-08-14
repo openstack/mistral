@@ -93,6 +93,8 @@ class ServiceCoordinator(object):
             LOG.exception('Error sending a heartbeat to coordination '
                           'backend. %s', six.text_type(e))
 
+            self._started = False
+
     @retry(stop_max_attempt_number=5)
     def join_group(self, group_id):
         if not self.is_active() or not group_id:
@@ -133,6 +135,11 @@ class ServiceCoordinator(object):
             )
 
     def get_members(self, group_id):
+        """Gets members of coordination group.
+
+        ToozError exception must be handled when this function is invoded, we
+        leave it to the invoker for the handling decision.
+        """
         if not self.is_active():
             return []
 
