@@ -72,10 +72,12 @@ def _get_indices_if_rerun(unaccepted_executions):
     :return: a list of numbers.
     """
 
-    return [
-        ex.runtime_context['with_items_index']
-        for ex in unaccepted_executions
-    ]
+    return sorted(
+        set([
+            ex.runtime_context['with_items_index']
+            for ex in unaccepted_executions
+        ])
+    )
 
 
 def _get_unaccepted_act_exs(task_ex):
