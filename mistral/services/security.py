@@ -61,8 +61,6 @@ def create_context(trust_id, project_id):
     :param project_id: Project Id.
     :return: Mistral security context.
     """
-    if not trust_id:
-        return
 
     if CONF.pecan.auth_enable:
         client = keystone.client_for_trusts(trust_id)
