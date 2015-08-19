@@ -81,7 +81,7 @@ class WorkbookTest(SQLAlchemyTest):
         db_api.create_workbook(WORKBOOKS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntry,
+            exc.DBDuplicateEntryException,
             db_api.create_workbook,
             WORKBOOKS[0]
         )
@@ -262,7 +262,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntry,
+            exc.DBDuplicateEntryException,
             db_api.create_workflow_definition,
             WF_DEFINITIONS[0]
         )
@@ -438,7 +438,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntry,
+            exc.DBDuplicateEntryException,
             db_api.create_action_definition,
             ACTION_DEFINITIONS[0]
         )
@@ -1091,7 +1091,7 @@ class CronTriggerTest(SQLAlchemyTest):
         db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntry,
+            exc.DBDuplicateEntryException,
             db_api.create_cron_trigger,
             CRON_TRIGGERS[0]
         )
@@ -1217,7 +1217,7 @@ class EnvironmentTest(SQLAlchemyTest):
         db_api.create_environment(ENVIRONMENTS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntry,
+            exc.DBDuplicateEntryException,
             db_api.create_environment,
             ENVIRONMENTS[0]
         )
@@ -1400,7 +1400,7 @@ class TXTest(SQLAlchemyTest):
 
                 db_api.create_workbook(WORKBOOKS[0])
 
-        except exc.DBDuplicateEntry:
+        except exc.DBDuplicateEntryException:
             pass
 
         self.assertFalse(self.is_db_session_open())

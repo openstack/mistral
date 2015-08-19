@@ -30,7 +30,7 @@ def validate_input(definition, input, spec=None):
     missing_param_names = []
 
     spec_input = (spec.get_input() if spec else
-                  utils.get_input_dict_from_input_string(definition.input))
+                  utils.get_dict_from_string(definition.input))
 
     for p_name, p_value in six.iteritems(spec_input):
         if p_value is utils.NotDefined and p_name not in input_param_names:

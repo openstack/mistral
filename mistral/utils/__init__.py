@@ -205,11 +205,11 @@ class NotDefined(object):
     pass
 
 
-def get_input_dict_from_input_string(input_string):
+def get_dict_from_string(input_string, delimiter=','):
     if not input_string:
         return {}
 
-    raw_inputs = input_string.split(',')
+    raw_inputs = input_string.split(delimiter)
 
     inputs = []
 
@@ -218,7 +218,13 @@ def get_input_dict_from_input_string(input_string):
         name_value = input.split('=')
 
         if len(name_value) > 1:
-            inputs += [{name_value[0]: json.loads(name_value[1])}]
+
+            try:
+                value = json.loads(name_value[1])
+            except ValueError:
+                value = name_value[1]
+
+            inputs += [{name_value[0]: value}]
         else:
             inputs += [name_value[0]]
 

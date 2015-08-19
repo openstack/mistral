@@ -36,7 +36,7 @@ class ExceptionTestCase(base.BaseTest):
         self.assertEqual(exc.http_code, 404)
 
     def test_duplicate_obj_code(self):
-        exc = exceptions.DBDuplicateEntry()
+        exc = exceptions.DBDuplicateEntryException()
         self.assertIn("Database object already exists",
                       six.text_type(exc))
         self.assertEqual(exc.http_code, 409)
