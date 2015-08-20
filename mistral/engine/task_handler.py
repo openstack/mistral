@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import copy
+import operator
 
 from oslo_log import log as logging
 
@@ -62,18 +63,20 @@ def run_existing_task(task_ex_id, reset=True):
             not task_spec.get_with_items()):
         return
 
-    # Reset state of processed task and related action executions.
-    if reset:
-        action_exs = task_ex.executions
-    else:
-        action_exs = db_api.get_action_executions(
-            task_execution_id=task_ex.id,
-            state=states.ERROR,
-            accepted=True
-        )
+    # Reset nested executions only if task is not already RUNNING.
+    if task_ex.state != states.RUNNING:
+        # Reset state of processed task and related action executions.
+        if reset:
+            action_exs = task_ex.executions
+        else:
+            action_exs = db_api.get_action_executions(
+                task_execution_id=task_ex.id,
+                state=states.ERROR,
+                accepted=True
+            )
 
-    for action_ex in action_exs:
-        action_ex.accepted = False
+        for action_ex in action_exs:
+            action_ex.accepted = False
 
     # Explicitly change task state to RUNNING.
     task_ex.state = states.RUNNING
@@ -90,27 +93,10 @@ def _run_existing_task(task_ex, task_spec, wf_spec):
         task_ex.in_context
     )
 
-    # TODO(rakhmerov): May be it shouldn't be here. Need to think.
-    if task_spec.get_with_items():
-        with_items.prepare_runtime_context(task_ex, task_spec, input_dicts)
-
-    action_exs = db_api.get_action_executions(
-        task_execution_id=task_ex.id,
-        state=states.SUCCESS,
-        accepted=True
-    )
-
-    with_items_indices = [
-        action_ex.runtime_context['with_items_index']
-        for action_ex in action_exs
-        if 'with_items_index' in action_ex.runtime_context
-    ]
-
     # In some cases we can have no input, e.g. in case of 'with-items'.
     if input_dicts:
-        for index, input_d in enumerate(input_dicts):
-            if index not in with_items_indices:
-                _run_action_or_workflow(task_ex, task_spec, input_d, index)
+        for index, input_d in input_dicts:
+            _run_action_or_workflow(task_ex, task_spec, input_d, index)
     else:
         _schedule_noop_action(task_ex, task_spec)
 
@@ -200,9 +186,13 @@ def on_action_complete(action_ex, result):
     if not task_spec.get_with_items():
         _complete_task(task_ex, task_spec, task_state)
     else:
-        if (task_state == states.ERROR or
-                with_items.iterations_completed(task_ex)):
-            _complete_task(task_ex, task_spec, task_state)
+        with_items.increase_capacity(task_ex)
+        if with_items.is_completed(task_ex):
+            _complete_task(
+                task_ex,
+                task_spec,
+                with_items.get_final_state(task_ex)
+            )
 
     return task_ex
 
@@ -245,6 +235,9 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
     should run with.
     In case of 'with-items' the result list will contain input dictionaries
     for all 'with-items' iterations correspondingly.
+
+    :return the list of tuples containing indexes
+    and the corresponding input dict.
     """
     # TODO(rakhmerov): Think how to get rid of this.
     ctx = data_flow.extract_task_result_proxies_to_context(ctx)
@@ -257,7 +250,7 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
             ctx
         )
 
-        return [input_dict]
+        return enumerate([input_dict])
     else:
         return _get_with_items_input(wf_spec, task_ex, task_spec, ctx)
 
@@ -297,7 +290,8 @@ def _get_with_items_input(wf_spec, task_ex, task_spec, ctx):
         {'itemX': 2, 'itemY': 'b'}
       ]
 
-    :return: list containing dicts of each action input.
+    :return: the list of tuples containing indexes
+    and the corresponding input dict.
     """
     with_items_inputs = expr.evaluate_recursively(
         task_spec.get_with_items(), ctx
@@ -325,7 +319,21 @@ def _get_with_items_input(wf_spec, task_ex, task_spec, ctx):
             wf_spec, task_ex, task_spec, new_ctx
         ))
 
-    return action_inputs
+    with_items.prepare_runtime_context(task_ex, task_spec, action_inputs)
+
+    indices = with_items.get_indices_for_loop(task_ex)
+    with_items.decrease_capacity(task_ex, len(indices))
+
+    if indices:
+        current_inputs = operator.itemgetter(*indices)(action_inputs)
+
+        return zip(
+            indices,
+            current_inputs if isinstance(current_inputs, tuple)
+            else [current_inputs]
+        )
+
+    return []
 
 
 def _get_action_input(wf_spec, task_ex, task_spec, ctx):
@@ -507,3 +515,19 @@ def _set_task_state(task_ex, state):
     )
 
     task_ex.state = state
+
+
+def is_task_completed(task_ex, task_spec):
+    if task_spec.get_with_items():
+        return with_items.is_completed(task_ex)
+
+    return states.is_completed(task_ex.state)
+
+
+def need_to_continue(task_ex, task_spec):
+    # For now continue is available only for with-items.
+    if task_spec.get_with_items():
+        return (with_items.has_more_iterations(task_ex)
+                and with_items.get_concurrency_spec(task_spec))
+
+    return False
