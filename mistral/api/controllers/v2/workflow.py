@@ -95,14 +95,6 @@ class Workflows(resource.ResourceList):
 
         super(Workflows, self).__init__(**kwargs)
 
-    @staticmethod
-    def convert_with_links(workflows, limit, url=None, **kwargs):
-        wf_collection = Workflows()
-        wf_collection.workflows = workflows
-        wf_collection.next = wf_collection.get_next(limit, url=url, **kwargs)
-
-        return wf_collection
-
     @classmethod
     def sample(cls):
         workflows_sample = cls()

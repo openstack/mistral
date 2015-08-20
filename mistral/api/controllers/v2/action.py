@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 Huawei Technologies Co., Ltd.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,6 +21,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import types
 from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -70,9 +70,21 @@ class Actions(resource.ResourceList):
 
     actions = [Action]
 
+    def __init__(self, **kwargs):
+        self._type = 'actions'
+
+        super(Actions, self).__init__(**kwargs)
+
     @classmethod
     def sample(cls):
-        return cls(actions=[Action.sample()])
+        actions_sample = cls()
+        actions_sample.actions = [Action.sample()]
+        actions_sample.next = "http://localhost:8989/v2/actions?" \
+                              "sort_keys=id,name&" \
+                              "sort_dirs=asc,desc&limit=10&" \
+                              "marker=123e4567-e89b-12d3-a456-426655440000"
+
+        return actions_sample
 
 
 class ActionsController(rest.RestController, hooks.HookController):
@@ -144,16 +156,49 @@ class ActionsController(rest.RestController, hooks.HookController):
 
             db_api.delete_action_definition(name)
 
-    @wsme_pecan.wsexpose(Actions)
-    def get_all(self):
+    @wsme_pecan.wsexpose(Actions, types.uuid, int, types.uniquelist,
+                         types.list)
+    def get_all(self, marker=None, limit=None, sort_keys='name',
+                sort_dirs='asc'):
         """Return all actions.
+
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatability.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: name.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be choosed.
+                          Default: asc.
 
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
-        LOG.info("Fetch actions.")
+        LOG.info("Fetch actions. marker=%s, limit=%s, sort_keys=%s, "
+                 "sort_dirs=%s", marker, limit, sort_keys, sort_dirs)
 
-        action_list = [Action.from_dict(db_model.to_dict())
-                       for db_model in db_api.get_action_definitions()]
+        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
 
-        return Actions(actions=action_list)
+        marker_obj = None
+
+        if marker:
+            marker_obj = db_api.get_action_definition_by_id(marker)
+
+        db_action_defs = db_api.get_action_definitions(
+            limit=limit,
+            marker=marker_obj,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs
+        )
+
+        actions_list = [Action.from_dict(db_model.to_dict())
+                        for db_model in db_action_defs]
+
+        return Actions.convert_with_links(
+            actions_list,
+            limit,
+            pecan.request.host_url,
+            sort_keys=','.join(sort_keys),
+            sort_dirs=','.join(sort_dirs)
+        )
