@@ -45,7 +45,7 @@ class DirectWorkflowController(base.WorkflowController):
     def _get_upstream_task_executions(self, task_spec):
         return filter(
             lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
-            wf_utils.find_task_executions(
+            wf_utils.find_task_executions_by_specs(
                 self.wf_ex,
                 self._find_inbound_task_specs(task_spec)
             )
@@ -184,16 +184,20 @@ class DirectWorkflowController(base.WorkflowController):
         return bool(self.get_on_error_clause(task_ex.name))
 
     def all_errors_handled(self):
-        for t_ex in wf_utils.find_error_tasks(self.wf_ex):
+        for t_ex in wf_utils.find_error_task_executions(self.wf_ex):
             if not self.get_on_error_clause(t_ex.name):
                 return False
 
         return True
 
     def _find_end_tasks(self):
+        # TODO(rakhmerov): Using _has_outbound_tasks() here is a wrong
+        # approach in case we have cycles in the workflow because we
+        # may have a situation when we don't have such tasks with no
+        # outbound tasks. Need to fix it.
         return filter(
-            lambda t_db: not self._has_outbound_tasks(t_db),
-            wf_utils.find_successful_tasks(self.wf_ex)
+            lambda t_ex: not self._has_outbound_tasks(t_ex),
+            wf_utils.find_successful_task_executions(self.wf_ex)
         )
 
     def _has_outbound_tasks(self, task_ex):
@@ -202,7 +206,8 @@ class DirectWorkflowController(base.WorkflowController):
         )
 
         return any(
-            [wf_utils.find_task_execution(self.wf_ex, t_s) for t_s in t_specs]
+            [wf_utils.find_task_executions_by_spec(self.wf_ex, t_s)
+             for t_s in t_specs]
         )
 
     @staticmethod
@@ -343,8 +348,17 @@ class DirectWorkflowController(base.WorkflowController):
 
         return False
 
+    # TODO(rakhmerov): Method signature is incorrect given that
+    # we may have multiple task executions for a task. It should
+    # accept inbound task execution rather than a spec.
     def _triggers_join(self, join_task_spec, inbound_task_spec):
-        in_t_ex = wf_utils.find_task_execution(self.wf_ex, inbound_task_spec)
+        in_t_execs = wf_utils.find_task_executions_by_spec(
+            self.wf_ex,
+            inbound_task_spec
+        )
+
+        # TODO(rakhmerov): Temporary hack. See the previous comment.
+        in_t_ex = in_t_execs[-1]
 
         if not in_t_ex or not states.is_completed(in_t_ex.state):
             return False
@@ -353,5 +367,6 @@ class DirectWorkflowController(base.WorkflowController):
             lambda t_name: join_task_spec.get_name() == t_name,
             self._find_next_task_names(
                 in_t_ex,
-                data_flow.evaluate_task_outbound_context(in_t_ex))
+                data_flow.evaluate_task_outbound_context(in_t_ex)
+            )
         )

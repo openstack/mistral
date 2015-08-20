@@ -79,22 +79,26 @@ class ReverseWorkflowController(base.WorkflowController):
 
         return filter(
             lambda t_e: t_e.state == states.SUCCESS,
-            wf_utils.find_task_executions(self.wf_ex, t_specs)
+            wf_utils.find_task_executions_by_specs(self.wf_ex, t_specs)
         )
 
     def evaluate_workflow_final_context(self):
-        return data_flow.evaluate_task_outbound_context(
-            wf_utils.find_task_execution(
-                self.wf_ex,
-                self._get_target_task_specification()
-            )
+        task_execs = wf_utils.find_task_executions_by_spec(
+            self.wf_ex,
+            self._get_target_task_specification()
         )
+
+        # NOTE: For reverse workflow there can't be multiple
+        # executions for one task.
+        assert len(task_execs) <= 1
+
+        return data_flow.evaluate_task_outbound_context(task_execs[0])
 
     def is_error_handled_for(self, task_ex):
         return task_ex.state != states.ERROR
 
     def all_errors_handled(self):
-        return len(wf_utils.find_error_tasks(self.wf_ex)) == 0
+        return len(wf_utils.find_error_task_executions(self.wf_ex)) == 0
 
     def _find_task_specs_with_satisfied_dependencies(self):
         """Given a target task name finds tasks with no dependencies.
@@ -128,9 +132,7 @@ class ReverseWorkflowController(base.WorkflowController):
                     "Task '%s' not found." % req
                 )
 
-        task_ex = wf_utils.find_task_execution(self.wf_ex, task_spec)
-
-        if task_ex:
+        if wf_utils.find_task_executions_by_spec(self.wf_ex, task_spec):
             return False
 
         if not self._get_task_requires(task_spec):

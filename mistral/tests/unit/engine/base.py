@@ -109,7 +109,8 @@ class EngineTestCase(base.DbTestCase):
 
         [thread.kill() for thread in self.threads]
 
-    def print_workflow_executions(self, exc_info):
+    @staticmethod
+    def print_workflow_executions(exc_info):
         print("\nEngine test case exception occurred: %s" % exc_info[1])
         print("Exception type: %s" % exc_info[0])
         print("\nPrinting workflow executions...")
@@ -124,8 +125,8 @@ class EngineTestCase(base.DbTestCase):
 
             for t_ex in wf_ex.task_executions:
                 print(
-                    "\t%s [state=%s, published=%s]" %
-                    (t_ex.name, t_ex.state, t_ex.published)
+                    "\t%s [id=%s, state=%s, published=%s]" %
+                    (t_ex.name, t_ex.id, t_ex.state, t_ex.published)
                 )
 
     def is_task_in_state(self, task_ex_id, state):
