@@ -35,8 +35,10 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     def process_cron_triggers_v2(self, ctx):
         for t in triggers.get_next_cron_triggers():
             LOG.debug("Processing cron trigger: %s" % t)
+
             # Setup admin context before schedule triggers.
             ctx = security.create_context(t.trust_id, t.project_id)
+
             auth_ctx.set_ctx(ctx)
 
             LOG.debug("Cron trigger security context: %s" % ctx)
@@ -45,7 +47,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                 rpc.get_engine_client().start_workflow(
                     t.workflow.name,
                     t.workflow_input,
-                    description="workflow execution by cron trigger.",
+                    description="Workflow execution created by cron trigger.",
                     **t.workflow_params
                 )
             finally:
@@ -61,8 +63,10 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
                     db_api_v2.update_cron_trigger(
                         t.name,
-                        {'next_execution_time': next_time,
-                         'remaining_executions': t.remaining_executions}
+                        {
+                            'next_execution_time': next_time,
+                            'remaining_executions': t.remaining_executions
+                        }
                     )
 
                     auth_ctx.set_ctx(None)

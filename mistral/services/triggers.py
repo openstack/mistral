@@ -14,6 +14,7 @@
 
 from croniter import croniter
 import datetime
+import six
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import utils as eng_utils
@@ -36,21 +37,25 @@ def get_next_cron_triggers():
 
 def validate_cron_trigger_input(pattern, first_time, count):
     if not (first_time or pattern):
-        raise exc.InvalidModelException("Pattern or first_execution_time must"
-                                        " be specified.")
+        raise exc.InvalidModelException(
+            'Pattern or first_execution_time must be specified.'
+        )
     if first_time:
         if (datetime.datetime.now() + datetime.timedelta(0, 60)) > first_time:
-            raise exc.InvalidModelException("First_execution_time must be at"
-                                            " least one minute in the future.")
+            raise exc.InvalidModelException(
+                'first_execution_time must be at least 1 second in the future.'
+            )
         if not pattern and count > 1:
-            raise exc.InvalidModelException("Pattern must be provided if count"
-                                            " is superior to 1.")
+            raise exc.InvalidModelException(
+                'Pattern must be provided if count is superior to 1.'
+            )
     if pattern:
         try:
             croniter(pattern)
         except (ValueError, KeyError):
-            raise exc.InvalidModelException("The specified pattern is not"
-                                            " valid: {}".format(pattern))
+            raise exc.InvalidModelException(
+                'The specified pattern is not valid: {}'.format(pattern)
+            )
 
 
 def create_cron_trigger(name, workflow_name, workflow_input,
@@ -59,10 +64,12 @@ def create_cron_trigger(name, workflow_name, workflow_input,
     if not start_time:
         start_time = datetime.datetime.now()
 
-    if type(first_time) in [str, unicode]:
+    if isinstance(first_time, six.string_types):
         try:
-            first_time = datetime.datetime.strptime(first_time,
-                                                    '%Y-%m-%d %H:%M')
+            first_time = datetime.datetime.strptime(
+                first_time,
+                '%Y-%m-%d %H:%M'
+            )
         except ValueError as e:
             raise exc.InvalidModelException(e.message)
 
@@ -70,6 +77,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
 
     if first_time:
         next_time = first_time
+
         if not (pattern and count):
             count = 1
     else:
