@@ -673,6 +673,83 @@ class ActionTestsV2(base.TestCase):
 
         self.assertEqual(200, resp.status)
         self.assertNotEqual([], body['actions'])
+        self.assertNotIn('next', body)
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_with_pagination(self):
+        resp, body = self.client.get_list_obj(
+            'actions?limit=1&sort_keys=name&sort_dirs=desc'
+        )
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(1, len(body['actions']))
+        self.assertIn('next', body)
+
+        name_1 = body['actions'][0].get('name')
+        next = body.get('next')
+
+        param_dict = utils.get_dict_from_string(
+            next.split('?')[1],
+            delimiter='&'
+        )
+
+        expected_sub_dict = {
+            'limit': 1,
+            'sort_keys': 'name',
+            'sort_dirs': 'desc'
+        }
+
+        self.assertDictContainsSubset(expected_sub_dict, param_dict)
+
+        # Query again using 'next' hint
+        url_param = next.split('/')[-1]
+        resp, body = self.client.get_list_obj(url_param)
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(1, len(body['actions']))
+
+        name_2 = body['actions'][0].get('name')
+
+        self.assertGreater(name_1, name_2)
+
+    @test.attr(type='negative')
+    def test_get_list_actions_nonexist_sort_dirs(self):
+        context = self.assertRaises(
+            exceptions.BadRequest,
+            self.client.get_list_obj,
+            'actions?limit=1&sort_keys=id&sort_dirs=nonexist'
+        )
+
+        self.assertIn(
+            'Unknown sort direction',
+            context.resp_body.get('faultstring')
+        )
+
+    @test.attr(type='negative')
+    def test_get_list_actions_invalid_limit(self):
+        context = self.assertRaises(
+            exceptions.BadRequest,
+            self.client.get_list_obj,
+            'actions?limit=-1&sort_keys=id&sort_dirs=asc'
+        )
+
+        self.assertIn(
+            'Limit must be positive',
+            context.resp_body.get('faultstring')
+        )
+
+    @test.attr(type='negative')
+    def test_get_list_actions_duplicate_sort_keys(self):
+        context = self.assertRaises(
+            exceptions.BadRequest,
+            self.client.get_list_obj,
+            'actions?limit=1&sort_keys=id,id&sort_dirs=asc,asc'
+        )
+
+        self.assertIn(
+            'Length of sort_keys must be equal or greater than sort_dirs',
+            context.resp_body.get('faultstring')
+        )
 
     @test.attr(type='sanity')
     def test_create_and_delete_few_actions(self):

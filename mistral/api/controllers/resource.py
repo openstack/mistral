@@ -72,6 +72,20 @@ class ResourceList(Resource):
     def collection(self):
         return getattr(self, self._type)
 
+    @classmethod
+    def convert_with_links(cls, resources, limit, url=None, **kwargs):
+        resource_collection = cls()
+
+        setattr(resource_collection, resource_collection._type, resources)
+
+        resource_collection.next = resource_collection.get_next(
+            limit,
+            url=url,
+            **kwargs
+        )
+
+        return resource_collection
+
     def has_next(self, limit):
         """Return whether resources has more items."""
         return len(self.collection) and len(self.collection) == limit

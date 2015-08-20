@@ -151,6 +151,10 @@ def delete_workflow_definitions(**kwargs):
 
 # Action definitions.
 
+def get_action_definition_by_id(id):
+    return IMPL.get_action_definition_by_id(id)
+
+
 def get_action_definition(name):
     return IMPL.get_action_definition(name)
 
@@ -160,8 +164,15 @@ def load_action_definition(name):
     return IMPL.load_action_definition(name)
 
 
-def get_action_definitions(**kwargs):
-    return IMPL.get_action_definitions(**kwargs)
+def get_action_definitions(limit=None, marker=None, sort_keys=['name'],
+                           sort_dirs=None, **kwargs):
+    return IMPL.get_action_definitions(
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        **kwargs
+    )
 
 
 def create_action_definition(values):

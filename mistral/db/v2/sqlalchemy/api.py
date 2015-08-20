@@ -346,6 +346,17 @@ def _get_workflow_definition_by_id(id):
 
 # Action definitions.
 
+def get_action_definition_by_id(id):
+    action_def = _get_db_object_by_id(models.ActionDefinition, id)
+
+    if not action_def:
+        raise exc.NotFoundException(
+            "Action not found [action_id=%s]" % id
+        )
+
+    return action_def
+
+
 def get_action_definition(name):
     a_def = _get_action_definition(name)
 
@@ -361,8 +372,24 @@ def load_action_definition(name):
     return _get_action_definition(name)
 
 
-def get_action_definitions(**kwargs):
-    return _get_collection_sorted_by_name(models.ActionDefinition, **kwargs)
+def get_action_definitions(limit=None, marker=None, sort_keys=['name'],
+                           sort_dirs=None, **kwargs):
+    query = _secure_query(models.ActionDefinition).filter_by(**kwargs)
+
+    try:
+        return _paginate_query(
+            models.ActionDefinition,
+            limit,
+            marker,
+            sort_keys,
+            sort_dirs,
+            query
+        )
+    except Exception as e:
+        raise exc.DBQueryEntryException(
+            "Failed when quering database, error type: %s, "
+            "error message: %s" % (e.__class__.__name__, e.message)
+        )
 
 
 @b.session_aware()

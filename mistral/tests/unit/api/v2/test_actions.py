@@ -21,6 +21,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral import utils
 
 
 ACTION_DEFINITION = """
@@ -46,7 +47,7 @@ std.echo:
 """
 
 ACTION = {
-    'id': '123',
+    'id': '123e4567-e89b-12d3-a456-426655440000',
     'name': 'my_action',
     'is_system': False,
     'description': 'My super cool action.',
@@ -220,3 +221,70 @@ class TestActionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['actions']), 0)
+
+    @mock.patch.object(db_api, "get_action_definitions", MOCK_ACTIONS)
+    def test_get_all_pagination(self):
+        resp = self.app.get(
+            '/v2/actions?limit=1&sort_keys=id,name')
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertIn('next', resp.json)
+        self.assertEqual(len(resp.json['actions']), 1)
+        self.assertDictEqual(ACTION, resp.json['actions'][0])
+
+        param_dict = utils.get_dict_from_string(
+            resp.json['next'].split('?')[1],
+            delimiter='&'
+        )
+
+        expected_dict = {
+            'marker': '123e4567-e89b-12d3-a456-426655440000',
+            'limit': 1,
+            'sort_keys': 'id,name',
+            'sort_dirs': 'asc,asc'
+        }
+
+        self.assertDictEqual(expected_dict, param_dict)
+
+    def test_get_all_pagination_limit_negative(self):
+        resp = self.app.get(
+            '/v2/actions?limit=-1&sort_keys=id,name&sort_dirs=asc,asc',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn("Limit must be positive", resp.body)
+
+    def test_get_all_pagination_limit_not_integer(self):
+        resp = self.app.get(
+            '/v2/actions?limit=1.1&sort_keys=id,name&sort_dirs=asc,asc',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn("unable to convert to int", resp.body)
+
+    def test_get_all_pagination_invalid_sort_dirs_length(self):
+        resp = self.app.get(
+            '/v2/actions?limit=1&sort_keys=id,name&sort_dirs=asc,asc,asc',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn(
+            "Length of sort_keys must be equal or greater than sort_dirs",
+            resp.body
+        )
+
+    def test_get_all_pagination_unknown_direction(self):
+        resp = self.app.get(
+            '/v2/actions?limit=1&sort_keys=id&sort_dirs=nonexist',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn("Unknown sort direction", resp.body)
