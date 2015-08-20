@@ -45,3 +45,6 @@ ChangeLog
 etc/*.conf
 tools/lintstack.head.py
 tools/pylint_exceptions
+
+#Linux swap file
+*.swp
