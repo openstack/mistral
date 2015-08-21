@@ -292,3 +292,10 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             self._parse_dsl_spec(add_tasks=True,
                                  changes=overlay,
                                  expect_error=expect_error)
+
+    def test_invalid_item(self):
+        overlay = {'name': 'invalid'}
+
+        exception = self._parse_dsl_spec(changes=overlay, expect_error=True)
+
+        self.assertIn("Invalid DSL", exception.message)

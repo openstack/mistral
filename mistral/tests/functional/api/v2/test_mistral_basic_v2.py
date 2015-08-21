@@ -818,40 +818,53 @@ class ActionTestsV2(base.TestCase):
 
     @test.attr(type='negative')
     def test_get_nonexistent_action(self):
-        self.assertRaises(exceptions.NotFound,
-                          self.client.get_object,
-                          'actions', 'nonexist')
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.get_object,
+            'actions', 'nonexist'
+        )
 
     @test.attr(type='negative')
     def test_double_creation(self):
         self.client.create_action('action_v2.yaml')
 
-        self.assertRaises(exceptions.Conflict,
-                          self.client.create_action,
-                          'action_v2.yaml')
+        self.assertRaises(
+            exceptions.Conflict,
+            self.client.create_action,
+            'action_v2.yaml'
+        )
 
     @test.attr(type='negative')
     def test_create_action_invalid_def(self):
-        self.assertRaises(exceptions.ServerFault,
-                          self.client.create_action, 'wb_v2.yaml')
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.create_action,
+            'wb_v2.yaml'
+        )
 
     @test.attr(type='negative')
     def test_update_action_invalid_def(self):
-        self.assertRaises(exceptions.ServerFault,
-                          self.client.update_request,
-                          'actions', 'wb_v2.yaml')
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.update_request,
+            'actions', 'wb_v2.yaml'
+        )
 
     @test.attr(type='negative')
     def test_delete_nonexistent_action(self):
-        self.assertRaises(exceptions.NotFound,
-                          self.client.delete_obj,
-                          'actions', 'nonexist')
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.delete_obj,
+            'actions', 'nonexist'
+        )
 
     @test.attr(type='negative')
     def test_delete_standard_action(self):
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.delete_obj,
-                          'actions', 'nova.servers_create')
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.delete_obj,
+            'actions', 'nova.servers_create'
+        )
 
 
 class TasksTestsV2(base.TestCase):
