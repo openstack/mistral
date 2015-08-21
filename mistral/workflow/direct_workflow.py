@@ -103,11 +103,9 @@ class DirectWorkflowController(base.WorkflowController):
         :return: List of workflow commands.
         """
 
-        ctx = data_flow.evaluate_task_outbound_context(task_ex)
-
         cmds = []
 
-        for t_n in self._find_next_task_names(task_ex, ctx):
+        for t_n in self._find_next_task_names(task_ex):
             t_s = self.wf_spec.get_tasks()[t_n]
 
             if not (t_s or t_n in commands.RESERVED_CMDS):
@@ -191,24 +189,20 @@ class DirectWorkflowController(base.WorkflowController):
         return True
 
     def _find_end_tasks(self):
-        # TODO(rakhmerov): Using _has_outbound_tasks() here is a wrong
-        # approach in case we have cycles in the workflow because we
-        # may have a situation when we don't have such tasks with no
-        # outbound tasks. Need to fix it.
         return filter(
             lambda t_ex: not self._has_outbound_tasks(t_ex),
             wf_utils.find_successful_task_executions(self.wf_ex)
         )
 
     def _has_outbound_tasks(self, task_ex):
-        t_specs = self._find_outbound_task_specs(
-            self.wf_spec.get_tasks()[task_ex.name]
-        )
-
-        return any(
-            [wf_utils.find_task_executions_by_spec(self.wf_ex, t_s)
-             for t_s in t_specs]
-        )
+        # In order to determine if there are outbound tasks we just need
+        # to calculate next task names (based on task outbound context)
+        # and remove all engine commands. To do the latter it's enough to
+        # check if there's a corresponding task specification for a task name.
+        return bool([
+            t_name for t_name in self._find_next_task_names(task_ex)
+            if self.wf_spec.get_tasks()[t_name]
+        ])
 
     @staticmethod
     def _remove_task_from_clause(on_clause, t_name):
@@ -256,9 +250,11 @@ class DirectWorkflowController(base.WorkflowController):
 
         return result
 
-    def _find_next_task_names(self, task_ex, ctx):
+    def _find_next_task_names(self, task_ex):
         t_state = task_ex.state
         t_name = task_ex.name
+
+        ctx = data_flow.evaluate_task_outbound_context(task_ex)
 
         t_names = []
 
@@ -365,8 +361,5 @@ class DirectWorkflowController(base.WorkflowController):
 
         return filter(
             lambda t_name: join_task_spec.get_name() == t_name,
-            self._find_next_task_names(
-                in_t_ex,
-                data_flow.evaluate_task_outbound_context(in_t_ex)
-            )
+            self._find_next_task_names(in_t_ex)
         )

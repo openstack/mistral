@@ -83,6 +83,4 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         self.assertTrue(task3_execs[0].state, states.SUCCESS)
         self.assertTrue(task3_execs[1].state, states.SUCCESS)
 
-        # TODO(rakhmerov): Evaluation of workflow output doesn't work yet.
-        # Need to fix it.
-        # self.assertEqual(3, wf_ex.output)
+        self.assertDictEqual({'cnt': 2}, wf_ex.output)
