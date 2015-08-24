@@ -643,8 +643,24 @@ def ensure_workflow_execution_exists(id):
     get_workflow_execution(id)
 
 
-def get_workflow_executions(**kwargs):
-    return _get_workflow_executions(**kwargs)
+def get_workflow_executions(limit=None, marker=None, sort_keys=['created_at'],
+                            sort_dirs=None, **kwargs):
+    query = _secure_query(models.WorkflowExecution).filter_by(**kwargs)
+
+    try:
+        return _paginate_query(
+            models.WorkflowExecution,
+            limit,
+            marker,
+            sort_keys,
+            sort_dirs,
+            query
+        )
+    except Exception as e:
+        raise exc.DBQueryEntryException(
+            "Failed when quering database, error type: %s, "
+            "error message: %s" % (e.__class__.__name__, e.message)
+        )
 
 
 @b.session_aware()
@@ -696,10 +712,6 @@ def delete_workflow_execution(id, session=None):
 @b.session_aware()
 def delete_workflow_executions(**kwargs):
     return _delete_all(models.WorkflowExecution, **kwargs)
-
-
-def _get_workflow_executions(**kwargs):
-    return _get_collection_sorted_by_time(models.WorkflowExecution, **kwargs)
 
 
 def _get_workflow_execution(id):

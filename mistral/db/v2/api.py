@@ -284,8 +284,15 @@ def load_workflow_execution(name):
     return IMPL.load_workflow_execution(name)
 
 
-def get_workflow_executions(**kwargs):
-    return IMPL.get_workflow_executions(**kwargs)
+def get_workflow_executions(limit=None, marker=None, sort_keys=['created_at'],
+                            sort_dirs=None, **kwargs):
+    return IMPL.get_workflow_executions(
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        **kwargs
+    )
 
 
 def ensure_workflow_execution_exists(id):
