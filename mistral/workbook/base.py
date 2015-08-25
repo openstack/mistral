@@ -200,12 +200,13 @@ class BaseSpec(object):
 class BaseListSpec(BaseSpec):
     item_class = None
 
-    _meta_schema = {
+    _schema = {
         "type": "object",
         "properties": {
             "version": types.VERSION
         },
-        "required": ["version"]
+        "additionalProperties": types.NONEMPTY_DICT,
+        "required": ["version"],
     }
 
     def __init__(self, data):
