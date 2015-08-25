@@ -339,6 +339,10 @@ class ExecutionTestsV2(base.TestCase):
             self.client.delete_obj('workflows', wf)
         self.client.workflows = []
 
+        for wf in self.client.executions:
+            self.client.delete_obj('executions', wf)
+        self.client.executions = []
+
         super(ExecutionTestsV2, self).tearDown()
 
     @test.attr(type='smoke')
@@ -869,6 +873,10 @@ class TasksTestsV2(base.TestCase):
         for wf in self.client.workflows:
             self.client.delete_obj('workflows', wf)
         self.client.workflows = []
+
+        for wf in self.client.executions:
+            self.client.delete_obj('executions', wf)
+        self.client.executions = []
 
         super(TasksTestsV2, self).tearDown()
 
