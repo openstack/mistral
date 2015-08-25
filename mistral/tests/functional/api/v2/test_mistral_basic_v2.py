@@ -347,8 +347,55 @@ class ExecutionTestsV2(base.TestCase):
 
     @test.attr(type='smoke')
     def test_get_list_executions(self):
-        resp, _ = self.client.get_list_obj('executions')
+        resp, body = self.client.get_list_obj('executions')
         self.assertEqual(200, resp.status)
+        self.assertNotIn('next', body)
+
+    @test.attr(type='smoke')
+    def test_get_list_executions_with_pagination(self):
+        resp, _ = self.client.create_execution(self.direct_wf)
+
+        self.assertEqual(201, resp.status)
+
+        resp, _ = self.client.create_execution(
+            self.reverse_wf['name'],
+            {self.reverse_wf['input']: "Bye"},
+            {"task_name": "goodbye"}
+        )
+
+        self.assertEqual(201, resp.status)
+
+        resp, body = self.client.get_list_obj('executions?limit=1')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(1, len(body['executions']))
+        self.assertIn('next', body)
+
+        created_at_1 = body['executions'][0].get('created_at')
+        next = body.get('next')
+        param_dict = utils.get_dict_from_string(
+            next.split('?')[1],
+            delimiter='&'
+        )
+
+        expected_dict = {
+            'limit': 1,
+            'sort_keys': 'created_at',
+            'sort_dirs': 'desc',
+        }
+
+        self.assertDictContainsSubset(expected_dict, param_dict)
+
+        # Query again using 'next' link
+        url_param = next.split('/')[-1]
+        resp, body = self.client.get_list_obj(url_param)
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(1, len(body['executions']))
+
+        created_at_2 = body['executions'][0].get('created_at')
+
+        self.assertGreater(created_at_1, created_at_2)
 
     @test.attr(type='sanity')
     def test_create_execution_for_direct_wf(self):
