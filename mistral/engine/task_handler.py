@@ -107,7 +107,7 @@ def defer_task(wf_cmd):
     wf_ex = wf_cmd.wf_ex
     task_spec = wf_cmd.task_spec
 
-    if not wf_utils.find_task_execution(wf_ex, task_spec):
+    if not wf_utils.find_task_executions_by_spec(wf_ex, task_spec):
         _create_task_execution(wf_ex, task_spec, ctx, state=states.WAITING)
 
 

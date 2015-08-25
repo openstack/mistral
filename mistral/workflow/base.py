@@ -120,7 +120,10 @@ class WorkflowController(object):
         :return: List of workflow commands.
         """
         # Add all tasks in IDLE state.
-        idle_tasks = wf_utils.find_tasks_with_state(self.wf_ex, states.IDLE)
+        idle_tasks = wf_utils.find_task_executions_with_state(
+            self.wf_ex,
+            states.IDLE
+        )
 
         return [commands.RunExistingTask(t) for t in idle_tasks]
 

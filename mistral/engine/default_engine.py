@@ -193,7 +193,7 @@ class DefaultEngine(base.Engine, coordination.Service):
         if states.is_paused_or_completed(wf_ex.state):
             return
 
-        if wf_utils.find_incomplete_tasks(wf_ex):
+        if wf_utils.find_incomplete_task_executions(wf_ex):
             return
 
         if wf_ctrl.all_errors_handled():
@@ -288,7 +288,7 @@ class DefaultEngine(base.Engine, coordination.Service):
         self._dispatch_workflow_commands(wf_ex, cmds)
 
         if not cmds:
-            if not wf_utils.find_incomplete_tasks(wf_ex):
+            if not wf_utils.find_incomplete_task_executions(wf_ex):
                 wf_handler.succeed_workflow(
                     wf_ex,
                     wf_ctrl.evaluate_workflow_final_context()
