@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from pecan import rest
 from wsme import types as wtypes
@@ -190,6 +191,29 @@ class ActionExecutionsController(rest.RestController):
         LOG.info("Fetch action_executions")
 
         return _get_action_executions()
+
+    @rest_utils.wrap_wsme_controller_exception
+    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
+    def delete(self, id):
+        """Delete the specified action_execution."""
+
+        LOG.info("Delete action_execution [id=%s]" % id)
+
+        if not cfg.CONF.api.allow_action_execution_deletion:
+            raise exc.NotAllowedException("Action execution deletion is not "
+                                          "allowed.")
+
+        action_ex = db_api.get_action_execution(id)
+
+        if action_ex.task_execution_id:
+            raise exc.NotAllowedException("Only ad-hoc action execution can "
+                                          "be deleted.")
+
+        if not states.is_completed(action_ex.state):
+            raise exc.NotAllowedException("Only completed action execution "
+                                          "can be deleted.")
+
+        return db_api.delete_action_execution(id)
 
 
 class TasksActionExecutionController(rest.RestController):

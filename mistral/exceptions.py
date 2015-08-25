@@ -127,3 +127,8 @@ class SizeLimitExceededException(MistralException):
 
 class CoordinationException(MistralException):
     http_code = 500
+
+
+class NotAllowedException(MistralException):
+    http_code = 403
+    message = "Operation not allowed"

@@ -633,6 +633,18 @@ class ActionExecutionTest(SQLAlchemyTest):
             created.id
         )
 
+    def test_delete_other_tenant_action_execution(self):
+        created = db_api.create_action_execution(ACTION_EXECS[0])
+
+        # Create a new user.
+        auth_context.set_ctx(test_base.get_context(default=False))
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.delete_action_execution,
+            created.id
+        )
+
     def test_trim_status_info(self):
         created = db_api.create_action_execution(ACTION_EXECS[0])
 

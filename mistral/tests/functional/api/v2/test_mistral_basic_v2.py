@@ -14,12 +14,17 @@
 
 import json
 
+from oslo_log import log as logging
+import six
 from tempest import test
 from tempest_lib import decorators
 from tempest_lib import exceptions
 
 from mistral.tests.functional import base
 from mistral import utils
+
+
+LOG = logging.getLogger(__name__)
 
 
 class WorkbookTestsV2(base.TestCase):
@@ -976,15 +981,26 @@ class TasksTestsV2(base.TestCase):
         )
 
 
-# TODO(namkhotkin) Need more tests on action executions.
 class ActionExecutionTestsV2(base.TestCase):
-
     _service = 'workflowv2'
+
+    @classmethod
+    def resource_cleanup(cls):
+        for action_ex in cls.client.action_executions:
+            try:
+                cls.client.delete_obj('action_executions', action_ex)
+            except Exception as e:
+                LOG.exception('Exception raised when deleting '
+                              'action_executions %s, error message: %s.'
+                              % (action_ex, six.text_type(e)))
+
+        cls.client.action_executions = []
+
+        super(ActionExecutionTestsV2, cls).resource_cleanup()
 
     @test.attr(type='sanity')
     def test_run_action_execution(self):
-        resp, body = self.client.post_json(
-            'action_executions',
+        resp, body = self.client.create_action_execution(
             {
                 'name': 'std.echo',
                 'input': '{"output": "Hello, Mistral!"}'
@@ -992,7 +1008,6 @@ class ActionExecutionTestsV2(base.TestCase):
         )
 
         self.assertEqual(201, resp.status)
-        body = json.loads(body)
         output = json.loads(body['output'])
         self.assertDictEqual(
             {'result': 'Hello, Mistral!'},
@@ -1001,8 +1016,7 @@ class ActionExecutionTestsV2(base.TestCase):
 
     @test.attr(type='sanity')
     def test_run_action_std_http(self):
-        resp, body = self.client.post_json(
-            'action_executions',
+        resp, body = self.client.create_action_execution(
             {
                 'name': 'std.http',
                 'input': '{"url": "http://wiki.openstack.org"}'
@@ -1010,14 +1024,12 @@ class ActionExecutionTestsV2(base.TestCase):
         )
 
         self.assertEqual(201, resp.status)
-        body = json.loads(body)
         output = json.loads(body['output'])
         self.assertTrue(output['result']['status'] in range(200, 307))
 
     @test.attr(type='sanity')
     def test_run_action_std_http_error(self):
-        resp, body = self.client.post_json(
-            'action_executions',
+        resp, body = self.client.create_action_execution(
             {
                 'name': 'std.http',
                 'input': '{"url": "http://www.google.ru/not-found-test"}'
@@ -1025,14 +1037,12 @@ class ActionExecutionTestsV2(base.TestCase):
         )
 
         self.assertEqual(201, resp.status)
-        body = json.loads(body)
         output = json.loads(body['output'])
         self.assertEqual(404, output['result']['status'])
 
     @test.attr(type='sanity')
     def test_create_action_execution(self):
-        resp, body = self.client.post_json(
-            'action_executions',
+        resp, body = self.client.create_action_execution(
             {
                 'name': 'std.echo',
                 'input': '{"output": "Hello, Mistral!"}',
@@ -1041,9 +1051,6 @@ class ActionExecutionTestsV2(base.TestCase):
         )
 
         self.assertEqual(201, resp.status)
-
-        body = json.loads(body)
-
         self.assertEqual('RUNNING', body['state'])
 
         # We must reread action execution in order to get actual
@@ -1058,4 +1065,13 @@ class ActionExecutionTestsV2(base.TestCase):
         self.assertDictEqual(
             {'result': 'Hello, Mistral!'},
             output
+        )
+
+    @test.attr(type='negative')
+    def test_delete_nonexistent_action_execution(self):
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.delete_obj,
+            'action_executions',
+            'nonexist'
         )

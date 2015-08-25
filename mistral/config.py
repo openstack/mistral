@@ -36,7 +36,10 @@ launch_opt = cfg.ListOpt(
 
 api_opts = [
     cfg.StrOpt('host', default='0.0.0.0', help='Mistral API server host'),
-    cfg.IntOpt('port', default=8989, help='Mistral API server port')
+    cfg.IntOpt('port', default=8989, help='Mistral API server port'),
+    cfg.BoolOpt('allow_action_execution_deletion', default=False,
+                help='Enables the ability to delete action_execution which '
+                     'has no relationship with workflows.'),
 ]
 
 pecan_opts = [

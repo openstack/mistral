@@ -70,6 +70,7 @@ class MistralClientBase(rest_client.RestClient):
         self.workflows = []
         self.triggers = []
         self.actions = []
+        self.action_executions = []
 
     def get_list_obj(self, name):
         resp, body = self.get(name)
@@ -203,6 +204,15 @@ class MistralClientV2(MistralClientBase):
         all_tasks = self.get_list_obj('tasks')[1]['tasks']
 
         return [t for t in all_tasks if t['workflow_name'] == wf_name]
+
+    def create_action_execution(self, request_body):
+        resp, body = self.post_json('action_executions', request_body)
+
+        params = json.loads(request_body.get('params', '{}'))
+        if params.get('save_result', False):
+            self.action_executions.append(json.loads(body)['id'])
+
+        return resp, json.loads(body)
 
 
 class AuthProv(auth.KeystoneV2AuthProvider):

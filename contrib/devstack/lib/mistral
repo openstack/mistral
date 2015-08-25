@@ -101,6 +101,7 @@ function configure_mistral {
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_user $MISTRAL_ADMIN_USER
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
+    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri "http://${KEYSTONE_AUTH_HOST}:5000/v3"
 
     # Setup RabbitMQ credentials
     iniset $MISTRAL_CONF_FILE DEFAULT rabbit_userid $RABBIT_USERID
@@ -111,8 +112,8 @@ function configure_mistral {
     iniset $MISTRAL_CONF_FILE database max_overflow -1
     iniset $MISTRAL_CONF_FILE database max_pool_size 1000
 
-    # Configure keystone auth url
-    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri "http://${KEYSTONE_AUTH_HOST}:5000/v3"
+    # Configure action execution deletion policy
+    iniset $MISTRAL_CONF_FILE api allow_action_execution_deletion True
 }
 
 
