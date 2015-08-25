@@ -18,7 +18,7 @@ from oslo_log import log as logging
 
 from mistral.services import periodic
 from mistral.services import security
-from mistral.services import triggers as t_s
+from mistral.services import triggers
 from mistral.services import workflows
 from mistral.tests.unit.engine import base
 
@@ -38,13 +38,15 @@ my_wf:
 
 
 class ProcessCronTriggerTest(base.EngineTestCase):
-
-    @mock.patch.object(security, 'create_trust',
+    @mock.patch.object(security,
+                       'create_trust',
                        type('trust', (object,), {'id': 'my_trust_id'}))
     def test_start_workflow(self):
         cfg.CONF.set_default('auth_enable', True, group='pecan')
+
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
-        t = t_s.create_cron_trigger(
+
+        t = triggers.create_cron_trigger(
             'test',
             wf.name,
             {},
@@ -58,24 +60,28 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         self.assertEqual('my_trust_id', t.trust_id)
 
         cfg.CONF.set_default('auth_enable', False, group='pecan')
-        m_p_t = periodic.MistralPeriodicTasks(cfg.CONF)
-        next_cron_trigger = t_s.get_next_cron_triggers()[0]
-        next_execution_before = next_cron_trigger.next_execution_time
 
-        m_p_t.process_cron_triggers_v2(None)
+        next_trigger = triggers.get_next_cron_triggers()[0]
+        next_execution_time_before = next_trigger.next_execution_time
 
-        next_cron_trigger = t_s.get_next_cron_triggers()[0]
-        next_execution_after = next_cron_trigger.next_execution_time
+        periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+
+        next_trigger = triggers.get_next_cron_triggers()[0]
+        next_execution_time_after = next_trigger.next_execution_time
 
         # Checking the workflow was executed, by
         # verifying that the next execution time changed.
-        self.assertNotEqual(next_execution_before, next_execution_after)
+        self.assertNotEqual(
+            next_execution_time_before,
+            next_execution_time_after
+        )
 
     def test_workflow_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
+
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
-        t_s.create_cron_trigger(
+        triggers.create_cron_trigger(
             'test',
             wf.name,
             {},
@@ -85,12 +91,24 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             None,
             None
         )
-        m_p_t = periodic.MistralPeriodicTasks(cfg.CONF)
-        next_cron_trigger = t_s.get_next_cron_triggers()[0]
-        next_execution_before = next_cron_trigger.next_execution_time
-        m_p_t.process_cron_triggers_v2(None)
 
-        next_cron_trigger = t_s.get_next_cron_triggers()[0]
-        next_execution_after = next_cron_trigger.next_execution_time
+        next_triggers = triggers.get_next_cron_triggers()
 
-        self.assertNotEqual(next_execution_before, next_execution_after)
+        self.assertEqual(1, len(next_triggers))
+
+        next_trigger = next_triggers[0]
+        next_execution_time_before = next_trigger.next_execution_time
+
+        periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+
+        next_triggers = triggers.get_next_cron_triggers()
+
+        self.assertEqual(1, len(next_triggers))
+
+        next_trigger = next_triggers[0]
+        next_execution_time_after = next_trigger.next_execution_time
+
+        self.assertNotEqual(
+            next_execution_time_before,
+            next_execution_time_after
+        )
