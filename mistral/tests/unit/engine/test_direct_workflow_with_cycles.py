@@ -67,22 +67,18 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_execs = wf_ex.task_executions
+        t_execs = wf_ex.task_executions
 
         # Expecting one execution for task1 and two executions
         # for task2 and task3 because of the cycle 'task2 <-> task3'.
-        task1_ex = self._assert_single_item(task_execs, name='task1')
-        task2_execs = self._assert_multiple_items(task_execs, 2, name='task2')
-        task3_execs = self._assert_multiple_items(task_execs, 2, name='task3')
+        self._assert_single_item(t_execs, name='task1')
+        self._assert_multiple_items(t_execs, 2, name='task2')
+        self._assert_multiple_items(t_execs, 2, name='task3')
 
-        self.assertEqual(5, len(task_execs))
+        self.assertEqual(5, len(t_execs))
 
-        self.assertTrue(wf_ex.state, states.SUCCESS)
-        self.assertTrue(task1_ex.state, states.SUCCESS)
-        self.assertTrue(task2_execs[0].state, states.SUCCESS)
-        self.assertTrue(task2_execs[1].state, states.SUCCESS)
-        self.assertTrue(task3_execs[0].state, states.SUCCESS)
-        self.assertTrue(task3_execs[1].state, states.SUCCESS)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self.assertTrue(all(states.SUCCESS == t_ex.state for t_ex in t_execs))
 
         self.assertDictEqual({'cnt': 2}, wf_ex.output)
 
@@ -132,28 +128,94 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_execs = wf_ex.task_executions
+        t_execs = wf_ex.task_executions
 
         # Expecting one execution for task1 and task5 and two executions
         # for task2, task3 and task4 because of the cycle
         # 'task2 -> task3 -> task4 -> task2'.
-        task1_ex = self._assert_single_item(task_execs, name='task1')
-        task2_execs = self._assert_multiple_items(task_execs, 2, name='task2')
-        task3_execs = self._assert_multiple_items(task_execs, 2, name='task3')
-        task4_execs = self._assert_multiple_items(task_execs, 2, name='task4')
-        task5_ex = self._assert_single_item(task_execs, name='task5')
+        self._assert_single_item(t_execs, name='task1')
+        self._assert_multiple_items(t_execs, 2, name='task2')
+        self._assert_multiple_items(t_execs, 2, name='task3')
+        self._assert_multiple_items(t_execs, 2, name='task4')
+        task5_ex = self._assert_single_item(t_execs, name='task5')
 
-        self.assertEqual(8, len(task_execs))
+        self.assertEqual(8, len(t_execs))
 
-        self.assertTrue(wf_ex.state, states.SUCCESS)
-        self.assertTrue(task1_ex.state, states.SUCCESS)
-        self.assertTrue(task2_execs[0].state, states.SUCCESS)
-        self.assertTrue(task2_execs[1].state, states.SUCCESS)
-        self.assertTrue(task3_execs[0].state, states.SUCCESS)
-        self.assertTrue(task3_execs[1].state, states.SUCCESS)
-        self.assertTrue(task4_execs[0].state, states.SUCCESS)
-        self.assertTrue(task4_execs[1].state, states.SUCCESS)
-        self.assertTrue(task5_ex.state, states.SUCCESS)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self.assertTrue(all(states.SUCCESS == t_ex.state for t_ex in t_execs))
 
         self.assertEqual(2, data_flow.get_task_execution_result(task5_ex))
         self.assertDictEqual({'cnt': 2}, wf_ex.output)
+
+    def test_parallel_cycles(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          vars:
+            cnt: 0
+
+          output:
+            cnt: <% $.cnt %>
+
+          tasks:
+            task1:
+              on-complete:
+                - task1_2
+                - task2_2
+
+            task1_2:
+              action: std.echo output=2
+              publish:
+                cnt: <% $.cnt + 1 %>
+              on-success:
+                - task1_3
+
+            task1_3:
+              action: std.echo output=3
+              on-success:
+                - task1_2: <% $.cnt < 2 %>
+
+            task2_2:
+              action: std.echo output=2
+              publish:
+                cnt: <% $.cnt + 1 %>
+              on-success:
+                - task2_3
+
+            task2_3:
+              action: std.echo output=3
+              on-success:
+                - task2_2: <% $.cnt < 3 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        t_execs = wf_ex.task_executions
+
+        # NOTE: We have two cycles in parallel workflow branches
+        # and those branches will have their own copy of "cnt" variable
+        # so both cycles must complete correctly.
+        self._assert_single_item(t_execs, name='task1')
+        self._assert_multiple_items(t_execs, 2, name='task1_2')
+        self._assert_multiple_items(t_execs, 2, name='task1_3')
+        self._assert_multiple_items(t_execs, 3, name='task2_2')
+        self._assert_multiple_items(t_execs, 3, name='task2_3')
+
+        self.assertEqual(11, len(t_execs))
+
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self.assertTrue(all(states.SUCCESS == t_ex.state for t_ex in t_execs))
+
+        # TODO(rakhmerov): We have this uncertainty because of the known
+        # bug: https://bugs.launchpad.net/mistral/liberty/+bug/1424461
+        # Now workflow output is almost always 3 because the second cycle
+        # takes longer hence it wins because of how DB queries work: they
+        # order entities in ascending of creation time.
+        self.assertTrue(wf_ex.output['cnt'] == 2 or wf_ex.output['cnt'] == 3)
