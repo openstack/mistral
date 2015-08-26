@@ -528,6 +528,6 @@ def need_to_continue(task_ex, task_spec):
     # For now continue is available only for with-items.
     if task_spec.get_with_items():
         return (with_items.has_more_iterations(task_ex)
-                and with_items.get_concurrency_spec(task_spec))
+                and with_items.get_concurrency(task_ex))
 
     return False

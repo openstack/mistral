@@ -385,7 +385,7 @@ class PauseBeforePolicy(base.TaskPolicy):
 class ConcurrencyPolicy(base.TaskPolicy):
     _schema = {
         "properties": {
-            "delay": {"concurrency": "integer"},
+            "concurrency": {"type": "integer"},
         }
     }
 

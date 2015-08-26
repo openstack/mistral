@@ -20,6 +20,7 @@ from mistral.workflow import states
 
 
 _CAPACITY = 'capacity'
+_CONCURRENCY = 'concurrency'
 _COUNT = 'count'
 _WITH_ITEMS = 'with_items_context'
 
@@ -50,10 +51,8 @@ def get_index(task_ex):
     )
 
 
-def get_concurrency_spec(task_spec):
-    policies = task_spec.get_policies()
-
-    return policies.get_concurrency() if policies else None
+def get_concurrency(task_ex):
+    return task_ex.runtime_context.get(_CONCURRENCY)
 
 
 def get_final_state(task_ex):
@@ -124,7 +123,7 @@ def decrease_capacity(task_ex, count):
 
 def increase_capacity(task_ex):
     with_items_context = _get_context(task_ex)
-    max_concurrency = task_ex.runtime_context.get('concurrency')
+    max_concurrency = get_concurrency(task_ex)
 
     if max_concurrency and with_items_context[_CAPACITY] < max_concurrency:
         with_items_context[_CAPACITY] += 1
@@ -138,7 +137,7 @@ def prepare_runtime_context(task_ex, task_spec, input_dicts):
     if with_items_spec and not runtime_context.get(_WITH_ITEMS):
         # Prepare current indexes and parallel limitation.
         runtime_context[_WITH_ITEMS] = {
-            _CAPACITY: get_concurrency_spec(task_spec) or None,
+            _CAPACITY: get_concurrency(task_ex),
             _COUNT: len(input_dicts)
         }
 
