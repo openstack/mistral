@@ -193,7 +193,7 @@ class TestTasksController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 400)
         self.assertIn('faultstring', resp.json)
-        self.assertIn('Missing argument', resp.json['faultstring'])
+        self.assertIn('Mandatory field missing', resp.json['faultstring'])
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(db_api, 'get_task_execution', MOCK_RERUN_ITEMS_TASKS)

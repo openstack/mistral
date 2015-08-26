@@ -11,6 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import json
 
 from oslo_utils import uuidutils
 import six
@@ -39,9 +40,7 @@ class ListType(wtypes.UserType):
 
     @staticmethod
     def frombasetype(value):
-        if value is None:
-            return None
-        return ListType.validate(value)
+        return ListType.validate(value) if value is not None else None
 
 
 class UniqueListType(ListType):
@@ -64,9 +63,7 @@ class UniqueListType(ListType):
 
     @staticmethod
     def frombasetype(value):
-        if value is None:
-            return None
-        return UniqueListType.validate(value)
+        return UniqueListType.validate(value) if value is not None else None
 
 
 class UuidType(wtypes.UserType):
@@ -89,11 +86,30 @@ class UuidType(wtypes.UserType):
 
     @staticmethod
     def frombasetype(value):
-        if value is None:
-            return None
-        return UuidType.validate(value)
+        return UuidType.validate(value) if value is not None else None
+
+
+class JsonType(wtypes.UserType):
+    """A simple JSON type."""
+
+    basetype = wtypes.text
+    name = 'json'
+
+    @staticmethod
+    def validate(value):
+        try:
+            json.dumps(value)
+        except TypeError:
+            raise exc.InputException('%s is not JSON serializable' % value)
+        else:
+            return value
+
+    @staticmethod
+    def frombasetype(value):
+        return JsonType.validate(value) if value is not None else None
 
 
 uuid = UuidType()
 list = ListType()
 uniquelist = UniqueListType()
+jsontype = JsonType()

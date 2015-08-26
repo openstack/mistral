@@ -17,12 +17,12 @@
 import json
 
 from oslo_log import log as logging
-import pecan
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import types
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
@@ -55,6 +55,9 @@ class ActionExecution(resource.Resource):
     created_at = wtypes.text
     updated_at = wtypes.text
 
+    # Add this param to make Mistral API work with WSME 0.8.0 or higher version
+    params = types.jsontype
+
     @classmethod
     def from_dict(cls, d):
         e = cls()
@@ -63,7 +66,7 @@ class ActionExecution(resource.Resource):
             if hasattr(e, key):
                 # Nonetype check for dictionary must be explicit.
                 if val is not None and (
-                        key == 'input' or key == 'output'):
+                        key == 'input' or key == 'output' or key == 'params'):
                     val = json.dumps(val)
                 setattr(e, key, val)
 
@@ -86,7 +89,8 @@ class ActionExecution(resource.Resource):
             input='{"first_name": "John", "last_name": "Doe"}',
             output='{"some_output": "Hello, John Doe!"}',
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
+            params={'save_result': True}
         )
 
 
@@ -156,12 +160,13 @@ class ActionExecutionsController(rest.RestController):
                          body=ActionExecution, status_code=201)
     def post(self, action_execution):
         """Create new action_execution."""
-        body = json.loads(pecan.request.body)
-
-        LOG.info("Create action_execution [action_execution=%s]" % body)
+        LOG.info("Create action_execution [action_execution=%s]" %
+                 action_execution)
 
         action_input = action_execution.input or None
         description = action_execution.description or None
+        params = action_execution.params or {}
+        name = action_execution.name
 
         if action_input:
             try:
@@ -174,9 +179,6 @@ class ActionExecutionsController(rest.RestController):
                     "Input should be JSON-serialized dict string. Actual: %s, "
                     "error: %s" % (action_execution.input, e)
                 )
-
-        name = action_execution.name
-        params = body.get('params', {})
 
         if not name:
             raise exc.InputException(

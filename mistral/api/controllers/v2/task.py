@@ -17,6 +17,7 @@ import json
 
 from oslo_log import log as logging
 from pecan import rest
+import wsme
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -54,6 +55,9 @@ class Task(resource.Resource):
     created_at = wtypes.text
     updated_at = wtypes.text
 
+    # Add this param to make Mistral API work with WSME 0.8.0 or higher version
+    reset = wsme.wsattr(bool, mandatory=True)
+
     @classmethod
     def from_dict(cls, d):
         e = cls()
@@ -79,7 +83,8 @@ class Task(resource.Resource):
             published='{key: value}',
             processed=True,
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
+            reset=True
         )
 
 
@@ -134,8 +139,8 @@ class TasksController(rest.RestController):
         return _get_task_resources_with_results()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Task, wtypes.text, bool, body=Task)
-    def put(self, id, reset, task):
+    @wsme_pecan.wsexpose(Task, wtypes.text, body=Task)
+    def put(self, id, task):
         """Update the specified task execution.
 
         :param id: Task execution ID.
@@ -146,6 +151,7 @@ class TasksController(rest.RestController):
         task_ex = db_api.get_task_execution(id)
         task_spec = spec_parser.get_task_spec(task_ex.spec)
         task_name = task.name or None
+        reset = task.reset
 
         if task_name and task_name != task_ex.name:
             raise exc.WorkflowException('Task name does not match.')
