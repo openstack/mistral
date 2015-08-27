@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import copy
+import six
 import traceback
 
 from oslo_log import log as logging
@@ -441,12 +442,12 @@ class DefaultEngine(base.Engine, coordination.Service):
         # Resolve environment parameter.
         env = params.get('env', {})
 
-        if not isinstance(env, dict) and not isinstance(env, basestring):
+        if not isinstance(env, dict) and not isinstance(env, six.string_types):
             raise ValueError(
                 'Unexpected type for environment [environment=%s]' % str(env)
             )
 
-        if isinstance(env, basestring):
+        if isinstance(env, six.string_types):
             env_db = db_api.get_environment(env)
             env = env_db.variables
             params['env'] = env

@@ -115,7 +115,7 @@ MOCK_DELETE = mock.MagicMock(return_value=None)
 def _convert_vars_to_dict(env_dict):
     """Converts 'variables' in the given environment dict into dictionary."""
     if ('variables' in env_dict and
-            isinstance(env_dict.get('variables'), basestring)):
+            isinstance(env_dict.get('variables'), six.string_types)):
         env_dict['variables'] = json.loads(env_dict['variables'])
 
     return env_dict
