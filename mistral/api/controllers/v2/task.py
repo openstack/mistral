@@ -23,6 +23,7 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action_execution
+from mistral.api.controllers.v2 import types
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
@@ -49,7 +50,7 @@ class Task(resource.Resource):
     IDLE, RUNNING, SUCCESS, ERROR, DELAYED"
 
     result = wtypes.text
-    published = wtypes.text
+    published = types.jsontype
     processed = bool
 
     created_at = wtypes.text
@@ -57,19 +58,6 @@ class Task(resource.Resource):
 
     # Add this param to make Mistral API work with WSME 0.8.0 or higher version
     reset = wsme.wsattr(bool, mandatory=True)
-
-    @classmethod
-    def from_dict(cls, d):
-        e = cls()
-
-        for key, val in d.items():
-            if hasattr(e, key):
-                # Nonetype check for dictionary must be explicit.
-                if val is not None and key == 'published':
-                    val = json.dumps(val)
-                setattr(e, key, val)
-
-        return e
 
     @classmethod
     def sample(cls):
@@ -80,7 +68,7 @@ class Task(resource.Resource):
             name='task',
             state=states.SUCCESS,
             result='task result',
-            published='{key: value}',
+            published={'key': 'value'},
             processed=True,
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
@@ -163,17 +151,20 @@ class TasksController(rest.RestController):
             raise exc.WorkflowException('Workflow name does not match.')
 
         if task.state != states.RUNNING:
-            raise exc.WorkflowException('Invalid task state. Only updating '
-                                        'task to rerun is supported.')
+            raise exc.WorkflowException(
+                'Invalid task state. Only updating task to rerun is supported.'
+            )
 
         if task_ex.state != states.ERROR:
-            raise exc.WorkflowException('The current task execution must be '
-                                        'in ERROR for rerun. Only updating '
-                                        'task to rerun is supported.')
+            raise exc.WorkflowException(
+                'The current task execution must be in ERROR for rerun.'
+                ' Only updating task to rerun is supported.'
+            )
 
         if not task_spec.get_with_items() and not reset:
-            raise exc.WorkflowException('Only with-items task has the '
-                                        'option to not reset.')
+            raise exc.WorkflowException(
+                'Only with-items task has the option to not reset.'
+            )
 
         rpc.get_engine_client().rerun_workflow(
             wf_ex.id,
@@ -190,6 +181,6 @@ class ExecutionTasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks, wtypes.text)
     def get_all(self, workflow_execution_id):
         """Return all tasks within the workflow execution."""
-        LOG.info("Fetch tasks")
+        LOG.info("Fetch tasks.")
 
         return _get_task_resources_with_results(workflow_execution_id)
