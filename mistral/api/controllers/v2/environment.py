@@ -17,11 +17,11 @@ import uuid
 
 from oslo_log import log as logging
 from pecan import rest
-import six
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import types
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exceptions
 from mistral.utils import rest_utils
@@ -43,38 +43,17 @@ class Environment(resource.Resource):
     id = wtypes.text
     name = wtypes.text
     description = wtypes.text
-    variables = wtypes.text
+    variables = types.jsontype
     scope = wtypes.Enum(str, 'private', 'public')
     created_at = wtypes.text
     updated_at = wtypes.text
-
-    def __init__(self, *args, **kwargs):
-        super(Environment, self).__init__()
-
-        for key, val in six.iteritems(kwargs):
-            if key == 'variables' and val is not None:
-                val = json.dumps(val)
-
-            setattr(self, key, val)
-
-    def to_dict(self):
-        d = super(Environment, self).to_dict()
-
-        if d.get('variables'):
-            d['variables'] = json.loads(d['variables'])
-
-        return d
-
-    @classmethod
-    def from_dict(cls, d):
-        return cls(**d)
 
     @classmethod
     def sample(cls):
         return cls(id=str(uuid.uuid4()),
                    name='sample',
                    description='example environment entry',
-                   variables=json.dumps(SAMPLE),
+                   variables=SAMPLE,
                    scope='private',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
@@ -91,7 +70,6 @@ class Environments(resource.Resource):
 
 
 class EnvironmentController(rest.RestController):
-
     @wsme_pecan.wsexpose(Environments)
     def get_all(self):
         """Return all environments.
@@ -100,8 +78,10 @@ class EnvironmentController(rest.RestController):
         """
         LOG.info("Fetch environments.")
 
-        environments = [Environment(**db_model.to_dict())
-                        for db_model in db_api.get_environments()]
+        environments = [
+            Environment.from_dict(db_model.to_dict())
+            for db_model in db_api.get_environments()
+        ]
 
         return Environments(environments=environments)
 
@@ -113,42 +93,45 @@ class EnvironmentController(rest.RestController):
 
         db_model = db_api.get_environment(name)
 
-        return Environment(**db_model.to_dict())
+        return Environment.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Environment, body=Environment, status_code=201)
-    def post(self, environment):
+    def post(self, env):
         """Create a new environment."""
-        LOG.info("Create environment [env=%s]" % environment)
+        LOG.info("Create environment [env=%s]" % env)
+
         self._validate_environment(
             json.loads(wsme_pecan.pecan.request.body),
             ['name', 'description', 'variables']
         )
-        db_model = db_api.create_environment(environment.to_dict())
 
-        return Environment(**db_model.to_dict())
+        db_model = db_api.create_environment(env.to_dict())
+
+        return Environment.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Environment, body=Environment)
-    def put(self, environment):
+    def put(self, env):
         """Update an environment."""
-        if not environment.name:
+        if not env.name:
             raise exceptions.InputException(
                 'Name of the environment is not provided.'
             )
 
-        LOG.info("Update environment [name=%s, env=%s]" %
-                 (environment.name, environment))
+        LOG.info("Update environment [name=%s, env=%s]" % (env.name, env))
+
         definition = json.loads(wsme_pecan.pecan.request.body)
         definition.pop('name')
+
         self._validate_environment(
             definition,
             ['description', 'variables', 'scope']
         )
-        db_model = db_api.update_environment(environment.name,
-                                             environment.to_dict())
 
-        return Environment(**db_model.to_dict())
+        db_model = db_api.update_environment(env.name, env.to_dict())
+
+        return Environment.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
@@ -158,10 +141,13 @@ class EnvironmentController(rest.RestController):
 
         db_api.delete_environment(name)
 
-    def _validate_environment(self, env_dict, legal_keys):
-        if env_dict is not None:
-            if set(env_dict) - set(legal_keys):
-                raise exceptions.InputException(
-                    "Please, check your environment definition. Only: "
-                    + "%s are allowed as definition keys" %
-                    legal_keys)
+    @staticmethod
+    def _validate_environment(env_dict, legal_keys):
+        if env_dict is None:
+            return
+
+        if set(env_dict) - set(legal_keys):
+            raise exceptions.InputException(
+                "Please, check your environment definition. Only: "
+                "%s are allowed as definition keys." % legal_keys
+            )

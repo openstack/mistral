@@ -149,31 +149,6 @@ class TestEnvironmentController(base.FunctionalTest):
             resource.to_dict()
         )
 
-    def test_resource_to_db_model(self):
-        resource = api.Environment(
-            **_convert_vars_to_string(copy.deepcopy(ENVIRONMENT))
-        )
-
-        values = resource.to_dict()
-
-        values['variables'] = json.loads(values['variables'])
-        values['created_at'] = datetime.datetime.strptime(
-            values['created_at'], DATETIME_FORMAT)
-        values['updated_at'] = datetime.datetime.strptime(
-            values['updated_at'], DATETIME_FORMAT)
-
-        db_model = db.Environment(**values)
-
-        db_api.create_environment(db_model)
-
-        self.assertEqual(values['id'], db_model.id)
-        self.assertEqual(values['name'], db_model.name)
-        self.assertIsNone(db_model.project_id)
-        self.assertEqual(values['description'], db_model.description)
-        self.assertDictEqual(values['variables'], db_model.variables)
-        self.assertEqual(values['created_at'], db_model.created_at)
-        self.assertEqual(values['updated_at'], db_model.updated_at)
-
     @mock.patch.object(db_api, 'get_environments', MOCK_ENVIRONMENTS)
     def test_get_all(self):
         resp = self.app.get('/v2/environments')
@@ -265,9 +240,11 @@ class TestEnvironmentController(base.FunctionalTest):
 
     @mock.patch.object(db_api, 'update_environment', MOCK_NOT_FOUND)
     def test_put_not_found(self):
+        env = copy.deepcopy(FOR_UPDATED_ENVIRONMENT)
+
         resp = self.app.put_json(
-            '/v2/environments/test',
-            copy.deepcopy(FOR_UPDATED_ENVIRONMENT),
+            '/v2/environments',
+            env,
             expect_errors=True
         )
 
