@@ -12,14 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
-
 from oslo_log import log as logging
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import types
 from mistral.db.v2 import api as db_api
 from mistral.services import triggers
 from mistral.utils import rest_utils
@@ -34,8 +33,8 @@ class CronTrigger(resource.Resource):
     id = wtypes.text
     name = wtypes.text
     workflow_name = wtypes.text
-    workflow_input = wtypes.text
-    workflow_params = wtypes.text
+    workflow_input = types.jsontype
+    workflow_params = types.jsontype
 
     scope = SCOPE_TYPES
 
@@ -46,39 +45,6 @@ class CronTrigger(resource.Resource):
 
     created_at = wtypes.text
     updated_at = wtypes.text
-
-    def to_dict(self):
-        d = super(CronTrigger, self).to_dict()
-
-        self._transform_string_to_dict(
-            d, ['workflow_input', 'workflow_params']
-        )
-
-        return d
-
-    def _transform_string_to_dict(self, d, keys):
-        """Transforms values of dict by given key list.
-        :param d: dict to transform.
-        :param keys: list of key names in dict
-        """
-        for k in keys:
-            if d.get(k):
-                d[k] = json.loads(d[k])
-
-    @classmethod
-    def from_dict(cls, d):
-        e = cls()
-
-        for key, val in d.items():
-            if hasattr(e, key):
-                # Nonetype check for dictionary must be explicit.
-                if (key in ['workflow_input', 'workflow_params']
-                        and val is not None):
-                    val = json.dumps(val)
-
-                setattr(e, key, val)
-
-        return e
 
     @classmethod
     def sample(cls):
