@@ -1,4 +1,145 @@
 Quick Start
 ===========
 
-TBD
+Install and Run Mistral
+-----------------------
+
+* Go through the installation manual: :doc:`Mistral Installation Guide </guides/installation_guide>`
+
+Install Mistral Client
+----------------------
+
+* For installing mistralclient, please refer to :doc:`Mistral Client / CLI Guide </guides/mistralclient_guide>`
+
+Export Keystone Credentials
+---------------------------
+
+To use the OpenStack command line tools you should specify environment variables with the configuration details for your OpenStack installation. The following example assumes that the Identity service is at ``127.0.0.1:5000``, with a user ``admin`` in the ``admin`` tenant whose password is ``password``::
+
+    $ export OS_AUTH_URL=http://127.0.0.1:5000/v2.0/
+    $ export OS_TENANT_NAME=admin
+    $ export OS_USERNAME=admin
+    $ export OS_PASSWORD=password
+
+Write Workflow
+--------------
+
+* Refer to the tutorial :doc:`How To Write a Workflow </guides/writing_workflow>`
+
+For example, the following workflow has been written::
+
+    ---
+    version: "2.0"
+
+    my_workflow:
+      type: direct
+
+      input:
+        - names
+
+      tasks:
+        task1:
+          with-items: name in <% $.names %>
+          action: std.echo output=<% $.name %>
+          on-success: task2
+
+        task2:
+          action: std.echo="Done"
+
+Create Workflow Object
+----------------------
+
+Use *python-mistralclient* to create the workflow::
+
+    mistral workflow-create <workflow.yaml>
+
+Make sure that output is like the following::
+
+    +-------------+--------+---------+---------------------+------------+
+    | Name        | Tags   | Input   | Created at          | Updated at |
+    +-------------+--------+---------+---------------------+------------+
+    | my_workflow | <none> | names   | 2015-08-13 08:44:49 | None       |
+    +-------------+--------+---------+---------------------+------------+
+
+
+Run Workflow and Check the Result
+---------------------------------
+
+Use *python-mistralclient* to run just created workflow. Pass variable **names** as **workflow_input**::
+
+    mistral execution-create my_workflow '{"names": ["John", "Mistral", "Ivan", "Crystal"]}'
+
+Make sure output is like the following::
+
+    +-------------+--------------------------------------+
+    | Field       | Value                                |
+    +-------------+--------------------------------------+
+    | ID          | 056c2ed1-695f-4ccd-92af-e31bc6153784 |
+    | Workflow    | my_workflow                          |
+    | Description |                                      |
+    | State       | RUNNING                              |
+    | State info  | None                                 |
+    | Created at  | 2015-08-28 09:05:00.065917           |
+    | Updated at  | 2015-08-28 09:05:00.844990           |
+    +-------------+--------------------------------------+
+
+After a while, check the status of the workflow execution (put execution id instead of example)::
+
+    mistral execution-get 056c2ed1-695f-4ccd-92af-e31bc6153784
+
+    +-------------+--------------------------------------+
+    | Field       | Value                                |
+    +-------------+--------------------------------------+
+    | ID          | 056c2ed1-695f-4ccd-92af-e31bc6153784 |
+    | Workflow    | my_workflow                          |
+    | Description |                                      |
+    | State       | SUCCESS                              |
+    | State info  | None                                 |
+    | Created at  | 2015-08-28 09:05:00                  |
+    | Updated at  | 2015-08-28 09:05:03                  |
+    +-------------+--------------------------------------+
+
+Statuses of each **task** also can be checked::
+
+    mistral task-list 056c2ed1-695f-4ccd-92af-e31bc6153784
+
+    +--------------------------------------+-------+---------------+--------------------------------------+---------+
+    | ID                                   | Name  | Workflow name | Execution ID                         | State   |
+    +--------------------------------------+-------+---------------+--------------------------------------+---------+
+    | 91874635-dcd4-4718-a864-ac90408c1085 | task1 | my_workflow   | 056c2ed1-695f-4ccd-92af-e31bc6153784 | SUCCESS |
+    | 3bf82863-28cb-4148-bfb8-1a6c3c115022 | task2 | my_workflow   | 056c2ed1-695f-4ccd-92af-e31bc6153784 | SUCCESS |
+    +--------------------------------------+-------+---------------+--------------------------------------+---------+
+
+Checking the result of task *'task1'*::
+
+    mistral task-get-result 91874635-dcd4-4718-a864-ac90408c1085
+
+    [
+        "John",
+        "Mistral",
+        "Ivan",
+        "Crystal"
+    ]
+
+If needed, we can go deeper and look at list of results of **action_executions** of single task::
+
+    mistral action-execution-list 91874635-dcd4-4718-a864-ac90408c1085
+
+    +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
+    | ID                                   | Name     | Workflow name | Task name | State   | State info | Is accepted |
+    +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
+    | 20c2b65d-b899-437f-8e1b-50fe477fbf4b | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
+    | 6773c887-6eff-46e6-bed9-d6b67d77813b | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
+    | 753a9e39-d93e-4751-a3c1-569d1b4eac64 | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
+    | 9872ddbc-61c5-4511-aa7e-dc4016607822 | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
+    +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
+
+Checking the result of first **action_execution**::
+
+    mistral action-execution-get-output 20c2b65d-b899-437f-8e1b-50fe477fbf4b
+
+    {
+        "result": "John"
+    }
+
+**Congratulations! Now you are ready to use OpenStack Workflow Service!**
