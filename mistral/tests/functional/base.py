@@ -52,15 +52,15 @@ def find_items(items, **props):
 
 
 class MistralClientBase(rest_client.RestClient):
-
     def __init__(self, auth_provider, service_type):
         super(MistralClientBase, self).__init__(
             auth_provider=auth_provider,
             service=service_type,
-            region=CONF.identity.region)
+            region=CONF.identity.region
+        )
 
         if service_type not in ('workflow', 'workflowv2'):
-            msg = ("Invalid parameter 'service_type'. ")
+            msg = "Invalid parameter 'service_type'. "
             raise exceptions.UnprocessableEntity(msg)
 
         self.endpoint_url = 'publicURL'
@@ -73,6 +73,7 @@ class MistralClientBase(rest_client.RestClient):
 
     def get_list_obj(self, name):
         resp, body = self.get(name)
+
         return resp, json.loads(body)
 
     def delete_obj(self, obj, name):
@@ -80,6 +81,7 @@ class MistralClientBase(rest_client.RestClient):
 
     def get_object(self, obj, id):
         resp, body = self.get('{obj}/{id}'.format(obj=obj, id=id))
+
         return resp, json.loads(body)
 
     def wait_execution_success(self, ex_body, timeout=180):
@@ -108,21 +110,19 @@ class MistralClientBase(rest_client.RestClient):
 class MistralClientV2(MistralClientBase):
 
     def post_request(self, url, file_name):
-        text = get_resource(file_name)
         headers = {"headers": "Content-Type:text/plain"}
 
-        return self.post(url, text, headers=headers)
+        return self.post(url, get_resource(file_name), headers=headers)
 
     def post_json(self, url, obj):
-        text = json.dumps(obj)
         headers = {"Content-Type": "application/json"}
 
-        return self.post(url, text, headers=headers)
+        return self.post(url, json.dumps(obj), headers=headers)
 
     def update_request(self, url, file_name):
-        text = get_resource(file_name)
         headers = {"headers": "Content-Type:text/plain"}
-        resp, body = self.put(url, text, headers=headers)
+
+        resp, body = self.put(url, get_resource(file_name), headers=headers)
 
         return resp, json.loads(body)
 
@@ -138,6 +138,7 @@ class MistralClientV2(MistralClientBase):
         self.workbooks.append(wb_name)
 
         _, wfs = self.get_list_obj('workflows')
+
         for wf in wfs['workflows']:
             if wf['name'].startswith(wb_name):
                 self.workflows.append(wf['name'])
@@ -154,6 +155,7 @@ class MistralClientV2(MistralClientBase):
 
     def create_execution(self, wf_name, wf_input=None, params=None):
         body = {"workflow_name": "%s" % wf_name}
+
         if wf_input:
             body.update({'input': json.dumps(wf_input)})
         if params:
@@ -179,6 +181,7 @@ class MistralClientV2(MistralClientBase):
             'remaining_executions': count,
             'first_execution_time': first_time
         }
+
         if wf_input:
             post_body.update({'workflow_input': json.dumps(wf_input)})
 
@@ -203,7 +206,6 @@ class MistralClientV2(MistralClientBase):
 
 
 class AuthProv(auth.KeystoneV2AuthProvider):
-
     def __init__(self):
         self.alt_part = None
 
@@ -221,7 +223,6 @@ class AuthProv(auth.KeystoneV2AuthProvider):
 
 
 class TestCase(test.BaseTestCase):
-
     @classmethod
     def setUpClass(cls):
         """This method allows to initialize authentication before
@@ -247,6 +248,7 @@ class TestCase(test.BaseTestCase):
 
         for wb in self.client.workbooks:
             self.client.delete_obj('workbooks', wb)
+
         self.client.workbooks = []
 
 
@@ -269,10 +271,12 @@ class TestCaseAdvanced(TestCase):
     def tearDown(self):
         for wb in self.client.workbooks:
             self.client.delete_obj('workbooks', wb)
+
         self.client.workbooks = []
 
         for ex in self.client.executions:
             self.client.delete_obj('executions', ex)
+
         self.client.executions = []
 
         super(TestCaseAdvanced, self).tearDown()

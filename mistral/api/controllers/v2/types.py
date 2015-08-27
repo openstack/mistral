@@ -95,18 +95,24 @@ class JsonType(wtypes.UserType):
     basetype = wtypes.text
     name = 'json'
 
-    @staticmethod
-    def validate(value):
-        try:
-            json.dumps(value)
-        except TypeError:
-            raise exc.InputException('%s is not JSON serializable' % value)
-        else:
-            return value
+    def validate(self, value):
+        if not value:
+            return {}
 
-    @staticmethod
-    def frombasetype(value):
-        return JsonType.validate(value) if value is not None else None
+        if not isinstance(value, dict):
+            raise exc.InputException(
+                'JsonType field value must be a dictionary [actual=%s]' % value
+            )
+
+        return value
+
+    def frombasetype(self, value):
+        # Value must a string.
+        return json.loads(value) if value is not None else None
+
+    def tobasetype(self, value):
+        # Value must a dict.
+        return json.dumps(value) if value is not None else None
 
 
 uuid = UuidType()
