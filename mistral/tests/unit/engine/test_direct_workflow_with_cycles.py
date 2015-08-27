@@ -18,6 +18,7 @@ from oslo_log import log as logging
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
+from mistral.workflow import data_flow
 from mistral.workflow import states
 
 
@@ -29,7 +30,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowWithCyclesTest(base.EngineTestCase):
-    def test_direct_workflow_on_closures(self):
+    def test_simple_cycle(self):
         wf_text = """
         version: '2.0'
 
@@ -83,4 +84,76 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         self.assertTrue(task3_execs[0].state, states.SUCCESS)
         self.assertTrue(task3_execs[1].state, states.SUCCESS)
 
+        self.assertDictEqual({'cnt': 2}, wf_ex.output)
+
+    def test_complex_cycle(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          vars:
+            cnt: 0
+
+          output:
+            cnt: <% $.cnt %>
+
+          tasks:
+            task1:
+              on-complete:
+                - task2
+
+            task2:
+              action: std.echo output=2
+              publish:
+                cnt: <% $.cnt + 1 %>
+              on-success:
+                - task3
+
+            task3:
+              action: std.echo output=3
+              on-complete:
+                - task4
+
+            task4:
+              action: std.echo output=4
+              on-success:
+                - task2: <% $.cnt < 2 %>
+                - task5: <% $.cnt >= 2 %>
+
+            task5:
+              action: std.echo output=<% $.cnt %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        task_execs = wf_ex.task_executions
+
+        # Expecting one execution for task1 and task5 and two executions
+        # for task2, task3 and task4 because of the cycle
+        # 'task2 -> task3 -> task4 -> task2'.
+        task1_ex = self._assert_single_item(task_execs, name='task1')
+        task2_execs = self._assert_multiple_items(task_execs, 2, name='task2')
+        task3_execs = self._assert_multiple_items(task_execs, 2, name='task3')
+        task4_execs = self._assert_multiple_items(task_execs, 2, name='task4')
+        task5_ex = self._assert_single_item(task_execs, name='task5')
+
+        self.assertEqual(8, len(task_execs))
+
+        self.assertTrue(wf_ex.state, states.SUCCESS)
+        self.assertTrue(task1_ex.state, states.SUCCESS)
+        self.assertTrue(task2_execs[0].state, states.SUCCESS)
+        self.assertTrue(task2_execs[1].state, states.SUCCESS)
+        self.assertTrue(task3_execs[0].state, states.SUCCESS)
+        self.assertTrue(task3_execs[1].state, states.SUCCESS)
+        self.assertTrue(task4_execs[0].state, states.SUCCESS)
+        self.assertTrue(task4_execs[1].state, states.SUCCESS)
+        self.assertTrue(task5_ex.state, states.SUCCESS)
+
+        self.assertEqual(2, data_flow.get_task_execution_result(task5_ex))
         self.assertDictEqual({'cnt': 2}, wf_ex.output)
