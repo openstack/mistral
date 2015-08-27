@@ -25,3 +25,10 @@ wf1:
     goodbye:
       action: std.echo output="<% $.farewell %>, <% $.name %>"
       requires: [addressee]
+
+wf2:
+  type: direct
+
+  tasks:
+    hello:
+      action: std.echo output="Hello"
