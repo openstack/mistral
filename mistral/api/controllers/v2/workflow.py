@@ -72,15 +72,16 @@ class Workflow(resource.Resource):
             if hasattr(e, key):
                 setattr(e, key, val)
 
-        input = d['spec'].get('input', [])
-        for param in input:
-            if isinstance(param, dict):
-                for k, v in param.items():
-                    input_list.append("%s=%s" % (k, v))
-            else:
-                input_list.append(param)
+        if 'spec' in d:
+            input = d.get('spec', {}).get('input', [])
+            for param in input:
+                if isinstance(param, dict):
+                    for k, v in param.items():
+                        input_list.append("%s=%s" % (k, v))
+                else:
+                    input_list.append(param)
 
-        setattr(e, 'input', ", ".join(input_list) if input_list else None)
+            setattr(e, 'input', ", ".join(input_list) if input_list else '')
 
         return e
 
@@ -175,9 +176,9 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_pecan_controller_exception
     @wsme_pecan.wsexpose(Workflows, types.uuid, int, types.uniquelist,
-                         types.list)
+                         types.list, types.uniquelist)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc'):
+                sort_dirs='asc', fields=''):
         """Return a list of workflows.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -189,14 +190,23 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         :param sort_dirs: Optional. Directions to sort corresponding to
                           sort_keys, "asc" or "desc" can be choosed.
                           Default: asc.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
 
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
         LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s", marker, limit, sort_keys, sort_dirs)
+                 "sort_dirs=%s, fields=%s", marker, limit, sort_keys,
+                 sort_dirs, fields)
+
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
 
         rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
+        rest_utils.validate_fields(fields, Workflow.get_fields())
 
         marker_obj = None
 
@@ -207,16 +217,22 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             limit=limit,
             marker=marker_obj,
             sort_keys=sort_keys,
-            sort_dirs=sort_dirs
+            sort_dirs=sort_dirs,
+            fields=fields
         )
 
-        workflows_list = [Workflow.from_dict(db_model.to_dict())
-                          for db_model in db_workflows]
+        workflows_list = []
+
+        for data in db_workflows:
+            workflow_dict = (dict(zip(fields, data)) if fields else
+                             data.to_dict())
+            workflows_list.append(Workflow.from_dict(workflow_dict))
 
         return Workflows.convert_with_links(
             workflows_list,
             limit,
             pecan.request.host_url,
             sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs)
+            sort_dirs=','.join(sort_dirs),
+            fields=','.join(fields) if fields else ''
         )

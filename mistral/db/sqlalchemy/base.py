@@ -181,9 +181,14 @@ def get_driver_name(session=None):
 
 
 @session_aware()
-def model_query(model, session=None):
+def model_query(model, columns=(), session=None):
     """Query helper.
 
-    :param model: base model to query
+    :param model: Base model to query.
+    :param columns: Optional. Which columns to be queried.
     """
+
+    if columns:
+        return session.query(*columns)
+
     return session.query(model)

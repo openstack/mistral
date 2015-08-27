@@ -102,8 +102,8 @@ def acquire_lock(model, id, session=None):
         sqlite_lock.acquire_lock(id, session)
 
 
-def _secure_query(model):
-    query = b.model_query(model)
+def _secure_query(model, *columns):
+    query = b.model_query(model, columns)
 
     if issubclass(model, mb.MistralSecureModelBase):
         query = query.filter(
@@ -235,6 +235,18 @@ def delete_workbooks(**kwargs):
 # Workflow definitions.
 
 
+WORKFLOW_COL_MAPPING = {
+    'id': models.WorkflowDefinition.id,
+    'name': models.WorkflowDefinition.name,
+    'input': models.WorkflowDefinition.spec,
+    'definition': models.WorkflowDefinition.definition,
+    'tags': models.WorkflowDefinition.tags,
+    'scope': models.WorkflowDefinition.scope,
+    'created_at': models.WorkflowDefinition.created_at,
+    'updated_at': models.WorkflowDefinition.updated_at
+}
+
+
 def get_workflow_definition(name):
     wf_def = _get_workflow_definition(name)
 
@@ -261,10 +273,13 @@ def load_workflow_definition(name):
     return _get_workflow_definition(name)
 
 
-# NOTE(xylan): We just leave filter param here for future usage
-def get_workflow_definitions(filters=None, limit=None, marker=None,
-                             sort_keys=None, sort_dirs=None, **kwargs):
-    query = _secure_query(models.WorkflowDefinition)
+def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
+                             sort_dirs=None, fields=None, **kwargs):
+    columns = (
+        tuple(WORKFLOW_COL_MAPPING.get(f) for f in fields) if fields else ()
+    )
+
+    query = _secure_query(models.WorkflowDefinition, *columns)
 
     try:
         return _paginate_query(

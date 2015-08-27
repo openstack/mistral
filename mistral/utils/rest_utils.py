@@ -66,4 +66,23 @@ def validate_query_params(limit, sort_keys, sort_dirs):
     for sort_dir in sort_dirs:
         if sort_dir not in ['asc', 'desc']:
             raise exc.ClientSideError("Unknown sort direction, must be 'desc' "
-                                      "or 'asc'")
+                                      "or 'asc'.")
+
+
+def validate_fields(fields, object_fields):
+    """Check for requested non-existent fields.
+
+    Check if the user requested non-existent fields.
+
+    :param fields: A list of fields requested by the user.
+    :param object_fields: A list of fields supported by the object.
+    """
+    if not fields:
+        return
+
+    invalid_fields = set(fields) - set(object_fields)
+
+    if invalid_fields:
+        raise exc.ClientSideError(
+            'Field(s) %s are invalid.' % ', '.join(invalid_fields)
+        )
