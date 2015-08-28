@@ -16,10 +16,10 @@
 
 import copy
 import datetime
+import json
 import mock
 from webtest import app as webtest_app
 
-from mistral.api.controllers.v2 import execution
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import rpc
@@ -167,20 +167,24 @@ class TestExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 201)
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
 
-        exec_dict = execution.Execution(**WF_EX_JSON_WITH_DESC).to_dict()
+        exec_dict = WF_EX_JSON_WITH_DESC
 
         f.assert_called_once_with(
             exec_dict['workflow_name'],
-            exec_dict['input'],
+            json.loads(exec_dict['input']),
             exec_dict['description'],
-            **exec_dict['params']
+            **json.loads(exec_dict['params'])
         )
 
     @mock.patch.object(rpc.EngineClient, 'start_workflow', MOCK_ACTION_EXC)
     def test_post_throws_exception(self):
-        context = self.assertRaises(webtest_app.AppError, self.app.post_json,
-                                    '/v2/executions',
-                                    WF_EX_JSON)
+        context = self.assertRaises(
+            webtest_app.AppError,
+            self.app.post_json,
+            '/v2/executions',
+            WF_EX_JSON
+        )
+
         self.assertIn('Bad response: 400', context.message)
 
     @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_DELETE)
