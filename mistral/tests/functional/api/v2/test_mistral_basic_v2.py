@@ -1027,11 +1027,12 @@ class ActionExecutionTestsV2(base.TestCase):
             {
                 'name': 'std.echo',
                 'input': '{"output": "Hello, Mistral!"}',
-                'params': {"save_result": True}
+                'params': '{"save_result": true}'
             }
         )
 
         self.assertEqual(201, resp.status)
+
         body = json.loads(body)
 
         self.assertEqual('RUNNING', body['state'])

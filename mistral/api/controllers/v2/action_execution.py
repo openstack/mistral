@@ -14,8 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
-
 from oslo_log import log as logging
 from pecan import rest
 from wsme import types as wtypes
@@ -50,27 +48,11 @@ class ActionExecution(resource.Resource):
     name = wtypes.text
     description = wtypes.text
     accepted = bool
-    input = wtypes.text
-    output = wtypes.text
+    input = types.jsontype
+    output = types.jsontype
     created_at = wtypes.text
     updated_at = wtypes.text
-
-    # Add this param to make Mistral API work with WSME 0.8.0 or higher version
     params = types.jsontype
-
-    @classmethod
-    def from_dict(cls, d):
-        e = cls()
-
-        for key, val in d.items():
-            if hasattr(e, key):
-                # Nonetype check for dictionary must be explicit.
-                if val is not None and (
-                        key == 'input' or key == 'output' or key == 'params'):
-                    val = json.dumps(val)
-                setattr(e, key, val)
-
-        return e
 
     @classmethod
     def sample(cls):
@@ -86,8 +68,8 @@ class ActionExecution(resource.Resource):
             name='std.echo',
             description='My running action',
             accepted=True,
-            input='{"first_name": "John", "last_name": "Doe"}',
-            output='{"some_output": "Hello, John Doe!"}',
+            input={'first_name': 'John', 'last_name': 'Doe'},
+            output={'some_output': 'Hello, John Doe!'},
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
             params={'save_result': True}
@@ -136,14 +118,12 @@ def _get_action_executions(task_execution_id=None):
     if task_execution_id:
         kwargs['task_execution_id'] = task_execution_id
 
-    action_executions = []
+    action_execs = [
+        _get_action_execution_resource(a_ex)
+        for a_ex in db_api.get_action_executions(**kwargs)
+    ]
 
-    for action_ex in db_api.get_action_executions(**kwargs):
-        action_executions.append(
-            _get_action_execution_resource(action_ex)
-        )
-
-    return ActionExecutions(action_executions=action_executions)
+    return ActionExecutions(action_executions=action_execs)
 
 
 class ActionExecutionsController(rest.RestController):
@@ -156,29 +136,16 @@ class ActionExecutionsController(rest.RestController):
         return _get_action_execution(id)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose({wtypes.text: wtypes.text},
+    @wsme_pecan.wsexpose(ActionExecution,
                          body=ActionExecution, status_code=201)
-    def post(self, action_execution):
+    def post(self, action_ex):
         """Create new action_execution."""
-        LOG.info("Create action_execution [action_execution=%s]" %
-                 action_execution)
+        LOG.info("Create action_execution [action_execution=%s]" % action_ex)
 
-        action_input = action_execution.input or None
-        description = action_execution.description or None
-        params = action_execution.params or {}
-        name = action_execution.name
-
-        if action_input:
-            try:
-                action_input = json.loads(action_execution.input)
-
-                if not isinstance(action_input, dict):
-                    raise TypeError("Input should be dict type.")
-            except (TypeError, ValueError) as e:
-                raise exc.InputException(
-                    "Input should be JSON-serialized dict string. Actual: %s, "
-                    "error: %s" % (action_execution.input, e)
-                )
+        name = action_ex.name
+        description = action_ex.description or None
+        action_input = action_ex.input or {}
+        params = action_ex.params or {}
 
         if not name:
             raise exc.InputException(
@@ -192,35 +159,25 @@ class ActionExecutionsController(rest.RestController):
             **params
         )
 
-        return ActionExecution.from_dict(action_ex).to_dict()
+        return ActionExecution.from_dict(action_ex)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text, body=ActionExecution)
-    def put(self, id, action_execution):
+    def put(self, id, action_ex):
         """Update the specified action_execution."""
         LOG.info(
             "Update action_execution [id=%s, action_execution=%s]"
-            % (id, action_execution)
+            % (id, action_ex)
         )
 
-        # Client must provide a valid json. It shouldn't  necessarily be an
-        # object but it should be json complaint so strings have to be escaped.
-        output = None
-
-        if action_execution.output:
-            try:
-                output = json.loads(action_execution.output)
-            except (ValueError, TypeError) as e:
-                raise exc.InvalidResultException(str(e))
-
-        if action_execution.state == states.SUCCESS:
-            result = wf_utils.Result(data=output)
-        elif action_execution.state == states.ERROR:
-            result = wf_utils.Result(error=output)
+        if action_ex.state == states.SUCCESS:
+            result = wf_utils.Result(data=action_ex.output)
+        elif action_ex.state == states.ERROR:
+            result = wf_utils.Result(error=action_ex.output)
         else:
             raise exc.InvalidResultException(
                 "Error. Expected on of %s, actual: %s" %
-                ([states.SUCCESS, states.ERROR], action_execution.state)
+                ([states.SUCCESS, states.ERROR], action_ex.state)
             )
 
         values = rpc.get_engine_client().on_action_complete(id, result)

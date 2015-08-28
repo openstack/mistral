@@ -28,7 +28,7 @@ from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
 
-action_ex = models.ActionExecution(
+ACTION_EX_DB = models.ActionExecution(
     id='123',
     workflow_name='flow',
     task_execution=models.TaskExecution(name='task1'),
@@ -45,7 +45,7 @@ action_ex = models.ActionExecution(
     updated_at=datetime.datetime(1970, 1, 1)
 )
 
-ACTION_EXEC = {
+ACTION_EX = {
     'id': '123',
     'workflow_name': 'flow',
     'task_execution_id': '333',
@@ -62,25 +62,25 @@ ACTION_EXEC = {
     'updated_at': '1970-01-01 00:00:00'
 }
 
-UPDATED_ACTION_EX = copy.copy(action_ex).to_dict()
-UPDATED_ACTION_EX['state'] = 'SUCCESS'
-UPDATED_ACTION_EX['task_name'] = 'task1'
-UPDATED_ACTION = copy.copy(ACTION_EXEC)
+UPDATED_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
+UPDATED_ACTION_EX_DB['state'] = 'SUCCESS'
+UPDATED_ACTION_EX_DB['task_name'] = 'task1'
+UPDATED_ACTION = copy.copy(ACTION_EX)
 UPDATED_ACTION['state'] = 'SUCCESS'
 UPDATED_ACTION_OUTPUT = UPDATED_ACTION['output']
 
-ERROR_ACTION_EX = copy.copy(action_ex).to_dict()
+ERROR_ACTION_EX = copy.copy(ACTION_EX_DB).to_dict()
 ERROR_ACTION_EX['state'] = 'ERROR'
 ERROR_ACTION_EX['task_name'] = 'task1'
-ERROR_ACTION = copy.copy(ACTION_EXEC)
+ERROR_ACTION = copy.copy(ACTION_EX)
 ERROR_ACTION['state'] = 'ERROR'
 ERROR_ACTION_RES = ERROR_ACTION['output']
 
-BROKEN_ACTION = copy.copy(ACTION_EXEC)
+BROKEN_ACTION = copy.copy(ACTION_EX)
 BROKEN_ACTION['output'] = 'string not escaped'
 
-MOCK_ACTION = mock.MagicMock(return_value=action_ex)
-MOCK_ACTIONS = mock.MagicMock(return_value=[action_ex])
+MOCK_ACTION = mock.MagicMock(return_value=ACTION_EX_DB)
+MOCK_ACTIONS = mock.MagicMock(return_value=[ACTION_EX_DB])
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 
@@ -91,7 +91,7 @@ class TestActionExecutionsController(base.FunctionalTest):
         resp = self.app.get('/v2/action_executions/123')
 
         self.assertEqual(resp.status_int, 200)
-        self.assertDictEqual(ACTION_EXEC, resp.json)
+        self.assertDictEqual(ACTION_EX, resp.json)
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -101,35 +101,35 @@ class TestActionExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'start_action')
     def test_post(self, f):
-        f.return_value = action_ex.to_dict()
+        f.return_value = ACTION_EX_DB.to_dict()
 
         resp = self.app.post_json(
             '/v2/action_executions',
             {
                 'name': 'std.echo',
-                'input': '{}',
-                'params': {'save_result': True}
+                'input': "{}",
+                'params': '{"save_result": true}'
             }
         )
 
         self.assertEqual(resp.status_int, 201)
 
-        action_exec = ACTION_EXEC
+        action_exec = ACTION_EX
         del action_exec['task_name']
 
-        self.assertDictEqual(ACTION_EXEC, resp.json)
+        self.assertDictEqual(ACTION_EX, resp.json)
 
         f.assert_called_once_with(
-            ACTION_EXEC['name'],
-            json.loads(ACTION_EXEC['input']),
+            ACTION_EX['name'],
+            json.loads(ACTION_EX['input']),
             description=None,
             save_result=True
         )
 
     @mock.patch.object(rpc.EngineClient, 'start_action')
     def test_post_without_input(self, f):
-        f.return_value = action_ex.to_dict()
-        f.return_value['output'] = {'result': '"123"'}
+        f.return_value = ACTION_EX_DB.to_dict()
+        f.return_value['output'] = {'result': '123'}
 
         resp = self.app.post_json(
             '/v2/action_executions',
@@ -137,16 +137,9 @@ class TestActionExecutionsController(base.FunctionalTest):
         )
 
         self.assertEqual(resp.status_int, 201)
-        self.assertDictEqual(
-            {'result': '"123"'},
-            json.loads(resp.json['output'])
-        )
+        self.assertEqual('{"result": "123"}', resp.json['output'])
 
-        f.assert_called_once_with(
-            'nova.servers_list',
-            None,
-            description=None
-        )
+        f.assert_called_once_with('nova.servers_list', {}, description=None)
 
     def test_post_bad_result(self):
         resp = self.app.post_json(
@@ -168,7 +161,7 @@ class TestActionExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
     def test_put(self, f):
-        f.return_value = UPDATED_ACTION_EX
+        f.return_value = UPDATED_ACTION_EX_DB
 
         resp = self.app.put_json('/v2/action_executions/123', UPDATED_ACTION)
 
@@ -177,7 +170,7 @@ class TestActionExecutionsController(base.FunctionalTest):
 
         f.assert_called_once_with(
             UPDATED_ACTION['id'],
-            wf_utils.Result(data=action_ex.output)
+            wf_utils.Result(data=ACTION_EX_DB.output)
         )
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
@@ -191,7 +184,7 @@ class TestActionExecutionsController(base.FunctionalTest):
 
         f.assert_called_once_with(
             ERROR_ACTION['id'],
-            wf_utils.Result(error=action_ex.output)
+            wf_utils.Result(error=ACTION_EX_DB.output)
         )
 
     @mock.patch.object(
@@ -200,14 +193,20 @@ class TestActionExecutionsController(base.FunctionalTest):
         MOCK_NOT_FOUND
     )
     def test_put_no_action_ex(self):
-        resp = self.app.put_json('/v2/action_executions/123', UPDATED_ACTION,
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/action_executions/123',
+            UPDATED_ACTION,
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 404)
 
     def test_put_bad_result(self):
-        resp = self.app.put_json('/v2/action_executions/123', BROKEN_ACTION,
-                                 expect_errors=True)
+        resp = self.app.put_json(
+            '/v2/action_executions/123',
+            BROKEN_ACTION,
+            expect_errors=True
+        )
 
         self.assertEqual(resp.status_int, 400)
 
@@ -215,7 +214,9 @@ class TestActionExecutionsController(base.FunctionalTest):
     def test_put_without_result(self, f):
         action_ex = copy.copy(UPDATED_ACTION)
         del action_ex['output']
-        f.return_value = UPDATED_ACTION_EX
+
+        f.return_value = UPDATED_ACTION_EX_DB
+
         resp = self.app.put_json('/v2/action_executions/123', action_ex)
 
         self.assertEqual(resp.status_int, 200)
@@ -227,7 +228,7 @@ class TestActionExecutionsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
 
         self.assertEqual(len(resp.json['action_executions']), 1)
-        self.assertDictEqual(ACTION_EXEC, resp.json['action_executions'][0])
+        self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
 
     @mock.patch.object(db_api, 'get_action_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
