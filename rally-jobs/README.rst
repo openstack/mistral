@@ -27,3 +27,5 @@ Useful links
 
 * About plugins:  https://rally.readthedocs.org/en/latest/plugins.html
 
+* Plugin samples: https://github.com/openstack/rally/tree/master/samples/plugins
+
