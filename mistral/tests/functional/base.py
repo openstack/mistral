@@ -84,7 +84,7 @@ class MistralClientBase(rest_client.RestClient):
 
         return resp, json.loads(body)
 
-    def wait_execution_success(self, ex_body, timeout=180):
+    def wait_execution_success(self, ex_body, timeout=180, url='executions'):
         start_time = time.time()
 
         expected_states = ['SUCCESS', 'RUNNING']
@@ -95,16 +95,16 @@ class MistralClientBase(rest_client.RestClient):
                        "to SUCCESS. Execution: {1}".format(timeout, ex_body))
                 raise exceptions.TimeoutException(msg)
 
-            _, ex_body = self.get_object('executions', ex_body['id'])
+            _, ex_body = self.get_object(url, ex_body['id'])
 
             if ex_body['state'] not in expected_states:
                 msg = ("Execution state %s is not in expected "
                        "states: %s" % (ex_body['state'], expected_states))
                 raise exceptions.TempestException(msg)
 
-            time.sleep(2)
+            time.sleep(1)
 
-        return True
+        return ex_body
 
 
 class MistralClientV2(MistralClientBase):
