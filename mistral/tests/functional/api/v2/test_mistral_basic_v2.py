@@ -1039,8 +1039,10 @@ class ActionExecutionTestsV2(base.TestCase):
 
         # We must reread action execution in order to get actual
         # state and output.
-        resp, body = self.client.get('action_executions/%s' % body['id'])
-        body = json.loads(body)
+        body = self.client.wait_execution_success(
+            body,
+            url='action_executions'
+        )
         output = json.loads(body['output'])
 
         self.assertEqual('SUCCESS', body['state'])
