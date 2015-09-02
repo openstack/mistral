@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Alcatel-lucent, Inc.
+# Copyright 2015 - Alcatel-lucent, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -23,7 +21,7 @@ from mistral.services import expiration_policy
 from mistral.tests.unit.api import base
 from oslo_config import cfg
 
-WORKFLOW_EXECS = [
+WF_EXECS = [
     {
         'id': '123',
         'name': 'success_expired',
@@ -71,13 +69,11 @@ WORKFLOW_EXECS = [
 
 
 def _load_executions():
-
-    for wf_exec in WORKFLOW_EXECS:
+    for wf_exec in WF_EXECS:
         db_api.create_workflow_execution(wf_exec)
 
 
 def _switch_context(project_id, is_admin):
-
     _ctx = ctx.MistralContext(
         user_id=None,
         project_id=project_id,
@@ -103,17 +99,17 @@ class ExpirationPolicyTest(base.FunctionalTest):
         now = datetime.datetime.now()
 
         # This execution has a parent wf and testing that we are
-        # Querying only for parent wfs.
+        # querying only for parent wfs.
         exec_child = db_api.get_execution('654')
 
-        self.assertEqual(exec_child.task_execution_id, '789')
+        self.assertEqual('789', exec_child.task_execution_id)
 
         # Call for all expired wfs execs.
         execs = db_api.get_expired_executions(now)
 
         # Should be only 3, the RUNNING execution shouldn't return,
-        # So the child wf (that has parent task id).
-        self.assertEqual(len(execs), 3)
+        # so the child wf (that has parent task id).
+        self.assertEqual(3, len(execs))
 
         # Switch context to Admin since expiration policy running as Admin.
         _switch_context(None, True)
@@ -124,40 +120,41 @@ class ExpirationPolicyTest(base.FunctionalTest):
         # Only non_expired available (update_at < older_than).
         execs = db_api.get_expired_executions(now)
 
-        self.assertEqual(len(execs), 1)
-        self.assertEqual(execs[0].id, '987')
+        self.assertEqual(1, len(execs))
+        self.assertEqual('987', execs[0].id)
 
         _set_expiration_policy_config(1, 5)
         expiration_policy.run_execution_expiration_policy(self, ctx)
         execs = db_api.get_expired_executions(now)
 
-        self.assertEqual(len(execs), 0)
+        self.assertEqual(0, len(execs))
 
     def test_negative_wrong_conf_values(self):
         _set_expiration_policy_config(None, None)
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
 
-        self.assertEqual(e_policy._periodic_spacing, {})
-        self.assertEqual(e_policy._periodic_tasks, [])
+        self.assertDictEqual({}, e_policy._periodic_spacing)
+        self.assertListEqual([], e_policy._periodic_tasks)
 
         _set_expiration_policy_config(None, 60)
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
 
-        self.assertEqual(e_policy._periodic_spacing, {})
-        self.assertEqual(e_policy._periodic_tasks, [])
+        self.assertDictEqual({}, e_policy._periodic_spacing)
+        self.assertListEqual([], e_policy._periodic_tasks)
 
         _set_expiration_policy_config(60, None)
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
 
-        self.assertEqual(e_policy._periodic_spacing, {})
-        self.assertEqual(e_policy._periodic_tasks, [])
+        self.assertDictEqual({}, e_policy._periodic_spacing)
+        self.assertListEqual([], e_policy._periodic_tasks)
 
     def test_periodic_task_parameters(self):
         _set_expiration_policy_config(17, 13)
 
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
-        self.assertEqual(e_policy._periodic_spacing
-                         ['run_execution_expiration_policy'], 17 * 60)
+
+        self.assertEqual(17 * 60, e_policy._periodic_spacing
+                         ['run_execution_expiration_policy'])
 
     def tearDown(self):
         """Restores the size limit config to default."""

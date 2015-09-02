@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Alcatel-lucent, Inc.
+# Copyright 2015 - Alcatel-lucent, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -80,10 +78,12 @@ def run_execution_expiration_policy(self, ctx):
                 )
                 auth_ctx.set_ctx(ctx)
 
-                LOG.debug('DELETE execution id : %s from date : %s '
-                          'according to expiration policy',
-                          execution.id,
-                          execution.updated_at)
+                LOG.debug(
+                    'DELETE execution id : %s from date : %s '
+                    'according to expiration policy',
+                    execution.id,
+                    execution.updated_at
+                )
                 db_api.delete_workflow_execution(execution.id)
             except Exception as e:
                 msg = "Failed to delete [execution_id=%s]\n %s" \
