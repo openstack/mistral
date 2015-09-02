@@ -317,7 +317,7 @@ class TestWorkflowsController(base.FunctionalTest):
             'marker': '123e4567-e89b-12d3-a456-426655440000',
             'limit': 1,
             'sort_keys': 'id,name',
-            'sort_dirs': 'asc,asc'
+            'sort_dirs': 'asc,asc',
         }
 
         self.assertDictEqual(expected_dict, param_dict)
@@ -364,6 +364,37 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 400)
 
         self.assertIn("Unknown sort direction", resp.body)
+
+    @mock.patch('mistral.db.v2.api.get_workflow_definitions')
+    def test_get_all_with_fields_filter(self, mock_get_db_wfs):
+        mock_get_db_wfs.return_value = [
+            ('123e4567-e89b-12d3-a456-426655440000', 'fake_name')
+        ]
+
+        resp = self.app.get('/v2/workflows?fields=name')
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(len(resp.json['workflows']), 1)
+
+        expected_dict = {
+            'id': '123e4567-e89b-12d3-a456-426655440000',
+            'name': 'fake_name'
+        }
+
+        self.assertDictEqual(expected_dict, resp.json['workflows'][0])
+
+    def test_get_all_with_invalid_field(self):
+        resp = self.app.get(
+            '/v2/workflows?fields=name,nonexist',
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+
+        self.assertIn(
+            "nonexist are invalid",
+            resp.body
+        )
 
     def test_validate(self):
         resp = self.app.post(

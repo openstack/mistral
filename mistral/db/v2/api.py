@@ -116,15 +116,14 @@ def load_workflow_definition(name):
     return IMPL.load_workflow_definition(name)
 
 
-# NOTE(xylan): We just leave filter param here for future usage
-def get_workflow_definitions(filters=None, limit=None, marker=None,
-                             sort_keys=None, sort_dirs=None, **kwargs):
+def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
+                             sort_dirs=None, fields=None, **kwargs):
     return IMPL.get_workflow_definitions(
-        filters=filters,
         limit=limit,
         marker=marker,
         sort_keys=sort_keys,
         sort_dirs=sort_dirs,
+        fields=fields,
         **kwargs
     )
 

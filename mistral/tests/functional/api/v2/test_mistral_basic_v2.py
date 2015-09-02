@@ -149,6 +149,15 @@ class WorkflowTestsV2(base.TestCase):
         self.assertNotIn('next', body)
 
     @test.attr(type='smoke')
+    def test_get_list_workflows_with_fields(self):
+        resp, body = self.client.get_list_obj('workflows?fields=name')
+
+        self.assertEqual(200, resp.status)
+
+        for wf in body['workflows']:
+            self.assertListEqual(['id', 'name'], wf.keys())
+
+    @test.attr(type='smoke')
     def test_get_list_workflows_with_pagination(self):
         resp, body = self.client.get_list_obj(
             'workflows?limit=1&sort_keys=name&sort_dirs=desc'

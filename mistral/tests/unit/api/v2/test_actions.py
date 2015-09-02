@@ -244,7 +244,9 @@ class TestActionsController(base.FunctionalTest):
             'sort_dirs': 'asc,asc'
         }
 
-        self.assertDictEqual(expected_dict, param_dict)
+        self.assertTrue(
+            set(expected_dict.items()).issubset(set(param_dict.items()))
+        )
 
     def test_get_all_pagination_limit_negative(self):
         resp = self.app.get(
