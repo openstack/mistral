@@ -126,7 +126,7 @@ class ExecutionsController(rest.RestController):
 
         new_state = wf_ex.state
         new_description = wf_ex.description
-        msg = wf_ex.state_info
+        msg = wf_ex.state_info if wf_ex.state_info else None
 
         # Currently we can change only state or description.
         if (not (new_state or new_description) or
