@@ -74,17 +74,25 @@ function create_mistral_accounts {
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
         MISTRAL_SERVICE_V2=$(openstack service create \
-            mistral \
-            --type=workflowv2 \
+            workflowv2 \
+            --name=mistral \
             --description="Workflow Service v2" \
             | grep " id " | get_field 2)
 
         openstack endpoint create \
-            $MISTRAL_SERVICE_V2 \
-            --region RegionOne \
-            --publicurl "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            --adminurl "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            --internalurl "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2"
+            workflowv2 \
+            public "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+            --region RegionOne
+
+        openstack endpoint create \
+            workflowv2 \
+            admin "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+            --region RegionOne
+
+        openstack endpoint create \
+            workflowv2 \
+            internal "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+            --region RegionOne
 
     fi
 }
