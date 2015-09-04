@@ -1,4 +1,4 @@
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,19 +44,94 @@ ALL = (
 PARAMS_PTRN = re.compile("([-_\w]+)=(%s)" % "|".join(ALL))
 
 
+def instantiate_spec(spec_cls, data):
+    """Instantiates specification accounting for specification hierarchies.
+
+    :param spec_cls: Specification concrete or base class. In case if base
+        class or the hierarchy is provided this method relies on attributes
+        _polymorphic_key and _polymorphic_value in order to find a concrete
+        class that needs to be instantiated.
+    :param data: Raw specification data as a dictionary.
+    """
+
+    if issubclass(spec_cls, BaseSpecList):
+        # Ignore polymorphic search for specification lists because
+        # it doesn't make sense for them.
+        return spec_cls(data)
+
+    if not hasattr(spec_cls, '_polymorphic_key'):
+        spec = spec_cls(data)
+
+        spec.validate_semantics()
+
+        return spec
+
+    key = spec_cls._polymorphic_key
+
+    if not isinstance(key, tuple):
+        key_name = key
+        key_default = None
+    else:
+        key_name = key[0]
+        key_default = key[1]
+
+    for cls in utils.iter_subclasses(spec_cls):
+        if not hasattr(cls, '_polymorphic_value'):
+            raise exc.DSLParsingException(
+                "Class '%s' is expected to have attribute '_polymorphic_value'"
+                " because it's a part of specification hierarchy inherited "
+                "from class '%s'." % (cls, spec_cls)
+            )
+
+        if cls._polymorphic_value == data.get(key_name, key_default):
+            spec = cls(data)
+
+            spec.validate_semantics()
+
+            return cls(data)
+
+    raise exc.DSLParsingException(
+        'Failed to find a specification class to instantiate '
+        '[spec_cls=%s, data=%s]' % (spec_cls, data)
+    )
+
+
 class BaseSpec(object):
+    """Base class for all DSL specifications.
+
+    It represents a DSL entity such as workflow or task as a python object
+    providing more convenient API to analyse DSL than just working with raw
+    data in form of a dictionary. Specification classes also implement
+    all required validation logic by overriding instance method 'validate()'.
+
+    Note that the specification mechanism allows to have polymorphic entities
+    in DSL. For example, if we find it more convenient to have separate
+    specification classes for different types of workflow (i.e. 'direct' and
+    'reverse') we can do so. In this case, in order to instantiate them
+    correctly method 'instantiate_spec' must always be used where argument
+    'spec_cls' must be a root class of the specification hierarchy containing
+    class attribute '_polymorhpic_key' pointing to a key in raw data relying
+    on which we can find a concrete class. Concrete classes then must all have
+    attribute '_polymorhpic_value' corresponding to a value in a raw data.
+    Attribute '_polymorhpic_key' can be either a string or a tuple of size two
+    where the first value is a key name itself and the second value is a
+    default polymorphic value that must be used if raw data doesn't contain
+    a configured key at all. An example of this situation is when we don't
+    specify a workflow type in DSL. In this case, we assume it's 'direct'.
+    """
+
     # See http://json-schema.org
     _schema = {
-        "type": "object"
+        'type': 'object'
     }
 
     _meta_schema = {
-        "type": "object"
+        'type': 'object'
     }
 
     _definitions = {}
 
-    _version = "1.0"
+    _version = '1.0'
 
     @classmethod
     def get_schema(cls, includes=['meta', 'definitions']):
@@ -65,31 +140,59 @@ class BaseSpec(object):
         schema['properties'] = utils.merge_dicts(
             schema.get('properties', {}),
             cls._meta_schema.get('properties', {}),
-            overwrite=False)
+            overwrite=False
+        )
 
         if includes and 'meta' in includes:
             schema['required'] = list(
                 set(schema.get('required', []) +
-                    cls._meta_schema.get('required', [])))
+                    cls._meta_schema.get('required', []))
+            )
 
         if includes and 'definitions' in includes:
             schema['definitions'] = utils.merge_dicts(
                 schema.get('definitions', {}),
                 cls._definitions,
-                overwrite=False)
+                overwrite=False
+            )
 
         return schema
 
     def __init__(self, data):
         self._data = data
 
-        self.validate()
+        self.validate_schema()
 
-    def validate(self):
+    def validate_schema(self):
+        """Validates DSL entity schema that this specification represents.
+
+        By default, this method just validate schema of DSL entity that this
+        specification represents using "_schema" class attribute.
+        Additionally, child classes may implement additional logic to validate
+        more specific things like YAQL expressions in their fields.
+
+        Note that this method is called before construction of specification
+        fields and validation logic should only rely on raw data provided as
+        a dictionary accessible through '_data' instance field.
+        """
+
         try:
             jsonschema.validate(self._data, self.get_schema())
         except jsonschema.ValidationError as e:
             raise exc.InvalidModelException("Invalid DSL: %s" % e)
+
+    def validate_semantics(self):
+        """Validates semantics of specification object.
+
+        Child classes may implement validation logic to check things like
+        integrity of corresponding data structure (e.g. task graph) or
+        other things that can't be expressed in JSON schema.
+
+        This method is called after specification has been built (i.e.
+        its initializer has finished it's work) so that validation logic
+        can rely on initialized specification fields.
+        """
+        pass
 
     def validate_yaql_expr(self, dsl_part):
         if isinstance(dsl_part, six.string_types):
@@ -106,7 +209,7 @@ class BaseSpec(object):
     def _spec_property(self, prop_name, spec_cls):
         prop_val = self._data.get(prop_name)
 
-        return spec_cls(prop_val) if prop_val else None
+        return instantiate_spec(spec_cls, prop_val) if prop_val else None
 
     def _group_spec(self, spec_cls, *prop_names):
         if not prop_names:
@@ -120,7 +223,7 @@ class BaseSpec(object):
             if prop_val:
                 data[prop_name] = prop_val
 
-        return spec_cls(data)
+        return instantiate_spec(spec_cls, data)
 
     def _inject_version(self, prop_names):
         for prop_name in prop_names:
@@ -139,8 +242,10 @@ class BaseSpec(object):
             return prop_val
         elif isinstance(prop_val, list):
             result = {}
+
             for t in prop_val:
                 result.update(t if isinstance(t, dict) else {t: ''})
+
             return result
         elif isinstance(prop_val, six.string_types):
             return {prop_val: ''}
@@ -172,6 +277,7 @@ class BaseSpec(object):
         cmd = cmd_matcher.group()
 
         params = {}
+
         for k, v in re.findall(PARAMS_PTRN, cmd_str):
             # Remove embracing quotes.
             v = v.strip()
@@ -218,7 +324,7 @@ class BaseListSpec(BaseSpec):
             if k != 'version':
                 v['name'] = k
                 self._inject_version([k])
-                self.items.append(self.item_class(v))
+                self.items.append(instantiate_spec(self.item_class, v))
 
     def validate(self):
         super(BaseListSpec, self).validate()
@@ -231,6 +337,12 @@ class BaseListSpec(BaseSpec):
 
     def get_items(self):
         return self.items
+
+    def __getitem__(self, idx):
+        return self.items[idx]
+
+    def __len__(self):
+        return len(self.items)
 
 
 class BaseSpecList(object):
@@ -245,7 +357,7 @@ class BaseSpecList(object):
             if k != 'version':
                 v['name'] = k
                 v['version'] = self._version
-                self.items[k] = self.item_class(v)
+                self.items[k] = instantiate_spec(self.item_class, v)
 
     def item_keys(self):
         return self.items.keys()

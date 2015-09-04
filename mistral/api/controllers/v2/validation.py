@@ -26,6 +26,7 @@ class SpecValidationController(rest.RestController):
 
     def __init__(self, parser):
         super(SpecValidationController, self).__init__()
+
         self._parse_func = parser
 
     @pecan.expose('json')

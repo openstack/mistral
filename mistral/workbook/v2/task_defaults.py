@@ -72,8 +72,8 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._on_error = self._as_list_of_tuples("on-error")
         self._requires = data.get('requires', [])
 
-    def validate(self):
-        super(TaskDefaultsSpec, self).validate()
+    def validate_schema(self):
+        super(TaskDefaultsSpec, self).validate_schema()
 
         # Validate YAQL expressions.
         self._validate_transitions('on-complete')

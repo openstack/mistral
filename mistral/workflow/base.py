@@ -154,14 +154,13 @@ class WorkflowController(object):
             if wf_type == wf_ctrl_cls.__workflow_type__:
                 return wf_ctrl_cls
 
-        msg = 'Failed to find a workflow controller [type=%s]' % wf_type
-        raise exc.NotFoundException(msg)
+        raise exc.NotFoundException(
+            'Failed to find a workflow controller [type=%s]' % wf_type
+        )
 
     @staticmethod
     def get_controller(wf_ex, wf_spec=None):
         if not wf_spec:
             wf_spec = spec_parser.get_workflow_spec(wf_ex['spec'])
 
-        ctrl_cls = WorkflowController._get_class(wf_spec.get_type())
-
-        return ctrl_cls(wf_ex)
+        return WorkflowController._get_class(wf_spec.get_type())(wf_ex)

@@ -86,8 +86,8 @@ class TaskSpec(base.BaseSpec):
         self._inject_type()
         self._process_action_and_workflow()
 
-    def validate(self):
-        super(TaskSpec, self).validate()
+    def validate_schema(self):
+        super(TaskSpec, self).validate_schema()
 
         action = self._data.get('action')
         workflow = self._data.get('workflow')
@@ -234,8 +234,8 @@ class DirectWorkflowTaskSpec(TaskSpec):
         self._on_success = self._as_list_of_tuples('on-success')
         self._on_error = self._as_list_of_tuples('on-error')
 
-    def validate(self):
-        super(DirectWorkflowTaskSpec, self).validate()
+    def validate_schema(self):
+        super(DirectWorkflowTaskSpec, self).validate_schema()
 
         if 'join' in self._data:
             join = self._data.get('join')

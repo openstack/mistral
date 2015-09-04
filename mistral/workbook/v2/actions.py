@@ -49,8 +49,8 @@ class ActionSpec(base.BaseSpec):
 
         utils.merge_dicts(self._base_input, _input)
 
-    def validate(self):
-        super(ActionSpec, self).validate()
+    def validate_schema(self):
+        super(ActionSpec, self).validate_schema()
 
         # Validate YAQL expressions.
         inline_params = self._parse_cmd_and_input(self._data.get('base'))[1]
