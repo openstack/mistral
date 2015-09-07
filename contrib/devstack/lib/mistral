@@ -57,43 +57,15 @@ function create_mistral_accounts {
         return
     fi
 
-    SERVICE_TENANT=$(openstack project list | awk "/ $SERVICE_TENANT_NAME / { print \$2 }")
-    ADMIN_ROLE=$(openstack role list | awk "/ admin / { print \$2 }")
-
-    MISTRAL_USER=$(openstack user create \
-        $MISTRAL_ADMIN_USER \
-        --password "$SERVICE_PASSWORD" \
-        --project $SERVICE_TENANT \
-        --email mistral@example.com \
-        | grep " id " | get_field 2)
-
-    openstack role add \
-        $ADMIN_ROLE \
-        --project $SERVICE_TENANT \
-        --user $MISTRAL_USER
+    create_service_user "mistral" "admin"
 
     if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        MISTRAL_SERVICE_V2=$(openstack service create \
-            workflowv2 \
-            --name=mistral \
-            --description="Workflow Service v2" \
-            | grep " id " | get_field 2)
-
-        openstack endpoint create \
-            workflowv2 \
-            public "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            --region RegionOne
-
-        openstack endpoint create \
-            workflowv2 \
-            admin "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            --region RegionOne
-
-        openstack endpoint create \
-            workflowv2 \
-            internal "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            --region RegionOne
-
+        get_or_create_service "mistral" "workflowv2" "Workflow Service v2"
+        get_or_create_endpoint "workflowv2" \
+            "$REGION_NAME" \
+            "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+            "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+            "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2"
     fi
 }
 
