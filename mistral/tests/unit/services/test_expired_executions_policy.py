@@ -1,4 +1,5 @@
 # Copyright 2015 - Alcatel-lucent, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,7 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
 import datetime
 
 from mistral import context as ctx
@@ -25,8 +25,8 @@ WF_EXECS = [
     {
         'id': '123',
         'name': 'success_expired',
-        'created_at': datetime.datetime.now() - datetime.timedelta(minutes=31),
-        'updated_at': datetime.datetime.now() - datetime.timedelta(minutes=30),
+        'created_at': datetime.datetime.now() - datetime.timedelta(minutes=60),
+        'updated_at': datetime.datetime.now() - datetime.timedelta(minutes=59),
         'workflow_name': 'test_exec',
         'state': "SUCCESS",
     },
@@ -114,7 +114,15 @@ class ExpirationPolicyTest(base.FunctionalTest):
         # Switch context to Admin since expiration policy running as Admin.
         _switch_context(None, True)
 
-        _set_expiration_policy_config(1, 10)
+        # TODO(m4dcoder): The expiration policy is changed here to expire
+        # executions older than 30 minutes. It was originally 10 minutes.
+        # The unit test below expects 1 execution to remain after the policy
+        # is applied. However, the unit test fail frequently because the
+        # process that deletes the expired executions seem to run late and
+        # all executions are deleted. The unit tests seems to run better if
+        # the config is changed to 30 minutes. Troubleshoot the expiration
+        # policy to identify cause of the delay.
+        _set_expiration_policy_config(1, 30)
         expiration_policy.run_execution_expiration_policy(self, ctx)
 
         # Only non_expired available (update_at < older_than).
