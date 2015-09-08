@@ -1,21 +1,8 @@
-# lib/mistral
-
-# Dependencies:
-# ``functions`` file
-# ``DEST``, ``DATA_DIR``, ``STACK_USER`` must be defined
-
-# ``stack.sh`` calls the entry points in this order:
-#
-# install_mistral
-# configure_mistral
-# start_mistral
-# stop_mistral
-
+# Setting configuration file for Mistral services
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
 set -o xtrace
-
 
 # Defaults
 # --------
@@ -136,10 +123,11 @@ function install_mistral {
     # both functions (setup_develop and setup_package) are defined at:
     # http://git.openstack.org/cgit/openstack-dev/devstack/tree/functions-common
     setup_package $MISTRAL_DIR -e
-    
+
     # installing python-nose.
     real_install_package python-nose
 }
+
 
 function install_mistral_pythonclient {
     git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
@@ -162,6 +150,26 @@ function stop_mistral {
     # Kill the Mistral screen windows
     screen -S $SCREEN_NAME -p mistral -X kill
 }
+
+
+if is_service_enabled mistral; then
+    if [[ "$1" == "stack" && "$2" == "install" ]]; then
+        echo_summary "Installing mistral"
+        install_mistral
+    elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
+        echo_summary "Configuring mistral"
+        configure_mistral
+        create_mistral_accounts
+    elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
+        echo_summary "Initializing mistral"
+        init_mistral
+        start_mistral
+    fi
+
+    if [[ "$1" == "unstack" ]]; then
+        stop_mistral
+    fi
+fi
 
 
 # Restore xtrace

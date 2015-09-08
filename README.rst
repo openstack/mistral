@@ -37,7 +37,7 @@ First of all, clone the repo and go to the repo directory::
 
 **Devstack installation**
 
-Information about how to install Mistral with devstack can be found here: https://github.com/openstack/mistral/tree/master/contrib/devstack
+Information about how to install Mistral with devstack can be found here: https://github.com/openstack/mistral/tree/master/devstack
 
 **Virtualenv installation**::
 

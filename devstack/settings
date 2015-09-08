@@ -1,0 +1,5 @@
+# Devstack settings
+
+# We have to add Mistral to enabled services for screen_it to work
+
+enable_service mistral
