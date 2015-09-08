@@ -17,6 +17,7 @@ import yaml
 from yaml import error
 
 from mistral import exceptions as exc
+from mistral.workbook import base
 from mistral.workbook.v2 import actions as actions_v2
 from mistral.workbook.v2 import tasks as tasks_v2
 from mistral.workbook.v2 import workbook as wb_v2
@@ -61,7 +62,7 @@ def _get_spec_version(spec_dict):
 
 def get_workbook_spec(spec_dict):
     if _get_spec_version(spec_dict) == V2_0:
-        return wb_v2.WorkbookSpec(spec_dict)
+        return base.instantiate_spec(wb_v2.WorkbookSpec, spec_dict)
 
     return None
 
@@ -72,7 +73,7 @@ def get_workbook_spec_from_yaml(text):
 
 def get_action_spec(spec_dict):
     if _get_spec_version(spec_dict) == V2_0:
-        return actions_v2.ActionSpec(spec_dict)
+        return base.instantiate_spec(actions_v2.ActionSpec, spec_dict)
 
     return None
 
@@ -86,7 +87,7 @@ def get_action_spec_from_yaml(text, action_name):
 
 
 def get_action_list_spec(spec_dict):
-    return actions_v2.ActionListSpec(spec_dict)
+    return base.instantiate_spec(actions_v2.ActionListSpec, spec_dict)
 
 
 def get_action_list_spec_from_yaml(text):
@@ -95,13 +96,13 @@ def get_action_list_spec_from_yaml(text):
 
 def get_workflow_spec(spec_dict):
     if _get_spec_version(spec_dict) == V2_0:
-        return wf_v2.WorkflowSpec(spec_dict)
+        return base.instantiate_spec(wf_v2.WorkflowSpec, spec_dict)
 
     return None
 
 
 def get_workflow_list_spec(spec_dict):
-    return wf_v2.WorkflowListSpec(spec_dict)
+    return base.instantiate_spec(wf_v2.WorkflowListSpec, spec_dict)
 
 
 def get_workflow_spec_from_yaml(text):

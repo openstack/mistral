@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,6 +17,7 @@ from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
+from mistral import exceptions as exc
 from mistral.tests import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import direct_workflow as d_wf
@@ -26,52 +25,24 @@ from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
-WB = """
----
-version: '2.0'
-
-name: my_wb
-
-workflows:
-  wf:
-    type: direct
-
-    tasks:
-      task1:
-        action: std.echo output="Hey"
-        publish:
-          res1: <% $.task1 %>
-        on-complete:
-          - task2: <% $.res1 = 'Hey' %>
-          - task3: <% $.res1 = 'Not Hey' %>
-
-      task2:
-        action: std.echo output="Hi"
-
-      task3:
-        action: std.echo output="Hoy"
-"""
-
 
 class DirectWorkflowControllerTest(base.DbTestCase):
-    def setUp(self):
-        super(DirectWorkflowControllerTest, self).setUp()
-
-        wb_spec = spec_parser.get_workbook_spec_from_yaml(WB)
+    def _prepare_test(self, wf_text):
+        wf_spec = spec_parser.get_workflow_list_spec_from_yaml(wf_text)[0]
 
         wf_ex = models.WorkflowExecution()
         wf_ex.update({
             'id': '1-2-3-4',
-            'spec': wb_spec.get_workflows().get('wf').to_dict(),
+            'spec': wf_spec.to_dict(),
             'state': states.RUNNING
         })
 
         self.wf_ex = wf_ex
-        self.wb_spec = wb_spec
+        self.wf_spec = wf_spec
         self.wf_ctrl = d_wf.DirectWorkflowController(wf_ex)
 
     def _create_task_execution(self, name, state):
-        tasks_spec = self.wb_spec.get_workflows()['wf'].get_tasks()
+        tasks_spec = self.wf_spec.get_tasks()
 
         task_ex = models.TaskExecution(
             id=self.getUniqueString('id'),
@@ -86,6 +57,30 @@ class DirectWorkflowControllerTest(base.DbTestCase):
 
     @mock.patch.object(db_api, 'get_task_execution')
     def test_continue_workflow(self, get_task_execution):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.echo output="Hey"
+              publish:
+                res1: <% $.task1 %>
+              on-complete:
+                - task2: <% $.res1 = 'Hey' %>
+                - task3: <% $.res1 = 'Not Hey' %>
+
+            task2:
+              action: std.echo output="Hi"
+
+            task3:
+              action: std.echo output="Hoy"
+        """
+
+        self._prepare_test(wf_text)
+
         # Workflow execution is in initial step. No running tasks.
         cmds = self.wf_ctrl.continue_workflow()
 
@@ -142,3 +137,23 @@ class DirectWorkflowControllerTest(base.DbTestCase):
         task2_ex.processed = True
 
         self.assertEqual(0, len(cmds))
+
+    def test_continue_workflow_no_start_tasks(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          description: >
+            Invalid workflow that doesn't have start tasks (tasks with
+            no inbound connections).
+          type: direct
+
+          tasks:
+            task1:
+              on-complete: task2
+
+            task2:
+              on-complete: task1
+        """
+
+        self.assertRaises(exc.DSLParsingException, self._prepare_test, wf_text)

@@ -22,12 +22,10 @@ from mistral.tests.unit.workbook.v2 import base
 from mistral import utils
 from mistral.workbook.v2 import tasks
 
-
 LOG = logging.getLogger(__name__)
 
 
 class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
-
     def test_workflow_types(self):
         tests = [
             ({'type': 'direct'}, False),
@@ -62,12 +60,32 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
                               tasks.DirectWfTaskSpecList)
 
     def test_direct_workflow_invalid_task(self):
-        overlay = {'test': {'type': 'direct', 'tasks': {}}}
+        overlay = {
+            'test': {
+                'type': 'direct',
+                'tasks': {}
+            }
+        }
         requires = {'requires': ['echo', 'get']}
 
         utils.merge_dicts(overlay['test']['tasks'], {'email': requires})
 
         self._parse_dsl_spec(add_tasks=True,
+                             changes=overlay,
+                             expect_error=True)
+
+    def test_direct_workflow_no_start_tasks(self):
+        overlay = {
+            'test': {
+                'type': 'direct',
+                'tasks': {
+                    'task1': {'on-complete': 'task2'},
+                    'task2': {'on-complete': 'task1'}
+                }
+            }
+        }
+
+        self._parse_dsl_spec(add_tasks=False,
                              changes=overlay,
                              expect_error=True)
 
@@ -142,9 +160,12 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         for wf_input, expect_error in tests:
             overlay = {'test': wf_input}
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_outputs(self):
         tests = [
@@ -160,9 +181,12 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         for wf_output, expect_error in tests:
             overlay = {'test': wf_output}
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_vars(self):
         tests = [
@@ -178,13 +202,18 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         for wf_vars, expect_error in tests:
             overlay = {'test': wf_vars}
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_tasks_required(self):
-        exception = self._parse_dsl_spec(add_tasks=False,
-                                         expect_error=True)
+        exception = self._parse_dsl_spec(
+            add_tasks=False,
+            expect_error=True
+        )
 
         self.assertIn("'tasks' is a required property", exception.message)
 
@@ -197,9 +226,12 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         for wf_tasks, expect_error in tests:
             overlay = {'test': wf_tasks}
-            self._parse_dsl_spec(add_tasks=False,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=False,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_task_defaults(self):
         tests = [
@@ -289,9 +321,11 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
             utils.merge_dicts(overlay['test']['task-defaults'], default)
 
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_invalid_item(self):
         overlay = {'name': 'invalid'}

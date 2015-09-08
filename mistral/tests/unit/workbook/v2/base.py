@@ -96,9 +96,11 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
         if not expect_error:
             return self._spec_parser(dsl_yaml)
         else:
-            return self.assertRaises(exc.DSLParsingException,
-                                     self._spec_parser,
-                                     dsl_yaml)
+            return self.assertRaises(
+                exc.DSLParsingException,
+                self._spec_parser,
+                dsl_yaml
+            )
 
 
 class WorkbookSpecValidationTestCase(WorkflowSpecValidationTestCase):

@@ -55,8 +55,8 @@ class PoliciesSpec(base.BaseSpec):
         self._pause_before = data.get('pause-before', False)
         self._concurrency = data.get('concurrency', 0)
 
-    def validate(self):
-        super(PoliciesSpec, self).validate()
+    def validate_schema(self):
+        super(PoliciesSpec, self).validate_schema()
 
         # Validate YAQL expressions.
         self.validate_yaql_expr(self._data.get('wait-before', 0))

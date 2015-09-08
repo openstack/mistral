@@ -70,8 +70,8 @@ class RetrySpec(base.BaseSpec):
 
         return retry
 
-    def validate(self):
-        super(RetrySpec, self).validate()
+    def validate_schema(self):
+        super(RetrySpec, self).validate_schema()
 
         # Validate YAQL expressions.
         self.validate_yaql_expr(self._data.get('count'))

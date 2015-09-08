@@ -1,4 +1,4 @@
-# Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class DirectWorkflowController(base.WorkflowController):
             lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
             wf_utils.find_task_executions_by_specs(
                 self.wf_ex,
-                self._find_inbound_task_specs(task_spec)
+                self.wf_spec.find_inbound_task_specs(task_spec)
             )
         )
 
@@ -80,19 +80,13 @@ class DirectWorkflowController(base.WorkflowController):
         return cmds
 
     def _find_start_commands(self):
-        t_specs = []
-
-        for t_s in self.wf_spec.get_tasks():
-            if not self._has_inbound_transitions(t_s):
-                t_specs.append(t_s)
-
         return [
             commands.RunTask(
                 self.wf_ex,
                 t_s,
                 self._get_task_inbound_context(t_s)
             )
-            for t_s in t_specs
+            for t_s in self.wf_spec.find_start_tasks()
         ]
 
     def _find_next_commands_for_task(self, task_ex):
@@ -121,7 +115,7 @@ class DirectWorkflowController(base.WorkflowController):
             )
 
             # NOTE(xylan): Decide whether or not a join task should run
-            # immediately
+            # immediately.
             if self._is_unsatisfied_join(cmd):
                 cmd.wait_flag = True
 
@@ -135,35 +129,6 @@ class DirectWorkflowController(base.WorkflowController):
         LOG.debug("Found commands: %s" % cmds)
 
         return cmds
-
-    def _has_inbound_transitions(self, task_spec):
-        return len(self._find_inbound_task_specs(task_spec)) > 0
-
-    def _find_inbound_task_specs(self, task_spec):
-        return [
-            t_s for t_s in self.wf_spec.get_tasks()
-            if self._transition_exists(t_s.get_name(), task_spec.get_name())
-        ]
-
-    def _find_outbound_task_specs(self, task_spec):
-        return [
-            t_s for t_s in self.wf_spec.get_tasks()
-            if self._transition_exists(task_spec.get_name(), t_s.get_name())
-        ]
-
-    def _transition_exists(self, from_task_name, to_task_name):
-        t_names = set()
-
-        for tup in self.get_on_error_clause(from_task_name):
-            t_names.add(tup[0])
-
-        for tup in self.get_on_success_clause(from_task_name):
-            t_names.add(tup[0])
-
-        for tup in self.get_on_complete_clause(from_task_name):
-            t_names.add(tup[0])
-
-        return to_task_name in t_names
 
     # TODO(rakhmerov): Need to refactor this method to be able to pass tasks
     # whose contexts need to be merged.
@@ -179,11 +144,11 @@ class DirectWorkflowController(base.WorkflowController):
         return ctx
 
     def is_error_handled_for(self, task_ex):
-        return bool(self.get_on_error_clause(task_ex.name))
+        return bool(self.wf_spec.get_on_error_clause(task_ex.name))
 
     def all_errors_handled(self):
         for t_ex in wf_utils.find_error_task_executions(self.wf_ex):
-            if not self.get_on_error_clause(t_ex.name):
+            if not self.wf_spec.get_on_error_clause(t_ex.name):
                 return False
 
         return True
@@ -204,52 +169,6 @@ class DirectWorkflowController(base.WorkflowController):
             if self.wf_spec.get_tasks()[t_name]
         ])
 
-    @staticmethod
-    def _remove_task_from_clause(on_clause, t_name):
-        return filter(lambda tup: tup[0] != t_name, on_clause)
-
-    def get_on_error_clause(self, t_name):
-        result = self.wf_spec.get_tasks()[t_name].get_on_error()
-
-        if not result:
-            task_defaults = self.wf_spec.get_task_defaults()
-
-            if task_defaults:
-                result = self._remove_task_from_clause(
-                    task_defaults.get_on_error(),
-                    t_name
-                )
-
-        return result
-
-    def get_on_success_clause(self, t_name):
-        result = self.wf_spec.get_tasks()[t_name].get_on_success()
-
-        if not result:
-            task_defaults = self.wf_spec.get_task_defaults()
-
-            if task_defaults:
-                result = self._remove_task_from_clause(
-                    task_defaults.get_on_success(),
-                    t_name
-                )
-
-        return result
-
-    def get_on_complete_clause(self, t_name):
-        result = self.wf_spec.get_tasks()[t_name].get_on_complete()
-
-        if not result:
-            task_defaults = self.wf_spec.get_task_defaults()
-
-            if task_defaults:
-                result = self._remove_task_from_clause(
-                    task_defaults.get_on_complete(),
-                    t_name
-                )
-
-        return result
-
     def _find_next_task_names(self, task_ex):
         t_state = task_ex.state
         t_name = task_ex.name
@@ -260,19 +179,19 @@ class DirectWorkflowController(base.WorkflowController):
 
         if states.is_completed(t_state):
             t_names += self._find_next_task_names_for_clause(
-                self.get_on_complete_clause(t_name),
+                self.wf_spec.get_on_complete_clause(t_name),
                 ctx
             )
 
         if t_state == states.ERROR:
             t_names += self._find_next_task_names_for_clause(
-                self.get_on_error_clause(t_name),
+                self.wf_spec.get_on_error_clause(t_name),
                 ctx
             )
 
         elif t_state == states.SUCCESS:
             t_names += self._find_next_task_names_for_clause(
-                self.get_on_success_clause(t_name),
+                self.wf_spec.get_on_success_clause(t_name),
                 ctx
             )
 
@@ -323,7 +242,7 @@ class DirectWorkflowController(base.WorkflowController):
         if not join_expr:
             return False
 
-        in_task_specs = self._find_inbound_task_specs(task_spec)
+        in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
         if not in_task_specs:
             return False
