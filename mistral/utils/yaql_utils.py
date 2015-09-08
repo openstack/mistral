@@ -14,6 +14,8 @@
 
 import yaql
 
+from mistral.db.v2 import api as db_api
+from mistral.workflow import utils as wf_utils
 
 ROOT_CONTEXT = None
 
@@ -23,6 +25,7 @@ def get_yaql_context(data_context):
 
     if not ROOT_CONTEXT:
         ROOT_CONTEXT = yaql.create_context()
+
         _register_functions(ROOT_CONTEXT)
 
     new_ctx = ROOT_CONTEXT.create_child_context()
@@ -38,9 +41,10 @@ def get_yaql_context(data_context):
 def _register_functions(yaql_ctx):
     yaql_ctx.register_function(env_)
     yaql_ctx.register_function(execution_)
+    yaql_ctx.register_function(task_)
 
 
-# Additional convenience YAQL functions.
+# Additional YAQL functions needed by Mistral.
 # If a function name ends with underscore then it doesn't need to pass
 # the name of the function when context registers it.
 
@@ -50,3 +54,33 @@ def env_(context):
 
 def execution_(context):
     return context['__execution']
+
+
+def task_(context, task_name):
+    # Importing data_flow in order to break cycle dependency between modules.
+    from mistral.workflow import data_flow
+
+    wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
+
+    task_execs = wf_utils.find_task_executions_by_name(wf_ex, task_name)
+
+    # TODO(rakhmerov): Account for multiple executions (i.e. in case of
+    # cycles).
+    task_ex = task_execs[-1]
+
+    if not task_ex:
+        raise ValueError(
+            'Failed to find task execution with name: %s' % task_name
+        )
+
+    # We don't use to_dict() db model method because not all fields
+    # make sense for user.
+    return {
+        'id': task_ex.id,
+        'name': task_ex.name,
+        'spec': task_ex.spec,
+        'state': task_ex.state,
+        'state_info': task_ex.state_info,
+        'result': data_flow.get_task_execution_result(task_ex),
+        'published': task_ex.published
+    }
