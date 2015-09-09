@@ -63,11 +63,12 @@ def find_task_execution_with_state(wf_ex, task_spec, state):
     return task_execs[0] if len(task_execs) > 0 else None
 
 
+def find_task_executions_by_name(wf_ex, task_name):
+    return [t for t in wf_ex.task_executions if t.name == task_name]
+
+
 def find_task_executions_by_spec(wf_ex, task_spec):
-    return [
-        t for t in wf_ex.task_executions
-        if t.name == task_spec.get_name()
-    ]
+    return find_task_executions_by_name(wf_ex, task_spec.get_name())
 
 
 def find_task_executions_by_specs(wf_ex, task_specs):
