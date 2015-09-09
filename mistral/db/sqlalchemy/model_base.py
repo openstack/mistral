@@ -38,6 +38,8 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
     __table__ = None
 
+    __hash__ = object.__hash__
+
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)

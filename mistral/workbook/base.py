@@ -320,7 +320,7 @@ class BaseListSpec(BaseSpec):
 
         self.items = []
 
-        for k, v in data.iteritems():
+        for k, v in six.iteritems(data):
             if k != 'version':
                 v['name'] = k
                 self._inject_version([k])
@@ -353,7 +353,7 @@ class BaseSpecList(object):
     def __init__(self, data):
         self.items = {}
 
-        for k, v in data.iteritems():
+        for k, v in six.iteritems(data):
             if k != 'version':
                 v['name'] = k
                 v['version'] = self._version
@@ -363,7 +363,7 @@ class BaseSpecList(object):
         return self.items.keys()
 
     def __iter__(self):
-        return self.items.itervalues()
+        return six.itervalues(self.items)
 
     def __getitem__(self, name):
         return self.items.get(name)

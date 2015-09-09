@@ -19,6 +19,7 @@ import json
 import logging
 import os
 from os import path
+import six
 import socket
 import threading
 import uuid
@@ -37,7 +38,7 @@ _th_loc_storage = threading.local()
 
 
 def generate_unicode_uuid():
-    return unicode(str(uuid.uuid4()))
+    return six.text_type(str(uuid.uuid4()))
 
 
 def _get_greenlet_local_storage():
@@ -127,7 +128,7 @@ def merge_dicts(left, right, overwrite=True):
     if right is None:
         return left
 
-    for k, v in right.iteritems():
+    for k, v in six.iteritems(right):
         if k not in left:
             left[k] = v
         else:
