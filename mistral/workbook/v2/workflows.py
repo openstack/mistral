@@ -57,10 +57,13 @@ class WorkflowSpec(base.BaseSpec):
             'task-defaults',
             task_defaults.TaskDefaultsSpec
         )
-        self._tasks = self._spec_property(
-            'tasks',
-            tasks.TaskSpecList.get_class(self._type)
-        )
+
+        # Inject 'type' here, so instantiate_spec function can recognize the
+        # specific subclass of TaskSpec.
+        for task in self._data.get('tasks').itervalues():
+            task['type'] = self._type
+
+        self._tasks = self._spec_property('tasks', tasks.TaskSpecList)
 
     def validate_schema(self):
         super(WorkflowSpec, self).validate_schema()
