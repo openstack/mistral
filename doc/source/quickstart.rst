@@ -24,8 +24,6 @@ To use the OpenStack command line tools you should specify environment variables
 Write Workflow
 --------------
 
-* Refer to the tutorial :doc:`How To Write a Workflow </guides/writing_workflow>`
-
 For example, the following workflow has been written::
 
     ---
