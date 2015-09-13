@@ -23,22 +23,22 @@ from mistral import exceptions as exc
 from mistral.tests import base
 
 """
-To try against a real SNMP server:
+To try against a real SMTP server:
 
-1) set LOCAL_SMPTD = True
-   run debug snmpd on the local machine:
+1) set LOCAL_SMTPD = True
+   run debug smtpd on the local machine:
    `sudo python -m smtpd -c DebuggingServer -n localhost:25`
    Debugging server doesn't support password.
 
-2) set REMOTE_SMPT = True
-   use external SNMP (like gmail), change the configuration,
+2) set REMOTE_SMTP = True
+   use external SMTP (like gmail), change the configuration,
    provide actual username and password
-        self.settings = {
-            'host': 'smtp.gmail.com:587',
-            'from': "youraccount@gmail.com",
-            'password': "secret"
-        }
 
+   self.settings = {
+       'host': 'smtp.gmail.com:587',
+       'from': 'youraccount@gmail.com',
+       'password': 'secret'
+   }
 """
 
 LOCAL_SMTPD = False
