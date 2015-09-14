@@ -131,12 +131,14 @@ class PauseWorkflow(SetWorkflowState):
         return "Pause [workflow=%s]" % self.wf_ex.name
 
 
-RESERVED_CMDS = {
-    'noop': Noop,
-    'fail': FailWorkflow,
-    'succeed': SucceedWorkflow,
-    'pause': PauseWorkflow
-}
+RESERVED_CMDS = dict(zip(
+    tasks.RESERVED_TASK_NAMES, [
+        Noop,
+        FailWorkflow,
+        SucceedWorkflow,
+        PauseWorkflow
+    ]
+))
 
 
 def get_command_class(cmd_name):

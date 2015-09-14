@@ -137,28 +137,6 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         self.assertDictEqual({'result2': 'a & b'}, task2_ex.published)
 
-    def test_reverse_workflow_wrong_task_name(self):
-        wf_text = """---
-        version: '2.0'
-        wf_wrong_task:
-          type: reverse
-          tasks:
-            task2:
-              requires: [wrong_name]
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        exception = self.assertRaises(
-            exc.WorkflowException,
-            self.engine.start_workflow,
-            "wf_wrong_task",
-            {},
-            task_name='task2'
-        )
-
-        self.assertIn("wrong_name", exception.message)
-
     def test_one_line_requires_syntax(self):
         wf_input = {'param1': 'a', 'param2': 'b'}
 
@@ -176,3 +154,27 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         self._assert_single_item(tasks, name='task4', state=states.SUCCESS)
         self._assert_single_item(tasks, name='task3', state=states.SUCCESS)
+
+    def test_inconsistent_task_names(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          type: reverse
+
+          tasks:
+            task2:
+              action: std.noop
+
+            task3:
+              action: std.noop
+              requires: [task1]
+        """
+
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            wf_service.create_workflows,
+            wf_text
+        )
+
+        self.assertIn("Task 'task1' not found", exception.message)

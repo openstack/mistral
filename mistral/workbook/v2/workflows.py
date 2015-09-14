@@ -81,6 +81,20 @@ class WorkflowSpec(base.BaseSpec):
         # Doesn't do anything by default.
         pass
 
+    def _validate_task_link(self, task_name, allow_engine_cmds=True):
+        valid_task = self._task_exists(task_name)
+
+        if allow_engine_cmds:
+            valid_task |= task_name in tasks.RESERVED_TASK_NAMES
+
+        if not valid_task:
+            raise exc.InvalidModelException(
+                "Task '%s' not found." % task_name
+            )
+
+    def _task_exists(self, task_name):
+        return self.get_tasks()[task_name] is not None
+
     def get_name(self):
         return self._name
 
@@ -134,6 +148,15 @@ class DirectWorkflowSpec(WorkflowSpec):
                 '[workflow_name=%s]' % self._name
             )
 
+        self._check_workflow_integrity()
+
+    def _check_workflow_integrity(self):
+        for t_s in self.get_tasks():
+            out_task_names = self.find_outbound_task_names(t_s.get_name())
+
+            for out_t_name in out_task_names:
+                self._validate_task_link(out_t_name)
+
     def find_start_tasks(self):
         return [
             t_s for t_s in self.get_tasks()
@@ -158,17 +181,22 @@ class DirectWorkflowSpec(WorkflowSpec):
     def has_outbound_transitions(self, task_spec):
         return len(self.find_outbound_task_specs(task_spec)) > 0
 
-    def transition_exists(self, from_task_name, to_task_name):
+    def find_outbound_task_names(self, task_name):
         t_names = set()
 
-        for tup in self.get_on_error_clause(from_task_name):
+        for tup in self.get_on_error_clause(task_name):
             t_names.add(tup[0])
 
-        for tup in self.get_on_success_clause(from_task_name):
+        for tup in self.get_on_success_clause(task_name):
             t_names.add(tup[0])
 
-        for tup in self.get_on_complete_clause(from_task_name):
+        for tup in self.get_on_complete_clause(task_name):
             t_names.add(tup[0])
+
+        return t_names
+
+    def transition_exists(self, from_task_name, to_task_name):
+        t_names = self.find_outbound_task_names(from_task_name)
 
         return to_task_name in t_names
 
@@ -234,6 +262,26 @@ class ReverseWorkflowSpec(WorkflowSpec):
             },
         }
     }
+
+    def validate_semantics(self):
+        self._check_workflow_integrity()
+
+    def _check_workflow_integrity(self):
+        for t_s in self.get_tasks():
+            for req in self.get_task_requires(t_s):
+                self._validate_task_link(req, allow_engine_cmds=False)
+
+    def get_task_requires(self, task_spec):
+        requires = set(task_spec.get_requires())
+
+        defaults = self.get_task_defaults()
+
+        if defaults:
+            requires |= set(defaults.get_requires())
+
+        requires.discard(task_spec.get_name())
+
+        return list(requires)
 
 
 class WorkflowSpecList(base.BaseSpecList):

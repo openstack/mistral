@@ -326,8 +326,8 @@ class BaseListSpec(BaseSpec):
                 self._inject_version([k])
                 self.items.append(instantiate_spec(self.item_class, v))
 
-    def validate(self):
-        super(BaseListSpec, self).validate()
+    def validate_schema(self):
+        super(BaseListSpec, self).validate_schema()
 
         if len(self._data.keys()) < 2:
             raise exc.InvalidModelException(
