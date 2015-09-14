@@ -208,7 +208,7 @@ def get_mapping_for_service(service, client):
 
 
 def print_mapping(mapping):
-    print(json.dumps(mapping, indent=4))
+    print(json.dumps(mapping, indent=8, separators=(',', ': ')))
 
 
 if __name__ == "__main__":
