@@ -940,3 +940,47 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual(12, len(task1.executions))
         self._assert_multiple_items(task1.executions, 4, accepted=True)
+
+    def test_with_items_env(self):
+        workflow = """---
+        version: "2.0"
+
+        with_items_env:
+          tasks:
+            task1:
+              with-items: i in [1, 2, 3, 4]
+              action: std.echo output="<% $.i %>.<% env().name %>"
+        """
+        wf_service.create_workflows(workflow)
+        env = {'name': 'Mistral'}
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'with_items_env',
+            {},
+            env=env
+        )
+
+        self._await(
+            lambda: self.is_execution_success(wf_ex.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        result = data_flow.get_task_execution_result(task1)
+
+        self.assertEqual(
+            [
+                "1.Mistral",
+                "2.Mistral",
+                "3.Mistral",
+                "4.Mistral"
+            ],
+            result
+        )
+
+        self.assertEqual(states.SUCCESS, task1.state)
