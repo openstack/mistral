@@ -43,6 +43,7 @@ class Definition(mb.MistralSecureModelBase):
     definition = sa.Column(sa.Text(), nullable=True)
     spec = sa.Column(st.JsonDictType())
     tags = sa.Column(st.JsonListType())
+    is_system = sa.Column(sa.Boolean())
 
 
 # There's no WorkbookExecution so we safely omit "Definition" in the name.
@@ -82,7 +83,6 @@ class ActionDefinition(Definition):
     # Service properties.
     action_class = sa.Column(sa.String(200))
     attributes = sa.Column(st.JsonDictType())
-    is_system = sa.Column(sa.Boolean())
 
 
 # Execution objects.

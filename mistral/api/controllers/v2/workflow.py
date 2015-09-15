@@ -26,6 +26,7 @@ from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.services import workflows
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
@@ -172,7 +173,14 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """Delete the named workflow."""
         LOG.info("Delete workflow [name=%s]" % name)
 
-        db_api.delete_workflow_definition(name)
+        with db_api.transaction():
+            wf_db = db_api.get_workflow_definition(name)
+
+            if wf_db.is_system:
+                msg = "Attempt to delete a system workflow: %s" % name
+                raise exc.DataAccessException(msg)
+
+            db_api.delete_workflow_definition(name)
 
     @rest_utils.wrap_pecan_controller_exception
     @wsme_pecan.wsexpose(Workflows, types.uuid, int, types.uniquelist,
