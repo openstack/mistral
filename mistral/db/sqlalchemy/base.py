@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from oslo_config import cfg
 from oslo_db import options
 from oslo_db.sqlalchemy import session as db_session
@@ -42,7 +44,7 @@ def _get_facade():
             cfg.CONF.database.connection,
             sqlite_fk=True,
             autocommit=False,
-            **dict(cfg.CONF.database.iteritems())
+            **dict(six.iteritems(cfg.CONF.database))
         )
 
     return _facade

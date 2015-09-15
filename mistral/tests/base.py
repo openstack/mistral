@@ -127,7 +127,7 @@ class BaseTest(base.BaseTestCase):
 
         filtered_items = filter(lambda item: _matches(item, **props), items)
 
-        found = len(filtered_items)
+        found = len(list(filtered_items))
 
         if found != count:
             LOG.info("[failed test ctx] items=%s, expected_props=%s" % (str(
