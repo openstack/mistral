@@ -221,8 +221,7 @@ class TestWorkflowsController(base.FunctionalTest):
         )
 
         self.assertEqual(resp.status_int, 400)
-        self.assertIn("Task properties 'action' and 'workflow' "
-                      "can't be specified both", resp.body)
+        self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_post(self, mock_mtd):
@@ -264,8 +263,7 @@ class TestWorkflowsController(base.FunctionalTest):
         )
 
         self.assertEqual(resp.status_int, 400)
-        self.assertIn("Task properties 'action' and 'workflow' "
-                      "can't be specified both", resp.body)
+        self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
     def test_delete(self):
@@ -416,8 +414,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertFalse(resp.json['valid'])
-        self.assertIn("Task properties 'action' and 'workflow' "
-                      "can't be specified both", resp.json['error'])
+        self.assertIn("Invalid DSL", resp.json['error'])
 
     def test_validate_dsl_parse_exception(self):
         resp = self.app.post(

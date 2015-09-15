@@ -20,7 +20,6 @@ import yaml
 from mistral import exceptions as exc
 from mistral.tests.unit.workbook.v2 import base
 from mistral import utils
-from mistral.workbook.v2 import tasks
 
 LOG = logging.getLogger(__name__)
 
@@ -56,8 +55,6 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
         self.assertEqual(1, len(wfs_spec.get_workflows()))
         self.assertEqual('test', wfs_spec.get_workflows()[0].get_name())
         self.assertEqual('direct', wfs_spec.get_workflows()[0].get_type())
-        self.assertIsInstance(wfs_spec.get_workflows()[0].get_tasks(),
-                              tasks.DirectWfTaskSpecList)
 
     def test_direct_workflow_invalid_task(self):
         overlay = {
@@ -102,8 +99,6 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
         self.assertEqual(1, len(wfs_spec.get_workflows()))
         self.assertEqual('test', wfs_spec.get_workflows()[0].get_name())
         self.assertEqual('reverse', wfs_spec.get_workflows()[0].get_type())
-        self.assertIsInstance(wfs_spec.get_workflows()[0].get_tasks(),
-                              tasks.ReverseWfTaskSpecList)
 
     def test_reverse_workflow_invalid_task(self):
         overlay = {'test': {'type': 'reverse', 'tasks': {}}}

@@ -356,8 +356,8 @@ class ExecutionTestsV2(base.TestCase):
             self.client.delete_obj('workflows', wf)
         self.client.workflows = []
 
-        for wf in self.client.executions:
-            self.client.delete_obj('executions', wf)
+        for ex in self.client.executions:
+            self.client.delete_obj('executions', ex)
         self.client.executions = []
 
         super(ExecutionTestsV2, self).tearDown()

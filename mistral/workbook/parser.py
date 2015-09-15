@@ -115,13 +115,6 @@ def get_workflow_list_spec_from_yaml(text):
 
 def get_task_spec(spec_dict):
     if _get_spec_version(spec_dict) == V2_0:
-        workflow_type = spec_dict.get('type')
-
-        if workflow_type == 'direct':
-            return tasks_v2.DirectWorkflowTaskSpec(spec_dict)
-        elif workflow_type == 'reverse':
-            return tasks_v2.ReverseWorkflowTaskSpec(spec_dict)
-        else:
-            raise Exception('Unsupported workflow type "%s".' % workflow_type)
+        return base.instantiate_spec(tasks_v2.TaskSpec, spec_dict)
 
     return None

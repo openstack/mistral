@@ -15,31 +15,12 @@
 
 from oslo_log import log as logging
 
-from mistral import exceptions
-from mistral.tests import base
 from mistral.tests.unit.workbook.v2 import base as v2_base
 from mistral import utils
-from mistral.workbook.v2 import tasks
 from mistral.workbook.v2 import workflows
 
 
 LOG = logging.getLogger(__name__)
-
-
-class TaskSpecListTest(base.BaseTest):
-    def test_get_class(self):
-        spec_list_cls = tasks.TaskSpecList.get_class('direct')
-
-        self.assertIs(spec_list_cls, tasks.DirectWfTaskSpecList)
-
-    def test_get_class_notfound(self):
-        exc = self.assertRaises(
-            exceptions.NotFoundException,
-            tasks.TaskSpecList.get_class,
-            "invalid"
-        )
-
-        self.assertIn("Can not find task list specification", str(exc))
 
 
 class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
