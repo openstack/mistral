@@ -26,7 +26,7 @@ from heatclient.v1 import client as heatclient
 from keystoneclient import base as keystone_base
 from keystoneclient.v3 import client as keystoneclient
 from novaclient.openstack.common.apiclient import base as nova_base
-from novaclient.v2 import client as novaclient
+from novaclient import client as novaclient
 
 
 # TODO(nmakhotkin): Find a rational way to do it for neutron.
@@ -105,7 +105,7 @@ GLANCE_NAMESPACE_LIST = [
 
 
 def get_nova_client(**kwargs):
-    return novaclient.Client()
+    return novaclient.Client(2)
 
 
 def get_keystone_client(**kwargs):
