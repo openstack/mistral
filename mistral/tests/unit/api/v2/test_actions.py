@@ -123,6 +123,24 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
 
+    @mock.patch.object(db_api, "load_action_definition", MOCK_ACTION)
+    @mock.patch.object(
+        db_api, "create_or_update_action_definition")
+    def test_put_public(self, mock_mtd):
+        mock_mtd.return_value = UPDATED_ACTION_DB
+
+        resp = self.app.put(
+            '/v2/actions?scope=public',
+            UPDATED_ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(resp.status_int, 200)
+
+        self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
+
+        self.assertEqual("public", mock_mtd.call_args[0][1]['scope'])
+
     @mock.patch.object(
         db_api, "create_or_update_action_definition", MOCK_NOT_FOUND
     )
@@ -172,6 +190,35 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertIsNotNone(spec)
         self.assertEqual(ACTION_DB.name, spec['name'])
+
+    @mock.patch.object(db_api, "create_action_definition")
+    def test_post_public(self, mock_mtd):
+        mock_mtd.return_value = ACTION_DB
+
+        resp = self.app.post(
+            '/v2/actions?scope=public',
+            ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(resp.status_int, 201)
+        self.assertEqual({"actions": [ACTION]}, resp.json)
+
+        self.assertEqual("public", mock_mtd.call_args[0][0]['scope'])
+
+    @mock.patch.object(db_api, "create_action_definition")
+    def test_post_wrong_scope(self, mock_mtd):
+        mock_mtd.return_value = ACTION_DB
+
+        resp = self.app.post(
+            '/v2/actions?scope=unique',
+            ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Scope must be one of the following", resp.text)
 
     @mock.patch.object(db_api, "create_action_definition", MOCK_DUPLICATE)
     def test_post_dup(self):

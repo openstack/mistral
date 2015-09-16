@@ -184,6 +184,21 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
+    @mock.patch.object(db_api, "update_workflow_definition")
+    def test_put_public(self, mock_update):
+        mock_update.return_value = UPDATED_WF_DB
+
+        resp = self.app.put(
+            '/v2/workflows?scope=public',
+            UPDATED_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(resp.status_int, 200)
+        self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
+
+        self.assertEqual("public", mock_update.call_args[0][1]['scope'])
+
     @mock.patch.object(
         db_api, "update_workflow_definition", MOCK_WF_WITH_INPUT
     )
@@ -243,6 +258,35 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertIsNotNone(spec)
         self.assertEqual(WF_DB.name, spec['name'])
+
+    @mock.patch.object(db_api, "create_workflow_definition")
+    def test_post_public(self, mock_mtd):
+        mock_mtd.return_value = WF_DB
+
+        resp = self.app.post(
+            '/v2/workflows?scope=public',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(resp.status_int, 201)
+        self.assertEqual({"workflows": [WF]}, resp.json)
+
+        self.assertEqual("public", mock_mtd.call_args[0][0]['scope'])
+
+    @mock.patch.object(db_api, "create_action_definition")
+    def test_post_wrong_scope(self, mock_mtd):
+        mock_mtd.return_value = WF_DB
+
+        resp = self.app.post(
+            '/v2/workflows?scope=unique',
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Scope must be one of the following", resp.text)
 
     @mock.patch.object(db_api, "create_workflow_definition", MOCK_DUPLICATE)
     def test_post_dup(self):
