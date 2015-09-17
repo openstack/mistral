@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import StringIO
 import yaml
 from yaml import error
 
@@ -118,3 +119,34 @@ def get_task_spec(spec_dict):
         return base.instantiate_spec(tasks_v2.TaskSpec, spec_dict)
 
     return None
+
+
+def get_workflow_definition(wb_def, wf_name):
+    wf_def = []
+    wf_name = wf_name + ":"
+    io = StringIO.StringIO(wb_def[wb_def.index("workflows:"):])
+    io.readline()
+    ident = 0
+
+    # Get the indentation of the workflow name tag. (e.g. wf1:)
+    for line in io:
+        if wf_name == line.strip():
+            ident = len(line.expandtabs()) - len(line.expandtabs().lstrip(' '))
+            wf_def.append(line.lstrip())
+            break
+
+    # Add strings to list unless same/less indentation is found.
+    for line in io:
+        if not line.strip() or line.startswith("#"):
+            wf_def.append(line)
+        else:
+            temp = len(line.expandtabs()) - len(line.expandtabs().lstrip(' '))
+            if ident < temp:
+                wf_def.append(line)
+            else:
+                break
+
+    io.close()
+    wf_def = ''.join(wf_def).strip() + '\n'
+
+    return wf_def

@@ -42,6 +42,7 @@ actions:
 
 workflows:
   wf1:
+#Sample Comment 1
     type: reverse
     tags: [wf_test]
     input:
@@ -56,6 +57,34 @@ workflows:
           result: "{$}"
 
   wf2:
+    type: direct
+    output:
+      result: "{$.result}"
+
+    tasks:
+      task1:
+        workflow: my_wb.wf1 param1='Hi' task_name='task1'
+        publish:
+          result: "The result of subworkflow is '{$.final_result}'"
+"""
+
+WORKBOOK_WF1_DEFINITION = """wf1:
+#Sample Comment 1
+    type: reverse
+    tags: [wf_test]
+    input:
+      - param1
+    output:
+      result: "{$.result}"
+
+    tasks:
+      task1:
+        action: std.echo output="{$.param1}"
+        publish:
+          result: "{$}"
+"""
+
+WORKBOOK_WF2_DEFINITION = """wf2:
     type: direct
     output:
       result: "{$.result}"
@@ -106,6 +135,32 @@ workflows:
           result: "{$}"
 """
 
+UPDATED_WORKBOOK_WF1_DEFINITION = """wf1:
+    type: direct
+    output:
+      result: "{$.result}"
+
+    tasks:
+      task1:
+        workflow: my_wb.wf2 param1='Hi' task_name='task1'
+        publish:
+          result: "The result of subworkflow is '{$.final_result}'"
+"""
+
+UPDATED_WORKBOOK_WF2_DEFINITION = """wf2:
+    type: reverse
+    input:
+      - param1
+    output:
+      result: "{$.result}"
+
+    tasks:
+      task1:
+        action: std.echo output="{$.param1}"
+        publish:
+          result: "{$}"
+"""
+
 
 class WorkbookServiceTest(base.DbTestCase):
     def test_create_workbook(self):
@@ -143,6 +198,7 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertListEqual(['wf_test'], wf1_spec.get_tags())
         self.assertListEqual(['wf_test'], wf1_db.tags)
+        self.assertEqual(WORKBOOK_WF1_DEFINITION, wf1_db.definition)
 
         # Workflow 2.
         wf2_db = self._assert_single_item(db_wfs, name='my_wb.wf2')
@@ -150,6 +206,7 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
+        self.assertEqual(WORKBOOK_WF2_DEFINITION, wf2_db.definition)
 
     def test_update_workbook(self):
         # Create workbook.
@@ -176,6 +233,7 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf1', wf1_spec.get_name())
         self.assertEqual('direct', wf1_spec.get_type())
+        self.assertEqual(UPDATED_WORKBOOK_WF1_DEFINITION, wf1_db.definition)
 
         # Workflow 2.
         wf2_db = self._assert_single_item(db_wfs, name='my_wb.wf2')
@@ -183,3 +241,4 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('reverse', wf2_spec.get_type())
+        self.assertEqual(UPDATED_WORKBOOK_WF2_DEFINITION, wf2_db.definition)

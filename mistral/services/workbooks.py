@@ -86,6 +86,7 @@ def _create_or_update_workflows(wb_db, workflows_spec):
 
             values = {
                 'name': wf_name,
+                'definition': _get_wf_definition(wb_db, wf_spec),
                 'spec': wf_spec.to_dict(),
                 'scope': wb_db.scope,
                 'project_id': wb_db.project_id,
@@ -107,3 +108,10 @@ def _get_workbook_values(wb_spec, definition, scope):
     }
 
     return values
+
+
+def _get_wf_definition(wb_db, wf_spec):
+    wf_definition = spec_parser.get_workflow_definition(wb_db.definition,
+                                                        wf_spec.get_name())
+
+    return wf_definition
