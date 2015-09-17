@@ -10,6 +10,8 @@ set -o xtrace
 # Set up default repos
 MISTRAL_REPO=${MISTRAL_REPO:-${GIT_BASE}/openstack/mistral.git}
 MISTRAL_BRANCH=${MISTRAL_BRANCH:-master}
+MISTRAL_DASHBOARD_REPO=${MISTRAL_DASHBOARD_REPO:-${GIT_BASE}/openstack/mistral-dashboard.git}
+MISTRAL_DASHBOARD_BRANCH=${MISTRAL_DASHBOARD_BRANCH:-$MISTRAL_BRANCH}
 
 MISTRAL_PYTHONCLIENT_REPO=${MISTRAL_PYTHONCLIENT_REPO:-${GIT_BASE}/openstack/python-mistralclient.git}
 MISTRAL_PYTHONCLIENT_BRANCH=${MISTRAL_PYTHONCLIENT_BRANCH:-$MISTRAL_BRANCH}
@@ -17,6 +19,7 @@ MISTRAL_PYTHONCLIENT_DIR=$DEST/python-mistralclient
 
 # Set up default directories
 MISTRAL_DIR=$DEST/mistral
+MISTRAL_DASHBOARD_DIR=$DEST/mistral-dashboard
 MISTRAL_CONF_DIR=${MISTRAL_CONF_DIR:-/etc/mistral}
 MISTRAL_CONF_FILE=${MISTRAL_CONF_DIR}/mistral.conf
 MISTRAL_DEBUG=${MISTRAL_DEBUG:-True}
@@ -126,6 +129,17 @@ function install_mistral {
 
     # installing python-nose.
     real_install_package python-nose
+
+    if is_service_enabled horizon; then
+        _install_mistraldashboard
+    fi
+}
+
+
+function _install_mistraldashboard {
+    git_clone $MISTRAL_DASHBOARD_REPO $MISTRAL_DASHBOARD_DIR $MISTRAL_DASHBOARD_BRANCH
+    setup_package $MISTRAL_DASHBOARD_DIR -e
+    ln -fs $MISTRAL_DASHBOARD_DIR/_50_mistral.py.example $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
 }
 
 
@@ -152,6 +166,18 @@ function stop_mistral {
 }
 
 
+function cleanup_mistral {
+    if is_service_enabled horizon; then
+        _mistral_cleanup_mistraldashboard
+    fi
+}
+
+
+function _mistral_cleanup_mistraldashboard {
+    rm -f $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
+}
+
+
 if is_service_enabled mistral; then
     if [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing mistral"
@@ -167,7 +193,13 @@ if is_service_enabled mistral; then
     fi
 
     if [[ "$1" == "unstack" ]]; then
+        echo_summary "Shutting down mistral"
         stop_mistral
+    fi
+
+    if [[ "$1" == "clean" ]]; then
+        echo_summary "Cleaning mistral"
+        cleanup_mistral
     fi
 fi
 
