@@ -26,6 +26,7 @@ from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.services import workflows
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
@@ -136,10 +137,16 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             of multiple workflows. In this case they all will be updated.
         """
         definition = pecan.request.text
+        scope = pecan.request.GET.get('scope', 'private')
 
+        if scope not in SCOPE_TYPES.values:
+            raise exc.InvalidModelException(
+                "Scope must be one of the following: %s; actual: "
+                "%s" % (SCOPE_TYPES.values, scope)
+            )
         LOG.info("Update workflow(s) [definition=%s]" % definition)
 
-        db_wfs = workflows.update_workflows(definition)
+        db_wfs = workflows.update_workflows(definition, scope=scope)
         models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
 
         workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]
@@ -155,11 +162,18 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             of multiple workflows. In this case they all will be created.
         """
         definition = pecan.request.text
+        scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
+
+        if scope not in SCOPE_TYPES.values:
+            raise exc.InvalidModelException(
+                "Scope must be one of the following: %s; actual: "
+                "%s" % (SCOPE_TYPES.values, scope)
+            )
 
         LOG.info("Create workflow(s) [definition=%s]" % definition)
 
-        db_wfs = workflows.create_workflows(definition)
+        db_wfs = workflows.create_workflows(definition, scope=scope)
         models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
 
         workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]

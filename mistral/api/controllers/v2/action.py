@@ -113,8 +113,15 @@ class ActionsController(rest.RestController, hooks.HookController):
         """
         definition = pecan.request.text
         LOG.info("Update action(s) [definition=%s]" % definition)
+        scope = pecan.request.GET.get('scope', 'private')
 
-        db_acts = actions.update_actions(definition)
+        if scope not in SCOPE_TYPES.values:
+            raise exc.InvalidModelException(
+                "Scope must be one of the following: %s; actual: "
+                "%s" % (SCOPE_TYPES.values, scope)
+            )
+
+        db_acts = actions.update_actions(definition, scope=scope)
         models_dicts = [db_act.to_dict() for db_act in db_acts]
 
         action_list = [Action.from_dict(act) for act in models_dicts]
@@ -130,11 +137,18 @@ class ActionsController(rest.RestController, hooks.HookController):
             of multiple actions. In this case they all will be created.
         """
         definition = pecan.request.text
+        scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
+
+        if scope not in SCOPE_TYPES.values:
+            raise exc.InvalidModelException(
+                "Scope must be one of the following: %s; actual: "
+                "%s" % (SCOPE_TYPES.values, scope)
+            )
 
         LOG.info("Create action(s) [definition=%s]" % definition)
 
-        db_acts = actions.create_actions(definition)
+        db_acts = actions.create_actions(definition, scope=scope)
         models_dicts = [db_act.to_dict() for db_act in db_acts]
 
         action_list = [Action.from_dict(act) for act in models_dicts]
