@@ -95,6 +95,7 @@ workflows:
         on-complete:
           - task9
           - task10
+          - task11
 
       task9:
         join: all

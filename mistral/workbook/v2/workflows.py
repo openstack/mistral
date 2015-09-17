@@ -149,6 +149,7 @@ class DirectWorkflowSpec(WorkflowSpec):
             )
 
         self._check_workflow_integrity()
+        self._check_join_tasks()
 
     def _check_workflow_integrity(self):
         for t_s in self.get_tasks():
@@ -156,6 +157,39 @@ class DirectWorkflowSpec(WorkflowSpec):
 
             for out_t_name in out_task_names:
                 self._validate_task_link(out_t_name)
+
+    def _check_join_tasks(self):
+        join_tasks = [t for t in self.get_tasks() if t.get_join()]
+
+        err_msgs = []
+
+        for join_t in join_tasks:
+            t_name = join_t.get_name()
+            join_val = join_t.get_join()
+
+            in_tasks = self.find_inbound_task_specs(join_t)
+
+            if join_val == 'all':
+                if len(in_tasks) == 0:
+                    err_msgs.append(
+                        "No inbound tasks for task with 'join: all'"
+                        " [task_name=%s]" % t_name
+                    )
+
+                continue
+
+            if join_val == 'one':
+                join_val = 1
+
+            if len(in_tasks) < join_val:
+                err_msgs.append(
+                    "Not enough inbound tasks for task with 'join'"
+                    " [task_name=%s, join=%s, inbound_tasks=%s]" %
+                    (t_name, join_val, len(in_tasks))
+                )
+
+        if len(err_msgs) > 0:
+            raise exc.InvalidModelException('\n'.join(err_msgs))
 
     def find_start_tasks(self):
         return [

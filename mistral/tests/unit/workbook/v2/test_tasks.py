@@ -72,9 +72,12 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for task, expect_error in tests:
             overlay = {'test': {'tasks': {'task1': task}}}
-            self._parse_dsl_spec(add_tasks=False,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=False,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_inputs(self):
         tests = [
@@ -89,10 +92,14 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for task_input, expect_error in tests:
             overlay = {'test': {'tasks': {'task1': {'action': 'test.mock'}}}}
+
             utils.merge_dicts(overlay['test']['tasks']['task1'], task_input)
-            self._parse_dsl_spec(add_tasks=False,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=False,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_with_items(self):
         tests = [
@@ -114,9 +121,12 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for with_item, expect_error in tests:
             overlay = {'test': {'tasks': {'get': with_item}}}
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_publish(self):
         tests = [
@@ -131,10 +141,14 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for output, expect_error in tests:
             overlay = {'test': {'tasks': {'task1': {'action': 'test.mock'}}}}
+
             utils.merge_dicts(overlay['test']['tasks']['task1'], output)
-            self._parse_dsl_spec(add_tasks=False,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=False,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_policies(self):
         tests = [
@@ -191,9 +205,11 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
         for policy, expect_error in tests:
             overlay = {'test': {'tasks': {'get': policy}}}
 
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_direct_transition(self):
         tests = [
@@ -237,9 +253,11 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
             utils.merge_dicts(overlay['test']['tasks'], {'get': transition})
 
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_join(self):
         tests = [
@@ -248,7 +266,8 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'join': 'all'}, False),
             ({'join': 'one'}, False),
             ({'join': 0}, False),
-            ({'join': 3}, False),
+            ({'join': 2}, False),
+            ({'join': 3}, True),
             ({'join': '3'}, True),
             ({'join': -3}, True)
         ]
@@ -257,12 +276,16 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for join, expect_error in tests:
             overlay = {'test': {'tasks': {}}}
+
             utils.merge_dicts(overlay['test']['tasks'], {'get': on_success})
             utils.merge_dicts(overlay['test']['tasks'], {'echo': on_success})
             utils.merge_dicts(overlay['test']['tasks'], {'email': join})
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_requires(self):
         tests = [
@@ -278,11 +301,15 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for require, expect_error in tests:
             overlay = {'test': {'tasks': {}}}
+
             utils.merge_dicts(overlay['test'], {'type': 'reverse'})
             utils.merge_dicts(overlay['test']['tasks'], {'email': require})
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_keep_result(self):
         tests = [
@@ -300,7 +327,11 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
 
         for keep_result, expect_error in tests:
             overlay = {'test': {'tasks': {}}}
+
             utils.merge_dicts(overlay['test']['tasks'], {'email': keep_result})
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )

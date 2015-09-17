@@ -35,9 +35,12 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         for wf_type, expect_error in tests:
             overlay = {'test': wf_type}
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
 
     def test_direct_workflow(self):
         overlay = {'test': {'type': 'direct', 'tasks': {}}}
@@ -48,9 +51,11 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
         utils.merge_dicts(overlay['test']['tasks'], {'echo': on_success})
         utils.merge_dicts(overlay['test']['tasks'], {'email': join})
 
-        wfs_spec = self._parse_dsl_spec(add_tasks=True,
-                                        changes=overlay,
-                                        expect_error=False)
+        wfs_spec = self._parse_dsl_spec(
+            add_tasks=True,
+            changes=overlay,
+            expect_error=False
+        )
 
         self.assertEqual(1, len(wfs_spec.get_workflows()))
         self.assertEqual('test', wfs_spec.get_workflows()[0].get_name())
@@ -67,9 +72,11 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         utils.merge_dicts(overlay['test']['tasks'], {'email': requires})
 
-        self._parse_dsl_spec(add_tasks=True,
-                             changes=overlay,
-                             expect_error=True)
+        self._parse_dsl_spec(
+            add_tasks=True,
+            changes=overlay,
+            expect_error=True
+        )
 
     def test_direct_workflow_no_start_tasks(self):
         overlay = {
@@ -82,9 +89,42 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             }
         }
 
-        self._parse_dsl_spec(add_tasks=False,
-                             changes=overlay,
-                             expect_error=True)
+        self._parse_dsl_spec(
+            add_tasks=False,
+            changes=overlay,
+            expect_error=True
+        )
+
+    def test_direct_workflow_invalid_join(self):
+        tests = [
+            ({'task3': {'join': 2}}, False),
+            ({'task3': {'join': 5}}, True),
+            ({'task3': {'join': 1}}, False),
+            ({'task3': {'join': 'one'}}, False),
+            ({'task3': {'join': 'all'}}, False),
+            ({'task4': {'join': 'all'}}, True),
+            ({'task4': {'join': 1}}, True),
+            ({'task4': {'join': 'one'}}, True)
+        ]
+
+        for test in tests:
+            overlay = {
+                'test': {
+                    'type': 'direct',
+                    'tasks': {
+                        'task1': {'on-complete': 'task3'},
+                        'task2': {'on-complete': 'task3'}
+                    }
+                }
+            }
+
+            utils.merge_dicts(overlay['test']['tasks'], test[0])
+
+            self._parse_dsl_spec(
+                add_tasks=False,
+                changes=overlay,
+                expect_error=test[1]
+            )
 
     def test_reverse_workflow(self):
         overlay = {'test': {'type': 'reverse', 'tasks': {}}}
@@ -92,9 +132,11 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         utils.merge_dicts(overlay['test']['tasks'], {'email': require})
 
-        wfs_spec = self._parse_dsl_spec(add_tasks=True,
-                                        changes=overlay,
-                                        expect_error=False)
+        wfs_spec = self._parse_dsl_spec(
+            add_tasks=True,
+            changes=overlay,
+            expect_error=False
+        )
 
         self.assertEqual(1, len(wfs_spec.get_workflows()))
         self.assertEqual('test', wfs_spec.get_workflows()[0].get_name())
@@ -109,17 +151,21 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
         utils.merge_dicts(overlay['test']['tasks'], {'echo': on_success})
         utils.merge_dicts(overlay['test']['tasks'], {'email': join})
 
-        self._parse_dsl_spec(add_tasks=True,
-                             changes=overlay,
-                             expect_error=True)
+        self._parse_dsl_spec(
+            add_tasks=True,
+            changes=overlay,
+            expect_error=True
+        )
 
     def test_version_required(self):
         dsl_dict = copy.deepcopy(self._dsl_blank)
         dsl_dict.pop('version', None)
 
-        exception = self.assertRaises(exc.DSLParsingException,
-                                      self._spec_parser,
-                                      yaml.safe_dump(dsl_dict))
+        exception = self.assertRaises(
+            exc.DSLParsingException,
+            self._spec_parser,
+            yaml.safe_dump(dsl_dict)
+        )
 
         self.assertIn("'version' is a required property", exception.message)
 
@@ -133,9 +179,11 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
         ]
 
         for version, expect_error in tests:
-            self._parse_dsl_spec(add_tasks=True,
-                                 changes=version,
-                                 expect_error=expect_error)
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=version,
+                expect_error=expect_error
+            )
 
     def test_inputs(self):
         tests = [
