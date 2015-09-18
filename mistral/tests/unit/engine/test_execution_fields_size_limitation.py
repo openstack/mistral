@@ -168,9 +168,17 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual("Size of 'published' is 1KB which exceeds "
-                         "the limit of 0KB",
-                         wf_ex.state_info)
+        self.assertEqual(
+            "Failure caused by error in task 'task1': ",
+            wf_ex.state_info
+        )
+
+        task_ex = self._assert_single_item(wf_ex.task_executions, name='task1')
+
+        self.assertEqual(
+            "Size of 'published' is 1KB which exceeds the limit of 0KB",
+            task_ex.state_info
+        )
 
     @expect_size_limit_exception('params')
     def test_workflow_params_limit(self):

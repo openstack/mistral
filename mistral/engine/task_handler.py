@@ -497,16 +497,19 @@ def _complete_task(task_ex, task_spec, state):
 
     _set_task_state(task_ex, state)
 
-    data_flow.publish_variables(
-        task_ex,
-        task_spec
-    )
+    try:
+        data_flow.publish_variables(
+            task_ex,
+            task_spec
+        )
+    except Exception as e:
+        _set_task_state(task_ex, states.ERROR, state_info=str(e))
 
     if not task_spec.get_keep_result():
         data_flow.destroy_task_result(task_ex)
 
 
-def _set_task_state(task_ex, state):
+def _set_task_state(task_ex, state, state_info=None):
     # TODO(rakhmerov): How do we log task result?
     wf_trace.info(
         task_ex.workflow_execution,
@@ -515,6 +518,9 @@ def _set_task_state(task_ex, state):
     )
 
     task_ex.state = state
+
+    if state_info:
+        task_ex.state_info = state_info
 
 
 def is_task_completed(task_ex, task_spec):
