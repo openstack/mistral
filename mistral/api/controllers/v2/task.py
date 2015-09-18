@@ -49,6 +49,9 @@ class Task(resource.Resource):
     "state can take one of the following values: \
     IDLE, RUNNING, SUCCESS, ERROR, DELAYED"
 
+    state_info = wtypes.text
+    "an optional state information string"
+
     result = wtypes.text
     published = types.jsontype
     processed = bool
