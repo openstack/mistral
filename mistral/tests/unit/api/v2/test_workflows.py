@@ -46,6 +46,9 @@ WF_DB = models.WorkflowDefinition(
     spec={'input': ['param1']}
 )
 
+WF_DB_SYSTEM = WF_DB.get_clone()
+WF_DB_SYSTEM.is_system = True
+
 WF = {
     'id': '123e4567-e89b-12d3-a456-426655440000',
     'name': 'flow',
@@ -137,6 +140,7 @@ flow:
 """
 
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
+MOCK_WF_SYSTEM = mock.MagicMock(return_value=WF_DB_SYSTEM)
 MOCK_WF_WITH_INPUT = mock.MagicMock(return_value=WF_DB_WITH_INPUT)
 MOCK_WFS = mock.MagicMock(return_value=[WF_DB])
 MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
@@ -183,6 +187,20 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(resp.status_int, 200)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
+
+    @mock.patch.object(
+        db_api, "load_workflow_definition", MOCK_WF_SYSTEM
+    )
+    def test_put_system(self):
+        resp = self.app.put(
+            '/v2/workflows',
+            UPDATED_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Attempt to modify a system workflow", resp.text)
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_put_public(self, mock_update):
@@ -310,10 +328,18 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     def test_delete(self):
         resp = self.app.delete('/v2/workflows/123')
 
         self.assertEqual(resp.status_int, 204)
+
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF_SYSTEM)
+    def test_delete_system(self):
+        resp = self.app.delete('/v2/workflows/123', expect_errors=True)
+
+        self.assertEqual(resp.status_int, 400)
+        self.assertIn("Attempt to delete a system workflow", resp.text)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
