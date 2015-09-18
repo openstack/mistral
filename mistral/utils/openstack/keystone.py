@@ -67,16 +67,20 @@ def get_endpoint_for_project(service_name=None, service_type=None):
     service_list = keystone_client.services.list()
 
     if service_name:
-        service_id = [s.id for s in service_list if s.name == service_name][0]
+        service_ids = [s.id for s in service_list if s.name == service_name]
     elif service_type:
-        service_id = [s.id for s in service_list if s.type == service_type][0]
+        service_ids = [s.id for s in service_list if s.type == service_type]
     else:
         raise Exception(
             "Either 'service_name' or 'service_type' must be provided."
         )
 
+    if not service_ids:
+        raise Exception("Either service '%s' or service type "
+                        "'%s' doesn't exist!" % (service_name, service_type))
+
     endpoints = keystone_client.endpoints.list(
-        service=service_id,
+        service=service_ids[0],
         interface='public'
     )
 
