@@ -1,3 +1,4 @@
+====================================
 Mistral Dashboard Installation Guide
 ====================================
 
@@ -5,7 +6,7 @@ Mistral dashboard is the plugin for Horizon where it is easily possible to contr
 mistral objects by interacting with web user interface.
 
 Setup Instructions
-==================
+------------------
 This instruction assumes that Horizon is already installed and it's installation
 folder is <horizon>. Detailed information on how to install Horizon can be
 found at `Horizon Installation <http://docs.openstack.org/developer/horizon/quickstart.html#setup.>`_
@@ -50,7 +51,8 @@ The following should get you started:
     $ tox -evenv -- python manage.py runserver
 
 Debug Instructions
-==================
+------------------
+
 **Pycharm**
 
 Set PyCharm debug settings:

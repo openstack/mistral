@@ -31,7 +31,6 @@ User guide
    guides/dashboard_guide
    guides/upgrade_guide
    guides/mistralclient_guide
-   guides/writing_workflow
 
 **API**
 
