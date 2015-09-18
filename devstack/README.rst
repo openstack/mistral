@@ -1,6 +1,6 @@
-======================
- Enabling in Devstack
-======================
+====================
+Enabling in Devstack
+====================
 
 1. Download DevStack::
 
