@@ -331,6 +331,21 @@ class WorkflowTestsV2(base.TestCase):
                           'workflows', 'wb_v1.yaml')
 
     @test.attr(type='negative')
+    def test_delete_wf_with_trigger_associate(self):
+        tr_name = 'trigger'
+        resp, body = self.client.create_workflow('wf_v2.yaml')
+        name = body['workflows'][0]['name']
+        resp, body = self.client.create_cron_trigger(
+            tr_name, name, None, '5 * * * *')
+
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.delete_obj,
+                          'workflows', name)
+
+        self.client.delete_obj('cron_triggers', tr_name)
+        self.client.triggers.remove(tr_name)
+
+    @test.attr(type='negative')
     def test_delete_nonexistent_wf(self):
         self.assertRaises(exceptions.NotFound,
                           self.client.delete_obj,
