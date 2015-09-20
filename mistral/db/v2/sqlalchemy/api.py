@@ -343,7 +343,24 @@ def delete_workflow_definition(name, session=None):
             "Workflow not found [workflow_name=%s]" % name
         )
 
+    cron_triggers = _get_associated_cron_triggers(name)
+
+    if cron_triggers:
+        raise exc.DBException(
+            "Can't delete workflow that has triggers [workflow_name=%s],"
+            "[cron_trigger_name(s)=%s]" % (name, ', '.join(cron_triggers))
+        )
+
     session.delete(wf_def)
+
+
+def _get_associated_cron_triggers(wf_name):
+    cron_triggers = _secure_query(
+        models.CronTrigger,
+        models.CronTrigger.name
+    ).filter_by(workflow_name=wf_name).all()
+
+    return [t[0] for t in cron_triggers]
 
 
 @b.session_aware()
