@@ -4,4 +4,4 @@ source = mistral
 omit = mistral/tests/*,mistral/openstack/*
 
 [report]
-ignore-errors = True
+ignore_errors = True
