@@ -91,26 +91,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertTrue(wf_ex.state, states.ERROR)
 
-    def test_direct_workflow_wrong_task_name(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.echo output="Echo"
-              on-success:
-                - wrong_name
-        """
-
-        wf_service.create_workflows(wf_text)
-        wf_ex = self.engine.start_workflow('wf', {})
-
-        self._await(lambda: self.is_execution_error(wf_ex.id))
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        self.assertIn("'wrong_name' not found", wf_ex.state_info)
-
     def test_direct_workflow_change_state_after_success(self):
         wf_text = """
         version: '2.0'
@@ -342,3 +322,25 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf', {})
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
+
+    def test_inconsistent_task_names(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: task3
+
+            task2:
+              action: std.noop
+        """
+
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            wf_service.create_workflows,
+            wf_text
+        )
+
+        self.assertIn("Task 'task3' not found", exception.message)

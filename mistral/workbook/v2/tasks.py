@@ -29,6 +29,12 @@ from mistral.workbook.v2 import policies
 WITH_ITEMS_PTRN = re.compile(
     "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % expr.INLINE_YAQL_REGEXP
 )
+RESERVED_TASK_NAMES = [
+    'noop',
+    'fail',
+    'succeed',
+    'pause'
+]
 
 
 class TaskSpec(base.BaseSpec):

@@ -73,7 +73,7 @@ class ReverseWorkflowController(base.WorkflowController):
     def _get_upstream_task_executions(self, task_spec):
         t_specs = [
             self.wf_spec.get_tasks()[t_name]
-            for t_name in self._get_task_requires(task_spec)
+            for t_name in self.wf_spec.get_task_requires(task_spec)
             or []
         ]
 
@@ -120,22 +120,11 @@ class ReverseWorkflowController(base.WorkflowController):
             if self._is_satisfied_task(t_s)
         ]
 
-    def _task_exists(self, task_name):
-        return self.wf_spec.get_tasks()[task_name] is not None
-
     def _is_satisfied_task(self, task_spec):
-        task_requires = self._get_task_requires(task_spec)
-
-        for req in task_requires:
-            if not self._task_exists(req):
-                raise exc.WorkflowException(
-                    "Task '%s' not found." % req
-                )
-
         if wf_utils.find_task_executions_by_spec(self.wf_ex, task_spec):
             return False
 
-        if not self._get_task_requires(task_spec):
+        if not self.wf_spec.get_task_requires(task_spec):
             return True
 
         success_t_names = set()
@@ -144,7 +133,9 @@ class ReverseWorkflowController(base.WorkflowController):
             if t_ex.state == states.SUCCESS:
                 success_t_names.add(t_ex.name)
 
-        return not (set(self._get_task_requires(task_spec)) - success_t_names)
+        return not (
+            set(self.wf_spec.get_task_requires(task_spec)) - success_t_names
+        )
 
     def _build_graph(self, tasks_spec):
         graph = nx.DiGraph()
@@ -161,7 +152,7 @@ class ReverseWorkflowController(base.WorkflowController):
         return graph
 
     def _get_dependency_tasks(self, tasks_spec, task_spec):
-        dep_task_names = self._get_task_requires(task_spec)
+        dep_task_names = self.wf_spec.get_task_requires(task_spec)
 
         if len(dep_task_names) == 0:
             return []
@@ -174,15 +165,3 @@ class ReverseWorkflowController(base.WorkflowController):
                     dep_t_specs.add(t_spec)
 
         return dep_t_specs
-
-    def _get_task_requires(self, task_spec):
-        requires = set(task_spec.get_requires())
-
-        task_defaults = self.wf_spec.get_task_defaults()
-
-        if task_defaults:
-            requires |= set(task_defaults.get_requires())
-
-        requires.discard(task_spec.get_name())
-
-        return list(requires)
