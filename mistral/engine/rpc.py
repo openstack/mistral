@@ -227,6 +227,12 @@ class EngineServer(object):
         return self._engine.resume_workflow(execution_id)
 
 
+def _wrap_exception_and_reraise(exception):
+    message = "%s: %s" % (exception.__class__.__name__, exception.message)
+
+    raise exc.MistralException(message)
+
+
 def wrap_messaging_exception(method):
     """This decorator unwrap remote error in one of MistralException.
 
@@ -242,9 +248,14 @@ def wrap_messaging_exception(method):
         try:
             return method(*args, **kwargs)
 
-        except client.RemoteError as e:
-            exc_cls = getattr(exc, e.exc_type)
-            raise exc_cls(e.value)
+        except exc.MistralException:
+            raise
+        except (client.RemoteError, Exception) as e:
+            if hasattr(e, 'exc_type') and hasattr(exc, e.exc_type):
+                exc_cls = getattr(exc, e.exc_type)
+                raise exc_cls(e.value)
+
+            _wrap_exception_and_reraise(e)
 
     return decorator
 

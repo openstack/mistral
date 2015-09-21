@@ -440,3 +440,18 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
             {},
             'some_description'
         )
+
+    def test_engine_client_remote_error_arbitrary(self):
+        mocked = mock.Mock()
+        mocked.call.side_effect = KeyError('wrong key')
+        self.engine_client._client = mocked
+
+        exception = self.assertRaises(
+            exc.MistralException,
+            self.engine_client.start_workflow,
+            'some_wf',
+            {},
+            'some_description'
+        )
+
+        self.assertIn('KeyError: wrong key', exception.message)
