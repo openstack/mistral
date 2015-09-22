@@ -13,9 +13,11 @@
 #    under the License.
 
 import json
-import mock
 import os
 import time
+
+import mock
+import six
 
 from tempest import clients
 from tempest import config
@@ -37,7 +39,7 @@ def get_resource(path):
 
 def find_items(items, **props):
     def _matches(item, **props):
-        for prop_name, prop_val in props.iteritems():
+        for prop_name, prop_val in six.iteritems(props):
             if item[prop_name] != prop_val:
                 return False
 
