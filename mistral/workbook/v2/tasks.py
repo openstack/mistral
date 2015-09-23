@@ -253,14 +253,6 @@ class DirectWorkflowTaskSpec(TaskSpec):
     def validate_schema(self):
         super(DirectWorkflowTaskSpec, self).validate_schema()
 
-        if 'join' in self._data:
-            join = self._data.get('join')
-
-            if not (isinstance(join, int) or join in ['all', 'one']):
-                msg = ("Task property 'join' is only allowed to be an"
-                       " integer, 'all' or 'one': %s" % self._data)
-                raise exc.InvalidModelException(msg)
-
         # Validate YAQL expressions.
         self._validate_transitions('on-complete')
         self._validate_transitions('on-success')
