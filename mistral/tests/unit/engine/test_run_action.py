@@ -56,6 +56,17 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.assertEqual('Hello!', action_ex.output['result'])
 
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=exc.ActionException("some error"))
+    )
+    def test_run_action_error(self):
+        # Start action and see the result.
+        action_ex = self.engine.start_action('std.echo', {'output': 'Hello!'})
+
+        self.assertIn('some error', action_ex.output['result'])
+
     def test_run_action_save_result(self):
         # Start action.
         action_ex = self.engine.start_action(

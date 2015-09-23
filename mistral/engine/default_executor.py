@@ -44,13 +44,15 @@ class DefaultExecutor(base.Executor, coordination.Service):
         """
 
         def send_error_back(error_msg):
+            error_result = wf_utils.Result(error=error_msg)
+
             if action_ex_id:
                 self._engine_client.on_action_complete(
                     action_ex_id,
-                    wf_utils.Result(error=error_msg)
+                    error_result
                 )
             else:
-                return error_msg
+                return error_result
 
         action_cls = a_f.construct_action_class(action_class_str, attributes)
 
