@@ -23,4 +23,4 @@ class EchoActionTest(base.BaseTest):
         expected = "my output"
         action = std.EchoAction(expected)
 
-        self.assertEqual(action.run(), expected)
+        self.assertEqual(expected, action.run())
