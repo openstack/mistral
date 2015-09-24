@@ -27,23 +27,23 @@ class ExceptionTestCase(base.BaseTest):
         exc = exceptions.NotFoundException('check_for_this')
         self.assertIn('check_for_this',
                       six.text_type(exc))
-        self.assertEqual(exc.http_code, 404)
+        self.assertEqual(404, exc.http_code)
 
     def test_nf_with_no_message(self):
         exc = exceptions.NotFoundException()
         self.assertIn("Object not found",
                       six.text_type(exc))
-        self.assertEqual(exc.http_code, 404)
+        self.assertEqual(404, exc.http_code,)
 
     def test_duplicate_obj_code(self):
         exc = exceptions.DBDuplicateEntryException()
         self.assertIn("Database object already exists",
                       six.text_type(exc))
-        self.assertEqual(exc.http_code, 409)
+        self.assertEqual(409, exc.http_code,)
 
     def test_default_code(self):
         exc = exceptions.EngineException()
-        self.assertEqual(exc.http_code, 500)
+        self.assertEqual(500, exc.http_code)
 
     def test_default_message(self):
         exc = exceptions.EngineException()

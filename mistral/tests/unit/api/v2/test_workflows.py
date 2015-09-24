@@ -155,7 +155,7 @@ class TestWorkflowsController(base.FunctionalTest):
     def test_get(self):
         resp = self.app.get('/v2/workflows/123')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WF, resp.json)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF_WITH_INPUT)
@@ -164,14 +164,14 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.maxDiff = None
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WF_WITH_DEFAULT_INPUT, resp.json)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/workflows/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(
         db_api, "update_workflow_definition", MOCK_UPDATED_WF
@@ -185,7 +185,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.maxDiff = None
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
     @mock.patch.object(
@@ -199,7 +199,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Attempt to modify a system workflow", resp.text)
 
     @mock.patch.object(db_api, "update_workflow_definition")
@@ -212,7 +212,7 @@ class TestWorkflowsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
         self.assertEqual("public", mock_update.call_args[0][1]['scope'])
@@ -229,7 +229,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.maxDiff = None
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual({'workflows': [WF_WITH_DEFAULT_INPUT]}, resp.json)
 
     @mock.patch.object(
@@ -243,7 +243,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True,
         )
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     def test_put_invalid(self):
         resp = self.app.put(
@@ -253,7 +253,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(db_api, "create_workflow_definition")
@@ -266,7 +266,7 @@ class TestWorkflowsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertDictEqual({'workflows': [WF]}, resp.json)
 
         self.assertEqual(1, mock_mtd.call_count)
@@ -286,7 +286,7 @@ class TestWorkflowsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertEqual({"workflows": [WF]}, resp.json)
 
         self.assertEqual("public", mock_mtd.call_args[0][0]['scope'])
@@ -302,7 +302,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Scope must be one of the following", resp.text)
 
     @mock.patch.object(db_api, "create_workflow_definition", MOCK_DUPLICATE)
@@ -314,7 +314,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 409)
+        self.assertEqual(409, resp.status_int)
 
     def test_post_invalid(self):
         resp = self.app.post(
@@ -324,7 +324,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
@@ -332,48 +332,48 @@ class TestWorkflowsController(base.FunctionalTest):
     def test_delete(self):
         resp = self.app.delete('/v2/workflows/123')
 
-        self.assertEqual(resp.status_int, 204)
+        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF_SYSTEM)
     def test_delete_system(self):
         resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Attempt to delete a system workflow", resp.text)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_WFS)
     def test_get_all(self):
         resp = self.app.get('/v2/workflows')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['workflows']), 1)
+        self.assertEqual(1, len(resp.json['workflows']))
         self.assertDictEqual(WF, resp.json['workflows'][0])
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/workflows')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['workflows']), 0)
+        self.assertEqual(0, len(resp.json['workflows']))
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_WFS)
     def test_get_all_pagination(self):
         resp = self.app.get(
             '/v2/workflows?limit=1&sort_keys=id,name')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
         self.assertIn('next', resp.json)
 
-        self.assertEqual(len(resp.json['workflows']), 1)
+        self.assertEqual(1, len(resp.json['workflows']))
         self.assertDictEqual(WF, resp.json['workflows'][0])
 
         param_dict = utils.get_dict_from_string(
@@ -396,7 +396,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("Limit must be positive", resp.body)
 
@@ -406,7 +406,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("unable to convert to int", resp.body)
 
@@ -416,7 +416,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
@@ -429,7 +429,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("Unknown sort direction", resp.body)
 
@@ -441,8 +441,8 @@ class TestWorkflowsController(base.FunctionalTest):
 
         resp = self.app.get('/v2/workflows?fields=name')
 
-        self.assertEqual(resp.status_int, 200)
-        self.assertEqual(len(resp.json['workflows']), 1)
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(1, len(resp.json['workflows']))
 
         expected_dict = {
             'id': '123e4567-e89b-12d3-a456-426655440000',
@@ -457,7 +457,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "nonexist are invalid",
@@ -471,7 +471,7 @@ class TestWorkflowsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertTrue(resp.json['valid'])
 
     def test_validate_invalid_model_exception(self):
@@ -482,7 +482,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Invalid DSL", resp.json['error'])
 
@@ -494,7 +494,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Definition could not be parsed", resp.json['error'])
 
@@ -506,7 +506,7 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("unexpected '*' at position 1",
                       resp.json['error'])
@@ -519,6 +519,6 @@ class TestWorkflowsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Invalid DSL", resp.json['error'])

@@ -79,14 +79,14 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.maxDiff = None
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/executions/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(
         db_api,
@@ -101,7 +101,7 @@ class TestExecutionsController(base.FunctionalTest):
         UPDATED_WF_EX_WITH_DESC = copy.copy(UPDATED_WF_EX_JSON)
         UPDATED_WF_EX_WITH_DESC['description'] = 'execution description.'
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(UPDATED_WF_EX_WITH_DESC, resp.json)
 
     @mock.patch.object(
@@ -124,7 +124,7 @@ class TestExecutionsController(base.FunctionalTest):
 
             update_exec['description'] = "execution description."
 
-            self.assertEqual(resp.status_int, 200)
+            self.assertEqual(200, resp.status_int)
             self.assertDictEqual(update_exec, resp.json)
             mock_pw.assert_called_once_with('123', 'ERROR', "Force")
 
@@ -149,7 +149,7 @@ class TestExecutionsController(base.FunctionalTest):
             update_exec['description'] = 'execution description.'
             update_exec['state_info'] = None
 
-            self.assertEqual(resp.status_int, 200)
+            self.assertEqual(200, resp.status_int)
             self.assertDictEqual(update_exec, resp.json)
             mock_pw.assert_called_once_with('123', 'ERROR', None)
 
@@ -161,7 +161,7 @@ class TestExecutionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     def test_put_both_state_and_description(self):
         self.assertRaises(
@@ -179,7 +179,7 @@ class TestExecutionsController(base.FunctionalTest):
 
         resp = self.app.put_json('/v2/executions/123', update_params)
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         mock_ensure.assert_called_once_with('123')
         mock_update.assert_called_once_with('123', update_params)
 
@@ -189,7 +189,7 @@ class TestExecutionsController(base.FunctionalTest):
 
         resp = self.app.post_json('/v2/executions', WF_EX_JSON_WITH_DESC)
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
 
         exec_dict = WF_EX_JSON_WITH_DESC
@@ -216,30 +216,30 @@ class TestExecutionsController(base.FunctionalTest):
     def test_delete(self):
         resp = self.app.delete('/v2/executions/123')
 
-        self.assertEqual(resp.status_int, 204)
+        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/executions/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
     def test_get_all(self):
         resp = self.app.get('/v2/executions')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['executions']), 1)
+        self.assertEqual(1, len(resp.json['executions']))
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json['executions'][0])
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/executions')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['executions']), 0)
+        self.assertEqual(0, len(resp.json['executions']))
 
     @mock.patch.object(db_api, "get_workflow_executions", MOCK_WF_EXECUTIONS)
     def test_get_all_pagination(self):
@@ -247,9 +247,9 @@ class TestExecutionsController(base.FunctionalTest):
             '/v2/executions?limit=1&sort_keys=id,workflow_name'
             '&sort_dirs=asc,desc')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertIn('next', resp.json)
-        self.assertEqual(len(resp.json['executions']), 1)
+        self.assertEqual(1, len(resp.json['executions']))
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json['executions'][0])
 
         param_dict = utils.get_dict_from_string(
@@ -272,7 +272,7 @@ class TestExecutionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("Limit must be positive", resp.body)
 
@@ -282,7 +282,7 @@ class TestExecutionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("unable to convert to int", resp.body)
 
@@ -292,7 +292,7 @@ class TestExecutionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
@@ -305,6 +305,6 @@ class TestExecutionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("Unknown sort direction", resp.body)

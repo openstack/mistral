@@ -95,9 +95,9 @@ class SendEmailActionTest(base.BaseTest):
 
         self.assertTrue(sendmail.called, "should call sendmail")
         self.assertEqual(
-            sendmail.call_args[1]['from_addr'], self.from_addr)
+            self.from_addr, sendmail.call_args[1]['from_addr'])
         self.assertEqual(
-            sendmail.call_args[1]['to_addrs'], self.to_addrs_str)
+            self.to_addrs_str, sendmail.call_args[1]['to_addrs'])
 
         message = parser.Parser().parsestr(sendmail.call_args[1]['msg'])
 

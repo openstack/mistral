@@ -99,14 +99,14 @@ class TestActionsController(base.FunctionalTest):
     def test_get(self):
         resp = self.app.get('/v2/actions/my_action')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(ACTION, resp.json)
 
     @mock.patch.object(db_api, "get_action_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/actions/my_action', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     @mock.patch.object(
@@ -119,7 +119,7 @@ class TestActionsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
         self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
 
@@ -135,7 +135,7 @@ class TestActionsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
         self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
 
@@ -163,7 +163,7 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('Attempt to modify a system action: std.echo',
                       resp.text)
 
@@ -177,7 +177,7 @@ class TestActionsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertEqual({"actions": [ACTION]}, resp.json)
 
         self.assertEqual(1, mock_mtd.call_count)
@@ -201,7 +201,7 @@ class TestActionsController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertEqual({"actions": [ACTION]}, resp.json)
 
         self.assertEqual("public", mock_mtd.call_args[0][0]['scope'])
@@ -217,7 +217,7 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Scope must be one of the following", resp.text)
 
     @mock.patch.object(db_api, "create_action_definition", MOCK_DUPLICATE)
@@ -229,26 +229,26 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 409)
+        self.assertEqual(409, resp.status_int)
 
     @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     @mock.patch.object(db_api, "delete_action_definition", MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/actions/my_action')
 
-        self.assertEqual(resp.status_int, 204)
+        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "delete_action_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/actions/my_action', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
     def test_delete_system(self):
         resp = self.app.delete('/v2/actions/std.echo', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('Attempt to delete a system action: std.echo',
                       resp.json['faultstring'])
 
@@ -256,27 +256,27 @@ class TestActionsController(base.FunctionalTest):
     def test_get_all(self):
         resp = self.app.get('/v2/actions')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['actions']), 1)
+        self.assertEqual(1, len(resp.json['actions']))
         self.assertDictEqual(ACTION, resp.json['actions'][0])
 
     @mock.patch.object(db_api, "get_action_definitions", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/actions')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['actions']), 0)
+        self.assertEqual(0, len(resp.json['actions']))
 
     @mock.patch.object(db_api, "get_action_definitions", MOCK_ACTIONS)
     def test_get_all_pagination(self):
         resp = self.app.get(
             '/v2/actions?limit=1&sort_keys=id,name')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertIn('next', resp.json)
-        self.assertEqual(len(resp.json['actions']), 1)
+        self.assertEqual(1, len(resp.json['actions']))
         self.assertDictEqual(ACTION, resp.json['actions'][0])
 
         param_dict = utils.get_dict_from_string(
@@ -301,7 +301,7 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("Limit must be positive", resp.body)
 
@@ -311,7 +311,7 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("unable to convert to int", resp.body)
 
@@ -321,7 +321,7 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
@@ -334,6 +334,6 @@ class TestActionsController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
 
         self.assertIn("Unknown sort direction", resp.body)
