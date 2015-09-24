@@ -263,7 +263,7 @@ class BaseSpec(object):
 
     @staticmethod
     def _as_tuple(val):
-        return val.items()[0] if isinstance(val, dict) else (val, '')
+        return list(val.items())[0] if isinstance(val, dict) else (val, '')
 
     @staticmethod
     def _parse_cmd_and_input(cmd_str):

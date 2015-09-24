@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from mistral import exceptions as exc
 from mistral import utils
 from mistral.workbook import types
@@ -60,7 +62,7 @@ class WorkflowSpec(base.BaseSpec):
 
         # Inject 'type' here, so instantiate_spec function can recognize the
         # specific subclass of TaskSpec.
-        for task in self._data.get('tasks').itervalues():
+        for task in six.itervalues(self._data.get('tasks')):
             task['type'] = self._type
 
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)

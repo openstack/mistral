@@ -282,7 +282,8 @@ def _get_hash_function_by(column_name):
     def calc_hash(context):
         d = context.current_parameters[column_name] or {}
 
-        return hashlib.sha256(json.dumps(sorted(d.items()))).hexdigest()
+        return hashlib.sha256(json.dumps(sorted(d.items())).
+                              encode('utf-8')).hexdigest()
 
     return calc_hash
 

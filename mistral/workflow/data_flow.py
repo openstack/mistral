@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import copy
+import six
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -135,7 +136,7 @@ class ProxyAwareDict(dict):
             return d
 
     def iteritems(self):
-        for k, _ in super(ProxyAwareDict, self).iteritems():
+        for k, _ in six.iteritems(super(ProxyAwareDict, self)):
             yield k, self[k]
 
     def to_builtin_dict(self):
@@ -263,7 +264,7 @@ def add_workflow_variables_to_context(wf_ex, wf_spec):
 def extract_task_result_proxies_to_context(ctx):
     ctx = ProxyAwareDict(copy.deepcopy(ctx))
 
-    for task_ex_id, task_ex_name in ctx['__tasks'].iteritems():
+    for task_ex_id, task_ex_name in six.iteritems(ctx['__tasks']):
         ctx[task_ex_name] = TaskResultProxy(task_ex_id)
 
     return ctx
