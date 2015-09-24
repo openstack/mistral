@@ -292,7 +292,7 @@ def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
         )
     except Exception as e:
         raise exc.DBQueryEntryException(
-            "Failed when quering database, error type: %s, "
+            "Failed when querying database, error type: %s, "
             "error message: %s" % (e.__class__.__name__, e.message)
         )
 
@@ -402,7 +402,7 @@ def get_action_definitions(limit=None, marker=None, sort_keys=['name'],
         )
     except Exception as e:
         raise exc.DBQueryEntryException(
-            "Failed when quering database, error type: %s, "
+            "Failed when querying database, error type: %s, "
             "error message: %s" % (e.__class__.__name__, e.message)
         )
 

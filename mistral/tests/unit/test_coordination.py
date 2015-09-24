@@ -123,7 +123,7 @@ class ServiceTest(base.BaseTest):
     def setUp(self):
         super(ServiceTest, self).setUp()
 
-        # Re-intialize the global service coordinator object, in order to use
+        # Re-initialize the global service coordinator object, in order to use
         # new coordination configuration.
         coordination.cleanup_service_coordinator()
 

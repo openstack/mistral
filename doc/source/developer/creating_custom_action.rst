@@ -10,7 +10,7 @@ How to write an Action Plugin
 
     class RunnerAction(base.Action):
         def __init__(self, param):
-            # store the incomming params
+            # store the incoming params
             self.param = param
 
         def run(self):

@@ -74,7 +74,7 @@ Before starting Mistral server, run *mistral-db-manage populate* command. It pre
 
 For more detailed information about *mistral-db-manage* script please see :doc:`Mistral Upgrade Guide </guides/upgrade_guide>`.
 
-**NOTE**: For users who want a dry run with **SQLite** database backend(not used in production), *mistral-db-manage* is not recommended for database initialization because of `SQLite limitations <http://www.sqlite.org/omitted.html>`_. Please use sync_db script described below instead for database initilization.
+**NOTE**: For users who want a dry run with **SQLite** database backend(not used in production), *mistral-db-manage* is not recommended for database initialization because of `SQLite limitations <http://www.sqlite.org/omitted.html>`_. Please use sync_db script described below instead for database initialization.
 
 **If you use virtualenv**::
 

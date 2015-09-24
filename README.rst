@@ -117,7 +117,7 @@ Mistral configuration is needed for getting it work correctly either with real O
         connection = postgresql://<user>:<password>@localhost:5432/mistral
 
 8. **If you are not using OpenStack, skip this item.** Update *mistral/actions/openstack/mapping.json* file which contains all allowed OpenStack actions,
-according to the specific client versions of OpenStack projects in your deployment. Please find more detailed infomation in *tools/get_action_list.py* script.
+according to the specific client versions of OpenStack projects in your deployment. Please find more detailed information in *tools/get_action_list.py* script.
 
 Before the first run
 --------------------
@@ -132,7 +132,7 @@ For updating the database to the latest revision type::
 
 For more detailed information about *mistral-db-manage* script please see migration readme `here <https://github.com/openstack/mistral/blob/master/mistral/db/sqlalchemy/migration/alembic_migrations/README.md>`__.
 
-| NOTE: For users want a dry run with SQLite database backend(not used in production), *mistral-db-manage* is not recommended for database initialization because of `SQLite limitations <http://www.sqlite.org/omitted.html>`_. Please use sync_db script described below instead for database initilization.
+| NOTE: For users want a dry run with SQLite database backend(not used in production), *mistral-db-manage* is not recommended for database initialization because of `SQLite limitations <http://www.sqlite.org/omitted.html>`_. Please use sync_db script described below instead for database initialization.
 
 Before starting Mistral server, run sync_db script. It prepares the DB, creates in it with all standard actions and standard workflows which Mistral provides for all mistral users.
 

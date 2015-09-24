@@ -70,7 +70,7 @@ either with real OpenStack environment or without OpenStack environment.
 
     connection = postgresql://<user>:<password>@<database-host>:5432/mistral
 
-8. **If you are not using OpenStack, skip this item.** Update mistral/actions/openstack/mapping.json file which contains all allowed OpenStack actions, according to the specific client versions of OpenStack projects in your deployment. Please find more detailed infomation in tools/get_action_list.py script.
+8. **If you are not using OpenStack, skip this item.** Update mistral/actions/openstack/mapping.json file which contains all allowed OpenStack actions, according to the specific client versions of OpenStack projects in your deployment. Please find more detailed information in tools/get_action_list.py script.
 
 9. Configure Task affinity feature if needed. It is needed for distinguishing either single task executor or one task executor from group of task executors::
 
