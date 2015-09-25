@@ -170,7 +170,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             task_handler.after_task_complete(task_ex, task_spec, wf_spec)
 
             # Ignore DELAYED state.
-            if task_ex.state == states.DELAYED:
+            if task_ex.state == states.RUNNING_DELAYED:
                 return
 
             wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)

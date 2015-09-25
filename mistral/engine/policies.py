@@ -31,7 +31,7 @@ def _log_task_delay(task_ex, delay_sec):
     wf_trace.info(
         task_ex,
         "Task '%s' [%s -> %s, delay = %s sec]" %
-        (task_ex.name, task_ex.state, states.DELAYED, delay_sec)
+        (task_ex.name, task_ex.state, states.RUNNING_DELAYED, delay_sec)
     )
 
 
@@ -174,7 +174,7 @@ class WaitBeforePolicy(base.TaskPolicy):
             wf_trace.info(
                 task_ex,
                 "Task '%s' [%s -> %s]"
-                % (task_ex.name, states.DELAYED, states.RUNNING)
+                % (task_ex.name, states.RUNNING_DELAYED, states.RUNNING)
             )
 
             task_ex.state = states.RUNNING
@@ -185,7 +185,7 @@ class WaitBeforePolicy(base.TaskPolicy):
             policy_context.update({'skip': True})
             _log_task_delay(task_ex, self.delay)
 
-            task_ex.state = states.DELAYED
+            task_ex.state = states.RUNNING_DELAYED
 
             scheduler.schedule_call(
                 None,
@@ -228,7 +228,7 @@ class WaitAfterPolicy(base.TaskPolicy):
 
         state = task_ex.state
         # Set task state to 'DELAYED'.
-        task_ex.state = states.DELAYED
+        task_ex.state = states.RUNNING_DELAYED
 
         # Schedule to change task state to RUNNING again.
         scheduler.schedule_call(
@@ -314,7 +314,7 @@ class RetryPolicy(base.TaskPolicy):
         _log_task_delay(task_ex, self.delay)
 
         data_flow.invalidate_task_execution_result(task_ex)
-        task_ex.state = states.DELAYED
+        task_ex.state = states.RUNNING_DELAYED
 
         policy_context['retry_no'] = retry_no + 1
         runtime_context[context_key] = policy_context

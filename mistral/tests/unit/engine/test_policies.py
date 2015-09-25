@@ -338,7 +338,7 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(states.DELAYED, task_ex.state)
+        self.assertEqual(states.RUNNING_DELAYED, task_ex.state)
         self.assertDictEqual(
             {'wait_before_policy': {'skip': True}},
             task_ex.runtime_context
@@ -356,7 +356,7 @@ class PoliciesTest(base.EngineTestCase):
         exec_db = db_api.get_execution(exec_db.id)
         task_db = exec_db.task_executions[0]
 
-        self.assertEqual(states.DELAYED, task_db.state)
+        self.assertEqual(states.RUNNING_DELAYED, task_db.state)
 
         self._await(lambda: self.is_execution_success(exec_db.id))
 
