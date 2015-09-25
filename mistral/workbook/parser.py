@@ -123,17 +123,27 @@ def get_task_spec(spec_dict):
 
 
 def get_workflow_definition(wb_def, wf_name):
-    wf_def = []
     wf_name = wf_name + ":"
-    io = six.StringIO(wb_def[wb_def.index("workflows:"):])
-    io.readline()
-    ident = 0
 
-    # Get the indentation of the workflow name tag. (e.g. wf1:)
+    return _parse_def_from_wb(wb_def, "workflows:", wf_name)
+
+
+def get_action_definition(wb_def, action_name):
+    action_name = action_name + ":"
+
+    return _parse_def_from_wb(wb_def, "actions:", action_name)
+
+
+def _parse_def_from_wb(wb_def, section_name, item_name):
+    io = six.StringIO(wb_def[wb_def.index(section_name):])
+    io.readline()
+    definition = []
+    ident = 0
+    # Get the indentation of the action/workflow name tag.
     for line in io:
-        if wf_name == line.strip():
-            ident = line.index(wf_name)
-            wf_def.append(line.lstrip())
+        if item_name == line.strip():
+            ident = line.index(item_name)
+            definition.append(line.lstrip())
             break
 
     # Add strings to list unless same/less indentation is found.
@@ -141,18 +151,18 @@ def get_workflow_definition(wb_def, wf_name):
         new_line = line.strip()
 
         if not new_line:
-            wf_def.append(line)
+            definition.append(line)
         elif new_line.startswith("#"):
             new_line = line if ident > line.index("#") else line[ident:]
-            wf_def.append(new_line)
+            definition.append(new_line)
         else:
             temp = line.index(line.lstrip())
             if ident < temp:
-                wf_def.append(line[ident:])
+                definition.append(line[ident:])
             else:
                 break
 
     io.close()
-    wf_def = ''.join(wf_def).rstrip() + '\n'
+    definition = ''.join(definition).rstrip() + '\n'
 
-    return wf_def
+    return definition
