@@ -96,6 +96,7 @@ WORKBOOK_WF2_DEFINITION = """wf2:
         result: "The result of subworkflow is '{$.final_result}'"
 """
 
+
 UPDATED_WORKBOOK = """
 ---
 version: '2.0'
@@ -162,6 +163,13 @@ UPDATED_WORKBOOK_WF2_DEFINITION = """wf2:
 """
 
 
+ACTION_DEFINITION = """concat:
+  base: std.echo
+  base-input:
+    output: "{$.str1}{$.str2}"
+"""
+
+
 class WorkbookServiceTest(base.DbTestCase):
     def test_create_workbook(self):
         wb_db = wb_service.create_workbook_v2(WORKBOOK)
@@ -185,6 +193,7 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('concat', action_spec.get_name())
         self.assertEqual('std.echo', action_spec.get_base())
+        self.assertEqual(ACTION_DEFINITION, action_db.definition)
 
         db_wfs = db_api.get_workflow_definitions()
 
