@@ -11,8 +11,19 @@ std.create_instance:
     - name
     - image_id
     - flavor_id
-    - ssh_username
-    - ssh_password
+    - ssh_username: null
+    - ssh_password: null
+
+    # Name of previously created keypair to inject into the instance.
+    # Either ssh credentials or keypair must be provided.
+    - key_name: null
+
+    # Security_groups: A list of security group names
+    - security_groups: null
+
+    # An ordered list of nics to be added to this server, with information about connected networks, fixed IPs, port etc.
+    # Example: nics: [{"net-id": "27aa8c1c-d6b8-4474-b7f7-6cdcf63ac856"}]
+    - nics: null
 
   task-defaults:
     on-error:
@@ -28,6 +39,10 @@ std.create_instance:
     create_vm:
       description: Initial request to create a VM.
       action: nova.servers_create name=<% $.name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
+      input:
+        key_name: <% $.key_name %>
+        security_groups: <% $.security_groups %>
+        nics: <% $.nics %>
       publish:
         vm_id: <% $.create_vm.id %>
       on-success:
