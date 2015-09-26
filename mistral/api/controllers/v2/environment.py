@@ -102,7 +102,7 @@ class EnvironmentController(rest.RestController):
         LOG.info("Create environment [env=%s]" % env)
 
         self._validate_environment(
-            json.loads(wsme_pecan.pecan.request.body),
+            json.loads(wsme_pecan.pecan.request.body.decode()),
             ['name', 'description', 'variables']
         )
 
@@ -121,7 +121,7 @@ class EnvironmentController(rest.RestController):
 
         LOG.info("Update environment [name=%s, env=%s]" % (env.name, env))
 
-        definition = json.loads(wsme_pecan.pecan.request.body)
+        definition = json.loads(wsme_pecan.pecan.request.body.decode())
         definition.pop('name')
 
         self._validate_environment(

@@ -304,7 +304,10 @@ class TestActionExecutionsController(base.FunctionalTest):
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
-        self.assertIn("Action execution deletion is not allowed", resp.body)
+        self.assertIn(
+            "Action execution deletion is not allowed",
+            resp.body.decode()
+        )
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_ACTION)
     def test_delete_action_exeuction_with_task(self):
@@ -313,7 +316,10 @@ class TestActionExecutionsController(base.FunctionalTest):
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
-        self.assertIn("Only ad-hoc action execution can be deleted", resp.body)
+        self.assertIn(
+            "Only ad-hoc action execution can be deleted",
+            resp.body.decode()
+        )
 
     @mock.patch.object(
         db_api,
@@ -328,5 +334,5 @@ class TestActionExecutionsController(base.FunctionalTest):
         self.assertEqual(403, resp.status_int)
         self.assertIn(
             "Only completed action execution can be deleted",
-            resp.body
+            resp.body.decode()
         )

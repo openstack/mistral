@@ -146,7 +146,7 @@ class TestWorkbooksController(base.FunctionalTest):
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn("Invalid DSL", resp.body)
+        self.assertIn("Invalid DSL", resp.body.decode())
 
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_WORKBOOK)
     def test_post(self):
@@ -179,7 +179,7 @@ class TestWorkbooksController(base.FunctionalTest):
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn("Invalid DSL", resp.body)
+        self.assertIn("Invalid DSL", resp.body.decode())
 
     @mock.patch.object(db_api, "delete_workbook", MOCK_DELETE)
     def test_delete(self):
