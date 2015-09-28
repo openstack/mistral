@@ -24,10 +24,11 @@ from mistral.tests import base
 from mistral.workflow import utils as wf_utils
 
 
-FACTORY_METHOD_NAME = ('mistral.tests.unit.services.test_scheduler.'
+FACTORY_METHOD_PATH = ('mistral.tests.unit.services.test_scheduler.'
                        'factory_method')
-TARGET_METHOD_NAME = FACTORY_METHOD_NAME
-FAILED_TO_SEND_TARGET_NAME = ('mistral.tests.unit.services.test_scheduler.'
+TARGET_METHOD_PATH = ('mistral.tests.unit.services.test_scheduler.'
+                      'target_method')
+FAILED_TO_SEND_TARGET_PATH = ('mistral.tests.unit.services.test_scheduler.'
                               'failed_to_send')
 
 DELAY = 1.5
@@ -42,12 +43,17 @@ def factory_method():
     )
 
 
+def target_method():
+    pass
+
+
 def failed_to_send():
     raise exc.EngineException("Test")
 
 
-def update_call_failed(id, values):
+def update_call_failed(id, values, query_filter):
     return None, 0
+
 
 MOCK_UPDATE_CALL_FAILED = mock.MagicMock(side_effect=update_call_failed)
 
@@ -60,13 +66,13 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.addCleanup(self.thread_group.stop)
 
-    @mock.patch(FACTORY_METHOD_NAME)
+    @mock.patch(FACTORY_METHOD_PATH)
     def test_scheduler_with_factory(self, factory):
         target_method = 'run_something'
         method_args = {'name': 'task', 'id': '123'}
 
         scheduler.schedule_call(
-            FACTORY_METHOD_NAME,
+            FACTORY_METHOD_PATH,
             target_method,
             DELAY,
             **method_args
@@ -92,13 +98,13 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertEqual(0, len(calls))
 
-    @mock.patch(TARGET_METHOD_NAME)
+    @mock.patch(FACTORY_METHOD_PATH)
     def test_scheduler_without_factory(self, method):
         method_args = {'name': 'task', 'id': '321'}
 
         scheduler.schedule_call(
             None,
-            TARGET_METHOD_NAME,
+            FACTORY_METHOD_PATH,
             DELAY,
             **method_args
         )
@@ -108,7 +114,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         call = self._assert_single_item(
             calls,
-            target_method_name=TARGET_METHOD_NAME
+            target_method_name=FACTORY_METHOD_PATH
         )
 
         self.assertIn('name', call['method_arguments'])
@@ -122,7 +128,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertEqual(0, len(calls))
 
-    @mock.patch(FACTORY_METHOD_NAME)
+    @mock.patch(FACTORY_METHOD_PATH)
     def test_scheduler_with_serializer(self, factory):
         target_method = 'run_something'
 
@@ -139,7 +145,7 @@ class SchedulerServiceTest(base.DbTestCase):
         }
 
         scheduler.schedule_call(
-            FACTORY_METHOD_NAME,
+            FACTORY_METHOD_PATH,
             target_method,
             DELAY,
             serializers=serializers,
@@ -171,7 +177,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertEqual(0, len(calls))
 
-    @mock.patch(TARGET_METHOD_NAME)
+    @mock.patch(TARGET_METHOD_PATH)
     def test_scheduler_multi_instance(self, method):
         def stop_thread_groups():
             [tg.stop() for tg in self.tgs]
@@ -183,7 +189,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         scheduler.schedule_call(
             None,
-            TARGET_METHOD_NAME,
+            TARGET_METHOD_PATH,
             DELAY,
             **method_args
         )
@@ -191,7 +197,7 @@ class SchedulerServiceTest(base.DbTestCase):
         time_filter = datetime.datetime.now() + datetime.timedelta(seconds=2)
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
-        self._assert_single_item(calls, target_method_name=TARGET_METHOD_NAME)
+        self._assert_single_item(calls, target_method_name=TARGET_METHOD_PATH)
 
         eventlet.sleep(WAIT)
 
@@ -202,19 +208,13 @@ class SchedulerServiceTest(base.DbTestCase):
 
         self.assertEqual(0, len(calls))
 
-    @mock.patch(TARGET_METHOD_NAME)
+    @mock.patch(FACTORY_METHOD_PATH)
     def test_scheduler_delete_calls(self, method):
-        def stop_thread_groups():
-            [tg.stop() for tg in self.tgs]
-
-        self.tgs = [scheduler.setup(), scheduler.setup()]
-        self.addCleanup(stop_thread_groups)
-
         method_args = {'name': 'task', 'id': '321'}
 
         scheduler.schedule_call(
             None,
-            TARGET_METHOD_NAME,
+            FACTORY_METHOD_PATH,
             DELAY,
             **method_args
         )
@@ -222,7 +222,7 @@ class SchedulerServiceTest(base.DbTestCase):
         time_filter = datetime.datetime.now() + datetime.timedelta(seconds=2)
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
-        self._assert_single_item(calls, target_method_name=TARGET_METHOD_NAME)
+        self._assert_single_item(calls, target_method_name=FACTORY_METHOD_PATH)
 
         eventlet.sleep(WAIT)
 
@@ -231,7 +231,7 @@ class SchedulerServiceTest(base.DbTestCase):
                           calls[0].id
                           )
 
-    @mock.patch(TARGET_METHOD_NAME)
+    @mock.patch(FACTORY_METHOD_PATH)
     def test_processing_true_does_not_return_in_get_delayed_calls_to_start(
             self,
             method):
@@ -240,7 +240,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         values = {
             'factory_method_path': None,
-            'target_method_name': TARGET_METHOD_NAME,
+            'target_method_name': FACTORY_METHOD_PATH,
             'execution_time': execution_time,
             'auth_context': None,
             'serializers': None,
@@ -257,18 +257,12 @@ class SchedulerServiceTest(base.DbTestCase):
         db_api.delete_delayed_call(call.id)
 
     @mock.patch.object(db_api, 'update_delayed_call', MOCK_UPDATE_CALL_FAILED)
-    def test_scheduler_doesnt_handel_calls_the_failed_on_update(self):
-        def stop_thread_groups():
-            [tg.stop() for tg in self.tgs]
-
-        self.tgs = [scheduler.setup(), scheduler.setup()]
-        self.addCleanup(stop_thread_groups)
-
+    def test_scheduler_doesnt_handle_calls_the_failed_on_update(self):
         method_args = {'name': 'task', 'id': '321'}
 
         scheduler.schedule_call(
             None,
-            TARGET_METHOD_NAME,
+            FACTORY_METHOD_PATH,
             DELAY,
             **method_args
         )
