@@ -70,30 +70,30 @@ workflows:
 
 WORKBOOK_WF1_DEFINITION = """wf1:
 #Sample Comment 1
-    type: reverse
-    tags: [wf_test]
-    input:
-      - param1
-    output:
-      result: "{$.result}"
+  type: reverse
+  tags: [wf_test]
+  input:
+    - param1
+  output:
+    result: "{$.result}"
 
-    tasks:
-      task1:
-        action: std.echo output="{$.param1}"
-        publish:
-          result: "{$}"
+  tasks:
+    task1:
+      action: std.echo output="{$.param1}"
+      publish:
+        result: "{$}"
 """
 
 WORKBOOK_WF2_DEFINITION = """wf2:
-    type: direct
-    output:
-      result: "{$.result}"
+  type: direct
+  output:
+    result: "{$.result}"
 
-    tasks:
-      task1:
-        workflow: my_wb.wf1 param1='Hi' task_name='task1'
-        publish:
-          result: "The result of subworkflow is '{$.final_result}'"
+  tasks:
+    task1:
+      workflow: my_wb.wf1 param1='Hi' task_name='task1'
+      publish:
+        result: "The result of subworkflow is '{$.final_result}'"
 """
 
 UPDATED_WORKBOOK = """
@@ -136,29 +136,29 @@ workflows:
 """
 
 UPDATED_WORKBOOK_WF1_DEFINITION = """wf1:
-    type: direct
-    output:
-      result: "{$.result}"
+  type: direct
+  output:
+    result: "{$.result}"
 
-    tasks:
-      task1:
-        workflow: my_wb.wf2 param1='Hi' task_name='task1'
-        publish:
-          result: "The result of subworkflow is '{$.final_result}'"
+  tasks:
+    task1:
+      workflow: my_wb.wf2 param1='Hi' task_name='task1'
+      publish:
+        result: "The result of subworkflow is '{$.final_result}'"
 """
 
 UPDATED_WORKBOOK_WF2_DEFINITION = """wf2:
-    type: reverse
-    input:
-      - param1
-    output:
-      result: "{$.result}"
+  type: reverse
+  input:
+    - param1
+  output:
+    result: "{$.result}"
 
-    tasks:
-      task1:
-        action: std.echo output="{$.param1}"
-        publish:
-          result: "{$}"
+  tasks:
+    task1:
+      action: std.echo output="{$.param1}"
+      publish:
+        result: "{$}"
 """
 
 
