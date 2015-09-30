@@ -111,7 +111,9 @@ def _get_workbook_values(wb_spec, definition, scope):
 
 
 def _get_wf_definition(wb_db, wf_spec):
-    wf_definition = spec_parser.get_workflow_definition(wb_db.definition,
-                                                        wf_spec.get_name())
+    wf_definition = spec_parser.get_workflow_definition(
+        wb_db.definition,
+        wf_spec.get_name()
+    )
 
     return wf_definition

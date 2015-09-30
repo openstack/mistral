@@ -13,9 +13,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import StringIO
 import yaml
 from yaml import error
+
+import six
 
 from mistral import exceptions as exc
 from mistral.workbook import base
@@ -124,29 +125,34 @@ def get_task_spec(spec_dict):
 def get_workflow_definition(wb_def, wf_name):
     wf_def = []
     wf_name = wf_name + ":"
-    io = StringIO.StringIO(wb_def[wb_def.index("workflows:"):])
+    io = six.StringIO(wb_def[wb_def.index("workflows:"):])
     io.readline()
     ident = 0
 
     # Get the indentation of the workflow name tag. (e.g. wf1:)
     for line in io:
         if wf_name == line.strip():
-            ident = len(line.expandtabs()) - len(line.expandtabs().lstrip(' '))
+            ident = line.index(wf_name)
             wf_def.append(line.lstrip())
             break
 
     # Add strings to list unless same/less indentation is found.
     for line in io:
-        if not line.strip() or line.startswith("#"):
+        new_line = line.strip()
+
+        if not new_line:
             wf_def.append(line)
+        elif new_line.startswith("#"):
+            new_line = line if ident > line.index("#") else line[ident:]
+            wf_def.append(new_line)
         else:
-            temp = len(line.expandtabs()) - len(line.expandtabs().lstrip(' '))
+            temp = line.index(line.lstrip())
             if ident < temp:
-                wf_def.append(line)
+                wf_def.append(line[ident:])
             else:
                 break
 
     io.close()
-    wf_def = ''.join(wf_def).strip() + '\n'
+    wf_def = ''.join(wf_def).rstrip() + '\n'
 
     return wf_def
