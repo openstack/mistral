@@ -106,14 +106,14 @@ class TestWorkbooksController(base.FunctionalTest):
     def test_get(self):
         resp = self.app.get('/v2/workbooks/123')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WORKBOOK, resp.json)
 
     @mock.patch.object(db_api, "get_workbook", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/workbooks/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_UPDATED_WORKBOOK)
     def test_put(self):
@@ -123,7 +123,7 @@ class TestWorkbooksController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertEqual(UPDATED_WORKBOOK, resp.json)
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_NOT_FOUND)
@@ -135,7 +135,7 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     def test_put_invalid(self):
         resp = self.app.put(
@@ -145,7 +145,7 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_WORKBOOK)
@@ -156,7 +156,7 @@ class TestWorkbooksController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertEqual(WORKBOOK, resp.json)
 
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_DUPLICATE)
@@ -168,7 +168,7 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 409)
+        self.assertEqual(409, resp.status_int)
 
     def test_post_invalid(self):
         resp = self.app.post(
@@ -178,37 +178,37 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body)
 
     @mock.patch.object(db_api, "delete_workbook", MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/workbooks/123')
 
-        self.assertEqual(resp.status_int, 204)
+        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "delete_workbook", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/workbooks/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_workbooks", MOCK_WORKBOOKS)
     def test_get_all(self):
         resp = self.app.get('/v2/workbooks')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['workbooks']), 1)
+        self.assertEqual(1, len(resp.json['workbooks']))
         self.assertDictEqual(WORKBOOK, resp.json['workbooks'][0])
 
     @mock.patch.object(db_api, "get_workbooks", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/workbooks')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['workbooks']), 0)
+        self.assertEqual(0, len(resp.json['workbooks']))
 
     def test_validate(self):
         resp = self.app.post(
@@ -217,7 +217,7 @@ class TestWorkbooksController(base.FunctionalTest):
             headers={'Content-Type': 'text/plain'}
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertTrue(resp.json['valid'])
 
     def test_validate_invalid_model_exception(self):
@@ -228,7 +228,7 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Invalid DSL", resp.json['error'])
 
@@ -240,7 +240,7 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Definition could not be parsed", resp.json['error'])
 
@@ -252,7 +252,7 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("unexpected '*' at position 1",
                       resp.json['error'])
@@ -265,6 +265,6 @@ class TestWorkbooksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Invalid DSL", resp.json['error'])

@@ -235,4 +235,4 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]
 
-        self.assertEqual(trigger_names, ['test2', 'test1', 'test3'])
+        self.assertEqual(['test2', 'test1', 'test3'], trigger_names)

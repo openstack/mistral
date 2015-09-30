@@ -33,9 +33,9 @@ class TestServicesController(base.FunctionalTest):
 
         resp = self.app.get('/v2/services')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['services']), 1)
+        self.assertEqual(1, len(resp.json['services']))
 
         srv_ret = [{"name": "service1", "type": "api_group"}]
         self.assertItemsEqual(srv_ret, resp.json['services'])

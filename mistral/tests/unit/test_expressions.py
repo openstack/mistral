@@ -43,14 +43,14 @@ class YaqlEvaluatorTest(base.BaseTest):
 
     def test_expression_result(self):
         res = self._evaluator.evaluate('$.server', DATA)
-        self.assertEqual(res, {
+        self.assertEqual({
             'id': "03ea824a-aa24-4105-9131-66c48ae54acf",
             'name': 'cloud-fedora',
             'status': 'ACTIVE'
-        })
+        }, res)
 
         res = self._evaluator.evaluate('$.server.id', DATA)
-        self.assertEqual(res, '03ea824a-aa24-4105-9131-66c48ae54acf')
+        self.assertEqual('03ea824a-aa24-4105-9131-66c48ae54acf', res)
 
         res = self._evaluator.evaluate("$.server.status = 'ACTIVE'", DATA)
         self.assertTrue(res)
@@ -68,7 +68,7 @@ class YaqlEvaluatorTest(base.BaseTest):
 
         expression_str = 'invalid_expression_string'
         res = self._evaluator.evaluate(expression_str, DATA)
-        self.assertEqual(res, expression_str)
+        self.assertEqual(expression_str, res)
 
     def test_select_result(self):
         res = self._evaluator.evaluate(
@@ -76,7 +76,7 @@ class YaqlEvaluatorTest(base.BaseTest):
             SERVERS
         )
         item = list(res)[0]
-        self.assertEqual(item, {'name': 'ubuntu'})
+        self.assertEqual({'name': 'ubuntu'}, item)
 
     def test_function_string(self):
         self.assertEqual('3', self._evaluator.evaluate('str($)', '3'))
@@ -216,7 +216,7 @@ class ExpressionsTest(base.BaseTest):
         for expression, expected in test_cases:
             actual = expr.evaluate_recursively(expression, data)
 
-            self.assertEqual(actual, expected)
+            self.assertEqual(expected, actual)
 
     def test_evaluate_recursively(self):
         task_spec_dict = {
@@ -308,4 +308,4 @@ class ExpressionsTest(base.BaseTest):
         applied = expr.evaluate_recursively(defaults, context)
         expected = 'mysql://admin:secrete@vm1234.example.com/test'
 
-        self.assertEqual(applied['conn'], expected)
+        self.assertEqual(expected, applied['conn'])
