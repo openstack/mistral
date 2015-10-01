@@ -144,7 +144,7 @@ def prepare_runtime_context(task_ex, task_spec, input_dicts):
 
 def validate_input(with_items_input):
     # Take only mapped values and check them.
-    values = with_items_input.values()
+    values = list(with_items_input.values())
 
     if not all([isinstance(v, list) for v in values]):
         raise exc.InputException(
