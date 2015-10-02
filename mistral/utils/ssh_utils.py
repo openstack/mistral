@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from oslo_log import log as logging
 import paramiko
 
@@ -31,11 +33,15 @@ def _read_paramimko_stream(recv_func):
     return result
 
 
-def _connect(host, username, password):
+def _connect(host, username, password, pkey):
+    if pkey:
+        pkey = paramiko.RSAKey(file_obj=six.StringIO(pkey))
+
     LOG.debug('Creating SSH connection to %s' % host)
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(host, username=username, password=password)
+    ssh.connect(host, username=username, password=password, pkey=pkey)
+
     return ssh
 
 
@@ -43,9 +49,9 @@ def _cleanup(ssh):
     ssh.close()
 
 
-def execute_command(cmd, host, username, password,
+def execute_command(cmd, host, username, password=None, pkey=None,
                     get_stderr=False, raise_when_error=True):
-    ssh = _connect(host, username, password)
+    ssh = _connect(host, username, password, pkey)
 
     LOG.debug("Executing command %s" % cmd)
 

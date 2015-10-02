@@ -15,6 +15,7 @@
 from mistral.actions import std_actions
 from mistral.tests import base
 from mistral.utils import inspect_utils as i_u
+from mistral.workflow import commands
 
 
 class InspectUtilsTest(base.BaseTest):
@@ -32,7 +33,7 @@ class InspectUtilsTest(base.BaseTest):
         self.assertEqual(http_action_params, parameters_str)
 
     def test_get_parameters_str_all_mandatory(self):
-        action_class = std_actions.SSHAction
-        parameters_str = i_u.get_arg_list_as_str(action_class.__init__)
+        clazz = commands.RunTask
+        parameters_str = i_u.get_arg_list_as_str(clazz.__init__)
 
-        self.assertEqual("cmd, host, username, password", parameters_str)
+        self.assertEqual("wf_ex, task_spec, ctx", parameters_str)
