@@ -759,7 +759,8 @@ Input parameters:
 -  **host** - Host name that the command needs to be executed on.
    *Required*.
 -  **username** - User name to authenticate on the host.
--  **password** - User password to to authenticate on the host.
+-  **password** - User password to to authenticate on the host. *Optional.*
+-  **private_key** - Private key string which will be used for authentication on remote host. *Optional.*
 
 **NOTE**: Authentication using key pairs is supported, key should be
 on Mistral Executor server machine.
