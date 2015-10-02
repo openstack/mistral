@@ -272,6 +272,14 @@ class RetryPolicy(base.TaskPolicy):
         """
         super(RetryPolicy, self).after_task_complete(task_ex, task_spec)
 
+        # TODO(m4dcoder): If the task_ex.executions collection is not called,
+        # then the retry_no in the runtime_context of the task_ex will not
+        # be updated accurately. To be exact, the retry_no will be one
+        # iteration behind. task_ex.executions was originally called in
+        # get_task_execution_result but it was refactored to use
+        # db_api.get_action_executions to support session-less use cases.
+        action_ex = task_ex.executions  # noqa
+
         context_key = 'retry_task_policy'
 
         runtime_context = _ensure_context_has_key(

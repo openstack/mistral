@@ -87,14 +87,20 @@ def invalidate_task_execution_result(task_ex):
 
 
 def get_task_execution_result(task_ex):
-    action_execs = task_ex.executions
+    # Use of task_ex.executions requires a session to lazy load the action
+    # executions. This get_task_execution_result method is also invoked
+    # from get_all in the task execution API controller. If there is a lot of
+    # read against the API, it will lead to a lot of unnecessary DB locks
+    # which result in possible deadlocks and WF execution failures. Therefore,
+    # use db_api.get_action_executions here to avoid session-less use cases.
+    action_execs = db_api.get_action_executions(task_execution_id=task_ex.id)
     action_execs.sort(
         key=lambda x: x.runtime_context.get('with_items_index')
     )
 
     results = [
         _extract_execution_result(ex)
-        for ex in task_ex.executions
+        for ex in action_execs
         if hasattr(ex, 'output') and ex.accepted
     ]
 
