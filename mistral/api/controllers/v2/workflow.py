@@ -180,7 +180,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
         return Workflows(workflows=workflow_list).to_string()
 
-    @rest_utils.wrap_pecan_controller_exception
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workflow."""
@@ -195,7 +195,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
             db_api.delete_workflow_definition(name)
 
-    @rest_utils.wrap_pecan_controller_exception
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflows, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',

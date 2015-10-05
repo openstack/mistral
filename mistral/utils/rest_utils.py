@@ -15,9 +15,11 @@
 #    limitations under the License.
 
 import functools
+import json
 
 import pecan
 import six
+from webob import Response
 from wsme import exc
 
 from mistral import exceptions as ex
@@ -47,8 +49,12 @@ def wrap_pecan_controller_exception(func):
         try:
             return func(*args, **kwargs)
         except ex.MistralException as excp:
-            pecan.response.translatable_error = excp
-            pecan.abort(excp.http_code, six.text_type(excp))
+            return Response(
+                status=excp.http_code,
+                content_type='application/json',
+                body=json.dumps(dict(
+                    faultstring=six.text_type(excp))))
+
     return wrapped
 
 
