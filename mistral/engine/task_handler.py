@@ -466,7 +466,7 @@ def _schedule_run_workflow(task_ex, task_spec, wf_input, index):
     if 'env' in parent_wf_ex.params:
         wf_params['env'] = parent_wf_ex.params['env']
 
-    for k, v in wf_input.items():
+    for k, v in list(wf_input.items()):
         if k not in wf_spec.get_input():
             wf_params[k] = v
             del wf_input[k]
