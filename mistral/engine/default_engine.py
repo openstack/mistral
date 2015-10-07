@@ -466,7 +466,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             'state': states.RUNNING,
             'input': wf_input or {},
             'output': {},
-            'context': copy.copy(wf_input) or {},
+            'context': copy.deepcopy(wf_input) or {},
             'task_execution_id': params.get('task_execution_id'),
             'runtime_context': {
                 'with_items_index': params.get('with_items_index', 0)

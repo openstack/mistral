@@ -193,7 +193,7 @@ def _evaluate_item(item, context):
 
 
 def evaluate_recursively(data, context):
-    data = copy.copy(data)
+    data = copy.deepcopy(data)
 
     if not context:
         return data

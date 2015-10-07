@@ -47,7 +47,7 @@ TRIGGER = {
     'remaining_executions': 42
 }
 
-trigger_values = copy.copy(TRIGGER)
+trigger_values = copy.deepcopy(TRIGGER)
 trigger_values['workflow_input'] = json.loads(
     trigger_values['workflow_input'])
 
@@ -61,7 +61,7 @@ TRIGGER_DB.update(trigger_values)
 UPDATED_TRIGGER_DB = copy.copy(TRIGGER_DB)
 UPDATED_TRIGGER_DB['pattern'] = '*/1 * * * *'
 
-UPDATED_TRIGGER = copy.copy(TRIGGER)
+UPDATED_TRIGGER = copy.deepcopy(TRIGGER)
 UPDATED_TRIGGER['pattern'] = '*/1 * * * *'
 
 MOCK_WF = mock.MagicMock(return_value=WF)
