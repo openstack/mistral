@@ -95,18 +95,18 @@ ACTION_EX = {
 UPDATED_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
 UPDATED_ACTION_EX_DB['state'] = 'SUCCESS'
 UPDATED_ACTION_EX_DB['task_name'] = 'task1'
-UPDATED_ACTION = copy.copy(ACTION_EX)
+UPDATED_ACTION = copy.deepcopy(ACTION_EX)
 UPDATED_ACTION['state'] = 'SUCCESS'
 UPDATED_ACTION_OUTPUT = UPDATED_ACTION['output']
 
 ERROR_ACTION_EX = copy.copy(ACTION_EX_DB).to_dict()
 ERROR_ACTION_EX['state'] = 'ERROR'
 ERROR_ACTION_EX['task_name'] = 'task1'
-ERROR_ACTION = copy.copy(ACTION_EX)
+ERROR_ACTION = copy.deepcopy(ACTION_EX)
 ERROR_ACTION['state'] = 'ERROR'
 ERROR_ACTION_RES = ERROR_ACTION['output']
 
-BROKEN_ACTION = copy.copy(ACTION_EX)
+BROKEN_ACTION = copy.deepcopy(ACTION_EX)
 BROKEN_ACTION['output'] = 'string not escaped'
 
 MOCK_ACTION = mock.MagicMock(return_value=ACTION_EX_DB)
@@ -257,7 +257,7 @@ class TestActionExecutionsController(base.FunctionalTest):
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
     def test_put_without_result(self, f):
-        action_ex = copy.copy(UPDATED_ACTION)
+        action_ex = copy.deepcopy(UPDATED_ACTION)
         del action_ex['output']
 
         f.return_value = UPDATED_ACTION_EX_DB

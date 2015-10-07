@@ -247,7 +247,7 @@ class WithItemsEngineTest(base.EngineTestCase):
     def test_with_items_static_var(self):
         wb_service.create_workbook_v2(WORKBOOK_WITH_STATIC_VAR)
 
-        wf_input = copy.copy(WORKFLOW_INPUT)
+        wf_input = copy.deepcopy(WORKFLOW_INPUT)
         wf_input.update({'greeting': 'Hello'})
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)

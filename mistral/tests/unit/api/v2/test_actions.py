@@ -81,7 +81,7 @@ my_action:
 
 UPDATED_ACTION_DB = copy.copy(ACTION_DB)
 UPDATED_ACTION_DB['definition'] = UPDATED_ACTION_DEFINITION
-UPDATED_ACTION = copy.copy(ACTION)
+UPDATED_ACTION = copy.deepcopy(ACTION)
 UPDATED_ACTION['definition'] = UPDATED_ACTION_DEFINITION
 
 MOCK_ACTION = mock.MagicMock(return_value=ACTION_DB)

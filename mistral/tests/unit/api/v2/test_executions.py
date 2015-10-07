@@ -54,13 +54,13 @@ WF_EX_JSON = {
     'workflow_name': 'some',
 }
 
-UPDATED_WF_EX = copy.copy(WF_EX)
+UPDATED_WF_EX = copy.deepcopy(WF_EX)
 UPDATED_WF_EX['state'] = states.PAUSED
 
-UPDATED_WF_EX_JSON = copy.copy(WF_EX_JSON)
+UPDATED_WF_EX_JSON = copy.deepcopy(WF_EX_JSON)
 UPDATED_WF_EX_JSON['state'] = states.PAUSED
 
-WF_EX_JSON_WITH_DESC = copy.copy(WF_EX_JSON)
+WF_EX_JSON_WITH_DESC = copy.deepcopy(WF_EX_JSON)
 WF_EX_JSON_WITH_DESC['description'] = "execution description."
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
@@ -98,7 +98,7 @@ class TestExecutionsController(base.FunctionalTest):
     def test_put(self):
         resp = self.app.put_json('/v2/executions/123', UPDATED_WF_EX_JSON)
 
-        UPDATED_WF_EX_WITH_DESC = copy.copy(UPDATED_WF_EX_JSON)
+        UPDATED_WF_EX_WITH_DESC = copy.deepcopy(UPDATED_WF_EX_JSON)
         UPDATED_WF_EX_WITH_DESC['description'] = 'execution description.'
 
         self.assertEqual(resp.status_int, 200)
@@ -110,12 +110,12 @@ class TestExecutionsController(base.FunctionalTest):
         MOCK_WF_EX
     )
     def test_put_stop(self):
-        update_exec = copy.copy(WF_EX_JSON)
+        update_exec = copy.deepcopy(WF_EX_JSON)
         update_exec['state'] = states.ERROR
         update_exec['state_info'] = "Force"
 
         with mock.patch.object(rpc.EngineClient, 'stop_workflow') as mock_pw:
-            wf_ex = copy.copy(WF_EX)
+            wf_ex = copy.deepcopy(WF_EX)
             wf_ex['state'] = states.ERROR
             wf_ex['state_info'] = "Force"
             mock_pw.return_value = wf_ex
@@ -134,12 +134,12 @@ class TestExecutionsController(base.FunctionalTest):
         MOCK_WF_EX
     )
     def test_put_state_info_unset(self):
-        update_exec = copy.copy(WF_EX_JSON)
+        update_exec = copy.deepcopy(WF_EX_JSON)
         update_exec['state'] = states.ERROR
         update_exec.pop('state_info', None)
 
         with mock.patch.object(rpc.EngineClient, 'stop_workflow') as mock_pw:
-            wf_ex = copy.copy(WF_EX)
+            wf_ex = copy.deepcopy(WF_EX)
             wf_ex['state'] = states.ERROR
             del wf_ex.state_info
             mock_pw.return_value = wf_ex
