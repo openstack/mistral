@@ -715,8 +715,8 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
 
-        self.assertEqual(
-            {},
+        self.assertDictEqual(
+            {'retry_no': 1},
             task_ex.runtime_context['retry_task_policy']
         )
 

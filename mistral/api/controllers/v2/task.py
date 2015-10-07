@@ -102,9 +102,8 @@ def _get_task_resources_with_results(wf_ex_id=None):
     if wf_ex_id:
         filters['workflow_execution_id'] = wf_ex_id
 
-    with db_api.transaction():
-        task_exs = db_api.get_task_executions(**filters)
-        tasks = [_get_task_resource_with_result(t_e) for t_e in task_exs]
+    task_exs = db_api.get_task_executions(**filters)
+    tasks = [_get_task_resource_with_result(t_e) for t_e in task_exs]
 
     return Tasks(tasks=tasks)
 
