@@ -15,21 +15,25 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import contextlib
 import json
 import logging
 import os
 from os import path
+import shutil
 import six
 import socket
+import tempfile
 import threading
 import uuid
 
 import eventlet
 from eventlet import corolocal
+from oslo_concurrency import processutils
 import pkg_resources as pkg
 import random
 
-
+from mistral import exceptions as exc
 from mistral import version
 
 
@@ -255,3 +259,55 @@ def get_process_identifier():
     """Gets current running process identifier."""
 
     return "%s_%s" % (socket.gethostname(), os.getpid())
+
+
+@contextlib.contextmanager
+def tempdir(**kwargs):
+    argdict = kwargs.copy()
+
+    if 'dir' not in argdict:
+        argdict['dir'] = '/tmp/'
+    tmpdir = tempfile.mkdtemp(**argdict)
+
+    try:
+        yield tmpdir
+    finally:
+        try:
+            shutil.rmtree(tmpdir)
+        except OSError as e:
+            raise exc.DataAccessException(
+                "Failed to delete temp dir %(dir)s (reason: %(reason)s)" %
+                {'dir': tmpdir, 'reason': e}
+            )
+
+
+def generate_key_pair(key_length=2048):
+    """Create RSA key pair with specified number of bits in key.
+    Returns tuple of private and public keys.
+    """
+    with tempdir() as tmpdir:
+        keyfile = os.path.join(tmpdir, 'tempkey')
+        args = [
+            'ssh-keygen',
+            '-q',  # quiet
+            '-N', '',  # w/o passphrase
+            '-t', 'rsa',  # create key of rsa type
+            '-f', keyfile,  # filename of the key file
+            '-C', 'Generated-by-Mistral'  # key comment
+        ]
+        if key_length is not None:
+            args.extend(['-b', key_length])
+        processutils.execute(*args)
+        if not os.path.exists(keyfile):
+            raise exc.DataAccessException(
+                "Private key file hasn't been created"
+            )
+        private_key = open(keyfile).read()
+        public_key_path = keyfile + '.pub'
+        if not os.path.exists(public_key_path):
+            raise exc.DataAccessException(
+                "Public key file hasn't been created"
+            )
+        public_key = open(public_key_path).read()
+
+        return private_key, public_key
