@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 
 def validate_input(definition, input, spec=None):
-    input_param_names = copy.copy(list((input or {}).keys()))
+    input_param_names = copy.deepcopy(list((input or {}).keys()))
     missing_param_names = []
 
     spec_input = (spec.get_input() if spec else

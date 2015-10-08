@@ -142,7 +142,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
                     call.target_method_name
                 )
 
-            method_args = copy.copy(call.method_arguments)
+            method_args = copy.deepcopy(call.method_arguments)
 
             if call.serializers:
                 # Deserialize arguments.
