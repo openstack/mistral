@@ -236,11 +236,11 @@ class AuthProv(auth.KeystoneV2AuthProvider):
 
 class TestCase(test.BaseTestCase):
     @classmethod
-    def setUpClass(cls):
+    def resource_setup(cls):
         """This method allows to initialize authentication before
         each test case and define parameters of Mistral API Service.
         """
-        super(TestCase, cls).setUpClass()
+        super(TestCase, cls).resource_setup()
 
         if 'WITHOUT_AUTH' in os.environ:
             cls.mgr = mock.MagicMock()
@@ -266,19 +266,17 @@ class TestCase(test.BaseTestCase):
 
 class TestCaseAdvanced(TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(TestCaseAdvanced, cls).setUpClass()
+    def resource_setup(cls):
+        super(TestCaseAdvanced, cls).resource_setup()
 
-        cls.server_client = cls.mgr.servers_client
+        cls.server_client = clients.ServersClient(
+            cls.mgr.auth_provider,
+            "compute",
+            region=CONF.identity.region
+        )
 
         cls.image_ref = CONF.compute.image_ref
         cls.flavor_ref = CONF.compute.flavor_ref
-
-    def setUp(self):
-        super(TestCaseAdvanced, self).setUp()
-
-        self.workbook_name = 'test'
-        self.client.create_workbook(self.workbook_name)
 
     def tearDown(self):
         for wb in self.client.workbooks:

@@ -25,8 +25,8 @@ class OpenStackActionsTestsV2(base.TestCase):
     # TODO(akuznetsova): refactoring will be finished
 
     @classmethod
-    def setUpClass(cls):
-        super(OpenStackActionsTestsV2, cls).setUpClass()
+    def resource_setup(cls):
+        super(OpenStackActionsTestsV2, cls).resource_setup()
 
         _, cls.wb = cls.client.create_workbook(
             'openstack/action_collection_wb.yaml')
