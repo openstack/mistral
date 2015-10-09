@@ -40,34 +40,6 @@ class JsonEncoded(sa.TypeDecorator):
         return value
 
 
-class MutableDict(mutable.Mutable, dict):
-    @classmethod
-    def coerce(cls, key, value):
-        """Convert plain dictionaries to MutableDict."""
-        if not isinstance(value, MutableDict):
-            if isinstance(value, dict):
-                return MutableDict(value)
-
-            # this call will raise ValueError
-            return mutable.Mutable.coerce(key, value)
-        return value
-
-    def update(self, e=None, **f):
-        """Detect dictionary update events and emit change events."""
-        dict.update(self, e, **f)
-        self.changed()
-
-    def __setitem__(self, key, value):
-        """Detect dictionary set events and emit change events."""
-        dict.__setitem__(self, key, value)
-        self.changed()
-
-    def __delitem__(self, key):
-        """Detect dictionary del events and emit change events."""
-        dict.__delitem__(self, key)
-        self.changed()
-
-
 class MutableList(mutable.Mutable, list):
     @classmethod
     def coerce(cls, key, value):
@@ -103,7 +75,7 @@ class MutableList(mutable.Mutable, list):
 
 def JsonDictType():
     """Returns an SQLAlchemy Column Type suitable to store a Json dict."""
-    return MutableDict.as_mutable(JsonEncoded)
+    return mutable.MutableDict.as_mutable(JsonEncoded)
 
 
 def JsonListType():
@@ -121,4 +93,4 @@ class JsonEncodedLongText(JsonEncoded):
 
 
 def JsonLongDictType():
-    return MutableDict.as_mutable(JsonEncodedLongText)
+    return mutable.MutableDict.as_mutable(JsonEncodedLongText)
