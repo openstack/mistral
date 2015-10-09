@@ -44,7 +44,8 @@ class V8Evaluator(JSEvaluator):
             # Prepare data context and way for interaction with it.
             ctx.eval('$ = %s' % json.dumps(context))
 
-            return ctx.eval(script)
+            result = ctx.eval(script)
+            return _PYV8.convert(result)
 
 # TODO(nmakhotkin) Make it configurable.
 EVALUATOR = V8Evaluator
