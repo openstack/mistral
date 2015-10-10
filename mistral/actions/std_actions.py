@@ -327,11 +327,12 @@ class SSHAction(base.Action):
     same order as provided hosts.
     """
 
-    def __init__(self, cmd, host, username, password):
+    def __init__(self, cmd, host, username, password=None, private_key=None):
         self.cmd = cmd
         self.host = host
         self.username = username
         self.password = password
+        self.private_key = private_key
 
     def run(self):
         def raise_exc(parent_exc=None):
@@ -352,7 +353,9 @@ class SSHAction(base.Action):
                     self.cmd,
                     host_name,
                     self.username,
-                    self.password)
+                    self.password,
+                    pkey=self.private_key
+                )
 
                 if status_code > 0:
                     return raise_exc()
