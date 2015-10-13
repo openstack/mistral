@@ -207,7 +207,11 @@ class AuthHook(hooks.PecanHook):
             else:
                 msg = 'Authentication required'
 
-            pecan.abort(status_code=401, detail=msg)
+            pecan.abort(
+                status_code=401,
+                detail=msg,
+                headers={'Server-Error-Message': msg}
+            )
 
 
 class ContextHook(hooks.PecanHook):
