@@ -120,6 +120,21 @@ When a Task starts Mistral creates a set of Action Executions. So Action Executi
 .. rest-controller:: mistral.api.controllers.v2.action_execution:TasksActionExecutionController
     :webprefix: /v2/tasks
 
+Cron Triggers
+-----------------
+
+Cron trigger is an object that allows to run Mistral workflows according to a time pattern (Unix crontab patterns format). Once a trigger is created it will run a specified workflow according to its properties: pattern, first_execution_time and remaining_executions.
+
+
+.. autotype:: mistral.api.controllers.v2.cron_trigger.CronTrigger
+   :members:
+
+.. autotype:: mistral.api.controllers.v2.cron_trigger.CronTriggers
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.cron_trigger:CronTriggersController
+    :webprefix: /v2/cron_triggers
+
 
 Environments
 ------------
