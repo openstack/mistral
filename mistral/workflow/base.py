@@ -98,7 +98,7 @@ class WorkflowController(object):
         upstream_task_execs = self._get_upstream_task_executions(task_spec)
 
         return u.merge_dicts(
-            copy.copy(self.wf_ex.context),
+            copy.deepcopy(self.wf_ex.context),
             data_flow.evaluate_upstream_context(upstream_task_execs)
         )
 

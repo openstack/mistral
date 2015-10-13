@@ -405,7 +405,7 @@ def _schedule_run_action(task_ex, task_spec, action_input, index):
         task_spec.get_target(),
         utils.merge_dicts(
             copy.deepcopy(action_input),
-            copy.copy(task_ex.in_context)
+            copy.deepcopy(task_ex.in_context)
         )
     )
 

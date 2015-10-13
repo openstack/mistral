@@ -885,7 +885,7 @@ class TaskExecutionTest(SQLAlchemyTest):
     def test_create_and_get_and_load_task_execution(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-        values = copy.copy(TASK_EXECS[0])
+        values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
         created = db_api.create_task_execution(values)
@@ -907,7 +907,7 @@ class TaskExecutionTest(SQLAlchemyTest):
         with db_api.transaction():
             wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-            values = copy.copy(TASK_EXECS[0])
+            values = copy.deepcopy(TASK_EXECS[0])
             values.update({'workflow_execution_id': wf_ex.id})
 
             task = db_api.create_task_execution(values)
@@ -945,7 +945,7 @@ class TaskExecutionTest(SQLAlchemyTest):
     def test_update_task_execution(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-        values = copy.copy(TASK_EXECS[0])
+        values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
         created = db_api.create_task_execution(values)
@@ -971,7 +971,7 @@ class TaskExecutionTest(SQLAlchemyTest):
 
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-        values = copy.copy(TASK_EXECS[0])
+        values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
         created = db_api.create_or_update_task_execution(id, values)
@@ -997,12 +997,12 @@ class TaskExecutionTest(SQLAlchemyTest):
     def test_get_task_executions(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-        values = copy.copy(TASK_EXECS[0])
+        values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
         created0 = db_api.create_task_execution(values)
 
-        values = copy.copy(TASK_EXECS[1])
+        values = copy.deepcopy(TASK_EXECS[1])
         values.update({'workflow_execution_id': wf_ex.id})
 
         created1 = db_api.create_task_execution(values)
@@ -1018,7 +1018,7 @@ class TaskExecutionTest(SQLAlchemyTest):
     def test_delete_task_execution(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-        values = copy.copy(TASK_EXECS[0])
+        values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
         created = db_api.create_task_execution(values)
@@ -1038,7 +1038,7 @@ class TaskExecutionTest(SQLAlchemyTest):
     def test_task_execution_repr(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 
-        values = copy.copy(TASK_EXECS[0])
+        values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
         s = db_api.create_task_execution(values).__repr__()

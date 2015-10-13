@@ -106,7 +106,7 @@ flow:
 
 UPDATED_WF_DB = copy.copy(WF_DB)
 UPDATED_WF_DB['definition'] = UPDATED_WF_DEFINITION
-UPDATED_WF = copy.copy(WF)
+UPDATED_WF = copy.deepcopy(WF)
 UPDATED_WF['definition'] = UPDATED_WF_DEFINITION
 
 WF_DEF_INVALID_MODEL_EXCEPTION = """
