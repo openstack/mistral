@@ -24,7 +24,7 @@ To use the OpenStack command line tools you should specify environment variables
 Write Workflow
 --------------
 
-For example, the following workflow has been written::
+For example, we have the following workflow::
 
     ---
     version: "2.0"
@@ -44,10 +44,13 @@ For example, the following workflow has been written::
         task2:
           action: std.echo="Done"
 
+This is a simple workflow iterates through the given list of names in its first task (using "with-items") and stores
+them as a task result (using echo action) and then stores word "Done" as a result of the second task.
+
 Create Workflow Object
 ----------------------
 
-Use *python-mistralclient* to create the workflow::
+Use *Mistral CLI* to create the workflow::
 
     mistral workflow-create <workflow.yaml>
 
@@ -63,7 +66,7 @@ Make sure that output is like the following::
 Run Workflow and Check the Result
 ---------------------------------
 
-Use *python-mistralclient* to run just created workflow. Pass variable **names** as **workflow_input**::
+Use *Mistral CLI* to run just created workflow. Pass variable **names** as **workflow_input**::
 
     mistral execution-create my_workflow '{"names": ["John", "Mistral", "Ivan", "Crystal"]}'
 
