@@ -21,7 +21,7 @@ tasks on specific Mistral executors. In fact, there are 2 cases:
 1. Need to execute the task on single executor.
 2. Need to execute the task on one of executor in executors group which has one name.
 
-For enabling task affinity feature, edit edit section "executor" host property
+For enabling task affinity feature, edit section "executor" host property
 in configuration file::
 
     [executor]

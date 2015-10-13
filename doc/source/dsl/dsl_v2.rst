@@ -790,8 +790,7 @@ Input parameters:
 dependencies and JS engine.** Currently Mistral uses only V8 Engine and
 its wrapper - PyV8. For installing it, do the next steps:
 
-1. Install required libraries - boost, g++, libtool, autoconf,
-subversion, libv8-legacy-dev: On Ubuntu::
+1. Install required libraries - boost, g++, libtool, autoconf, subversion, libv8-legacy-dev: On Ubuntu::
 
     sudo apt-get install libboost-all-dev g++ libtool autoconf libv8-legacy-dev subversion make
 
