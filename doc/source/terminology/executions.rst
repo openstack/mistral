@@ -25,8 +25,8 @@ Defines a workflow execution step. It has a state and result.
 A task can be in one of a number of predefined states reflecting its current status:
 
 * **IDLE** - task is not started yet; probably not all requirements are satisfied.
-* **WAITING** - task is ready to start but is waiting for specific conditions to perform running.
-* **DELAYED** - task was in the running state before and the task execution has been delayed on precise amount of time.
+* **WAITING** - task execution object has been created but it is not ready to start because some preconditions are not met. **NOTE:** The task may never run just because some of the preconditions may never be met.
+* **RUNNING_DELAYED** - task was in the running state before and the task execution has been delayed on precise amount of time.
 * **RUNNING** - task is currently being executed.
 * **SUCCESS** - task has finished successfully.
 * **ERROR** - task has finished with an error.
