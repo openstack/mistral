@@ -326,6 +326,9 @@ class SSHAction(base.Action):
     will be a single value, otherwise a list of results provided in the
     same order as provided hosts.
     """
+    @property
+    def _execute_cmd_method(self):
+        return ssh_utils.execute_command
 
     def __init__(self, cmd, host, username, password=None, private_key=None):
         self.cmd = cmd
@@ -333,6 +336,14 @@ class SSHAction(base.Action):
         self.username = username
         self.password = password
         self.private_key = private_key
+
+        self.params = {
+            'cmd': self.cmd,
+            'host': self.host,
+            'username': self.username,
+            'password': self.password,
+            'private_key': self.private_key
+        }
 
     def run(self):
         def raise_exc(parent_exc=None):
@@ -349,13 +360,9 @@ class SSHAction(base.Action):
                 self.host = [self.host]
 
             for host_name in self.host:
-                status_code, result = ssh_utils.execute_command(
-                    self.cmd,
-                    host_name,
-                    self.username,
-                    self.password,
-                    pkey=self.private_key
-                )
+                self.params['host'] = host_name
+
+                status_code, result = self._execute_cmd_method(**self.params)
 
                 if status_code > 0:
                     return raise_exc()
@@ -372,6 +379,33 @@ class SSHAction(base.Action):
     def test(self):
         # TODO(rakhmerov): Implement.
         return None
+
+
+class SSHProxiedAction(SSHAction):
+    @property
+    def _execute_cmd_method(self):
+        return ssh_utils.execute_command_via_gateway
+
+    def __init__(self, cmd, host, username, private_key, gateway_host,
+                 gateway_username=None, password=None, proxy_command=None):
+        super(SSHProxiedAction, self).__init__(
+            cmd,
+            host,
+            username,
+            password,
+            private_key
+        )
+
+        self.gateway_host = gateway_host
+        self.gateway_username = gateway_username
+
+        self.params.update(
+            {
+                'gateway_host': gateway_host,
+                'gateway_username': gateway_username,
+                'proxy_command': proxy_command
+            }
+        )
 
 
 class JavaScriptAction(base.Action):

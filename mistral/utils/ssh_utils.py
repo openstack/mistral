@@ -33,30 +33,41 @@ def _read_paramimko_stream(recv_func):
     return result
 
 
-def _connect(host, username, password, pkey):
-    if pkey:
-        pkey = paramiko.RSAKey(file_obj=six.StringIO(pkey))
+def _to_paramiko_private_key(private_key_raw, password):
+    return paramiko.RSAKey(
+        file_obj=six.StringIO(private_key_raw),
+        password=password
+    )
+
+
+def _connect(host, username, password=None, pkey=None, proxy=None):
+    if isinstance(pkey, six.string_types):
+        pkey = _to_paramiko_private_key(pkey, password)
 
     LOG.debug('Creating SSH connection to %s' % host)
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(host, username=username, password=password, pkey=pkey)
 
-    return ssh
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    ssh_client.connect(
+        host,
+        username=username,
+        password=password,
+        pkey=pkey,
+        sock=proxy
+    )
+
+    return ssh_client
 
 
-def _cleanup(ssh):
-    ssh.close()
+def _cleanup(ssh_client):
+    ssh_client.close()
 
 
-def execute_command(cmd, host, username, password=None, pkey=None,
-                    get_stderr=False, raise_when_error=True):
-    ssh = _connect(host, username, password, pkey)
-
-    LOG.debug("Executing command %s" % cmd)
-
+def _execute_command(ssh_client, cmd, get_stderr=False,
+                     raise_when_error=True):
     try:
-        chan = ssh.get_transport().open_session()
+        chan = ssh_client.get_transport().open_session()
         chan.exec_command(cmd)
 
         # TODO(nmakhotkin): that could hang if stderr buffer overflows
@@ -73,4 +84,64 @@ def execute_command(cmd, host, username, password=None, pkey=None,
         else:
             return ret_code, stdout
     finally:
-        _cleanup(ssh)
+        _cleanup(ssh_client)
+
+
+def execute_command_via_gateway(cmd, host, username, private_key,
+                                gateway_host, gateway_username=None,
+                                proxy_command=None, password=None):
+    LOG.debug('Creating SSH connection')
+
+    if isinstance(private_key, six.string_types):
+        private_key = _to_paramiko_private_key(private_key, password)
+
+    proxy = None
+
+    if proxy_command:
+        LOG.debug('Creating proxy using command: %s' % proxy_command)
+
+        proxy = paramiko.ProxyCommand(proxy_command)
+
+    _proxy_ssh_client = paramiko.SSHClient()
+    _proxy_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    LOG.debug('Connecting to proxy gateway at: %s' % gateway_host)
+
+    if not gateway_username:
+        gateway_username = username
+
+    _proxy_ssh_client.connect(
+        gateway_host,
+        username=gateway_username,
+        pkey=private_key,
+        sock=proxy
+    )
+
+    proxy = _proxy_ssh_client.get_transport().open_session()
+    proxy.exec_command("nc {0} 22".format(host))
+
+    ssh_client = _connect(
+        host,
+        username=username,
+        pkey=private_key,
+        proxy=proxy
+    )
+
+    try:
+        return _execute_command(
+            ssh_client,
+            cmd,
+            get_stderr=False,
+            raise_when_error=True
+        )
+    finally:
+        _cleanup(_proxy_ssh_client)
+
+
+def execute_command(cmd, host, username, password=None, private_key=None,
+                    get_stderr=False, raise_when_error=True):
+    ssh_client = _connect(host, username, password, private_key)
+
+    LOG.debug("Executing command %s" % cmd)
+
+    return _execute_command(ssh_client, cmd, get_stderr, raise_when_error)
