@@ -79,7 +79,7 @@ class TestCronTriggerController(base.FunctionalTest):
     def test_get(self):
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TRIGGER, resp.json)
 
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_NOT_FOUND)
@@ -89,7 +89,7 @@ class TestCronTriggerController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger")
@@ -98,7 +98,7 @@ class TestCronTriggerController(base.FunctionalTest):
 
         resp = self.app.post_json('/v2/cron_triggers', TRIGGER)
 
-        self.assertEqual(resp.status_int, 201)
+        self.assertEqual(201, resp.status_int)
         self.assertDictEqual(TRIGGER, resp.json)
 
         self.assertEqual(1, mock_mtd.call_count)
@@ -115,7 +115,7 @@ class TestCronTriggerController(base.FunctionalTest):
             '/v2/cron_triggers', TRIGGER, expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 409)
+        self.assertEqual(409, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)
@@ -127,14 +127,14 @@ class TestCronTriggerController(base.FunctionalTest):
             '/v2/cron_triggers', trig, expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 409)
+        self.assertEqual(409, resp.status_int)
 
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/cron_triggers/my_cron_trigger')
 
-        self.assertEqual(resp.status_int, 204)
+        self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_NOT_FOUND)
     def test_delete_not_found(self):
@@ -143,21 +143,21 @@ class TestCronTriggerController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, "get_cron_triggers", MOCK_TRIGGERS)
     def test_get_all(self):
         resp = self.app.get('/v2/cron_triggers')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['cron_triggers']), 1)
+        self.assertEqual(1, len(resp.json['cron_triggers']))
         self.assertDictEqual(TRIGGER, resp.json['cron_triggers'][0])
 
     @mock.patch.object(db_api, "get_cron_triggers", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/cron_triggers')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['cron_triggers']), 0)
+        self.assertEqual(0, len(resp.json['cron_triggers']))

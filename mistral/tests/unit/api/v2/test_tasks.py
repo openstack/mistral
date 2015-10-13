@@ -142,31 +142,31 @@ class TestTasksController(base.FunctionalTest):
     def test_get(self):
         resp = self.app.get('/v2/tasks/123')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
 
     @mock.patch.object(db_api, 'get_task_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/tasks/123', expect_errors=True)
 
-        self.assertEqual(resp.status_int, 404)
+        self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_TASKS)
     def test_get_all(self):
         resp = self.app.get('/v2/tasks')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['tasks']), 1)
+        self.assertEqual(1, len(resp.json['tasks']))
         self.assertDictEqual(TASK, resp.json['tasks'][0])
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/tasks')
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(len(resp.json['tasks']), 0)
+        self.assertEqual(0, len(resp.json['tasks']))
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(db_api, 'get_task_execution', MOCK_RERUN_TASKS)
@@ -177,7 +177,7 @@ class TestTasksController(base.FunctionalTest):
 
         resp = self.app.put_json('/v2/tasks/123', params=params)
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
@@ -191,7 +191,7 @@ class TestTasksController(base.FunctionalTest):
             params=params,
             expect_errors=True)
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('Mandatory field missing', resp.json['faultstring'])
 
@@ -204,7 +204,7 @@ class TestTasksController(base.FunctionalTest):
 
         resp = self.app.put_json('/v2/tasks/123', params=params)
 
-        self.assertEqual(resp.status_int, 200)
+        self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
@@ -219,7 +219,7 @@ class TestTasksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('execution must be in ERROR', resp.json['faultstring'])
 
@@ -236,7 +236,7 @@ class TestTasksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('Invalid task state', resp.json['faultstring'])
 
@@ -252,7 +252,7 @@ class TestTasksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('Only with-items task', resp.json['faultstring'])
 
@@ -269,7 +269,7 @@ class TestTasksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('Task name does not match', resp.json['faultstring'])
 
@@ -286,6 +286,6 @@ class TestTasksController(base.FunctionalTest):
             expect_errors=True
         )
 
-        self.assertEqual(resp.status_int, 400)
+        self.assertEqual(400, resp.status_int)
         self.assertIn('faultstring', resp.json)
         self.assertIn('Workflow name does not match', resp.json['faultstring'])
