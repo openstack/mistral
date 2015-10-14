@@ -1,8 +1,6 @@
 V2 API
 ======
 
-.. warning:: (2014-10-5): API described in this document might slightly change within a short period of time (2-3 weeks) and should be now considered experimental. Mistral team is now actively working on stabilization.
-
 This API describes the ways of interacting with Mistral service via HTTP protocol using Representational State Transfer concept (ReST).
 
 
