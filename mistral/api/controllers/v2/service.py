@@ -39,7 +39,7 @@ class Service(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(name='executor_host', type='executor_group')
+        return cls(name='host1_1234', type='executor_group')
 
 
 class Services(resource.Resource):
