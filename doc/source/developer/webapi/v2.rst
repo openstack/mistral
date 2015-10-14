@@ -119,7 +119,7 @@ When a Task starts Mistral creates a set of Action Executions. So Action Executi
     :webprefix: /v2/tasks
 
 Cron Triggers
------------------
+-------------
 
 Cron trigger is an object that allows to run Mistral workflows according to a time pattern (Unix crontab patterns format). Once a trigger is created it will run a specified workflow according to its properties: pattern, first_execution_time and remaining_executions.
 
@@ -186,3 +186,16 @@ There are three service groups according to Mistral architecture currently, name
 
 .. rest-controller:: mistral.api.controllers.v2.service:ServicesController
    :webprefix: /v2/services
+
+Validation
+----------
+
+Validation endpoints allow to check correctness of workbook and workflow DSL without having to upload them into Mistral.
+
+**POST /v2/workbooks/validation**
+  Validate workbook content (DSL grammar and semantics).
+
+**POST /v2/workflows/validation**
+  Validate workflow content (DSL grammar and semantics).
+
+These endpoints expect workbook or workflow text (DSL) correspondingly in a request body.
