@@ -2,15 +2,41 @@ Mistral Main Features
 =====================
 
 
-Task results / Dataflow
+Task result / Data Flow
 -----------------------
 
-Mistral supports transferring data from one task to another. In other words, if *taskA* produces
-some result data, and then *taskB* (which is next after *taskA*) can use that result data. For referring
-to the result data and also probably for selecting, filtering actions of the data in Mistral is used specific
-query language called *YAQL*. For the details how to use *YAQL*, please see :doc:`How to use YAQL in Mistral </guides/using_yaql>`.
-From Mistral standpoint, feature of referring any task produced result in subsequent task was called **DataFlow**.
+Mistral supports transferring data from one task to another. In other words, if *taskA* produces a value then
+*taskB* which follows *taskA* can use it. In order to use this data Mistral relies on query language called
+`YAQL <https://github.com/stackforge/yaql>`_. YAQL is powerful yet simple tool that allows to filter needed information,
+transform data and call functions. Find more information about it in
+`YAQL official documentation <http://yaql.readthedocs.org>`_ . This mechanism allowing to transfer data plays one of the
+central roles in workflow concept and is referred to as Data Flow.
 
+Below is a simple example of how Mistral Data Flow looks like from DSL (workflow language) perspective:
+
+::
+
+ version: '2.0'
+
+ my_workflow:
+   input:
+     - host
+     - username
+     - password
+
+   tasks:
+     task1:
+       action: std.ssh host=<% $.host %> username=<% $.username %> password=<% $.password %>
+       input:
+         cmd: "cd ~ && ls"
+       on-complete: task2
+
+     task2:
+       action: do_something data=<% task(task1).result %>
+
+Task called "task1" produces a result that contains a list of files in a user home folder of a host (both username and
+host are provided as workflow input) and task "task2" uses this data using YAQL expression "task(task1).result".
+"task()" here is a function registered in YAQL by Mistral to get information about a task by its name.
 
 Task affinity
 -------------
