@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import abc
+import inspect
 
 from mistral.actions import base
 from mistral import exceptions as exc
@@ -69,7 +70,12 @@ class OpenStackAction(base.Action):
         try:
             method = self._get_client_method(self._get_client())
 
-            return method(**self._kwargs_for_run)
+            result = method(**self._kwargs_for_run)
+
+            if inspect.isgenerator(result):
+                return [v for v in result]
+
+            return result
         except Exception as e:
             e_str = '%s: %s' % (type(e), e.message)
 
