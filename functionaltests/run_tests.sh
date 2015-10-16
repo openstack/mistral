@@ -25,6 +25,11 @@ echo "Successfully contacted Mistral API"
 # Where tempest code lives
 TEMPEST_DIR=${TEMPEST_DIR:-/opt/stack/new/tempest}
 
+# Path to directory with tempest.conf file, otherwise it will
+# take relative path from where the run tests command is being executed.
+export TEMPEST_CONFIG_DIR=${TEMPEST_CONFIG_DIR:-$TEMPEST_DIR/etc/}
+echo "Tempest configuration file directory: $TEMPEST_CONFIG_DIR"
+
 # Where mistral code and mistralclient code live
 MISTRAL_DIR=/opt/stack/new/mistral
 MISTRALCLIENT_DIR=/opt/stack/new/python-mistralclient
