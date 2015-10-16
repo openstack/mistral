@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import inspect
-
 from cinderclient.v1 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
@@ -26,7 +24,6 @@ from oslo_log import log
 
 from mistral.actions.openstack import base
 from mistral import context
-from mistral import exceptions as exc
 from mistral.utils.openstack import keystone as keystone_utils
 
 
@@ -151,17 +148,6 @@ class HeatAction(base.OpenStackAction):
     @classmethod
     def _get_fake_client(cls):
         return cls._client_class("")
-
-    def run(self):
-        try:
-            method = self._get_client_method(self._get_client())
-            result = method(**self._kwargs_for_run)
-            if inspect.isgenerator(result):
-                return [v for v in result]
-            return result
-        except Exception as e:
-            raise exc.ActionException("%s failed: %s"
-                                      % (self.__class__.__name__, e))
 
 
 class NeutronAction(base.OpenStackAction):
