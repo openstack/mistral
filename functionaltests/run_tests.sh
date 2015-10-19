@@ -32,8 +32,5 @@ MISTRALCLIENT_DIR=/opt/stack/new/python-mistralclient
 # Define PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$TEMPEST_DIR
 
-#installing requirements for tempest
-pip install -r $TEMPEST_DIR/requirements.txt
-
 pwd
 nosetests -sv mistral/tests/functional/

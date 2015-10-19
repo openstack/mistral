@@ -16,8 +16,10 @@
 
 import copy
 
+from mistral import exceptions as exc
 from mistral.tests import base
 from mistral import utils
+from mistral.utils import ssh_utils
 
 LEFT = {
     'key1': {
@@ -117,3 +119,15 @@ class UtilsTest(base.BaseTest):
         self.assertEqual(2, input_dict.get('param2'))
         self.assertEqual('var3', input_dict.get('param3'))
         self.assertIs(input_dict.get('param1'), utils.NotDefined)
+
+    def test_paramiko_to_private_key(self):
+        self.assertRaises(
+            exc.DataAccessException,
+            ssh_utils._to_paramiko_private_key,
+            "../dir"
+        )
+        self.assertRaises(
+            exc.DataAccessException,
+            ssh_utils._to_paramiko_private_key,
+            "..\\dir"
+        )

@@ -765,7 +765,9 @@ Input parameters:
    *Required*.
 -  **username** - User name to authenticate on the host.
 -  **password** - User password to to authenticate on the host. *Optional.*
--  **private_key** - Private key string which will be used for authentication on remote host. *Optional.*
+-  **private_key_filename** - Private key file name which will be used for authentication on remote host.
+All private keys should be on executor host in **<home-user-directory>/.ssh/**.
+**<home-user-directory>** should refer to user directory under which service is running. *Optional.*
 
 **NOTE**: Authentication using key pairs is supported, key should be
 on Mistral Executor server machine.
