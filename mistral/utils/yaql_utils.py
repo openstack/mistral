@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
+
 import yaql
 
 from mistral.db.v2 import api as db_api
@@ -42,6 +44,7 @@ def _register_functions(yaql_ctx):
     yaql_ctx.register_function(env_)
     yaql_ctx.register_function(execution_)
     yaql_ctx.register_function(task_)
+    yaql_ctx.register_function(json_pp_, name='json_pp')
 
 
 # Additional YAQL functions needed by Mistral.
@@ -54,6 +57,10 @@ def env_(context):
 
 def execution_(context):
     return context['__execution']
+
+
+def json_pp_(data):
+    return json.dumps(data, indent=4).replace("\\n", "\n")
 
 
 def task_(context, task_name):
