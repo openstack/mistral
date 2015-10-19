@@ -273,9 +273,11 @@ class DefaultEngine(base.Engine, coordination.Service):
         # When resuming a workflow we need to ignore all 'pause'
         # commands because workflow controller takes tasks that
         # completed within the period when the workflow was pause.
-        cmds = filter(
-            lambda c: not isinstance(c, commands.PauseWorkflow),
-            cmds
+        cmds = list(
+            filter(
+                lambda c: not isinstance(c, commands.PauseWorkflow),
+                cmds
+            )
         )
 
         # Since there's no explicit task causing the operation
