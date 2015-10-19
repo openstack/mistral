@@ -17,6 +17,7 @@
 
 RETVAL=0
 
+sudo chmod -R a+rw /opt/stack/new/
 cd /opt/stack/new/
 
 echo "Repository: $ZUUL_PROJECT"
@@ -25,7 +26,7 @@ echo "Repository: $ZUUL_PROJECT"
 if [[ "$ZUUL_PROJECT" == "openstack/mistral" ]]; then
     cd mistral/
     echo "Run mistral API tests"
-    sudo bash ./functionaltests/run_tests.sh
+    ./functionaltests/run_tests.sh
     RETVAL=$?
 fi
 
@@ -33,7 +34,7 @@ fi
 if [[ RETVAL -eq 0 ]]; then
     cd /opt/stack/new/python-mistralclient/
     echo "Run mistralclient tests"
-    sudo bash ./functionaltests/run_tests.sh
+    ./functionaltests/run_tests.sh
     RETVAL=$?
 fi
 

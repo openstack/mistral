@@ -330,19 +330,20 @@ class SSHAction(base.Action):
     def _execute_cmd_method(self):
         return ssh_utils.execute_command
 
-    def __init__(self, cmd, host, username, password=None, private_key=None):
+    def __init__(self, cmd, host, username,
+                 password=None, private_key_filename=None):
         self.cmd = cmd
         self.host = host
         self.username = username
         self.password = password
-        self.private_key = private_key
+        self.private_key_filename = private_key_filename
 
         self.params = {
             'cmd': self.cmd,
             'host': self.host,
             'username': self.username,
             'password': self.password,
-            'private_key': self.private_key
+            'private_key_filename': self.private_key_filename
         }
 
     def run(self):
@@ -386,14 +387,15 @@ class SSHProxiedAction(SSHAction):
     def _execute_cmd_method(self):
         return ssh_utils.execute_command_via_gateway
 
-    def __init__(self, cmd, host, username, private_key, gateway_host,
-                 gateway_username=None, password=None, proxy_command=None):
+    def __init__(self, cmd, host, username, private_key_filename,
+                 gateway_host, gateway_username=None,
+                 password=None, proxy_command=None):
         super(SSHProxiedAction, self).__init__(
             cmd,
             host,
             username,
             password,
-            private_key
+            private_key_filename
         )
 
         self.gateway_host = gateway_host
