@@ -228,7 +228,7 @@ class EngineServer(object):
 
 
 def _wrap_exception_and_reraise(exception):
-    message = "%s: %s" % (exception.__class__.__name__, exception.message)
+    message = "%s: %s" % (exception.__class__.__name__, exception.args[0])
 
     raise exc.MistralException(message)
 

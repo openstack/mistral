@@ -683,6 +683,7 @@ WF_EXECS = [
         'task_id': None,
         'trust_id': None,
         'description': None,
+        'output': None
     },
     {
         'spec': {},
@@ -695,6 +696,7 @@ WF_EXECS = [
         'task_id': None,
         'trust_id': None,
         'description': None,
+        'output': None
     }
 ]
 
