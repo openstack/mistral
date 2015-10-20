@@ -43,11 +43,13 @@ class DirectWorkflowController(base.WorkflowController):
     __workflow_type__ = "direct"
 
     def _get_upstream_task_executions(self, task_spec):
-        return filter(
-            lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
-            wf_utils.find_task_executions_by_specs(
-                self.wf_ex,
-                self.wf_spec.find_inbound_task_specs(task_spec)
+        return list(
+            filter(
+                lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
+                wf_utils.find_task_executions_by_specs(
+                    self.wf_ex,
+                    self.wf_spec.find_inbound_task_specs(task_spec)
+                )
             )
         )
 
@@ -154,9 +156,11 @@ class DirectWorkflowController(base.WorkflowController):
         return True
 
     def _find_end_tasks(self):
-        return filter(
-            lambda t_ex: not self._has_outbound_tasks(t_ex),
-            wf_utils.find_successful_task_executions(self.wf_ex)
+        return list(
+            filter(
+                lambda t_ex: not self._has_outbound_tasks(t_ex),
+                wf_utils.find_successful_task_executions(self.wf_ex)
+            )
         )
 
     def _has_outbound_tasks(self, task_ex):
@@ -218,7 +222,9 @@ class DirectWorkflowController(base.WorkflowController):
         ]
 
     def _remove_started_joins(self, cmds):
-        return filter(lambda cmd: not self._is_started_join(cmd), cmds)
+        return list(
+            filter(lambda cmd: not self._is_started_join(cmd), cmds)
+        )
 
     def _is_started_join(self, cmd):
         if not (isinstance(cmd, commands.RunTask) and
@@ -278,7 +284,9 @@ class DirectWorkflowController(base.WorkflowController):
         if not in_t_ex or not states.is_completed(in_t_ex.state):
             return False
 
-        return filter(
-            lambda t_name: join_task_spec.get_name() == t_name,
-            self._find_next_task_names(in_t_ex)
+        return list(
+            filter(
+                lambda t_name: join_task_spec.get_name() == t_name,
+                self._find_next_task_names(in_t_ex)
+            )
         )

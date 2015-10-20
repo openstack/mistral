@@ -45,7 +45,7 @@ def find_items(items, **props):
 
         return True
 
-    filtered = filter(lambda item: _matches(item, **props), items)
+    filtered = list(filter(lambda item: _matches(item, **props), items))
 
     if len(filtered) == 1:
         return filtered[0]
