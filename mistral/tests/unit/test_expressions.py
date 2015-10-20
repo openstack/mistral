@@ -111,6 +111,24 @@ class YaqlEvaluatorTest(base.BaseTest):
                           self._evaluator.validate,
                           {'a': 1})
 
+    def test_json_pp(self):
+        self.assertEqual('"3"', self._evaluator.evaluate('json_pp($)', '3'))
+        self.assertEqual('3', self._evaluator.evaluate('json_pp($)', 3))
+        self.assertEqual(
+            '[\n    1, \n    2\n]',
+            self._evaluator.evaluate('json_pp($)', [1, 2])
+        )
+        self.assertEqual(
+            '{\n    "a": "b"\n}',
+            self._evaluator.evaluate('json_pp($)', {'a': 'b'})
+        )
+        self.assertEqual(
+            '"Mistral\nis\nawesome"',
+            self._evaluator.evaluate(
+                'json_pp($)', '\n'.join(['Mistral', 'is', 'awesome'])
+            )
+        )
+
 
 class InlineYAQLEvaluatorTest(base.BaseTest):
     def setUp(self):
