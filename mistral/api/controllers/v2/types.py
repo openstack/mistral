@@ -35,8 +35,8 @@ class ListType(wtypes.UserType):
         """
         items = [v.strip().lower() for v in six.text_type(value).split(',')]
 
-        # filter() to remove empty items.
-        return filter(None, items)
+        # remove empty items.
+        return [x for x in items if x]
 
     @staticmethod
     def frombasetype(value):

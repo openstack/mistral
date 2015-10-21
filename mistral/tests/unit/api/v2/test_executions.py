@@ -296,7 +296,7 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
-            resp.body
+            resp.body.decode()
         )
 
     def test_get_all_pagination_unknown_direction(self):
@@ -307,4 +307,4 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(400, resp.status_int)
 
-        self.assertIn("Unknown sort direction", resp.body)
+        self.assertIn("Unknown sort direction", resp.body.decode())

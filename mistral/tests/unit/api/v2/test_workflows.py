@@ -420,7 +420,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertIn(
             "Length of sort_keys must be equal or greater than sort_dirs",
-            resp.body
+            resp.body.decode()
         )
 
     def test_get_all_pagination_unknown_direction(self):
@@ -431,7 +431,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(400, resp.status_int)
 
-        self.assertIn("Unknown sort direction", resp.body)
+        self.assertIn("Unknown sort direction", resp.body.decode())
 
     @mock.patch('mistral.db.v2.api.get_workflow_definitions')
     def test_get_all_with_fields_filter(self, mock_get_db_wfs):
@@ -461,7 +461,7 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertIn(
             "nonexist are invalid",
-            resp.body
+            resp.body.decode()
         )
 
     def test_validate(self):
