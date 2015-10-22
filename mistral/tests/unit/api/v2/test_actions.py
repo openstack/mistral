@@ -303,7 +303,7 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertEqual(400, resp.status_int)
 
-        self.assertIn("Limit must be positive", resp.body)
+        self.assertIn("Limit must be positive", resp.body.decode())
 
     def test_get_all_pagination_limit_not_integer(self):
         resp = self.app.get(
@@ -313,7 +313,7 @@ class TestActionsController(base.FunctionalTest):
 
         self.assertEqual(400, resp.status_int)
 
-        self.assertIn("unable to convert to int", resp.body)
+        self.assertIn("unable to convert to int", resp.body.decode())
 
     def test_get_all_pagination_invalid_sort_dirs_length(self):
         resp = self.app.get(

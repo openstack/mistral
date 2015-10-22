@@ -14,6 +14,7 @@
 
 import mock
 from oslo_config import cfg
+import six
 
 from mistral import coordination
 from mistral.tests import base
@@ -94,7 +95,7 @@ class ServiceCoordinatorTest(base.BaseTest):
         members = coordinator.get_members('fake_group')
 
         self.assertEqual(1, len(members))
-        self.assertItemsEqual(('fake_id',), members)
+        self.assertItemsEqual((six.b('fake_id'),), members)
 
     def test_join_group_and_leave_group(self):
         cfg.CONF.set_default(
@@ -113,7 +114,7 @@ class ServiceCoordinatorTest(base.BaseTest):
         members_after = coordinator.get_members('fake_group')
 
         self.assertEqual(1, len(members_before))
-        self.assertEqual(set(['fake_id']), members_before)
+        self.assertEqual(set([six.b('fake_id')]), members_before)
 
         self.assertEqual(0, len(members_after))
         self.assertEqual(set([]), members_after)
@@ -144,4 +145,4 @@ class ServiceTest(base.BaseTest):
         members = srv_coordinator.get_members('fake_group')
 
         mock_get_identifier.assert_called_once_with()
-        self.assertEqual(set(['fake_id']), members)
+        self.assertEqual(set([six.b('fake_id')]), members)
