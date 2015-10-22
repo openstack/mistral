@@ -17,6 +17,7 @@ Overview
     Roadmap <https://wiki.openstack.org/wiki/Mistral/Roadmap>
     terminology/index
     main_features
+    cookbooks
 
 User guide
 ----------
