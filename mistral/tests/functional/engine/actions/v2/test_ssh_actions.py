@@ -13,6 +13,8 @@
 #    limitations under the License.
 
 import json
+import os
+from os import path
 import time
 
 from oslo_log import log as logging
@@ -27,6 +29,7 @@ from mistral.utils import ssh_utils
 
 LOG = logging.getLogger(__name__)
 CONF = config.CONF
+SSH_KEYS_DIRECTORY = path.expanduser("~/.ssh/")
 
 
 class SSHActionsTestsV2(base.TestCaseAdvanced):
@@ -138,6 +141,27 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         cls.private_key, cls.public_key = utils.generate_key_pair()
         cls.key_name = 'mistral-functional-tests-key'
 
+        # If ZUUL_PROJECT is specified, it means
+        # tests are running on Jenkins gate.
+
+        if os.environ.get('ZUUL_PROJECT'):
+            cls.key_dir = "/opt/stack/new/.ssh/"
+
+            if not path.exists(cls.key_dir):
+                os.mkdir(cls.key_dir)
+        else:
+            cls.key_dir = SSH_KEYS_DIRECTORY
+
+        utils.save_text_to(
+            cls.private_key,
+            cls.key_dir + cls.key_name,
+            overwrite=True
+        )
+
+        LOG.info(
+            "Private key saved to %s" % cls.key_dir + cls.key_name
+        )
+
         # Create keypair in nova.
         cls.mgr.keypairs_client.create_keypair(
             name=cls.key_name,
@@ -184,6 +208,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         cls.mgr.security_group_rules_client.delete_security_group_rule(
             cls.ssh_rule_id
         )
+        os.remove(cls.key_dir + cls.key_name)
 
         super(SSHActionsTestsV2, cls).resource_cleanup()
 
@@ -193,7 +218,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             'cmd': 'hostname',
             'host': self.public_vm_ip,
             'username': CONF.scenario.ssh_user,
-            'private_key': self.private_key
+            'private_key_filename': self.key_name
         }
 
         resp, body = self.client.create_action_execution(
@@ -217,7 +242,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             'cmd': 'hostname',
             'host': guest_vm_ip,
             'username': CONF.scenario.ssh_user,
-            'private_key': self.private_key,
+            'private_key_filename': self.key_name,
             'gateway_host': self.public_vm_ip,
             'gateway_username': CONF.scenario.ssh_user
         }
