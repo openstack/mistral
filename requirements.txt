@@ -13,12 +13,12 @@ kombu>=3.0.7
 mock>=1.2
 networkx>=1.10
 oslo.concurrency>=2.3.0 # Apache-2.0
-oslo.config>=2.3.0 # Apache-2.0
+oslo.config>=2.6.0 # Apache-2.0
 oslo.db>=3.0.0 # Apache-2.0
 oslo.messaging!=1.17.0,!=1.17.1,!=2.6.0,!=2.6.1,>=1.16.0 # Apache-2.0
 oslo.utils!=2.6.0,>=2.4.0 # Apache-2.0
 oslo.log>=1.8.0 # Apache-2.0
-oslo.serialization>=1.4.0 # Apache-2.0
+oslo.serialization>=1.10.0 # Apache-2.0
 oslo.service>=0.10.0 # Apache-2.0
 paramiko>=1.13.0
 pbr>=1.6
@@ -35,6 +35,6 @@ retrying!=1.3.0,>=1.2.3 # Apache-2.0
 six>=1.9.0
 SQLAlchemy<1.1.0,>=0.9.9
 stevedore>=1.5.0 # Apache-2.0
-WSME>=0.7
+WSME>=0.8
 yaql>=1.0.0 # Apache 2.0 License
 tooz>=1.19.0 # Apache-2.0
