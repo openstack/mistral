@@ -16,9 +16,9 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
-from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -133,9 +133,10 @@ class AdhocActionsTest(base.EngineTestCase):
         )
 
     def test_run_adhoc_action_without_sufficient_input_value(self):
-        self.assertRaises(
-            exc.InputException,
-            self.engine.start_workflow,
+        wf_ex = self.engine.start_workflow(
             'my_wb.wf3',
             {'str1': 'a', 'str2': 'b'}
         )
+
+        self.assertIn("Invalid input", wf_ex.state_info)
+        self.assertEqual(states.ERROR, wf_ex.state)

@@ -66,7 +66,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id), timeout=5)
+        self._await(lambda: self.is_execution_success(wf_ex.id))
 
         # Reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)

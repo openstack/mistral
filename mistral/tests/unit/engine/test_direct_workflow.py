@@ -12,12 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mock
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import default_engine as de
 from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
@@ -163,11 +161,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo wrong_input="Ha-ha"
         """
 
-        self.assertRaises(
-            exc.InputException,
-            self._run_workflow,
-            wf_text
-        )
+        wf_ex = self._run_workflow(wf_text)
+
+        self.assertIn("Invalid input", wf_ex.state_info)
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_wrong_action(self):
         wf_text = """
@@ -208,20 +205,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
-            self.assertRaises(
-                exc.InvalidActionException,
-                self.engine.start_workflow, 'wf', None)
+        wf_ex = self.engine.start_workflow('wf', None)
 
-            self.assertEqual(1, mock_fw.call_count)
-
-            self.assertTrue(
-                issubclass(
-                    type(mock_fw.call_args[0][1]),
-                    exc.InvalidActionException
-                ),
-                "Called with a right exception"
-            )
+        self.assertIn(
+            "Failed to find action [action_name=wrong.task]",
+            wf_ex.state_info
+        )
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_messed_yaql(self):
         wf_text = """
@@ -257,20 +247,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        with mock.patch.object(de.DefaultEngine, '_fail_workflow') as mock_fw:
-            self.assertRaises(
-                exc.YaqlEvaluationException,
-                self.engine.start_workflow, 'wf', None
-            )
+        wf_ex = self.engine.start_workflow('wf', None)
 
-            self.assertEqual(1, mock_fw.call_count)
-            self.assertTrue(
-                issubclass(
-                    type(mock_fw.call_args[0][1]),
-                    exc.YaqlEvaluationException
-                ),
-                "Called with a right exception"
-            )
+        self.assertIn(
+            "Can not evaluate YAQL expression:  wrong(yaql)",
+            wf_ex.state_info
+        )
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_mismatched_yaql_in_first_task(self):
         wf_text = """
@@ -286,12 +269,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        exception = self.assertRaises(
-            exc.YaqlEvaluationException,
-            self.engine.start_workflow, 'wf', {'var': 2}
-        )
+        wf_ex = self.engine.start_workflow('wf', {'var': 2})
 
-        self.assertIn("Can not evaluate YAQL expression", exception.message)
+        self.assertIn("Can not evaluate YAQL expression", wf_ex.state_info)
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_one_line_syntax_in_on_clauses(self):
         wf_text = """
