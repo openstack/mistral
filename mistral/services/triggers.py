@@ -45,7 +45,7 @@ def validate_cron_trigger_input(pattern, first_time, count):
             raise exc.InvalidModelException(
                 'first_execution_time must be at least 1 second in the future.'
             )
-        if not pattern and count > 1:
+        if not pattern and count and count > 1:
             raise exc.InvalidModelException(
                 'Pattern must be provided if count is superior to 1.'
             )

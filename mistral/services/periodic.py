@@ -51,7 +51,8 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                     **t.workflow_params
                 )
             finally:
-                if t.remaining_executions > 0:
+                if (t.remaining_executions is not None and
+                   t.remaining_executions > 0):
                     t.remaining_executions -= 1
                 if t.remaining_executions == 0:
                     db_api_v2.delete_cron_trigger(t.name)
