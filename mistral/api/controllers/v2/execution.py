@@ -192,7 +192,7 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(Executions, types.uuid, int, types.uniquelist,
                          types.list)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='desc'):
+                sort_dirs='asc'):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
