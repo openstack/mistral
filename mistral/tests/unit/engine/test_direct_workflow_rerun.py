@@ -458,6 +458,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
         self._await(lambda: self.is_task_in_state(task_1_ex.id, states.ERROR))
         self._await(lambda: self.is_task_in_state(task_2_ex.id, states.ERROR))
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)

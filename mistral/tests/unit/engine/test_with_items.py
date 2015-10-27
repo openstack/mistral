@@ -656,17 +656,16 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(workflow_with_concurrency_yaql)
 
         # Start workflow.
-        exception = self.assertRaises(
-            exc.InvalidModelException,
-            self.engine.start_workflow,
+        wf_ex = self.engine.start_workflow(
             'concurrency_test',
             {'concurrency': '2'}
         )
 
         self.assertIn(
             "Invalid data type in ConcurrencyPolicy",
-            exception.message
+            wf_ex.state_info
         )
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_with_items_concurrency_2(self):
         workflow_with_concurrency_2 = """---
