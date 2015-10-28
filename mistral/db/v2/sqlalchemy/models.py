@@ -184,7 +184,7 @@ def validate_long_type_length(cls, field_name, value):
         if (size_limit_kb < 0):
             return
 
-        size_kb = sys.getsizeof(str(value)) / 1024
+        size_kb = int(sys.getsizeof(str(value)) / 1024)
 
         if size_kb > size_limit_kb:
             LOG.error(
