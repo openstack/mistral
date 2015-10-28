@@ -111,12 +111,13 @@ def get_indices_for_loop(task_ex):
 def decrease_capacity(task_ex, count):
     with_items_context = _get_context(task_ex)
 
-    if with_items_context[_CAPACITY] >= count:
-        with_items_context[_CAPACITY] -= count
-    elif with_items_context[_CAPACITY]:
-        raise exc.WorkflowException(
-            "Impossible to apply current with-items concurrency."
-        )
+    if with_items_context[_CAPACITY] is not None:
+        if with_items_context[_CAPACITY] >= count:
+            with_items_context[_CAPACITY] -= count
+        else:
+            raise exc.WorkflowException(
+                "Impossible to apply current with-items concurrency."
+            )
 
     task_ex.runtime_context.update({_WITH_ITEMS: with_items_context})
 
