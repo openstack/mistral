@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +23,7 @@ from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
+from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -32,12 +34,12 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowEngineTest(base.EngineTestCase):
-    def _run_workflow(self, workflow_yaml):
+    def _run_workflow(self, workflow_yaml, state=states.ERROR):
         wf_service.create_workflows(workflow_yaml)
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self._await(lambda: self.is_execution_in_state(wf_ex.id, state))
 
         return db_api.get_workflow_execution(wf_ex.id)
 
@@ -223,7 +225,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
                 "Called with a right exception"
             )
 
-    def test_messed_yaql(self):
+    def test_next_task_with_input_yaql_error(self):
         wf_text = """
         version: '2.0'
 
@@ -240,9 +242,98 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.echo output=<% wrong(yaql) %>
         """
 
+        # Invoke workflow and assert workflow is in ERROR.
         wf_ex = self._run_workflow(wf_text)
 
-        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
+
+        # Assert that there is only one task execution and it's SUCCESS.
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+
+        # Assert that there is only one action execution and it's SUCCESS.
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
+
+    def test_async_next_task_with_input_yaql_error(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.async_noop
+              on-complete:
+                - task2
+
+            task2:
+              action: std.echo output=<% wrong(yaql) %>
+        """
+
+        # Invoke workflow and assert workflow, task,
+        # and async action execution are RUNNING.
+        wf_ex = self._run_workflow(wf_text, states.RUNNING)
+
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.RUNNING, task_1_ex.state)
+
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.RUNNING, task_1_action_exs[0].state)
+
+        # Update async action execution result.
+        result = wf_utils.Result(data='foobar')
+
+        self.assertRaises(
+            exc.YaqlEvaluationException,
+            self.engine.on_action_complete,
+            task_1_action_exs[0].id,
+            result
+        )
+
+        # Assert that task1 is SUCCESS and workflow is ERROR.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
 
     def test_messed_yaql_in_first_task(self):
         wf_text = """
@@ -322,6 +413,116 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf', {})
 
         self._await(lambda: self.is_execution_success(wf_ex.id))
+
+    def test_task_on_clause_has_yaql_error(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.noop
+              on-success:
+                - task2: <% wrong(yaql) %>
+
+            task2:
+              action: std.noop
+        """
+
+        # Invoke workflow and assert workflow is in ERROR.
+        wf_ex = self._run_workflow(wf_text)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
+
+        # Assert that there is only one task execution and it's SUCCESS.
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+
+        # Assert that there is only one action execution and it's SUCCESS.
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
+
+    def test_async_task_on_clause_has_yaql_error(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.async_noop
+              on-complete:
+                - task2: <% wrong(yaql) %>
+
+            task2:
+              action: std.noop
+        """
+
+        # Invoke workflow and assert workflow, task,
+        # and async action execution are RUNNING.
+        wf_ex = self._run_workflow(wf_text, states.RUNNING)
+
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.RUNNING, task_1_ex.state)
+
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.RUNNING, task_1_action_exs[0].state)
+
+        # Update async action execution result.
+        result = wf_utils.Result(data='foobar')
+
+        self.assertRaises(
+            exc.YaqlEvaluationException,
+            self.engine.on_action_complete,
+            task_1_action_exs[0].id,
+            result
+        )
+
+        # Assert that task1 is SUCCESS and workflow is ERROR.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
+        self.assertEqual(1, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id
+        )
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
 
     def test_inconsistent_task_names(self):
         wf_text = """
