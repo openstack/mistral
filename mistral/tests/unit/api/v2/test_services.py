@@ -52,7 +52,7 @@ class TestServicesController(base.FunctionalTest):
             '/v2/services',
         )
 
-        self.assertIn('Service API is not supported', context.message)
+        self.assertIn('Service API is not supported', context.args[0])
 
     @mock.patch('mistral.coordination.ServiceCoordinator.get_members',
                 side_effect=tooz.coordination.ToozError('error message'))
@@ -70,5 +70,5 @@ class TestServicesController(base.FunctionalTest):
 
         self.assertIn(
             'Failed to get service members from coordination backend',
-            context.message
+            context.args[0]
         )

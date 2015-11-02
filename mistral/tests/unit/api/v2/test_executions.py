@@ -210,7 +210,7 @@ class TestExecutionsController(base.FunctionalTest):
             WF_EX_JSON
         )
 
-        self.assertIn('Bad response: 400', context.message)
+        self.assertIn('Bad response: 400', context.args[0])
 
     @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_DELETE)
     def test_delete(self):
