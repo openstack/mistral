@@ -115,7 +115,7 @@ class YaqlEvaluatorTest(base.BaseTest):
         self.assertEqual('"3"', self._evaluator.evaluate('json_pp($)', '3'))
         self.assertEqual('3', self._evaluator.evaluate('json_pp($)', 3))
         self.assertEqual(
-            '[\n    1, \n    2\n]',
+            '[\n    1,\n    2\n]',
             self._evaluator.evaluate('json_pp($)', [1, 2])
         )
         self.assertEqual(

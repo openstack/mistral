@@ -12,13 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
 
 import yaql
 
 from mistral.db.v2 import api as db_api
 from mistral.workflow import utils as wf_utils
-
+from oslo_serialization import jsonutils
 ROOT_CONTEXT = None
 
 
@@ -60,7 +59,10 @@ def execution_(context):
 
 
 def json_pp_(data):
-    return json.dumps(data, indent=4).replace("\\n", "\n")
+    return jsonutils.dumps(
+        data,
+        indent=4
+    ).replace("\\n", "\n").replace(" \n", "\n")
 
 
 def task_(context, task_name):
