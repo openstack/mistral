@@ -58,7 +58,7 @@ def get_concurrency(task_ex):
 def get_final_state(task_ex):
     find_error = lambda x: x.accepted and x.state == states.ERROR
 
-    if filter(find_error, task_ex.executions):
+    if list(filter(find_error, task_ex.executions)):
         return states.ERROR
     else:
         return states.SUCCESS
