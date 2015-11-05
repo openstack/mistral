@@ -77,7 +77,7 @@ def build_wait_before_policy(policies_spec):
 
     wait_before = policies_spec.get_wait_before()
 
-    return WaitBeforePolicy(wait_before) if wait_before > 0 else None
+    return WaitBeforePolicy(wait_before) if wait_before != 0 else None
 
 
 def build_wait_after_policy(policies_spec):
