@@ -14,8 +14,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import base64
+from email.header import decode_header
 from email import parser
 import mock
+import six
 import testtools
 
 from mistral.actions import std_actions as std
@@ -103,8 +106,26 @@ class SendEmailActionTest(base.BaseTest):
 
         self.assertEqual(self.from_addr, message['from'])
         self.assertEqual(self.to_addrs_str, message['to'])
-        self.assertEqual(self.subject, message['subject'])
-        self.assertEqual(self.body, message.get_payload())
+        if six.PY3:
+            self.assertEqual(
+                self.subject,
+                decode_header(message['subject'])[0][0].decode('utf-8')
+            )
+        else:
+            self.assertEqual(
+                self.subject.decode('utf-8'),
+                decode_header(message['subject'])[0][0].decode('utf-8')
+            )
+        if six.PY3:
+            self.assertEqual(
+                self.body,
+                base64.b64decode(message.get_payload()).decode('utf-8')
+            )
+        else:
+            self.assertEqual(
+                self.body.decode('utf-8'),
+                base64.b64decode(message.get_payload()).decode('utf-8')
+            )
 
     @mock.patch('smtplib.SMTP')
     def test_with_password(self, smtp):
