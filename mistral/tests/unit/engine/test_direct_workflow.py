@@ -93,6 +93,45 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertTrue(wf_ex.state, states.ERROR)
 
+    def test_direct_workflow_condition_transition_not_triggering(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          input:
+            - var: null
+
+          tasks:
+            task1:
+              action: std.fail
+              on-success:
+                - task2
+              on-error:
+                - task3: <% $.var != null %>
+
+            task2:
+              action: std.noop
+
+            task3:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self.assertEqual(1, len(tasks))
+
+        self._await(lambda: self.is_task_error(task1.id))
+
+        self.assertTrue(wf_ex.state, states.ERROR)
+
     def test_direct_workflow_change_state_after_success(self):
         wf_text = """
         version: '2.0'

@@ -150,7 +150,13 @@ class DirectWorkflowController(base.WorkflowController):
 
     def all_errors_handled(self):
         for t_ex in wf_utils.find_error_task_executions(self.wf_ex):
-            if not self.wf_spec.get_on_error_clause(t_ex.name):
+
+            tasks_on_error = self._find_next_task_names_for_clause(
+                self.wf_spec.get_on_error_clause(t_ex.name),
+                data_flow.evaluate_task_outbound_context(t_ex)
+            )
+
+            if not tasks_on_error:
                 return False
 
         return True
