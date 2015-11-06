@@ -15,18 +15,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from email.header import Header
 from email.mime import text
+
 import json
 import requests
 import smtplib
-
-from oslo_log import log as logging
 
 from mistral.actions import base
 from mistral import exceptions as exc
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
 from mistral.workflow import utils as wf_utils
+from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
@@ -286,9 +287,8 @@ class SendEmailAction(base.Action):
                  (self.sender, self.to, self.subject,
                   self.smtp_server, self.body[:128]))
 
-        # TODO(dzimine): handle utf-8, http://stackoverflow.com/a/14506784
-        message = text.MIMEText(self.body)
-        message['Subject'] = self.subject
+        message = text.MIMEText(self.body, _charset='utf-8')
+        message['Subject'] = Header(self.subject, 'utf-8')
         message['From'] = self.sender
         message['To'] = self.to
 
