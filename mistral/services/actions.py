@@ -31,20 +31,39 @@ def create_actions(definition, scope='private'):
     return db_actions
 
 
-def update_actions(definition, scope='private'):
+def update_actions(definition, scope='private', run_in_tx=True):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
     db_actions = []
 
-    with db_api.transaction():
-        for action_spec in action_list_spec.get_actions():
-            db_actions.append(
-                create_or_update_action(
-                    action_spec,
-                    definition,
-                    scope
-                )
+    if run_in_tx:
+        with db_api.transaction():
+            db_actions = _append_all_actions(
+                action_list_spec,
+                db_actions,
+                definition,
+                scope
             )
+    else:
+        db_actions = _append_all_actions(
+            action_list_spec,
+            db_actions,
+            definition,
+            scope
+        )
+
+    return db_actions
+
+
+def _append_all_actions(action_list_spec, db_actions, definition, scope):
+    for action_spec in action_list_spec.get_actions():
+        db_actions.append(
+            create_or_update_action(
+                action_spec,
+                definition,
+                scope
+            )
+        )
 
     return db_actions
 
