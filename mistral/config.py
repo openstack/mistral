@@ -93,12 +93,12 @@ executor_opts = [
 ]
 
 execution_expiration_policy_opts = [
-    cfg.IntOpt('evaluation_interval', default=None,
+    cfg.IntOpt('evaluation_interval',
                help='How often will the executions be evaluated '
                     '(in minutes). For example for value 120 the interval '
                     'will be 2 hours (every 2 hours).'),
 
-    cfg.IntOpt('older_than', default=None,
+    cfg.IntOpt('older_than',
                help='Evaluate from which time remove executions in minutes. '
                     'For example when older_than = 60, remove all executions '
                     'that finished a 60 minutes ago or more. '
@@ -116,7 +116,6 @@ wf_trace_log_name_opt = cfg.StrOpt(
 
 coordination_opts = [
     cfg.StrOpt('backend_url',
-               default=None,
                help='The backend URL to be used for coordination'),
     cfg.FloatOpt('heartbeat_interval',
                  default=5.0,
