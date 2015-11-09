@@ -48,3 +48,6 @@ tools/pylint_exceptions
 
 #Linux swap file
 *.swp
+
+# Files created by releasenotes build
+releasenotes/build
