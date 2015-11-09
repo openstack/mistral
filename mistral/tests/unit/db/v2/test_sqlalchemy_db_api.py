@@ -1113,17 +1113,38 @@ class CronTriggerTest(SQLAlchemyTest):
 
         self.assertIsNone(created.updated_at)
 
-        updated = db_api.update_cron_trigger(
+        updated, updated_count = db_api.update_cron_trigger(
             created.name,
             {'pattern': '*/1 * * * *'}
         )
 
         self.assertEqual('*/1 * * * *', updated.pattern)
+        self.assertEqual(1, updated_count)
 
         fetched = db_api.get_cron_trigger(created.name)
 
         self.assertEqual(updated, fetched)
         self.assertIsNotNone(fetched.updated_at)
+
+        # Test update_cron_trigger and query_filter with results
+        updated, updated_count = db_api.update_cron_trigger(
+            created.name,
+            {'pattern': '*/1 * * * *'},
+            query_filter={'name': created.name}
+        )
+
+        self.assertEqual(updated, fetched)
+        self.assertEqual(1, updated_count)
+
+        # Test update_cron_trigger and query_filter without results
+        updated, updated_count = db_api.update_cron_trigger(
+            created.name,
+            {'pattern': '*/1 * * * *'},
+            query_filter={'name': 'not-existing-id'}
+        )
+
+        self.assertEqual(updated, updated)
+        self.assertEqual(0, updated_count)
 
     def test_create_or_update_cron_trigger(self):
         name = 'not-existing-id'
@@ -1163,8 +1184,9 @@ class CronTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(created, fetched)
 
-        db_api.delete_cron_trigger(created.name)
+        rowcount = db_api.delete_cron_trigger(created.name)
 
+        self.assertEqual(1, rowcount)
         self.assertRaises(
             exc.NotFoundException,
             db_api.get_cron_trigger,
