@@ -25,6 +25,7 @@ eventlet.monkey_patch(
     time=True)
 
 import os
+import time
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
@@ -76,8 +77,16 @@ def launch_executor(transport):
 
     executor_v2.register_membership()
 
-    server.start()
-    server.wait()
+    try:
+        server.start()
+        while True:
+            time.sleep(604800)
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
+        print("Stopping executor service...")
+        server.stop()
+        server.wait()
 
 
 def launch_engine(transport):
@@ -107,8 +116,16 @@ def launch_engine(transport):
 
     engine_v2.register_membership()
 
-    server.start()
-    server.wait()
+    try:
+        server.start()
+        while True:
+            time.sleep(604800)
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
+        print("Stopping engine service...")
+        server.stop()
+        server.wait()
 
 
 def launch_api(transport):
