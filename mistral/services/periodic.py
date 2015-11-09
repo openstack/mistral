@@ -14,6 +14,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import traceback
+
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import periodic_task
@@ -22,12 +24,16 @@ from oslo_service import threadgroup
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
 from mistral.engine import rpc
+from mistral import exceptions as exc
 from mistral.services import security
 from mistral.services import triggers
 
 LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
+
+# {periodic_task: thread_group}
+_periodic_tasks = {}
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
@@ -44,33 +50,74 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             LOG.debug("Cron trigger security context: %s" % ctx)
 
             try:
-                rpc.get_engine_client().start_workflow(
-                    t.workflow.name,
-                    t.workflow_input,
-                    description="Workflow execution created by cron trigger.",
-                    **t.workflow_params
+                # Try to advance the cron trigger next_execution_time and
+                # remaining_executions if relevant.
+                modified = advance_cron_trigger(t)
+
+                # If cron trigger was not already modified by another engine.
+                if modified:
+                    LOG.debug(
+                        "Starting workflow %s triggered by cron %s",
+                        t.workflow.name, t.name
+                    )
+
+                    rpc.get_engine_client().start_workflow(
+                        t.workflow.name,
+                        t.workflow_input,
+                        description="Workflow execution created "
+                                    "by cron trigger.",
+                        **t.workflow_params
+                    )
+            except Exception as e:
+                # Log and continue to next cron trigger
+                msg = (
+                    "Failed to process cron trigger %s\n%s"
+                    % (str(t), traceback.format_exc(e))
                 )
+                LOG.error(msg)
             finally:
-                if (t.remaining_executions is not None and
-                   t.remaining_executions > 0):
-                    t.remaining_executions -= 1
-                if t.remaining_executions == 0:
-                    db_api_v2.delete_cron_trigger(t.name)
-                else:  # if remaining execution = None or > 0
-                    next_time = triggers.get_next_execution_time(
-                        t.pattern,
-                        t.next_execution_time
-                    )
+                auth_ctx.set_ctx(None)
 
-                    db_api_v2.update_cron_trigger(
-                        t.name,
-                        {
-                            'next_execution_time': next_time,
-                            'remaining_executions': t.remaining_executions
-                        }
-                    )
 
-                    auth_ctx.set_ctx(None)
+def advance_cron_trigger(ct):
+        modified_count = 0
+
+        try:
+            # If the cron trigger is defined with limited execution count.
+            if (ct.remaining_executions is not None
+               and ct.remaining_executions > 0):
+                ct.remaining_executions -= 1
+
+            # If this is the last execution.
+            if ct.remaining_executions == 0:
+                modified_count = db_api_v2.delete_cron_trigger(ct.name)
+            else:  # if remaining execution = None or > 0.
+                next_time = triggers.get_next_execution_time(
+                    ct.pattern,
+                    ct.next_execution_time
+                )
+
+                # Update the cron trigger with next execution details
+                # only if it wasn't already updated by a different process.
+                updated, modified_count = db_api_v2.update_cron_trigger(
+                    ct.name,
+                    {
+                        'next_execution_time': next_time,
+                        'remaining_executions': ct.remaining_executions
+                    },
+                    query_filter={
+                        'next_execution_time': ct.next_execution_time
+                    }
+                )
+        except exc.NotFoundException as e:
+            # Cron trigger was probably already deleted by a different process.
+            LOG.debug(
+                "Cron trigger named '%s' does not exist anymore: %s",
+                ct.name, str(e)
+            )
+
+        # Return True if this engine was able to modify the cron trigger in DB.
+        return modified_count > 0
 
 
 def setup():
@@ -90,3 +137,13 @@ def setup():
         periodic_interval_max=1,
         context=ctx
     )
+
+    _periodic_tasks[pt] = tg
+
+    return tg
+
+
+def stop_all_periodic_tasks():
+    for pt, tg in _periodic_tasks.items():
+        tg.stop()
+        del _periodic_tasks[pt]
