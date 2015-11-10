@@ -101,7 +101,7 @@ def log_exec(logger, level=logging.DEBUG):
     def _decorator(func):
         def _logged(*args, **kw):
             params_repr = ("[args=%s, kw=%s]" % (str(args), str(kw))
-                           if len(args) > 0 or len(kw) > 0 else "")
+                           if args or kw else "")
 
             func_repr = ("Called method [name=%s, doc='%s', params=%s]" %
                          (func.__name__, func.__doc__, params_repr))
