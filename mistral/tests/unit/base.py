@@ -249,7 +249,8 @@ class DbTestCase(BaseTest):
                     db_api_v2.delete_workbooks()
                     db_api_v2.delete_cron_triggers()
                     db_api_v2.delete_workflow_definitions()
-                    db_api_v2.delete_environments()
+                    db_api_v2.delete_environments(),
+                    db_api_v2.delete_resource_members()
 
         sqlite_lock.cleanup()
 

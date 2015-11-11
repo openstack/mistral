@@ -450,3 +450,35 @@ def delete_environment(name):
 
 def delete_environments(**kwargs):
     IMPL.delete_environments(**kwargs)
+
+
+# Resource members.
+
+
+def create_resource_member(values):
+    return IMPL.create_resource_member(values)
+
+
+def get_resource_member(resource_id, res_type, member_id):
+    return IMPL.get_resource_member(resource_id, res_type, member_id)
+
+
+def get_resource_members(resource_id, res_type):
+    return IMPL.get_resource_members(resource_id, res_type)
+
+
+def update_resource_member(resource_id, res_type, member_id, values):
+    return IMPL.update_resource_member(
+        resource_id,
+        res_type,
+        member_id,
+        values
+    )
+
+
+def delete_resource_member(resource_id, res_type, member_id):
+    IMPL.delete_resource_member(resource_id, res_type, member_id)
+
+
+def delete_resource_members(**kwargs):
+    IMPL.delete_resource_members(**kwargs)
