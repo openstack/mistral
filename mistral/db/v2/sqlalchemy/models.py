@@ -27,6 +27,7 @@ from oslo_log import log as logging
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 from mistral import exceptions as exc
+from mistral.services import security
 from mistral import utils
 
 
@@ -397,3 +398,27 @@ mb.register_secure_model_hooks()
 # affected by the user do not exceed the limit configuration.
 for attr_name in ['input', 'output', 'params', 'published']:
     register_length_validator(attr_name)
+
+
+class ResourceMember(mb.MistralModelBase):
+    """Contains info about resource members."""
+
+    __tablename__ = 'resource_members_v2'
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'resource_id',
+            'resource_type',
+            'member_id'
+        ),
+    )
+
+    id = mb.id_column()
+    resource_id = sa.Column(sa.String(80), nullable=False)
+    resource_type = sa.Column(
+        sa.String(50),
+        nullable=False,
+        default='workflow'
+    )
+    project_id = sa.Column(sa.String(80), default=security.get_project_id)
+    member_id = sa.Column(sa.String(80), nullable=False)
+    status = sa.Column(sa.String(20), nullable=False, default="pending")
