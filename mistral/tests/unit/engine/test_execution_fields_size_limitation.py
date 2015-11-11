@@ -22,6 +22,7 @@ from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
 from mistral.tests import base as test_base
 from mistral.tests.unit.engine import base
+from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
@@ -129,14 +130,19 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             }
         )
 
-    @expect_size_limit_exception('input')
     def test_action_input_limit(self):
         new_wf = generate_workflow(['__ACTION_INPUT__'])
 
         wf_service.create_workflows(new_wf)
 
         # Start workflow.
-        self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.assertIn(
+            "Size of 'input' is 1KB which exceeds the limit of 0KB",
+            wf_ex.state_info
+        )
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_action_output_limit(self):
         wf_service.create_workflows(WF)
@@ -151,9 +157,11 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual("Size of 'output' is 1KB which exceeds "
-                         "the limit of 0KB",
-                         wf_ex.state_info)
+        self.assertIn(
+            "Size of 'output' is 1KB which exceeds the limit of 0KB",
+            wf_ex.state_info
+        )
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_task_published_limit(self):
         new_wf = generate_workflow(['__TASK_PUBLISHED__'])

@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
 
 from oslo_db.sqlalchemy import models as oslo_models
 import sqlalchemy as sa
@@ -100,7 +101,8 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
 
 def datetime_to_str(dct, attr_name):
-    if dct.get(attr_name) is not None:
+    if (dct.get(attr_name) is not None
+            and not isinstance(dct.get(attr_name), six.string_types)):
         dct[attr_name] = dct[attr_name].isoformat(' ')
 
 

@@ -888,13 +888,13 @@ class PoliciesTest(base.EngineTestCase):
         wb_service.create_workbook_v2(wb)
 
         # Start workflow.
-        exception = self.assertRaises(
-            exc.InvalidModelException,
-            self.engine.start_workflow,
-            'wb.wf1', {'wait_before': '1'}
-        )
+        wf_ex = self.engine.start_workflow('wb.wf1', {'wait_before': '1'})
 
-        self.assertIn('Invalid data type in WaitBeforePolicy', str(exception))
+        self.assertIn(
+            'Invalid data type in WaitBeforePolicy',
+            wf_ex.state_info
+        )
+        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_delayed_task_and_correct_finish_workflow(self):
         wf_delayed_state = """---
