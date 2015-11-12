@@ -43,7 +43,7 @@ def validate_cron_trigger_input(pattern, first_time, count):
     if first_time:
         if (datetime.datetime.now() + datetime.timedelta(0, 60)) > first_time:
             raise exc.InvalidModelException(
-                'first_execution_time must be at least 1 second in the future.'
+                'first_execution_time must be at least 1 minute in the future.'
             )
         if not pattern and count and count > 1:
             raise exc.InvalidModelException(
@@ -78,7 +78,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
     if first_time:
         next_time = first_time
 
-        if not (pattern and count):
+        if not (pattern or count):
             count = 1
     else:
         next_time = get_next_execution_time(pattern, start_time)
