@@ -116,8 +116,10 @@ def session_aware(param_name="session"):
 
 
 def start_tx():
-    """Opens new database session and starts new transaction assuming
-        there wasn't any opened sessions within the same thread.
+    """Starts transaction.
+
+    Opens new database session and starts new transaction assuming
+    there wasn't any opened sessions within the same thread.
     """
     if _get_thread_local_session():
         raise exc.DataAccessException(
@@ -158,8 +160,10 @@ def rollback_tx():
 
 
 def end_tx():
-    """Ends current database transaction.
-        It rolls back all uncommitted changes and closes database session.
+    """Ends transaction.
+
+    Ends current database transaction.
+    It rolls back all uncommitted changes and closes database session.
     """
     ses = _get_thread_local_session()
 
