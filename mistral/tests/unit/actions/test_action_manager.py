@@ -18,7 +18,7 @@ from oslo_log import log as logging
 
 from mistral.actions import std_actions as std
 from mistral.services import action_manager as a_m
-from mistral.tests import base
+from mistral.tests.unit import base
 
 
 LOG = logging.getLogger(__name__)

@@ -20,7 +20,7 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import scheduler
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.workflow import utils as wf_utils
 
 

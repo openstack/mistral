@@ -20,7 +20,7 @@ from oslo_config import cfg
 import testtools
 
 from mistral.db.v2.sqlalchemy import api as db_api
-from mistral.tests import base as test_base
+from mistral.tests.unit import base as test_base
 
 
 WF_EXEC = {

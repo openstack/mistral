@@ -18,7 +18,7 @@ from oslo_log import log as logging
 from mistral.actions import base as actions_base
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
-from mistral.tests import base as test_base
+from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import data_flow
 from mistral.workflow import states

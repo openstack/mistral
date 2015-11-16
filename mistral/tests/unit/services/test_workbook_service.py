@@ -17,7 +17,7 @@ from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.services import workbooks as wb_service
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)

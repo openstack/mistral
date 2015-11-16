@@ -16,7 +16,7 @@
 
 from mistral.actions import std_actions as std
 from mistral import exceptions as exc
-from mistral.tests import base
+from mistral.tests.unit import base
 
 
 class FailActionTest(base.BaseTest):

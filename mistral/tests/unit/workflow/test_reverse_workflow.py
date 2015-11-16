@@ -16,7 +16,7 @@ from oslo_log import log as logging
 
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import reverse_workflow as reverse_wf
 from mistral.workflow import states

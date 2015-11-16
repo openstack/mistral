@@ -15,7 +15,7 @@
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
-from mistral.tests import base
+from mistral.tests.unit import base
 
 DATA = {
     "server": {

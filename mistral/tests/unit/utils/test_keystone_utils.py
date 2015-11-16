@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.utils.openstack import keystone
 
 

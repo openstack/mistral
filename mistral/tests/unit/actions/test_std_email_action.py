@@ -23,7 +23,7 @@ import testtools
 
 from mistral.actions import std_actions as std
 from mistral import exceptions as exc
-from mistral.tests import base
+from mistral.tests.unit import base
 
 """
 To try against a real SMTP server:

@@ -25,7 +25,7 @@ from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.services import security
-from mistral.tests import base as test_base
+from mistral.tests.unit import base as test_base
 
 
 WORKBOOKS = [

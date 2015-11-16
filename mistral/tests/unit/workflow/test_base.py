@@ -15,7 +15,7 @@
 import mock
 
 from mistral import exceptions
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.workflow import base as wf_base
 from mistral.workflow import direct_workflow
 from mistral.workflow import reverse_workflow

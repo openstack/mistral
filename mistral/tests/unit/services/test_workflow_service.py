@@ -17,7 +17,7 @@ from oslo_log import log as logging
 
 from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral import utils
 from mistral.workbook import parser as spec_parser
 

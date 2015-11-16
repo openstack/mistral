@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 from mistral.actions import std_actions
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import commands
 
