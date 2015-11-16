@@ -42,7 +42,11 @@ def register_standard_actions():
 
     for action_path in action_paths:
         action_definition = open(action_path).read()
-        actions.update_actions(action_definition, scope='public')
+        actions.update_actions(
+            action_definition,
+            scope='public',
+            run_in_tx=False
+        )
 
 
 def get_registered_actions(**kwargs):
@@ -74,10 +78,10 @@ def _clear_system_action_db():
 
 
 def sync_db():
-    _clear_system_action_db()
-
-    register_action_classes()
-    register_standard_actions()
+    with db_api.transaction():
+        _clear_system_action_db()
+        register_action_classes()
+        register_standard_actions()
 
 
 def _register_dynamic_action_classes():
@@ -106,25 +110,23 @@ def register_action_classes():
         namespace='mistral.actions',
         invoke_on_load=False
     )
+    for name in mgr.names():
+        action_class_str = mgr[name].entry_point_target.replace(':', '.')
+        action_class = mgr[name].plugin
+        description = i_utils.get_docstring(action_class)
+        input_str = i_utils.get_arg_list_as_str(action_class.__init__)
 
-    with db_api.transaction():
-        for name in mgr.names():
-            action_class_str = mgr[name].entry_point_target.replace(':', '.')
-            action_class = mgr[name].plugin
-            description = i_utils.get_docstring(action_class)
-            input_str = i_utils.get_arg_list_as_str(action_class.__init__)
+        attrs = i_utils.get_public_fields(mgr[name].plugin)
 
-            attrs = i_utils.get_public_fields(mgr[name].plugin)
+        register_action_class(
+            name,
+            action_class_str,
+            attrs,
+            description=description,
+            input_str=input_str
+        )
 
-            register_action_class(
-                name,
-                action_class_str,
-                attrs,
-                description=description,
-                input_str=input_str
-            )
-
-        _register_dynamic_action_classes()
+    _register_dynamic_action_classes()
 
 
 def get_action_db(action_name):
