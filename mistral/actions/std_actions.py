@@ -243,6 +243,7 @@ class MistralHTTPAction(HTTPAction):
             'Mistral-Workflow-Execution-Id': actx.get('workflow_execution_id'),
             'Mistral-Task-Id': actx.get('task_id'),
             'Mistral-Action-Execution-Id': actx.get('action_execution_id'),
+            'Mistral-Callback-URL': actx.get('callback_url'),
         })
 
         super(MistralHTTPAction, self).__init__(
