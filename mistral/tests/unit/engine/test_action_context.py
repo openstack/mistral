@@ -77,7 +77,8 @@ class ActionContextTest(base.EngineTestCase):
             'Mistral-Workflow-Name': wf_ex.workflow_name,
             'Mistral-Workflow-Execution-Id': wf_ex.id,
             'Mistral-Task-Id': task_ex.id,
-            'Mistral-Action-Execution-Id': action_ex.id
+            'Mistral-Action-Execution-Id': action_ex.id,
+            'Mistral-Callback-URL': '/v2/action_executions/%s' % action_ex.id
         }
 
         requests.request.assert_called_with(
