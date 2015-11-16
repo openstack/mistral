@@ -209,7 +209,9 @@ class DirectWorkflowController(base.WorkflowController):
 
     @staticmethod
     def _find_next_task_names_for_clause(clause, ctx):
-        """Finds next task(command) names base on given {name: condition}
+        """Finds next tasks names.
+
+         This method finds next task(command) base on given {name: condition}
          dictionary.
 
         :param clause: Dictionary {task_name: condition} taken from

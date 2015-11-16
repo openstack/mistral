@@ -37,7 +37,9 @@ _schedulers = {}
 
 def schedule_call(factory_method_path, target_method_name,
                   run_after, serializers=None, **method_args):
-    """Add this call specification to DB, and then after run_after
+    """Schedules call and lately invokes target_method.
+
+    Add this call specification to DB, and then after run_after
     seconds service CallScheduler invokes the target_method.
 
     :param factory_method_path: Full python-specific path to

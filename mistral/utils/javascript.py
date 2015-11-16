@@ -27,8 +27,7 @@ class JSEvaluator(object):
     @classmethod
     @abc.abstractmethod
     def evaluate(cls, script, context):
-        """Executes given JavaScript.
-        """
+        """Executes given JavaScript."""
         pass
 
 
