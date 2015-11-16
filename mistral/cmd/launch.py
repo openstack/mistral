@@ -168,7 +168,9 @@ def print_server_info():
 
 
 def get_properly_ordered_parameters():
-    """In oslo it's important the order of the launch parameters.
+    """Orders launch parameters in the right order.
+
+    In oslo it's important the order of the launch parameters.
     if --config-file came after the command line parameters the command
     line parameters are ignored.
     So to make user command line parameters are never ignored this method

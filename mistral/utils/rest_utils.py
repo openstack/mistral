@@ -26,7 +26,9 @@ from mistral import exceptions as ex
 
 
 def wrap_wsme_controller_exception(func):
-    """This decorator wraps controllers method to manage wsme exceptions:
+    """Decorator for controllers method.
+
+    This decorator wraps controllers method to manage wsme exceptions:
     In case of expected error it aborts the request with specific status code.
     """
     @functools.wraps(func)
@@ -41,7 +43,9 @@ def wrap_wsme_controller_exception(func):
 
 
 def wrap_pecan_controller_exception(func):
-    """This decorator wraps controllers method to manage pecan exceptions:
+    """Decorator for controllers method.
+
+    This decorator wraps controllers method to manage pecan exceptions:
     In case of expected error it aborts the request with specific status code.
     """
     @functools.wraps(func)

@@ -237,7 +237,9 @@ class AuthProv(auth.KeystoneV2AuthProvider):
 class TestCase(test.BaseTestCase):
     @classmethod
     def resource_setup(cls):
-        """This method allows to initialize authentication before
+        """Client authentication.
+
+        This method allows to initialize authentication before
         each test case and define parameters of Mistral API Service.
         """
         super(TestCase, cls).resource_setup()

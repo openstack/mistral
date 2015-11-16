@@ -19,7 +19,9 @@ from pecan import hooks
 
 class ContentTypeHook(hooks.PecanHook):
     def __init__(self, content_type, methods=['GET']):
-        """Content type hook is needed for changing content type of
+        """Content type hook.
+
+        This hook is needed for changing content type of
         responses but only for some HTTP methods. This is kind of
         'hack' but it seems impossible using pecan/WSME to set different
         content types on request and response.
