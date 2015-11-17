@@ -107,7 +107,7 @@ class Execution(mb.MistralSecureModelBase):
     workflow_name = sa.Column(sa.String(80))
     spec = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
-    state_info = sa.Column(sa.String(1024), nullable=True)
+    state_info = sa.Column(sa.Text(), nullable=True)
     tags = sa.Column(st.JsonListType())
 
     # Runtime context like iteration_no of a repeater.
@@ -169,7 +169,7 @@ for cls in utils.iter_subclasses(Execution):
         # Catch and trim Execution.state_info to always fit allocated size.
         cls.state_info,
         'set',
-        lambda t, v, o, i: utils.cut(v, 1020),
+        lambda t, v, o, i: utils.cut(v, 65532),
         retval=True
     )
 
