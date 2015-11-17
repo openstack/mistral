@@ -13,10 +13,13 @@
 #    limitations under the License.
 
 import datetime
+import eventlet
 import mock
 from oslo_config import cfg
 
+from mistral.engine import rpc
 from mistral import exceptions as exc
+from mistral.services import periodic
 from mistral.services import security
 from mistral.services import triggers as t_s
 from mistral.services import workflows
@@ -38,6 +41,23 @@ my_wf:
     task1:
       action: std.echo output='Hi!'
 """
+
+advance_cron_trigger_orig = periodic.advance_cron_trigger
+
+
+def new_advance_cron_trigger(ct):
+    """Wrap the original advance_cron_trigger method.
+
+    This method makes sure that the other coroutines will also run
+    while this thread is executing. Without explicitly passing control to
+    another coroutine the process_cron_triggers_v2 will finish looping
+    over all the cron triggers in one coroutine without any sharing at all.
+    """
+    eventlet.sleep()
+    modified = advance_cron_trigger_orig(ct)
+    eventlet.sleep()
+
+    return modified
 
 
 class TriggerServiceV2Test(base.DbTestCase):
@@ -236,3 +256,32 @@ class TriggerServiceV2Test(base.DbTestCase):
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]
 
         self.assertEqual(['test2', 'test1', 'test3'], trigger_names)
+
+    @mock.patch(
+        'mistral.services.periodic.advance_cron_trigger',
+        mock.MagicMock(side_effect=new_advance_cron_trigger)
+    )
+    @mock.patch.object(rpc.EngineClient, 'start_workflow')
+    def test_single_execution_with_multiple_processes(self, start_wf_mock):
+        def stop_thread_groups():
+            [tg.stop() for tg in self.tgs]
+
+        self.tgs = [periodic.setup(), periodic.setup(), periodic.setup()]
+        self.addCleanup(stop_thread_groups)
+
+        trigger_count = 5
+        t_s.create_cron_trigger(
+            'ct1',
+            self.wf.name,
+            {},
+            {},
+            '* * * * * */1',  # Every second
+            None,
+            trigger_count,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        eventlet.sleep(10)
+
+        self.assertEqual(True, start_wf_mock.called)
+        self.assertEqual(trigger_count, start_wf_mock.call_count)
