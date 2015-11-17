@@ -66,7 +66,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
 
     @classmethod
     def _associate_floating_ip_to_server(cls, server_id):
-        fl_ip_client = cls.mgr.floating_ips_client
+        fl_ip_client = cls.mgr.compute_floating_ips_client
 
         all_ips = fl_ip_client.list_floating_ips().get(
             'floating_ips'
