@@ -21,13 +21,18 @@ from mistral.workbook import parser as spec_parser
 STD_WF_PATH = 'resources/workflows'
 
 
-def register_standard_workflows():
+def register_standard_workflows(run_in_tx=True):
     workflow_paths = utils.get_file_list(STD_WF_PATH)
 
     for wf_path in workflow_paths:
         workflow_definition = open(wf_path).read()
 
-        create_workflows(workflow_definition, scope='public', is_system=True)
+        create_workflows(
+            workflow_definition,
+            scope='public',
+            is_system=True,
+            run_in_tx=run_in_tx
+        )
 
 
 def _clear_system_workflow_db():
@@ -35,22 +40,42 @@ def _clear_system_workflow_db():
 
 
 def sync_db():
-    _clear_system_workflow_db()
-    register_standard_workflows()
+    with db_api.transaction():
+        _clear_system_workflow_db()
+        register_standard_workflows(run_in_tx=False)
 
 
-def create_workflows(definition, scope='private', is_system=False):
+def create_workflows(definition, scope='private', is_system=False,
+                     run_in_tx=True):
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
-
     db_wfs = []
 
-    with db_api.transaction():
-        for wf_spec in wf_list_spec.get_workflows():
-            db_wfs.append(
-                _create_workflow(wf_spec, definition, scope, is_system)
+    if run_in_tx:
+        with db_api.transaction():
+            _append_all_workflows(
+                definition,
+                is_system,
+                scope,
+                wf_list_spec,
+                db_wfs
             )
+    else:
+        _append_all_workflows(
+            definition,
+            is_system,
+            scope,
+            wf_list_spec,
+            db_wfs
+        )
 
     return db_wfs
+
+
+def _append_all_workflows(definition, is_system, scope, wf_list_spec, db_wfs):
+    for wf_spec in wf_list_spec.get_workflows():
+        db_wfs.append(
+            _create_workflow(wf_spec, definition, scope, is_system)
+        )
 
 
 def update_workflows(definition, scope='private'):
