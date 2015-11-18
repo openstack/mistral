@@ -55,9 +55,9 @@ class DefaultEngine(base.Engine, coordination.Service):
     def start_workflow(self, wf_name, wf_input, description='', **params):
         wf_exec_id = None
 
-        try:
-            params = self._canonize_workflow_params(params)
+        params = self._canonize_workflow_params(params)
 
+        try:
             with db_api.transaction():
                 wf_def = db_api.get_workflow_definition(wf_name)
                 wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
@@ -75,11 +75,17 @@ class DefaultEngine(base.Engine, coordination.Service):
 
                 wf_trace.info(wf_ex, "Starting workflow: '%s'" % wf_name)
 
+            # Separate workflow execution creation and dispatching command
+            # transactions in order to be able to return workflow execution
+            # with corresponding error message in state_info when error occurs
+            # at dispatching commands.
+            with db_api.transaction():
+                wf_ex = db_api.get_workflow_execution(wf_exec_id)
+
                 wf_ctrl = wf_base.WorkflowController.get_controller(
                     wf_ex,
                     wf_spec
                 )
-
                 self._dispatch_workflow_commands(
                     wf_ex,
                     wf_ctrl.continue_workflow()
@@ -91,7 +97,11 @@ class DefaultEngine(base.Engine, coordination.Service):
                 "Failed to start workflow '%s' id=%s: %s\n%s",
                 wf_name, wf_exec_id, e, traceback.format_exc()
             )
-            self._fail_workflow(wf_exec_id, e)
+            wf_ex = self._fail_workflow(wf_exec_id, e)
+
+            if wf_ex:
+                return wf_ex.get_clone()
+
             raise e
 
     @u.log_exec(LOG)
@@ -247,7 +257,9 @@ class DefaultEngine(base.Engine, coordination.Service):
                 "Failed to handle action execution result [id=%s]: %s\n%s",
                 action_ex_id, e, traceback.format_exc()
             )
+
             self._fail_workflow(wf_ex_id, e)
+
             raise e
 
     @u.log_exec(LOG)
@@ -412,9 +424,9 @@ class DefaultEngine(base.Engine, coordination.Service):
     @staticmethod
     def _fail_workflow(wf_ex_id, err, action_ex_id=None):
         """Private helper to fail workflow on exceptions."""
-        with db_api.transaction():
-            err_msg = str(err)
+        err_msg = str(err)
 
+        with db_api.transaction():
             wf_ex = db_api.load_workflow_execution(wf_ex_id)
 
             if wf_ex is None:
@@ -436,6 +448,8 @@ class DefaultEngine(base.Engine, coordination.Service):
                     action_ex,
                     wf_utils.Result(error=err_msg)
                 )
+
+            return wf_ex
 
     @staticmethod
     def _canonize_workflow_params(params):
