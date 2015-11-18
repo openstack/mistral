@@ -32,7 +32,7 @@ from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2 import api as db_api_v2
 from mistral.services import action_manager
 from mistral.services import security
-from mistral.tests import config as test_config
+from mistral.tests.unit import config as test_config
 from mistral.utils import inspect_utils as i_utils
 from mistral import version
 

@@ -17,7 +17,7 @@
 import copy
 
 from mistral import exceptions as exc
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral import utils
 from mistral.utils import ssh_utils
 

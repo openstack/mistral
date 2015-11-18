@@ -14,7 +14,7 @@
 
 
 from mistral.db.v2.sqlalchemy import models
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.workflow import states
 from mistral.workflow import with_items
 

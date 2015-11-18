@@ -21,7 +21,7 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
-from mistral.tests import base as test_base
+from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral import utils
 from mistral.workflow import data_flow

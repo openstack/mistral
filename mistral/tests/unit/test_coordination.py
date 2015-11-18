@@ -17,7 +17,7 @@ from oslo_config import cfg
 import six
 
 from mistral import coordination
-from mistral.tests import base
+from mistral.tests.unit import base
 
 
 class ServiceCoordinatorTest(base.BaseTest):

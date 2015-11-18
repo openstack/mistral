@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api
-from mistral.tests import base
+from mistral.tests.unit import base
 
 
 class ActionManagerTest(base.DbTestCase):

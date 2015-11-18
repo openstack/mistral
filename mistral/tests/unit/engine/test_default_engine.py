@@ -26,7 +26,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine import default_engine as d_eng
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.tests.unit.engine import base as eng_test_base
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils

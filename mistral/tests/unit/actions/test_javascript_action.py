@@ -15,7 +15,7 @@
 import mock
 
 from mistral.actions import std_actions as std
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.utils import javascript
 
 

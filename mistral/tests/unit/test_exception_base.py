@@ -17,7 +17,7 @@
 import six
 
 from mistral import exceptions
-from mistral.tests import base
+from mistral.tests.unit import base
 
 
 class ExceptionTestCase(base.BaseTest):

@@ -16,7 +16,7 @@
 
 from oslo_log import log as logging
 
-from mistral.tests import base
+from mistral.tests.unit import base
 from mistral.workflow import states as s
 
 LOG = logging.getLogger(__name__)

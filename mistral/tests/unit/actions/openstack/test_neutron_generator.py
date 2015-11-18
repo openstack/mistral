@@ -14,7 +14,7 @@
 
 from mistral.actions.openstack.action_generator import generators
 from mistral.actions.openstack import actions
-from mistral.tests import base
+from mistral.tests.unit import base
 
 
 class NeutronGeneratorTest(base.BaseTest):
