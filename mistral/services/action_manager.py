@@ -156,7 +156,8 @@ def get_action_context(task_ex, action_ex_id):
             'task_id': task_ex.id,
             'task_name': task_ex.name,
             'task_tags': task_ex.tags,
-            'action_execution_id': action_ex_id
+            'action_execution_id': action_ex_id,
+            'callback_url': '/v2/action_executions/%s' % action_ex_id
         }
     }
 
