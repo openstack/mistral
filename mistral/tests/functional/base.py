@@ -20,6 +20,7 @@ import mock
 import six
 
 from tempest import clients
+from tempest.common import credentials_factory as creds
 from tempest import config
 from tempest import test as test
 from tempest_lib import auth
@@ -246,7 +247,10 @@ class TestCase(test.BaseTestCase):
             cls.mgr = mock.MagicMock()
             cls.mgr.auth_provider = AuthProv()
         else:
-            cls.mgr = clients.Manager()
+            cls.creds = creds.get_configured_credentials(
+                credential_type='user'
+            )
+            cls.mgr = clients.Manager(cls.creds)
 
         if cls._service == 'workflowv2':
             cls.client = MistralClientV2(
