@@ -20,6 +20,8 @@ from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient import client as novaclient
+from troveclient import client as troveclient
+
 from oslo_config import cfg
 from oslo_log import log
 
@@ -225,6 +227,41 @@ class CinderAction(base.OpenStackAction):
 
         client.client.auth_token = ctx.auth_token
         client.client.management_url = cinder_url
+
+        return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()
+
+
+class TroveAction(base.OpenStackAction):
+    _client_class = troveclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Trove action security context: %s" % ctx)
+
+        trove_endpoint = keystone_utils.get_endpoint_for_project(
+            service_type='database'
+        )
+
+        trove_url = keystone_utils.format_url(
+            trove_endpoint.url,
+            {'tenant_id': ctx.project_id}
+        )
+
+        client = self._client_class(
+            ctx.user_name,
+            ctx.auth_token,
+            project_id=ctx.project_id,
+            auth_url=trove_url,
+            region_name=trove_endpoint.region
+        )
+
+        client.client.auth_token = ctx.auth_token
+        client.client.management_url = trove_url
 
         return client
 
