@@ -98,14 +98,11 @@ def get_indices_for_loop(task_ex):
 
         if max(indices) < count - 1:
             indices += list(six.moves.range(max(indices) + 1, count))
+    else:
+        index = get_index(task_ex)
+        indices = list(six.moves.range(index, count))
 
-        return indices[:capacity] if capacity else indices
-
-    index = get_index(task_ex)
-
-    number_to_execute = capacity if capacity else count - index
-
-    return list(six.moves.range(index, index + number_to_execute))
+    return indices[:capacity]
 
 
 def decrease_capacity(task_ex, count):

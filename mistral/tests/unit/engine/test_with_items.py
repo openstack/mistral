@@ -858,6 +858,41 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task_ex.state)
 
+    def test_with_items_concurrency_gt_list_length(self):
+        workflow_definition = """---
+        version: "2.0"
+
+        concurrency_test:
+          type: direct
+
+          input:
+           - names: ["John", "Ivan"]
+
+          tasks:
+            task1:
+              with-items: name in <% $.names %>
+              action: std.echo output=<% $.name %>
+              concurrency: 3
+        """
+
+        wf_service.create_workflows(workflow_definition)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('concurrency_test', {})
+
+        self._await(
+            lambda: self.is_execution_success(wf_ex.id),
+        )
+
+        wf_ex = db_api.get_execution(wf_ex.id)
+        task_ex = self._assert_single_item(wf_ex.task_executions, name='task1')
+        result = data_flow.get_task_execution_result(task_ex)
+
+        self.assertEqual(states.SUCCESS, task_ex.state)
+        self.assertTrue(isinstance(result, list))
+        self.assertIn('John', result)
+        self.assertIn('Ivan', result)
+
     def test_with_items_retry_policy(self):
         workflow = """---
         version: "2.0"
