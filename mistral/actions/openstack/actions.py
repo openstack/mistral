@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 from ceilometerclient.v2 import client as ceilometerclient
-from cinderclient.v1 import client as cinderclient
+from cinderclient.v2 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
 from keystoneclient import httpclient
@@ -209,7 +209,7 @@ class CinderAction(base.OpenStackAction):
         LOG.debug("Cinder action security context: %s" % ctx)
 
         cinder_endpoint = keystone_utils.get_endpoint_for_project(
-            service_type='volume'
+            service_type='volumev2'
         )
 
         cinder_url = keystone_utils.format_url(
