@@ -102,11 +102,7 @@ function install_mistral {
 
     git_clone $MISTRAL_REPO $MISTRAL_DIR $MISTRAL_BRANCH
 
-    # setup_package function is used because Mistral requirements
-    # don't match with global-requirement.txt
-    # both functions (setup_develop and setup_package) are defined at:
-    # http://git.openstack.org/cgit/openstack-dev/devstack/tree/functions-common
-    setup_package $MISTRAL_DIR -e
+    setup_develop $MISTRAL_DIR -e
 
     # installing python-nose.
     real_install_package python-nose
@@ -119,7 +115,7 @@ function install_mistral {
 
 function _install_mistraldashboard {
     git_clone $MISTRAL_DASHBOARD_REPO $MISTRAL_DASHBOARD_DIR $MISTRAL_DASHBOARD_BRANCH
-    setup_package $MISTRAL_DASHBOARD_DIR -e
+    setup_develop $MISTRAL_DASHBOARD_DIR -e
     ln -fs $MISTRAL_DASHBOARD_DIR/_50_mistral.py.example $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
 }
 
@@ -130,7 +126,7 @@ function install_mistral_pythonclient {
     if [ ! "$tags" = "" ]; then
         git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d $tags
     fi
-    setup_package $MISTRAL_PYTHONCLIENT_DIR -e
+    setup_develop $MISTRAL_PYTHONCLIENT_DIR -e
 }
 
 
