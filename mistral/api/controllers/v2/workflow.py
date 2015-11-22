@@ -48,6 +48,7 @@ class Workflow(resource.Resource):
     tags = [wtypes.text]
     scope = SCOPE_TYPES
     "'private' or 'public'"
+    project_id = wtypes.text
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -61,6 +62,7 @@ class Workflow(resource.Resource):
                         'WORKFLOW DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
+                   project_id='a7eb669e9819420ea4bd1453e672c0a7',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
 
