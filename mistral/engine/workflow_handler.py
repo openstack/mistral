@@ -24,11 +24,19 @@ from mistral.workflow import utils as wf_utils
 
 
 def succeed_workflow(wf_ex, final_context, state_info=None):
-    set_execution_state(wf_ex, states.SUCCESS, state_info)
-
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-    wf_ex.output = data_flow.evaluate_workflow_output(wf_spec, final_context)
+    # Fail workflow if output is not successfully evaluated.
+    try:
+        wf_ex.output = data_flow.evaluate_workflow_output(
+            wf_spec,
+            final_context
+        )
+    except Exception as e:
+        return fail_workflow(wf_ex, e.message)
+
+    # Set workflow execution to success until after output is evaluated.
+    set_execution_state(wf_ex, states.SUCCESS, state_info)
 
     if wf_ex.task_execution_id:
         _schedule_send_result_to_parent_workflow(wf_ex)
@@ -66,7 +74,10 @@ def send_result_to_parent_workflow(wf_ex_id):
             wf_utils.Result(data=wf_ex.output)
         )
     elif wf_ex.state == states.ERROR:
-        err_msg = 'Failed subworkflow [execution_id=%s]' % wf_ex.id
+        err_msg = (
+            wf_ex.state_info or
+            'Failed subworkflow [execution_id=%s]' % wf_ex.id
+        )
 
         rpc.get_engine_client().on_action_complete(
             wf_ex.id,

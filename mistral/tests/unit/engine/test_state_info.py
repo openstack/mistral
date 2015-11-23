@@ -48,7 +48,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertIn("error in task 'task1'", wf_ex.state_info)
+        self.assertIn("error in tasks: task1", wf_ex.state_info)
 
     def test_state_info_two_failed_branches(self):
         workflow = """---
@@ -72,8 +72,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertIn("error in task 'task1'", wf_ex.state_info)
-        self.assertIn("error in task 'task2'", wf_ex.state_info)
+        self.assertIn("error in tasks: task1, task2", wf_ex.state_info)
 
     def test_state_info_with_policies(self):
         workflow = """---
@@ -99,4 +98,4 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertIn("error in task 'task1'", wf_ex.state_info)
+        self.assertIn("error in tasks: task1", wf_ex.state_info)
