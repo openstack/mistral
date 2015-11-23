@@ -15,3 +15,4 @@ sphinxcontrib-pecanwsme>=0.8
 testrepository>=0.0.18
 testtools>=1.4.0
 unittest2
+reno>=0.1.1  # Apache2
