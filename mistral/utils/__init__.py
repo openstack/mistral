@@ -95,6 +95,7 @@ def set_thread_local(var_name, val):
 
 def log_exec(logger, level=logging.DEBUG):
     """Decorator for logging function execution.
+
         By default, target function execution is logged with DEBUG level.
     """
 
@@ -283,6 +284,7 @@ def tempdir(**kwargs):
 
 def generate_key_pair(key_length=2048):
     """Create RSA key pair with specified number of bits in key.
+
     Returns tuple of private and public keys.
     """
     with tempdir() as tmpdir:

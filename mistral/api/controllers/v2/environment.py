@@ -73,6 +73,7 @@ class EnvironmentController(rest.RestController):
     @wsme_pecan.wsexpose(Environments)
     def get_all(self):
         """Return all environments.
+
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
