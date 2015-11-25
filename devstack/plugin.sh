@@ -1,4 +1,11 @@
-# Setting configuration file for Mistral services
+# ``stack.sh`` calls the entry points in this order:
+#
+# install_mistral
+# install_python_mistralclient
+# configure_mistral
+# start_mistral
+# stop_mistral
+# cleanup_mistral
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
@@ -98,10 +105,6 @@ function init_mistral {
 
 # install_mistral - Collect source and prepare
 function install_mistral {
-    install_mistral_pythonclient
-
-    git_clone $MISTRAL_REPO $MISTRAL_DIR $MISTRAL_BRANCH
-
     setup_develop $MISTRAL_DIR -e
 
     # installing python-nose.
@@ -121,12 +124,14 @@ function _install_mistraldashboard {
 
 
 function install_mistral_pythonclient {
-    git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
-    local tags=`git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -l | grep 2015`
-    if [ ! "$tags" = "" ]; then
-        git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d $tags
+    if use_library_from_git "python-mistralclient"; then
+        git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
+        local tags=`git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -l | grep 2015`
+        if [ ! "$tags" = "" ]; then
+            git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d $tags
+        fi
+        setup_develop $MISTRAL_PYTHONCLIENT_DIR -e
     fi
-    setup_develop $MISTRAL_PYTHONCLIENT_DIR -e
 }
 
 
@@ -159,6 +164,7 @@ if is_service_enabled mistral; then
     if [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing mistral"
         install_mistral
+        install_mistral_pythonclient
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring mistral"
         configure_mistral
