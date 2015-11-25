@@ -14,12 +14,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from os import path
+
 import six
 
 from oslo_log import log as logging
 import paramiko
 
+from mistral import exceptions as exc
 
+
+KEY_PATH = path.expanduser("~/.ssh/")
 LOG = logging.getLogger(__name__)
 
 
@@ -33,9 +38,17 @@ def _read_paramimko_stream(recv_func):
     return result
 
 
-def _to_paramiko_private_key(private_key_raw, password):
+def _to_paramiko_private_key(private_key_filename, password=None):
+    if '../' in private_key_filename or '..\\' in private_key_filename:
+        raise exc.DataAccessException(
+            "Private key filename must not contain '..'. "
+            "Actual: %s" % private_key_filename
+        )
+
+    private_key_path = KEY_PATH + private_key_filename
+
     return paramiko.RSAKey(
-        file_obj=six.StringIO(private_key_raw),
+        filename=private_key_path,
         password=password
     )
 
@@ -87,13 +100,12 @@ def _execute_command(ssh_client, cmd, get_stderr=False,
         _cleanup(ssh_client)
 
 
-def execute_command_via_gateway(cmd, host, username, private_key,
+def execute_command_via_gateway(cmd, host, username, private_key_filename,
                                 gateway_host, gateway_username=None,
                                 proxy_command=None, password=None):
     LOG.debug('Creating SSH connection')
 
-    if isinstance(private_key, six.string_types):
-        private_key = _to_paramiko_private_key(private_key, password)
+    private_key = _to_paramiko_private_key(private_key_filename, password)
 
     proxy = None
 
@@ -138,9 +150,10 @@ def execute_command_via_gateway(cmd, host, username, private_key,
         _cleanup(_proxy_ssh_client)
 
 
-def execute_command(cmd, host, username, password=None, private_key=None,
-                    get_stderr=False, raise_when_error=True):
-    ssh_client = _connect(host, username, password, private_key)
+def execute_command(cmd, host, username, password=None,
+                    private_key_filename=None, get_stderr=False,
+                    raise_when_error=True):
+    ssh_client = _connect(host, username, password, private_key_filename)
 
     LOG.debug("Executing command %s" % cmd)
 

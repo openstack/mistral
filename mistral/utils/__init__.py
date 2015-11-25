@@ -268,6 +268,7 @@ def tempdir(**kwargs):
 
     if 'dir' not in argdict:
         argdict['dir'] = '/tmp/'
+
     tmpdir = tempfile.mkdtemp(**argdict)
 
     try:
@@ -280,6 +281,16 @@ def tempdir(**kwargs):
                 "Failed to delete temp dir %(dir)s (reason: %(reason)s)" %
                 {'dir': tmpdir, 'reason': e}
             )
+
+
+def save_text_to(text, file_path, overwrite=False):
+    if os.path.exists(file_path) and not overwrite:
+        raise exc.DataAccessException(
+            "Cannot save data to file. File %s already exists."
+        )
+
+    with open(file_path, 'w') as f:
+        f.write(text)
 
 
 def generate_key_pair(key_length=2048):
@@ -297,15 +308,20 @@ def generate_key_pair(key_length=2048):
             '-f', keyfile,  # filename of the key file
             '-C', 'Generated-by-Mistral'  # key comment
         ]
+
         if key_length is not None:
             args.extend(['-b', key_length])
+
         processutils.execute(*args)
+
         if not os.path.exists(keyfile):
             raise exc.DataAccessException(
                 "Private key file hasn't been created"
             )
+
         private_key = open(keyfile).read()
         public_key_path = keyfile + '.pub'
+
         if not os.path.exists(public_key_path):
             raise exc.DataAccessException(
                 "Public key file hasn't been created"
