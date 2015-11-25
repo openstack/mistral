@@ -245,8 +245,16 @@ class DefaultEngine(base.Engine, coordination.Service):
                 # If workflow is on pause or completed then there's no
                 # need to continue workflow.
                 if states.is_paused_or_completed(wf_ex.state):
-                    return action_ex
+                    return action_ex.get_clone()
 
+            # Separate the task transition in a separate transaction. The task
+            # has already completed for better or worst. The task state should
+            # not be affected by errors during transition on conditions such as
+            # on-success and on-error.
+            with db_api.transaction():
+                action_ex = db_api.get_action_execution(action_ex_id)
+                task_ex = action_ex.task_execution
+                wf_ex = action_ex.task_execution.workflow_execution
                 self._on_task_state_change(task_ex, wf_ex)
 
                 return action_ex.get_clone()
