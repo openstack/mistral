@@ -385,7 +385,7 @@
         "users_update_password": "users.update_password"
     },
     "heat": {
-        "_comment": "It uses heatclient.v2.",
+        "_comment": "It uses heatclient.v1.",
         "actions_cancel_update": "actions.cancel_update",
         "actions_check": "actions.check",
         "actions_resume": "actions.resume",
