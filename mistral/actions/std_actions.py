@@ -273,7 +273,7 @@ class SendEmailAction(base.Action):
         # TODO(dzimine): validate parameters
 
         # Task invocation parameters.
-        self.to = ', '.join(to_addrs)
+        self.to = to_addrs
         self.subject = subject or "<No subject>"
         self.body = body
 
@@ -291,7 +291,7 @@ class SendEmailAction(base.Action):
         message = text.MIMEText(self.body, _charset='utf-8')
         message['Subject'] = Header(self.subject, 'utf-8')
         message['From'] = self.sender
-        message['To'] = self.to
+        message['To'] = ', '.join(self.to)
 
         try:
             s = smtplib.SMTP(self.smtp_server)
