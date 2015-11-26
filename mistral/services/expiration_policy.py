@@ -43,7 +43,7 @@ class ExecutionExpirationPolicy(periodic_task.PeriodicTasks):
         interval = CONF.execution_expiration_policy.evaluation_interval
         older_than = CONF.execution_expiration_policy.older_than
 
-        if (interval and older_than >= 1):
+        if (interval and older_than and older_than >= 1):
             _periodic_task = periodic_task.periodic_task(
                 spacing=interval * 60,
                 run_immediately=True
