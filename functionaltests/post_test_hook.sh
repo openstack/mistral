@@ -18,24 +18,10 @@
 RETVAL=0
 
 sudo chmod -R a+rw /opt/stack/new/
-cd /opt/stack/new/
+cd /opt/stack/new/mistral
 
-echo "Repository: $ZUUL_PROJECT"
-
-#Run API tests only for mistral repository
-if [[ "$ZUUL_PROJECT" == "openstack/mistral" ]]; then
-    cd mistral/
-    echo "Run mistral API tests"
-    ./functionaltests/run_tests.sh
-    RETVAL=$?
-fi
-
-#Run client tests for both repositories: mistral and python-mistralclient
-if [[ RETVAL -eq 0 ]]; then
-    cd /opt/stack/new/python-mistralclient/
-    echo "Run mistralclient tests"
-    ./functionaltests/run_tests.sh
-    RETVAL=$?
-fi
+echo "Running Mistral API tests"
+./functionaltests/run_tests.sh
+RETVAL=$?
 
 exit $RETVAL
