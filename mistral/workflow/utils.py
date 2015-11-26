@@ -109,21 +109,25 @@ def find_error_task_executions(wf_ex):
 
 def construct_fail_info_message(wf_ctrl, wf_ex):
     # Try to find where error is exactly.
-    failed_tasks = filter(
-        lambda t: not wf_ctrl.is_error_handled_for(t),
-        find_error_task_executions(wf_ex)
+    failed_tasks = sorted(
+        filter(
+            lambda t: not wf_ctrl.is_error_handled_for(t),
+            find_error_task_executions(wf_ex)
+        ),
+        key=lambda t: t.name
     )
 
-    errors = []
+    msg = ('Failure caused by error in tasks: %s\n' %
+           ', '.join([t.name for t in failed_tasks]))
 
     for t in failed_tasks:
-        errors += [
-            ("error in task '%s': "
-             "%s" % (t.name, str(ex.output.get('result', 'Unknown')))
-             if ex.output else 'Unknown')
-            for ex in t.executions
-        ]
+        msg += '\n  %s -> ' % t.name
 
-    state_info = "Failure caused by %s" % ';\n '.join(errors)
+        if t.state_info:
+            msg += t.state_info + '\n'
+        else:
+            for i, ex in enumerate(t.executions):
+                output = (ex.output or dict()).get('result', 'Unknown')
+                msg += '    action execution #%s: %s\n' % (i + 1, str(output))
 
-    return state_info
+    return msg

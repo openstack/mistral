@@ -181,17 +181,23 @@ def on_action_complete(action_ex, result):
     wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
     task_spec = wf_spec.get_tasks()[task_ex.name]
 
-    task_state = states.SUCCESS if result.is_success() else states.ERROR
+    if result.is_success():
+        task_state = states.SUCCESS
+        task_state_info = None
+    else:
+        task_state = states.ERROR
+        task_state_info = result.error
 
     if not task_spec.get_with_items():
-        _complete_task(task_ex, task_spec, task_state)
+        _complete_task(task_ex, task_spec, task_state, task_state_info)
     else:
         with_items.increase_capacity(task_ex)
         if with_items.is_completed(task_ex):
             _complete_task(
                 task_ex,
                 task_spec,
-                with_items.get_final_state(task_ex)
+                with_items.get_final_state(task_ex),
+                task_state_info
             )
 
     return task_ex
@@ -490,12 +496,12 @@ def run_workflow(wf_name, wf_input, wf_params):
     )
 
 
-def _complete_task(task_ex, task_spec, state):
+def _complete_task(task_ex, task_spec, state, state_info=None):
     # Ignore if task already completed.
     if states.is_completed(task_ex.state):
         return []
 
-    _set_task_state(task_ex, state)
+    _set_task_state(task_ex, state, state_info=state_info)
 
     try:
         data_flow.publish_variables(

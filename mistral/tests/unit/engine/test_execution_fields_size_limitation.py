@@ -176,8 +176,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(
-            "Failure caused by error in task 'task1': ",
+        self.assertIn(
+            "Failure caused by error in tasks: task1",
             wf_ex.state_info
         )
 

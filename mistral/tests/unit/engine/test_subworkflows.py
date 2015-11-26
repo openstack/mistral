@@ -23,6 +23,7 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -31,11 +32,11 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-WORKBOOK = """
+WB1 = """
 ---
 version: '2.0'
 
-name: my_wb
+name: wb1
 
 workflows:
   wf1:
@@ -70,15 +71,38 @@ workflows:
           slogan: "<% $.task1.final_result %> is a cool movie!"
 """
 
+WB2 = """
+---
+version: '2.0'
+
+name: wb2
+
+workflows:
+  wf1:
+    type: direct
+    tasks:
+      task1:
+        workflow: wf2
+
+  wf2:
+    type: direct
+    output:
+      var1: <% $.does_not_exist %>
+    tasks:
+        task1:
+            action: std.noop
+"""
+
 
 class SubworkflowsTest(base.EngineTestCase):
     def setUp(self):
         super(SubworkflowsTest, self).setUp()
 
-        wb_service.create_workbook_v2(WORKBOOK)
+        wb_service.create_workbook_v2(WB1)
+        wb_service.create_workbook_v2(WB2)
 
     def test_subworkflow_success(self):
-        wf2_ex = self.engine.start_workflow('my_wb.wf2', None)
+        wf2_ex = self.engine.start_workflow('wb1.wf2', None)
 
         project_id = auth_context.ctx().project_id
 
@@ -95,8 +119,8 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(2, len(wf_execs))
 
         # Execution of 'wf2'.
-        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
-        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
+        wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
         self.assertEqual(project_id, wf1_ex.project_id)
         self.assertIsNotNone(wf1_ex.task_execution_id)
@@ -154,7 +178,7 @@ class SubworkflowsTest(base.EngineTestCase):
     @mock.patch.object(std_actions.EchoAction, 'run',
                        mock.MagicMock(side_effect=exc.ActionException))
     def test_subworkflow_error(self):
-        wf2_ex = self.engine.start_workflow('my_wb.wf2', None)
+        wf2_ex = self.engine.start_workflow('wb1.wf2', None)
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
@@ -162,8 +186,8 @@ class SubworkflowsTest(base.EngineTestCase):
 
         self.assertEqual(2, len(wf_execs))
 
-        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
-        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
+        wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
         # Wait till workflow 'wf1' is completed.
         self._await(lambda: self.is_execution_error(wf1_ex.id))
@@ -171,10 +195,28 @@ class SubworkflowsTest(base.EngineTestCase):
         # Wait till workflow 'wf2' is completed, its state must be ERROR.
         self._await(lambda: self.is_execution_error(wf2_ex.id))
 
+    def test_subworkflow_yaql_error(self):
+        wf_ex = self.engine.start_workflow('wb2.wf1', None)
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        wf_execs = db_api.get_workflow_executions()
+
+        self.assertEqual(2, len(wf_execs))
+
+        wf2_ex = self._assert_single_item(wf_execs, name='wb2.wf2')
+        self.assertEqual(states.ERROR, wf2_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', wf2_ex.state_info)
+
+        # Ensure error message is bubbled up to the main workflow.
+        wf1_ex = self._assert_single_item(wf_execs, name='wb2.wf1')
+        self.assertEqual(states.ERROR, wf1_ex.state)
+        self.assertIn('Can not evaluate YAQL expression', wf1_ex.state_info)
+
     def test_subworkflow_environment_inheritance(self):
         env = {'key1': 'abc'}
 
-        wf2_ex = self.engine.start_workflow('my_wb.wf2', None, env=env)
+        wf2_ex = self.engine.start_workflow('wb1.wf2', None, env=env)
 
         # Execution of 'wf2'.
         self.assertIsNotNone(wf2_ex)
@@ -188,8 +230,8 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(2, len(wf_execs))
 
         # Execution of 'wf1'.
-        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
-        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
+        wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
         expected_start_params = {
             'task_name': 'task2',
