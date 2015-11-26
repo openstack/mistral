@@ -152,7 +152,6 @@ _DEFAULT_LOG_LEVELS = [
     'amqp=WARN',
     'sqlalchemy=WARN',
     'oslo_messaging=INFO',
-    'iso8601=WARN',
     'eventlet.wsgi.server=WARN',
     'stevedore=INFO',
     'oslo_service.periodic_task=INFO',
