@@ -984,15 +984,35 @@ def create_cron_trigger(values, session=None):
 
 
 @b.session_aware()
-def update_cron_trigger(name, values, session=None):
+def update_cron_trigger(name, values, session=None, query_filter=None):
     cron_trigger = _get_cron_trigger(name)
 
     if not cron_trigger:
         raise exc.NotFoundException("Cron trigger not found [name=%s]" % name)
 
-    cron_trigger.update(values.copy())
+    if query_filter:
+        try:
+            # Execute the UPDATE statement with the query_filter as the WHERE.
+            specimen = models.CronTrigger(id=cron_trigger.id, **query_filter)
+            cron_trigger = b.model_query(
+                models.CronTrigger).update_on_match(specimen=specimen,
+                                                    surrogate_key='id',
+                                                    values=values)
 
-    return cron_trigger
+            return cron_trigger, 1
+
+        except oslo_sqlalchemy.update_match.NoRowsMatched:
+            LOG.debug(
+                "No rows matched for cron update call"
+                "[id=%s, values=%s, query_filter=%s", id, values, query_filter
+            )
+
+            return cron_trigger, 0
+
+    else:
+        cron_trigger.update(values.copy())
+
+        return cron_trigger, len(session.dirty)
 
 
 @b.session_aware()
@@ -1002,7 +1022,8 @@ def create_or_update_cron_trigger(name, values, session=None):
     if not cron_trigger:
         return create_cron_trigger(values)
     else:
-        return update_cron_trigger(name, values)
+        updated, _ = update_cron_trigger(name, values)
+        return updated
 
 
 @b.session_aware()
@@ -1012,7 +1033,13 @@ def delete_cron_trigger(name, session=None):
     if not cron_trigger:
         raise exc.NotFoundException("Cron trigger not found [name=%s]" % name)
 
-    session.delete(cron_trigger)
+    # Delete the cron trigger by ID and get the affected row count.
+    table = models.CronTrigger.__table__
+    result = session.execute(
+        table.delete().where(table.c.id == cron_trigger.id)
+    )
+
+    return result.rowcount
 
 
 @b.session_aware()

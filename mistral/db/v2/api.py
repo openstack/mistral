@@ -402,8 +402,8 @@ def create_cron_trigger(values):
     return IMPL.create_cron_trigger(values)
 
 
-def update_cron_trigger(name, values):
-    return IMPL.update_cron_trigger(name, values)
+def update_cron_trigger(name, values, query_filter=None):
+    return IMPL.update_cron_trigger(name, values, query_filter=query_filter)
 
 
 def create_or_update_cron_trigger(name, values):
