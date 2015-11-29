@@ -1,0 +1,8 @@
+---
+prelude: >
+    Mistral now supports Trove actions in workbook or workflow.
+upgrade:
+  - During an upgrade to Mitaka, operators or administrators must use
+    ``python tools/get_action_list.py trove`` command to generate trove action
+    names and values for updating ``mistral/actions/openstack/mapping.json``,
+    then, perform ``python tools/sync_db.py`` to populate database.
