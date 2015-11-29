@@ -830,7 +830,7 @@ Example:
         - radix: 16
 
       output:
-        uuid: <% task(generated_uuid).result %>
+        uuid: <% task(generate_uuid_task).result %>
 
       tasks:
         generate_uuid_task:

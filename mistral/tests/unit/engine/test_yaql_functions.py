@@ -109,3 +109,28 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
             },
             task2.published
         )
+
+    def test_task_function_non_existing(self):
+        wf_text = """---
+            version: '2.0'
+
+            wf:
+              type: direct
+              output:
+                task_name: <% task(non_existing_task).name %>
+
+              tasks:
+                task1:
+                  action: std.noop
+            """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIn('non_existing_task', wf_ex.state_info)
