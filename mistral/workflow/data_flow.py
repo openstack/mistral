@@ -27,7 +27,7 @@ from mistral import utils
 from mistral.utils import inspect_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
-
+from mistral.workflow import with_items
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
@@ -107,7 +107,10 @@ def get_task_execution_result(task_ex):
     task_spec = spec_parser.get_task_spec(task_ex.spec)
 
     if task_spec.get_with_items():
-        return results
+        if with_items.get_count(task_ex) > 0:
+            return results
+        else:
+            return []
 
     return results[0] if len(results) == 1 else results
 
