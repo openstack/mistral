@@ -34,8 +34,7 @@ def upgrade():
         'cron_triggers_v2',
         sa.Column('first_execution_time', sa.DateTime(), nullable=True)
     )
-    op.drop_index('workflow_input_hash', table_name='cron_triggers_v2')
-    op.drop_index('workflow_input_hash_2', table_name='cron_triggers_v2')
+
     op.create_unique_constraint(
         None,
         'cron_triggers_v2', [
