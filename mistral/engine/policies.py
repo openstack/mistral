@@ -22,6 +22,7 @@ from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
 
+import six
 
 _ENGINE_CLIENT_PATH = 'mistral.engine.rpc.get_engine_client'
 _RUN_EXISTING_TASK_PATH = 'mistral.engine.task_handler.run_existing_task'
@@ -77,7 +78,10 @@ def build_wait_before_policy(policies_spec):
 
     wait_before = policies_spec.get_wait_before()
 
-    return WaitBeforePolicy(wait_before) if wait_before != 0 else None
+    if (isinstance(wait_before, six.string_types) or wait_before > 0):
+        return WaitBeforePolicy(wait_before)
+    else:
+        return None
 
 
 def build_wait_after_policy(policies_spec):
@@ -86,7 +90,10 @@ def build_wait_after_policy(policies_spec):
 
     wait_after = policies_spec.get_wait_after()
 
-    return WaitAfterPolicy(wait_after) if wait_after > 0 else None
+    if (isinstance(wait_after, six.string_types) or wait_after > 0):
+        return WaitAfterPolicy(wait_after)
+    else:
+        return None
 
 
 def build_retry_policy(policies_spec):
@@ -112,7 +119,10 @@ def build_timeout_policy(policies_spec):
 
     timeout_policy = policies_spec.get_timeout()
 
-    return TimeoutPolicy(timeout_policy) if timeout_policy > 0 else None
+    if (isinstance(timeout_policy, six.string_types) or timeout_policy > 0):
+        return TimeoutPolicy(timeout_policy)
+    else:
+        return None
 
 
 def build_pause_before_policy(policies_spec):

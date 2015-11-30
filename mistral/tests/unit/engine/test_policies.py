@@ -134,6 +134,25 @@ workflows:
 """
 
 
+WAIT_AFTER_FROM_VAR = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    input:
+      - wait_after
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        wait-after: <% $.wait_after %>
+"""
+
+
 RETRY_WB = """
 ---
 version: '2.0'
@@ -150,6 +169,29 @@ workflows:
         retry:
           count: 3
           delay: 1
+"""
+
+
+RETRY_WB_FROM_VAR = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    input:
+      - count
+      - delay
+
+    tasks:
+      task1:
+        action: std.http url="http://some_non-existing_host"
+        retry:
+          count: <% $.count %>
+          delay: <% $.delay %>
 """
 
 
@@ -188,6 +230,24 @@ workflows:
       task1:
         action: std.async_noop
         timeout: 1
+"""
+
+
+TIMEOUT_FROM_VAR = """
+---
+version: '2.0'
+name: wb
+workflows:
+  wf1:
+    type: direct
+
+    input:
+      - timeout
+
+    tasks:
+      task1:
+        action: std.async_noop
+        timeout: <% $.timeout %>
 """
 
 
@@ -242,6 +302,24 @@ workflows:
       task1:
         action: std.echo output="Hi!"
         concurrency: 4
+"""
+
+
+CONCURRENCY_WB_FROM_VAR = """
+---
+version: '2.0'
+name: wb
+workflows:
+  wf1:
+    type: direct
+
+    input:
+      - concurrency
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        concurrency: <% $.concurrency %>
 """
 
 
@@ -379,6 +457,20 @@ class PoliciesTest(base.EngineTestCase):
         )
         self._await(lambda: self.is_task_success(task_ex.id))
 
+    def test_wait_after_policy_from_var(self):
+        wb_service.create_workbook_v2(WAIT_AFTER_FROM_VAR)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {'wait_after': 2})
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.RUNNING, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
+        self.assertEqual(2, task_ex.in_context['wait_after'])
+
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB)
 
@@ -407,6 +499,22 @@ class PoliciesTest(base.EngineTestCase):
             2,
             task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
+
+    def test_retry_policy_from_var(self):
+        wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {'count': 3, 'delay': 1})
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.RUNNING, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
+
+        self.assertEqual(3, task_ex.in_context["count"])
+        self.assertEqual(1, task_ex.in_context["delay"])
 
     def test_retry_policy_never_happen(self):
         retry_wb = """---
@@ -767,6 +875,20 @@ class PoliciesTest(base.EngineTestCase):
         # Make sure that engine did not create extra tasks.
         self.assertEqual(1, len(tasks_db))
 
+    def test_timeout_policy_from_var(self):
+        wb_service.create_workbook_v2(TIMEOUT_FROM_VAR)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {'timeout': 1})
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.RUNNING, task_ex.state)
+
+        self.assertEqual(1, task_ex.in_context['timeout'])
+
     def test_pause_before_policy(self):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
 
@@ -870,6 +992,20 @@ class PoliciesTest(base.EngineTestCase):
         runtime_context = task_ex.runtime_context
 
         self.assertEqual(4, runtime_context['concurrency'])
+
+    def test_concurrency_is_in_runtime_context_from_var(self):
+        wb_service.create_workbook_v2(CONCURRENCY_WB_FROM_VAR)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {'concurrency': 4})
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        task_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        self.assertEqual(4, task_ex.in_context['concurrency'])
 
     def test_wrong_policy_prop_type(self):
         wb = """---
