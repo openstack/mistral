@@ -1,0 +1,4 @@
+---
+prelude: >
+    Cinder V1 API has been deprecated since Juno dev cycle, and will be
+    removed in future, Mistral will support Cinder V2 API from Mitaka release.
