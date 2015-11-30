@@ -114,3 +114,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().instances.get.called)
         mocked().instances.get.assert_called_once_with(instance="1234-abcd")
+
+    @mock.patch.object(actions.IronicAction, '_get_client')
+    def test_ironic_action(self, mocked):
+        method_name = "node.get"
+        action_class = actions.IronicAction
+        action_class.client_method_name = method_name
+        params = {'node': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().node.get.called)
+        mocked().node.get.assert_called_once_with(node="1234-abcd")

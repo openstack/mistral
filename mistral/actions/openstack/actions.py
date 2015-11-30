@@ -16,6 +16,7 @@ from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.v2 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
+from ironicclient.v1 import client as ironicclient
 from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
@@ -268,3 +269,24 @@ class TroveAction(base.OpenStackAction):
     @classmethod
     def _get_fake_client(cls):
         return cls._client_class()
+
+
+class IronicAction(base.OpenStackAction):
+    _client_class = ironicclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Ironic action security context: %s" % ctx)
+
+        ironic_endpoint = keystone_utils.get_endpoint_for_project('ironic')
+
+        return self._client_class(
+            ironic_endpoint.url,
+            token=ctx.auth_token,
+            region_name=ironic_endpoint.region
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class("http://127.0.0.1:6385/")

@@ -54,3 +54,8 @@ class CeilometerActionGenerator(base.OpenStackActionGenerator):
 class TroveActionGenerator(base.OpenStackActionGenerator):
     action_namespace = "trove"
     base_action_class = actions.TroveAction
+
+
+class IronicActionGenerator(base.OpenStackActionGenerator):
+    action_namespace = "ironic"
+    base_action_class = actions.IronicAction

@@ -30,6 +30,8 @@ from novaclient import client as novaclient
 from novaclient.openstack.common.apiclient import base as nova_base
 from troveclient import base as trove_base
 from troveclient.v1 import client as troveclient
+from ironicclient.common import base as ironic_base
+from ironicclient.v1 import client as ironicclient
 
 # TODO(nmakhotkin): Find a rational way to do it for neutron.
 # TODO(nmakhotkin): Implement recursive way of searching for managers
@@ -62,6 +64,7 @@ BASE_NOVA_MANAGER = nova_base.HookableMixin
 BASE_KEYSTONE_MANAGER = keystone_base.Manager
 BASE_CINDER_MANAGER = cinder_base.HookableMixin
 BASE_TROVE_MANAGER = trove_base.Manager
+BASE_IRONIC_MANAGER = ironic_base.Manager
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -138,6 +141,9 @@ def get_cinder_client(**kwargs):
 def get_trove_client(**kwargs):
     return troveclient.Client('username', 'password')
 
+def get_ironic_client(**kwargs):
+    return ironicclient.Client("http://127.0.0.1:6385/")
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -146,6 +152,7 @@ CLIENTS = {
     'keystone': get_keystone_client,
     'glance': get_glance_client,
     'trove' : get_trove_client,
+    'ironic' : get_ironic_client,
     # 'neutron': get_nova_client
 }
 BASE_MANAGERS = {
@@ -156,6 +163,7 @@ BASE_MANAGERS = {
     'keystone': BASE_KEYSTONE_MANAGER,
     'glance': None,
     'trove': BASE_TROVE_MANAGER,
+    'ironic': BASE_IRONIC_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
 }
 NAMESPACES = {
