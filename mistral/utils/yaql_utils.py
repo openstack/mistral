@@ -75,7 +75,7 @@ def task_(context, task_name):
 
     # TODO(rakhmerov): Account for multiple executions (i.e. in case of
     # cycles).
-    task_ex = task_execs[-1]
+    task_ex = task_execs[-1] if len(task_execs) > 0 else None
 
     if not task_ex:
         raise ValueError(
