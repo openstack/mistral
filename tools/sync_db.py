@@ -15,8 +15,8 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from mistral.db.v2 import api as db_api
 from mistral import config
+from mistral.db.v2 import api as db_api
 from mistral.services import action_manager
 from mistral.services import workflows
 
@@ -29,7 +29,7 @@ def main():
     config.parse_args()
 
     if len(CONF.config_file) == 0:
-        print "Usage: sync_db --config-file <path-to-config-file>"
+        print("Usage: sync_db --config-file <path-to-config-file>")
         return exit(1)
 
     logging.setup(CONF, 'Mistral')
