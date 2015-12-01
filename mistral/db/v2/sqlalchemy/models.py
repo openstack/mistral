@@ -54,6 +54,8 @@ class Workbook(Definition):
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
     )
 
 
@@ -64,6 +66,9 @@ class WorkflowDefinition(Definition):
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
+        sa.Index('%s_is_system' % __tablename__, 'is_system'),
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
     )
 
 
@@ -74,6 +79,10 @@ class ActionDefinition(Definition):
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
+        sa.Index('%s_is_system' % __tablename__, 'is_system'),
+        sa.Index('%s_action_class' % __tablename__, 'action_class'),
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
     )
 
     # Main properties.
@@ -91,6 +100,14 @@ class Execution(mb.MistralSecureModelBase):
     """Abstract execution object."""
 
     __tablename__ = 'executions_v2'
+
+    __table_args__ = (
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+        sa.Index('%s_state' % __tablename__, 'state'),
+        sa.Index('%s_type' % __tablename__, 'type'),
+        sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
+    )
 
     type = sa.Column(sa.String(50))
 
@@ -230,6 +247,12 @@ TaskExecution.executions = relationship(
     lazy='select'
 )
 
+sa.Index(
+    '%s_task_execution_id' % Execution.__tablename__,
+    Execution.task_execution_id
+)
+
+
 # Many-to-one for 'TaskExecution' and 'WorkflowExecution'.
 
 TaskExecution.workflow_execution_id = sa.Column(
@@ -245,6 +268,11 @@ WorkflowExecution.task_executions = relationship(
     lazy='select'
 )
 
+sa.Index(
+    '%s_workflow_execution_id' % TaskExecution.__tablename__,
+    TaskExecution.workflow_execution_id
+)
+
 
 # Other objects.
 
@@ -253,6 +281,14 @@ class DelayedCall(mb.MistralModelBase):
     """Contains info about delayed calls."""
 
     __tablename__ = 'delayed_calls_v2'
+
+    __table_args__ = (
+        sa.Index(
+            '%s_processing_execution_time' % __tablename__,
+            'processing',
+            'execution_time'
+        ),
+    )
 
     id = mb.id_column()
     factory_method_path = sa.Column(sa.String(200), nullable=True)
@@ -271,6 +307,9 @@ class Environment(mb.MistralSecureModelBase):
 
     __table_args__ = (
         sa.UniqueConstraint('name', 'project_id'),
+        sa.Index('%s_name' % __tablename__, 'name'),
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
     )
 
     # Main properties.
@@ -301,7 +340,14 @@ class CronTrigger(mb.MistralSecureModelBase):
             'workflow_input_hash', 'workflow_name', 'pattern', 'project_id',
             'workflow_params_hash', 'remaining_executions',
             'first_execution_time'
-        )
+        ),
+        sa.Index(
+            '%s_next_execution_time' % __tablename__,
+            'next_execution_time'
+        ),
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+        sa.Index('%s_workflow_name' % __tablename__, 'workflow_name'),
     )
 
     id = mb.id_column()
