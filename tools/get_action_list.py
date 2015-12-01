@@ -61,7 +61,7 @@ BASE_HEAT_MANAGER = heat_base.HookableMixin
 BASE_NOVA_MANAGER = nova_base.HookableMixin
 BASE_KEYSTONE_MANAGER = keystone_base.Manager
 BASE_CINDER_MANAGER = cinder_base.HookableMixin
-BASE_TROVE_MANAGER = trove_base.HookableMixin
+BASE_TROVE_MANAGER = trove_base.Manager
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -70,7 +70,7 @@ def get_parser():
     )
     parser.add_argument(
         'service',
-        choices=['nova', 'glance', 'heat', 'cinder', 'keystone', 'ceilometer'],
+        choices=CLIENTS.keys(),
         help='Service name which methods need to be found.'
     )
     parser.add_argument(
@@ -136,7 +136,7 @@ def get_cinder_client(**kwargs):
     return cinderclient.Client()
 
 def get_trove_client(**kwargs):
-    return troveclient.Client()
+    return troveclient.Client('username', 'password')
 
 CLIENTS = {
     'nova': get_nova_client,
