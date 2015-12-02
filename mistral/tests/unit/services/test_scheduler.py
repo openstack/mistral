@@ -17,6 +17,7 @@ import datetime
 import eventlet
 import mock
 
+from mistral import context as auth_context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import scheduler
@@ -24,12 +25,21 @@ from mistral.tests.unit import base
 from mistral.workflow import utils as wf_utils
 
 
-FACTORY_METHOD_PATH = ('mistral.tests.unit.services.test_scheduler.'
-                       'factory_method')
-TARGET_METHOD_PATH = ('mistral.tests.unit.services.test_scheduler.'
-                      'target_method')
-FAILED_TO_SEND_TARGET_PATH = ('mistral.tests.unit.services.test_scheduler.'
-                              'failed_to_send')
+FACTORY_METHOD_PATH = (
+    'mistral.tests.unit.services.test_scheduler.factory_method'
+)
+TARGET_METHOD_PATH = (
+    'mistral.tests.unit.services.test_scheduler.target_method'
+)
+CHECK_CONTEXT_METHOD_PATH = (
+    'mistral.tests.unit.services.test_scheduler.target_check_context_method'
+)
+COMPARE_CONTEXT_METHOD_PATH = (
+    'mistral.tests.unit.services.test_scheduler.compare_context_values'
+)
+FAILED_TO_SEND_TARGET_PATH = (
+    'mistral.tests.unit.services.test_scheduler.failed_to_send'
+)
 
 DELAY = 1.5
 WAIT = DELAY * 3
@@ -45,6 +55,15 @@ def factory_method():
 
 def target_method():
     pass
+
+
+def compare_context_values(expected, actual):
+    pass
+
+
+def target_check_context_method(expected_project_id):
+    actual_project_id = auth_context.ctx()._BaseContext__values['project_id']
+    compare_context_values(expected_project_id, actual_project_id)
 
 
 def failed_to_send():
@@ -127,6 +146,50 @@ class SchedulerServiceTest(base.DbTestCase):
         calls = db_api.get_delayed_calls_to_start(time_filter)
 
         self.assertEqual(0, len(calls))
+
+    @mock.patch(COMPARE_CONTEXT_METHOD_PATH)
+    def test_scheduler_call_target_method_with_correct_auth(self, method):
+        default_context = base.get_context(default=True)
+        auth_context.set_ctx(default_context)
+        default_project_id = (
+            default_context._BaseContext__values['project_id']
+        )
+        method_args1 = {'expected_project_id': default_project_id}
+
+        scheduler.schedule_call(
+            None,
+            CHECK_CONTEXT_METHOD_PATH,
+            DELAY,
+            **method_args1
+        )
+
+        second_context = base.get_context(default=False)
+        auth_context.set_ctx(second_context)
+        second_project_id = (
+            second_context._BaseContext__values['project_id']
+        )
+        method_args2 = {'expected_project_id': second_project_id}
+
+        scheduler.schedule_call(
+            None,
+            CHECK_CONTEXT_METHOD_PATH,
+            DELAY,
+            **method_args2
+        )
+
+        eventlet.sleep(WAIT)
+
+        method.assert_any_call(
+            default_project_id,
+            default_project_id
+        )
+
+        method.assert_any_call(
+            second_project_id,
+            second_project_id
+        )
+
+        self.assertNotEqual(default_project_id, second_project_id)
 
     @mock.patch(FACTORY_METHOD_PATH)
     def test_scheduler_with_serializer(self, factory):
