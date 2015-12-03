@@ -338,12 +338,45 @@ class WorkflowTestsV2(base.TestCase):
         resp, body = self.client.create_cron_trigger(
             tr_name, name, None, '5 * * * *')
 
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.delete_obj,
-                          'workflows', name)
+        try:
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.client.delete_obj,
+                'workflows',
+                name
+            )
+        finally:
+            self.client.delete_obj('cron_triggers', tr_name)
+            self.client.triggers.remove(tr_name)
 
-        self.client.delete_obj('cron_triggers', tr_name)
-        self.client.triggers.remove(tr_name)
+    @test.attr(type='negative')
+    def test_delete_wf_with_trigger_associate_in_other_tenant(self):
+        tr_name = 'trigger'
+        _, body = self.client.create_workflow('wf_v2.yaml', scope='public')
+        name = body['workflows'][0]['name']
+        resp, body = self.alt_client.create_cron_trigger(
+            tr_name,
+            name,
+            None,
+            '5 * * * *'
+        )
+
+        try:
+            exception = self.assertRaises(
+                exceptions.BadRequest,
+                self.client.delete_obj,
+                'workflows',
+                name
+            )
+
+            self.assertEqual(
+                "Can't delete workflow that has triggers " +
+                "[workflow_name=wf2],[cron_trigger_name(s)=trigger]",
+                exception.resp_body['faultstring']
+            )
+        finally:
+            self.alt_client.delete_obj('cron_triggers', tr_name)
+            self.alt_client.triggers.remove(tr_name)
 
     @test.attr(type='negative')
     def test_delete_nonexistent_wf(self):

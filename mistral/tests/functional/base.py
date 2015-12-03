@@ -154,8 +154,11 @@ class MistralClientV2(MistralClientBase):
 
         return resp, json.loads(body)
 
-    def create_workflow(self, yaml_file):
-        resp, body = self.post_request('workflows', yaml_file)
+    def create_workflow(self, yaml_file, scope=None):
+        if scope:
+            resp, body = self.post_request('workflows?scope=public', yaml_file)
+        else:
+            resp, body = self.post_request('workflows', yaml_file)
 
         for wf in json.loads(body)['workflows']:
             self.workflows.append(wf['name'])
@@ -259,9 +262,16 @@ class TestCase(test.BaseTestCase):
             )
             cls.mgr = clients.Manager(cls.creds)
 
+            cls.alt_creds = creds.get_configured_credentials(
+                credential_type='alt_user'
+            )
+            cls.alt_mgr = clients.Manager(cls.alt_creds)
+
         if cls._service == 'workflowv2':
             cls.client = MistralClientV2(
                 cls.mgr.auth_provider, cls._service)
+            cls.alt_client = MistralClientV2(
+                cls.alt_mgr.auth_provider, cls._service)
 
     def setUp(self):
         super(TestCase, self).setUp()

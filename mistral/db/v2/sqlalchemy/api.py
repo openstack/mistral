@@ -364,9 +364,9 @@ def delete_workflow_definition(name, session=None):
 
 
 def _get_associated_cron_triggers(wf_name):
-    cron_triggers = _secure_query(
+    cron_triggers = b.model_query(
         models.CronTrigger,
-        models.CronTrigger.name
+        [models.CronTrigger.name]
     ).filter_by(workflow_name=wf_name).all()
 
     return [t[0] for t in cron_triggers]
