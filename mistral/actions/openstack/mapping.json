@@ -910,5 +910,17 @@
         "port_get_by_address": "port.get_by_address",
         "port_list": "port.list",
         "port_update": "port.update"
+    },
+    "baremetal_introspection": {
+        "_comment": "It uses ironic_inspector_client.v1.",
+        "introspect": "introspect",
+        "get_status": "get_status",
+        "get_data": "get_data",
+        "rules_create": "rules.create",
+        "rules_delete": "rules.delete",
+        "rules_delete_all": "rules.delete_all",
+        "rules_from_json": "rules.from_json",
+        "rules_get": "rules.get",
+        "rules_get_all": "rules.get_all"
     }
 }

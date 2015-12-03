@@ -36,6 +36,8 @@ from troveclient.v1 import client as troveclient
 # TODO(nmakhotkin): Find a rational way to do it for neutron.
 # TODO(nmakhotkin): Implement recursive way of searching for managers
 # TODO(nmakhotkin): (e.g. keystone).
+# TODO(dprince): Need to update ironic_inspector_client before we can
+# plug it in cleanly here.
 
 """It is simple CLI tool which allows to see and update mapping.json file
 if needed. mapping.json contains all allowing OpenStack actions sorted by
@@ -158,6 +160,7 @@ CLIENTS = {
     'trove': get_trove_client,
     'ironic': get_ironic_client,
     # 'neutron': get_nova_client
+    # 'baremetal_introspection': ...
 }
 BASE_MANAGERS = {
     'nova': BASE_NOVA_MANAGER,
@@ -169,6 +172,7 @@ BASE_MANAGERS = {
     'trove': BASE_TROVE_MANAGER,
     'ironic': BASE_IRONIC_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
+    # 'baremetal_introspection': ...
 }
 NAMESPACES = {
     'glance': GLANCE_NAMESPACE_LIST,

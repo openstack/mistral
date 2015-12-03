@@ -26,6 +26,8 @@ MODULE_MAPPING = {
     'ceilometer': ['ceilometer.alarms_list', actions.CeilometerAction],
     'trove': ['trove.instances_list', actions.TroveAction],
     'ironic': ['ironic.node_list', actions.IronicAction],
+    'baremetal_introspection': ['baremetal_introspection.introspect',
+                                actions.BaremetalIntrospectionAction],
 }
 
 EXTRA_MODULES = ['neutron']

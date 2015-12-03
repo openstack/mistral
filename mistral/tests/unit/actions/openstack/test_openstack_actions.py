@@ -126,3 +126,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().node.get.called)
         mocked().node.get.assert_called_once_with(node="1234-abcd")
+
+    @mock.patch.object(actions.BaremetalIntrospectionAction, '_get_client')
+    def test_baremetal_introspector_action(self, mocked):
+        method_name = "get_status"
+        action_class = actions.BaremetalIntrospectionAction
+        action_class.client_method_name = method_name
+        params = {'uuid': '1234'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().get_status.called)
+        mocked().get_status.assert_called_once_with(uuid="1234")
