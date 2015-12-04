@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -121,13 +122,17 @@ def construct_fail_info_message(wf_ctrl, wf_ex):
            ', '.join([t.name for t in failed_tasks]))
 
     for t in failed_tasks:
-        msg += '\n  %s -> ' % t.name
+        msg += '\n  %s [task_ex_id=%s] -> %s\n' % (t.name, t.id, t.state_info)
 
-        if t.state_info:
-            msg += t.state_info + '\n'
-        else:
-            for i, ex in enumerate(t.executions):
+        for i, ex in enumerate(t.executions):
+            if ex.state == states.ERROR:
                 output = (ex.output or dict()).get('result', 'Unknown')
-                msg += '    action execution #%s: %s\n' % (i + 1, str(output))
+                msg += (
+                    '    [action_ex_id=%s, idx=%s]: %s\n' % (
+                        ex.id,
+                        i,
+                        str(output)
+                    )
+                )
 
     return msg
