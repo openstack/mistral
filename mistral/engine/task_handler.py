@@ -80,6 +80,7 @@ def run_existing_task(task_ex_id, reset=True):
 
     # Explicitly change task state to RUNNING.
     task_ex.state = states.RUNNING
+    task_ex.state_info = None
     task_ex.processed = False
 
     _run_existing_task(task_ex, task_spec, wf_spec)
