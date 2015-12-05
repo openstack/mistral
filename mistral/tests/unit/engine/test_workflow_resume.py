@@ -303,6 +303,11 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, wf_ex.state)
 
+        # Wait for task3 to be processed.
+        task3_ex = self._assert_single_item(task_execs, name='task3')
+        self._await(lambda: self.is_task_success(task3_ex.id))
+        self._await(lambda: self.is_task_processed(task3_ex.id))
+
         # Finish task2.
         task2_action_ex = db_api.get_action_executions(
             task_execution_id=task2_ex.id
@@ -314,7 +319,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self.assertEqual(states.SUCCESS, wf_ex.state, wf_ex.state_info)
         self.assertEqual(4, len(wf_ex.task_executions))
 
     @mock.patch.object(de.DefaultEngine, '_fail_workflow')
@@ -335,7 +340,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         with mock.patch.object(
                 db_api,
-                'get_workflow_execution',
+                'acquire_lock',
                 side_effect=err):
 
             self.assertRaises(

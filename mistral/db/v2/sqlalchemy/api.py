@@ -91,15 +91,24 @@ def transaction():
 
 @b.session_aware()
 def acquire_lock(model, id, session=None):
-    if b.get_driver_name() != 'sqlite':
-        query = _secure_query(model).filter("id = '%s'" % id)
+    # Expire all so all objects queried after lock is acquired
+    # will be up-to-date from the DB and not from cache.
+    session.expire_all()
 
-        query.update(
-            {'updated_at': timeutils.utcnow()},
-            synchronize_session='fetch',
-        )
+    if b.get_driver_name() != 'sqlite':
+        entity = _get_one_entity(model, id)
+        entity.update({'updated_at': timeutils.utcnow()})
+
     else:
         sqlite_lock.acquire_lock(id, session)
+        entity = _get_one_entity(model, id)
+
+    return entity
+
+
+def _get_one_entity(model, id):
+    # Get entity by ID and expect exactly one object.
+    return _secure_query(model).filter(model.id == id).one()
 
 
 def _secure_query(model, *columns):

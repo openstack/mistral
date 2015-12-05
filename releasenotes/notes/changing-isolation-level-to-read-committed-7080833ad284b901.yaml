@@ -1,0 +1,66 @@
+---
+fixes:
+  - |
+    [`bug 1518012 <https://bugs.launchpad.net/keystone/+bug/1518012>`_]
+    [`bug 1513456 <https://bugs.launchpad.net/keystone/+bug/1513456>`_]
+
+    Fix concurrency issues by using READ_COMMITTED
+
+    This release note describes bugs:
+      * #1513456 - task stuck in RUNNING state when all action executions are finished regarding the problem and the fix.
+      * #1518012- WF execution stays in RUNNING although task and action executions are in SUCCESS.
+
+    This fix does not require any action from Mistral users and
+    does not have any implications other than the bug fix.
+
+    The state of a workflow execution was not updated even when all task
+    executions were completed if some tasks finished at the same time as
+    other tasks.
+
+    Because we were using our connections with transaction isolation
+    level = REPEATABLE_READ - Each process was using a snapshot of the DB
+    created at the first read statement in that transaction.
+    When a task finished and evaluated the state of all the other tasks
+    it did not see the up-to-date state of those tasks - and so, because
+    not all tasks were completed - the task did not change the workflow
+    execution state.
+
+    Similar behavior happened with multiple action executions under same
+    task. On completion, each action execution checked the status of the
+    other action executions and did not see the up-to-date state of these
+    action execution - causing task execution to stay in RUNNING state.
+
+    The solution is to change DB transaction isolation level from
+    REPEATABLE_READ to READ_COMMITTED so process A can see changes committed
+    in other transactions even if process A is in the middle of a transaction.
+
+    A short explaination regarding the different isolation levels:
+
+    - |
+
+      REPEATABLE_READ - while in transaction, the first read operation to the
+      DB creates a snapshot of the entire DB so you are guarantee that all the
+      data in the DB will remain the same until the end of the transaction.
+
+      REPEATABLE_READ example:
+        * ConnectionA selects from tableA in a transaction.
+        * ConnectionB deletes all rows from tableB in a transaction.
+        * ConnectionB commits.
+        * ConnectionA loops over the rows of tableA and fetches from tableB using the tableA_tableB_FK - ConnectionA will get rows from tableB.
+
+    - |
+
+      READ_COMMITTED - while in a transaction, every query to the DB will get
+      the committed data.
+
+      READ_COMMITTED example:
+        * ConnectionA starts a transaction.
+        * ConnectionB starts a transaction.
+        * ConnectionA insert row to tableA and commits.
+        * ConnectionB insert row to tableA.
+        * ConnectionB selects tableA and gets two rows.
+        * ConnectionB commits / rollback.
+
+    Two good articles about isolation levels are:
+      * `Differences between READ-COMMITTED and REPEATABLE-READ transaction isolation levels <https://www.percona.com/blog/2015/01/14/mysql-performance-implications-of-innodb-isolation-modes/>`_.
+      * `MySQL performance implications of InnoDB isolation modes <https://www.percona.com/blog/2012/08/28/differences-between-read-committed-and-repeatable-read-transaction-isolation-levels/>`_.

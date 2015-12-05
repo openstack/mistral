@@ -1,0 +1,8 @@
+---
+version: '2.0'
+
+test_action_ex_concurrency:
+  tasks:
+    test_with_items:
+      with-items: index in <% range(2) %>
+      action: std.echo output='<% $.index %>'

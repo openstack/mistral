@@ -156,11 +156,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             # policy worked.
 
             wf_ex_id = task_ex.workflow_execution_id
-
-            # Must be before loading the object itself (see method doc).
-            self._lock_workflow_execution(wf_ex_id)
-
-            wf_ex = task_ex.workflow_execution
+            wf_ex = self._lock_workflow_execution(wf_ex_id)
 
             wf_trace.info(
                 task_ex,
@@ -234,13 +230,9 @@ class DefaultEngine(base.Engine, coordination.Service):
                     ).get_clone()
 
                 wf_ex_id = action_ex.task_execution.workflow_execution_id
+                wf_ex = self._lock_workflow_execution(wf_ex_id)
 
-                # Must be before loading the object itself (see method doc).
-                self._lock_workflow_execution(wf_ex_id)
-
-                wf_ex = action_ex.task_execution.workflow_execution
-
-                task_ex = task_handler.on_action_complete(action_ex, result)
+                task_handler.on_action_complete(action_ex, result)
 
                 # If workflow is on pause or completed then there's no
                 # need to continue workflow.
@@ -254,7 +246,9 @@ class DefaultEngine(base.Engine, coordination.Service):
             with db_api.transaction():
                 action_ex = db_api.get_action_execution(action_ex_id)
                 task_ex = action_ex.task_execution
-                wf_ex = action_ex.task_execution.workflow_execution
+                wf_ex = self._lock_workflow_execution(
+                    task_ex.workflow_execution_id
+                )
                 self._on_task_state_change(task_ex, wf_ex)
 
                 return action_ex.get_clone()
@@ -266,17 +260,16 @@ class DefaultEngine(base.Engine, coordination.Service):
                 action_ex_id, e, traceback.format_exc()
             )
 
-            self._fail_workflow(wf_ex_id, e)
+            # If an exception was thrown after we got the wf_ex_id
+            if wf_ex_id:
+                self._fail_workflow(wf_ex_id, e)
 
             raise e
 
     @u.log_exec(LOG)
     def pause_workflow(self, execution_id):
         with db_api.transaction():
-            # Must be before loading the object itself (see method doc).
-            self._lock_workflow_execution(execution_id)
-
-            wf_ex = db_api.get_workflow_execution(execution_id)
+            wf_ex = self._lock_workflow_execution(execution_id)
 
             wf_handler.set_execution_state(wf_ex, states.PAUSED)
 
@@ -323,15 +316,12 @@ class DefaultEngine(base.Engine, coordination.Service):
     def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True):
         try:
             with db_api.transaction():
-                # Must be before loading the object itself (see method doc).
-                self._lock_workflow_execution(wf_ex_id)
+                wf_ex = self._lock_workflow_execution(wf_ex_id)
 
                 task_ex = db_api.get_task_execution(task_ex_id)
 
                 if task_ex.workflow_execution.id != wf_ex_id:
                     raise ValueError('Workflow execution ID does not match.')
-
-                wf_ex = task_ex.workflow_execution
 
                 if wf_ex.state == states.PAUSED:
                     return wf_ex.get_clone()
@@ -349,10 +339,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     def resume_workflow(self, wf_ex_id):
         try:
             with db_api.transaction():
-                # Must be before loading the object itself (see method doc).
-                self._lock_workflow_execution(wf_ex_id)
-
-                wf_ex = db_api.get_workflow_execution(wf_ex_id)
+                wf_ex = self._lock_workflow_execution(wf_ex_id)
 
                 if wf_ex.state != states.PAUSED:
                     return wf_ex.get_clone()
@@ -369,10 +356,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     @u.log_exec(LOG)
     def stop_workflow(self, execution_id, state, message=None):
         with db_api.transaction():
-            # Must be before loading the object itself (see method doc).
-            self._lock_workflow_execution(execution_id)
-
-            wf_ex = db_api.get_execution(execution_id)
+            wf_ex = self._lock_workflow_execution(execution_id)
 
             return self._stop_workflow(wf_ex, state, message)
 
@@ -506,9 +490,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
     @staticmethod
     def _lock_workflow_execution(wf_exec_id):
-        # NOTE: Workflow execution object must be locked before
-        # loading the object itself into the session (either with
-        # 'get_XXX' or 'load_XXX' methods). Otherwise, there can be
-        # multiple parallel transactions that see the same state
-        # and hence the rest of the method logic would not be atomic.
-        db_api.acquire_lock(db_models.WorkflowExecution, wf_exec_id)
+        # Locks a workflow execution using the db_api.acquire_lock function.
+        # The method expires all session objects and returns the up-to-date
+        # workflow execution from the DB.
+        return db_api.acquire_lock(db_models.WorkflowExecution, wf_exec_id)
