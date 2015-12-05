@@ -92,16 +92,11 @@ class SQLiteLocksTest(test_base.DbTestCase):
         self._random_sleep()
 
         with db_api.transaction():
-            # Here we lock the object before it gets loaded into the
-            # session and prevent reading the same object state by
-            # multiple transactions. Hence the rest of the transaction
-            # body works atomically (in a serialized manner) and the
-            # result (object name) must be equal to a number of
-            # transactions.
-            db_api.acquire_lock(db_models.WorkflowExecution, wf_ex.id)
+            # Lock workflow execution and get the most up-to-date object.
+            wf_ex = db_api.acquire_lock(db_models.WorkflowExecution, wf_ex.id)
 
             # Refresh the object.
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            db_api.get_workflow_execution(wf_ex.id)
 
             wf_ex.name = str(int(wf_ex.name) + 1)
 
@@ -127,42 +122,3 @@ class SQLiteLocksTest(test_base.DbTestCase):
         print("Correct locking test gave object name: %s" % wf_ex.name)
 
         self.assertEqual(str(number), wf_ex.name)
-
-    def _run_invalid_locking(self, wf_ex):
-        self._random_sleep()
-
-        with db_api.transaction():
-            # Load object into the session (transaction).
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            # It's too late to lock the object here because it's already
-            # been loaded into the session so there should be multiple
-            # threads that read the same object state so they write the
-            # same value into DB. As a result we won't get a result
-            # (object name) equal to a number of transactions.
-            db_api.acquire_lock(db_models.WorkflowExecution, wf_ex.id)
-
-            wf_ex.name = str(int(wf_ex.name) + 1)
-
-            return wf_ex.name
-
-    def test_invalid_locking(self):
-        wf_ex = db_api.create_workflow_execution(WF_EXEC)
-
-        threads = []
-
-        number = 500
-
-        for i in range(1, number):
-            threads.append(
-                eventlet.spawn(self._run_invalid_locking, wf_ex)
-            )
-
-        [t.wait() for t in threads]
-        [t.kill() for t in threads]
-
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-        print("Invalid locking test gave object name: %s" % wf_ex.name)
-
-        self.assertNotEqual(str(number), wf_ex.name)

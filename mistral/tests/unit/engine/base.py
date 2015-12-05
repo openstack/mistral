@@ -166,3 +166,6 @@ class EngineTestCase(base.DbTestCase):
 
     def is_task_delayed(self, task_ex_id):
         return self.is_task_in_state(task_ex_id, states.RUNNING_DELAYED)
+
+    def is_task_processed(self, task_ex_id):
+        return db_api.get_task_execution(task_ex_id).processed

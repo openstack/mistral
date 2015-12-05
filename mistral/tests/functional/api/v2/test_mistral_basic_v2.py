@@ -557,6 +557,32 @@ class ExecutionTestsV2(base.TestCase):
                           self.reverse_wf['name'],
                           params={"task_name": "nonexist"})
 
+    @test.attr(type='sanity')
+    def test_action_ex_concurrency(self):
+        resp, wf = self.client.create_workflow("wf_action_ex_concurrency.yaml")
+        self.assertEqual(201, resp.status)
+
+        wf_name = wf['workflows'][0]['name']
+        resp, execution = self.client.create_execution(wf_name)
+
+        self.assertEqual(201, resp.status)
+        self.assertEqual('RUNNING', execution['state'])
+
+        self.client.wait_execution_success(execution)
+
+    @test.attr(type='sanity')
+    def test_task_ex_concurrency(self):
+        resp, wf = self.client.create_workflow("wf_task_ex_concurrency.yaml")
+        self.assertEqual(201, resp.status)
+
+        wf_name = wf['workflows'][0]['name']
+        resp, execution = self.client.create_execution(wf_name)
+
+        self.assertEqual(201, resp.status)
+        self.assertEqual('RUNNING', execution['state'])
+
+        self.client.wait_execution(execution, target_state='ERROR')
+
 
 class CronTriggerTestsV2(base.TestCase):
 

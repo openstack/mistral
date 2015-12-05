@@ -281,7 +281,21 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 8, 25)
         )
 
-        eventlet.sleep(10)
+        # Wait until there are 'trigger_count' executions.
+        self._await(
+            lambda: self._wait_for_single_execution_with_multiple_processes(
+                trigger_count,
+                start_wf_mock
+            )
+        )
 
-        self.assertEqual(True, start_wf_mock.called)
+        # Wait some more and make sure there are no more than 'trigger_count'
+        # executions.
+        eventlet.sleep(5)
         self.assertEqual(trigger_count, start_wf_mock.call_count)
+
+    def _wait_for_single_execution_with_multiple_processes(self, trigger_count,
+                                                           start_wf_mock):
+        eventlet.sleep(1)
+
+        return trigger_count == start_wf_mock.call_count

@@ -63,7 +63,7 @@ def transaction():
 
 
 def acquire_lock(model, id):
-    IMPL.acquire_lock(model, id)
+    return IMPL.acquire_lock(model, id)
 
 
 # Workbooks.
