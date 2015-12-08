@@ -556,3 +556,61 @@ class JoinEngineTest(base.EngineTestCase):
             },
             exec_db.output
         )
+
+    def test_full_join_with_branch_errors(self):
+        wf_full_join_with_errors = """---
+        version: '2.0'
+
+        main:
+          type: direct
+
+          tasks:
+            task10:
+              action: std.noop
+              on-success:
+                - task21
+                - task31
+
+            task21:
+              action: std.noop
+              on-success:
+                - task22
+            task22:
+              action: std.noop
+              on-success:
+                - task40
+
+            task31:
+              action: std.fail
+              on-success:
+                - task32
+            task32:
+              action: std.noop
+              on-success:
+                - task40
+
+            task40:
+              join: all
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_full_join_with_errors)
+        wf_ex = self.engine.start_workflow('main', {})
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        tasks = wf_ex.task_executions
+
+        task10 = self._assert_single_item(tasks, name='task10')
+        task21 = self._assert_single_item(tasks, name='task21')
+        task22 = self._assert_single_item(tasks, name='task22')
+        task31 = self._assert_single_item(tasks, name='task31')
+        task40 = self._assert_single_item(tasks, name='task40')
+
+        self.assertEqual(states.SUCCESS, task10.state)
+        self.assertEqual(states.SUCCESS, task21.state)
+        self.assertEqual(states.SUCCESS, task22.state)
+        self.assertEqual(states.ERROR, task31.state)
+        self.assertNotIn('task32', [task.name for task in tasks])
+        self.assertEqual(states.WAITING, task40.state)

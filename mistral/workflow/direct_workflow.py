@@ -287,7 +287,7 @@ class DirectWorkflowController(base.WorkflowController):
         )
 
         # TODO(rakhmerov): Temporary hack. See the previous comment.
-        in_t_ex = in_t_execs[-1]
+        in_t_ex = in_t_execs[-1] if in_t_execs else None
 
         if not in_t_ex or not states.is_completed(in_t_ex.state):
             return False
