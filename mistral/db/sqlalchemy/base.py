@@ -20,6 +20,7 @@ from oslo_config import cfg
 from oslo_db import options
 from oslo_db.sqlalchemy import session as db_session
 from oslo_log import log as logging
+import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
@@ -34,6 +35,7 @@ options.set_defaults(cfg.CONF, connection="sqlite:///mistral.sqlite")
 _DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
 
 _facade = None
+_sqlalchemy_create_engine_orig = sa.create_engine
 
 
 def _get_facade():
@@ -50,7 +52,25 @@ def _get_facade():
     return _facade
 
 
+# Monkey-patching sqlalchemy to set the isolation_level
+# as this configuration is not exposed by oslo_db.
+def _sqlalchemy_create_engine_wrapper(*args, **kwargs):
+    # sqlite (used for unit testing and not allowed for production)
+    # does not support READ_COMMITTED.
+    # Checking the drivername using the args and not the get_driver_name()
+    # method because that method requires a session.
+    if args[0].drivername != 'sqlite':
+        kwargs["isolation_level"] = "READ_COMMITTED"
+
+    return _sqlalchemy_create_engine_orig(*args, **kwargs)
+
+
 def get_engine():
+    # If the patch was not applied yet.
+    if sa.create_engine != _sqlalchemy_create_engine_wrapper:
+        # Replace the original create_engine with our wrapper.
+        sa.create_engine = _sqlalchemy_create_engine_wrapper
+
     return _get_facade().get_engine()
 
 
