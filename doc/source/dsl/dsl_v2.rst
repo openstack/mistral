@@ -891,20 +891,20 @@ YAML example
     version: '2.0'
 
     error_email:
-    input:
-      - execution_id
-    base: std.email
-    base-input:
-      to_addrs: ['admin@mywebsite.org']
-      subject: 'Something went wrong with your Mistral workflow :('
-      body: |
-          Please take a look at Mistral Dashboard to find out what's wrong
-          with your workflow execution <% $.execution_id %>.
-          Everything's going to be alright!
-          -- Sincerely, Mistral Team.
-      from_addr: 'mistral@openstack.org'
-      smtp_server: 'smtp.google.com'
-      smtp_password: 'SECRET'
+      input:
+        - execution_id
+      base: std.email
+      base-input:
+        to_addrs: ['admin@mywebsite.org']
+        subject: 'Something went wrong with your Mistral workflow :('
+        body: |
+            Please take a look at Mistral Dashboard to find out what's wrong
+            with your workflow execution <% $.execution_id %>.
+            Everything's going to be alright!
+            -- Sincerely, Mistral Team.
+        from_addr: 'mistral@openstack.org'
+        smtp_server: 'smtp.google.com'
+        smtp_password: 'SECRET'
 
 Once this action is uploaded to Mistral any workflow will be able to use
 it as follows:
