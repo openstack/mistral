@@ -21,10 +21,9 @@ from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient import client as novaclient
-from troveclient import client as troveclient
-
 from oslo_config import cfg
 from oslo_log import log
+from troveclient import client as troveclient
 
 from mistral.actions.openstack import base
 from mistral import context
