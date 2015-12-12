@@ -360,20 +360,30 @@ def create_or_update_workflow_definition(name, values, session=None):
 
 
 @b.session_aware()
-def delete_workflow_definition(name, session=None):
-    wf_def = _get_workflow_definition(name)
+def delete_workflow_definition(identifier, session=None):
+    wf_def = get_workflow_definition(identifier)
 
-    if not wf_def:
-        raise exc.NotFoundException(
-            "Workflow not found [workflow_name=%s]" % name
+    if wf_def.project_id != security.get_project_id():
+        raise exc.NotAllowedException(
+            "Can not delete workflow of other users. [workflow_identifier=%s]"
+            % identifier
         )
 
-    cron_triggers = _get_associated_cron_triggers(name)
+    if wf_def.is_system:
+        msg = "Attempt to delete a system workflow: %s" % identifier
+        raise exc.DataAccessException(msg)
+
+    # TODO(lane): We use workflow name here instead of supporting UUID, as
+    # cron-trigger is created using workflow name currently. Of course,
+    # cron-trigger creation still needs to be fixed in terms of non-unique
+    # workflow name in the system.
+    cron_triggers = _get_associated_cron_triggers(wf_def.name)
 
     if cron_triggers:
         raise exc.DBException(
-            "Can't delete workflow that has triggers [workflow_name=%s],"
-            "[cron_trigger_name(s)=%s]" % (name, ', '.join(cron_triggers))
+            "Can't delete workflow that has triggers associated. "
+            "[workflow_identifier=%s], [cron_trigger_name(s)=%s]" %
+            (identifier, ', '.join(cron_triggers))
         )
 
     session.delete(wf_def)

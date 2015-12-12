@@ -103,8 +103,8 @@ def delete_workbooks(**kwargs):
 
 # Workflow definitions.
 
-def get_workflow_definition(name):
-    return IMPL.get_workflow_definition(name)
+def get_workflow_definition(identifier):
+    return IMPL.get_workflow_definition(identifier)
 
 
 def get_workflow_definition_by_id(id):
@@ -140,8 +140,8 @@ def create_or_update_workflow_definition(name, values):
     return IMPL.create_or_update_workflow_definition(name, values)
 
 
-def delete_workflow_definition(name):
-    IMPL.delete_workflow_definition(name)
+def delete_workflow_definition(identifier):
+    IMPL.delete_workflow_definition(identifier)
 
 
 def delete_workflow_definitions(**kwargs):
