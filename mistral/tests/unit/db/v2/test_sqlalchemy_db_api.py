@@ -278,6 +278,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertIsNone(created.updated_at)
 
+        # Update workflow using workflow name as identifier.
         updated = db_api.update_workflow_definition(
             created['name'],
             {'definition': 'my new definition'}
@@ -289,6 +290,33 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(updated, fetched)
         self.assertIsNotNone(fetched.updated_at)
+
+        # Update workflow using workflow uuid as identifier.
+        updated = db_api.update_workflow_definition(
+            created['id'],
+            {'name': 'updated_name', 'definition': 'my new definition'}
+        )
+
+        self.assertEqual('updated_name', updated.name)
+        self.assertEqual('my new definition', updated.definition)
+
+        fetched = db_api.get_workflow_definition(created['id'])
+
+        self.assertEqual(updated, fetched)
+        self.assertIsNotNone(fetched.updated_at)
+
+    def test_update_other_project_workflow_definition(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        # Switch to another project.
+        auth_context.set_ctx(test_base.get_context(default=False))
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.update_workflow_definition,
+            created.name,
+            {'definition': 'my new definition'}
+        )
 
     def test_create_or_update_workflow_definition(self):
         name = WF_DEFINITIONS[0]['name']

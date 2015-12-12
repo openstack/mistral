@@ -132,11 +132,14 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
-    def put(self):
+    def put(self, identifier=None):
         """Update one or more workflows.
 
-        NOTE: The text is allowed to have definitions
-            of multiple workflows. In this case they all will be updated.
+        :param identifier: Optional. If provided, it's UUID of a workflow.
+            Only one workflow can be updated with identifier param.
+
+        The text is allowed to have definitions of multiple workflows. In this
+        case they all will be updated.
         """
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
@@ -146,14 +149,20 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                 "Scope must be one of the following: %s; actual: "
                 "%s" % (SCOPE_TYPES.values, scope)
             )
+
         LOG.info("Update workflow(s) [definition=%s]" % definition)
 
-        db_wfs = workflows.update_workflows(definition, scope=scope)
-        models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
+        db_wfs = workflows.update_workflows(
+            definition,
+            scope=scope,
+            identifier=identifier
+        )
 
+        models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
         workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]
 
-        return Workflows(workflows=workflow_list).to_string()
+        return (workflow_list[0].to_string() if identifier
+                else Workflows(workflows=workflow_list).to_string())
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")

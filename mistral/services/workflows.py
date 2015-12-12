@@ -78,8 +78,15 @@ def _append_all_workflows(definition, is_system, scope, wf_list_spec, db_wfs):
         )
 
 
-def update_workflows(definition, scope='private'):
+def update_workflows(definition, scope='private', identifier=None):
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
+    wfs = wf_list_spec.get_workflows()
+
+    if identifier and len(wfs) > 1:
+        raise exc.InputException(
+            "More than one workflows are not supported for update with UUID "
+            "provided."
+        )
 
     db_wfs = []
 
@@ -88,7 +95,8 @@ def update_workflows(definition, scope='private'):
             db_wfs.append(_update_workflow(
                 wf_spec,
                 definition,
-                scope
+                scope,
+                identifier=identifier
             ))
 
     return db_wfs
@@ -113,14 +121,10 @@ def _create_workflow(wf_spec, definition, scope, is_system):
     )
 
 
-def _update_workflow(wf_spec, definition, scope):
-    workflow = db_api.load_workflow_definition(wf_spec.get_name())
-
-    if workflow and workflow.is_system:
-        raise exc.InvalidActionException(
-            "Attempt to modify a system workflow: %s" %
-            workflow.name
-        )
+def _update_workflow(wf_spec, definition, scope, identifier=None):
     values = _get_workflow_values(wf_spec, definition, scope)
 
-    return db_api.update_workflow_definition(values['name'], values)
+    return db_api.update_workflow_definition(
+        identifier if identifier else values['name'],
+        values
+    )
