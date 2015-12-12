@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_utils import uuidutils
 import six
 
 from mistral import exceptions as exc
@@ -80,8 +81,13 @@ class WorkflowSpec(base.BaseSpec):
         self.validate_yaql_expr(self._data.get('vars', {}))
 
     def validate_semantics(self):
-        # Doesn't do anything by default.
-        pass
+        super(WorkflowSpec, self).validate_semantics()
+
+        # Distinguish workflow name from workflow UUID.
+        if uuidutils.is_uuid_like(self._name):
+            raise exc.InvalidModelException(
+                "Workflow name cannot be in the format of UUID."
+            )
 
     def _validate_task_link(self, task_name, allow_engine_cmds=True):
         valid_task = self._task_exists(task_name)
@@ -142,6 +148,8 @@ class DirectWorkflowSpec(WorkflowSpec):
     }
 
     def validate_semantics(self):
+        super(DirectWorkflowSpec, self).validate_semantics()
+
         # Check if there are start tasks.
         if not self.find_start_tasks():
             raise exc.DSLParsingException(
@@ -300,6 +308,8 @@ class ReverseWorkflowSpec(WorkflowSpec):
     }
 
     def validate_semantics(self):
+        super(ReverseWorkflowSpec, self).validate_semantics()
+
         self._check_workflow_integrity()
 
     def _check_workflow_integrity(self):
