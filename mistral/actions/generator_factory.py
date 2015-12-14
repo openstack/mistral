@@ -19,16 +19,17 @@ from mistral.actions.openstack.action_generator import base
 
 SUPPORTED_MODULES = [
     'Nova', 'Glance', 'Keystone', 'Heat', 'Neutron', 'Cinder', 'Ceilometer',
-    'Trove', 'Ironic'
+    'Trove', 'Ironic', 'Baremetal Introspection'
 ]
 
 
 def all_generators():
     for mod_name in SUPPORTED_MODULES:
-        mod_namespace = mod_name.lower()
-        mod_cls_name = 'mistral.actions.openstack.actions.%sAction' % mod_name
+        prefix = mod_name.replace(' ', '')
+        mod_namespace = mod_name.lower().replace(' ', '_')
+        mod_cls_name = 'mistral.actions.openstack.actions.%sAction' % prefix
         mod_action_cls = importutils.import_class(mod_cls_name)
-        generator_cls_name = '%sActionGenerator' % mod_name
+        generator_cls_name = '%sActionGenerator' % prefix
 
         yield type(
             generator_cls_name,
