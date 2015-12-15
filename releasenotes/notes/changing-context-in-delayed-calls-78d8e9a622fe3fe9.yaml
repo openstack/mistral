@@ -1,0 +1,7 @@
+---
+security:
+  - >
+    [`bug 1521802 <https://bugs.launchpad.net/mistral/+bug/1521802>`_]
+    Fixing the problem that sometimes sub-workflow executions were run/saved
+    under the wrong tenant in cron trigger periodic task in multi-tenancy
+    deployment.
