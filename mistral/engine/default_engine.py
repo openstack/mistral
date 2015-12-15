@@ -200,7 +200,14 @@ class DefaultEngine(base.Engine, coordination.Service):
         if states.is_paused_or_completed(wf_ex.state):
             return
 
-        if wf_utils.find_incomplete_task_executions(wf_ex):
+        # Workflow is not completed if there are any incomplete task
+        # executions that are not in WAITING state. If all incomplete
+        # tasks are waiting and there are unhandled errors, then these
+        # tasks will not reach completion. In this case, mark the
+        # workflow complete.
+        incomplete_tasks = wf_utils.find_incomplete_task_executions(wf_ex)
+
+        if any(not states.is_waiting(t.state) for t in incomplete_tasks):
             return
 
         if wf_ctrl.all_errors_handled():
