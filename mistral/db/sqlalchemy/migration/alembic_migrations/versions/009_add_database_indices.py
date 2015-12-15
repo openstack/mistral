@@ -26,9 +26,13 @@ revision = '009'
 down_revision = '008'
 
 from alembic import op
+from sqlalchemy.engine import reflection
 
 
 def upgrade():
+
+    inspector = reflection.Inspector.from_engine(op.get_bind())
+
     op.create_index(
         'action_definitions_v2_action_class',
         'action_definitions_v2',
@@ -85,17 +89,23 @@ def upgrade():
         unique=False
     )
 
-    op.drop_constraint(
-        'cron_triggers_v2_workflow_input_hash_workflow_name_pattern__key',
-        'cron_triggers_v2',
-        type_='unique'
-    )
+    cron_v2_constrs = [uc['name'] for uc in
+                       inspector.get_unique_constraints('cron_triggers_v2')]
+    if ('cron_triggers_v2_workflow_input_hash_workflow_name_pattern__key' in
+            cron_v2_constrs):
+        op.drop_constraint(
+            'cron_triggers_v2_workflow_input_hash_workflow_name_pattern__key',
+            'cron_triggers_v2',
+            type_='unique'
+        )
 
-    op.drop_constraint(
-        'cron_triggers_v2_workflow_input_hash_workflow_name_pattern_key1',
-        'cron_triggers_v2',
-        type_='unique'
-    )
+    if ('cron_triggers_v2_workflow_input_hash_workflow_name_pattern_key1' in
+            cron_v2_constrs):
+        op.drop_constraint(
+            'cron_triggers_v2_workflow_input_hash_workflow_name_pattern_key1',
+            'cron_triggers_v2',
+            type_='unique'
+        )
 
     op.create_index(
         'delayed_calls_v2_processing_execution_time',
