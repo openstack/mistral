@@ -21,8 +21,8 @@ from tempest import test
 from tempest_lib import decorators
 from tempest_lib import exceptions
 
-from mistral.tests.functional import base
 from mistral import utils
+from mistral_tempest_tests.services import base
 
 
 LOG = logging.getLogger(__name__)
