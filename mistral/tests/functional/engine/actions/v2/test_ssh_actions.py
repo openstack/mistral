@@ -38,7 +38,10 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
 
     @classmethod
     def _create_security_group_rule_ssh(cls):
-        sec_groups = cls.mgr.security_groups_client.list_security_groups()
+        sec_groups = (
+            cls.mgr.compute_security_groups_client.
+            list_security_groups()
+        )
         sec_groups = sec_groups['security_groups']
 
         default_group = next(
@@ -217,7 +220,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         input_data = {
             'cmd': 'hostname',
             'host': self.public_vm_ip,
-            'username': CONF.scenario.ssh_user,
+            'username': CONF.validation.image_ssh_user,
             'private_key_filename': self.key_name
         }
 
@@ -241,10 +244,10 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         input_data = {
             'cmd': 'hostname',
             'host': guest_vm_ip,
-            'username': CONF.scenario.ssh_user,
+            'username': CONF.validation.image_ssh_user,
             'private_key_filename': self.key_name,
             'gateway_host': self.public_vm_ip,
-            'gateway_username': CONF.scenario.ssh_user
+            'gateway_username': CONF.validation.image_ssh_user
         }
 
         resp, body = self.client.create_action_execution(
