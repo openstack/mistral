@@ -16,6 +16,8 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import utils
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import data_flow
+from mistral.workflow import states
 
 
 STD_WF_PATH = 'resources/workflows'
@@ -100,6 +102,22 @@ def update_workflows(definition, scope='private', identifier=None):
             ))
 
     return db_wfs
+
+
+def update_workflow_execution_env(wf_ex, env):
+    if not env:
+        return wf_ex
+
+    if wf_ex.state not in [states.IDLE, states.PAUSED, states.ERROR]:
+        raise exc.NotAllowedException(
+            'Updating env to workflow execution is only permitted if '
+            'it is in idle, paused, or re-runnable state.'
+        )
+
+    wf_ex.params['env'] = utils.merge_dicts(wf_ex.params['env'], env)
+    data_flow.add_environment_to_context(wf_ex)
+
+    return wf_ex
 
 
 def _get_workflow_values(wf_spec, definition, scope, is_system=False):

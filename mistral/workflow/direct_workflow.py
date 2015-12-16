@@ -65,8 +65,10 @@ class DirectWorkflowController(base.WorkflowController):
             self.wf_spec.get_tasks()[t_ex_candidate.name]
         )
 
-    def _find_next_commands(self):
-        cmds = super(DirectWorkflowController, self)._find_next_commands()
+    def _find_next_commands(self, env=None):
+        cmds = super(DirectWorkflowController, self)._find_next_commands(
+            env=env
+        )
 
         if not self.wf_ex.task_executions:
             return self._find_start_commands()

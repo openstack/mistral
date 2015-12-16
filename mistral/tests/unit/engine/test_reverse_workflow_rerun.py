@@ -49,6 +49,26 @@ workflows:
           - t2
 """
 
+SIMPLE_WORKBOOK_DIFF_ENV_VAR = """
+---
+version: '2.0'
+name: wb1
+workflows:
+  wf1:
+    type: reverse
+    tasks:
+      t1:
+        action: std.echo output="Task 1"
+      t2:
+        action: std.echo output=<% env().var1 %>
+        requires:
+          - t1
+      t3:
+        action: std.echo output=<% env().var2 %>
+        requires:
+          - t2
+"""
+
 
 class ReverseWorkflowRerunTest(base.EngineTestCase):
 
@@ -130,6 +150,127 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_3_action_exs))
         self.assertEqual(states.SUCCESS, task_3_action_exs[0].state)
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.MagicMock(
+            side_effect=[
+                'Task 1',               # Mock task1 success for initial run.
+                exc.ActionException(),  # Mock task2 exception for initial run.
+                'Task 2',               # Mock task2 success for rerun.
+                'Task 3'                # Mock task3 success.
+            ]
+        )
+    )
+    def test_rerun_diff_env_vars(self):
+        wb_service.create_workbook_v2(SIMPLE_WORKBOOK_DIFF_ENV_VAR)
+
+        # Initial environment variables for the workflow execution.
+        env = {
+            'var1': 'fee fi fo fum',
+            'var2': 'foobar'
+        }
+
+        # Run workflow and fail task.
+        wf_ex = self.engine.start_workflow(
+            'wb1.wf1',
+            {},
+            task_name='t3',
+            env=env
+        )
+
+        self._await(lambda: self.is_execution_error(wf_ex.id))
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIsNotNone(wf_ex.state_info)
+        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertDictEqual(env, wf_ex.params['env'])
+        self.assertDictEqual(env, wf_ex.context['__env'])
+
+        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
+        task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
+
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+        self.assertEqual(states.ERROR, task_2_ex.state)
+        self.assertIsNotNone(task_2_ex.state_info)
+
+        # Update env in workflow execution with the following.
+        updated_env = {
+            'var1': 'Task 2',
+            'var2': 'Task 3'
+        }
+
+        # Resume workflow and re-run failed task.
+        self.engine.rerun_workflow(wf_ex.id, task_2_ex.id, env=updated_env)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertIsNone(wf_ex.state_info)
+        self.assertDictEqual(updated_env, wf_ex.params['env'])
+        self.assertDictEqual(updated_env, wf_ex.context['__env'])
+
+        # Wait for the workflow to succeed.
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self.assertIsNone(wf_ex.state_info)
+        self.assertEqual(3, len(wf_ex.task_executions))
+
+        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
+        task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
+        task_3_ex = self._assert_single_item(wf_ex.task_executions, name='t3')
+
+        # Check action executions of task 1.
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+
+        task_1_action_exs = db_api.get_action_executions(
+            task_execution_id=task_1_ex.id)
+
+        self.assertEqual(1, len(task_1_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
+
+        self.assertDictEqual(
+            {'output': 'Task 1'},
+            task_1_action_exs[0].input
+        )
+
+        # Check action executions of task 2.
+        self.assertEqual(states.SUCCESS, task_2_ex.state)
+        self.assertIsNone(task_2_ex.state_info)
+
+        task_2_action_exs = db_api.get_action_executions(
+            task_execution_id=task_2_ex.id)
+
+        self.assertEqual(2, len(task_2_action_exs))
+        self.assertEqual(states.ERROR, task_2_action_exs[0].state)
+        self.assertEqual(states.SUCCESS, task_2_action_exs[1].state)
+
+        self.assertDictEqual(
+            {'output': env['var1']},
+            task_2_action_exs[0].input
+        )
+
+        self.assertDictEqual(
+            {'output': updated_env['var1']},
+            task_2_action_exs[1].input
+        )
+
+        # Check action executions of task 3.
+        self.assertEqual(states.SUCCESS, task_3_ex.state)
+
+        task_3_action_exs = db_api.get_action_executions(
+            task_execution_id=task_3_ex.id)
+
+        self.assertEqual(1, len(task_3_action_exs))
+        self.assertEqual(states.SUCCESS, task_3_action_exs[0].state)
+
+        self.assertDictEqual(
+            {'output': updated_env['var2']},
+            task_3_action_exs[0].input
+        )
 
     @mock.patch.object(
         std_actions.EchoAction,

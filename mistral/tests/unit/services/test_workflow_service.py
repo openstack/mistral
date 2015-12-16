@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,14 +13,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
+
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral import utils
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -177,3 +182,102 @@ class WorkflowServiceTest(base.DbTestCase):
         )
 
         self.assertIn("Invalid DSL", exception.message)
+
+    def test_update_workflow_execution_env(self):
+        wf_exec_template = {
+            'spec': {},
+            'start_params': {'task': 'my_task1'},
+            'state': 'PAUSED',
+            'state_info': None,
+            'params': {'env': {'k1': 'abc'}},
+            'created_at': None,
+            'updated_at': None,
+            'context': {'__env': {'k1': 'fee fi fo fum'}},
+            'task_id': None,
+            'trust_id': None,
+            'description': None,
+            'output': None
+        }
+
+        states_permitted = [
+            states.IDLE,
+            states.PAUSED,
+            states.ERROR
+        ]
+
+        update_env = {'k1': 'foobar'}
+
+        for state in states_permitted:
+            wf_exec = copy.deepcopy(wf_exec_template)
+            wf_exec['state'] = state
+
+            with db_api.transaction():
+                created = db_api.create_workflow_execution(wf_exec)
+
+                self.assertIsNone(created.updated_at)
+
+                updated = wf_service.update_workflow_execution_env(
+                    created,
+                    update_env
+                )
+
+            self.assertDictEqual(update_env, updated.params['env'])
+            self.assertDictEqual(update_env, updated.context['__env'])
+
+            fetched = db_api.get_workflow_execution(created.id)
+
+            self.assertEqual(updated, fetched)
+            self.assertIsNotNone(fetched.updated_at)
+
+    def test_update_workflow_execution_env_wrong_state(self):
+        wf_exec_template = {
+            'spec': {},
+            'start_params': {'task': 'my_task1'},
+            'state': 'PAUSED',
+            'state_info': None,
+            'params': {'env': {'k1': 'abc'}},
+            'created_at': None,
+            'updated_at': None,
+            'context': {'__env': {'k1': 'fee fi fo fum'}},
+            'task_id': None,
+            'trust_id': None,
+            'description': None,
+            'output': None
+        }
+
+        states_not_permitted = [
+            states.RUNNING,
+            states.RUNNING_DELAYED,
+            states.SUCCESS,
+            states.WAITING
+        ]
+
+        update_env = {'k1': 'foobar'}
+
+        for state in states_not_permitted:
+            wf_exec = copy.deepcopy(wf_exec_template)
+            wf_exec['state'] = state
+
+            with db_api.transaction():
+                created = db_api.create_workflow_execution(wf_exec)
+
+                self.assertIsNone(created.updated_at)
+
+                self.assertRaises(
+                    exc.NotAllowedException,
+                    wf_service.update_workflow_execution_env,
+                    created,
+                    update_env
+                )
+
+            fetched = db_api.get_workflow_execution(created.id)
+
+            self.assertDictEqual(
+                wf_exec['params']['env'],
+                fetched.params['env']
+            )
+
+            self.assertDictEqual(
+                wf_exec['context']['__env'],
+                fetched.context['__env']
+            )

@@ -48,7 +48,18 @@ class WorkflowController(object):
         self.wf_ex = wf_ex
         self.wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-    def continue_workflow(self, task_ex=None, reset=True):
+    def _update_task_ex_env(self, task_ex, env):
+        if not env:
+            return task_ex
+
+        task_ex.in_context['__env'] = u.merge_dicts(
+            task_ex.in_context['__env'],
+            env
+        )
+
+        return task_ex
+
+    def continue_workflow(self, task_ex=None, reset=True, env=None):
         """Calculates a list of commands to continue the workflow.
 
         Given a workflow specification this method makes required analysis
@@ -57,6 +68,7 @@ class WorkflowController(object):
 
         :param: task_ex: Task execution to rerun.
         :param: reset: If true, then purge action executions for the tasks.
+        :param env: A set of environment variables to overwrite.
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
         """
@@ -64,9 +76,9 @@ class WorkflowController(object):
             return []
 
         if task_ex:
-            return self._get_rerun_commands([task_ex], reset)
+            return self._get_rerun_commands([task_ex], reset, env=env)
 
-        return self._find_next_commands()
+        return self._find_next_commands(env=env)
 
     @abc.abstractmethod
     def is_error_handled_for(self, task_ex):
@@ -97,10 +109,20 @@ class WorkflowController(object):
     def _get_task_inbound_context(self, task_spec):
         upstream_task_execs = self._get_upstream_task_executions(task_spec)
 
-        return u.merge_dicts(
+        upstream_ctx = data_flow.evaluate_upstream_context(upstream_task_execs)
+
+        ctx = u.merge_dicts(
             copy.deepcopy(self.wf_ex.context),
-            data_flow.evaluate_upstream_context(upstream_task_execs)
+            upstream_ctx
         )
+
+        if self.wf_ex.context:
+            ctx['__env'] = u.merge_dicts(
+                copy.deepcopy(upstream_ctx.get('__env', {})),
+                copy.deepcopy(self.wf_ex.context.get('__env', {}))
+            )
+
+        return ctx
 
     @abc.abstractmethod
     def _get_upstream_task_executions(self, task_spec):
@@ -112,11 +134,13 @@ class WorkflowController(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _find_next_commands(self):
+    def _find_next_commands(self, env=None):
         """Finds commands that should run next.
 
         A concrete algorithm of finding such tasks depends on a concrete
         workflow controller.
+
+        :param env: A set of environment variables to overwrite.
         :return: List of workflow commands.
         """
         # Add all tasks in IDLE state.
@@ -125,15 +149,22 @@ class WorkflowController(object):
             states.IDLE
         )
 
+        for task_ex in idle_tasks:
+            self._update_task_ex_env(task_ex, env)
+
         return [commands.RunExistingTask(t) for t in idle_tasks]
 
-    def _get_rerun_commands(self, task_exs, reset=True):
+    def _get_rerun_commands(self, task_exs, reset=True, env=None):
         """Get commands to rerun existing task executions.
 
         :param task_exs: List of task executions.
         :param reset: If true, then purge action executions for the tasks.
+        :param env: A set of environment variables to overwrite.
         :return: List of workflow commands.
         """
+        for task_ex in task_exs:
+            self._update_task_ex_env(task_ex, env)
+
         cmds = [commands.RunExistingTask(t_e, reset) for t_e in task_exs]
 
         LOG.debug("Found commands: %s" % cmds)

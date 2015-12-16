@@ -28,6 +28,7 @@ from mistral.engine import task_handler
 from mistral.engine import utils as eng_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral.services import action_manager as a_m
+from mistral.services import workflows as wf_service
 from mistral import utils as u
 from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
@@ -283,13 +284,15 @@ class DefaultEngine(base.Engine, coordination.Service):
 
         return wf_ex
 
-    def _continue_workflow(self, wf_ex, task_ex=None, reset=True):
+    def _continue_workflow(self, wf_ex, task_ex=None, reset=True, env=None):
+        wf_ex = wf_service.update_workflow_execution_env(wf_ex, env)
+
         wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
         wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
 
         # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset)
+        cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset, env=env)
 
         # When resuming a workflow we need to ignore all 'pause'
         # commands because workflow controller takes tasks that
@@ -321,7 +324,7 @@ class DefaultEngine(base.Engine, coordination.Service):
         return wf_ex.get_clone()
 
     @u.log_exec(LOG)
-    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True):
+    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True, env=None):
         try:
             with db_api.transaction():
                 wf_ex = self._lock_workflow_execution(wf_ex_id)
@@ -334,7 +337,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                 if wf_ex.state == states.PAUSED:
                     return wf_ex.get_clone()
 
-                return self._continue_workflow(wf_ex, task_ex, reset)
+                return self._continue_workflow(wf_ex, task_ex, reset, env=env)
         except Exception as e:
             LOG.error(
                 "Failed to rerun execution id=%s at task=%s: %s\n%s",
@@ -344,7 +347,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             raise e
 
     @u.log_exec(LOG)
-    def resume_workflow(self, wf_ex_id):
+    def resume_workflow(self, wf_ex_id, env=None):
         try:
             with db_api.transaction():
                 wf_ex = self._lock_workflow_execution(wf_ex_id)
@@ -352,7 +355,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                 if wf_ex.state != states.PAUSED:
                     return wf_ex.get_clone()
 
-                return self._continue_workflow(wf_ex)
+                return self._continue_workflow(wf_ex, env=env)
         except Exception as e:
             LOG.error(
                 "Failed to resume execution id=%s: %s\n%s",

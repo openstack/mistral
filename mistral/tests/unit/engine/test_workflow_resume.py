@@ -21,6 +21,7 @@ from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils
 
@@ -49,6 +50,33 @@ workflows:
 
       task2:
         action: std.echo output="Task 2"
+"""
+
+
+RESUME_WORKBOOK_DIFF_ENV_VAR = """
+---
+version: '2.0'
+
+name: wb
+
+workflows:
+  wf1:
+    type: direct
+
+    tasks:
+      task1:
+        action: std.echo output="Hi!"
+        on-complete:
+          - task2
+
+      task2:
+        action: std.echo output=<% env().var1 %>
+        pause-before: true
+        on-complete:
+          - task3
+
+      task3:
+        action: std.echo output=<% env().var2 %>
 """
 
 
@@ -350,3 +378,75 @@ class WorkflowResumeTest(base.EngineTestCase):
             )
 
             mock_fw.assert_called_once_with(wf_ex.id, err)
+
+    def test_resume_diff_env_vars(self):
+        wb_service.create_workbook_v2(RESUME_WORKBOOK_DIFF_ENV_VAR)
+
+        # Initial environment variables for the workflow execution.
+        env = {
+            'var1': 'fee fi fo fum',
+            'var2': 'foobar'
+        }
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {}, env=env)
+
+        self._await(lambda: self.is_execution_paused(wf_ex.id))
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        task_1_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task1'
+        )
+
+        task_2_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task2'
+        )
+
+        self.assertEqual(states.PAUSED, wf_ex.state)
+        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertDictEqual(env, wf_ex.params['env'])
+        self.assertDictEqual(env, wf_ex.context['__env'])
+        self.assertEqual(states.SUCCESS, task_1_ex.state)
+        self.assertEqual(states.IDLE, task_2_ex.state)
+
+        # Update env in workflow execution with the following.
+        updated_env = {
+            'var1': 'Task 2',
+            'var2': 'Task 3'
+        }
+
+        # Update the env variables and resume workflow.
+        self.engine.resume_workflow(wf_ex.id, env=updated_env)
+        self._await(lambda: self.is_execution_success(wf_ex.id))
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertDictEqual(updated_env, wf_ex.params['env'])
+        self.assertDictEqual(updated_env, wf_ex.context['__env'])
+        self.assertEqual(3, len(wf_ex.task_executions))
+
+        # Check result of task2.
+        task_2_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task2'
+        )
+
+        self.assertEqual(states.SUCCESS, task_2_ex.state)
+
+        task_2_result = data_flow.get_task_execution_result(task_2_ex)
+
+        self.assertEqual(updated_env['var1'], task_2_result)
+
+        # Check result of task3.
+        task_3_ex = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task3'
+        )
+
+        self.assertEqual(states.SUCCESS, task_3_ex.state)
+
+        task_3_result = data_flow.get_task_execution_result(task_3_ex)
+
+        self.assertEqual(updated_env['var2'], task_3_result)
