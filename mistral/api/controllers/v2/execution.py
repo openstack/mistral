@@ -26,6 +26,7 @@ from mistral.api.controllers.v2 import types
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
+from mistral.services import workflows as wf_service
 from mistral.utils import rest_utils
 from mistral.workflow import states
 
@@ -124,37 +125,81 @@ class ExecutionsController(rest.RestController):
 
         db_api.ensure_workflow_execution_exists(id)
 
-        new_state = wf_ex.state
-        new_description = wf_ex.description
-        msg = wf_ex.state_info if wf_ex.state_info else None
+        delta = {}
 
-        # Currently we can change only state or description.
-        if (not (new_state or new_description) or
-                (new_state and new_description)):
-            raise exc.DataAccessException(
-                "Only state or description of execution can be changed. "
-                "But they can not be changed at the same time."
+        if wf_ex.state:
+            delta['state'] = wf_ex.state
+
+        if wf_ex.description:
+            delta['description'] = wf_ex.description
+
+        if wf_ex.params and wf_ex.params.get('env'):
+            delta['env'] = wf_ex.params.get('env')
+
+        # Currently we can change only state, description, or env.
+        if len(delta.values()) <= 0:
+            raise exc.InputException(
+                'The property state, description, or env '
+                'is not provided for update.'
             )
 
-        if new_description:
+        # Description cannot be updated together with state.
+        if delta.get('description') and delta.get('state'):
+            raise exc.InputException(
+                'The property description must be updated '
+                'separately from state.'
+            )
+
+        # If state change, environment cannot be updated if not RUNNING.
+        if (delta.get('env') and
+                delta.get('state') and delta['state'] != states.RUNNING):
+            raise exc.InputException(
+                'The property env can only be updated when workflow '
+                'execution is not running or on resume from pause.'
+            )
+
+        if delta.get('description'):
             wf_ex = db_api.update_workflow_execution(
                 id,
-                {'description': new_description}
+                {'description': delta['description']}
             )
 
-        elif new_state == states.PAUSED:
-            wf_ex = rpc.get_engine_client().pause_workflow(id)
-        elif new_state == states.RUNNING:
-            wf_ex = rpc.get_engine_client().resume_workflow(id)
-        elif new_state in [states.SUCCESS, states.ERROR]:
-            wf_ex = rpc.get_engine_client().stop_workflow(id, new_state, msg)
-        else:
-            # To prevent changing state in other cases throw a message.
-            raise exc.DataAccessException(
-                "Can not change state to %s. Allowed states are: '%s" %
-                (new_state, ", ".join([states.RUNNING, states.PAUSED,
-                 states.SUCCESS, states.ERROR]))
-            )
+        if not delta.get('state') and delta.get('env'):
+            with db_api.transaction():
+                wf_ex = db_api.get_workflow_execution(id)
+                wf_ex = wf_service.update_workflow_execution_env(
+                    wf_ex,
+                    delta.get('env')
+                )
+
+        if delta.get('state'):
+            if delta.get('state') == states.PAUSED:
+                wf_ex = rpc.get_engine_client().pause_workflow(id)
+            elif delta.get('state') == states.RUNNING:
+                wf_ex = rpc.get_engine_client().resume_workflow(
+                    id,
+                    env=delta.get('env')
+                )
+            elif delta.get('state') in [states.SUCCESS, states.ERROR]:
+                msg = wf_ex.state_info if wf_ex.state_info else None
+                wf_ex = rpc.get_engine_client().stop_workflow(
+                    id,
+                    delta.get('state'),
+                    msg
+                )
+            else:
+                # To prevent changing state in other cases throw a message.
+                raise exc.InputException(
+                    "Cannot change state to %s. Allowed states are: '%s" % (
+                        wf_ex.state,
+                        ', '.join([
+                            states.RUNNING,
+                            states.PAUSED,
+                            states.SUCCESS,
+                            states.ERROR
+                        ])
+                    )
+                )
 
         return Execution.from_dict(
             wf_ex if isinstance(wf_ex, dict) else wf_ex.to_dict()

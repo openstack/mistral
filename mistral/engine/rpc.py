@@ -148,6 +148,7 @@ class EngineServer(object):
         """Receives calls over RPC to pause workflows on engine.
 
         :param rpc_ctx: Request context.
+        :param execution_id: Workflow execution id.
         :return: Workflow execution.
         """
 
@@ -158,13 +159,15 @@ class EngineServer(object):
 
         return self._engine.pause_workflow(execution_id)
 
-    def rerun_workflow(self, rpc_ctx, wf_ex_id, task_ex_id, reset=True):
+    def rerun_workflow(self, rpc_ctx, wf_ex_id, task_ex_id,
+                       reset=True, env=None):
         """Receives calls over RPC to rerun workflows on engine.
 
         :param rpc_ctx: RPC request context.
         :param wf_ex_id: Workflow execution id.
         :param task_ex_id: Task execution id.
         :param reset: If true, then purge action execution for the task.
+        :param env: Environment variables to update.
         :return: Workflow execution.
         """
 
@@ -173,13 +176,14 @@ class EngineServer(object):
             "wf_ex_id=%s, task_ex_id=%s]" % (rpc_ctx, wf_ex_id, task_ex_id)
         )
 
-        return self._engine.rerun_workflow(wf_ex_id, task_ex_id, reset)
+        return self._engine.rerun_workflow(wf_ex_id, task_ex_id, reset, env)
 
-    def resume_workflow(self, rpc_ctx, wf_ex_id):
+    def resume_workflow(self, rpc_ctx, wf_ex_id, env=None):
         """Receives calls over RPC to resume workflows on engine.
 
         :param rpc_ctx: RPC request context.
         :param wf_ex_id: Workflow execution id.
+        :param env: Environment variables to update.
         :return: Workflow execution.
         """
 
@@ -188,7 +192,7 @@ class EngineServer(object):
             "wf_ex_id=%s]" % (rpc_ctx, wf_ex_id)
         )
 
-        return self._engine.resume_workflow(wf_ex_id)
+        return self._engine.resume_workflow(wf_ex_id, env)
 
     def stop_workflow(self, rpc_ctx, execution_id, state, message=None):
         """Receives calls over RPC to stop workflows on engine.
@@ -356,7 +360,7 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
-    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True):
+    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True, env=None):
         """Rerun the workflow.
 
         This method reruns workflow with the given execution id
@@ -365,6 +369,7 @@ class EngineClient(base.Engine):
         :param wf_ex_id: Workflow execution id.
         :param task_ex_id: Task execution id.
         :param reset: If true, then purge action execution for the task.
+        :param env: Environment variables to update.
         :return: Workflow execution.
         """
 
@@ -373,21 +378,24 @@ class EngineClient(base.Engine):
             'rerun_workflow',
             wf_ex_id=wf_ex_id,
             task_ex_id=task_ex_id,
-            reset=reset
+            reset=reset,
+            env=env
         )
 
     @wrap_messaging_exception
-    def resume_workflow(self, wf_ex_id):
+    def resume_workflow(self, wf_ex_id, env=None):
         """Resumes the workflow with the given execution id.
 
         :param wf_ex_id: Workflow execution id.
+        :param env: Environment variables to update.
         :return: Workflow execution.
         """
 
         return self._client.call(
             auth_ctx.ctx(),
             'resume_workflow',
-            wf_ex_id=wf_ex_id
+            wf_ex_id=wf_ex_id,
+            env=env
         )
 
     @wrap_messaging_exception

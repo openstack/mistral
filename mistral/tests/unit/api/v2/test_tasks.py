@@ -59,7 +59,7 @@ TASK_EX = models.TaskExecution(
     tags=['a', 'b'],
     in_context={},
     runtime_context={},
-    workflow_execution_id='123',
+    workflow_execution_id=WF_EX.id,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
     published=PUBLISHED,
@@ -81,7 +81,7 @@ WITH_ITEMS_TASK_EX = models.TaskExecution(
     tags=['a', 'b'],
     in_context={},
     runtime_context={},
-    workflow_execution_id='123',
+    workflow_execution_id=WF_EX.id,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
     published=PUBLISHED,
@@ -93,7 +93,7 @@ TASK = {
     'name': 'task',
     'workflow_name': 'flow',
     'state': 'RUNNING',
-    'workflow_execution_id': '123',
+    'workflow_execution_id': WF_EX.id,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'result': json.dumps(RESULT),
@@ -127,10 +127,6 @@ MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_ERROR_TASK = mock.MagicMock(return_value=ERROR_TASK_EX)
 MOCK_ERROR_ITEMS_TASK = mock.MagicMock(return_value=ERROR_ITEMS_TASK_EX)
-MOCK_RERUN_TASKS = mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
-MOCK_RERUN_ITEMS_TASKS = mock.MagicMock(
-    side_effect=[ERROR_ITEMS_TASK_EX, WITH_ITEMS_TASK_EX]
-)
 
 
 @mock.patch.object(
@@ -169,7 +165,11 @@ class TestTasksController(base.FunctionalTest):
         self.assertEqual(0, len(resp.json['tasks']))
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_task_execution', MOCK_RERUN_TASKS)
+    @mock.patch.object(
+        db_api,
+        'get_task_execution',
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+    )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put(self):
         params = copy.deepcopy(RERUN_TASK)
@@ -180,8 +180,19 @@ class TestTasksController(base.FunctionalTest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
 
+        rpc.EngineClient.rerun_workflow.assert_called_with(
+            WF_EX.id,
+            TASK_EX.id,
+            reset=params['reset'],
+            env=None
+        )
+
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_task_execution', MOCK_RERUN_TASKS)
+    @mock.patch.object(
+        db_api,
+        'get_task_execution',
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+    )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_missing_reset(self):
         params = copy.deepcopy(RERUN_TASK)
@@ -196,7 +207,11 @@ class TestTasksController(base.FunctionalTest):
         self.assertIn('Mandatory field missing', resp.json['faultstring'])
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
-    @mock.patch.object(db_api, 'get_task_execution', MOCK_RERUN_ITEMS_TASKS)
+    @mock.patch.object(
+        db_api,
+        'get_task_execution',
+        mock.MagicMock(side_effect=[ERROR_ITEMS_TASK_EX, WITH_ITEMS_TASK_EX])
+    )
     @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
     def test_put_with_items(self):
         params = copy.deepcopy(RERUN_TASK)
@@ -206,6 +221,30 @@ class TestTasksController(base.FunctionalTest):
 
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
+
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
+    @mock.patch.object(
+        db_api,
+        'get_task_execution',
+        mock.MagicMock(side_effect=[ERROR_TASK_EX, TASK_EX])
+    )
+    @mock.patch.object(rpc.EngineClient, 'rerun_workflow', MOCK_WF_EX)
+    def test_put_env(self):
+        params = copy.deepcopy(RERUN_TASK)
+        params['reset'] = True
+        params['env'] = '{"k1": "def"}'
+
+        resp = self.app.put_json('/v2/tasks/123', params=params)
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(TASK, resp.json)
+
+        rpc.EngineClient.rerun_workflow.assert_called_with(
+            WF_EX.id,
+            TASK_EX.id,
+            reset=params['reset'],
+            env=json.loads(params['env'])
+        )
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(db_api, 'get_task_execution', MOCK_TASK)

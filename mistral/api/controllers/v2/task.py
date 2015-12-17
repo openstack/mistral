@@ -62,6 +62,8 @@ class Task(resource.Resource):
     # Add this param to make Mistral API work with WSME 0.8.0 or higher version
     reset = wsme.wsattr(bool, mandatory=True)
 
+    env = types.jsontype
+
     @classmethod
     def sample(cls):
         return cls(
@@ -142,6 +144,7 @@ class TasksController(rest.RestController):
         task_spec = spec_parser.get_task_spec(task_ex.spec)
         task_name = task.name or None
         reset = task.reset
+        env = task.env or None
 
         if task_name and task_name != task_ex.name:
             raise exc.WorkflowException('Task name does not match.')
@@ -171,7 +174,8 @@ class TasksController(rest.RestController):
         rpc.get_engine_client().rerun_workflow(
             wf_ex.id,
             task_ex.id,
-            reset
+            reset=reset,
+            env=env
         )
 
         task_ex = db_api.get_task_execution(id)

@@ -21,6 +21,7 @@ import mock
 from webtest import app as webtest_app
 
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import api as sql_db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import rpc
 from mistral import exceptions as exc
@@ -60,6 +61,13 @@ UPDATED_WF_EX['state'] = states.PAUSED
 UPDATED_WF_EX_JSON = copy.deepcopy(WF_EX_JSON)
 UPDATED_WF_EX_JSON['state'] = states.PAUSED
 
+UPDATED_WF_EX_ENV = copy.deepcopy(UPDATED_WF_EX)
+UPDATED_WF_EX_ENV['params'] = {'env': {'k1': 'def'}}
+
+UPDATED_WF_EX_ENV_DESC = copy.deepcopy(UPDATED_WF_EX)
+UPDATED_WF_EX_ENV_DESC['description'] = 'foobar'
+UPDATED_WF_EX_ENV_DESC['params'] = {'env': {'k1': 'def'}}
+
 WF_EX_JSON_WITH_DESC = copy.deepcopy(WF_EX_JSON)
 WF_EX_JSON_WITH_DESC['description'] = "execution description."
 
@@ -91,67 +99,141 @@ class TestExecutionsController(base.FunctionalTest):
     @mock.patch.object(
         db_api,
         'ensure_workflow_execution_exists',
-        MOCK_WF_EX
+        mock.MagicMock(return_value=None)
     )
-    @mock.patch.object(rpc.EngineClient, 'pause_workflow',
-                       MOCK_UPDATED_WF_EX)
-    def test_put(self):
-        resp = self.app.put_json('/v2/executions/123', UPDATED_WF_EX_JSON)
+    @mock.patch.object(
+        rpc.EngineClient,
+        'pause_workflow',
+        MOCK_UPDATED_WF_EX
+    )
+    def test_put_state_paused(self):
+        update_exec = {
+            'id': WF_EX['id'],
+            'state': states.PAUSED
+        }
 
-        UPDATED_WF_EX_WITH_DESC = copy.deepcopy(UPDATED_WF_EX_JSON)
-        UPDATED_WF_EX_WITH_DESC['description'] = 'execution description.'
+        resp = self.app.put_json('/v2/executions/123', update_exec)
+
+        expected_exec = copy.deepcopy(WF_EX_JSON_WITH_DESC)
+        expected_exec['state'] = states.PAUSED
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(UPDATED_WF_EX_WITH_DESC, resp.json)
+        self.assertDictEqual(expected_exec, resp.json)
 
     @mock.patch.object(
         db_api,
         'ensure_workflow_execution_exists',
-        MOCK_WF_EX
+        mock.MagicMock(return_value=None)
     )
-    def test_put_stop(self):
-        update_exec = copy.deepcopy(WF_EX_JSON)
-        update_exec['state'] = states.ERROR
-        update_exec['state_info'] = "Force"
+    @mock.patch.object(rpc.EngineClient, 'stop_workflow')
+    def test_put_state_error(self, mock_stop_wf):
+        update_exec = {
+            'id': WF_EX['id'],
+            'state': states.ERROR,
+            'state_info': 'Force'
+        }
 
-        with mock.patch.object(rpc.EngineClient, 'stop_workflow') as mock_pw:
-            wf_ex = copy.deepcopy(WF_EX)
-            wf_ex['state'] = states.ERROR
-            wf_ex['state_info'] = "Force"
-            mock_pw.return_value = wf_ex
+        wf_ex = copy.deepcopy(WF_EX)
+        wf_ex['state'] = states.ERROR
+        wf_ex['state_info'] = 'Force'
+        mock_stop_wf.return_value = wf_ex
 
-            resp = self.app.put_json('/v2/executions/123', update_exec)
+        resp = self.app.put_json('/v2/executions/123', update_exec)
 
-            update_exec['description'] = "execution description."
+        expected_exec = copy.deepcopy(WF_EX_JSON_WITH_DESC)
+        expected_exec['state'] = states.ERROR
+        expected_exec['state_info'] = 'Force'
 
-            self.assertEqual(200, resp.status_int)
-            self.assertDictEqual(update_exec, resp.json)
-            mock_pw.assert_called_once_with('123', 'ERROR', "Force")
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected_exec, resp.json)
+        mock_stop_wf.assert_called_once_with('123', 'ERROR', 'Force')
 
     @mock.patch.object(
         db_api,
         'ensure_workflow_execution_exists',
-        MOCK_WF_EX
+        mock.MagicMock(return_value=None)
     )
-    def test_put_state_info_unset(self):
-        update_exec = copy.deepcopy(WF_EX_JSON)
-        update_exec['state'] = states.ERROR
-        update_exec.pop('state_info', None)
+    @mock.patch.object(rpc.EngineClient, 'resume_workflow')
+    def test_put_state_resume(self, mock_resume_wf):
+        update_exec = {
+            'id': WF_EX['id'],
+            'state': states.RUNNING
+        }
 
-        with mock.patch.object(rpc.EngineClient, 'stop_workflow') as mock_pw:
-            wf_ex = copy.deepcopy(WF_EX)
-            wf_ex['state'] = states.ERROR
-            del wf_ex.state_info
-            mock_pw.return_value = wf_ex
+        wf_ex = copy.deepcopy(WF_EX)
+        wf_ex['state'] = states.RUNNING
+        wf_ex['state_info'] = None
+        mock_resume_wf.return_value = wf_ex
 
-            resp = self.app.put_json('/v2/executions/123', update_exec)
+        resp = self.app.put_json('/v2/executions/123', update_exec)
 
-            update_exec['description'] = 'execution description.'
-            update_exec['state_info'] = None
+        expected_exec = copy.deepcopy(WF_EX_JSON_WITH_DESC)
+        expected_exec['state'] = states.RUNNING
+        expected_exec['state_info'] = None
 
-            self.assertEqual(200, resp.status_int)
-            self.assertDictEqual(update_exec, resp.json)
-            mock_pw.assert_called_once_with('123', 'ERROR', None)
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected_exec, resp.json)
+        mock_resume_wf.assert_called_once_with('123', env=None)
+
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
+    @mock.patch.object(rpc.EngineClient, 'stop_workflow')
+    def test_put_state_info_unset(self, mock_stop_wf):
+        update_exec = {
+            'id': WF_EX['id'],
+            'state': states.ERROR,
+        }
+
+        wf_ex = copy.deepcopy(WF_EX)
+        wf_ex['state'] = states.ERROR
+        del wf_ex.state_info
+        mock_stop_wf.return_value = wf_ex
+
+        resp = self.app.put_json('/v2/executions/123', update_exec)
+
+        expected_exec = copy.deepcopy(WF_EX_JSON_WITH_DESC)
+        expected_exec['state'] = states.ERROR
+        expected_exec['state_info'] = None
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected_exec, resp.json)
+        mock_stop_wf.assert_called_once_with('123', 'ERROR', None)
+
+    @mock.patch('mistral.db.v2.api.ensure_workflow_execution_exists')
+    @mock.patch(
+        'mistral.db.v2.api.update_workflow_execution',
+        return_value=WF_EX
+    )
+    def test_put_description(self, mock_update, mock_ensure):
+        update_params = {'description': 'execution description.'}
+
+        resp = self.app.put_json('/v2/executions/123', update_params)
+
+        self.assertEqual(200, resp.status_int)
+        mock_ensure.assert_called_once_with('123')
+        mock_update.assert_called_once_with('123', update_params)
+
+    @mock.patch.object(
+        sql_db_api,
+        'get_workflow_execution',
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX))
+    )
+    @mock.patch(
+        'mistral.services.workflows.update_workflow_execution_env',
+        return_value=copy.deepcopy(UPDATED_WF_EX_ENV)
+    )
+    def test_put_env(self, mock_update_env):
+        update_exec = {'params': '{"env": {"k1": "def"}}'}
+
+        resp = self.app.put_json('/v2/executions/123', update_exec)
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(update_exec['params'], resp.json['params'])
+
+        mock_update_env.assert_called_once_with(UPDATED_WF_EX, {'k1': 'def'})
 
     @mock.patch.object(db_api, 'update_workflow_execution', MOCK_NOT_FOUND)
     def test_put_not_found(self):
@@ -163,25 +245,97 @@ class TestExecutionsController(base.FunctionalTest):
 
         self.assertEqual(404, resp.status_int)
 
-    def test_put_both_state_and_description(self):
-        self.assertRaises(
-            webtest_app.AppError,
-            self.app.put_json,
-            '/v2/executions/123',
-            WF_EX_JSON_WITH_DESC
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
+    def test_put_empty(self):
+        resp = self.app.put_json('/v2/executions/123', {}, expect_errors=True)
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn(
+            'state, description, or env is not provided for update',
+            resp.json['faultstring']
         )
 
-    @mock.patch('mistral.db.v2.api.ensure_workflow_execution_exists')
-    @mock.patch('mistral.db.v2.api.update_workflow_execution',
-                return_value=WF_EX)
-    def test_put_description(self, mock_update, mock_ensure):
-        update_params = {'description': 'execution description.'}
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
+    def test_put_state_and_description(self):
+        resp = self.app.put_json(
+            '/v2/executions/123',
+            {'description': 'foobar', 'state': states.ERROR},
+            expect_errors=True
+        )
 
-        resp = self.app.put_json('/v2/executions/123', update_params)
+        self.assertEqual(400, resp.status_int)
+        self.assertIn(
+            'description must be updated separately from state',
+            resp.json['faultstring']
+        )
+
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
+    @mock.patch.object(
+        sql_db_api,
+        'get_workflow_execution',
+        mock.MagicMock(return_value=copy.deepcopy(UPDATED_WF_EX))
+    )
+    @mock.patch(
+        'mistral.db.v2.api.update_workflow_execution',
+        return_value=WF_EX
+    )
+    @mock.patch(
+        'mistral.services.workflows.update_workflow_execution_env',
+        return_value=copy.deepcopy(UPDATED_WF_EX_ENV_DESC)
+    )
+    def test_put_env_and_description(self, mock_update_env, mock_update):
+        update_exec = {
+            'description': 'foobar',
+            'params': '{"env": {"k1": "def"}}'
+        }
+
+        resp = self.app.put_json('/v2/executions/123', update_exec)
 
         self.assertEqual(200, resp.status_int)
-        mock_ensure.assert_called_once_with('123')
-        mock_update.assert_called_once_with('123', update_params)
+        self.assertEqual(update_exec['description'], resp.json['description'])
+        self.assertEqual(update_exec['params'], resp.json['params'])
+
+        mock_update.assert_called_once_with('123', {'description': 'foobar'})
+        mock_update_env.assert_called_once_with(UPDATED_WF_EX, {'k1': 'def'})
+
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
+    def test_put_env_wrong_state(self):
+        update_exec = {
+            'id': WF_EX['id'],
+            'state': states.SUCCESS,
+            'params': '{"env": {"k1": "def"}}'
+        }
+
+        resp = self.app.put_json(
+            '/v2/executions/123',
+            update_exec,
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+
+        expected_fault = (
+            'env can only be updated when workflow execution '
+            'is not running or on resume from pause'
+        )
+
+        self.assertIn(expected_fault, resp.json['faultstring'])
 
     @mock.patch.object(rpc.EngineClient, 'start_workflow')
     def test_post(self, f):
