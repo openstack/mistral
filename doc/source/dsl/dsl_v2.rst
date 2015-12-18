@@ -981,24 +981,24 @@ YAML example
     workflows:
       local_workflow1:
         type: direct
-       
+
         tasks:
           task1:
             action: local_action str1='Hi' str2=' Mistral!'
             on-complete:
               - task2
 
-        task2:
-          action: global_action
-          ...
-       
+          task2:
+            action: global_action
+            ...
+
       local_workflow2:
         type: reverse
 
         tasks:
           task1:
             workflow: local_workflow1
-          
+
           task2:
             workflow: global_workflow param1='val1' param2='val2'
             requires: [task1]
