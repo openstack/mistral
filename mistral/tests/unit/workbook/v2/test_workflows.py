@@ -376,3 +376,25 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
         exception = self._parse_dsl_spec(changes=overlay, expect_error=True)
 
         self.assertIn("Invalid DSL", exception.message)
+
+    def test_invalid_name(self):
+        invalid_wf = {
+            'version': '2.0',
+            'b98180ba-48a0-4e26-ab2e-50dc224f6fd1': {
+                'type': 'direct',
+                'tasks': {'t1': {'action': 'std.noop'}}
+            }
+        }
+
+        dsl_yaml = yaml.safe_dump(invalid_wf, default_flow_style=False)
+
+        exception = self.assertRaises(
+            exc.InvalidModelException,
+            self._spec_parser,
+            dsl_yaml
+        )
+
+        self.assertIn(
+            "Workflow name cannot be in the format of UUID",
+            exception.message
+        )
