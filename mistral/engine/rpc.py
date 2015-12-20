@@ -122,8 +122,9 @@ class EngineServer(object):
             **params
         )
 
-    def on_task_state_change(self, rpc_ctx, task_ex_id, state):
-        return self._engine.on_task_state_change(task_ex_id, state)
+    def on_task_state_change(self, rpc_ctx, task_ex_id, state,
+                             state_info=None):
+        return self._engine.on_task_state_change(task_ex_id, state, state_info)
 
     def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
                            result_error):
@@ -308,12 +309,13 @@ class EngineClient(base.Engine):
             params=params
         )
 
-    def on_task_state_change(self, task_ex_id, state):
+    def on_task_state_change(self, task_ex_id, state, state_info=None):
         return self._client.call(
             auth_ctx.ctx(),
             'on_task_state_change',
             task_ex_id=task_ex_id,
-            state=state
+            state=state,
+            state_info=state_info
         )
 
     @wrap_messaging_exception
