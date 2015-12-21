@@ -332,12 +332,19 @@ def create_workflow_definition(values, session=None):
 
 
 @b.session_aware()
-def update_workflow_definition(name, values, session=None):
-    wf_def = _get_workflow_definition(name)
+def update_workflow_definition(identifier, values, session=None):
+    wf_def = get_workflow_definition(identifier)
 
-    if not wf_def:
-        raise exc.NotFoundException(
-            "Workflow not found [workflow_name=%s]" % name)
+    if wf_def.project_id != security.get_project_id():
+        raise exc.NotAllowedException(
+            "Can not update workflow of other tenants. "
+            "[workflow_identifier=%s]" % identifier
+        )
+
+    if wf_def.is_system:
+        raise exc.InvalidActionException(
+            "Attempt to modify a system workflow: %s" % identifier
+        )
 
     wf_def.update(values.copy())
 

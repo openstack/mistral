@@ -139,6 +139,20 @@ flow:
       action: std.echo output=<% * %>
 """
 
+WFS_DEFINITION = """
+---
+version: '2.0'
+
+wf1:
+  tasks:
+    task1:
+      action: std.echo output="Hello"
+wf2:
+  tasks:
+    task1:
+      action: std.echo output="Mistral"
+"""
+
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
 MOCK_WF_SYSTEM = mock.MagicMock(return_value=WF_DB_SYSTEM)
 MOCK_WF_WITH_INPUT = mock.MagicMock(return_value=WF_DB_WITH_INPUT)
@@ -188,10 +202,29 @@ class TestWorkflowsController(base.FunctionalTest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual({'workflows': [UPDATED_WF]}, resp.json)
 
-    @mock.patch.object(
-        db_api, "load_workflow_definition", MOCK_WF_SYSTEM
+    @mock.patch("mistral.services.workflows.update_workflows")
+    def test_put_with_uuid(self, update_mock):
+        update_mock.return_value = [UPDATED_WF_DB]
+
+        resp = self.app.put(
+            '/v2/workflows/123e4567-e89b-12d3-a456-426655440000',
+            UPDATED_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(200, resp.status_int)
+        update_mock.assert_called_once_with(
+            UPDATED_WF_DEFINITION,
+            scope='private',
+            identifier='123e4567-e89b-12d3-a456-426655440000'
+        )
+        self.assertDictEqual(UPDATED_WF, resp.json)
+
+    @mock.patch(
+        "mistral.db.v2.sqlalchemy.api.get_workflow_definition",
+        return_value=WF_DB_SYSTEM
     )
-    def test_put_system(self):
+    def test_put_system(self, get_mock):
         resp = self.app.put(
             '/v2/workflows',
             UPDATED_WF_DEFINITION,
@@ -255,6 +288,20 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
+
+    def test_put_more_workflows_with_uuid(self):
+        resp = self.app.put(
+            '/v2/workflows/123e4567-e89b-12d3-a456-426655440000',
+            WFS_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn(
+            "More than one workflows are not supported for update",
+            resp.body.decode()
+        )
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_post(self, mock_mtd):

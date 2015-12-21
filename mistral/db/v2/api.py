@@ -132,8 +132,8 @@ def create_workflow_definition(values):
     return IMPL.create_workflow_definition(values)
 
 
-def update_workflow_definition(name, values):
-    return IMPL.update_workflow_definition(name, values)
+def update_workflow_definition(identifier, values):
+    return IMPL.update_workflow_definition(identifier, values)
 
 
 def create_or_update_workflow_definition(name, values):
