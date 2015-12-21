@@ -122,11 +122,11 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflow, wtypes.text)
-    def get(self, name):
+    def get(self, identifier):
         """Return the named workflow."""
-        LOG.info("Fetch workflow [name=%s]" % name)
+        LOG.info("Fetch workflow [identifier=%s]" % identifier)
 
-        db_model = db_api.get_workflow_definition(name)
+        db_model = db_api.get_workflow_definition(identifier)
 
         return Workflow.from_dict(db_model.to_dict())
 

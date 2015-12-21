@@ -257,6 +257,12 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_workflow_definition("not-existing-wf"))
 
+    def test_get_workflow_definition_with_uuid(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        fetched = db_api.get_workflow_definition(created.id)
+
+        self.assertEqual(created, fetched)
+
     def test_create_workflow_definition_duplicate_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_workflow_definition(WF_DEFINITIONS[0])

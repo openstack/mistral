@@ -22,6 +22,7 @@ from oslo_db import sqlalchemy as oslo_sqlalchemy
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b
@@ -256,12 +257,20 @@ WORKFLOW_COL_MAPPING = {
 }
 
 
-def get_workflow_definition(name):
-    wf_def = _get_workflow_definition(name)
+def get_workflow_definition(identifier):
+    """Gets workflow definition by name or uuid.
+
+    :param identifier: Identifier could be in the format of plain string or
+                       uuid.
+    :return: Workflow definition.
+    """
+    wf_def = (_get_workflow_definition_by_id(identifier)
+              if uuidutils.is_uuid_like(identifier)
+              else _get_workflow_definition(identifier))
 
     if not wf_def:
         raise exc.NotFoundException(
-            "Workflow not found [workflow_name=%s]" % name
+            "Workflow not found [workflow_identifier=%s]" % identifier
         )
 
     return wf_def
