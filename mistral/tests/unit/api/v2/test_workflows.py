@@ -381,8 +381,11 @@ class TestWorkflowsController(base.FunctionalTest):
 
         self.assertEqual(204, resp.status_int)
 
-    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF_SYSTEM)
-    def test_delete_system(self):
+    @mock.patch(
+        "mistral.db.v2.sqlalchemy.api.get_workflow_definition",
+        return_value=WF_DB_SYSTEM
+    )
+    def test_delete_system(self, get_mock):
         resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(400, resp.status_int)

@@ -193,18 +193,12 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, name):
-        """Delete the named workflow."""
-        LOG.info("Delete workflow [name=%s]" % name)
+    def delete(self, identifier):
+        """Delete a workflow."""
+        LOG.info("Delete workflow [identifier=%s]" % identifier)
 
         with db_api.transaction():
-            wf_db = db_api.get_workflow_definition(name)
-
-            if wf_db.is_system:
-                msg = "Attempt to delete a system workflow: %s" % name
-                raise exc.DataAccessException(msg)
-
-            db_api.delete_workflow_definition(name)
+            db_api.delete_workflow_definition(identifier)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflows, types.uuid, int, types.uniquelist,

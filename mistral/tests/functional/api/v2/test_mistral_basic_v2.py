@@ -369,9 +369,8 @@ class WorkflowTestsV2(base.TestCase):
                 name
             )
 
-            self.assertEqual(
-                "Can't delete workflow that has triggers " +
-                "[workflow_name=wf2],[cron_trigger_name(s)=trigger]",
+            self.assertIn(
+                "Can't delete workflow that has triggers associated",
                 exception.resp_body['faultstring']
             )
         finally:

@@ -363,17 +363,33 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[1])
 
     def test_delete_workflow_definition(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        fetched0 = db_api.get_workflow_definition(created0.name)
+        fetched1 = db_api.get_workflow_definition(created1.id)
+
+        self.assertEqual(created0, fetched0)
+        self.assertEqual(created1, fetched1)
+
+        for identifier in [created0.name, created1.id]:
+            db_api.delete_workflow_definition(identifier)
+
+            self.assertRaises(
+                exc.NotFoundException,
+                db_api.get_workflow_definition,
+                identifier
+            )
+
+    def test_delete_other_project_workflow_definition(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
-        fetched = db_api.get_workflow_definition(created.name)
-
-        self.assertEqual(created, fetched)
-
-        db_api.delete_workflow_definition(created.name)
+        # Switch to another project.
+        auth_context.set_ctx(test_base.get_context(default=False))
 
         self.assertRaises(
-            exc.NotFoundException,
-            db_api.get_workflow_definition,
+            exc.NotAllowedException,
+            db_api.delete_workflow_definition,
             created.name
         )
 
