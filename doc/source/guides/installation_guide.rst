@@ -114,6 +114,20 @@ To run more than one server (API, Engine, or Task Executor) on the same process,
 
 The --server command line option can be a comma delimited list. The valid options are "all" (by default if not specified) or any combination of "api", "engine", and "executor". It's important to note that the "fake" transport for the rpc_backend defined in the config file should only be used if "all" the Mistral servers are launched on the same process. Otherwise, messages do not get delivered if the Mistral servers are launched on different processes because the "fake" transport is using an in process queue.
 
+Mistral And Docker
+------------------
+Please first refer `installation steps for docker <https://docs.docker.com/installation/>`_.
+To build the image from the mistral source, change directory to the root directory of the Mistral git repository and run::
+
+    docker build -t <Name of image> .
+
+The Mistral Docker image is configured to store the database in the user's home directory. For persistence of these data, you may want to keep this directory outside of the container. This may be done by the following steps::
+
+    sudo mkdir '<user-defined-directory>'
+    docker run -it -v '<user-defined-directory>':/home/mistral <Name of image>
+
+More about docker: https://www.docker.com/
+
 Mistral Client Installation
 ---------------------------
 
