@@ -148,7 +148,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                     output=output
                 )
 
-    def on_task_state_change(self, task_ex_id, state):
+    def on_task_state_change(self, task_ex_id, state, state_info=None):
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex_id)
             # TODO(rakhmerov): The method is mostly needed for policy and
@@ -160,11 +160,12 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             wf_trace.info(
                 task_ex,
-                "Task '%s' [%s -> %s]"
-                % (task_ex.name, task_ex.state, state)
+                "Task '%s' [%s -> %s] state_info : %s"
+                % (task_ex.name, task_ex.state, state, state_info)
             )
 
             task_ex.state = state
+            task_ex.state_info = state_info
 
             self._on_task_state_change(task_ex, wf_ex)
 

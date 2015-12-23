@@ -439,5 +439,6 @@ def fail_task_if_incomplete(task_ex_id, timeout):
 
         rpc.get_engine_client().on_task_state_change(
             task_ex_id,
-            states.ERROR
+            states.ERROR,
+            msg
         )
