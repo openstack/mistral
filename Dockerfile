@@ -29,6 +29,7 @@ WORKDIR /home/mistral
 RUN sudo apt-get install -y screen
 RUN echo "#!/bin/bash" > /root/postlaunch.sh
 RUN echo "sudo cp -n /etc/mistral/mistral.conf /home/mistral/" >> /root/postlaunch.sh
+RUN echo "sudo cp -n /opt/stack/mistral/mistral.sqlite /home/mistral" >> /root/postlaunch.sh
 RUN echo "sudo service rabbitmq-server start" >> /root/postlaunch.sh
 RUN echo "screen -d -m mistral-server --server all --config-file /home/mistral/mistral.conf" >> /root/postlaunch.sh
 RUN chmod 755 /root/postlaunch.sh
