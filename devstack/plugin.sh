@@ -78,8 +78,8 @@ function configure_mistral {
     iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri "http://${KEYSTONE_AUTH_HOST}:5000/v3"
 
     # Setup RabbitMQ credentials
-    iniset $MISTRAL_CONF_FILE DEFAULT rabbit_userid $RABBIT_USERID
-    iniset $MISTRAL_CONF_FILE DEFAULT rabbit_password $RABBIT_PASSWORD
+    iniset $MISTRAL_CONF_FILE oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
+    iniset $MISTRAL_CONF_FILE oslo_messaging_rabbit rabbit_password $RABBIT_PASSWORD
 
     # Configure the database.
     iniset $MISTRAL_CONF_FILE database connection `database_connection_url mistral`
