@@ -19,15 +19,12 @@ import six
 from oslo_config import cfg
 from oslo_db import options
 from oslo_db.sqlalchemy import session as db_session
-from oslo_log import log as logging
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
 from mistral import utils
 
-
-LOG = logging.getLogger(__name__)
 
 # Note(dzimine): sqlite only works for basic testing.
 options.set_defaults(cfg.CONF, connection="sqlite:///mistral.sqlite")

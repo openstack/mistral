@@ -16,10 +16,6 @@
 
 import abc
 
-from oslo_log import log as logging
-
-LOG = logging.getLogger(__name__)
-
 
 class Action(object):
     """Action.

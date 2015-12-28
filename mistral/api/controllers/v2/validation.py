@@ -12,14 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
+
 import pecan
 from pecan import rest
 
 from mistral import exceptions as exc
-
-
-LOG = logging.getLogger(__name__)
 
 
 class SpecValidationController(rest.RestController):

@@ -16,14 +16,13 @@
 import contextlib
 
 from oslo_db import api as db_api
-from oslo_log import log as logging
+
 
 _BACKEND_MAPPING = {
     'sqlalchemy': 'mistral.db.v2.sqlalchemy.api',
 }
 
 IMPL = db_api.DBAPI('sqlalchemy', backend_mapping=_BACKEND_MAPPING)
-LOG = logging.getLogger(__name__)
 
 
 def setup_db():
