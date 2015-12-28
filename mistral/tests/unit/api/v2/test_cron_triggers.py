@@ -34,13 +34,14 @@ WF = models.WorkflowDefinition(
         }
     }
 )
-WF.update({'id': '1-2-3-4', 'name': 'my_wf'})
+WF.update({'id': '123e4567-e89b-12d3-a456-426655440000', 'name': 'my_wf'})
 
 TRIGGER = {
     'id': '123',
     'name': 'my_cron_trigger',
     'pattern': '* * * * *',
     'workflow_name': WF.name,
+    'workflow_id': '123e4567-e89b-12d3-a456-426655440000',
     'workflow_input': '{}',
     'workflow_params': '{}',
     'scope': 'private',
@@ -57,17 +58,9 @@ trigger_values['workflow_params'] = json.loads(
 TRIGGER_DB = models.CronTrigger()
 TRIGGER_DB.update(trigger_values)
 
-
-UPDATED_TRIGGER_DB = copy.copy(TRIGGER_DB)
-UPDATED_TRIGGER_DB['pattern'] = '*/1 * * * *'
-
-UPDATED_TRIGGER = copy.deepcopy(TRIGGER)
-UPDATED_TRIGGER['pattern'] = '*/1 * * * *'
-
 MOCK_WF = mock.MagicMock(return_value=WF)
 MOCK_TRIGGER = mock.MagicMock(return_value=TRIGGER_DB)
 MOCK_TRIGGERS = mock.MagicMock(return_value=[TRIGGER_DB])
-MOCK_UPDATED_TRIGGER = mock.MagicMock(return_value=UPDATED_TRIGGER_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())

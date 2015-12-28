@@ -33,6 +33,7 @@ class CronTrigger(resource.Resource):
     id = wtypes.text
     name = wtypes.text
     workflow_name = wtypes.text
+    workflow_id = wtypes.text
     workflow_input = types.jsontype
     workflow_params = types.jsontype
 
@@ -51,6 +52,7 @@ class CronTrigger(resource.Resource):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='my_trigger',
                    workflow_name='my_wf',
+                   workflow_id='123e4567-e89b-12d3-a456-426655441111',
                    workflow_input={},
                    workflow_params={},
                    scope='private',
@@ -93,12 +95,13 @@ class CronTriggersController(rest.RestController):
 
         db_model = triggers.create_cron_trigger(
             values['name'],
-            values['workflow_name'],
+            values.get('workflow_name'),
             values.get('workflow_input'),
             values.get('workflow_params'),
             values.get('pattern'),
             values.get('first_execution_time'),
-            values.get('remaining_executions')
+            values.get('remaining_executions'),
+            workflow_id=values.get('workflow_id')
         )
 
         return CronTrigger.from_dict(db_model.to_dict())

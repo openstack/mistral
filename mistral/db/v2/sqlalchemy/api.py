@@ -373,11 +373,7 @@ def delete_workflow_definition(identifier, session=None):
         msg = "Attempt to delete a system workflow: %s" % identifier
         raise exc.DataAccessException(msg)
 
-    # TODO(lane): We use workflow name here instead of supporting UUID, as
-    # cron-trigger is created using workflow name currently. Of course,
-    # cron-trigger creation still needs to be fixed in terms of non-unique
-    # workflow name in the system.
-    cron_triggers = _get_associated_cron_triggers(wf_def.name)
+    cron_triggers = _get_associated_cron_triggers(identifier)
 
     if cron_triggers:
         raise exc.DBException(
@@ -389,11 +385,17 @@ def delete_workflow_definition(identifier, session=None):
     session.delete(wf_def)
 
 
-def _get_associated_cron_triggers(wf_name):
+def _get_associated_cron_triggers(wf_identifier):
+    criterion = (
+        {'workflow_id': wf_identifier}
+        if uuidutils.is_uuid_like(wf_identifier)
+        else {'workflow_name': wf_identifier}
+    )
+
     cron_triggers = b.model_query(
         models.CronTrigger,
         [models.CronTrigger.name]
-    ).filter_by(workflow_name=wf_name).all()
+    ).filter_by(**criterion).all()
 
     return [t[0] for t in cron_triggers]
 

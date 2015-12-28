@@ -60,7 +60,7 @@ def validate_cron_trigger_input(pattern, first_time, count):
 
 def create_cron_trigger(name, workflow_name, workflow_input,
                         workflow_params=None, pattern=None, first_time=None,
-                        count=None, start_time=None):
+                        count=None, start_time=None, workflow_id=None):
     if not start_time:
         start_time = datetime.datetime.now()
 
@@ -84,7 +84,9 @@ def create_cron_trigger(name, workflow_name, workflow_input,
         next_time = get_next_execution_time(pattern, start_time)
 
     with db_api.transaction():
-        wf_def = db_api.get_workflow_definition(workflow_name)
+        wf_def = db_api.get_workflow_definition(
+            workflow_id if workflow_id else workflow_name
+        )
 
         eng_utils.validate_input(
             wf_def,
@@ -98,7 +100,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
             'first_execution_time': first_time,
             'next_execution_time': next_time,
             'remaining_executions': count,
-            'workflow_name': workflow_name,
+            'workflow_name': wf_def.name,
             'workflow_id': wf_def.id,
             'workflow_input': workflow_input or {},
             'workflow_params': workflow_params or {},
