@@ -380,7 +380,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             try:
                 final_context = wf_ctrl.evaluate_workflow_final_context()
             except Exception as e:
-                LOG.warn(
+                LOG.warning(
                     "Failed to get final context for %s: %s" % (wf_ex, e)
                 )
             return wf_handler.succeed_workflow(

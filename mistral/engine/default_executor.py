@@ -76,7 +76,7 @@ class DefaultExecutor(base.Executor, coordination.Service):
                    " Actual init params = %s. More info: %s"
                    % (action_class_str, i_u.get_arg_list(action_cls.__init__),
                       action_params.keys(), e))
-            LOG.warn(msg)
+            LOG.warning(msg)
 
         except exc.ActionException as e:
             msg = ("Failed to run action [action_ex_id=%s, action_cls='%s',"
