@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+import oslo_middleware.cors as cors_middleware
 import pecan
 
 from mistral.api import access_control
@@ -61,5 +62,18 @@ def setup_app(config=None):
 
     # Set up access control.
     app = access_control.setup(app)
+
+    # Create a CORS wrapper, and attach mistral-specific defaults that must be
+    # included in all CORS responses.
+    app = cors_middleware.CORS(app, cfg.CONF)
+    app.set_latent(
+        allow_headers=['X-Auth-Token', 'X-Identity-Status', 'X-Roles',
+                       'X-Service-Catalog', 'X-User-Id', 'X-Tenant-Id'
+                       'X-Project-Id', 'X-User-Name', 'X-Project-Name'],
+        allow_methods=['GET', 'PUT', 'POST', 'DELETE', 'PATCH'],
+        expose_headers=['X-Auth-Token', 'X-Subject-Token',
+                        'X-Service-Token', 'X-Project-Id', 'X-User-Name',
+                        'X-Project-Name']
+    )
 
     return app
