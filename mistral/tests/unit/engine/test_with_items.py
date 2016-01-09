@@ -200,7 +200,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # check is not depend on order of items.
         result = data_flow.get_task_execution_result(task1)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
@@ -263,7 +263,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         task1 = self._assert_single_item(tasks, name='task1')
         result = data_flow.get_task_execution_result(task1)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('Hello, John!', result)
         self.assertIn('Hello, Ivan!', result)
@@ -294,7 +294,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # check is not depend on order of items.
         result = data_flow.get_task_execution_result(task1)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('a 1', result)
         self.assertIn('b 2', result)
@@ -331,7 +331,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         task_ex = db_api.get_task_execution(task_ex.id)
         result = data_flow.get_task_execution_result(task_ex)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
@@ -505,7 +505,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         result = data_flow.get_task_execution_result(task1)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('Guy', result)
 
@@ -582,7 +582,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # check is not depend on order of items.
         result = data_flow.get_task_execution_result(task_ex)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
@@ -627,7 +627,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # check is not depend on order of items.
         result = data_flow.get_task_execution_result(task_ex)
 
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
@@ -740,7 +740,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
         result = data_flow.get_task_execution_result(task_ex)
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
@@ -850,7 +850,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Since we know that we can receive results in random order,
         # check is not depend on order of items.
         result = data_flow.get_task_execution_result(task_ex)
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
 
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
@@ -889,7 +889,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         result = data_flow.get_task_execution_result(task_ex)
 
         self.assertEqual(states.SUCCESS, task_ex.state)
-        self.assertTrue(isinstance(result, list))
+        self.assertIsInstance(result, list)
         self.assertIn('John', result)
         self.assertIn('Ivan', result)
 
