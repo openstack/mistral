@@ -28,9 +28,10 @@ MODULE_MAPPING = {
     'ironic': ['ironic.node_list', actions.IronicAction],
     'baremetal_introspection': ['baremetal_introspection.introspect',
                                 actions.BaremetalIntrospectionAction],
+    'swift': ['swift.head_account', actions.SwiftAction],
 }
 
-EXTRA_MODULES = ['neutron']
+EXTRA_MODULES = ['neutron', 'swift']
 
 
 class GeneratorTest(base.BaseTest):

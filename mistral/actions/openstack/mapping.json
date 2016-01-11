@@ -922,5 +922,20 @@
         "rules_from_json": "rules.from_json",
         "rules_get": "rules.get",
         "rules_get_all": "rules.get_all"
+    },
+    "swift": {
+        "_comment": "It uses swiftclient.v1.",
+        "head_account": "head_account",
+        "get_account": "get_account",
+        "post_account": "post_account",
+        "head_container": "head_container",
+        "get_container": "get_container",
+        "put_container": "put_container",
+        "post_container": "post_container",
+        "delete_container": "delete_container",
+        "get_object": "get_object",
+        "put_object": "put_object",
+        "post_object": "post_object",
+        "get_capabilities": "get_capabilities"
     }
 }
