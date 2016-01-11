@@ -346,6 +346,18 @@ def update_workflow_definition(identifier, values, session=None):
             "Attempt to modify a system workflow: %s" % identifier
         )
 
+    if wf_def.scope == 'public' and values['scope'] == 'private':
+        cron_triggers = _get_associated_cron_triggers(identifier)
+
+        try:
+            [get_cron_trigger(name) for name in cron_triggers]
+        except exc.NotFoundException:
+            raise exc.NotAllowedException(
+                "Can not update scope of workflow that has triggers "
+                "associated in other tenants."
+                "[workflow_identifier=%s]" % identifier
+            )
+
     wf_def.update(values.copy())
 
     return wf_def
