@@ -24,6 +24,7 @@ from neutronclient.v2_0 import client as neutronclient
 from novaclient import client as novaclient
 from oslo_config import cfg
 from oslo_log import log
+from swiftclient import client as swift_client
 from troveclient import client as troveclient
 
 from mistral.actions.openstack import base
@@ -308,3 +309,21 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
             inspector_url=inspector_endpoint.url,
             auth_token=ctx.auth_token,
         )
+
+
+class SwiftAction(base.OpenStackAction):
+    _client_class = swift_client.Connection
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Swift action security context: %s" % ctx)
+
+        swift_endpoint = keystone_utils.get_endpoint_for_project('swift')
+
+        kwargs = {
+            'preauthurl': swift_endpoint.url % {'tenant_id': ctx.project_id},
+            'preauthtoken': ctx.auth_token
+        }
+
+        return self._client_class(**kwargs)

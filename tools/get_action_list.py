@@ -38,6 +38,8 @@ from troveclient.v1 import client as troveclient
 # TODO(nmakhotkin): (e.g. keystone).
 # TODO(dprince): Need to update ironic_inspector_client before we can
 # plug it in cleanly here.
+# TODO(dprince): Swiftclient doesn't currently support discovery
+# like we do in this class.
 
 """It is simple CLI tool which allows to see and update mapping.json file
 if needed. mapping.json contains all allowing OpenStack actions sorted by
@@ -161,6 +163,7 @@ CLIENTS = {
     'ironic': get_ironic_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
+    # 'swift': ...
 }
 BASE_MANAGERS = {
     'nova': BASE_NOVA_MANAGER,
@@ -173,6 +176,7 @@ BASE_MANAGERS = {
     'ironic': BASE_IRONIC_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
+    # 'swift': ...
 }
 NAMESPACES = {
     'glance': GLANCE_NAMESPACE_LIST,

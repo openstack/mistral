@@ -19,7 +19,7 @@ from mistral.actions.openstack.action_generator import base
 
 SUPPORTED_MODULES = [
     'Nova', 'Glance', 'Keystone', 'Heat', 'Neutron', 'Cinder', 'Ceilometer',
-    'Trove', 'Ironic', 'Baremetal Introspection'
+    'Trove', 'Ironic', 'Baremetal Introspection', 'Swift'
 ]
 
 
