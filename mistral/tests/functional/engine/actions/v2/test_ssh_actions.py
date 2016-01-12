@@ -48,12 +48,15 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             g for g in sec_groups if g['name'] == 'default'
         )
 
-        rule = cls.mgr.security_group_rules_client.create_security_group_rule(
-            parent_group_id=default_group['id'],
-            ip_protocol="tcp",
-            from_port=22,
-            to_port=22,
-            cidr="0.0.0.0/0"
+        rule = (
+            cls.mgr.compute_security_group_rules_client
+            .create_security_group_rule(
+                parent_group_id=default_group['id'],
+                ip_protocol="tcp",
+                from_port=22,
+                to_port=22,
+                cidr="0.0.0.0/0"
+            )
         )
 
         cls.ssh_rule_id = rule['security_group_rule']['id']
@@ -204,11 +207,16 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
 
     @classmethod
     def resource_cleanup(cls):
+        fl_ip_client = cls.mgr.compute_floating_ips_client
+        fl_ip_client.disassociate_floating_ip_from_server(
+            cls.public_vm_ip,
+            cls.public_vm['id']
+        )
         cls.server_client.delete_server(cls.public_vm['id'])
         cls.server_client.delete_server(cls.guest_vm['id'])
         cls.mgr.keypairs_client.delete_keypair(cls.key_name)
 
-        cls.mgr.security_group_rules_client.delete_security_group_rule(
+        cls.mgr.compute_security_group_rules_client.delete_security_group_rule(
             cls.ssh_rule_id
         )
         os.remove(cls.key_dir + cls.key_name)
