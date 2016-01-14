@@ -16,7 +16,6 @@
 import copy
 
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
@@ -26,7 +25,6 @@ from mistral import utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
-LOG = logging.getLogger(__name__)
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.

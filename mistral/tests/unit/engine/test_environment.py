@@ -14,7 +14,6 @@
 
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_executor
@@ -22,7 +21,6 @@ from mistral.engine import rpc
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 
-LOG = logging.getLogger(__name__)
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.

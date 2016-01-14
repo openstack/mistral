@@ -14,7 +14,6 @@
 
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 import testtools
 
 from mistral.db.v2 import api as db_api
@@ -23,10 +22,11 @@ from mistral.tests.unit.engine import base
 from mistral.utils import javascript
 from mistral.workflow import states
 
-LOG = logging.getLogger(__name__)
+
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
+
 
 WORKBOOK = """
 ---

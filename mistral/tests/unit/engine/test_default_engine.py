@@ -18,7 +18,6 @@ import uuid
 
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 from oslo_messaging.rpc import client as rpc_client
 
 from mistral.db.v2 import api as db_api
@@ -31,7 +30,6 @@ from mistral.tests.unit.engine import base as eng_test_base
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
-LOG = logging.getLogger(__name__)
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.

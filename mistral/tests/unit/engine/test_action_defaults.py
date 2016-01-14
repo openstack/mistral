@@ -14,7 +14,6 @@
 
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 import requests
 import six
 import testtools
@@ -26,7 +25,6 @@ from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
-LOG = logging.getLogger(__name__)
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.

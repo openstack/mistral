@@ -16,13 +16,9 @@
 import copy
 import six
 
-from oslo_log import log as logging
-
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import utils
-
-LOG = logging.getLogger(__name__)
 
 
 def validate_input(definition, input, spec=None):

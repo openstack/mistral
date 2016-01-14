@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
-
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit import base
@@ -21,8 +19,6 @@ from mistral.workbook import parser as spec_parser
 from mistral.workflow import reverse_workflow as reverse_wf
 from mistral.workflow import states
 
-
-LOG = logging.getLogger(__name__)
 
 # TODO(rakhmerov): This workflow is too simple. Add more complicated one.
 

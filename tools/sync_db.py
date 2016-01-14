@@ -22,7 +22,6 @@ from mistral.services import workflows
 
 
 CONF = cfg.CONF
-LOG = logging.getLogger(__name__)
 
 
 def main():
