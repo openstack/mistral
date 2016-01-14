@@ -90,6 +90,21 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         self.assertEqual(datetime.datetime(2010, 8, 25, 0, 10), next_time)
 
+    def test_trigger_create_with_wf_id(self):
+        trigger = t_s.create_cron_trigger(
+            'test',
+            None,
+            {},
+            {},
+            '*/5 * * * *',
+            None,
+            None,
+            datetime.datetime(2010, 8, 25),
+            workflow_id=self.wf.id
+        )
+
+        self.assertEqual(self.wf.name, trigger.workflow_name)
+
     def test_trigger_create_the_same_first_time_or_count(self):
         t_s.create_cron_trigger(
             'test',
