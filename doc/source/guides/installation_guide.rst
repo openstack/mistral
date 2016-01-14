@@ -121,12 +121,20 @@ To build the image from the mistral source, change directory to the root directo
 
     docker build -t <Name of image> .
 
+In case you want pre-built image, you can download it from `openstack tarballs source <https://tarballs.openstack.org/mistral/images/mistral-docker.tar.gz>`_.
+
+To load this image to docker registry, please run following command::
+
+    docker load -i '<path of mistral-docker.tar.gz>'
+
 The Mistral Docker image is configured to store the database in the user's home directory. For persistence of these data, you may want to keep this directory outside of the container. This may be done by the following steps::
 
     sudo mkdir '<user-defined-directory>'
     docker run -it -v '<user-defined-directory>':/home/mistral <Name of image>
 
 More about docker: https://www.docker.com/
+
+**NOTE:** This docker image uses **SQLite** database. So, it cannot be used for production environment. If you want to use this for production environment, then put customized mistral.conf to '<user-defined-directory>'.
 
 Mistral Client Installation
 ---------------------------
