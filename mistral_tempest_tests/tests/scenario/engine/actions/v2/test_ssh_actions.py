@@ -22,9 +22,9 @@ from paramiko import ssh_exception
 from tempest import config
 from tempest import test
 
-from mistral.tests.functional import base
 from mistral import utils
 from mistral.utils import ssh_utils
+from mistral_tempest_tests.services import base
 
 
 LOG = logging.getLogger(__name__)
