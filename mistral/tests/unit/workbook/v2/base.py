@@ -14,16 +14,12 @@
 
 import copy
 
-from oslo_log import log as logging
 import yaml
 
 from mistral import exceptions as exc
 from mistral.tests.unit import base
 from mistral import utils
 from mistral.workbook import parser as spec_parser
-
-
-LOG = logging.getLogger(__name__)
 
 
 class WorkflowSpecValidationTestCase(base.BaseTest):

@@ -14,13 +14,8 @@
 
 import copy
 
-from oslo_log import log as logging
-
 from mistral.tests.unit.workbook.v2 import base
 from mistral import utils
-
-
-LOG = logging.getLogger(__name__)
 
 
 class ActionSpecValidation(base.WorkbookSpecValidationTestCase):

@@ -15,7 +15,6 @@ import datetime
 
 import mock
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.services import periodic
@@ -24,7 +23,6 @@ from mistral.services import triggers
 from mistral.services import workflows
 from mistral.tests.unit.engine import base
 
-LOG = logging.getLogger(__name__)
 
 WORKFLOW_LIST = """
 ---

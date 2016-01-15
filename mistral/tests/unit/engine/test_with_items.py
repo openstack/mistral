@@ -14,7 +14,6 @@
 
 import copy
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from mistral.actions import base as action_base
 from mistral.db.v2 import api as db_api
@@ -30,7 +29,6 @@ from mistral.workflow import utils as wf_utils
 
 # TODO(nmakhotkin) Need to write more tests.
 
-LOG = logging.getLogger(__name__)
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')

@@ -15,14 +15,10 @@
 
 import copy
 
-from oslo_log import log as logging
 import yaml
 
 from mistral import exceptions as exc
 from mistral.tests.unit.workbook.v2 import base
-
-
-LOG = logging.getLogger(__name__)
 
 
 class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):

@@ -14,14 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
-
 from mistral.actions import std_actions as std
 from mistral.services import action_manager as a_m
 from mistral.tests.unit import base
-
-
-LOG = logging.getLogger(__name__)
 
 
 class ActionManagerTest(base.DbTestCase):
