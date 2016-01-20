@@ -1,0 +1,5 @@
+---
+prelude: >
+    Tempest plugin has been implemented. Now Mistral
+    tests can be run from Mistral repo as well as from
+    Tempest repo.
