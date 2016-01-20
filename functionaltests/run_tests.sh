@@ -38,4 +38,4 @@ MISTRALCLIENT_DIR=/opt/stack/new/python-mistralclient
 export PYTHONPATH=$PYTHONPATH:$TEMPEST_DIR
 
 pwd
-nosetests -sv mistral/tests/functional/
+nosetests -sv mistral_tempest_tests/tests/
