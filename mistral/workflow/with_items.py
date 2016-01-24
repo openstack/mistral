@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
 import six
 
 from mistral.db.v2 import api as db_api
@@ -64,40 +65,48 @@ def get_final_state(task_ex):
         return states.SUCCESS
 
 
-def _get_indices_if_rerun(unaccepted_executions):
+def _get_with_item_indices(exs):
     """Returns a list of indices in case of re-running with-items.
 
-    :param unaccepted_executions: List of executions.
+    :param exs: List of executions.
     :return: a list of numbers.
     """
+    return sorted(set([ex.runtime_context['with_items_index'] for ex in exs]))
 
-    return sorted(
-        set([
-            ex.runtime_context['with_items_index']
-            for ex in unaccepted_executions
-        ])
+
+def _get_accepted_act_exs(task_ex):
+    # Choose only if not accepted but completed.
+    return list(
+        filter(
+            lambda x: x.accepted and states.is_completed(x.state),
+            task_ex.executions
+        )
     )
 
 
 def _get_unaccepted_act_exs(task_ex):
     # Choose only if not accepted but completed.
-    return list(filter(
-        lambda x: not x.accepted and states.is_completed(x.state),
-        task_ex.executions
-    ))
+    return list(
+        filter(
+            lambda x: not x.accepted and states.is_completed(x.state),
+            task_ex.executions
+        )
+    )
 
 
 def get_indices_for_loop(task_ex):
     capacity = _get_context(task_ex)[_CAPACITY]
     count = get_count(task_ex)
 
-    unaccepted = _get_unaccepted_act_exs(task_ex)
+    accepted = _get_with_item_indices(_get_accepted_act_exs(task_ex))
+    unaccepted = _get_with_item_indices(_get_unaccepted_act_exs(task_ex))
+    candidates = sorted(list(set(unaccepted) - set(accepted)))
 
-    if unaccepted:
-        indices = _get_indices_if_rerun(unaccepted)
+    if candidates:
+        indices = copy.copy(candidates)
 
-        if max(indices) < count - 1:
-            indices += list(six.moves.range(max(indices) + 1, count))
+        if max(candidates) < count - 1:
+            indices += list(six.moves.range(max(candidates) + 1, count))
     else:
         index = get_index(task_ex)
         indices = list(six.moves.range(index, count))
