@@ -26,6 +26,7 @@ from mistral.engine import rpc
 from mistral.engine import utils as e_utils
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.services import executions as wf_ex_service
 from mistral.services import scheduler
 from mistral import utils
 from mistral.utils import wf_trace
@@ -476,23 +477,24 @@ def _schedule_run_workflow(task_ex, task_spec, wf_input, index):
             wf_params[k] = v
             del wf_input[k]
 
-    scheduler.schedule_call(
-        None,
-        'mistral.engine.task_handler.run_workflow',
-        0,
-        wf_name=wf_def.name,
-        wf_input=wf_input,
-        wf_params=wf_params
-    )
-
-
-def run_workflow(wf_name, wf_input, wf_params):
-    rpc.get_engine_client().start_workflow(
-        wf_name,
+    wf_ex_id = wf_ex_service.create_workflow_execution(
+        wf_def.name,
         wf_input,
         "sub-workflow execution",
-        **wf_params
+        wf_params
     )
+
+    scheduler.schedule_call(
+        None,
+        'mistral.engine.task_handler.resume_workflow',
+        0,
+        wf_ex_id=wf_ex_id,
+        env=None
+    )
+
+
+def resume_workflow(wf_ex_id, env):
+    rpc.get_engine_client().resume_workflow(wf_ex_id, env=env)
 
 
 def _complete_task(task_ex, task_spec, state, state_info=None):

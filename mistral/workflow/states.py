@@ -49,6 +49,10 @@ def is_completed(state):
     return state in [SUCCESS, ERROR]
 
 
+def is_running(state):
+    return state in [RUNNING, RUNNING_DELAYED]
+
+
 def is_waiting(state):
     return state == WAITING
 
@@ -57,8 +61,12 @@ def is_idle(state):
     return state == IDLE
 
 
+def is_paused(state):
+    return state == PAUSED
+
+
 def is_paused_or_completed(state):
-    return state == PAUSED or is_completed(state)
+    return is_paused(state) or is_completed(state)
 
 
 def is_valid_transition(from_state, to_state):

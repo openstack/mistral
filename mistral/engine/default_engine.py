@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import copy
-import six
 import traceback
 
 from oslo_log import log as logging
@@ -25,16 +23,15 @@ from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
 from mistral.engine import base
 from mistral.engine import task_handler
-from mistral.engine import utils as eng_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral.services import action_manager as a_m
+from mistral.services import executions as wf_ex_service
 from mistral.services import workflows as wf_service
 from mistral import utils as u
 from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
-from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
@@ -54,39 +51,33 @@ class DefaultEngine(base.Engine, coordination.Service):
 
     @u.log_exec(LOG)
     def start_workflow(self, wf_name, wf_input, description='', **params):
-        wf_exec_id = None
-
-        params = self._canonize_workflow_params(params)
+        wf_ex_id = None
 
         try:
             with db_api.transaction():
-                wf_def = db_api.get_workflow_definition(wf_name)
-                wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
-
-                eng_utils.validate_input(wf_def, wf_input, wf_spec)
-
-                wf_ex = self._create_workflow_execution(
-                    wf_def,
-                    wf_spec,
+                # The new workflow execution will be in an IDLE
+                # state on initial record creation.
+                wf_ex_id = wf_ex_service.create_workflow_execution(
+                    wf_name,
                     wf_input,
                     description,
                     params
                 )
-                wf_exec_id = wf_ex.id
-
-                wf_trace.info(wf_ex, "Starting workflow: '%s'" % wf_name)
 
             # Separate workflow execution creation and dispatching command
             # transactions in order to be able to return workflow execution
             # with corresponding error message in state_info when error occurs
             # at dispatching commands.
             with db_api.transaction():
-                wf_ex = db_api.get_workflow_execution(wf_exec_id)
+                wf_ex = db_api.get_workflow_execution(wf_ex_id)
+                wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+                wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
                 wf_ctrl = wf_base.WorkflowController.get_controller(
                     wf_ex,
                     wf_spec
                 )
+
                 self._dispatch_workflow_commands(
                     wf_ex,
                     wf_ctrl.continue_workflow()
@@ -96,9 +87,10 @@ class DefaultEngine(base.Engine, coordination.Service):
         except Exception as e:
             LOG.error(
                 "Failed to start workflow '%s' id=%s: %s\n%s",
-                wf_name, wf_exec_id, e, traceback.format_exc()
+                wf_name, wf_ex_id, e, traceback.format_exc()
             )
-            wf_ex = self._fail_workflow(wf_exec_id, e)
+
+            wf_ex = self._fail_workflow(wf_ex_id, e)
 
             if wf_ex:
                 return wf_ex.get_clone()
@@ -252,16 +244,16 @@ class DefaultEngine(base.Engine, coordination.Service):
                     return action_ex.get_clone()
 
             prev_task_state = task_ex.state
+
             # Separate the task transition in a separate transaction. The task
             # has already completed for better or worst. The task state should
             # not be affected by errors during transition on conditions such as
             # on-success and on-error.
             with db_api.transaction():
+                wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
                 action_ex = db_api.get_action_execution(action_ex_id)
                 task_ex = action_ex.task_execution
-                wf_ex = wf_handler.lock_workflow_execution(
-                    task_ex.workflow_execution_id
-                )
+
                 self._on_task_state_change(
                     task_ex,
                     wf_ex,
@@ -364,7 +356,8 @@ class DefaultEngine(base.Engine, coordination.Service):
             with db_api.transaction():
                 wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-                if wf_ex.state != states.PAUSED:
+                if (not states.is_paused(wf_ex.state) and
+                        not states.is_idle(wf_ex.state)):
                     return wf_ex.get_clone()
 
                 return self._continue_workflow(wf_ex, env=env)
@@ -467,46 +460,3 @@ class DefaultEngine(base.Engine, coordination.Service):
                 )
 
             return wf_ex
-
-    @staticmethod
-    def _canonize_workflow_params(params):
-        # Resolve environment parameter.
-        env = params.get('env', {})
-
-        if not isinstance(env, dict) and not isinstance(env, six.string_types):
-            raise ValueError(
-                'Unexpected type for environment [environment=%s]' % str(env)
-            )
-
-        if isinstance(env, six.string_types):
-            env_db = db_api.get_environment(env)
-            env = env_db.variables
-            params['env'] = env
-
-        return params
-
-    @staticmethod
-    def _create_workflow_execution(wf_def, wf_spec, wf_input, description,
-                                   params):
-        wf_ex = db_api.create_workflow_execution({
-            'name': wf_def.name,
-            'description': description,
-            'workflow_name': wf_def.name,
-            'spec': wf_spec.to_dict(),
-            'params': params or {},
-            'state': states.RUNNING,
-            'input': wf_input or {},
-            'output': {},
-            'context': copy.deepcopy(wf_input) or {},
-            'task_execution_id': params.get('task_execution_id'),
-            'runtime_context': {
-                'with_items_index': params.get('with_items_index', 0)
-            },
-        })
-
-        data_flow.add_openstack_data_to_context(wf_ex)
-        data_flow.add_execution_to_context(wf_ex)
-        data_flow.add_environment_to_context(wf_ex)
-        data_flow.add_workflow_variables_to_context(wf_ex, wf_spec)
-
-        return wf_ex

@@ -56,7 +56,7 @@ class Execution(resource.Resource):
     "reference to the parent task execution"
 
     state = wtypes.text
-    "state can be one of: RUNNING, SUCCESS, ERROR, PAUSED"
+    "state can be one of: IDLE, RUNNING, SUCCESS, ERROR, PAUSED"
 
     state_info = wtypes.text
     "an optional state information string"

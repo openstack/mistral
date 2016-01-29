@@ -45,11 +45,13 @@ def is_completed(task_ex):
 
 
 def get_index(task_ex):
-    return len(
-        list(filter(
-            lambda x: x.accepted or states.RUNNING, task_ex.executions
-        ))
+    f = lambda x: (
+        x.accepted or
+        states.is_running(x.state) or
+        states.is_idle(x.state)
     )
+
+    return len(list(filter(f, task_ex.executions)))
 
 
 def get_concurrency(task_ex):
