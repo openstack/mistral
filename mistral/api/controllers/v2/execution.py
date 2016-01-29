@@ -52,6 +52,9 @@ class Execution(resource.Resource):
     "params define workflow type specific parameters. For example, reverse \
     workflow takes one parameter 'task_name' that defines a target task."
 
+    task_execution_id = wtypes.text
+    "reference to the parent task execution"
+
     state = wtypes.text
     "state can be one of: RUNNING, SUCCESS, ERROR, PAUSED"
 
