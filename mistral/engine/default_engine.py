@@ -157,7 +157,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             # policy worked.
 
             wf_ex_id = task_ex.workflow_execution_id
-            wf_ex = self._lock_workflow_execution(wf_ex_id)
+            wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
             wf_trace.info(
                 task_ex,
@@ -239,7 +239,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                     ).get_clone()
 
                 wf_ex_id = action_ex.task_execution.workflow_execution_id
-                wf_ex = self._lock_workflow_execution(wf_ex_id)
+                wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
                 task_handler.on_action_complete(action_ex, result)
 
@@ -255,7 +255,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             with db_api.transaction():
                 action_ex = db_api.get_action_execution(action_ex_id)
                 task_ex = action_ex.task_execution
-                wf_ex = self._lock_workflow_execution(
+                wf_ex = wf_handler.lock_workflow_execution(
                     task_ex.workflow_execution_id
                 )
                 self._on_task_state_change(task_ex, wf_ex)
@@ -278,7 +278,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     @u.log_exec(LOG)
     def pause_workflow(self, execution_id):
         with db_api.transaction():
-            wf_ex = self._lock_workflow_execution(execution_id)
+            wf_ex = wf_handler.lock_workflow_execution(execution_id)
 
             wf_handler.set_execution_state(wf_ex, states.PAUSED)
 
@@ -287,7 +287,11 @@ class DefaultEngine(base.Engine, coordination.Service):
     def _continue_workflow(self, wf_ex, task_ex=None, reset=True, env=None):
         wf_ex = wf_service.update_workflow_execution_env(wf_ex, env)
 
-        wf_handler.set_execution_state(wf_ex, states.RUNNING)
+        wf_handler.set_execution_state(
+            wf_ex,
+            states.RUNNING,
+            set_upstream=True
+        )
 
         wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
 
@@ -327,7 +331,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True, env=None):
         try:
             with db_api.transaction():
-                wf_ex = self._lock_workflow_execution(wf_ex_id)
+                wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
                 task_ex = db_api.get_task_execution(task_ex_id)
 
@@ -350,7 +354,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     def resume_workflow(self, wf_ex_id, env=None):
         try:
             with db_api.transaction():
-                wf_ex = self._lock_workflow_execution(wf_ex_id)
+                wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
                 if wf_ex.state != states.PAUSED:
                     return wf_ex.get_clone()
@@ -367,7 +371,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     @u.log_exec(LOG)
     def stop_workflow(self, execution_id, state, message=None):
         with db_api.transaction():
-            wf_ex = self._lock_workflow_execution(execution_id)
+            wf_ex = wf_handler.lock_workflow_execution(execution_id)
 
             return self._stop_workflow(wf_ex, state, message)
 
@@ -498,10 +502,3 @@ class DefaultEngine(base.Engine, coordination.Service):
         data_flow.add_workflow_variables_to_context(wf_ex, wf_spec)
 
         return wf_ex
-
-    @staticmethod
-    def _lock_workflow_execution(wf_exec_id):
-        # Locks a workflow execution using the db_api.acquire_lock function.
-        # The method expires all session objects and returns the up-to-date
-        # workflow execution from the DB.
-        return db_api.acquire_lock(db_models.WorkflowExecution, wf_exec_id)

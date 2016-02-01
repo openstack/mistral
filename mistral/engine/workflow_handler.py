@@ -13,7 +13,9 @@
 #    limitations under the License.
 
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import rpc
+from mistral.engine import task_handler
 from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.utils import wf_trace
@@ -85,7 +87,7 @@ def send_result_to_parent_workflow(wf_ex_id):
         )
 
 
-def set_execution_state(wf_ex, state, state_info=None):
+def set_execution_state(wf_ex, state, state_info=None, set_upstream=False):
     cur_state = wf_ex.state
 
     if states.is_valid_transition(cur_state, state):
@@ -106,3 +108,32 @@ def set_execution_state(wf_ex, state, state_info=None):
     # Workflow result should be accepted by parent workflows (if any)
     # only if it completed successfully.
     wf_ex.accepted = wf_ex.state == states.SUCCESS
+
+    # If specified, then recursively set the state of the parent workflow
+    # executions to the same state. Only changing state to RUNNING is
+    # supported.
+    if set_upstream and state == states.RUNNING and wf_ex.task_execution_id:
+        task_ex = db_api.get_task_execution(wf_ex.task_execution_id)
+
+        parent_wf_ex = lock_workflow_execution(task_ex.workflow_execution_id)
+
+        set_execution_state(
+            parent_wf_ex,
+            state,
+            state_info=state_info,
+            set_upstream=set_upstream
+        )
+
+        task_handler.set_task_state(
+            task_ex,
+            state,
+            state_info=None,
+            processed=False
+        )
+
+
+def lock_workflow_execution(wf_ex_id):
+    # Locks a workflow execution using the db_api.acquire_lock function.
+    # The method expires all session objects and returns the up-to-date
+    # workflow execution from the DB.
+    return db_api.acquire_lock(db_models.WorkflowExecution, wf_ex_id)

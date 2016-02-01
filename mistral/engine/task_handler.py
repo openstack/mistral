@@ -79,9 +79,7 @@ def run_existing_task(task_ex_id, reset=True):
             action_ex.accepted = False
 
     # Explicitly change task state to RUNNING.
-    task_ex.state = states.RUNNING
-    task_ex.state_info = None
-    task_ex.processed = False
+    set_task_state(task_ex, states.RUNNING, None, processed=False)
 
     _run_existing_task(task_ex, task_spec, wf_spec)
 
@@ -128,7 +126,7 @@ def run_new_task(wf_cmd):
     )
 
     if task_ex:
-        _set_task_state(task_ex, states.RUNNING)
+        set_task_state(task_ex, states.RUNNING, None)
         task_ex.in_context = ctx
     else:
         task_ex = _create_task_execution(wf_ex, task_spec, ctx)
@@ -502,7 +500,7 @@ def _complete_task(task_ex, task_spec, state, state_info=None):
     if states.is_completed(task_ex.state):
         return []
 
-    _set_task_state(task_ex, state, state_info=state_info)
+    set_task_state(task_ex, state, state_info)
 
     try:
         data_flow.publish_variables(
@@ -510,13 +508,13 @@ def _complete_task(task_ex, task_spec, state, state_info=None):
             task_spec
         )
     except Exception as e:
-        _set_task_state(task_ex, states.ERROR, state_info=str(e))
+        set_task_state(task_ex, states.ERROR, str(e))
 
     if not task_spec.get_keep_result():
         data_flow.destroy_task_result(task_ex)
 
 
-def _set_task_state(task_ex, state, state_info=None):
+def set_task_state(task_ex, state, state_info, processed=None):
     # TODO(rakhmerov): How do we log task result?
     wf_trace.info(
         task_ex.workflow_execution,
@@ -525,9 +523,10 @@ def _set_task_state(task_ex, state, state_info=None):
     )
 
     task_ex.state = state
+    task_ex.state_info = state_info
 
-    if state_info:
-        task_ex.state_info = state_info
+    if processed is not None:
+        task_ex.processed = processed
 
 
 def is_task_completed(task_ex, task_spec):
