@@ -28,6 +28,8 @@ from mistral.services import security
 from mistral.tests.unit import base as test_base
 
 
+user_context = test_base.get_context(default=False)
+
 WORKBOOKS = [
     {
         'name': 'my_workbook1',
@@ -1275,6 +1277,20 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
+    def test_get_cron_triggers_other_tenant(self):
+        created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        fetched = db_api.get_cron_triggers(
+            pattern='* * * * *',
+            project_id=security.DEFAULT_PROJECT_ID
+        )
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
     def test_delete_cron_trigger(self):
         created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
@@ -1571,3 +1587,174 @@ class TXTest(SQLAlchemyTest):
 
         self.assertEqual(created_wb, fetched_wb)
         self.assertFalse(self.is_db_session_open())
+
+
+RESOURCE_MEMBERS = [
+    {
+        'resource_id': '123e4567-e89b-12d3-a456-426655440000',
+        'resource_type': 'workflow',
+        'project_id': security.get_project_id(),
+        'member_id': user_context.project_id,
+        'status': 'pending',
+    },
+    {
+        'resource_id': '123e4567-e89b-12d3-a456-426655440000',
+        'resource_type': 'workflow',
+        'project_id': security.get_project_id(),
+        'member_id': '111',
+        'status': 'pending',
+    },
+]
+
+
+class ResourceMemberTest(SQLAlchemyTest):
+    def test_create_and_get_resource_member(self):
+        created_1 = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+        created_2 = db_api.create_resource_member(RESOURCE_MEMBERS[1])
+
+        fetched = db_api.get_resource_member(
+            '123e4567-e89b-12d3-a456-426655440000',
+            'workflow',
+            user_context.project_id
+        )
+
+        self.assertEqual(created_1, fetched)
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        fetched = db_api.get_resource_member(
+            '123e4567-e89b-12d3-a456-426655440000',
+            'workflow',
+            user_context.project_id
+        )
+
+        self.assertEqual(created_1, fetched)
+
+        # Tenant A can not see membership of resource shared to Tenant B.
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_resource_member,
+            '123e4567-e89b-12d3-a456-426655440000',
+            'workflow',
+            created_2.member_id
+        )
+
+    def test_create_resource_member_duplicate(self):
+        db_api.create_resource_member(RESOURCE_MEMBERS[0])
+
+        self.assertRaises(
+            exc.DBDuplicateEntryException,
+            db_api.create_resource_member,
+            RESOURCE_MEMBERS[0]
+        )
+
+    def test_get_resource_members_by_owner(self):
+        for res_member in RESOURCE_MEMBERS:
+            db_api.create_resource_member(res_member)
+
+        fetched = db_api.get_resource_members(
+            '123e4567-e89b-12d3-a456-426655440000',
+            'workflow',
+        )
+
+        self.assertTrue(2, len(fetched))
+
+    def test_get_resource_members_not_owner(self):
+        created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+        db_api.create_resource_member(RESOURCE_MEMBERS[1])
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        fetched = db_api.get_resource_members(
+            created.resource_id,
+            'workflow',
+        )
+
+        self.assertTrue(1, len(fetched))
+        self.assertEqual(created, fetched[0])
+
+    def test_update_resource_member_by_member(self):
+        created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        updated = db_api.update_resource_member(
+            created.resource_id,
+            'workflow',
+            user_context.project_id,
+            {'status': 'accepted'}
+        )
+
+        self.assertEqual(created.id, updated.id)
+        self.assertEqual('accepted', updated.status)
+
+    def test_update_resource_member_by_owner(self):
+        created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.update_resource_member,
+            created.resource_id,
+            'workflow',
+            user_context.project_id,
+            {'status': 'accepted'}
+        )
+
+    def test_delete_resource_member(self):
+        created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+
+        db_api.delete_resource_member(
+            created.resource_id,
+            'workflow',
+            user_context.project_id,
+        )
+
+        fetched = db_api.get_resource_members(
+            created.resource_id,
+            'workflow',
+        )
+
+        self.assertEqual(0, len(fetched))
+
+    def test_delete_resource_member_not_owner(self):
+        created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.delete_resource_member,
+            created.resource_id,
+            'workflow',
+            user_context.project_id,
+        )
+
+    def test_delete_resource_member_already_deleted(self):
+        created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
+
+        db_api.delete_resource_member(
+            created.resource_id,
+            'workflow',
+            user_context.project_id,
+        )
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.delete_resource_member,
+            created.resource_id,
+            'workflow',
+            user_context.project_id,
+        )
+
+    def test_delete_nonexistent_resource_member(self):
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.delete_resource_member,
+            'nonexitent_resource',
+            'workflow',
+            'nonexitent_member',
+        )
