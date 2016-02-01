@@ -52,6 +52,10 @@ def get_arg_list(func):
 
 
 def get_arg_list_as_str(func):
+    args = getattr(func, "__arguments__", None)
+    if args:
+        return args
+
     argspec = inspect.getargspec(func)
     defs = list(argspec.defaults or [])
 

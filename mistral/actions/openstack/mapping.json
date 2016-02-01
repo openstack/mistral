@@ -937,5 +937,11 @@
         "put_object": "put_object",
         "post_object": "post_object",
         "get_capabilities": "get_capabilities"
+    },
+    "zaqar": {
+        "_comment": "It uses zaqarclient.v2.",
+        "queue_messages": "queue_messages",
+        "queue_post": "queue_post",
+        "queue_pop": "queue_pop"
     }
 }

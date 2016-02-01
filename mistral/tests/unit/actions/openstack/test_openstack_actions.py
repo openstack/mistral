@@ -151,3 +151,15 @@ class OpenStackActionTest(base.BaseTestCase):
         self.assertTrue(mocked().get_object.called)
         mocked().get_object.assert_called_once_with(container='foo',
                                                     object='bar')
+
+    @mock.patch.object(actions.ZaqarAction, '_get_client')
+    def test_zaqar_action(self, mocked):
+        method_name = "queue_messages"
+        action_class = actions.ZaqarAction
+        action_class.client_method_name = method_name
+        params = {'queue_name': 'foo'}
+        action = action_class(**params)
+        action.run()
+
+        mocked().queue.assert_called_once_with('foo')
+        mocked().queue().messages.assert_called_once_with()

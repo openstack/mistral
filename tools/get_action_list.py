@@ -40,6 +40,8 @@ from troveclient.v1 import client as troveclient
 # plug it in cleanly here.
 # TODO(dprince): Swiftclient doesn't currently support discovery
 # like we do in this class.
+# TODO(therve): Zaqarclient doesn't currently support discovery
+# like we do in this class.
 
 """It is simple CLI tool which allows to see and update mapping.json file
 if needed. mapping.json contains all allowing OpenStack actions sorted by
@@ -164,6 +166,7 @@ CLIENTS = {
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
+    # 'zaqar': ...
 }
 BASE_MANAGERS = {
     'nova': BASE_NOVA_MANAGER,
@@ -177,6 +180,7 @@ BASE_MANAGERS = {
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...
+    # 'zaqar': ...
 }
 NAMESPACES = {
     'glance': GLANCE_NAMESPACE_LIST,

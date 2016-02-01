@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import functools
+
 from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.v2 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
@@ -26,9 +28,11 @@ from oslo_config import cfg
 from oslo_log import log
 from swiftclient import client as swift_client
 from troveclient import client as troveclient
+from zaqarclient.queues.v2 import client as zaqarclient
 
 from mistral.actions.openstack import base
 from mistral import context
+from mistral.utils import inspect_utils
 from mistral.utils.openstack import keystone as keystone_utils
 
 
@@ -327,3 +331,96 @@ class SwiftAction(base.OpenStackAction):
         }
 
         return self._client_class(**kwargs)
+
+
+class ZaqarAction(base.OpenStackAction):
+    _client_class = zaqarclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Zaqar action security context: %s" % ctx)
+
+        zaqar_endpoint = keystone_utils.get_endpoint_for_project(
+            service_type='messaging')
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+
+        opts = {
+            'os_auth_token': ctx.auth_token,
+            'os_auth_url': keystone_endpoint.url,
+            'os_project_id': ctx.project_id,
+        }
+        auth_opts = {'backend': 'keystone', 'options': opts}
+        conf = {'auth_opts': auth_opts}
+
+        return self._client_class(zaqar_endpoint.url, conf=conf)
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class("")
+
+    @classmethod
+    def _get_client_method(cls, client):
+        method = getattr(cls, cls.client_method_name)
+
+        # We can't use partial as it's not supported by getargspec
+        @functools.wraps(method)
+        def wrap(*args, **kwargs):
+            return method(client, *args, **kwargs)
+
+        args = inspect_utils.get_arg_list_as_str(method)
+        # Remove client
+        wrap.__arguments__ = args.split(', ', 1)[1]
+
+        return wrap
+
+    @staticmethod
+    def queue_messages(client, queue_name, **params):
+        """Gets a list of messages from the queue.
+
+        :param queue_name: Name of the target queue.
+        :type queue_name: `six.string_type`
+
+        :param params: Filters to use for getting messages.
+        :type params: **kwargs dict
+
+        :returns: List of messages.
+        :rtype: `list`
+        """
+        queue = client.queue(queue_name)
+
+        return queue.messages(**params)
+
+    @staticmethod
+    def queue_post(client, queue_name, messages):
+        """Posts one or more messages to a queue.
+
+        :param queue_name: Name of the target queue.
+        :type queue_name: `six.string_type`
+
+        :param messages: One or more messages to post.
+        :type messages: `list` or `dict`
+
+        :returns: A dict with the result of this operation.
+        :rtype: `dict`
+        """
+        queue = client.queue(queue_name)
+
+        return queue.post(messages)
+
+    @staticmethod
+    def queue_pop(client, queue_name, count=1):
+        """Pop `count` messages from the queue.
+
+        :param queue_name: Name of the target queue.
+        :type queue_name: `six.string_type`
+
+        :param count: Number of messages to pop.
+        :type count: int
+
+        :returns: List of messages.
+        :rtype: `list`
+        """
+        queue = client.queue(queue_name)
+
+        return queue.pop(count)
