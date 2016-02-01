@@ -42,7 +42,7 @@ For example, we have the following workflow::
           on-success: task2
 
         task2:
-          action: std.echo="Done"
+          action: std.echo output="Done"
 
 This is a simple workflow iterates through the given list of names in its first task (using "with-items") and stores
 them as a task result (using echo action) and then stores word "Done" as a result of the second task.
