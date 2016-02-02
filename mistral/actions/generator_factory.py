@@ -23,6 +23,5 @@ def all_generators():
         generators.HeatActionGenerator,
         generators.NeutronActionGenerator,
         generators.CinderActionGenerator,
-        generators.CeilometerActionGenerator,
-        generators.TroveActionGenerator
+        generators.CeilometerActionGenerator
     ]

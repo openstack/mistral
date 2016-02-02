@@ -102,15 +102,3 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().alarms.get.called)
         mocked().alarms.get.assert_called_once_with(alarm_id="1234-abcd")
-
-    @mock.patch.object(actions.TroveAction, '_get_client')
-    def test_trove_action(self, mocked):
-        method_name = "instances.get"
-        action_class = actions.TroveAction
-        action_class.client_method_name = method_name
-        params = {'instance': '1234-abcd'}
-        action = action_class(**params)
-        action.run()
-
-        self.assertTrue(mocked().instances.get.called)
-        mocked().instances.get.assert_called_once_with(instance="1234-abcd")
