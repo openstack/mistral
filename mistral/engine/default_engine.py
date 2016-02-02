@@ -170,11 +170,14 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             self._on_task_state_change(task_ex, wf_ex)
 
-    def _on_task_state_change(self, task_ex, wf_ex):
+    def _on_task_state_change(self, task_ex, wf_ex, task_state=states.SUCCESS):
         task_spec = spec_parser.get_task_spec(task_ex.spec)
         wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-        if task_handler.is_task_completed(task_ex, task_spec):
+        # We must be sure that if task is completed,
+        # it was also completed in previous transaction.
+        if (task_handler.is_task_completed(task_ex, task_spec)
+                and states.is_completed(task_state)):
             task_handler.after_task_complete(task_ex, task_spec, wf_spec)
 
             # Ignore DELAYED state.
@@ -241,13 +244,14 @@ class DefaultEngine(base.Engine, coordination.Service):
                 wf_ex_id = action_ex.task_execution.workflow_execution_id
                 wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-                task_handler.on_action_complete(action_ex, result)
+                task_ex = task_handler.on_action_complete(action_ex, result)
 
                 # If workflow is on pause or completed then there's no
                 # need to continue workflow.
                 if states.is_paused_or_completed(wf_ex.state):
                     return action_ex.get_clone()
 
+            prev_task_state = task_ex.state
             # Separate the task transition in a separate transaction. The task
             # has already completed for better or worst. The task state should
             # not be affected by errors during transition on conditions such as
@@ -258,7 +262,11 @@ class DefaultEngine(base.Engine, coordination.Service):
                 wf_ex = wf_handler.lock_workflow_execution(
                     task_ex.workflow_execution_id
                 )
-                self._on_task_state_change(task_ex, wf_ex)
+                self._on_task_state_change(
+                    task_ex,
+                    wf_ex,
+                    task_state=prev_task_state
+                )
 
                 return action_ex.get_clone()
         except Exception as e:
