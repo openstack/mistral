@@ -88,7 +88,7 @@ def instantiate_spec(spec_cls, data):
 
             spec.validate_semantics()
 
-            return cls(data)
+            return spec
 
     raise exc.DSLParsingException(
         'Failed to find a specification class to instantiate '

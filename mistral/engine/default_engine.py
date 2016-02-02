@@ -176,7 +176,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             if task_ex.state == states.RUNNING_DELAYED:
                 return
 
-            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex, wf_spec)
 
             # Calculate commands to process next.
             cmds = wf_ctrl.continue_workflow()
