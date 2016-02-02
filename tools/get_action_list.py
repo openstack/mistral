@@ -28,8 +28,7 @@ from keystoneclient import base as keystone_base
 from keystoneclient.v3 import client as keystoneclient
 from novaclient import client as novaclient
 from novaclient.openstack.common.apiclient import base as nova_base
-from troveclient import base as trove_base
-from troveclient.v1 import client as troveclient
+
 
 # TODO(nmakhotkin): Find a rational way to do it for neutron.
 # TODO(nmakhotkin): Implement recursive way of searching for managers
@@ -61,7 +60,6 @@ BASE_HEAT_MANAGER = heat_base.HookableMixin
 BASE_NOVA_MANAGER = nova_base.HookableMixin
 BASE_KEYSTONE_MANAGER = keystone_base.Manager
 BASE_CINDER_MANAGER = cinder_base.HookableMixin
-BASE_TROVE_MANAGER = trove_base.HookableMixin
 
 
 def get_parser():
@@ -137,9 +135,6 @@ def get_cinder_client(**kwargs):
     return cinderclient.Client()
 
 
-def get_trove_client(**kwargs):
-    return troveclient.Client()
-
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -147,7 +142,6 @@ CLIENTS = {
     'cinder': get_cinder_client,
     'keystone': get_keystone_client,
     'glance': get_glance_client,
-    'trove': get_trove_client,
     # 'neutron': get_nova_client
 }
 BASE_MANAGERS = {
@@ -157,7 +151,6 @@ BASE_MANAGERS = {
     'cinder': BASE_CINDER_MANAGER,
     'keystone': BASE_KEYSTONE_MANAGER,
     'glance': None,
-    'trove': BASE_TROVE_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
 }
 NAMESPACES = {

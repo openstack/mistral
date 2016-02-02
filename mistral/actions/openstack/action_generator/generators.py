@@ -49,8 +49,3 @@ class CinderActionGenerator(base.OpenStackActionGenerator):
 class CeilometerActionGenerator(base.OpenStackActionGenerator):
     action_namespace = "ceilometer"
     base_action_class = actions.CeilometerAction
-
-
-class TroveActionGenerator(base.OpenStackActionGenerator):
-    action_namespace = "trove"
-    base_action_class = actions.TroveAction
