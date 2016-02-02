@@ -49,6 +49,7 @@ TASK_EX = models.TaskExecution(
     id='123',
     name='task',
     workflow_name='flow',
+    workflow_id='123e4567-e89b-12d3-a456-426655441111',
     spec={
         'type': 'direct',
         'version': '2.0',
@@ -70,6 +71,7 @@ WITH_ITEMS_TASK_EX = models.TaskExecution(
     id='123',
     name='task',
     workflow_name='flow',
+    workflow_id='123e4567-e89b-12d3-a456-426655441111',
     spec={
         'type': 'direct',
         'version': '2.0',
@@ -92,6 +94,7 @@ TASK = {
     'id': '123',
     'name': 'task',
     'workflow_name': 'flow',
+    'workflow_id': '123e4567-e89b-12d3-a456-426655441111',
     'state': 'RUNNING',
     'workflow_execution_id': WF_EX.id,
     'created_at': '1970-01-01 00:00:00',

@@ -43,6 +43,7 @@ class Task(resource.Resource):
     name = wtypes.text
 
     workflow_name = wtypes.text
+    workflow_id = wtypes.text
     workflow_execution_id = wtypes.text
 
     state = wtypes.text
@@ -69,6 +70,7 @@ class Task(resource.Resource):
         return cls(
             id='123e4567-e89b-12d3-a456-426655440000',
             workflow_name='flow',
+            workflow_id='123e4567-e89b-12d3-a456-426655441111',
             workflow_execution_id='123e4567-e89b-12d3-a456-426655440000',
             name='task',
             state=states.SUCCESS,

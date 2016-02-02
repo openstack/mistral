@@ -50,7 +50,8 @@ class DefaultEngine(base.Engine, coordination.Service):
         coordination.Service.__init__(self, 'engine_group')
 
     @u.log_exec(LOG)
-    def start_workflow(self, wf_name, wf_input, description='', **params):
+    def start_workflow(self, wf_identifier, wf_input, description='',
+                       **params):
         wf_ex_id = None
 
         try:
@@ -58,7 +59,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                 # The new workflow execution will be in an IDLE
                 # state on initial record creation.
                 wf_ex_id = wf_ex_service.create_workflow_execution(
-                    wf_name,
+                    wf_identifier,
                     wf_input,
                     description,
                     params
@@ -87,7 +88,7 @@ class DefaultEngine(base.Engine, coordination.Service):
         except Exception as e:
             LOG.error(
                 "Failed to start workflow '%s' id=%s: %s\n%s",
-                wf_name, wf_ex_id, e, traceback.format_exc()
+                wf_identifier, wf_ex_id, e, traceback.format_exc()
             )
 
             wf_ex = self._fail_workflow(wf_ex_id, e)

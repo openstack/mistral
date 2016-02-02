@@ -208,6 +208,7 @@ def _create_task_execution(wf_ex, task_spec, ctx, state=states.RUNNING):
         'name': task_spec.get_name(),
         'workflow_execution_id': wf_ex.id,
         'workflow_name': wf_ex.workflow_name,
+        'workflow_id': wf_ex.workflow_id,
         'state': state,
         'spec': task_spec.to_dict(),
         'in_context': ctx,
