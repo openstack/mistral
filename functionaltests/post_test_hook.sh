@@ -14,14 +14,19 @@
 
 # This script is executed inside post_test_hook function in devstack gate.
 
+sudo chmod -R a+rw /opt/stack/
+(cd $BASE/new/tempest/; sudo virtualenv .venv)
+source $BASE/new/tempest/.venv/bin/activate
 
-RETVAL=0
+(cd $BASE/new/tempest/; sudo pip install -r requirements.txt -r test-requirements.txt)
+sudo pip install nose
+sudo pip install numpy
 
-sudo chmod -R a+rw /opt/stack/new/
-cd /opt/stack/new/mistral
+sudo cp $BASE/new/tempest/etc/logging.conf.sample $BASE/new/tempest/etc/logging.conf
 
-echo "Running Mistral API tests"
-./functionaltests/run_tests.sh
-RETVAL=$?
+(cd $BASE/new/mistral/; sudo pip install -r requirements.txt -r test-requirements.txt)
+(cd $BASE/new/mistral/; sudo python setup.py install)
 
-exit $RETVAL
+export TOX_TESTENV_PASSENV=ZUUL_PROJECT
+(cd $BASE/new/tempest/; sudo -E testr init)
+(cd $BASE/new/tempest/; sudo -E tox -eall-plugin mistral)
