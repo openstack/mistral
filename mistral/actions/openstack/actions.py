@@ -306,7 +306,8 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
         LOG.debug("Baremetal introspection action security context: %s" % ctx)
 
         inspector_endpoint = keystone_utils.get_endpoint_for_project(
-            'baremetal-introspection')
+            service_type='baremetal-introspection'
+        )
 
         return self._client_class(
             api_version=1,
