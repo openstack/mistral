@@ -14,7 +14,7 @@ function pre_hook() {
 function run_tests_by_version() {
   echo "$(tput setaf 4)Running integration API and workflow execution tests for v$1$(tput sgr 0)"
   export VERSION="v$1"
-  nosetests -v mistral/tests/functional/api/v$1/
+  nosetests -v mistral_tempest_tests/tests/api/v$1/
   unset VERSION
 }
 
