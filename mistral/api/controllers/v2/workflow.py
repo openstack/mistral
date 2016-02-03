@@ -210,7 +210,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         :param marker: Optional. Pagination marker for large data sets.
         :param limit: Optional. Maximum number of resources to return in a
                       single result. Default value is None for backward
-                      compatability.
+                      compatibility.
         :param sort_keys: Optional. Columns to sort results by.
                           Default: created_at.
         :param sort_dirs: Optional. Directions to sort corresponding to
