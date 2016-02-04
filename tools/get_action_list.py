@@ -18,6 +18,8 @@ import inspect
 import json
 import os
 
+from barbicanclient import base as barbican_base
+from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient import utils as cinder_base
 from cinderclient.v2 import client as cinderclient
@@ -71,6 +73,7 @@ BASE_KEYSTONE_MANAGER = keystone_base.Manager
 BASE_CINDER_MANAGER = cinder_base.HookableMixin
 BASE_TROVE_MANAGER = trove_base.Manager
 BASE_IRONIC_MANAGER = ironic_base.Manager
+BASE_BARBICAN_MANAGER = barbican_base.BaseEntityManager
 
 
 def get_parser():
@@ -154,6 +157,13 @@ def get_ironic_client(**kwargs):
     return ironicclient.Client("http://127.0.0.1:6385/")
 
 
+def get_barbican_client(**kwargs):
+    return barbicanclient.Client(
+        project_id="1",
+        endpoint="http://127.0.0.1:9311"
+    )
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -163,6 +173,7 @@ CLIENTS = {
     'glance': get_glance_client,
     'trove': get_trove_client,
     'ironic': get_ironic_client,
+    'barbican': get_barbican_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -177,6 +188,7 @@ BASE_MANAGERS = {
     'glance': None,
     'trove': BASE_TROVE_MANAGER,
     'ironic': BASE_IRONIC_MANAGER,
+    'barbican': BASE_BARBICAN_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...

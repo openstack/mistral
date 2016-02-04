@@ -943,5 +943,27 @@
         "queue_messages": "queue_messages",
         "queue_post": "queue_post",
         "queue_pop": "queue_pop"
+    },
+    "barbican": {
+        "_comment": "It uses barbicanclient",
+        "secrets_get": "secrets.get",
+        "secrets_create": "secrets.create",
+        "secrets_delete": "secrets.delete",
+        "secrets_list": "secrets.list",
+        "containers_get": "containers.get",
+        "containers_create": "containers.create",
+        "containers_create_certificate": "containers.create_certificate",
+        "containers_create_rsa": "containers.create_rsa",
+        "containers_delete": "containers.delete",
+        "containers_list": "containers.list",
+        "containers_register_consumer": "containers.register_consumer",
+        "containers_remove_consumer": "containers.remove_consumer",
+        "orders_get": "orders.get",
+        "orders_create": "orders.create",
+        "orders_create_key": "orders.create_key",
+        "orders_create_asymmetric": "orders.create_asymmetric",
+        "orders_delete": "orders.delete",
+        "orders_list": "orders.list",
+        "secrets_store": "secrets_store"
     }
 }

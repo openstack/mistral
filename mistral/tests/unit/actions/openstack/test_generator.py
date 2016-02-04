@@ -30,6 +30,7 @@ MODULE_MAPPING = {
                                 actions.BaremetalIntrospectionAction],
     'swift': ['swift.head_account', actions.SwiftAction],
     'zaqar': ['zaqar.queue_messages', actions.ZaqarAction],
+    'barbican': ['barbican.orders_list', actions.BarbicanAction],
 }
 
 EXTRA_MODULES = ['neutron', 'swift', 'zaqar']
