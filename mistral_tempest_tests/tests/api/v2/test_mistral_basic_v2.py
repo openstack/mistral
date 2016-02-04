@@ -166,7 +166,7 @@ class WorkflowTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
 
         for wf in body['workflows']:
-            self.assertListEqual(['id', 'name'], wf.keys())
+            self.assertListEqual(sorted(['id', 'name']), sorted(list(wf)))
 
     @test.attr(type='smoke')
     def test_get_list_workflows_with_pagination(self):
