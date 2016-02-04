@@ -34,7 +34,7 @@ fixes:
     REPEATABLE_READ to READ_COMMITTED so process A can see changes committed
     in other transactions even if process A is in the middle of a transaction.
 
-    A short explaination regarding the different isolation levels:
+    A short explanation regarding the different isolation levels:
 
     - |
 
