@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from paramiko import ssh_exception
 from tempest import config
 from tempest import test
+from tempest_lib import exceptions
 
 from mistral import utils
 from mistral.utils import ssh_utils
@@ -137,6 +138,22 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         )
 
     @classmethod
+    def _wait_until_server_delete(cls, server_id, timeout=60, delay=2):
+        seconds_remain = timeout
+
+        LOG.info("Deleting server [id=%s]..." % server_id)
+
+        while seconds_remain > 0:
+            try:
+                cls.server_client.show_server(server_id)
+                seconds_remain -= delay
+                time.sleep(delay)
+            except exceptions.NotFound:
+                return
+
+        raise RuntimeError("Server delete timeout!")
+
+    @classmethod
     def resource_setup(cls):
         super(SSHActionsTestsV2, cls).resource_setup()
 
@@ -212,8 +229,13 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             cls.public_vm_ip,
             cls.public_vm['id']
         )
+
         cls.server_client.delete_server(cls.public_vm['id'])
         cls.server_client.delete_server(cls.guest_vm['id'])
+
+        cls._wait_until_server_delete(cls.public_vm['id'])
+        cls._wait_until_server_delete(cls.guest_vm['id'])
+
         cls.mgr.keypairs_client.delete_keypair(cls.key_name)
 
         cls.mgr.compute_security_group_rules_client.delete_security_group_rule(
