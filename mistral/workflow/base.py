@@ -40,13 +40,17 @@ class WorkflowController(object):
     by Mistral.
     """
 
-    def __init__(self, wf_ex):
+    def __init__(self, wf_ex, wf_spec=None):
         """Creates a new workflow controller.
 
         :param wf_ex: Workflow execution.
+
+        :param wf_spec: Workflow specification.
         """
         self.wf_ex = wf_ex
-        self.wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+        if wf_spec is None:
+            wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+        self.wf_spec = wf_spec
 
     def _update_task_ex_env(self, task_ex, env):
         if not env:
@@ -194,4 +198,7 @@ class WorkflowController(object):
         if not wf_spec:
             wf_spec = spec_parser.get_workflow_spec(wf_ex['spec'])
 
-        return WorkflowController._get_class(wf_spec.get_type())(wf_ex)
+        return WorkflowController._get_class(wf_spec.get_type())(
+            wf_ex,
+            wf_spec
+        )

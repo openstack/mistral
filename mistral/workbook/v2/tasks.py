@@ -114,8 +114,6 @@ class TaskSpec(base.BaseSpec):
     def validate_schema(self):
         super(TaskSpec, self).validate_schema()
 
-        self._transform_with_items()
-
         action = self._data.get('action')
         workflow = self._data.get('workflow')
 

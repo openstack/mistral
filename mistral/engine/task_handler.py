@@ -96,9 +96,15 @@ def _run_existing_task(task_ex, task_spec, wf_spec):
     # In some cases we can have no input, e.g. in case of 'with-items'.
     if input_dicts:
         for index, input_d in input_dicts:
-            _run_action_or_workflow(task_ex, task_spec, input_d, index)
+            _run_action_or_workflow(
+                task_ex,
+                task_spec,
+                input_d,
+                index,
+                wf_spec
+            )
     else:
-        _schedule_noop_action(task_ex, task_spec)
+        _schedule_noop_action(task_ex, task_spec, wf_spec)
 
 
 def defer_task(wf_cmd):
@@ -365,7 +371,7 @@ def _get_workflow_input(task_spec, ctx):
     return expr.evaluate_recursively(task_spec.get_input(), ctx)
 
 
-def _run_action_or_workflow(task_ex, task_spec, input_dict, index):
+def _run_action_or_workflow(task_ex, task_spec, input_dict, index, wf_spec):
     t_name = task_ex.name
 
     if task_spec.get_action_name():
@@ -375,14 +381,14 @@ def _run_action_or_workflow(task_ex, task_spec, input_dict, index):
             (t_name, task_spec.get_action_name())
         )
 
-        _schedule_run_action(task_ex, task_spec, input_dict, index)
+        _schedule_run_action(task_ex, task_spec, input_dict, index, wf_spec)
     elif task_spec.get_workflow_name():
         wf_trace.info(
             task_ex,
             "Task '%s' is RUNNING [workflow_name = %s]" %
             (t_name, task_spec.get_workflow_name()))
 
-        _schedule_run_workflow(task_ex, task_spec, input_dict, index)
+        _schedule_run_workflow(task_ex, task_spec, input_dict, index, wf_spec)
 
 
 def _get_action_defaults(task_ex, task_spec):
@@ -391,10 +397,7 @@ def _get_action_defaults(task_ex, task_spec):
     return actions.get(task_spec.get_action_name(), {})
 
 
-def _schedule_run_action(task_ex, task_spec, action_input, index):
-    wf_ex = task_ex.workflow_execution
-    wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
-
+def _schedule_run_action(task_ex, task_spec, action_input, index, wf_spec):
     action_spec_name = task_spec.get_action_name()
 
     action_def = action_handler.resolve_definition(
@@ -424,9 +427,8 @@ def _schedule_run_action(task_ex, task_spec, action_input, index):
     )
 
 
-def _schedule_noop_action(task_ex, task_spec):
+def _schedule_noop_action(task_ex, task_spec, wf_spec):
     wf_ex = task_ex.workflow_execution
-    wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
     action_def = action_handler.resolve_action_definition(
         'std.noop',
@@ -450,9 +452,9 @@ def _schedule_noop_action(task_ex, task_spec):
     )
 
 
-def _schedule_run_workflow(task_ex, task_spec, wf_input, index):
+def _schedule_run_workflow(task_ex, task_spec, wf_input, index,
+                           parent_wf_spec):
     parent_wf_ex = task_ex.workflow_execution
-    parent_wf_spec = spec_parser.get_workflow_spec(parent_wf_ex.spec)
 
     wf_spec_name = task_spec.get_workflow_name()
 

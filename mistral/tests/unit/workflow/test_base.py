@@ -56,4 +56,4 @@ class WorkflowControllerTest(base.BaseTest):
 
         mock_get_spec.assert_called_once_with("spec")
         mock_get_class.assert_called_once_with("direct")
-        mock_handler_cls.assert_called_once_with(wf_ex)
+        mock_handler_cls.assert_called_once_with(wf_ex, mock_wf_spec)
