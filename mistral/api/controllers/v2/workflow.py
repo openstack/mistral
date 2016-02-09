@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 import pecan
 from pecan import hooks
 from pecan import rest
@@ -22,6 +23,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import member
 from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
@@ -103,10 +105,10 @@ class Workflows(resource.ResourceList):
     def sample(cls):
         workflows_sample = cls()
         workflows_sample.workflows = [Workflow.sample()]
-        workflows_sample.next = "http://localhost:8989/v2/workflows?" \
-                                "sort_keys=id,name&" \
-                                "sort_dirs=asc,desc&limit=10&" \
-                                "marker=123e4567-e89b-12d3-a456-426655440000"
+        workflows_sample.next = ("http://localhost:8989/v2/workflows?"
+                                 "sort_keys=id,name&"
+                                 "sort_dirs=asc,desc&limit=10&"
+                                 "marker=123e4567-e89b-12d3-a456-426655440000")
 
         return workflows_sample
 
@@ -119,6 +121,32 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     validate = validation.SpecValidationController(
         spec_parser.get_workflow_list_spec_from_yaml)
+
+    @pecan.expose()
+    def _lookup(self, identifier, sub_resource, *remainder):
+        LOG.info(
+            "Lookup subcontrollers of WorkflowsController, "
+            "sub_resource: %s, remainder: %s.",
+            sub_resource,
+            remainder
+        )
+
+        if sub_resource == 'members':
+            if not uuidutils.is_uuid_like(identifier):
+                raise exc.WorkflowException(
+                    "Only support UUID as resource identifier in resource "
+                    "sharing feature."
+                )
+
+            # We don't check workflow's existence here, since a user may query
+            # members of a workflow, which doesn't belong to him/her.
+            return member.MembersController('workflow', identifier), remainder
+
+        return super(WorkflowsController, self)._lookup(
+            identifier,
+            sub_resource,
+            *remainder
+        )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflow, wtypes.text)
