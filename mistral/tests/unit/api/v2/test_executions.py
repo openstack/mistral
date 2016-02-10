@@ -33,6 +33,7 @@ from mistral.workflow import states
 WF_EX = models.WorkflowExecution(
     id='123e4567-e89b-12d3-a456-426655440000',
     workflow_name='some',
+    workflow_id='123e4567-e89b-12d3-a456-426655441111',
     description='execution description.',
     spec={'name': 'some'},
     state=states.RUNNING,
@@ -54,11 +55,13 @@ WF_EX_JSON = {
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
     'workflow_name': 'some',
+    'workflow_id': '123e4567-e89b-12d3-a456-426655441111'
 }
 
 SUB_WF_EX = models.WorkflowExecution(
     id=str(uuid.uuid4()),
     workflow_name='some',
+    workflow_id='123e4567-e89b-12d3-a456-426655441111',
     description='foobar',
     spec={'name': 'some'},
     state=states.RUNNING,
@@ -74,6 +77,7 @@ SUB_WF_EX = models.WorkflowExecution(
 SUB_WF_EX_JSON = {
     'id': SUB_WF_EX.id,
     'workflow_name': 'some',
+    'workflow_id': '123e4567-e89b-12d3-a456-426655441111',
     'description': 'foobar',
     'input': '{"foo": "bar"}',
     'output': '{}',
@@ -389,7 +393,7 @@ class TestExecutionsController(base.FunctionalTest):
         exec_dict = WF_EX_JSON_WITH_DESC
 
         f.assert_called_once_with(
-            exec_dict['workflow_name'],
+            exec_dict['workflow_id'],
             json.loads(exec_dict['input']),
             exec_dict['description'],
             **json.loads(exec_dict['params'])
@@ -402,6 +406,16 @@ class TestExecutionsController(base.FunctionalTest):
             self.app.post_json,
             '/v2/executions',
             WF_EX_JSON
+        )
+
+        self.assertIn('Bad response: 400', context.args[0])
+
+    def test_post_without_workflow_id_and_name(self):
+        context = self.assertRaises(
+            webtest_app.AppError,
+            self.app.post_json,
+            '/v2/executions',
+            {'description': 'some description here.'}
         )
 
         self.assertIn('Bad response: 400', context.args[0])

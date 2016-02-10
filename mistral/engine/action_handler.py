@@ -62,6 +62,7 @@ def create_action_execution(action_def, action_input, task_ex=None,
         values.update({
             'task_execution_id': task_ex.id,
             'workflow_name': task_ex.workflow_name,
+            'workflow_id': task_ex.workflow_id,
             'project_id': task_ex.project_id,
         })
     else:

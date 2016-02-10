@@ -29,10 +29,12 @@ class Engine(object):
     """Engine interface."""
 
     @abc.abstractmethod
-    def start_workflow(self, wf_name, wf_input, description='', **params):
+    def start_workflow(self, wf_identifier, wf_input, description='',
+                       **params):
         """Starts the specified workflow.
 
-        :param wf_name: Workflow name.
+        :param wf_identifier: Workflow ID or name. Workflow ID is recommended,
+            workflow name will be deprecated since Mitaka.
         :param wf_input: Workflow input data as a dictionary.
         :param description: Execution description.
         :param params: Additional workflow type specific parameters.

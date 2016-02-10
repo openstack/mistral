@@ -121,8 +121,8 @@ class Execution(mb.MistralSecureModelBase):
     id = mb.id_column()
     name = sa.Column(sa.String(80))
     description = sa.Column(sa.String(255), nullable=True)
-
     workflow_name = sa.Column(sa.String(80))
+    workflow_id = sa.Column(sa.String(80))
     spec = sa.Column(st.JsonDictType())
     state = sa.Column(sa.String(20))
     state_info = sa.Column(sa.Text(), nullable=True)
