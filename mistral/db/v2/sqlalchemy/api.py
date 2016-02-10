@@ -115,11 +115,19 @@ def _get_one_entity(model, id):
 def _secure_query(model, *columns):
     query = b.model_query(model, columns)
 
+    shared_res_ids = []
+    res_type = RESOURCE_MAPPING.get(model, '')
+
+    if res_type:
+        shared_res = _get_accepted_resources(res_type)
+        shared_res_ids = [res.resource_id for res in shared_res]
+
     if issubclass(model, mb.MistralSecureModelBase):
         query = query.filter(
             sa.or_(
                 model.project_id == security.get_project_id(),
-                model.scope == 'public'
+                model.scope == 'public',
+                model.id.in_(shared_res_ids)
             )
         )
 
@@ -144,7 +152,10 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
 
 
 def _delete_all(model, session=None, **kwargs):
-    _secure_query(model).filter_by(**kwargs).delete()
+    # NOTE(lane): Because we use 'in_' operator in _secure_query(), delete()
+    # method will raise error with default parameter. Please refer to
+    # http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete
+    _secure_query(model).filter_by(**kwargs).delete(synchronize_session=False)
 
 
 def _get_collection_sorted_by_name(model, **kwargs):
@@ -1191,6 +1202,12 @@ def delete_environments(**kwargs):
 # Resource members.
 
 
+RESOURCE_MAPPING = {
+    models.WorkflowDefinition: 'workflow',
+    models.Workbook: 'workbook'
+}
+
+
 def _get_criterion(resource_id, member_id=None, is_owner=True):
     """Generates criterion for querying resource_member_v2 table."""
 
@@ -1210,7 +1227,7 @@ def _get_criterion(resource_id, member_id=None, is_owner=True):
 
     # Other members query other resource membership.
     elif not is_owner and member_id and member_id != security.get_project_id():
-            return None
+        return None
 
     # Resource member query resource memberships.
     return sa.and_(
@@ -1326,3 +1343,15 @@ def delete_resource_member(resource_id, res_type, member_id, session=None):
 @b.session_aware()
 def delete_resource_members(**kwargs):
     return _delete_all(models.ResourceMember, **kwargs)
+
+
+def _get_accepted_resources(res_type):
+    resources = _secure_query(models.ResourceMember).filter(
+        sa.and_(
+            models.ResourceMember.resource_type == res_type,
+            models.ResourceMember.status == 'accepted',
+            models.ResourceMember.member_id == security.get_project_id()
+        )
+    ).all()
+
+    return resources
