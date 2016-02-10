@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.v1 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
@@ -122,35 +121,6 @@ class KeystoneAction(base.OpenStackAction):
         httpclient.HTTPClient.authenticate = authenticate
 
         return fake_client
-
-
-class CeilometerAction(base.OpenStackAction):
-    _client_class = ceilometerclient.Client
-
-    def _get_client(self):
-        ctx = context.ctx()
-
-        LOG.debug("Ceilometer action security context: %s" % ctx)
-
-        ceilometer_endpoint = keystone_utils.get_endpoint_for_project(
-            'ceilometer'
-        )
-
-        endpoint_url = keystone_utils.format_url(
-            ceilometer_endpoint.url,
-            {'tenant_id': ctx.project_id}
-        )
-
-        return self._client_class(
-            endpoint_url,
-            region_name=ceilometer_endpoint.region,
-            token=ctx.auth_token,
-            username=ctx.user_name
-        )
-
-    @classmethod
-    def _get_fake_client(cls):
-        return cls._client_class("")
 
 
 class HeatAction(base.OpenStackAction):
