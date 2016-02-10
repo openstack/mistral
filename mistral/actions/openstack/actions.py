@@ -14,12 +14,14 @@
 
 import functools
 
+from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.v2 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
 from ironic_inspector_client import v1 as ironic_inspector_client
 from ironicclient.v1 import client as ironicclient
+from keystoneclient.auth import identity
 from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from neutronclient.v2_0 import client as neutronclient
@@ -425,3 +427,102 @@ class ZaqarAction(base.OpenStackAction):
         queue = client.queue(queue_name)
 
         return queue.pop(count)
+
+
+class BarbicanAction(base.OpenStackAction):
+    _client_class = barbicanclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Barbican action security context: %s" % ctx)
+
+        barbican_endpoint = keystone_utils.get_endpoint_for_project('barbican')
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+
+        auth = identity.v2.Token(
+            auth_url=keystone_endpoint.url,
+            tenant_name=ctx.user_name,
+            token=ctx.auth_token,
+            tenant_id=ctx.project_id
+        )
+
+        return self._client_class(
+            project_id=ctx.project_id,
+            endpoint=barbican_endpoint.url,
+            auth=auth
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class(
+            project_id="1",
+            endpoint="http://127.0.0.1:9311"
+        )
+
+    @classmethod
+    def _get_client_method(cls, client):
+        if cls.client_method_name != "secrets_store":
+            return super(BarbicanAction, cls)._get_client_method(client)
+
+        method = getattr(cls, cls.client_method_name)
+
+        @functools.wraps(method)
+        def wrap(*args, **kwargs):
+            return method(client, *args, **kwargs)
+
+        args = inspect_utils.get_arg_list_as_str(method)
+
+        # Remove client.
+        wrap.__arguments__ = args.split(', ', 1)[1]
+
+        return wrap
+
+    @staticmethod
+    def secrets_store(client,
+                      name=None,
+                      payload=None,
+                      algorithm=None,
+                      bit_length=None,
+                      secret_type=None,
+                      mode=None, expiration=None):
+        """Create and Store a secret in Barbican.
+
+        :param name: A friendly name for the Secret
+        :type name: string
+
+        :param payload: The unencrypted secret data
+        :type payload: string
+
+        :param algorithm: The algorithm associated with this secret key
+        :type algorithm: string
+
+        :param bit_length: The bit length of this secret key
+        :type bit_length: int
+
+        :param secret_type: The secret type for this secret key
+        :type secret_type: string
+
+         :param mode: The algorithm mode used with this secret keybit_length:
+        :type mode: string
+
+        :param expiration: The expiration time of the secret in ISO 8601 format
+        :type expiration: string
+
+        :returns: A new Secret object
+        :rtype: class:`barbicanclient.secrets.Secret'
+        """
+
+        entity = client.secrets.create(
+            name,
+            payload,
+            algorithm,
+            bit_length,
+            secret_type,
+            mode,
+            expiration
+        )
+
+        entity.store()
+
+        return entity._get_formatted_entity()
