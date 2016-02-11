@@ -93,6 +93,14 @@ executor_opts = [
                help='The version of the executor.')
 ]
 
+rpc_option = cfg.BoolOpt(
+    'use_mistral_rpc',
+    default=False,
+    help='Specifies whether Mistral uses modified oslo.messaging (if True)'
+         ' or original oslo.messaging. Modified oslo.messaging is done for'
+         ' acknowledgement a message after processing.'
+)
+
 execution_expiration_policy_opts = [
     cfg.IntOpt('evaluation_interval',
                help='How often will the executions be evaluated '
@@ -139,6 +147,7 @@ CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
 CONF.register_opts(execution_expiration_policy_opts,
                    group=EXECUTION_EXPIRATION_POLICY_GROUP)
 CONF.register_opt(wf_trace_log_name_opt)
+CONF.register_opt(rpc_option)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 
 CLI_OPTS = [
@@ -172,7 +181,10 @@ def list_opts():
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
         (None, itertools.chain(
             CLI_OPTS,
-            [wf_trace_log_name_opt]
+            [
+                wf_trace_log_name_opt,
+                rpc_option
+            ]
         ))
     ]
 
