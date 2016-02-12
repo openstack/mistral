@@ -38,6 +38,8 @@ class Member(resource.Resource):
     project_id = wtypes.text
     member_id = wtypes.text
     status = wtypes.Enum(str, 'pending', 'accepted', 'rejected')
+    created_at = wtypes.text
+    updated_at = wtypes.text
 
     @classmethod
     def sample(cls):
@@ -116,7 +118,7 @@ class MembersController(rest.RestController):
             self.resource_id,
             self.type
         )
-        members = [Member.from_dict(member) for member in db_members]
+        members = [Member.from_dict(member.to_dict()) for member in db_members]
 
         return Members(members=members)
 
