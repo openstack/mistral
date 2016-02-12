@@ -1758,3 +1758,44 @@ class ResourceMemberTest(SQLAlchemyTest):
             'workflow',
             'nonexitent_member',
         )
+
+
+class WorkflowSharingTest(SQLAlchemyTest):
+    def test_get_shared_workflow(self):
+        wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_workflow_definition,
+            wf.id
+        )
+
+        # Switch to original tenant, share workflow to another tenant.
+        auth_context.set_ctx(test_base.get_context())
+
+        workflow_sharing = {
+            'resource_id': wf.id,
+            'resource_type': 'workflow',
+            'project_id': security.get_project_id(),
+            'member_id': user_context.project_id,
+            'status': 'pending',
+        }
+
+        db_api.create_resource_member(workflow_sharing)
+
+        # Switch to another tenant, accept the sharing, get workflows.
+        auth_context.set_ctx(user_context)
+
+        db_api.update_resource_member(
+            wf.id,
+            'workflow',
+            user_context.project_id,
+            {'status': 'accepted'}
+        )
+
+        fetched = db_api.get_workflow_definition(wf.id)
+
+        self.assertEqual(wf, fetched)
