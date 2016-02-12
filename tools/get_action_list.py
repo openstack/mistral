@@ -18,7 +18,6 @@ import inspect
 import json
 import os
 
-from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient import utils as cinder_base
 from cinderclient.v2 import client as cinderclient
 from glanceclient.v2 import client as glanceclient
@@ -26,8 +25,8 @@ from heatclient.openstack.common.apiclient import base as heat_base
 from heatclient.v1 import client as heatclient
 from keystoneclient import base as keystone_base
 from keystoneclient.v3 import client as keystoneclient
-from novaclient import client as novaclient
 from novaclient.openstack.common.apiclient import base as nova_base
+from novaclient import client as novaclient
 
 
 # TODO(nmakhotkin): Find a rational way to do it for neutron.
@@ -69,7 +68,7 @@ def get_parser():
     )
     parser.add_argument(
         'service',
-        choices=['nova', 'glance', 'heat', 'cinder', 'keystone', 'ceilometer'],
+        choices=['nova', 'glance', 'heat', 'cinder', 'keystone'],
         help='Service name which methods need to be found.'
     )
     parser.add_argument(
@@ -104,12 +103,6 @@ GLANCE_NAMESPACE_LIST = [
     'image_members', 'image_tags', 'images', 'schemas', 'tasks'
 ]
 
-CEILOMETER_NAMESPACE_LIST = [
-    'alarms', 'capabilities', 'event_types', 'events', 'meters',
-    'new_samples', 'query_alarm_history', 'query_alarms', 'query_samples',
-    'resources', 'samples', 'statistics', 'trait_descriptions', 'traits'
-]
-
 
 def get_nova_client(**kwargs):
     return novaclient.Client(2)
@@ -127,10 +120,6 @@ def get_heat_client(**kwargs):
     return heatclient.Client('')
 
 
-def get_ceilometer_client(**kwargs):
-    return ceilometerclient.Client('')
-
-
 def get_cinder_client(**kwargs):
     return cinderclient.Client()
 
@@ -138,7 +127,6 @@ def get_cinder_client(**kwargs):
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
-    'ceilometer': get_ceilometer_client,
     'cinder': get_cinder_client,
     'keystone': get_keystone_client,
     'glance': get_glance_client,
@@ -147,15 +135,13 @@ CLIENTS = {
 BASE_MANAGERS = {
     'nova': BASE_NOVA_MANAGER,
     'heat': BASE_HEAT_MANAGER,
-    'ceilometer': None,
     'cinder': BASE_CINDER_MANAGER,
     'keystone': BASE_KEYSTONE_MANAGER,
     'glance': None,
     # 'neutron': BASE_NOVA_MANAGER
 }
 NAMESPACES = {
-    'glance': GLANCE_NAMESPACE_LIST,
-    'ceilometer': CEILOMETER_NAMESPACE_LIST
+    'glance': GLANCE_NAMESPACE_LIST
 }
 ALLOWED_ATTRS = ['service_catalog', 'catalog']
 FORBIDDEN_METHODS = [
