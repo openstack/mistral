@@ -25,6 +25,7 @@ eventlet.monkey_patch(
     time=True)
 
 import os
+import six
 import time
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
@@ -38,7 +39,14 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
+
+if six.PY3 is True:
+    import socketserver
+else:
+    import SocketServer as socketserver
+
 from wsgiref import simple_server
+from wsgiref.simple_server import WSGIServer
 
 from mistral.api import app
 from mistral import config
@@ -128,6 +136,10 @@ def launch_engine(transport):
         server.wait()
 
 
+class ThreadingWSGIServer(socketserver.ThreadingMixIn, WSGIServer):
+    pass
+
+
 def launch_api(transport):
     host = cfg.CONF.api.host
     port = cfg.CONF.api.port
@@ -135,7 +147,8 @@ def launch_api(transport):
     server = simple_server.make_server(
         host,
         port,
-        app.setup_app()
+        app.setup_app(),
+        ThreadingWSGIServer
     )
 
     LOG.info("Mistral API is serving on http://%s:%s (PID=%s)" %
