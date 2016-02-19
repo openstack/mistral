@@ -31,6 +31,7 @@ MODULE_MAPPING = {
     'swift': ['swift.head_account', actions.SwiftAction],
     'zaqar': ['zaqar.queue_messages', actions.ZaqarAction],
     'barbican': ['barbican.orders_list', actions.BarbicanAction],
+    'mistral': ['mistral.workflows_get', actions.MistralAction],
 }
 
 EXTRA_MODULES = ['neutron', 'swift', 'zaqar']

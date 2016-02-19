@@ -139,6 +139,18 @@ class OpenStackActionTest(base.BaseTestCase):
         self.assertTrue(mocked().get_status.called)
         mocked().get_status.assert_called_once_with(uuid="1234")
 
+    @mock.patch.object(actions.MistralAction, '_get_client')
+    def test_mistral_action(self, mocked):
+        method_name = "workflows.get"
+        action_class = actions.MistralAction
+        action_class.client_method_name = method_name
+        params = {'name': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().workflows.get.called)
+        mocked().workflows.get.assert_called_once_with(name="1234-abcd")
+
     @mock.patch.object(actions.SwiftAction, '_get_client')
     def test_swift_action(self, mocked):
         method_name = "get_object"
