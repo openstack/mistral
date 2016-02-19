@@ -411,6 +411,9 @@ def delete_workflow_definition(identifier, session=None):
             (identifier, ', '.join(cron_triggers))
         )
 
+    # Delete workflow members first.
+    delete_resource_members(resource_type='workflow', resource_id=wf_def.id)
+
     session.delete(wf_def)
 
 
