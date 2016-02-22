@@ -24,6 +24,7 @@ from ironicclient.v1 import client as ironicclient
 from keystoneclient.auth import identity
 from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
+from mistralclient.api.v2 import client as mistralclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient import client as novaclient
 from oslo_config import cfg
@@ -237,6 +238,40 @@ class CinderAction(base.OpenStackAction):
         client.client.management_url = cinder_url
 
         return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()
+
+
+class MistralAction(base.OpenStackAction):
+    _client_class = mistralclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Mistral action security context: %s" % ctx)
+
+        # Check for trust scope token. This may occur if the action is
+        # called from a workflow triggered by a Mistral cron trigger.
+        if ctx.is_trust_scoped:
+            auth_url = None
+            mistral_endpoint = keystone_utils.get_endpoint_for_project(
+                'mistral'
+            )
+            mistral_url = mistral_endpoint.url
+        else:
+            keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+            auth_url = keystone_endpoint.url
+            mistral_url = None
+
+        return self._client_class(
+            mistral_url=mistral_url,
+            auth_token=ctx.auth_token,
+            project_id=ctx.project_id,
+            user_id=ctx.user_id,
+            auth_url=auth_url
+        )
 
     @classmethod
     def _get_fake_client(cls):
