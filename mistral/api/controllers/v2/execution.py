@@ -232,7 +232,7 @@ class ExecutionsController(rest.RestController):
             )
 
         result = engine.start_workflow(
-            exec_dict.get('workflow_id', exec_dict['workflow_name']),
+            exec_dict.get('workflow_id', exec_dict.get('workflow_name')),
             exec_dict.get('input'),
             exec_dict.get('description', ''),
             **exec_dict.get('params') or {}

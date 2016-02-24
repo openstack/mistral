@@ -19,6 +19,7 @@ import time
 import mock
 import six
 
+from oslo_utils import uuidutils
 from tempest import clients
 from tempest import config
 from tempest import test as test
@@ -164,8 +165,11 @@ class MistralClientV2(MistralClientBase):
 
         return resp, json.loads(body)
 
-    def create_execution(self, wf_name, wf_input=None, params=None):
-        body = {"workflow_name": "%s" % wf_name}
+    def create_execution(self, identifier, wf_input=None, params=None):
+        if uuidutils.is_uuid_like(identifier):
+            body = {"workflow_id": "%s" % identifier}
+        else:
+            body = {"workflow_name": "%s" % identifier}
 
         if wf_input:
             body.update({'input': json.dumps(wf_input)})
