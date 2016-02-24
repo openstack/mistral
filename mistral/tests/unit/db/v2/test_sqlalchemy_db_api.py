@@ -1799,3 +1799,80 @@ class WorkflowSharingTest(SQLAlchemyTest):
         fetched = db_api.get_workflow_definition(wf.id)
 
         self.assertEqual(wf, fetched)
+
+    def test_owner_delete_shared_workflow(self):
+        wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        workflow_sharing = {
+            'resource_id': wf.id,
+            'resource_type': 'workflow',
+            'project_id': security.get_project_id(),
+            'member_id': user_context.project_id,
+            'status': 'pending',
+        }
+
+        db_api.create_resource_member(workflow_sharing)
+
+        # Switch to another tenant, accept the sharing.
+        auth_context.set_ctx(user_context)
+
+        db_api.update_resource_member(
+            wf.id,
+            'workflow',
+            user_context.project_id,
+            {'status': 'accepted'}
+        )
+
+        fetched = db_api.get_workflow_definition(wf.id)
+
+        self.assertEqual(wf, fetched)
+
+        # Switch to original tenant, delete the workflow.
+        auth_context.set_ctx(test_base.get_context())
+
+        db_api.delete_workflow_definition(wf.id)
+
+        # Switch to another tenant, can not see that workflow.
+        auth_context.set_ctx(user_context)
+
+        self.assertRaises(
+            exc.NotFoundException,
+            db_api.get_workflow_definition,
+            wf.id
+        )
+
+    def test_owner_delete_shared_workflow_has_crontrigger(self):
+        wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        workflow_sharing = {
+            'resource_id': wf.id,
+            'resource_type': 'workflow',
+            'project_id': security.get_project_id(),
+            'member_id': user_context.project_id,
+            'status': 'pending',
+        }
+
+        db_api.create_resource_member(workflow_sharing)
+
+        # Switch to another tenant, accept the sharing.
+        auth_context.set_ctx(user_context)
+
+        db_api.update_resource_member(
+            wf.id,
+            'workflow',
+            user_context.project_id,
+            {'status': 'accepted'}
+        )
+
+        # Create cron trigger using the shared workflow.
+        CRON_TRIGGERS[0]['workflow_id'] = wf.id
+        db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        # Switch to original tenant, try to delete the workflow.
+        auth_context.set_ctx(test_base.get_context())
+
+        self.assertRaises(
+            exc.DBException,
+            db_api.delete_workflow_definition,
+            wf.id
+        )
