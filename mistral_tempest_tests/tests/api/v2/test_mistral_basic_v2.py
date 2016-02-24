@@ -1167,3 +1167,18 @@ class ActionExecutionTestsV2(base.TestCase):
             'action_executions',
             'nonexist'
         )
+
+    @test.attr(type='sanity')
+    def test_create_action_execution_sync(self):
+        token = self.client.auth_provider.get_token()
+        resp, body = self.client.create_action_execution(
+            {
+                'name': 'std.http',
+                'input': '{{"url": "http://localhost:8989/v2/workflows",\
+                           "headers": {{"X-Auth-Token": "{}"}}}}'.format(token)
+            }
+        )
+
+        self.assertEqual(201, resp.status)
+        output = json.loads(body['output'])
+        self.assertEqual(200, output['result']['status'])
