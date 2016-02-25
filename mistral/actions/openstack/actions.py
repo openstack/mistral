@@ -45,8 +45,6 @@ CONF = cfg.CONF
 
 
 class NovaAction(base.OpenStackAction):
-    _client_class = novaclient.get_client_class(2)
-
     def _get_client(self):
         ctx = context.ctx()
 
@@ -55,7 +53,8 @@ class NovaAction(base.OpenStackAction):
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         nova_endpoint = keystone_utils.get_endpoint_for_project('nova')
 
-        client = self._client_class(
+        client = novaclient.Client(
+            2,
             username=None,
             api_key=None,
             endpoint_type='publicURL',
@@ -72,6 +71,10 @@ class NovaAction(base.OpenStackAction):
         )
 
         return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return novaclient.Client(2)
 
 
 class GlanceAction(base.OpenStackAction):
