@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add support for `workflow sharing`_ feature. users of one project can share
+    workflows to other projects using this feature.
+
+    .. _workflow sharing: https://specs.openstack.org/openstack/mistral-specs/specs/mitaka/approved/mistral-workflow-resource-sharing.html
