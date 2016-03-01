@@ -15,6 +15,8 @@ and result. Third party service should do a request to Mistral API and provide i
 
 .. image:: /img/Mistral_actions.png
 
+:doc:`How to work with asynchronous actions </developer/asynchronous_actions>`
+
 System Actions
 --------------
 
@@ -22,6 +24,7 @@ System actions are provided by Mistral out of the box and can be used by anyone.
 actions for specific Mistral installation via a special plugin mechanism.
 
 :doc:`How to write an Action Plugin </developer/creating_custom_action>`
+
 
 Ad-hoc Actions
 --------------
