@@ -1,0 +1,5 @@
+---
+deprecations:
+  - Usage of workflow name in the system(e.g. creating executions/cron-triggers
+    , workfow CRUD operations, etc.) is deprecated, please use workflow UUID
+    instead. The workflow sharing feature can only be used with workflow UUID.

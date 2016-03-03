@@ -1,0 +1,11 @@
+---
+prelude: >
+   Actions of several OpenStack services are supported out of the box in
+   Mitaka, including Barbican, Cinder(V2), Swift, Trove, Zaqar and Mistral.
+upgrade:
+  - During an upgrade to Mitaka, operators or administrators need to run
+    ``python tools/get_action_list.py <service name>`` command to generate
+    service action names and values for updating
+    ``mistral/actions/openstack/mapping.json``, then, run
+    ``python tools/sync_db.py`` to populate database. Please note, some
+    services like Neutron, Swift, Zaqar don't support the command yet.
