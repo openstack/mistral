@@ -210,10 +210,13 @@ def get_properly_ordered_parameters():
 
     for arg in sys.argv[1:]:
         if arg == '--config-file' or arg.startswith('--config-file='):
-            conf_file_value = args[args.index(arg) + 1]
-            args.remove(conf_file_value)
+            if "=" in arg:
+                conf_file_value = arg.split("=", 1)[1]
+            else:
+                conf_file_value = args[args.index(arg) + 1]
+                args.remove(conf_file_value)
             args.remove(arg)
-            args.insert(0, arg)
+            args.insert(0, "--config-file")
             args.insert(1, conf_file_value)
 
     return args
