@@ -106,8 +106,8 @@ def set_execution_state(wf_ex, state, state_info=None, set_upstream=False):
         raise exc.WorkflowException(msg)
 
     # Workflow result should be accepted by parent workflows (if any)
-    # only if it completed successfully.
-    wf_ex.accepted = wf_ex.state == states.SUCCESS
+    # only if it completed successfully or failed.
+    wf_ex.accepted = wf_ex.state in (states.SUCCESS, states.ERROR)
 
     # If specified, then recursively set the state of the parent workflow
     # executions to the same state. Only changing state to RUNNING is

@@ -242,6 +242,46 @@ class WithItemsEngineTest(base.EngineTestCase):
         tasks = wf_ex.task_executions
         self.assertEqual(2, len(tasks))
 
+    def test_with_items_sub_workflow_fail(self):
+        workbook = """---
+        version: "2.0"
+
+        name: wb1
+
+        workflows:
+          with_items:
+            type: direct
+
+            tasks:
+              task1:
+                with-items: i in [1, 2, 3]
+                workflow: subworkflow
+                on-error: task2
+
+              task2:
+                action: std.echo output="With-items failed"
+
+          subworkflow:
+            type: direct
+            tasks:
+              fail:
+                action: std.fail
+        """
+        wb_service.create_workbook_v2(workbook)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb1.with_items', {})
+
+        self._await(
+            lambda: self.is_execution_success(wf_ex.id),
+        )
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        self.assertEqual(2, len(tasks))
+
     def test_with_items_static_var(self):
         wb_service.create_workbook_v2(WORKBOOK_WITH_STATIC_VAR)
 
