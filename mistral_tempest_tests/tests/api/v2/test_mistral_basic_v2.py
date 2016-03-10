@@ -13,13 +13,13 @@
 # under the License.
 
 import json
+import six
 
 from oslo_concurrency.fixture import lockutils
 from oslo_log import log as logging
-import six
+from tempest.lib import decorators
+from tempest.lib import exceptions
 from tempest import test
-from tempest_lib import decorators
-from tempest_lib import exceptions
 
 from mistral import utils
 from mistral_tempest_tests.services import base

@@ -20,8 +20,8 @@ import time
 from oslo_log import log as logging
 from paramiko import ssh_exception
 from tempest import config
+from tempest.lib import exceptions
 from tempest import test
-from tempest_lib import exceptions
 
 from mistral import utils
 from mistral.utils import ssh_utils
