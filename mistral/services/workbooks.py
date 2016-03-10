@@ -16,7 +16,6 @@
 
 from mistral.db.v2 import api as db_api_v2
 from mistral.services import actions
-from mistral.services import security
 from mistral.workbook import parser as spec_parser
 
 
@@ -93,8 +92,6 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'project_id': wb_db.project_id,
                 'tags': wf_spec.get_tags()
             }
-
-            security.add_trust_id(values)
 
             db_api_v2.create_or_update_workflow_definition(wf_name, values)
 
