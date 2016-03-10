@@ -32,7 +32,7 @@ python-mistralclient>=1.0.0 # Apache-2.0
 python-neutronclient!=4.1.0,>=2.6.0 # Apache-2.0
 python-novaclient!=2.33.0,>=2.29.0 # Apache-2.0
 python-swiftclient>=2.2.0 # Apache-2.0
-python-troveclient>=1.2.0 # Apache-2.0
+python-troveclient!=2.1.0,>=1.2.0 # Apache-2.0
 python-ironicclient>=1.1.0 # Apache-2.0
 python-ironic-inspector-client>=1.3.0 # Apache-2.0
 python-zaqarclient>=0.3.0 # Apache-2.0
