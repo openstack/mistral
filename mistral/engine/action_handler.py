@@ -261,39 +261,31 @@ def resolve_action_definition(action_spec_name, wf_name=None,
     return action_db
 
 
-def transform_result(result, task_ex=None, action_ex=None):
+def transform_result(result, task_ex, task_spec):
     """Transforms task result accounting for ad-hoc actions.
 
     In case if the given result is an action result and action is
     an ad-hoc action the method transforms the result according to
     ad-hoc action configuration.
 
-    :param task_ex: Task DB model.
     :param result: Result of task action/workflow.
+    :param task_ex: Task DB model.
+    :param task_spec: Task specification.
     """
     if result.is_error():
         return result
 
-    action_spec_name = None
-
-    if task_ex:
-        action_spec_name = spec_parser.get_task_spec(
-            task_ex.spec).get_action_name()
-    elif action_ex:
-        if action_ex.spec:
-            action_spec_name = spec_parser.get_action_spec(action_ex.spec)
-        else:
-            action_spec_name = action_ex.name
+    action_spec_name = task_spec.get_action_name()
 
     if action_spec_name:
-        wf_ex = task_ex.workflow_execution if task_ex else None
-        wf_spec_name = wf_ex.spec['name'] if task_ex else None
+        wf_ex = task_ex.workflow_execution
+        wf_spec_name = wf_ex.spec['name']
 
         return transform_action_result(
             action_spec_name,
             result,
-            wf_ex.workflow_name if wf_ex else None,
-            wf_spec_name if wf_ex else None,
+            wf_ex.workflow_name,
+            wf_spec_name,
         )
 
     return result
