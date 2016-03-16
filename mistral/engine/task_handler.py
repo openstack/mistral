@@ -117,11 +117,10 @@ def defer_task(wf_cmd):
         _create_task_execution(wf_ex, task_spec, ctx, state=states.WAITING)
 
 
-def run_new_task(wf_cmd):
+def run_new_task(wf_cmd, wf_spec):
     """Runs a task."""
     ctx = wf_cmd.ctx
     wf_ex = wf_cmd.wf_ex
-    wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
     task_spec = wf_cmd.task_spec
 
     # NOTE(xylan): Need to think how to get rid of this weird judgment to keep
@@ -155,7 +154,7 @@ def run_new_task(wf_cmd):
     _run_existing_task(task_ex, task_spec, wf_spec)
 
 
-def on_action_complete(action_ex, result):
+def on_action_complete(action_ex, wf_spec, result):
     """Handles event of action result arrival.
 
     Given action result this method performs analysis of the workflow
@@ -163,6 +162,7 @@ def on_action_complete(action_ex, result):
     scheduled for execution.
 
     :param action_ex: Action execution objects the result belongs to.
+    :param wf_spec: Worflow specification.
     :param result: Task action/workflow output wrapped into
         mistral.workflow.utils.Result instance.
     :return List of engine commands that need to be performed.
@@ -175,17 +175,14 @@ def on_action_complete(action_ex, result):
             isinstance(action_ex, models.WorkflowExecution)):
         return task_ex
 
-    result = action_handler.transform_result(result, task_ex)
+    task_spec = wf_spec.get_tasks()[task_ex.name]
 
-    wf_ex = task_ex.workflow_execution
+    result = action_handler.transform_result(result, task_ex, task_spec)
 
     # Ignore workflow executions because they're handled during
     # workflow completion.
     if not isinstance(action_ex, models.WorkflowExecution):
         action_handler.store_action_result(action_ex, result)
-
-    wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
-    task_spec = wf_spec.get_tasks()[task_ex.name]
 
     if result.is_success():
         task_state = states.SUCCESS
@@ -480,11 +477,12 @@ def _schedule_run_workflow(task_ex, task_spec, wf_input, index,
             wf_params[k] = v
             del wf_input[k]
 
-    wf_ex_id = wf_ex_service.create_workflow_execution(
+    wf_ex_id, _ = wf_ex_service.create_workflow_execution(
         wf_def.name,
         wf_input,
         "sub-workflow execution",
-        wf_params
+        wf_params,
+        wf_spec
     )
 
     scheduler.schedule_call(

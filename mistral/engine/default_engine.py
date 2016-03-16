@@ -58,7 +58,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             with db_api.transaction():
                 # The new workflow execution will be in an IDLE
                 # state on initial record creation.
-                wf_ex_id = wf_ex_service.create_workflow_execution(
+                wf_ex_id, wf_spec = wf_ex_service.create_workflow_execution(
                     wf_identifier,
                     wf_input,
                     description,
@@ -71,7 +71,6 @@ class DefaultEngine(base.Engine, coordination.Service):
             # at dispatching commands.
             with db_api.transaction():
                 wf_ex = db_api.get_workflow_execution(wf_ex_id)
-                wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
                 wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
                 wf_ctrl = wf_base.WorkflowController.get_controller(
@@ -81,7 +80,8 @@ class DefaultEngine(base.Engine, coordination.Service):
 
                 self._dispatch_workflow_commands(
                     wf_ex,
-                    wf_ctrl.continue_workflow()
+                    wf_ctrl.continue_workflow(),
+                    wf_spec
                 )
 
                 return wf_ex.get_clone()
@@ -151,6 +151,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             wf_ex_id = task_ex.workflow_execution_id
             wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
+            wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
             wf_trace.info(
                 task_ex,
@@ -161,11 +162,11 @@ class DefaultEngine(base.Engine, coordination.Service):
             task_ex.state = state
             task_ex.state_info = state_info
 
-            self._on_task_state_change(task_ex, wf_ex)
+            self._on_task_state_change(task_ex, wf_ex, wf_spec)
 
-    def _on_task_state_change(self, task_ex, wf_ex, task_state=states.SUCCESS):
-        task_spec = spec_parser.get_task_spec(task_ex.spec)
-        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+    def _on_task_state_change(self, task_ex, wf_ex, wf_spec,
+                              task_state=states.SUCCESS):
+        task_spec = wf_spec.get_tasks()[task_ex.name]
 
         # We must be sure that if task is completed,
         # it was also completed in previous transaction.
@@ -184,17 +185,17 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             task_ex.processed = True
 
-            self._dispatch_workflow_commands(wf_ex, cmds)
+            self._dispatch_workflow_commands(wf_ex, cmds, wf_spec)
 
-            self._check_workflow_completion(wf_ex, wf_ctrl)
+            self._check_workflow_completion(wf_ex, wf_ctrl, wf_spec)
         elif task_handler.need_to_continue(task_ex, task_spec):
             # Re-run existing task.
             cmds = [commands.RunExistingTask(task_ex, reset=False)]
 
-            self._dispatch_workflow_commands(wf_ex, cmds)
+            self._dispatch_workflow_commands(wf_ex, cmds, wf_spec)
 
     @staticmethod
-    def _check_workflow_completion(wf_ex, wf_ctrl):
+    def _check_workflow_completion(wf_ex, wf_ctrl, wf_spec):
         if states.is_paused_or_completed(wf_ex.state):
             return
 
@@ -211,7 +212,8 @@ class DefaultEngine(base.Engine, coordination.Service):
         if wf_ctrl.all_errors_handled():
             wf_handler.succeed_workflow(
                 wf_ex,
-                wf_ctrl.evaluate_workflow_final_context()
+                wf_ctrl.evaluate_workflow_final_context(),
+                wf_spec
             )
         else:
             state_info = wf_utils.construct_fail_info_message(wf_ctrl, wf_ex)
@@ -236,8 +238,13 @@ class DefaultEngine(base.Engine, coordination.Service):
 
                 wf_ex_id = action_ex.task_execution.workflow_execution_id
                 wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
+                wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
-                task_ex = task_handler.on_action_complete(action_ex, result)
+                task_ex = task_handler.on_action_complete(
+                    action_ex,
+                    wf_spec,
+                    result
+                )
 
                 # If workflow is on pause or completed then there's no
                 # need to continue workflow.
@@ -258,6 +265,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                 self._on_task_state_change(
                     task_ex,
                     wf_ex,
+                    wf_spec,
                     task_state=prev_task_state
                 )
 
@@ -317,13 +325,15 @@ class DefaultEngine(base.Engine, coordination.Service):
             if states.is_completed(t_ex.state) and not t_ex.processed:
                 t_ex.processed = True
 
-        self._dispatch_workflow_commands(wf_ex, cmds)
+        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+        self._dispatch_workflow_commands(wf_ex, cmds, wf_spec)
 
         if not cmds:
             if not wf_utils.find_incomplete_task_executions(wf_ex):
                 wf_handler.succeed_workflow(
                     wf_ex,
-                    wf_ctrl.evaluate_workflow_final_context()
+                    wf_ctrl.evaluate_workflow_final_context(),
+                    wf_spec
                 )
 
         return wf_ex.get_clone()
@@ -389,9 +399,11 @@ class DefaultEngine(base.Engine, coordination.Service):
                 LOG.warning(
                     "Failed to get final context for %s: %s" % (wf_ex, e)
                 )
+            wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
             return wf_handler.succeed_workflow(
                 wf_ex,
                 final_context,
+                wf_spec,
                 message
             )
         elif state == states.ERROR:
@@ -404,7 +416,7 @@ class DefaultEngine(base.Engine, coordination.Service):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def _dispatch_workflow_commands(self, wf_ex, wf_cmds):
+    def _dispatch_workflow_commands(self, wf_ex, wf_cmds, wf_spec):
         if not wf_cmds:
             return
 
@@ -412,7 +424,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             if isinstance(cmd, commands.RunTask) and cmd.is_waiting():
                 task_handler.defer_task(cmd)
             elif isinstance(cmd, commands.RunTask):
-                task_handler.run_new_task(cmd)
+                task_handler.run_new_task(cmd, wf_spec)
             elif isinstance(cmd, commands.RunExistingTask):
                 task_handler.run_existing_task(
                     cmd.task_ex.id,
