@@ -233,7 +233,10 @@ class TestWorkflowsController(base.FunctionalTest):
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn("Attempt to modify a system workflow", resp.text)
+        self.assertIn(
+            "Attempt to modify a system workflow",
+            resp.body.decode()
+        )
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_put_public(self, mock_update):
@@ -350,7 +353,7 @@ class TestWorkflowsController(base.FunctionalTest):
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn("Scope must be one of the following", resp.text)
+        self.assertIn("Scope must be one of the following", resp.body.decode())
 
     @mock.patch.object(db_api, "create_workflow_definition", MOCK_DUPLICATE)
     def test_post_dup(self):
@@ -389,7 +392,10 @@ class TestWorkflowsController(base.FunctionalTest):
         resp = self.app.delete('/v2/workflows/123', expect_errors=True)
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn("Attempt to delete a system workflow", resp.text)
+        self.assertIn(
+            "Attempt to delete a system workflow",
+            resp.body.decode()
+        )
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_NOT_FOUND)
     def test_delete_not_found(self):

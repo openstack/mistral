@@ -164,8 +164,10 @@ class TestActionsController(base.FunctionalTest):
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn('Attempt to modify a system action: std.echo',
-                      resp.text)
+        self.assertIn(
+            'Attempt to modify a system action: std.echo',
+            resp.body.decode()
+        )
 
     @mock.patch.object(db_api, "create_action_definition")
     def test_post(self, mock_mtd):
@@ -218,7 +220,7 @@ class TestActionsController(base.FunctionalTest):
         )
 
         self.assertEqual(400, resp.status_int)
-        self.assertIn("Scope must be one of the following", resp.text)
+        self.assertIn("Scope must be one of the following", resp.body.decode())
 
     @mock.patch.object(db_api, "create_action_definition", MOCK_DUPLICATE)
     def test_post_dup(self):
