@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_messaging.rpc import client
+from oslo_messaging.rpc import dispatcher
 
 from mistral import context as auth_ctx
 from mistral.engine import base
@@ -30,6 +31,35 @@ _TRANSPORT = None
 
 _ENGINE_CLIENT = None
 _EXECUTOR_CLIENT = None
+
+
+class RPCDispatcherPostAck(dispatcher.RPCDispatcher):
+    def __call__(self, incoming, executor_callback=None):
+        return messaging.rpc.dispatcher.dispatcher.DispatcherExecutorContext(
+            incoming,
+            self._dispatch_and_reply,
+            executor_callback=executor_callback
+        )
+
+    def _dispatch_and_reply(self, incoming, executor_callback):
+        incoming = incoming[0]
+
+        super(RPCDispatcherPostAck, self)._dispatch_and_reply(
+            incoming,
+            executor_callback
+        )
+
+        incoming.acknowledge()
+
+
+def get_rpc_server(transport, target, endpoints, executor='blocking',
+                   serializer=None):
+    dispatcher = RPCDispatcherPostAck(target, endpoints, serializer)
+    return messaging.server.MessageHandlingServer(
+        transport,
+        dispatcher,
+        executor
+    )
 
 
 def cleanup():
