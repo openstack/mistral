@@ -1,8 +1,16 @@
 # Devstack settings
 
-# We have to add Mistral to enabled services for screen_it to work
+# We have to add Mistral to enabled services for run_process to work
+# "mistral" should be always enabled
+# To run services in separate processes and screens need to write:
+# enable_service mistral mistral-api mistral-engine mistral-executor
+# To run all services in one screen as a one process need to write:
+# enable_service mistral
+# All other combinations of services like 'mistral mistral-api' or 'mistral mistral-api mistral-engine'
+# is an incorrect way to run services and all services by default will run in one screen
 
-enable_service mistral
+
+enable_service mistral mistral-api mistral-engine mistral-executor
 
 
 # Set up default repos
