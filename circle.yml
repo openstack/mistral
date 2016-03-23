@@ -21,6 +21,7 @@ machine:
     DISTROS: "wheezy jessie trusty el6 el7"
     NOTESTS: "el7"
     ST2_PACKAGES_REPO: https://github.com/StackStorm/st2-packages
+    ST2_PACKAGES_BRANCH: master  # XXX: Set this to vX.Y for release branches
     ST2_DOCKERFILES_REPO: https://github.com/StackStorm/st2-dockerfiles
     ST2_PACKAGES: "st2mistral"
     BUILD_DOCKER: 0
@@ -39,7 +40,10 @@ machine:
 
 checkout:
   post:
-    - git clone --depth 1 ${ST2_PACKAGES_REPO} /home/ubuntu/st2/st2-packages
+    - |
+      git clone --depth 1 ${ST2_PACKAGES_REPO} /home/ubuntu/mistral/st2-packages
+      cd /home/ubuntu/mistral/st2-packages
+      git checkout ${ST2_PACKAGES_BRANCH} || true
     - .circle/buildenv_mistral.sh
 
 dependencies:
