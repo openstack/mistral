@@ -70,8 +70,8 @@ class WorkflowController(object):
         according to this workflow type rules and identifies a list of
         commands needed to continue the workflow.
 
-        :param: task_ex: Task execution to rerun.
-        :param: reset: If true, then purge action executions for the tasks.
+        :param task_ex: Task execution to rerun.
+        :param reset: If true, then purge action executions for the tasks.
         :param env: A set of environment variables to overwrite.
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
@@ -88,6 +88,7 @@ class WorkflowController(object):
     def is_error_handled_for(self, task_ex):
         """Determines if error is handled for specific task.
 
+        :param task_ex: Task execution perform a check for.
         :return: True if either there is no error at all or
             error is considered handled.
         """
