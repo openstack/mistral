@@ -65,7 +65,7 @@ dependencies:
 test:
   override:
     # docker-compose test depends on both mistral and st2 packages being available.
-    # Enable the tests, when there are separate tests for st2 and mistral.
+    # Enable the tests, when there are separate tests for mistral.
     # - .circle/docker-compose.sh test ${DISTRO}:
     #    parallel: true
     # Copy all Packages to node0
