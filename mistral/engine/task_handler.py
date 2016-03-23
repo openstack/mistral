@@ -162,7 +162,7 @@ def on_action_complete(action_ex, wf_spec, result):
     scheduled for execution.
 
     :param action_ex: Action execution objects the result belongs to.
-    :param wf_spec: Worflow specification.
+    :param wf_spec: Workflow specification.
     :param result: Task action/workflow output wrapped into
         mistral.workflow.utils.Result instance.
     :return List of engine commands that need to be performed.
