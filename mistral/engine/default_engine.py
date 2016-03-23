@@ -73,10 +73,7 @@ class DefaultEngine(base.Engine, coordination.Service):
                 wf_ex = db_api.get_workflow_execution(wf_ex_id)
                 wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
-                wf_ctrl = wf_base.WorkflowController.get_controller(
-                    wf_ex,
-                    wf_spec
-                )
+                wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
                 self._dispatch_workflow_commands(
                     wf_ex,
@@ -178,7 +175,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             if task_ex.state == states.RUNNING_DELAYED:
                 return
 
-            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex, wf_spec)
+            wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
             # Calculate commands to process next.
             cmds = wf_ctrl.continue_workflow()
@@ -302,7 +299,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             set_upstream=True
         )
 
-        wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+        wf_ctrl = wf_base.get_controller(wf_ex)
 
         # Calculate commands to process next.
         cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset, env=env)
@@ -390,7 +387,7 @@ class DefaultEngine(base.Engine, coordination.Service):
     @staticmethod
     def _stop_workflow(wf_ex, state, message=None):
         if state == states.SUCCESS:
-            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+            wf_ctrl = wf_base.get_controller(wf_ex)
 
             final_context = {}
             try:
@@ -469,6 +466,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
                 task_handler.on_action_complete(
                     action_ex,
+                    spec_parser.get_workflow_spec(wf_ex.spec),
                     wf_utils.Result(error=err_msg)
                 )
 
