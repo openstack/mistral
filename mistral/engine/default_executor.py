@@ -19,7 +19,6 @@ from oslo_log import log as logging
 from mistral.actions import action_factory as a_f
 from mistral import coordination
 from mistral.engine import base
-from mistral import exceptions as exc
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 
@@ -37,7 +36,7 @@ class DefaultExecutor(base.Executor, coordination.Service):
                    action_params):
         """Runs action.
 
-        :param action_ex_id: Corresponding task id.
+        :param action_ex_id: Action execution id.
         :param action_class_str: Path to action class in dot notation.
         :param attributes: Attributes of action class which will be set to.
         :param action_params: Action parameters.
@@ -51,14 +50,29 @@ class DefaultExecutor(base.Executor, coordination.Service):
                     action_ex_id,
                     error_result
                 )
-            else:
-                return error_result
+
+                return None
+
+            return error_result
 
         action_cls = a_f.construct_action_class(action_class_str, attributes)
 
+        # Instantiate action.
+
         try:
             action = action_cls(**action_params)
+        except Exception as e:
+            msg = ("Failed to initialize action %s. Action init params = %s."
+                   " Actual init params = %s. More info: %s"
+                   % (action_class_str, i_u.get_arg_list(action_cls.__init__),
+                      action_params.keys(), e))
+            LOG.warning(msg)
 
+            return send_error_back(msg)
+
+        # Run action.
+
+        try:
             result = action.run()
 
             # Note: it's made for backwards compatibility with already
@@ -67,24 +81,25 @@ class DefaultExecutor(base.Executor, coordination.Service):
             if not isinstance(result, wf_utils.Result):
                 result = wf_utils.Result(data=result)
 
-            if action_ex_id and (action.is_sync() or result.is_error()):
-                self._engine_client.on_action_complete(action_ex_id, result)
-
-            return result
-        except TypeError as e:
-            msg = ("Failed to initialize action %s. Action init params = %s."
-                   " Actual init params = %s. More info: %s"
-                   % (action_class_str, i_u.get_arg_list(action_cls.__init__),
-                      action_params.keys(), e))
-            LOG.warning(msg)
-
-        except exc.ActionException as e:
+        except Exception as e:
             msg = ("Failed to run action [action_ex_id=%s, action_cls='%s',"
                    " attributes='%s', params='%s']\n %s"
                    % (action_ex_id, action_cls, attributes, action_params, e))
             LOG.exception(msg)
-        except Exception as e:
-            msg = str(e)
 
-        # Send error info to engine.
-        return send_error_back(msg)
+            return send_error_back(msg)
+
+        # Send action result.
+
+        try:
+            if action_ex_id and (action.is_sync() or result.is_error()):
+                self._engine_client.on_action_complete(action_ex_id, result)
+
+        except Exception as e:
+            msg = ("Exception occurred when calling engine on_action_complete"
+                   " [action_ex_id=%s, action_cls='%s',"
+                   " attributes='%s', params='%s']\n %s"
+                   % (action_ex_id, action_cls, attributes, action_params, e))
+            LOG.exception(msg)
+
+        return result

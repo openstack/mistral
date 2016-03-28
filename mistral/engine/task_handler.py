@@ -46,6 +46,9 @@ def run_existing_task(task_ex_id, reset=True):
     """This function runs existing task execution.
 
     It is needed mostly by scheduler.
+
+    :param task_ex_id: Task execution id.
+    :param reset: Reset action executions for the task.
     """
     task_ex = db_api.get_task_execution(task_ex_id)
     task_spec = spec_parser.get_task_spec(task_ex.spec)
@@ -54,15 +57,16 @@ def run_existing_task(task_ex_id, reset=True):
 
     # Throw exception if the existing task already succeeded.
     if task_ex.state == states.SUCCESS:
-        raise exc.EngineException('Reruning existing task that already '
-                                  'succeeded is not supported.')
+        raise exc.EngineException(
+            'Rerunning existing task that already succeeded is not supported.'
+        )
 
     # Exit if the existing task failed and reset is not instructed.
     # For a with-items task without reset, re-running the existing
     # task will re-run the failed and unstarted items.
     if (task_ex.state == states.ERROR and not reset and
             not task_spec.get_with_items()):
-        return
+        return task_ex
 
     # Reset nested executions only if task is not already RUNNING.
     if task_ex.state != states.RUNNING:
@@ -84,14 +88,27 @@ def run_existing_task(task_ex_id, reset=True):
 
     _run_existing_task(task_ex, task_spec, wf_spec)
 
+    return task_ex
+
 
 def _run_existing_task(task_ex, task_spec, wf_spec):
-    input_dicts = _get_input_dictionaries(
-        wf_spec,
-        task_ex,
-        task_spec,
-        task_ex.in_context
-    )
+    try:
+        input_dicts = _get_input_dictionaries(
+            wf_spec,
+            task_ex,
+            task_spec,
+            task_ex.in_context
+        )
+    except exc.MistralException as e:
+        LOG.error(
+            'An error while calculating task action inputs'
+            ' [task_execution_id=%s]: %s',
+            task_ex.id, e
+        )
+
+        set_task_state(task_ex, states.ERROR, str(e))
+
+        return
 
     # In some cases we can have no input, e.g. in case of 'with-items'.
     if input_dicts:
@@ -113,8 +130,15 @@ def defer_task(wf_cmd):
     wf_ex = wf_cmd.wf_ex
     task_spec = wf_cmd.task_spec
 
-    if not wf_utils.find_task_executions_by_spec(wf_ex, task_spec):
-        _create_task_execution(wf_ex, task_spec, ctx, state=states.WAITING)
+    if wf_utils.find_task_executions_by_spec(wf_ex, task_spec):
+        return None
+
+    return _create_task_execution(
+        wf_ex,
+        task_spec,
+        ctx,
+        state=states.WAITING
+    )
 
 
 def run_new_task(wf_cmd, wf_spec):
@@ -149,23 +173,25 @@ def run_new_task(wf_cmd, wf_spec):
 
     # Policies could possibly change task state.
     if task_ex.state != states.RUNNING:
-        return
+        return task_ex
 
     _run_existing_task(task_ex, task_spec, wf_spec)
+
+    return task_ex
 
 
 def on_action_complete(action_ex, wf_spec, result):
     """Handles event of action result arrival.
 
-    Given action result this method performs analysis of the workflow
-    execution and identifies commands (including tasks) that can be
-    scheduled for execution.
+    Given action result this method changes corresponding task execution
+    object. This method must never be called for the case of individual
+    action which is not associated with any tasks.
 
     :param action_ex: Action execution objects the result belongs to.
     :param wf_spec: Workflow specification.
     :param result: Task action/workflow output wrapped into
         mistral.workflow.utils.Result instance.
-    :return List of engine commands that need to be performed.
+    :return Task execution object.
     """
 
     task_ex = action_ex.task_execution
@@ -177,7 +203,18 @@ def on_action_complete(action_ex, wf_spec, result):
 
     task_spec = wf_spec.get_tasks()[task_ex.name]
 
-    result = action_handler.transform_result(result, task_ex, task_spec)
+    try:
+        result = action_handler.transform_result(result, task_ex, task_spec)
+    except exc.YaqlEvaluationException as e:
+        err_msg = str(e)
+
+        LOG.error(
+            'YAQL error while transforming action result'
+            ' [action_execution_id=%s, result=%s]: %s',
+            action_ex.id, result, err_msg
+        )
+
+        result = wf_utils.Result(error=err_msg)
 
     # Ignore workflow executions because they're handled during
     # workflow completion.
@@ -195,6 +232,7 @@ def on_action_complete(action_ex, wf_spec, result):
         _complete_task(task_ex, task_spec, task_state, task_state_info)
     else:
         with_items.increase_capacity(task_ex)
+
         if with_items.is_completed(task_ex):
             _complete_task(
                 task_ex,
@@ -405,7 +443,10 @@ def _schedule_run_action(task_ex, task_spec, action_input, index, wf_spec):
     )
 
     action_ex = action_handler.create_action_execution(
-        action_def, action_input, task_ex, index
+        action_def,
+        action_input,
+        task_ex,
+        index
     )
 
     target = expr.evaluate_recursively(
@@ -506,11 +547,14 @@ def _complete_task(task_ex, task_spec, state, state_info=None):
     set_task_state(task_ex, state, state_info)
 
     try:
-        data_flow.publish_variables(
-            task_ex,
-            task_spec
+        data_flow.publish_variables(task_ex, task_spec)
+    except exc.MistralException as e:
+        LOG.error(
+            'An error while publishing task variables'
+            ' [task_execution_id=%s]: %s',
+            task_ex.id, str(e)
         )
-    except Exception as e:
+
         set_task_state(task_ex, states.ERROR, str(e))
 
     if not task_spec.get_keep_result():
@@ -518,7 +562,6 @@ def _complete_task(task_ex, task_spec, state, state_info=None):
 
 
 def set_task_state(task_ex, state, state_info, processed=None):
-    # TODO(rakhmerov): How do we log task result?
     wf_trace.info(
         task_ex.workflow_execution,
         "Task execution '%s' [%s -> %s]" %
