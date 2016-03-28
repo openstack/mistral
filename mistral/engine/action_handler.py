@@ -29,7 +29,7 @@ from mistral.workflow import utils as wf_utils
 
 def create_action_execution(action_def, action_input, task_ex=None,
                             index=0, description=''):
-    # TODO(rakhmerov): We can avoid hitting DB at all when calling something
+    # TODO(rakhmerov): We can avoid hitting DB at all when calling things like
     # create_action_execution(), these operations can be just done using
     # SQLAlchemy session (1-level cache) and session flush (on TX commit) would
     # send necessary SQL queries to DB. Currently, session flush happens

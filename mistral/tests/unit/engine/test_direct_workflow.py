@@ -29,12 +29,14 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class DirectWorkflowEngineTest(base.EngineTestCase):
-    def _run_workflow(self, workflow_yaml, state=states.ERROR):
-        wf_service.create_workflows(workflow_yaml)
+    def _run_workflow(self, wf_text, expected_state=states.ERROR):
+        wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_in_state(wf_ex.id, state))
+        self._await(
+            lambda: self.is_execution_in_state(wf_ex.id, expected_state)
+        )
 
         return db_api.get_workflow_execution(wf_ex.id)
 
@@ -274,23 +276,37 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
 
-        # Assert that there is only one task execution and it's SUCCESS.
-        self.assertEqual(1, len(wf_ex.task_executions))
+        task_execs = wf_ex.task_executions
 
+        self.assertEqual(2, len(task_execs))
+
+        # 'task1' should be in SUCCESS.
         task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
+            task_execs,
+            name='task1',
+            state=states.SUCCESS
         )
 
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
-
-        # Assert that there is only one action execution and it's SUCCESS.
+        # 'task1' should have exactly one action execution (in SUCCESS).
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id
         )
 
         self.assertEqual(1, len(task_1_action_exs))
         self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
+
+        # 'task2' should exist but in ERROR.
+        task_2_ex = self._assert_single_item(
+            task_execs,
+            name='task2',
+            state=states.ERROR
+        )
+
+        # 'task2' must not have action executions.
+        self.assertEqual(
+            0,
+            len(db_api.get_action_executions(task_execution_id=task_2_ex.id))
+        )
 
     def test_async_next_task_with_input_yaql_error(self):
         wf_text = """
@@ -331,35 +347,47 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, task_1_action_exs[0].state)
 
         # Update async action execution result.
-        result = wf_utils.Result(data='foobar')
-
-        self.assertRaises(
-            exc.YaqlEvaluationException,
-            self.engine.on_action_complete,
+        self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            result
+            wf_utils.Result(data='foobar')
         )
 
-        # Assert that task1 is SUCCESS and workflow is ERROR.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
-        self.assertEqual(1, len(wf_ex.task_executions))
 
+        task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
+
+        # 'task1' must be in SUCCESS.
         task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
+            task_execs,
+            name='task1',
+            state=states.SUCCESS
         )
 
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
-
+        # 'task1' must have exactly one action execution (in SUCCESS).
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id
         )
 
         self.assertEqual(1, len(task_1_action_exs))
         self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
+
+        # 'task2' must be in ERROR.
+        task_2_ex = self._assert_single_item(
+            task_execs,
+            name='task2',
+            state=states.ERROR
+        )
+
+        # 'task2' must not have action executions.
+        self.assertEqual(
+            0,
+            len(db_api.get_action_executions(task_execution_id=task_2_ex.id))
+        )
 
     def test_messed_yaql_in_first_task(self):
         wf_text = """
@@ -511,13 +539,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, task_1_action_exs[0].state)
 
         # Update async action execution result.
-        result = wf_utils.Result(data='foobar')
-
-        self.assertRaises(
-            exc.YaqlEvaluationException,
-            self.engine.on_action_complete,
+        self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            result
+            wf_utils.Result(data='foobar')
         )
 
         # Assert that task1 is SUCCESS and workflow is ERROR.
