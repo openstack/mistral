@@ -24,6 +24,7 @@ from mistral.engine import base
 from mistral import exceptions as exc
 from mistral.workflow import utils as wf_utils
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -164,6 +165,8 @@ class EngineServer(object):
 
         :param rpc_ctx: RPC request context.
         :param action_ex_id: Action execution id.
+        :param result_data: Action result data.
+        :param result_error: Action result error.
         :return: Action execution.
         """
 

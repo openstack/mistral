@@ -37,6 +37,7 @@ wf:
   input:
     - workflow_input: '__WORKFLOW_INPUT__'
     - action_output_length: 0
+
   tasks:
     task1:
       action: my_action
@@ -79,8 +80,10 @@ def expect_size_limit_exception(field_name):
 def generate_workflow(tokens):
     new_wf = WF
     long_string = ''.join('A' for _ in range(1024))
+
     for token in tokens:
         new_wf = new_wf.replace(token, long_string)
+
     return new_wf
 
 
@@ -136,11 +139,11 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
+        self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn(
             "Size of 'input' is 1KB which exceeds the limit of 0KB",
             wf_ex.state_info
         )
-        self.assertEqual(states.ERROR, wf_ex.state)
 
     def test_action_output_limit(self):
         wf_service.create_workflows(WF)
@@ -175,7 +178,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertIn(
-            "Failure caused by error in tasks: task1",
+            'Failure caused by error in tasks: task1',
             wf_ex.state_info
         )
 
