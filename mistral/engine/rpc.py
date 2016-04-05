@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import inspect
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
@@ -34,23 +35,47 @@ _ENGINE_CLIENT = None
 _EXECUTOR_CLIENT = None
 
 
-class RPCDispatcherPostAck(dispatcher.RPCDispatcher):
-    def __call__(self, incoming, executor_callback=None):
-        return messaging.rpc.dispatcher.dispatcher.DispatcherExecutorContext(
-            incoming,
-            self._dispatch_and_reply,
-            executor_callback=executor_callback
-        )
+# TODO(nmakhotkin): Delete this once oslo_messaging version
+# TODO(nmakhotkin): is >= 4.4.0 in global requirements.
+# Declare different classes for < 4.4.0 oslo_messaging
+# and >= 4.4.0 oslo_messaging:
+# >= 4.4.0 doesn't contain 'executor_callback' argument anymore.
+if 'executor_callback' in inspect.getargspec(
+    dispatcher.RPCDispatcher.__call__
+).args:
+    # For < 4.4.0.
+    class RPCDispatcherPostAck(dispatcher.RPCDispatcher):
+        def __call__(self, incoming, executor_callback=None):
+            return dispatcher.dispatcher.DispatcherExecutorContext(
+                incoming,
+                self._dispatch_and_reply,
+                executor_callback=executor_callback
+            )
 
-    def _dispatch_and_reply(self, incoming, executor_callback):
-        incoming = incoming[0]
+        def _dispatch_and_reply(self, incoming, executor_callback):
+            incoming = incoming[0]
 
-        super(RPCDispatcherPostAck, self)._dispatch_and_reply(
-            incoming,
-            executor_callback
-        )
+            super(RPCDispatcherPostAck, self)._dispatch_and_reply(
+                incoming,
+                executor_callback
+            )
 
-        incoming.acknowledge()
+            incoming.acknowledge()
+else:
+    # For >= 4.4.0
+    class RPCDispatcherPostAck(dispatcher.RPCDispatcher):
+        def __call__(self, incoming):
+            return dispatcher.dispatcher.DispatcherExecutorContext(
+                incoming,
+                self._dispatch_and_reply
+            )
+
+        def _dispatch_and_reply(self, incoming):
+            incoming = incoming[0]
+
+            super(RPCDispatcherPostAck, self)._dispatch_and_reply(incoming)
+
+            incoming.acknowledge()
 
 
 def get_rpc_server(transport, target, endpoints, executor='blocking',
