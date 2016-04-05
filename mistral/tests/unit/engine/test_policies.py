@@ -647,7 +647,7 @@ class PoliciesTest(base.EngineTestCase):
                 retry:
                   count: 4
                   delay: 1
-                  continue-on: <% $.task1 < 3 %>
+                  continue-on: <% task(task1).result < 3 %>
         """
         wb_service.create_workbook_v2(retry_wb)
 
@@ -684,7 +684,7 @@ class PoliciesTest(base.EngineTestCase):
                 retry:
                   count: 4
                   delay: 1
-                  continue-on: <% $.task1 <= 3 %>
+                  continue-on: <% task(task1).result <= 3 %>
         """
         wb_service.create_workbook_v2(retry_wb)
 
@@ -799,7 +799,8 @@ class PoliciesTest(base.EngineTestCase):
         workflows:
           wf1:
             output:
-              result: <% $.task1 %>
+              result: <% task(task1).result %>
+
             tasks:
               task1:
                 action: std.echo output="mocked result"

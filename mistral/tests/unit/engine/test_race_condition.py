@@ -48,7 +48,7 @@ wf:
     task1:
       action: test.block
       publish:
-        result: <% $.task1 %>
+        result: <% task(task1).result %>
 """
 
 WF_SHORT_ACTION = """

@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import copy
-import six
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -39,7 +38,7 @@ def evaluate_upstream_context(upstream_task_execs):
 
     for t_ex in upstream_task_execs:
         # TODO(rakhmerov): These two merges look confusing. So it's a
-        # temporary solution.There's still the bug
+        # temporary solution. There's still the bug
         # https://bugs.launchpad.net/mistral/+bug/1424461 that needs to be
         # fixed using context variable versioning.
         published_vars = utils.merge_dicts(
@@ -47,30 +46,9 @@ def evaluate_upstream_context(upstream_task_execs):
             t_ex.published
         )
 
-        utils.merge_dicts(
-            ctx,
-            evaluate_task_outbound_context(t_ex, include_result=False)
-        )
+        utils.merge_dicts(ctx, evaluate_task_outbound_context(t_ex))
 
-    ctx = utils.merge_dicts(ctx, published_vars)
-
-    # TODO(rakhmerov): IMO, this method shouldn't deal with these task ids or
-    # anything else related to task proxies. Need to refactor.
-    return utils.merge_dicts(
-        ctx,
-        _get_task_identifiers_dict(upstream_task_execs)
-    )
-
-
-# TODO(rakhmerov): Think how to gt rid of this method and the whole trick
-# with upstream tasks. It doesn't look clear from design standpoint.
-def _get_task_identifiers_dict(task_execs):
-    tasks = {}
-
-    for task_ex in task_execs:
-        tasks[task_ex.id] = task_ex.name
-
-    return {"__tasks": tasks}
+    return utils.merge_dicts(ctx, published_vars)
 
 
 def _extract_execution_result(ex):
@@ -115,57 +93,17 @@ def get_task_execution_result(task_ex):
     return results[0] if len(results) == 1 else results
 
 
-class TaskResultProxy(object):
-    def __init__(self, task_id):
-        self.task_id = task_id
-
-    def get(self):
-        task_ex = db_api.get_task_execution(self.task_id)
-        return get_task_execution_result(task_ex)
-
-    def __str__(self):
-        return "%s [task_id = '%s']" % (self.__class__.__name__, self.task_id)
-
-    def __repr__(self):
-        return self.__str__()
-
-
-class ProxyAwareDict(dict):
-    def __getitem__(self, item):
-        val = super(ProxyAwareDict, self).__getitem__(item)
-        if isinstance(val, TaskResultProxy):
-            return val.get()
-
-        return val
-
-    def get(self, k, d=None):
-        try:
-            return self.__getitem__(k)
-        except KeyError:
-            return d
-
-    def iteritems(self):
-        for k, _ in six.iteritems(super(ProxyAwareDict, self)):
-            yield k, self[k]
-
-    def to_builtin_dict(self):
-        return {k: self[k] for k, _ in self.iteritems()}
-
-
 def publish_variables(task_ex, task_spec):
     if task_ex.state != states.SUCCESS:
         return
 
-    expr_ctx = extract_task_result_proxies_to_context(task_ex.in_context)
+    expr_ctx = task_ex.in_context
 
     if task_ex.name in expr_ctx:
         LOG.warning(
             'Shadowing context variable with task name while publishing: %s' %
             task_ex.name
         )
-
-    # Add result of current task to context for variables evaluation.
-    expr_ctx[task_ex.name] = TaskResultProxy(task_ex.id)
 
     task_ex.published = expr.evaluate_recursively(
         task_spec.get_publish(),
@@ -179,51 +117,38 @@ def destroy_task_result(task_ex):
             ex.output = {}
 
 
-def evaluate_task_outbound_context(task_ex, include_result=True):
+def evaluate_task_outbound_context(task_ex):
     """Evaluates task outbound Data Flow context.
 
     This method assumes that complete task output (after publisher etc.)
     has already been evaluated.
     :param task_ex: DB task.
-    :param include_result: boolean argument, if True - include the
-        TaskResultProxy in outbound context under <task_name> key.
     :return: Outbound task Data Flow context.
     """
 
     in_context = (copy.deepcopy(dict(task_ex.in_context))
                   if task_ex.in_context is not None else {})
 
-    out_ctx = utils.merge_dicts(in_context, task_ex.published)
-
-    # Add task output under key 'taskName'.
-    if include_result:
-        task_ex_result = TaskResultProxy(task_ex.id)
-
-        out_ctx = utils.merge_dicts(
-            out_ctx,
-            {task_ex.name: task_ex_result or None}
-        )
-
-    return ProxyAwareDict(out_ctx)
+    return utils.merge_dicts(in_context, task_ex.published)
 
 
-def evaluate_workflow_output(wf_spec, context):
+def evaluate_workflow_output(wf_spec, ctx):
     """Evaluates workflow output.
 
     :param wf_spec: Workflow specification.
-    :param context: Final Data Flow context (cause task's outbound context).
+    :param ctx: Final Data Flow context (cause task's outbound context).
     """
-    # Convert context to ProxyAwareDict for correct output evaluation.
-    context = ProxyAwareDict(copy.deepcopy(context))
+
+    ctx = copy.deepcopy(ctx)
 
     output_dict = wf_spec.get_output()
 
     # Evaluate workflow 'publish' clause using the final workflow context.
-    output = expr.evaluate_recursively(output_dict, context)
+    output = expr.evaluate_recursively(output_dict, ctx)
 
     # TODO(rakhmerov): Many don't like that we return the whole context
-    # TODO(rakhmerov): if 'output' is not explicitly defined.
-    return ProxyAwareDict(output or context).to_builtin_dict()
+    # if 'output' is not explicitly defined.
+    return output or ctx
 
 
 def add_openstack_data_to_context(wf_ex):
@@ -255,6 +180,7 @@ def add_environment_to_context(wf_ex):
     # If env variables are provided, add an evaluated copy into the context.
     if 'env' in wf_ex.params:
         env = copy.deepcopy(wf_ex.params['env'])
+
         # An env variable can be an expression of other env variables.
         wf_ex.context['__env'] = expr.evaluate_recursively(env, {'__env': env})
 
@@ -266,17 +192,6 @@ def add_workflow_variables_to_context(wf_ex, wf_spec):
         wf_ex.context,
         expr.evaluate_recursively(wf_spec.get_vars(), wf_ex.context)
     )
-
-
-# TODO(rakhmerov): Think how to get rid of this method. It should not be
-# exposed in API.
-def extract_task_result_proxies_to_context(ctx):
-    ctx = ProxyAwareDict(copy.deepcopy(ctx))
-
-    for task_ex_id, task_ex_name in six.iteritems(ctx['__tasks']):
-        ctx[task_ex_name] = TaskResultProxy(task_ex_id)
-
-    return ctx
 
 
 def evaluate_object_fields(obj, context):

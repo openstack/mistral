@@ -45,10 +45,10 @@ wf:
         success_result: <% $.success_result %>
         error_result: <% $.error_result %>
       publish:
-        p_var: <% $.task1 %>
+        p_var: <% task(task1).result %>
       on-error:
-        - task2: <% $.task1 = 2 %>
-        - task3: <% $.task1 = 3 %>
+        - task2: <% task(task1).result = 2 %>
+        - task3: <% task(task1).result = 3 %>
 
     task2:
       action: std.noop
