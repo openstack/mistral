@@ -137,14 +137,24 @@ function install_mistral_pythonclient {
 
 # start_mistral - Start running processes, including screen
 function start_mistral {
-    screen_it mistral "cd $MISTRAL_DIR && $MISTRAL_BIN_DIR/mistral-server --config-file $MISTRAL_CONF_DIR/mistral.conf"
+    if is_service_enabled mistral-api && is_service_enabled mistral-engine && is_service_enabled mistral-executor ; then
+        echo_summary "Installing all mistral services in separate processes"
+        run_process mistral-api "$MISTRAL_BIN_DIR/mistral-server --server api --config-file $MISTRAL_CONF_DIR/mistral.conf"
+        run_process mistral-engine "$MISTRAL_BIN_DIR/mistral-server --server engine --config-file $MISTRAL_CONF_DIR/mistral.conf"
+        run_process mistral-executor "$MISTRAL_BIN_DIR/mistral-server --server executor --config-file $MISTRAL_CONF_DIR/mistral.conf"
+    else
+        echo_summary "Installing all mistral services in one process"
+        run_process mistral "$MISTRAL_BIN_DIR/mistral-server --server all --config-file $MISTRAL_CONF_DIR/mistral.conf"
+    fi
 }
 
 
 # stop_mistral - Stop running processes
 function stop_mistral {
     # Kill the Mistral screen windows
-    screen -S $SCREEN_NAME -p mistral -X kill
+    for serv in mistral mistral-api mistral-engine mistral-executor; do
+        stop_process $serv
+    done
 }
 
 

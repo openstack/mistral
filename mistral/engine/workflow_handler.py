@@ -19,15 +19,12 @@ from mistral.engine import task_handler
 from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.utils import wf_trace
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
 
-def succeed_workflow(wf_ex, final_context, state_info=None):
-    wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
-
+def succeed_workflow(wf_ex, final_context, wf_spec, state_info=None):
     # Fail workflow if output is not successfully evaluated.
     try:
         wf_ex.output = data_flow.evaluate_workflow_output(
@@ -106,8 +103,8 @@ def set_execution_state(wf_ex, state, state_info=None, set_upstream=False):
         raise exc.WorkflowException(msg)
 
     # Workflow result should be accepted by parent workflows (if any)
-    # only if it completed successfully.
-    wf_ex.accepted = wf_ex.state == states.SUCCESS
+    # only if it completed successfully or failed.
+    wf_ex.accepted = wf_ex.state in (states.SUCCESS, states.ERROR)
 
     # If specified, then recursively set the state of the parent workflow
     # executions to the same state. Only changing state to RUNNING is

@@ -91,6 +91,9 @@ if on_rtd:
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project
 
+# A list of ignored prefixes for module index sorting.
+modindex_common_prefix = ['mistral.']
+
 # The name for this set of Sphinx documents. If None, it defaults to
 # "<project> v<release> documentation".
 html_title = 'Mistral'

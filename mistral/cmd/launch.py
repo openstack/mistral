@@ -75,7 +75,9 @@ def launch_executor(transport):
 
     endpoints = [rpc.ExecutorServer(executor_v2)]
 
-    server = messaging.get_rpc_server(
+    get_rpc_server = get_rpc_server_function()
+
+    server = get_rpc_server(
         transport,
         target,
         endpoints,
@@ -114,7 +116,9 @@ def launch_engine(transport):
     # Setup expiration policy
     expiration_policy.setup()
 
-    server = messaging.get_rpc_server(
+    get_rpc_server = get_rpc_server_function()
+
+    server = get_rpc_server(
         transport,
         target,
         endpoints,
@@ -138,6 +142,13 @@ def launch_engine(transport):
 
 class ThreadingWSGIServer(socketserver.ThreadingMixIn, WSGIServer):
     pass
+
+
+def get_rpc_server_function():
+    if CONF.use_mistral_rpc:
+        return rpc.get_rpc_server
+    else:
+        return messaging.get_rpc_server
 
 
 def launch_api(transport):
@@ -210,10 +221,13 @@ def get_properly_ordered_parameters():
 
     for arg in sys.argv[1:]:
         if arg == '--config-file' or arg.startswith('--config-file='):
-            conf_file_value = args[args.index(arg) + 1]
-            args.remove(conf_file_value)
+            if "=" in arg:
+                conf_file_value = arg.split("=", 1)[1]
+            else:
+                conf_file_value = args[args.index(arg) + 1]
+                args.remove(conf_file_value)
             args.remove(arg)
-            args.insert(0, arg)
+            args.insert(0, "--config-file")
             args.insert(1, conf_file_value)
 
     return args

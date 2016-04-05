@@ -52,3 +52,6 @@ tools/pylint_exceptions
 
 # Files created by releasenotes build
 releasenotes/build
+
+# Files created by doc build
+doc/source/api

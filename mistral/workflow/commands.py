@@ -63,14 +63,14 @@ class RunExistingTask(WorkflowCommand):
     """Command for running already existent task."""
 
     def __init__(self, task_ex, reset=True):
-        wf_ex = task_ex.workflow_execution
-        task_spec = spec_parser.get_task_spec(task_ex.spec)
+        super(RunExistingTask, self).__init__(
+            task_ex.workflow_execution,
+            spec_parser.get_task_spec(task_ex.spec),
+            task_ex.in_context
+        )
+
         self.task_ex = task_ex
         self.reset = reset
-
-        super(RunExistingTask, self).__init__(
-            wf_ex, task_spec, task_ex.in_context
-        )
 
 
 class SetWorkflowState(WorkflowCommand):

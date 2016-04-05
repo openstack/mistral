@@ -24,6 +24,7 @@ from mistral.engine import action_handler
 from mistral.engine import base
 from mistral.engine import task_handler
 from mistral.engine import workflow_handler as wf_handler
+from mistral import exceptions as exc
 from mistral.services import action_manager as a_m
 from mistral.services import executions as wf_ex_service
 from mistral.services import workflows as wf_service
@@ -55,33 +56,29 @@ class DefaultEngine(base.Engine, coordination.Service):
         wf_ex_id = None
 
         try:
+            # Create a persistent workflow execution in a separate transaction
+            # so that we can return it even in case of unexpected errors that
+            # lead to transaction rollback.
             with db_api.transaction():
                 # The new workflow execution will be in an IDLE
                 # state on initial record creation.
-                wf_ex_id = wf_ex_service.create_workflow_execution(
+                wf_ex_id, wf_spec = wf_ex_service.create_workflow_execution(
                     wf_identifier,
                     wf_input,
                     description,
                     params
                 )
 
-            # Separate workflow execution creation and dispatching command
-            # transactions in order to be able to return workflow execution
-            # with corresponding error message in state_info when error occurs
-            # at dispatching commands.
             with db_api.transaction():
                 wf_ex = db_api.get_workflow_execution(wf_ex_id)
-                wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
                 wf_handler.set_execution_state(wf_ex, states.RUNNING)
 
-                wf_ctrl = wf_base.WorkflowController.get_controller(
-                    wf_ex,
-                    wf_spec
-                )
+                wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
                 self._dispatch_workflow_commands(
                     wf_ex,
-                    wf_ctrl.continue_workflow()
+                    wf_ctrl.continue_workflow(),
+                    wf_spec
                 )
 
                 return wf_ex.get_clone()
@@ -151,6 +148,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             wf_ex_id = task_ex.workflow_execution_id
             wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
+            wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
 
             wf_trace.info(
                 task_ex,
@@ -161,40 +159,49 @@ class DefaultEngine(base.Engine, coordination.Service):
             task_ex.state = state
             task_ex.state_info = state_info
 
-            self._on_task_state_change(task_ex, wf_ex)
+            self._on_task_state_change(task_ex, wf_ex, wf_spec)
 
-    def _on_task_state_change(self, task_ex, wf_ex, task_state=states.SUCCESS):
-        task_spec = spec_parser.get_task_spec(task_ex.spec)
-        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+    def _on_task_state_change(self, task_ex, wf_ex, wf_spec):
+        task_spec = wf_spec.get_tasks()[task_ex.name]
 
-        # We must be sure that if task is completed,
-        # it was also completed in previous transaction.
-        if (task_handler.is_task_completed(task_ex, task_spec)
-                and states.is_completed(task_state)):
+        if task_handler.is_task_completed(task_ex, task_spec):
             task_handler.after_task_complete(task_ex, task_spec, wf_spec)
 
             # Ignore DELAYED state.
             if task_ex.state == states.RUNNING_DELAYED:
                 return
 
-            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex, wf_spec)
+            wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
             # Calculate commands to process next.
-            cmds = wf_ctrl.continue_workflow()
+            try:
+                cmds = wf_ctrl.continue_workflow()
+            except exc.YaqlEvaluationException as e:
+                LOG.error(
+                    'YAQL error occurred while calculating next workflow '
+                    'commands [wf_ex_id=%s, task_ex_id=%s]: %s',
+                    wf_ex.id, task_ex.id, e
+                )
 
+                wf_handler.fail_workflow(wf_ex, str(e))
+
+                return
+
+            # Mark task as processed after all decisions have been made
+            # upon its completion.
             task_ex.processed = True
 
-            self._dispatch_workflow_commands(wf_ex, cmds)
+            self._dispatch_workflow_commands(wf_ex, cmds, wf_spec)
 
-            self._check_workflow_completion(wf_ex, wf_ctrl)
+            self._check_workflow_completion(wf_ex, wf_ctrl, wf_spec)
         elif task_handler.need_to_continue(task_ex, task_spec):
             # Re-run existing task.
             cmds = [commands.RunExistingTask(task_ex, reset=False)]
 
-            self._dispatch_workflow_commands(wf_ex, cmds)
+            self._dispatch_workflow_commands(wf_ex, cmds, wf_spec)
 
     @staticmethod
-    def _check_workflow_completion(wf_ex, wf_ctrl):
+    def _check_workflow_completion(wf_ex, wf_ctrl, wf_spec):
         if states.is_paused_or_completed(wf_ex.state):
             return
 
@@ -211,7 +218,8 @@ class DefaultEngine(base.Engine, coordination.Service):
         if wf_ctrl.all_errors_handled():
             wf_handler.succeed_workflow(
                 wf_ex,
-                wf_ctrl.evaluate_workflow_final_context()
+                wf_ctrl.evaluate_workflow_final_context(),
+                wf_spec
             )
         else:
             state_info = wf_utils.construct_fail_info_message(wf_ctrl, wf_ex)
@@ -237,36 +245,26 @@ class DefaultEngine(base.Engine, coordination.Service):
                 wf_ex_id = action_ex.task_execution.workflow_execution_id
                 wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-                task_ex = task_handler.on_action_complete(action_ex, result)
+                wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+
+                task_ex = task_handler.on_action_complete(
+                    action_ex,
+                    wf_spec,
+                    result
+                )
 
                 # If workflow is on pause or completed then there's no
                 # need to continue workflow.
                 if states.is_paused_or_completed(wf_ex.state):
                     return action_ex.get_clone()
 
-            prev_task_state = task_ex.state
-
-            # Separate the task transition in a separate transaction. The task
-            # has already completed for better or worst. The task state should
-            # not be affected by errors during transition on conditions such as
-            # on-success and on-error.
-            with db_api.transaction():
-                wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
-                action_ex = db_api.get_action_execution(action_ex_id)
-                task_ex = action_ex.task_execution
-
-                self._on_task_state_change(
-                    task_ex,
-                    wf_ex,
-                    task_state=prev_task_state
-                )
+                self._on_task_state_change(task_ex, wf_ex, wf_spec)
 
                 return action_ex.get_clone()
         except Exception as e:
-            # TODO(dzimine): try to find out which command caused failure.
             # TODO(rakhmerov): Need to refactor logging in a more elegant way.
             LOG.error(
-                "Failed to handle action execution result [id=%s]: %s\n%s",
+                'Failed to handle action execution result [id=%s]: %s\n%s',
                 action_ex_id, e, traceback.format_exc()
             )
 
@@ -294,14 +292,15 @@ class DefaultEngine(base.Engine, coordination.Service):
             set_upstream=True
         )
 
-        wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+        wf_ctrl = wf_base.get_controller(wf_ex)
 
+        # TODO(rakhmerov): Add YAQL error handling.
         # Calculate commands to process next.
         cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset, env=env)
 
         # When resuming a workflow we need to ignore all 'pause'
         # commands because workflow controller takes tasks that
-        # completed within the period when the workflow was pause.
+        # completed within the period when the workflow was paused.
         cmds = list(
             filter(
                 lambda c: not isinstance(c, commands.PauseWorkflow),
@@ -317,13 +316,16 @@ class DefaultEngine(base.Engine, coordination.Service):
             if states.is_completed(t_ex.state) and not t_ex.processed:
                 t_ex.processed = True
 
-        self._dispatch_workflow_commands(wf_ex, cmds)
+        wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+
+        self._dispatch_workflow_commands(wf_ex, cmds, wf_spec)
 
         if not cmds:
             if not wf_utils.find_incomplete_task_executions(wf_ex):
                 wf_handler.succeed_workflow(
                     wf_ex,
-                    wf_ctrl.evaluate_workflow_final_context()
+                    wf_ctrl.evaluate_workflow_final_context(),
+                    wf_spec
                 )
 
         return wf_ex.get_clone()
@@ -371,27 +373,32 @@ class DefaultEngine(base.Engine, coordination.Service):
             raise e
 
     @u.log_exec(LOG)
-    def stop_workflow(self, execution_id, state, message=None):
+    def stop_workflow(self, wf_ex_id, state, message=None):
         with db_api.transaction():
-            wf_ex = wf_handler.lock_workflow_execution(execution_id)
+            wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
             return self._stop_workflow(wf_ex, state, message)
 
     @staticmethod
     def _stop_workflow(wf_ex, state, message=None):
         if state == states.SUCCESS:
-            wf_ctrl = wf_base.WorkflowController.get_controller(wf_ex)
+            wf_ctrl = wf_base.get_controller(wf_ex)
 
             final_context = {}
+
             try:
                 final_context = wf_ctrl.evaluate_workflow_final_context()
             except Exception as e:
                 LOG.warning(
-                    "Failed to get final context for %s: %s" % (wf_ex, e)
+                    'Failed to get final context for %s: %s' % (wf_ex, e)
                 )
+
+            wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+
             return wf_handler.succeed_workflow(
                 wf_ex,
                 final_context,
+                wf_spec,
                 message
             )
         elif state == states.ERROR:
@@ -400,11 +407,11 @@ class DefaultEngine(base.Engine, coordination.Service):
         return wf_ex
 
     @u.log_exec(LOG)
-    def rollback_workflow(self, execution_id):
+    def rollback_workflow(self, wf_ex_id):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
 
-    def _dispatch_workflow_commands(self, wf_ex, wf_cmds):
+    def _dispatch_workflow_commands(self, wf_ex, wf_cmds, wf_spec):
         if not wf_cmds:
             return
 
@@ -412,12 +419,26 @@ class DefaultEngine(base.Engine, coordination.Service):
             if isinstance(cmd, commands.RunTask) and cmd.is_waiting():
                 task_handler.defer_task(cmd)
             elif isinstance(cmd, commands.RunTask):
-                task_handler.run_new_task(cmd)
+                task_ex = task_handler.run_new_task(cmd, wf_spec)
+
+                if task_ex.state == states.ERROR:
+                    wf_handler.fail_workflow(
+                        wf_ex,
+                        'Failed to start task [task_ex=%s]: %s' %
+                        (task_ex, task_ex.state_info)
+                    )
             elif isinstance(cmd, commands.RunExistingTask):
-                task_handler.run_existing_task(
+                task_ex = task_handler.run_existing_task(
                     cmd.task_ex.id,
                     reset=cmd.reset
                 )
+
+                if task_ex.state == states.ERROR:
+                    wf_handler.fail_workflow(
+                        wf_ex,
+                        'Failed to start task [task_ex=%s]: %s' %
+                        (task_ex, task_ex.state_info)
+                    )
             elif isinstance(cmd, commands.SetWorkflowState):
                 if states.is_completed(cmd.new_state):
                     self._stop_workflow(cmd.wf_ex, cmd.new_state, cmd.msg)
@@ -432,32 +453,28 @@ class DefaultEngine(base.Engine, coordination.Service):
             if wf_ex.state != states.RUNNING:
                 break
 
+    # TODO(rakhmerov): This method may not be needed at all because error
+    # handling is now implemented too roughly w/o distinguishing different
+    # errors. On most errors (like YAQLException) we shouldn't rollback
+    # transactions, we just need to fail corresponding execution objects
+    # where a problem happened (action, task or workflow).
     @staticmethod
-    def _fail_workflow(wf_ex_id, err, action_ex_id=None):
+    def _fail_workflow(wf_ex_id, exc):
         """Private helper to fail workflow on exceptions."""
-        err_msg = str(err)
 
         with db_api.transaction():
             wf_ex = db_api.load_workflow_execution(wf_ex_id)
 
             if wf_ex is None:
                 LOG.error(
-                    "Cant fail workflow execution with id='%s': not found.",
+                    "Can't fail workflow execution with id='%s': not found.",
                     wf_ex_id
                 )
-                return
+                return None
 
-            wf_handler.set_execution_state(wf_ex, states.ERROR, err_msg)
+            wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-            if action_ex_id:
-                # Note(dzimine): Don't call self.engine_client:
-                # 1) to avoid computing and triggering next tasks
-                # 2) to avoid a loop in case of error in transport
-                action_ex = db_api.get_action_execution(action_ex_id)
-
-                task_handler.on_action_complete(
-                    action_ex,
-                    wf_utils.Result(error=err_msg)
-                )
+            if not states.is_paused_or_completed(wf_ex.state):
+                wf_handler.set_execution_state(wf_ex, states.ERROR, str(exc))
 
             return wf_ex

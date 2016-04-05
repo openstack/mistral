@@ -71,11 +71,14 @@ def _create_workflow_execution(wf_def, wf_spec, wf_input, desc, params):
     return wf_ex
 
 
-def create_workflow_execution(wf_identifier, wf_input, description, params):
+def create_workflow_execution(wf_identifier, wf_input, description, params,
+                              wf_spec=None):
     params = canonize_workflow_params(params)
 
     wf_def = db_api.get_workflow_definition(wf_identifier)
-    wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
+
+    if wf_spec is None:
+        wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
     eng_utils.validate_input(wf_def, wf_input, wf_spec)
 
@@ -89,4 +92,4 @@ def create_workflow_execution(wf_identifier, wf_input, description, params):
 
     wf_trace.info(wf_ex, "Starting workflow: '%s'" % wf_identifier)
 
-    return wf_ex.id
+    return wf_ex.id, wf_spec

@@ -21,7 +21,6 @@ from oslo_db import exception as db_exc
 from oslo_db import sqlalchemy as oslo_sqlalchemy
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
-from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 
@@ -96,20 +95,16 @@ def acquire_lock(model, id, session=None):
     # will be up-to-date from the DB and not from cache.
     session.expire_all()
 
-    if b.get_driver_name() != 'sqlite':
-        entity = _get_one_entity(model, id)
-        entity.update({'updated_at': timeutils.utcnow()})
-
-    else:
+    if b.get_driver_name() == 'sqlite':
+        # In case of 'sqlite' we need to apply a manual lock.
         sqlite_lock.acquire_lock(id, session)
-        entity = _get_one_entity(model, id)
 
-    return entity
+    return _lock_entity(model, id)
 
 
-def _get_one_entity(model, id):
-    # Get entity by ID and expect exactly one object.
-    return _secure_query(model).filter(model.id == id).one()
+def _lock_entity(model, id):
+    # Get entity by ID in "FOR UPDATE" mode and expect exactly one object.
+    return _secure_query(model).with_for_update().filter(model.id == id).one()
 
 
 def _secure_query(model, *columns):

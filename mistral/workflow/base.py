@@ -31,6 +31,35 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
+def get_controller(wf_ex, wf_spec=None):
+    """Gets a workflow controller instance by given workflow execution object.
+
+    :param wf_ex: Workflow execution object.
+    :param wf_spec: Workflow specification object. If passed, the method works
+        faster.
+    :returns: Workflow controller class.
+    """
+
+    if not wf_spec:
+        wf_spec = spec_parser.get_workflow_spec(wf_ex['spec'])
+
+    wf_type = wf_spec.get_type()
+
+    ctrl_cls = None
+
+    for cls in u.iter_subclasses(WorkflowController):
+        if cls.__workflow_type__ == wf_type:
+            ctrl_cls = cls
+            break
+
+    if not ctrl_cls:
+        raise exc.NotFoundException(
+            'Failed to find a workflow controller [type=%s]' % wf_type
+        )
+
+    return ctrl_cls(wf_ex, wf_spec)
+
+
 class WorkflowController(object):
     """Workflow Controller base class.
 
@@ -48,8 +77,10 @@ class WorkflowController(object):
         :param wf_spec: Workflow specification.
         """
         self.wf_ex = wf_ex
+
         if wf_spec is None:
             wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+
         self.wf_spec = wf_spec
 
     def _update_task_ex_env(self, task_ex, env):
@@ -70,8 +101,8 @@ class WorkflowController(object):
         according to this workflow type rules and identifies a list of
         commands needed to continue the workflow.
 
-        :param: task_ex: Task execution to rerun.
-        :param: reset: If true, then purge action executions for the tasks.
+        :param task_ex: Task execution to rerun.
+        :param reset: If true, then purge action executions for the tasks.
         :param env: A set of environment variables to overwrite.
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
@@ -88,6 +119,7 @@ class WorkflowController(object):
     def is_error_handled_for(self, task_ex):
         """Determines if error is handled for specific task.
 
+        :param task_ex: Task execution perform a check for.
         :return: True if either there is no error at all or
             error is considered handled.
         """
@@ -177,28 +209,3 @@ class WorkflowController(object):
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)
-
-    @staticmethod
-    def _get_class(wf_type):
-        """Gets a workflow controller class by given workflow type.
-
-        :param wf_type: Workflow type.
-        :returns: Workflow controller class.
-        """
-        for wf_ctrl_cls in u.iter_subclasses(WorkflowController):
-            if wf_type == wf_ctrl_cls.__workflow_type__:
-                return wf_ctrl_cls
-
-        raise exc.NotFoundException(
-            'Failed to find a workflow controller [type=%s]' % wf_type
-        )
-
-    @staticmethod
-    def get_controller(wf_ex, wf_spec=None):
-        if not wf_spec:
-            wf_spec = spec_parser.get_workflow_spec(wf_ex['spec'])
-
-        return WorkflowController._get_class(wf_spec.get_type())(
-            wf_ex,
-            wf_spec
-        )

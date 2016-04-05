@@ -22,11 +22,10 @@ import six
 from oslo_utils import uuidutils
 from tempest import clients
 from tempest import config
+from tempest.lib import auth
+from tempest.lib.common import rest_client
+from tempest.lib import exceptions
 from tempest import test as test
-from tempest_lib import auth
-from tempest_lib.common import rest_client
-from tempest_lib import exceptions
-
 
 CONF = config.CONF
 

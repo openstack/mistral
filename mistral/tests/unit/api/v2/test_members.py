@@ -77,7 +77,7 @@ class TestMembersController(base.FunctionalTest):
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_create_resource_member(self, auth_mock):
-        # Workflow Ower shares workflow to another tenant.
+        # Workflow owner shares workflow to another tenant.
         resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
 
         self.assertEqual(201, resp.status_int)
@@ -176,7 +176,7 @@ class TestMembersController(base.FunctionalTest):
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_get_resource_memberips(self, auth_mock):
-        # Workflow Ower shares workflow to another tenant.
+        # Workflow owner shares workflow to another tenant.
         resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
 
         self.assertEqual(201, resp.status_int)
@@ -220,7 +220,7 @@ class TestMembersController(base.FunctionalTest):
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_update_membership(self, auth_mock):
-        # Workflow Ower shares workflow to another tenant.
+        # Workflow owner shares workflow to another tenant.
         resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
 
         self.assertEqual(201, resp.status_int)
@@ -300,7 +300,7 @@ class TestMembersController(base.FunctionalTest):
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_delete_membership(self, auth_mock):
-        # Workflow Ower shares workflow to another tenant.
+        # Workflow owner shares workflow to another tenant.
         resp = self.app.post_json(MEMBER_URL, {'member_id': '11-22-33'})
 
         self.assertEqual(201, resp.status_int)
