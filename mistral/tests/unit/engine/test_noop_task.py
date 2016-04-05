@@ -41,14 +41,14 @@ wf:
     task1:
       action: std.echo output=<% $.num1 %>
       publish:
-        result1: <% $.task1 %>
+        result1: <% task(task1).result %>
       on-complete:
         - task3
 
     task2:
       action: std.echo output=<% $.num2 %>
       publish:
-        result2: <% $.task2 %>
+        result2: <% task(task2).result %>
       on-complete:
         - task3
 
@@ -64,12 +64,12 @@ wf:
     task4:
       action: std.echo output=4
       publish:
-        result: <% $.task4 %>
+        result: <% task(task4).result %>
 
     task5:
       action: std.echo output=5
       publish:
-        result: <% $.task5 %>
+        result: <% task(task5).result %>
 """
 
 

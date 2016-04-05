@@ -51,7 +51,7 @@ workflows:
         with-items: name_info in <% $.names_info %>
         action: std.echo output=<% $.name_info.name %>
         publish:
-          result: <% $.task1[0] %>
+          result: <% task(task1).result[0] %>
 
 """
 
@@ -74,7 +74,7 @@ workflows:
         with-items: name_info in <% $.names_info %>
         action: std.echo output="<% $.greeting %>, <% $.name_info.name %>!"
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 """
 
 
@@ -99,7 +99,7 @@ workflows:
           - itemY in <% $.arrayJ %>
         action: std.echo output="<% $.itemX %> <% $.itemY %>"
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 
 """
 
@@ -107,19 +107,22 @@ workflows:
 WB_ACTION_CONTEXT = """
 ---
 version: "2.0"
+
 name: wb1
 
 workflows:
   wf1_with_items:
     type: direct
+
     input:
       - links
+
     tasks:
       task1:
         with-items: link in <% $.links %>
         action: std.http url=<% $.link %>
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1) %>
 """
 
 
@@ -496,7 +499,7 @@ class WithItemsEngineTest(base.EngineTestCase):
                 with-items: i in [1, 2, 3]
                 action: sleep_echo output=<% $.i %>
                 publish:
-                  one_two_three: <% $.task1 %>
+                  one_two_three: <% task(task1).result %>
         """
         # Register random sleep action in the DB.
         test_base.register_action_class('sleep_echo', RandomSleepEchoAction)

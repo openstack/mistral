@@ -9,7 +9,7 @@ workflows:
       catalog:
         action: keystone.service_catalog_get_data
         publish:
-           result: <% $.catalog %>
+           result: <% task(catalog).result %>
 
   nova:
     type: direct
@@ -17,7 +17,7 @@ workflows:
       networks_list:
         action: nova.networks_list
         publish:
-           result: <% $.networks_list %>
+           result: <% task(networks_list).result %>
 
   glance:
     type: direct
@@ -25,7 +25,7 @@ workflows:
       images_list:
         action: glance.images_list
         publish:
-           result: <% $.images_list %>
+           result: <% task(images_list).result %>
 
   heat:
     type: direct
@@ -33,7 +33,7 @@ workflows:
       stacks_list:
         action: heat.stacks_list
         publish:
-           result: <% $.stacks_list %>
+           result: <% task(stacks_list).result %>
 
   neutron:
     type: direct
@@ -41,7 +41,7 @@ workflows:
       list_subnets:
         action: neutron.list_subnets
         publish:
-           result: <% $.list_subnets %>
+           result: <% task(list_subnets).result %>
 
   cinder:
     type: direct
@@ -49,5 +49,5 @@ workflows:
       volumes_list:
         action: cinder.volumes_list
         publish:
-           result: <% $.volumes_list %>
+           result: <% task(volumes_list).result %>
 

@@ -54,7 +54,7 @@ workflows:
           context: <% $ %>
 
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 
 """
 

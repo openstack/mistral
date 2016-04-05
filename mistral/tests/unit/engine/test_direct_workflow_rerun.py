@@ -31,10 +31,13 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 SIMPLE_WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         action: std.echo output="Task 1"
@@ -51,10 +54,13 @@ workflows:
 SIMPLE_WORKBOOK_DIFF_ENV_VAR = """
 ---
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t10:
         action: std.echo output="Task 10"
@@ -78,16 +84,19 @@ workflows:
 WITH_ITEMS_WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb3
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         with-items: i in <% list(range(0, 3)) %>
         action: std.echo output="Task 1.<% $.i %>"
         publish:
-          v1: <% $.t1 %>
+          v1: <% task(t1).result %>
         on-success:
           - t2
       t2:
@@ -97,16 +106,19 @@ workflows:
 WITH_ITEMS_WORKBOOK_DIFF_ENV_VAR = """
 ---
 version: '2.0'
+
 name: wb3
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         with-items: i in <% list(range(0, 3)) %>
         action: std.echo output="Task 1.<% $.i %> [<% env().var1 %>]"
         publish:
-          v1: <% $.t1 %>
+          v1: <% task(t1).result %>
         on-success:
           - t2
       t2:
@@ -116,17 +128,20 @@ workflows:
 WITH_ITEMS_WORKBOOK_CONCURRENCY = """
 ---
 version: '2.0'
+
 name: wb3
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         with-items: i in <% list(range(0, 4)) %>
         action: std.echo output="Task 1.<% $.i %>"
         concurrency: 2
         publish:
-          v1: <% $.t1 %>
+          v1: <% task(t1).result %>
         on-success:
           - t2
       t2:
@@ -136,10 +151,13 @@ workflows:
 JOIN_WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         action: std.echo output="Task 1"
@@ -156,10 +174,13 @@ workflows:
 
 SUBFLOW_WORKBOOK = """
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         action: std.echo output="Task 1"
@@ -171,10 +192,13 @@ workflows:
           - t3
       t3:
         action: std.echo output="Task 3"
+
   wf2:
     type: direct
+
     output:
-      result: <% $.wf2_t1 %>
+      result: <% task(wf2_t1).result %>
+
     tasks:
       wf2_t1:
         action: std.echo output="Task 2"

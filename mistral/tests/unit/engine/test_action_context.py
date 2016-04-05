@@ -45,7 +45,7 @@ workflows:
         input:
           url: https://wiki.openstack.org/wiki/mistral
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 """
 
 

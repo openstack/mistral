@@ -9,7 +9,7 @@ wf:
       action: std.echo output="Hello"
       wait-before: 1
       publish:
-        result: <% $.hello %>
+        result: <% task(hello).result %>
 
 wf1:
   type: reverse
@@ -20,7 +20,7 @@ wf1:
     addressee:
       action: std.echo output="John"
       publish:
-        name: <% $.addressee %>
+        name: <% task(addressee).result %>
 
     goodbye:
       action: std.echo output="<% $.farewell %>, <% $.name %>"
