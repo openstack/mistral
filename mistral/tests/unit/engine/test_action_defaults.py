@@ -15,8 +15,6 @@
 import mock
 from oslo_config import cfg
 import requests
-import six
-import testtools
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
@@ -98,7 +96,6 @@ wf2_with_items:
 
 class ActionDefaultTest(base.EngineTestCase):
 
-    @testtools.skipIf(six.PY3, "bug/1517020")
     @mock.patch.object(
         requests, 'request',
         mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
@@ -124,7 +121,6 @@ class ActionDefaultTest(base.EngineTestCase):
             auth=EXPECTED_ENV_AUTH,
             timeout=ENV['__actions']['std.http']['timeout'])
 
-    @testtools.skipIf(six.PY3, "bug/1517020")
     @mock.patch.object(
         requests, 'request',
         mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
@@ -157,7 +153,6 @@ class ActionDefaultTest(base.EngineTestCase):
     @mock.patch.object(
         std_actions.HTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
-    @testtools.skip("Fix 'with-items'.")
     def test_with_items_action_defaults_from_env(self):
         wf_service.create_workflows(WORKFLOW1_WITH_ITEMS)
 
@@ -196,7 +191,6 @@ class ActionDefaultTest(base.EngineTestCase):
     @mock.patch.object(
         std_actions.HTTPAction, 'is_sync',
         mock.MagicMock(return_value=True))
-    @testtools.skip("Fix 'with-items'.")
     def test_with_items_action_defaults_from_env_not_applied(self):
         wf_service.create_workflows(WORKFLOW2_WITH_ITEMS)
 
