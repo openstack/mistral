@@ -143,7 +143,7 @@ class SubworkflowsTest(base.EngineTestCase):
         )
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(wf1_ex.id))
+        self.await_execution_success(wf1_ex.id)
 
         wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
@@ -153,7 +153,7 @@ class SubworkflowsTest(base.EngineTestCase):
         )
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(wf2_ex.id))
+        self.await_execution_success(wf2_ex.id)
 
         wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
 
@@ -193,15 +193,15 @@ class SubworkflowsTest(base.EngineTestCase):
         wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_error(wf1_ex.id))
+        self.await_execution_error(wf1_ex.id)
 
         # Wait till workflow 'wf2' is completed, its state must be ERROR.
-        self._await(lambda: self.is_execution_error(wf2_ex.id))
+        self.await_execution_error(wf2_ex.id)
 
     def test_subworkflow_yaql_error(self):
         wf_ex = self.engine.start_workflow('wb2.wf1', None)
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         wf_execs = db_api.get_workflow_executions()
 
@@ -246,7 +246,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictContainsSubset(expected_start_params, wf1_ex.params)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(wf1_ex.id))
+        self.await_execution_success(wf1_ex.id)
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(wf2_ex.id))
+        self.await_execution_success(wf2_ex.id)

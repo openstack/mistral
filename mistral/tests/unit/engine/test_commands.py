@@ -60,7 +60,7 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
     def test_fail(self):
         wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -74,7 +74,7 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
     def test_succeed(self):
         wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -88,7 +88,7 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
     def test_pause(self):
         wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -137,7 +137,7 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
     def test_fail(self):
         wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 1})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -151,7 +151,7 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
     def test_succeed(self):
         wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 2})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -165,7 +165,7 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
     def test_pause(self):
         wf_ex = self.engine.start_workflow('my_wb.wf', {'my_var': 3})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -247,7 +247,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
     def test_fail_first(self):
         wf_ex = self.engine.start_workflow('my_wb.fail_first_wf', None)
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -261,7 +261,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
     def test_fail_second(self):
         wf_ex = self.engine.start_workflow('my_wb.fail_second_wf', None)
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -276,13 +276,13 @@ class OrderEngineCommandsTest(base.EngineTestCase):
             name='task2'
         )
 
-        self._await(lambda: self.is_task_success(task2_db.id))
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_task_success(task2_db.id)
+        self.await_execution_error(wf_ex.id)
 
     def test_succeed_first(self):
         wf_ex = self.engine.start_workflow('my_wb.succeed_first_wf', None)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -296,7 +296,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
     def test_succeed_second(self):
         wf_ex = self.engine.start_workflow('my_wb.succeed_second_wf', None)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -311,5 +311,5 @@ class OrderEngineCommandsTest(base.EngineTestCase):
             name='task2'
         )
 
-        self._await(lambda: self.is_task_error(task2_db.id))
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_task_error(task2_db.id)
+        self.await_execution_success(wf_ex.id)
