@@ -75,13 +75,7 @@ class RunActionEngineTest(base.EngineTestCase):
             save_result=True
         )
 
-        is_action_ex_success = (
-            lambda: db_api.get_action_execution(
-                action_ex.id
-            ).state == states.SUCCESS
-        )
-
-        self._await(is_action_ex_success)
+        self.await_action_success(action_ex.id)
 
         action_ex = db_api.get_action_execution(action_ex.id)
 
@@ -91,13 +85,7 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_async(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
-        is_action_ex_running = (
-            lambda: db_api.get_action_execution(
-                action_ex.id
-            ).state == states.RUNNING
-        )
-
-        self._await(is_action_ex_running)
+        self.await_action_state(action_ex.id, states.RUNNING)
 
         action_ex = db_api.get_action_execution(action_ex.id)
 
@@ -109,13 +97,7 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_async_invoke_failure(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
-        is_action_ex_error = (
-            lambda: db_api.get_action_execution(
-                action_ex.id
-            ).state == states.ERROR
-        )
-
-        self._await(is_action_ex_error)
+        self.await_action_error(action_ex.id)
 
         action_ex = db_api.get_action_execution(action_ex.id)
 
@@ -128,13 +110,7 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_async_invoke_with_error(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
-        is_action_ex_error = (
-            lambda: db_api.get_action_execution(
-                action_ex.id
-            ).state == states.ERROR
-        )
-
-        self._await(is_action_ex_error)
+        self.await_action_error(action_ex.id)
 
         action_ex = db_api.get_action_execution(action_ex.id)
 
