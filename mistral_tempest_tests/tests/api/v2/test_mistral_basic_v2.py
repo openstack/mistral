@@ -17,7 +17,6 @@ import six
 
 from oslo_concurrency.fixture import lockutils
 from oslo_log import log as logging
-from tempest.lib import decorators
 from tempest.lib import exceptions
 from tempest import test
 
@@ -811,14 +810,26 @@ class CronTriggerTestsV2(base.TestCase):
                           self.client.create_cron_trigger,
                           tr_name, self.wf_name, None, '5 * * * *')
 
-    @decorators.skip_because(bug="1383146")
     @test.attr(type='negative')
     def test_create_two_cron_triggers_with_same_pattern(self):
-        self.client.create_trigger(
-            'trigger1', self.wf_name, None, '5 * * * *')
-        self.assertRaises(exceptions.Conflict,
-                          self.client.create_cron_trigger,
-                          'trigger2', self.wf_name, None, '5 * * * *')
+        self.client.create_cron_trigger(
+            'trigger1',
+            self.wf_name,
+            None,
+            '5 * * * *',
+            "4242-12-25 13:37",
+            "42"
+        )
+        self.assertRaises(
+            exceptions.Conflict,
+            self.client.create_cron_trigger,
+            'trigger2',
+            self.wf_name,
+            None,
+            '5 * * * *',
+            "4242-12-25 13:37",
+            "42"
+        )
 
     @test.attr(type='negative')
     def test_invalid_cron_pattern_not_enough_params(self):
