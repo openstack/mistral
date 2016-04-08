@@ -24,6 +24,7 @@ from mistral.services import security
 from mistral.services import triggers as t_s
 from mistral.services import workflows
 from mistral.tests.unit import base
+from mistral import utils
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -68,7 +69,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
     def test_trigger_create(self):
         trigger = t_s.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -92,7 +93,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
     def test_trigger_create_with_wf_id(self):
         trigger = t_s.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             None,
             {},
             {},
@@ -107,7 +108,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
     def test_trigger_create_the_same_first_time_or_count(self):
         t_s.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -118,7 +119,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         )
 
         t_s.create_cron_trigger(
-            'test2',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -129,7 +130,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         )
 
         t_s.create_cron_trigger(
-            'test3',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -146,7 +147,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         self.assertRaises(
             exc.DBDuplicateEntryException,
             t_s.create_cron_trigger,
-            'test4',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -171,7 +172,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         exception = self.assertRaises(
             exc.InputException,
             t_s.create_cron_trigger,
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             'some_wf',
             {},
             {},
@@ -186,7 +187,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
     def test_oneshot_trigger_create(self):
         trigger = t_s.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -211,7 +212,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         )
 
         trigger = t_s.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
             {},
             {},
@@ -224,8 +225,10 @@ class TriggerServiceV2Test(base.DbTestCase):
         self.assertEqual('my_trust_id', trigger.trust_id)
 
     def test_get_trigger_in_correct_orders(self):
+        t1_name = 'trigger-%s' % utils.generate_unicode_uuid()
+
         t_s.create_cron_trigger(
-            'test1',
+            t1_name,
             self.wf.name,
             {},
             {},
@@ -235,8 +238,10 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 8, 25)
         )
 
+        t2_name = 'trigger-%s' % utils.generate_unicode_uuid()
+
         t_s.create_cron_trigger(
-            'test2',
+            t2_name,
             self.wf.name,
             {},
             {},
@@ -246,8 +251,10 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 8, 22)
         )
 
+        t3_name = 'trigger-%s' % utils.generate_unicode_uuid()
+
         t_s.create_cron_trigger(
-            'test3',
+            t3_name,
             self.wf.name,
             {},
             {},
@@ -257,8 +264,10 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 9, 21)
         )
 
+        t4_name = 'trigger-%s' % utils.generate_unicode_uuid()
+
         t_s.create_cron_trigger(
-            'test4',
+            t4_name,
             self.wf.name,
             {},
             {},
@@ -270,7 +279,7 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]
 
-        self.assertEqual(['test2', 'test1', 'test3'], trigger_names)
+        self.assertEqual([t2_name, t1_name, t3_name], trigger_names)
 
     @mock.patch(
         'mistral.services.periodic.advance_cron_trigger',
@@ -279,9 +288,9 @@ class TriggerServiceV2Test(base.DbTestCase):
     @mock.patch.object(rpc.EngineClient, 'start_workflow')
     def test_single_execution_with_multiple_processes(self, start_wf_mock):
         def stop_thread_groups():
-            [tg.stop() for tg in self.tgs]
+            [tg.stop() for tg in self.triggers]
 
-        self.tgs = [periodic.setup(), periodic.setup(), periodic.setup()]
+        self.triggers = [periodic.setup(), periodic.setup(), periodic.setup()]
         self.addCleanup(stop_thread_groups)
 
         trigger_count = 5
@@ -307,6 +316,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         # Wait some more and make sure there are no more than 'trigger_count'
         # executions.
         eventlet.sleep(5)
+
         self.assertEqual(trigger_count, start_wf_mock.call_count)
 
     def _wait_for_single_execution_with_multiple_processes(self, trigger_count,
