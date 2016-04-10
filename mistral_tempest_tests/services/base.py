@@ -31,8 +31,8 @@ CONF = config.CONF
 
 
 def get_resource(path):
-    main_package = 'mistral'
-    dir_path = __file__[0:__file__.find(main_package) + len(main_package) + 1]
+    main_package = 'mistral_tempest_tests'
+    dir_path = __file__[0:__file__.find(main_package)]
 
     return open(dir_path + 'mistral/tests/resources/' + path).read()
 
