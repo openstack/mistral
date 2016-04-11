@@ -116,6 +116,8 @@ class ProcessCronTriggerTest(base.EngineTestCase):
     @mock.patch('mistral.services.triggers.validate_cron_trigger_input')
     def test_create_cron_trigger_with_pattern_and_first_time(self,
                                                              validate_mock):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
         # Make the first_time 1 sec later than current time, in order to make
