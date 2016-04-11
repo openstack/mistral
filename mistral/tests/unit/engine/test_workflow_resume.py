@@ -198,7 +198,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -211,7 +211,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.assertEqual(2, len(wf_ex.task_executions))
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -243,7 +243,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, wf_ex.state)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -255,7 +255,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -264,7 +264,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         wf_ex = self.engine.resume_workflow(wf_ex.id)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -279,7 +279,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -294,12 +294,12 @@ class WorkflowResumeTest(base.EngineTestCase):
         task1_ex = self._assert_single_item(task_execs, name='task1')
         task2_ex = self._assert_single_item(task_execs, name='task2')
 
-        self._await(lambda: self.is_task_success(task1_ex.id))
-        self._await(lambda: self.is_task_success(task2_ex.id))
+        self.await_task_success(task1_ex.id)
+        self.await_task_success(task2_ex.id)
 
         self.engine.resume_workflow(wf_ex.id)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id), 1, 5)
+        self.await_execution_success(wf_ex.id, 1, 5)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -312,7 +312,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -333,8 +333,9 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         # Wait for task3 to be processed.
         task3_ex = self._assert_single_item(task_execs, name='task3')
-        self._await(lambda: self.is_task_success(task3_ex.id))
-        self._await(lambda: self.is_task_processed(task3_ex.id))
+
+        self.await_task_success(task3_ex.id)
+        self.await_task_processed(task3_ex.id)
 
         # Finish task2.
         task2_action_ex = db_api.get_action_executions(
@@ -343,7 +344,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.engine.on_action_complete(task2_action_ex.id, utils.Result())
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -357,7 +358,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -391,7 +392,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {}, env=env)
 
-        self._await(lambda: self.is_execution_paused(wf_ex.id))
+        self.await_execution_paused(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -420,7 +421,9 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         # Update the env variables and resume workflow.
         self.engine.resume_workflow(wf_ex.id, env=updated_env)
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertDictEqual(updated_env, wf_ex.params['env'])

@@ -139,7 +139,7 @@ class EnvironmentTest(base.EngineTestCase):
         self.assertDictEqual(wf1_ex.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(wf1_ex.id))
+        self.await_execution_success(wf1_ex.id)
 
         wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
@@ -148,7 +148,7 @@ class EnvironmentTest(base.EngineTestCase):
         self.assertDictEqual(wf1_ex.output, expected_wf1_output)
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(wf2_ex.id))
+        self.await_execution_success(wf2_ex.id)
 
         wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
 

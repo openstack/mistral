@@ -48,7 +48,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('test_wf', {})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -72,7 +72,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('test_wf', {})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -98,7 +98,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('test_wf', {})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -132,7 +132,9 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         wf_service.create_workflows(workflow)
 
         wf_ex = self.engine.start_workflow('wf', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
