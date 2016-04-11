@@ -14,9 +14,14 @@
 
 import abc
 import inspect
+import traceback
+
+from oslo_log import log
 
 from mistral.actions import base
 from mistral import exceptions as exc
+
+LOG = log.getLogger(__name__)
 
 
 class OpenStackAction(base.Action):
@@ -77,6 +82,10 @@ class OpenStackAction(base.Action):
 
             return result
         except Exception as e:
+            # Print the traceback for the last exception so that we can see
+            # where the issue comes from.
+            LOG.warning(traceback.format_exc())
+
             e_str = '%s: %s' % (type(e), e.message)
 
             raise exc.ActionException(
