@@ -57,7 +57,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                 # If cron trigger was not already modified by another engine.
                 if modified:
                     LOG.debug(
-                        "Starting workflow %s triggered by cron %s",
+                        "Starting workflow '%s' by cron trigger '%s'",
                         t.workflow.name, t.name
                     )
 
@@ -69,7 +69,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                         **t.workflow_params
                     )
             except Exception as e:
-                # Log and continue to next cron trigger
+                # Log and continue to next cron trigger.
                 msg = (
                     "Failed to process cron trigger %s\n%s"
                     % (str(t), traceback.format_exc(e))
@@ -79,45 +79,44 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                 auth_ctx.set_ctx(None)
 
 
-def advance_cron_trigger(ct):
-        modified_count = 0
+def advance_cron_trigger(t):
+    modified_count = 0
 
-        try:
-            # If the cron trigger is defined with limited execution count.
-            if (ct.remaining_executions is not None
-               and ct.remaining_executions > 0):
-                ct.remaining_executions -= 1
+    try:
+        # If the cron trigger is defined with limited execution count.
+        if t.remaining_executions is not None and t.remaining_executions > 0:
+            t.remaining_executions -= 1
 
-            # If this is the last execution.
-            if ct.remaining_executions == 0:
-                modified_count = db_api_v2.delete_cron_trigger(ct.name)
-            else:  # if remaining execution = None or > 0.
-                next_time = triggers.get_next_execution_time(
-                    ct.pattern,
-                    ct.next_execution_time
-                )
-
-                # Update the cron trigger with next execution details
-                # only if it wasn't already updated by a different process.
-                updated, modified_count = db_api_v2.update_cron_trigger(
-                    ct.name,
-                    {
-                        'next_execution_time': next_time,
-                        'remaining_executions': ct.remaining_executions
-                    },
-                    query_filter={
-                        'next_execution_time': ct.next_execution_time
-                    }
-                )
-        except exc.NotFoundException as e:
-            # Cron trigger was probably already deleted by a different process.
-            LOG.debug(
-                "Cron trigger named '%s' does not exist anymore: %s",
-                ct.name, str(e)
+        # If this is the last execution.
+        if t.remaining_executions == 0:
+            modified_count = db_api_v2.delete_cron_trigger(t.name)
+        else:  # if remaining execution = None or > 0.
+            next_time = triggers.get_next_execution_time(
+                t.pattern,
+                t.next_execution_time
             )
 
-        # Return True if this engine was able to modify the cron trigger in DB.
-        return modified_count > 0
+            # Update the cron trigger with next execution details
+            # only if it wasn't already updated by a different process.
+            updated, modified_count = db_api_v2.update_cron_trigger(
+                t.name,
+                {
+                    'next_execution_time': next_time,
+                    'remaining_executions': t.remaining_executions
+                },
+                query_filter={
+                    'next_execution_time': t.next_execution_time
+                }
+            )
+    except exc.NotFoundException as e:
+        # Cron trigger was probably already deleted by a different process.
+        LOG.debug(
+            "Cron trigger named '%s' does not exist anymore: %s",
+            t.name, str(e)
+        )
+
+    # Return True if this engine was able to modify the cron trigger in DB.
+    return modified_count > 0
 
 
 def setup():
