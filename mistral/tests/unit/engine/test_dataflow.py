@@ -43,14 +43,14 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task1:
               action: std.echo output="Hi"
               publish:
-                hi: <% $.task1 %>
+                hi: <% task(task1).result %>
               on-success:
                 - task2
 
             task2:
               action: std.echo output="Morpheus"
               publish:
-                to: <% $.task2 %>
+                to: <% task(task2).result %>
               on-success:
                 - task3
 
@@ -64,7 +64,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {}, env={'from': 'Neo'})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -96,7 +96,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task1:
               action: std.echo output="Hi"
               publish:
-                hi: <% $.task1 %>
+                hi: <% task(task1).result %>
                 progress: "completed task1"
               on-success:
                 - notify
@@ -105,7 +105,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task2:
               action: std.echo output="Morpheus"
               publish:
-                to: <% $.task2 %>
+                to: <% task(task2).result %>
                 progress: "completed task2"
               on-success:
                 - notify
@@ -121,7 +121,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             notify:
               action: std.echo output=<% $.progress %>
               publish:
-                progress: <% $.notify %>
+                progress: <% task(notify).result %>
         """
 
         wf_service.create_workflows(linear_with_branches_wf)
@@ -129,7 +129,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {}, env={'from': 'Neo'})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -180,12 +180,12 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task1:
               action: std.echo output=1
               publish:
-                var1: <% $.task1 %>
+                var1: <% task(task1).result %>
 
             task2:
               action: std.echo output=2
               publish:
-                var2: <% $.task2 %>
+                var2: <% task(task2).result %>
         """
 
         wf_service.create_workflows(parallel_tasks_wf)
@@ -193,7 +193,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -269,7 +269,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -318,21 +318,21 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task1:
               action: std.echo output="Hi"
               publish:
-                greeting: <% $.task1 %>
+                greeting: <% task(task1).result %>
               on-success:
                 - task2
 
             task2:
               action: std.echo output="Yo"
               publish:
-                greeting: <% $.task2 %>
+                greeting: <% task(task2).result %>
               on-success:
                 - task3
 
             task3:
               action: std.echo output="Morpheus"
               publish:
-                to: <% $.task3 %>
+                to: <% task(task3).result %>
               on-success:
                 - task4
 
@@ -350,7 +350,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             env={'from': 'Neo'}
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -400,14 +400,16 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task4:
               join: all
               publish:
-                result: "<% $.task1 %>, <% $.task21 %>! Your <% $.task22 %>."
+                result: >
+                  <% task(task1).result %>, <% task(task21).result %>!
+                  Your <% task(task22).result %>.
         """
         wf_service.create_workflows(linear_wf)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -416,7 +418,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         task4 = self._assert_single_item(tasks, name='task4')
 
         self.assertDictEqual(
-            {'result': 'Hi, Morpheus! Your Neo.'},
+            {'result': 'Hi, Morpheus! Your Neo.\n'},
             task4.published
         )
 
@@ -431,7 +433,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task1:
               action: std.echo output=["Hi", "John Doe!"]
               publish:
-                hi: <% $.task1 %>
+                hi: <% task(task1).result %>
               keep-result: false
 
         """
@@ -440,12 +442,13 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         tasks = wf_ex.task_executions
+
         task1 = self._assert_single_item(tasks, name='task1')
 
         result = data_flow.get_task_execution_result(task1)
@@ -471,14 +474,14 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                with-items: i in <% list() %>
                action: std.echo output= "Task 1.<% $.i %>"
                publish:
-                 result: <% $.task1 %>
+                 result: <% task(task1).result %>
         """
         wf_service.create_workflows(wf)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf1_with_items', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -505,14 +508,12 @@ class DataFlowTest(test_base.BaseTest):
             }
         )
 
-        action_exs = []
-
-        action_exs.append(models.ActionExecution(
+        action_exs = [models.ActionExecution(
             name='my_action',
             output={'result': 1},
             accepted=True,
             runtime_context={'with_items_index': 0}
-        ))
+        )]
 
         with mock.patch.object(db_api, 'get_action_executions',
                                return_value=action_exs):

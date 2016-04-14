@@ -49,13 +49,13 @@ workflows:
       - str2
     output:
       workflow_result: <% $.result %> # Access to execution context variables
-      concat_task_result: <% $.concat %> # Access to the same but via task name
+      concat_task_result: <% task(concat).result %> # Same but via task name
 
     tasks:
       concat:
         action: concat_twice s1=<% $.str1 %> s2=<% $.str2 %>
         publish:
-          result: <% $.concat %>
+          result: <% task(concat).result %>
 
   wf2:
     type: direct
@@ -64,13 +64,13 @@ workflows:
       - str2
     output:
       workflow_result: <% $.result %> # Access to execution context variables
-      concat_task_result: <% $.concat %> # Access to the same but via task name
+      concat_task_result: <% task(concat).result %> # Same but via task name
 
     tasks:
       concat:
         action: concat_twice s2=<% $.str2 %>
         publish:
-          result: <% $.concat %>
+          result: <% task(concat).result %>
 
   wf3:
     type: direct
@@ -96,7 +96,7 @@ class AdhocActionsTest(base.EngineTestCase):
             {'str1': 'a', 'str2': 'b'}
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -116,7 +116,7 @@ class AdhocActionsTest(base.EngineTestCase):
             {'str1': 'a', 'str2': 'b'}
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 

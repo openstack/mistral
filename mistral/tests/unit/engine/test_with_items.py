@@ -51,7 +51,7 @@ workflows:
         with-items: name_info in <% $.names_info %>
         action: std.echo output=<% $.name_info.name %>
         publish:
-          result: <% $.task1[0] %>
+          result: <% task(task1).result[0] %>
 
 """
 
@@ -74,7 +74,7 @@ workflows:
         with-items: name_info in <% $.names_info %>
         action: std.echo output="<% $.greeting %>, <% $.name_info.name %>!"
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 """
 
 
@@ -99,7 +99,7 @@ workflows:
           - itemY in <% $.arrayJ %>
         action: std.echo output="<% $.itemX %> <% $.itemY %>"
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 
 """
 
@@ -107,19 +107,22 @@ workflows:
 WB_ACTION_CONTEXT = """
 ---
 version: "2.0"
+
 name: wb1
 
 workflows:
   wf1_with_items:
     type: direct
+
     input:
       - links
+
     tasks:
       task1:
         with-items: link in <% $.links %>
         action: std.http url=<% $.link %>
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1) %>
 """
 
 
@@ -182,9 +185,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', WF_INPUT)
 
-        self._await(
-            lambda: self.is_execution_success(wf_ex.id),
-        )
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -236,7 +237,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('with_items', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -275,7 +276,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -291,7 +292,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -317,7 +318,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -357,7 +358,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("Mistral")
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -403,7 +404,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_input = {'names_info': []}
         wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -438,7 +439,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -496,7 +497,7 @@ class WithItemsEngineTest(base.EngineTestCase):
                 with-items: i in [1, 2, 3]
                 action: sleep_echo output=<% $.i %>
                 publish:
-                  one_two_three: <% $.task1 %>
+                  one_two_three: <% task(task1).result %>
         """
         # Register random sleep action in the DB.
         test_base.register_action_class('sleep_echo', RandomSleepEchoAction)
@@ -506,7 +507,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -528,7 +529,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', WF_INPUT_ONE_ITEM)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -612,7 +613,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assert_capacity(1, task_ex)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -654,7 +655,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             {'concurrency': 2}
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -774,7 +775,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assert_capacity(2, task_ex)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -814,7 +815,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('concurrency_test_fail', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_execution(wf_ex.id)
 
@@ -888,7 +889,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assert_capacity(3, task_ex)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -926,7 +927,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('concurrency_test', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_execution(wf_ex.id)
 
@@ -965,7 +966,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('with_items_retry', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -1007,7 +1008,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('with_items_retry_concurrency', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -1041,7 +1042,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             env={'name': 'Mistral'}
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -1088,7 +1089,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb1.with_items', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -1153,7 +1154,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         names = ["Peter", "Susan", "Edmund", "Lucy", "Aslan", "Caspian"]
         wf_ex = self.engine.start_workflow('wb1.main', {'names': names})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_execution(wf_ex.id)
 

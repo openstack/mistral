@@ -45,10 +45,10 @@ wf:
         success_result: <% $.success_result %>
         error_result: <% $.error_result %>
       publish:
-        p_var: <% $.task1 %>
+        p_var: <% task(task1).result %>
       on-error:
-        - task2: <% $.task1 = 2 %>
-        - task3: <% $.task1 = 3 %>
+        - task2: <% task(task1).result = 2 %>
+        - task3: <% task(task1).result = 3 %>
 
     task2:
       action: std.noop
@@ -91,7 +91,7 @@ class ErrorResultTest(base.EngineTestCase):
             }
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -123,7 +123,7 @@ class ErrorResultTest(base.EngineTestCase):
             }
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -155,7 +155,7 @@ class ErrorResultTest(base.EngineTestCase):
             }
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)

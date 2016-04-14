@@ -287,8 +287,6 @@ def _get_input_dictionaries(wf_spec, task_ex, task_spec, ctx):
     :return the list of tuples containing indexes
     and the corresponding input dict.
     """
-    # TODO(rakhmerov): Think how to get rid of this.
-    ctx = data_flow.extract_task_result_proxies_to_context(ctx)
 
     if not task_spec.get_with_items():
         input_dict = _get_workflow_or_action_input(

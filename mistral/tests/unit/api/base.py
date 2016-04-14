@@ -25,8 +25,6 @@ from mistral.tests.unit import base
 # Disable authentication for functional tests.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-__all__ = ['FunctionalTest']
-
 
 class FunctionalTest(base.DbTestCase):
 
@@ -43,11 +41,14 @@ class FunctionalTest(base.DbTestCase):
                 'auth_enable': False
             }
         })
+
         self.addCleanup(pecan.set_config, {}, overwrite=True)
-        self.addCleanup(cfg.CONF.set_default, 'auth_enable', False,
+        self.addCleanup(cfg.CONF.set_default,
+                        'auth_enable',
+                        False,
                         group='pecan')
 
-        # make sure the api get the correct context.
+        # Make sure the api get the correct context.
         self.patch_ctx = mock.patch('mistral.context.context_from_headers')
         self.mock_ctx = self.patch_ctx.start()
         self.mock_ctx.return_value = self.ctx

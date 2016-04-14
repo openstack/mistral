@@ -54,7 +54,7 @@ workflows:
           context: <% $ %>
 
         publish:
-          result: <% $.task1 %>
+          result: <% task(task1).result %>
 
 """
 
@@ -74,7 +74,7 @@ class JavaScriptEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('test_js.js_test', {'num': 50})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -93,7 +93,7 @@ class JavaScriptEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('test_js.js_test', {'num': 50})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)

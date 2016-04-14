@@ -44,12 +44,12 @@ workflows:
       task1:
         action: std.echo output=<% $.param1 %>
         publish:
-          result1: <% $.task1 %>
+          result1: <% task(task1).result %>
 
       task2:
         action: std.echo output="<% $.result1 %> & <% $.param2 %>"
         publish:
-          result2: <% $.task2 %>
+          result2: <% task(task2).result %>
         requires: [task1]
 
       task3:
@@ -82,7 +82,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual({'task_name': 'task1'}, wf_ex.params)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -112,7 +112,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual({'task_name': 'task2'}, wf_ex.params)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -144,7 +144,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             task_name='task4'
         )
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         tasks = db_api.get_task_executions()
 

@@ -53,7 +53,7 @@ workflows:
       task1:
         action: std.echo output=<% $.param1 %>
         publish:
-            var: <% $.task1 %>
+            var: <% task(task1).result %>
 
       task2:
         action: std.echo output=<% $.param2 %>
@@ -364,7 +364,6 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(states.SUCCESS, task2_action_ex.state)
 
         # Data Flow properties.
-        self.assertIn('__tasks', task2_ex.in_context)
         self.assertIn('__execution', task1_ex.in_context)
         self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
         self.assertDictEqual({}, task2_ex.published)

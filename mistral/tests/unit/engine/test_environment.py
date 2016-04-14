@@ -51,14 +51,14 @@ workflows:
         action: std.echo output=<% $.param1 %>
         target: <% env().var1 %>
         publish:
-          result1: <% $.task1 %>
+          result1: <% task(task1).result %>
 
       task2:
         requires: [task1]
         action: std.echo output="'<% $.result1 %> & <% $.param2 %>'"
         target: <% env().var1 %>
         publish:
-          final_result: <% $.task2 %>
+          final_result: <% task(task2).result %>
 
   wf2:
     output:
@@ -72,7 +72,8 @@ workflows:
           param2: <% env().var3 %>
           task_name: task2
         publish:
-          slogan: "<% $.task1.final_result %> is a cool <% env().var4 %>!"
+          slogan: >
+            <% task(task1).result.final_result %> is a cool <% env().var4 %>!
 """
 
 
@@ -92,9 +93,9 @@ def _run_at_target(action_ex_id, action_class_str, attributes,
 MOCK_RUN_AT_TARGET = mock.MagicMock(side_effect=_run_at_target)
 
 
-class SubworkflowsTest(base.EngineTestCase):
+class EnvironmentTest(base.EngineTestCase):
     def setUp(self):
-        super(SubworkflowsTest, self).setUp()
+        super(EnvironmentTest, self).setUp()
 
         wb_service.create_workbook_v2(WORKBOOK)
 
@@ -138,7 +139,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictEqual(wf1_ex.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.
-        self._await(lambda: self.is_execution_success(wf1_ex.id))
+        self.await_execution_success(wf1_ex.id)
 
         wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
@@ -147,11 +148,11 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertDictEqual(wf1_ex.output, expected_wf1_output)
 
         # Wait till workflow 'wf2' is completed.
-        self._await(lambda: self.is_execution_success(wf2_ex.id))
+        self.await_execution_success(wf2_ex.id)
 
         wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
 
-        expected_wf2_output = {'slogan': "'Bonnie & Clyde' is a cool movie!"}
+        expected_wf2_output = {'slogan': "'Bonnie & Clyde' is a cool movie!\n"}
 
         self.assertDictEqual(wf2_ex.output, expected_wf2_output)
 

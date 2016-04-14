@@ -31,10 +31,13 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 SIMPLE_WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         action: std.echo output="Task 1"
@@ -51,10 +54,13 @@ workflows:
 SIMPLE_WORKBOOK_DIFF_ENV_VAR = """
 ---
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t10:
         action: std.echo output="Task 10"
@@ -78,16 +84,19 @@ workflows:
 WITH_ITEMS_WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb3
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         with-items: i in <% list(range(0, 3)) %>
         action: std.echo output="Task 1.<% $.i %>"
         publish:
-          v1: <% $.t1 %>
+          v1: <% task(t1).result %>
         on-success:
           - t2
       t2:
@@ -97,16 +106,19 @@ workflows:
 WITH_ITEMS_WORKBOOK_DIFF_ENV_VAR = """
 ---
 version: '2.0'
+
 name: wb3
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         with-items: i in <% list(range(0, 3)) %>
         action: std.echo output="Task 1.<% $.i %> [<% env().var1 %>]"
         publish:
-          v1: <% $.t1 %>
+          v1: <% task(t1).result %>
         on-success:
           - t2
       t2:
@@ -116,17 +128,20 @@ workflows:
 WITH_ITEMS_WORKBOOK_CONCURRENCY = """
 ---
 version: '2.0'
+
 name: wb3
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         with-items: i in <% list(range(0, 4)) %>
         action: std.echo output="Task 1.<% $.i %>"
         concurrency: 2
         publish:
-          v1: <% $.t1 %>
+          v1: <% task(t1).result %>
         on-success:
           - t2
       t2:
@@ -136,10 +151,13 @@ workflows:
 JOIN_WORKBOOK = """
 ---
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         action: std.echo output="Task 1"
@@ -156,10 +174,13 @@ workflows:
 
 SUBFLOW_WORKBOOK = """
 version: '2.0'
+
 name: wb1
+
 workflows:
   wf1:
     type: direct
+
     tasks:
       t1:
         action: std.echo output="Task 1"
@@ -171,10 +192,13 @@ workflows:
           - t3
       t3:
         action: std.echo output="Task 3"
+
   wf2:
     type: direct
+
     output:
-      result: <% $.wf2_t1 %>
+      result: <% task(wf2_t1).result %>
+
     tasks:
       wf2_t1:
         action: std.echo output="Task 2"
@@ -200,7 +224,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -216,13 +242,15 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_2_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
         # Wait for the workflow to succeed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -290,7 +318,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {}, env=env)
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -318,6 +348,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_21_ex.id, env=updated_env)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -326,7 +357,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertDictEqual(updated_env, wf_ex.context['__env'])
 
         # Wait for the workflow to succeed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -421,7 +453,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -464,7 +498,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb3.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -484,12 +520,14 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id), delay=10)
+        self.await_execution_success(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -509,7 +547,6 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # The single action execution that succeeded should not re-run.
         self.assertEqual(5, len(task_1_action_exs))
-
         self.assertListEqual(['Task 1.0', 'Task 1.1', 'Task 1.2'],
                              task_1_ex.published.get('v1'))
 
@@ -542,7 +579,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb3.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -561,12 +600,14 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id), delay=10)
+        self.await_execution_success(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -616,13 +657,13 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WITH_ITEMS_WORKBOOK_DIFF_ENV_VAR)
 
         # Initial environment variables for the workflow execution.
-        env = {
-            'var1': 'fee fi fo fum'
-        }
+        env = {'var1': 'fee fi fo fum'}
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb3.wf1', {}, env=env)
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -658,7 +699,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id), delay=10)
+        self.await_execution_success(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -718,8 +760,11 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {})
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -737,13 +782,15 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_3_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
         # Wait for the workflow to succeed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -804,13 +851,17 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {})
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
         task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
         task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
-        self._await(lambda: self.is_task_in_state(task_1_ex.id, states.ERROR))
-        self._await(lambda: self.is_task_in_state(task_2_ex.id, states.ERROR))
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_task_error(task_1_ex.id)
+        self.await_task_error(task_2_ex.id)
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -827,6 +878,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -834,8 +886,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Wait for the task to succeed.
         task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
-        self._await(lambda: self.is_task_in_state(task_1_ex.id,
-                                                  states.SUCCESS))
+
+        self.await_task_success(task_1_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -852,13 +905,15 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(wf_ex.id, task_2_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
         # Wait for the workflow to succeed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -929,7 +984,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb3.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -949,12 +1006,14 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task. Re-run #1 with no reset.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_error(wf_ex.id), delay=10)
+        self.await_execution_error(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -968,12 +1027,14 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task. Re-run #2 with reset.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=True)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_error(wf_ex.id), delay=10)
+        self.await_execution_error(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -987,12 +1048,14 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task. Re-run #3 with no reset.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_error(wf_ex.id), delay=10)
+        self.await_execution_error(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -1006,12 +1069,14 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task. Re-run #4 with no reset.
         self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self._await(lambda: self.is_execution_success(wf_ex.id), delay=10)
+        self.await_execution_success(wf_ex.id, delay=10)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -1061,7 +1126,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -1083,7 +1150,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNone(wf_ex.state_info)
 
         # Wait for the workflow to succeed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -1140,7 +1208,9 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {})
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+
+        self.await_execution_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -1175,6 +1245,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed subworkflow task.
         self.engine.rerun_workflow(sub_wf_ex.id, sub_wf_task_ex.id)
+
         sub_wf_ex = db_api.get_workflow_execution(sub_wf_ex.id)
 
         self.assertEqual(states.RUNNING, sub_wf_ex.state)
@@ -1186,7 +1257,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNone(wf_ex.state_info)
 
         # Wait for the subworkflow to succeed.
-        self._await(lambda: self.is_execution_success(sub_wf_ex.id))
+        self.await_execution_success(sub_wf_ex.id)
+
         sub_wf_ex = db_api.get_workflow_execution(sub_wf_ex.id)
 
         self.assertEqual(states.SUCCESS, sub_wf_ex.state)
@@ -1210,7 +1282,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, sub_wf_task_ex_action_exs[1].state)
 
         # Wait for the main workflow to succeed.
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)

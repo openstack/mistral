@@ -22,6 +22,7 @@ from mistral.services import security
 from mistral.services import triggers
 from mistral.services import workflows
 from mistral.tests.unit.engine import base
+from mistral import utils
 
 
 WORKFLOW_LIST = """
@@ -47,7 +48,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
         t = triggers.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             wf.name,
             {},
             {},
@@ -66,7 +67,11 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
 
-        next_trigger = triggers.get_next_cron_triggers()[0]
+        next_triggers = triggers.get_next_cron_triggers()
+
+        self.assertEqual(1, len(next_triggers))
+
+        next_trigger = next_triggers[0]
         next_execution_time_after = next_trigger.next_execution_time
 
         # Checking the workflow was executed, by
@@ -82,7 +87,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
         triggers.create_cron_trigger(
-            'test',
+            'trigger-%s' % utils.generate_unicode_uuid(),
             wf.name,
             {},
             {},
@@ -116,6 +121,8 @@ class ProcessCronTriggerTest(base.EngineTestCase):
     @mock.patch('mistral.services.triggers.validate_cron_trigger_input')
     def test_create_cron_trigger_with_pattern_and_first_time(self,
                                                              validate_mock):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
 
         # Make the first_time 1 sec later than current time, in order to make
@@ -125,8 +132,10 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         # Creates a cron-trigger with pattern and first time, ensure the
         # cron-trigger can be executed more than once, and cron-trigger will
         # not be deleted.
+        trigger_name = 'trigger-%s' % utils.generate_unicode_uuid()
+
         cron_trigger = triggers.create_cron_trigger(
-            'test',
+            trigger_name,
             wf.name,
             {},
             {},
@@ -148,7 +157,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             cron_trigger.next_execution_time
         )
 
-        cron_trigger_db = db_api.get_cron_trigger('test')
+        cron_trigger_db = db_api.get_cron_trigger(trigger_name)
 
         self.assertIsNotNone(cron_trigger_db)
         self.assertEqual(

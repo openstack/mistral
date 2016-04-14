@@ -1058,10 +1058,14 @@ def update_cron_trigger(name, values, session=None, query_filter=None):
         try:
             # Execute the UPDATE statement with the query_filter as the WHERE.
             specimen = models.CronTrigger(id=cron_trigger.id, **query_filter)
-            cron_trigger = b.model_query(
-                models.CronTrigger).update_on_match(specimen=specimen,
-                                                    surrogate_key='id',
-                                                    values=values)
+
+            query = b.model_query(models.CronTrigger)
+
+            cron_trigger = query.update_on_match(
+                specimen=specimen,
+                surrogate_key='id',
+                values=values
+            )
 
             return cron_trigger, 1
 

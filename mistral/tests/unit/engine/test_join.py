@@ -41,14 +41,14 @@ class JoinEngineTest(base.EngineTestCase):
             task1:
               action: std.echo output=1
               publish:
-                result1: <% $.task1 %>
+                result1: <% task(task1).result %>
               on-complete:
                 - task3
 
             task2:
               action: std.echo output=2
               publish:
-                result2: <% $.task2 %>
+                result2: <% task(task2).result %>
               on-complete:
                 - task3
 
@@ -56,7 +56,7 @@ class JoinEngineTest(base.EngineTestCase):
               join: all
               action: std.echo output="<% $.result1 %>,<% $.result2 %>"
               publish:
-                result3: <% $.task3 %>
+                result3: <% task(task3).result %>
         """
 
         wf_service.create_workflows(wf_full_join)
@@ -64,7 +64,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -95,7 +95,7 @@ class JoinEngineTest(base.EngineTestCase):
             task1:
               action: std.echo output=1
               publish:
-                result1: <% $.task1 %>
+                result1: <% task(task1).result %>
               on-complete:
                 - task3
 
@@ -108,7 +108,7 @@ class JoinEngineTest(base.EngineTestCase):
               join: all
               action: std.echo output="<% $.result1 %>-<% $.result1 %>"
               publish:
-                result3: <% $.task3 %>
+                result3: <% task(task3).result %>
         """
 
         wf_service.create_workflows(wf_full_join_with_errors)
@@ -116,7 +116,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -147,14 +147,14 @@ class JoinEngineTest(base.EngineTestCase):
             task1:
               action: std.echo output=1
               publish:
-                result1: <% $.task1 %>
+                result1: <% task(task1).result %>
               on-complete:
                 - task3
 
             task2:
               action: std.echo output=2
               publish:
-                result2: <% $.task2 %>
+                result2: <% task(task2).result %>
               on-complete:
                 - task3: <% $.result2 = 11111 %>
                 - task4: <% $.result2 = 2 %>
@@ -163,12 +163,12 @@ class JoinEngineTest(base.EngineTestCase):
               join: all
               action: std.echo output="<% $.result1 %>-<% $.result1 %>"
               publish:
-                result3: <% $.task3 %>
+                result3: <% task(task3).result %>
 
             task4:
               action: std.echo output=4
               publish:
-                result4: <% $.task4 %>
+                result4: <% task(task4).result %>
         """
 
         wf_service.create_workflows(wf_full_join_with_conditions)
@@ -192,7 +192,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         # NOTE(xylan): We ensure task4 is successful here because of the
         # uncertainty of its running parallelly with task3.
-        self._await(lambda: self.is_task_success(task4.id))
+        self.await_task_success(task4.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertEqual(states.SUCCESS, task1.state)
@@ -213,14 +213,14 @@ class JoinEngineTest(base.EngineTestCase):
             task1:
               action: std.echo output=1
               publish:
-                result1: <% $.task1 %>
+                result1: <% task(task1).result %>
               on-complete:
                 - task4
 
             task2:
               action: std.echo output=2
               publish:
-                result2: <% $.task2 %>
+                result2: <% task(task2).result %>
               on-complete:
                 - task4
 
@@ -240,7 +240,7 @@ class JoinEngineTest(base.EngineTestCase):
               join: 2
               action: std.echo output="<% $.result1 %>,<% $.result2 %>"
               publish:
-                result4: <% $.task4 %>
+                result4: <% task(task4).result %>
         """
 
         wf_service.create_workflows(wf_partial_join)
@@ -248,7 +248,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -268,7 +268,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         # task3 may still be in RUNNING state and we need to make sure
         # it gets into ERROR state.
-        self._await(lambda: self.is_task_error(task3.id))
+        self.await_task_error(task3.id)
 
         self.assertDictEqual({'result4': '1,2'}, task4.published)
         self.assertDictEqual({'result': '1,2'}, wf_ex.output)
@@ -320,7 +320,7 @@ class JoinEngineTest(base.EngineTestCase):
                   <% result1 in $.keys() %>,<% result2 in $.keys() %>,
                   <% result3 in $.keys() %>,<% result4 in $.keys() %>
               publish:
-                result5: <% $.task5 %>
+                result5: <% task(task5).result %>
         """
 
         wf_service.create_workflows(wf_partial_join_triggers_once)
@@ -328,7 +328,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -391,7 +391,7 @@ class JoinEngineTest(base.EngineTestCase):
                   <% result1 in $.keys() %>,<% result2 in $.keys() %>,
                   <% result3 in $.keys() %>
               publish:
-                result4: <% $.task4 %>
+                result4: <% task(task4).result %>
         """
 
         wf_service.create_workflows(wf_discriminator)
@@ -399,7 +399,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -428,6 +428,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         main:
           type: direct
+
           output:
             var1: <% $.var1 %>
             var2: <% $.var2 %>
@@ -455,6 +456,7 @@ class JoinEngineTest(base.EngineTestCase):
                 var2: true
               on-success:
                 - done
+
             done:
               join: all
               publish:
@@ -462,6 +464,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         work:
           type: direct
+
           tasks:
             do:
               action: std.echo output="Doing..."
@@ -476,7 +479,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('main', {})
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -540,7 +543,7 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         exec_db = self.engine.start_workflow('main', {})
 
-        self._await(lambda: self.is_execution_success(exec_db.id))
+        self.await_execution_success(exec_db.id)
 
         # Note: We need to reread execution to access related tasks.
         exec_db = db_api.get_execution(exec_db.id)
@@ -595,7 +598,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_full_join_with_errors)
         wf_ex = self.engine.start_workflow('main', {})
 
-        self._await(lambda: self.is_execution_error(wf_ex.id))
+        self.await_execution_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         tasks = wf_ex.task_executions

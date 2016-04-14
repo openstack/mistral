@@ -48,7 +48,7 @@ wf:
     task1:
       action: test.block
       publish:
-        result: <% $.task1 %>
+        result: <% task(task1).result %>
 """
 
 WF_SHORT_ACTION = """
@@ -62,14 +62,14 @@ wf:
     The idea is to use action that runs faster than engine.start_workflow().
     And we need to check that engine handles this situation as well. This was
     a situation previously that led to a race condition in engine, method
-    on_task_result() was called while DB transaction in start_workflow() was
-    still active (not committed yet).
+    on_action_complete() was called while DB transaction in start_workflow()
+    was still active (not committed yet).
     To emulate a short action we use a workflow with two start tasks so they
     run both in parallel on the first engine iteration when we call method
     start_workflow(). First task has a short action that just returns a
     predefined result and the second task blocks until the test explicitly
     unblocks it. So the first action will always end before start_workflow()
-    methods ends.
+    method ends.
 
   output:
     result: <% $.result %>
@@ -78,7 +78,7 @@ wf:
     task1:
       action: std.echo output=1
       publish:
-        result: <% $.task1 %>
+        result: <% task(task1).result %>
 
     task2:
       action: test.block
@@ -112,9 +112,9 @@ class BlockingAction(action_base.Action):
         pass
 
 
-class LongActionTest(base.EngineTestCase):
+class EngineActionRaceConditionTest(base.EngineTestCase):
     def setUp(self):
-        super(LongActionTest, self).setUp()
+        super(EngineActionRaceConditionTest, self).setUp()
 
         global ACTION_SEMAPHORE
         global TEST_SEMAPHORE
@@ -159,14 +159,16 @@ class LongActionTest(base.EngineTestCase):
 
         self.unblock_action()
 
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertDictEqual({'result': 'test'}, wf_ex.output)
 
-    # TODO(rakhmerov): Should periodically fail now. Fix race condition.
-    @testtools.skip('Skip until the race condition is fixed.')
+    # TODO(rakhmerov): Should periodically fail now because of poor
+    # transaction isolation support in SQLite. Requires more research
+    # to understand all the details. It's not reproducible on MySql.
+    @testtools.skip('Skip until we know how to fix it with SQLite.')
     def test_short_action(self):
         wf_service.create_workflows(WF_SHORT_ACTION)
 
@@ -187,12 +189,12 @@ class LongActionTest(base.EngineTestCase):
             state=states.RUNNING
         )
 
-        self._await(lambda: self.is_task_success(task1_ex.id))
+        self.await_task_success(task1_ex.id, timeout=10)
 
         self.unblock_action()
 
-        self._await(lambda: self.is_task_success(task2_ex.id))
-        self._await(lambda: self.is_execution_success(wf_ex.id))
+        self.await_task_success(task2_ex.id)
+        self.await_execution_success(wf_ex.id)
 
         task1_ex = db_api.get_task_execution(task1_ex.id)
         task1_action_ex = db_api.get_action_executions(

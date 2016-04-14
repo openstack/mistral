@@ -29,6 +29,10 @@ from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
+# Default delay and timeout in seconds for await_xxx() functions.
+DEFAULT_DELAY = 1
+DEFAULT_TIMEOUT = 60
+
 
 def launch_engine_server(transport, engine):
     target = messaging.Target(
@@ -143,11 +147,10 @@ class EngineTestCase(base.DbTestCase):
                     (t_ex.name, t_ex.id, t_ex.state, t_ex.published)
                 )
 
-    def is_task_in_state(self, task_ex_id, state):
-        return db_api.get_task_execution(task_ex_id).state == state
+    # Various methods for abstract execution objects.
 
     def is_execution_in_state(self, ex_id, state):
-        return db_api.get_workflow_execution(ex_id).state == state
+        return db_api.get_execution(ex_id).state == state
 
     def is_execution_success(self, ex_id):
         return self.is_execution_in_state(ex_id, states.SUCCESS)
@@ -158,14 +161,92 @@ class EngineTestCase(base.DbTestCase):
     def is_execution_paused(self, ex_id):
         return self.is_execution_in_state(ex_id, states.PAUSED)
 
+    def await_execution_state(self, ex_id, state, delay=DEFAULT_DELAY,
+                              timeout=DEFAULT_TIMEOUT):
+        self._await(
+            lambda: self.is_execution_in_state(ex_id, state), delay, timeout
+        )
+
+    def await_execution_success(self, ex_id, delay=DEFAULT_DELAY,
+                                timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(ex_id, states.SUCCESS, delay, timeout)
+
+    def await_execution_error(self, ex_id, delay=DEFAULT_DELAY,
+                              timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(ex_id, states.ERROR, delay, timeout)
+
+    def await_execution_paused(self, ex_id, delay=DEFAULT_DELAY,
+                               timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(ex_id, states.PAUSED, delay, timeout)
+
+    # Various methods for action execution objects.
+
+    def is_action_success(self, a_ex_id):
+        return self.is_execution_in_state(a_ex_id, states.SUCCESS)
+
+    def is_action_error(self, a_ex_id):
+        return self.is_execution_in_state(a_ex_id, states.ERROR)
+
+    def await_action_state(self, a_ex_id, state, delay=DEFAULT_DELAY,
+                           timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(a_ex_id, state, delay, timeout)
+
+    def await_action_success(self, t_ex_id, delay=DEFAULT_DELAY,
+                             timeout=DEFAULT_TIMEOUT):
+        self.await_execution_success(t_ex_id, delay, timeout)
+
+    def await_action_error(self, t_ex_id, delay=DEFAULT_DELAY,
+                           timeout=DEFAULT_TIMEOUT):
+        self.await_execution_error(t_ex_id, delay, timeout)
+
+    # Various methods for task execution objects.
+
     def is_task_success(self, task_ex_id):
-        return self.is_task_in_state(task_ex_id, states.SUCCESS)
+        return self.is_execution_in_state(task_ex_id, states.SUCCESS)
 
     def is_task_error(self, task_ex_id):
-        return self.is_task_in_state(task_ex_id, states.ERROR)
+        return self.is_execution_in_state(task_ex_id, states.ERROR)
 
     def is_task_delayed(self, task_ex_id):
-        return self.is_task_in_state(task_ex_id, states.RUNNING_DELAYED)
+        return self.is_execution_in_state(task_ex_id, states.RUNNING_DELAYED)
 
     def is_task_processed(self, task_ex_id):
         return db_api.get_task_execution(task_ex_id).processed
+
+    def await_task_state(self, t_ex_id, state, delay=DEFAULT_DELAY,
+                         timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(t_ex_id, state, delay, timeout)
+
+    def await_task_success(self, t_ex_id, delay=DEFAULT_DELAY,
+                           timeout=DEFAULT_TIMEOUT):
+        self.await_execution_success(t_ex_id, delay, timeout)
+
+    def await_task_error(self, t_ex_id, delay=DEFAULT_DELAY,
+                         timeout=DEFAULT_TIMEOUT):
+        self.await_execution_error(t_ex_id, delay, timeout)
+
+    def await_task_delayed(self, t_ex_id, delay=DEFAULT_DELAY,
+                           timeout=DEFAULT_TIMEOUT):
+        self.await_task_state(t_ex_id, states.RUNNING_DELAYED, delay, timeout)
+
+    def await_task_processed(self, t_ex_id, delay=DEFAULT_DELAY,
+                             timeout=DEFAULT_TIMEOUT):
+        self._await(lambda: self.is_task_processed(t_ex_id), delay, timeout)
+
+    # Various methods for workflow execution objects.
+
+    def await_workflow_state(self, ex_id, state, delay=DEFAULT_DELAY,
+                             timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(ex_id, state, delay, timeout)
+
+    def await_workflow_success(self, ex_id, delay=DEFAULT_DELAY,
+                               timeout=DEFAULT_TIMEOUT):
+        self.await_execution_success(ex_id, delay, timeout)
+
+    def await_workflow_error(self, ex_id, delay=DEFAULT_DELAY,
+                             timeout=DEFAULT_TIMEOUT):
+        self.await_execution_error(ex_id, delay, timeout)
+
+    def await_workflow_paused(self, ex_id, delay=DEFAULT_DELAY,
+                              timeout=DEFAULT_TIMEOUT):
+        self.await_execution_paused(ex_id, delay, timeout)
