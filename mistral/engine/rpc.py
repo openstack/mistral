@@ -40,7 +40,9 @@ _EXECUTOR_CLIENT = None
 # Declare different classes for < 4.4.0 oslo_messaging
 # and >= 4.4.0 oslo_messaging:
 # >= 4.4.0 doesn't contain 'executor_callback' argument anymore.
-if 'executor_callback' in inspect.getargspec(
+# > 4.6.1 dispatcher.RPCDispatcher doesn't have a __call__ method.
+if inspect.ismethod(dispatcher.RPCDispatcher.__call__) and \
+   'executor_callback' in inspect.getargspec(
     dispatcher.RPCDispatcher.__call__
 ).args:
     # For < 4.4.0.
