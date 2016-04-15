@@ -20,6 +20,7 @@ import pecan
 import pecan.testing
 from webtest import app as webtest_app
 
+from mistral.services import periodic
 from mistral.tests.unit import base
 
 # Disable authentication for functional tests.
@@ -38,7 +39,8 @@ class FunctionalTest(base.DbTestCase):
                 'root': pecan_opts.root,
                 'modules': pecan_opts.modules,
                 'debug': pecan_opts.debug,
-                'auth_enable': False
+                'auth_enable': False,
+                'disable_cron_trigger_thread': True
             }
         })
 
@@ -47,6 +49,11 @@ class FunctionalTest(base.DbTestCase):
                         'auth_enable',
                         False,
                         group='pecan')
+
+        # Adding cron trigger thread clean up explicitly in case if
+        # new tests will provide an alternative configuration for pecan
+        # application.
+        self.addCleanup(periodic.stop_all_periodic_tasks)
 
         # Make sure the api get the correct context.
         self.patch_ctx = mock.patch('mistral.context.context_from_headers')

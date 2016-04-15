@@ -20,12 +20,12 @@ from oslo_middleware import cors as cors_middleware
 
 
 class TestCORSMiddleware(base.FunctionalTest):
-    '''Provide a basic smoke test to ensure CORS middleware is active.
+    """Provide a basic smoke test to ensure CORS middleware is active.
 
     The tests below provide minimal confirmation that the CORS middleware
     is active, and may be configured. For comprehensive tests, please consult
     the test suite in oslo_middleware.
-    '''
+    """
 
     def setUp(self):
         # Make sure the CORS options are registered

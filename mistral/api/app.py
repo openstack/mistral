@@ -45,13 +45,15 @@ def get_pecan_config():
 def setup_app(config=None):
     if not config:
         config = get_pecan_config()
+
     m_config.set_config_defaults()
 
     app_conf = dict(config.app)
 
     db_api_v2.setup_db()
 
-    periodic.setup()
+    if not app_conf.pop('disable_cron_trigger_thread', False):
+        periodic.setup()
 
     coordination.Service('api_group').register_membership()
 
@@ -67,6 +69,4 @@ def setup_app(config=None):
 
     # Create a CORS wrapper, and attach mistral-specific defaults that must be
     # included in all CORS responses.
-    app = cors_middleware.CORS(app, cfg.CONF)
-
-    return app
+    return cors_middleware.CORS(app, cfg.CONF)
