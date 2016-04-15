@@ -19,7 +19,7 @@ from oslo_config import cfg as cfg
 from oslo_middleware import cors as cors_middleware
 
 
-class TestCORSMiddleware(base.FunctionalTest):
+class TestCORSMiddleware(base.APITest):
     """Provide a basic smoke test to ensure CORS middleware is active.
 
     The tests below provide minimal confirmation that the CORS middleware

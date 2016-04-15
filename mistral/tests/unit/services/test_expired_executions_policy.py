@@ -18,7 +18,7 @@ import datetime
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral.services import expiration_policy
-from mistral.tests.unit.api import base
+from mistral.tests.unit import base
 from oslo_config import cfg
 
 
@@ -82,7 +82,7 @@ def _switch_context(project_id, is_admin):
     ctx.set_ctx(_ctx)
 
 
-class ExpirationPolicyTest(base.FunctionalTest):
+class ExpirationPolicyTest(base.DbTestCase):
     def test_expiration_policy_for_executions(self):
         # Delete execution uses a secured filtering and we need
         # to verify that admin able to do that for other projects.

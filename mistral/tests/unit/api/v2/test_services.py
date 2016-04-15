@@ -21,7 +21,7 @@ from mistral import coordination
 from mistral.tests.unit.api import base
 
 
-class TestServicesController(base.FunctionalTest):
+class TestServicesController(base.APITest):
     def test_get_all(self):
         cfg.CONF.set_default('backend_url', 'zake://', 'coordination')
 

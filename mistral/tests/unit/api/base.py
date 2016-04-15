@@ -27,10 +27,10 @@ from mistral.tests.unit import base
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-class FunctionalTest(base.DbTestCase):
+class APITest(base.DbTestCase):
 
     def setUp(self):
-        super(FunctionalTest, self).setUp()
+        super(APITest, self).setUp()
 
         pecan_opts = cfg.CONF.pecan
 

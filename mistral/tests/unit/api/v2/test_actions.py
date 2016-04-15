@@ -94,7 +94,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 
-class TestActionsController(base.FunctionalTest):
+class TestActionsController(base.APITest):
     @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     def test_get(self):
         resp = self.app.get('/v2/actions/my_action')

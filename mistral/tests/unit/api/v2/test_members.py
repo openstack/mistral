@@ -46,7 +46,7 @@ WORKFLOW_MEMBER_ACCEPTED = {}
 MEMBER_URL = None
 
 
-class TestMembersController(base.FunctionalTest):
+class TestMembersController(base.APITest):
     def setUp(self):
         super(TestMembersController, self).setUp()
 

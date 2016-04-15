@@ -19,7 +19,7 @@ from mistral.tests.unit.api import base
 from mistral.tests.unit.api import test_auth
 
 
-class TestRootController(base.FunctionalTest):
+class TestRootController(base.APITest):
     def test_index(self):
         resp = self.app.get('/', headers={'Accept': 'application/json'})
 

@@ -120,7 +120,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
 
-class TestActionExecutionsController(base.FunctionalTest):
+class TestActionExecutionsController(base.APITest):
     def setUp(self):
         super(TestActionExecutionsController, self).setUp()
 

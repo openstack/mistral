@@ -115,7 +115,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
 
 
-class TestExecutionsController(base.FunctionalTest):
+class TestExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     def test_get(self):
         resp = self.app.get('/v2/executions/123')

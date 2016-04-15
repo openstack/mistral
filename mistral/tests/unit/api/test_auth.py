@@ -57,7 +57,7 @@ PKI_TOKEN_VERIFIED = {
 }
 
 
-class TestKeystoneMiddleware(base.FunctionalTest):
+class TestKeystoneMiddleware(base.APITest):
     """Test keystone middleware AuthProtocol.
 
     It checks that keystone middleware AuthProtocol is executed

@@ -164,7 +164,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 
-class TestWorkflowsController(base.FunctionalTest):
+class TestWorkflowsController(base.APITest):
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     def test_get(self):
         resp = self.app.get('/v2/workflows/123')

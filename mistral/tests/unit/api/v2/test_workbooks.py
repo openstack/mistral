@@ -101,7 +101,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 
-class TestWorkbooksController(base.FunctionalTest):
+class TestWorkbooksController(base.APITest):
     @mock.patch.object(db_api, "get_workbook", MOCK_WORKBOOK)
     def test_get(self):
         resp = self.app.get('/v2/workbooks/123')

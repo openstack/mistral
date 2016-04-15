@@ -67,7 +67,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 
-class TestCronTriggerController(base.FunctionalTest):
+class TestCronTriggerController(base.APITest):
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     def test_get(self):
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')

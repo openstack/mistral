@@ -130,7 +130,7 @@ def _convert_vars_to_string(env_dict):
     return env_dict
 
 
-class TestEnvironmentController(base.FunctionalTest):
+class TestEnvironmentController(base.APITest):
 
     def _assert_dict_equal(self, expected, actual):
         self.assertIsInstance(expected, dict)
