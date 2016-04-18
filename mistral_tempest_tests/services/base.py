@@ -58,7 +58,8 @@ class MistralClientBase(rest_client.RestClient):
         super(MistralClientBase, self).__init__(
             auth_provider=auth_provider,
             service=service_type,
-            region=CONF.identity.region
+            region=CONF.identity.region,
+            disable_ssl_certificate_validation=True
         )
 
         if service_type not in ('workflow', 'workflowv2'):
