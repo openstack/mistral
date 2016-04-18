@@ -1,7 +1,7 @@
  #!/bin/bash -xe
 if [ -x "/usr/bin/apt-get" ]; then
 sudo -E apt-get update
-sudo -E apt-get install -y docker.io apparmor aufs-tools
+sudo -E apt-get install -y docker.io apparmor cgroup-lite
 elif [ -x "/usr/bin/yum" ]; then
 sudo -E yum install -y docker-io gpg
 else

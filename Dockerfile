@@ -10,6 +10,7 @@ RUN sudo pip install tox==1.6.1
 RUN mkdir -p /opt/stack/mistral
 ADD . /opt/stack/mistral
 WORKDIR /opt/stack/mistral
+RUN pip install -r requirements.txt
 RUN pip install .
 RUN mkdir /etc/mistral
 RUN oslo-config-generator --config-file tools/config/config-generator.mistral.conf --output-file /etc/mistral/mistral.conf
