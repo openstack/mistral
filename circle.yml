@@ -1,0 +1,96 @@
+# Setup in CircleCI account the following ENV variables:
+# IS_PRODUCTION (default: 0)
+# IS_ENTERPRISE (default: 0)
+# PACKAGECLOUD_ORGANIZATION (default: stackstorm)
+# PACKAGECLOUD_TOKEN
+# DOCKER_USER
+# DOCKER_EMAIL
+# DOCKER_PASSWORD
+general:
+  # Don't run CI for PR, only for major branches
+  branches:
+    only:
+      - master
+      - /st2-[0-9]+\.[0-9]+\.[0-9]+/
+  build_dir: st2-packages
+  artifacts:
+    - ~/packages
+
+machine:
+  environment:
+    DISTROS: "wheezy jessie trusty el6 el7"
+    NOTESTS: "el7"
+    ST2_PACKAGES_REPO: https://github.com/StackStorm/st2-packages
+    ST2_PACKAGES_BRANCH: "v1.4"  # XXX: Set this to vX.Y for release branches
+    ST2_DOCKERFILES_REPO: https://github.com/StackStorm/st2-dockerfiles
+    ST2_PACKAGES: "st2mistral"
+    BUILD_DOCKER: 0
+    DEPLOY_DOCKER: 0
+    DEPLOY_PACKAGES: 1
+  pre:
+    - mkdir -p ~/packages
+    # Need latest Docker version for some features to work (CircleCI by default works with outdated version)
+    - |
+      sudo curl -L -o /usr/bin/docker 'http://s3-external-1.amazonaws.com/circle-downloads/docker-1.9.0-circleci'
+      sudo chmod 0755 /usr/bin/docker
+  services:
+    - docker
+    - postgresql
+    - rabbitmq-server
+
+checkout:
+  post:
+    - |
+      git clone --depth 1 ${ST2_PACKAGES_REPO} /home/ubuntu/mistral/st2-packages
+      cd /home/ubuntu/mistral/st2-packages
+      git checkout ${ST2_PACKAGES_BRANCH} || true
+    - .circle/buildenv_mistral.sh
+
+dependencies:
+  cache_directories:
+    - ~/.cache/pip
+  pre:
+    - sudo .circle/configure-services.sh
+    - sudo .circle/fix-cache-permissions.sh
+    - sudo apt-get -y install parallel jq
+    - gem install package_cloud
+    - sudo pip install docker-compose
+    - docker-compose version
+    - docker version
+  override:
+    - .circle/docker-compose.sh pull ${DISTRO}
+  post:
+    - .circle/docker-compose.sh build ${DISTRO}
+
+test:
+  override:
+    # docker-compose test depends on both mistral and st2 packages being available.
+    # Enable the tests, when there are separate tests for mistral.
+    # - .circle/docker-compose.sh test ${DISTRO}:
+    #    parallel: true
+    # Copy all Packages to node0
+    - rsync -rv /tmp/st2-packages/ node0:~/packages/${DISTRO}:
+        parallel: true
+  # post:
+    # If we ever have docker containers for mistral, enable the following line
+    # - .circle/docker.sh build st2mistral
+
+deployment:
+  publish:
+    owner: StackStorm
+    branch:
+      - master
+      - /st2-[0-9]+\.[0-9]+\.[0-9]+/
+    commands:
+      - |
+        DISTROS=($DISTROS)
+        parallel -v -j0 --line-buffer .circle/packagecloud.sh deploy {} ~/packages/{} ::: ${DISTROS[@]::$CIRCLE_NODE_TOTAL}
+      - .circle/docker.sh deploy st2mistral
+      - .circle/save_payload.py ~/packages
+
+experimental:
+  notify:
+    branches:
+      only:
+        - master
+        - /st2-[0-9]+\.[0-9]+\.[0-9]+/
