@@ -275,9 +275,9 @@ class DefaultEngine(base.Engine, coordination.Service):
             raise e
 
     @u.log_exec(LOG)
-    def pause_workflow(self, execution_id):
+    def pause_workflow(self, wf_ex_id):
         with db_api.transaction():
-            wf_ex = wf_handler.lock_workflow_execution(execution_id)
+            wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
             wf_handler.set_execution_state(wf_ex, states.PAUSED)
 

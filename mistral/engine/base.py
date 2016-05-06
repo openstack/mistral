@@ -69,28 +69,41 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def pause_workflow(self, execution_id):
-        """Pauses workflow execution.
+    def pause_workflow(self, wf_ex_id):
+        """Pauses workflow.
 
-        :param execution_id: Execution id.
+        :param wf_ex_id: Execution id.
         :return: Workflow execution object.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def resume_workflow(self, execution_id):
-        """Resumes workflow execution.
+    def resume_workflow(self, wf_ex_id):
+        """Resumes workflow.
 
-        :param execution_id: Execution id.
+        :param wf_ex_id: Execution id.
         :return: Workflow execution object.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def stop_workflow(self, execution_id, state, message):
-        """Stops workflow execution.
+    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True, env=None):
+        """Rerun workflow from the specified task.
 
-        :param execution_id: Workflow execution id.
+        :param wf_ex_id: Workflow execution id.
+        :param task_ex_id: Task execution id.
+        :param reset: If True, reset task state including deleting its action
+            executions.
+        :param env: Workflow environment.
+        :return: Workflow execution object.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def stop_workflow(self, wf_ex_id, state, message):
+        """Stops workflow.
+
+        :param wf_ex_id: Workflow execution id.
         :param state: State assigned to the workflow. Permitted states are
             SUCCESS or ERROR.
         :param message: Optional information string.
@@ -100,10 +113,10 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def rollback_workflow(self, execution_id):
+    def rollback_workflow(self, wf_ex_id):
         """Rolls back workflow execution.
 
-        :param execution_id: Execution id.
+        :param wf_ex_id: Execution id.
         :return: Workflow execution object.
         """
         raise NotImplementedError
