@@ -99,15 +99,15 @@ class YaqlEvaluatorTest(base.BaseTest):
         self._evaluator.validate('$.a1 * $.a2')
 
     def test_validate_failed(self):
-        self.assertRaises(exc.YaqlEvaluationException,
+        self.assertRaises(exc.YaqlGrammarException,
                           self._evaluator.validate,
                           '*')
 
-        self.assertRaises(exc.YaqlEvaluationException,
+        self.assertRaises(exc.YaqlGrammarException,
                           self._evaluator.validate,
                           [1, 2, 3])
 
-        self.assertRaises(exc.YaqlEvaluationException,
+        self.assertRaises(exc.YaqlGrammarException,
                           self._evaluator.validate,
                           {'a': 1})
 
@@ -184,7 +184,7 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         self._evaluator.validate('The value is <% $.a1 %>.')
 
     def test_validate_failed(self):
-        self.assertRaises(exc.YaqlEvaluationException,
+        self.assertRaises(exc.YaqlGrammarException,
                           self._evaluator.validate,
                           'The value is <% * %>.')
 

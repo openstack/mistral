@@ -183,8 +183,9 @@ def get_workbook(name):
     wb = _get_workbook(name)
 
     if not wb:
-        raise exc.NotFoundException(
-            "Workbook not found [workbook_name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Workbook not found [workbook_name=%s]" % name
+        )
 
     return wb
 
@@ -218,8 +219,9 @@ def update_workbook(name, values, session=None):
     wb = _get_workbook(name)
 
     if not wb:
-        raise exc.NotFoundException(
-            "Workbook not found [workbook_name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Workbook not found [workbook_name=%s]" % name
+        )
 
     wb.update(values.copy())
 
@@ -239,8 +241,9 @@ def delete_workbook(name, session=None):
     wb = _get_workbook(name)
 
     if not wb:
-        raise exc.NotFoundException(
-            "Workbook not found [workbook_name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Workbook not found [workbook_name=%s]" % name
+        )
 
     session.delete(wb)
 
@@ -281,7 +284,7 @@ def get_workflow_definition(identifier):
               else _get_workflow_definition(identifier))
 
     if not wf_def:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Workflow not found [workflow_identifier=%s]" % identifier
         )
 
@@ -292,7 +295,7 @@ def get_workflow_definition_by_id(id):
     wf_def = _get_workflow_definition_by_id(id)
 
     if not wf_def:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Workflow not found [workflow_id=%s]" % id
         )
 
@@ -363,7 +366,7 @@ def update_workflow_definition(identifier, values, session=None):
 
         try:
             [get_cron_trigger(name) for name in cron_triggers]
-        except exc.NotFoundException:
+        except exc.DBEntityNotFoundException:
             raise exc.NotAllowedException(
                 "Can not update scope of workflow that has triggers "
                 "associated in other tenants."
@@ -446,7 +449,7 @@ def get_action_definition_by_id(id):
     action_def = _get_db_object_by_id(models.ActionDefinition, id)
 
     if not action_def:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Action not found [action_id=%s]" % id
         )
 
@@ -457,7 +460,7 @@ def get_action_definition(name):
     a_def = _get_action_definition(name)
 
     if not a_def:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Action definition not found [action_name=%s]" % name
         )
 
@@ -509,8 +512,9 @@ def update_action_definition(name, values, session=None):
     a_def = _get_action_definition(name)
 
     if not a_def:
-        raise exc.NotFoundException(
-            "Action definition not found [action_name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Action definition not found [action_name=%s]" % name
+        )
 
     a_def.update(values.copy())
 
@@ -530,7 +534,7 @@ def delete_action_definition(name, session=None):
     a_def = _get_action_definition(name)
 
     if not a_def:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Action definition not found [action_name=%s]" % name
         )
 
@@ -552,7 +556,7 @@ def get_execution(id):
     ex = _get_execution(id)
 
     if not ex:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Execution not found [execution_id=%s]" % id
         )
 
@@ -592,7 +596,7 @@ def update_execution(id, values, session=None):
     ex = _get_execution(id)
 
     if not ex:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Execution not found [execution_id=%s]" % id
         )
 
@@ -614,8 +618,9 @@ def delete_execution(id, session=None):
     ex = _get_execution(id)
 
     if not ex:
-        raise exc.NotFoundException(
-            "Execution not found [execution_id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "Execution not found [execution_id=%s]" % id
+        )
 
     session.delete(ex)
 
@@ -639,8 +644,9 @@ def get_action_execution(id):
     a_ex = _get_action_execution(id)
 
     if not a_ex:
-        raise exc.NotFoundException(
-            "ActionExecution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "ActionExecution not found [id=%s]" % id
+        )
 
     return a_ex
 
@@ -678,7 +684,7 @@ def update_action_execution(id, values, session=None):
     a_ex = _get_action_execution(id)
 
     if not a_ex:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "ActionExecution not found [id=%s]" % id
         )
 
@@ -700,7 +706,7 @@ def delete_action_execution(id, session=None):
     a_ex = _get_action_execution(id)
 
     if not a_ex:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "ActionExecution not found [id=%s]" % id
         )
 
@@ -726,7 +732,9 @@ def get_workflow_execution(id):
     wf_ex = _get_workflow_execution(id)
 
     if not wf_ex:
-        raise exc.NotFoundException("WorkflowExecution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "WorkflowExecution not found [id=%s]" % id
+        )
 
     return wf_ex
 
@@ -780,7 +788,9 @@ def update_workflow_execution(id, values, session=None):
     wf_ex = _get_workflow_execution(id)
 
     if not wf_ex:
-        raise exc.NotFoundException("WorkflowExecution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "WorkflowExecution not found [id=%s]" % id
+        )
 
     wf_ex.update(values.copy())
 
@@ -800,7 +810,9 @@ def delete_workflow_execution(id, session=None):
     wf_ex = _get_workflow_execution(id)
 
     if not wf_ex:
-        raise exc.NotFoundException("WorkflowExecution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "WorkflowExecution not found [id=%s]" % id
+        )
 
     session.delete(wf_ex)
 
@@ -820,7 +832,9 @@ def get_task_execution(id):
     task_ex = _get_task_execution(id)
 
     if not task_ex:
-        raise exc.NotFoundException("Task execution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "Task execution not found [id=%s]" % id
+        )
 
     return task_ex
 
@@ -854,7 +868,9 @@ def update_task_execution(id, values, session=None):
     task_ex = _get_task_execution(id)
 
     if not task_ex:
-        raise exc.NotFoundException("TaskExecution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "TaskExecution not found [id=%s]" % id
+        )
 
     task_ex.update(values.copy())
 
@@ -874,7 +890,9 @@ def delete_task_execution(id, session=None):
     task_ex = _get_task_execution(id)
 
     if not task_ex:
-        raise exc.NotFoundException("TaskExecution not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "TaskExecution not found [id=%s]" % id
+        )
 
     session.delete(task_ex)
 
@@ -914,7 +932,7 @@ def delete_delayed_call(id, session=None):
     delayed_call = _get_delayed_call(id)
 
     if not delayed_call:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "DelayedCall not found [id=%s]" % id
         )
 
@@ -964,7 +982,9 @@ def get_delayed_call(id, session=None):
     delayed_call = _get_delayed_call(id=id, session=session)
 
     if not delayed_call:
-        raise exc.NotFoundException("Delayed Call not found [id=%s]" % id)
+        raise exc.DBEntityNotFoundException(
+            "Delayed Call not found [id=%s]" % id
+        )
 
     return delayed_call
 
@@ -1000,8 +1020,9 @@ def get_cron_trigger(name):
     cron_trigger = _get_cron_trigger(name)
 
     if not cron_trigger:
-        raise exc.NotFoundException(
-            "Cron trigger not found [name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Cron trigger not found [name=%s]" % name
+        )
 
     return cron_trigger
 
@@ -1052,7 +1073,9 @@ def update_cron_trigger(name, values, session=None, query_filter=None):
     cron_trigger = _get_cron_trigger(name)
 
     if not cron_trigger:
-        raise exc.NotFoundException("Cron trigger not found [name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Cron trigger not found [name=%s]" % name
+        )
 
     if query_filter:
         try:
@@ -1099,7 +1122,9 @@ def delete_cron_trigger(name, session=None):
     cron_trigger = _get_cron_trigger(name)
 
     if not cron_trigger:
-        raise exc.NotFoundException("Cron trigger not found [name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Cron trigger not found [name=%s]" % name
+        )
 
     # Delete the cron trigger by ID and get the affected row count.
     table = models.CronTrigger.__table__
@@ -1131,7 +1156,9 @@ def get_environment(name):
     env = _get_environment(name)
 
     if not env:
-        raise exc.NotFoundException("Environment not found [name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Environment not found [name=%s]" % name
+        )
 
     return env
 
@@ -1165,7 +1192,9 @@ def update_environment(name, values, session=None):
     env = _get_environment(name)
 
     if not env:
-        raise exc.NotFoundException("Environment not found [name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Environment not found [name=%s]" % name
+        )
 
     env.update(values)
 
@@ -1187,7 +1216,9 @@ def delete_environment(name, session=None):
     env = _get_environment(name)
 
     if not env:
-        raise exc.NotFoundException("Environment not found [name=%s]" % name)
+        raise exc.DBEntityNotFoundException(
+            "Environment not found [name=%s]" % name
+        )
 
     session.delete(env)
 
@@ -1268,7 +1299,7 @@ def get_resource_member(resource_id, res_type, member_id):
     ).first()
 
     if not res_member:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Resource member not found [resource_id=%s, member_id=%s]" %
             (resource_id, member_id)
         )
@@ -1298,7 +1329,7 @@ def update_resource_member(resource_id, res_type, member_id, values,
     # Only member who is not the owner of the resource can update the
     # membership status.
     if member_id != security.get_project_id():
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Resource member not found [resource_id=%s, member_id=%s]" %
             (resource_id, member_id)
         )
@@ -1312,7 +1343,7 @@ def update_resource_member(resource_id, res_type, member_id, values,
     ).first()
 
     if not res_member:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Resource member not found [resource_id=%s, member_id=%s]" %
             (resource_id, member_id)
         )
@@ -1331,7 +1362,7 @@ def delete_resource_member(resource_id, res_type, member_id, session=None):
     res_member = query.filter(_get_criterion(resource_id, member_id)).first()
 
     if not res_member:
-        raise exc.NotFoundException(
+        raise exc.DBEntityNotFoundException(
             "Resource member not found [resource_id=%s, member_id=%s]" %
             (resource_id, member_id)
         )

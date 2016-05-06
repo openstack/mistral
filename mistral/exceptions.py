@@ -14,16 +14,34 @@
 #    limitations under the License.
 
 
-class Error(Exception):
+class MistralError(Exception):
+    """Mistral specific error.
+
+    Reserved for situations that can't automatically handled. When it occurs
+    it signals that there is a major environmental problem like invalid startup
+    configuration or implementation problem (e.g. some code doesn't take care
+    of certain corner cases). From architectural perspective it's pointless to
+    try to handle this type of problems except doing some finalization work
+    like transaction rollback, deleting temporary files etc.
+    """
     def __init__(self, message=None):
-        super(Error, self).__init__(message)
+        super(MistralError, self).__init__(message)
 
 
-class MistralException(Error):
-    """Base Exception for the project
+class MistralException(Exception):
+    """Mistral specific exception.
 
-    To correctly use this class, inherit from it and define
-    a 'message' and 'http_code' properties.
+    Reserved for situations that are not critical for program continuation.
+    It is possible to recover from this type of problems automatically and
+    continue program execution. Such problems may be related with invalid user
+    input (such as invalid syntax) or temporary environmental problems.
+
+    In case if an instance of a certain exception type bubbles up to API layer
+    then this type of exception it must be associated with an http code so it's
+    clear how to represent it for a client.
+
+    To correctly use this class, inherit from it and define a 'message' and
+    'http_code' properties.
     """
     message = "An unknown exception occurred"
     http_code = 500
@@ -42,29 +60,55 @@ class MistralException(Error):
     def __init__(self, message=None):
         if message is not None:
             self.message = message
+
         super(MistralException, self).__init__(
             '%d: %s' % (self.http_code, self.message))
 
+
+# Database exceptions.
 
 class DBException(MistralException):
     http_code = 400
 
 
-class DataAccessException(MistralException):
-    http_code = 400
-
-
-class NotFoundException(MistralException):
-    http_code = 404
-    message = "Object not found"
-
-
-class DBDuplicateEntryException(MistralException):
+class DBDuplicateEntryException(DBException):
     http_code = 409
     message = "Database object already exists"
 
 
-class DBQueryEntryException(MistralException):
+class DBQueryEntryException(DBException):
+    http_code = 400
+
+
+class DBEntityNotFoundException(DBException):
+    http_code = 404
+    message = "Object not found"
+
+
+# DSL exceptions.
+
+class DSLParsingException(MistralException):
+    http_code = 400
+
+
+class YaqlGrammarException(DSLParsingException):
+    http_code = 400
+    message = "Invalid grammar of YAQL expression"
+
+
+class InvalidModelException(DSLParsingException):
+    http_code = 400
+    message = "Wrong entity definition"
+
+
+# Various common exceptions.
+
+class YaqlEvaluationException(MistralException):
+    http_code = 400
+    message = "Can not evaluate YAQL expression"
+
+
+class DataAccessException(MistralException):
     http_code = 400
 
 
@@ -95,20 +139,6 @@ class InputException(MistralException):
 class ApplicationContextNotFoundException(MistralException):
     http_code = 400
     message = "Application context not found"
-
-
-class DSLParsingException(MistralException):
-    http_code = 400
-
-
-class YaqlEvaluationException(DSLParsingException):
-    http_code = 400
-    message = "Can not evaluate YAQL expression"
-
-
-class InvalidModelException(DSLParsingException):
-    http_code = 400
-    message = "Wrong entity definition"
 
 
 class InvalidResultException(MistralException):

@@ -160,7 +160,7 @@ MOCK_WFS = mock.MagicMock(return_value=[WF_DB])
 MOCK_UPDATED_WF = mock.MagicMock(return_value=UPDATED_WF_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
-MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
+MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 
 

@@ -289,7 +289,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         eventlet.sleep(WAIT)
 
-        self.assertRaises(exc.NotFoundException,
+        self.assertRaises(exc.DBEntityNotFoundException,
                           db_api.get_delayed_call,
                           calls[0].id
                           )
@@ -336,7 +336,7 @@ class SchedulerServiceTest(base.DbTestCase):
         eventlet.sleep(WAIT)
 
         # If the scheduler does handel calls that failed on update
-        # NotFoundException will raise.
+        # DBEntityNotFoundException will raise.
         db_api.get_delayed_call(calls[0].id)
 
         db_api.delete_delayed_call(calls[0].id)

@@ -53,7 +53,7 @@ def get_controller(wf_ex, wf_spec=None):
             break
 
     if not ctrl_cls:
-        raise exc.NotFoundException(
+        raise exc.MistralError(
             'Failed to find a workflow controller [type=%s]' % wf_type
         )
 

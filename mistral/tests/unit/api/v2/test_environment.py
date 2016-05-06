@@ -107,7 +107,7 @@ MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
 MOCK_ENVIRONMENTS = mock.MagicMock(return_value=[ENVIRONMENT_DB])
 MOCK_UPDATED_ENVIRONMENT = mock.MagicMock(return_value=UPDATED_ENVIRONMENT_DB)
 MOCK_EMPTY = mock.MagicMock(return_value=[])
-MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
+MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundException())
 MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryException())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 

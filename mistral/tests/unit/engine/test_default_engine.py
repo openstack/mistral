@@ -89,7 +89,7 @@ ENVIRONMENT_DB = models.Environment(
 )
 
 MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
-MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.NotFoundException())
+MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundException())
 
 
 class DefaultEngineTest(base.DbTestCase):
@@ -233,7 +233,7 @@ class DefaultEngineTest(base.DbTestCase):
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_start_workflow_env_not_found(self):
-        self.assertRaises(exc.NotFoundException,
+        self.assertRaises(exc.DBEntityNotFoundException,
                           self.engine.start_workflow,
                           'wb.wf',
                           {'param1': '<% env().key1 %>'},

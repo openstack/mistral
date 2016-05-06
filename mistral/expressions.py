@@ -78,7 +78,7 @@ class YAQLEvaluator(Evaluator):
         try:
             YAQL_ENGINE(expression)
         except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
-            raise exc.YaqlEvaluationException(getattr(e, 'message', e))
+            raise exc.YaqlGrammarException(getattr(e, 'message', e))
 
     @classmethod
     def evaluate(cls, expression, data_context):
