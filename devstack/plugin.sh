@@ -105,7 +105,7 @@ function init_mistral {
 
 # install_mistral - Collect source and prepare
 function install_mistral {
-    setup_develop $MISTRAL_DIR -e
+    setup_develop $MISTRAL_DIR
 
     # installing python-nose.
     real_install_package python-nose
@@ -118,7 +118,7 @@ function install_mistral {
 
 function _install_mistraldashboard {
     git_clone $MISTRAL_DASHBOARD_REPO $MISTRAL_DASHBOARD_DIR $MISTRAL_DASHBOARD_BRANCH
-    setup_develop $MISTRAL_DASHBOARD_DIR -e
+    setup_develop $MISTRAL_DASHBOARD_DIR
     ln -fs $MISTRAL_DASHBOARD_DIR/_50_mistral.py.example $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
 }
 
@@ -130,7 +130,7 @@ function install_mistral_pythonclient {
         if [ ! "$tags" = "" ]; then
             git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d $tags
         fi
-        setup_develop $MISTRAL_PYTHONCLIENT_DIR -e
+        setup_develop $MISTRAL_PYTHONCLIENT_DIR
     fi
 }
 
