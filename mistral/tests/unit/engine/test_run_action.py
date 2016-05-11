@@ -65,6 +65,7 @@ class RunActionEngineTest(base.EngineTestCase):
         # Start action and see the result.
         action_ex = self.engine.start_action('std.echo', {'output': 'Hello!'})
 
+        self.assertIsNotNone(action_ex.output)
         self.assertIn('some error', action_ex.output['result'])
 
     def test_run_action_save_result(self):
@@ -148,10 +149,15 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.assertIn('concat', exception.message)
 
-    @mock.patch('mistral.engine.action_handler.resolve_action_definition')
+    # TODO(rakhmerov): This is an example of a bad test. It pins to
+    # implementation details too much and prevents from making refactoring
+    # easily. When writing tests we should make assertions about
+    # consequences, not about how internal machinery works, i.e. we need to
+    # follow "black box" testing paradigm.
+    @mock.patch('mistral.engine.actions.resolve_action_definition')
     @mock.patch('mistral.engine.utils.validate_input')
     @mock.patch('mistral.services.action_manager.get_action_class')
-    @mock.patch('mistral.engine.action_handler.run_action')
+    @mock.patch('mistral.engine.actions.PythonAction.run')
     def test_run_action_with_kwargs_input(self, run_mock, class_mock,
                                           validate_mock, def_mock):
         action_def = models.ActionDefinition()
@@ -172,16 +178,15 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.engine.start_action('fake_action', {'input': 'Hello'})
 
-        self.assertEqual(2, def_mock.call_count)
-        def_mock.assert_called_with('fake_action', None, None)
+        self.assertEqual(1, def_mock.call_count)
+        def_mock.assert_called_with('fake_action')
 
         self.assertEqual(0, validate_mock.call_count)
 
         class_ret.assert_called_once_with(input='Hello')
 
         run_mock.assert_called_once_with(
-            action_def,
             {'input': 'Hello'},
-            target=None,
-            async=False
+            None,
+            save=None
         )

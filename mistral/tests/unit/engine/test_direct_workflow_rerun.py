@@ -460,18 +460,27 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIsNotNone(wf_ex.state_info)
-        self.assertEqual(2, len(wf_ex.task_executions))
 
-        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
-        task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
+        task_execs = wf_ex.task_executions
 
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
-        self.assertEqual(states.ERROR, task_2_ex.state)
+        self.assertEqual(2, len(task_execs))
+
+        task_1_ex = self._assert_single_item(
+            task_execs,
+            name='t1',
+            state=states.SUCCESS
+        )
+        task_2_ex = self._assert_single_item(
+            task_execs,
+            name='t2',
+            state=states.ERROR
+        )
+
         self.assertIsNotNone(task_2_ex.state_info)
 
         # Resume workflow and re-run failed task.
         e = self.assertRaises(
-            exc.EngineException,
+            exc.MistralError,
             self.engine.rerun_workflow,
             wf_ex.id,
             task_1_ex.id
@@ -505,9 +514,12 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIsNotNone(wf_ex.state_info)
-        self.assertEqual(1, len(wf_ex.task_executions))
 
-        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
+        task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task_1_ex = self._assert_single_item(task_execs, name='t1')
 
         self.assertEqual(states.ERROR, task_1_ex.state)
         self.assertIsNotNone(task_1_ex.state_info)
@@ -532,10 +544,13 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
-        self.assertEqual(2, len(wf_ex.task_executions))
 
-        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
-        task_2_ex = self._assert_single_item(wf_ex.task_executions, name='t2')
+        task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
+
+        task_1_ex = self._assert_single_item(task_execs, name='t1')
+        task_2_ex = self._assert_single_item(task_execs, name='t2')
 
         # Check action executions of task 1.
         self.assertEqual(states.SUCCESS, task_1_ex.state)
@@ -547,8 +562,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # The single action execution that succeeded should not re-run.
         self.assertEqual(5, len(task_1_action_exs))
-        self.assertListEqual(['Task 1.0', 'Task 1.1', 'Task 1.2'],
-                             task_1_ex.published.get('v1'))
+        self.assertListEqual(
+            ['Task 1.0', 'Task 1.1', 'Task 1.2'],
+            task_1_ex.published.get('v1')
+        )
 
         # Check action executions of task 2.
         self.assertEqual(states.SUCCESS, task_2_ex.state)

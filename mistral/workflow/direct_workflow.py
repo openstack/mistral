@@ -121,7 +121,7 @@ class DirectWorkflowController(base.WorkflowController):
             # NOTE(xylan): Decide whether or not a join task should run
             # immediately.
             if self._is_unsatisfied_join(cmd):
-                cmd.wait_flag = True
+                cmd.wait = True
 
             cmds.append(cmd)
 

@@ -21,6 +21,9 @@ from mistral import exceptions as exc
 from mistral import utils
 
 
+# TODO(rakhmerov): This method is too abstract, validation rules may vary
+# depending on object type (action, wf), it's not clear what it can be
+# applied to.
 def validate_input(definition, input, spec=None):
     input_param_names = copy.deepcopy(list((input or {}).keys()))
     missing_param_names = []

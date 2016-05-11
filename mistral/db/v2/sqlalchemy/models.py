@@ -199,7 +199,7 @@ def validate_long_type_length(cls, field_name, value):
         size_limit_kb = cfg.CONF.engine.execution_field_size_limit_kb
 
         # If the size is unlimited.
-        if (size_limit_kb < 0):
+        if size_limit_kb < 0:
             return
 
         size_kb = int(sys.getsizeof(str(value)) / 1024)
@@ -394,6 +394,8 @@ class CronTrigger(mb.MistralSecureModelBase):
 # Register all hooks related to secure models.
 mb.register_secure_model_hooks()
 
+# TODO(rakhmerov): This is a bad solution. It's hard to find in the code,
+# configure flexibly etc. Fix it.
 # Register an event listener to verify that the size of all the long columns
 # affected by the user do not exceed the limit configuration.
 for attr_name in ['input', 'output', 'params', 'published']:

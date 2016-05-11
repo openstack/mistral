@@ -15,7 +15,6 @@
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import base
-from mistral.engine import rpc
 from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
@@ -24,8 +23,8 @@ from mistral.workflow import states
 
 import six
 
-_ENGINE_CLIENT_PATH = 'mistral.engine.rpc.get_engine_client'
-_RUN_EXISTING_TASK_PATH = 'mistral.engine.task_handler.run_existing_task'
+_CONTINUE_TASK_PATH = 'mistral.engine.policies._continue_task'
+_COMPLETE_TASK_PATH = 'mistral.engine.policies._complete_task'
 
 
 def _log_task_delay(task_ex, delay_sec):
@@ -180,7 +179,7 @@ class WaitBeforePolicy(base.TaskPolicy):
         policy_context = runtime_context[context_key]
 
         if policy_context.get('skip'):
-            # Unset state 'DELAYED'.
+            # Unset state 'RUNNING_DELAYED'.
             wf_trace.info(
                 task_ex,
                 "Task '%s' [%s -> %s]"
@@ -193,13 +192,16 @@ class WaitBeforePolicy(base.TaskPolicy):
 
         if task_ex.state != states.IDLE:
             policy_context.update({'skip': True})
+
             _log_task_delay(task_ex, self.delay)
 
             task_ex.state = states.RUNNING_DELAYED
 
+            # TODO(rakhmerov): This is wrong as task handler doesn't manage
+            # transactions and hence it can't be called explicitly.
             scheduler.schedule_call(
                 None,
-                _RUN_EXISTING_TASK_PATH,
+                _CONTINUE_TASK_PATH,
                 self.delay,
                 task_ex_id=task_ex.id,
             )
@@ -228,6 +230,7 @@ class WaitAfterPolicy(base.TaskPolicy):
         task_ex.runtime_context = runtime_context
 
         policy_context = runtime_context[context_key]
+
         if policy_context.get('skip'):
             # Skip, already processed.
             return
@@ -236,17 +239,25 @@ class WaitAfterPolicy(base.TaskPolicy):
 
         _log_task_delay(task_ex, self.delay)
 
-        state = task_ex.state
+        end_state = task_ex.state
+        end_state_info = task_ex.state_info
+
+        # TODO(rakhmerov): Policies probably needs to have tasks.Task
+        # interface in order to change manage task state safely.
         # Set task state to 'DELAYED'.
         task_ex.state = states.RUNNING_DELAYED
+        task_ex.state_info = (
+            'Suspended by wait-after policy for %s seconds' % self.delay
+        )
 
         # Schedule to change task state to RUNNING again.
         scheduler.schedule_call(
-            _ENGINE_CLIENT_PATH,
-            'on_task_state_change',
+            None,
+            _COMPLETE_TASK_PATH,
             self.delay,
-            state=state,
             task_ex_id=task_ex.id,
+            state=end_state,
+            state_info=end_state_info
         )
 
 
@@ -339,7 +350,7 @@ class RetryPolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            _RUN_EXISTING_TASK_PATH,
+            _CONTINUE_TASK_PATH,
             self.delay,
             task_ex_id=task_ex.id,
         )
@@ -360,7 +371,7 @@ class TimeoutPolicy(base.TaskPolicy):
 
         scheduler.schedule_call(
             None,
-            'mistral.engine.policies.fail_task_if_incomplete',
+            'mistral.engine.policies._fail_task_if_incomplete',
             self.delay,
             task_ex_id=task_ex.id,
             timeout=self.delay
@@ -424,21 +435,35 @@ class ConcurrencyPolicy(base.TaskPolicy):
         task_ex.runtime_context = runtime_context
 
 
-def fail_task_if_incomplete(task_ex_id, timeout):
+def _continue_task(task_ex_id):
+    from mistral.engine import task_handler
+
+    # TODO(rakhmerov): It must be done in TX after Scheduler is fixed.
+    task_handler.continue_task(db_api.get_task_execution(task_ex_id))
+
+
+def _complete_task(task_ex_id, state, state_info):
+    from mistral.engine import task_handler
+
+    # TODO(rakhmerov): It must be done in TX after Scheduler is fixed.
+    task_handler.complete_task(
+        db_api.get_task_execution(task_ex_id),
+        state,
+        state_info
+    )
+
+
+def _fail_task_if_incomplete(task_ex_id, timeout):
+    from mistral.engine import task_handler
+
+    # TODO(rakhmerov): It must be done in TX after Scheduler is fixed.
     task_ex = db_api.get_task_execution(task_ex_id)
 
     if not states.is_completed(task_ex.state):
-        msg = "Task timed out [id=%s, timeout(s)=%s]." % (task_ex_id, timeout)
+        msg = 'Task timed out [timeout(s)=%s].' % timeout
 
-        wf_trace.info(task_ex, msg)
-
-        wf_trace.info(
-            task_ex,
-            "Task '%s' [%s -> ERROR]" % (task_ex.name, task_ex.state)
-        )
-
-        rpc.get_engine_client().on_task_state_change(
-            task_ex_id,
+        task_handler.complete_task(
+            db_api.get_task_execution(task_ex_id),
             states.ERROR,
             msg
         )

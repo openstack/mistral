@@ -172,8 +172,7 @@ class EnvironmentTest(base.EngineTestCase):
                 'mistral.actions.std_actions.EchoAction',
                 {},
                 a_ex.input,
-                TARGET,
-                True
+                TARGET
             )
 
     def test_subworkflow_env_task_input(self):

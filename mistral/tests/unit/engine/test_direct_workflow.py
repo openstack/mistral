@@ -143,6 +143,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         """
 
         wf_service.create_workflows(wf_text)
+
         wf_ex = self.engine.start_workflow('wf', {})
 
         self.await_execution_success(wf_ex.id)
@@ -411,6 +412,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf:
           input:
             - var
+
           tasks:
             task1:
               action: std.echo output=<% $.var + $.var2 %>
@@ -484,7 +486,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             name='task1'
         )
 
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
+        self.assertEqual(states.ERROR, task_1_ex.state)
 
         # Assert that there is only one action execution and it's SUCCESS.
         task_1_action_exs = db_api.get_action_executions(
@@ -550,7 +552,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             name='task1'
         )
 
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
+        self.assertEqual(states.ERROR, task_1_ex.state)
 
         task_1_action_exs = db_api.get_action_executions(
             task_execution_id=task_1_ex.id

@@ -25,9 +25,7 @@ class WithItemsTest(base.BaseTest):
         return models.ActionExecution(
             accepted=accepted,
             state=state,
-            runtime_context={
-                'with_items_index': index
-            }
+            runtime_context={'index': index}
         )
 
     def test_get_indices(self):

@@ -303,7 +303,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         e = self.assertRaises(
-            exc.EngineException,
+            exc.MistralError,
             self.engine.rerun_workflow,
             wf_ex.id,
             task_1_ex.id

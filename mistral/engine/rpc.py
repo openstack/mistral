@@ -503,11 +503,12 @@ class ExecutorClient(base.Executor):
         :param transport: Messaging transport.
         :type transport: Transport.
         """
+        self.topic = cfg.CONF.executor.topic
+
         serializer = auth_ctx.RpcContextSerializer(
             auth_ctx.JsonPayloadSerializer()
         )
 
-        self.topic = cfg.CONF.executor.topic
         self._client = messaging.RPCClient(
             transport,
             messaging.Target(),
@@ -539,8 +540,15 @@ class ExecutorClient(base.Executor):
 
         rpc_client_method = call_ctx.cast if async else call_ctx.call
 
-        return rpc_client_method(
-            auth_ctx.ctx(),
-            'run_action',
-            **kwargs
+        res = rpc_client_method(auth_ctx.ctx(), 'run_action', **kwargs)
+
+        # TODO(rakhmerov): It doesn't seem a good approach since we have
+        # a serializer for Result class. A better solution would be to
+        # use a composite serializer that dispatches serialization and
+        # deserialization to concrete serializers depending on object
+        # type.
+
+        return (
+            wf_utils.Result(data=res['data'], error=res['error'])
+            if res else None
         )

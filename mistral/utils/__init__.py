@@ -23,6 +23,7 @@ from os import path
 import shutil
 import six
 import socket
+import sys
 import tempfile
 import threading
 import uuid
@@ -167,6 +168,16 @@ def cut(data, length=100):
         return "%s..." % string[:length]
     else:
         return string
+
+
+def cut_by_kb(data, kilobytes):
+    if kilobytes <= 0:
+        return cut(data)
+
+    bytes_per_char = sys.getsizeof('s') - sys.getsizeof('')
+    length = int(kilobytes * 1024 / bytes_per_char)
+
+    return cut(data, length)
 
 
 def iter_subclasses(cls, _seen=None):
