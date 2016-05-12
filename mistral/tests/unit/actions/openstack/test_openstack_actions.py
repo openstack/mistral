@@ -187,3 +187,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().orders_list.called)
         mocked().orders_list.assert_called_once_with(limit=5)
+
+    @mock.patch.object(actions.DesignateAction, '_get_client')
+    def test_designate_action(self, mocked):
+        method_name = "domain.get"
+        action_class = actions.DesignateAction
+        action_class.client_method_name = method_name
+        params = {'domain': 'example.com'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().domain.get.called)
+        mocked().domain.get.assert_called_once_with(domain="example.com")

@@ -17,6 +17,7 @@ import functools
 from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.v2 import client as cinderclient
+from designateclient import client as designateclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
 from ironic_inspector_client import v1 as ironic_inspector_client
@@ -570,3 +571,39 @@ class BarbicanAction(base.OpenStackAction):
         entity.store()
 
         return entity._get_formatted_entity()
+
+
+class DesignateAction(base.OpenStackAction):
+    _client_class = designateclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Designate action security context: %s" % ctx)
+
+        designate_endpoint = keystone_utils.get_endpoint_for_project(
+            service_type='dns'
+        )
+
+        designate_url = keystone_utils.format_url(
+            designate_endpoint.url,
+            {'tenant_id': ctx.project_id}
+        )
+
+        client = self._client_class(
+            1,
+            ctx.user_name,
+            ctx.auth_token,
+            project_id=ctx.project_id,
+            auth_url=designate_url,
+            region_name=designate_endpoint.region
+        )
+
+        client.client.auth_token = ctx.auth_token
+        client.client.management_url = designate_url
+
+        return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()
