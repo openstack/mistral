@@ -23,6 +23,7 @@ from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.openstack.common.apiclient import base as cinder_base
 from cinderclient.v2 import client as cinderclient
+from designateclient import client as designateclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.openstack.common.apiclient import base as heat_base
 from heatclient.v1 import client as heatclient
@@ -127,6 +128,11 @@ CEILOMETER_NAMESPACE_LIST = [
     'resources', 'samples', 'statistics', 'trait_descriptions', 'traits'
 ]
 
+DESIGNATE_NAMESPACE_LIST = [
+    'diagnostics', 'domain', 'quota', 'record', 'report_count',
+    'report_tenant', 'server', 'sync', 'touch'
+]
+
 
 def get_nova_client(**kwargs):
     return novaclient.Client(2)
@@ -171,6 +177,10 @@ def get_barbican_client(**kwargs):
     )
 
 
+def get_designate_client(**kwargs):
+    return designateclient.Client(1)
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -182,6 +192,7 @@ CLIENTS = {
     'ironic': get_ironic_client,
     'barbican': get_barbican_client,
     'mistral': get_mistral_client,
+    'designate': get_designate_client
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -198,6 +209,7 @@ BASE_MANAGERS = {
     'ironic': BASE_IRONIC_MANAGER,
     'barbican': BASE_BARBICAN_MANAGER,
     'mistral': BASE_MISTRAL_MANAGER,
+    'designate': None,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -205,7 +217,8 @@ BASE_MANAGERS = {
 }
 NAMESPACES = {
     'glance': GLANCE_NAMESPACE_LIST,
-    'ceilometer': CEILOMETER_NAMESPACE_LIST
+    'ceilometer': CEILOMETER_NAMESPACE_LIST,
+    'designate': DESIGNATE_NAMESPACE_LIST
 }
 ALLOWED_ATTRS = ['service_catalog', 'catalog']
 FORBIDDEN_METHODS = [
