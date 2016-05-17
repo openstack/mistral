@@ -22,11 +22,13 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
+from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import actions
 from mistral.utils import rest_utils
+from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
@@ -92,6 +94,9 @@ class ActionsController(rest.RestController, hooks.HookController):
     # to have requests and response of different content types. Then
     # delete ContentTypeHook.
     __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
+
+    validate = validation.SpecValidationController(
+        spec_parser.get_action_list_spec_from_yaml)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Action, wtypes.text)

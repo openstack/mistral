@@ -190,7 +190,7 @@ There are three service groups according to Mistral architecture currently, name
 Validation
 ----------
 
-Validation endpoints allow to check correctness of workbook and workflow DSL without having to upload them into Mistral.
+Validation endpoints allow to check correctness of workbook, workflow and ad-hoc action DSL without having to upload them into Mistral.
 
 **POST /v2/workbooks/validation**
   Validate workbook content (DSL grammar and semantics).
@@ -198,4 +198,7 @@ Validation endpoints allow to check correctness of workbook and workflow DSL wit
 **POST /v2/workflows/validation**
   Validate workflow content (DSL grammar and semantics).
 
-These endpoints expect workbook or workflow text (DSL) correspondingly in a request body.
+**POST /v2/actions/validation**
+  Validate ad-hoc action content (DSL grammar and semantics).
+
+These endpoints expect workbook, workflow or ad-hoc action  text (DSL) correspondingly in a request body.

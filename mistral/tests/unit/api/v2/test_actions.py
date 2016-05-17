@@ -36,6 +36,35 @@ my_action:
     output: "{$.str1}{$.str2}"
 """
 
+ACTION_DEFINITION_INVALID_NO_BASE = """
+---
+version: '2.0'
+
+my_action:
+  description: My super cool action.
+  tags: ['test', 'v2']
+
+  base-input:
+    output: "{$.str1}{$.str2}"
+"""
+
+ACTION_DEFINITION_INVALID_YAQL = """
+---
+version: '2.0'
+
+my_action:
+  description: My super cool action.
+  tags: ['test', 'v2']
+  base: std.echo
+  base-input:
+    output: <% $. %>
+"""
+
+ACTION_DSL_PARSE_EXCEPTION = """
+---
+%
+"""
+
 SYSTEM_ACTION_DEFINITION = """
 ---
 version: '2.0'
@@ -339,3 +368,62 @@ class TestActionsController(base.APITest):
         self.assertEqual(400, resp.status_int)
 
         self.assertIn("Unknown sort direction", resp.body.decode())
+
+    def test_validate(self):
+        resp = self.app.post(
+            '/v2/actions/validate',
+            ACTION_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue(resp.json['valid'])
+
+    def test_validate_invalid_model_exception(self):
+        resp = self.app.post(
+            '/v2/actions/validate',
+            ACTION_DEFINITION_INVALID_NO_BASE,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Invalid DSL", resp.json['error'])
+
+    def test_validate_dsl_parse_exception(self):
+        resp = self.app.post(
+            '/v2/actions/validate',
+            ACTION_DSL_PARSE_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Definition could not be parsed", resp.json['error'])
+
+    def test_validate_yaql_parse_exception(self):
+        resp = self.app.post(
+            '/v2/actions/validate',
+            ACTION_DEFINITION_INVALID_YAQL,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("unexpected end of statement",
+                      resp.json['error'])
+
+    def test_validate_empty(self):
+        resp = self.app.post(
+            '/v2/actions/validate',
+            '',
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertFalse(resp.json['valid'])
+        self.assertIn("Invalid DSL", resp.json['error'])
