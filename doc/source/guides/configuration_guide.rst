@@ -30,8 +30,8 @@ either with real OpenStack environment or without OpenStack environment.
 5. **If you are not using OpenStack, skip this item**. Register Mistral service and Mistral endpoints on Keystone::
 
     $ MISTRAL_URL="http://[host]:[port]/v2"
-    $ keystone service-create --name mistral --type workflowv2
-    $ keystone endpoint-create --service_id mistral --publicurl $MISTRAL_URL --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
+    $ openstack service create workflow --name mistral --description 'OpenStack Workflow service'
+    $ openstack endpoint create workflow --publicurl $MISTRAL_URL --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
 
 6. Configure transport properties in the corresponding config section: for RabbitMQ it is **oslo_messaging_rabbit**::
 
