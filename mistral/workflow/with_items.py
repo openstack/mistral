@@ -25,9 +25,15 @@ _CONCURRENCY = 'concurrency'
 _COUNT = 'count'
 _WITH_ITEMS = 'with_items_context'
 
+_DEFAULT_WITH_ITEMS = {
+    _COUNT: 0,
+    _CONCURRENCY: 0,
+    _CAPACITY: 0
+}
+
 
 def _get_context(task_ex):
-    return task_ex.runtime_context[_WITH_ITEMS]
+    return task_ex.runtime_context.get(_WITH_ITEMS, _DEFAULT_WITH_ITEMS)
 
 
 def get_count(task_ex):

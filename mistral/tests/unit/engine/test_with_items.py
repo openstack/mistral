@@ -244,6 +244,37 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual(2, len(wf_ex.task_executions))
 
+    def test_with_items_yaql_fail(self):
+        wf_text = """---
+        version: "2.0"
+
+        with_items:
+          type: direct
+
+          tasks:
+            task1:
+              with-items: i in <% $.foobar %>
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('with_items', {})
+
+        self.await_execution_error(wf_ex.id)
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+        task1 = self._assert_single_item(tasks, name='task1')
+        result = data_flow.get_task_execution_result(task1)
+
+        self.assertEqual(states.ERROR, task1.state)
+        self.assertIsInstance(result, list)
+        self.assertListEqual(result, [])
+
     def test_with_items_sub_workflow_fail(self):
         wb_text = """---
         version: "2.0"
