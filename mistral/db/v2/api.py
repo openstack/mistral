@@ -76,8 +76,16 @@ def load_workbook(name):
     return IMPL.load_workbook(name)
 
 
-def get_workbooks():
-    return IMPL.get_workbooks()
+def get_workbooks(limit=None, marker=None, sort_keys=None,
+                  sort_dirs=None, fields=None, **kwargs):
+    return IMPL.get_workbooks(
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        fields=fields,
+        **kwargs
+)
 
 
 def create_workbook(values):

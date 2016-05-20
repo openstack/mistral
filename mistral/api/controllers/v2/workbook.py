@@ -21,6 +21,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
 from mistral.db.v2 import api as db_api
@@ -117,16 +118,65 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         db_api.delete_workbook(name)
 
-    @wsme_pecan.wsexpose(Workbooks)
-    def get_all(self):
-        """Return all workbooks.
+    @wsme_pecan.wsexpose(Workbooks, types.uuid, int, types.uniquelist,
+                         types.list, types.uniquelist)
+    def get_all(self, marker=None, limit=None, sort_keys='created_at',
+                sort_dirs='asc', fields=''):
+        """Return a list of workbooks.
+
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatibility.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: created_at.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be choosed.
+                          Default: asc.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
 
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
-        LOG.info("Fetch workbooks.")
+        LOG.info("Fetch workbooks. marker=%s, limit=%s, sort_keys=%s, "
+                 "sort_dirs=%s, fields=%s", marker, limit, sort_keys,
+                 sort_dirs, fields)
 
-        workbooks_list = [Workbook.from_dict(db_model.to_dict())
-                          for db_model in db_api.get_workbooks()]
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
 
-        return Workbooks(workbooks=workbooks_list)
+        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
+        rest_utils.validate_fields(fields, Workbook.get_fields())
+
+        marker_obj = None
+
+        if marker:
+            marker_obj = db_api.get_workbook(marker)
+
+        db_workbooks = db_api.get_workbooks(
+            limit=limit,
+            marker=marker_obj,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields
+        )
+
+        workbooks_list = []
+
+        for data in db_workbooks:
+            workbook_dict = (dict(zip(fields, data)) if fields else
+                             data.to_dict())
+            workbooks_list.append(Workbook.from_dict(workbook_dict))
+
+        return Workbook.convert_with_links(
+            workbooks_list,
+            limit,
+            pecan.request.host_url,
+            sort_keys=','.join(sort_keys),
+            sort_dirs=','.join(sort_dirs),
+            fields=','.join(fields) if fields else ''
+        )
+

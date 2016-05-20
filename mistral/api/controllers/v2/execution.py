@@ -249,9 +249,9 @@ class ExecutionsController(rest.RestController):
         return db_api.delete_workflow_execution(id)
 
     @wsme_pecan.wsexpose(Executions, types.uuid, int, types.uniquelist,
-                         types.list)
+                         types.list, types.uniquelist)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc'):
+                sort_dirs='asc', fields=''):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -264,13 +264,22 @@ class ExecutionsController(rest.RestController):
                           sort_keys, "asc" or "desc" can be chosen.
                           Default: desc. The length of sort_dirs can be equal
                           or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
         """
         LOG.info(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s", marker, limit, sort_keys, sort_dirs
+            "sort_dirs=%s, fields=%s", marker, limit, sort_keys, sort_dirs,
+            fields
         )
 
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
+
         rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
+        rest_utils.validate_fields(fields, Executions.get_fields())
 
         marker_obj = None
 
@@ -281,18 +290,22 @@ class ExecutionsController(rest.RestController):
             limit=limit,
             marker=marker_obj,
             sort_keys=sort_keys,
-            sort_dirs=sort_dirs
+            sort_dirs=sort_dirs,
+            fields=fields
         )
 
-        wf_executions = [
-            Execution.from_dict(db_model.to_dict())
-            for db_model in db_workflow_exs
-        ]
+        wf_executions = []
+
+        for data in db_workflow_exs:
+            wf_execution_dict = (dict(zip(fields, data)) if fields else
+                             data.to_dict())
+            wf_executions.append(Executions.from_dict(wf_execution_dict))
 
         return Executions.convert_with_links(
             wf_executions,
             limit,
             pecan.request.host_url,
             sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs)
+            sort_dirs=','.join(sort_dirs),
+            fields=','.join(fields) if fields else ''
         )
