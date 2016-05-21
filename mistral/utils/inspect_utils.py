@@ -66,12 +66,15 @@ def get_arg_list_as_str(func):
 
     for index, default in enumerate(args):
         if index >= diff_args_defs:
-            arg_str_list.append(
-                "%s=%s" % (
-                    args[index],
-                    json.dumps(defs[index - diff_args_defs])
+            try:
+                arg_str_list.append(
+                    "%s=%s" % (
+                        args[index],
+                        json.dumps(defs[index - diff_args_defs])
+                    )
                 )
-            )
+            except TypeError:
+                pass
         else:
             arg_str_list.append("%s" % args[index])
 

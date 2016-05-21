@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import time
+
 from mistral.actions import std_actions
 from mistral.tests.unit import base
 from mistral.utils import inspect_utils as i_u
@@ -37,3 +39,11 @@ class InspectUtilsTest(base.BaseTest):
         parameters_str = i_u.get_arg_list_as_str(clazz.__init__)
 
         self.assertEqual("wf_ex, task_spec, ctx", parameters_str)
+
+    def test_get_parameters_str_with_function_parameter(self):
+
+        def test_func(foo, bar=None, test_func=time.sleep):
+            pass
+
+        parameters_str = i_u.get_arg_list_as_str(test_func)
+        self.assertEqual("foo, bar=null", parameters_str)
