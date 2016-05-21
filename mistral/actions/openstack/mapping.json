@@ -976,7 +976,8 @@
         "rules_delete_all": "rules.delete_all",
         "rules_from_json": "rules.from_json",
         "rules_get": "rules.get",
-        "rules_get_all": "rules.get_all"
+        "rules_get_all": "rules.get_all",
+        "wait_for_finish": "wait_for_finish"
     },
     "swift": {
         "_comment": "It uses swiftclient.v1.",
