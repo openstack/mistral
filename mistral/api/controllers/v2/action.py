@@ -171,9 +171,9 @@ class ActionsController(rest.RestController, hooks.HookController):
             db_api.delete_action_definition(name)
 
     @wsme_pecan.wsexpose(Actions, types.uuid, int, types.uniquelist,
-                         types.list)
+                         types.list, types.uniquelist)
     def get_all(self, marker=None, limit=None, sort_keys='name',
-                sort_dirs='asc'):
+                sort_dirs='asc', fields=''):
         """Return all actions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -185,14 +185,22 @@ class ActionsController(rest.RestController, hooks.HookController):
         :param sort_dirs: Optional. Directions to sort corresponding to
                           sort_keys, "asc" or "desc" can be choosed.
                           Default: asc.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
 
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
         LOG.info("Fetch actions. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s", marker, limit, sort_keys, sort_dirs)
+                 "sort_dirs=%s, fields=%s", marker, limit, sort_keys, sort_dirs, fields)
+
+        if fields and 'id' not in fields:
+                fields.insert(0, 'id')
 
         rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
+        rest_utils.validate_fields(fields, Action.get_fields())
 
         marker_obj = None
 
@@ -203,16 +211,22 @@ class ActionsController(rest.RestController, hooks.HookController):
             limit=limit,
             marker=marker_obj,
             sort_keys=sort_keys,
-            sort_dirs=sort_dirs
+            sort_dirs=sort_dirs,
+            fields=fields
         )
 
-        actions_list = [Action.from_dict(db_model.to_dict())
-                        for db_model in db_action_defs]
+        actions_list = []
+
+        for data in db_action_defs:
+            action_list_dict = (dict(zip(fields, data)) if fields else
+                                data.to_dict())
+            actions_list.append(Action.from_dict(action_list_dict))
 
         return Actions.convert_with_links(
             actions_list,
             limit,
             pecan.request.host_url,
             sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs)
+            sort_dirs=','.join(sort_dirs),
+            fields=','.join(fields) if fields else ''
         )

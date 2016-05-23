@@ -155,8 +155,8 @@ def _delete_all(model, session=None, **kwargs):
 
 def _get_collection(model, limit=None, marker=None, sort_keys=None,
                     sort_dirs=None, fields=None, query=None, **kwargs):
-    import pdb
-    pdb.set_trace()
+    #import pdb
+    #pdb.set_trace()
     columns = (
         tuple(COL_MAPPINGS.get(model, {}).get(f) for f in fields) if fields else ()
     )
@@ -307,6 +307,7 @@ WORKFLOW_COL_MAPPING = {
     'definition': models.WorkflowDefinition.definition,
     'tags': models.WorkflowDefinition.tags,
     'scope': models.WorkflowDefinition.scope,
+    'project_id': models.WorkflowDefinition.project_id,
     'created_at': models.WorkflowDefinition.created_at,
     'updated_at': models.WorkflowDefinition.updated_at
 }
@@ -470,6 +471,9 @@ ACTION_COL_MAPPING = {
     'id': models.ActionDefinition.id,
     'name': models.ActionDefinition.name,
     'definition': models.ActionDefinition.definition,
+    'description': models.ActionDefinition.description,
+    'is_system': models.ActionDefinition.is_system,
+    'input': models.ActionDefinition.input,
     'tags': models.ActionDefinition.tags,
     'scope': models.ActionDefinition.scope,
     'created_at': models.ActionDefinition.created_at,
