@@ -16,6 +16,7 @@
 import json
 
 from oslo_log import log as logging
+import pecan
 from pecan import rest
 import wsme
 from wsme import types as wtypes
@@ -36,7 +37,7 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
-class Task(resource.Resource):
+class Task(resource.ResourceList):
     """Task resource."""
 
     id = wtypes.text
@@ -83,10 +84,15 @@ class Task(resource.Resource):
         )
 
 
-class Tasks(resource.Resource):
+class Tasks(resource.ResourceList):
     """A collection of tasks."""
 
     tasks = [Task]
+
+    def __init__(self, **kwargs):
+        self._type = 'tasks'
+
+        super(Tasks, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -125,12 +131,67 @@ class TasksController(rest.RestController):
 
         return _get_task_resource_with_result(task_ex)
 
-    @wsme_pecan.wsexpose(Tasks)
-    def get_all(self):
-        """Return all tasks within the execution."""
-        LOG.info("Fetch tasks")
+    @wsme_pecan.wsexpose(Tasks, types.uuid, int, types.uniquelist,
+                         types.list, types.uniquelist)
+    def get_all(self, marker=None, limit=None, sort_keys='created_at',
+                sort_dirs='asc', fields=''):
+        """Return all tasks within the execution.
 
-        return _get_task_resources_with_results()
+         :param marker: Optional. Pagination marker for large data sets.
+         :param limit: Optional. Maximum number of resources to return in a
+                       single result. Default value is None for backward
+                       compatibility.
+         :param sort_keys: Optional. Columns to sort results by.
+                           Default: created_at, which is backward compatible.
+         :param sort_dirs: Optional. Directions to sort corresponding to
+                           sort_keys, "asc" or "desc" can be chosen.
+                           Default: desc. The length of sort_dirs can be equal
+                           or less than that of sort_keys.
+         :param fields: Optional. A specified list of fields of the resource to
+                        be returned. 'id' will be included automatically in
+                        fields if it's provided, since it will be used when
+                        constructing 'next' link.
+        """
+        LOG.info(
+            "Fetch tasks. marker=%s, limit=%s, sort_keys=%s, "
+            "sort_dirs=%s, fields=%s", marker, limit, sort_keys, sort_dirs,
+            fields
+        )
+
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
+
+        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
+        rest_utils.validate_fields(fields, Task.get_fields())
+
+        marker_obj = None
+
+        if marker:
+            marker_obj = db_api.get_task_execution(marker)
+
+        db_tasks = db_api.get_task_executions(
+            limit=limit,
+            marker=marker_obj,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields
+        )
+
+        tasks_list = []
+
+        for data in db_tasks:
+            tasks_list_dict = (dict(zip(fields, data)) if fields else
+                                data.to_dict())
+            tasks_list.append(Task.from_dict(tasks_list_dict))
+
+        return Tasks.convert_with_links(
+            tasks_list,
+            limit,
+            pecan.request.host_url,
+            sort_keys=','.join(sort_keys),
+            sort_dirs=','.join(sort_dirs),
+            fields=','.join(fields) if fields else ''
+        )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Task, wtypes.text, body=Task)

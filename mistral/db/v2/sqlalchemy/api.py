@@ -863,6 +863,8 @@ TASK_EXECUTION_COL_MAPPING = {
     'published': models.TaskExecution.published,
     'workflow_id': models.TaskExecution.workflow_id,
     'workflow_name': models.TaskExecution.workflow_name,
+    'workflow_execution_id': models.TaskExecution.workflow_execution_id,
+    'state_info': models.TaskExecution.state_info,
     'state': models.TaskExecution.state,
     'created_at': models.TaskExecution.created_at,
     'updated_at': models.TaskExecution.updated_at
@@ -881,8 +883,8 @@ def load_task_execution(id):
     return _get_task_execution(id)
 
 
-def get_task_executions(**kwargs):
-    return _get_task_executions(**kwargs)
+def get_task_executions(sort_keys=['created_at'], **kwargs):
+    return _get_collection(models.TaskExecution, sort_keys=sort_keys, **kwargs)
 
 
 @b.session_aware()
