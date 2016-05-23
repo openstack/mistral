@@ -279,7 +279,7 @@ class ExecutionsController(rest.RestController):
             fields.insert(0, 'id')
 
         rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
-        rest_utils.validate_fields(fields, Executions.get_fields())
+        rest_utils.validate_fields(fields, Execution.get_fields())
 
         marker_obj = None
 
@@ -299,7 +299,7 @@ class ExecutionsController(rest.RestController):
         for data in db_workflow_exs:
             wf_execution_dict = (dict(zip(fields, data)) if fields else
                              data.to_dict())
-            wf_executions.append(Executions.from_dict(wf_execution_dict))
+            wf_executions.append(Execution.from_dict(wf_execution_dict))
 
         return Executions.convert_with_links(
             wf_executions,
