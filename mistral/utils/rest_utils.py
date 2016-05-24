@@ -14,10 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
 import functools
 import json
-
+from oslo_log import log as logging
 import pecan
 import six
 from webob import Response
@@ -26,6 +25,7 @@ from wsme import exc
 from mistral import exceptions as ex
 
 LOG = logging.getLogger(__name__)
+
 
 def wrap_wsme_controller_exception(func):
     """Decorator for controllers method.
@@ -100,9 +100,16 @@ def validate_fields(fields, object_fields):
         )
 
 
-def get_all(list_cls, cls, get_all_function, get_function, collection_name,
-                marker=None, limit=None, sort_keys='created_at', sort_dirs='asc',
-                fields=''):
+def get_all(list_cls,
+            cls,
+            get_all_function,
+            get_function,
+            collection_name,
+            marker=None,
+            limit=None,
+            sort_keys='created_at',
+            sort_dirs='asc',
+            fields=''):
 
     """Return a list of cls.
 
@@ -125,8 +132,13 @@ def get_all(list_cls, cls, get_all_function, get_function, collection_name,
     """
 
     LOG.info("Fetch %s. marker=%s, limit=%s, sort_keys=%s, "
-         "sort_dirs=%s, fields=%s", collection_name, marker, limit, sort_keys,
-         sort_dirs, fields)
+             "sort_dirs=%s, fields=%s",
+             collection_name,
+             marker,
+             limit,
+             sort_keys,
+             sort_dirs,
+             fields)
 
     if fields and 'id' not in fields:
         fields.insert(0, 'id')
@@ -151,7 +163,7 @@ def get_all(list_cls, cls, get_all_function, get_function, collection_name,
 
     for data in db_list:
         dict_data = (dict(zip(fields, data)) if fields else
-                                 data.to_dict())
+                     data.to_dict())
         list_to_return.append(cls.from_dict(dict_data))
 
     return list_cls.convert_with_links(

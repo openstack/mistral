@@ -147,7 +147,13 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         project_id is different but the scope is public.
         """
 
-        return rest_utils.get_all(Workbooks, Workbook, db_api.get_workbooks,
-                                  db_api.get_workbook, "workbooks", marker,
-                                  limit, sort_keys, sort_dirs, fields)
-
+        return rest_utils.get_all(Workbooks,
+                                  Workbook,
+                                  db_api.get_workbooks,
+                                  db_api.get_workbook,
+                                  "workbooks",
+                                  marker,
+                                  limit,
+                                  sort_keys,
+                                  sort_dirs,
+                                  fields)

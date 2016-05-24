@@ -155,10 +155,9 @@ def _delete_all(model, session=None, **kwargs):
 
 def _get_collection(model, limit=None, marker=None, sort_keys=None,
                     sort_dirs=None, fields=None, query=None, **kwargs):
-    #import pdb
-    #pdb.set_trace()
     columns = (
-        tuple(COL_MAPPINGS.get(model, {}).get(f) for f in fields) if fields else ()
+        tuple(COL_MAPPINGS.get(model,
+                               {}).get(f) for f in fields) if fields else ()
     )
 
     if query is None:
@@ -185,7 +184,8 @@ def _get_collection_sorted_by_name(model, fields=None, **kwargs):
     # especially in resource sharing scenario, the resource owner needs to
     # check if the resource is used by a member.
     columns = (
-        tuple(COL_MAPPINGS.get(model, {}).get(f) for f in fields) if fields else ()
+        tuple(COL_MAPPINGS.get(model,
+                               {}).get(f) for f in fields) if fields else ()
     )
 
     query = (b.model_query(model, *columns) if 'project_id' in kwargs
@@ -221,6 +221,7 @@ WORKBOOK_COL_MAPPING = {
     'created_at': models.Workbook.created_at,
     'updated_at': models.Workbook.updated_at
 }
+
 
 def get_workbook(name):
     wb = _get_workbook(name)
@@ -348,7 +349,8 @@ def load_workflow_definition(name):
 
 
 def get_workflow_definitions(sort_keys=['created_at'], **kwargs):
-    return _get_collection(model=models.WorkflowDefinition, sort_keys=sort_keys,
+    return _get_collection(model=models.WorkflowDefinition,
+                           sort_keys=sort_keys,
                            **kwargs)
 
 
@@ -797,7 +799,9 @@ def ensure_workflow_execution_exists(id):
 
 
 def get_workflow_executions(sort_keys=['created_at'], **kwargs):
-    return _get_collection(models.WorkflowExecution, sort_keys=sort_keys, **kwargs)
+    return _get_collection(models.WorkflowExecution,
+                           sort_keys=sort_keys,
+                           **kwargs)
 
 
 @b.session_aware()
@@ -871,6 +875,7 @@ TASK_EXECUTION_COL_MAPPING = {
     'created_at': models.TaskExecution.created_at,
     'updated_at': models.TaskExecution.updated_at
 }
+
 
 def get_task_execution(id):
     task_ex = _get_task_execution(id)
@@ -1209,6 +1214,7 @@ ENVIRONMENT_COL_MAPPING = {
     'created_at': models.Environment.created_at,
     'updated_at': models.Environment.updated_at
 }
+
 
 def get_environment(name):
     env = _get_environment(name)

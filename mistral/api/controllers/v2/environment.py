@@ -101,10 +101,16 @@ class EnvironmentController(rest.RestController):
 
         """
 
-        return rest_utils.get_all(Environments, Environment, db_api.get_environments,
-                                  db_api.get_environment, "environments",
-                                  marker=marker, limit=limit, sort_keys=sort_keys,
-                                  sort_dirs=sort_dirs, fields=fields)
+        return rest_utils.get_all(Environments,
+                                  Environment,
+                                  db_api.get_environments,
+                                  db_api.get_environment,
+                                  "environments",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
+                                  fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Environment, wtypes.text)

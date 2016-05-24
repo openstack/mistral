@@ -16,7 +16,6 @@
 import json
 
 from oslo_log import log as logging
-import pecan
 from pecan import rest
 import wsme
 from wsme import types as wtypes
@@ -153,9 +152,15 @@ class TasksController(rest.RestController):
                         constructing 'next' link.
         """
 
-        return rest_utils.get_all(Tasks, Task, db_api.get_task_executions,
-                                  db_api.get_task_execution, "tasks", marker=marker,
-                                  limit=limit, sort_keys=sort_keys, sort_dirs=sort_dirs,
+        return rest_utils.get_all(Tasks,
+                                  Task,
+                                  db_api.get_task_executions,
+                                  db_api.get_task_execution,
+                                  "tasks",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
                                   fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception

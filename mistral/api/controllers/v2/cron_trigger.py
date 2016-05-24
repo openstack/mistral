@@ -135,7 +135,13 @@ class CronTriggersController(rest.RestController):
         return CronTriggers(cron_triggers=_list)
         '''
 
-        return rest_utils.get_all(CronTriggers, CronTrigger, db_api.get_cron_triggers,
-                                  db_api.get_cron_trigger, "cron triggers", marker=marker,
-                                  limit=limit, sort_keys=sort_keys, sort_dirs=sort_dirs,
+        return rest_utils.get_all(CronTriggers,
+                                  CronTrigger,
+                                  db_api.get_cron_triggers,
+                                  db_api.get_cron_trigger,
+                                  "cron triggers",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
                                   fields=fields)

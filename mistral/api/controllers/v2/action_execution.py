@@ -213,9 +213,16 @@ class ActionExecutionsController(rest.RestController):
 
         """
 
-        return rest_utils.get_all(ActionExecutions, ActionExecution, db_api.get_action_executions,
-                              db_api.get_action_execution, "Task", marker,
-                              limit, sort_keys, sort_dirs, fields)
+        return rest_utils.get_all(ActionExecutions,
+                                  ActionExecution,
+                                  db_api.get_action_executions,
+                                  db_api.get_action_execution,
+                                  "Task",
+                                  marker,
+                                  limit,
+                                  sort_keys,
+                                  sort_dirs,
+                                  fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

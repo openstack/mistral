@@ -15,7 +15,6 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
-import pecan
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -270,7 +269,13 @@ class ExecutionsController(rest.RestController):
                        constructing 'next' link.
         """
 
-        return rest_utils.get_all(Executions, Execution, db_api.get_workflow_executions,
-                                  db_api.get_workflow_execution, "executions",
-                                  marker=marker, limit=limit, sort_keys=sort_keys,
-                                  sort_dirs=sort_dirs, fields=fields)
+        return rest_utils.get_all(Executions,
+                                  Execution,
+                                  db_api.get_workflow_executions,
+                                  db_api.get_workflow_execution,
+                                  "executions",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
+                                  fields=fields)

@@ -194,7 +194,13 @@ class ActionsController(rest.RestController, hooks.HookController):
         project_id is different but the scope is public.
         """
 
-        return rest_utils.get_all(Actions, Action, db_api.get_action_definitions,
-                                  db_api.get_action_definition_by_id, "actions",
-                                  marker=marker, limit=limit, sort_keys=sort_keys,
-                                  sort_dirs=sort_dirs, fields=fields)
+        return rest_utils.get_all(Actions,
+                                  Action,
+                                  db_api.get_action_definitions,
+                                  db_api.get_action_definition_by_id,
+                                  "actions",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
+                                  fields=fields)

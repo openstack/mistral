@@ -85,7 +85,7 @@ def get_workbooks(limit=None, marker=None, sort_keys=None,
         sort_dirs=sort_dirs,
         fields=fields,
         **kwargs
-)
+    )
 
 
 def create_workbook(values):
@@ -436,8 +436,11 @@ def load_environment(name):
     return IMPL.load_environment(name)
 
 
-def get_environments(limit=None, marker=None, sort_keys=['name'],
-                               sort_dirs=None, **kwargs):
+def get_environments(limit=None,
+                     marker=None,
+                     sort_keys=['name'],
+                     sort_dirs=None,
+                     **kwargs):
 
     return IMPL.get_environments(
         limit=limit,
