@@ -236,8 +236,8 @@ def load_workbook(name):
     return _get_workbook(name)
 
 
-def get_workbooks(**kwargs):
-    return _get_collection_sorted_by_name(models.Workbook, **kwargs)
+def get_workbooks(sort_keys=['created_at'], **kwargs):
+    return _get_collection(models.Workbook, sort_keys=sort_keys, **kwargs)
 
 
 @b.session_aware()
@@ -347,8 +347,8 @@ def load_workflow_definition(name):
     return _get_workflow_definition(name)
 
 
-def get_workflow_definitions(**kwargs):
-    return _get_collection(model=models.WorkflowDefinition,
+def get_workflow_definitions(sort_keys=['created_at'], **kwargs):
+    return _get_collection(model=models.WorkflowDefinition, sort_keys=sort_keys,
                            **kwargs)
 
 
@@ -663,6 +663,8 @@ def _get_execution(id):
 ACTION_EXECUTION_COL_MAPPING = {
     'id': models.ActionExecution.id,
     'name': models.ActionExecution.name,
+    'workflow_name': models.ActionExecution.workflow_name,
+    'task_execution_id': models.ActionExecution.task_execution_id,
     'accepted': models.ActionExecution.accepted,
     'description': models.ActionExecution.description,
     'input': models.ActionExecution.input,
@@ -1060,6 +1062,8 @@ CRON_TRIGGER_COL_MAPPING = {
     'workflow_input': models.CronTrigger.workflow_input,
     'workflow_params': models.CronTrigger.workflow_params,
     'scope': models.CronTrigger.scope,
+    'first_execution_time': models.CronTrigger.first_execution_time,
+    'next_execution_time': models.CronTrigger.next_execution_time,
     'created_at': models.CronTrigger.created_at,
     'updated_at': models.CronTrigger.updated_at
 }
@@ -1079,8 +1083,9 @@ def load_cron_trigger(name):
     return _get_cron_trigger(name)
 
 
-def get_cron_triggers(**kwargs):
-    return _get_collection_sorted_by_name(models.CronTrigger, **kwargs)
+def get_cron_triggers(sort_keys=['created_at'], **kwargs):
+    '''return _get_collection_sorted_by_name(models.CronTrigger, **kwargs)'''
+    return _get_collection(models.CronTrigger, sort_keys=sort_keys, **kwargs)
 
 
 @b.session_aware()
@@ -1218,8 +1223,8 @@ def load_environment(name):
     return _get_environment(name)
 
 
-def get_environments(**kwargs):
-    return _get_collection_sorted_by_name(models.Environment, **kwargs)
+def get_environments(sort_keys=['created_at'], **kwargs):
+    return _get_collection(models.Environment, sort_keys=sort_keys, **kwargs)
 
 
 @b.session_aware()

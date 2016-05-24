@@ -61,10 +61,15 @@ class Workbook(resource.Resource):
                    updated_at='1970-01-01T00:00:00.000000')
 
 
-class Workbooks(resource.Resource):
+class Workbooks(resource.ResourceList):
     """A collection of Workbooks."""
 
     workbooks = [Workbook]
+
+    def __init__(self, **kwargs):
+        self._type = 'workbooks'
+
+        super(Workbooks, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -141,42 +146,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
-        LOG.info("Fetch workbooks. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, fields=%s", marker, limit, sort_keys,
-                 sort_dirs, fields)
 
-        if fields and 'id' not in fields:
-            fields.insert(0, 'id')
-
-        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
-        rest_utils.validate_fields(fields, Workbook.get_fields())
-
-        marker_obj = None
-
-        if marker:
-            marker_obj = db_api.get_workbook(marker)
-
-        db_workbooks = db_api.get_workbooks(
-            limit=limit,
-            marker=marker_obj,
-            sort_keys=sort_keys,
-            sort_dirs=sort_dirs,
-            fields=fields
-        )
-
-        workbooks_list = []
-
-        for data in db_workbooks:
-            workbook_dict = (dict(zip(fields, data)) if fields else
-                             data.to_dict())
-            workbooks_list.append(Workbook.from_dict(workbook_dict))
-
-        return Workbook.convert_with_links(
-            workbooks_list,
-            limit,
-            pecan.request.host_url,
-            sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs),
-            fields=','.join(fields) if fields else ''
-        )
+        return rest_utils.get_all(Workbooks, Workbook, db_api.get_workbooks,
+                                  db_api.get_workbook, "workbooks", marker,
+                                  limit, sort_keys, sort_dirs, fields)
 

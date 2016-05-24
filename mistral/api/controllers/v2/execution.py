@@ -269,43 +269,8 @@ class ExecutionsController(rest.RestController):
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
         """
-        LOG.info(
-            "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s, fields=%s", marker, limit, sort_keys, sort_dirs,
-            fields
-        )
 
-        if fields and 'id' not in fields:
-            fields.insert(0, 'id')
-
-        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
-        rest_utils.validate_fields(fields, Execution.get_fields())
-
-        marker_obj = None
-
-        if marker:
-            marker_obj = db_api.get_workflow_execution(marker)
-
-        db_workflow_exs = db_api.get_workflow_executions(
-            limit=limit,
-            marker=marker_obj,
-            sort_keys=sort_keys,
-            sort_dirs=sort_dirs,
-            fields=fields
-        )
-
-        wf_executions = []
-
-        for data in db_workflow_exs:
-            wf_execution_dict = (dict(zip(fields, data)) if fields else
-                             data.to_dict())
-            wf_executions.append(Execution.from_dict(wf_execution_dict))
-
-        return Executions.convert_with_links(
-            wf_executions,
-            limit,
-            pecan.request.host_url,
-            sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs),
-            fields=','.join(fields) if fields else ''
-        )
+        return rest_utils.get_all(Executions, Execution, db_api.get_workflow_executions,
+                                  db_api.get_workflow_execution, "executions",
+                                  marker=marker, limit=limit, sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs, fields=fields)

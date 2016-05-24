@@ -436,8 +436,16 @@ def load_environment(name):
     return IMPL.load_environment(name)
 
 
-def get_environments():
-    return IMPL.get_environments()
+def get_environments(limit=None, marker=None, sort_keys=['name'],
+                               sort_dirs=None, **kwargs):
+
+    return IMPL.get_environments(
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        **kwargs
+    )
 
 
 def create_environment(values):
