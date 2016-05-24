@@ -146,7 +146,10 @@ def get_command_class(cmd_name):
     return RESERVED_CMDS[cmd_name] if cmd_name in RESERVED_CMDS else None
 
 
-def create_command(cmd_name, wf_ex, task_spec, ctx):
+def create_command(cmd_name, wf_ex, task_spec, ctx, explicit_params=None):
     cmd_cls = get_command_class(cmd_name) or RunTask
 
-    return cmd_cls(wf_ex, task_spec, ctx)
+    if issubclass(cmd_cls, SetWorkflowState):
+        return cmd_cls(wf_ex, task_spec, ctx, explicit_params.get('msg'))
+    else:
+        return cmd_cls(wf_ex, task_spec, ctx)

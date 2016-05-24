@@ -103,7 +103,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         cmds = []
 
-        for t_n in self._find_next_task_names(task_ex):
+        for t_n, params in self._find_next_tasks(task_ex):
             t_s = self.wf_spec.get_tasks()[t_n]
 
             if not (t_s or t_n in commands.RESERVED_CMDS):
@@ -115,7 +115,8 @@ class DirectWorkflowController(base.WorkflowController):
                 t_n,
                 self.wf_ex,
                 t_s,
-                self._get_task_inbound_context(t_s)
+                self._get_task_inbound_context(t_s),
+                params
             )
 
             # NOTE(xylan): Decide whether or not a join task should run
@@ -153,7 +154,7 @@ class DirectWorkflowController(base.WorkflowController):
     def all_errors_handled(self):
         for t_ex in wf_utils.find_error_task_executions(self.wf_ex):
 
-            tasks_on_error = self._find_next_task_names_for_clause(
+            tasks_on_error = self._find_next_tasks_for_clause(
                 self.wf_spec.get_on_error_clause(t_ex.name),
                 data_flow.evaluate_task_outbound_context(t_ex)
             )
@@ -182,35 +183,44 @@ class DirectWorkflowController(base.WorkflowController):
         ])
 
     def _find_next_task_names(self, task_ex):
+        return [t[0] for t in self._find_next_tasks(task_ex)]
+
+    def _find_next_tasks(self, task_ex):
         t_state = task_ex.state
         t_name = task_ex.name
 
         ctx = data_flow.evaluate_task_outbound_context(task_ex)
 
-        t_names = []
+        t_names_and_params = []
 
         if states.is_completed(t_state):
-            t_names += self._find_next_task_names_for_clause(
-                self.wf_spec.get_on_complete_clause(t_name),
-                ctx
+            t_names_and_params += (
+                self._find_next_tasks_for_clause(
+                    self.wf_spec.get_on_complete_clause(t_name),
+                    ctx
+                )
             )
 
         if t_state == states.ERROR:
-            t_names += self._find_next_task_names_for_clause(
-                self.wf_spec.get_on_error_clause(t_name),
-                ctx
+            t_names_and_params += (
+                self._find_next_tasks_for_clause(
+                    self.wf_spec.get_on_error_clause(t_name),
+                    ctx
+                )
             )
 
         elif t_state == states.SUCCESS:
-            t_names += self._find_next_task_names_for_clause(
-                self.wf_spec.get_on_success_clause(t_name),
-                ctx
+            t_names_and_params += (
+                self._find_next_tasks_for_clause(
+                    self.wf_spec.get_on_success_clause(t_name),
+                    ctx
+                )
             )
 
-        return t_names
+        return t_names_and_params
 
     @staticmethod
-    def _find_next_task_names_for_clause(clause, ctx):
+    def _find_next_tasks_for_clause(clause, ctx):
         """Finds next tasks names.
 
          This method finds next task(command) base on given {name: condition}
@@ -226,8 +236,8 @@ class DirectWorkflowController(base.WorkflowController):
             return []
 
         return [
-            t_name
-            for t_name, condition in clause
+            (t_name, expr.evaluate_recursively(params, ctx))
+            for t_name, condition, params in clause
             if not condition or expr.evaluate(condition, ctx)
         ]
 

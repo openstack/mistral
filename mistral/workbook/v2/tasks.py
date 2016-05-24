@@ -244,9 +244,15 @@ class DirectWorkflowTaskSpec(TaskSpec):
         super(DirectWorkflowTaskSpec, self).__init__(data)
 
         self._join = data.get('join')
-        self._on_complete = self._as_list_of_tuples('on-complete')
-        self._on_success = self._as_list_of_tuples('on-success')
-        self._on_error = self._as_list_of_tuples('on-error')
+        self._on_complete = self.prepare_on_clause(
+            self._as_list_of_tuples('on-complete')
+        )
+        self._on_success = self.prepare_on_clause(
+            self._as_list_of_tuples('on-success')
+        )
+        self._on_error = self.prepare_on_clause(
+            self._as_list_of_tuples('on-error')
+        )
 
     def validate_schema(self):
         super(DirectWorkflowTaskSpec, self).validate_schema()
@@ -261,6 +267,16 @@ class DirectWorkflowTaskSpec(TaskSpec):
 
         [self.validate_yaql_expr(t)
          for t in ([val] if isinstance(val, six.string_types) else val)]
+
+    @staticmethod
+    def prepare_on_clause(list_of_tuples):
+        for i, task in enumerate(list_of_tuples):
+            task_name, params = DirectWorkflowTaskSpec._parse_cmd_and_input(
+                task[0]
+            )
+            list_of_tuples[i] = (task_name, task[1], params)
+
+        return list_of_tuples
 
     def get_join(self):
         return self._join
