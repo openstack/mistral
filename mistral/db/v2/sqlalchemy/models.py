@@ -424,3 +424,32 @@ class ResourceMember(mb.MistralModelBase):
     project_id = sa.Column(sa.String(80), default=security.get_project_id)
     member_id = sa.Column(sa.String(80), nullable=False)
     status = sa.Column(sa.String(20), nullable=False, default="pending")
+
+
+class EventTrigger(mb.MistralSecureModelBase):
+    """Contains info about event triggers."""
+
+    __tablename__ = 'event_triggers_v2'
+
+    __table_args__ = (
+        sa.UniqueConstraint('exchange', 'topic', 'event', 'workflow_id',
+                            'project_id'),
+        sa.Index('%s_project_id_workflow_id' % __tablename__, 'project_id',
+                 'workflow_id'),
+    )
+
+    id = mb.id_column()
+    name = sa.Column(sa.String(200))
+
+    workflow_id = sa.Column(
+        sa.String(36),
+        sa.ForeignKey(WorkflowDefinition.id)
+    )
+    workflow_params = sa.Column(st.JsonDictType())
+    workflow_input = sa.Column(st.JsonDictType())
+
+    exchange = sa.Column(sa.String(80), nullable=False)
+    topic = sa.Column(sa.String(80), nullable=False)
+    event = sa.Column(sa.String(80), nullable=False)
+
+    trust_id = sa.Column(sa.String(80))

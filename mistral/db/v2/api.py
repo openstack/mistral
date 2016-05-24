@@ -505,3 +505,42 @@ def delete_resource_member(resource_id, res_type, member_id):
 
 def delete_resource_members(**kwargs):
     IMPL.delete_resource_members(**kwargs)
+
+
+# Event triggers.
+
+def get_event_trigger(id, insecure=False):
+    return IMPL.get_event_trigger(id, insecure)
+
+
+def get_event_triggers(insecure=False, limit=None, marker=None, sort_keys=None,
+                       sort_dirs=None, fields=None, **kwargs):
+    return IMPL.get_event_triggers(
+        insecure=False,
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        fields=fields,
+        **kwargs
+    )
+
+
+def create_event_trigger(values):
+    return IMPL.create_event_trigger(values)
+
+
+def update_event_trigger(id, values):
+    return IMPL.update_event_trigger(id, values)
+
+
+def delete_event_trigger(id):
+    return IMPL.delete_event_trigger(id)
+
+
+def delete_event_triggers(**kwargs):
+    return IMPL.delete_event_triggers(**kwargs)
+
+
+def ensure_event_trigger_exists(id):
+    return IMPL.ensure_event_trigger_exists(id)
