@@ -106,6 +106,32 @@ ERROR_ACTION = copy.deepcopy(ACTION_EX)
 ERROR_ACTION['state'] = 'ERROR'
 ERROR_ACTION_RES = ERROR_ACTION['output']
 
+ERROR_OUTPUT = "Fake error, it is a test"
+ERROR_ACTION_EX_WITH_OUTPUT = copy.copy(ACTION_EX_DB).to_dict()
+ERROR_ACTION_EX_WITH_OUTPUT['state'] = 'ERROR'
+ERROR_ACTION_EX_WITH_OUTPUT['task_name'] = 'task1'
+ERROR_ACTION_EX_WITH_OUTPUT['output'] = {"output": ERROR_OUTPUT}
+ERROR_ACTION_WITH_OUTPUT = copy.deepcopy(ACTION_EX)
+ERROR_ACTION_WITH_OUTPUT['state'] = 'ERROR'
+ERROR_ACTION_WITH_OUTPUT['output'] = (
+    '{"output": "%s"}' % ERROR_OUTPUT
+)
+ERROR_ACTION_RES_WITH_OUTPUT = {"output": ERROR_OUTPUT}
+
+DEFAULT_ERROR_OUTPUT = "Unknown error"
+ERROR_ACTION_EX_FOR_EMPTY_OUTPUT = copy.copy(ACTION_EX_DB).to_dict()
+ERROR_ACTION_EX_FOR_EMPTY_OUTPUT['state'] = 'ERROR'
+ERROR_ACTION_EX_FOR_EMPTY_OUTPUT['task_name'] = 'task1'
+ERROR_ACTION_EX_FOR_EMPTY_OUTPUT['output'] = {"output": DEFAULT_ERROR_OUTPUT}
+ERROR_ACTION_FOR_EMPTY_OUTPUT = copy.deepcopy(ERROR_ACTION)
+ERROR_ACTION_FOR_EMPTY_OUTPUT['output'] = (
+    '{"output": "%s"}' % DEFAULT_ERROR_OUTPUT
+)
+
+ERROR_ACTION_WITH_NONE_OUTPUT = copy.deepcopy(ERROR_ACTION)
+ERROR_ACTION_WITH_NONE_OUTPUT['output'] = None
+
+
 BROKEN_ACTION = copy.deepcopy(ACTION_EX)
 BROKEN_ACTION['output'] = 'string not escaped'
 
@@ -219,17 +245,49 @@ class TestActionExecutionsController(base.APITest):
         )
 
     @mock.patch.object(rpc.EngineClient, 'on_action_complete')
-    def test_put_error(self, f):
-        f.return_value = ERROR_ACTION_EX
+    def test_put_error_with_output(self, f):
+        f.return_value = ERROR_ACTION_EX_WITH_OUTPUT
 
+        resp = self.app.put_json(
+            '/v2/action_executions/123',
+            ERROR_ACTION_WITH_OUTPUT
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(ERROR_ACTION_WITH_OUTPUT, resp.json)
+
+        f.assert_called_once_with(
+            ERROR_ACTION_WITH_OUTPUT['id'],
+            wf_utils.Result(error=ERROR_ACTION_RES_WITH_OUTPUT)
+        )
+
+    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    def test_put_error_with_unknown_reason(self, f):
+        f.return_value = ERROR_ACTION_EX_FOR_EMPTY_OUTPUT
         resp = self.app.put_json('/v2/action_executions/123', ERROR_ACTION)
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(ERROR_ACTION, resp.json)
+        self.assertDictEqual(ERROR_ACTION_FOR_EMPTY_OUTPUT, resp.json)
 
         f.assert_called_once_with(
-            ERROR_ACTION['id'],
-            wf_utils.Result(error=ACTION_EX_DB.output)
+            ERROR_ACTION_FOR_EMPTY_OUTPUT['id'],
+            wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
+        )
+
+    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    def test_put_error_with_unknown_reason_output_none(self, f):
+        f.return_value = ERROR_ACTION_EX_FOR_EMPTY_OUTPUT
+        resp = self.app.put_json(
+            '/v2/action_executions/123',
+            ERROR_ACTION_WITH_NONE_OUTPUT
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(ERROR_ACTION_FOR_EMPTY_OUTPUT, resp.json)
+
+        f.assert_called_once_with(
+            ERROR_ACTION_FOR_EMPTY_OUTPUT['id'],
+            wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
         )
 
     @mock.patch.object(
