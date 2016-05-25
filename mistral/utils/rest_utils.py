@@ -113,8 +113,13 @@ def get_all(list_cls,
 
     """Return a list of cls.
 
-    :param list_cls: Class list (ex: Actions, Workflows, ...).
-    :param cls: Class (ex: Action, Workflow, ...).
+    :param list_cls: Collection class (e.g.: Actions, Workflows, ...).
+    :param cls: Class (e.g.: Action, Workflow, ...).
+    :param get_all_function: Request function to get all elements with
+                             filtering (limit, marker, sort_keys, sort_dirs,
+                             fields)
+    :param get_function: Function used to fetch the marker
+    :param collection_name: Name of the collection
     :param marker: Optional. Pagination marker for large data sets.
     :param limit: Optional. Maximum number of resources to return in a
                   single result. Default value is None for backward
