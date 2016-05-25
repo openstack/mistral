@@ -179,7 +179,8 @@ def _get_collection(model, limit=None, marker=None, sort_keys=None,
         )
 
 
-def _get_collection_sorted_by_name(model, fields=None, **kwargs):
+def _get_collection_sorted_by_name(model, fields=None, sort_keys=['name'],
+                                   **kwargs):
     # Note(lane): Sometimes tenant_A needs to get resources of tenant_B,
     # especially in resource sharing scenario, the resource owner needs to
     # check if the resource is used by a member.
@@ -193,7 +194,7 @@ def _get_collection_sorted_by_name(model, fields=None, **kwargs):
 
     return _get_collection(model=model,
                            query=query,
-                           sort_keys=['name'],
+                           sort_keys=sort_keys,
                            fields=fields,
                            **kwargs)
 
@@ -237,8 +238,8 @@ def load_workbook(name):
     return _get_workbook(name)
 
 
-def get_workbooks(sort_keys=['created_at'], **kwargs):
-    return _get_collection(models.Workbook, sort_keys=sort_keys, **kwargs)
+def get_workbooks(**kwargs):
+    return _get_collection_sorted_by_name(models.Workbook, **kwargs)
 
 
 @b.session_aware()
@@ -308,7 +309,6 @@ WORKFLOW_COL_MAPPING = {
     'definition': models.WorkflowDefinition.definition,
     'tags': models.WorkflowDefinition.tags,
     'scope': models.WorkflowDefinition.scope,
-    'project_id': models.WorkflowDefinition.project_id,
     'created_at': models.WorkflowDefinition.created_at,
     'updated_at': models.WorkflowDefinition.updated_at
 }
@@ -1027,6 +1027,7 @@ CRON_TRIGGER_COL_MAPPING = {
     'id': models.CronTrigger.id,
     'name': models.CronTrigger.name,
     'pattern': models.CronTrigger.pattern,
+    'project_id': models.CronTrigger.project_id,
     'remaining_executions': models.CronTrigger.remaining_executions,
     'workflow_id': models.CronTrigger.workflow_id,
     'workflow_name': models.CronTrigger.workflow_name,
@@ -1054,9 +1055,8 @@ def load_cron_trigger(name):
     return _get_cron_trigger(name)
 
 
-def get_cron_triggers(sort_keys=['created_at'], **kwargs):
-    '''return _get_collection_sorted_by_name(models.CronTrigger, **kwargs)'''
-    return _get_collection(models.CronTrigger, sort_keys=sort_keys, **kwargs)
+def get_cron_triggers(**kwargs):
+    return _get_collection_sorted_by_name(models.CronTrigger, **kwargs)
 
 
 @b.session_aware()
@@ -1195,8 +1195,8 @@ def load_environment(name):
     return _get_environment(name)
 
 
-def get_environments(sort_keys=['created_at'], **kwargs):
-    return _get_collection(models.Environment, sort_keys=sort_keys, **kwargs)
+def get_environments(**kwargs):
+    return _get_collection_sorted_by_name(models.Environment, **kwargs)
 
 
 @b.session_aware()

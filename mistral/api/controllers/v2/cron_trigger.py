@@ -125,16 +125,6 @@ class CronTriggersController(rest.RestController):
                 sort_dirs='asc', fields=''):
         """Return all cron triggers."""
 
-        '''LOG.info("Fetch cron triggers.")
-
-        _list = [
-            CronTrigger.from_dict(db_model.to_dict())
-            for db_model in db_api.get_cron_triggers()
-        ]
-
-        return CronTriggers(cron_triggers=_list)
-        '''
-
         return rest_utils.get_all(CronTriggers,
                                   CronTrigger,
                                   db_api.get_cron_triggers,
