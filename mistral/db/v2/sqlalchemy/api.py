@@ -156,8 +156,8 @@ def _delete_all(model, session=None, **kwargs):
 def _get_collection(model, limit=None, marker=None, sort_keys=None,
                     sort_dirs=None, fields=None, query=None, **kwargs):
     columns = (
-        tuple(COL_MAPPINGS.get(model,
-                               {}).get(f) for f in fields) if fields else ()
+        tuple(COL_MAPPINGS.get(model, {}).get(f) for f in fields)
+        if fields else ()
     )
 
     if query is None:
@@ -662,24 +662,6 @@ def _get_execution(id):
 
 # Action executions.
 
-ACTION_EXECUTION_COL_MAPPING = {
-    'id': models.ActionExecution.id,
-    'name': models.ActionExecution.name,
-    'workflow_name': models.ActionExecution.workflow_name,
-    'task_execution_id': models.ActionExecution.task_execution_id,
-    'accepted': models.ActionExecution.accepted,
-    'description': models.ActionExecution.description,
-    'input': models.ActionExecution.input,
-    'output': models.ActionExecution.output,
-    'params': models.ActionExecution.runtime_context,
-    'state': models.ActionExecution.state,
-    'state_info': models.ActionExecution.state_info,
-    'tags': models.ActionExecution.tags,
-    'created_at': models.ActionExecution.created_at,
-    'updated_at': models.ActionExecution.updated_at
-}
-
-
 def get_action_execution(id):
     a_ex = _get_action_execution(id)
 
@@ -861,22 +843,6 @@ def _get_workflow_execution(id):
 
 # Tasks executions.
 
-TASK_EXECUTION_COL_MAPPING = {
-    'id': models.TaskExecution.id,
-    'name': models.TaskExecution.name,
-    'description': models.TaskExecution.description,
-    'processed': models.TaskExecution.processed,
-    'published': models.TaskExecution.published,
-    'workflow_id': models.TaskExecution.workflow_id,
-    'workflow_name': models.TaskExecution.workflow_name,
-    'workflow_execution_id': models.TaskExecution.workflow_execution_id,
-    'state_info': models.TaskExecution.state_info,
-    'state': models.TaskExecution.state,
-    'created_at': models.TaskExecution.created_at,
-    'updated_at': models.TaskExecution.updated_at
-}
-
-
 def get_task_execution(id):
     task_ex = _get_task_execution(id)
 
@@ -890,8 +856,8 @@ def load_task_execution(id):
     return _get_task_execution(id)
 
 
-def get_task_executions(sort_keys=['created_at'], **kwargs):
-    return _get_collection(models.TaskExecution, sort_keys=sort_keys, **kwargs)
+def get_task_executions(**kwargs):
+    return _get_task_executions(**kwargs)
 
 
 @b.session_aware()
@@ -1452,8 +1418,6 @@ COL_MAPPINGS = {
     models.WorkflowDefinition: WORKFLOW_COL_MAPPING,
     models.WorkflowExecution: WORKFLOW_EXECUTION_COL_MAPPING,
     models.ActionDefinition: ACTION_COL_MAPPING,
-    models.ActionExecution: ACTION_EXECUTION_COL_MAPPING,
-    models.TaskExecution: TASK_EXECUTION_COL_MAPPING,
     models.CronTrigger: CRON_TRIGGER_COL_MAPPING,
     models.Environment: ENVIRONMENT_COL_MAPPING,
     models.Workbook: WORKBOOK_COL_MAPPING

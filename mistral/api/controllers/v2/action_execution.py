@@ -77,15 +77,10 @@ class ActionExecution(resource.Resource):
         )
 
 
-class ActionExecutions(resource.ResourceList):
+class ActionExecutions(resource.Resource):
     """A collection of action_executions."""
 
     action_executions = [ActionExecution]
-
-    def __init__(self, **kwargs):
-        self._type = 'action_executions'
-
-        super(ActionExecutions, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -190,39 +185,12 @@ class ActionExecutionsController(rest.RestController):
 
         return ActionExecution.from_dict(values)
 
-    @wsme_pecan.wsexpose(ActionExecutions, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields=''):
-        """Return all action_executions within the execution.
+    @wsme_pecan.wsexpose(ActionExecutions)
+    def get_all(self):
+        """Return all action_executions within the execution."""
+        LOG.info("Fetch action_executions")
 
-         :param marker: Optional. Pagination marker for large data sets.
-         :param limit: Optional. Maximum number of resources to return in a
-                       single result. Default value is None for backward
-                       compatibility.
-         :param sort_keys: Optional. Columns to sort results by.
-                           Default: created_at, which is backward compatible.
-         :param sort_dirs: Optional. Directions to sort corresponding to
-                           sort_keys, "asc" or "desc" can be chosen.
-                           Default: desc. The length of sort_dirs can be equal
-                           or less than that of sort_keys.
-         :param fields: Optional. A specified list of fields of the resource to
-                        be returned. 'id' will be included automatically in
-                        fields if it's provided, since it will be used when
-                        constructing 'next' link.
-
-        """
-
-        return rest_utils.get_all(ActionExecutions,
-                                  ActionExecution,
-                                  db_api.get_action_executions,
-                                  db_api.get_action_execution,
-                                  "Task",
-                                  marker,
-                                  limit,
-                                  sort_keys,
-                                  sort_dirs,
-                                  fields)
+        return _get_action_executions()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

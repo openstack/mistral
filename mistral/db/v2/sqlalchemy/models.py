@@ -220,7 +220,6 @@ def validate_long_type_length(cls, field_name, value):
 
 def register_length_validator(attr_name):
     """Register an event listener on the attribute.
-
     This event listener will validate the size every
     time a 'set' occurs.
     """

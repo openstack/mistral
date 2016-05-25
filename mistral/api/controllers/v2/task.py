@@ -36,7 +36,7 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
-class Task(resource.ResourceList):
+class Task(resource.Resource):
     """Task resource."""
 
     id = wtypes.text
@@ -83,15 +83,10 @@ class Task(resource.ResourceList):
         )
 
 
-class Tasks(resource.ResourceList):
+class Tasks(resource.Resource):
     """A collection of tasks."""
 
     tasks = [Task]
-
-    def __init__(self, **kwargs):
-        self._type = 'tasks'
-
-        super(Tasks, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -130,38 +125,12 @@ class TasksController(rest.RestController):
 
         return _get_task_resource_with_result(task_ex)
 
-    @wsme_pecan.wsexpose(Tasks, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields=''):
-        """Return all tasks within the execution.
+    @wsme_pecan.wsexpose(Tasks)
+    def get_all(self):
+        """Return all tasks within the execution."""
+        LOG.info("Fetch tasks")
 
-         :param marker: Optional. Pagination marker for large data sets.
-         :param limit: Optional. Maximum number of resources to return in a
-                       single result. Default value is None for backward
-                       compatibility.
-         :param sort_keys: Optional. Columns to sort results by.
-                           Default: created_at, which is backward compatible.
-         :param sort_dirs: Optional. Directions to sort corresponding to
-                           sort_keys, "asc" or "desc" can be chosen.
-                           Default: desc. The length of sort_dirs can be equal
-                           or less than that of sort_keys.
-         :param fields: Optional. A specified list of fields of the resource to
-                        be returned. 'id' will be included automatically in
-                        fields if it's provided, since it will be used when
-                        constructing 'next' link.
-        """
-
-        return rest_utils.get_all(Tasks,
-                                  Task,
-                                  db_api.get_task_executions,
-                                  db_api.get_task_execution,
-                                  "tasks",
-                                  marker=marker,
-                                  limit=limit,
-                                  sort_keys=sort_keys,
-                                  sort_dirs=sort_dirs,
-                                  fields=fields)
+        return _get_task_resources_with_results()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Task, wtypes.text, body=Task)
