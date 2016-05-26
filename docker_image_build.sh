@@ -1,12 +1,16 @@
- #!/bin/bash -xe
-if [ -x "/usr/bin/apt-get" ]; then
-sudo -E apt-get update
-sudo -E apt-get install -y docker.io apparmor cgroup-lite
-elif [ -x "/usr/bin/yum" ]; then
-sudo -E yum install -y docker-io gpg
-else
-echo "No supported package manager installed on system. Supported: apt, yum"
-exit 1
-fi
-sudo docker build -t mistral-docker .
-sudo docker save mistral-docker | gzip > mistral-docker.tar.gz
+#!/bin/bash -xe
+
+# TODO (akovi): This script is needed practically only for the CI builds.
+# Should be moved to some other place
+
+# install docker
+curl -fsSL https://get.docker.com/ | sh
+
+sudo service docker restart
+
+sudo -E docker pull ubuntu:14.04
+
+# build image
+sudo -E tools/docker/build.sh
+
+sudo -E docker save mistral-all | gzip > mistral-docker.tar.gz
