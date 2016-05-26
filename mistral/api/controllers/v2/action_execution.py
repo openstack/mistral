@@ -171,10 +171,14 @@ class ActionExecutionsController(rest.RestController):
             % (id, action_ex)
         )
 
+        output = action_ex.output
+
         if action_ex.state == states.SUCCESS:
-            result = wf_utils.Result(data=action_ex.output)
+            result = wf_utils.Result(data=output)
         elif action_ex.state == states.ERROR:
-            result = wf_utils.Result(error=action_ex.output)
+            if not output:
+                output = 'Unknown error'
+            result = wf_utils.Result(error=output)
         else:
             raise exc.InvalidResultException(
                 "Error. Expected on of %s, actual: %s" %
