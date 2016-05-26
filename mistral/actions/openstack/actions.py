@@ -31,7 +31,7 @@ from novaclient import client as novaclient
 from oslo_config import cfg
 from oslo_log import log
 from swiftclient import client as swift_client
-from troveclient import client as troveclient
+from troveclient.v1 import client as troveclient
 from zaqarclient.queues.v2 import client as zaqarclient
 
 from mistral.actions.openstack import base
@@ -320,7 +320,7 @@ class TroveAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._client_class()
+        return cls._client_class("fake_user", "fake_passwd")
 
 
 class IronicAction(base.OpenStackAction):
