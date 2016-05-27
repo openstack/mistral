@@ -438,32 +438,32 @@ class ConcurrencyPolicy(base.TaskPolicy):
 def _continue_task(task_ex_id):
     from mistral.engine import task_handler
 
-    # TODO(rakhmerov): It must be done in TX after Scheduler is fixed.
-    task_handler.continue_task(db_api.get_task_execution(task_ex_id))
+    with db_api.transaction():
+        task_handler.continue_task(db_api.get_task_execution(task_ex_id))
 
 
 def _complete_task(task_ex_id, state, state_info):
     from mistral.engine import task_handler
 
-    # TODO(rakhmerov): It must be done in TX after Scheduler is fixed.
-    task_handler.complete_task(
-        db_api.get_task_execution(task_ex_id),
-        state,
-        state_info
-    )
+    with db_api.transaction():
+        task_handler.complete_task(
+            db_api.get_task_execution(task_ex_id),
+            state,
+            state_info
+        )
 
 
 def _fail_task_if_incomplete(task_ex_id, timeout):
     from mistral.engine import task_handler
 
-    # TODO(rakhmerov): It must be done in TX after Scheduler is fixed.
-    task_ex = db_api.get_task_execution(task_ex_id)
+    with db_api.transaction():
+        task_ex = db_api.get_task_execution(task_ex_id)
 
-    if not states.is_completed(task_ex.state):
-        msg = 'Task timed out [timeout(s)=%s].' % timeout
+        if not states.is_completed(task_ex.state):
+            msg = 'Task timed out [timeout(s)=%s].' % timeout
 
-        task_handler.complete_task(
-            db_api.get_task_execution(task_ex_id),
-            states.ERROR,
-            msg
-        )
+            task_handler.complete_task(
+                db_api.get_task_execution(task_ex_id),
+                states.ERROR,
+                msg
+            )

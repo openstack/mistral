@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 
 # Default delay and timeout in seconds for await_xxx() functions.
 DEFAULT_DELAY = 1
-DEFAULT_TIMEOUT = 20
+DEFAULT_TIMEOUT = 30
 
 
 def launch_engine_server(transport, engine):
@@ -114,7 +114,7 @@ class EngineTestCase(base.DbTestCase):
             eventlet.spawn(launch_executor_server, transport, self.executor),
         ]
 
-        self.addOnException(self.print_workflow_executions)
+        self.addOnException(self.print_executions)
 
         # Start scheduler.
         scheduler_thread_group = scheduler.setup()
@@ -128,9 +128,10 @@ class EngineTestCase(base.DbTestCase):
         [thread.kill() for thread in self.threads]
 
     @staticmethod
-    def print_workflow_executions(exc_info):
+    def print_executions(exc_info):
         print("\nEngine test case exception occurred: %s" % exc_info[1])
         print("Exception type: %s" % exc_info[0])
+
         print("\nPrinting workflow executions...")
 
         wf_execs = db_api.get_workflow_executions()
@@ -166,6 +167,22 @@ class EngineTestCase(base.DbTestCase):
                          a.accepted,
                          a.output)
                     )
+
+        print("\nPrinting standalone action executions...")
+
+        a_execs = db_api.get_action_executions(task_execution_id=None)
+
+        for a in a_execs:
+            print(
+                "\t\t%s [id=%s, state=%s, state_info=%s, accepted=%s,"
+                " output=%s]" %
+                (a.name,
+                 a.id,
+                 a.state,
+                 a.state_info,
+                 a.accepted,
+                 a.output)
+            )
 
     # Various methods for abstract execution objects.
 

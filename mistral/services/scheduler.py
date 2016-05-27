@@ -162,23 +162,19 @@ class CallScheduler(periodic_task.PeriodicTasks):
             )
 
         for (target_auth_context, target_method, method_args) in delayed_calls:
-            # TODO(rakhmerov): https://bugs.launchpad.net/mistral/+bug/1484521
-            # Transaction is needed here because some of the
-            # target_method can use the DB.
-            with db_api.transaction():
-                try:
-                    # Set the correct context for the method.
-                    context.set_ctx(
-                        context.MistralContext(target_auth_context)
-                    )
+            try:
+                # Set the correct context for the method.
+                context.set_ctx(
+                    context.MistralContext(target_auth_context)
+                )
 
-                    # Call the method.
-                    target_method(**method_args)
-                except Exception as e:
-                    LOG.exception("Delayed call failed [exception=%s]: %s", e)
-                finally:
-                    # Remove context.
-                    context.set_ctx(None)
+                # Call the method.
+                target_method(**method_args)
+            except Exception as e:
+                LOG.exception("Delayed call failed [exception=%s]: %s", e)
+            finally:
+                # Remove context.
+                context.set_ctx(None)
 
         with db_api.transaction():
             for call in calls_to_make:
