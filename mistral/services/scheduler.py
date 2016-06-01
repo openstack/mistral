@@ -171,7 +171,11 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 # Call the method.
                 target_method(**method_args)
             except Exception as e:
-                LOG.exception("Delayed call failed [exception=%s]: %s", e)
+                LOG.exception(
+                    "Delayed call failed, method: %s, exception: %s",
+                    target_method,
+                    e
+                )
             finally:
                 # Remove context.
                 context.set_ctx(None)
