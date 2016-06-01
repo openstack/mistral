@@ -14,18 +14,39 @@
 #    limitations under the License.
 
 
+# TODO(rakhmerov): Can we make one parent for errors and exceptions?
+
 class MistralError(Exception):
     """Mistral specific error.
 
-    Reserved for situations that can't automatically handled. When it occurs
+    Reserved for situations that can't be automatically handled. When it occurs
     it signals that there is a major environmental problem like invalid startup
     configuration or implementation problem (e.g. some code doesn't take care
     of certain corner cases). From architectural perspective it's pointless to
     try to handle this type of problems except doing some finalization work
     like transaction rollback, deleting temporary files etc.
     """
+
+    message = "An unknown error occurred"
+    http_code = 500
+
     def __init__(self, message=None):
-        super(MistralError, self).__init__(message)
+        if message is not None:
+            self.message = message
+
+        super(MistralError, self).__init__(
+            '%d: %s' % (self.http_code, self.message))
+
+    @property
+    def code(self):
+        """This is here for webob to read.
+
+        https://github.com/Pylons/webob/blob/master/webob/exc.py
+        """
+        return self.http_code
+
+    def __str__(self):
+        return self.message
 
 
 class MistralException(Exception):
@@ -46,6 +67,13 @@ class MistralException(Exception):
     message = "An unknown exception occurred"
     http_code = 500
 
+    def __init__(self, message=None):
+        if message is not None:
+            self.message = message
+
+        super(MistralException, self).__init__(
+            '%d: %s' % (self.http_code, self.message))
+
     @property
     def code(self):
         """This is here for webob to read.
@@ -57,30 +85,23 @@ class MistralException(Exception):
     def __str__(self):
         return self.message
 
-    def __init__(self, message=None):
-        if message is not None:
-            self.message = message
 
-        super(MistralException, self).__init__(
-            '%d: %s' % (self.http_code, self.message))
+# Database errors.
 
-
-# Database exceptions.
-
-class DBException(MistralException):
+class DBError(MistralError):
     http_code = 400
 
 
-class DBDuplicateEntryException(DBException):
+class DBDuplicateEntryError(DBError):
     http_code = 409
     message = "Database object already exists"
 
 
-class DBQueryEntryException(DBException):
+class DBQueryEntryError(DBError):
     http_code = 400
 
 
-class DBEntityNotFoundException(DBException):
+class DBEntityNotFoundError(DBError):
     http_code = 404
     message = "Object not found"
 
@@ -101,7 +122,7 @@ class InvalidModelException(DSLParsingException):
     message = "Wrong entity definition"
 
 
-# Various common exceptions.
+# Various common exceptions and errors.
 
 class YaqlEvaluationException(MistralException):
     http_code = 400

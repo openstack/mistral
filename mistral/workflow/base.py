@@ -111,6 +111,8 @@ class WorkflowController(object):
         if self._is_paused_or_completed():
             return []
 
+        # TODO(rakhmerov): I think it should rather be a new method
+        # rerun_task() because it covers a different use case.
         if task_ex:
             return self._get_rerun_commands([task_ex], reset, env=env)
 
@@ -199,7 +201,11 @@ class WorkflowController(object):
         :param env: A set of environment variables to overwrite.
         :return: List of workflow commands.
         """
+
         for task_ex in task_exs:
+            # TODO(rakhmerov): It is wrong that we update something in
+            # workflow controller, by design it should not change system
+            # state. Fix it, it should happen outside.
             self._update_task_ex_env(task_ex, env)
 
         cmds = [commands.RunExistingTask(t_e, reset) for t_e in task_exs]

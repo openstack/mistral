@@ -20,14 +20,8 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
 from mistral.engine import base
-from mistral.engine import dispatcher
 from mistral.engine import workflow_handler as wf_handler
-from mistral.services import executions as wf_ex_service
-from mistral.services import workflows as wf_service
 from mistral import utils as u
-from mistral.workflow import base as wf_base
-from mistral.workflow import commands
-from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -47,23 +41,12 @@ class DefaultEngine(base.Engine, coordination.Service):
     def start_workflow(self, wf_identifier, wf_input, description='',
                        **params):
         with db_api.transaction():
-            # TODO(rakhmerov): It needs to be hidden in workflow_handler and
-            # Workflow abstraction.
-            # The new workflow execution will be in an IDLE
-            # state on initial record creation.
-            wf_ex, wf_spec = wf_ex_service.create_workflow_execution(
+            wf_ex = wf_handler.start_workflow(
                 wf_identifier,
                 wf_input,
                 description,
                 params
             )
-            wf_handler.set_workflow_state(wf_ex, states.RUNNING)
-
-            wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
-
-            cmds = wf_ctrl.continue_workflow()
-
-            dispatcher.dispatch_workflow_commands(wf_ex, cmds)
 
             return wf_ex.get_clone()
 
@@ -115,88 +98,40 @@ class DefaultEngine(base.Engine, coordination.Service):
         with db_api.transaction():
             wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-            wf_handler.set_workflow_state(wf_ex, states.PAUSED)
+            wf_handler.pause_workflow(wf_ex)
 
-        return wf_ex
-
-    @staticmethod
-    def _continue_workflow(wf_ex, task_ex=None, reset=True, env=None):
-        wf_ex = wf_service.update_workflow_execution_env(wf_ex, env)
-
-        wf_handler.set_workflow_state(
-            wf_ex,
-            states.RUNNING,
-            set_upstream=True
-        )
-
-        wf_ctrl = wf_base.get_controller(wf_ex)
-
-        # TODO(rakhmerov): Add error handling.
-        # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset, env=env)
-
-        # When resuming a workflow we need to ignore all 'pause'
-        # commands because workflow controller takes tasks that
-        # completed within the period when the workflow was paused.
-        # TODO(rakhmerov): This all should be in workflow handler, it's too
-        # specific for engine level.
-        cmds = list(
-            filter(
-                lambda c: not isinstance(c, commands.PauseWorkflow),
-                cmds
-            )
-        )
-
-        # Since there's no explicit task causing the operation
-        # we need to mark all not processed tasks as processed
-        # because workflow controller takes only completed tasks
-        # with flag 'processed' equal to False.
-        for t_ex in wf_ex.task_executions:
-            if states.is_completed(t_ex.state) and not t_ex.processed:
-                t_ex.processed = True
-
-        dispatcher.dispatch_workflow_commands(wf_ex, cmds)
-
-        if not cmds:
-            wf_handler.check_workflow_completion(wf_ex)
-
-        return wf_ex.get_clone()
+            return wf_ex.get_clone()
 
     @u.log_exec(LOG)
-    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True, env=None):
-        # TODO(rakhmerov): Rewrite this functionality with Task abstraction.
+    def rerun_workflow(self, task_ex_id, reset=True, env=None):
         with db_api.transaction():
-            wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
-
             task_ex = db_api.get_task_execution(task_ex_id)
 
-            if task_ex.workflow_execution.id != wf_ex_id:
-                raise ValueError('Workflow execution ID does not match.')
+            wf_ex = wf_handler.lock_workflow_execution(
+                task_ex.workflow_execution_id
+            )
 
-            if wf_ex.state == states.PAUSED:
-                return wf_ex.get_clone()
+            wf_handler.rerun_workflow(wf_ex, task_ex, reset=reset, env=env)
 
-            # TODO(rakhmerov): This should be a call to workflow handler.
-            return self._continue_workflow(wf_ex, task_ex, reset, env=env)
+            return wf_ex.get_clone()
 
     @u.log_exec(LOG)
     def resume_workflow(self, wf_ex_id, env=None):
-        # TODO(rakhmerov): Rewrite this functionality with Task abstraction.
         with db_api.transaction():
             wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-            if (not states.is_paused(wf_ex.state) and
-                    not states.is_idle(wf_ex.state)):
-                return wf_ex.get_clone()
+            wf_handler.resume_workflow(wf_ex, env=env)
 
-            return self._continue_workflow(wf_ex, env=env)
+            return wf_ex.get_clone()
 
     @u.log_exec(LOG)
     def stop_workflow(self, wf_ex_id, state, message=None):
         with db_api.transaction():
             wf_ex = wf_handler.lock_workflow_execution(wf_ex_id)
 
-            return wf_handler.stop_workflow(wf_ex, state, message)
+            wf_handler.stop_workflow(wf_ex, state, message)
+
+            return wf_ex.get_clone()
 
     @u.log_exec(LOG)
     def rollback_workflow(self, wf_ex_id):

@@ -241,7 +241,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(task_2_ex.state_info)
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_2_ex.id)
+        self.engine.rerun_workflow(task_2_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -347,7 +347,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         }
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_21_ex.id, env=updated_env)
+        self.engine.rerun_workflow(task_21_ex.id, env=updated_env)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -482,7 +482,6 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         e = self.assertRaises(
             exc.MistralError,
             self.engine.rerun_workflow,
-            wf_ex.id,
             task_1_ex.id
         )
 
@@ -531,7 +530,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(3, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+        self.engine.rerun_workflow(task_1_ex.id, reset=False)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -616,7 +615,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(4, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+        self.engine.rerun_workflow(task_1_ex.id, reset=False)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -705,7 +704,6 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         # Resume workflow and re-run failed task.
         self.engine.rerun_workflow(
-            wf_ex.id,
             task_1_ex.id,
             reset=False,
             env=updated_env
@@ -798,7 +796,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(task_3_ex.state_info)
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_3_ex.id)
+        self.engine.rerun_workflow(task_3_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -894,7 +892,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(task_2_ex.state_info)
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id)
+        self.engine.rerun_workflow(task_1_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -921,7 +919,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.WAITING, task_3_ex.state)
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_2_ex.id)
+        self.engine.rerun_workflow(task_2_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1022,7 +1020,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(3, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task. Re-run #1 with no reset.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+        self.engine.rerun_workflow(task_1_ex.id, reset=False)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1043,7 +1041,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(5, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task. Re-run #2 with reset.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=True)
+        self.engine.rerun_workflow(task_1_ex.id, reset=True)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1064,7 +1062,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(8, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task. Re-run #3 with no reset.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+        self.engine.rerun_workflow(task_1_ex.id, reset=False)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1085,7 +1083,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(10, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task. Re-run #4 with no reset.
-        self.engine.rerun_workflow(wf_ex.id, task_1_ex.id, reset=False)
+        self.engine.rerun_workflow(task_1_ex.id, reset=False)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1160,7 +1158,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(task_2_ex.state_info)
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_2_ex.id)
+        self.engine.rerun_workflow(task_2_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -1261,7 +1259,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(sub_wf_task_ex.state_info)
 
         # Resume workflow and re-run failed subworkflow task.
-        self.engine.rerun_workflow(sub_wf_ex.id, sub_wf_task_ex.id)
+        self.engine.rerun_workflow(sub_wf_task_ex.id)
 
         sub_wf_ex = db_api.get_workflow_execution(sub_wf_ex.id)
 

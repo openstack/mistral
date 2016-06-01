@@ -104,7 +104,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(task_2_ex.state_info)
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_2_ex.id)
+        self.engine.rerun_workflow(task_2_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -203,7 +203,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         }
 
         # Resume workflow and re-run failed task.
-        self.engine.rerun_workflow(wf_ex.id, task_2_ex.id, env=updated_env)
+        self.engine.rerun_workflow(task_2_ex.id, env=updated_env)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -305,7 +305,6 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         e = self.assertRaises(
             exc.MistralError,
             self.engine.rerun_workflow,
-            wf_ex.id,
             task_1_ex.id
         )
 

@@ -83,7 +83,7 @@ class WorkbookTest(SQLAlchemyTest):
         db_api.create_workbook(WORKBOOKS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             db_api.create_workbook,
             WORKBOOKS[0]
         )
@@ -153,7 +153,7 @@ class WorkbookTest(SQLAlchemyTest):
         db_api.delete_workbook(created.name)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workbook,
             created.name
         )
@@ -284,7 +284,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             db_api.create_workflow_definition,
             WF_DEFINITIONS[0]
         )
@@ -424,7 +424,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             db_api.delete_workflow_definition(identifier)
 
             self.assertRaises(
-                exc.DBEntityNotFoundException,
+                exc.DBEntityNotFoundError,
                 db_api.get_workflow_definition,
                 identifier
             )
@@ -536,7 +536,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             db_api.create_action_definition,
             ACTION_DEFINITIONS[0]
         )
@@ -606,7 +606,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         db_api.delete_action_definition(created.name)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_action_definition,
             created.name
         )
@@ -726,7 +726,7 @@ class ActionExecutionTest(SQLAlchemyTest):
         db_api.delete_action_execution(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_action_execution,
             created.id
         )
@@ -738,7 +738,7 @@ class ActionExecutionTest(SQLAlchemyTest):
         auth_context.set_ctx(test_base.get_context(default=False))
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.delete_action_execution,
             created.id
         )
@@ -880,7 +880,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         db_api.delete_workflow_execution(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workflow_execution,
             created.id
         )
@@ -1130,7 +1130,7 @@ class TaskExecutionTest(SQLAlchemyTest):
         db_api.delete_task_execution(created.id)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_task_execution,
             created.id
         )
@@ -1203,7 +1203,7 @@ class CronTriggerTest(SQLAlchemyTest):
         db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             db_api.create_cron_trigger,
             CRON_TRIGGERS[0]
         )
@@ -1302,7 +1302,7 @@ class CronTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(1, rowcount)
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_cron_trigger,
             created.name
         )
@@ -1365,7 +1365,7 @@ class EnvironmentTest(SQLAlchemyTest):
         db_api.create_environment(ENVIRONMENTS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             db_api.create_environment,
             ENVIRONMENTS[0]
         )
@@ -1432,7 +1432,7 @@ class EnvironmentTest(SQLAlchemyTest):
         db_api.delete_environment(created.name)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_environment,
             created.name
         )
@@ -1462,7 +1462,7 @@ class TXTest(SQLAlchemyTest):
 
         self.assertFalse(self.is_db_session_open())
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workbook,
             created['id']
         )
@@ -1525,12 +1525,12 @@ class TXTest(SQLAlchemyTest):
 
         self.assertFalse(self.is_db_session_open())
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workflow_execution,
             created.id
         )
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workbook,
             created_wb.name
         )
@@ -1548,12 +1548,12 @@ class TXTest(SQLAlchemyTest):
 
                 db_api.create_workbook(WORKBOOKS[0])
 
-        except exc.DBDuplicateEntryException:
+        except exc.DBDuplicateEntryError:
             pass
 
         self.assertFalse(self.is_db_session_open())
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workbook,
             created.name
         )
@@ -1633,7 +1633,7 @@ class ResourceMemberTest(SQLAlchemyTest):
 
         # Tenant A can not see membership of resource shared to Tenant B.
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_resource_member,
             '123e4567-e89b-12d3-a456-426655440000',
             'workflow',
@@ -1644,7 +1644,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         db_api.create_resource_member(RESOURCE_MEMBERS[0])
 
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             db_api.create_resource_member,
             RESOURCE_MEMBERS[0]
         )
@@ -1695,7 +1695,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.update_resource_member,
             created.resource_id,
             'workflow',
@@ -1726,7 +1726,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         auth_context.set_ctx(user_context)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.delete_resource_member,
             created.resource_id,
             'workflow',
@@ -1743,7 +1743,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         )
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.delete_resource_member,
             created.resource_id,
             'workflow',
@@ -1752,7 +1752,7 @@ class ResourceMemberTest(SQLAlchemyTest):
 
     def test_delete_nonexistent_resource_member(self):
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.delete_resource_member,
             'nonexitent_resource',
             'workflow',
@@ -1768,7 +1768,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(user_context)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workflow_definition,
             wf.id
         )
@@ -1836,7 +1836,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(user_context)
 
         self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             db_api.get_workflow_definition,
             wf.id
         )
@@ -1872,7 +1872,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         auth_context.set_ctx(test_base.get_context())
 
         self.assertRaises(
-            exc.DBException,
+            exc.DBError,
             db_api.delete_workflow_definition,
             wf.id
         )

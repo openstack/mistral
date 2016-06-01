@@ -607,10 +607,12 @@ class ExecutionTestsV2(base.TestCase):
 
     @test.attr(type='negative')
     def test_create_execution_forgot_input_params(self):
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.create_execution,
-                          self.reverse_wf['name'],
-                          params={"task_name": "nonexist"})
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.create_execution,
+            self.reverse_wf['name'],
+            params={"task_name": "nonexist"}
+        )
 
     @test.attr(type='sanity')
     def test_action_ex_concurrency(self):

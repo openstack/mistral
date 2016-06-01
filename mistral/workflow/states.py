@@ -69,6 +69,10 @@ def is_paused_or_completed(state):
     return is_paused(state) or is_completed(state)
 
 
+def is_paused_or_idle(state):
+    return is_paused(state) or is_idle(state)
+
+
 def is_valid_transition(from_state, to_state):
     if is_invalid(from_state) or is_invalid(to_state):
         return False

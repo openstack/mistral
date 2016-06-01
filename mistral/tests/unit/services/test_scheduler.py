@@ -289,7 +289,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         eventlet.sleep(WAIT)
 
-        self.assertRaises(exc.DBEntityNotFoundException,
+        self.assertRaises(exc.DBEntityNotFoundError,
                           db_api.get_delayed_call,
                           calls[0].id
                           )

@@ -22,10 +22,12 @@ from mistral import utils
 
 
 # TODO(rakhmerov): This method is too abstract, validation rules may vary
-# depending on object type (action, wf), it's not clear what it can be
+#  depending on object type (action, wf), it's not clear what it can be
 # applied to.
-def validate_input(definition, input, spec=None):
-    input_param_names = copy.deepcopy(list((input or {}).keys()))
+# TODO(rakhmerov): It must not do any manipulations with parameters
+#  (input_dict)!
+def validate_input(definition, input_dict, spec=None):
+    input_param_names = copy.deepcopy(list((input_dict or {}).keys()))
     missing_param_names = []
 
     spec_input = (spec.get_input() if spec else
@@ -33,7 +35,8 @@ def validate_input(definition, input, spec=None):
 
     for p_name, p_value in six.iteritems(spec_input):
         if p_value is utils.NotDefined and p_name not in input_param_names:
-            missing_param_names.append(p_name)
+            missing_param_names.append(str(p_name))
+
         if p_name in input_param_names:
             input_param_names.remove(p_name)
 
@@ -55,7 +58,7 @@ def validate_input(definition, input, spec=None):
             msg % tuple(msg_props)
         )
     else:
-        utils.merge_dicts(input, spec_input, overwrite=False)
+        utils.merge_dicts(input_dict, spec_input, overwrite=False)
 
 
 def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,

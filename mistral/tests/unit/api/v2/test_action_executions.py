@@ -142,7 +142,7 @@ MOCK_ACTION_NOT_COMPLETE = mock.MagicMock(
 MOCK_AD_HOC_ACTION = mock.MagicMock(return_value=AD_HOC_ACTION_EX_DB)
 MOCK_ACTIONS = mock.MagicMock(return_value=[ACTION_EX_DB])
 MOCK_EMPTY = mock.MagicMock(return_value=[])
-MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundException())
+MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
 

@@ -145,7 +145,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         # But creation with the same count and first time
         # simultaneously leads to error.
         self.assertRaises(
-            exc.DBDuplicateEntryException,
+            exc.DBDuplicateEntryError,
             t_s.create_cron_trigger,
             'trigger-%s' % utils.generate_unicode_uuid(),
             self.wf.name,
