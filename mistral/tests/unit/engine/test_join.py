@@ -576,6 +576,7 @@ class JoinEngineTest(base.EngineTestCase):
               action: std.noop
               on-success:
                 - task22
+
             task22:
               action: std.noop
               on-success:
@@ -585,6 +586,7 @@ class JoinEngineTest(base.EngineTestCase):
               action: std.fail
               on-success:
                 - task32
+
             task32:
               action: std.noop
               on-success:

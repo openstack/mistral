@@ -73,7 +73,7 @@ def get_task_execution_result(task_ex):
     # use db_api.get_action_executions here to avoid session-less use cases.
     action_execs = db_api.get_action_executions(task_execution_id=task_ex.id)
     action_execs.sort(
-        key=lambda x: x.runtime_context.get('with_items_index')
+        key=lambda x: x.runtime_context.get('index')
     )
 
     results = [
@@ -109,12 +109,6 @@ def publish_variables(task_ex, task_spec):
         task_spec.get_publish(),
         expr_ctx
     )
-
-
-def destroy_task_result(task_ex):
-    for ex in task_ex.executions:
-        if hasattr(ex, 'output'):
-            ex.output = {}
 
 
 def evaluate_task_outbound_context(task_ex):

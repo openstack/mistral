@@ -597,17 +597,13 @@ class ExecutionTestsV2(base.TestCase):
 
     @test.attr(type='negative')
     def test_create_execution_for_reverse_wf_invalid_start_task(self):
-        _, wf_ex = self.client.create_execution(
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.create_execution,
             self.reverse_wf['name'],
-            {
-                self.reverse_wf['input']: "Bye"},
-            {
-                "task_name": "nonexist"
-            }
+            {self.reverse_wf['input']: "Bye"},
+            {"task_name": "nonexist"}
         )
-
-        self.assertEqual("ERROR", wf_ex['state'])
-        self.assertIn("Invalid task name", wf_ex['state_info'])
 
     @test.attr(type='negative')
     def test_create_execution_forgot_input_params(self):

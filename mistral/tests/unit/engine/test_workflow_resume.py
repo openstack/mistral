@@ -16,7 +16,6 @@ import mock
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import default_engine as de
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
@@ -139,7 +138,7 @@ workflows:
 
     tasks:
       task1:
-        action: std.echo output="Hi!"
+        action: std.echo output="Task 1"
         on-complete:
           - task3
           - pause
@@ -299,7 +298,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.engine.resume_workflow(wf_ex.id)
 
-        self.await_execution_success(wf_ex.id, 1, 5)
+        self.await_execution_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -351,8 +350,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_ex.state, wf_ex.state_info)
         self.assertEqual(4, len(wf_ex.task_executions))
 
-    @mock.patch.object(de.DefaultEngine, '_fail_workflow')
-    def test_resume_fails(self, mock_fw):
+    def test_resume_fails(self):
         # Start and pause workflow.
         wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
 
@@ -365,7 +363,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.assertEqual(states.PAUSED, wf_ex.state)
 
         # Simulate failure and check if it is handled.
-        err = exc.MistralException('foo')
+        err = exc.MistralError('foo')
 
         with mock.patch.object(
                 db_api,
@@ -373,12 +371,10 @@ class WorkflowResumeTest(base.EngineTestCase):
                 side_effect=err):
 
             self.assertRaises(
-                exc.MistralException,
+                exc.MistralError,
                 self.engine.resume_workflow,
                 wf_ex.id
             )
-
-            mock_fw.assert_called_once_with(wf_ex.id, err)
 
     def test_resume_diff_env_vars(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK_DIFF_ENV_VAR)

@@ -486,10 +486,10 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
-        task1 = self._assert_single_item(tasks, name='task1')
+        task1 = self._assert_single_item(wf_ex.task_executions, name='task1')
 
         result = data_flow.get_task_execution_result(task1)
+
         self.assertListEqual([], result)
 
 
@@ -512,7 +512,7 @@ class DataFlowTest(test_base.BaseTest):
             name='my_action',
             output={'result': 1},
             accepted=True,
-            runtime_context={'with_items_index': 0}
+            runtime_context={'index': 0}
         )]
 
         with mock.patch.object(db_api, 'get_action_executions',
@@ -523,14 +523,14 @@ class DataFlowTest(test_base.BaseTest):
             name='my_action',
             output={'result': 1},
             accepted=True,
-            runtime_context={'with_items_index': 0}
+            runtime_context={'index': 0}
         ))
 
         action_exs.append(models.ActionExecution(
             name='my_action',
             output={'result': 1},
             accepted=False,
-            runtime_context={'with_items_index': 0}
+            runtime_context={'index': 0}
         ))
 
         with mock.patch.object(db_api, 'get_action_executions',

@@ -45,17 +45,18 @@ class RunTask(WorkflowCommand):
 
     def __init__(self, wf_ex, task_spec, ctx):
         super(RunTask, self).__init__(wf_ex, task_spec, ctx)
-        self.wait_flag = False
+
+        self.wait = False
 
     def is_waiting(self):
-        return (self.wait_flag and
+        return (self.wait and
                 isinstance(self.task_spec, tasks.DirectWorkflowTaskSpec) and
                 self.task_spec.get_join())
 
     def __repr__(self):
         return (
             "Run task [workflow=%s, task=%s, waif_flag=%s]"
-            % (self.wf_ex.name, self.task_spec.get_name(), self.wait_flag)
+            % (self.wf_ex.name, self.task_spec.get_name(), self.wait)
         )
 
 

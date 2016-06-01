@@ -59,7 +59,7 @@ def _create_workflow_execution(wf_def, wf_spec, wf_input, desc, params):
         'context': copy.deepcopy(wf_input) or {},
         'task_execution_id': params.get('task_execution_id'),
         'runtime_context': {
-            'with_items_index': params.get('with_items_index', 0)
+            'index': params.get('index', 0)
         },
     })
 
@@ -92,4 +92,4 @@ def create_workflow_execution(wf_identifier, wf_input, description, params,
 
     wf_trace.info(wf_ex, "Starting workflow: '%s'" % wf_identifier)
 
-    return wf_ex.id, wf_spec
+    return wf_ex, wf_spec

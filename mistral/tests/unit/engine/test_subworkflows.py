@@ -181,7 +181,7 @@ class SubworkflowsTest(base.EngineTestCase):
     @mock.patch.object(std_actions.EchoAction, 'run',
                        mock.MagicMock(side_effect=exc.ActionException))
     def test_subworkflow_error(self):
-        wf2_ex = self.engine.start_workflow('wb1.wf2', None)
+        self.engine.start_workflow('wb1.wf2', None)
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
@@ -208,11 +208,13 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(2, len(wf_execs))
 
         wf2_ex = self._assert_single_item(wf_execs, name='wb2.wf2')
+
         self.assertEqual(states.ERROR, wf2_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf2_ex.state_info)
 
         # Ensure error message is bubbled up to the main workflow.
         wf1_ex = self._assert_single_item(wf_execs, name='wb2.wf1')
+
         self.assertEqual(states.ERROR, wf1_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf1_ex.state_info)
 

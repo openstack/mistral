@@ -178,13 +178,13 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertIn(
-            'Failure caused by error in tasks: task1',
+            'Failed to handle action completion [wf=wf, task=task1',
             wf_ex.state_info
         )
 
         task_ex = self._assert_single_item(wf_ex.task_executions, name='task1')
 
-        self.assertEqual(
+        self.assertIn(
             "Size of 'published' is 1KB which exceeds the limit of 0KB",
             task_ex.state_info
         )
