@@ -1,0 +1,5 @@
+---
+features:
+    - |
+      Now user can provide custom message for fail/pause/success transition.
+      e.g. - fail(msg='error in task'): <% condition if any %>
