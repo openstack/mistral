@@ -14,8 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import traceback
-
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import periodic_task
@@ -68,13 +66,9 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                                     "by cron trigger.",
                         **t.workflow_params
                     )
-            except Exception as e:
+            except Exception:
                 # Log and continue to next cron trigger.
-                msg = (
-                    "Failed to process cron trigger %s\n%s"
-                    % (str(t), traceback.format_exc(e))
-                )
-                LOG.error(msg)
+                LOG.exception("Failed to process cron trigger %s" % str(t))
             finally:
                 auth_ctx.set_ctx(None)
 
