@@ -25,7 +25,7 @@ from mistral import utils
 from mistral.workbook import types
 
 
-CMD_PTRN = re.compile("^[\w\.]+[^=\s\"]*")
+CMD_PTRN = re.compile("^[\w\.]+[^=\(\s\"]*")
 
 INLINE_YAQL = expr.INLINE_YAQL_REGEXP
 _ALL_IN_BRACKETS = "\[.*\]\s*"

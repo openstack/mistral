@@ -18,6 +18,10 @@ import six
 from mistral.workbook import types
 from mistral.workbook.v2 import base
 from mistral.workbook.v2 import policies
+from mistral.workbook.v2 import tasks
+
+
+direct_wf_ts = tasks.DirectWorkflowTaskSpec
 
 
 class TaskDefaultsSpec(base.BaseSpec):
@@ -67,9 +71,15 @@ class TaskDefaultsSpec(base.BaseSpec):
             'pause-before',
             'concurrency'
         )
-        self._on_complete = self._as_list_of_tuples("on-complete")
-        self._on_success = self._as_list_of_tuples("on-success")
-        self._on_error = self._as_list_of_tuples("on-error")
+        self._on_complete = direct_wf_ts.prepare_on_clause(
+            self._as_list_of_tuples('on-complete')
+        )
+        self._on_success = direct_wf_ts.prepare_on_clause(
+            self._as_list_of_tuples('on-success')
+        )
+        self._on_error = direct_wf_ts.prepare_on_clause(
+            self._as_list_of_tuples('on-error')
+        )
         self._requires = data.get('requires', [])
 
     def validate_schema(self):
