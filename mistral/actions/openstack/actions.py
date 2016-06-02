@@ -591,12 +591,11 @@ class DesignateAction(base.OpenStackAction):
         )
 
         client = self._client_class(
-            1,
-            ctx.user_name,
-            ctx.auth_token,
-            project_id=ctx.project_id,
-            auth_url=designate_url,
-            region_name=designate_endpoint.region
+            endpoint=designate_url,
+            tenant_id=ctx.project_id,
+            auth_url=CONF.keystone_authtoken.auth_uri,
+            region_name=designate_endpoint.region,
+            service_type='dns'
         )
 
         client.client.auth_token = ctx.auth_token
