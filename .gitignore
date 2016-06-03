@@ -31,6 +31,7 @@ cover/*
 .testrepository/
 subunit.log
 .mistral.conf
+AUTHORS
 ChangeLog
 
 # Translations
