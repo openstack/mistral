@@ -21,7 +21,7 @@ from oslo_db import exception as db_exc
 from oslo_db import sqlalchemy as oslo_sqlalchemy
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
-from oslo_utils import uuidutils
+from oslo_utils import uuidutils  # noqa
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import base as b
@@ -224,6 +224,18 @@ def _get_db_object_by_id(model, id):
     return _secure_query(model).filter_by(id=id).first()
 
 
+def _get_db_object_by_name_or_id(model, identifier):
+    query = _secure_query(model)
+    query = query.filter(
+        sa.or_(
+            model.id == identifier,
+            model.name == identifier
+        )
+    )
+
+    return query.first()
+
+
 # Workbook definitions.
 
 def get_workbook(name):
@@ -313,9 +325,10 @@ def get_workflow_definition(identifier):
                        uuid.
     :return: Workflow definition.
     """
-    wf_def = (_get_workflow_definition_by_id(identifier)
-              if uuidutils.is_uuid_like(identifier)
-              else _get_workflow_definition(identifier))
+    wf_def = _get_db_object_by_name_or_id(
+        models.WorkflowDefinition,
+        identifier
+    )
 
     if not wf_def:
         raise exc.DBEntityNotFoundError(
@@ -326,7 +339,7 @@ def get_workflow_definition(identifier):
 
 
 def get_workflow_definition_by_id(id):
-    wf_def = _get_workflow_definition_by_id(id)
+    wf_def = _get_db_object_by_id(models.WorkflowDefinition, id)
 
     if not wf_def:
         raise exc.DBEntityNotFoundError(
@@ -337,7 +350,7 @@ def get_workflow_definition_by_id(id):
 
 
 def load_workflow_definition(name):
-    return _get_workflow_definition(name)
+    return _get_db_object_by_name(models.WorkflowDefinition, name)
 
 
 def get_workflow_definitions(sort_keys=['created_at'], fields=None, **kwargs):
@@ -403,7 +416,7 @@ def update_workflow_definition(identifier, values, session=None):
 
 @b.session_aware()
 def create_or_update_workflow_definition(name, values, session=None):
-    if not _get_workflow_definition(name):
+    if not _get_db_object_by_name(models.WorkflowDefinition, name):
         return create_workflow_definition(values)
     else:
         return update_workflow_definition(name, values)
@@ -458,14 +471,6 @@ def delete_workflow_definitions(**kwargs):
     return _delete_all(models.WorkflowDefinition, **kwargs)
 
 
-def _get_workflow_definition(name):
-    return _get_db_object_by_name(models.WorkflowDefinition, name)
-
-
-def _get_workflow_definition_by_id(id):
-    return _get_db_object_by_id(models.WorkflowDefinition, id)
-
-
 # Action definitions.
 
 def get_action_definition_by_id(id):
@@ -479,19 +484,22 @@ def get_action_definition_by_id(id):
     return action_def
 
 
-def get_action_definition(name):
-    a_def = _get_action_definition(name)
+def get_action_definition(identifier):
+    a_def = _get_db_object_by_name_or_id(
+        models.ActionDefinition,
+        identifier
+    )
 
     if not a_def:
         raise exc.DBEntityNotFoundError(
-            "Action definition not found [action_name=%s]" % name
+            "Action definition not found [action_name=%s]" % identifier
         )
 
     return a_def
 
 
 def load_action_definition(name):
-    return _get_action_definition(name)
+    return _get_db_object_by_name(models.ActionDefinition, name)
 
 
 def get_action_definitions(sort_keys=['name'], **kwargs):
@@ -520,7 +528,7 @@ def create_action_definition(values, session=None):
 
 @b.session_aware()
 def update_action_definition(name, values, session=None):
-    a_def = _get_action_definition(name)
+    a_def = _get_db_object_by_name(models.ActionDefinition, name)
 
     if not a_def:
         raise exc.DBEntityNotFoundError(
@@ -534,20 +542,15 @@ def update_action_definition(name, values, session=None):
 
 @b.session_aware()
 def create_or_update_action_definition(name, values, session=None):
-    if not _get_action_definition(name):
+    if not _get_db_object_by_name(models.ActionDefinition, name):
         return create_action_definition(values)
     else:
         return update_action_definition(name, values)
 
 
 @b.session_aware()
-def delete_action_definition(name, session=None):
-    a_def = _get_action_definition(name)
-
-    if not a_def:
-        raise exc.DBEntityNotFoundError(
-            "Action definition not found [action_name=%s]" % name
-        )
+def delete_action_definition(identifier, session=None):
+    a_def = get_action_definition(identifier)
 
     session.delete(a_def)
 
@@ -555,10 +558,6 @@ def delete_action_definition(name, session=None):
 @b.session_aware()
 def delete_action_definitions(**kwargs):
     return _delete_all(models.ActionDefinition, **kwargs)
-
-
-def _get_action_definition(name):
-    return _get_db_object_by_name(models.ActionDefinition, name)
 
 
 # Common executions.

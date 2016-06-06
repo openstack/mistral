@@ -102,12 +102,16 @@ class ActionsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Action, wtypes.text)
-    def get(self, name):
-        """Return the named action."""
-        acl.enforce('actions:get', context.ctx())
-        LOG.info("Fetch action [name=%s]" % name)
+    def get(self, identifier):
+        """Return the named action.
 
-        db_model = db_api.get_action_definition(name)
+        :param identifier: ID or name of the Action to get.
+        """
+
+        acl.enforce('actions:get', context.ctx())
+        LOG.info("Fetch action [identifier=%s]" % identifier)
+
+        db_model = db_api.get_action_definition(identifier)
 
         return Action.from_dict(db_model.to_dict())
 
@@ -169,19 +173,19 @@ class ActionsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, name):
+    def delete(self, identifier):
         """Delete the named action."""
         acl.enforce('actions:delete', context.ctx())
-        LOG.info("Delete action [name=%s]" % name)
+        LOG.info("Delete action [identifier=%s]" % identifier)
 
         with db_api.transaction():
-            db_model = db_api.get_action_definition(name)
+            db_model = db_api.get_action_definition(identifier)
 
             if db_model.is_system:
-                msg = "Attempt to delete a system action: %s" % name
+                msg = "Attempt to delete a system action: %s" % identifier
                 raise exc.DataAccessException(msg)
 
-            db_api.delete_action_definition(name)
+            db_api.delete_action_definition(identifier)
 
     @wsme_pecan.wsexpose(Actions, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,

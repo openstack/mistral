@@ -124,21 +124,44 @@ MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryError())
 
 
 class TestActionsController(base.APITest):
-    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_ACTION)
     def test_get(self):
         resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(ACTION, resp.json)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_NOT_FOUND)
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/actions/my_action', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     @mock.patch.object(db_api, "update_action_definition", MOCK_UPDATED_ACTION)
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_ACTION)
+    def test_get_by_id(self):
+        url = '/v2/actions/{0}'.format(ACTION['id'])
+        resp = self.app.get(url)
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(ACTION['id'], resp.json['id'])
+
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_NOT_FOUND)
+    def test_get_by_id_not_found(self):
+        url = '/v2/actions/1234'
+        resp = self.app.get(url, expect_errors=True)
+
+        self.assertEqual(404, resp.status_int)
+
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_ACTION)
+    @mock.patch.object(
+        db_api, "update_action_definition", MOCK_UPDATED_ACTION
+    )
     def test_put(self):
         resp = self.app.put(
             '/v2/actions',
@@ -178,7 +201,8 @@ class TestActionsController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
     def test_put_system(self):
         resp = self.app.put(
             '/v2/actions',
@@ -257,7 +281,8 @@ class TestActionsController(base.APITest):
 
         self.assertEqual(409, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_ACTION)
     @mock.patch.object(db_api, "delete_action_definition", MOCK_DELETE)
     def test_delete(self):
         resp = self.app.delete('/v2/actions/my_action')
@@ -270,7 +295,8 @@ class TestActionsController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
+    @mock.patch.object(
+        db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
     def test_delete_system(self):
         resp = self.app.delete('/v2/actions/std.echo', expect_errors=True)
 
@@ -278,7 +304,8 @@ class TestActionsController(base.APITest):
         self.assertIn('Attempt to delete a system action: std.echo',
                       resp.json['faultstring'])
 
-    @mock.patch.object(db_api, "get_action_definitions", MOCK_ACTIONS)
+    @mock.patch.object(
+        db_api, "get_action_definitions", MOCK_ACTIONS)
     def test_get_all(self):
         resp = self.app.get('/v2/actions')
 
@@ -287,7 +314,8 @@ class TestActionsController(base.APITest):
         self.assertEqual(1, len(resp.json['actions']))
         self.assertDictEqual(ACTION, resp.json['actions'][0])
 
-    @mock.patch.object(db_api, "get_action_definitions", MOCK_EMPTY)
+    @mock.patch.object(
+        db_api, "get_action_definitions", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/actions')
 
@@ -295,7 +323,8 @@ class TestActionsController(base.APITest):
 
         self.assertEqual(0, len(resp.json['actions']))
 
-    @mock.patch.object(db_api, "get_action_definitions", MOCK_ACTIONS)
+    @mock.patch.object(
+        db_api, "get_action_definitions", MOCK_ACTIONS)
     def test_get_all_pagination(self):
         resp = self.app.get(
             '/v2/actions?limit=1&sort_keys=id,name')
