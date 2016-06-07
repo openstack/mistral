@@ -89,7 +89,7 @@ ENVIRONMENT_DB = models.Environment(
 )
 
 MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
-MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundException())
+MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 
 
 class DefaultEngineTest(base.DbTestCase):
@@ -210,7 +210,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertDictEqual(wf_ex.params.get('env', {}), env)
 
-    @mock.patch.object(db_api, "get_environment", MOCK_ENVIRONMENT)
+    @mock.patch.object(db_api, "load_environment", MOCK_ENVIRONMENT)
     def test_start_workflow_with_saved_env(self):
         wf_input = {
             'param1': '<% env().key1 %>',
@@ -223,7 +223,8 @@ class DefaultEngineTest(base.DbTestCase):
             'wb.wf',
             wf_input,
             env='test',
-            task_name='task2')
+            task_name='task2'
+        )
 
         self.assertIsNotNone(wf_ex)
 
@@ -233,23 +234,40 @@ class DefaultEngineTest(base.DbTestCase):
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_start_workflow_env_not_found(self):
-        self.assertRaises(exc.DBEntityNotFoundException,
-                          self.engine.start_workflow,
-                          'wb.wf',
-                          {'param1': '<% env().key1 %>'},
-                          env='foo',
-                          task_name='task2')
+        e = self.assertRaises(
+            exc.InputException,
+            self.engine.start_workflow,
+            'wb.wf',
+            {
+                'param1': '<% env().key1 %>',
+                'param2': 'some value'
+            },
+            env='foo',
+            task_name='task2'
+        )
+
+        self.assertEqual("Environment is not found: foo", e.message)
 
     def test_start_workflow_with_env_type_error(self):
-        self.assertRaises(ValueError,
-                          self.engine.start_workflow,
-                          'wb.wf',
-                          {'param1': '<% env().key1 %>'},
-                          env=True,
-                          task_name='task2')
+        e = self.assertRaises(
+            exc.InputException,
+            self.engine.start_workflow,
+            'wb.wf',
+            {
+                'param1': '<% env().key1 %>',
+                'param2': 'some value'
+            },
+            env=True,
+            task_name='task2'
+        )
+
+        self.assertIn(
+            'Unexpected value type for environment',
+            e.message
+        )
 
     def test_start_workflow_missing_parameters(self):
-        self.assertRaises(
+        e = self.assertRaises(
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
@@ -257,14 +275,24 @@ class DefaultEngineTest(base.DbTestCase):
             task_name='task2'
         )
 
+        self.assertIn("Invalid input", e.message)
+        self.assertIn("missing=['param2']", e.message)
+
     def test_start_workflow_unexpected_parameters(self):
-        self.assertRaises(
+        e = self.assertRaises(
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
-            {'param1': 'Hey', 'param2': 'Hi', 'unexpected_param': 'val'},
+            {
+                'param1': 'Hey',
+                'param2': 'Hi',
+                'unexpected_param': 'val'
+            },
             task_name='task2'
         )
+
+        self.assertIn("Invalid input", e.message)
+        self.assertIn("unexpected=['unexpected_param']", e.message)
 
     def test_on_action_complete(self):
         wf_input = {'param1': 'Hey', 'param2': 'Hi'}

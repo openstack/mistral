@@ -165,7 +165,7 @@ class WorkflowServiceTest(base.DbTestCase):
 
     def test_update_non_existing_workflow_failed(self):
         exception = self.assertRaises(
-            exc.DBEntityNotFoundException,
+            exc.DBEntityNotFoundError,
             wf_service.update_workflows,
             WORKFLOW
         )

@@ -78,19 +78,19 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def resume_workflow(self, wf_ex_id):
+    def resume_workflow(self, wf_ex_id, env=None):
         """Resumes workflow.
 
         :param wf_ex_id: Execution id.
+        :param env: Workflow environment.
         :return: Workflow execution object.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def rerun_workflow(self, wf_ex_id, task_ex_id, reset=True, env=None):
+    def rerun_workflow(self, task_ex_id, reset=True, env=None):
         """Rerun workflow from the specified task.
 
-        :param wf_ex_id: Workflow execution id.
         :param task_ex_id: Task execution id.
         :param reset: If True, reset task state including deleting its action
             executions.

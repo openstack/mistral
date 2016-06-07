@@ -31,11 +31,7 @@ def dispatch_workflow_commands(wf_ex, wf_cmds):
         if isinstance(cmd, (commands.RunTask, commands.RunExistingTask)):
             task_handler.run_task(cmd)
         elif isinstance(cmd, commands.SetWorkflowState):
-            # TODO(rakhmerov): Make just a single call to workflow_handler
-            if states.is_completed(cmd.new_state):
-                wf_handler.stop_workflow(cmd.wf_ex, cmd.new_state, cmd.msg)
-            else:
-                wf_handler.set_workflow_state(wf_ex, cmd.new_state, cmd.msg)
+            wf_handler.set_workflow_state(wf_ex, cmd.new_state, cmd.msg)
         elif isinstance(cmd, commands.Noop):
             # Do nothing.
             pass

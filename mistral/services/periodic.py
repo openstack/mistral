@@ -102,7 +102,7 @@ def advance_cron_trigger(t):
                     'next_execution_time': t.next_execution_time
                 }
             )
-    except exc.DBEntityNotFoundException as e:
+    except exc.DBEntityNotFoundError as e:
         # Cron trigger was probably already deleted by a different process.
         LOG.debug(
             "Cron trigger named '%s' does not exist anymore: %s",

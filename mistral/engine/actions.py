@@ -20,10 +20,10 @@ import six
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral.engine import utils as e_utils
+from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.services import action_manager as a_m
-from mistral.services import executions as wf_ex_service
 from mistral.services import scheduler
 from mistral.services import security
 from mistral import utils
@@ -36,7 +36,6 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 _RUN_EXISTING_ACTION_PATH = 'mistral.engine.actions._run_existing_action'
-_RESUME_WORKFLOW_PATH = 'mistral.engine.actions._resume_workflow'
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -381,23 +380,12 @@ class WorkflowAction(Action):
                 wf_params[k] = v
                 del input_dict[k]
 
-        wf_ex, _ = wf_ex_service.create_workflow_execution(
-            wf_def.name,
+        wf_handler.start_workflow(
+            wf_def.id,
             input_dict,
             "sub-workflow execution",
-            wf_params,
-            wf_spec
+            wf_params
         )
-
-        scheduler.schedule_call(
-            None,
-            _RESUME_WORKFLOW_PATH,
-            0,
-            wf_ex_id=wf_ex.id,
-            env=None
-        )
-
-        # TODO(rakhmerov): Add info logging.
 
     def run(self, input_dict, target, index=0, desc='', save=True):
         raise NotImplemented('Does not apply to this WorkflowAction.')
@@ -409,10 +397,6 @@ class WorkflowAction(Action):
     def validate_input(self, input_dict):
         # TODO(rakhmerov): Implement.
         pass
-
-
-def _resume_workflow(wf_ex_id, env):
-    rpc.get_engine_client().resume_workflow(wf_ex_id, env=env)
 
 
 def _run_existing_action(action_ex_id, target):

@@ -20,9 +20,9 @@ import json
 import pecan
 import six
 from webob import Response
-from wsme import exc
+from wsme import exc as wsme_exc
 
-from mistral import exceptions as ex
+from mistral import exceptions as exc
 
 
 def wrap_wsme_controller_exception(func):
@@ -35,10 +35,14 @@ def wrap_wsme_controller_exception(func):
     def wrapped(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except ex.MistralException as excp:
-            pecan.response.translatable_error = excp
-            raise exc.ClientSideError(msg=six.text_type(excp),
-                                      status_code=excp.http_code)
+        except (exc.MistralException, exc.MistralError) as e:
+            pecan.response.translatable_error = e
+
+            raise wsme_exc.ClientSideError(
+                msg=six.text_type(e),
+                status_code=e.http_code
+            )
+
     return wrapped
 
 
@@ -52,31 +56,33 @@ def wrap_pecan_controller_exception(func):
     def wrapped(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except ex.MistralException as excp:
+        except (exc.MistralException, exc.MistralError) as e:
             return Response(
-                status=excp.http_code,
+                status=e.http_code,
                 content_type='application/json',
-                body=json.dumps(dict(
-                    faultstring=six.text_type(excp))))
+                body=json.dumps(dict(faultstring=six.text_type(e)))
+            )
 
     return wrapped
 
 
 def validate_query_params(limit, sort_keys, sort_dirs):
     if limit is not None and limit <= 0:
-        raise exc.ClientSideError("Limit must be positive.")
+        raise wsme_exc.ClientSideError("Limit must be positive.")
 
     if len(sort_keys) < len(sort_dirs):
-        raise exc.ClientSideError("Length of sort_keys must be equal or "
-                                  "greater than sort_dirs.")
+        raise wsme_exc.ClientSideError(
+            "Length of sort_keys must be equal or greater than sort_dirs."
+        )
 
     if len(sort_keys) > len(sort_dirs):
         sort_dirs.extend(['asc'] * (len(sort_keys) - len(sort_dirs)))
 
     for sort_dir in sort_dirs:
         if sort_dir not in ['asc', 'desc']:
-            raise exc.ClientSideError("Unknown sort direction, must be 'desc' "
-                                      "or 'asc'.")
+            raise wsme_exc.ClientSideError(
+                "Unknown sort direction, must be 'desc' or 'asc'."
+            )
 
 
 def validate_fields(fields, object_fields):
@@ -93,6 +99,6 @@ def validate_fields(fields, object_fields):
     invalid_fields = set(fields) - set(object_fields)
 
     if invalid_fields:
-        raise exc.ClientSideError(
+        raise wsme_exc.ClientSideError(
             'Field(s) %s are invalid.' % ', '.join(invalid_fields)
         )

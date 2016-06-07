@@ -58,7 +58,7 @@ def run_task(wf_cmd):
         return
 
     if task.is_completed():
-        wf_handler.check_workflow_completion(wf_cmd.wf_ex)
+        wf_handler.on_task_complete(task.task_ex)
 
 
 def on_action_complete(action_ex):
@@ -102,7 +102,7 @@ def on_action_complete(action_ex):
         return
 
     if task.is_completed():
-        wf_handler.check_workflow_completion(wf_ex)
+        wf_handler.on_task_complete(task_ex)
 
 
 def fail_task(task_ex, msg):
@@ -120,7 +120,7 @@ def continue_task(task_ex):
     task.run()
 
     if task.is_completed():
-        wf_handler.check_workflow_completion(task_ex.workflow_execution)
+        wf_handler.on_task_complete(task_ex)
 
 
 def complete_task(task_ex, state, state_info):
@@ -130,7 +130,7 @@ def complete_task(task_ex, state, state_info):
     task.complete(state, state_info)
 
     if task.is_completed():
-        wf_handler.check_workflow_completion(task_ex.workflow_execution)
+        wf_handler.on_task_complete(task_ex)
 
 
 def _build_task_from_execution(task_ex, task_spec=None):

@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 from oslo_config import cfg
-import testtools
 
 from mistral.actions import base as actions_base
 from mistral.db.v2 import api as db_api
@@ -63,20 +62,6 @@ class MyAction(actions_base.Action):
         raise NotImplementedError
 
 
-def expect_size_limit_exception(field_name):
-    def logger(test_func):
-        def wrapped(*args, **kwargs):
-            with testtools.ExpectedException(exc.SizeLimitExceededException,
-                                             value_re="Size of '%s' is 1KB "
-                                                      "which exceeds the limit"
-                                                      " of 0KB" % field_name):
-                return test_func(*args, **kwargs)
-
-        return wrapped
-
-    return logger
-
-
 def generate_workflow(tokens):
     new_wf = WF
     long_string = ''.join('A' for _ in range(1024))
@@ -91,17 +76,35 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
     def setUp(self):
         """Resets the size limit config between tests"""
         super(ExecutionFieldsSizeLimitTest, self).setUp()
-        cfg.CONF.set_default('execution_field_size_limit_kb', 0,
-                             group='engine')
+
+        cfg.CONF.set_default(
+            'execution_field_size_limit_kb',
+            0,
+            group='engine'
+        )
+
         test_base.register_action_class('my_action', MyAction)
 
+    def tearDown(self):
+        """Restores the size limit config to default"""
+        super(ExecutionFieldsSizeLimitTest, self).tearDown()
+
+        cfg.CONF.set_default(
+            'execution_field_size_limit_kb',
+            1024,
+            group='engine'
+        )
+
     def test_default_limit(self):
-        cfg.CONF.set_default('execution_field_size_limit_kb', -1,
-                             group='engine')
+        cfg.CONF.set_default(
+            'execution_field_size_limit_kb',
+            -1,
+            group='engine'
+        )
 
         new_wf = generate_workflow(
-            ['__ACTION_INPUT_', '__WORKFLOW_INPUT__',
-             '__TASK_PUBLISHED__'])
+            ['__ACTION_INPUT_', '__WORKFLOW_INPUT__', '__TASK_PUBLISHED__']
+        )
 
         wf_service.create_workflows(new_wf)
 
@@ -110,25 +113,38 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.await_execution_success(wf_ex.id)
 
-    @expect_size_limit_exception('input')
     def test_workflow_input_default_value_limit(self):
         new_wf = generate_workflow(['__WORKFLOW_INPUT__'])
 
         wf_service.create_workflows(new_wf)
 
         # Start workflow.
-        self.engine.start_workflow('wf', {})
+        e = self.assertRaises(
+            exc.SizeLimitExceededException,
+            self.engine.start_workflow,
+            'wf',
+            {}
+        )
 
-    @expect_size_limit_exception('input')
+        self.assertEqual(
+            "Size of 'input' is 1KB which exceeds the limit of 0KB",
+            e.message
+        )
+
     def test_workflow_input_limit(self):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        self.engine.start_workflow(
+        e = self.assertRaises(
+            exc.SizeLimitExceededException,
+            self.engine.start_workflow,
             'wf',
-            {
-                'workflow_input': ''.join('A' for _ in range(1024))
-            }
+            {'workflow_input': ''.join('A' for _ in range(1024))}
+        )
+
+        self.assertEqual(
+            "Size of 'input' is 1KB which exceeds the limit of 0KB",
+            e.message
         )
 
     def test_action_input_limit(self):
@@ -149,9 +165,10 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {
-            'action_output_length': 1024
-        })
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {'action_output_length': 1024}
+        )
 
         self.await_execution_error(wf_ex.id)
 
@@ -189,16 +206,22 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             task_ex.state_info
         )
 
-    @expect_size_limit_exception('params')
     def test_workflow_params_limit(self):
         wf_service.create_workflows(WF)
 
         # Start workflow.
         long_string = ''.join('A' for _ in range(1024))
-        self.engine.start_workflow('wf', {}, '', env={'param': long_string})
 
-    def tearDown(self):
-        """Restores the size limit config to default"""
-        super(ExecutionFieldsSizeLimitTest, self).tearDown()
-        cfg.CONF.set_default('execution_field_size_limit_kb', 1024,
-                             group='engine')
+        e = self.assertRaises(
+            exc.SizeLimitExceededException,
+            self.engine.start_workflow,
+            'wf',
+            {},
+            '',
+            env={'param': long_string}
+        )
+
+        self.assertIn(
+            "Size of 'params' is 1KB which exceeds the limit of 0KB",
+            e.message
+        )
