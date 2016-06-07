@@ -75,10 +75,12 @@ class Task(object):
         """
 
         if not self.task_ex:
-            self.task_ex = wf_utils.find_task_executions_by_spec(
+            t_execs = wf_utils.find_task_executions_by_spec(
                 self.wf_ex,
                 self.task_spec
             )
+
+            self.task_ex = t_execs[0] if t_execs else None
 
         if not self.task_ex:
             self._create_task_execution()

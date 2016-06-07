@@ -28,7 +28,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 class JoinEngineTest(base.EngineTestCase):
     def test_full_join_without_errors(self):
-        wf_full_join = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -59,7 +59,7 @@ class JoinEngineTest(base.EngineTestCase):
                 result3: <% task(task3).result %>
         """
 
-        wf_service.create_workflows(wf_full_join)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -82,7 +82,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_full_join_with_errors(self):
-        wf_full_join_with_errors = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -111,7 +111,7 @@ class JoinEngineTest(base.EngineTestCase):
                 result3: <% task(task3).result %>
         """
 
-        wf_service.create_workflows(wf_full_join_with_errors)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -134,7 +134,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual({'result': '1-1'}, wf_ex.output)
 
     def test_full_join_with_conditions(self):
-        wf_full_join_with_conditions = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -171,7 +171,7 @@ class JoinEngineTest(base.EngineTestCase):
                 result4: <% task(task4).result %>
         """
 
-        wf_service.create_workflows(wf_full_join_with_conditions)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -200,7 +200,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.WAITING, task3.state)
 
     def test_partial_join(self):
-        wf_partial_join = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -243,7 +243,7 @@ class JoinEngineTest(base.EngineTestCase):
                 result4: <% task(task4).result %>
         """
 
-        wf_service.create_workflows(wf_partial_join)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -274,7 +274,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_partial_join_triggers_once(self):
-        wf_partial_join_triggers_once = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -323,7 +323,7 @@ class JoinEngineTest(base.EngineTestCase):
                 result5: <% task(task5).result %>
         """
 
-        wf_service.create_workflows(wf_partial_join_triggers_once)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -352,7 +352,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(2, result5.count('True'))
 
     def test_discriminator(self):
-        wf_discriminator = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -394,7 +394,7 @@ class JoinEngineTest(base.EngineTestCase):
                 result4: <% task(task4).result %>
         """
 
-        wf_service.create_workflows(wf_discriminator)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
@@ -495,7 +495,7 @@ class JoinEngineTest(base.EngineTestCase):
 
     @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1424461')
     def test_full_join_parallel_published_vars_complex(self):
-        wfs_tasks_join_complex = """---
+        wf_text = """---
         version: "2.0"
 
         main:
@@ -538,7 +538,7 @@ class JoinEngineTest(base.EngineTestCase):
               publish:
                 var_d: 1
         """
-        wf_service.create_workflows(wfs_tasks_join_complex)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         exec_db = self.engine.start_workflow('main', {})
@@ -559,7 +559,7 @@ class JoinEngineTest(base.EngineTestCase):
         )
 
     def test_full_join_with_branch_errors(self):
-        wf_full_join_with_errors = """---
+        wf_text = """---
         version: '2.0'
 
         main:
@@ -597,7 +597,8 @@ class JoinEngineTest(base.EngineTestCase):
               action: std.noop
         """
 
-        wf_service.create_workflows(wf_full_join_with_errors)
+        wf_service.create_workflows(wf_text)
+
         wf_ex = self.engine.start_workflow('main', {})
 
         self.await_execution_error(wf_ex.id)
@@ -617,3 +618,49 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task31.state)
         self.assertNotIn('task32', [task.name for task in tasks])
         self.assertEqual(states.WAITING, task40.state)
+
+    def test_diamond_join_all(self):
+        wf_text = """---
+        version: '2.0'
+
+        test-join:
+          type: direct
+
+          tasks:
+            a:
+              action: std.noop
+              on-success:
+                - b
+                - c
+                - d
+
+            b:
+              action: std.noop
+              on-success:
+                - e
+
+            c:
+              action: std.noop
+              on-success:
+                - e
+
+            d:
+              action: std.noop
+              on-success:
+                - e
+
+            e:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('test-join', {})
+
+        self.await_execution_success(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+
+        self._assert_multiple_items(tasks, 5, state=states.SUCCESS)
