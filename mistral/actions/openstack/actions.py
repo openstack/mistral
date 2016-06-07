@@ -25,6 +25,7 @@ from ironicclient.v1 import client as ironicclient
 from keystoneclient.auth import identity
 from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
+from magnumclient.v1 import client as magnumclient
 from mistralclient.api.v2 import client as mistralclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient import client as novaclient
@@ -602,6 +603,31 @@ class DesignateAction(base.OpenStackAction):
         client.client.management_url = designate_url
 
         return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()
+
+
+class MagnumAction(base.OpenStackAction):
+    _client_class = magnumclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Magnum action security context: %s" % ctx)
+
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        auth_url = keystone_endpoint.url
+        magnum_url = keystone_utils.get_endpoint_for_project('magnum').url
+
+        return self._client_class(
+            magnum_url=magnum_url,
+            auth_token=ctx.auth_token,
+            project_id=ctx.project_id,
+            user_id=ctx.user_id,
+            auth_url=auth_url
+        )
 
     @classmethod
     def _get_fake_client(cls):
