@@ -184,7 +184,6 @@ class TestTasksController(base.APITest):
         self.assertDictEqual(TASK, resp.json)
 
         rpc.EngineClient.rerun_workflow.assert_called_with(
-            WF_EX.id,
             TASK_EX.id,
             reset=params['reset'],
             env=None
@@ -243,7 +242,6 @@ class TestTasksController(base.APITest):
         self.assertDictEqual(TASK, resp.json)
 
         rpc.EngineClient.rerun_workflow.assert_called_with(
-            WF_EX.id,
             TASK_EX.id,
             reset=params['reset'],
             env=json.loads(params['env'])
