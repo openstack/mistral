@@ -68,6 +68,8 @@ class BaseContext(object):
 class MistralContext(BaseContext):
     # Use set([...]) since set literals are not supported in Python 2.6.
     _elements = set([
+        "auth_uri",
+        "auth_cacert",
         "user_id",
         "project_id",
         "auth_token",
@@ -120,6 +122,8 @@ def spawn(thread_description, func, *args, **kwargs):
 
 def context_from_headers(headers):
     return MistralContext(
+        auth_uri=CONF.keystone_authtoken.auth_uri,
+        auth_cacert=CONF.keystone_authtoken.cafile,
         user_id=headers.get('X-User-Id'),
         project_id=headers.get('X-Project-Id'),
         auth_token=headers.get('X-Auth-Token'),
