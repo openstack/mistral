@@ -60,6 +60,8 @@ class Action(object):
         raise NotImplementedError
 
     def fail(self, msg):
+        assert self.action_ex
+
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
         msg = utils.cut_by_kb(
@@ -189,6 +191,8 @@ class PythonAction(Action):
     """Regular Python action."""
 
     def complete(self, result):
+        assert self.action_ex
+
         if states.is_completed(self.action_ex.state):
             return
 
@@ -202,6 +206,8 @@ class PythonAction(Action):
         self._log_result(prev_state, result)
 
     def schedule(self, input_dict, target, index=0, desc=''):
+        assert not self.action_ex
+
         self._create_action_execution(
             self._prepare_input(input_dict),
             self._prepare_runtime_context(index),
@@ -217,6 +223,8 @@ class PythonAction(Action):
         )
 
     def run(self, input_dict, target, index=0, desc='', save=True):
+        assert not self.action_ex
+
         input_dict = self._prepare_input(input_dict)
         runtime_ctx = self._prepare_runtime_context(index)
 
@@ -352,6 +360,8 @@ class WorkflowAction(Action):
         pass
 
     def schedule(self, input_dict, target, index=0, desc=''):
+        assert not self.action_ex
+
         parent_wf_ex = self.task_ex.workflow_execution
         parent_wf_spec = spec_parser.get_workflow_spec(parent_wf_ex.spec)
 
