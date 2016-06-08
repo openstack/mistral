@@ -624,28 +624,22 @@ class JoinEngineTest(base.EngineTestCase):
         version: '2.0'
 
         test-join:
-          type: direct
-
           tasks:
             a:
-              action: std.noop
               on-success:
                 - b
                 - c
                 - d
 
             b:
-              action: std.noop
               on-success:
                 - e
 
             c:
-              action: std.noop
               on-success:
                 - e
 
             d:
-              action: std.noop
               on-success:
                 - e
 
@@ -664,3 +658,34 @@ class JoinEngineTest(base.EngineTestCase):
         tasks = wf_ex.task_executions
 
         self._assert_multiple_items(tasks, 5, state=states.SUCCESS)
+
+    def test_join_multiple_routes_with_one_source(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            a:
+              on-success:
+                - b
+                - c
+
+            b:
+              on-success:
+                - c
+
+            c:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_execution_success(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        tasks = wf_ex.task_executions
+
+        self._assert_multiple_items(tasks, 3, state=states.SUCCESS)
