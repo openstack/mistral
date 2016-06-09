@@ -174,7 +174,6 @@ class TasksController(rest.RestController):
             )
 
         rpc.get_engine_client().rerun_workflow(
-            wf_ex.id,
             task_ex.id,
             reset=reset,
             env=env
