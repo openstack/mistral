@@ -121,7 +121,7 @@ def _convert_vars_to_dict(env_dict):
     return env_dict
 
 
-def _convert_vars_to_string(env_dict):
+def _convert_vars_to_json(env_dict):
     """Converts 'variables' in the given environment dict into string."""
     if ('variables' in env_dict and
             isinstance(env_dict.get('variables'), dict)):
@@ -179,7 +179,7 @@ class TestEnvironmentController(base.APITest):
     def test_post(self):
         resp = self.app.post_json(
             '/v2/environments',
-            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
+            _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
         )
 
         self.assertEqual(201, resp.status_int)
@@ -190,7 +190,7 @@ class TestEnvironmentController(base.APITest):
     def test_post_with_illegal_field(self):
         resp = self.app.post_json(
             '/v2/environments',
-            _convert_vars_to_string(
+            _convert_vars_to_json(
                 copy.deepcopy(ENVIRONMENT_WITH_ILLEGAL_FIELD)),
             expect_errors=True
         )
@@ -200,7 +200,7 @@ class TestEnvironmentController(base.APITest):
     def test_post_dup(self):
         resp = self.app.post_json(
             '/v2/environments',
-            _convert_vars_to_string(copy.deepcopy(ENVIRONMENT_FOR_CREATE)),
+            _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE)),
             expect_errors=True
         )
 
@@ -208,7 +208,7 @@ class TestEnvironmentController(base.APITest):
 
     @mock.patch.object(db_api, 'create_environment', MOCK_ENVIRONMENT)
     def test_post_default_scope(self):
-        env = _convert_vars_to_string(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
+        env = _convert_vars_to_json(copy.deepcopy(ENVIRONMENT_FOR_CREATE))
 
         resp = self.app.post_json('/v2/environments', env)
 

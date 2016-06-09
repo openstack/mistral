@@ -189,8 +189,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
         workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]
 
-        return (workflow_list[0].to_string() if identifier
-                else Workflows(workflows=workflow_list).to_string())
+        return (workflow_list[0].to_json() if identifier
+                else Workflows(workflows=workflow_list).to_json())
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -217,7 +217,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
         workflow_list = [Workflow.from_dict(wf) for wf in models_dicts]
 
-        return Workflows(workflows=workflow_list).to_string()
+        return Workflows(workflows=workflow_list).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

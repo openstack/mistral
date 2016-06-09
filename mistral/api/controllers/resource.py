@@ -58,7 +58,7 @@ class Resource(wtypes.Base):
 
         return res + "]"
 
-    def to_string(self):
+    def to_json(self):
         return json.dumps(self.to_dict())
 
     @classmethod
