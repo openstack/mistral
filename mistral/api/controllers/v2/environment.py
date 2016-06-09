@@ -20,8 +20,10 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exceptions
 from mistral.utils import rest_utils
@@ -77,6 +79,7 @@ class EnvironmentController(rest.RestController):
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
+        acl.enforce('environments:list', context.ctx())
         LOG.info("Fetch environments.")
 
         environments = [
@@ -90,6 +93,7 @@ class EnvironmentController(rest.RestController):
     @wsme_pecan.wsexpose(Environment, wtypes.text)
     def get(self, name):
         """Return the named environment."""
+        acl.enforce('environments:get', context.ctx())
         LOG.info("Fetch environment [name=%s]" % name)
 
         db_model = db_api.get_environment(name)
@@ -100,6 +104,7 @@ class EnvironmentController(rest.RestController):
     @wsme_pecan.wsexpose(Environment, body=Environment, status_code=201)
     def post(self, env):
         """Create a new environment."""
+        acl.enforce('environments:create', context.ctx())
         LOG.info("Create environment [env=%s]" % env)
 
         self._validate_environment(
@@ -115,6 +120,8 @@ class EnvironmentController(rest.RestController):
     @wsme_pecan.wsexpose(Environment, body=Environment)
     def put(self, env):
         """Update an environment."""
+        acl.enforce('environments:update', context.ctx())
+
         if not env.name:
             raise exceptions.InputException(
                 'Name of the environment is not provided.'
@@ -138,6 +145,7 @@ class EnvironmentController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named environment."""
+        acl.enforce('environments:delete', context.ctx())
         LOG.info("Delete environment [name=%s]" % name)
 
         db_api.delete_environment(name)

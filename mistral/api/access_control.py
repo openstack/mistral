@@ -18,6 +18,9 @@
 
 from keystonemiddleware import auth_token
 from oslo_config import cfg
+from oslo_policy import policy
+
+from mistral import exceptions as exc
 
 
 _ENFORCER = None
@@ -29,10 +32,37 @@ def setup(app):
 
         # Change auth decisions of requests to the app itself.
         conf.update({'delay_auth_decision': True})
+        _ensure_enforcer_initialization()
 
         return auth_token.AuthProtocol(app, conf)
     else:
         return app
+
+
+def enforce(action, context, target=None, do_raise=True,
+            exc=exc.NotAllowedException):
+    target_obj = {
+        'project_id': context.project_id,
+        'user_id': context.user_id,
+    }
+
+    target_obj.update(target or {})
+    _ensure_enforcer_initialization()
+
+    return _ENFORCER.enforce(
+        action,
+        target_obj,
+        context.to_dict(),
+        do_raise=do_raise,
+        exc=exc
+    )
+
+
+def _ensure_enforcer_initialization():
+    global _ENFORCER
+    if not _ENFORCER:
+        _ENFORCER = policy.Enforcer(cfg.CONF)
+        _ENFORCER.load_rules()
 
 
 def get_limited_to(headers):

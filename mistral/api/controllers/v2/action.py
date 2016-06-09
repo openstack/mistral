@@ -20,10 +20,12 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import actions
@@ -102,6 +104,7 @@ class ActionsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(Action, wtypes.text)
     def get(self, name):
         """Return the named action."""
+        acl.enforce('actions:get', context.ctx())
         LOG.info("Fetch action [name=%s]" % name)
 
         db_model = db_api.get_action_definition(name)
@@ -116,6 +119,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be updated.
         """
+        acl.enforce('actions:update', context.ctx())
         definition = pecan.request.text
         LOG.info("Update action(s) [definition=%s]" % definition)
         scope = pecan.request.GET.get('scope', 'private')
@@ -141,6 +145,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be created.
         """
+        acl.enforce('actions:create', context.ctx())
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
@@ -164,6 +169,7 @@ class ActionsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named action."""
+        acl.enforce('actions:delete', context.ctx())
         LOG.info("Delete action [name=%s]" % name)
 
         with db_api.transaction():
@@ -194,6 +200,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
+        acl.enforce('actions:list', context.ctx())
         LOG.info("Fetch actions. marker=%s, limit=%s, sort_keys=%s, "
                  "sort_dirs=%s", marker, limit, sort_keys, sort_dirs)
 

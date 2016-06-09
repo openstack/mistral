@@ -20,8 +20,10 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
@@ -132,6 +134,7 @@ class ActionExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text)
     def get(self, id):
         """Return the specified action_execution."""
+        acl.enforce('action_executions:get', context.ctx())
         LOG.info("Fetch action_execution [id=%s]" % id)
 
         return _get_action_execution(id)
@@ -141,6 +144,7 @@ class ActionExecutionsController(rest.RestController):
                          body=ActionExecution, status_code=201)
     def post(self, action_ex):
         """Create new action_execution."""
+        acl.enforce('action_executions:create', context.ctx())
         LOG.info("Create action_execution [action_execution=%s]" % action_ex)
 
         name = action_ex.name
@@ -166,6 +170,7 @@ class ActionExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text, body=ActionExecution)
     def put(self, id, action_ex):
         """Update the specified action_execution."""
+        acl.enforce('action_executions:update', context.ctx())
         LOG.info(
             "Update action_execution [id=%s, action_execution=%s]"
             % (id, action_ex)
@@ -192,6 +197,7 @@ class ActionExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(ActionExecutions)
     def get_all(self):
         """Return all action_executions within the execution."""
+        acl.enforce('action_executions:list', context.ctx())
         LOG.info("Fetch action_executions")
 
         return _get_action_executions()
@@ -201,6 +207,7 @@ class ActionExecutionsController(rest.RestController):
     def delete(self, id):
         """Delete the specified action_execution."""
 
+        acl.enforce('action_executions:delete', context.ctx())
         LOG.info("Delete action_execution [id=%s]" % id)
 
         if not cfg.CONF.api.allow_action_execution_deletion:
@@ -224,6 +231,7 @@ class TasksActionExecutionController(rest.RestController):
     @wsme_pecan.wsexpose(ActionExecutions, wtypes.text)
     def get_all(self, task_execution_id):
         """Return all action executions within the task execution."""
+        acl.enforce('action_executions:list', context.ctx())
         LOG.info("Fetch action executions")
 
         return _get_action_executions(task_execution_id=task_execution_id)
@@ -232,6 +240,7 @@ class TasksActionExecutionController(rest.RestController):
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text, wtypes.text)
     def get(self, task_execution_id, action_ex_id):
         """Return the specified action_execution."""
+        acl.enforce('action_executions:get', context.ctx())
         LOG.info("Fetch action_execution [id=%s]" % action_ex_id)
 
         return _get_action_execution(action_ex_id)

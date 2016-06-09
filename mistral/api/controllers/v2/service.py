@@ -20,8 +20,10 @@ import tooz.coordination
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.cmd import launch
+from mistral import context
 from mistral import coordination
 from mistral import exceptions as exc
 from mistral.utils import rest_utils
@@ -58,6 +60,7 @@ class ServicesController(rest.RestController):
     def get_all(self):
         """Return all services."""
 
+        acl.enforce('services:list', context.ctx())
         LOG.info("Fetch services.")
 
         if not cfg.CONF.coordination.backend_url:

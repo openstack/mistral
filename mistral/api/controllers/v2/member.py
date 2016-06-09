@@ -20,8 +20,10 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.utils import rest_utils
@@ -87,6 +89,7 @@ class MembersController(rest.RestController):
     @wsme_pecan.wsexpose(Member, wtypes.text)
     def get(self, member_id):
         """Shows resource member details."""
+        acl.enforce('members:get', context.ctx())
         LOG.info(
             "Fetch resource member [resource_id=%s, resource_type=%s, "
             "member_id=%s].",
@@ -108,6 +111,7 @@ class MembersController(rest.RestController):
     @wsme_pecan.wsexpose(Members)
     def get_all(self):
         """Return all members with whom the resource has been shared."""
+        acl.enforce('members:list', context.ctx())
         LOG.info(
             "Fetch resource members [resource_id=%s, resource_type=%s].",
             self.resource_id,
@@ -127,6 +131,7 @@ class MembersController(rest.RestController):
     @wsme_pecan.wsexpose(Member, body=Member, status_code=201)
     def post(self, member_info):
         """Shares the resource to a new member."""
+        acl.enforce('members:create', context.ctx())
         LOG.info(
             "Share resource to a member. [resource_id=%s, "
             "resource_type=%s, member_info=%s].",
@@ -161,6 +166,7 @@ class MembersController(rest.RestController):
     @wsme_pecan.wsexpose(Member, wtypes.text, body=Member)
     def put(self, member_id, member_info):
         """Sets the status for a resource member."""
+        acl.enforce('members:update', context.ctx())
         LOG.info(
             "Update resource member status. [resource_id=%s, "
             "member_id=%s, member_info=%s].",
@@ -187,6 +193,7 @@ class MembersController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, member_id):
         """Deletes a member from the member list of a resource."""
+        acl.enforce('members:delete', context.ctx())
         LOG.info(
             "Delete resource member. [resource_id=%s, "
             "resource_type=%s, member_id=%s].",
