@@ -100,6 +100,8 @@ class Task(object):
         :param processed: New "processed" flag value.
         """
 
+        assert self.task_ex
+
         wf_trace.info(
             self.task_ex.workflow_execution,
             "Task execution '%s' [%s -> %s]: %s" %
@@ -122,6 +124,8 @@ class Task(object):
         :param state: New task state.
         :param state_info: New state information (i.e. error message).
         """
+
+        assert self.task_ex
 
         # Ignore if task already completed.
         if states.is_completed(self.task_ex.state):
@@ -351,6 +355,8 @@ class WithItemsTask(RegularTask):
     """
 
     def on_action_complete(self, action_ex):
+        assert self.task_ex
+
         state = action_ex.state
         # TODO(rakhmerov): Here we can define more informative messages
         # cases when action is successful and when it's not. For example,

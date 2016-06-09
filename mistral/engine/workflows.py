@@ -64,6 +64,8 @@ class Workflow(object):
         :param params: Workflow type specific parameters.
         """
 
+        assert not self.wf_ex
+
         wf_trace.info(self.wf_ex, "Starting workflow: %s" % self.wf_def)
 
         # TODO(rakhmerov): This call implicitly changes input_dict! Fix it!
@@ -87,6 +89,8 @@ class Workflow(object):
         :param msg: Additional explaining message.
         """
 
+        assert self.wf_ex
+
         if state == states.SUCCESS:
             wf_ctrl = wf_base.get_controller(self.wf_ex)
 
@@ -109,6 +113,8 @@ class Workflow(object):
         :param task_ex: Task execution that's completed.
         """
 
+        assert self.wf_ex
+
         self._check_and_complete()
 
     def resume(self, env=None):
@@ -116,6 +122,8 @@ class Workflow(object):
 
         :param env: Environment.
         """
+
+        assert self.wf_ex
 
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
@@ -132,6 +140,8 @@ class Workflow(object):
         :param env: Environment.
         """
 
+        assert self.wf_ex
+
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
         self.set_state(states.RUNNING, recursive=True)
@@ -139,6 +149,8 @@ class Workflow(object):
         self._continue_workflow(task_ex, reset, env=env)
 
     def lock(self):
+        assert self.wf_ex
+
         return db_api.acquire_lock(db_models.WorkflowExecution, self.wf_ex.id)
 
     def _create_execution(self, input_dict, desc, params):
@@ -172,6 +184,8 @@ class Workflow(object):
         data_flow.add_workflow_variables_to_context(self.wf_ex, self.wf_spec)
 
     def set_state(self, state, state_info=None, recursive=False):
+        assert self.wf_ex
+
         cur_state = self.wf_ex.state
 
         if states.is_valid_transition(cur_state, state):
