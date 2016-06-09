@@ -199,3 +199,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().domain.get.called)
         mocked().domain.get.assert_called_once_with(domain="example.com")
+
+    @mock.patch.object(actions.MagnumAction, '_get_client')
+    def test_magnum_action(self, mocked):
+        method_name = "baymodels.get"
+        action_class = actions.MagnumAction
+        action_class.client_method_name = method_name
+        params = {'id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().baymodels.get.called)
+        mocked().baymodels.get.assert_called_once_with(id="1234-abcd")

@@ -1118,5 +1118,13 @@
         "sync_domain": "sync.sync_domain",
         "sync_record": "sync.sync_record",
         "touch_domain": "touch.domain"
+    },
+    "magnum": {
+        "_comment": "It uses magnumclient.v1.",
+        "baymodels_create": "baymodels.create",
+        "baymodels_delete": "baymodels.delete",
+        "baymodels_get": "baymodels.get",
+        "baymodels_list": "baymodels.list",
+        "baymodels_update": "baymodels.update"
     }
 }
