@@ -1,5 +1,5 @@
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ from keystoneclient.v3 import client as keystone_client
 from oslo_config import cfg
 import oslo_messaging as messaging
 from oslo_serialization import jsonutils
+from osprofiler import profiler
 import pecan
 from pecan import hooks
 
@@ -174,9 +175,25 @@ class RpcContextSerializer(messaging.Serializer):
         return self._base.deserialize_entity(context, entity)
 
     def serialize_context(self, context):
-        return context.to_dict()
+        ctx = context.to_dict()
+
+        pfr = profiler.get()
+
+        if pfr:
+            ctx['trace_info'] = {
+                "hmac_key": pfr.hmac_key,
+                "base_id": pfr.get_base_id(),
+                "parent_id": pfr.get_id()
+            }
+
+        return ctx
 
     def deserialize_context(self, context):
+        trace_info = context.pop('trace_info', None)
+
+        if trace_info:
+            profiler.init(**trace_info)
+
         ctx = MistralContext(**context)
         set_ctx(ctx)
 

@@ -1,16 +1,21 @@
 [loggers]
-keys=workflow_trace,root
+keys=workflow_trace,profiler_trace,root
 
 [handlers]
-keys=consoleHandler, wfTraceFileHandler, fileHandler
+keys=consoleHandler, wfTraceFileHandler, profilerFileHandler, fileHandler
 
 [formatters]
-keys=wfFormatter, simpleFormatter, verboseFormatter
+keys=wfFormatter, profilerFormatter, simpleFormatter, verboseFormatter
 
 [logger_workflow_trace]
 level=INFO
 handlers=consoleHandler, wfTraceFileHandler
 qualname=workflow_trace
+
+[logger_profiler_trace]
+level=INFO
+handlers=profilerFileHandler
+qualname=profiler_trace
 
 [logger_root]
 level=INFO
@@ -34,6 +39,12 @@ level=INFO
 formatter=wfFormatter
 args=("/var/log/mistral_wf_trace.log",)
 
+[handler_profilerFileHandler]
+class=FileHandler
+level=INFO
+formatter=profilerFormatter
+args=("/var/log/mistral_osprofile.log",)
+
 [formatter_verboseFormatter]
 format=%(asctime)s %(thread)s %(levelname)s %(module)s [-] %(message)s
 datefmt=
@@ -44,4 +55,8 @@ datefmt=
 
 [formatter_wfFormatter]
 format=%(asctime)s WF [-] %(message)s
+datefmt=
+
+[formatter_profilerFormatter]
+format=%(message)s
 datefmt=

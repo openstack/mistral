@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 import traceback as tb
 
 from mistral.db.v2.sqlalchemy import models
@@ -25,6 +27,7 @@ from mistral.workbook import parser as spec_parser
 LOG = logging.getLogger(__name__)
 
 
+@profiler.trace('action-handler-on-action-complete')
 def on_action_complete(action_ex, result):
     task_ex = action_ex.task_execution
 

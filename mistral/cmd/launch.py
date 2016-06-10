@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ from mistral.engine import default_executor as def_executor
 from mistral.engine import rpc
 from mistral.services import expiration_policy
 from mistral.services import scheduler
+from mistral.utils import profiler
 from mistral import version
 
 
@@ -66,6 +67,8 @@ LOG = logging.getLogger(__name__)
 
 
 def launch_executor(transport):
+    profiler.setup('mistral-executor', cfg.CONF.executor.host)
+
     target = messaging.Target(
         topic=cfg.CONF.executor.topic,
         server=cfg.CONF.executor.host
@@ -100,6 +103,8 @@ def launch_executor(transport):
 
 
 def launch_engine(transport):
+    profiler.setup('mistral-engine', cfg.CONF.engine.host)
+
     target = messaging.Target(
         topic=cfg.CONF.engine.topic,
         server=cfg.CONF.engine.host

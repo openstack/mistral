@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -55,7 +56,14 @@ def schedule_call(factory_method_path, target_method_name,
        in mistral/utils/serializer.py
     :param method_args: Target method keyword arguments.
     """
-    ctx = context.ctx().to_dict() if context.has_ctx() else {}
+    ctx_serializer = context.RpcContextSerializer(
+        context.JsonPayloadSerializer()
+    )
+
+    ctx = (
+        ctx_serializer.serialize_context(context.ctx())
+        if context.has_ctx() else {}
+    )
 
     execution_time = (datetime.datetime.now() +
                       datetime.timedelta(seconds=run_after))
@@ -161,12 +169,14 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 (target_auth_context, target_method, method_args)
             )
 
+        ctx_serializer = context.RpcContextSerializer(
+            context.JsonPayloadSerializer()
+        )
+
         for (target_auth_context, target_method, method_args) in delayed_calls:
             try:
                 # Set the correct context for the method.
-                context.set_ctx(
-                    context.MistralContext(target_auth_context)
-                )
+                ctx_serializer.deserialize_context(target_auth_context)
 
                 # Call the method.
                 target_method(**method_args)

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral.actions import action_factory as a_f
 from mistral import coordination
@@ -32,6 +32,7 @@ class DefaultExecutor(base.Executor, coordination.Service):
 
         coordination.Service.__init__(self, 'executor_group')
 
+    @profiler.trace('executor-run-action')
     def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params):
         """Runs action.

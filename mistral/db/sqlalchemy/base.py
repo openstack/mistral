@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,6 +18,7 @@ import six
 from oslo_config import cfg
 from oslo_db import options
 from oslo_db.sqlalchemy import session as db_session
+import osprofiler.sqlalchemy
 import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import sqlite_lock
@@ -45,6 +45,14 @@ def _get_facade():
             autocommit=False,
             **dict(six.iteritems(cfg.CONF.database))
         )
+
+        if cfg.CONF.profiler.enabled:
+            if cfg.CONF.profiler.trace_sqlalchemy:
+                osprofiler.sqlalchemy.add_tracing(
+                    sa,
+                    _facade.get_engine(),
+                    'db'
+                )
 
     return _facade
 

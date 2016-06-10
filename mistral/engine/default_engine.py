@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,6 +15,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral import coordination
 from mistral.db.v2 import api as db_api
@@ -38,6 +40,7 @@ class DefaultEngine(base.Engine, coordination.Service):
         coordination.Service.__init__(self, 'engine_group')
 
     @u.log_exec(LOG)
+    @profiler.trace('engine-start-workflow')
     def start_workflow(self, wf_identifier, wf_input, description='',
                        **params):
         with db_api.transaction():
@@ -78,6 +81,7 @@ class DefaultEngine(base.Engine, coordination.Service):
             )
 
     @u.log_exec(LOG)
+    @profiler.trace('engine-on-action-complete')
     def on_action_complete(self, action_ex_id, result):
         with db_api.transaction():
             action_ex = db_api.get_action_execution(action_ex_id)
