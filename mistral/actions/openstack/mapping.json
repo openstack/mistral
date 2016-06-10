@@ -1125,6 +1125,11 @@
         "baymodels_delete": "baymodels.delete",
         "baymodels_get": "baymodels.get",
         "baymodels_list": "baymodels.list",
-        "baymodels_update": "baymodels.update"
+        "baymodels_update": "baymodels.update",
+        "bays_create": "bays.create",
+        "bays_delete": "bays.delete",
+        "bays_get": "bays.get",
+        "bays_list": "bays.list",
+        "bays_update": "bays.update"
     }
 }
