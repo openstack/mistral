@@ -211,3 +211,17 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().baymodels.get.called)
         mocked().baymodels.get.assert_called_once_with(id="1234-abcd")
+
+    @mock.patch.object(actions.MuranoAction, '_get_client')
+    def test_murano_action(self, mocked):
+        method_name = "categories.get"
+        action_class = actions.MuranoAction
+        action_class.client_method_name = method_name
+        params = {'category_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().categories.get.called)
+        mocked().categories.get.assert_called_once_with(
+            category_id="1234-abcd"
+        )

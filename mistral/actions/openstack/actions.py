@@ -27,6 +27,7 @@ from keystoneclient import httpclient
 from keystoneclient.v3 import client as keystoneclient
 from magnumclient.v1 import client as magnumclient
 from mistralclient.api.v2 import client as mistralclient
+from muranoclient.v1 import client as muranoclient
 from neutronclient.v2_0 import client as neutronclient
 from novaclient import client as novaclient
 from oslo_config import cfg
@@ -627,6 +628,30 @@ class MagnumAction(base.OpenStackAction):
             project_id=ctx.project_id,
             user_id=ctx.user_id,
             auth_url=auth_url
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()
+
+
+class MuranoAction(base.OpenStackAction):
+    _client_class = muranoclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Murano action security context: %s" % ctx)
+
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        murano_endpoint = keystone_utils.get_endpoint_for_project('murano')
+
+        return self._client_class(
+            endpoint=murano_endpoint.url,
+            token=ctx.auth_token,
+            tenant=ctx.project_id,
+            region_name=murano_endpoint.region,
+            auth_url=keystone_endpoint.url
         )
 
     @classmethod
