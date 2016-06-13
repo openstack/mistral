@@ -1130,7 +1130,17 @@
         "bays_delete": "bays.delete",
         "bays_get": "bays.get",
         "bays_list": "bays.list",
-        "bays_update": "bays.update"
+        "bays_update": "bays.update",
+        "certificates_create": "certificates.create",
+        "certificates_delete": "certificates.delete",
+        "certificates_get": "certificates.get",
+        "certificates_list": "certificates.list",
+        "certificates_update": "certificates.update",
+        "mservices_create": "mservices.create",
+        "mservices_delete": "mservices.delete",
+        "mservices_get": "mservices.get",
+        "mservices_list": "mservices.list",
+        "mservices_update": "mservices.update"
     },
     "murano":{
         "_comment": "It uses muranoclient.v1.",
