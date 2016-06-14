@@ -20,9 +20,11 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
@@ -116,6 +118,7 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(Execution, wtypes.text)
     def get(self, id):
         """Return the specified Execution."""
+        acl.enforce("executions:get", context.ctx())
         LOG.info("Fetch execution [id=%s]" % id)
 
         return Execution.from_dict(db_api.get_workflow_execution(id).to_dict())
@@ -128,6 +131,7 @@ class ExecutionsController(rest.RestController):
         :param id: execution ID.
         :param wf_ex: Execution object.
         """
+        acl.enforce('executions:update', context.ctx())
         LOG.info('Update execution [id=%s, execution=%s]' % (id, wf_ex))
 
         db_api.ensure_workflow_execution_exists(id)
@@ -219,6 +223,7 @@ class ExecutionsController(rest.RestController):
 
         :param wf_ex: Execution object with input content.
         """
+        acl.enforce('executions:create', context.ctx())
         LOG.info('Create execution [execution=%s]' % wf_ex)
 
         engine = rpc.get_engine_client()
@@ -244,6 +249,7 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, id):
         """Delete the specified Execution."""
+        acl.enforce('executions:delete', context.ctx())
         LOG.info('Delete execution [id=%s]' % id)
 
         return db_api.delete_workflow_execution(id)
@@ -265,6 +271,7 @@ class ExecutionsController(rest.RestController):
                           Default: desc. The length of sort_dirs can be equal
                           or less than that of sort_keys.
         """
+        acl.enforce('executions:list', context.ctx())
         LOG.info(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
             "sort_dirs=%s", marker, limit, sort_keys, sort_dirs

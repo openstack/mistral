@@ -21,9 +21,11 @@ import wsme
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action_execution
 from mistral.api.controllers.v2 import types
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.engine import rpc
 from mistral import exceptions as exc
@@ -119,6 +121,7 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Task, wtypes.text)
     def get(self, id):
         """Return the specified task."""
+        acl.enforce('tasks:get', context.ctx())
         LOG.info("Fetch task [id=%s]" % id)
 
         task_ex = db_api.get_task_execution(id)
@@ -128,6 +131,7 @@ class TasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks)
     def get_all(self):
         """Return all tasks within the execution."""
+        acl.enforce('tasks:list', context.ctx())
         LOG.info("Fetch tasks")
 
         return _get_task_resources_with_results()
@@ -140,6 +144,7 @@ class TasksController(rest.RestController):
         :param id: Task execution ID.
         :param task: Task execution object.
         """
+        acl.enforce('tasks:update', context.ctx())
         LOG.info("Update task execution [id=%s, task=%s]" % (id, task))
 
         task_ex = db_api.get_task_execution(id)
@@ -188,6 +193,7 @@ class ExecutionTasksController(rest.RestController):
     @wsme_pecan.wsexpose(Tasks, wtypes.text)
     def get_all(self, workflow_execution_id):
         """Return all tasks within the workflow execution."""
+        acl.enforce('tasks:list', context.ctx())
         LOG.info("Fetch tasks.")
 
         return _get_task_resources_with_results(workflow_execution_id)

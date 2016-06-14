@@ -22,6 +22,7 @@ from webtest import app as webtest_app
 
 from mistral.services import periodic
 from mistral.tests.unit import base
+from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
 # Disable authentication for functional tests.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
@@ -60,6 +61,8 @@ class APITest(base.DbTestCase):
         self.mock_ctx = self.patch_ctx.start()
         self.mock_ctx.return_value = self.ctx
         self.addCleanup(self.patch_ctx.stop)
+
+        self.policy = self.useFixture(policy_fixtures.PolicyFixture())
 
     def assertNotFound(self, url):
         try:

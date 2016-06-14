@@ -22,11 +22,13 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import member
 from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workflows
@@ -152,6 +154,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(Workflow, wtypes.text)
     def get(self, identifier):
         """Return the named workflow."""
+        acl.enforce('workflows:get', context.ctx())
         LOG.info("Fetch workflow [identifier=%s]" % identifier)
 
         db_model = db_api.get_workflow_definition(identifier)
@@ -169,6 +172,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         The text is allowed to have definitions of multiple workflows. In this
         case they all will be updated.
         """
+        acl.enforce('workflows:update', context.ctx())
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
 
@@ -200,6 +204,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         NOTE: The text is allowed to have definitions
             of multiple workflows. In this case they all will be created.
         """
+        acl.enforce('workflows:create', context.ctx())
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
@@ -223,6 +228,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, identifier):
         """Delete a workflow."""
+        acl.enforce('workflows:delete', context.ctx())
         LOG.info("Delete workflow [identifier=%s]" % identifier)
 
         with db_api.transaction():
@@ -252,6 +258,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
+        acl.enforce('workflows:list', context.ctx())
         LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
                  "sort_dirs=%s, fields=%s", marker, limit, sort_keys,
                  sort_dirs, fields)

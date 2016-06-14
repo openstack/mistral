@@ -62,6 +62,9 @@ function configure_mistral {
     oslo-config-generator --config-file $MISTRAL_DIR/tools/config/config-generator.mistral.conf --output-file $MISTRAL_CONF_FILE
     iniset $MISTRAL_CONF_FILE DEFAULT debug $MISTRAL_DEBUG
 
+    MISTRAL_POLICY_FILE=$MISTRAL_CONF_DIR/policy.json
+    cp $MISTRAL_DIR/etc/policy.json $MISTRAL_POLICY_FILE
+
     # Run all Mistral processes as a single process
     iniset $MISTRAL_CONF_FILE DEFAULT server all
 
@@ -88,6 +91,9 @@ function configure_mistral {
 
     # Configure action execution deletion policy
     iniset $MISTRAL_CONF_FILE api allow_action_execution_deletion True
+
+    # Path of policy.json file.
+    iniset $MISTRAL_CONF oslo_policy policy_file $MISTRAL_POLICY_FILE
 
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user

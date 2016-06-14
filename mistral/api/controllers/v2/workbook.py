@@ -20,9 +20,11 @@ from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.services import workbooks
 from mistral.utils import rest_utils
@@ -80,6 +82,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(Workbook, wtypes.text)
     def get(self, name):
         """Return the named workbook."""
+        acl.enforce('workbooks:get', context.ctx())
         LOG.info("Fetch workbook [name=%s]" % name)
 
         db_model = db_api.get_workbook(name)
@@ -90,6 +93,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @pecan.expose(content_type="text/plain")
     def put(self):
         """Update a workbook."""
+        acl.enforce('workbooks:update', context.ctx())
         definition = pecan.request.text
         LOG.info("Update workbook [definition=%s]" % definition)
 
@@ -101,6 +105,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @pecan.expose(content_type="text/plain")
     def post(self):
         """Create a new workbook."""
+        acl.enforce('workbooks:create', context.ctx())
         definition = pecan.request.text
         LOG.info("Create workbook [definition=%s]" % definition)
 
@@ -113,6 +118,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workbook."""
+        acl.enforce('workbooks:delete', context.ctx())
         LOG.info("Delete workbook [name=%s]" % name)
 
         db_api.delete_workbook(name)
@@ -124,6 +130,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
         """
+        acl.enforce('workbooks:list', context.ctx())
         LOG.info("Fetch workbooks.")
 
         workbooks_list = [Workbook.from_dict(db_model.to_dict())
