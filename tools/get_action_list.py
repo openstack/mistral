@@ -35,6 +35,8 @@ from magnumclient.common import base as magnum_base
 from magnumclient.v1 import client as magnumclient
 from mistralclient.api import base as mistral_base
 from mistralclient.api.v2 import client as mistralclient
+from muranoclient.common import base as murano_base
+from muranoclient.v1 import client as muranoclient
 from novaclient import base as nova_base
 from novaclient import client as novaclient
 from troveclient import base as trove_base
@@ -81,6 +83,7 @@ BASE_TROVE_MANAGER = trove_base.Manager
 BASE_IRONIC_MANAGER = ironic_base.Manager
 BASE_BARBICAN_MANAGER = barbican_base.BaseEntityManager
 BASE_MAGNUM_MANAGER = magnum_base.Manager
+BASE_MURANO_MANAGER = murano_base.Manager
 
 
 def get_parser():
@@ -188,6 +191,10 @@ def get_magnum_client(**kwargs):
     return magnumclient.Client()
 
 
+def get_murano_client(**kwargs):
+    return muranoclient.Client('')
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -201,6 +208,7 @@ CLIENTS = {
     'mistral': get_mistral_client,
     'designate': get_designate_client,
     'magnum': get_magnum_client,
+    'murano': get_murano_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -219,6 +227,7 @@ BASE_MANAGERS = {
     'mistral': BASE_MISTRAL_MANAGER,
     'designate': None,
     'magnum': BASE_MAGNUM_MANAGER,
+    'murano': BASE_MURANO_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...
