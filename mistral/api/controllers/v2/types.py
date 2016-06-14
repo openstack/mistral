@@ -107,8 +107,12 @@ class JsonType(wtypes.UserType):
         return value
 
     def frombasetype(self, value):
-        # Value must be a string.
-        return json.loads(value) if value is not None else None
+        if isinstance(value, dict):
+            return value
+        try:
+            return json.loads(value) if value is not None else None
+        except TypeError as e:
+            raise ValueError(e)
 
     def tobasetype(self, value):
         # Value must be a dict.

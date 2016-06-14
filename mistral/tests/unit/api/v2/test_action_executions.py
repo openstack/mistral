@@ -198,6 +198,33 @@ class TestActionExecutionsController(base.APITest):
         )
 
     @mock.patch.object(rpc.EngineClient, 'start_action')
+    def test_post_json(self, f):
+        f.return_value = ACTION_EX_DB.to_dict()
+
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {
+                'name': 'std.echo',
+                'input': {},
+                'params': '{"save_result": true}'
+            }
+        )
+
+        self.assertEqual(201, resp.status_int)
+
+        action_exec = ACTION_EX
+        del action_exec['task_name']
+
+        self.assertDictEqual(ACTION_EX, resp.json)
+
+        f.assert_called_once_with(
+            ACTION_EX['name'],
+            json.loads(ACTION_EX['input']),
+            description=None,
+            save_result=True
+        )
+
+    @mock.patch.object(rpc.EngineClient, 'start_action')
     def test_post_without_input(self, f):
         f.return_value = ACTION_EX_DB.to_dict()
         f.return_value['output'] = {'result': '123'}
@@ -225,6 +252,15 @@ class TestActionExecutionsController(base.APITest):
         resp = self.app.post_json(
             '/v2/action_executions',
             {'input': None},
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+
+    def test_post_bad_json_input(self):
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {'input': 2},
             expect_errors=True
         )
 
