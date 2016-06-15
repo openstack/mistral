@@ -1,0 +1,7 @@
+---
+features:
+  - Magnum action are now supported.
+upgrade:
+  - During an upgrade to Newton, operators or administrators need to
+    run ``python tools/sync_db.py`` to populate database with Magnum
+    action definitions.
