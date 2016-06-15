@@ -41,6 +41,23 @@ def setup(app):
 
 def enforce(action, context, target=None, do_raise=True,
             exc=exc.NotAllowedException):
+    """Verifies that the action is valid on the target in this context.
+
+    :param action: String, representing the action to be checked.
+                   This should be colon separated for clarity.
+                   i.e. ``workflows:create``
+    :param context: Mistral context.
+    :param target: Dictionary, representing the object of the action.
+                   For object creation, this should be a dictionary
+                   representing the location of the object.
+                   e.g. ``{'project_id': context.project_id}``
+    :param do_raise: if True (the default), raises specified excepion.
+    :param exc: Exception to be raised if not authorized. Default is
+                mistral.exceptions.NotAllowedException.
+
+    :return: returns True if authorized and False if not authorized and
+             do_raise is False.
+    """
     target_obj = {
         'project_id': context.project_id,
         'user_id': context.user_id,
