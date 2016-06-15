@@ -99,7 +99,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         wb_db = workbooks.update_workbook_v2(definition)
 
-        return Workbook.from_dict(wb_db.to_dict()).to_string()
+        return Workbook.from_dict(wb_db.to_dict()).to_json()
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -112,7 +112,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         wb_db = workbooks.create_workbook_v2(definition)
         pecan.response.status = 201
 
-        return Workbook.from_dict(wb_db.to_dict()).to_string()
+        return Workbook.from_dict(wb_db.to_dict()).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

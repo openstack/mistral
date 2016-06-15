@@ -135,7 +135,7 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         action_list = [Action.from_dict(act) for act in models_dicts]
 
-        return Actions(actions=action_list).to_string()
+        return Actions(actions=action_list).to_json()
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -163,7 +163,7 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         action_list = [Action.from_dict(act) for act in models_dicts]
 
-        return Actions(actions=action_list).to_string()
+        return Actions(actions=action_list).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
