@@ -247,8 +247,14 @@ class AuthProv(auth.KeystoneV2AuthProvider):
 
 
 class TestCase(test.BaseTestCase):
-
     credentials = ['primary', 'alt']
+
+    @classmethod
+    def skip_checks(cls):
+        super(TestCase, cls).skip_checks()
+
+        if not CONF.service_available.mistral:
+            raise cls.skipException("Mistral support is required.")
 
     @classmethod
     def resource_setup(cls):
