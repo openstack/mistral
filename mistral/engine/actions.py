@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 import abc
 from oslo_config import cfg
 from oslo_log import log as logging
+from osprofiler import profiler
 import six
 
 from mistral.db.v2 import api as db_api
@@ -190,6 +192,7 @@ class Action(object):
 class PythonAction(Action):
     """Regular Python action."""
 
+    @profiler.trace('action-complete')
     def complete(self, result):
         assert self.action_ex
 
@@ -205,6 +208,7 @@ class PythonAction(Action):
 
         self._log_result(prev_state, result)
 
+    @profiler.trace('action-schedule')
     def schedule(self, input_dict, target, index=0, desc=''):
         assert not self.action_ex
 
@@ -222,6 +226,7 @@ class PythonAction(Action):
             target=target
         )
 
+    @profiler.trace('action-run')
     def run(self, input_dict, target, index=0, desc='', save=True):
         assert not self.action_ex
 
@@ -355,10 +360,12 @@ class AdHocAction(PythonAction):
 class WorkflowAction(Action):
     """Workflow action."""
 
+    @profiler.trace('action-complete')
     def complete(self, result):
         # No-op because in case of workflow result is already processed.
         pass
 
+    @profiler.trace('action-schedule')
     def schedule(self, input_dict, target, index=0, desc=''):
         assert not self.action_ex
 
@@ -397,6 +404,7 @@ class WorkflowAction(Action):
             wf_params
         )
 
+    @profiler.trace('action-run')
     def run(self, input_dict, target, index=0, desc='', save=True):
         raise NotImplemented('Does not apply to this WorkflowAction.')
 

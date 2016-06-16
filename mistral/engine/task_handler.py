@@ -1,6 +1,7 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Nokia Networks.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 import traceback as tb
 
 from mistral.engine import tasks
@@ -30,6 +32,7 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
+@profiler.trace('task-handler-run-task')
 def run_task(wf_cmd):
     """Runs workflow task.
 
@@ -61,6 +64,7 @@ def run_task(wf_cmd):
         wf_handler.on_task_complete(task.task_ex)
 
 
+@profiler.trace('task-handler-on-task-complete')
 def on_action_complete(action_ex):
     """Handles action completion event.
 

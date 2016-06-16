@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 import traceback as tb
 
 from mistral.db.v2 import api as db_api
@@ -25,6 +27,7 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
+@profiler.trace('workflow-handler-start-workflow')
 def start_workflow(wf_identifier, wf_input, desc, params):
     wf = workflows.Workflow(
         db_api.get_workflow_definition(wf_identifier)
@@ -52,6 +55,7 @@ def fail_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.ERROR, msg)
 
 
+@profiler.trace('workflow-handler-on-task-complete')
 def on_task_complete(task_ex):
     wf_ex = task_ex.workflow_execution
 
@@ -106,6 +110,7 @@ def resume_workflow(wf_ex, env=None):
     wf.resume(env=env)
 
 
+@profiler.trace('workflow-handler-set-state')
 def set_workflow_state(wf_ex, state, msg=None):
     if states.is_completed(state):
         stop_workflow(wf_ex, state, msg)
@@ -117,6 +122,7 @@ def set_workflow_state(wf_ex, state, msg=None):
         )
 
 
+@profiler.trace('workflow-handler-lock-execution')
 def lock_workflow_execution(wf_ex_id):
     # Locks a workflow execution using the db_api.acquire_lock function.
     # The method expires all session objects and returns the up-to-date

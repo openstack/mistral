@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,6 +17,7 @@ import abc
 import copy
 from oslo_config import cfg
 from oslo_log import log as logging
+from osprofiler import profiler
 import six
 
 from mistral.db.v2 import api as db_api
@@ -56,6 +58,7 @@ class Workflow(object):
         self.wf_ex = wf_ex
         self.wf_spec = spec_parser.get_workflow_spec(wf_def.spec)
 
+    @profiler.trace('workflow-start')
     def start(self, input_dict, desc='', params=None):
         """Start workflow.
 
@@ -107,6 +110,7 @@ class Workflow(object):
         elif state == states.ERROR:
             return self._fail_workflow(msg)
 
+    @profiler.trace('workflow-on-task-complete')
     def on_task_complete(self, task_ex):
         """Handle task completion event.
 
@@ -148,6 +152,7 @@ class Workflow(object):
 
         self._continue_workflow(task_ex, reset, env=env)
 
+    @profiler.trace('workflow-lock')
     def lock(self):
         assert self.wf_ex
 
@@ -183,6 +188,7 @@ class Workflow(object):
         data_flow.add_environment_to_context(self.wf_ex)
         data_flow.add_workflow_variables_to_context(self.wf_ex, self.wf_spec)
 
+    @profiler.trace('workflow-set-state')
     def set_state(self, state, state_info=None, recursive=False):
         assert self.wf_ex
 

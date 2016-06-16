@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -16,6 +15,7 @@
 
 from oslo_config import cfg
 import oslo_middleware.cors as cors_middleware
+import osprofiler.web
 import pecan
 
 from mistral.api import access_control
@@ -66,6 +66,14 @@ def setup_app(config=None):
 
     # Set up access control.
     app = access_control.setup(app)
+
+    # Set up profiler.
+    if cfg.CONF.profiler.enabled:
+        app = osprofiler.web.WsgiMiddleware(
+            app,
+            hmac_keys=cfg.CONF.profiler.hmac_keys,
+            enabled=cfg.CONF.profiler.enabled
+        )
 
     # Create a CORS wrapper, and attach mistral-specific defaults that must be
     # included in all CORS responses.

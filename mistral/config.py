@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -23,6 +22,7 @@ import itertools
 from oslo_config import cfg
 from oslo_log import log
 from oslo_middleware import cors
+from osprofiler import opts as profiler
 
 from mistral import version
 
@@ -131,6 +131,15 @@ coordination_opts = [
                  help='Number of seconds between heartbeats for coordination.')
 ]
 
+profiler_opts = profiler.list_opts()[0][1]
+profiler_opts.append(
+    cfg.StrOpt(
+        'profiler_log_name',
+        default='profiler_trace',
+        help='Logger name for the osprofiler trace output.'
+    )
+)
+
 CONF = cfg.CONF
 
 API_GROUP = 'api'
@@ -139,6 +148,7 @@ EXECUTOR_GROUP = 'executor'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
+PROFILER_GROUP = profiler.list_opts()[0][0]
 
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
@@ -149,6 +159,7 @@ CONF.register_opts(execution_expiration_policy_opts,
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(rpc_option)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
+CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 
 CLI_OPTS = [
     use_debugger,
@@ -179,6 +190,7 @@ def list_opts():
         (PECAN_GROUP, pecan_opts),
         (COORDINATION_GROUP, coordination_opts),
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
+        (PROFILER_GROUP, profiler_opts),
         (None, itertools.chain(
             CLI_OPTS,
             [

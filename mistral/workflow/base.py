@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 - Huawei Technologies Co. Ltd
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@ import abc
 import copy
 
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral import exceptions as exc
 from mistral import utils as u
@@ -95,6 +97,7 @@ class WorkflowController(object):
 
         return task_ex
 
+    @profiler.trace('workflow-controller-continue-workflow')
     def continue_workflow(self, task_ex=None, reset=True, env=None):
         """Calculates a list of commands to continue the workflow.
 
