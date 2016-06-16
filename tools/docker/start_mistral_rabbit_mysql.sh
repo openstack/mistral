@@ -4,6 +4,7 @@ docker rm -f mistral-mysql mistral-rabbitmq mistral | true
 
 docker run -d --name mistral-mysql -e MYSQL_ROOT_PASSWORD=strangehat mysql
 docker run -d --name mistral-rabbitmq rabbitmq
+
 docker run -d --link mistral-mysql:mysql --link mistral-rabbitmq:rabbitmq --name mistral mistral-all
 
 sleep 10
@@ -17,8 +18,8 @@ docker exec mistral python -c "
 import ConfigParser
 c = ConfigParser.ConfigParser()
 c.read('/home/mistral/mistral.conf')
+c.set('DEFAULT', 'transport_url', 'rabbit://guest:guest@rabbitmq:5672/')
 c.set('database','connection','mysql://root:strangehat@mysql:3306/mistral')
-c.set('oslo_messaging_rabbit', 'rabbit_host', 'rabbitmq')
 c.set('pecan', 'auth_enable', 'false')
 with open('/home/mistral/mistral.conf', 'w') as f:
   c.write(f)
