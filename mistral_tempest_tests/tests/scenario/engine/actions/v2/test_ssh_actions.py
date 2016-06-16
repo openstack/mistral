@@ -25,7 +25,7 @@ from tempest import test
 
 from mistral import utils
 from mistral.utils import ssh_utils
-from mistral_tempest_tests.services import base
+from mistral_tempest_tests.tests import base
 
 
 LOG = logging.getLogger(__name__)
