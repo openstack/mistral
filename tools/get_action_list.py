@@ -125,7 +125,9 @@ def get_parser():
 
 
 GLANCE_NAMESPACE_LIST = [
-    'image_members', 'image_tags', 'images', 'schemas', 'tasks'
+    'image_members', 'image_tags', 'images', 'schemas', 'tasks',
+    'metadefs_resource_type', 'metadefs_property', 'metadefs_object',
+    'metadefs_tag', 'metadefs_namespace', 'versions'
 ]
 
 CEILOMETER_NAMESPACE_LIST = [
@@ -242,7 +244,7 @@ ALLOWED_ATTRS = ['service_catalog', 'catalog']
 FORBIDDEN_METHODS = [
     'add_hook', 'alternate_service_type', 'completion_cache', 'run_hooks',
     'write_to_completion_cache', 'model', 'build_key_only_query', 'build_url',
-    'head', 'put'
+    'head', 'put', 'unvalidated_model'
 ]
 
 
