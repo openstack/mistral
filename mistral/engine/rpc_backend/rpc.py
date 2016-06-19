@@ -555,3 +555,10 @@ class ExecutorClient(base.Executor):
             wf_utils.Result(data=res['data'], error=res['error'])
             if res else None
         )
+
+
+class EventEngineServer(object):
+    """RPC Event Engine server."""
+
+    def __init__(self, event_engine):
+        self.event_engine = event_engine

@@ -152,6 +152,21 @@ executor_opts = [
     )
 ]
 
+event_engine_opts = [
+    cfg.StrOpt(
+        'host',
+        default='0.0.0.0',
+        help='Name of the event engine node. This can be an opaque '
+             'identifier. It is not necessarily a hostname, '
+             'FQDN, or IP address.'
+    ),
+    cfg.StrOpt(
+        'topic',
+        default='mistral_event_engine',
+        help='The message topic that the event engine listens on.'
+    ),
+]
+
 execution_expiration_policy_opts = [
     cfg.IntOpt(
         'evaluation_interval',
@@ -210,6 +225,7 @@ CONF = cfg.CONF
 API_GROUP = 'api'
 ENGINE_GROUP = 'engine'
 EXECUTOR_GROUP = 'executor'
+EVENT_ENGINE_GROUP = 'event_engine'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
@@ -221,12 +237,13 @@ CONF.register_opt(auth_type_opt)
 
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
-CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
 CONF.register_opts(
     execution_expiration_policy_opts,
     group=EXECUTION_EXPIRATION_POLICY_GROUP
 )
+CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
+CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opt(rpc_impl_opt)
@@ -265,6 +282,7 @@ def list_opts():
         (API_GROUP, api_opts),
         (ENGINE_GROUP, engine_opts),
         (EXECUTOR_GROUP, executor_opts),
+        (EVENT_ENGINE_GROUP, event_engine_opts),
         (PECAN_GROUP, pecan_opts),
         (COORDINATION_GROUP, coordination_opts),
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),

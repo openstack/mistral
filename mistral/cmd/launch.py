@@ -55,6 +55,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
 from mistral.engine import default_executor as def_executor
 from mistral.engine.rpc_backend import rpc
+from mistral.services import event_engine
 from mistral.services import expiration_policy
 from mistral.services import scheduler
 from mistral.utils import profiler
@@ -117,6 +118,27 @@ def launch_engine():
         print("Stopping engine service...")
 
 
+def launch_event_engine():
+    profiler.setup('mistral-event-engine', cfg.CONF.event_engine.host)
+
+    event_eng = event_engine.EventEngine(rpc.get_engine_client())
+    endpoint = rpc.EventEngineServer(event_eng)
+
+    event_engine_server = rpc.get_rpc_server_driver()(
+        rpc_utils.get_rpc_info_from_oslo(CONF.event_engine)
+    )
+    event_engine_server.register_endpoint(endpoint)
+
+    event_eng.register_membership()
+
+    try:
+        event_engine_server.run()
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
+        print("Stopping event_engine service...")
+
+
 class ThreadingWSGIServer(socketserver.ThreadingMixIn, WSGIServer):
     pass
 
@@ -153,7 +175,8 @@ def launch_any(options):
 LAUNCH_OPTIONS = {
     'api': launch_api,
     'engine': launch_engine,
-    'executor': launch_executor
+    'executor': launch_executor,
+    'event-engine': launch_event_engine
 }
 
 
