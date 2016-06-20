@@ -17,7 +17,7 @@ import functools
 from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.v2 import client as cinderclient
-from designateclient import client as designateclient
+from designateclient import v1 as designateclient
 from glanceclient.v2 import client as glanceclient
 from heatclient.v1 import client as heatclient
 from ironic_inspector_client import v1 as ironic_inspector_client
@@ -98,7 +98,7 @@ class GlanceAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._client_class("")
+        return cls._client_class("fake_endpoint")
 
 
 class KeystoneAction(base.OpenStackAction):
