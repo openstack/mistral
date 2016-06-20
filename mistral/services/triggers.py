@@ -17,6 +17,7 @@ import datetime
 import six
 
 from mistral.db.v2 import api as db_api
+from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
 from mistral.services import security
@@ -110,5 +111,77 @@ def create_cron_trigger(name, workflow_name, workflow_input,
         security.add_trust_id(values)
 
         trig = db_api.create_cron_trigger(values)
+
+    return trig
+
+
+def create_event_trigger(name, exchange, topic, event, workflow_id,
+                         workflow_input=None, workflow_params=None):
+    with db_api.transaction():
+        wf_def = db_api.get_workflow_definition_by_id(workflow_id)
+
+        eng_utils.validate_input(
+            wf_def,
+            workflow_input or {},
+            parser.get_workflow_spec_by_definition_id(
+                wf_def.id,
+                wf_def.updated_at
+            )
+        )
+
+        values = {
+            'name': name,
+            'workflow_id': workflow_id,
+            'workflow_input': workflow_input or {},
+            'workflow_params': workflow_params or {},
+            'exchange': exchange,
+            'topic': topic,
+            'event': event,
+        }
+
+        security.add_trust_id(values)
+
+        trig = db_api.create_event_trigger(values)
+
+        trigs = db_api.get_event_triggers(insecure=True, exchange=exchange,
+                                          topic=topic)
+        events = [t.event for t in trigs]
+
+        # NOTE(kong): Send RPC message within the db transaction, rollback if
+        # any error occurs.
+        rpc.get_event_engine_client().create_event_trigger(
+            trig.to_dict(),
+            events
+        )
+
+    return trig
+
+
+def delete_event_trigger(event_trigger):
+    with db_api.transaction():
+        db_api.delete_event_trigger(event_trigger['id'])
+
+        trigs = db_api.get_event_triggers(
+            insecure=True,
+            exchange=event_trigger['exchange'],
+            topic=event_trigger['topic']
+        )
+        events = set([t.event for t in trigs])
+
+        # NOTE(kong): Send RPC message within the db transaction, rollback if
+        # any error occurs.
+        rpc.get_event_engine_client().delete_event_trigger(
+            event_trigger,
+            list(events)
+        )
+
+
+def update_event_trigger(id, values):
+    with db_api.transaction():
+        trig = db_api.update_event_trigger(id, values)
+
+        # NOTE(kong): Send RPC message within the db transaction, rollback if
+        # any error occurs.
+        rpc.get_event_engine_client().update_event_trigger(trig.to_dict())
 
     return trig

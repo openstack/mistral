@@ -54,5 +54,11 @@
     "workflows:delete": "rule:admin_or_owner",
     "workflows:get": "rule:admin_or_owner",
     "workflows:list": "rule:admin_or_owner",
-    "workflows:update": "rule:admin_or_owner"
+    "workflows:update": "rule:admin_or_owner",
+
+    "event_triggers:create": "rule:admin_or_owner",
+    "event_triggers:delete": "rule:admin_or_owner",
+    "event_triggers:get": "rule:admin_or_owner",
+    "event_triggers:list": "rule:admin_or_owner",
+    "event_triggers:update": "rule:admin_or_owner",
 }

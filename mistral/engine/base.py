@@ -147,6 +147,19 @@ class Executor(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
+class EventEngine(object):
+    """Action event trigger interface."""
+
+    @abc.abstractmethod
+    def create_event_trigger(self, trigger, events):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_event_trigger(self, trigger, events):
+        raise NotImplementedError()
+
+
+@six.add_metaclass(abc.ABCMeta)
 class TaskPolicy(object):
     """Task policy.
 

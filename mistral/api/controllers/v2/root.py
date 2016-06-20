@@ -22,6 +22,7 @@ from mistral.api.controllers.v2 import action
 from mistral.api.controllers.v2 import action_execution
 from mistral.api.controllers.v2 import cron_trigger
 from mistral.api.controllers.v2 import environment
+from mistral.api.controllers.v2 import event_trigger
 from mistral.api.controllers.v2 import execution
 from mistral.api.controllers.v2 import service
 from mistral.api.controllers.v2 import task
@@ -54,6 +55,7 @@ class Controller(object):
     environments = environment.EnvironmentController()
     action_executions = action_execution.ActionExecutionsController()
     services = service.ServicesController()
+    event_triggers = event_trigger.EventTriggersController()
 
     @wsme_pecan.wsexpose(RootResource)
     def index(self):

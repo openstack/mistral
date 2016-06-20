@@ -35,6 +35,7 @@ _TRANSPORT = None
 
 _ENGINE_CLIENT = None
 _EXECUTOR_CLIENT = None
+_EVENT_ENGINE_CLIENT = None
 
 
 def cleanup():
@@ -43,10 +44,12 @@ def cleanup():
     global _TRANSPORT
     global _ENGINE_CLIENT
     global _EXECUTOR_CLIENT
+    global _EVENT_ENGINE_CLIENT
 
     _TRANSPORT = None
     _ENGINE_CLIENT = None
     _EXECUTOR_CLIENT = None
+    _EVENT_ENGINE_CLIENT = None
 
 
 def get_transport():
@@ -78,6 +81,17 @@ def get_executor_client():
         )
 
     return _EXECUTOR_CLIENT
+
+
+def get_event_engine_client():
+    global _EVENT_ENGINE_CLIENT
+
+    if not _EVENT_ENGINE_CLIENT:
+        _EVENT_ENGINE_CLIENT = EventEngineClient(
+            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.event_engine)
+        )
+
+    return _EVENT_ENGINE_CLIENT
 
 
 def get_rpc_server_driver():
@@ -570,7 +584,62 @@ class ExecutorClient(base.Executor):
 
 
 class EventEngineServer(object):
-    """RPC Event Engine server."""
+    """RPC EventEngine server."""
 
     def __init__(self, event_engine):
-        self.event_engine = event_engine
+        self._event_engine = event_engine
+
+    def create_event_trigger(self, rpc_ctx, trigger, events):
+        LOG.info(
+            "Received RPC request 'create_event_trigger'[rpc_ctx=%s,"
+            " trigger=%s, events=%s", rpc_ctx, trigger, events
+        )
+
+        return self._event_engine.create_event_trigger(trigger, events)
+
+    def delete_event_trigger(self, rpc_ctx, trigger, events):
+        LOG.info(
+            "Received RPC request 'delete_event_trigger'[rpc_ctx=%s,"
+            " trigger=%s, events=%s", rpc_ctx, trigger, events
+        )
+
+        return self._event_engine.delete_event_trigger(trigger, events)
+
+    def update_event_trigger(self, rpc_ctx, trigger):
+        LOG.info(
+            "Received RPC request 'update_event_trigger'[rpc_ctx=%s,"
+            " trigger=%s", rpc_ctx, trigger
+        )
+
+        return self._event_engine.update_event_trigger(trigger)
+
+
+class EventEngineClient(base.EventEngine):
+    """RPC EventEngine client."""
+
+    def __init__(self, rpc_conf_dict):
+        """Constructs an RPC client for the EventEngine service."""
+        self._client = get_rpc_client_driver()(rpc_conf_dict)
+
+    def create_event_trigger(self, trigger, events):
+        return self._client.sync_call(
+            auth_ctx.ctx(),
+            'create_event_trigger',
+            trigger=trigger,
+            events=events
+        )
+
+    def delete_event_trigger(self, trigger, events):
+        return self._client.sync_call(
+            auth_ctx.ctx(),
+            'delete_event_trigger',
+            trigger=trigger,
+            events=events
+        )
+
+    def update_event_trigger(self, trigger):
+        return self._client.sync_call(
+            auth_ctx.ctx(),
+            'update_event_trigger',
+            trigger=trigger,
+        )

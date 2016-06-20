@@ -540,3 +540,56 @@ class Services(resource.Resource):
     @classmethod
     def sample(cls):
         return cls(services=[Service.sample()])
+
+
+class EventTrigger(resource.Resource):
+    """EventTrigger resource."""
+
+    id = wsme.wsattr(wtypes.text, readonly=True)
+    created_at = wsme.wsattr(wtypes.text, readonly=True)
+    updated_at = wsme.wsattr(wtypes.text, readonly=True)
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
+    name = wtypes.text
+    workflow_id = types.uuid
+    workflow_input = types.jsontype
+    workflow_params = types.jsontype
+    exchange = wtypes.text
+    topic = wtypes.text
+    event = wtypes.text
+    scope = SCOPE_TYPES
+
+    @classmethod
+    def sample(cls):
+        return cls(id='123e4567-e89b-12d3-a456-426655441414',
+                   created_at='1970-01-01T00:00:00.000000',
+                   updated_at='1970-01-01T00:00:00.000000',
+                   project_id='project',
+                   name='expiration_event_trigger',
+                   workflow_id='123e4567-e89b-12d3-a456-426655441414',
+                   workflow_input={},
+                   workflow_params={},
+                   exchange='nova',
+                   topic='notifications',
+                   event='compute.instance.create.end')
+
+
+class EventTriggers(resource.ResourceList):
+    """A collection of event triggers."""
+
+    event_triggers = [EventTrigger]
+
+    def __init__(self, **kwargs):
+        self._type = 'event_triggers'
+
+        super(EventTriggers, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        triggers_sample = cls()
+        triggers_sample.event_triggers = [EventTrigger.sample()]
+        triggers_sample.next = ("http://localhost:8989/v2/event_triggers?"
+                                "sort_keys=id,name&"
+                                "sort_dirs=asc,desc&limit=10&"
+                                "marker=123e4567-e89b-12d3-a456-426655440000")
+
+        return triggers_sample
