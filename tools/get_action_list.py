@@ -51,6 +51,8 @@ from troveclient.v1 import client as troveclient
 # like we do in this class.
 # TODO(therve): Zaqarclient doesn't currently support discovery
 # like we do in this class.
+# TODO(sa709c): Tackerclient doesn't currently support discovery
+# like we do in this class.
 
 """It is simple CLI tool which allows to see and update mapping.json file
 if needed. mapping.json contains all allowing OpenStack actions sorted by

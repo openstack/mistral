@@ -225,3 +225,17 @@ class OpenStackActionTest(base.BaseTestCase):
         mocked().categories.get.assert_called_once_with(
             category_id="1234-abcd"
         )
+
+    @mock.patch.object(actions.TackerAction, '_get_client')
+    def test_tacker_action(self, mocked):
+        method_name = "show_vim"
+        action_class = actions.TackerAction
+        action_class.client_method_name = method_name
+        params = {'vim_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().show_vim.called)
+        mocked().show_vim.assert_called_once_with(
+            vim_id="1234-abcd"
+        )

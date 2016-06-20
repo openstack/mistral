@@ -1245,5 +1245,24 @@
         "sessions_delete": "sessions.delete",
         "sessions_deploy": "sessions.deploy",
         "sessions_get": "sessions.get"
+    },
+    "tacker":{
+        "_comment": "It uses tackerclient.v1_0.",
+        "list_extensions": "list_extensions",
+        "show_extension": "show_extension",
+        "create_vnfd": "create_vnfd",
+        "delete_vnfd": "delete_vnfd",
+        "list_vnfds": "list_vnfds",
+        "show_vnfd": "show_vnfd",
+        "create_vnf": "create_vnf",
+        "update_vnf": "update_vnf",
+        "delete_vnf": "delete_vnf",
+        "list_vnfs": "list_vnfs",
+        "show_vnf": "show_vnf",
+        "create_vim": "create_vim",
+        "update_vim": "update_vim",
+        "delete_vim": "delete_vim",
+        "list_vims": "list_vims",
+        "show_vim": "show_vim"
     }
 }

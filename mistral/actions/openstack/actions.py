@@ -33,6 +33,7 @@ from novaclient import client as novaclient
 from oslo_config import cfg
 from oslo_log import log
 from swiftclient import client as swift_client
+from tackerclient.v1_0 import client as tackerclient
 from troveclient.v1 import client as troveclient
 from zaqarclient.queues.v2 import client as zaqarclient
 
@@ -654,6 +655,30 @@ class MuranoAction(base.OpenStackAction):
             token=ctx.auth_token,
             tenant=ctx.project_id,
             region_name=murano_endpoint.region,
+            auth_url=keystone_endpoint.url
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._client_class()
+
+
+class TackerAction(base.OpenStackAction):
+    _client_class = tackerclient.Client
+
+    def _get_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Tacker action security context: %s" % ctx)
+
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        tacker_endpoint = keystone_utils.get_endpoint_for_project('tacker')
+
+        return self._client_class(
+            endpoint_url=tacker_endpoint.url,
+            token=ctx.auth_token,
+            tenant_id=ctx.project_id,
+            region_name=tacker_endpoint.region,
             auth_url=keystone_endpoint.url
         )
 
