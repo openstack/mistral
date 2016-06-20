@@ -135,8 +135,8 @@ CEILOMETER_NAMESPACE_LIST = [
 ]
 
 DESIGNATE_NAMESPACE_LIST = [
-    'diagnostics', 'domain', 'quota', 'record', 'report_count',
-    'report_tenant', 'server', 'sync', 'touch'
+    'diagnostics', 'domains', 'quotas', 'records', 'reports', 'servers',
+    'sync', 'touch'
 ]
 
 
@@ -184,7 +184,7 @@ def get_barbican_client(**kwargs):
 
 
 def get_designate_client(**kwargs):
-    return designateclient.Client(1)
+    return designateclient.Client('1')
 
 
 def get_magnum_client(**kwargs):

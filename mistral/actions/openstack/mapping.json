@@ -1114,9 +1114,9 @@
         "servers_get": "servers.get",
         "servers_list": "servers.list",
         "servers_update": "servers.update",
-        "sync_all": "sync.sync_all",
-        "sync_domain": "sync.sync_domain",
-        "sync_record": "sync.sync_record",
+        "sync_sync_all": "sync.sync_all",
+        "sync_sync_domain": "sync.sync_domain",
+        "sync_sync_record": "sync.sync_record",
         "touch_domain": "touch.domain"
     },
     "magnum": {
