@@ -42,10 +42,9 @@ def register_standard_actions():
 
     for action_path in action_paths:
         action_definition = open(action_path).read()
-        actions.update_actions(
+        actions.create_or_update_actions(
             action_definition,
-            scope='public',
-            run_in_tx=False
+            scope='public'
         )
 
 
