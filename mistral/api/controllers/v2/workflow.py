@@ -236,9 +236,9 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflows, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist)
+                         types.list, types.uniquelist, types.jsontype)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields=''):
+                sort_dirs='asc', fields='', **filters):
         """Return a list of workflows.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -254,46 +254,26 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
+        :param filters: Optional. A list of filters to apply to the result.
 
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
         acl.enforce('workflows:list', context.ctx())
         LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, fields=%s", marker, limit, sort_keys,
-                 sort_dirs, fields)
+                 "sort_dirs=%s, fields=%s, filters=%s", marker, limit,
+                 sort_keys, sort_dirs, fields, filters)
 
-        if fields and 'id' not in fields:
-            fields.insert(0, 'id')
-
-        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
-        rest_utils.validate_fields(fields, Workflow.get_fields())
-
-        marker_obj = None
-
-        if marker:
-            marker_obj = db_api.get_workflow_definition_by_id(marker)
-
-        db_workflows = db_api.get_workflow_definitions(
+        return rest_utils.get_all(
+            Workflows,
+            Workflow,
+            db_api.get_workflow_definitions,
+            db_api.get_workflow_definition_by_id,
+            resource_function=None,
+            marker=marker,
             limit=limit,
-            marker=marker_obj,
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
-            fields=fields
-        )
-
-        workflows_list = []
-
-        for data in db_workflows:
-            workflow_dict = (dict(zip(fields, data)) if fields else
-                             data.to_dict())
-            workflows_list.append(Workflow.from_dict(workflow_dict))
-
-        return Workflows.convert_with_links(
-            workflows_list,
-            limit,
-            pecan.request.host_url,
-            sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs),
-            fields=','.join(fields) if fields else ''
+            fields=fields,
+            **filters
         )

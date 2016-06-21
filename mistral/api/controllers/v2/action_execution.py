@@ -79,10 +79,15 @@ class ActionExecution(resource.Resource):
         )
 
 
-class ActionExecutions(resource.Resource):
+class ActionExecutions(resource.ResourceList):
     """A collection of action_executions."""
 
     action_executions = [ActionExecution]
+
+    def __init__(self, **kwargs):
+        self._type = 'action_executions'
+
+        super(ActionExecutions, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -115,18 +120,48 @@ def _get_action_execution_resource(action_ex):
     return res
 
 
-def _get_action_executions(task_execution_id=None):
-    kwargs = {'type': 'action_execution'}
+def _get_action_executions(task_execution_id=None, marker=None, limit=None,
+                           sort_keys='created_at', sort_dirs='asc',
+                           fields='', **filters):
+    """Return all action executions.
+
+    Where project_id is the same as the requestor or
+    project_id is different but the scope is public.
+
+    :param marker: Optional. Pagination marker for large data sets.
+    :param limit: Optional. Maximum number of resources to return in a
+                  single result. Default value is None for backward
+                  compatibility.
+    :param sort_keys: Optional. Columns to sort results by.
+                      Default: created_at, which is backward compatible.
+    :param sort_dirs: Optional. Directions to sort corresponding to
+                      sort_keys, "asc" or "desc" can be chosen.
+                      Default: desc. The length of sort_dirs can be equal
+                      or less than that of sort_keys.
+    :param fields: Optional. A specified list of fields of the resource to
+                   be returned. 'id' will be included automatically in
+                   fields if it's provided, since it will be used when
+                   constructing 'next' link.
+    :param filters: Optional. A list of filters to apply to the result.
+    """
+    filters['type'] = 'action_execution'
 
     if task_execution_id:
-        kwargs['task_execution_id'] = task_execution_id
+        filters['task_execution_id'] = task_execution_id
 
-    action_execs = [
-        _get_action_execution_resource(a_ex)
-        for a_ex in db_api.get_action_executions(**kwargs)
-    ]
-
-    return ActionExecutions(action_executions=action_execs)
+    return rest_utils.get_all(
+        ActionExecutions,
+        ActionExecution,
+        db_api.get_action_executions,
+        db_api.get_action_execution,
+        resource_function=_get_action_execution_resource,
+        marker=marker,
+        limit=limit,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        fields=fields,
+        **filters
+    )
 
 
 class ActionExecutionsController(rest.RestController):
@@ -194,13 +229,45 @@ class ActionExecutionsController(rest.RestController):
 
         return ActionExecution.from_dict(values)
 
-    @wsme_pecan.wsexpose(ActionExecutions)
-    def get_all(self):
-        """Return all action_executions within the execution."""
-        acl.enforce('action_executions:list', context.ctx())
-        LOG.info("Fetch action_executions")
+    @wsme_pecan.wsexpose(ActionExecutions, types.uuid, int, types.uniquelist,
+                         types.list, types.uniquelist, types.jsontype)
+    def get_all(self, marker=None, limit=None, sort_keys='created_at',
+                sort_dirs='asc', fields='', **filters):
+        """Return all tasks within the execution.
 
-        return _get_action_executions()
+        Where project_id is the same as the requestor or
+        project_id is different but the scope is public.
+
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatibility.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: created_at, which is backward compatible.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be chosen.
+                          Default: desc. The length of sort_dirs can be equal
+                          or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
+        :param filters: Optional. A list of filters to apply to the result.
+
+        """
+        acl.enforce('action_executions:list', context.ctx())
+        LOG.info("Fetch action_executions. marker=%s, limit=%s, "
+                 "sort_keys=%s, sort_dirs=%s, filters=%s",
+                 marker, limit, sort_keys, sort_dirs, filters)
+
+        return _get_action_executions(
+            marker=marker,
+            limit=limit,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields,
+            **filters
+        )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
@@ -228,13 +295,46 @@ class ActionExecutionsController(rest.RestController):
 
 
 class TasksActionExecutionController(rest.RestController):
-    @wsme_pecan.wsexpose(ActionExecutions, wtypes.text)
-    def get_all(self, task_execution_id):
-        """Return all action executions within the task execution."""
-        acl.enforce('action_executions:list', context.ctx())
-        LOG.info("Fetch action executions")
+    @wsme_pecan.wsexpose(ActionExecutions, types.uuid, types.uuid, int,
+                         types.uniquelist, types.list, types.uniquelist,
+                         types.jsontype)
+    def get_all(self, task_execution_id, marker=None, limit=None,
+                sort_keys='created_at', sort_dirs='asc', fields='', **filters):
+        """Return all tasks within the execution.
 
-        return _get_action_executions(task_execution_id=task_execution_id)
+        Where project_id is the same as the requestor or
+        project_id is different but the scope is public.
+
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatibility.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: created_at, which is backward compatible.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be chosen.
+                          Default: desc. The length of sort_dirs can be equal
+                          or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
+        :param filters: Optional. A list of filters to apply to the result.
+        """
+        acl.enforce('action_executions:list', context.ctx())
+        LOG.info("Fetch action_executions. marker=%s, limit=%s, "
+                 "sort_keys=%s, sort_dirs=%s, filters=%s",
+                 marker, limit, sort_keys, sort_dirs, filters)
+
+        return _get_action_executions(
+            task_execution_id=task_execution_id,
+            marker=marker,
+            limit=limit,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields,
+            **filters
+        )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(ActionExecution, wtypes.text, wtypes.text)

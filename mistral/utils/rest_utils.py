@@ -19,10 +19,14 @@ import json
 
 import pecan
 import six
+
+from oslo_log import log as logging
 from webob import Response
 from wsme import exc as wsme_exc
 
 from mistral import exceptions as exc
+
+LOG = logging.getLogger(__name__)
 
 
 def wrap_wsme_controller_exception(func):
@@ -102,3 +106,95 @@ def validate_fields(fields, object_fields):
         raise wsme_exc.ClientSideError(
             'Field(s) %s are invalid.' % ', '.join(invalid_fields)
         )
+
+
+def get_all(list_cls, cls, get_all_function, get_function,
+            resource_function=None, marker=None, limit=None,
+            sort_keys='created_at', sort_dirs='asc', fields='', **filters):
+    """Return a list of cls.
+
+    :param list_cls: Collection class (e.g.: Actions, Workflows, ...).
+    :param cls: Class (e.g.: Action, Workflow, ...).
+    :param get_all_function: Request function to get all elements with
+                             filtering (limit, marker, sort_keys, sort_dirs,
+                             fields)
+    :param get_function: Function used to fetch the marker
+    :param resource_function: Optional, function used to fetch additional data
+    :param marker: Optional. Pagination marker for large data sets.
+    :param limit: Optional. Maximum number of resources to return in a
+                  single result. Default value is None for backward
+                  compatibility.
+    :param sort_keys: Optional. Columns to sort results by.
+                      Default: created_at.
+    :param sort_dirs: Optional. Directions to sort corresponding to
+                      sort_keys, "asc" or "desc" can be choosed.
+                      Default: asc.
+    :param fields: Optional. A specified list of fields of the resource to
+                   be returned. 'id' will be included automatically in
+                   fields if it's provided, since it will be used when
+                   constructing 'next' link.
+    :param filters: Optional. A specified dictionary of filters to match.
+    """
+    if fields and 'id' not in fields:
+        fields.insert(0, 'id')
+
+    validate_query_params(limit, sort_keys, sort_dirs)
+    validate_fields(fields, cls.get_fields())
+
+    marker_obj = None
+
+    if marker:
+        marker_obj = get_function(marker)
+
+    list_to_return = []
+    if resource_function:
+        # do not filter fields yet, resource_function needs the ORM object
+        db_list = get_all_function(
+            limit=limit,
+            marker=marker_obj,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            **filters
+        )
+
+        for data in db_list:
+            obj = resource_function(data)
+
+            # filter fields using a loop instead of the ORM
+            if fields:
+                data = []
+                for f in fields:
+                    if hasattr(obj, f):
+                        data.append(getattr(obj, f))
+
+                dict_data = dict(zip(fields, data))
+            else:
+                dict_data = obj.to_dict()
+
+            list_to_return.append(cls.from_dict(dict_data))
+
+    else:
+        db_list = get_all_function(
+            limit=limit,
+            marker=marker_obj,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields,
+            **filters
+        )
+
+        for data in db_list:
+            dict_data = (dict(zip(fields, data)) if fields else
+                         data.to_dict())
+
+            list_to_return.append(cls.from_dict(dict_data))
+
+    return list_cls.convert_with_links(
+        list_to_return,
+        limit,
+        pecan.request.host_url,
+        sort_keys=','.join(sort_keys),
+        sort_dirs=','.join(sort_dirs),
+        fields=','.join(fields) if fields else '',
+        **filters
+    )

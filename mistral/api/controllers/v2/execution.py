@@ -15,7 +15,6 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
-import pecan
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -255,9 +254,9 @@ class ExecutionsController(rest.RestController):
         return db_api.delete_workflow_execution(id)
 
     @wsme_pecan.wsexpose(Executions, types.uuid, int, types.uniquelist,
-                         types.list)
+                         types.list, types.uniquelist, types.jsontype)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc'):
+                sort_dirs='asc', fields='', **filters):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -270,36 +269,30 @@ class ExecutionsController(rest.RestController):
                           sort_keys, "asc" or "desc" can be chosen.
                           Default: desc. The length of sort_dirs can be equal
                           or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
+        :param filters: Optional. A list of filters to apply to the result.
+
         """
         acl.enforce('executions:list', context.ctx())
         LOG.info(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s", marker, limit, sort_keys, sort_dirs
+            "sort_dirs=%s, filters=%s", marker, limit, sort_keys, sort_dirs,
+            filters
         )
 
-        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
-
-        marker_obj = None
-
-        if marker:
-            marker_obj = db_api.get_workflow_execution(marker)
-
-        db_workflow_exs = db_api.get_workflow_executions(
+        return rest_utils.get_all(
+            Executions,
+            Execution,
+            db_api.get_workflow_executions,
+            db_api.get_workflow_execution,
+            resource_function=None,
+            marker=marker,
             limit=limit,
-            marker=marker_obj,
             sort_keys=sort_keys,
-            sort_dirs=sort_dirs
-        )
-
-        wf_executions = [
-            Execution.from_dict(db_model.to_dict())
-            for db_model in db_workflow_exs
-        ]
-
-        return Executions.convert_with_links(
-            wf_executions,
-            limit,
-            pecan.request.host_url,
-            sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs)
+            sort_dirs=sort_dirs,
+            fields=fields,
+            **filters
         )
