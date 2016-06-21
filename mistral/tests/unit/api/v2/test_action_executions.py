@@ -185,10 +185,10 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(201, resp.status_int)
 
-        action_exec = ACTION_EX
+        action_exec = copy.deepcopy(ACTION_EX)
         del action_exec['task_name']
 
-        self.assertDictEqual(ACTION_EX, resp.json)
+        self.assertDictEqual(action_exec, resp.json)
 
         f.assert_called_once_with(
             ACTION_EX['name'],
@@ -212,10 +212,10 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(201, resp.status_int)
 
-        action_exec = ACTION_EX
+        action_exec = copy.deepcopy(ACTION_EX)
         del action_exec['task_name']
 
-        self.assertDictEqual(ACTION_EX, resp.json)
+        self.assertDictEqual(action_exec, resp.json)
 
         f.assert_called_once_with(
             ACTION_EX['name'],

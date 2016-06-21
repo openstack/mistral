@@ -153,20 +153,56 @@ def _delete_all(model, session=None, **kwargs):
     _secure_query(model).filter_by(**kwargs).delete(synchronize_session=False)
 
 
-def _get_collection_sorted_by_name(model, **kwargs):
+def _get_collection(model, limit=None, marker=None, sort_keys=None,
+                    sort_dirs=None, fields=None, query=None, **kwargs):
+    columns = (
+        tuple([getattr(model, f) for f in fields if hasattr(model, f)])
+        if fields else ()
+    )
+
+    if query is None:
+        query = _secure_query(model, *columns).filter_by(**kwargs)
+
+    try:
+        return _paginate_query(
+            model,
+            limit,
+            marker,
+            sort_keys,
+            sort_dirs,
+            query
+        )
+    except Exception as e:
+        raise exc.DBQueryEntryException(
+            "Failed when querying database, error type: %s, "
+            "error message: %s" % (e.__class__.__name__, e.message)
+        )
+
+
+def _get_collection_sorted_by_name(model, fields=None, sort_keys=['name'],
+                                   **kwargs):
     # Note(lane): Sometimes tenant_A needs to get resources of tenant_B,
     # especially in resource sharing scenario, the resource owner needs to
     # check if the resource is used by a member.
-    query = (b.model_query(model) if 'project_id' in kwargs
-             else _secure_query(model))
+    columns = (
+        tuple([getattr(model, f) for f in fields if hasattr(model, f)])
+        if fields else ()
+    )
 
-    return query.filter_by(**kwargs).order_by(model.name).all()
+    query = (b.model_query(model, *columns) if 'project_id' in kwargs
+             else _secure_query(model, *columns))
+
+    return _get_collection(
+        model=model,
+        query=query,
+        sort_keys=sort_keys,
+        fields=fields,
+        **kwargs
+    )
 
 
-def _get_collection_sorted_by_time(model, **kwargs):
-    query = _secure_query(model)
-
-    return query.filter_by(**kwargs).order_by(model.created_at).all()
+def _get_collection_sorted_by_time(model, sort_keys=['created_at'], **kwargs):
+    return _get_collection(model, sort_keys=sort_keys, **kwargs)
 
 
 def _get_db_object_by_name(model, name):
@@ -259,19 +295,6 @@ def delete_workbooks(**kwargs):
 
 # Workflow definitions.
 
-
-WORKFLOW_COL_MAPPING = {
-    'id': models.WorkflowDefinition.id,
-    'name': models.WorkflowDefinition.name,
-    'input': models.WorkflowDefinition.spec,
-    'definition': models.WorkflowDefinition.definition,
-    'tags': models.WorkflowDefinition.tags,
-    'scope': models.WorkflowDefinition.scope,
-    'created_at': models.WorkflowDefinition.created_at,
-    'updated_at': models.WorkflowDefinition.updated_at
-}
-
-
 def get_workflow_definition(identifier):
     """Gets workflow definition by name or uuid.
 
@@ -306,28 +329,17 @@ def load_workflow_definition(name):
     return _get_workflow_definition(name)
 
 
-def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
-                             sort_dirs=None, fields=None, **kwargs):
-    columns = (
-        tuple(WORKFLOW_COL_MAPPING.get(f) for f in fields) if fields else ()
+def get_workflow_definitions(sort_keys=['created_at'], fields=None, **kwargs):
+    if fields and 'input' in fields:
+        fields.remove('input')
+        fields.append('spec')
+
+    return _get_collection(
+        model=models.WorkflowDefinition,
+        sort_keys=sort_keys,
+        fields=fields,
+        **kwargs
     )
-
-    query = _secure_query(models.WorkflowDefinition, *columns)
-
-    try:
-        return _paginate_query(
-            models.WorkflowDefinition,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
-    except Exception as e:
-        raise exc.DBQueryEntryError(
-            "Failed when querying database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
-        )
 
 
 @b.session_aware()
@@ -471,24 +483,12 @@ def load_action_definition(name):
     return _get_action_definition(name)
 
 
-def get_action_definitions(limit=None, marker=None, sort_keys=['name'],
-                           sort_dirs=None, **kwargs):
-    query = _secure_query(models.ActionDefinition).filter_by(**kwargs)
-
-    try:
-        return _paginate_query(
-            models.ActionDefinition,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
-    except Exception as e:
-        raise exc.DBQueryEntryError(
-            "Failed when querying database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
-        )
+def get_action_definitions(sort_keys=['name'], **kwargs):
+    return _get_collection(
+        model=models.ActionDefinition,
+        sort_keys=sort_keys,
+        **kwargs
+    )
 
 
 @b.session_aware()
@@ -747,24 +747,12 @@ def ensure_workflow_execution_exists(id):
     get_workflow_execution(id)
 
 
-def get_workflow_executions(limit=None, marker=None, sort_keys=['created_at'],
-                            sort_dirs=None, **kwargs):
-    query = _secure_query(models.WorkflowExecution).filter_by(**kwargs)
-
-    try:
-        return _paginate_query(
-            models.WorkflowExecution,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
-    except Exception as e:
-        raise exc.DBQueryEntryError(
-            "Failed when quering database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
-        )
+def get_workflow_executions(sort_keys=['created_at'], **kwargs):
+    return _get_collection(
+        models.WorkflowExecution,
+        sort_keys=sort_keys,
+        **kwargs
+    )
 
 
 @b.session_aware()
@@ -1144,10 +1132,15 @@ def _get_cron_trigger(name):
     return _get_db_object_by_name(models.CronTrigger, name)
 
 
-def _get_cron_triggers(**kwargs):
+def _get_cron_triggers(*columns, **kwargs):
     query = b.model_query(models.CronTrigger)
 
-    return query.filter_by(**kwargs).all()
+    return _get_collection(
+        models.CronTrigger,
+        query=query,
+        *columns,
+        **kwargs
+    )
 
 
 # Environments.

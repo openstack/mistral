@@ -64,10 +64,15 @@ class CronTrigger(resource.Resource):
                    updated_at='1970-01-01T00:00:00.000000')
 
 
-class CronTriggers(resource.Resource):
+class CronTriggers(resource.ResourceList):
     """A collection of cron triggers."""
 
     cron_triggers = [CronTrigger]
+
+    def __init__(self, **kwargs):
+        self._type = 'cron_triggers'
+
+        super(CronTriggers, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -119,16 +124,44 @@ class CronTriggersController(rest.RestController):
 
         db_api.delete_cron_trigger(name)
 
-    @wsme_pecan.wsexpose(CronTriggers)
-    def get_all(self):
-        """Return all cron triggers."""
+    @wsme_pecan.wsexpose(CronTriggers, types.uuid, int, types.uniquelist,
+                         types.list, types.uniquelist, types.jsontype)
+    def get_all(self, marker=None, limit=None, sort_keys='created_at',
+                sort_dirs='asc', fields='', **filters):
+        """Return all cron triggers.
 
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatibility.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: created_at, which is backward compatible.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be chosen.
+                          Default: desc. The length of sort_dirs can be equal
+                          or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
+        :param filters: Optional. A list of filters to apply to the result.
+
+        """
         acl.enforce('cron_triggers:list', context.ctx())
-        LOG.info("Fetch cron triggers.")
+        LOG.info("Fetch cron triggers. marker=%s, limit=%s, sort_keys=%s, "
+                 "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
+                 sort_dirs, filters)
 
-        _list = [
-            CronTrigger.from_dict(db_model.to_dict())
-            for db_model in db_api.get_cron_triggers()
-        ]
-
-        return CronTriggers(cron_triggers=_list)
+        return rest_utils.get_all(
+            CronTriggers,
+            CronTrigger,
+            db_api.get_cron_triggers,
+            db_api.get_cron_trigger,
+            resource_function=None,
+            marker=marker,
+            limit=limit,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields,
+            **filters
+        )
