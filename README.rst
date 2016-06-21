@@ -87,6 +87,9 @@ an OpenStack environment.
 
      $ tox -evenv -- pip install mysql-python
 
+     NOTE: If you're using Python 3 then you need to install ``mysqlclient``
+     instead of ``mysql-python``.
+
    * Create the database and grant privileges::
 
      $ mysql -u root -p
