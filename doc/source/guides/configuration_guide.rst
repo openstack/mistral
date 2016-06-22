@@ -85,7 +85,14 @@ either with real OpenStack environment or without OpenStack environment.
       target: my_favorite_executor
     ...Workflow YAML...
 
-10. After that try to run mistral engine and see it is running without any error::
+10. Configure role based access policies for Mistral endpoints (policy.json)::
+
+     [oslo_policy]
+     policy_file = <path-of-policy.json file>
+
+    Default policy.json file is in ``mistral/etc/``. For more deatils see `policy.json file <http://docs.openstack.org/mitaka/config-reference/policy-json-file.html>`_.
+
+11. After that try to run mistral engine and see it is running without any error::
 
      mistral-server --config-file <path-to-config> --server engine
 
