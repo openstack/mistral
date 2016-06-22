@@ -21,6 +21,7 @@ from email.mime import text
 import json
 import requests
 import smtplib
+import time
 
 from mistral.actions import base
 from mistral import exceptions as exc
@@ -432,3 +433,29 @@ class JavaScriptAction(base.Action):
 
     def test(self):
         return self.script
+
+
+class SleepAction(base.Action):
+    """Sleep action.
+
+    This action sleeps for given amount of seconds. It can be mostly useful
+    for testing and debugging purposes.
+    """
+    def __init__(self, seconds=1):
+        try:
+            self._seconds = int(seconds)
+            self._seconds = 0 if self._seconds < 0 else self._seconds
+        except ValueError:
+            self._seconds = 0
+
+    def run(self):
+        LOG.info('Running sleep action [seconds=%s]' % self._seconds)
+
+        time.sleep(self._seconds)
+
+        return None
+
+    def test(self):
+        time.sleep(1)
+
+        return None

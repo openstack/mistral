@@ -171,7 +171,7 @@ workflows:
           - pause
 
       task2:
-        action: std.mistral_http url="http://google.com"
+        action: std.async_noop
         # This one won't be finished when execution is already PAUSED.
         on-complete:
           - task4
