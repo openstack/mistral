@@ -44,6 +44,47 @@ class RunActionEngineTest(base.EngineTestCase):
           input:
             - left
             - right
+
+        concat3:
+          base: concat
+          base-input:
+            left: <% $.left %><% $.center %>
+            right: <% $.right %>
+          input:
+            - left
+            - center
+            - right
+
+        concat4:
+          base: concat3
+          base-input:
+            left: <% $.left %>
+            center: <% $.center_left %><% $.center_right %>
+            right: <% $.right %>
+          input:
+            - left
+            - center_left
+            - center_right
+            - right
+
+        missing_base:
+          base: wrong
+          input:
+            - some_input
+
+        loop_action:
+          base: loop_action
+          base-input:
+            output: <% $.output %>
+          input:
+            - output
+
+        level2_loop_action:
+          base: loop_action
+          base-input:
+            output: <% $.output %>
+          input:
+            - output
         """
         actions.create_actions(action)
 
@@ -126,6 +167,56 @@ class RunActionEngineTest(base.EngineTestCase):
         )
 
         self.assertEqual('Hello, John Doe!', action_ex.output['result'])
+
+    def test_run_level_two_action_adhoc(self):
+        # Start action and see the result.
+        action_ex = self.engine.start_action(
+            'concat3',
+            {'left': 'Hello, ', 'center': 'John', 'right': ' Doe!'}
+        )
+
+        self.assertEqual('Hello, John Doe!', action_ex.output['result'])
+
+    def test_run_level_three_action_adhoc(self):
+        # Start action and see the result.
+        action_ex = self.engine.start_action(
+            'concat4',
+            {
+                'left': 'Hello, ',
+                'center_left': 'John',
+                'center_right': ' Doe',
+                'right': '!'
+            }
+        )
+
+        self.assertEqual('Hello, John Doe!', action_ex.output['result'])
+
+    def test_run_action_with_missing_base(self):
+        # Start action and see the result.
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            self.engine.start_action,
+            'missing_base',
+            {'some_input': 'Hi'}
+        )
+
+    def test_run_loop_action(self):
+        # Start action and see the result.
+        self.assertRaises(
+            ValueError,
+            self.engine.start_action,
+            'loop_action',
+            {'output': 'Hello'}
+        )
+
+    def test_run_level_two_loop_action(self):
+        # Start action and see the result.
+        self.assertRaises(
+            ValueError,
+            self.engine.start_action,
+            'level2_loop_action',
+            {'output': 'Hello'}
+        )
 
     def test_run_action_wrong_input(self):
         # Start action and see the result.

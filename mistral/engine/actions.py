@@ -296,6 +296,9 @@ class AdHocAction(PythonAction):
         base_action_def = db_api.get_action_definition(
             self.action_spec.get_base()
         )
+        base_action_def = self._gather_base_actions(
+            action_def, base_action_def
+        )
 
         super(AdHocAction, self).__init__(
             base_action_def,
@@ -317,15 +320,18 @@ class AdHocAction(PythonAction):
         )
 
     def _prepare_input(self, input_dict):
-        base_input_expr = self.action_spec.get_base_input()
+        base_input_dict = input_dict
 
-        if base_input_expr:
-            base_input_dict = expr.evaluate_recursively(
-                base_input_expr,
-                input_dict
-            )
-        else:
-            base_input_dict = {}
+        for action_def in self.adhoc_action_defs:
+            action_spec = spec_parser.get_action_spec(action_def.spec)
+            base_input_expr = action_spec.get_base_input()
+            if base_input_expr:
+                base_input_dict = expr.evaluate_recursively(
+                    base_input_expr,
+                    base_input_dict
+                )
+            else:
+                base_input_dict = {}
 
         return super(AdHocAction, self)._prepare_input(base_input_dict)
 
@@ -355,6 +361,40 @@ class AdHocAction(PythonAction):
             ctx,
             {'adhoc_action_name': self.adhoc_action_def.name}
         )
+
+    def _gather_base_actions(self, action_def, base_action_def):
+        """Find all base ad-hoc actions and store them
+
+        An ad-hoc action may be based on another ad-hoc action (and this
+        recursively). Using twice the same base action is not allowed to
+        avoid infinite loops. It stores the list of ad-hoc actions.
+        :param action_def: Action definition
+        :type action_def: ActionDefinition
+        :param base_action_def: Original base action definition
+        :type base_action_def: ActionDefinition
+        :return; The definition of the base system action
+        :rtype; ActionDefinition
+        """
+        self.adhoc_action_defs = [action_def]
+        original_base_name = self.action_spec.get_name()
+        action_names = set([original_base_name])
+
+        base = base_action_def
+        while not base.is_system and base.name not in action_names:
+            action_names.add(base.name)
+            self.adhoc_action_defs.append(base)
+
+            base_name = base.spec['base']
+            base = db_api.get_action_definition(base_name)
+
+        # if the action is repeated
+        if base.name in action_names:
+            raise ValueError(
+                'An ad-hoc action cannot use twice the same action, %s is '
+                'used at least twice' % base.name
+            )
+
+        return base
 
 
 class WorkflowAction(Action):
