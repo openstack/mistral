@@ -14,12 +14,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+
 from mistral.actions import std_actions as std
 from mistral.services import action_manager as a_m
 from mistral.tests.unit import base
 
 
 class ActionManagerTest(base.DbTestCase):
+
     def test_register_standard_actions(self):
         action_list = a_m.get_registered_actions()
 
@@ -31,7 +33,10 @@ class ActionManagerTest(base.DbTestCase):
         self._assert_single_item(action_list, name="std.javascript")
 
         self._assert_single_item(action_list, name="nova.servers_get")
-        self._assert_single_item(action_list, name="nova.volumes_delete")
+        self._assert_single_item(
+            action_list,
+            name="nova.volumes_delete_server_volume"
+        )
 
         server_find_action = self._assert_single_item(
             action_list,
