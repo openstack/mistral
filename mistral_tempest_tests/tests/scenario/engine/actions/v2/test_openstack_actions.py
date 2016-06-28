@@ -14,7 +14,7 @@
 
 from tempest import test
 
-from mistral_tempest_tests.services import base
+from mistral_tempest_tests.tests import base
 
 
 class OpenStackActionsTestsV2(base.TestCase):
