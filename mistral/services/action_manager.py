@@ -148,16 +148,41 @@ def get_action_class(action_full_name):
         )
 
 
-def get_action_context(task_ex, action_ex_id):
+def get_action_context(task_ex, action_ex_id, save=True):
+    if task_ex:
+        return {
+            _ACTION_CTX_PARAM: {
+                'workflow_name': task_ex.workflow_name,
+                'workflow_execution_id': task_ex.workflow_execution_id,
+                'task_id': task_ex.id,
+                'task_name': task_ex.name,
+                'task_tags': task_ex.tags,
+                'action_execution_id': action_ex_id,
+                'callback_url': '/v2/action_executions/%s' % action_ex_id
+            }
+        }
+    elif save:
+        return {
+            _ACTION_CTX_PARAM: {
+                'workflow_name': None,
+                'workflow_execution_id': None,
+                'task_id': None,
+                'task_name': None,
+                'task_tags': None,
+                'action_execution_id': action_ex_id,
+                'callback_url': '/v2/action_executions/%s' % action_ex_id
+            }
+        }
+
     return {
         _ACTION_CTX_PARAM: {
-            'workflow_name': task_ex.workflow_name,
-            'workflow_execution_id': task_ex.workflow_execution_id,
-            'task_id': task_ex.id,
-            'task_name': task_ex.name,
-            'task_tags': task_ex.tags,
-            'action_execution_id': action_ex_id,
-            'callback_url': '/v2/action_executions/%s' % action_ex_id
+            'workflow_name': None,
+            'workflow_execution_id': None,
+            'task_id': None,
+            'task_name': None,
+            'task_tags': None,
+            'action_execution_id': None,
+            'callback_url': None
         }
     }
 

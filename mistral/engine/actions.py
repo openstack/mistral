@@ -122,22 +122,9 @@ class Action(object):
         """
         return True
 
-    def _create_action_execution(self, input_dict, runtime_ctx, desc=''):
-        # Assign the action execution ID here to minimize database calls.
-        # Otherwise, the input property of the action execution DB object needs
-        # to be updated with the action execution ID after the action execution
-        # DB object is created.
-        action_ex_id = utils.generate_unicode_uuid()
-
-        # TODO(rakhmerov): Bad place, we probably need to push action context
-        # to all actions. It's related to
-        # https://blueprints.launchpad.net/mistral/+spec/mistral-custom-actions-api
-        if a_m.has_action_context(
-                self.action_def.action_class,
-                self.action_def.attributes or {}) and self.task_ex:
-            input_dict.update(
-                a_m.get_action_context(self.task_ex, action_ex_id)
-            )
+    def _create_action_execution(self, input_dict, runtime_ctx,
+                                 desc='', action_ex_id=None):
+        action_ex_id = action_ex_id or utils.generate_unicode_uuid()
 
         values = {
             'id': action_ex_id,
@@ -212,10 +199,19 @@ class PythonAction(Action):
     def schedule(self, input_dict, target, index=0, desc=''):
         assert not self.action_ex
 
+        # Assign the action execution ID here to minimize database calls.
+        # Otherwise, the input property of the action execution DB object needs
+        # to be updated with the action execution ID after the action execution
+        # DB object is created.
+        action_ex_id = utils.generate_unicode_uuid()
+
+        self._insert_action_context(action_ex_id, input_dict)
+
         self._create_action_execution(
             self._prepare_input(input_dict),
             self._prepare_runtime_context(index),
-            desc=desc
+            desc=desc,
+            action_ex_id=action_ex_id
         )
 
         scheduler.schedule_call(
@@ -233,8 +229,21 @@ class PythonAction(Action):
         input_dict = self._prepare_input(input_dict)
         runtime_ctx = self._prepare_runtime_context(index)
 
+        # Assign the action execution ID here to minimize database calls.
+        # Otherwise, the input property of the action execution DB object needs
+        # to be updated with the action execution ID after the action execution
+        # DB object is created.
+        action_ex_id = utils.generate_unicode_uuid()
+
+        self._insert_action_context(action_ex_id, input_dict, save=save)
+
         if save:
-            self._create_action_execution(input_dict, runtime_ctx, desc=desc)
+            self._create_action_execution(
+                input_dict,
+                runtime_ctx,
+                desc=desc,
+                action_ex_id=action_ex_id
+            )
 
         result = rpc.get_executor_client().run_action(
             self.action_ex.id if self.action_ex else None,
@@ -285,6 +294,24 @@ class PythonAction(Action):
         Python action inserts index into runtime context.
         """
         return {'index': index}
+
+    def _insert_action_context(self, action_ex_id, input_dict, save=True):
+        """Template method to prepare action context.
+
+        It inserts the action context in the input if required
+        runtime context.
+        """
+        # we need to push action context to all actions. It's related to
+        # https://blueprints.launchpad.net/mistral/+spec/mistral-custom-actions-api
+        has_action_context = a_m.has_action_context(
+            self.action_def.action_class,
+            self.action_def.attributes or {}
+        )
+
+        if has_action_context:
+            input_dict.update(
+                a_m.get_action_context(self.task_ex, action_ex_id, save=save)
+            )
 
 
 class AdHocAction(PythonAction):
