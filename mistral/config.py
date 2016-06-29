@@ -18,6 +18,7 @@ Configuration options registration and useful routines.
 """
 
 import itertools
+import os
 
 from oslo_config import cfg
 from oslo_log import log
@@ -52,6 +53,14 @@ rpc_impl_opt = cfg.StrOpt(
     choices=['oslo', 'kombu'],
     help='Specifies RPC implementation for RPC client and server. Support of '
          'kombu driver is experimental.'
+)
+
+os_endpoint_type = cfg.StrOpt(
+    'os-actions-endpoint-type',
+    default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'publicURL'),
+    choices=['publicURL', 'adminURL', 'internalURL'],
+    help='Type of endpoint in identity service catalog to use for'
+         ' communication with OpenStack services.'
 )
 
 pecan_opts = [
@@ -197,6 +206,7 @@ CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opt(rpc_impl_opt)
+CONF.register_opt(os_endpoint_type)
 
 
 CLI_OPTS = [
@@ -233,7 +243,8 @@ def list_opts():
             CLI_OPTS,
             [
                 wf_trace_log_name_opt,
-                rpc_impl_opt
+                rpc_impl_opt,
+                os_endpoint_type,
             ]
         ))
     ]

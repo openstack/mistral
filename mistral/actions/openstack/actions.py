@@ -64,7 +64,7 @@ class NovaAction(base.OpenStackAction):
             2,
             username=None,
             api_key=None,
-            endpoint_type='publicURL',
+            endpoint_type=CONF.os_actions_endpoint_type,
             service_type='compute',
             auth_token=ctx.auth_token,
             tenant_id=ctx.project_id,

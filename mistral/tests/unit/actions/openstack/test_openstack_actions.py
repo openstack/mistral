@@ -13,9 +13,16 @@
 #    limitations under the License.
 
 import mock
-from oslotest import base
 
 from mistral.actions.openstack import actions
+from mistral.config import CONF
+from mistral import context as ctx
+from oslotest import base
+
+
+class FakeEndpoint(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
 
 class OpenStackActionTest(base.BaseTestCase):
@@ -30,6 +37,85 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().servers.get.called)
         mocked().servers.get.assert_called_once_with(server="1234-abcd")
+
+    @mock.patch('mistral.actions.openstack.actions.keystone_utils.get_'
+                'keystone_endpoint_v2')
+    @mock.patch('mistral.actions.openstack.actions.keystone_utils.get_'
+                'endpoint_for_project')
+    @mock.patch('mistral.actions.openstack.actions.novaclient')
+    def test_nova_action_config_endpoint(self, mock_novaclient,
+                                         mock_nova_endpoint,
+                                         mock_ks_endpoint_v2):
+
+        # this is the default, but be explicit
+        CONF.set_default('os_actions_endpoint_type', 'publicURL')
+
+        test_ctx = ctx.MistralContext(
+            user_id=None,
+            project_id='1234',
+            project_name='admin',
+            auth_token=None,
+            is_admin=False
+        )
+        ctx.set_ctx(test_ctx)
+
+        # attributes mirror keystone Endpoint object exactly
+        # (with endpoint type publicURL)
+        keystone_attrs = {
+            'url': 'http://192.0.2.1:5000/v2.0',
+            'enabled': True,
+            'id': 'b1ddf133fa6e491c8ee13701be97db2d',
+            'interface': 'public',
+            'links': {
+                u'self': u'http://192.0.2.1:5000/v3/endpoints/'
+                'b1ddf133fa6e491c8ee13701be97db2d'
+            },
+            'region': 'regionOne',
+            'region_id': 'regionOne',
+            'service_id': '8f4afc75cd584d5cb381f68a9db80147',
+        }
+        keystone_endpoint = FakeEndpoint(**keystone_attrs)
+
+        nova_attrs = {
+            'url': 'http://192.0.2.1:8774/v2/%(tenant_id)s',
+            'enabled': True,
+            'id': '5bb51b33c9984513b52b6a3e85154305',
+            'interface': 'public',
+            'links': {
+                u'self': u'http://192.0.2.1:5000/v3/endpoints/'
+                '5bb51b33c9984513b52b6a3e85154305'
+            },
+            'region': 'regionOne',
+            'region_id': 'regionOne',
+            'service_id': '1af46173f37848edb65bd4962ed2d09d',
+        }
+        nova_endpoint = FakeEndpoint(**nova_attrs)
+
+        mock_ks_endpoint_v2.return_value(keystone_endpoint)
+        mock_nova_endpoint.return_value(nova_endpoint)
+
+        method_name = "servers.get"
+        action_class = actions.NovaAction
+        action_class.client_method_name = method_name
+        params = {'server': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        mock_novaclient.Client.assert_called_once_with(
+            2,
+            username=None,
+            api_key=None,
+            endpoint_type='publicURL',
+            service_type='compute',
+            auth_token=test_ctx.auth_token,
+            tenant_id=test_ctx.project_id,
+            region_name=mock_ks_endpoint_v2().region,
+            auth_url=mock_ks_endpoint_v2().url
+        )
+
+        self.assertTrue(mock_novaclient.Client().servers.get.called)
+        mock_novaclient.Client().servers.get.assert_called_once_with(
+            server="1234-abcd")
 
     @mock.patch.object(actions.GlanceAction, '_get_client')
     def test_glance_action(self, mocked):
