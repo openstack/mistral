@@ -64,7 +64,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
 
     @classmethod
     def _create_server(cls, server_name, **kwargs):
-        return cls.server_client.create_server(
+        return cls.mgr.servers_client.create_server(
             name=server_name,
             imageRef=CONF.compute.image_ref,
             flavorRef=CONF.compute.flavor_ref,
@@ -126,7 +126,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         LOG.info("Waiting server [id=%s]..." % server_id)
 
         while seconds_remain > 0:
-            server_info = cls.server_client.show_server(server_id)
+            server_info = cls.mgr.servers_client.show_server(server_id)
             if server_info['server']['status'] == 'ACTIVE':
                 return
 
@@ -145,7 +145,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
 
         while seconds_remain > 0:
             try:
-                cls.server_client.show_server(server_id)
+                cls.mgr.servers_client.show_server(server_id)
                 seconds_remain -= delay
                 time.sleep(delay)
             except exceptions.NotFound:
@@ -214,11 +214,11 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         cls._wait_until_server_up(cls.public_vm_ip)
 
         # Update servers info.
-        cls.public_vm = cls.server_client.show_server(
+        cls.public_vm = cls.mgr.servers_client.show_server(
             cls.public_vm['id']
         ).get('server')
 
-        cls.guest_vm = cls.server_client.show_server(
+        cls.guest_vm = cls.mgr.servers_client.show_server(
             cls.guest_vm['id']
         ).get('server')
 
@@ -230,8 +230,8 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             cls.public_vm['id']
         )
 
-        cls.server_client.delete_server(cls.public_vm['id'])
-        cls.server_client.delete_server(cls.guest_vm['id'])
+        cls.mgr.servers_client.delete_server(cls.public_vm['id'])
+        cls.mgr.servers_client.delete_server(cls.guest_vm['id'])
 
         cls._wait_until_server_delete(cls.public_vm['id'])
         cls._wait_until_server_delete(cls.guest_vm['id'])

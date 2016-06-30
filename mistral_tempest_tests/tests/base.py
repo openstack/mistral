@@ -15,7 +15,6 @@
 import os
 
 import mock
-from tempest import clients
 from tempest import config
 from tempest import test as test
 
@@ -74,12 +73,6 @@ class TestCaseAdvanced(TestCase):
     @classmethod
     def resource_setup(cls):
         super(TestCaseAdvanced, cls).resource_setup()
-
-        cls.server_client = clients.ServersClient(
-            cls.mgr.auth_provider,
-            "compute",
-            region=CONF.identity.region
-        )
 
         cls.image_ref = CONF.compute.image_ref
         cls.flavor_ref = CONF.compute.flavor_ref
