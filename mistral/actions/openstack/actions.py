@@ -109,21 +109,24 @@ class KeystoneAction(base.OpenStackAction):
 
         LOG.debug("Keystone action security context: %s" % ctx)
 
+        # TODO(akovi) cacert is deprecated in favor of session
+        # TODO(akovi) this piece of code should be refactored
+        # TODO(akovi) to follow the new guide lines
         kwargs = {
             'token': ctx.auth_token,
-            'auth_url': CONF.keystone_authtoken.auth_uri,
+            'auth_url': ctx.auth_uri,
             'project_id': ctx.project_id,
-            'cacert': CONF.keystone_authtoken.cafile,
+            'cacert': ctx.auth_cacert,
         }
 
         # In case of trust-scoped token explicitly pass endpoint parameter.
         if (ctx.is_trust_scoped
                 or keystone_utils.is_token_trust_scoped(ctx.auth_token)):
-            kwargs['endpoint'] = CONF.keystone_authtoken.auth_uri
+            kwargs['endpoint'] = ctx.auth_uri
 
         client = self._client_class(**kwargs)
 
-        client.management_url = CONF.keystone_authtoken.auth_uri
+        client.management_url = ctx.auth_uri
 
         return client
 
@@ -214,7 +217,7 @@ class NeutronAction(base.OpenStackAction):
             endpoint_url=neutron_endpoint.url,
             region_name=neutron_endpoint.region,
             token=ctx.auth_token,
-            auth_url=CONF.keystone_authtoken.auth_uri
+            auth_url=ctx.auth_uri
         )
 
 
@@ -595,7 +598,7 @@ class DesignateAction(base.OpenStackAction):
         client = self._client_class(
             endpoint=designate_url,
             tenant_id=ctx.project_id,
-            auth_url=CONF.keystone_authtoken.auth_uri,
+            auth_url=ctx.auth_uri,
             region_name=designate_endpoint.region,
             service_type='dns'
         )

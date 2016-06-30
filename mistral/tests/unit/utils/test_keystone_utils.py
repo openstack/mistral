@@ -15,6 +15,57 @@
 from mistral.tests.unit import base
 from mistral.utils.openstack import keystone
 
+SERVICES_CATALOG = [
+    {
+        "type": "compute",
+        "name": "nova",
+        "endpoints": [
+            {
+                "interface": "private",
+                "url": "https://example.com/nova/private",
+                "region": "RegionOne"
+            },
+            {
+                "interface": "public",
+                "url": "https://example.com/nova/public",
+                "region": "RegionOne"
+            }
+        ]
+    },
+    {
+        "type": "compute",
+        "name": "nova2",
+        "endpoints": [
+            {
+                "interface": "public",
+                "url": "https://example.com/nova2/public/r1",
+                "region": "RegionOne"
+            },
+            {
+                "interface": "public",
+                "url": "https://example.com/nova2/public/r2",
+                "region": "RegionTwo"
+            }
+        ]
+    },
+    {
+        "type": "orchestration",
+        "name": "heat",
+        "endpoints": [
+            {
+                "interface": "private",
+                "url": "https://example.com/heat/private",
+                "region": "RegionOne"
+            },
+            {
+                "interface": "public",
+                "url": "https://example.com/heat/public",
+                "region": "RegionOne"
+            }
+        ]
+    }
+]
+
 
 class KeystoneUtilsTest(base.BaseTest):
     def setUp(self):
@@ -41,3 +92,24 @@ class KeystoneUtilsTest(base.BaseTest):
             expected,
             keystone.format_url(url_template, self.values)
         )
+
+    def test_service_endpoints_select(self):
+        def find(name, typ=None, catalog=SERVICES_CATALOG):
+            return keystone.select_service_endpoints(name, typ, catalog)
+
+        endpoints = find('nova', 'compute')
+        self.assertEqual('https://example.com/nova/public', endpoints[0].url,
+                         message='public interface must be selected')
+
+        endpoints = find('nova2')
+        self.assertEqual(2, len(endpoints),
+                         message='public endpoints must be selected '
+                                 'in each region')
+
+        endpoints = find('heat')
+        self.assertEqual('https://example.com/heat/public', endpoints[0].url,
+                         message='selection should work without type set')
+
+        endpoints = find('nova', None, [])
+        self.assertEqual([], endpoints,
+                         message='empty catalog should be accepted')

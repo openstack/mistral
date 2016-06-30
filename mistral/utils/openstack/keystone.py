@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from keystoneclient.v3 import client as ks_client
+from keystoneclient.v3.endpoints import Endpoint
 from oslo_config import cfg
 
 from mistral import context
@@ -23,7 +24,7 @@ CONF = cfg.CONF
 
 def client():
     ctx = context.ctx()
-    auth_url = CONF.keystone_authtoken.auth_uri
+    auth_url = ctx.auth_uri
 
     cl = ks_client.Client(
         username=ctx.user_name,
@@ -62,37 +63,49 @@ def client_for_trusts(trust_id):
 
 
 def get_endpoint_for_project(service_name=None, service_type=None):
-    admin_project_name = CONF.keystone_authtoken.admin_tenant_name
-    keystone_client = _admin_client(project_name=admin_project_name)
-    service_list = keystone_client.services.list()
-
-    if service_name:
-        service_ids = [s.id for s in service_list if s.name == service_name]
-    elif service_type:
-        service_ids = [s.id for s in service_list if s.type == service_type]
-    else:
+    if service_name is None and service_type is None:
         raise Exception(
             "Either 'service_name' or 'service_type' must be provided."
         )
 
-    if not service_ids:
-        raise Exception("Either service '%s' or service type "
-                        "'%s' doesn't exist!" % (service_name, service_type))
+    ctx = context.ctx()
 
-    endpoints = keystone_client.endpoints.list(
-        service=service_ids[0],
-        interface='public'
-    )
+    token = ctx.auth_token
+    response = client().tokens.get_token_data(token, include_catalog=True)
+
+    endpoints = select_service_endpoints(
+        service_name,
+        service_type,
+        response["token"]["catalog"])
 
     if not endpoints:
         raise Exception(
             "No endpoints found [service_name=%s, service_type=%s]"
             % (service_name, service_type)
         )
+    else:
+        # TODO(rakhmerov): We may have more than one endpoint because
+        # TODO(rakhmerov): of regions and ideally we need a config option
+        # TODO(rakhmerov): for region
+        return endpoints[0]
 
-    # TODO(rakhmerov): We may have more than one endpoint because of regions
-    # TODO(rakhmerov): and ideally we need a config option for region
-    return endpoints[0]
+
+def select_service_endpoints(service_name, service_type, services):
+    endpoints = []
+
+    for catalog in services:
+
+        if service_name and catalog["name"] != service_name:
+            continue
+
+        if service_type and catalog["type"] != service_type:
+            continue
+
+        for endpoint in catalog["endpoints"]:
+            if endpoint["interface"] == 'public':
+                endpoints.append(Endpoint(None, endpoint, loaded=True))
+
+    return endpoints
 
 
 def get_keystone_endpoint_v2():
