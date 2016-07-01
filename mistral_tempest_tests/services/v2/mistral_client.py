@@ -139,3 +139,26 @@ class MistralClientV2(base.MistralClientBase):
             self.action_executions.append(json.loads(body)['id'])
 
         return resp, json.loads(body)
+
+    def create_event_trigger(self, wf_id, exchange, topic, event, name='',
+                             wf_input=None, wf_params=None):
+        post_body = {
+            'workflow_id': wf_id,
+            'exchange': exchange,
+            'topic': topic,
+            'event': event,
+            'name': name
+        }
+
+        if wf_input:
+            post_body.update({'workflow_input': json.dumps(wf_input)})
+
+        if wf_params:
+            post_body.update({'workflow_params': json.dumps(wf_params)})
+
+        rest, body = self.post('event_triggers', json.dumps(post_body))
+
+        event_trigger = json.loads(body)
+        self.event_triggers.append(event_trigger['id'])
+
+        return rest, event_trigger
