@@ -196,6 +196,11 @@ keycloak_oidc_opts = [
     cfg.StrOpt(
         'auth_url',
         help='Keycloak base url (e.g. https://my.keycloak:8443/auth)'
+    ),
+    cfg.StrOpt(
+        'insecure',
+        default=False,
+        help='If True, SSL/TLS certificate verification is disabled'
     )
 ]
 

@@ -183,3 +183,8 @@ class CoordinationException(MistralException):
 class NotAllowedException(MistralException):
     http_code = 403
     message = "Operation not allowed"
+
+
+class UnauthorizedException(MistralException):
+    http_code = 401
+    message = "Unauthorized"

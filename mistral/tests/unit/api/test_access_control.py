@@ -22,7 +22,9 @@ class PolicyTestCase(base.BaseTest):
     """Tests whether the configuration of the policy engine is corect."""
     def setUp(self):
         super(PolicyTestCase, self).setUp()
+
         self.policy = self.useFixture(policy_fixtures.PolicyFixture())
+
         rules = {
             "admin_only": "is_admin:True",
             "admin_or_owner": "is_admin:True or project_id:%(project_id)s",
@@ -30,16 +32,19 @@ class PolicyTestCase(base.BaseTest):
             "example:admin": "rule:admin_only",
             "example:admin_or_owner": "rule:admin_or_owner"
         }
+
         self.policy.set_rules(rules)
 
     def test_admin_api_allowed(self):
         auth_ctx = base.get_context(default=True, admin=True)
+
         self.assertTrue(
             acl.enforce('example:admin', auth_ctx, auth_ctx.to_dict())
         )
 
     def test_admin_api_disallowed(self):
         auth_ctx = base.get_context(default=True)
+
         self.assertRaises(
             exc.NotAllowedException,
             acl.enforce,
@@ -50,6 +55,7 @@ class PolicyTestCase(base.BaseTest):
 
     def test_admin_or_owner_api_allowed(self):
         auth_ctx = base.get_context(default=True)
+
         self.assertTrue(
             acl.enforce('example:admin_or_owner', auth_ctx, auth_ctx.to_dict())
         )
@@ -57,6 +63,7 @@ class PolicyTestCase(base.BaseTest):
     def test_admin_or_owner_api_disallowed(self):
         auth_ctx = base.get_context(default=True)
         target = {'project_id': 'another'}
+
         self.assertRaises(
             exc.NotAllowedException,
             acl.enforce,

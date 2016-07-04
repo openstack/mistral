@@ -27,11 +27,15 @@ _ENFORCER = None
 
 
 def setup(app):
-    if cfg.CONF.pecan.auth_enable:
+    if cfg.CONF.pecan.auth_enable and cfg.CONF.auth_type == 'keystone':
         conf = dict(cfg.CONF.keystone_authtoken)
 
         # Change auth decisions of requests to the app itself.
         conf.update({'delay_auth_decision': True})
+
+        # NOTE(rakhmerov): Policy enforcement works only if Keystone
+        # authentication is enabled. No support for other authentication
+        # types at this point.
         _ensure_enforcer_initialization()
 
         return auth_token.AuthProtocol(app, conf)
@@ -58,6 +62,12 @@ def enforce(action, context, target=None, do_raise=True,
     :return: returns True if authorized and False if not authorized and
              do_raise is False.
     """
+
+    if cfg.CONF.auth_type != 'keystone':
+        # Policy enforcement is supported now only with Keystone
+        # authentication.
+        return
+
     target_obj = {
         'project_id': context.project_id,
         'user_id': context.user_id,
