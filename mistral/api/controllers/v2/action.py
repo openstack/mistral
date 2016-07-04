@@ -130,9 +130,10 @@ class ActionsController(rest.RestController, hooks.HookController):
                 "%s" % (SCOPE_TYPES.values, scope)
             )
 
-        db_acts = actions.update_actions(definition, scope=scope)
-        models_dicts = [db_act.to_dict() for db_act in db_acts]
+        with db_api.transaction():
+            db_acts = actions.update_actions(definition, scope=scope)
 
+        models_dicts = [db_act.to_dict() for db_act in db_acts]
         action_list = [Action.from_dict(act) for act in models_dicts]
 
         return Actions(actions=action_list).to_json()
@@ -158,9 +159,10 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         LOG.info("Create action(s) [definition=%s]" % definition)
 
-        db_acts = actions.create_actions(definition, scope=scope)
-        models_dicts = [db_act.to_dict() for db_act in db_acts]
+        with db_api.transaction():
+            db_acts = actions.create_actions(definition, scope=scope)
 
+        models_dicts = [db_act.to_dict() for db_act in db_acts]
         action_list = [Action.from_dict(act) for act in models_dicts]
 
         return Actions(actions=action_list).to_json()
