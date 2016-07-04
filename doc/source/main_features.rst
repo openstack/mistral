@@ -258,15 +258,34 @@ configuration. Other policies can also be used the same way as with regular non 
 Execution expiration policy
 ---------------------------
 
-For Mistral used in production, it is often hardly to control the number of workflow executions. The number of
-workflow executions is significantly growing for the long time of Mistral running. The purpose of this feature to
-delete old workflow executions which has been already completed. The criteria is the time when a workflow execution was
-updated last time.
+When Mistral is used in production it can be difficult to control the number
+of completed workflow executions. By default Mistral will store all
+executions indefinitely and over time the number stored will accumulate. This
+can be resolved by setting an expiration policy.
 
 **By default this feature is disabled.**
 
-In order to configure this feature, please open and edit configuration file and specify time in minutes::
+When enabled, the policy will define a maximum age of an execution in
+minutes since the last updated time. To enable and set a policy, edit the
+Mistral configuration file and specify ``older_than`` and
+``evaluation_interval`` in minutes.
+
+.. code-block:: cfg
 
     [execution_expiration_policy]
-    older_than = 10080  # Workflow executions older than 1 week will be deleted automatically.
+    older_than = 10080  # 1 week
+    evaluation_interval = 120  # 2 hours
 
+For the expiration policy to be enabled, both of these configuration options
+must be set.
+
+- **older_than**
+
+ This defines the maximum age of an execution in minutes since it was last
+ updated. It must be greater or equal to ``1``.
+
+- **evaluation_interval**
+
+ The evaluation interval defines how frequently Mistral will check and expire
+ old executions. In the above example it is set to two hours, then every two
+ hours Mistral will clean up and look for expired executions.
