@@ -18,6 +18,7 @@ import yaql
 from mistral.db.v2 import api as db_api
 from mistral.workflow import utils as wf_utils
 from oslo_serialization import jsonutils
+from stevedore import extension
 ROOT_CONTEXT = None
 
 
@@ -39,11 +40,24 @@ def get_yaql_context(data_context):
     return new_ctx
 
 
+def _register_custom_functions(yaql_ctx):
+    """Register custom YAQL functions
+
+    Custom YAQL functions must be added as entry points in the
+    'mistral.yaql_functions' namespace
+    :param yaql_ctx: YAQL context object
+    """
+    mgr = extension.ExtensionManager(
+        namespace='mistral.yaql_functions',
+        invoke_on_load=False
+    )
+    for name in mgr.names():
+        yaql_function = mgr[name].plugin
+        yaql_ctx.register_function(yaql_function, name=name)
+
+
 def _register_functions(yaql_ctx):
-    yaql_ctx.register_function(env_)
-    yaql_ctx.register_function(execution_)
-    yaql_ctx.register_function(task_)
-    yaql_ctx.register_function(json_pp_, name='json_pp')
+    _register_custom_functions(yaql_ctx)
 
 
 # Additional YAQL functions needed by Mistral.
