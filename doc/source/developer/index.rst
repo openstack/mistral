@@ -6,5 +6,6 @@ Developer's Reference
 
    creating_custom_action
    asynchronous_actions
+   extending_yaql
    devstack
    troubleshooting
