@@ -1241,3 +1241,62 @@ class WithItemsEngineTest(base.EngineTestCase):
         result = [item['result'] for item in task_result]
 
         self.assertListEqual(sorted(result), sorted(names))
+
+    def test_with_items_and_adhoc_action(self):
+        wb_text = """---
+        version: "2.0"
+
+        name: test
+
+        actions:
+          http:
+            input:
+              - url: http://www.example.com
+              - method: GET
+              - timeout: 10
+
+            output: <% $.content %>
+
+            base: std.http
+            base-input:
+              url: <% $.url %>
+              method: <% $.method %>
+              timeout: <% $.timeout %>
+
+        workflows:
+          with_items_default_bug:
+            description: Re-create the with-items bug with default values
+            type: direct
+
+            tasks:
+              get_pages:
+                with-items: page in <% range(0, 1) %>
+                action: test.http
+                input:
+                  url: http://www.example.com
+                  method: GET
+                on-success:
+                  - well_done
+
+              well_done:
+                action: std.echo output="Well done"
+        """
+
+        wb_service.create_workbook_v2(wb_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('test.with_items_default_bug', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        task_execs = wf_ex.task_executions
+
+        task1_ex = self._assert_single_item(task_execs, name='get_pages')
+        task2_ex = self._assert_single_item(task_execs, name='well_done')
+
+        self.assertEqual(2, len(task_execs))
+        self.assertEqual(states.SUCCESS, task1_ex.state)
+        self.assertEqual(states.SUCCESS, task2_ex.state)

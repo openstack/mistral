@@ -406,6 +406,8 @@ class WithItemsTask(RegularTask):
 
             action = self._build_action()
 
+            action.validate_input(input_dict)
+
             action.schedule(
                 input_dict,
                 target,
