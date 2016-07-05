@@ -19,6 +19,7 @@ import oslo_messaging as messaging
 from oslo_messaging.rpc import client
 from oslo_messaging.rpc import dispatcher
 from oslo_messaging.rpc import server
+from stevedore import driver
 
 from mistral import context as auth_ctx
 from mistral.engine import base
@@ -29,6 +30,8 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
+_IMPL_CLIENT = None
+_IMPL_SERVER = None
 _TRANSPORT = None
 
 _ENGINE_CLIENT = None
@@ -82,6 +85,32 @@ def get_executor_client():
         _EXECUTOR_CLIENT = ExecutorClient(get_transport())
 
     return _EXECUTOR_CLIENT
+
+
+def get_rpc_server_driver():
+    rpc_impl = cfg.CONF.rpc_implementation
+
+    global _IMPL_SERVER
+    if not _IMPL_SERVER:
+        _IMPL_SERVER = driver.DriverManager(
+            'mistral.engine.rpc',
+            '%s_server' % rpc_impl
+        ).driver
+
+    return _IMPL_SERVER
+
+
+def get_rpc_client_driver():
+    rpc_impl = cfg.CONF.rpc_implementation
+
+    global _IMPL_CLIENT
+    if not _IMPL_CLIENT:
+        _IMPL_CLIENT = driver.DriverManager(
+            'mistral.engine.rpc',
+            '%s_client' % rpc_impl
+        ).driver
+
+    return _IMPL_CLIENT
 
 
 class EngineServer(object):

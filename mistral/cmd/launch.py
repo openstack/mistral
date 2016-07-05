@@ -231,7 +231,6 @@ def get_properly_ordered_parameters():
 def main():
     try:
         config.parse_args(get_properly_ordered_parameters())
-
         print_server_info()
 
         logging.setup(CONF, 'Mistral')
