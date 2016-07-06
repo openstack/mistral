@@ -25,9 +25,10 @@ eventlet.monkey_patch(
     thread=False if '--use-debugger' in sys.argv else True,
     time=True)
 
+
 import os
 import six
-import time
+
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
@@ -39,7 +40,6 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging as messaging
 
 if six.PY3 is True:
     import socketserver
@@ -51,7 +51,6 @@ from wsgiref.simple_server import WSGIServer
 
 from mistral.api import app
 from mistral import config
-from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
 from mistral.engine import default_executor as def_executor
@@ -59,6 +58,7 @@ from mistral.engine.rpc import rpc
 from mistral.services import expiration_policy
 from mistral.services import scheduler
 from mistral.utils import profiler
+from mistral.utils import rpc_utils
 from mistral import version
 
 
@@ -67,51 +67,33 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
-def launch_executor(transport):
+def launch_executor():
     profiler.setup('mistral-executor', cfg.CONF.executor.host)
 
-    target = messaging.Target(
-        topic=cfg.CONF.executor.topic,
-        server=cfg.CONF.executor.host
-    )
-
     executor_v2 = def_executor.DefaultExecutor(rpc.get_engine_client())
+    executor_endpoint = rpc.ExecutorServer(executor_v2)
 
-    endpoints = [rpc.ExecutorServer(executor_v2)]
-
-    server = messaging.get_rpc_server(
-        transport,
-        target,
-        endpoints,
-        executor='eventlet',
-        serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
+    executor_server = rpc.get_rpc_server_driver()(
+        rpc_utils.get_rpc_info_from_oslo(CONF.executor)
     )
+    executor_server.register_endpoint(executor_endpoint)
 
     executor_v2.register_membership()
 
     try:
-        server.start()
-        while True:
-            time.sleep(604800)
+        executor_server.run()
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
         print("Stopping executor service...")
-        server.stop()
-        server.wait()
 
 
-def launch_engine(transport):
+def launch_engine():
     profiler.setup('mistral-engine', cfg.CONF.engine.host)
-
-    target = messaging.Target(
-        topic=cfg.CONF.engine.topic,
-        server=cfg.CONF.engine.host
-    )
 
     engine_v2 = def_eng.DefaultEngine(rpc.get_engine_client())
 
-    endpoints = [rpc.EngineServer(engine_v2)]
+    engine_endpoint = rpc.EngineServer(engine_v2)
 
     # Setup scheduler in engine.
     db_api.setup_db()
@@ -120,37 +102,30 @@ def launch_engine(transport):
     # Setup expiration policy
     expiration_policy.setup()
 
-    server = messaging.get_rpc_server(
-        transport,
-        target,
-        endpoints,
-        executor='eventlet',
-        serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
+    engine_server = rpc.get_rpc_server_driver()(
+        rpc_utils.get_rpc_info_from_oslo(CONF.engine)
     )
+    engine_server.register_endpoint(engine_endpoint)
 
     engine_v2.register_membership()
 
     try:
-        server.start()
-        while True:
-            time.sleep(604800)
+        engine_server.run()
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
         print("Stopping engine service...")
-        server.stop()
-        server.wait()
 
 
 class ThreadingWSGIServer(socketserver.ThreadingMixIn, WSGIServer):
     pass
 
 
-def launch_api(transport):
+def launch_api():
     host = cfg.CONF.api.host
     port = cfg.CONF.api.port
 
-    server = simple_server.make_server(
+    api_server = simple_server.make_server(
         host,
         port,
         app.setup_app(),
@@ -160,12 +135,12 @@ def launch_api(transport):
     LOG.info("Mistral API is serving on http://%s:%s (PID=%s)" %
              (host, port, os.getpid()))
 
-    server.serve_forever()
+    api_server.serve_forever()
 
 
-def launch_any(transport, options):
+def launch_any(options):
     # Launch the servers on different threads.
-    threads = [eventlet.spawn(LAUNCH_OPTIONS[option], transport)
+    threads = [eventlet.spawn(LAUNCH_OPTIONS[option])
                for option in options]
 
     print('Server started.')
@@ -250,11 +225,11 @@ def main():
         # servers are launched on the same process. Otherwise, messages do not
         # get delivered if the Mistral servers are launched on different
         # processes because the "fake" transport is using an in process queue.
-        transport = rpc.get_transport()
+        rpc.get_transport()
 
         if cfg.CONF.server == ['all']:
             # Launch all servers.
-            launch_any(transport, LAUNCH_OPTIONS.keys())
+            launch_any(LAUNCH_OPTIONS.keys())
         else:
             # Validate launch option.
             if set(cfg.CONF.server) - set(LAUNCH_OPTIONS.keys()):
@@ -262,7 +237,7 @@ def main():
                                 'api, engine, and executor.')
 
             # Launch distinct set of server(s).
-            launch_any(transport, set(cfg.CONF.server))
+            launch_any(set(cfg.CONF.server))
 
     except RuntimeError as excp:
         sys.stderr.write("ERROR: %s\n" % excp)

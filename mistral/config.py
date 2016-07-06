@@ -50,7 +50,8 @@ rpc_impl_opt = cfg.StrOpt(
     'rpc_implementation',
     default='oslo',
     choices=['oslo', 'kombu'],
-    help='Specifies RPC implementation for RPC client and server.'
+    help='Specifies RPC implementation for RPC client and server. Support of '
+         'kombu driver is experimental.'
 )
 
 pecan_opts = [

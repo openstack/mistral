@@ -19,10 +19,13 @@ from mistral.utils import rpc_utils
 
 
 class RPCTest(base.EngineTestCase):
+    def setUp(self):
+        super(RPCTest, self).setUp()
+
     def test_get_rabbit_config(self):
         conf = cfg.CONF
 
-        rpc_info = rpc_utils.get_rabbit_info_from_oslo(conf.engine)
+        rpc_info = rpc_utils._get_rabbit_info_from_oslo(conf.engine)
 
         self.assertDictEqual(
             {
@@ -34,8 +37,8 @@ class RPCTest(base.EngineTestCase):
                 'host': 'localhost',
                 'exchange': 'openstack',
                 'password': 'guest',
-                'auto_delete': False,
                 'durable_queues': False,
+                'auto_delete': False
             },
             rpc_info
         )

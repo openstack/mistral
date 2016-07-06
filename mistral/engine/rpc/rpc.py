@@ -17,13 +17,12 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_messaging.rpc import client
-from oslo_messaging.rpc import dispatcher
-from oslo_messaging.rpc import server
 from stevedore import driver
 
 from mistral import context as auth_ctx
 from mistral.engine import base
 from mistral import exceptions as exc
+from mistral.utils import rpc_utils
 from mistral.workflow import utils as wf_utils
 
 
@@ -36,16 +35,6 @@ _TRANSPORT = None
 
 _ENGINE_CLIENT = None
 _EXECUTOR_CLIENT = None
-
-
-def get_rpc_server(transport, target, endpoints, executor='blocking',
-                   serializer=None):
-    return server.RPCServer(
-        transport,
-        target,
-        dispatcher.RPCDispatcher(endpoints, serializer),
-        executor
-    )
 
 
 def cleanup():
@@ -73,7 +62,9 @@ def get_engine_client():
     global _ENGINE_CLIENT
 
     if not _ENGINE_CLIENT:
-        _ENGINE_CLIENT = EngineClient(get_transport())
+        _ENGINE_CLIENT = EngineClient(
+            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.engine)
+        )
 
     return _ENGINE_CLIENT
 
@@ -82,7 +73,9 @@ def get_executor_client():
     global _EXECUTOR_CLIENT
 
     if not _EXECUTOR_CLIENT:
-        _EXECUTOR_CLIENT = ExecutorClient(get_transport())
+        _EXECUTOR_CLIENT = ExecutorClient(
+            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.executor)
+        )
 
     return _EXECUTOR_CLIENT
 
@@ -316,19 +309,12 @@ def wrap_messaging_exception(method):
 class EngineClient(base.Engine):
     """RPC Engine client."""
 
-    def __init__(self, transport):
+    def __init__(self, rpc_conf_dict):
         """Constructs an RPC client for engine.
 
-        :param transport: Messaging transport.
+        :param rpc_conf_dict: Dict containing RPC configuration.
         """
-        serializer = auth_ctx.RpcContextSerializer(
-            auth_ctx.JsonPayloadSerializer())
-
-        self._client = messaging.RPCClient(
-            transport,
-            messaging.Target(topic=cfg.CONF.engine.topic),
-            serializer=serializer
-        )
+        self._client = get_rpc_client_driver()(rpc_conf_dict)
 
     @wrap_messaging_exception
     def start_workflow(self, wf_identifier, wf_input, description='',
@@ -337,7 +323,7 @@ class EngineClient(base.Engine):
 
         :return: Workflow execution.
         """
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'start_workflow',
             workflow_identifier=wf_identifier,
@@ -353,7 +339,7 @@ class EngineClient(base.Engine):
 
         :return: Action execution.
         """
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'start_action',
             action_name=action_name,
@@ -363,7 +349,7 @@ class EngineClient(base.Engine):
         )
 
     def on_task_state_change(self, task_ex_id, state, state_info=None):
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'on_task_state_change',
             task_ex_id=task_ex_id,
@@ -389,7 +375,7 @@ class EngineClient(base.Engine):
         :return: Task.
         """
 
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'on_action_complete',
             action_ex_id=action_ex_id,
@@ -405,7 +391,7 @@ class EngineClient(base.Engine):
         :return: Workflow execution.
         """
 
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'pause_workflow',
             execution_id=wf_ex_id
@@ -442,7 +428,7 @@ class EngineClient(base.Engine):
         :return: Workflow execution.
         """
 
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'resume_workflow',
             wf_ex_id=wf_ex_id,
@@ -463,7 +449,7 @@ class EngineClient(base.Engine):
         :return: Workflow execution, model.Execution
         """
 
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'stop_workflow',
             execution_id=wf_ex_id,
@@ -480,7 +466,7 @@ class EngineClient(base.Engine):
         :return: Workflow execution.
         """
 
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'rollback_workflow',
             execution_id=wf_ex_id
@@ -522,23 +508,14 @@ class ExecutorServer(object):
 class ExecutorClient(base.Executor):
     """RPC Executor client."""
 
-    def __init__(self, transport):
+    def __init__(self, rpc_conf_dict):
         """Constructs an RPC client for the Executor.
 
-        :param transport: Messaging transport.
-        :type transport: Transport.
+        :param rpc_conf_dict: Dict containing RPC configuration.
         """
+
         self.topic = cfg.CONF.executor.topic
-
-        serializer = auth_ctx.RpcContextSerializer(
-            auth_ctx.JsonPayloadSerializer()
-        )
-
-        self._client = messaging.RPCClient(
-            transport,
-            messaging.Target(),
-            serializer=serializer
-        )
+        self._client = get_rpc_client_driver()(rpc_conf_dict)
 
     def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params, target=None, async=True):
@@ -561,9 +538,8 @@ class ExecutorClient(base.Executor):
             'params': action_params
         }
 
-        call_ctx = self._client.prepare(topic=self.topic, server=target)
-
-        rpc_client_method = call_ctx.cast if async else call_ctx.call
+        rpc_client_method = (self._client.async_call
+                             if async else self._client.sync_call)
 
         res = rpc_client_method(auth_ctx.ctx(), 'run_action', **kwargs)
 

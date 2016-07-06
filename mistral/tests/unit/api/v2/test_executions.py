@@ -19,6 +19,8 @@ import datetime
 import json
 
 import mock
+from oslo_config import cfg
+import oslo_messaging
 import uuid
 from webtest import app as webtest_app
 
@@ -30,6 +32,9 @@ from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral import utils
 from mistral.workflow import states
+
+# This line is needed for correct initialization of messaging config.
+oslo_messaging.get_transport(cfg.CONF)
 
 
 WF_EX = models.WorkflowExecution(
@@ -117,6 +122,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
 
 
+@mock.patch.object(rpc, '_IMPL_CLIENT', mock.Mock())
 class TestExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     def test_get(self):

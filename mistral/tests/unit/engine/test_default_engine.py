@@ -452,7 +452,7 @@ class DefaultEngineTest(base.DbTestCase):
 class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
     def test_engine_client_remote_error(self):
         mocked = mock.Mock()
-        mocked.call.side_effect = rpc_client.RemoteError(
+        mocked.sync_call.side_effect = rpc_client.RemoteError(
             'InputException',
             'Input is wrong'
         )
@@ -468,7 +468,7 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
 
     def test_engine_client_remote_error_arbitrary(self):
         mocked = mock.Mock()
-        mocked.call.side_effect = KeyError('wrong key')
+        mocked.sync_call.side_effect = KeyError('wrong key')
         self.engine_client._client = mocked
 
         exception = self.assertRaises(
