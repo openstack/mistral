@@ -108,6 +108,17 @@ def validate_fields(fields, object_fields):
         )
 
 
+def filters_to_dict(**kwargs):
+    """Return only non-null values
+
+    :param kwargs: All possible filters
+    :type kwargs: dict
+    :return: Actual filters
+    :rtype: dict
+    """
+    return {k: v for k, v in kwargs.items() if v is not None}
+
+
 def get_all(list_cls, cls, get_all_function, get_function,
             resource_function=None, marker=None, limit=None,
             sort_keys='created_at', sort_dirs='asc', fields='', **filters):
@@ -127,7 +138,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     :param sort_keys: Optional. Columns to sort results by.
                       Default: created_at.
     :param sort_dirs: Optional. Directions to sort corresponding to
-                      sort_keys, "asc" or "desc" can be choosed.
+                      sort_keys, "asc" or "desc" can be chosen.
                       Default: asc.
     :param fields: Optional. A specified list of fields of the resource to
                    be returned. 'id' will be included automatically in

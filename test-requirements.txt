@@ -15,4 +15,4 @@ sphinxcontrib-pecanwsme>=0.8 # Apache-2.0
 testrepository>=0.0.18 # Apache-2.0/BSD
 testtools>=1.4.0 # MIT
 unittest2 # BSD
-reno>=1.6.2 # Apache2
+reno>=1.8.0 # Apache2

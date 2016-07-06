@@ -36,6 +36,8 @@ from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
+STATE_TYPES = wtypes.Enum(str, states.IDLE, states.RUNNING, states.SUCCESS,
+                          states.ERROR, states.RUNNING_DELAYED)
 
 
 class Task(resource.Resource):
@@ -112,7 +114,7 @@ def _get_task_resources_with_results(wf_ex_id=None, marker=None, limit=None,
                                      fields='', **filters):
     """Return all tasks within the execution.
 
-    Where project_id is the same as the requestor or
+    Where project_id is the same as the requester or
     project_id is different but the scope is public.
 
     :param marker: Optional. Pagination marker for large data sets.
@@ -164,12 +166,18 @@ class TasksController(rest.RestController):
         return _get_task_resource_with_result(task_ex)
 
     @wsme_pecan.wsexpose(Tasks, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, types.jsontype)
+                         types.list, types.uniquelist, wtypes.text,
+                         wtypes.text, types.uuid, types.uuid, STATE_TYPES,
+                         wtypes.text, wtypes.text, types.jsontype, bool,
+                         wtypes.text, wtypes.text, bool, types.jsontype)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', **filters):
+                sort_dirs='asc', fields='', name=None, workflow_name=None,
+                workflow_id=None, workflow_execution_id=None, state=None,
+                state_info=None, result=None, published=None, processed=None,
+                created_at=None, updated_at=None, reset=None, env=None):
         """Return all tasks.
 
-        Where project_id is the same as the requestor or
+        Where project_id is the same as the requester or
         project_id is different but the scope is public.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -186,10 +194,47 @@ class TasksController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
-
+        :param name: Optional. Keep only resources with a specific name.
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param workflow_id: Optional. Keep only resources with a specific
+                            workflow ID.
+        :param workflow_execution_id: Optional. Keep only resources with a
+                                      specific workflow execution ID.
+        :param state: Optional. Keep only resources with a specific state.
+        :param state_info: Optional. Keep only resources with specific
+                           state information.
+        :param result: Optional. Keep only resources with a specific result.
+        :param published: Optional. Keep only resources with specific
+                          published content.
+        :param processed: Optional. Keep only resources which have been
+                          processed or not.
+        :param reset: Optional. Keep only resources which have been reset or
+                      not.
+        :param env: Optional. Keep only resources with a specific environment.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('tasks:list', context.ctx())
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            workflow_name=workflow_name,
+            workflow_id=workflow_id,
+            state=state,
+            state_info=state_info,
+            updated_at=updated_at,
+            name=name,
+            workflow_execution_id=workflow_execution_id,
+            result=result,
+            published=published,
+            processed=processed,
+            reset=reset,
+            env=env
+        )
+
         LOG.info("Fetch tasks. marker=%s, limit=%s, sort_keys=%s, "
                  "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
                  sort_dirs, filters)
@@ -257,14 +302,19 @@ class TasksController(rest.RestController):
 
 
 class ExecutionTasksController(rest.RestController):
-
     @wsme_pecan.wsexpose(Tasks, types.uuid, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist)
+                         types.list, types.uniquelist, wtypes.text,
+                         wtypes.text, types.uuid, STATE_TYPES, wtypes.text,
+                         wtypes.text, types.jsontype, bool, wtypes.text,
+                         wtypes.text, bool, types.jsontype)
     def get_all(self, workflow_execution_id, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='', **filters):
+                sort_keys='created_at', sort_dirs='asc', fields='', name=None,
+                workflow_name=None, workflow_id=None, state=None,
+                state_info=None, result=None, published=None, processed=None,
+                created_at=None, updated_at=None, reset=None, env=None):
         """Return all tasks within the execution.
 
-        Where project_id is the same as the requestor or
+        Where project_id is the same as the requester or
         project_id is different but the scope is public.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -281,9 +331,48 @@ class ExecutionTasksController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
+        :param name: Optional. Keep only resources with a specific name.
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param workflow_id: Optional. Keep only resources with a specific
+                            workflow ID.
+        :param workflow_execution_id: Optional. Keep only resources with a
+                                      specific workflow execution ID.
+        :param state: Optional. Keep only resources with a specific state.
+        :param state_info: Optional. Keep only resources with specific
+                           state information.
+        :param result: Optional. Keep only resources with a specific result.
+        :param published: Optional. Keep only resources with specific
+                          published content.
+        :param processed: Optional. Keep only resources which have been
+                          processed or not.
+        :param reset: Optional. Keep only resources which have been reset or
+                      not.
+        :param env: Optional. Keep only resources with a specific environment.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('tasks:list', context.ctx())
+
+        filters = rest_utils.filters_to_dict(
+            wf_ex_id=workflow_execution_id,
+            created_at=created_at,
+            id=id,
+            workflow_name=workflow_name,
+            workflow_id=workflow_id,
+            state=state,
+            state_info=state_info,
+            updated_at=updated_at,
+            name=name,
+            result=result,
+            published=published,
+            processed=processed,
+            reset=reset,
+            env=env
+        )
+
         LOG.info("Fetch tasks. workflow_execution_id=%s, marker=%s, limit=%s, "
                  "sort_keys=%s, sort_dirs=%s, filters=%s",
                  workflow_execution_id, marker, limit, sort_keys, sort_dirs,

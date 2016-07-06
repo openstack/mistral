@@ -30,6 +30,7 @@ from mistral.utils import rest_utils
 
 
 LOG = logging.getLogger(__name__)
+SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 
 SAMPLE = {
     'server': 'localhost',
@@ -46,7 +47,7 @@ class Environment(resource.Resource):
     name = wtypes.text
     description = wtypes.text
     variables = types.jsontype
-    scope = wtypes.Enum(str, 'private', 'public')
+    scope = SCOPE_TYPES
     created_at = wtypes.text
     updated_at = wtypes.text
 
@@ -78,12 +79,15 @@ class Environments(resource.ResourceList):
 
 class EnvironmentController(rest.RestController):
     @wsme_pecan.wsexpose(Environments, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, types.jsontype)
+                         types.list, types.uniquelist, wtypes.text,
+                         wtypes.text, types.jsontype, SCOPE_TYPES, wtypes.text,
+                         wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', **filters):
+                sort_dirs='asc', fields='', name=None, description=None,
+                variables=None, scope=None, created_at=None, updated_at=None):
         """Return all environments.
 
-        Where project_id is the same as the requestor or
+        Where project_id is the same as the requester or
         project_id is different but the scope is public.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -100,10 +104,28 @@ class EnvironmentController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
-
+        :param name: Optional. Keep only resources with a specific name.
+        :param description: Optional. Keep only resources with a specific
+                            description.
+        :param variables: Optional. Keep only resources with specific
+                          variables.
+        :param scope: Optional. Keep only resources with a specific scope.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('environments:list', context.ctx())
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            name=name,
+            updated_at=updated_at,
+            description=description,
+            variables=variables,
+            scope=scope
+        )
+
         LOG.info("Fetch environments. marker=%s, limit=%s, sort_keys=%s, "
                  "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
                  sort_dirs, filters)
