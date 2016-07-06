@@ -33,6 +33,8 @@ from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
+STATE_TYPES = wtypes.Enum(str, states.IDLE, states.RUNNING, states.SUCCESS,
+                          states.ERROR, states.PAUSED)
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
@@ -254,9 +256,15 @@ class ExecutionsController(rest.RestController):
         return db_api.delete_workflow_execution(id)
 
     @wsme_pecan.wsexpose(Executions, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, types.jsontype)
+                         types.list, types.uniquelist, wtypes.text,
+                         types.uuid, wtypes.text, types.jsontype, types.uuid,
+                         STATE_TYPES, wtypes.text, types.jsontype,
+                         types.jsontype, wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', **filters):
+                sort_dirs='asc', fields='', workflow_name=None,
+                workflow_id=None, description=None, params=None,
+                task_execution_id=None, state=None, state_info=None,
+                input=None, output=None, created_at=None, updated_at=None):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -273,10 +281,41 @@ class ExecutionsController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
-
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param workflow_id: Optional. Keep only resources with a specific
+                            workflow ID.
+        :param description: Optional. Keep only resources with a specific
+                            description.
+        :param params: Optional. Keep only resources with specific parameters.
+        :param task_execution_id: Optional. Keep only resources with a
+                                  specific task execution ID.
+        :param state: Optional. Keep only resources with a specific state.
+        :param state_info: Optional. Keep only resources with specific
+                           state information.
+        :param input: Optional. Keep only resources with a specific input.
+        :param output: Optional. Keep only resources with a specific output.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('executions:list', context.ctx())
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            workflow_name=workflow_name,
+            workflow_id=workflow_id,
+            params=params,
+            task_execution_id=task_execution_id,
+            state=state,
+            state_info=state_info,
+            input=input,
+            output=output,
+            updated_at=updated_at,
+            description=description
+        )
+
         LOG.info(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
             "sort_dirs=%s, filters=%s", marker, limit, sort_keys, sort_dirs,

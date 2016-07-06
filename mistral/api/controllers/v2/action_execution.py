@@ -125,7 +125,7 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
                            fields='', **filters):
     """Return all action executions.
 
-    Where project_id is the same as the requestor or
+    Where project_id is the same as the requester or
     project_id is different but the scope is public.
 
     :param marker: Optional. Pagination marker for large data sets.
@@ -230,12 +230,20 @@ class ActionExecutionsController(rest.RestController):
         return ActionExecution.from_dict(values)
 
     @wsme_pecan.wsexpose(ActionExecutions, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, types.jsontype)
+                         types.list, types.uniquelist, wtypes.text,
+                         wtypes.text, wtypes.text, types.uniquelist,
+                         wtypes.text, wtypes.text, wtypes.text, types.uuid,
+                         wtypes.text, wtypes.text, bool, types.jsontype,
+                         types.jsontype, types.jsontype, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', **filters):
+                sort_dirs='asc', fields='', created_at=None, name=None,
+                tag=None, tags=None, updated_at=None, workflow_name=None,
+                task_name=None, task_execution_id=None, state=None,
+                state_info=None, accepted=None, input=None, output=None,
+                params=None, description=None):
         """Return all tasks within the execution.
 
-        Where project_id is the same as the requestor or
+        Where project_id is the same as the requester or
         project_id is different but the scope is public.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -252,10 +260,57 @@ class ActionExecutionsController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
-
+        :param name: Optional. Keep only resources with a specific name.
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param task_name: Optional. Keep only resources with a specific
+                          task name.
+        :param task_execution_id: Optional. Keep only resources within a
+                                  specific task execution.
+        :param state: Optional. Keep only resources with a specific state.
+        :param state_info: Optional. Keep only resources with specific state
+                           information.
+        :param accepted: Optional. Keep only resources which have been accepted
+                         or not.
+        :param input: Optional. Keep only resources with a specific input.
+        :param output: Optional. Keep only resources with a specific output.
+        :param params: Optional. Keep only resources with specific parameters.
+        :param description: Optional. Keep only resources with a specific
+                            description.
+        :param tag: Optional. Keep only resources with a specific tag. If it is
+                    used with 'tags', it will be appended to the list of
+                    matching tags.
+        :param tags: Optional. Keep only resources containing specific tags.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('action_executions:list', context.ctx())
+
+        if tag is not None:
+            if tags is None:
+                tags = [tag]
+            else:
+                tags.append(tag)
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            name=name,
+            tags=tags,
+            updated_at=updated_at,
+            workflow_name=workflow_name,
+            task_name=task_name,
+            task_execution_id=task_execution_id,
+            state=state,
+            state_info=state_info,
+            accepted=accepted,
+            input=input,
+            output=output,
+            params=params,
+            description=description
+        )
+
         LOG.info("Fetch action_executions. marker=%s, limit=%s, "
                  "sort_keys=%s, sort_dirs=%s, filters=%s",
                  marker, limit, sort_keys, sort_dirs, filters)
@@ -297,14 +352,23 @@ class ActionExecutionsController(rest.RestController):
 class TasksActionExecutionController(rest.RestController):
     @wsme_pecan.wsexpose(ActionExecutions, types.uuid, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
-                         types.jsontype)
+                         wtypes.text, wtypes.text, types.uniquelist,
+                         wtypes.text, wtypes.text, wtypes.text, wtypes.text,
+                         wtypes.text, wtypes.text, bool, types.jsontype,
+                         types.jsontype, types.jsontype, wtypes.text)
     def get_all(self, task_execution_id, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='', **filters):
+                sort_keys='created_at', sort_dirs='asc', fields='',
+                created_at=None, name=None, tag=None, tags=None,
+                updated_at=None, workflow_name=None, task_name=None,
+                state=None, state_info=None, accepted=None, input=None,
+                output=None, params=None, description=None):
         """Return all tasks within the execution.
 
-        Where project_id is the same as the requestor or
+        Where project_id is the same as the requester or
         project_id is different but the scope is public.
 
+        :param task_execution_id: Keep only resources within a specific task
+                                  execution.
         :param marker: Optional. Pagination marker for large data sets.
         :param limit: Optional. Maximum number of resources to return in a
                       single result. Default value is None for backward
@@ -319,15 +383,59 @@ class TasksActionExecutionController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
+        :param name: Optional. Keep only resources with a specific name.
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param task_name: Optional. Keep only resources with a specific
+                          task name.
+        :param state: Optional. Keep only resources with a specific state.
+        :param state_info: Optional. Keep only resources with specific state
+                           information.
+        :param accepted: Optional. Keep only resources which have been accepted
+                         or not.
+        :param input: Optional. Keep only resources with a specific input.
+        :param output: Optional. Keep only resources with a specific output.
+        :param params: Optional. Keep only resources with specific parameters.
+        :param description: Optional. Keep only resources with a specific
+                            description.
+        :param tag: Optional. Keep only resources with a specific tag. If it is
+                    used with 'tags', it will be appended to the list of
+                    matching tags.
+        :param tags: Optional. Keep only resources containing specific tags.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('action_executions:list', context.ctx())
+        if tag is not None:
+            if tags is None:
+                tags = [tag]
+            else:
+                tags.append(tag)
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            name=name,
+            tags=tags,
+            updated_at=updated_at,
+            workflow_name=workflow_name,
+            task_name=task_name,
+            task_execution_id=task_execution_id,
+            state=state,
+            state_info=state_info,
+            accepted=accepted,
+            input=input,
+            output=output,
+            params=params,
+            description=description
+        )
+
         LOG.info("Fetch action_executions. marker=%s, limit=%s, "
                  "sort_keys=%s, sort_dirs=%s, filters=%s",
                  marker, limit, sort_keys, sort_dirs, filters)
 
         return _get_action_executions(
-            task_execution_id=task_execution_id,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

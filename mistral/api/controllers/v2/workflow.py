@@ -236,9 +236,14 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Workflows, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, types.jsontype)
+                         types.list, types.uniquelist, wtypes.text,
+                         wtypes.text, wtypes.text, wtypes.text,
+                         types.uniquelist, SCOPE_TYPES, types.uuid,
+                         wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', **filters):
+                sort_dirs='asc', fields='', name=None, input=None,
+                definition=None, tag=None, tags=None, scope=None,
+                project_id=None, created_at=None, updated_at=None):
         """Return a list of workflows.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -248,18 +253,47 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         :param sort_keys: Optional. Columns to sort results by.
                           Default: created_at.
         :param sort_dirs: Optional. Directions to sort corresponding to
-                          sort_keys, "asc" or "desc" can be choosed.
+                          sort_keys, "asc" or "desc" can be chosen.
                           Default: asc.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
-
-        Where project_id is the same as the requester or
-        project_id is different but the scope is public.
+        :param name: Optional. Keep only resources with a specific name.
+        :param input: Optional. Keep only resources with a specific input.
+        :param definition: Optional. Keep only resources with a specific
+                           definition.
+        :param tag: Optional. Keep only resources with a specific tag. If it is
+                    used with 'tags', it will be appended to the list of
+                    matching tags.
+        :param tags: Optional. Keep only resources containing specific tags.
+        :param scope: Optional. Keep only resources with a specific scope.
+        :param project_id: Optional. The same as the requester project_id
+                           or different if the scope is public.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('workflows:list', context.ctx())
+
+        if tag is not None:
+            if tags is None:
+                tags = [tag]
+            else:
+                tags.append(tag)
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            name=name,
+            scope=scope,
+            tags=tags,
+            updated_at=updated_at,
+            input=input,
+            definition=definition,
+            project_id=project_id
+        )
+
         LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
                  "sort_dirs=%s, fields=%s, filters=%s", marker, limit,
                  sort_keys, sort_dirs, fields, filters)

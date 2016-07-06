@@ -125,9 +125,17 @@ class CronTriggersController(rest.RestController):
         db_api.delete_cron_trigger(name)
 
     @wsme_pecan.wsexpose(CronTriggers, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, types.jsontype)
+                         types.list, types.uniquelist, wtypes.text,
+                         wtypes.text, types.uuid, types.jsontype,
+                         types.jsontype, SCOPE_TYPES, wtypes.text,
+                         wtypes.IntegerType(minimum=1), wtypes.text,
+                         wtypes.text, wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', **filters):
+                sort_dirs='asc', fields='', name=None, workflow_name=None,
+                workflow_id=None, workflow_input=None, workflow_params=None,
+                scope=None, pattern=None, remaining_executions=None,
+                first_execution_time=None, next_execution_time=None,
+                created_at=None, updated_at=None):
         """Return all cron triggers.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -144,10 +152,45 @@ class CronTriggersController(rest.RestController):
                        be returned. 'id' will be included automatically in
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
-        :param filters: Optional. A list of filters to apply to the result.
-
+        :param name: Optional. Keep only resources with a specific name.
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param workflow_id: Optional. Keep only resources with a specific
+                            workflow ID.
+        :param workflow_input: Optional. Keep only resources with a specific
+                               workflow input.
+        :param workflow_params: Optional. Keep only resources with specific
+                                workflow parameters.
+        :param scope: Optional. Keep only resources with a specific scope.
+        :param pattern: Optional. Keep only resources with a specific pattern.
+        :param remaining_executions: Optional. Keep only resources with a
+                                     specific number of remaining executions.
+        :param first_execution_time: Optional. Keep only resources with a
+                                     specific time and date of first execution.
+        :param next_execution_time: Optional. Keep only resources with a
+                                    specific time and date of next execution.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
         """
         acl.enforce('cron_triggers:list', context.ctx())
+
+        filters = rest_utils.filters_to_dict(
+            created_at=created_at,
+            name=name,
+            updated_at=updated_at,
+            workflow_name=workflow_name,
+            workflow_id=workflow_id,
+            workflow_input=workflow_input,
+            workflow_params=workflow_params,
+            scope=scope,
+            pattern=pattern,
+            remaining_executions=remaining_executions,
+            first_execution_time=first_execution_time,
+            next_execution_time=next_execution_time
+        )
+
         LOG.info("Fetch cron triggers. marker=%s, limit=%s, sort_keys=%s, "
                  "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
                  sort_dirs, filters)

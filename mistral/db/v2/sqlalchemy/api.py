@@ -161,7 +161,18 @@ def _get_collection(model, limit=None, marker=None, sort_keys=None,
     )
 
     if query is None:
+        tags = kwargs.pop('tags', None)
         query = _secure_query(model, *columns).filter_by(**kwargs)
+
+        # To match the tag list, a resource must contain at least all of the
+        # tags present in the filter parameter.
+        if tags:
+            tag_attr = getattr(model, 'tags')
+            if len(tags) == 1:
+                expr = tag_attr.contains(tags)
+            else:
+                expr = sa.and_(*[tag_attr.contains(tag) for tag in tags])
+            query = query.filter(expr)
 
     try:
         return _paginate_query(
