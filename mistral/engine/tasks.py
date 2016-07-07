@@ -311,7 +311,11 @@ class RegularTask(Task):
 
         action.validate_input(input_dict)
 
-        action.schedule(input_dict, target)
+        action.schedule(
+            input_dict,
+            target,
+            safe_rerun=self.task_spec.get_safe_rerun()
+        )
 
     def _get_target(self, input_dict):
         return expr.evaluate_recursively(
@@ -399,7 +403,12 @@ class WithItemsTask(RegularTask):
 
             action = self._build_action()
 
-            action.schedule(input_dict, target, index=idx)
+            action.schedule(
+                input_dict,
+                target,
+                index=idx,
+                safe_rerun=self.task_spec.get_safe_rerun()
+            )
 
     def _get_with_items_input(self):
         """Calculate input array for separating each action input.
