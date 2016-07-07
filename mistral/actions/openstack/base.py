@@ -47,6 +47,10 @@ class OpenStackAction(base.Action):
         pass
 
     @classmethod
+    def _get_client_class(cls):
+        return None
+
+    @classmethod
     def _get_client_method(cls, client):
         hierarchy_list = cls.client_method_name.split('.')
         attribute = client
@@ -64,7 +68,7 @@ class OpenStackAction(base.Action):
         saving into DB.
         """
         # Default is simple _get_client_class instance
-        return cls._get_client_class()
+        return cls._get_client_class()()
 
     @classmethod
     def get_fake_client_method(cls):

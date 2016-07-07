@@ -97,7 +97,7 @@ class GlanceAction(base.OpenStackAction):
 
         glance_endpoint = keystone_utils.get_endpoint_for_project('glance')
 
-        return GlanceAction._get_client_class()(
+        return self._get_client_class()(
             glance_endpoint.url,
             region_name=glance_endpoint.region,
             token=ctx.auth_token
@@ -134,7 +134,7 @@ class KeystoneAction(base.OpenStackAction):
                 or keystone_utils.is_token_trust_scoped(ctx.auth_token)):
             kwargs['endpoint'] = ctx.auth_uri
 
-        client = KeystoneAction._get_client_class()(**kwargs)
+        client = self._get_client_class()(**kwargs)
 
         client.management_url = ctx.auth_uri
 
@@ -174,7 +174,7 @@ class CeilometerAction(base.OpenStackAction):
             {'tenant_id': ctx.project_id}
         )
 
-        return CeilometerAction._get_client_class()(
+        return self._get_client_class()(
             endpoint_url,
             region_name=ceilometer_endpoint.region,
             token=ctx.auth_token,
@@ -207,7 +207,7 @@ class HeatAction(base.OpenStackAction):
             }
         )
 
-        return HeatAction._get_client_class()(
+        return self._get_client_class()(
             endpoint_url,
             region_name=heat_endpoint.region,
             token=ctx.auth_token,
@@ -232,7 +232,7 @@ class NeutronAction(base.OpenStackAction):
 
         neutron_endpoint = keystone_utils.get_endpoint_for_project('neutron')
 
-        return NeutronAction._get_client_class()(
+        return self._get_client_class()(
             endpoint_url=neutron_endpoint.url,
             region_name=neutron_endpoint.region,
             token=ctx.auth_token,
@@ -263,7 +263,7 @@ class CinderAction(base.OpenStackAction):
             }
         )
 
-        client = CinderAction._get_client_class()(
+        client = self._get_client_class()(
             ctx.user_name,
             ctx.auth_token,
             project_id=ctx.project_id,
@@ -305,7 +305,7 @@ class MistralAction(base.OpenStackAction):
             auth_url = keystone_endpoint.url
             mistral_url = None
 
-        return MistralAction._get_client_class()(
+        return self._get_client_class()(
             mistral_url=mistral_url,
             auth_token=ctx.auth_token,
             project_id=ctx.project_id,
@@ -338,7 +338,7 @@ class TroveAction(base.OpenStackAction):
             {'tenant_id': ctx.project_id}
         )
 
-        client = TroveAction._get_client_class()(
+        client = self._get_client_class()(
             ctx.user_name,
             ctx.auth_token,
             project_id=ctx.project_id,
@@ -369,7 +369,7 @@ class IronicAction(base.OpenStackAction):
 
         ironic_endpoint = keystone_utils.get_endpoint_for_project('ironic')
 
-        return IronicAction._get_client_class()(
+        return self._get_client_class()(
             ironic_endpoint.url,
             token=ctx.auth_token,
             region_name=ironic_endpoint.region
@@ -395,7 +395,7 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
             service_type='baremetal-introspection'
         )
 
-        return BaremetalIntrospectionAction._get_client_class()(
+        return self._get_client_class()(
             api_version=1,
             inspector_url=inspector_endpoint.url,
             auth_token=ctx.auth_token,
@@ -420,7 +420,7 @@ class SwiftAction(base.OpenStackAction):
             'preauthtoken': ctx.auth_token
         }
 
-        return SwiftAction._get_client_class()(**kwargs)
+        return self._get_client_class()(**kwargs)
 
 
 class ZaqarAction(base.OpenStackAction):
@@ -446,7 +446,7 @@ class ZaqarAction(base.OpenStackAction):
         auth_opts = {'backend': 'keystone', 'options': opts}
         conf = {'auth_opts': auth_opts}
 
-        return ZaqarAction._get_client_class()(zaqar_endpoint.url, conf=conf)
+        return self._get_client_class()(zaqar_endpoint.url, conf=conf)
 
     @classmethod
     def _get_fake_client(cls):
@@ -540,7 +540,7 @@ class BarbicanAction(base.OpenStackAction):
             tenant_id=ctx.project_id
         )
 
-        return BarbicanAction._get_client_class()(
+        return self._get_client_class()(
             project_id=ctx.project_id,
             endpoint=barbican_endpoint.url,
             auth=auth
@@ -641,7 +641,7 @@ class DesignateAction(base.OpenStackAction):
             {'tenant_id': ctx.project_id}
         )
 
-        client = DesignateAction._get_client_class()(
+        client = self._get_client_class()(
             endpoint=designate_url,
             tenant_id=ctx.project_id,
             auth_url=ctx.auth_uri,
@@ -674,7 +674,7 @@ class MagnumAction(base.OpenStackAction):
         auth_url = keystone_endpoint.url
         magnum_url = keystone_utils.get_endpoint_for_project('magnum').url
 
-        return MagnumAction._get_client_class()(
+        return self._get_client_class()(
             magnum_url=magnum_url,
             auth_token=ctx.auth_token,
             project_id=ctx.project_id,
@@ -701,7 +701,7 @@ class MuranoAction(base.OpenStackAction):
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         murano_endpoint = keystone_utils.get_endpoint_for_project('murano')
 
-        return MuranoAction._get_client_class()(
+        return self._get_client_class()(
             endpoint=murano_endpoint.url,
             token=ctx.auth_token,
             tenant=ctx.project_id,
@@ -728,7 +728,7 @@ class TackerAction(base.OpenStackAction):
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         tacker_endpoint = keystone_utils.get_endpoint_for_project('tacker')
 
-        return TackerAction._get_client_class()(
+        return self._get_client_class()(
             endpoint_url=tacker_endpoint.url,
             token=ctx.auth_token,
             tenant_id=ctx.project_id,
