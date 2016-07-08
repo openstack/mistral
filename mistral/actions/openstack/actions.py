@@ -684,7 +684,7 @@ class MagnumAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()()
+        return cls._get_client_class()(auth_url='X', magnum_url='X')
 
 
 class MuranoAction(base.OpenStackAction):
