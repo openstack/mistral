@@ -250,3 +250,56 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         action_execs = task_ex.executions
 
         self.assertEqual(0, len(action_execs))
+
+    def test_action_error_with_wait_after_policy(self):
+        # Check that state of all workflow objects (workflow executions,
+        # task executions, action executions) is properly persisted in case
+        # of action error and task has 'wait-after' policy. It is an
+        # implicit test for task completion because 'wait-after' inserts
+        # a delay between actual task completion and logic that calculates
+        # next workflow commands. If an an error happens while calculating
+        # next commands (e.g. invalid YAQL in on-XXX clauses) then we also
+        # need to handle this properly, meaning that task and workflow state
+        # should go into ERROR state.
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              wait-after: 1
+              on-success:
+                - task2: <% invalid_yaql_function() %>
+
+            task2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task_ex = self._assert_single_item(
+            task_execs,
+            name='task1',
+            state=states.ERROR
+        )
+
+        action_execs = task_ex.executions
+
+        self.assertEqual(1, len(action_execs))
+
+        self._assert_single_item(
+            action_execs,
+            name='std.noop',
+            state=states.SUCCESS
+        )
