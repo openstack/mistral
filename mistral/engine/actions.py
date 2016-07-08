@@ -267,7 +267,6 @@ class PythonAction(Action):
         if self.action_def.action_class:
             self._inject_action_ctx_for_validating(input_dict)
 
-        # TODO(rakhmerov): I'm not sure what this is for.
         # NOTE(xylan): Don't validate action input if action initialization
         # method contains ** argument.
         if '**' not in self.action_def.input:

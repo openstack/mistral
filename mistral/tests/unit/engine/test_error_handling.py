@@ -208,3 +208,45 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             name='std.noop',
             state=states.SUCCESS
         )
+
+    def test_action_error_with_wait_before_policy(self):
+        # Check that state of all workflow objects (workflow executions,
+        # task executions, action executions) is properly persisted in case
+        # of action error and task has 'wait-before' policy. It is an
+        # implicit test for task continuation because 'wait-before' inserts
+        # a delay between preparing task execution object and scheduling
+        # actions. If an an error happens during scheduling actions (e.g.
+        # invalid YAQL in action parameters) then we also need to handle
+        # this properly, meaning that task and workflow state should go
+        # into ERROR state.
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output=<% invalid_yaql_function() %>
+              wait-before: 1
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task_ex = self._assert_single_item(
+            task_execs,
+            name='task1',
+            state=states.ERROR
+        )
+
+        action_execs = task_ex.executions
+
+        self.assertEqual(0, len(action_execs))
