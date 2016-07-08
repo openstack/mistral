@@ -711,7 +711,7 @@ class MuranoAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()()
+        return cls._get_client_class()("http://127.0.0.1:8082/")
 
 
 class TackerAction(base.OpenStackAction):
