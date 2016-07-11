@@ -134,39 +134,42 @@ class EngineTestCase(base.DbTestCase):
 
         print("\nPrinting workflow executions...")
 
-        wf_execs = db_api.get_workflow_executions()
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
 
-        for w in wf_execs:
-            print(
-                "\n%s [state=%s, state_info=%s, output=%s]" %
-                (w.name, w.state, w.state_info, w.output)
-            )
-
-            for t in w.task_executions:
+            for w in wf_execs:
                 print(
-                    "\t%s [id=%s, state=%s, state_info=%s, processed=%s,"
-                    " published=%s]" %
-                    (t.name,
-                     t.id,
-                     t.state,
-                     t.state_info,
-                     t.processed,
-                     t.published)
+                    "\n%s [state=%s, state_info=%s, output=%s]" %
+                    (w.name, w.state, w.state_info, w.output)
                 )
 
-                a_execs = db_api.get_action_executions(task_execution_id=t.id)
-
-                for a in a_execs:
+                for t in w.task_executions:
                     print(
-                        "\t\t%s [id=%s, state=%s, state_info=%s, accepted=%s,"
-                        " output=%s]" %
-                        (a.name,
-                         a.id,
-                         a.state,
-                         a.state_info,
-                         a.accepted,
-                         a.output)
+                        "\t%s [id=%s, state=%s, state_info=%s, processed=%s,"
+                        " published=%s]" %
+                        (t.name,
+                         t.id,
+                         t.state,
+                         t.state_info,
+                         t.processed,
+                         t.published)
                     )
+
+                    a_execs = db_api.get_action_executions(
+                        task_execution_id=t.id
+                    )
+
+                    for a in a_execs:
+                        print(
+                            "\t\t%s [id=%s, state=%s, state_info=%s,"
+                            " accepted=%s, output=%s]" %
+                            (a.name,
+                             a.id,
+                             a.state,
+                             a.state_info,
+                             a.accepted,
+                             a.output)
+                        )
 
         print("\nPrinting standalone action executions...")
 
