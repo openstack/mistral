@@ -197,8 +197,6 @@ class WaitBeforePolicy(base.TaskPolicy):
 
             task_ex.state = states.RUNNING_DELAYED
 
-            # TODO(rakhmerov): This is wrong as task handler doesn't manage
-            # transactions and hence it can't be called explicitly.
             scheduler.schedule_call(
                 None,
                 _CONTINUE_TASK_PATH,
@@ -410,7 +408,6 @@ class PauseBeforePolicy(base.TaskPolicy):
         task_ex.state = states.IDLE
 
 
-# TODO(rakhmerov): In progress.
 class ConcurrencyPolicy(base.TaskPolicy):
     _schema = {
         "properties": {
@@ -424,6 +421,10 @@ class ConcurrencyPolicy(base.TaskPolicy):
     def before_task_start(self, task_ex, task_spec):
         super(ConcurrencyPolicy, self).before_task_start(task_ex, task_spec)
 
+        # This policy doesn't do anything except validating "concurrency"
+        # property value and setting a variable into task runtime context.
+        # This variable is then used to define how many action executions
+        # may be started in parallel.
         context_key = 'concurrency'
 
         runtime_context = _ensure_context_has_key(
