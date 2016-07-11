@@ -107,6 +107,8 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
                     message.properties['correlation_id']):
                 utils.set_thread_local(IS_RECEIVED, True)
 
+                # TODO(ddeja): Decide if raising exception to kombu is best
+                # behaviour.
                 if message.properties.get('type') == 'error':
                     raise response
                 utils.set_thread_local(RESULT, response)
