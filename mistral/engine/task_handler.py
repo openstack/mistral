@@ -145,8 +145,23 @@ def continue_task(task_ex):
 def complete_task(task_ex, state, state_info):
     task = _build_task_from_execution(task_ex)
 
-    # TODO(rakhmerov): Error handling.
-    task.complete(state, state_info)
+    try:
+        task.complete(state, state_info)
+    except exc.MistralException as e:
+        wf_ex = task_ex.workflow_execution
+
+        msg = (
+            "Failed to complete task [wf=%s, task=%s]: %s\n%s" %
+            (wf_ex, task_ex.name, e, tb.format_exc())
+        )
+
+        LOG.error(msg)
+
+        task.set_state(states.ERROR, msg)
+
+        wf_handler.fail_workflow(wf_ex, msg)
+
+        return
 
     if task.is_completed():
         wf_handler.on_task_complete(task_ex)
