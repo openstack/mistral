@@ -44,7 +44,7 @@ std.create_instance:
         security_groups: <% $.security_groups %>
         nics: <% $.nics %>
       publish:
-        vm_id: <% $.create_vm.id %>
+        vm_id: <% task(create_vm).result.id %>
       on-success:
         - search_for_ip
 
@@ -52,7 +52,7 @@ std.create_instance:
       description: Gets first free ip from Nova floating IPs.
       action: nova.floating_ips_findall instance_id=null
       publish:
-        vm_ip: <% $.search_for_ip[0].ip %>
+        vm_ip: <% task(search_for_ip).result[0].ip %>
       on-success:
         - wait_vm_active
 
@@ -63,7 +63,7 @@ std.create_instance:
         count: 10
         delay: 10
       publish:
-        status: <% $.wait_vm_active.status %>
+        status: <% task(wait_vm_active).result.status %>
       on-success:
         - associate_ip
 
