@@ -104,6 +104,13 @@ os_endpoint_type = cfg.StrOpt(
          ' communication with OpenStack services.'
 )
 
+expiration_token_duration = cfg.IntOpt(
+    'expiration_token_duration',
+    default=30,
+    help='Window of seconds to determine whether the given token is about'
+         ' to expire.'
+)
+
 pecan_opts = [
     cfg.StrOpt(
         'root',
@@ -267,6 +274,7 @@ CONF.register_opt(rpc_impl_opt)
 CONF.register_opt(rpc_response_timeout_opt)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opt(os_endpoint_type)
+CONF.register_opt(expiration_token_duration)
 
 CLI_OPTS = [
     use_debugger_opt,
@@ -276,7 +284,7 @@ CLI_OPTS = [
 default_group_opts = itertools.chain(
     CLI_OPTS,
     [wf_trace_log_name_opt, auth_type_opt, rpc_impl_opt, os_endpoint_type,
-     rpc_response_timeout_opt]
+     rpc_response_timeout_opt, expiration_token_duration]
 )
 
 CONF.register_cli_opts(CLI_OPTS)

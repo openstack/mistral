@@ -85,7 +85,8 @@ class MistralContext(BaseContext):
         "roles",
         "is_admin",
         "is_trust_scoped",
-        "redelivered"
+        "redelivered",
+        "expires_at",
     ])
 
     def __repr__(self):
@@ -127,7 +128,7 @@ def spawn(thread_description, func, *args, **kwargs):
                    None, func, *args, **kwargs)
 
 
-def context_from_headers(headers):
+def context_from_headers_and_env(headers, env):
     params = _extract_auth_params_from_headers(headers)
     auth_cacert = params['auth_cacert']
     auth_token = params['auth_token']
@@ -147,6 +148,7 @@ def context_from_headers(headers):
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(","),
         is_trust_scoped=False,
+        expires_at=env.get('keystone.token_info')['token']['expires_at'],
     )
 
 
@@ -319,7 +321,10 @@ def authenticate_with_keycloak(req):
 
 class ContextHook(hooks.PecanHook):
     def before(self, state):
-        set_ctx(context_from_headers(state.request.headers))
+        set_ctx(context_from_headers_and_env(
+            state.request.headers,
+            state.request.environ
+        ))
 
     def after(self, state):
         set_ctx(None)

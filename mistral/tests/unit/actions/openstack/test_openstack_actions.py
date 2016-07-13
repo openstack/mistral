@@ -55,7 +55,9 @@ class OpenStackActionTest(base.BaseTestCase):
             project_id='1234',
             project_name='admin',
             auth_token=None,
-            is_admin=False
+            is_admin=False,
+            # set year to 3016 in order for token to always be valid
+            expires_at='3016-07-13T18:34:22.000000Z'
         )
         ctx.set_ctx(test_ctx)
 
@@ -101,6 +103,37 @@ class OpenStackActionTest(base.BaseTestCase):
         action = action_class(**params)
         action.run()
 
+        mock_novaclient.Client.assert_called_once_with(
+            2,
+            username=None,
+            api_key=None,
+            endpoint_type='publicURL',
+            service_type='compute',
+            auth_token=test_ctx.auth_token,
+            tenant_id=test_ctx.project_id,
+            region_name=mock_ks_endpoint_v2().region,
+            auth_url=mock_ks_endpoint_v2().url
+        )
+
+        self.assertTrue(mock_novaclient.Client().servers.get.called)
+        mock_novaclient.Client().servers.get.assert_called_once_with(
+            server="1234-abcd")
+
+        # Repeat test in order to validate cache.
+        mock_novaclient.reset_mock()
+        action.run()
+
+        mock_novaclient.Client.assert_not_called()
+        mock_novaclient.Client().servers.get.assert_called_with(
+            server="1234-abcd")
+
+        # Repeat again with different context for cache testing.
+        test_ctx.project_name = 'service'
+        test_ctx.project_id = '1235'
+        ctx.set_ctx(test_ctx)
+
+        mock_novaclient.reset_mock()
+        action.run()
         mock_novaclient.Client.assert_called_once_with(
             2,
             username=None,
