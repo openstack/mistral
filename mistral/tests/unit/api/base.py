@@ -24,7 +24,7 @@ from mistral.services import periodic
 from mistral.tests.unit import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
-# Disable authentication for functional tests.
+# Disable authentication for API tests.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 

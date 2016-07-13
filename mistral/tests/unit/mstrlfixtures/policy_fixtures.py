@@ -28,23 +28,30 @@ class PolicyFixture(fixtures.Fixture):
 
     def setUp(self):
         super(PolicyFixture, self).setUp()
+
         self.policy_dir = self.useFixture(fixtures.TempDir())
         self.policy_file_name = os.path.join(
             self.policy_dir.path,
             'policy.json'
         )
+
         with open(self.policy_file_name, 'w') as policy_file:
             policy_file.write(fake_policy.policy_data)
+
         policy_opts.set_defaults(cfg.CONF)
+
         cfg.CONF.set_override(
             'policy_file',
             self.policy_file_name,
             'oslo_policy'
         )
+
         acl._ENFORCER = oslo_policy.Enforcer(cfg.CONF)
         acl._ENFORCER.load_rules()
+
         self.addCleanup(acl._ENFORCER.clear)
 
     def set_rules(self, rules):
         policy = acl._ENFORCER
+
         policy.set_rules(oslo_policy.Rules.from_dict(rules))
