@@ -34,13 +34,16 @@ class DefaultExecutor(base.Executor, coordination.Service):
 
     @profiler.trace('executor-run-action')
     def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params):
+                   action_params, safe_rerun, redelivered=False):
         """Runs action.
 
         :param action_ex_id: Action execution id.
         :param action_class_str: Path to action class in dot notation.
         :param attributes: Attributes of action class which will be set to.
         :param action_params: Action parameters.
+        :param safe_rerun: Tells if given action can be safely rerun.
+        :param redelivered: Tells if given action was run before on another
+            executor.
         """
 
         def send_error_back(error_msg):
@@ -55,6 +58,16 @@ class DefaultExecutor(base.Executor, coordination.Service):
                 return None
 
             return error_result
+
+        if redelivered and not safe_rerun:
+            msg = (
+                "Request to run action %s was redelivered, but action %s"
+                " cannot be re-run safely. The only safe thing to do is fail"
+                " action."
+                % (action_class_str, action_class_str)
+            )
+
+            return send_error_back(msg)
 
         action_cls = a_f.construct_action_class(action_class_str, attributes)
 

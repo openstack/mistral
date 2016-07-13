@@ -480,7 +480,7 @@ class ExecutorServer(object):
         self._executor = executor
 
     def run_action(self, rpc_ctx, action_ex_id, action_class_str,
-                   attributes, params):
+                   attributes, params, safe_rerun):
         """Receives calls over RPC to run action on executor.
 
         :param rpc_ctx: RPC request context dictionary.
@@ -488,6 +488,7 @@ class ExecutorServer(object):
         :param action_class_str: Action class name.
         :param attributes: Action class attributes.
         :param params: Action input parameters.
+        :param safe_rerun: Tells if given action can be safely rerun.
         :return: Action result.
         """
 
@@ -497,11 +498,15 @@ class ExecutorServer(object):
             % (rpc_ctx, action_ex_id, action_class_str, attributes, params)
         )
 
+        redelivered = rpc_ctx.redelivered or False
+
         return self._executor.run_action(
             action_ex_id,
             action_class_str,
             attributes,
-            params
+            params,
+            safe_rerun,
+            redelivered
         )
 
 
@@ -538,6 +543,7 @@ class ExecutorClient(base.Executor):
             'action_class_str': action_class_str,
             'attributes': attributes,
             'params': action_params,
+            'safe_rerun': safe_rerun
         }
 
         rpc_client_method = (self._client.async_call

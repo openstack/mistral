@@ -85,6 +85,7 @@ class MistralContext(BaseContext):
         "roles",
         "is_admin",
         "is_trust_scoped",
+        "redelivered"
     ])
 
     def __repr__(self):

@@ -86,7 +86,8 @@ def _run_at_target(action_ex_id, action_class_str, attributes,
         action_ex_id,
         action_class_str,
         attributes,
-        action_params
+        action_params,
+        safe_rerun
     )
 
 

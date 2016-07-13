@@ -147,10 +147,14 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
         is_async = request.get('async', False)
         rpc_ctx = request.get('rpc_ctx')
+        redelivered = message.delivery_info.get('redelivered', None)
         rpc_method_name = request.get('rpc_method')
         arguments = request.get('arguments')
         correlation_id = message.properties['correlation_id']
         reply_to = message.properties['reply_to']
+
+        if redelivered is not None:
+            rpc_ctx['redelivered'] = redelivered
 
         rpc_context = self._set_auth_ctx(rpc_ctx)
 
