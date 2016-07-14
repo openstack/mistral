@@ -109,7 +109,7 @@ def _get_task_resource_with_result(task_ex):
     return task
 
 
-def _get_task_resources_with_results(wf_ex_id=None, marker=None, limit=None,
+def _get_task_resources_with_results(marker=None, limit=None,
                                      sort_keys='created_at', sort_dirs='asc',
                                      fields='', **filters):
     """Return all tasks within the execution.
@@ -133,9 +133,6 @@ def _get_task_resources_with_results(wf_ex_id=None, marker=None, limit=None,
                    constructing 'next' link.
     :param filters: Optional. A list of filters to apply to the result.
     """
-    if wf_ex_id:
-        filters['workflow_execution_id'] = wf_ex_id
-
     return rest_utils.get_all(
         Tasks,
         Task,
@@ -357,9 +354,8 @@ class ExecutionTasksController(rest.RestController):
         acl.enforce('tasks:list', context.ctx())
 
         filters = rest_utils.filters_to_dict(
-            wf_ex_id=workflow_execution_id,
+            workflow_execution_id=workflow_execution_id,
             created_at=created_at,
-            id=id,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
             state=state,
@@ -379,7 +375,6 @@ class ExecutionTasksController(rest.RestController):
                  filters)
 
         return _get_task_resources_with_results(
-            wf_ex_id=workflow_execution_id,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
