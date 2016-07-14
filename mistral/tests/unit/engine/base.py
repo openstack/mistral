@@ -22,7 +22,7 @@ from mistral import context as ctx
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
 from mistral.engine import default_executor as def_exec
-from mistral.engine.rpc import rpc
+from mistral.engine.rpc_backend import rpc
 from mistral.services import scheduler
 from mistral.tests.unit import base
 from mistral.workflow import states

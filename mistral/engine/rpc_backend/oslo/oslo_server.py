@@ -16,8 +16,8 @@ from oslo_log import log as logging
 import oslo_messaging as messaging
 
 from mistral import context as ctx
-from mistral.engine.rpc import base as rpc_base
-from mistral.engine.rpc import rpc
+from mistral.engine.rpc_backend import base as rpc_base
+from mistral.engine.rpc_backend import rpc
 
 
 LOG = logging.getLogger(__name__)

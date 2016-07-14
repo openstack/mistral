@@ -86,7 +86,7 @@ def get_rpc_server_driver():
     global _IMPL_SERVER
     if not _IMPL_SERVER:
         _IMPL_SERVER = driver.DriverManager(
-            'mistral.engine.rpc',
+            'mistral.engine.rpc_backend',
             '%s_server' % rpc_impl
         ).driver
 
@@ -99,7 +99,7 @@ def get_rpc_client_driver():
     global _IMPL_CLIENT
     if not _IMPL_CLIENT:
         _IMPL_CLIENT = driver.DriverManager(
-            'mistral.engine.rpc',
+            'mistral.engine.rpc_backend',
             '%s_client' % rpc_impl
         ).driver
 

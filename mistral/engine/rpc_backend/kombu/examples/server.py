@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine.rpc.kombu import kombu_server
+from mistral.engine.rpc_backend.kombu import kombu_server
 
 
 # Simple example of endpoint of RPC server, which just

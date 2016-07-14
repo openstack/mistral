@@ -21,7 +21,7 @@ from oslo_service import threadgroup
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api_v2
-from mistral.engine.rpc import rpc
+from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.services import triggers

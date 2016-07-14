@@ -20,7 +20,7 @@ from osprofiler import profiler
 import six
 
 from mistral.db.v2 import api as db_api
-from mistral.engine.rpc import rpc
+from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as e_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc

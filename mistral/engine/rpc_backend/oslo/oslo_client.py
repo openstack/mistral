@@ -15,8 +15,8 @@
 import oslo_messaging as messaging
 
 from mistral import context as auth_ctx
-from mistral.engine.rpc import base as rpc_base
-from mistral.engine.rpc import rpc
+from mistral.engine.rpc_backend import base as rpc_base
+from mistral.engine.rpc_backend import rpc
 
 
 class OsloRPCClient(rpc_base.RPCClient):

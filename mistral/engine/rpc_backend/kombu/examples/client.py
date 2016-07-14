@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.engine.rpc.kombu import kombu_client
+from mistral.engine.rpc_backend.kombu import kombu_client
 
 
 # Example of using Kombu based RPC client.
