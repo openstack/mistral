@@ -16,7 +16,7 @@
 
   TODO: why REST URL is not generated with parameters?
 
-## Running sphinx-audobuild
+## Running sphinx-autobuild
 
 [auto-loader](https://pypi.python.org/pypi/sphinx-autobuild/0.2.3) - rules for convenient development https://pypi.python.org/pypi/sphinx-autobuild/0.2.3. install, and run:
 
