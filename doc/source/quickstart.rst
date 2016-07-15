@@ -44,8 +44,8 @@ For example, we have the following workflow::
         task2:
           action: std.echo output="Done"
 
-This is a simple workflow iterates through the given list of names in its first task (using "with-items") and stores
-them as a task result (using echo action) and then stores word "Done" as a result of the second task.
+This simple workflow iterates through the given list of names in its first task (using "with-items"), stores
+them as a task result (using echo action) and then stores the word "Done" as a result of the second task.
 
 Create Workflow Object
 ----------------------
@@ -66,11 +66,11 @@ Make sure that output is like the following::
 Run Workflow and Check the Result
 ---------------------------------
 
-Use *Mistral CLI* to run just created workflow. Pass variable **names** as **workflow_input**::
+Use *Mistral CLI* to run the newly-created workflow. Pass the variable **names** as **workflow_input**::
 
     mistral execution-create my_workflow '{"names": ["John", "Mistral", "Ivan", "Crystal"]}'
 
-Make sure output is like the following::
+Make sure the output is like the following::
 
     +-------------+--------------------------------------+
     | Field       | Value                                |
@@ -84,7 +84,7 @@ Make sure output is like the following::
     | Updated at  | 2015-08-28 09:05:00.844990           |
     +-------------+--------------------------------------+
 
-After a while, check the status of the workflow execution (put execution id instead of example)::
+After a while, check the status of the workflow execution (replace the example execution id with the real one)::
 
     mistral execution-get 056c2ed1-695f-4ccd-92af-e31bc6153784
 
@@ -100,7 +100,7 @@ After a while, check the status of the workflow execution (put execution id inst
     | Updated at  | 2015-08-28 09:05:03                  |
     +-------------+--------------------------------------+
 
-Statuses of each **task** also can be checked::
+The status of each **task** also can be checked::
 
     mistral task-list 056c2ed1-695f-4ccd-92af-e31bc6153784
 
@@ -111,7 +111,7 @@ Statuses of each **task** also can be checked::
     | 3bf82863-28cb-4148-bfb8-1a6c3c115022 | task2 | my_workflow   | 056c2ed1-695f-4ccd-92af-e31bc6153784 | SUCCESS |
     +--------------------------------------+-------+---------------+--------------------------------------+---------+
 
-Checking the result of task *'task1'*::
+Check the result of task *'task1'*::
 
     mistral task-get-result 91874635-dcd4-4718-a864-ac90408c1085
 
@@ -122,20 +122,20 @@ Checking the result of task *'task1'*::
         "Crystal"
     ]
 
-If needed, we can go deeper and look at list of results of **action_executions** of single task::
+If needed, we can go deeper and look at a list of the results of the **action_executions** of a single task::
 
     mistral action-execution-list 91874635-dcd4-4718-a864-ac90408c1085
 
     +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
     | ID                                   | Name     | Workflow name | Task name | State   | State info | Is accepted |
     +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
-    | 20c2b65d-b899-437f-8e1b-50fe477fbf4b | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
-    | 6773c887-6eff-46e6-bed9-d6b67d77813b | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
-    | 753a9e39-d93e-4751-a3c1-569d1b4eac64 | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
-    | 9872ddbc-61c5-4511-aa7e-dc4016607822 | std.echo | my_wirkflow   | task1     | SUCCESS | None       | True        |
+    | 20c2b65d-b899-437f-8e1b-50fe477fbf4b | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
+    | 6773c887-6eff-46e6-bed9-d6b67d77813b | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
+    | 753a9e39-d93e-4751-a3c1-569d1b4eac64 | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
+    | 9872ddbc-61c5-4511-aa7e-dc4016607822 | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
     +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
 
-Checking the result of first **action_execution**::
+Check the result of the first **action_execution**::
 
     mistral action-execution-get-output 20c2b65d-b899-437f-8e1b-50fe477fbf4b
 
