@@ -194,11 +194,13 @@ class KombuServerTestCase(base.KombuTestCase):
 
     @mock.patch.object(kombu_server.KombuRPCServer, 'publish_message')
     @mock.patch.object(kombu_server.KombuRPCServer, '_get_rpc_method')
-    def test__on_message_is_async(self, get_rpc_method, publish_message):
+    @mock.patch('mistral.context.MistralContext')
+    def test__on_message_is_async(self, mistral_context, get_rpc_method,
+                                  publish_message):
         result = 'result'
         request = {
             'async': True,
-            'rpc_ctx': self.ctx,
+            'rpc_ctx': {},
             'rpc_method': 'found_method',
             'arguments': {
                 'a': 1,
@@ -217,7 +219,7 @@ class KombuServerTestCase(base.KombuTestCase):
 
         self.server._on_message(request, message)
         rpc_method.assert_called_once_with(
-            rpc_ctx=self.ctx,
+            rpc_ctx=mistral_context(),
             a=1,
             b=2
         )
@@ -225,11 +227,13 @@ class KombuServerTestCase(base.KombuTestCase):
 
     @mock.patch.object(kombu_server.KombuRPCServer, 'publish_message')
     @mock.patch.object(kombu_server.KombuRPCServer, '_get_rpc_method')
-    def test__on_message_is_sync(self, get_rpc_method, publish_message):
+    @mock.patch('mistral.context.MistralContext')
+    def test__on_message_is_sync(self, mistral_context, get_rpc_method,
+                                 publish_message):
         result = 'result'
         request = {
             'async': False,
-            'rpc_ctx': self.ctx,
+            'rpc_ctx': {},
             'rpc_method': 'found_method',
             'arguments': {
                 'a': 1,
@@ -250,7 +254,7 @@ class KombuServerTestCase(base.KombuTestCase):
 
         self.server._on_message(request, message)
         rpc_method.assert_called_once_with(
-            rpc_ctx=self.ctx,
+            rpc_ctx=mistral_context(),
             a=1,
             b=2
         )
