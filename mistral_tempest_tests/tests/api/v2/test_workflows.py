@@ -270,7 +270,7 @@ class WorkflowTestsV2(base.TestCase):
             )
 
             self.assertIn(
-                "Can't delete workflow that has triggers associated",
+                "Can't delete workflow that has cron triggers associated",
                 exception.resp_body['faultstring']
             )
         finally:

@@ -372,7 +372,9 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         # Create a new user.
         auth_context.set_ctx(test_base.get_context(default=False))
 
-        db_api.create_cron_trigger(CRON_TRIGGER)
+        cron_trigger = copy.copy(CRON_TRIGGER)
+        cron_trigger['workflow_id'] = created.id
+        db_api.create_cron_trigger(cron_trigger)
 
         auth_context.set_ctx(test_base.get_context(default=True))
 
@@ -383,10 +385,50 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             {'scope': 'private'}
         )
 
+    def test_update_wf_scope_event_trigger_associated_in_diff_tenant(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        # Switch to another user.
+        auth_context.set_ctx(test_base.get_context(default=False))
+
+        event_trigger = copy.copy(EVENT_TRIGGERS[0])
+        event_trigger.update({'workflow_id': created.id})
+
+        db_api.create_event_trigger(event_trigger)
+
+        # Switch back.
+        auth_context.set_ctx(test_base.get_context(default=True))
+
+        self.assertRaises(
+            exc.NotAllowedException,
+            db_api.update_workflow_definition,
+            created.id,
+            {'scope': 'private'}
+        )
+
+    def test_update_wf_scope_event_trigger_associated_in_same_tenant(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        event_trigger = copy.copy(EVENT_TRIGGERS[0])
+        event_trigger.update({'workflow_id': created.id})
+
+        db_api.create_event_trigger(event_trigger)
+
+        updated = db_api.update_workflow_definition(
+            created.id,
+            {'scope': 'private'}
+        )
+
+        self.assertEqual('private', updated.scope)
+
     def test_update_wf_scope_cron_trigger_associated_in_same_tenant(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
-        db_api.create_cron_trigger(CRON_TRIGGER)
+        cron_trigger = copy.copy(CRON_TRIGGER)
+        cron_trigger.update({'workflow_id': created.id})
+
+        db_api.create_cron_trigger(cron_trigger)
+
         updated = db_api.update_workflow_definition(
             created['name'],
             {'scope': 'private'}
@@ -428,6 +470,22 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
                 db_api.get_workflow_definition,
                 identifier
             )
+
+    def test_delete_workflow_definition_has_event_trigger(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        event_trigger = copy.copy(EVENT_TRIGGERS[0])
+        event_trigger['workflow_id'] = created.id
+
+        trigger = db_api.create_event_trigger(event_trigger)
+
+        self.assertEqual(trigger.workflow_id, created.id)
+
+        self.assertRaises(
+            exc.DBError,
+            db_api.delete_workflow_definition,
+            created.id
+        )
 
     def test_delete_other_project_workflow_definition(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
@@ -483,7 +541,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(1, len(fetched))
         self.assertEqual(created0, fetched[0])
-        self.assertEqual('public', created0.scope)
+        self.assertEqual('public', fetched[0].scope)
 
     def test_workflow_definition_repr(self):
         s = db_api.create_workflow_definition(WF_DEFINITIONS[0]).__repr__()
@@ -1284,6 +1342,7 @@ class CronTriggerTest(SQLAlchemyTest):
         auth_context.set_ctx(user_context)
 
         fetched = db_api.get_cron_triggers(
+            insecure=True,
             pattern='* * * * *',
             project_id=security.DEFAULT_PROJECT_ID
         )
@@ -1875,4 +1934,93 @@ class WorkflowSharingTest(SQLAlchemyTest):
             exc.DBError,
             db_api.delete_workflow_definition,
             wf.id
+        )
+
+
+EVENT_TRIGGERS = [
+    {
+        'name': 'trigger1',
+        'workflow_id': '',
+        'workflow_input': {},
+        'workflow_params': {},
+        'exchange': 'openstack',
+        'topic': 'notification',
+        'event': 'compute.create_instance',
+    },
+    {
+        'name': 'trigger2',
+        'workflow_id': '',
+        'workflow_input': {},
+        'workflow_params': {},
+        'exchange': 'openstack',
+        'topic': 'notification',
+        'event': 'compute.delete_instance',
+    },
+]
+
+
+class EventTriggerTest(SQLAlchemyTest):
+    def setUp(self):
+        super(EventTriggerTest, self).setUp()
+
+        self.wf = db_api.create_workflow_definition({'name': 'my_wf'})
+
+        for et in EVENT_TRIGGERS:
+            et['workflow_id'] = self.wf.id
+
+    def test_create_and_get_event_trigger(self):
+        created = db_api.create_event_trigger(EVENT_TRIGGERS[0])
+
+        fetched = db_api.get_event_trigger(created.id)
+
+        self.assertEqual(created, fetched)
+
+    def test_get_event_triggers_insecure(self):
+        for t in EVENT_TRIGGERS:
+            db_api.create_event_trigger(t)
+
+        fetched = db_api.get_event_triggers()
+
+        self.assertEqual(2, len(fetched))
+
+    def test_get_event_triggers_not_insecure(self):
+        db_api.create_event_trigger(EVENT_TRIGGERS[0])
+
+        # Switch to another tenant.
+        auth_context.set_ctx(user_context)
+
+        db_api.create_event_trigger(EVENT_TRIGGERS[1])
+        fetched = db_api.get_event_triggers()
+
+        self.assertEqual(1, len(fetched))
+
+        fetched = db_api.get_event_triggers(insecure=True)
+
+        self.assertEqual(2, len(fetched))
+
+    def test_update_event_trigger(self):
+        created = db_api.create_event_trigger(EVENT_TRIGGERS[0])
+
+        # Need a new existing workflow for updating event trigger because of
+        # foreign constraint.
+        new_wf = db_api.create_workflow_definition({'name': 'my_wf1'})
+
+        db_api.update_event_trigger(
+            created.id,
+            {'workflow_id': new_wf.id}
+        )
+
+        updated = db_api.get_event_trigger(created.id)
+
+        self.assertEqual(new_wf.id, updated.workflow_id)
+
+    def test_delete_event_triggers(self):
+        created = db_api.create_event_trigger(EVENT_TRIGGERS[0])
+
+        db_api.delete_event_trigger(created.id)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_event_trigger,
+            created.id
         )

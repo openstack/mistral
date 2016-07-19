@@ -245,11 +245,12 @@ class DbTestCase(BaseTest):
             with mock.patch('mistral.services.security.get_project_id',
                             new=mock.MagicMock(return_value=ctx.project_id)):
                 with db_api_v2.transaction():
+                    db_api_v2.delete_event_triggers()
                     db_api_v2.delete_executions()
                     db_api_v2.delete_workbooks()
                     db_api_v2.delete_cron_triggers()
                     db_api_v2.delete_workflow_definitions()
-                    db_api_v2.delete_environments(),
+                    db_api_v2.delete_environments()
                     db_api_v2.delete_resource_members()
 
         sqlite_lock.cleanup()

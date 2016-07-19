@@ -31,6 +31,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import security
 
+
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
@@ -110,6 +111,9 @@ def _lock_entity(model, id):
 def _secure_query(model, *columns):
     query = b.model_query(model, columns)
 
+    if not issubclass(model, mb.MistralSecureModelBase):
+        return query
+
     shared_res_ids = []
     res_type = RESOURCE_MAPPING.get(model, '')
 
@@ -117,14 +121,20 @@ def _secure_query(model, *columns):
         shared_res = _get_accepted_resources(res_type)
         shared_res_ids = [res.resource_id for res in shared_res]
 
-    if issubclass(model, mb.MistralSecureModelBase):
-        query = query.filter(
-            sa.or_(
-                model.project_id == security.get_project_id(),
-                model.scope == 'public',
-                model.id.in_(shared_res_ids)
-            )
+    query_criterion = sa.or_(
+        model.project_id == security.get_project_id(),
+        model.scope == 'public'
+    )
+
+    # NOTE(kong): Include IN_ predicate in query filter only if shared_res_ids
+    # is not empty to avoid sqlalchemy SAWarning and wasting a db call.
+    if shared_res_ids:
+        query_criterion = sa.or_(
+            query_criterion,
+            model.id.in_(shared_res_ids)
         )
+
+    query = query.filter(query_criterion)
 
     return query
 
@@ -147,32 +157,34 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
 
 
 def _delete_all(model, session=None, **kwargs):
-    # NOTE(lane): Because we use 'in_' operator in _secure_query(), delete()
+    # NOTE(kong): Because we use 'in_' operator in _secure_query(), delete()
     # method will raise error with default parameter. Please refer to
     # http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete
     _secure_query(model).filter_by(**kwargs).delete(synchronize_session=False)
 
 
-def _get_collection(model, limit=None, marker=None, sort_keys=None,
-                    sort_dirs=None, fields=None, query=None, **kwargs):
+def _get_collection(model, insecure=False, limit=None, marker=None,
+                    sort_keys=None, sort_dirs=None, fields=None, **kwargs):
     columns = (
         tuple([getattr(model, f) for f in fields if hasattr(model, f)])
         if fields else ()
     )
 
-    if query is None:
-        tags = kwargs.pop('tags', None)
-        query = _secure_query(model, *columns).filter_by(**kwargs)
+    tags = kwargs.pop('tags', None)
 
-        # To match the tag list, a resource must contain at least all of the
-        # tags present in the filter parameter.
-        if tags:
-            tag_attr = getattr(model, 'tags')
-            if len(tags) == 1:
-                expr = tag_attr.contains(tags)
-            else:
-                expr = sa.and_(*[tag_attr.contains(tag) for tag in tags])
-            query = query.filter(expr)
+    query = (b.model_query(model, *columns) if insecure
+             else _secure_query(model, *columns))
+    query = query.filter_by(**kwargs)
+
+    # To match the tag list, a resource must contain at least all of the
+    # tags present in the filter parameter.
+    if tags:
+        tag_attr = getattr(model, 'tags')
+        if len(tags) == 1:
+            expr = tag_attr.contains(tags)
+        else:
+            expr = sa.and_(*[tag_attr.contains(tag) for tag in tags])
+        query = query.filter(expr)
 
     try:
         return _paginate_query(
@@ -184,36 +196,32 @@ def _get_collection(model, limit=None, marker=None, sort_keys=None,
             query
         )
     except Exception as e:
-        raise exc.DBQueryEntryException(
+        raise exc.DBQueryEntryError(
             "Failed when querying database, error type: %s, "
             "error message: %s" % (e.__class__.__name__, e.message)
         )
 
 
-def _get_collection_sorted_by_name(model, fields=None, sort_keys=['name'],
-                                   **kwargs):
-    # Note(lane): Sometimes tenant_A needs to get resources of tenant_B,
-    # especially in resource sharing scenario, the resource owner needs to
-    # check if the resource is used by a member.
-    columns = (
-        tuple([getattr(model, f) for f in fields if hasattr(model, f)])
-        if fields else ()
-    )
-
-    query = (b.model_query(model, *columns) if 'project_id' in kwargs
-             else _secure_query(model, *columns))
-
+def _get_collection_sorted_by_name(model, insecure=False, fields=None,
+                                   sort_keys=['name'], **kwargs):
     return _get_collection(
         model=model,
-        query=query,
+        insecure=insecure,
         sort_keys=sort_keys,
         fields=fields,
         **kwargs
     )
 
 
-def _get_collection_sorted_by_time(model, sort_keys=['created_at'], **kwargs):
-    return _get_collection(model, sort_keys=sort_keys, **kwargs)
+def _get_collection_sorted_by_time(model, insecure=False, fields=None,
+                                   sort_keys=['created_at'], **kwargs):
+    return _get_collection(
+        model=model,
+        insecure=insecure,
+        sort_keys=sort_keys,
+        fields=fields,
+        **kwargs
+    )
 
 
 def _get_db_object_by_name(model, name):
@@ -345,7 +353,7 @@ def get_workflow_definitions(sort_keys=['created_at'], fields=None, **kwargs):
         fields.remove('input')
         fields.append('spec')
 
-    return _get_collection(
+    return _get_collection_sorted_by_name(
         model=models.WorkflowDefinition,
         sort_keys=sort_keys,
         fields=fields,
@@ -385,16 +393,29 @@ def update_workflow_definition(identifier, values, session=None):
         )
 
     if wf_def.scope == 'public' and values['scope'] == 'private':
-        cron_triggers = _get_associated_cron_triggers(identifier)
+        # Check cron triggers.
+        cron_triggers = get_cron_triggers(insecure=True, workflow_id=wf_def.id)
 
-        try:
-            [get_cron_trigger(name) for name in cron_triggers]
-        except exc.DBEntityNotFoundError:
-            raise exc.NotAllowedException(
-                "Can not update scope of workflow that has triggers "
-                "associated in other tenants."
-                "[workflow_identifier=%s]" % identifier
-            )
+        for c_t in cron_triggers:
+            if c_t.project_id != wf_def.project_id:
+                raise exc.NotAllowedException(
+                    "Can not update scope of workflow that has cron triggers "
+                    "associated in other tenants. [workflow_identifier=%s]" %
+                    identifier
+                )
+
+        # Check event triggers.
+        event_triggers = get_event_triggers(
+            insecure=True,
+            workflow_id=wf_def.id
+        )
+        for e_t in event_triggers:
+            if e_t.project_id != wf_def.project_id:
+                raise exc.NotAllowedException(
+                    "Can not update scope of workflow that has event triggers "
+                    "associated in other tenants. [workflow_identifier=%s]" %
+                    identifier
+                )
 
     wf_def.update(values.copy())
 
@@ -423,34 +444,27 @@ def delete_workflow_definition(identifier, session=None):
         msg = "Attempt to delete a system workflow: %s" % identifier
         raise exc.DataAccessException(msg)
 
-    cron_triggers = _get_associated_cron_triggers(identifier)
-
+    cron_triggers = get_cron_triggers(insecure=True, workflow_id=wf_def.id)
     if cron_triggers:
         raise exc.DBError(
-            "Can't delete workflow that has triggers associated. "
-            "[workflow_identifier=%s], [cron_trigger_name(s)=%s]" %
-            (identifier, ', '.join(cron_triggers))
+            "Can't delete workflow that has cron triggers associated. "
+            "[workflow_identifier=%s], [cron_trigger_id(s)=%s]" %
+            (identifier, ', '.join([t.id for t in cron_triggers]))
+        )
+
+    event_triggers = get_event_triggers(insecure=True, workflow_id=wf_def.id)
+
+    if event_triggers:
+        raise exc.DBError(
+            "Can't delete workflow that has event triggers associated. "
+            "[workflow_identifier=%s], [event_trigger_id(s)=%s]" %
+            (identifier, ', '.join([t.id for t in event_triggers]))
         )
 
     # Delete workflow members first.
     delete_resource_members(resource_type='workflow', resource_id=wf_def.id)
 
     session.delete(wf_def)
-
-
-def _get_associated_cron_triggers(wf_identifier):
-    criterion = (
-        {'workflow_id': wf_identifier}
-        if uuidutils.is_uuid_like(wf_identifier)
-        else {'workflow_name': wf_identifier}
-    )
-
-    cron_triggers = b.model_query(
-        models.CronTrigger,
-        [models.CronTrigger.name]
-    ).filter_by(**criterion).all()
-
-    return [t[0] for t in cron_triggers]
 
 
 @b.session_aware()
@@ -494,10 +508,9 @@ def load_action_definition(name):
     return _get_action_definition(name)
 
 
-def get_action_definitions(sort_keys=['name'], **kwargs):
-    return _get_collection(
+def get_action_definitions(**kwargs):
+    return _get_collection_sorted_by_name(
         model=models.ActionDefinition,
-        sort_keys=sort_keys,
         **kwargs
     )
 
@@ -758,10 +771,9 @@ def ensure_workflow_execution_exists(id):
     get_workflow_execution(id)
 
 
-def get_workflow_executions(sort_keys=['created_at'], **kwargs):
-    return _get_collection(
+def get_workflow_executions(**kwargs):
+    return _get_collection_sorted_by_time(
         models.WorkflowExecution,
-        sort_keys=sort_keys,
         **kwargs
     )
 
@@ -1030,8 +1042,12 @@ def load_cron_trigger(name):
     return _get_cron_trigger(name)
 
 
-def get_cron_triggers(**kwargs):
-    return _get_collection_sorted_by_name(models.CronTrigger, **kwargs)
+def get_cron_triggers(insecure=False, **kwargs):
+    return _get_collection_sorted_by_name(
+        models.CronTrigger,
+        insecure=insecure,
+        **kwargs
+    )
 
 
 @b.session_aware()
@@ -1141,17 +1157,6 @@ def delete_cron_triggers(**kwargs):
 
 def _get_cron_trigger(name):
     return _get_db_object_by_name(models.CronTrigger, name)
-
-
-def _get_cron_triggers(*columns, **kwargs):
-    query = b.model_query(models.CronTrigger)
-
-    return _get_collection(
-        models.CronTrigger,
-        query=query,
-        *columns,
-        **kwargs
-    )
 
 
 # Environments.
@@ -1371,7 +1376,7 @@ def delete_resource_member(resource_id, res_type, member_id, session=None):
             (resource_id, member_id)
         )
 
-    # TODO(lane): Check association with cron triggers when deleting a workflow
+    # TODO(kong): Check association with cron triggers when deleting a workflow
     # member which is in 'accepted' status.
 
     session.delete(res_member)
@@ -1392,3 +1397,85 @@ def _get_accepted_resources(res_type):
     ).all()
 
     return resources
+
+
+# Event triggers.
+
+def get_event_trigger(id, insecure=False):
+    event_trigger = _get_event_trigger(id, insecure)
+
+    if not event_trigger:
+        raise exc.DBEntityNotFoundError(
+            "Event trigger not found [id=%s]." % id
+        )
+
+    return event_trigger
+
+
+def get_event_triggers(insecure=False, **kwargs):
+    return _get_collection_sorted_by_time(
+        model=models.EventTrigger,
+        insecure=insecure,
+        **kwargs
+    )
+
+
+@b.session_aware()
+def create_event_trigger(values, session=None):
+    event_trigger = models.EventTrigger()
+
+    event_trigger.update(values)
+
+    try:
+        event_trigger.save(session=session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntryError(
+            "Duplicate entry for event trigger %s: %s"
+            % (event_trigger.id, e.columns)
+        )
+    # TODO(nmakhotkin): Remove this 'except' after fixing
+    # https://bugs.launchpad.net/oslo.db/+bug/1458583.
+    except db_exc.DBError as e:
+        raise exc.DBDuplicateEntryError(
+            "Duplicate entry for event trigger: %s" % e
+        )
+
+    return event_trigger
+
+
+@b.session_aware()
+def update_event_trigger(id, values, session=None):
+    event_trigger = _get_event_trigger(id)
+
+    if not event_trigger:
+        raise exc.DBEntityNotFoundError("Event trigger not found [id=%s]" % id)
+
+    event_trigger.update(values.copy())
+
+    return event_trigger
+
+
+@b.session_aware()
+def delete_event_trigger(id, session=None):
+    event_trigger = _get_event_trigger(id)
+
+    if not event_trigger:
+        raise exc.DBEntityNotFoundError("Event trigger not found [id=%s]" % id)
+
+    session.delete(event_trigger)
+
+
+@b.session_aware()
+def delete_event_triggers(**kwargs):
+    return _delete_all(models.EventTrigger, **kwargs)
+
+
+def _get_event_trigger(id, insecure=False):
+    if insecure:
+        return b.model_query(models.EventTrigger).filter_by(id=id).first()
+    else:
+        return _get_db_object_by_id(models.EventTrigger, id)
+
+
+def ensure_event_trigger_exists(id):
+    get_event_trigger(id)
