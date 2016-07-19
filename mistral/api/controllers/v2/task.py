@@ -24,6 +24,7 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api import access_control as acl
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action_execution
+from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -148,8 +149,91 @@ def _get_task_resources_with_results(marker=None, limit=None,
     )
 
 
+class TaskExecutionsController(rest.RestController):
+    @wsme_pecan.wsexpose(resources.Executions, types.uuid, types.uuid, int,
+                         types.uniquelist, types.list, types.uniquelist,
+                         wtypes.text, types.uuid, wtypes.text, types.jsontype,
+                         STATE_TYPES, wtypes.text, types.jsontype,
+                         types.jsontype, wtypes.text, wtypes.text)
+    def get_all(self, task_execution_id, marker=None, limit=None,
+                sort_keys='created_at', sort_dirs='asc', fields='',
+                workflow_name=None, workflow_id=None, description=None,
+                params=None, state=None, state_info=None, input=None,
+                output=None, created_at=None, updated_at=None):
+        """Return all executions that belong to the given task execution.
+
+        :param task_execution_id: Task task execution ID.
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatibility.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: created_at, which is backward compatible.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be chosen.
+                          Default: desc. The length of sort_dirs can be equal
+                          or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
+        :param workflow_name: Optional. Keep only resources with a specific
+                              workflow name.
+        :param workflow_id: Optional. Keep only resources with a specific
+                            workflow ID.
+        :param description: Optional. Keep only resources with a specific
+                            description.
+        :param params: Optional. Keep only resources with specific parameters.
+        :param state: Optional. Keep only resources with a specific state.
+        :param state_info: Optional. Keep only resources with specific
+                           state information.
+        :param input: Optional. Keep only resources with a specific input.
+        :param output: Optional. Keep only resources with a specific output.
+        :param created_at: Optional. Keep only resources created at a specific
+                           time and date.
+        :param updated_at: Optional. Keep only resources with specific latest
+                           update time and date.
+        """
+        acl.enforce('executions:list', context.ctx())
+
+        filters = rest_utils.filters_to_dict(
+            task_execution_id=task_execution_id,
+            created_at=created_at,
+            workflow_name=workflow_name,
+            workflow_id=workflow_id,
+            params=params,
+            state=state,
+            state_info=state_info,
+            input=input,
+            output=output,
+            updated_at=updated_at,
+            description=description
+        )
+
+        LOG.info(
+            "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
+            "sort_dirs=%s, filters=%s", marker, limit, sort_keys, sort_dirs,
+            filters
+        )
+
+        return rest_utils.get_all(
+            resources.Executions,
+            resources.Execution,
+            db_api.get_workflow_executions,
+            db_api.get_workflow_execution,
+            resource_function=None,
+            marker=marker,
+            limit=limit,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields,
+            **filters
+        )
+
+
 class TasksController(rest.RestController):
     action_executions = action_execution.TasksActionExecutionController()
+    workflow_executions = TaskExecutionsController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Task, wtypes.text)
