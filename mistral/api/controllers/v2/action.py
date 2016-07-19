@@ -21,7 +21,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
-from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
@@ -33,62 +33,6 @@ from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
 
 LOG = logging.getLogger(__name__)
-SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
-
-
-class Action(resource.Resource):
-    """Action resource.
-
-    NOTE: *name* is immutable. Note that name and description get inferred
-    from action definition when Mistral service receives a POST request.
-    So they can't be changed in another way.
-
-    """
-
-    id = wtypes.text
-    name = wtypes.text
-    is_system = bool
-    input = wtypes.text
-
-    description = wtypes.text
-    tags = [wtypes.text]
-    definition = wtypes.text
-    scope = SCOPE_TYPES
-
-    created_at = wtypes.text
-    updated_at = wtypes.text
-
-    @classmethod
-    def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   name='flow',
-                   definition='HERE GOES ACTION DEFINITION IN MISTRAL DSL v2',
-                   tags=['large', 'expensive'],
-                   scope='private',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
-
-
-class Actions(resource.ResourceList):
-    """A collection of Actions."""
-
-    actions = [Action]
-
-    def __init__(self, **kwargs):
-        self._type = 'actions'
-
-        super(Actions, self).__init__(**kwargs)
-
-    @classmethod
-    def sample(cls):
-        actions_sample = cls()
-        actions_sample.actions = [Action.sample()]
-        actions_sample.next = "http://localhost:8989/v2/actions?" \
-                              "sort_keys=id,name&" \
-                              "sort_dirs=asc,desc&limit=10&" \
-                              "marker=123e4567-e89b-12d3-a456-426655440000"
-
-        return actions_sample
 
 
 class ActionsController(rest.RestController, hooks.HookController):
@@ -101,7 +45,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         spec_parser.get_action_list_spec_from_yaml)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Action, wtypes.text)
+    @wsme_pecan.wsexpose(resources.Action, wtypes.text)
     def get(self, identifier):
         """Return the named action.
 
@@ -113,7 +57,7 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         db_model = db_api.get_action_definition(identifier)
 
-        return Action.from_dict(db_model.to_dict())
+        return resources.Action.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -128,19 +72,19 @@ class ActionsController(rest.RestController, hooks.HookController):
         LOG.info("Update action(s) [definition=%s]" % definition)
         scope = pecan.request.GET.get('scope', 'private')
 
-        if scope not in SCOPE_TYPES.values:
+        if scope not in resources.SCOPE_TYPES.values:
             raise exc.InvalidModelException(
                 "Scope must be one of the following: %s; actual: "
-                "%s" % (SCOPE_TYPES.values, scope)
+                "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
         with db_api.transaction():
             db_acts = actions.update_actions(definition, scope=scope)
 
         models_dicts = [db_act.to_dict() for db_act in db_acts]
-        action_list = [Action.from_dict(act) for act in models_dicts]
+        action_list = [resources.Action.from_dict(act) for act in models_dicts]
 
-        return Actions(actions=action_list).to_json()
+        return resources.Actions(actions=action_list).to_json()
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -155,10 +99,10 @@ class ActionsController(rest.RestController, hooks.HookController):
         scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
 
-        if scope not in SCOPE_TYPES.values:
+        if scope not in resources.SCOPE_TYPES.values:
             raise exc.InvalidModelException(
                 "Scope must be one of the following: %s; actual: "
-                "%s" % (SCOPE_TYPES.values, scope)
+                "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
         LOG.info("Create action(s) [definition=%s]" % definition)
@@ -167,9 +111,9 @@ class ActionsController(rest.RestController, hooks.HookController):
             db_acts = actions.create_actions(definition, scope=scope)
 
         models_dicts = [db_act.to_dict() for db_act in db_acts]
-        action_list = [Action.from_dict(act) for act in models_dicts]
+        action_list = [resources.Action.from_dict(act) for act in models_dicts]
 
-        return Actions(actions=action_list).to_json()
+        return resources.Actions(actions=action_list).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
@@ -187,9 +131,9 @@ class ActionsController(rest.RestController, hooks.HookController):
 
             db_api.delete_action_definition(identifier)
 
-    @wsme_pecan.wsexpose(Actions, types.uuid, int, types.uniquelist,
+    @wsme_pecan.wsexpose(resources.Actions, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, SCOPE_TYPES, wtypes.text,
+                         wtypes.text, resources.SCOPE_TYPES, wtypes.text,
                          types.uniquelist, wtypes.text, wtypes.text,
                          wtypes.text, bool, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='name',
@@ -257,8 +201,8 @@ class ActionsController(rest.RestController, hooks.HookController):
                  sort_dirs, filters)
 
         return rest_utils.get_all(
-            Actions,
-            Action,
+            resources.Actions,
+            resources.Action,
             db_api.get_action_definitions,
             db_api.get_action_definition_by_id,
             resource_function=None,
