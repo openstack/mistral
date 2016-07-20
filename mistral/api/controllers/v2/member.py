@@ -11,8 +11,8 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+
 import functools
-import uuid
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -21,8 +21,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
-from mistral.api.controllers import resource
-from mistral.api.controllers.v2 import types
+from mistral.api.controllers.v2 import resources
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -31,38 +30,6 @@ from mistral.utils import rest_utils
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
-
-
-class Member(resource.Resource):
-    id = types.uuid
-    resource_id = wtypes.text
-    resource_type = wtypes.text
-    project_id = wtypes.text
-    member_id = wtypes.text
-    status = wtypes.Enum(str, 'pending', 'accepted', 'rejected')
-    created_at = wtypes.text
-    updated_at = wtypes.text
-
-    @classmethod
-    def sample(cls):
-        return cls(
-            id=str(uuid.uuid4()),
-            resource_id=str(uuid.uuid4()),
-            resource_type='workflow',
-            project_id='40a908dbddfe48ad80a87fb30fa70a03',
-            member_id='a7eb669e9819420ea4bd1453e672c0a7',
-            status='accepted',
-            created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
-        )
-
-
-class Members(resource.ResourceList):
-    members = [Member]
-
-    @classmethod
-    def sample(cls):
-        return cls(members=[Member.sample()])
 
 
 def auth_enable_check(func):
@@ -86,10 +53,11 @@ class MembersController(rest.RestController):
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
-    @wsme_pecan.wsexpose(Member, wtypes.text)
+    @wsme_pecan.wsexpose(resources.Member, wtypes.text)
     def get(self, member_id):
         """Shows resource member details."""
         acl.enforce('members:get', context.ctx())
+
         LOG.info(
             "Fetch resource member [resource_id=%s, resource_type=%s, "
             "member_id=%s].",
@@ -104,14 +72,15 @@ class MembersController(rest.RestController):
             member_id
         ).to_dict()
 
-        return Member.from_dict(member_dict)
+        return resources.Member.from_dict(member_dict)
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
-    @wsme_pecan.wsexpose(Members)
+    @wsme_pecan.wsexpose(resources.Members)
     def get_all(self):
         """Return all members with whom the resource has been shared."""
         acl.enforce('members:list', context.ctx())
+
         LOG.info(
             "Fetch resource members [resource_id=%s, resource_type=%s].",
             self.resource_id,
@@ -122,16 +91,24 @@ class MembersController(rest.RestController):
             self.resource_id,
             self.type
         )
-        members = [Member.from_dict(member.to_dict()) for member in db_members]
+        members = [
+            resources.Member.from_dict(member.to_dict())
+            for member in db_members
+        ]
 
-        return Members(members=members)
+        return resources.Members(members=members)
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
-    @wsme_pecan.wsexpose(Member, body=Member, status_code=201)
+    @wsme_pecan.wsexpose(
+        resources.Member,
+        body=resources.Member,
+        status_code=201
+    )
     def post(self, member_info):
         """Shares the resource to a new member."""
         acl.enforce('members:create', context.ctx())
+
         LOG.info(
             "Share resource to a member. [resource_id=%s, "
             "resource_type=%s, member_info=%s].",
@@ -159,14 +136,15 @@ class MembersController(rest.RestController):
 
         db_member = db_api.create_resource_member(resource_member)
 
-        return Member.from_dict(db_member.to_dict())
+        return resources.Member.from_dict(db_member.to_dict())
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
-    @wsme_pecan.wsexpose(Member, wtypes.text, body=Member)
+    @wsme_pecan.wsexpose(resources.Member, wtypes.text, body=resources.Member)
     def put(self, member_id, member_info):
         """Sets the status for a resource member."""
         acl.enforce('members:update', context.ctx())
+
         LOG.info(
             "Update resource member status. [resource_id=%s, "
             "member_id=%s, member_info=%s].",
@@ -186,7 +164,7 @@ class MembersController(rest.RestController):
             {'status': member_info.status}
         )
 
-        return Member.from_dict(db_member.to_dict())
+        return resources.Member.from_dict(db_member.to_dict())
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
@@ -194,6 +172,7 @@ class MembersController(rest.RestController):
     def delete(self, member_id):
         """Deletes a member from the member list of a resource."""
         acl.enforce('members:delete', context.ctx())
+
         LOG.info(
             "Delete resource member. [resource_id=%s, "
             "resource_type=%s, member_id=%s].",
