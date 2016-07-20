@@ -162,6 +162,65 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
+    def test_task_error_with_on_handlers(self):
+        # Check that state of all workflow objects (workflow executions,
+        # task executions, action executions) is properly persisted in case
+        # of an error at task level and this task has on-XXX handlers.
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                my_var: <% invalid_yaql_function() %>
+              on-success:
+                - task2
+              on-error:
+                - task3
+
+            task2:
+              description: This task must never run.
+              action: std.noop
+
+            task3:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        # Now we need to make sure that task is in ERROR state but action
+        # is in SUCCESS because error occurred in 'publish' clause which
+        # must not affect action state.
+        task_execs = wf_ex.task_executions
+
+        # NOTE: task3 must not run because on-error handler triggers only
+        # on error outcome of an action (or workflow) associated with a task.
+        self.assertEqual(1, len(task_execs))
+
+        task_ex = self._assert_single_item(
+            task_execs,
+            name='task1',
+            state=states.ERROR
+        )
+
+        action_execs = task_ex.executions
+
+        self.assertEqual(1, len(action_execs))
+
+        self._assert_single_item(
+            action_execs,
+            name='std.noop',
+            state=states.SUCCESS
+        )
+
     def test_workflow_error(self):
         # Check that state of all workflow objects (workflow executions,
         # task executions, action executions) is properly persisted in case
