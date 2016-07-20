@@ -18,7 +18,7 @@ The list of needed packages is shown below:
 
 In case of Ubuntu, just run::
 
-    apt-get install python-dev python-setuptools libffi-dev libxslt1-dev libxml2-dev libyaml-dev libssl-dev
+    apt-get install python-dev python-setuptools python-pip libffi-dev libxslt1-dev libxml2-dev libyaml-dev libssl-dev
 
 **NOTE:** **Mistral can be used without authentication at all or it can work with OpenStack.** In case of OpenStack, it works **only on Keystone v3**, make sure **Keystone v3** is installed.
 
