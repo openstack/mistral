@@ -32,7 +32,7 @@ class TestCORSMiddleware(base.APITest):
         cfg.CONF.register_opts(cors_middleware.CORS_OPTS, 'cors')
 
         # Load up our valid domain values before the application is created.
-        cfg.CONF.set_override(
+        self.override_config(
             "allowed_origin",
             "http://valid.example.com",
             group='cors'

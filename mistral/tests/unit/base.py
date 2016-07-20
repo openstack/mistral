@@ -202,6 +202,11 @@ class BaseTest(base.BaseTestCase):
     def _sleep(self, seconds):
         time.sleep(seconds)
 
+    def override_config(self, name, override, group=None):
+        """Cleanly override CONF variables."""
+        cfg.CONF.set_override(name, override, group)
+        self.addCleanup(cfg.CONF.clear_override, name, group)
+
 
 class DbTestCase(BaseTest):
     is_heavy_init_called = False
