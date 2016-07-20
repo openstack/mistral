@@ -115,6 +115,8 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         context = auth_context.MistralContext(**ctx)
         auth_context.set_ctx(context)
 
+        return context
+
     def publish_message(self, body, reply_to, corr_id, type='response'):
         with kombu.producers[self.conn].acquire(block=True) as producer:
             producer.publish(
@@ -144,13 +146,13 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                   request)
 
         is_async = request.get('async', False)
-        rpc_context = request.get('rpc_ctx')
+        rpc_ctx = request.get('rpc_ctx')
         rpc_method_name = request.get('rpc_method')
         arguments = request.get('arguments')
         correlation_id = message.properties['correlation_id']
         reply_to = message.properties['reply_to']
 
-        self._set_auth_ctx(rpc_context)
+        rpc_context = self._set_auth_ctx(rpc_ctx)
 
         rpc_method = self._get_rpc_method(rpc_method_name)
 
