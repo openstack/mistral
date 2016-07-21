@@ -62,7 +62,8 @@ class TaskSpec(base.BaseSpec):
             "pause-before": policies.PAUSE_BEFORE_SCHEMA,
             "concurrency": policies.CONCURRENCY_SCHEMA,
             "target": types.NONEMPTY_STRING,
-            "keep-result": types.YAQL_OR_BOOLEAN
+            "keep-result": types.YAQL_OR_BOOLEAN,
+            "safe-rerun": types.YAQL_OR_BOOLEAN
         },
         "additionalProperties": False,
         "anyOf": [
@@ -108,6 +109,7 @@ class TaskSpec(base.BaseSpec):
         )
         self._target = data.get('target')
         self._keep_result = data.get('keep-result', True)
+        self._safe_rerun = data.get('safe-rerun', False)
 
         self._process_action_and_workflow()
 
@@ -125,6 +127,7 @@ class TaskSpec(base.BaseSpec):
         self.validate_yaql_expr(self._data.get('input', {}))
         self.validate_yaql_expr(self._data.get('publish', {}))
         self.validate_yaql_expr(self._data.get('keep-result', {}))
+        self.validate_yaql_expr(self._data.get('safe-rerun', {}))
 
     def _transform_with_items(self):
         raw = self._data.get('with-items', [])
@@ -209,6 +212,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_keep_result(self):
         return self._keep_result
+
+    def get_safe_rerun(self):
+        return self._safe_rerun
 
 
 class DirectWorkflowTaskSpec(TaskSpec):
