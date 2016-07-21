@@ -518,7 +518,7 @@ class ExecutorClient(base.Executor):
         self._client = get_rpc_client_driver()(rpc_conf_dict)
 
     def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params, target=None, async=True):
+                   action_params, target=None, async=True, safe_rerun=False):
         """Sends a request to run action to executor.
 
         :param action_ex_id: Action execution id.
@@ -528,6 +528,8 @@ class ExecutorClient(base.Executor):
         :param target: Target (group of action executors).
         :param async: If True, run action in asynchronous mode (w/o waiting
             for completion).
+        :param safe_rerun: If true, action would be re-run if executor dies
+            during execution.
         :return: Action result.
         """
 
@@ -535,7 +537,7 @@ class ExecutorClient(base.Executor):
             'action_ex_id': action_ex_id,
             'action_class_str': action_class_str,
             'attributes': attributes,
-            'params': action_params
+            'params': action_params,
         }
 
         rpc_client_method = (self._client.async_call
