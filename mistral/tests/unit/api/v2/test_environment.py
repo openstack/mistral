@@ -20,7 +20,7 @@ import uuid
 import mock
 import six
 
-from mistral.api.controllers.v2 import environment as api
+from mistral.api.controllers.v2 import resources
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db
 from mistral import exceptions as exc
@@ -142,7 +142,7 @@ class TestEnvironmentController(base.APITest):
         self.assertDictEqual(expected, actual)
 
     def test_resource(self):
-        resource = api.Environment(**copy.deepcopy(ENVIRONMENT))
+        resource = resources.Environment(**copy.deepcopy(ENVIRONMENT))
 
         self._assert_dict_equal(
             copy.deepcopy(ENVIRONMENT),

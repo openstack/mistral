@@ -274,6 +274,7 @@ class TasksController(rest.RestController):
         :param task: Task execution object.
         """
         acl.enforce('tasks:update', context.ctx())
+
         LOG.info("Update task execution [id=%s, task=%s]" % (id, task))
 
         task_ex = db_api.get_task_execution(id)

@@ -22,6 +22,123 @@ from mistral.workflow import states
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 
 
+class Workbook(resource.Resource):
+    """Workbook resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+
+    definition = wtypes.text
+    "workbook definition in Mistral v2 DSL"
+    tags = [wtypes.text]
+    scope = SCOPE_TYPES
+    "'private' or 'public'"
+
+    created_at = wtypes.text
+    updated_at = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(id='123e4567-e89b-12d3-a456-426655440000',
+                   name='book',
+                   definition='HERE GOES'
+                        'WORKBOOK DEFINITION IN MISTRAL DSL v2',
+                   tags=['large', 'expensive'],
+                   scope='private',
+                   created_at='1970-01-01T00:00:00.000000',
+                   updated_at='1970-01-01T00:00:00.000000')
+
+
+class Workbooks(resource.ResourceList):
+    """A collection of Workbooks."""
+
+    workbooks = [Workbook]
+
+    def __init__(self, **kwargs):
+        self._type = 'workbooks'
+
+        super(Workbooks, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        return cls(workbooks=[Workbook.sample()])
+
+
+class Workflow(resource.Resource):
+    """Workflow resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+    input = wtypes.text
+
+    definition = wtypes.text
+    "Workflow definition in Mistral v2 DSL"
+    tags = [wtypes.text]
+    scope = SCOPE_TYPES
+    "'private' or 'public'"
+    project_id = wtypes.text
+
+    created_at = wtypes.text
+    updated_at = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(id='123e4567-e89b-12d3-a456-426655440000',
+                   name='flow',
+                   input='param1, param2',
+                   definition='HERE GOES'
+                        'WORKFLOW DEFINITION IN MISTRAL DSL v2',
+                   tags=['large', 'expensive'],
+                   scope='private',
+                   project_id='a7eb669e9819420ea4bd1453e672c0a7',
+                   created_at='1970-01-01T00:00:00.000000',
+                   updated_at='1970-01-01T00:00:00.000000')
+
+    @classmethod
+    def from_dict(cls, d):
+        e = cls()
+        input_list = []
+
+        for key, val in d.items():
+            if hasattr(e, key):
+                setattr(e, key, val)
+
+        if 'spec' in d:
+            input = d.get('spec', {}).get('input', [])
+            for param in input:
+                if isinstance(param, dict):
+                    for k, v in param.items():
+                        input_list.append("%s=%s" % (k, v))
+                else:
+                    input_list.append(param)
+
+            setattr(e, 'input', ", ".join(input_list) if input_list else '')
+
+        return e
+
+
+class Workflows(resource.ResourceList):
+    """A collection of workflows."""
+
+    workflows = [Workflow]
+
+    def __init__(self, **kwargs):
+        self._type = 'workflows'
+
+        super(Workflows, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        workflows_sample = cls()
+        workflows_sample.workflows = [Workflow.sample()]
+        workflows_sample.next = ("http://localhost:8989/v2/workflows?"
+                                 "sort_keys=id,name&"
+                                 "sort_dirs=asc,desc&limit=10&"
+                                 "marker=123e4567-e89b-12d3-a456-426655440000")
+
+        return workflows_sample
+
+
 class Action(resource.Resource):
     """Action resource.
 
@@ -273,3 +390,153 @@ class ActionExecutions(resource.ResourceList):
     @classmethod
     def sample(cls):
         return cls(action_executions=[ActionExecution.sample()])
+
+
+class CronTrigger(resource.Resource):
+    """CronTrigger resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+    workflow_name = wtypes.text
+    workflow_id = wtypes.text
+    workflow_input = types.jsontype
+    workflow_params = types.jsontype
+
+    scope = SCOPE_TYPES
+
+    pattern = wtypes.text
+    remaining_executions = wtypes.IntegerType(minimum=1)
+    first_execution_time = wtypes.text
+    next_execution_time = wtypes.text
+
+    created_at = wtypes.text
+    updated_at = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            name='my_trigger',
+            workflow_name='my_wf',
+            workflow_id='123e4567-e89b-12d3-a456-426655441111',
+            workflow_input={},
+            workflow_params={},
+            scope='private',
+            pattern='* * * * *',
+            remaining_executions=42,
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000'
+        )
+
+
+class CronTriggers(resource.ResourceList):
+    """A collection of cron triggers."""
+
+    cron_triggers = [CronTrigger]
+
+    def __init__(self, **kwargs):
+        self._type = 'cron_triggers'
+
+        super(CronTriggers, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        return cls(cron_triggers=[CronTrigger.sample()])
+
+
+class Environment(resource.Resource):
+    """Environment resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+    description = wtypes.text
+    variables = types.jsontype
+    scope = SCOPE_TYPES
+    created_at = wtypes.text
+    updated_at = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            name='sample',
+            description='example environment entry',
+            variables={
+                'server': 'localhost',
+                'database': 'temp',
+                'timeout': 600,
+                'verbose': True
+            },
+            scope='private',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000'
+        )
+
+
+class Environments(resource.ResourceList):
+    """A collection of Environment resources."""
+
+    environments = [Environment]
+
+    def __init__(self, **kwargs):
+        self._type = 'environments'
+
+        super(Environments, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        return cls(environments=[Environment.sample()])
+
+
+class Member(resource.Resource):
+    id = types.uuid
+    resource_id = wtypes.text
+    resource_type = wtypes.text
+    project_id = wtypes.text
+    member_id = wtypes.text
+    status = wtypes.Enum(str, 'pending', 'accepted', 'rejected')
+    created_at = wtypes.text
+    updated_at = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            resource_id='123e4567-e89b-12d3-a456-426655440011',
+            resource_type='workflow',
+            project_id='40a908dbddfe48ad80a87fb30fa70a03',
+            member_id='a7eb669e9819420ea4bd1453e672c0a7',
+            status='accepted',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000'
+        )
+
+
+class Members(resource.ResourceList):
+    members = [Member]
+
+    @classmethod
+    def sample(cls):
+        return cls(members=[Member.sample()])
+
+
+class Service(resource.Resource):
+    """Service resource."""
+
+    name = wtypes.text
+
+    type = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(name='host1_1234', type='executor_group')
+
+
+class Services(resource.Resource):
+    """A collection of Services."""
+
+    services = [Service]
+
+    @classmethod
+    def sample(cls):
+        return cls(services=[Service.sample()])

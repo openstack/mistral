@@ -21,7 +21,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
-from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
@@ -33,49 +33,6 @@ from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
-SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
-
-
-class Workbook(resource.Resource):
-    """Workbook resource."""
-
-    id = wtypes.text
-    name = wtypes.text
-
-    definition = wtypes.text
-    "workbook definition in Mistral v2 DSL"
-    tags = [wtypes.text]
-    scope = SCOPE_TYPES
-    "'private' or 'public'"
-
-    created_at = wtypes.text
-    updated_at = wtypes.text
-
-    @classmethod
-    def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   name='book',
-                   definition='HERE GOES'
-                        'WORKBOOK DEFINITION IN MISTRAL DSL v2',
-                   tags=['large', 'expensive'],
-                   scope='private',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
-
-
-class Workbooks(resource.ResourceList):
-    """A collection of Workbooks."""
-
-    workbooks = [Workbook]
-
-    def __init__(self, **kwargs):
-        self._type = 'workbooks'
-
-        super(Workbooks, self).__init__(**kwargs)
-
-    @classmethod
-    def sample(cls):
-        return cls(workbooks=[Workbook.sample()])
 
 
 class WorkbooksController(rest.RestController, hooks.HookController):
@@ -85,54 +42,61 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         spec_parser.get_workbook_spec_from_yaml)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Workbook, wtypes.text)
+    @wsme_pecan.wsexpose(resources.Workbook, wtypes.text)
     def get(self, name):
         """Return the named workbook."""
         acl.enforce('workbooks:get', context.ctx())
+
         LOG.info("Fetch workbook [name=%s]" % name)
 
         db_model = db_api.get_workbook(name)
 
-        return Workbook.from_dict(db_model.to_dict())
+        return resources.Workbook.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
     def put(self):
         """Update a workbook."""
         acl.enforce('workbooks:update', context.ctx())
+
         definition = pecan.request.text
+
         LOG.info("Update workbook [definition=%s]" % definition)
 
         wb_db = workbooks.update_workbook_v2(definition)
 
-        return Workbook.from_dict(wb_db.to_dict()).to_json()
+        return resources.Workbook.from_dict(wb_db.to_dict()).to_json()
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
     def post(self):
         """Create a new workbook."""
         acl.enforce('workbooks:create', context.ctx())
+
         definition = pecan.request.text
+
         LOG.info("Create workbook [definition=%s]" % definition)
 
         wb_db = workbooks.create_workbook_v2(definition)
         pecan.response.status = 201
 
-        return Workbook.from_dict(wb_db.to_dict()).to_json()
+        return resources.Workbook.from_dict(wb_db.to_dict()).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named workbook."""
         acl.enforce('workbooks:delete', context.ctx())
+
         LOG.info("Delete workbook [name=%s]" % name)
 
         db_api.delete_workbook(name)
 
-    @wsme_pecan.wsexpose(Workbooks, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, wtypes.text, SCOPE_TYPES, wtypes.text,
-                         types.uniquelist, wtypes.text)
+    @wsme_pecan.wsexpose(resources.Workbooks, types.uuid, int,
+                         types.uniquelist, types.list, types.uniquelist,
+                         wtypes.text, wtypes.text, wtypes.text,
+                         resources.SCOPE_TYPES, wtypes.text, types.uniquelist,
+                         wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', created_at=None,
                 definition=None, name=None, scope=None, tag=None, tags=None,
@@ -190,8 +154,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
                  sort_keys, sort_dirs, fields, filters)
 
         return rest_utils.get_all(
-            Workbooks,
-            Workbook,
+            resources.Workbooks,
+            resources.Workbook,
             db_api.get_workbooks,
             db_api.get_workbook,
             resource_function=None,

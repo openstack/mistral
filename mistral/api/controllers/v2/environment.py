@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import json
-import uuid
 
 from oslo_log import log as logging
 from pecan import rest
@@ -21,7 +20,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
-from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -30,58 +29,13 @@ from mistral.utils import rest_utils
 
 
 LOG = logging.getLogger(__name__)
-SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
-
-SAMPLE = {
-    'server': 'localhost',
-    'database': 'temp',
-    'timeout': 600,
-    'verbose': True
-}
-
-
-class Environment(resource.Resource):
-    """Environment resource."""
-
-    id = wtypes.text
-    name = wtypes.text
-    description = wtypes.text
-    variables = types.jsontype
-    scope = SCOPE_TYPES
-    created_at = wtypes.text
-    updated_at = wtypes.text
-
-    @classmethod
-    def sample(cls):
-        return cls(id=str(uuid.uuid4()),
-                   name='sample',
-                   description='example environment entry',
-                   variables=SAMPLE,
-                   scope='private',
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
-
-
-class Environments(resource.ResourceList):
-    """A collection of Environment resources."""
-
-    environments = [Environment]
-
-    def __init__(self, **kwargs):
-        self._type = 'environments'
-
-        super(Environments, self).__init__(**kwargs)
-
-    @classmethod
-    def sample(cls):
-        return cls(environments=[Environment.sample()])
 
 
 class EnvironmentController(rest.RestController):
-    @wsme_pecan.wsexpose(Environments, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, types.jsontype, SCOPE_TYPES, wtypes.text,
-                         wtypes.text)
+    @wsme_pecan.wsexpose(resources.Environments, types.uuid, int,
+                         types.uniquelist, types.list, types.uniquelist,
+                         wtypes.text, wtypes.text, types.jsontype,
+                         resources.SCOPE_TYPES, wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', name=None, description=None,
                 variables=None, scope=None, created_at=None, updated_at=None):
@@ -131,8 +85,8 @@ class EnvironmentController(rest.RestController):
                  sort_dirs, filters)
 
         return rest_utils.get_all(
-            Environments,
-            Environment,
+            resources.Environments,
+            resources.Environment,
             db_api.get_environments,
             db_api.get_environment,
             resource_function=None,
@@ -145,21 +99,27 @@ class EnvironmentController(rest.RestController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Environment, wtypes.text)
+    @wsme_pecan.wsexpose(resources.Environment, wtypes.text)
     def get(self, name):
         """Return the named environment."""
         acl.enforce('environments:get', context.ctx())
+
         LOG.info("Fetch environment [name=%s]" % name)
 
         db_model = db_api.get_environment(name)
 
-        return Environment.from_dict(db_model.to_dict())
+        return resources.Environment.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Environment, body=Environment, status_code=201)
+    @wsme_pecan.wsexpose(
+        resources.Environment,
+        body=resources.Environment,
+        status_code=201
+    )
     def post(self, env):
         """Create a new environment."""
         acl.enforce('environments:create', context.ctx())
+
         LOG.info("Create environment [env=%s]" % env)
 
         self._validate_environment(
@@ -169,10 +129,10 @@ class EnvironmentController(rest.RestController):
 
         db_model = db_api.create_environment(env.to_dict())
 
-        return Environment.from_dict(db_model.to_dict())
+        return resources.Environment.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Environment, body=Environment)
+    @wsme_pecan.wsexpose(resources.Environment, body=resources.Environment)
     def put(self, env):
         """Update an environment."""
         acl.enforce('environments:update', context.ctx())
@@ -194,13 +154,14 @@ class EnvironmentController(rest.RestController):
 
         db_model = db_api.update_environment(env.name, env.to_dict())
 
-        return Environment.from_dict(db_model.to_dict())
+        return resources.Environment.from_dict(db_model.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
         """Delete the named environment."""
         acl.enforce('environments:delete', context.ctx())
+
         LOG.info("Delete environment [name=%s]" % name)
 
         db_api.delete_environment(name)
