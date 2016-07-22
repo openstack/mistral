@@ -20,7 +20,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
-from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import types
 from mistral import context
@@ -39,93 +39,26 @@ STATE_TYPES = wtypes.Enum(str, states.IDLE, states.RUNNING, states.SUCCESS,
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
 
-class Execution(resource.Resource):
-    """Execution resource."""
-
-    id = wtypes.text
-    "id is immutable and auto assigned."
-
-    workflow_name = wtypes.text
-    "reference to workflow definition"
-
-    workflow_id = wtypes.text
-    "reference to workflow ID"
-
-    description = wtypes.text
-    "description of workflow execution."
-
-    params = types.jsontype
-    "params define workflow type specific parameters. For example, reverse \
-    workflow takes one parameter 'task_name' that defines a target task."
-
-    task_execution_id = wtypes.text
-    "reference to the parent task execution"
-
-    state = wtypes.text
-    "state can be one of: IDLE, RUNNING, SUCCESS, ERROR, PAUSED"
-
-    state_info = wtypes.text
-    "an optional state information string"
-
-    input = types.jsontype
-    "input is a JSON structure containing workflow input values."
-
-    output = types.jsontype
-    "output is a workflow output."
-
-    created_at = wtypes.text
-    updated_at = wtypes.text
-
-    @classmethod
-    def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   workflow_name='flow',
-                   workflow_id='123e4567-e89b-12d3-a456-426655441111',
-                   description='this is the first execution.',
-                   state='SUCCESS',
-                   input={},
-                   output={},
-                   params={'env': {'k1': 'abc', 'k2': 123}},
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
-
-
-class Executions(resource.ResourceList):
-    """A collection of Execution resources."""
-
-    executions = [Execution]
-
-    def __init__(self, **kwargs):
-        self._type = 'executions'
-
-        super(Executions, self).__init__(**kwargs)
-
-    @classmethod
-    def sample(cls):
-        executions_sample = cls()
-        executions_sample.executions = [Execution.sample()]
-        executions_sample.next = "http://localhost:8989/v2/executions?" \
-                                 "sort_keys=id,workflow_name&" \
-                                 "sort_dirs=asc,desc&limit=10&" \
-                                 "marker=123e4567-e89b-12d3-a456-426655440000"
-
-        return executions_sample
-
-
 class ExecutionsController(rest.RestController):
     tasks = task.ExecutionTasksController()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Execution, wtypes.text)
+    @wsme_pecan.wsexpose(resources.Execution, wtypes.text)
     def get(self, id):
         """Return the specified Execution."""
         acl.enforce("executions:get", context.ctx())
         LOG.info("Fetch execution [id=%s]" % id)
 
-        return Execution.from_dict(db_api.get_workflow_execution(id).to_dict())
+        return resources.Execution.from_dict(
+            db_api.get_workflow_execution(id).to_dict()
+        )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Execution, wtypes.text, body=Execution)
+    @wsme_pecan.wsexpose(
+        resources.Execution,
+        wtypes.text,
+        body=resources.Execution
+    )
     def put(self, id, wf_ex):
         """Update the specified workflow execution.
 
@@ -213,12 +146,16 @@ class ExecutionsController(rest.RestController):
                     )
                 )
 
-        return Execution.from_dict(
+        return resources.Execution.from_dict(
             wf_ex if isinstance(wf_ex, dict) else wf_ex.to_dict()
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(Execution, body=Execution, status_code=201)
+    @wsme_pecan.wsexpose(
+        resources.Execution,
+        body=resources.Execution,
+        status_code=201
+    )
     def post(self, wf_ex):
         """Create a new Execution.
 
@@ -244,7 +181,7 @@ class ExecutionsController(rest.RestController):
             **exec_dict.get('params') or {}
         )
 
-        return Execution.from_dict(result)
+        return resources.Execution.from_dict(result)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
@@ -255,10 +192,10 @@ class ExecutionsController(rest.RestController):
 
         return db_api.delete_workflow_execution(id)
 
-    @wsme_pecan.wsexpose(Executions, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, wtypes.text,
-                         types.uuid, wtypes.text, types.jsontype, types.uuid,
-                         STATE_TYPES, wtypes.text, types.jsontype,
+    @wsme_pecan.wsexpose(resources.Executions, types.uuid, int,
+                         types.uniquelist, types.list, types.uniquelist,
+                         wtypes.text, types.uuid, wtypes.text, types.jsontype,
+                         types.uuid, STATE_TYPES, wtypes.text, types.jsontype,
                          types.jsontype, wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', workflow_name=None,
@@ -323,8 +260,8 @@ class ExecutionsController(rest.RestController):
         )
 
         return rest_utils.get_all(
-            Executions,
-            Execution,
+            resources.Executions,
+            resources.Execution,
             db_api.get_workflow_executions,
             db_api.get_workflow_execution,
             resource_function=None,

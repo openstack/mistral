@@ -85,7 +85,6 @@ SUB_WF_EX_JSON = {
     'id': SUB_WF_EX.id,
     'workflow_name': 'some',
     'workflow_id': '123e4567-e89b-12d3-a456-426655441111',
-    'description': 'foobar',
     'input': '{"foo": "bar"}',
     'output': '{}',
     'params': '{"env": {"k1": "abc"}}',
@@ -95,6 +94,12 @@ SUB_WF_EX_JSON = {
     'updated_at': '1970-01-01 00:00:00',
     'task_execution_id': SUB_WF_EX.task_execution_id
 }
+
+MOCK_SUB_WF_EXECUTIONS = mock.MagicMock(return_value=[SUB_WF_EX])
+
+SUB_WF_EX_JSON_WITH_DESC = copy.deepcopy(SUB_WF_EX_JSON)
+SUB_WF_EX_JSON_WITH_DESC['description'] = SUB_WF_EX.description
+
 
 UPDATED_WF_EX = copy.deepcopy(WF_EX)
 UPDATED_WF_EX['state'] = states.PAUSED
@@ -110,7 +115,7 @@ UPDATED_WF_EX_ENV_DESC['description'] = 'foobar'
 UPDATED_WF_EX_ENV_DESC['params'] = {'env': {'k1': 'def'}}
 
 WF_EX_JSON_WITH_DESC = copy.deepcopy(WF_EX_JSON)
-WF_EX_JSON_WITH_DESC['description'] = "execution description."
+WF_EX_JSON_WITH_DESC['description'] = WF_EX.description
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 MOCK_SUB_WF_EX = mock.MagicMock(return_value=SUB_WF_EX)
@@ -128,8 +133,6 @@ class TestExecutionsController(base.APITest):
     def test_get(self):
         resp = self.app.get('/v2/executions/123')
 
-        self.maxDiff = None
-
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
 
@@ -137,10 +140,8 @@ class TestExecutionsController(base.APITest):
     def test_get_sub_wf_ex(self):
         resp = self.app.get('/v2/executions/123')
 
-        self.maxDiff = None
-
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(SUB_WF_EX_JSON, resp.json)
+        self.assertDictEqual(SUB_WF_EX_JSON_WITH_DESC, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -524,3 +525,21 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(400, resp.status_int)
 
         self.assertIn("Unknown sort direction", resp.body.decode())
+
+    @mock.patch.object(
+        db_api,
+        'get_workflow_executions',
+        MOCK_SUB_WF_EXECUTIONS
+    )
+    def test_get_task_workflow_executions(self):
+        resp = self.app.get(
+            '/v2/tasks/%s/workflow_executions' % SUB_WF_EX.task_execution_id
+        )
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['executions']))
+        self.assertDictEqual(
+            SUB_WF_EX_JSON_WITH_DESC,
+            resp.json['executions'][0]
+        )
