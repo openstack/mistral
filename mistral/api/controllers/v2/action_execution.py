@@ -21,7 +21,7 @@ from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
-from mistral.api.controllers import resource
+from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -33,65 +33,6 @@ from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
-
-
-class ActionExecution(resource.Resource):
-    """ActionExecution resource."""
-
-    id = wtypes.text
-
-    workflow_name = wtypes.text
-    task_name = wtypes.text
-    task_execution_id = wtypes.text
-
-    state = wtypes.text
-
-    state_info = wtypes.text
-    tags = [wtypes.text]
-    name = wtypes.text
-    description = wtypes.text
-    accepted = bool
-    input = types.jsontype
-    output = types.jsontype
-    created_at = wtypes.text
-    updated_at = wtypes.text
-    params = types.jsontype
-
-    @classmethod
-    def sample(cls):
-        return cls(
-            id='123e4567-e89b-12d3-a456-426655440000',
-            workflow_name='flow',
-            task_name='task1',
-            workflow_execution_id='653e4127-e89b-12d3-a456-426655440076',
-            task_execution_id='343e45623-e89b-12d3-a456-426655440090',
-            state=states.SUCCESS,
-            state_info=states.SUCCESS,
-            tags=['foo', 'fee'],
-            name='std.echo',
-            description='My running action',
-            accepted=True,
-            input={'first_name': 'John', 'last_name': 'Doe'},
-            output={'some_output': 'Hello, John Doe!'},
-            created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000',
-            params={'save_result': True}
-        )
-
-
-class ActionExecutions(resource.ResourceList):
-    """A collection of action_executions."""
-
-    action_executions = [ActionExecution]
-
-    def __init__(self, **kwargs):
-        self._type = 'action_executions'
-
-        super(ActionExecutions, self).__init__(**kwargs)
-
-    @classmethod
-    def sample(cls):
-        return cls(action_executions=[ActionExecution.sample()])
 
 
 def _load_deferred_output_field(action_ex):
@@ -111,7 +52,7 @@ def _get_action_execution_resource(action_ex):
 
     # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
     # TODO(nmakhotkin): Use db_model for this instead.
-    res = ActionExecution.from_dict(action_ex.to_dict())
+    res = resources.ActionExecution.from_dict(action_ex.to_dict())
 
     task_name = (action_ex.task_execution.name
                  if action_ex.task_execution else None)
@@ -150,8 +91,8 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
         filters['task_execution_id'] = task_execution_id
 
     return rest_utils.get_all(
-        ActionExecutions,
-        ActionExecution,
+        resources.ActionExecutions,
+        resources.ActionExecution,
         db_api.get_action_executions,
         db_api.get_action_execution,
         resource_function=_get_action_execution_resource,
@@ -166,7 +107,7 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
 
 class ActionExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(ActionExecution, wtypes.text)
+    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text)
     def get(self, id):
         """Return the specified action_execution."""
         acl.enforce('action_executions:get', context.ctx())
@@ -175,8 +116,8 @@ class ActionExecutionsController(rest.RestController):
         return _get_action_execution(id)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(ActionExecution,
-                         body=ActionExecution, status_code=201)
+    @wsme_pecan.wsexpose(resources.ActionExecution,
+                         body=resources.ActionExecution, status_code=201)
     def post(self, action_ex):
         """Create new action_execution."""
         acl.enforce('action_executions:create', context.ctx())
@@ -199,10 +140,14 @@ class ActionExecutionsController(rest.RestController):
             **params
         )
 
-        return ActionExecution.from_dict(action_ex)
+        return resources.ActionExecution.from_dict(action_ex)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(ActionExecution, wtypes.text, body=ActionExecution)
+    @wsme_pecan.wsexpose(
+        resources.ActionExecution,
+        wtypes.text,
+        body=resources.ActionExecution
+    )
     def put(self, id, action_ex):
         """Update the specified action_execution."""
         acl.enforce('action_executions:update', context.ctx())
@@ -227,14 +172,15 @@ class ActionExecutionsController(rest.RestController):
 
         values = rpc.get_engine_client().on_action_complete(id, result)
 
-        return ActionExecution.from_dict(values)
+        return resources.ActionExecution.from_dict(values)
 
-    @wsme_pecan.wsexpose(ActionExecutions, types.uuid, int, types.uniquelist,
-                         types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, wtypes.text, types.uniquelist,
-                         wtypes.text, wtypes.text, wtypes.text, types.uuid,
-                         wtypes.text, wtypes.text, bool, types.jsontype,
-                         types.jsontype, types.jsontype, wtypes.text)
+    @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, int,
+                         types.uniquelist, types.list, types.uniquelist,
+                         wtypes.text, wtypes.text, wtypes.text,
+                         types.uniquelist, wtypes.text, wtypes.text,
+                         wtypes.text, types.uuid, wtypes.text, wtypes.text,
+                         bool, types.jsontype, types.jsontype, types.jsontype,
+                         wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', created_at=None, name=None,
                 tag=None, tags=None, updated_at=None, workflow_name=None,
@@ -350,8 +296,8 @@ class ActionExecutionsController(rest.RestController):
 
 
 class TasksActionExecutionController(rest.RestController):
-    @wsme_pecan.wsexpose(ActionExecutions, types.uuid, types.uuid, int,
-                         types.uniquelist, types.list, types.uniquelist,
+    @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, types.uuid,
+                         int, types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text, wtypes.text,
                          wtypes.text, wtypes.text, bool, types.jsontype,
@@ -445,7 +391,7 @@ class TasksActionExecutionController(rest.RestController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(ActionExecution, wtypes.text, wtypes.text)
+    @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text, wtypes.text)
     def get(self, task_execution_id, action_ex_id):
         """Return the specified action_execution."""
         acl.enforce('action_executions:get', context.ctx())
