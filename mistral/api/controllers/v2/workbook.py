@@ -158,7 +158,6 @@ class WorkbooksController(rest.RestController, hooks.HookController):
             resources.Workbook,
             db_api.get_workbooks,
             db_api.get_workbook,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

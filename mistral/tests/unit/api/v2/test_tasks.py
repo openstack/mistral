@@ -104,6 +104,9 @@ TASK = {
     'processed': True
 }
 
+TASK_WITHOUT_RESULT = copy.deepcopy(TASK)
+del TASK_WITHOUT_RESULT['result']
+
 UPDATED_TASK_EX = copy.deepcopy(TASK_EX)
 UPDATED_TASK_EX['state'] = 'SUCCESS'
 UPDATED_TASK = copy.deepcopy(TASK)
@@ -157,7 +160,7 @@ class TestTasksController(base.APITest):
         self.assertEqual(200, resp.status_int)
 
         self.assertEqual(1, len(resp.json['tasks']))
-        self.assertDictEqual(TASK, resp.json['tasks'][0])
+        self.assertDictEqual(TASK_WITHOUT_RESULT, resp.json['tasks'][0])
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_EMPTY)
     def test_get_all_empty(self):

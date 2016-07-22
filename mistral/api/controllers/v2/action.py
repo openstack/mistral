@@ -205,7 +205,6 @@ class ActionsController(rest.RestController, hooks.HookController):
             resources.Action,
             db_api.get_action_definitions,
             db_api.get_action_definition_by_id,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

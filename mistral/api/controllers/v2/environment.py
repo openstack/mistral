@@ -89,7 +89,6 @@ class EnvironmentController(rest.RestController):
             resources.Environment,
             db_api.get_environments,
             db_api.get_environment,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
