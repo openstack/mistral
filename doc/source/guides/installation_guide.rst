@@ -50,6 +50,7 @@ This will install necessary virtual environments and run all the project tests. 
 
 or::
 
+    pip install -r requirements.txt
     python setup.py install
 
 **NOTE**: Differences *pip install -e* and *setup.py install*. **pip install -e** works very similarly to **setup.py install** or the EasyInstall tool, except that it doesn’t actually install anything. Instead, it creates a special .egg-link file in the deployment directory, that links to your project’s source code.

@@ -64,6 +64,7 @@ Installing virtual environments may take significant time (~10-15 mins).
 
 or::
 
+  $ pip install -r requirements.txt
   $ python setup.py install
 
 
