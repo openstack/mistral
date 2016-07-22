@@ -27,7 +27,6 @@ from osprofiler import opts as profiler
 
 from mistral import version
 
-
 # Options under default group.
 launch_opt = cfg.ListOpt(
     'server',
@@ -75,6 +74,14 @@ rpc_impl_opt = cfg.StrOpt(
     choices=['oslo', 'kombu'],
     help='Specifies RPC implementation for RPC client and server. Support of '
          'kombu driver is experimental.'
+)
+
+# TODO(ddeja): This config option is a part of oslo RPCClient
+# It would be the best to not register it twice, rather use RPCClient somehow
+rpc_response_timeout_opt = cfg.IntOpt(
+    'rpc_response_timeout',
+    default=60,
+    help='Seconds to wait for a response from a call.'
 )
 
 os_endpoint_type = cfg.StrOpt(
@@ -191,7 +198,6 @@ profiler_opts.append(
     )
 )
 
-
 keycloak_oidc_opts = [
     cfg.StrOpt(
         'auth_url',
@@ -203,7 +209,6 @@ keycloak_oidc_opts = [
         help='If True, SSL/TLS certificate verification is disabled'
     )
 ]
-
 
 CONF = cfg.CONF
 
@@ -230,9 +235,9 @@ CONF.register_opts(
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opt(rpc_impl_opt)
+CONF.register_opt(rpc_response_timeout_opt)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opt(os_endpoint_type)
-
 
 CLI_OPTS = [
     use_debugger_opt,
@@ -241,7 +246,8 @@ CLI_OPTS = [
 
 default_group_opts = itertools.chain(
     CLI_OPTS,
-    [wf_trace_log_name_opt, auth_type_opt, rpc_impl_opt, os_endpoint_type]
+    [wf_trace_log_name_opt, auth_type_opt, rpc_impl_opt, os_endpoint_type,
+     rpc_response_timeout_opt]
 )
 
 CONF.register_cli_opts(CLI_OPTS)
