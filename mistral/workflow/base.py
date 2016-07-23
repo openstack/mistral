@@ -140,6 +140,13 @@ class WorkflowController(object):
         """
         raise NotImplementedError
 
+    def any_cancels(self):
+        """Determines if there are any task cancellations.
+
+        :return: True if there is one or more tasks in cancelled state.
+        """
+        return len(wf_utils.find_cancelled_task_executions(self.wf_ex)) > 0
+
     @abc.abstractmethod
     def evaluate_workflow_final_context(self):
         """Evaluates final workflow context assuming that workflow has finished.

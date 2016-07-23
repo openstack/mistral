@@ -193,8 +193,13 @@ class PythonAction(Action):
 
         prev_state = self.action_ex.state
 
-        self.action_ex.state = (states.SUCCESS if result.is_success()
-                                else states.ERROR)
+        if result.is_success():
+            self.action_ex.state = states.SUCCESS
+        elif result.is_cancel():
+            self.action_ex.state = states.CANCELLED
+        else:
+            self.action_ex.state = states.ERROR
+
         self.action_ex.output = self._prepare_output(result)
         self.action_ex.accepted = True
 

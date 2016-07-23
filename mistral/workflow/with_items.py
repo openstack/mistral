@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+#    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
 #
@@ -69,9 +70,12 @@ def get_concurrency(task_ex):
 
 def get_final_state(task_ex):
     find_error = lambda x: x.accepted and x.state == states.ERROR
+    find_cancel = lambda x: x.accepted and x.state == states.CANCELLED
 
     if list(filter(find_error, task_ex.executions)):
         return states.ERROR
+    elif list(filter(find_cancel, task_ex.executions)):
+        return states.CANCELLED
     else:
         return states.SUCCESS
 

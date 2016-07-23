@@ -1,5 +1,6 @@
 # Copyright 2015 - Alcatel-lucent, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -65,8 +66,25 @@ def _load_executions():
             'workflow_name': 'test_exec',
             'state': "SUCCESS",
             'task_execution_id': '789'
+        },
+        {
+            'id': 'abc',
+            'name': 'cancelled_expired',
+            'created_at': time_now - datetime.timedelta(minutes=60),
+            'updated_at': time_now - datetime.timedelta(minutes=59),
+            'workflow_name': 'test_exec',
+            'state': "CANCELLED",
+        },
+        {
+            'id': 'def',
+            'name': 'cancelled_not_expired',
+            'created_at': time_now - datetime.timedelta(minutes=15),
+            'updated_at': time_now - datetime.timedelta(minutes=5),
+            'workflow_name': 'test_exec',
+            'state': "CANCELLED",
         }
     ]
+
     for wf_exec in wf_execs:
         db_api.create_workflow_execution(wf_exec)
 
@@ -105,9 +123,9 @@ class ExpirationPolicyTest(base.DbTestCase):
         # Call for all expired wfs execs.
         execs = db_api.get_expired_executions(now)
 
-        # Should be only 3, the RUNNING execution shouldn't return,
+        # Should be only 5, the RUNNING execution shouldn't return,
         # so the child wf (that has parent task id).
-        self.assertEqual(3, len(execs))
+        self.assertEqual(5, len(execs))
 
         # Switch context to Admin since expiration policy running as Admin.
         _switch_context(None, True)
@@ -118,8 +136,8 @@ class ExpirationPolicyTest(base.DbTestCase):
         # Only non_expired available (update_at < older_than).
         execs = db_api.get_expired_executions(now)
 
-        self.assertEqual(1, len(execs))
-        self.assertEqual('987', execs[0].id)
+        self.assertEqual(2, len(execs))
+        self.assertListEqual(['987', 'def'], sorted([ex.id for ex in execs]))
 
         _set_expiration_policy_config(1, 5)
         expiration_policy.run_execution_expiration_policy(self, ctx)

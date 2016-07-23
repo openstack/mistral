@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 Huawei Technologies Co., Ltd.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -206,6 +207,39 @@ class TestExecutionsController(base.APITest):
         'ensure_workflow_execution_exists',
         mock.MagicMock(return_value=None)
     )
+    @mock.patch.object(rpc.EngineClient, 'stop_workflow')
+    def test_put_state_cancelled(self, mock_stop_wf):
+        update_exec = {
+            'id': WF_EX['id'],
+            'state': states.CANCELLED,
+            'state_info': 'Cancelled by user.'
+        }
+
+        wf_ex = copy.deepcopy(WF_EX)
+        wf_ex['state'] = states.CANCELLED
+        wf_ex['state_info'] = 'Cancelled by user.'
+        mock_stop_wf.return_value = wf_ex
+
+        resp = self.app.put_json('/v2/executions/123', update_exec)
+
+        expected_exec = copy.deepcopy(WF_EX_JSON_WITH_DESC)
+        expected_exec['state'] = states.CANCELLED
+        expected_exec['state_info'] = 'Cancelled by user.'
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected_exec, resp.json)
+
+        mock_stop_wf.assert_called_once_with(
+            '123',
+            'CANCELLED',
+            'Cancelled by user.'
+        )
+
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
     @mock.patch.object(rpc.EngineClient, 'resume_workflow')
     def test_put_state_resume(self, mock_resume_wf):
         update_exec = {
@@ -227,6 +261,33 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(expected_exec, resp.json)
         mock_resume_wf.assert_called_once_with('123', env=None)
+
+    @mock.patch.object(
+        db_api,
+        'ensure_workflow_execution_exists',
+        mock.MagicMock(return_value=None)
+    )
+    def test_put_invalid_state(self):
+        invalid_states = [states.IDLE, states.WAITING, states.RUNNING_DELAYED]
+
+        for state in invalid_states:
+            update_exec = {
+                'id': WF_EX['id'],
+                'state': state
+            }
+
+            resp = self.app.put_json(
+                '/v2/executions/123',
+                update_exec,
+                expect_errors=True
+            )
+
+            self.assertEqual(400, resp.status_int)
+
+            self.assertIn(
+                'Cannot change state to %s.' % state,
+                resp.json['faultstring']
+            )
 
     @mock.patch.object(
         db_api,
