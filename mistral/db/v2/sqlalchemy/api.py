@@ -247,7 +247,7 @@ def _get_db_object_by_name_or_id(model, identifier):
 # Workbook definitions.
 
 def get_workbook(name):
-    wb = _get_workbook(name)
+    wb = _get_db_object_by_name(models.Workbook, name)
 
     if not wb:
         raise exc.DBEntityNotFoundError(
@@ -258,7 +258,7 @@ def get_workbook(name):
 
 
 def load_workbook(name):
-    return _get_workbook(name)
+    return _get_db_object_by_name(models.Workbook, name)
 
 
 def get_workbooks(**kwargs):
@@ -283,12 +283,7 @@ def create_workbook(values, session=None):
 
 @b.session_aware()
 def update_workbook(name, values, session=None):
-    wb = _get_workbook(name)
-
-    if not wb:
-        raise exc.DBEntityNotFoundError(
-            "Workbook not found [workbook_name=%s]" % name
-        )
+    wb = get_workbook(name)
 
     wb.update(values.copy())
 
@@ -297,7 +292,7 @@ def update_workbook(name, values, session=None):
 
 @b.session_aware()
 def create_or_update_workbook(name, values, session=None):
-    if not _get_workbook(name):
+    if not _get_db_object_by_name(models.Workbook, name):
         return create_workbook(values)
     else:
         return update_workbook(name, values)
@@ -305,18 +300,9 @@ def create_or_update_workbook(name, values, session=None):
 
 @b.session_aware()
 def delete_workbook(name, session=None):
-    wb = _get_workbook(name)
-
-    if not wb:
-        raise exc.DBEntityNotFoundError(
-            "Workbook not found [workbook_name=%s]" % name
-        )
+    wb = get_workbook(name)
 
     session.delete(wb)
-
-
-def _get_workbook(name):
-    return _get_db_object_by_name(models.Workbook, name)
 
 
 @b.session_aware()
@@ -576,7 +562,7 @@ def delete_action_definitions(**kwargs):
 # Common executions.
 
 def get_execution(id):
-    ex = _get_execution(id)
+    ex = _get_db_object_by_id(models.Execution, id)
 
     if not ex:
         raise exc.DBEntityNotFoundError(
@@ -587,7 +573,7 @@ def get_execution(id):
 
 
 def load_execution(id):
-    return _get_execution(id)
+    return _get_db_object_by_id(models.Execution, id)
 
 
 def ensure_execution_exists(id):
@@ -616,12 +602,7 @@ def create_execution(values, session=None):
 
 @b.session_aware()
 def update_execution(id, values, session=None):
-    ex = _get_execution(id)
-
-    if not ex:
-        raise exc.DBEntityNotFoundError(
-            "Execution not found [execution_id=%s]" % id
-        )
+    ex = get_execution(id)
 
     ex.update(values.copy())
 
@@ -630,7 +611,7 @@ def update_execution(id, values, session=None):
 
 @b.session_aware()
 def create_or_update_execution(id, values, session=None):
-    if not _get_execution(id):
+    if not _get_db_object_by_id(models.Execution, id):
         return create_execution(values)
     else:
         return update_execution(id, values)
@@ -638,12 +619,7 @@ def create_or_update_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_execution(id, session=None):
-    ex = _get_execution(id)
-
-    if not ex:
-        raise exc.DBEntityNotFoundError(
-            "Execution not found [execution_id=%s]" % id
-        )
+    ex = get_execution(id)
 
     session.delete(ex)
 
@@ -657,14 +633,10 @@ def _get_executions(**kwargs):
     return _get_collection_sorted_by_time(models.Execution, **kwargs)
 
 
-def _get_execution(id):
-    return _get_db_object_by_id(models.Execution, id)
-
-
 # Action executions.
 
 def get_action_execution(id):
-    a_ex = _get_action_execution(id)
+    a_ex = _get_db_object_by_id(models.ActionExecution, id)
 
     if not a_ex:
         raise exc.DBEntityNotFoundError(
@@ -675,7 +647,7 @@ def get_action_execution(id):
 
 
 def load_action_execution(id):
-    return _get_action_execution(id)
+    return _get_db_object_by_id(models.ActionExecution, id)
 
 
 def ensure_action_execution_exists(id):
@@ -704,12 +676,7 @@ def create_action_execution(values, session=None):
 
 @b.session_aware()
 def update_action_execution(id, values, session=None):
-    a_ex = _get_action_execution(id)
-
-    if not a_ex:
-        raise exc.DBEntityNotFoundError(
-            "ActionExecution not found [id=%s]" % id
-        )
+    a_ex = get_action_execution(id)
 
     a_ex.update(values.copy())
 
@@ -718,7 +685,7 @@ def update_action_execution(id, values, session=None):
 
 @b.session_aware()
 def create_or_update_action_execution(id, values, session=None):
-    if not _get_action_execution(id):
+    if not _get_db_object_by_id(models.ActionExecution, id):
         return create_action_execution(values)
     else:
         return update_action_execution(id, values)
@@ -726,12 +693,7 @@ def create_or_update_action_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_action_execution(id, session=None):
-    a_ex = _get_action_execution(id)
-
-    if not a_ex:
-        raise exc.DBEntityNotFoundError(
-            "ActionExecution not found [id=%s]" % id
-        )
+    a_ex = get_action_execution(id)
 
     session.delete(a_ex)
 
@@ -745,14 +707,10 @@ def _get_action_executions(**kwargs):
     return _get_collection_sorted_by_time(models.ActionExecution, **kwargs)
 
 
-def _get_action_execution(id):
-    return _get_db_object_by_id(models.ActionExecution, id)
-
-
 # Workflow executions.
 
 def get_workflow_execution(id):
-    wf_ex = _get_workflow_execution(id)
+    wf_ex = _get_db_object_by_id(models.WorkflowExecution, id)
 
     if not wf_ex:
         raise exc.DBEntityNotFoundError(
@@ -763,7 +721,7 @@ def get_workflow_execution(id):
 
 
 def load_workflow_execution(id):
-    return _get_workflow_execution(id)
+    return _get_db_object_by_id(models.WorkflowExecution, id)
 
 
 def ensure_workflow_execution_exists(id):
@@ -795,12 +753,7 @@ def create_workflow_execution(values, session=None):
 
 @b.session_aware()
 def update_workflow_execution(id, values, session=None):
-    wf_ex = _get_workflow_execution(id)
-
-    if not wf_ex:
-        raise exc.DBEntityNotFoundError(
-            "WorkflowExecution not found [id=%s]" % id
-        )
+    wf_ex = get_workflow_execution(id)
 
     wf_ex.update(values.copy())
 
@@ -809,7 +762,7 @@ def update_workflow_execution(id, values, session=None):
 
 @b.session_aware()
 def create_or_update_workflow_execution(id, values, session=None):
-    if not _get_workflow_execution(id):
+    if not _get_db_object_by_id(models.WorkflowExecution, id):
         return create_workflow_execution(values)
     else:
         return update_workflow_execution(id, values)
@@ -817,12 +770,7 @@ def create_or_update_workflow_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_workflow_execution(id, session=None):
-    wf_ex = _get_workflow_execution(id)
-
-    if not wf_ex:
-        raise exc.DBEntityNotFoundError(
-            "WorkflowExecution not found [id=%s]" % id
-        )
+    wf_ex = get_workflow_execution(id)
 
     session.delete(wf_ex)
 
@@ -832,14 +780,10 @@ def delete_workflow_executions(**kwargs):
     return _delete_all(models.WorkflowExecution, **kwargs)
 
 
-def _get_workflow_execution(id):
-    return _get_db_object_by_id(models.WorkflowExecution, id)
-
-
 # Tasks executions.
 
 def get_task_execution(id):
-    task_ex = _get_task_execution(id)
+    task_ex = _get_db_object_by_id(models.TaskExecution, id)
 
     if not task_ex:
         raise exc.DBEntityNotFoundError(
@@ -850,7 +794,7 @@ def get_task_execution(id):
 
 
 def load_task_execution(id):
-    return _get_task_execution(id)
+    return _get_db_object_by_id(models.TaskExecution, id)
 
 
 def get_task_executions(**kwargs):
@@ -875,12 +819,7 @@ def create_task_execution(values, session=None):
 
 @b.session_aware()
 def update_task_execution(id, values, session=None):
-    task_ex = _get_task_execution(id)
-
-    if not task_ex:
-        raise exc.DBEntityNotFoundError(
-            "TaskExecution not found [id=%s]" % id
-        )
+    task_ex = get_task_execution(id)
 
     task_ex.update(values.copy())
 
@@ -889,7 +828,7 @@ def update_task_execution(id, values, session=None):
 
 @b.session_aware()
 def create_or_update_task_execution(id, values, session=None):
-    if not _get_task_execution(id):
+    if not _get_db_object_by_id(models.TaskExecution, id):
         return create_task_execution(values)
     else:
         return update_task_execution(id, values)
@@ -897,12 +836,7 @@ def create_or_update_task_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_task_execution(id, session=None):
-    task_ex = _get_task_execution(id)
-
-    if not task_ex:
-        raise exc.DBEntityNotFoundError(
-            "TaskExecution not found [id=%s]" % id
-        )
+    task_ex = get_task_execution(id)
 
     session.delete(task_ex)
 
@@ -910,10 +844,6 @@ def delete_task_execution(id, session=None):
 @b.session_aware()
 def delete_task_executions(**kwargs):
     return _delete_all(models.TaskExecution, **kwargs)
-
-
-def _get_task_execution(id):
-    return _get_db_object_by_id(models.TaskExecution, id)
 
 
 def _get_task_executions(**kwargs):
@@ -939,12 +869,7 @@ def create_delayed_call(values, session=None):
 
 @b.session_aware()
 def delete_delayed_call(id, session=None):
-    delayed_call = _get_delayed_call(id)
-
-    if not delayed_call:
-        raise exc.DBEntityNotFoundError(
-            "DelayedCall not found [id=%s]" % id
-        )
+    delayed_call = get_delayed_call(id)
 
     session.delete(delayed_call)
 
@@ -989,7 +914,7 @@ def update_delayed_call(id, values, query_filter=None, session=None):
 
 @b.session_aware()
 def get_delayed_call(id, session=None):
-    delayed_call = _get_delayed_call(id=id, session=session)
+    delayed_call = _get_db_object_by_id(models.DelayedCall, id)
 
     if not delayed_call:
         raise exc.DBEntityNotFoundError(
@@ -1017,17 +942,10 @@ def get_expired_executions(time, session=None):
     return query.all()
 
 
-@b.session_aware()
-def _get_delayed_call(id, session=None):
-    query = b.model_query(models.DelayedCall)
-
-    return query.filter_by(id=id).first()
-
-
 # Cron triggers.
 
 def get_cron_trigger(name):
-    cron_trigger = _get_cron_trigger(name)
+    cron_trigger = _get_db_object_by_name(models.CronTrigger, name)
 
     if not cron_trigger:
         raise exc.DBEntityNotFoundError(
@@ -1038,7 +956,7 @@ def get_cron_trigger(name):
 
 
 def load_cron_trigger(name):
-    return _get_cron_trigger(name)
+    return _get_db_object_by_name(models.CronTrigger, name)
 
 
 def get_cron_triggers(insecure=False, **kwargs):
@@ -1084,12 +1002,7 @@ def create_cron_trigger(values, session=None):
 
 @b.session_aware()
 def update_cron_trigger(name, values, session=None, query_filter=None):
-    cron_trigger = _get_cron_trigger(name)
-
-    if not cron_trigger:
-        raise exc.DBEntityNotFoundError(
-            "Cron trigger not found [name=%s]" % name
-        )
+    cron_trigger = get_cron_trigger(name)
 
     if query_filter:
         try:
@@ -1122,7 +1035,7 @@ def update_cron_trigger(name, values, session=None, query_filter=None):
 
 @b.session_aware()
 def create_or_update_cron_trigger(name, values, session=None):
-    cron_trigger = _get_cron_trigger(name)
+    cron_trigger = _get_db_object_by_name(models.CronTrigger, name)
 
     if not cron_trigger:
         return create_cron_trigger(values)
@@ -1133,12 +1046,7 @@ def create_or_update_cron_trigger(name, values, session=None):
 
 @b.session_aware()
 def delete_cron_trigger(name, session=None):
-    cron_trigger = _get_cron_trigger(name)
-
-    if not cron_trigger:
-        raise exc.DBEntityNotFoundError(
-            "Cron trigger not found [name=%s]" % name
-        )
+    cron_trigger = get_cron_trigger(name)
 
     # Delete the cron trigger by ID and get the affected row count.
     table = models.CronTrigger.__table__
@@ -1154,14 +1062,10 @@ def delete_cron_triggers(**kwargs):
     return _delete_all(models.CronTrigger, **kwargs)
 
 
-def _get_cron_trigger(name):
-    return _get_db_object_by_name(models.CronTrigger, name)
-
-
 # Environments.
 
 def get_environment(name):
-    env = _get_environment(name)
+    env = _get_db_object_by_name(models.Environment, name)
 
     if not env:
         raise exc.DBEntityNotFoundError(
@@ -1172,7 +1076,7 @@ def get_environment(name):
 
 
 def load_environment(name):
-    return _get_environment(name)
+    return _get_db_object_by_name(models.Environment, name)
 
 
 def get_environments(**kwargs):
@@ -1197,12 +1101,7 @@ def create_environment(values, session=None):
 
 @b.session_aware()
 def update_environment(name, values, session=None):
-    env = _get_environment(name)
-
-    if not env:
-        raise exc.DBEntityNotFoundError(
-            "Environment not found [name=%s]" % name
-        )
+    env = get_environment(name)
 
     env.update(values)
 
@@ -1211,7 +1110,7 @@ def update_environment(name, values, session=None):
 
 @b.session_aware()
 def create_or_update_environment(name, values, session=None):
-    env = _get_environment(name)
+    env = _get_db_object_by_name(models.Environment, name)
 
     if not env:
         return create_environment(values)
@@ -1221,18 +1120,9 @@ def create_or_update_environment(name, values, session=None):
 
 @b.session_aware()
 def delete_environment(name, session=None):
-    env = _get_environment(name)
-
-    if not env:
-        raise exc.DBEntityNotFoundError(
-            "Environment not found [name=%s]" % name
-        )
+    env = get_environment(name)
 
     session.delete(env)
-
-
-def _get_environment(name):
-    return _get_db_object_by_name(models.Environment, name)
 
 
 @b.session_aware()
@@ -1444,10 +1334,7 @@ def create_event_trigger(values, session=None):
 
 @b.session_aware()
 def update_event_trigger(id, values, session=None):
-    event_trigger = _get_event_trigger(id)
-
-    if not event_trigger:
-        raise exc.DBEntityNotFoundError("Event trigger not found [id=%s]" % id)
+    event_trigger = get_event_trigger(id)
 
     event_trigger.update(values.copy())
 
@@ -1456,10 +1343,7 @@ def update_event_trigger(id, values, session=None):
 
 @b.session_aware()
 def delete_event_trigger(id, session=None):
-    event_trigger = _get_event_trigger(id)
-
-    if not event_trigger:
-        raise exc.DBEntityNotFoundError("Event trigger not found [id=%s]" % id)
+    event_trigger = get_event_trigger(id)
 
     session.delete(event_trigger)
 
