@@ -144,16 +144,23 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
     if not query:
         query = _secure_query(model)
 
+    sort_keys = sort_keys if sort_keys else []
+    sort_dirs = sort_dirs if sort_dirs else []
+
+    if 'id' not in sort_keys:
+        sort_keys.append('id')
+        sort_dirs.append('asc')
+
     query = db_utils.paginate_query(
         query,
         model,
         limit,
-        sort_keys if sort_keys else {},
+        sort_keys,
         marker=marker,
         sort_dirs=sort_dirs
     )
 
-    return query.all()
+    return query
 
 
 def _delete_all(model, session=None, **kwargs):
@@ -170,24 +177,27 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
         if fields else ()
     )
 
-    tags = kwargs.pop('tags', None)
-
     query = (b.model_query(model, *columns) if insecure
              else _secure_query(model, *columns))
     query = query.filter_by(**kwargs)
+
+    tags = kwargs.pop('tags', None)
 
     # To match the tag list, a resource must contain at least all of the
     # tags present in the filter parameter.
     if tags:
         tag_attr = getattr(model, 'tags')
+
         if len(tags) == 1:
             expr = tag_attr.contains(tags)
         else:
             expr = sa.and_(*[tag_attr.contains(tag) for tag in tags])
+
         query = query.filter(expr)
 
-    try:
-        return _paginate_query(
+    if marker or limit:
+        # Paginate query only if query set is limited.
+        query = _paginate_query(
             model,
             limit,
             marker,
@@ -195,10 +205,13 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
             sort_dirs,
             query
         )
+
+    try:
+        return query.all()
     except Exception as e:
         raise exc.DBQueryEntryError(
             "Failed when querying database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
+            "error message: %s" % (e.__class__.__name__, str(e))
         )
 
 

@@ -88,10 +88,12 @@ class ExecutionTestsV2(base.TestCase):
             delimiter='&'
         )
 
+        # NOTE: 'id' gets included into sort keys automatically with 'desc'
+        # sorting to avoid pagination looping.
         expected_dict = {
             'limit': 1,
-            'sort_keys': 'workflow_name',
-            'sort_dirs': 'asc',
+            'sort_keys': 'workflow_name,id',
+            'sort_dirs': 'asc,asc',
         }
 
         self.assertTrue(
