@@ -185,8 +185,8 @@ def create_action_definition(values):
     return IMPL.create_action_definition(values)
 
 
-def update_action_definition(name, values):
-    return IMPL.update_action_definition(name, values)
+def update_action_definition(identifier, values):
+    return IMPL.update_action_definition(identifier, values)
 
 
 def create_or_update_action_definition(name, values):
