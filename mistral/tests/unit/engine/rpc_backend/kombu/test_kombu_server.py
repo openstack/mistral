@@ -174,9 +174,9 @@ class KombuServerTestCase(base.KombuTestCase):
     )
     def test__on_message_rpc_method_not_found(self):
         request = {
-            'rpc_ctx': self.ctx,
+            'rpc_ctx': {},
             'rpc_method': 'not_found_method',
-            'arguments': None
+            'arguments': {}
         }
 
         message = mock.MagicMock()
@@ -213,6 +213,7 @@ class KombuServerTestCase(base.KombuTestCase):
             'reply_to': None,
             'correlation_id': None
         }
+        message.delivery_info.get.return_value = False
 
         rpc_method = mock.MagicMock(return_value=result)
         get_rpc_method.return_value = rpc_method
@@ -248,6 +249,7 @@ class KombuServerTestCase(base.KombuTestCase):
             'reply_to': reply_to,
             'correlation_id': correlation_id
         }
+        message.delivery_info.get.return_value = False
 
         rpc_method = mock.MagicMock(return_value=result)
         get_rpc_method.return_value = rpc_method
