@@ -31,17 +31,21 @@ class WithItemsTest(base.BaseTest):
     def test_get_indices(self):
         # Task execution for running 6 items with concurrency=3.
         task_ex = models.TaskExecution(
+            spec={
+                'action': 'myaction'
+            },
             runtime_context={
                 'with_items_context': {
                     'capacity': 3,
                     'count': 6
                 }
             },
-            executions=[]
+            action_executions=[],
+            workflow_executions=[]
         )
 
         # Set 3 items: 2 success and 1 error unaccepted.
-        task_ex.executions += [
+        task_ex.action_executions += [
             self.get_action_ex(True, states.SUCCESS, 0),
             self.get_action_ex(True, states.SUCCESS, 1),
             self.get_action_ex(False, states.ERROR, 2)

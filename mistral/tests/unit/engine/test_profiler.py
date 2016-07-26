@@ -71,7 +71,7 @@ class EngineProfilerTest(base.EngineTestCase):
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex['state'])
 
-        self.await_execution_success(wf_ex['id'])
+        self.await_workflow_success(wf_ex['id'])
 
         self.assertGreater(self.mock_profiler_log_func.call_count, 0)
 
@@ -94,6 +94,6 @@ class EngineProfilerTest(base.EngineTestCase):
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex['state'])
 
-        self.await_execution_success(wf_ex['id'])
+        self.await_workflow_success(wf_ex['id'])
 
         self.assertEqual(self.mock_profiler_log_func.call_count, 0)

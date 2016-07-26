@@ -89,7 +89,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {}, task_name='t3')
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -111,7 +111,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNone(wf_ex.state_info)
 
         # Wait for the workflow to succeed.
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -180,7 +180,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
             env=env
         )
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -212,7 +212,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertDictEqual(updated_env, wf_ex.context['__env'])
 
         # Wait for the workflow to succeed.
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
@@ -287,7 +287,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
 
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow('wb1.wf1', {}, task_name='t3')
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)

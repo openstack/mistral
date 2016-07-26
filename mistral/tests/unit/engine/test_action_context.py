@@ -62,7 +62,7 @@ class ActionContextTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 

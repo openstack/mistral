@@ -16,7 +16,6 @@
 import copy
 import six
 
-from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.workflow import states
 
@@ -45,13 +44,11 @@ def get_count(task_ex):
 
 
 def is_completed(task_ex):
-    action_exs = db_api.get_action_executions(
-        task_execution_id=task_ex.id,
-        accepted=True
-    )
+    execs = list(filter(lambda t: t.accepted, task_ex.executions))
+
     count = get_count(task_ex) or 1
 
-    return count == len(action_exs)
+    return count == len(execs)
 
 
 def get_index(task_ex):
@@ -89,7 +86,7 @@ def _get_with_item_indices(exs):
     return sorted(set([ex.runtime_context['index'] for ex in exs]))
 
 
-def _get_accepted_act_exs(task_ex):
+def _get_accepted_executions(task_ex):
     # Choose only if not accepted but completed.
     return list(
         filter(
@@ -99,7 +96,7 @@ def _get_accepted_act_exs(task_ex):
     )
 
 
-def _get_unaccepted_act_exs(task_ex):
+def _get_unaccepted_executions(task_ex):
     # Choose only if not accepted but completed.
     return list(
         filter(
@@ -113,8 +110,8 @@ def get_indices_for_loop(task_ex):
     capacity = _get_context(task_ex)[_CAPACITY]
     count = get_count(task_ex)
 
-    accepted = _get_with_item_indices(_get_accepted_act_exs(task_ex))
-    unaccepted = _get_with_item_indices(_get_unaccepted_act_exs(task_ex))
+    accepted = _get_with_item_indices(_get_accepted_executions(task_ex))
+    unaccepted = _get_with_item_indices(_get_unaccepted_executions(task_ex))
     candidates = sorted(list(set(unaccepted) - set(accepted)))
 
     if candidates:

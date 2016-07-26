@@ -158,7 +158,7 @@ class Action(object):
         if self.task_ex:
             # Add to collection explicitly so that it's in a proper
             # state within the current session.
-            self.task_ex.executions.append(self.action_ex)
+            self.task_ex.action_executions.append(self.action_ex)
 
     def _inject_action_ctx_for_validating(self, input_dict):
         if a_m.has_action_context(

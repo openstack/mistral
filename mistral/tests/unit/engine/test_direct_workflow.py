@@ -34,7 +34,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_state(wf_ex.id, expected_state)
+        self.await_workflow_state(wf_ex.id, expected_state)
 
         return db_api.get_workflow_execution(wf_ex.id)
 
@@ -114,7 +114,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         tasks = wf_ex.task_executions
@@ -146,7 +146,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         self.assertEqual(
             states.SUCCESS,
@@ -453,7 +453,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
     def test_task_on_clause_has_yaql_error(self):
         wf_text = """

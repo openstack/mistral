@@ -96,7 +96,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
 
         get_task_execution.return_value = task1_ex
 
-        task1_ex.executions.append(
+        task1_ex.action_executions.append(
             models.ActionExecution(
                 name='std.echo',
                 workflow_name='wf',
@@ -119,7 +119,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
 
         # Now assume that 'task2' completed successfully.
         task2_ex = self._create_task_execution('task2', states.SUCCESS)
-        task2_ex.executions.append(
+        task2_ex.action_executions.append(
             models.ActionExecution(
                 name='std.echo',
                 workflow_name='wf',

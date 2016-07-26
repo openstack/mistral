@@ -755,25 +755,26 @@ class ActionExecutionTest(SQLAlchemyTest):
         self.assertIsNone(db_api.load_action_execution("not-existing-id"))
 
     def test_update_action_execution(self):
-        created = db_api.create_action_execution(ACTION_EXECS[0])
+        with db_api.transaction():
+            created = db_api.create_action_execution(ACTION_EXECS[0])
 
-        self.assertIsNone(created.updated_at)
+            self.assertIsNone(created.updated_at)
 
-        updated = db_api.update_execution(
-            created.id,
-            {'state': 'RUNNING', 'state_info': "Running..."}
-        )
+            updated = db_api.update_action_execution(
+                created.id,
+                {'state': 'RUNNING', 'state_info': "Running..."}
+            )
 
-        self.assertEqual('RUNNING', updated.state)
-        self.assertEqual(
-            'RUNNING',
-            db_api.load_action_execution(updated.id).state
-        )
+            self.assertEqual('RUNNING', updated.state)
+            self.assertEqual(
+                'RUNNING',
+                db_api.load_action_execution(updated.id).state
+            )
 
-        fetched = db_api.get_action_execution(created.id)
+            fetched = db_api.get_action_execution(created.id)
 
-        self.assertEqual(updated, fetched)
-        self.assertIsNotNone(fetched.updated_at)
+            self.assertEqual(updated, fetched)
+            self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_action_execution(self):
         id = 'not-existing-id'
@@ -785,20 +786,21 @@ class ActionExecutionTest(SQLAlchemyTest):
         self.assertIsNotNone(created)
         self.assertIsNotNone(created.id)
 
-        updated = db_api.create_or_update_action_execution(
-            created.id,
-            {'state': 'RUNNING'}
-        )
+        with db_api.transaction():
+            updated = db_api.create_or_update_action_execution(
+                created.id,
+                {'state': 'RUNNING'}
+            )
 
-        self.assertEqual('RUNNING', updated.state)
-        self.assertEqual(
-            'RUNNING',
-            db_api.load_action_execution(updated.id).state
-        )
+            self.assertEqual('RUNNING', updated.state)
+            self.assertEqual(
+                'RUNNING',
+                db_api.load_action_execution(updated.id).state
+            )
 
-        fetched = db_api.get_action_execution(created.id)
+            fetched = db_api.get_action_execution(created.id)
 
-        self.assertEqual(updated, fetched)
+            self.assertEqual(updated, fetched)
 
     def test_get_action_executions(self):
         created0 = db_api.create_action_execution(WF_EXECS[0])
@@ -909,50 +911,55 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         self.assertIsNone(db_api.load_workflow_execution("not-existing-id"))
 
     def test_update_workflow_execution(self):
-        created = db_api.create_workflow_execution(WF_EXECS[0])
+        with db_api.transaction():
+            created = db_api.create_workflow_execution(WF_EXECS[0])
 
-        self.assertIsNone(created.updated_at)
+            self.assertIsNone(created.updated_at)
 
-        updated = db_api.update_execution(
-            created.id,
-            {'state': 'RUNNING', 'state_info': "Running..."}
-        )
+            updated = db_api.update_workflow_execution(
+                created.id,
+                {'state': 'RUNNING', 'state_info': "Running..."}
+            )
 
-        self.assertEqual('RUNNING', updated.state)
-        self.assertEqual(
-            'RUNNING',
-            db_api.load_workflow_execution(updated.id).state
-        )
+            self.assertEqual('RUNNING', updated.state)
+            self.assertEqual(
+                'RUNNING',
+                db_api.load_workflow_execution(updated.id).state
+            )
 
-        fetched = db_api.get_workflow_execution(created.id)
+            fetched = db_api.get_workflow_execution(created.id)
 
-        self.assertEqual(updated, fetched)
-        self.assertIsNotNone(fetched.updated_at)
+            self.assertEqual(updated, fetched)
+            self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_workflow_execution(self):
         id = 'not-existing-id'
 
         self.assertIsNone(db_api.load_workflow_execution(id))
 
-        created = db_api.create_or_update_workflow_execution(id, WF_EXECS[0])
+        with db_api.transaction():
+            created = db_api.create_or_update_workflow_execution(
+                id,
+                WF_EXECS[0]
+            )
 
-        self.assertIsNotNone(created)
-        self.assertIsNotNone(created.id)
+            self.assertIsNotNone(created)
+            self.assertIsNotNone(created.id)
 
-        updated = db_api.create_or_update_workflow_execution(
-            created.id,
-            {'state': 'RUNNING'}
-        )
+            updated = db_api.create_or_update_workflow_execution(
+                created.id,
+                {'state': 'RUNNING'}
+            )
 
-        self.assertEqual('RUNNING', updated.state)
-        self.assertEqual(
-            'RUNNING',
-            db_api.load_workflow_execution(updated.id).state
-        )
+            self.assertEqual('RUNNING', updated.state)
+            self.assertEqual(
+                'RUNNING',
+                db_api.load_workflow_execution(updated.id).state
+            )
 
-        fetched = db_api.get_workflow_execution(created.id)
+            fetched = db_api.get_workflow_execution(created.id)
 
-        self.assertEqual(updated, fetched)
+            self.assertEqual(updated, fetched)
 
     def test_get_workflow_executions(self):
         created0 = db_api.create_workflow_execution(WF_EXECS[0])
@@ -991,7 +998,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         )
 
         self.assertEqual('FAILED', updated.state)
-        state_info = db_api.load_execution(updated.id).state_info
+        state_info = db_api.load_workflow_execution(updated.id).state_info
         self.assertEqual(
             65535,
             len(state_info)
@@ -1020,8 +1027,6 @@ class WorkflowExecutionTest(SQLAlchemyTest):
 
             self.assertEqual(TASK_EXECS[0]['name'], task_ex.name)
 
-        # Make sure that polymorphic load works correctly.
-        self.assertEqual(2, len(db_api.get_executions()))
         self.assertEqual(1, len(db_api.get_workflow_executions()))
         self.assertEqual(1, len(db_api.get_task_executions()))
 
@@ -1107,35 +1112,40 @@ class TaskExecutionTest(SQLAlchemyTest):
 
             task = db_api.create_task_execution(values)
 
-            self.assertEqual(0, len(task.executions))
+            self.assertEqual(0, len(task.action_executions))
+            self.assertEqual(0, len(task.workflow_executions))
 
             a_ex1 = db_models.ActionExecution()
             a_ex2 = db_models.ActionExecution()
 
-            task.executions.append(a_ex1)
-            task.executions.append(a_ex2)
+            task.action_executions.append(a_ex1)
+            task.action_executions.append(a_ex2)
 
-            self.assertEqual(2, len(task.executions))
+            self.assertEqual(2, len(task.action_executions))
+            self.assertEqual(0, len(task.workflow_executions))
 
         # Make sure associated objects were saved.
         with db_api.transaction():
             task = db_api.get_task_execution(task.id)
 
-            self.assertEqual(2, len(task.executions))
+            self.assertEqual(2, len(task.action_executions))
 
-            self.assertNotIsInstance(task.executions[0].task_execution, list)
+            self.assertNotIsInstance(
+                task.action_executions[0].task_execution,
+                list
+            )
 
         # Remove associated objects from collection.
         with db_api.transaction():
             task = db_api.get_task_execution(task.id)
 
-            del task.executions[:]
+            del task.action_executions[:]
 
         # Make sure associated objects were deleted.
         with db_api.transaction():
             task = db_api.get_task_execution(task.id)
 
-            self.assertEqual(0, len(task.executions))
+            self.assertEqual(0, len(task.action_executions))
 
     def test_update_task_execution(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])

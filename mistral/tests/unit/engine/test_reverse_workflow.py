@@ -82,7 +82,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual({'task_name': 'task1'}, wf_ex.params)
 
         # Wait till workflow 'wf1' is completed.
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -112,7 +112,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         self.assertDictEqual({'task_name': 'task2'}, wf_ex.params)
 
         # Wait till workflow 'wf1' is completed.
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -144,7 +144,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             task_name='task4'
         )
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         tasks = db_api.get_task_executions()
 

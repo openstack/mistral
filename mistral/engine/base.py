@@ -56,7 +56,7 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_action_complete(self, action_ex_id, result):
+    def on_action_complete(self, action_ex_id, result, wf_action=False):
         """Accepts action result and continues the workflow.
 
         Action execution result here is a result which comes from an
@@ -64,7 +64,11 @@ class Engine(object):
         :param action_ex_id: Action execution id.
         :param result: Action/workflow result. Instance of
             mistral.workflow.base.Result
-        :return:
+        :param wf_action: If True it means that the given id points to
+            a workflow execution rather than action execution. It happens
+            when a nested workflow execution sends its result to a parent
+            workflow.
+        :return: Action(or workflow if wf_action=True) execution object.
         """
         raise NotImplementedError
 

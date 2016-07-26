@@ -159,7 +159,7 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
 
         self.unblock_action()
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -194,7 +194,7 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
         self.unblock_action()
 
         self.await_task_success(task2_ex.id)
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         task1_ex = db_api.get_task_execution(task1_ex.id)
         task1_action_ex = db_api.get_action_executions(

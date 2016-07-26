@@ -201,45 +201,6 @@ def delete_action_definitions(**kwargs):
     return IMPL.delete_action_definitions(**kwargs)
 
 
-# Common executions.
-
-def get_execution(id):
-    return IMPL.get_execution(id)
-
-
-def load_execution(name):
-    """Unlike get_execution this method is allowed to return None."""
-    return IMPL.load_execution(name)
-
-
-def get_executions(**kwargs):
-    return IMPL.get_executions(**kwargs)
-
-
-def ensure_execution_exists(id):
-    return IMPL.ensure_execution_exists(id)
-
-
-def create_execution(values):
-    return IMPL.create_execution(values)
-
-
-def update_execution(id, values):
-    return IMPL.update_execution(id, values)
-
-
-def create_or_update_execution(id, values):
-    return IMPL.create_or_update_execution(id, values)
-
-
-def delete_execution(id):
-    return IMPL.delete_execution(id)
-
-
-def delete_executions(**kwargs):
-    IMPL.delete_executions(**kwargs)
-
-
 # Action executions.
 
 def get_action_execution(id):

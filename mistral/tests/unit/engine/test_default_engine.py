@@ -408,12 +408,12 @@ class DefaultEngineTest(base.DbTestCase):
         wf_ex = self.engine.start_workflow(
             'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
         # Re-read execution to access related tasks.
-        wf_ex = db_api.get_execution(wf_ex.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.engine.stop_workflow(wf_ex.id, 'ERROR', "Stop this!")
 
         # Re-read from DB again
-        wf_ex = db_api.get_execution(wf_ex.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual('ERROR', wf_ex.state)
         self.assertEqual("Stop this!", wf_ex.state_info)
@@ -423,12 +423,12 @@ class DefaultEngineTest(base.DbTestCase):
         wf_ex = self.engine.start_workflow(
             'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
         # Re-read execution to access related tasks.
-        wf_ex = db_api.get_execution(wf_ex.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.engine.stop_workflow(wf_ex.id, 'SUCCESS', "Like this, done")
 
         # Re-read from DB again
-        wf_ex = db_api.get_execution(wf_ex.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual('SUCCESS', wf_ex.state)
         self.assertEqual("Like this, done", wf_ex.state_info)
@@ -437,7 +437,7 @@ class DefaultEngineTest(base.DbTestCase):
         wf_ex = self.engine.start_workflow(
             'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
         # Re-read execution to access related tasks.
-        wf_ex = db_api.get_execution(wf_ex.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertNotEqual(
             'PAUSE',

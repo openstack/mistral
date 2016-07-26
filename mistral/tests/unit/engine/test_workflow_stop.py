@@ -44,9 +44,9 @@ class WorkflowStopTest(base.EngineTestCase):
     def test_stop_failed(self):
         self.engine.stop_workflow(self.exec_id, states.SUCCESS, "Force stop")
 
-        self.await_execution_success(self.exec_id)
+        self.await_workflow_success(self.exec_id)
 
-        wf_ex = db_api.get_execution(self.exec_id)
+        wf_ex = db_api.get_workflow_execution(self.exec_id)
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
         self.assertEqual("Force stop", wf_ex.state_info)
@@ -54,9 +54,9 @@ class WorkflowStopTest(base.EngineTestCase):
     def test_stop_succeeded(self):
         self.engine.stop_workflow(self.exec_id, states.ERROR, "Failure")
 
-        self.await_execution_error(self.exec_id)
+        self.await_workflow_error(self.exec_id)
 
-        wf_ex = db_api.get_execution(self.exec_id)
+        wf_ex = db_api.get_workflow_execution(self.exec_id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertEqual("Failure", wf_ex.state_info)

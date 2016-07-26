@@ -90,7 +90,6 @@ def on_action_complete(action_ex):
     try:
         task.on_action_complete(action_ex)
     except exc.MistralException as e:
-        task_ex = action_ex.task_execution
         wf_ex = task_ex.workflow_execution
 
         msg = ("Failed to handle action completion [wf=%s, task=%s,"

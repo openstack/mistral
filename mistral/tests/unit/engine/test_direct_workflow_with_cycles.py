@@ -60,11 +60,14 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        t_execs = wf_ex.task_executions
+            self.assertDictEqual({'cnt': 2}, wf_ex.output)
+
+            t_execs = wf_ex.task_executions
 
         # Expecting one execution for task1 and two executions
         # for task2 and task3 because of the cycle 'task2 <-> task3'.
@@ -76,8 +79,6 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
         self.assertTrue(all(states.SUCCESS == t_ex.state for t_ex in t_execs))
-
-        self.assertDictEqual({'cnt': 2}, wf_ex.output)
 
     def test_complex_cycle(self):
         wf_text = """
@@ -121,11 +122,14 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        t_execs = wf_ex.task_executions
+            self.assertDictEqual({'cnt': 2}, wf_ex.output)
+
+            t_execs = wf_ex.task_executions
 
         # Expecting one execution for task1 and task5 and two executions
         # for task2, task3 and task4 because of the cycle
@@ -134,6 +138,7 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         self._assert_multiple_items(t_execs, 2, name='task2')
         self._assert_multiple_items(t_execs, 2, name='task3')
         self._assert_multiple_items(t_execs, 2, name='task4')
+
         task5_ex = self._assert_single_item(t_execs, name='task5')
 
         self.assertEqual(8, len(t_execs))
@@ -141,8 +146,10 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_ex.state)
         self.assertTrue(all(states.SUCCESS == t_ex.state for t_ex in t_execs))
 
-        self.assertEqual(2, data_flow.get_task_execution_result(task5_ex))
-        self.assertDictEqual({'cnt': 2}, wf_ex.output)
+        with db_api.transaction():
+            task5_ex = db_api.get_task_execution(task5_ex.id)
+
+            self.assertEqual(2, data_flow.get_task_execution_result(task5_ex))
 
     def test_parallel_cycles(self):
         wf_text = """
@@ -190,11 +197,13 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        t_execs = wf_ex.task_executions
+            wf_output = wf_ex.output
+            t_execs = wf_ex.task_executions
 
         # NOTE: We have two cycles in parallel workflow branches
         # and those branches will have their own copy of "cnt" variable
@@ -215,4 +224,4 @@ class DirectWorkflowWithCyclesTest(base.EngineTestCase):
         # Now workflow output is almost always 3 because the second cycle
         # takes longer hence it wins because of how DB queries work: they
         # order entities in ascending of creation time.
-        self.assertTrue(wf_ex.output['cnt'] == 2 or wf_ex.output['cnt'] == 3)
+        self.assertTrue(wf_output['cnt'] == 2 or wf_output['cnt'] == 3)

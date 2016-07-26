@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mock
-
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
@@ -64,7 +62,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {}, env={'from': 'Neo'})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -129,7 +127,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {}, env={'from': 'Neo'})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -193,7 +191,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -269,7 +267,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -350,7 +348,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             env={'from': 'Neo'}
         )
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -409,7 +407,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -442,7 +440,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -481,7 +479,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf1_with_items', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -501,41 +499,38 @@ class DataFlowTest(test_base.BaseTest):
                 "version": '2.0',
                 'name': 'task1',
                 'with-items': 'var in [1]',
-                'type': 'direct'
+                'type': 'direct',
+                'action': 'my_action'
             },
             runtime_context={
                 'with_items_context': {'count': 1}
             }
         )
 
-        action_exs = [models.ActionExecution(
+        task_ex.action_executions = [models.ActionExecution(
             name='my_action',
             output={'result': 1},
             accepted=True,
             runtime_context={'index': 0}
         )]
 
-        with mock.patch.object(db_api, 'get_action_executions',
-                               return_value=action_exs):
-            self.assertEqual([1], data_flow.get_task_execution_result(task_ex))
+        self.assertEqual([1], data_flow.get_task_execution_result(task_ex))
 
-        action_exs.append(models.ActionExecution(
+        task_ex.action_executions.append(models.ActionExecution(
             name='my_action',
             output={'result': 1},
             accepted=True,
             runtime_context={'index': 0}
         ))
 
-        action_exs.append(models.ActionExecution(
+        task_ex.action_executions.append(models.ActionExecution(
             name='my_action',
             output={'result': 1},
             accepted=False,
             runtime_context={'index': 0}
         ))
 
-        with mock.patch.object(db_api, 'get_action_executions',
-                               return_value=action_exs):
-            self.assertEqual(
-                [1, 1],
-                data_flow.get_task_execution_result(task_ex)
-            )
+        self.assertEqual(
+            [1, 1],
+            data_flow.get_task_execution_result(task_ex)
+        )

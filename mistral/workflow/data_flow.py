@@ -19,7 +19,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral import context as auth_ctx
-from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import expressions as expr
 from mistral import utils
@@ -65,20 +64,14 @@ def invalidate_task_execution_result(task_ex):
 
 
 def get_task_execution_result(task_ex):
-    # Use of task_ex.executions requires a session to lazy load the action
-    # executions. This get_task_execution_result method is also invoked
-    # from get_all in the task execution API controller. If there is a lot of
-    # read against the API, it will lead to a lot of unnecessary DB locks
-    # which result in possible deadlocks and WF execution failures. Therefore,
-    # use db_api.get_action_executions here to avoid session-less use cases.
-    action_execs = db_api.get_action_executions(task_execution_id=task_ex.id)
-    action_execs.sort(
+    execs = task_ex.executions
+    execs.sort(
         key=lambda x: x.runtime_context.get('index')
     )
 
     results = [
         _extract_execution_result(ex)
-        for ex in action_execs
+        for ex in execs
         if hasattr(ex, 'output') and ex.accepted
     ]
 

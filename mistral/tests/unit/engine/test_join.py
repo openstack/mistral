@@ -64,12 +64,15 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            self.assertDictEqual({'result': '1,2'}, wf_ex.output)
+
+            tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -78,8 +81,6 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
         self.assertEqual(states.SUCCESS, task3.state)
-
-        self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_full_join_with_errors(self):
         wf_text = """---
@@ -116,12 +117,15 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            self.assertDictEqual({'result': '1-1'}, wf_ex.output)
+
+            tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -130,8 +134,6 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.ERROR, task2.state)
         self.assertEqual(states.SUCCESS, task3.state)
-
-        self.assertDictEqual({'result': '1-1'}, wf_ex.output)
 
     def test_full_join_with_conditions(self):
         wf_text = """---
@@ -248,12 +250,15 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            self.assertDictEqual({'result': '1,2'}, wf_ex.output)
+
+            tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -271,7 +276,6 @@ class JoinEngineTest(base.EngineTestCase):
         self.await_task_error(task3.id)
 
         self.assertDictEqual({'result4': '1,2'}, task4.published)
-        self.assertDictEqual({'result': '1,2'}, wf_ex.output)
 
     def test_partial_join_triggers_once(self):
         wf_text = """---
@@ -328,12 +332,13 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
         self.assertEqual(5, len(tasks))
 
@@ -399,12 +404,13 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -479,19 +485,20 @@ class JoinEngineTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('main', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(
-            {
-                'var1': True,
-                'is_done': True,
-                'var2': True
-            },
-            wf_ex.output
-        )
+            self.assertDictEqual(
+                {
+                    'var1': True,
+                    'is_done': True,
+                    'var2': True
+                },
+                wf_ex.output
+            )
 
     @testtools.skip('https://bugs.launchpad.net/mistral/+bug/1424461')
     def test_full_join_parallel_published_vars_complex(self):
@@ -541,22 +548,23 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('main', {})
+        wf_ex = self.engine.start_workflow('main', {})
 
-        self.await_execution_success(exec_db.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(
-            {
-                'var_a': 1,
-                'var_b': 1,
-                'var_c': 1,
-                'var_d': 1
-            },
-            exec_db.output
-        )
+            self.assertDictEqual(
+                {
+                    'var_a': 1,
+                    'var_b': 1,
+                    'var_c': 1,
+                    'var_d': 1
+                },
+                wf_ex.output
+            )
 
     def test_full_join_with_branch_errors(self):
         wf_text = """---
@@ -601,10 +609,12 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('main', {})
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        tasks = wf_ex.task_executions
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         task10 = self._assert_single_item(tasks, name='task10')
         task21 = self._assert_single_item(tasks, name='task21')
@@ -651,11 +661,12 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('test-join', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
         self._assert_multiple_items(tasks, 5, state=states.SUCCESS)
 
@@ -682,10 +693,11 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
-        self._assert_multiple_items(tasks, 3, state=states.SUCCESS)
+            self._assert_multiple_items(tasks, 3, state=states.SUCCESS)

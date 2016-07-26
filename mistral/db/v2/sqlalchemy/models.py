@@ -98,26 +98,9 @@ class ActionDefinition(Definition):
 # Execution objects.
 
 class Execution(mb.MistralSecureModelBase):
-    """Abstract execution object."""
+    __abstract__ = True
 
-    __tablename__ = 'executions_v2'
-
-    __table_args__ = (
-        sa.Index('%s_project_id' % __tablename__, 'project_id'),
-        sa.Index('%s_scope' % __tablename__, 'scope'),
-        sa.Index('%s_state' % __tablename__, 'state'),
-        sa.Index('%s_type' % __tablename__, 'type'),
-        sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
-    )
-
-    type = sa.Column(sa.String(50))
-
-    __mapper_args__ = {
-        'polymorphic_on': type,
-        'polymorphic_identity': 'execution'
-    }
-
-    # Main properties.
+    # Common properties.
     id = mb.id_column()
     name = sa.Column(sa.String(80))
     description = sa.Column(sa.String(255), nullable=True)
@@ -128,34 +111,44 @@ class Execution(mb.MistralSecureModelBase):
     state_info = sa.Column(sa.Text(), nullable=True)
     tags = sa.Column(st.JsonListType())
 
-    # Runtime context like iteration_no of a repeater.
-    # Effectively internal engine properties which will be used to determine
-    # execution of a task.
+    # Internal properties which can be used by engine.
     runtime_context = sa.Column(st.JsonLongDictType())
 
 
 class ActionExecution(Execution):
     """Contains action execution information."""
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'action_execution'
-    }
+    __tablename__ = 'action_executions_v2'
+
+    __table_args__ = (
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+        sa.Index('%s_state' % __tablename__, 'state'),
+        sa.Index('%s_updated_at' % __tablename__, 'updated_at')
+    )
 
     # Main properties.
     accepted = sa.Column(sa.Boolean(), default=False)
     input = sa.Column(st.JsonLongDictType(), nullable=True)
-
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
 
 
-class WorkflowExecution(ActionExecution):
+class WorkflowExecution(Execution):
     """Contains workflow execution information."""
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'workflow_execution'
-    }
+    __tablename__ = 'workflow_executions_v2'
+
+    __table_args__ = (
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+        sa.Index('%s_state' % __tablename__, 'state'),
+        sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
+    )
 
     # Main properties.
+    accepted = sa.Column(sa.Boolean(), default=False)
+    input = sa.Column(st.JsonLongDictType(), nullable=True)
+    output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
     params = sa.Column(st.JsonLongDictType())
 
     # TODO(rakhmerov): We need to get rid of this field at all.
@@ -165,9 +158,14 @@ class WorkflowExecution(ActionExecution):
 class TaskExecution(Execution):
     """Contains task runtime information."""
 
-    __mapper_args__ = {
-        'polymorphic_identity': 'task_execution'
-    }
+    __tablename__ = 'task_executions_v2'
+
+    __table_args__ = (
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+        sa.Index('%s_state' % __tablename__, 'state'),
+        sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
+    )
 
     # Main properties.
     action_spec = sa.Column(st.JsonLongDictType())
@@ -180,6 +178,14 @@ class TaskExecution(Execution):
     # Data Flow properties.
     in_context = sa.Column(st.JsonLongDictType())
     published = sa.Column(st.JsonLongDictType())
+
+    @property
+    def executions(self):
+        return (
+            self.action_executions
+            if self.spec.get('action')
+            else self.workflow_executions
+        )
 
 
 for cls in utils.iter_subclasses(Execution):
@@ -232,33 +238,53 @@ def register_length_validator(attr_name):
                 lambda t, v, o, i: validate_long_type_length(cls, attr_name, v)
             )
 
-# Many-to-one for 'Execution' and 'TaskExecution'.
+# Many-to-one for 'ActionExecution' and 'TaskExecution'.
 
-Execution.task_execution_id = sa.Column(
+ActionExecution.task_execution_id = sa.Column(
     sa.String(36),
-    sa.ForeignKey(TaskExecution.id),
+    sa.ForeignKey(TaskExecution.id, ondelete='CASCADE'),
     nullable=True
 )
 
-TaskExecution.executions = relationship(
-    Execution,
+TaskExecution.action_executions = relationship(
+    ActionExecution,
     backref=backref('task_execution', remote_side=[TaskExecution.id]),
     cascade='all, delete-orphan',
-    foreign_keys=Execution.task_execution_id,
+    foreign_keys=ActionExecution.task_execution_id,
     lazy='select'
 )
 
 sa.Index(
-    '%s_task_execution_id' % Execution.__tablename__,
-    Execution.task_execution_id
+    '%s_task_execution_id' % ActionExecution.__tablename__,
+    'task_execution_id'
 )
 
+# Many-to-one for 'WorkflowExecution' and 'TaskExecution'.
+
+WorkflowExecution.task_execution_id = sa.Column(
+    sa.String(36),
+    sa.ForeignKey(TaskExecution.id, ondelete='CASCADE'),
+    nullable=True
+)
+
+TaskExecution.workflow_executions = relationship(
+    WorkflowExecution,
+    backref=backref('task_execution', remote_side=[TaskExecution.id]),
+    cascade='all, delete-orphan',
+    foreign_keys=WorkflowExecution.task_execution_id,
+    lazy='select'
+)
+
+sa.Index(
+    '%s_task_execution_id' % WorkflowExecution.__tablename__,
+    'task_execution_id'
+)
 
 # Many-to-one for 'TaskExecution' and 'WorkflowExecution'.
 
 TaskExecution.workflow_execution_id = sa.Column(
     sa.String(36),
-    sa.ForeignKey(WorkflowExecution.id)
+    sa.ForeignKey(WorkflowExecution.id, ondelete='CASCADE')
 )
 
 WorkflowExecution.task_executions = relationship(

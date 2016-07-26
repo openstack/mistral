@@ -422,7 +422,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex.runtime_context
         )
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
     def test_wait_before_policy_from_var(self):
         wb_service.create_workbook_v2(WAIT_BEFORE_FROM_VAR)
@@ -431,12 +431,12 @@ class PoliciesTest(base.EngineTestCase):
         exec_db = self.engine.start_workflow('wb.wf1', {'wait_before': 1})
 
         # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_execution(exec_db.id)
+        exec_db = db_api.get_workflow_execution(exec_db.id)
         task_db = exec_db.task_executions[0]
 
         self.assertEqual(states.RUNNING_DELAYED, task_db.state)
 
-        self.await_execution_success(exec_db.id)
+        self.await_workflow_success(exec_db.id)
 
     def test_wait_after_policy(self):
         wb_service.create_workbook_v2(WAIT_AFTER_WB)
@@ -484,7 +484,7 @@ class PoliciesTest(base.EngineTestCase):
         self.await_task_delayed(task_ex.id, delay=0.5)
         self.await_task_error(task_ex.id)
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -536,7 +536,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_success(task_ex.id)
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -575,7 +575,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_error(task_ex.id)
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -614,7 +614,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_error(task_ex.id)
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -654,7 +654,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_success(task_ex.id)
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -691,7 +691,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_success(task_ex.id)
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -727,7 +727,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_error(task_ex.id)
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -769,7 +769,7 @@ class PoliciesTest(base.EngineTestCase):
         task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -813,7 +813,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_task_success(task_ex.id)
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = wf_ex.task_executions[0]
@@ -843,7 +843,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self._assert_single_item(wf_ex.task_executions, name='task1')
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
     def test_timeout_policy_success_after_timeout(self):
         wb_service.create_workbook_v2(TIMEOUT_WB2)
@@ -857,7 +857,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, task_ex.state)
 
-        self.await_execution_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id)
 
         # Wait until timeout exceeds.
         self._sleep(1)
@@ -896,7 +896,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.IDLE, task_ex.state)
 
-        self.await_execution_paused(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
 
         self._sleep(1)
 
@@ -905,7 +905,7 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self._assert_single_item(wf_ex.task_executions, name='task1')
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = self._assert_single_item(
@@ -935,7 +935,7 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.IDLE, task_ex.state)
 
         # Verify wf paused by pause-before
-        self.await_execution_paused(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
 
         # Allow wait-before to expire
         self._sleep(2)
@@ -943,7 +943,7 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         # Verify wf still paused (wait-before didn't reactivate)
-        self.await_execution_paused(wf_ex.id)
+        self.await_workflow_paused(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
         self.assertEqual(states.IDLE, task_ex.state)
@@ -953,7 +953,7 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         self._assert_single_item(wf_ex.task_executions, name='task1')
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = self._assert_single_item(
@@ -974,7 +974,7 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
         task_ex = self._assert_single_item(
@@ -1046,9 +1046,9 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', {})
 
-        self.await_execution_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_execution(wf_ex.id)
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(2, len(wf_ex.task_executions))

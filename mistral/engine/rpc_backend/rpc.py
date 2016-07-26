@@ -168,13 +168,14 @@ class EngineServer(object):
         return self._engine.on_task_state_change(task_ex_id, state, state_info)
 
     def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
-                           result_error):
+                           result_error, wf_action):
         """Receives RPC calls to communicate action result to engine.
 
         :param rpc_ctx: RPC request context.
         :param action_ex_id: Action execution id.
         :param result_data: Action result data.
         :param result_error: Action result error.
+        :param wf_action: True if given id points to a workflow execution.
         :return: Action execution.
         """
 
@@ -185,7 +186,7 @@ class EngineServer(object):
             " action_ex_id=%s, result=%s]" % (rpc_ctx, action_ex_id, result)
         )
 
-        return self._engine.on_action_complete(action_ex_id, result)
+        return self._engine.on_action_complete(action_ex_id, result, wf_action)
 
     def pause_workflow(self, rpc_ctx, execution_id):
         """Receives calls over RPC to pause workflows on engine.
@@ -358,7 +359,7 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
-    def on_action_complete(self, action_ex_id, result):
+    def on_action_complete(self, action_ex_id, result, wf_action=False):
         """Conveys action result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
@@ -372,7 +373,11 @@ class EngineClient(base.Engine):
 
         :param action_ex_id: Action execution id.
         :param result: Action execution result.
-        :return: Task.
+        :param wf_action: If True it means that the given id points to
+            a workflow execution rather than action execution. It happens
+            when a nested workflow execution sends its result to a parent
+            workflow.
+        :return: Action(or workflow if wf_action=True) execution object.
         """
 
         return self._client.sync_call(
@@ -380,7 +385,8 @@ class EngineClient(base.Engine):
             'on_action_complete',
             action_ex_id=action_ex_id,
             result_data=result.data,
-            result_error=result.error
+            result_error=result.error,
+            wf_action=wf_action
         )
 
     @wrap_messaging_exception

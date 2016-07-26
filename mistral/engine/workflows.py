@@ -369,30 +369,32 @@ def _send_result_to_parent_workflow(wf_ex_id):
     wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
     if wf_ex.state == states.SUCCESS:
-        rpc.get_engine_client().on_action_complete(
-            wf_ex.id,
-            wf_utils.Result(data=wf_ex.output)
-        )
+        result = wf_utils.Result(data=wf_ex.output)
     elif wf_ex.state == states.ERROR:
         err_msg = (
             wf_ex.state_info or
             'Failed subworkflow [execution_id=%s]' % wf_ex.id
         )
 
-        rpc.get_engine_client().on_action_complete(
-            wf_ex.id,
-            wf_utils.Result(error=err_msg)
-        )
+        result = wf_utils.Result(error=err_msg)
     elif wf_ex.state == states.CANCELLED:
         err_msg = (
             wf_ex.state_info or
             'Cancelled subworkflow [execution_id=%s]' % wf_ex.id
         )
 
-        rpc.get_engine_client().on_action_complete(
-            wf_ex.id,
-            wf_utils.Result(error=err_msg, cancel=True)
+        result = wf_utils.Result(error=err_msg, cancel=True)
+    else:
+        raise RuntimeError(
+            "Method _send_result_to_parent_workflow() must never be called"
+            " if a workflow is not in SUCCESS, ERROR or CNCELLED state."
         )
+
+    rpc.get_engine_client().on_action_complete(
+        wf_ex.id,
+        result,
+        wf_action=True
+    )
 
 
 def _build_fail_info_message(wf_ctrl, wf_ex):
@@ -411,11 +413,22 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
     for t in failed_tasks:
         msg += '\n  %s [task_ex_id=%s] -> %s\n' % (t.name, t.id, t.state_info)
 
-        for i, ex in enumerate(t.executions):
+        for i, ex in enumerate(t.action_executions):
             if ex.state == states.ERROR:
                 output = (ex.output or dict()).get('result', 'Unknown')
                 msg += (
                     '    [action_ex_id=%s, idx=%s]: %s\n' % (
+                        ex.id,
+                        i,
+                        str(output)
+                    )
+                )
+
+        for i, ex in enumerate(t.workflow_executions):
+            if ex.state == states.ERROR:
+                output = (ex.output or dict()).get('result', 'Unknown')
+                msg += (
+                    '    [wf_ex_id=%s, idx=%s]: %s\n' % (
                         ex.id,
                         i,
                         str(output)

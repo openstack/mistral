@@ -23,8 +23,9 @@ from mistral.tests.unit import base
 from oslo_config import cfg
 
 
-def _load_executions():
+def _create_workflow_executions():
     time_now = datetime.datetime.now()
+
     wf_execs = [
         {
             'id': '123',
@@ -59,15 +60,6 @@ def _load_executions():
             'state': "SUCCESS",
         },
         {
-            'id': '654',
-            'name': 'expired but not a parent',
-            'created_at': time_now - datetime.timedelta(days=15),
-            'updated_at': time_now - datetime.timedelta(days=10),
-            'workflow_name': 'test_exec',
-            'state': "SUCCESS",
-            'task_execution_id': '789'
-        },
-        {
             'id': 'abc',
             'name': 'cancelled_expired',
             'created_at': time_now - datetime.timedelta(minutes=60),
@@ -87,6 +79,28 @@ def _load_executions():
 
     for wf_exec in wf_execs:
         db_api.create_workflow_execution(wf_exec)
+
+    # Create a nested workflow execution.
+
+    db_api.create_task_execution(
+        {
+            'id': '789',
+            'workflow_execution_id': '987',
+            'name': 'my_task'
+        }
+    )
+
+    db_api.create_workflow_execution(
+        {
+            'id': '654',
+            'name': 'expired but not a parent',
+            'created_at': time_now - datetime.timedelta(days=15),
+            'updated_at': time_now - datetime.timedelta(days=10),
+            'workflow_name': 'test_exec',
+            'state': "SUCCESS",
+            'task_execution_id': '789'
+        }
+    )
 
 
 def _switch_context(project_id, is_admin):
@@ -110,13 +124,13 @@ class ExpirationPolicyTest(base.DbTestCase):
         # we want to load the executions with other project_id.
         _switch_context('non_admin_project', False)
 
-        _load_executions()
+        _create_workflow_executions()
 
         now = datetime.datetime.now()
 
         # This execution has a parent wf and testing that we are
         # querying only for parent wfs.
-        exec_child = db_api.get_execution('654')
+        exec_child = db_api.get_workflow_execution('654')
 
         self.assertEqual('789', exec_child.task_execution_id)
 
