@@ -145,11 +145,10 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
         query = _secure_query(model)
 
     sort_keys = sort_keys if sort_keys else []
-    sort_dirs = sort_dirs if sort_dirs else []
 
     if 'id' not in sort_keys:
         sort_keys.append('id')
-        sort_dirs.append('asc')
+        sort_dirs.append('asc') if sort_dirs else None
 
     query = db_utils.paginate_query(
         query,
@@ -195,16 +194,14 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
 
         query = query.filter(expr)
 
-    if marker or limit:
-        # Paginate query only if query set is limited.
-        query = _paginate_query(
-            model,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
+    query = _paginate_query(
+        model,
+        limit,
+        marker,
+        sort_keys,
+        sort_dirs,
+        query
+    )
 
     try:
         return query.all()
