@@ -830,7 +830,7 @@ Example:
         - radix: 16
 
       output:
-        uuid: <% task(generate_uuid_task).result %>
+        uuid: <% $.generated_uuid %>
 
       tasks:
         generate_uuid_task:
@@ -843,7 +843,7 @@ Example:
                       return v.toString($.radix);
               });
           publish:
-            generated_uuid: <% $.generate_uuid_task %>
+            generated_uuid: <% task(generate_uuid_task).result %>
 
 Another example for getting the current date and time:
 
@@ -851,7 +851,7 @@ Another example for getting the current date and time:
 
       ---
       version: '2.0'
-      
+
       get_date_workflow:
         description: Get the current date
 
@@ -859,7 +859,7 @@ Another example for getting the current date and time:
 
         output:
           current_date: <% $.current_date %>
-      
+
         tasks:
           get_date_task:
             action: std.javascript
