@@ -55,6 +55,7 @@ class ReverseWorkflowController(base.WorkflowController):
         return cmds + [
             commands.RunTask(
                 self.wf_ex,
+                self.wf_spec,
                 t_s,
                 self._get_task_inbound_context(t_s)
             )

@@ -12,8 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services import workbooks as wb_service
 from mistral.tests.unit import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import reverse_workflow as reverse_wf
@@ -41,9 +43,13 @@ workflows:
 """
 
 
-class ReverseWorkflowControllerTest(base.BaseTest):
+class ReverseWorkflowControllerTest(base.DbTestCase):
     def setUp(self):
         super(ReverseWorkflowControllerTest, self).setUp()
+
+        wb_service.create_workbook_v2(WB)
+
+        wf_def = db_api.get_workflow_definitions()[0]
 
         wb_spec = spec_parser.get_workbook_spec_from_yaml(WB)
 
@@ -51,7 +57,8 @@ class ReverseWorkflowControllerTest(base.BaseTest):
             id='1-2-3-4',
             spec=wb_spec.get_workflows().get('wf').to_dict(),
             state=states.RUNNING,
-            params={}
+            params={},
+            workflow_id=wf_def.id
         )
 
         self.wf_ex = wf_ex

@@ -87,6 +87,7 @@ class DirectWorkflowController(base.WorkflowController):
         return [
             commands.RunTask(
                 self.wf_ex,
+                self.wf_spec,
                 t_s,
                 self._get_task_inbound_context(t_s)
             )
@@ -114,6 +115,7 @@ class DirectWorkflowController(base.WorkflowController):
             cmd = commands.create_command(
                 t_n,
                 self.wf_ex,
+                self.wf_spec,
                 t_s,
                 self._get_task_inbound_context(t_s),
                 params

@@ -28,7 +28,6 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral import utils
 from mistral.utils import wf_trace
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -47,12 +46,13 @@ class Task(object):
     Mistral engine or its components in order to manipulate with tasks.
     """
 
-    def __init__(self, wf_ex, task_spec, ctx, task_ex=None):
+    @profiler.trace('task-create')
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None):
         self.wf_ex = wf_ex
         self.task_spec = task_spec
         self.ctx = ctx
         self.task_ex = task_ex
-        self.wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+        self.wf_spec = wf_spec
         self.waiting = False
         self.reset_flag = False
 

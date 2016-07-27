@@ -13,11 +13,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from cachetools import cached
+from cachetools import LRUCache
+from threading import RLock
 import yaml
 from yaml import error
 
 import six
 
+from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.workbook import base
 from mistral.workbook.v2 import actions as actions_v2
@@ -28,6 +32,9 @@ from mistral.workbook.v2 import workflows as wf_v2
 V2_0 = '2.0'
 
 ALL_VERSIONS = [V2_0]
+
+
+_WF_CACHE = LRUCache(maxsize=100)
 
 
 def parse_yaml(text):
@@ -60,7 +67,6 @@ def _get_spec_version(spec_dict):
 
 # Factory methods to get specifications either from raw YAML formatted text or
 # from dictionaries parsed from YAML formatted text.
-
 
 def get_workbook_spec(spec_dict):
     if _get_spec_version(spec_dict) == V2_0:
@@ -97,6 +103,15 @@ def get_action_list_spec_from_yaml(text):
 
 
 def get_workflow_spec(spec_dict):
+    """Get workflow specification object from dictionary.
+
+    NOTE: For large workflows this method can work very long (seconds).
+    For this reason, method 'get_workflow_spec_by_id' should be used
+    whenever possible because it caches specification objects by
+    workflow definition id.
+
+    :param spec_dict: Raw specification dictionary.
+    """
     if _get_spec_version(spec_dict) == V2_0:
         return base.instantiate_spec(wf_v2.WorkflowSpec, spec_dict)
 
@@ -129,7 +144,7 @@ def get_workflow_definition(wb_def, wf_name):
 
 
 def get_action_definition(wb_def, action_name):
-    action_name = action_name + ":"
+    action_name += ":"
 
     return _parse_def_from_wb(wb_def, "actions:", action_name)
 
@@ -166,3 +181,25 @@ def _parse_def_from_wb(wb_def, section_name, item_name):
     definition = ''.join(definition).rstrip() + '\n'
 
     return definition
+
+
+# Methods for obtaining specifications in a more efficient way using
+# caching techniques.
+
+@cached(_WF_CACHE, lock=RLock())
+def get_workflow_spec_by_id(wf_def_id):
+    if not wf_def_id:
+        return None
+
+    wf_def = db_api.get_workflow_definition(wf_def_id)
+
+    return get_workflow_spec(wf_def.spec)
+
+
+def get_workflow_spec_cache_size():
+    return len(_WF_CACHE)
+
+
+def clear_caches():
+    """Clears all specification caches."""
+    _WF_CACHE.clear()

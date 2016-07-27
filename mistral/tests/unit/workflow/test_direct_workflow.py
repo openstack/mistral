@@ -17,6 +17,7 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import direct_workflow as d_wf
@@ -25,14 +26,15 @@ from mistral.workflow import states
 
 class DirectWorkflowControllerTest(base.DbTestCase):
     def _prepare_test(self, wf_text):
-        wf_spec = spec_parser.get_workflow_list_spec_from_yaml(wf_text)[0]
+        wfs = wf_service.create_workflows(wf_text)
+        wf_spec = spec_parser.get_workflow_spec_by_id(wfs[0].id)
 
-        wf_ex = models.WorkflowExecution()
-        wf_ex.update({
-            'id': '1-2-3-4',
-            'spec': wf_spec.to_dict(),
-            'state': states.RUNNING
-        })
+        wf_ex = models.WorkflowExecution(
+            id='1-2-3-4',
+            spec=wf_spec.to_dict(),
+            state=states.RUNNING,
+            workflow_id=wfs[0].id
+        )
 
         self.wf_ex = wf_ex
         self.wf_spec = wf_spec

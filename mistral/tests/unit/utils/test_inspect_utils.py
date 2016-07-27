@@ -38,7 +38,7 @@ class InspectUtilsTest(base.BaseTest):
         clazz = commands.RunTask
         parameters_str = i_u.get_arg_list_as_str(clazz.__init__)
 
-        self.assertEqual("wf_ex, task_spec, ctx", parameters_str)
+        self.assertEqual('wf_ex, wf_spec, task_spec, ctx', parameters_str)
 
     def test_get_parameters_str_with_function_parameter(self):
 
@@ -46,4 +46,5 @@ class InspectUtilsTest(base.BaseTest):
             pass
 
         parameters_str = i_u.get_arg_list_as_str(test_func)
+
         self.assertEqual("foo, bar=null", parameters_str)

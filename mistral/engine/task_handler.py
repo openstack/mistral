@@ -82,6 +82,7 @@ def on_action_complete(action_ex):
 
     task = _create_task(
         wf_ex,
+        spec_parser.get_workflow_spec_by_id(wf_ex.workflow_id),
         task_spec,
         task_ex.in_context,
         task_ex
@@ -109,7 +110,10 @@ def on_action_complete(action_ex):
 
 
 def fail_task(task_ex, msg):
-    task = _build_task_from_execution(task_ex)
+    task = _build_task_from_execution(
+        spec_parser.get_workflow_spec_by_id(task_ex.workflow_id),
+        task_ex
+    )
 
     task.set_state(states.ERROR, msg)
 
@@ -117,7 +121,10 @@ def fail_task(task_ex, msg):
 
 
 def continue_task(task_ex):
-    task = _build_task_from_execution(task_ex)
+    task = _build_task_from_execution(
+        spec_parser.get_workflow_spec_by_id(task_ex.workflow_id),
+        task_ex
+    )
 
     try:
         task.run()
@@ -142,7 +149,10 @@ def continue_task(task_ex):
 
 
 def complete_task(task_ex, state, state_info):
-    task = _build_task_from_execution(task_ex)
+    task = _build_task_from_execution(
+        spec_parser.get_workflow_spec_by_id(task_ex.workflow_id),
+        task_ex
+    )
 
     try:
         task.complete(state, state_info)
@@ -166,19 +176,22 @@ def complete_task(task_ex, state, state_info):
         wf_handler.on_task_complete(task_ex)
 
 
-def _build_task_from_execution(task_ex, task_spec=None):
+def _build_task_from_execution(wf_spec, task_ex, task_spec=None):
     return _create_task(
         task_ex.workflow_execution,
+        wf_spec,
         task_spec or spec_parser.get_task_spec(task_ex.spec),
         task_ex.in_context,
         task_ex
     )
 
 
+@profiler.trace('task-handler-build-task-from-command')
 def _build_task_from_command(cmd):
     if isinstance(cmd, wf_cmds.RunExistingTask):
         task = _create_task(
             cmd.wf_ex,
+            cmd.wf_spec,
             spec_parser.get_task_spec(cmd.task_ex.spec),
             cmd.ctx,
             cmd.task_ex
@@ -190,7 +203,7 @@ def _build_task_from_command(cmd):
         return task
 
     if isinstance(cmd, wf_cmds.RunTask):
-        task = _create_task(cmd.wf_ex, cmd.task_spec, cmd.ctx)
+        task = _create_task(cmd.wf_ex, cmd.wf_spec, cmd.task_spec, cmd.ctx)
 
         if cmd.is_waiting():
             task.defer()
@@ -200,8 +213,8 @@ def _build_task_from_command(cmd):
     raise exc.MistralError('Unsupported workflow command: %s' % cmd)
 
 
-def _create_task(wf_ex, task_spec, ctx, task_ex=None):
+def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None):
     if task_spec.get_with_items():
-        return tasks.WithItemsTask(wf_ex, task_spec, ctx, task_ex)
+        return tasks.WithItemsTask(wf_ex, wf_spec, task_spec, ctx, task_ex)
 
-    return tasks.RegularTask(wf_ex, task_spec, ctx, task_ex)
+    return tasks.RegularTask(wf_ex, wf_spec, task_spec, ctx, task_ex)

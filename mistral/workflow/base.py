@@ -43,7 +43,7 @@ def get_controller(wf_ex, wf_spec=None):
     """
 
     if not wf_spec:
-        wf_spec = spec_parser.get_workflow_spec(wf_ex['spec'])
+        wf_spec = spec_parser.get_workflow_spec_by_id(wf_ex.workflow_id)
 
     wf_type = wf_spec.get_type()
 
@@ -81,7 +81,7 @@ class WorkflowController(object):
         self.wf_ex = wf_ex
 
         if wf_spec is None:
-            wf_spec = spec_parser.get_workflow_spec(wf_ex.spec)
+            wf_spec = spec_parser.get_workflow_spec_by_id(wf_ex.workflow_id)
 
         self.wf_spec = wf_spec
 
@@ -201,7 +201,10 @@ class WorkflowController(object):
         for task_ex in idle_tasks:
             self._update_task_ex_env(task_ex, env)
 
-        return [commands.RunExistingTask(t) for t in idle_tasks]
+        return [
+            commands.RunExistingTask(self.wf_ex, self.wf_spec, t)
+            for t in idle_tasks
+        ]
 
     def _get_rerun_commands(self, task_exs, reset=True, env=None):
         """Get commands to rerun existing task executions.
@@ -218,7 +221,10 @@ class WorkflowController(object):
             # state. Fix it, it should happen outside.
             self._update_task_ex_env(task_ex, env)
 
-        cmds = [commands.RunExistingTask(t_e, reset) for t_e in task_exs]
+        cmds = [
+            commands.RunExistingTask(self.wf_ex, self.wf_spec, t_e, reset)
+            for t_e in task_exs
+        ]
 
         LOG.debug("Found commands: %s" % cmds)
 

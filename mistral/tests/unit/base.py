@@ -35,7 +35,7 @@ from mistral.services import security
 from mistral.tests.unit import config as test_config
 from mistral.utils import inspect_utils as i_utils
 from mistral import version
-
+from mistral.workbook import parser as spec_parser
 
 RESOURCES_PATH = 'tests/resources/'
 LOG = logging.getLogger(__name__)
@@ -98,6 +98,11 @@ class FakeHTTPResponse(object):
 
 
 class BaseTest(base.BaseTestCase):
+    def setUp(self):
+        super(BaseTest, self).setUp()
+
+        self.addCleanup(spec_parser.clear_caches)
+
     def assertListEqual(self, l1, l2):
         if tuple(sys.version_info)[0:2] < (2, 7):
             # for python 2.6 compatibility
