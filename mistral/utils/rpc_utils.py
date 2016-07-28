@@ -17,6 +17,7 @@ from oslo_config import cfg
 
 
 CONF = cfg.CONF
+CONF.import_opt('rpc_response_timeout', 'mistral.config')
 
 
 def get_rpc_info_from_oslo(additional_conf=None):
@@ -38,5 +39,6 @@ def _get_rabbit_info_from_oslo(additional_conf):
         'port': CONF.oslo_messaging_rabbit.rabbit_port,
         'virtual_host': CONF.oslo_messaging_rabbit.rabbit_virtual_host,
         'durable_queues': CONF.oslo_messaging_rabbit.amqp_durable_queues,
-        'auto_delete': CONF.oslo_messaging_rabbit.amqp_auto_delete
+        'auto_delete': CONF.oslo_messaging_rabbit.amqp_auto_delete,
+        'timeout': CONF.rpc_response_timeout
     }

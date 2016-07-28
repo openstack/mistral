@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import socket
-import time
 
 import kombu
 from oslo_log import log as logging
@@ -44,7 +43,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         self.virtual_host = conf.get('virtual_host', '/')
         self.durable_queue = conf.get('durable_queues', False)
         self.auto_delete = conf.get('auto_delete', False)
-        self._timeout = 180
+        self._timeout = conf.get('timeout', 60)
         self.conn = self._make_connection(
             self.host,
             self.port,
@@ -120,15 +119,11 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         a timeout occurred. If a timeout occurred - the `RpcTimeout` exception
         will be raised.
         """
-        start_time = time.time()
-
         while not utils.get_thread_local(IS_RECEIVED):
             try:
-                self.conn.drain_events()
+                self.conn.drain_events(timeout=self._timeout)
             except socket.timeout:
-                if self._timeout > 0:
-                    if time.time() - start_time > self._timeout:
-                        raise exc.MistralException("RPC Request timeout")
+                raise exc.MistralException("RPC Request timeout")
 
     def _call(self, ctx, method, target, async=False, **kwargs):
         """Performs a remote call for the given method.

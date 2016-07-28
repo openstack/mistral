@@ -38,7 +38,8 @@ class RPCTest(base.EngineTestCase):
                 'exchange': 'openstack',
                 'password': 'guest',
                 'durable_queues': False,
-                'auto_delete': False
+                'auto_delete': False,
+                'timeout': 60
             },
             rpc_info
         )
