@@ -46,45 +46,6 @@ def _get_task_resource_with_result(task_ex):
     return task
 
 
-def _get_task_resources_with_results(marker=None, limit=None,
-                                     sort_keys='created_at', sort_dirs='asc',
-                                     fields='', **filters):
-    """Return all tasks within the execution.
-
-    Where project_id is the same as the requester or
-    project_id is different but the scope is public.
-
-    :param marker: Optional. Pagination marker for large data sets.
-    :param limit: Optional. Maximum number of resources to return in a
-                  single result. Default value is None for backward
-                  compatibility.
-    :param sort_keys: Optional. Columns to sort results by.
-                      Default: created_at, which is backward compatible.
-    :param sort_dirs: Optional. Directions to sort corresponding to
-                      sort_keys, "asc" or "desc" can be chosen.
-                      Default: desc. The length of sort_dirs can be equal
-                      or less than that of sort_keys.
-    :param fields: Optional. A specified list of fields of the resource to
-                   be returned. 'id' will be included automatically in
-                   fields if it's provided, since it will be used when
-                   constructing 'next' link.
-    :param filters: Optional. A list of filters to apply to the result.
-    """
-    return rest_utils.get_all(
-        resources.Tasks,
-        resources.Task,
-        db_api.get_task_executions,
-        db_api.get_task_execution,
-        resource_function=_get_task_resource_with_result,
-        marker=marker,
-        limit=limit,
-        sort_keys=sort_keys,
-        sort_dirs=sort_dirs,
-        fields=fields,
-        **filters
-    )
-
-
 class TaskExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
@@ -157,7 +118,6 @@ class TaskExecutionsController(rest.RestController):
             resources.Execution,
             db_api.get_workflow_executions,
             db_api.get_workflow_execution,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
@@ -252,11 +212,16 @@ class TasksController(rest.RestController):
             env=env
         )
 
-        LOG.info("Fetch tasks. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
-                 sort_dirs, filters)
+        LOG.info(
+            "Fetch tasks. marker=%s, limit=%s, sort_keys=%s, sort_dirs=%s,"
+            " filters=%s", marker, limit, sort_keys, sort_dirs, filters
+        )
 
-        return _get_task_resources_with_results(
+        return rest_utils.get_all(
+            resources.Tasks,
+            resources.Task,
+            db_api.get_task_executions,
+            db_api.get_task_execution,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
@@ -390,12 +355,18 @@ class ExecutionTasksController(rest.RestController):
             env=env
         )
 
-        LOG.info("Fetch tasks. workflow_execution_id=%s, marker=%s, limit=%s, "
-                 "sort_keys=%s, sort_dirs=%s, filters=%s",
-                 workflow_execution_id, marker, limit, sort_keys, sort_dirs,
-                 filters)
+        LOG.info(
+            "Fetch tasks. workflow_execution_id=%s, marker=%s, limit=%s, "
+            "sort_keys=%s, sort_dirs=%s, filters=%s",
+            workflow_execution_id, marker, limit, sort_keys, sort_dirs,
+            filters
+        )
 
-        return _get_task_resources_with_results(
+        return rest_utils.get_all(
+            resources.Tasks,
+            resources.Task,
+            db_api.get_task_executions,
+            db_api.get_task_execution,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

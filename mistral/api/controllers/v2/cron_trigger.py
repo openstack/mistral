@@ -156,7 +156,6 @@ class CronTriggersController(rest.RestController):
             resources.CronTrigger,
             db_api.get_cron_triggers,
             db_api.get_cron_trigger,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

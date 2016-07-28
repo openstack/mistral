@@ -264,7 +264,6 @@ class ExecutionsController(rest.RestController):
             resources.Execution,
             db_api.get_workflow_executions,
             db_api.get_workflow_execution,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

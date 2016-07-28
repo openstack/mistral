@@ -158,6 +158,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
         marker_obj = get_function(marker)
 
     list_to_return = []
+
     if resource_function:
         # do not filter fields yet, resource_function needs the ORM object
         db_list = get_all_function(
@@ -183,7 +184,6 @@ def get_all(list_cls, cls, get_all_function, get_function,
                 dict_data = obj.to_dict()
 
             list_to_return.append(cls.from_dict(dict_data))
-
     else:
         db_list = get_all_function(
             limit=limit,

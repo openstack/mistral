@@ -234,7 +234,6 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             resources.Workflow,
             db_api.get_workflow_definitions,
             db_api.get_workflow_definition_by_id,
-            resource_function=None,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
