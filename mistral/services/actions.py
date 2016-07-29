@@ -36,8 +36,9 @@ def update_actions(definition, scope='private', identifier=None):
 
     if identifier and len(actions) > 1:
         raise exc.InputException(
-            "More than one actions are not supported for update with UUID "
-            "provided."
+            "More than one actions are not supported for "
+            "update with identifier. [identifier: %s]" %
+            identifier
         )
 
     db_actions = []
