@@ -536,13 +536,8 @@ def create_action_definition(values, session=None):
 
 
 @b.session_aware()
-def update_action_definition(name, values, session=None):
-    a_def = _get_db_object_by_name(models.ActionDefinition, name)
-
-    if not a_def:
-        raise exc.DBEntityNotFoundError(
-            "Action definition not found [action_name=%s]" % name
-        )
+def update_action_definition(identifier, values, session=None):
+    a_def = get_action_definition(identifier)
 
     a_def.update(values.copy())
 

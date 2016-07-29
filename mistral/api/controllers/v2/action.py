@@ -61,7 +61,7 @@ class ActionsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
-    def put(self):
+    def put(self, identifier=None):
         """Update one or more actions.
 
         NOTE: This text is allowed to have definitions
@@ -79,7 +79,11 @@ class ActionsController(rest.RestController, hooks.HookController):
             )
 
         with db_api.transaction():
-            db_acts = actions.update_actions(definition, scope=scope)
+            db_acts = actions.update_actions(
+                definition,
+                scope=scope,
+                identifier=identifier
+            )
 
         models_dicts = [db_act.to_dict() for db_act in db_acts]
         action_list = [resources.Action.from_dict(act) for act in models_dicts]

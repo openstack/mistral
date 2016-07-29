@@ -589,6 +589,12 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_action_definition("not-existing-id"))
 
+    def test_get_action_definition_with_uuid(self):
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        fetched = db_api.get_action_definition(created.id)
+
+        self.assertEqual(created, fetched)
+
     def test_create_action_definition_duplicate_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -599,7 +605,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
             ACTION_DEFINITIONS[0]
         )
 
-    def test_update_action_definition(self):
+    def test_update_action_definition_with_name(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
         self.assertIsNone(created.updated_at)
@@ -615,6 +621,22 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(updated, fetched)
         self.assertIsNotNone(fetched.updated_at)
+
+    def test_update_action_definition_with_uuid(self):
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+
+        self.assertIsNone(created.updated_at)
+
+        updated = db_api.update_action_definition(
+            created.id,
+            {'description': 'my new desc'}
+        )
+
+        self.assertEqual('my new desc', updated.description)
+
+        fetched = db_api.get_action_definition(created.id)
+
+        self.assertEqual(updated, fetched)
 
     def test_create_or_update_action_definition(self):
         name = 'not-existing-id'
@@ -654,7 +676,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
-    def test_delete_action_definition(self):
+    def test_delete_action_definition_with_name(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
         fetched = db_api.get_action_definition(created.name)
@@ -667,6 +689,21 @@ class ActionDefinitionTest(SQLAlchemyTest):
             exc.DBEntityNotFoundError,
             db_api.get_action_definition,
             created.name
+        )
+
+    def test_delete_action_definition_with_uuid(self):
+        created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+
+        fetched = db_api.get_action_definition(created.id)
+
+        self.assertEqual(created, fetched)
+
+        db_api.delete_action_definition(created.id)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_action_definition,
+            created.id
         )
 
     def test_action_definition_repr(self):

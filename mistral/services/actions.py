@@ -30,13 +30,25 @@ def create_actions(definition, scope='private'):
     return db_actions
 
 
-def update_actions(definition, scope='private'):
+def update_actions(definition, scope='private', identifier=None):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
+    actions = action_list_spec.get_actions()
+
+    if identifier and len(actions) > 1:
+        raise exc.InputException(
+            "More than one actions are not supported for update with UUID "
+            "provided."
+        )
 
     db_actions = []
 
     for action_spec in action_list_spec.get_actions():
-        db_actions.append(update_action(action_spec, definition, scope))
+        db_actions.append(update_action(
+            action_spec,
+            definition,
+            scope,
+            identifier=identifier
+        ))
 
     return db_actions
 
@@ -60,7 +72,7 @@ def create_action(action_spec, definition, scope):
     )
 
 
-def update_action(action_spec, definition, scope):
+def update_action(action_spec, definition, scope, identifier=None):
     action = db_api.load_action_definition(action_spec.get_name())
 
     if action and action.is_system:
@@ -71,7 +83,10 @@ def update_action(action_spec, definition, scope):
 
     values = _get_action_values(action_spec, definition, scope)
 
-    return db_api.update_action_definition(values['name'], values)
+    return db_api.update_action_definition(
+        identifier if identifier else values['name'],
+        values
+    )
 
 
 def create_or_update_action(action_spec, definition, scope):
