@@ -20,8 +20,10 @@ from mistral.workbook import parser as spec_parser
 
 
 def create_workbook_v2(definition, scope='private'):
+    wb_spec = spec_parser.get_workbook_spec_from_yaml(definition)
+
     wb_values = _get_workbook_values(
-        spec_parser.get_workbook_spec_from_yaml(definition),
+        wb_spec,
         definition,
         scope
     )
@@ -29,34 +31,38 @@ def create_workbook_v2(definition, scope='private'):
     with db_api_v2.transaction():
         wb_db = db_api_v2.create_workbook(wb_values)
 
-        _on_workbook_update(wb_db, wb_values)
+        _on_workbook_update(wb_db, wb_spec)
 
     return wb_db
 
 
 def update_workbook_v2(definition, scope='private'):
-    values = _get_workbook_values(
-        spec_parser.get_workbook_spec_from_yaml(definition),
-        definition,
-        scope
-    )
+    wb_spec = spec_parser.get_workbook_spec_from_yaml(definition)
+
+    values = _get_workbook_values(wb_spec, definition, scope)
 
     with db_api_v2.transaction():
         wb_db = db_api_v2.update_workbook(values['name'], values)
 
-        _on_workbook_update(wb_db, values)
+        _, db_wfs = _on_workbook_update(wb_db, wb_spec)
+
+    # Once transaction has committed we need to update specification cache.
+    for db_wf, wf_spec in zip(db_wfs, wb_spec.get_workflows()):
+        spec_parser.update_workflow_cache(db_wf.id, wf_spec)
 
     return wb_db
 
 
-def _on_workbook_update(wb_db, values):
-    wb_spec = spec_parser.get_workbook_spec(values['spec'])
+def _on_workbook_update(wb_db, wb_spec):
+    db_actions = _create_or_update_actions(wb_db, wb_spec.get_actions())
+    db_wfs = _create_or_update_workflows(wb_db, wb_spec.get_workflows())
 
-    _create_or_update_actions(wb_db, wb_spec.get_actions())
-    _create_or_update_workflows(wb_db, wb_spec.get_workflows())
+    return db_actions, db_wfs
 
 
 def _create_or_update_actions(wb_db, actions_spec):
+    db_actions = []
+
     if actions_spec:
         for action_spec in actions_spec:
             action_name = '%s.%s' % (wb_db.name, action_spec.get_name())
@@ -76,10 +82,19 @@ def _create_or_update_actions(wb_db, actions_spec):
                 'project_id': wb_db.project_id
             }
 
-            db_api_v2.create_or_update_action_definition(action_name, values)
+            db_actions.append(
+                db_api_v2.create_or_update_action_definition(
+                    action_name,
+                    values
+                )
+            )
+
+    return db_actions
 
 
 def _create_or_update_workflows(wb_db, workflows_spec):
+    db_wfs = []
+
     if workflows_spec:
         for wf_spec in workflows_spec:
             wf_name = '%s.%s' % (wb_db.name, wf_spec.get_name())
@@ -93,7 +108,11 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'tags': wf_spec.get_tags()
             }
 
-            db_api_v2.create_or_update_workflow_definition(wf_name, values)
+            db_wfs.append(
+                db_api_v2.create_or_update_workflow_definition(wf_name, values)
+            )
+
+    return db_wfs
 
 
 def _get_workbook_values(wb_spec, definition, scope):

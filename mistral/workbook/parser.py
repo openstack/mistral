@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from cachetools import cached
+from cachetools import hashkey
 from cachetools import LRUCache
 from threading import RLock
 import yaml
@@ -35,6 +36,7 @@ ALL_VERSIONS = [V2_0]
 
 
 _WF_CACHE = LRUCache(maxsize=100)
+_WF_CACHE_LOCK = RLock()
 
 
 def parse_yaml(text):
@@ -186,7 +188,8 @@ def _parse_def_from_wb(wb_def, section_name, item_name):
 # Methods for obtaining specifications in a more efficient way using
 # caching techniques.
 
-@cached(_WF_CACHE, lock=RLock())
+
+@cached(_WF_CACHE, lock=_WF_CACHE_LOCK)
 def get_workflow_spec_by_id(wf_def_id):
     if not wf_def_id:
         return None
@@ -203,3 +206,9 @@ def get_workflow_spec_cache_size():
 def clear_caches():
     """Clears all specification caches."""
     _WF_CACHE.clear()
+
+
+def update_workflow_cache(wf_def_id, spec):
+    with _WF_CACHE_LOCK:
+        # We have to use hashkey function because @cached uses it implicitly.
+        _WF_CACHE[hashkey(wf_def_id)] = spec

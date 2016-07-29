@@ -105,15 +105,11 @@ class CallScheduler(periodic_task.PeriodicTasks):
         time_filter = datetime.datetime.now() + datetime.timedelta(
             seconds=1)
 
-        # Wrap delayed calls processing in transaction to
-        # guarantee that calls will be processed just once.
-        # Do delete query to DB first to force hanging up all
-        # parallel transactions.
-        # It should work on isolation level 'READ-COMMITTED',
-        # 'REPEATABLE-READ' and above.
-        #
-        # 'REPEATABLE-READ' is by default in MySQL and
-        # 'READ-COMMITTED is by default in PostgreSQL.
+        # Wrap delayed calls processing in transaction to guarantee that calls
+        # will be processed just once. Do delete query to DB first to force
+        # hanging up all parallel transactions.
+        # It should work with transactions which run at least 'READ-COMMITTED'
+        # mode.
         delayed_calls = []
 
         with db_api.transaction():
@@ -128,7 +124,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 result, number_of_updated = db_api.update_delayed_call(
                     id=call.id,
                     values={'processing': True},
-                    query_filter={"processing": False}
+                    query_filter={'processing': False}
                 )
 
                 # If number_of_updated != 1 other scheduler already

@@ -101,6 +101,11 @@ def update_workflows(definition, scope='private', identifier=None):
                 identifier=identifier
             ))
 
+    # Once transaction has committed we need to update specification cache.
+
+    for db_wf, wf_spec in zip(db_wfs, wf_list_spec.get_workflows()):
+        spec_parser.update_workflow_cache(db_wf.id, wf_spec)
+
     return db_wfs
 
 
