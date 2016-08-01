@@ -289,10 +289,11 @@ class SchedulerServiceTest(base.DbTestCase):
 
         eventlet.sleep(WAIT)
 
-        self.assertRaises(exc.DBEntityNotFoundError,
-                          db_api.get_delayed_call,
-                          calls[0].id
-                          )
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_delayed_call,
+            calls[0].id
+        )
 
     @mock.patch(FACTORY_METHOD_PATH)
     def test_processing_true_does_not_return_in_get_delayed_calls_to_start(
@@ -340,3 +341,46 @@ class SchedulerServiceTest(base.DbTestCase):
         db_api.get_delayed_call(calls[0].id)
 
         db_api.delete_delayed_call(calls[0].id)
+
+    def test_schedule_with_unique_key(self):
+        method_args = {'name': 'task', 'id': '321'}
+
+        key = 'my_unique_key'
+
+        scheduler.schedule_call(
+            None,
+            TARGET_METHOD_PATH,
+            DELAY,
+            unique_key=key,
+            **method_args
+        )
+
+        self.assertEqual(1, len(db_api.get_delayed_calls()))
+
+        # Schedule the call for the second time, number of calls
+        # must not change due to the same unique key.
+        scheduler.schedule_call(
+            None,
+            TARGET_METHOD_PATH,
+            DELAY,
+            unique_key=key,
+            **method_args
+        )
+
+        calls = db_api.get_delayed_calls()
+
+        self.assertEqual(1, len(calls))
+
+        # Now change 'processing' flag and make sure we can schedule
+        # one more call because DB constraint allows it.
+        db_api.update_delayed_call(calls[0].id, {'processing': True})
+
+        scheduler.schedule_call(
+            None,
+            TARGET_METHOD_PATH,
+            DELAY,
+            unique_key=key,
+            **method_args
+        )
+
+        self.assertEqual(2, len(db_api.get_delayed_calls()))
