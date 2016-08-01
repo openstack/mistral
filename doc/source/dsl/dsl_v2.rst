@@ -214,6 +214,9 @@ attributes:
 -  **timeout** - Configures timeout policy. *Optional*.
 -  **retry** - Configures retry policy. *Optional*.
 -  **concurrency** - Configures concurrency policy. *Optional*.
+-  **safe-rerun** - Boolean value allowing to rerun task if executor dies
+   during action execution. If set to 'true' task may be run twice.
+   *Optional*. By default set to 'false'.
 
 Policies
 ''''''''
