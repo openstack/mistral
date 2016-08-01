@@ -138,9 +138,12 @@ class Workflow(object):
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
         # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow(env)
+        cmds = wf_ctrl.continue_workflow()
 
-        # TODO(rakhmerov): How to update environment correctly?
+        if env:
+            for cmd in cmds:
+                if isinstance(cmd, commands.RunExistingTask):
+                    _update_task_environment(cmd.task_ex, env)
 
         self._continue_workflow(cmds)
 
@@ -159,11 +162,7 @@ class Workflow(object):
 
         self.set_state(states.RUNNING, recursive=True)
 
-        if env:
-            task_ex.in_context['__env'] = utils.merge_dicts(
-                task_ex.in_context['__env'],
-                env
-            )
+        _update_task_environment(task_ex, env)
 
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
@@ -354,6 +353,16 @@ class Workflow(object):
             0,
             wf_ex_id=self.wf_ex.id
         )
+
+
+def _update_task_environment(task_ex, env):
+    if env is None:
+        return
+
+    task_ex.in_context['__env'] = utils.merge_dicts(
+        task_ex.in_context['__env'],
+        env
+    )
 
 
 def _get_environment(params):

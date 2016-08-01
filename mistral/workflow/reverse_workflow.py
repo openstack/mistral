@@ -40,15 +40,13 @@ class ReverseWorkflowController(base.WorkflowController):
 
     __workflow_type__ = "reverse"
 
-    def _find_next_commands(self, env=None):
+    def _find_next_commands(self):
         """Finds all tasks with resolved dependencies.
 
          This method finds all tasks with resolved dependencies and
          returns them in the form of workflow commands.
         """
-        cmds = super(ReverseWorkflowController, self)._find_next_commands(
-            env=env
-        )
+        cmds = super(ReverseWorkflowController, self)._find_next_commands()
 
         task_specs = self._find_task_specs_with_satisfied_dependencies()
 
