@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -940,7 +941,8 @@ def get_expired_executions(time, session=None):
     query = query.filter(
         sa.or_(
             models.WorkflowExecution.state == "SUCCESS",
-            models.WorkflowExecution.state == "ERROR"
+            models.WorkflowExecution.state == "ERROR",
+            models.WorkflowExecution.state == "CANCELLED"
         )
     )
 

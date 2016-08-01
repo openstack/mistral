@@ -370,20 +370,24 @@ class WithItemsTask(RegularTask):
         assert self.task_ex
 
         state = action_ex.state
+
         # TODO(rakhmerov): Here we can define more informative messages
         # cases when action is successful and when it's not. For example,
         # in state_info we can specify the cause action.
-        state_info = (None if state == states.SUCCESS
-                      else action_ex.output.get('result'))
+        # The use of action_ex.output.get('result') for state_info is not
+        # accurate because there could be action executions that had
+        # failed or was cancelled prior to this action execution.
+        state_info = {
+            states.SUCCESS: None,
+            states.ERROR: 'One or more action executions had failed.',
+            states.CANCELLED: 'One or more action executions was cancelled.'
+        }
 
         with_items.increase_capacity(self.task_ex)
 
         if with_items.is_completed(self.task_ex):
-            self.complete(
-                with_items.get_final_state(self.task_ex),
-                state_info
-            )
-
+            state = with_items.get_final_state(self.task_ex)
+            self.complete(state, state_info[state])
             return
 
         if (with_items.has_more_iterations(self.task_ex)

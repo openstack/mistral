@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 Huawei Technologies Co., Ltd.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -33,8 +34,17 @@ from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
-STATE_TYPES = wtypes.Enum(str, states.IDLE, states.RUNNING, states.SUCCESS,
-                          states.ERROR, states.PAUSED)
+
+STATE_TYPES = wtypes.Enum(
+    str,
+    states.IDLE,
+    states.RUNNING,
+    states.SUCCESS,
+    states.ERROR,
+    states.PAUSED,
+    states.CANCELLED
+)
+
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
@@ -118,14 +128,14 @@ class ExecutionsController(rest.RestController):
                 )
 
         if delta.get('state'):
-            if delta.get('state') == states.PAUSED:
+            if states.is_paused(delta.get('state')):
                 wf_ex = rpc.get_engine_client().pause_workflow(id)
             elif delta.get('state') == states.RUNNING:
                 wf_ex = rpc.get_engine_client().resume_workflow(
                     id,
                     env=delta.get('env')
                 )
-            elif delta.get('state') in [states.SUCCESS, states.ERROR]:
+            elif states.is_completed(delta.get('state')):
                 msg = wf_ex.state_info if wf_ex.state_info else None
                 wf_ex = rpc.get_engine_client().stop_workflow(
                     id,
@@ -141,7 +151,8 @@ class ExecutionsController(rest.RestController):
                             states.RUNNING,
                             states.PAUSED,
                             states.SUCCESS,
-                            states.ERROR
+                            states.ERROR,
+                            states.CANCELLED
                         ])
                     )
                 )

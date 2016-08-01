@@ -109,6 +109,8 @@ class Workflow(object):
             return self._succeed_workflow(final_context, msg)
         elif state == states.ERROR:
             return self._fail_workflow(msg)
+        elif state == states.CANCELLED:
+            return self._cancel_workflow(msg)
 
     @profiler.trace('workflow-on-task-complete')
     def on_task_complete(self, task_ex):
@@ -212,7 +214,7 @@ class Workflow(object):
 
         # Workflow result should be accepted by parent workflows (if any)
         # only if it completed successfully or failed.
-        self.wf_ex.accepted = state in (states.SUCCESS, states.ERROR)
+        self.wf_ex.accepted = states.is_completed(state)
 
         if recursive and self.wf_ex.task_execution_id:
             parent_task_ex = db_api.get_task_execution(
@@ -275,7 +277,11 @@ class Workflow(object):
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
-        if wf_ctrl.all_errors_handled():
+        if wf_ctrl.any_cancels():
+            self._cancel_workflow(
+                _build_cancel_info_message(wf_ctrl, self.wf_ex)
+            )
+        elif wf_ctrl.all_errors_handled():
             self._succeed_workflow(wf_ctrl.evaluate_workflow_final_context())
         else:
             self._fail_workflow(_build_fail_info_message(wf_ctrl, self.wf_ex))
@@ -297,6 +303,24 @@ class Workflow(object):
             return
 
         self.set_state(states.ERROR, state_info=msg)
+
+        # When we set an ERROR state we should safely set output value getting
+        # w/o exceptions due to field size limitations.
+        msg = utils.cut_by_kb(
+            msg,
+            cfg.CONF.engine.execution_field_size_limit_kb
+        )
+
+        self.wf_ex.output = {'result': msg}
+
+        if self.wf_ex.task_execution_id:
+            self._schedule_send_result_to_parent_workflow()
+
+    def _cancel_workflow(self, msg):
+        if states.is_completed(self.wf_ex.state):
+            return
+
+        self.set_state(states.CANCELLED, state_info=msg)
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
@@ -359,6 +383,16 @@ def _send_result_to_parent_workflow(wf_ex_id):
             wf_ex.id,
             wf_utils.Result(error=err_msg)
         )
+    elif wf_ex.state == states.CANCELLED:
+        err_msg = (
+            wf_ex.state_info or
+            'Cancelled subworkflow [execution_id=%s]' % wf_ex.id
+        )
+
+        rpc.get_engine_client().on_action_complete(
+            wf_ex.id,
+            wf_utils.Result(error=err_msg, cancel=True)
+        )
 
 
 def _build_fail_info_message(wf_ctrl, wf_ex):
@@ -389,3 +423,14 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
                 )
 
     return msg
+
+
+def _build_cancel_info_message(wf_ctrl, wf_ex):
+    # Try to find where cancel is exactly.
+    cancelled_tasks = sorted(
+        wf_utils.find_cancelled_task_executions(wf_ex),
+        key=lambda t: t.name
+    )
+
+    return ('Cancelled tasks: %s' %
+            ', '.join([t.name for t in cancelled_tasks]))

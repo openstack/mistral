@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -218,6 +219,10 @@ class EngineTestCase(base.DbTestCase):
     def await_execution_paused(self, ex_id, delay=DEFAULT_DELAY,
                                timeout=DEFAULT_TIMEOUT):
         self.await_execution_state(ex_id, states.PAUSED, delay, timeout)
+
+    def await_execution_cancelled(self, ex_id, delay=DEFAULT_DELAY,
+                                  timeout=DEFAULT_TIMEOUT):
+        self.await_execution_state(ex_id, states.CANCELLED, delay, timeout)
 
     # Various methods for action execution objects.
 
