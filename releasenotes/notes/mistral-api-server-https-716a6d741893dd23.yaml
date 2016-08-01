@@ -1,0 +1,3 @@
+---
+features:
+  - Mistral API server can be configured to handle https requests.
