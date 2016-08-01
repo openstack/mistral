@@ -27,7 +27,7 @@ def client():
     auth_url = ctx.auth_uri
 
     cl = ks_client.Client(
-        username=ctx.user_name,
+        user_id=ctx.user_id,
         token=ctx.auth_token,
         tenant_id=ctx.project_id,
         auth_url=auth_url
