@@ -40,9 +40,9 @@ class Definition(mb.MistralSecureModelBase):
     __abstract__ = True
 
     id = mb.id_column()
-    name = sa.Column(sa.String(80))
-    definition = sa.Column(sa.Text(), nullable=True)
-    spec = sa.Column(st.JsonDictType())
+    name = sa.Column(sa.String(255))
+    definition = sa.Column(st.MediumText(), nullable=True)
+    spec = sa.Column(st.JsonMediumDictType())
     tags = sa.Column(st.JsonListType())
     is_system = sa.Column(sa.Boolean())
 
@@ -102,11 +102,11 @@ class Execution(mb.MistralSecureModelBase):
 
     # Common properties.
     id = mb.id_column()
-    name = sa.Column(sa.String(80))
+    name = sa.Column(sa.String(255))
     description = sa.Column(sa.String(255), nullable=True)
-    workflow_name = sa.Column(sa.String(80))
+    workflow_name = sa.Column(sa.String(255))
     workflow_id = sa.Column(sa.String(80))
-    spec = sa.Column(st.JsonDictType())
+    spec = sa.Column(st.JsonMediumDictType())
     state = sa.Column(sa.String(20))
     state_info = sa.Column(sa.Text(), nullable=True)
     tags = sa.Column(st.JsonListType())
@@ -386,7 +386,7 @@ class CronTrigger(mb.MistralSecureModelBase):
     )
     first_execution_time = sa.Column(sa.DateTime, nullable=True)
     next_execution_time = sa.Column(sa.DateTime, nullable=False)
-    workflow_name = sa.Column(sa.String(80))
+    workflow_name = sa.Column(sa.String(255))
     remaining_executions = sa.Column(sa.Integer)
 
     workflow_id = sa.Column(
