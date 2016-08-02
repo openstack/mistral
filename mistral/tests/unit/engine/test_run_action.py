@@ -96,6 +96,7 @@ class RunActionEngineTest(base.EngineTestCase):
         action_ex = self.engine.start_action('std.echo', {'output': 'Hello!'})
 
         self.assertEqual('Hello!', action_ex.output['result'])
+        self.assertEqual(states.SUCCESS, action_ex.state)
 
     @mock.patch.object(
         std_actions.EchoAction,
@@ -108,6 +109,7 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.assertIsNotNone(action_ex.output)
         self.assertIn('some error', action_ex.output['result'])
+        self.assertEqual(states.ERROR, action_ex.state)
 
     def test_run_action_save_result(self):
         # Start action.
@@ -262,7 +264,7 @@ class RunActionEngineTest(base.EngineTestCase):
             'scope': 'public'
         })
         def_mock.return_value = action_def
-        run_mock.return_value = {'result': 'Hello'}
+        run_mock.return_value = wf_utils.Result(data='Hello')
 
         class_ret = mock.MagicMock()
         class_mock.return_value = class_ret

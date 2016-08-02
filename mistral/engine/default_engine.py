@@ -24,6 +24,7 @@ from mistral.engine import action_handler
 from mistral.engine import base
 from mistral.engine import workflow_handler as wf_handler
 from mistral import utils as u
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -71,13 +72,16 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             output = action.run(action_input, target, save=save)
 
+            state = states.SUCCESS if output.is_success() else states.ERROR
+
             # Action execution is not created but we need to return similar
             # object to a client anyway.
             return db_models.ActionExecution(
                 name=action_name,
                 description=description,
                 input=action_input,
-                output=output
+                output=output.to_dict(),
+                state=state
             )
 
     @u.log_exec(LOG)
