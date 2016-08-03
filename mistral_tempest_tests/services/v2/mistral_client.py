@@ -29,9 +29,9 @@ class MistralClientV2(base.MistralClientBase):
 
         return self.post(url, base.get_resource(file_name), headers=headers)
 
-    def post_json(self, url, obj):
+    def post_json(self, url, obj, extra_headers={}):
         headers = {"Content-Type": "application/json"}
-
+        headers = dict(headers, **extra_headers)
         return self.post(url, json.dumps(obj), headers=headers)
 
     def update_request(self, url, file_name):
@@ -129,8 +129,10 @@ class MistralClientV2(base.MistralClientBase):
 
         return [t for t in all_tasks if t['workflow_name'] == wf_name]
 
-    def create_action_execution(self, request_body):
-        resp, body = self.post_json('action_executions', request_body)
+    def create_action_execution(self, request_body, extra_headers={}):
+        resp, body = self.post_json('action_executions',
+                                    request_body,
+                                    extra_headers)
 
         params = json.loads(request_body.get('params', '{}'))
         if params.get('save_result', False):
