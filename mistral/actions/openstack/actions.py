@@ -386,6 +386,10 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
     def _get_client_class(cls):
         return ironic_inspector_client.ClientV1
 
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()(1)
+
     def _get_client(self):
         ctx = context.ctx()
 
