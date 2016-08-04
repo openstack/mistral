@@ -61,7 +61,7 @@ def run_task(wf_cmd):
         return
 
     if task.is_completed():
-        wf_handler.on_task_complete(task.task_ex)
+        wf_handler.schedule_on_task_complete(task.task_ex)
 
 
 @profiler.trace('task-handler-on-task-complete')
@@ -106,7 +106,7 @@ def on_action_complete(action_ex):
         return
 
     if task.is_completed():
-        wf_handler.on_task_complete(task_ex)
+        wf_handler.schedule_on_task_complete(task_ex)
 
 
 def fail_task(task_ex, msg):
@@ -145,7 +145,7 @@ def continue_task(task_ex):
         return
 
     if task.is_completed():
-        wf_handler.on_task_complete(task_ex)
+        wf_handler.schedule_on_task_complete(task_ex)
 
 
 def complete_task(task_ex, state, state_info):
@@ -173,7 +173,7 @@ def complete_task(task_ex, state, state_info):
         return
 
     if task.is_completed():
-        wf_handler.on_task_complete(task_ex)
+        wf_handler.schedule_on_task_complete(task_ex)
 
 
 def _build_task_from_execution(wf_spec, task_ex, task_spec=None):
