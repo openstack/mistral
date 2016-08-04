@@ -24,6 +24,8 @@ from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import uuidutils  # noqa
 import sqlalchemy as sa
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import Insert
 
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
@@ -253,6 +255,73 @@ def _get_db_object_by_name_or_id(model, identifier):
     )
 
     return query.first()
+
+
+@compiles(Insert)
+def append_string(insert, compiler, **kw):
+    s = compiler.visit_insert(insert, **kw)
+
+    if 'append_string' in insert.kwargs:
+        append = insert.kwargs['append_string']
+
+        if append:
+            s += " " + append
+
+    if 'replace_string' in insert.kwargs:
+        replace = insert.kwargs['replace_string']
+
+        if isinstance(replace, tuple):
+            s = s.replace(replace[0], replace[1])
+
+    return s
+
+
+@b.session_aware()
+def insert_or_ignore(model_cls, values, session=None):
+    """Insert a new object into DB or ignore if it already exists.
+
+    This method is based on ability of MySQL, PostgreSQL and SQLite
+    to check unique constraint violations and allow user to take a
+    conflict mitigation action. Hence, uniqueness of the object that's
+    being inserted should be considered only from this perspective.
+
+    Note: This method hasn't been tested on databases other than MySQL,
+    PostgreSQL 9.5 or later, and SQLite. Therefore there's no guarantee
+    that it will work with them.
+
+    :param model_cls: Model class.
+    :param values: Values of the new object.
+    """
+
+    model = model_cls()
+
+    model.update(values)
+
+    append = None
+    replace = None
+
+    dialect = b.get_dialect_name()
+
+    if dialect == 'sqlite':
+        replace = ('INSERT INTO', 'INSERT OR IGNORE INTO')
+    elif dialect == 'mysql':
+        append = 'ON DUPLICATE KEY UPDATE id=id'
+    elif dialect == 'postgres':
+        append = 'ON CONFLICT DO NOTHING'
+    else:
+        raise RuntimeError(
+            '"Insert or ignore" is supported only for dialects: sqlite,'
+            ' mysql and postgres. Actual dialect: %s' % dialect
+        )
+
+    insert = model.__table__.insert(
+        append_string=append,
+        replace_string=replace
+    )
+
+    res = session.execute(insert, model.to_dict())
+
+    return res.rowcount
 
 
 # Workbook definitions.
@@ -797,6 +866,12 @@ def create_delayed_call(values, session=None):
         )
 
     return delayed_call
+
+
+def insert_or_ignore_delayed_call(values):
+    row_count = insert_or_ignore(models.DelayedCall, values.copy())
+
+    return row_count
 
 
 @b.session_aware()

@@ -212,6 +212,11 @@ def get_driver_name(session=None):
 
 
 @session_aware()
+def get_dialect_name(session=None):
+    return session.bind.url.get_dialect().name
+
+
+@session_aware()
 def model_query(model, columns=(), session=None):
     """Query helper.
 
