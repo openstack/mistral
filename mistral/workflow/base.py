@@ -85,36 +85,29 @@ class WorkflowController(object):
 
         self.wf_spec = wf_spec
 
-    @staticmethod
-    def _update_task_ex_env(task_ex, env):
-        if not env:
-            return task_ex
-
-        task_ex.in_context['__env'] = u.merge_dicts(
-            task_ex.in_context['__env'],
-            env
-        )
-
-        return task_ex
-
     @profiler.trace('workflow-controller-continue-workflow')
-    def continue_workflow(self, env=None):
+    def continue_workflow(self):
         """Calculates a list of commands to continue the workflow.
 
         Given a workflow specification this method makes required analysis
         according to this workflow type rules and identifies a list of
         commands needed to continue the workflow.
 
-        :param env: A set of environment variables to overwrite.
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
         """
+
+        # TODO(rakhmerov): We now use this method for two cases:
+        # 1) to handle task completion
+        # 2) to resume a workflow after it's been paused
+        # Moving forward we need to introduce a separate method for
+        # resuming a workflow because it won't be operating with
+        # any concrete tasks that caused this operation.
+
         if self._is_paused_or_completed():
             return []
 
-        # TODO(rakhmerov): Get rid of 'env' parameter completely, WF controller
-        # should not be updating any DB objects.
-        return self._find_next_commands(env=env)
+        return self._find_next_commands()
 
     def rerun_tasks(self, task_execs, reset=True):
         """Gets commands to rerun existing task executions.
@@ -197,13 +190,12 @@ class WorkflowController(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _find_next_commands(self, env=None):
+    def _find_next_commands(self):
         """Finds commands that should run next.
 
         A concrete algorithm of finding such tasks depends on a concrete
         workflow controller.
 
-        :param env: A set of environment variables to overwrite.
         :return: List of workflow commands.
         """
         # Add all tasks in IDLE state.
@@ -211,11 +203,6 @@ class WorkflowController(object):
             self.wf_ex,
             states.IDLE
         )
-
-        # TODO(rakhmerov): We should not be updating any DB objects in a WF
-        # controller.
-        for task_ex in idle_tasks:
-            self._update_task_ex_env(task_ex, env)
 
         return [
             commands.RunExistingTask(self.wf_ex, self.wf_spec, t)
