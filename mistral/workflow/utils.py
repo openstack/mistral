@@ -47,6 +47,10 @@ class Result(object):
             self.cancel == other.cancel
         )
 
+    def to_dict(self):
+        return ({'result': self.data}
+                if self.is_success() else {'result': self.error})
+
 
 class ResultSerializer(serializers.Serializer):
     def serialize(self, entity):

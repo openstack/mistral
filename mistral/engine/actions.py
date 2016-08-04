@@ -200,7 +200,7 @@ class PythonAction(Action):
         else:
             self.action_ex.state = states.ERROR
 
-        self.action_ex.output = self._prepare_output(result)
+        self.action_ex.output = self._prepare_output(result).to_dict()
         self.action_ex.accepted = True
 
         self._log_result(prev_state, result)
@@ -294,10 +294,9 @@ class PythonAction(Action):
     def _prepare_output(self, result):
         """Template method to do manipulations with action result.
 
-        Python action just wraps action result into dict that can
-        be stored in DB.
+        Python action doesn't do anything specific with result.
         """
-        return _get_action_output(result) if result else None
+        return result
 
     def _prepare_runtime_context(self, index, safe_rerun):
         """Template method to prepare action runtime context.
@@ -389,7 +388,7 @@ class AdHocAction(PythonAction):
                     error=result.error
                 )
 
-        return _get_action_output(result) if result else None
+        return result
 
     def _prepare_runtime_context(self, index, safe_rerun):
         ctx = super(AdHocAction, self)._prepare_runtime_context(
@@ -515,20 +514,7 @@ def _run_existing_action(action_ex_id, target):
         safe_rerun=action_ex.runtime_context.get('safe_rerun', False)
     )
 
-    return _get_action_output(result) if result else None
-
-
-def _get_action_output(result):
-    """Returns action output.
-
-    :param result: ActionResult instance or ActionResult dict
-    :return: dict containing result.
-    """
-    if isinstance(result, dict):
-        result = wf_utils.Result(result.get('data'), result.get('error'))
-
-    return ({'result': result.data}
-            if result.is_success() else {'result': result.error})
+    return result.to_dict() if result else None
 
 
 def resolve_action_definition(action_spec_name, wf_name=None,
