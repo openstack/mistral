@@ -100,13 +100,7 @@ def schedule_call(factory_method_path, target_method_name,
         'processing': False
     }
 
-    try:
-        db_api.create_delayed_call(values)
-    except exc.DBDuplicateEntryError:
-        LOG.debug(
-            'An attempt to schedule a non-unique delayed call'
-            ' (operation will be ignored): %s' % values
-        )
+    db_api.insert_or_ignore_delayed_call(values)
 
 
 class CallScheduler(periodic_task.PeriodicTasks):

@@ -338,6 +338,10 @@ def create_delayed_call(values):
     return IMPL.create_delayed_call(values)
 
 
+def insert_or_ignore_delayed_call(values):
+    return IMPL.insert_or_ignore_delayed_call(values)
+
+
 def delete_delayed_call(id):
     return IMPL.delete_delayed_call(id)
 
