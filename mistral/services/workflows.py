@@ -86,8 +86,9 @@ def update_workflows(definition, scope='private', identifier=None):
 
     if identifier and len(wfs) > 1:
         raise exc.InputException(
-            "More than one workflows are not supported for update with UUID "
-            "provided."
+            "More than one workflows are not supported for "
+            "update with identifier. [identifier: %s]" %
+            identifier
         )
 
     db_wfs = []
