@@ -856,6 +856,18 @@ def get_delayed_call(id, session=None):
     return delayed_call
 
 
+def get_delayed_calls(**kwargs):
+    return _get_collection(
+        model=models.DelayedCall,
+        **kwargs
+    )
+
+
+@b.session_aware()
+def delete_delayed_calls(**kwargs):
+    return _delete_all(models.DelayedCall, **kwargs)
+
+
 @b.session_aware()
 def get_expired_executions(time, session=None):
     query = b.model_query(models.WorkflowExecution)

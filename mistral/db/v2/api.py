@@ -350,6 +350,14 @@ def get_delayed_call(id):
     return IMPL.get_delayed_call(id)
 
 
+def get_delayed_calls(**kwargs):
+    return IMPL.get_delayed_calls(**kwargs)
+
+
+def delete_delayed_calls(**kwargs):
+    return IMPL.delete_delayed_calls(**kwargs)
+
+
 # Cron triggers.
 
 def get_cron_trigger(name):

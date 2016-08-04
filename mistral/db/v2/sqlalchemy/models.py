@@ -315,6 +315,7 @@ class DelayedCall(mb.MistralModelBase):
             'processing',
             'execution_time'
         ),
+        sa.UniqueConstraint('unique_key', 'processing')
     )
 
     id = mb.id_column()
@@ -322,6 +323,7 @@ class DelayedCall(mb.MistralModelBase):
     target_method_name = sa.Column(sa.String(80), nullable=False)
     method_arguments = sa.Column(st.JsonDictType())
     serializers = sa.Column(st.JsonDictType())
+    unique_key = sa.Column(sa.String(50), nullable=True)
     auth_context = sa.Column(st.JsonDictType())
     execution_time = sa.Column(sa.DateTime, nullable=False)
     processing = sa.Column(sa.Boolean, default=False, nullable=False)
