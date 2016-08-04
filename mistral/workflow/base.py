@@ -98,15 +98,13 @@ class WorkflowController(object):
         return task_ex
 
     @profiler.trace('workflow-controller-continue-workflow')
-    def continue_workflow(self, task_ex=None, reset=True, env=None):
+    def continue_workflow(self, env=None):
         """Calculates a list of commands to continue the workflow.
 
         Given a workflow specification this method makes required analysis
         according to this workflow type rules and identifies a list of
         commands needed to continue the workflow.
 
-        :param task_ex: Task execution to rerun.
-        :param reset: If true, then purge action executions for the tasks.
         :param env: A set of environment variables to overwrite.
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
@@ -114,12 +112,28 @@ class WorkflowController(object):
         if self._is_paused_or_completed():
             return []
 
-        # TODO(rakhmerov): I think it should rather be a new method
-        # rerun_task() because it covers a different use case.
-        if task_ex:
-            return self._get_rerun_commands([task_ex], reset, env=env)
-
+        # TODO(rakhmerov): Get rid of 'env' parameter completely, WF controller
+        # should not be updating any DB objects.
         return self._find_next_commands(env=env)
+
+    def rerun_tasks(self, task_execs, reset=True):
+        """Gets commands to rerun existing task executions.
+
+        :param task_execs: List of task executions.
+        :param reset: If true, then purge action executions for the tasks.
+        :return: List of workflow commands.
+        """
+        if self._is_paused_or_completed():
+            return []
+
+        cmds = [
+            commands.RunExistingTask(self.wf_ex, self.wf_spec, t_e, reset)
+            for t_e in task_execs
+        ]
+
+        LOG.debug("Commands to rerun workflow tasks: %s" % cmds)
+
+        return cmds
 
     @abc.abstractmethod
     def is_error_handled_for(self, task_ex):
@@ -198,6 +212,8 @@ class WorkflowController(object):
             states.IDLE
         )
 
+        # TODO(rakhmerov): We should not be updating any DB objects in a WF
+        # controller.
         for task_ex in idle_tasks:
             self._update_task_ex_env(task_ex, env)
 
@@ -205,30 +221,6 @@ class WorkflowController(object):
             commands.RunExistingTask(self.wf_ex, self.wf_spec, t)
             for t in idle_tasks
         ]
-
-    def _get_rerun_commands(self, task_exs, reset=True, env=None):
-        """Get commands to rerun existing task executions.
-
-        :param task_exs: List of task executions.
-        :param reset: If true, then purge action executions for the tasks.
-        :param env: A set of environment variables to overwrite.
-        :return: List of workflow commands.
-        """
-
-        for task_ex in task_exs:
-            # TODO(rakhmerov): It is wrong that we update something in
-            # workflow controller, by design it should not change system
-            # state. Fix it, it should happen outside.
-            self._update_task_ex_env(task_ex, env)
-
-        cmds = [
-            commands.RunExistingTask(self.wf_ex, self.wf_spec, t_e, reset)
-            for t_e in task_exs
-        ]
-
-        LOG.debug("Found commands: %s" % cmds)
-
-        return cmds
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)

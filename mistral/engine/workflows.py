@@ -135,7 +135,14 @@ class Workflow(object):
 
         self.set_state(states.RUNNING, recursive=True)
 
-        self._continue_workflow(env=env)
+        wf_ctrl = wf_base.get_controller(self.wf_ex)
+
+        # Calculate commands to process next.
+        cmds = wf_ctrl.continue_workflow(env)
+
+        # TODO(rakhmerov): How to update environment correctly?
+
+        self._continue_workflow(cmds)
 
     def rerun(self, task_ex, reset=True, env=None):
         """Rerun workflow from the given task.
@@ -152,7 +159,39 @@ class Workflow(object):
 
         self.set_state(states.RUNNING, recursive=True)
 
-        self._continue_workflow(task_ex, reset, env=env)
+        if env:
+            task_ex.in_context['__env'] = utils.merge_dicts(
+                task_ex.in_context['__env'],
+                env
+            )
+
+        wf_ctrl = wf_base.get_controller(self.wf_ex)
+
+        # Calculate commands to process next.
+        cmds = wf_ctrl.rerun_tasks([task_ex], reset=reset)
+
+        self._continue_workflow(cmds)
+
+    def _continue_workflow(self, cmds):
+        # When resuming a workflow we need to ignore all 'pause'
+        # commands because workflow controller takes tasks that
+        # completed within the period when the workflow was paused.
+        cmds = list(
+            filter(lambda c: not isinstance(c, commands.PauseWorkflow), cmds)
+        )
+
+        # Since there's no explicit task causing the operation
+        # we need to mark all not processed tasks as processed
+        # because workflow controller takes only completed tasks
+        # with flag 'processed' equal to False.
+        for t_ex in self.wf_ex.task_executions:
+            if states.is_completed(t_ex.state) and not t_ex.processed:
+                t_ex.processed = True
+
+        dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
+
+        if not cmds:
+            self._check_and_complete()
 
     @profiler.trace('workflow-lock')
     def lock(self):
@@ -234,32 +273,6 @@ class Workflow(object):
             parent_task_ex.state = state
             parent_task_ex.state_info = None
             parent_task_ex.processed = False
-
-    def _continue_workflow(self, task_ex=None, reset=True, env=None):
-        wf_ctrl = wf_base.get_controller(self.wf_ex)
-
-        # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow(task_ex=task_ex, reset=reset, env=env)
-
-        # When resuming a workflow we need to ignore all 'pause'
-        # commands because workflow controller takes tasks that
-        # completed within the period when the workflow was paused.
-        cmds = list(
-            filter(lambda c: not isinstance(c, commands.PauseWorkflow), cmds)
-        )
-
-        # Since there's no explicit task causing the operation
-        # we need to mark all not processed tasks as processed
-        # because workflow controller takes only completed tasks
-        # with flag 'processed' equal to False.
-        for t_ex in self.wf_ex.task_executions:
-            if states.is_completed(t_ex.state) and not t_ex.processed:
-                t_ex.processed = True
-
-        dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
-
-        if not cmds:
-            self._check_and_complete()
 
     def _check_and_complete(self):
         if states.is_paused_or_completed(self.wf_ex.state):
