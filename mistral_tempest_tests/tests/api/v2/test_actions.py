@@ -12,6 +12,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import datetime
 from oslo_log import log as logging
 from tempest.lib import exceptions
 from tempest import test
@@ -123,6 +124,162 @@ class ActionTestsV2(base.TestCase):
         self.assertIn(
             'Length of sort_keys must be equal or greater than sort_dirs',
             context.resp_body.get('faultstring')
+        )
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_equalto_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        resp, body = self.client.get_list_obj(
+            'actions?is_system=False'
+        )
+
+        self.assertEqual(200, resp.status)
+        self.assertNotEqual([], body['actions'])
+
+        for act in body['actions']:
+            self.assertFalse(act['is_system'])
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_notEqualto_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        resp, body = self.client.get_list_obj(
+            'actions?is_system=neq:False'
+        )
+
+        self.assertEqual(200, resp.status)
+        self.assertNotEqual([], body['actions'])
+
+        for act in body['actions']:
+            self.assertTrue(act['is_system'])
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_inList_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        created_acts = [action['name'] for action in body['actions']]
+        _, body = self.client.get_object('actions', created_acts[0])
+        time = body['created_at']
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=in:' + time.replace(' ', '%20')
+        )
+
+        self.assertEqual(200, resp.status)
+        action_names = [action['name'] for action in body['actions']]
+        self.assertListEqual(created_acts, action_names)
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_notinList_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        created_acts = [action['name'] for action in body['actions']]
+        _, body = self.client.get_object('actions', created_acts[0])
+        time = body['created_at']
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=nin:' + time.replace(' ', '%20')
+        )
+
+        self.assertEqual(200, resp.status)
+        action_names = [action['name'] for action in body['actions']]
+        for act in created_acts:
+            self.assertNotIn(act, action_names)
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_greaterThan_filter(self):
+        time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=gt:' + time.replace(' ', '%20')
+        )
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual([], body['actions'])
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_greaterThanEqualto_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        created_acts = [action['name'] for action in body['actions']]
+        _, body = self.client.get_object('actions', created_acts[0])
+        time = body['created_at']
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=gte:' + time.replace(' ', '%20')
+        )
+
+        actions = [action['name'] for action in body['actions']]
+        self.assertEqual(200, resp.status)
+        self.assertIn(created_acts[0], actions)
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_lessThan_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        created_acts = [action['name'] for action in body['actions']]
+        _, body = self.client.get_object('actions', created_acts[0])
+        time = body['created_at']
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=lt:' + time.replace(' ', '%20')
+        )
+
+        actions = [action['name'] for action in body['actions']]
+        self.assertEqual(200, resp.status)
+        self.assertNotIn(created_acts[0], actions)
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_lessThanEqualto_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        created_acts = [action['name'] for action in body['actions']]
+        _, body = self.client.get_object('actions', created_acts[0])
+        time = body['created_at']
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=lte:' + time.replace(' ', '%20')
+        )
+
+        actions = [action['name'] for action in body['actions']]
+        self.assertEqual(200, resp.status)
+        self.assertIn(created_acts[0], actions)
+
+    @test.attr(type='smoke')
+    def test_get_list_actions_multiple_filter(self):
+        resp, body = self.client.create_action('action_v2.yaml')
+        self.assertEqual(201, resp.status)
+
+        created_acts = [action['name'] for action in body['actions']]
+        _, body = self.client.get_object('actions', created_acts[0])
+        time = body['created_at']
+        resp, body = self.client.get_list_obj(
+            'actions?created_at=lte:' + time.replace(' ', '%20') +
+            '&is_system=False'
+        )
+
+        actions = [action['name'] for action in body['actions']]
+        self.assertEqual(200, resp.status)
+        self.assertIn(created_acts[0], actions)
+
+    @test.attr(type='negative')
+    def test_get_list_actions_invalid_filter(self):
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.get_list_obj,
+            'actions?is_system<False'
+        )
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.get_list_obj,
+            'actions?is_system!=False'
+        )
+        self.assertRaises(
+            exceptions.BadRequest,
+            self.client.get_list_obj,
+            'actions?created_at>2016-02-23%2008:51:26'
         )
 
     @test.attr(type='sanity')

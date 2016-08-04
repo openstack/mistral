@@ -28,6 +28,7 @@ from mistral.api.hooks import content_type as ct_hook
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.services import workbooks
+from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
 
@@ -95,11 +96,10 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(resources.Workbooks, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text,
-                         resources.SCOPE_TYPES, wtypes.text, types.uniquelist,
-                         wtypes.text)
+                         resources.SCOPE_TYPES, wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', created_at=None,
-                definition=None, name=None, scope=None, tag=None, tags=None,
+                definition=None, name=None, scope=None, tags=None,
                 updated_at=None):
         """Return a list of workbooks.
 
@@ -119,9 +119,6 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         :param name: Optional. Keep only resources with a specific name.
         :param definition: Optional. Keep only resources with a specific
                            definition.
-        :param tag: Optional. Keep only resources with a specific tag. If it is
-                    used with 'tags', it will be appended to the list of
-                    matching tags.
         :param tags: Optional. Keep only resources containing specific tags.
         :param scope: Optional. Keep only resources with a specific scope.
         :param created_at: Optional. Keep only resources created at a specific
@@ -134,13 +131,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workbooks:list', context.ctx())
 
-        if tag is not None:
-            if tags is None:
-                tags = [tag]
-            else:
-                tags.append(tag)
-
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             definition=definition,
             name=name,

@@ -28,6 +28,7 @@ from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
@@ -93,7 +94,7 @@ class TaskExecutionsController(rest.RestController):
         """
         acl.enforce('executions:list', context.ctx())
 
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             task_execution_id=task_execution_id,
             created_at=created_at,
             workflow_name=workflow_name,
@@ -196,7 +197,7 @@ class TasksController(rest.RestController):
         """
         acl.enforce('tasks:list', context.ctx())
 
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
@@ -339,7 +340,7 @@ class ExecutionTasksController(rest.RestController):
         """
         acl.enforce('tasks:list', context.ctx())
 
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             workflow_execution_id=workflow_execution_id,
             created_at=created_at,
             workflow_name=workflow_name,

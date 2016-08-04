@@ -26,6 +26,7 @@ from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests.unit import base as test_base
+from mistral.utils import filter_utils
 
 
 user_context = test_base.get_context(default=False)
@@ -567,6 +568,15 @@ ACTION_DEFINITIONS = [
         'attributes': None,
         'project_id': '<default-project>'
     },
+    {
+        'name': 'action3',
+        'description': 'Action #3',
+        'is_system': False,
+        'tags': ['mc', 'abc'],
+        'action_class': 'mypackage.my_module.Action3',
+        'attributes': None,
+        'project_id': '<default-project>'
+    },
 ]
 
 
@@ -604,6 +614,157 @@ class ActionDefinitionTest(SQLAlchemyTest):
             db_api.create_action_definition,
             ACTION_DEFINITIONS[0]
         )
+
+    def test_filter_action_definitions_by_equal_value(self):
+        db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        db_api.create_action_definition(ACTION_DEFINITIONS[1])
+
+        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+        _filter = filter_utils.create_or_update_filter(
+            'is_system',
+            False,
+            'eq'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created2, fetched[0])
+
+    def test_filter_action_definitions_by_notEqual_value(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+
+        db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'is_system',
+            False,
+            'neq'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_action_definitions_by_greaterThan_value(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created0['created_at'],
+            'gt'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created1, fetched[0])
+        self.assertEqual(created2, fetched[1])
+
+    def test_filter_action_definitions_by_greaterThanEqual_value(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created0['created_at'],
+            'gte'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(3, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+        self.assertEqual(created2, fetched[2])
+
+    def test_filter_action_definitions_by_lessThan_value(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created2['created_at'],
+            'lt'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_action_definitions_by_lessThanEqual_value(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created2['created_at'],
+            'lte'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(3, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+        self.assertEqual(created2, fetched[2])
+
+    def test_filter_action_definitions_by_values_in_list(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+
+        db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at'], created1['created_at']],
+            'in'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_action_definitions_by_values_notin_list(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at'], created1['created_at']],
+            'nin'
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created2, fetched[0])
+
+    def test_filter_action_definitions_by_multiple_columns(self):
+        created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
+
+        db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at'], created1['created_at']],
+            'in'
+        )
+        _filter = filter_utils.create_or_update_filter(
+            'is_system',
+            True,
+            'neq',
+            _filter
+        )
+        fetched = db_api.get_action_definitions(**_filter)
+
+        self.assertEqual(0, len(fetched))
 
     def test_update_action_definition_with_name(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])

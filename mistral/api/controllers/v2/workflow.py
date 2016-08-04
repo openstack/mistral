@@ -32,6 +32,7 @@ from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workflows
+from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
 
@@ -169,11 +170,11 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(resources.Workflows, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text, wtypes.text,
-                         types.uniquelist, resources.SCOPE_TYPES, types.uuid,
-                         wtypes.text, wtypes.text)
+                         resources.SCOPE_TYPES, types.uuid, wtypes.text,
+                         wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', name=None, input=None,
-                definition=None, tag=None, tags=None, scope=None,
+                definition=None, tags=None, scope=None,
                 project_id=None, created_at=None, updated_at=None):
         """Return a list of workflows.
 
@@ -194,9 +195,6 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         :param input: Optional. Keep only resources with a specific input.
         :param definition: Optional. Keep only resources with a specific
                            definition.
-        :param tag: Optional. Keep only resources with a specific tag. If it is
-                    used with 'tags', it will be appended to the list of
-                    matching tags.
         :param tags: Optional. Keep only resources containing specific tags.
         :param scope: Optional. Keep only resources with a specific scope.
         :param project_id: Optional. The same as the requester project_id
@@ -208,13 +206,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workflows:list', context.ctx())
 
-        if tag is not None:
-            if tags is None:
-                tags = [tag]
-            else:
-                tags.append(tag)
-
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             name=name,
             scope=scope,

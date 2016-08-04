@@ -29,6 +29,7 @@ from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import actions
+from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workbook import parser as spec_parser
 
@@ -138,11 +139,11 @@ class ActionsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(resources.Actions, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
                          wtypes.text, resources.SCOPE_TYPES, wtypes.text,
-                         types.uniquelist, wtypes.text, wtypes.text,
-                         wtypes.text, bool, wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text, wtypes.text,
+                         wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='name',
                 sort_dirs='asc', fields='', created_at=None, name=None,
-                scope=None, tag=None, tags=None, updated_at=None,
+                scope=None, tags=None, updated_at=None,
                 description=None, definition=None, is_system=None, input=None):
         """Return all actions.
 
@@ -168,9 +169,6 @@ class ActionsController(rest.RestController, hooks.HookController):
         :param input: Optional. Keep only resources with a specific input.
         :param description: Optional. Keep only resources with a specific
                             description.
-        :param tag: Optional. Keep only resources with a specific tag. If it is
-                    used with 'tags', it will be appended to the list of
-                    matching tags.
         :param tags: Optional. Keep only resources containing specific tags.
         :param created_at: Optional. Keep only resources created at a specific
                            time and date.
@@ -182,13 +180,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('actions:list', context.ctx())
 
-        if tag is not None:
-            if tags is None:
-                tags = [tag]
-            else:
-                tags.append(tag)
-
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             name=name,
             scope=scope,
