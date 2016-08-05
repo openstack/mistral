@@ -467,5 +467,6 @@ def _build_cancel_info_message(wf_ctrl, wf_ex):
         key=lambda t: t.name
     )
 
-    return ('Cancelled tasks: %s' %
-            ', '.join([t.name for t in cancelled_tasks]))
+    return (
+        'Cancelled tasks: %s' % ', '.join([t.name for t in cancelled_tasks])
+    )

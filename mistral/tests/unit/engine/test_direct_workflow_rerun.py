@@ -904,6 +904,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.await_task_success(task_1_ex.id)
 
+        self.await_workflow_error(wf_ex.id)
+
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertEqual(states.ERROR, wf_ex.state)
