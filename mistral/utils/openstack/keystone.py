@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import keystoneauth1.identity.generic as auth_plugins
+from keystoneauth1 import session as ks_session
 from keystoneclient.v3 import client as ks_client
 from keystoneclient.v3.endpoints import Endpoint
 from oslo_config import cfg
@@ -130,3 +132,19 @@ def is_token_trust_scoped(auth_token):
     token_info = keystone_client.tokens.validate(auth_token)
 
     return 'OS-TRUST:trust' in token_info
+
+
+def get_admin_session():
+    """Returns a keystone session from Mistral's service credentials."""
+
+    auth = auth_plugins.Password(
+        CONF.keystone_authtoken.auth_uri,
+        username=CONF.keystone_authtoken.admin_user,
+        password=CONF.keystone_authtoken.admin_password,
+        project_name=CONF.keystone_authtoken.admin_tenant_name,
+        # NOTE(jaosorior): Once mistral supports keystone v3 properly, we can
+        # fetch the following values from the configuration.
+        user_domain_name='Default',
+        project_domain_name='Default')
+
+    return ks_session.Session(auth=auth)
