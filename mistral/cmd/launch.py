@@ -27,7 +27,6 @@ eventlet.monkey_patch(
 
 
 import os
-import six
 
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
@@ -41,15 +40,7 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 from oslo_config import cfg
 from oslo_log import log as logging
 
-if six.PY3 is True:
-    import socketserver
-else:
-    import SocketServer as socketserver
-
-from wsgiref import simple_server
-from wsgiref.simple_server import WSGIServer
-
-from mistral.api import app
+from mistral.api import service as mistral_service
 from mistral import config
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine as def_eng
@@ -139,25 +130,11 @@ def launch_event_engine():
         print("Stopping event_engine service...")
 
 
-class ThreadingWSGIServer(socketserver.ThreadingMixIn, WSGIServer):
-    pass
-
-
 def launch_api():
-    host = cfg.CONF.api.host
-    port = cfg.CONF.api.port
-
-    api_server = simple_server.make_server(
-        host,
-        port,
-        app.setup_app(),
-        ThreadingWSGIServer
-    )
-
-    LOG.info("Mistral API is serving on http://%s:%s (PID=%s)" %
-             (host, port, os.getpid()))
-
-    api_server.serve_forever()
+    launcher = mistral_service.process_launcher()
+    server = mistral_service.WSGIService('mistral_api')
+    launcher.launch_service(server, workers=server.workers)
+    launcher.wait()
 
 
 def launch_any(options):

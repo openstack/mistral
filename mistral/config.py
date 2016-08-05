@@ -65,6 +65,18 @@ api_opts = [
         default=False,
         help='Enables the ability to delete action_execution which '
              'has no relationship with workflows.'
+    ),
+    cfg.BoolOpt(
+        'enable_ssl_api',
+        default=False,
+        help='Enable the integrated stand-alone API to service requests'
+             'via HTTPS instead of HTTP.'
+    ),
+    cfg.IntOpt(
+        'api_workers',
+        help='Number of workers for Mistral API service '
+             'default is equal to the number of CPUs available if that can '
+             'be determined, else a default worker count of 1 is returned.'
     )
 ]
 
