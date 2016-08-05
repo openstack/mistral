@@ -27,6 +27,30 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class JoinEngineTest(base.EngineTestCase):
+    def test_full_join_simple(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            join_task:
+              join: all
+
+            task1:
+              on-success: join_task
+
+            task2:
+              on-success: join_task
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
     def test_full_join_without_errors(self):
         wf_text = """---
         version: '2.0'
@@ -354,7 +378,12 @@ class JoinEngineTest(base.EngineTestCase):
         result5 = task5.published['result5']
 
         self.assertIsNotNone(result5)
-        self.assertEqual(2, result5.count('True'))
+
+        # Depending on how many inbound tasks completed before 'join'
+        # task5 started it can get different inbound context with.
+        # But at least two inbound results should be accessible at task5
+        # which logically corresponds to 'join' cardinality 2.
+        self.assertTrue(result5.count('True') >= 2)
 
     def test_discriminator(self):
         wf_text = """---

@@ -65,16 +65,21 @@ class DirectWorkflowController(base.WorkflowController):
             self.wf_spec.get_tasks()[t_ex_candidate.name]
         )
 
-    def _find_next_commands(self):
-        cmds = super(DirectWorkflowController, self)._find_next_commands()
+    def _find_next_commands(self, task_ex=None):
+        cmds = super(DirectWorkflowController, self)._find_next_commands(
+            task_ex
+        )
 
         if not self.wf_ex.task_executions:
             return self._find_start_commands()
 
-        task_execs = [
-            t_ex for t_ex in self.wf_ex.task_executions
-            if states.is_completed(t_ex.state) and not t_ex.processed
-        ]
+        if task_ex:
+            task_execs = [task_ex]
+        else:
+            task_execs = [
+                t_ex for t_ex in self.wf_ex.task_executions
+                if states.is_completed(t_ex.state) and not t_ex.processed
+            ]
 
         for t_ex in task_execs:
             cmds.extend(self._find_next_commands_for_task(t_ex))
@@ -87,7 +92,7 @@ class DirectWorkflowController(base.WorkflowController):
                 self.wf_ex,
                 self.wf_spec,
                 t_s,
-                self._get_task_inbound_context(t_s)
+                self.get_task_inbound_context(t_s)
             )
             for t_s in self.wf_spec.find_start_tasks()
         ]
@@ -115,25 +120,32 @@ class DirectWorkflowController(base.WorkflowController):
                 self.wf_ex,
                 self.wf_spec,
                 t_s,
-                self._get_task_inbound_context(t_s),
+                data_flow.evaluate_task_outbound_context(task_ex),
                 params
             )
 
-            # NOTE(xylan): Decide whether or not a join task should run
-            # immediately.
-            if self._is_unsatisfied_join(cmd):
-                cmd.wait = True
+            self._configure_if_join(cmd)
 
             cmds.append(cmd)
-
-        # We need to remove all "join" tasks that have already started
-        # (or even completed) to prevent running "join" tasks more than
-        # once.
-        cmds = self._remove_started_joins(cmds)
 
         LOG.debug("Found commands: %s" % cmds)
 
         return cmds
+
+    def _configure_if_join(self, cmd):
+        if not isinstance(cmd, commands.RunTask):
+            return
+
+        if not cmd.task_spec.get_join():
+            return
+
+        cmd.unique_key = self._get_join_unique_key(cmd)
+
+        if self._is_unsatisfied_join(cmd.task_spec):
+            cmd.wait = True
+
+    def _get_join_unique_key(self, cmd):
+        return 'join-task-%s-%s' % (self.wf_ex.id, cmd.task_spec.get_name())
 
     # TODO(rakhmerov): Need to refactor this method to be able to pass tasks
     # whose contexts need to be merged.
@@ -147,6 +159,14 @@ class DirectWorkflowController(base.WorkflowController):
             )
 
         return ctx
+
+    def is_task_start_allowed(self, task_ex):
+        task_spec = self.wf_spec.get_tasks()[task_ex.name]
+
+        return (
+            not task_spec.get_join() or
+            not self._is_unsatisfied_join(task_spec)
+        )
 
     def is_error_handled_for(self, task_ex):
         return bool(self.wf_spec.get_on_error_clause(task_ex.name))
@@ -241,28 +261,10 @@ class DirectWorkflowController(base.WorkflowController):
             if not condition or expr.evaluate(condition, ctx)
         ]
 
-    def _remove_started_joins(self, cmds):
-        return list(
-            filter(lambda cmd: not self._is_started_join(cmd), cmds)
-        )
-
-    def _is_started_join(self, cmd):
-        if not (isinstance(cmd, commands.RunTask) and
-                cmd.task_spec.get_join()):
-            return False
-
-        return wf_utils.find_task_execution_not_state(
-            self.wf_ex,
-            cmd.task_spec,
-            states.WAITING
-        )
-
-    def _is_unsatisfied_join(self, cmd):
-        if not isinstance(cmd, commands.RunTask):
-            return False
-
-        task_spec = cmd.task_spec
-
+    def _is_unsatisfied_join(self, task_spec):
+        # TODO(rakhmerov): We need to use task_ex instead of task_spec
+        # in order to cover a use case when there's more than one instance
+        # of the same 'join' task in a workflow.
         join_expr = task_spec.get_join()
 
         if not join_expr:
