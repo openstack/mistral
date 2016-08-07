@@ -85,8 +85,6 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
                    constructing 'next' link.
     :param filters: Optional. A list of filters to apply to the result.
     """
-    filters['type'] = 'action_execution'
-
     if task_execution_id:
         filters['task_execution_id'] = task_execution_id
 

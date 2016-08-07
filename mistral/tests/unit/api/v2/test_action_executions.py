@@ -170,6 +170,10 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(ACTION_EX, resp.json)
 
+    def test_basic_get(self):
+        resp = self.app.get('/v2/action_executions/')
+        self.assertEqual(200, resp.status_int)
+
     @mock.patch.object(db_api, 'get_action_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/action_executions/123', expect_errors=True)
