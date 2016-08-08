@@ -57,11 +57,18 @@ class ExecutionsController(rest.RestController):
     def get(self, id):
         """Return the specified Execution."""
         acl.enforce("executions:get", context.ctx())
+
         LOG.info("Fetch execution [id=%s]" % id)
 
-        return resources.Execution.from_dict(
-            db_api.get_workflow_execution(id).to_dict()
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(id)
+
+            # If a single object is requested we need to explicitly load
+            # 'output' attribute. We don't do this for collections to reduce
+            # amount of DB queries and network traffic.
+            hasattr(wf_ex, 'output')
+
+        return resources.Execution.from_dict(wf_ex.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
@@ -76,6 +83,7 @@ class ExecutionsController(rest.RestController):
         :param wf_ex: Execution object.
         """
         acl.enforce('executions:update', context.ctx())
+
         LOG.info('Update execution [id=%s, execution=%s]' % (id, wf_ex))
 
         db_api.ensure_workflow_execution_exists(id)
@@ -173,6 +181,7 @@ class ExecutionsController(rest.RestController):
         :param wf_ex: Execution object with input content.
         """
         acl.enforce('executions:create', context.ctx())
+
         LOG.info('Create execution [execution=%s]' % wf_ex)
 
         engine = rpc.get_engine_client()
@@ -199,6 +208,7 @@ class ExecutionsController(rest.RestController):
     def delete(self, id):
         """Delete the specified Execution."""
         acl.enforce('executions:delete', context.ctx())
+
         LOG.info('Delete execution [id=%s]' % id)
 
         return db_api.delete_workflow_execution(id)
