@@ -109,6 +109,7 @@ class ActionExecutionsController(rest.RestController):
     def get(self, id):
         """Return the specified action_execution."""
         acl.enforce('action_executions:get', context.ctx())
+
         LOG.info("Fetch action_execution [id=%s]" % id)
 
         return _get_action_execution(id)
@@ -119,6 +120,7 @@ class ActionExecutionsController(rest.RestController):
     def post(self, action_ex):
         """Create new action_execution."""
         acl.enforce('action_executions:create', context.ctx())
+
         LOG.info("Create action_execution [action_execution=%s]" % action_ex)
 
         name = action_ex.name
@@ -149,6 +151,7 @@ class ActionExecutionsController(rest.RestController):
     def put(self, id, action_ex):
         """Update the specified action_execution."""
         acl.enforce('action_executions:update', context.ctx())
+
         LOG.info(
             "Update action_execution [id=%s, action_execution=%s]"
             % (id, action_ex)
@@ -272,8 +275,8 @@ class ActionExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, id):
         """Delete the specified action_execution."""
-
         acl.enforce('action_executions:delete', context.ctx())
+
         LOG.info("Delete action_execution [id=%s]" % id)
 
         if not cfg.CONF.api.allow_action_execution_deletion:
@@ -352,6 +355,7 @@ class TasksActionExecutionController(rest.RestController):
                            update time and date.
         """
         acl.enforce('action_executions:list', context.ctx())
+
         if tag is not None:
             if tags is None:
                 tags = [tag]
@@ -393,6 +397,7 @@ class TasksActionExecutionController(rest.RestController):
     def get(self, task_execution_id, action_ex_id):
         """Return the specified action_execution."""
         acl.enforce('action_executions:get', context.ctx())
+
         LOG.info("Fetch action_execution [id=%s]" % action_ex_id)
 
         return _get_action_execution(action_ex_id)
