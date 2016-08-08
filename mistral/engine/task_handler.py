@@ -20,6 +20,7 @@ from osprofiler import profiler
 import traceback as tb
 
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models
 from mistral.engine import tasks
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
@@ -36,6 +37,10 @@ LOG = logging.getLogger(__name__)
 
 _CHECK_TASK_START_ALLOWED_PATH = (
     'mistral.engine.task_handler._check_task_start_allowed'
+)
+
+_SCHEDULED_ON_ACTION_COMPLETE_PATH = (
+    'mistral.engine.task_handler._scheduled_on_action_complete'
 )
 
 
@@ -74,8 +79,8 @@ def run_task(wf_cmd):
         wf_handler.schedule_on_task_complete(task.task_ex)
 
 
-@profiler.trace('task-handler-on-task-complete')
-def on_action_complete(action_ex):
+@profiler.trace('task-handler-on-action-complete')
+def _on_action_complete(action_ex):
     """Handles action completion event.
 
     :param action_ex: Action execution.
@@ -297,4 +302,48 @@ def _schedule_check_task_start_allowed(task_ex, delay=0):
         delay,
         unique_key=key,
         task_ex_id=task_ex.id
+    )
+
+
+def _scheduled_on_action_complete(action_ex_id, wf_action):
+    with db_api.transaction():
+        if wf_action:
+            action_ex = db_api.get_workflow_execution(action_ex_id)
+        else:
+            action_ex = db_api.get_action_execution(action_ex_id)
+
+        _on_action_complete(action_ex)
+
+
+def schedule_on_action_complete(action_ex, delay=0):
+    """Schedules task completion check.
+
+    This method provides transactional decoupling of action completion from
+    task completion check. It's needed in non-locking model in order to
+    avoid 'phantom read' phenomena when reading state of multiple actions
+    to see if a task is completed. Just starting a separate transaction
+    without using scheduler is not safe due to concurrency window that we'll
+    have in this case (time between transactions) whereas scheduler is a
+    special component that is designed to be resistant to failures.
+
+    :param action_ex: Action execution.
+    :param delay: Minimum amount of time before task completion check
+        should be made.
+    """
+
+    # Optimization to avoid opening a new transaction if it's not needed.
+    if not action_ex.task_execution.spec.get('with-items'):
+        _on_action_complete(action_ex)
+
+        return
+
+    key = 'th_on_a_c-%s' % action_ex.task_execution_id
+
+    scheduler.schedule_call(
+        None,
+        _SCHEDULED_ON_ACTION_COMPLETE_PATH,
+        delay,
+        unique_key=key,
+        action_ex_id=action_ex.id,
+        wf_action=isinstance(action_ex, models.WorkflowExecution)
     )

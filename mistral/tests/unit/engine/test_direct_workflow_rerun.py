@@ -15,6 +15,7 @@
 import mock
 
 from oslo_config import cfg
+import testtools
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
@@ -578,6 +579,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_2_action_exs))
 
+    @testtools.skip('Restore concurrency support.')
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
@@ -1028,7 +1030,8 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
 
-        self.assertEqual(states.ERROR, task_1_ex.state)
+        self.await_task_error(task_1_ex.id)
+
         self.assertIsNotNone(task_1_ex.state_info)
 
         task_1_action_exs = db_api.get_action_executions(
@@ -1038,9 +1041,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(3, len(task_1_action_exs))
 
         # Resume workflow and re-run failed task. Re-run #1 with no reset.
-        self.engine.rerun_workflow(task_1_ex.id, reset=False)
-
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        wf_ex = self.engine.rerun_workflow(task_1_ex.id, reset=False)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)

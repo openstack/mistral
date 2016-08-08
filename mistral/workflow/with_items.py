@@ -107,7 +107,10 @@ def _get_unaccepted_executions(task_ex):
 
 
 def get_indices_for_loop(task_ex):
-    capacity = _get_context(task_ex)[_CAPACITY]
+    # TODO(rakhmerov): For now we assume that capacity is unlimited.
+    # TODO(rakhmerov): We need to re-implement 'concurrency' completely.
+    # capacity = _get_context(task_ex)[_CAPACITY]
+    capacity = get_concurrency(task_ex)
     count = get_count(task_ex)
 
     accepted = _get_with_item_indices(_get_accepted_executions(task_ex))
