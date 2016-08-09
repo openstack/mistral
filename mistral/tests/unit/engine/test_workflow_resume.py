@@ -367,7 +367,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         with mock.patch.object(
                 db_api,
-                'acquire_lock',
+                'get_workflow_execution',
                 side_effect=err):
 
             self.assertRaises(
