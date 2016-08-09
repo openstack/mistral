@@ -35,8 +35,8 @@ from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
-_CHECK_TASK_START_ALLOWED_PATH = (
-    'mistral.engine.task_handler._check_task_start_allowed'
+_REFRESH_TASK_STATE_PATH = (
+    'mistral.engine.task_handler._refresh_task_state'
 )
 
 _SCHEDULED_ON_ACTION_COMPLETE_PATH = (
@@ -73,7 +73,7 @@ def run_task(wf_cmd):
         return
 
     if task.is_waiting():
-        _schedule_check_task_start_allowed(task.task_ex)
+        _schedule_refresh_task_state(task.task_ex)
 
     if task.is_completed():
         wf_handler.schedule_on_task_complete(task.task_ex)
@@ -259,7 +259,7 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
     )
 
 
-def _check_task_start_allowed(task_ex_id):
+def _refresh_task_state(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.get_task_execution(task_ex_id)
 
@@ -268,16 +268,24 @@ def _check_task_start_allowed(task_ex_id):
             spec_parser.get_workflow_spec_by_id(task_ex.workflow_id)
         )
 
-        if wf_ctrl.is_task_start_allowed(task_ex):
+        state, state_info = wf_ctrl.get_logical_task_state(task_ex)
+
+        if state == states.RUNNING:
             continue_task(task_ex)
+        elif state == states.ERROR:
+            fail_task(task_ex, state_info)
+        elif state == states.WAITING:
+            # TODO(rakhmerov): Algorithm for increasing rescheduling delay.
+            _schedule_refresh_task_state(task_ex, 1)
+        else:
+            # Must never get here.
+            raise RuntimeError(
+                'Unexpected logical task state [task_ex=%s, state=%s]' %
+                (task_ex, state)
+            )
 
-            return
 
-        # TODO(rakhmerov): Algorithm for increasing rescheduling delay.
-        _schedule_check_task_start_allowed(task_ex, 1)
-
-
-def _schedule_check_task_start_allowed(task_ex, delay=0):
+def _schedule_refresh_task_state(task_ex, delay=0):
     """Schedules task preconditions check.
 
     This method provides transactional decoupling of task preconditions
@@ -298,7 +306,7 @@ def _schedule_check_task_start_allowed(task_ex, delay=0):
 
     scheduler.schedule_call(
         None,
-        _CHECK_TASK_START_ALLOWED_PATH,
+        _REFRESH_TASK_STATE_PATH,
         delay,
         unique_key=key,
         task_ex_id=task_ex.id

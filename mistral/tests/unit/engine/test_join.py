@@ -455,7 +455,8 @@ class JoinEngineTest(base.EngineTestCase):
         result4 = task4.published['result4']
 
         self.assertIsNotNone(result4)
-        self.assertEqual(2, result4.count('False'))
+        self.assertTrue(result4.count('False') < 3)
+        self.assertTrue(result4.count('True') >= 1)
 
     def test_full_join_parallel_published_vars(self):
         wfs_tasks_join_complex = """---
@@ -645,6 +646,8 @@ class JoinEngineTest(base.EngineTestCase):
 
             tasks = wf_ex.task_executions
 
+        self.assertIsNotNone(wf_ex.state_info)
+
         task10 = self._assert_single_item(tasks, name='task10')
         task21 = self._assert_single_item(tasks, name='task21')
         task22 = self._assert_single_item(tasks, name='task22')
@@ -656,7 +659,7 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task22.state)
         self.assertEqual(states.ERROR, task31.state)
         self.assertNotIn('task32', [task.name for task in tasks])
-        self.assertEqual(states.WAITING, task40.state)
+        self.assertEqual(states.ERROR, task40.state)
 
     def test_diamond_join_all(self):
         wf_text = """---

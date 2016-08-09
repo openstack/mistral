@@ -108,9 +108,9 @@ class ReverseWorkflowController(base.WorkflowController):
 
         return data_flow.evaluate_task_outbound_context(task_execs[0])
 
-    def is_task_start_allowed(self, task_ex):
+    def get_logical_task_state(self, task_ex):
         # TODO(rakhmerov): Implement.
-        return True
+        return task_ex.state, task_ex.state_info
 
     def is_error_handled_for(self, task_ex):
         return task_ex.state != states.ERROR

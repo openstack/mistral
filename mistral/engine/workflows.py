@@ -278,19 +278,10 @@ class Workflow(object):
             return
 
         # Workflow is not completed if there are any incomplete task
-        # executions that are not in WAITING state. If all incomplete
-        # tasks are waiting and there are unhandled errors, then these
-        # tasks will not reach completion. In this case, mark the
-        # workflow complete.
-        # TODO(rakhmerov): In the new non-locking transactional model
-        # tasks in WAITING state should not be taken into account.
-        # I'm actually surprised why we did this so far. The point is
-        # that every task should complete sooner or later and get into
-        # one of the terminal state. We should not be leaving any tasks
-        # in a non-terminal state if we know exactly it's real state.
+        # executions.
         incomplete_tasks = wf_utils.find_incomplete_task_executions(self.wf_ex)
 
-        if any(not states.is_waiting(t.state) for t in incomplete_tasks):
+        if incomplete_tasks:
             return
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)

@@ -60,10 +60,12 @@ class DirectWorkflowController(base.WorkflowController):
         if not t_spec.get_join():
             return not t_ex_candidate.processed
 
-        return self._triggers_join(
-            t_spec,
-            self.wf_spec.get_tasks()[t_ex_candidate.name]
+        induced_state = self._get_induced_join_state(
+            self.wf_spec.get_tasks()[t_ex_candidate.name],
+            t_spec
         )
+
+        return induced_state == states.RUNNING
 
     def _find_next_commands(self, task_ex=None):
         cmds = super(DirectWorkflowController, self)._find_next_commands(
@@ -140,9 +142,7 @@ class DirectWorkflowController(base.WorkflowController):
             return
 
         cmd.unique_key = self._get_join_unique_key(cmd)
-
-        if self._is_unsatisfied_join(cmd.task_spec):
-            cmd.wait = True
+        cmd.wait = True
 
     def _get_join_unique_key(self, cmd):
         return 'join-task-%s-%s' % (self.wf_ex.id, cmd.task_spec.get_name())
@@ -160,13 +160,16 @@ class DirectWorkflowController(base.WorkflowController):
 
         return ctx
 
-    def is_task_start_allowed(self, task_ex):
+    def get_logical_task_state(self, task_ex):
         task_spec = self.wf_spec.get_tasks()[task_ex.name]
 
-        return (
-            not task_spec.get_join() or
-            not self._is_unsatisfied_join(task_spec)
-        )
+        if not task_spec.get_join():
+            # A simple 'non-join' task does not have any preconditions
+            # based on state of other tasks so its logical state always
+            # equals to its real state.
+            return task_ex.state, task_ex.state_info
+
+        return self._get_join_logical_state(task_spec)
 
     def is_error_handled_for(self, task_ex):
         return bool(self.wf_spec.get_on_error_clause(task_ex.name))
@@ -261,54 +264,115 @@ class DirectWorkflowController(base.WorkflowController):
             if not condition or expr.evaluate(condition, ctx)
         ]
 
-    def _is_unsatisfied_join(self, task_spec):
+    def _get_join_logical_state(self, task_spec):
         # TODO(rakhmerov): We need to use task_ex instead of task_spec
         # in order to cover a use case when there's more than one instance
         # of the same 'join' task in a workflow.
         join_expr = task_spec.get_join()
 
-        if not join_expr:
-            return False
-
         in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
         if not in_task_specs:
-            return False
+            return states.RUNNING
 
-        # We need to count a number of triggering inbound transitions.
-        num = len([1 for in_t_s in in_task_specs
-                   if self._triggers_join(task_spec, in_t_s)])
+        # List of tuples (task_name, state).
+        induced_states = [
+            (t_s.get_name(), self._get_induced_join_state(t_s, task_spec))
+            for t_s in in_task_specs
+        ]
 
-        # If "join" is configured as a number.
-        if isinstance(join_expr, int) and num < join_expr:
-            return True
+        def count(state):
+            return len(list(filter(lambda s: s[1] == state, induced_states)))
 
-        if join_expr == 'all' and len(in_task_specs) > num:
-            return True
+        error_count = count(states.ERROR)
+        running_count = count(states.RUNNING)
+        total_count = len(induced_states)
 
-        if join_expr == 'one' and num == 0:
-            return True
+        def _blocked_message():
+            return (
+                'Blocked by tasks: %s' %
+                [s[0] for s in induced_states if s[1] == states.WAITING]
+            )
 
-        return False
+        def _failed_message():
+            return (
+                'Failed by tasks: %s' %
+                [s[0] for s in induced_states if s[1] == states.ERROR]
+            )
+
+        # If "join" is configured as a number or 'one'.
+        if isinstance(join_expr, int) or join_expr == 'one':
+            cardinality = 1 if join_expr == 'one' else join_expr
+
+            if running_count >= cardinality:
+                return states.RUNNING, None
+
+            # E.g. 'join: 3' with inbound [ERROR, ERROR, RUNNING, WAITING]
+            # No chance to get 3 RUNNING states.
+            if error_count > (total_count - cardinality):
+                return states.ERROR, _failed_message()
+
+            return states.WAITING, _blocked_message()
+
+        if join_expr == 'all':
+            if total_count == running_count:
+                return states.RUNNING, None
+
+            if error_count > 0:
+                return states.ERROR, _failed_message()
+
+            return states.WAITING, _blocked_message()
+
+        raise RuntimeError('Unexpected join expression: %s' % join_expr)
 
     # TODO(rakhmerov): Method signature is incorrect given that
     # we may have multiple task executions for a task. It should
     # accept inbound task execution rather than a spec.
-    def _triggers_join(self, join_task_spec, inbound_task_spec):
+    def _get_induced_join_state(self, inbound_task_spec, join_task_spec):
+        join_task_name = join_task_spec.get_name()
+
+        in_task_ex = self._find_task_execution_by_spec(inbound_task_spec)
+
+        if not in_task_ex:
+            if self._possible_route(inbound_task_spec):
+                return states.WAITING
+            else:
+                return states.ERROR
+
+        if not states.is_completed(in_task_ex.state):
+            return states.WAITING
+
+        if join_task_name not in self._find_next_task_names(in_task_ex):
+            return states.ERROR
+
+        return states.RUNNING
+
+    def _find_task_execution_by_spec(self, task_spec):
         in_t_execs = wf_utils.find_task_executions_by_spec(
             self.wf_ex,
-            inbound_task_spec
+            task_spec
         )
 
         # TODO(rakhmerov): Temporary hack. See the previous comment.
-        in_t_ex = in_t_execs[-1] if in_t_execs else None
+        return in_t_execs[-1] if in_t_execs else None
 
-        if not in_t_ex or not states.is_completed(in_t_ex.state):
-            return False
+    def _possible_route(self, task_spec):
+        # TODO(rakhmerov): In some cases this method will be expensive because
+        # it uses a multistep recursive search with DB queries.
+        # It will be optimized with Workflow Execution Graph moving forward.
+        in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
-        return list(
-            filter(
-                lambda t_name: join_task_spec.get_name() == t_name,
-                self._find_next_task_names(in_t_ex)
-            )
-        )
+        if not in_task_specs:
+            return True
+
+        for t_s in in_task_specs:
+            t_ex = self._find_task_execution_by_spec(t_s)
+
+            if not t_ex:
+                if self._possible_route(t_s):
+                    return True
+            else:
+                if task_spec.get_name() in self._find_next_task_names(t_ex):
+                    return True
+
+        return False

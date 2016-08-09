@@ -126,12 +126,12 @@ class WorkflowController(object):
         return cmds
 
     @abc.abstractmethod
-    def is_task_start_allowed(self, task_ex):
-        """Determines if the given task is allowed to start.
+    def get_logical_task_state(self, task_ex):
+        """Determines a logical state of the given task.
 
         :param task_ex: Task execution.
-        :return: True if all preconditions are met and the given task
-            is allowed to start.
+        :return: Tuple (state, state_info) which the given task should have
+            according to workflow rules and current states of other tasks.
         """
         raise NotImplementedError
 

@@ -339,7 +339,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_10_ex.state)
         self.assertEqual(states.ERROR, task_21_ex.state)
         self.assertIsNotNone(task_21_ex.state_info)
-        self.assertEqual(states.WAITING, task_30_ex.state)
+        self.assertEqual(states.ERROR, task_30_ex.state)
 
         # Update env in workflow execution with the following.
         updated_env = {
@@ -933,7 +933,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task_1_ex.state)
         self.assertEqual(states.ERROR, task_2_ex.state)
-        self.assertEqual(states.WAITING, task_3_ex.state)
+        self.assertEqual(states.ERROR, task_3_ex.state)
 
         # Resume workflow and re-run failed task.
         wf_ex = self.engine.rerun_workflow(task_2_ex.id)
