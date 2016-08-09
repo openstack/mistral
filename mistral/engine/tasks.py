@@ -47,14 +47,22 @@ class Task(object):
     """
 
     @profiler.trace('task-create')
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None):
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None,
+                 unique_key=None):
         self.wf_ex = wf_ex
         self.task_spec = task_spec
         self.ctx = ctx
         self.task_ex = task_ex
         self.wf_spec = wf_spec
+        self.unique_key = unique_key
         self.waiting = False
         self.reset_flag = False
+
+    def is_completed(self):
+        return self.task_ex and states.is_completed(self.task_ex.state)
+
+    def is_waiting(self):
+        return self.waiting
 
     @abc.abstractmethod
     def on_action_complete(self, action_ex):
@@ -160,7 +168,7 @@ class Task(object):
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow()
+        cmds = wf_ctrl.continue_workflow(self.task_ex)
 
         # Mark task as processed after all decisions have been made
         # upon its completion.
@@ -181,22 +189,38 @@ class Task(object):
             p.after_task_complete(self.task_ex, self.task_spec)
 
     def _create_task_execution(self, state=states.RUNNING):
-        self.task_ex = db_api.create_task_execution({
+        values = {
+            'id': utils.generate_unicode_uuid(),
             'name': self.task_spec.get_name(),
             'workflow_execution_id': self.wf_ex.id,
             'workflow_name': self.wf_ex.workflow_name,
             'workflow_id': self.wf_ex.workflow_id,
             'state': state,
             'spec': self.task_spec.to_dict(),
+            'unique_key': self.unique_key,
             'in_context': self.ctx,
             'published': {},
             'runtime_context': {},
             'project_id': self.wf_ex.project_id
-        })
+        }
+
+        db_api.insert_or_ignore_task_execution(values)
+
+        # Since 'insert_or_ignore' cannot return a valid count of updated
+        # rows the only reliable way to check if insert operation has created
+        # an object is try to load this object by just generated uuid.
+        task_ex = db_api.load_task_execution(values['id'])
+
+        if not task_ex:
+            return False
+
+        self.task_ex = task_ex
 
         # Add to collection explicitly so that it's in a proper
         # state within the current session.
         self.wf_ex.task_executions.append(self.task_ex)
+
+        return True
 
     def _get_action_defaults(self):
         action_name = self.task_spec.get_action_name()
@@ -226,9 +250,6 @@ class RegularTask(Task):
 
         self.complete(state, state_info)
 
-    def is_completed(self):
-        return self.task_ex and states.is_completed(self.task_ex.state)
-
     @profiler.trace('task-run')
     def run(self):
         if not self.task_ex:
@@ -237,20 +258,12 @@ class RegularTask(Task):
             self._run_existing()
 
     def _run_new(self):
-        # NOTE(xylan): Need to think how to get rid of this weird judgment
-        # to keep it more consistent with the function name.
-        self.task_ex = wf_utils.find_task_execution_with_state(
-            self.wf_ex,
-            self.task_spec,
-            states.WAITING
-        )
+        if not self._create_task_execution():
+            # Task with the same unique key has already been created.
+            return
 
-        if self.task_ex:
-            self.set_state(states.RUNNING, None)
-
-            self.task_ex.in_context = self.ctx
-        else:
-            self._create_task_execution()
+        if self.waiting:
+            return
 
         LOG.debug(
             'Starting task [workflow=%s, task_spec=%s, init_state=%s]' %
@@ -278,9 +291,17 @@ class RegularTask(Task):
 
         self.set_state(states.RUNNING, None, processed=False)
 
+        self._update_inbound_context()
         self._reset_actions()
-
         self._schedule_actions()
+
+    def _update_inbound_context(self):
+        assert self.task_ex
+
+        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
+
+        self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec)
+        self.task_ex.in_context = self.ctx
 
     def _reset_actions(self):
         """Resets task state.
@@ -386,7 +407,9 @@ class WithItemsTask(RegularTask):
 
         if with_items.is_completed(self.task_ex):
             state = with_items.get_final_state(self.task_ex)
+
             self.complete(state, state_info[state])
+
             return
 
         if (with_items.has_more_iterations(self.task_ex)

@@ -46,12 +46,10 @@ class InsertOrIgnoreTest(test_base.DbTestCase):
         )
 
     def test_insert_or_ignore_without_conflicts(self):
-        row_count = db_api.insert_or_ignore(
+        db_api.insert_or_ignore(
             db_models.DelayedCall,
             DELAYED_CALL.copy()
         )
-
-        self.assertEqual(1, row_count)
 
         delayed_calls = db_api.get_delayed_calls()
 
@@ -67,9 +65,7 @@ class InsertOrIgnoreTest(test_base.DbTestCase):
 
         values['unique_key'] = 'key'
 
-        row_count = db_api.insert_or_ignore(db_models.DelayedCall, values)
-
-        self.assertEqual(1, row_count)
+        db_api.insert_or_ignore(db_models.DelayedCall, values)
 
         delayed_calls = db_api.get_delayed_calls()
 
@@ -85,9 +81,7 @@ class InsertOrIgnoreTest(test_base.DbTestCase):
 
         values['unique_key'] = 'key'
 
-        row_count = db_api.insert_or_ignore(db_models.DelayedCall, values)
-
-        self.assertEqual(0, row_count)
+        db_api.insert_or_ignore(db_models.DelayedCall, values)
 
         delayed_calls = db_api.get_delayed_calls()
 

@@ -165,10 +165,12 @@ class TaskExecution(Execution):
         sa.Index('%s_scope' % __tablename__, 'scope'),
         sa.Index('%s_state' % __tablename__, 'state'),
         sa.Index('%s_updated_at' % __tablename__, 'updated_at'),
+        sa.UniqueConstraint('unique_key')
     )
 
     # Main properties.
     action_spec = sa.Column(st.JsonLongDictType())
+    unique_key = sa.Column(sa.String(80), nullable=True)
 
     # Whether the task is fully processed (publishing and calculating commands
     # after it). It allows to simplify workflow controller implementations
@@ -323,7 +325,7 @@ class DelayedCall(mb.MistralModelBase):
     target_method_name = sa.Column(sa.String(80), nullable=False)
     method_arguments = sa.Column(st.JsonDictType())
     serializers = sa.Column(st.JsonDictType())
-    unique_key = sa.Column(sa.String(50), nullable=True)
+    unique_key = sa.Column(sa.String(80), nullable=True)
     auth_context = sa.Column(st.JsonDictType())
     execution_time = sa.Column(sa.DateTime, nullable=False)
     processing = sa.Column(sa.Boolean, default=False, nullable=False)

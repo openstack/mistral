@@ -292,9 +292,9 @@ def get_task_execution(id):
     return IMPL.get_task_execution(id)
 
 
-def load_task_execution(name):
+def load_task_execution(id):
     """Unlike get_task_execution this method is allowed to return None."""
-    return IMPL.load_task_execution(name)
+    return IMPL.load_task_execution(id)
 
 
 def get_task_executions(limit=None, marker=None, sort_keys=['created_at'],
@@ -310,6 +310,10 @@ def get_task_executions(limit=None, marker=None, sort_keys=['created_at'],
 
 def create_task_execution(values):
     return IMPL.create_task_execution(values)
+
+
+def insert_or_ignore_task_execution(values):
+    return IMPL.insert_or_ignore_task_execution(values)
 
 
 def update_task_execution(id, values):

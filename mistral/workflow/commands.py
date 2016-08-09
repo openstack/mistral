@@ -48,11 +48,13 @@ class RunTask(WorkflowCommand):
         super(RunTask, self).__init__(wf_ex, wf_spec, task_spec, ctx)
 
         self.wait = False
+        self.unique_key = None
 
     def is_waiting(self):
-        return (self.wait and
-                isinstance(self.task_spec, tasks.DirectWorkflowTaskSpec) and
-                self.task_spec.get_join())
+        return self.wait
+
+    def get_unique_key(self):
+        return self.unique_key
 
     def __repr__(self):
         return (
@@ -74,6 +76,7 @@ class RunExistingTask(WorkflowCommand):
 
         self.task_ex = task_ex
         self.reset = reset
+        self.unique_key = task_ex.unique_key
 
 
 class SetWorkflowState(WorkflowCommand):

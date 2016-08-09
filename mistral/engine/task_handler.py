@@ -19,10 +19,13 @@ from oslo_log import log as logging
 from osprofiler import profiler
 import traceback as tb
 
+from mistral.db.v2 import api as db_api
 from mistral.engine import tasks
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
+from mistral.services import scheduler
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import base as wf_base
 from mistral.workflow import commands as wf_cmds
 from mistral.workflow import states
 
@@ -30,6 +33,10 @@ from mistral.workflow import states
 """Responsible for running tasks and handling results."""
 
 LOG = logging.getLogger(__name__)
+
+_CHECK_TASK_START_ALLOWED_PATH = (
+    'mistral.engine.task_handler._check_task_start_allowed'
+)
 
 
 @profiler.trace('task-handler-run-task')
@@ -59,6 +66,9 @@ def run_task(wf_cmd):
         wf_handler.fail_workflow(wf_ex, msg)
 
         return
+
+    if task.is_waiting():
+        _schedule_check_task_start_allowed(task.task_ex)
 
     if task.is_completed():
         wf_handler.schedule_on_task_complete(task.task_ex)
@@ -127,6 +137,8 @@ def continue_task(task_ex):
     )
 
     try:
+        task.set_state(states.RUNNING, None)
+
         task.run()
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution
@@ -194,7 +206,8 @@ def _build_task_from_command(cmd):
             cmd.wf_spec,
             spec_parser.get_task_spec(cmd.task_ex.spec),
             cmd.ctx,
-            cmd.task_ex
+            task_ex=cmd.task_ex,
+            unique_key=cmd.task_ex.unique_key
         )
 
         if cmd.reset:
@@ -203,7 +216,13 @@ def _build_task_from_command(cmd):
         return task
 
     if isinstance(cmd, wf_cmds.RunTask):
-        task = _create_task(cmd.wf_ex, cmd.wf_spec, cmd.task_spec, cmd.ctx)
+        task = _create_task(
+            cmd.wf_ex,
+            cmd.wf_spec,
+            cmd.task_spec,
+            cmd.ctx,
+            unique_key=cmd.unique_key
+        )
 
         if cmd.is_waiting():
             task.defer()
@@ -213,8 +232,69 @@ def _build_task_from_command(cmd):
     raise exc.MistralError('Unsupported workflow command: %s' % cmd)
 
 
-def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None):
+def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
+                 unique_key=None):
     if task_spec.get_with_items():
-        return tasks.WithItemsTask(wf_ex, wf_spec, task_spec, ctx, task_ex)
+        return tasks.WithItemsTask(
+            wf_ex,
+            wf_spec,
+            task_spec,
+            ctx,
+            task_ex,
+            unique_key
+        )
 
-    return tasks.RegularTask(wf_ex, wf_spec, task_spec, ctx, task_ex)
+    return tasks.RegularTask(
+        wf_ex,
+        wf_spec,
+        task_spec,
+        ctx,
+        task_ex,
+        unique_key
+    )
+
+
+def _check_task_start_allowed(task_ex_id):
+    with db_api.transaction():
+        task_ex = db_api.get_task_execution(task_ex_id)
+
+        wf_ctrl = wf_base.get_controller(
+            task_ex.workflow_execution,
+            spec_parser.get_workflow_spec_by_id(task_ex.workflow_id)
+        )
+
+        if wf_ctrl.is_task_start_allowed(task_ex):
+            continue_task(task_ex)
+
+            return
+
+        # TODO(rakhmerov): Algorithm for increasing rescheduling delay.
+        _schedule_check_task_start_allowed(task_ex, 1)
+
+
+def _schedule_check_task_start_allowed(task_ex, delay=0):
+    """Schedules task preconditions check.
+
+    This method provides transactional decoupling of task preconditions
+    check from events that can potentially satisfy those preconditions.
+
+    It's needed in non-locking model in order to avoid 'phantom read'
+    phenomena when reading state of multiple tasks to see if a task that
+    depends on them can start. Just starting a separate transaction
+    without using scheduler is not safe due to concurrency window that
+    we'll have in this case (time between transactions) whereas scheduler
+    is a special component that is designed to be resistant to failures.
+
+    :param task_ex: Task execution.
+    :param delay: Delay.
+    :return:
+    """
+    key = 'th_c_t_s_a-%s' % task_ex.id
+
+    scheduler.schedule_call(
+        None,
+        _CHECK_TASK_START_ALLOWED_PATH,
+        delay,
+        unique_key=key,
+        task_ex_id=task_ex.id
+    )

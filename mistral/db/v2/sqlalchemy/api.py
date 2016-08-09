@@ -319,9 +319,16 @@ def insert_or_ignore(model_cls, values, session=None):
         replace_string=replace
     )
 
-    res = session.execute(insert, model.to_dict())
-
-    return res.rowcount
+    # NOTE(rakhmerov): As it turned out the result proxy object
+    # returned by insert expression does not provide a valid
+    # count of updated rows in for all supported databases.
+    # For this reason we shouldn't return anything from this
+    # method. In order to check whether a new object was really
+    # inserted users should rely on different approaches. The
+    # simplest is just to insert an object with an explicitly
+    # set id and then check if object with such id exists in DB.
+    # Generated id must be unique to make it work.
+    session.execute(insert, model.to_dict())
 
 
 # Workbook definitions.
@@ -818,6 +825,10 @@ def create_task_execution(values, session=None):
     return task_ex
 
 
+def insert_or_ignore_task_execution(values):
+    insert_or_ignore(models.TaskExecution, values.copy())
+
+
 @b.session_aware()
 def update_task_execution(id, values, session=None):
     task_ex = get_task_execution(id)
@@ -869,9 +880,7 @@ def create_delayed_call(values, session=None):
 
 
 def insert_or_ignore_delayed_call(values):
-    row_count = insert_or_ignore(models.DelayedCall, values.copy())
-
-    return row_count
+    insert_or_ignore(models.DelayedCall, values.copy())
 
 
 @b.session_aware()

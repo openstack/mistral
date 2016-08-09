@@ -86,28 +86,25 @@ class WorkflowController(object):
         self.wf_spec = wf_spec
 
     @profiler.trace('workflow-controller-continue-workflow')
-    def continue_workflow(self):
+    def continue_workflow(self, task_ex=None):
         """Calculates a list of commands to continue the workflow.
 
         Given a workflow specification this method makes required analysis
         according to this workflow type rules and identifies a list of
         commands needed to continue the workflow.
 
+        :param task_ex: Task execution that caused workflow continuation.
+            Optional. If not specified, it means that no certain task caused
+            this operation (e.g. workflow has been just started or resumed
+            manually).
         :return: List of workflow commands (instances of
             mistral.workflow.commands.WorkflowCommand).
         """
 
-        # TODO(rakhmerov): We now use this method for two cases:
-        # 1) to handle task completion
-        # 2) to resume a workflow after it's been paused
-        # Moving forward we need to introduce a separate method for
-        # resuming a workflow because it won't be operating with
-        # any concrete tasks that caused this operation.
-
         if self._is_paused_or_completed():
             return []
 
-        return self._find_next_commands()
+        return self._find_next_commands(task_ex)
 
     def rerun_tasks(self, task_execs, reset=True):
         """Gets commands to rerun existing task executions.
@@ -129,10 +126,20 @@ class WorkflowController(object):
         return cmds
 
     @abc.abstractmethod
+    def is_task_start_allowed(self, task_ex):
+        """Determines if the given task is allowed to start.
+
+        :param task_ex: Task execution.
+        :return: True if all preconditions are met and the given task
+            is allowed to start.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def is_error_handled_for(self, task_ex):
         """Determines if error is handled for specific task.
 
-        :param task_ex: Task execution perform a check for.
+        :param task_ex: Task execution.
         :return: True if either there is no error at all or
             error is considered handled.
         """
@@ -162,7 +169,9 @@ class WorkflowController(object):
         """
         raise NotImplementedError
 
-    def _get_task_inbound_context(self, task_spec):
+    def get_task_inbound_context(self, task_spec):
+        # TODO(rakhmerov): This method should also be able to work with task_ex
+        # to cover 'split' (aka 'merge') use case.
         upstream_task_execs = self._get_upstream_task_executions(task_spec)
 
         upstream_ctx = data_flow.evaluate_upstream_context(upstream_task_execs)
@@ -190,7 +199,7 @@ class WorkflowController(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _find_next_commands(self):
+    def _find_next_commands(self, task_ex):
         """Finds commands that should run next.
 
         A concrete algorithm of finding such tasks depends on a concrete
