@@ -56,7 +56,10 @@ class Workflow(object):
     def __init__(self, wf_def, wf_ex=None):
         self.wf_def = wf_def
         self.wf_ex = wf_ex
-        self.wf_spec = spec_parser.get_workflow_spec_by_id(wf_def.id)
+        self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wf_def.id,
+            wf_def.updated_at
+        )
 
     @profiler.trace('workflow-start')
     def start(self, input_dict, desc='', params=None):

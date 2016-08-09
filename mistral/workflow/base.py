@@ -43,7 +43,7 @@ def get_controller(wf_ex, wf_spec=None):
     """
 
     if not wf_spec:
-        wf_spec = spec_parser.get_workflow_spec_by_id(wf_ex.workflow_id)
+        wf_spec = spec_parser.get_workflow_spec_by_execution_id(wf_ex.id)
 
     wf_type = wf_spec.get_type()
 
@@ -81,7 +81,7 @@ class WorkflowController(object):
         self.wf_ex = wf_ex
 
         if wf_spec is None:
-            wf_spec = spec_parser.get_workflow_spec_by_id(wf_ex.workflow_id)
+            wf_spec = spec_parser.get_workflow_spec_by_execution_id(wf_ex.id)
 
         self.wf_spec = wf_spec
 

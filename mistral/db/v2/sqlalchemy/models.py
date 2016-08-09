@@ -36,6 +36,63 @@ from mistral import utils
 LOG = logging.getLogger(__name__)
 
 
+def _get_hash_function_by(column_name):
+    def calc_hash(context):
+        val = context.current_parameters[column_name] or {}
+
+        if isinstance(val, dict):
+            # If the value is a dictionary we need to make sure to have
+            # keys in the same order in a string representation.
+            hash_base = json.dumps(sorted(val.items()))
+        else:
+            hash_base = str(val)
+
+        return hashlib.sha256(hash_base.encode('utf-8')).hexdigest()
+
+    return calc_hash
+
+
+def validate_long_type_length(cls, field_name, value):
+    """Makes sure the value does not exceeds the maximum size."""
+    if value:
+        # Get the configured limit.
+        size_limit_kb = cfg.CONF.engine.execution_field_size_limit_kb
+
+        # If the size is unlimited.
+        if size_limit_kb < 0:
+            return
+
+        size_kb = int(sys.getsizeof(str(value)) / 1024)
+
+        if size_kb > size_limit_kb:
+            LOG.error(
+                "Size limit %dKB exceed for class [%s], "
+                "field %s of size %dKB.",
+                size_limit_kb, str(cls), field_name, size_kb
+            )
+
+            raise exc.SizeLimitExceededException(
+                field_name,
+                size_kb,
+                size_limit_kb
+            )
+
+
+def register_length_validator(attr_name):
+    """Register an event listener on the attribute.
+
+    This event listener will validate the size every
+    time a 'set' occurs.
+    """
+    for cls in utils.iter_subclasses(Execution):
+        if hasattr(cls, attr_name):
+            event.listen(
+                getattr(cls, attr_name),
+                'set',
+                lambda t, v, o, i: validate_long_type_length(cls, attr_name, v)
+            )
+
+
 class Definition(mb.MistralSecureModelBase):
     __abstract__ = True
 
@@ -200,46 +257,6 @@ for cls in utils.iter_subclasses(Execution):
     )
 
 
-def validate_long_type_length(cls, field_name, value):
-    """Makes sure the value does not exceeds the maximum size."""
-    if value:
-        # Get the configured limit.
-        size_limit_kb = cfg.CONF.engine.execution_field_size_limit_kb
-
-        # If the size is unlimited.
-        if size_limit_kb < 0:
-            return
-
-        size_kb = int(sys.getsizeof(str(value)) / 1024)
-
-        if size_kb > size_limit_kb:
-            LOG.error(
-                "Size limit %dKB exceed for class [%s], "
-                "field %s of size %dKB.",
-                size_limit_kb, str(cls), field_name, size_kb
-            )
-
-            raise exc.SizeLimitExceededException(
-                field_name,
-                size_kb,
-                size_limit_kb
-            )
-
-
-def register_length_validator(attr_name):
-    """Register an event listener on the attribute.
-
-    This event listener will validate the size every
-    time a 'set' occurs.
-    """
-    for cls in utils.iter_subclasses(Execution):
-        if hasattr(cls, attr_name):
-            event.listen(
-                getattr(cls, attr_name),
-                'set',
-                lambda t, v, o, i: validate_long_type_length(cls, attr_name, v)
-            )
-
 # Many-to-one for 'ActionExecution' and 'TaskExecution'.
 
 ActionExecution.task_execution_id = sa.Column(
@@ -348,16 +365,6 @@ class Environment(mb.MistralSecureModelBase):
     name = sa.Column(sa.String(200))
     description = sa.Column(sa.Text())
     variables = sa.Column(st.JsonDictType())
-
-
-def _get_hash_function_by(column_name):
-    def calc_hash(context):
-        d = context.current_parameters[column_name] or {}
-
-        return hashlib.sha256(json.dumps(sorted(d.items())).
-                              encode('utf-8')).hexdigest()
-
-    return calc_hash
 
 
 class CronTrigger(mb.MistralSecureModelBase):

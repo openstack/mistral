@@ -61,7 +61,9 @@ def _build_action(action_ex):
 
     if action_ex.workflow_name:
         wf_name = action_ex.workflow_name
-        wf_spec = spec_parser.get_workflow_spec_by_id(action_ex.workflow_id)
+        wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+            action_ex.task_execution.workflow_execution_id
+        )
         wf_spec_name = wf_spec.get_name()
 
     adhoc_action_name = action_ex.runtime_context.get('adhoc_action_name')

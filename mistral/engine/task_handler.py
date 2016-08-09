@@ -97,7 +97,7 @@ def _on_action_complete(action_ex):
 
     task = _create_task(
         wf_ex,
-        spec_parser.get_workflow_spec_by_id(wf_ex.workflow_id),
+        spec_parser.get_workflow_spec_by_execution_id(wf_ex.id),
         task_spec,
         task_ex.in_context,
         task_ex
@@ -125,10 +125,11 @@ def _on_action_complete(action_ex):
 
 
 def fail_task(task_ex, msg):
-    task = _build_task_from_execution(
-        spec_parser.get_workflow_spec_by_id(task_ex.workflow_id),
-        task_ex
+    wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+        task_ex.workflow_execution_id
     )
+
+    task = _build_task_from_execution(wf_spec, task_ex)
 
     task.set_state(states.ERROR, msg)
 
@@ -136,10 +137,11 @@ def fail_task(task_ex, msg):
 
 
 def continue_task(task_ex):
-    task = _build_task_from_execution(
-        spec_parser.get_workflow_spec_by_id(task_ex.workflow_id),
-        task_ex
+    wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+        task_ex.workflow_execution_id
     )
+
+    task = _build_task_from_execution(wf_spec, task_ex)
 
     try:
         task.set_state(states.RUNNING, None)
@@ -166,10 +168,11 @@ def continue_task(task_ex):
 
 
 def complete_task(task_ex, state, state_info):
-    task = _build_task_from_execution(
-        spec_parser.get_workflow_spec_by_id(task_ex.workflow_id),
-        task_ex
+    wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+        task_ex.workflow_execution_id
     )
+
+    task = _build_task_from_execution(wf_spec, task_ex)
 
     try:
         task.complete(state, state_info)
@@ -263,9 +266,13 @@ def _check_task_start_allowed(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.get_task_execution(task_ex_id)
 
+        wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+            task_ex.workflow_execution_id
+        )
+
         wf_ctrl = wf_base.get_controller(
             task_ex.workflow_execution,
-            spec_parser.get_workflow_spec_by_id(task_ex.workflow_id)
+            wf_spec
         )
 
         if wf_ctrl.is_task_start_allowed(task_ex):

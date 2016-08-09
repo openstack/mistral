@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 from cachetools import cached
-from cachetools import hashkey
 from cachetools import LRUCache
 from threading import RLock
 import yaml
@@ -35,8 +34,11 @@ V2_0 = '2.0'
 ALL_VERSIONS = [V2_0]
 
 
-_WF_CACHE = LRUCache(maxsize=100)
-_WF_CACHE_LOCK = RLock()
+_WF_EX_CACHE = LRUCache(maxsize=100)
+_WF_EX_CACHE_LOCK = RLock()
+
+_WF_DEF_CACHE = LRUCache(maxsize=100)
+_WF_DEF_CACHE_LOCK = RLock()
 
 
 def parse_yaml(text):
@@ -108,9 +110,9 @@ def get_workflow_spec(spec_dict):
     """Get workflow specification object from dictionary.
 
     NOTE: For large workflows this method can work very long (seconds).
-    For this reason, method 'get_workflow_spec_by_id' should be used
-    whenever possible because it caches specification objects by
-    workflow definition id.
+    For this reason, method 'get_workflow_spec_by_definition_id' or
+    'get_workflow_spec_by_execution_id' should be used whenever possible
+    because they cache specification objects.
 
     :param spec_dict: Raw specification dictionary.
     """
@@ -188,9 +190,43 @@ def _parse_def_from_wb(wb_def, section_name, item_name):
 # Methods for obtaining specifications in a more efficient way using
 # caching techniques.
 
+@cached(_WF_EX_CACHE, lock=_WF_EX_CACHE_LOCK)
+def get_workflow_spec_by_execution_id(wf_ex_id):
+    """Gets workflow specification by workflow execution id.
 
-@cached(_WF_CACHE, lock=_WF_CACHE_LOCK)
-def get_workflow_spec_by_id(wf_def_id):
+    The idea is that when a workflow execution is running we
+    must be getting the same workflow specification even if
+
+    :param wf_ex_id: Workflow execution id.
+    :return:  Workflow specification.
+    """
+    if not wf_ex_id:
+        return None
+
+    wf_ex = db_api.get_workflow_execution(wf_ex_id)
+
+    return get_workflow_spec(wf_ex.spec)
+
+
+@cached(_WF_DEF_CACHE, lock=_WF_DEF_CACHE_LOCK)
+def get_workflow_spec_by_definition_id(wf_def_id, wf_def_updated_at):
+    """Gets specification by workflow definition id and its 'updated_at'.
+
+    The idea of this method is to return a cached specification for the
+    given workflow id and workflow definition 'updated_at'. As long as the
+    given workflow definition remains the same in DB users of this method
+    will be getting a cached value. Once the workflow definition has
+    changed clients will be providing a different 'updated_at' value and
+    hence this method will be called and spec is updated for this combination
+    of parameters. Old cached values will be kicked out by LRU algorithm
+    if the cache runs out of space.
+
+    :param wf_def_id: Workflow definition id.
+    :param wf_def_updated_at: Workflow definition 'updated_at' value. It
+     serves only as part of cache key and is not explicitly used in the
+     method.
+    :return: Workflow specification.
+    """
     if not wf_def_id:
         return None
 
@@ -199,16 +235,18 @@ def get_workflow_spec_by_id(wf_def_id):
     return get_workflow_spec(wf_def.spec)
 
 
-def get_workflow_spec_cache_size():
-    return len(_WF_CACHE)
+def get_wf_execution_spec_cache_size():
+    return len(_WF_EX_CACHE)
+
+
+def get_wf_definition_spec_cache_size():
+    return len(_WF_DEF_CACHE)
 
 
 def clear_caches():
     """Clears all specification caches."""
-    _WF_CACHE.clear()
+    with _WF_EX_CACHE_LOCK:
+        _WF_EX_CACHE.clear()
 
-
-def update_workflow_cache(wf_def_id, spec):
-    with _WF_CACHE_LOCK:
-        # We have to use hashkey function because @cached uses it implicitly.
-        _WF_CACHE[hashkey(wf_def_id)] = spec
+    with _WF_DEF_CACHE_LOCK:
+        _WF_DEF_CACHE.clear()

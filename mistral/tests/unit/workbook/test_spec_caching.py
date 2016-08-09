@@ -32,12 +32,17 @@ class SpecificationCachingTest(base.DbTestCase):
 
         wfs = wf_service.create_workflows(wf_text)
 
-        self.assertEqual(0, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_definition_spec_cache_size())
 
-        wf_spec = spec_parser.get_workflow_spec_by_id(wfs[0].id)
+        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wfs[0].id,
+            wfs[0].updated_at
+        )
 
         self.assertIsNotNone(wf_spec)
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
     def test_workflow_spec_cache_update_via_workflow_service(self):
         wf_text = """
@@ -51,12 +56,17 @@ class SpecificationCachingTest(base.DbTestCase):
 
         wfs = wf_service.create_workflows(wf_text)
 
-        self.assertEqual(0, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_definition_spec_cache_size())
 
-        wf_spec = spec_parser.get_workflow_spec_by_id(wfs[0].id)
+        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wfs[0].id,
+            wfs[0].updated_at
+        )
 
         self.assertEqual(1, len(wf_spec.get_tasks()))
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
         # Now update workflow definition and check that cache is updated too.
 
@@ -74,12 +84,16 @@ class SpecificationCachingTest(base.DbTestCase):
 
         wfs = wf_service.update_workflows(wf_text)
 
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
-        wf_spec = spec_parser.get_workflow_spec_by_id(wfs[0].id)
+        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wfs[0].id,
+            wfs[0].updated_at
+        )
 
         self.assertEqual(2, len(wf_spec.get_tasks()))
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(2, spec_parser.get_wf_definition_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
 
     def test_workflow_spec_cache_update_via_workbook_service(self):
         wb_text = """
@@ -96,14 +110,19 @@ class SpecificationCachingTest(base.DbTestCase):
 
         wb_service.create_workbook_v2(wb_text)
 
-        self.assertEqual(0, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_definition_spec_cache_size())
 
         wf = db_api.get_workflow_definition('wb.wf')
 
-        wf_spec = spec_parser.get_workflow_spec_by_id(wf.id)
+        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wf.id,
+            wf.updated_at
+        )
 
         self.assertEqual(1, len(wf_spec.get_tasks()))
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
         # Now update workflow definition and check that cache is updated too.
 
@@ -124,9 +143,16 @@ class SpecificationCachingTest(base.DbTestCase):
 
         wb_service.update_workbook_v2(wb_text)
 
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
-        wf_spec = spec_parser.get_workflow_spec_by_id(wf.id)
+        wf = db_api.get_workflow_definition(wf.id)
+
+        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wf.id,
+            wf.updated_at
+        )
 
         self.assertEqual(2, len(wf_spec.get_tasks()))
-        self.assertEqual(1, spec_parser.get_workflow_spec_cache_size())
+        self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
+        self.assertEqual(2, spec_parser.get_wf_definition_spec_cache_size())
