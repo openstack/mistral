@@ -49,7 +49,7 @@ def on_action_complete(action_ex, result):
         return
 
     if task_ex:
-        task_handler.on_action_complete(action_ex)
+        task_handler.schedule_on_action_complete(action_ex)
 
 
 def _build_action(action_ex):

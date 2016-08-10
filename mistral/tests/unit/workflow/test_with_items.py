@@ -54,4 +54,7 @@ class WithItemsTest(base.BaseTest):
         # Then call get_indices and expect [2, 3, 4].
         indices = with_items.get_indices_for_loop(task_ex)
 
-        self.assertListEqual([2, 3, 4], indices)
+        # TODO(rakhmerov): Restore concurrency support.
+        # With disabled 'concurrency' support we expect indices 2,3,4,5
+        # because overall count is 6 and two indices were already processed.
+        self.assertListEqual([2, 3, 4, 5], indices)

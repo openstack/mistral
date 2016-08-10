@@ -239,7 +239,7 @@ class RegularTask(Task):
     Takes care of processing regular tasks with one action.
     """
 
-    @profiler.trace('task-on-action-complete')
+    @profiler.trace('regular-task-on-action-complete')
     def on_action_complete(self, action_ex):
         state = action_ex.state
         # TODO(rakhmerov): Here we can define more informative messages
@@ -379,17 +379,20 @@ class RegularTask(Task):
         return actions.PythonAction(action_def, task_ex=self.task_ex)
 
 
+# TODO(rakhmerov): Concurrency support is currently dropped since it doesn't
+# fit into non-locking transactional model. It needs to be restored later on.
+# A possible solution should be able to read and write a number of currently
+# running actions atomically which is now impossible w/o locks with JSON
+# field "runtime_context".
 class WithItemsTask(RegularTask):
     """With-items task.
 
     Takes care of processing "with-items" tasks.
     """
 
-    @profiler.trace('task-on-action-complete')
+    @profiler.trace('with-items-task-on-action-complete')
     def on_action_complete(self, action_ex):
         assert self.task_ex
-
-        state = action_ex.state
 
         # TODO(rakhmerov): Here we can define more informative messages
         # cases when action is successful and when it's not. For example,

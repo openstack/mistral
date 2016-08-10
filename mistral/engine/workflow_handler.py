@@ -28,7 +28,7 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
-_ON_TASK_COMPLETE_PATH = 'mistral.engine.workflow_handler.on_task_complete'
+_ON_TASK_COMPLETE_PATH = 'mistral.engine.workflow_handler._on_task_complete'
 
 
 @profiler.trace('workflow-handler-start-workflow')
@@ -75,7 +75,7 @@ def cancel_workflow(wf_ex, msg=None):
 
 
 @profiler.trace('workflow-handler-on-task-complete')
-def on_task_complete(task_ex_id):
+def _on_task_complete(task_ex_id):
     # Note: This method can only be called via scheduler.
     with db_api.transaction():
         task_ex = db_api.get_task_execution(task_ex_id)
