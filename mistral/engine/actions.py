@@ -174,11 +174,16 @@ class Action(object):
 
             return "result = %s" % utils.cut(result.data)
 
-        wf_trace.info(
-            None,
-            "Action execution '%s' [%s -> %s, %s]" %
-            (self.action_ex.name, prev_state, state, _result_msg())
-        )
+        if prev_state != state:
+            wf_trace.info(
+                None,
+                "Action '%s' (%s) [%s -> %s, %s]" %
+                (self.action_ex.name,
+                 self.action_ex.id,
+                 prev_state,
+                 state,
+                 _result_msg())
+            )
 
 
 class PythonAction(Action):

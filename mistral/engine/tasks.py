@@ -96,7 +96,7 @@ class Task(object):
         if not self.task_ex:
             self._create_task_execution()
 
-        self.set_state(states.WAITING, 'Task execution is deferred.')
+        self.set_state(states.WAITING, 'Task is deferred.')
 
         self.waiting = True
 
@@ -114,11 +114,17 @@ class Task(object):
 
         assert self.task_ex
 
-        wf_trace.info(
-            self.task_ex.workflow_execution,
-            "Task execution '%s' [%s -> %s]: %s" %
-            (self.task_ex.id, self.task_ex.state, state, state_info)
-        )
+        if (self.task_ex.state != state or
+                self.task_ex.state_info != state_info):
+            wf_trace.info(
+                self.task_ex.workflow_execution,
+                "Task '%s' (%s) [%s -> %s, msg=%s]" %
+                (self.task_ex.name,
+                 self.task_ex.id,
+                 self.task_ex.state,
+                 state,
+                 state_info)
+            )
 
         self.task_ex.state = state
         self.task_ex.state_info = state_info

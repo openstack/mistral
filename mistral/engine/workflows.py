@@ -243,8 +243,8 @@ class Workflow(object):
 
             wf_trace.info(
                 self.wf_ex,
-                "Execution of workflow '%s' [%s -> %s]"
-                % (self.wf_ex.workflow_name, cur_state, state)
+                "Workflow '%s' [%s -> %s, msg=%s]"
+                % (self.wf_ex.workflow_name, cur_state, state, state_info)
             )
         else:
             msg = ("Can't change workflow execution state from %s to %s. "
