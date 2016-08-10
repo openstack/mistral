@@ -18,7 +18,6 @@ from osprofiler import profiler
 import traceback as tb
 
 from mistral.db.v2 import api as db_api
-from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import workflows
 from mistral import exceptions as exc
 from mistral.services import scheduler
@@ -152,14 +151,6 @@ def set_workflow_state(wf_ex, state, msg=None):
         raise exc.MistralError(
             'Invalid workflow state [wf_ex=%s, state=%s]' % (wf_ex, state)
         )
-
-
-@profiler.trace('workflow-handler-lock-execution')
-def lock_workflow_execution(wf_ex_id):
-    # Locks a workflow execution using the db_api.acquire_lock function.
-    # The method expires all session objects and returns the up-to-date
-    # workflow execution from the DB.
-    return db_api.acquire_lock(db_models.WorkflowExecution, wf_ex_id)
 
 
 @profiler.trace('workflow-handler-schedule-on-task-complete')
