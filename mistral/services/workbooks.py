@@ -46,10 +46,6 @@ def update_workbook_v2(definition, scope='private'):
 
         _, db_wfs = _on_workbook_update(wb_db, wb_spec)
 
-    # Once transaction has committed we need to update specification cache.
-    for db_wf, wf_spec in zip(db_wfs, wb_spec.get_workflows()):
-        spec_parser.update_workflow_cache(db_wf.id, wf_spec)
-
     return wb_db
 
 

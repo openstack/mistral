@@ -451,8 +451,8 @@ class WorkflowAction(Action):
         assert not self.action_ex
 
         parent_wf_ex = self.task_ex.workflow_execution
-        parent_wf_spec = spec_parser.get_workflow_spec_by_id(
-            parent_wf_ex.workflow_id
+        parent_wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+            parent_wf_ex.id
         )
 
         task_spec = spec_parser.get_task_spec(self.task_ex.spec)
@@ -465,7 +465,10 @@ class WorkflowAction(Action):
             wf_spec_name
         )
 
-        wf_spec = spec_parser.get_workflow_spec_by_id(wf_def.id)
+        wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wf_def.id,
+            wf_def.updated_at
+        )
 
         wf_params = {
             'task_execution_id': self.task_ex.id,
