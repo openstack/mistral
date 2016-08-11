@@ -72,6 +72,14 @@ def run_task(wf_cmd):
 
         return
 
+    if not task.task_ex:
+        # It is possible that task execution was not created
+        # (and therefore not associated with Task instance).
+        # For example, in case of 'join' that has already been
+        # created by a different transaction. In this case
+        # we should skip post completion scheduled checks.
+        return
+
     if task.is_waiting():
         _schedule_refresh_task_state(task.task_ex)
 
