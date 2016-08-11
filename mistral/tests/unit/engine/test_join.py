@@ -733,3 +733,48 @@ class JoinEngineTest(base.EngineTestCase):
             tasks = wf_ex.task_executions
 
             self._assert_multiple_items(tasks, 3, state=states.SUCCESS)
+
+    def test_join_after_join(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            a:
+              on-success:
+                - c
+
+            b:
+              on-success:
+                - c
+
+            c:
+              join: all
+              on-success:
+                - f
+
+            d:
+              on-success:
+                - f
+
+            e:
+              on-success:
+                - f
+
+            f:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(6, len(task_execs))
+
+        self._assert_multiple_items(task_execs, 6, state=states.SUCCESS)
