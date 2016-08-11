@@ -96,7 +96,8 @@ class Task(object):
         if not self.task_ex:
             self._create_task_execution()
 
-        self.set_state(states.WAITING, 'Task is deferred.')
+        if self.task_ex:
+            self.set_state(states.WAITING, 'Task is deferred.')
 
         self.waiting = True
 
