@@ -53,14 +53,16 @@ class Result(object):
 
 
 class ResultSerializer(serializers.Serializer):
-    def serialize(self, entity):
+    @staticmethod
+    def serialize(entity):
         return {
             'data': entity.data,
             'error': entity.error,
             'cancel': entity.cancel
         }
 
-    def deserialize(self, entity):
+    @staticmethod
+    def deserialize(entity):
         return Result(
             entity['data'],
             entity['error'],

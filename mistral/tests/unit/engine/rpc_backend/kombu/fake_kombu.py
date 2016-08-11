@@ -25,6 +25,8 @@ connection = mock.MagicMock()
 connections = mock.MagicMock()
 connections.__getitem__ = lambda *args, **kwargs: connection
 
+serialization = mock.MagicMock()
+
 
 def BrokerConnection(*args, **kwargs):
     return mock.MagicMock()

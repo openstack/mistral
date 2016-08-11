@@ -14,12 +14,28 @@
 
 import abc
 
+from oslo_serialization import jsonutils
+
 
 class Serializer(object):
+    @staticmethod
     @abc.abstractmethod
-    def serialize(self, entity):
+    def serialize(entity):
         pass
 
+    @staticmethod
     @abc.abstractmethod
-    def deserialize(self, entity):
+    def deserialize(entity):
         pass
+
+
+class KombuSerializer(Serializer):
+    @staticmethod
+    def deserialize(entity):
+        return jsonutils.loads(entity)
+
+    @staticmethod
+    def serialize(entity):
+        return jsonutils.dumps(
+            jsonutils.to_primitive(entity, convert_instances=True)
+        )
