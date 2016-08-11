@@ -438,6 +438,34 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_success(exec_db.id)
 
+    def test_wait_before_policy_two_tasks(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            a:
+              wait-before: 2
+              on-success: b
+            b:
+              action: std.noop
+
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
+
+        self._assert_multiple_items(task_execs, 2, state=states.SUCCESS)
+
     def test_wait_after_policy(self):
         wb_service.create_workbook_v2(WAIT_AFTER_WB)
 
