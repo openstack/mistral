@@ -12,8 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
 from oslo_config import cfg
-import oslo_messaging as messaging
 
 from mistral.tests.unit.engine import base
 from mistral.utils import rpc_utils
@@ -23,10 +24,11 @@ class RPCTest(base.EngineTestCase):
     def setUp(self):
         super(RPCTest, self).setUp()
 
+    @mock.patch.object(cfg.CONF, 'rpc_backend', 'rabbit')
     def test_get_rabbit_config(self):
         conf = cfg.CONF
 
-        rpc_info = rpc_utils._get_rabbit_info_from_oslo(conf.engine)
+        rpc_info = rpc_utils.get_rpc_info_from_oslo(conf.engine)
 
         self.assertDictEqual(
             {
@@ -45,16 +47,44 @@ class RPCTest(base.EngineTestCase):
             rpc_info
         )
 
-    def test_get_transport_url_config(self):
+    @mock.patch.object(cfg.CONF, 'rpc_backend', 'zmq')
+    def test_get_zmq_config(self):
         conf = cfg.CONF
-        transport_url = 'rabbit://user:supersecret@not_localhost:1234/'
 
-        transport = messaging.TransportURL.parse(conf, transport_url)
+        rpc_info = rpc_utils.get_rpc_info_from_oslo(conf.engine)
 
-        rpc_info = rpc_utils._get_rpc_info_from_transport_url(
-            transport,
-            conf.engine
+        self.assertDictEqual(
+            {
+                'topic': 'mistral_engine',
+                'server_id': '0.0.0.0',
+                'exchange': 'openstack',
+                'timeout': 60
+            },
+            rpc_info
         )
+
+    @mock.patch.object(cfg.CONF, 'rpc_backend', 'amqp')
+    def test_get_amqp_config(self):
+        conf = cfg.CONF
+
+        rpc_info = rpc_utils.get_rpc_info_from_oslo(conf.engine)
+
+        self.assertDictEqual(
+            {
+                'topic': 'mistral_engine',
+                'server_id': '0.0.0.0',
+                'exchange': 'openstack',
+                'timeout': 60
+            },
+            rpc_info
+        )
+
+    @mock.patch.object(cfg.CONF, 'transport_url',
+                       'rabbit://user:supersecret@not_localhost:1234/')
+    def test_get_transport_url_rabbit_config(self):
+        conf = cfg.CONF
+
+        rpc_info = rpc_utils.get_rpc_info_from_oslo(conf.engine)
 
         self.assertDictEqual(
             {
@@ -68,6 +98,40 @@ class RPCTest(base.EngineTestCase):
                 'password': 'supersecret',
                 'durable_queues': False,
                 'auto_delete': False,
+                'timeout': 60
+            },
+            rpc_info
+        )
+
+    @mock.patch.object(cfg.CONF, 'transport_url',
+                       'zmq://user:supersecret@not_localhost:1234/')
+    def test_get_transport_url_zmq_config(self):
+        conf = cfg.CONF
+
+        rpc_info = rpc_utils.get_rpc_info_from_oslo(conf.engine)
+
+        self.assertDictEqual(
+            {
+                'topic': 'mistral_engine',
+                'server_id': '0.0.0.0',
+                'exchange': 'openstack',
+                'timeout': 60
+            },
+            rpc_info
+        )
+
+    @mock.patch.object(cfg.CONF, 'transport_url',
+                       'amqp://user:supersecret@not_localhost:1234/')
+    def test_get_transport_url_amqp_config(self):
+        conf = cfg.CONF
+
+        rpc_info = rpc_utils.get_rpc_info_from_oslo(conf.engine)
+
+        self.assertDictEqual(
+            {
+                'topic': 'mistral_engine',
+                'server_id': '0.0.0.0',
+                'exchange': 'openstack',
                 'timeout': 60
             },
             rpc_info
