@@ -778,3 +778,36 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(6, len(task_execs))
 
         self._assert_multiple_items(task_execs, 6, state=states.SUCCESS)
+
+    def test_join_route_delays(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            a:
+              wait-before: 4
+              on-success: b
+            b:
+              on-success: join
+
+            c:
+              on-success: join
+
+            join:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(4, len(task_execs))
+
+        self._assert_multiple_items(task_execs, 4, state=states.SUCCESS)
