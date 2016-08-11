@@ -372,7 +372,10 @@ class DirectWorkflowController(base.WorkflowController):
                 if self._possible_route(t_s):
                     return True
             else:
-                if task_spec.get_name() in self._find_next_task_names(t_ex):
+                t_name = task_spec.get_name()
+
+                if (not states.is_completed(t_ex.state) or
+                        t_name in self._find_next_task_names(t_ex)):
                     return True
 
         return False
