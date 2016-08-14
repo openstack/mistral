@@ -72,7 +72,11 @@ class DirectWorkflowController(base.WorkflowController):
             task_ex
         )
 
-        if not self.wf_ex.task_executions:
+        # Checking if task_ex is empty here is a serious optimization here
+        # because 'self.wf_ex.task_executions' leads to initialization of
+        # the entire collection which in case of highly-parallel workflows
+        # may be very expensive.
+        if not task_ex and not self.wf_ex.task_executions:
             return self._find_start_commands()
 
         if task_ex:
