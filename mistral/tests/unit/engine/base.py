@@ -129,9 +129,10 @@ class EngineTestCase(base.DbTestCase):
         [thread.kill() for thread in self.threads]
 
     @staticmethod
-    def print_executions(exc_info):
-        print("\nEngine test case exception occurred: %s" % exc_info[1])
-        print("Exception type: %s" % exc_info[0])
+    def print_executions(exc_info=None):
+        if exc_info:
+            print("\nEngine test case exception occurred: %s" % exc_info[1])
+            print("Exception type: %s" % exc_info[0])
 
         print("\nPrinting workflow executions...")
 

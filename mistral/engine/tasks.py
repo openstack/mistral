@@ -31,7 +31,6 @@ from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 from mistral.workflow import with_items
 
 
@@ -81,14 +80,12 @@ class Task(object):
     def defer(self):
         """Defers task.
 
-        This methods finds task execution or creates new and puts task
-        to a waiting state.
+        This method puts task to a waiting state.
         """
-
         if not self.task_ex:
-            t_execs = wf_utils.find_task_executions_by_spec(
-                self.wf_ex,
-                self.task_spec
+            t_execs = db_api.get_task_executions(
+                workflow_execution_id=self.wf_ex.id,
+                name=self.task_spec.get_name()
             )
 
             self.task_ex = t_execs[0] if t_execs else None
