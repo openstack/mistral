@@ -207,6 +207,12 @@ class WorkflowController(object):
 
         :return: List of workflow commands.
         """
+
+        # If task execution was passed then we should make all calculations
+        # only based on it.
+        if task_ex:
+            return []
+
         # Add all tasks in IDLE state.
         idle_tasks = wf_utils.find_task_executions_with_state(
             self.wf_ex,
