@@ -138,6 +138,15 @@ def evaluate_workflow_output(wf_spec, ctx):
     return output or ctx
 
 
+def add_current_task_to_context(ctx, task_id, task_name):
+    ctx['__task_execution'] = {
+        'id': task_id,
+        'name': task_name
+    }
+
+    return ctx
+
+
 def add_openstack_data_to_context(wf_ex):
     wf_ex.context = wf_ex.context or {}
 

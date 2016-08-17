@@ -34,6 +34,7 @@ from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import security
+from mistral import utils
 
 
 CONF = cfg.CONF
@@ -796,6 +797,23 @@ def get_task_executions(**kwargs):
     return _get_task_executions(**kwargs)
 
 
+def get_incomplete_task_executions(**kwargs):
+    query = b.model_query(models.TaskExecution)
+
+    query = query.filter_by(**kwargs)
+
+    query = query.filter(
+        sa.or_(
+            models.TaskExecution.state == 'IDLE',
+            models.TaskExecution.state == 'RUNNING',
+            models.TaskExecution.state == 'WAITING',
+            models.TaskExecution.state == 'DELAYED'
+        )
+    )
+
+    return query.all()
+
+
 @b.session_aware()
 def create_task_execution(values, session=None):
     task_ex = models.TaskExecution()
@@ -810,10 +828,6 @@ def create_task_execution(values, session=None):
         )
 
     return task_ex
-
-
-def insert_or_ignore_task_execution(values):
-    insert_or_ignore(models.TaskExecution, values.copy())
 
 
 @b.session_aware()
@@ -864,10 +878,6 @@ def create_delayed_call(values, session=None):
         )
 
     return delayed_call
-
-
-def insert_or_ignore_delayed_call(values):
-    insert_or_ignore(models.DelayedCall, values.copy())
 
 
 @b.session_aware()
@@ -1388,9 +1398,17 @@ def create_named_lock(name, session=None):
     # session may not immediately issue an SQL query to a database
     # and instead just schedule it whereas we need to make sure to
     # issue a query immediately.
+    session.flush()
+
     insert = models.NamedLock.__table__.insert()
 
-    session.execute(insert.values(name=name))
+    lock_id = utils.generate_unicode_uuid()
+
+    session.execute(insert.values(id=lock_id, name=name))
+
+    session.flush()
+
+    return lock_id
 
 
 def get_named_locks(**kwargs):
@@ -1398,22 +1416,27 @@ def get_named_locks(**kwargs):
 
 
 @b.session_aware()
-def delete_named_lock(name, session=None):
+def delete_named_lock(lock_id, session=None):
     # This method has to work without SQLAlchemy session because
     # session may not immediately issue an SQL query to a database
     # and instead just schedule it whereas we need to make sure to
     # issue a query immediately.
+    session.flush()
+
     table = models.NamedLock.__table__
 
     delete = table.delete()
 
-    session.execute(delete.where(table.c.name == name))
+    session.execute(delete.where(table.c.id == lock_id))
+
+    session.flush()
 
 
 @contextlib.contextmanager
 def named_lock(name):
+    lock_id = None
     try:
-        create_named_lock(name)
+        lock_id = create_named_lock(name)
         yield
     finally:
-        delete_named_lock(name)
+        delete_named_lock(lock_id)

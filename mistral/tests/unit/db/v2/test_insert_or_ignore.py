@@ -15,20 +15,39 @@
 
 
 from oslo_config import cfg
-from oslo_utils import timeutils
 
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.tests.unit import base as test_base
 
+WF_EX = {
+    'id': '1',
+    'spec': {},
+    'start_params': {'task': 'my_task1'},
+    'state': 'IDLE',
+    'state_info': "Running...",
+    'created_at': None,
+    'updated_at': None,
+    'context': None,
+    'task_id': None,
+    'trust_id': None,
+    'description': None,
+    'output': None
+}
 
-DELAYED_CALL = {
-    'factory_method_path': 'my_factory_method',
-    'target_method_name': 'my_target_method',
-    'method_arguments': None,
-    'serializers': None,
-    'auth_context': None,
-    'execution_time': timeutils.utcnow()
+
+TASK_EX = {
+    'workflow_execution_id': '1',
+    'workflow_name': 'my_wf',
+    'name': 'my_task1',
+    'spec': None,
+    'action_spec': None,
+    'state': 'IDLE',
+    'tags': ['deployment'],
+    'in_context': None,
+    'runtime_context': None,
+    'created_at': None,
+    'updated_at': None
 }
 
 
@@ -37,6 +56,8 @@ class InsertOrIgnoreTest(test_base.DbTestCase):
         super(InsertOrIgnoreTest, self).setUp()
 
         cfg.CONF.set_default('auth_enable', True, group='pecan')
+
+        db_api.create_workflow_execution(WF_EX)
 
         self.addCleanup(
             cfg.CONF.set_default,
@@ -47,46 +68,46 @@ class InsertOrIgnoreTest(test_base.DbTestCase):
 
     def test_insert_or_ignore_without_conflicts(self):
         db_api.insert_or_ignore(
-            db_models.DelayedCall,
-            DELAYED_CALL.copy()
+            db_models.TaskExecution,
+            TASK_EX.copy()
         )
 
-        delayed_calls = db_api.get_delayed_calls()
+        task_execs = db_api.get_task_executions()
 
-        self.assertEqual(1, len(delayed_calls))
+        self.assertEqual(1, len(task_execs))
 
-        delayed_call = delayed_calls[0]
+        task_ex = task_execs[0]
 
-        self._assert_dict_contains_subset(DELAYED_CALL, delayed_call.to_dict())
+        self._assert_dict_contains_subset(TASK_EX, task_ex.to_dict())
 
     def test_insert_or_ignore_with_conflicts(self):
         # Insert the first object.
-        values = DELAYED_CALL.copy()
+        values = TASK_EX.copy()
 
         values['unique_key'] = 'key'
 
-        db_api.insert_or_ignore(db_models.DelayedCall, values)
+        db_api.insert_or_ignore(db_models.TaskExecution, values)
 
-        delayed_calls = db_api.get_delayed_calls()
+        task_execs = db_api.get_task_executions()
 
-        self.assertEqual(1, len(delayed_calls))
+        self.assertEqual(1, len(task_execs))
 
-        delayed_call = delayed_calls[0]
+        task_ex = task_execs[0]
 
-        self._assert_dict_contains_subset(DELAYED_CALL, delayed_call.to_dict())
+        self._assert_dict_contains_subset(TASK_EX, task_ex.to_dict())
 
         # Insert the second object with the same unique key.
         # We must not get exceptions and new object must not be saved.
-        values = DELAYED_CALL.copy()
+        values = TASK_EX.copy()
 
         values['unique_key'] = 'key'
 
-        db_api.insert_or_ignore(db_models.DelayedCall, values)
+        db_api.insert_or_ignore(db_models.TaskExecution, values)
 
-        delayed_calls = db_api.get_delayed_calls()
+        task_execs = db_api.get_task_executions()
 
-        self.assertEqual(1, len(delayed_calls))
+        self.assertEqual(1, len(task_execs))
 
-        delayed_call = delayed_calls[0]
+        task_ex = task_execs[0]
 
-        self._assert_dict_contains_subset(DELAYED_CALL, delayed_call.to_dict())
+        self._assert_dict_contains_subset(TASK_EX, task_ex.to_dict())

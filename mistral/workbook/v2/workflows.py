@@ -130,6 +130,9 @@ class WorkflowSpec(base.BaseSpec):
     def get_tasks(self):
         return self._tasks
 
+    def get_task(self, name):
+        return self._tasks[name]
+
 
 class DirectWorkflowSpec(WorkflowSpec):
     _polymorphic_value = 'direct'

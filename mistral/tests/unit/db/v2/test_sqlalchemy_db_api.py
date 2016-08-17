@@ -2246,13 +2246,13 @@ class LockTest(SQLAlchemyTest):
 
         self.assertEqual('lock1', locks[0].name)
 
-        db_api.delete_named_lock('invalid_lock_name')
+        db_api.delete_named_lock('invalid_lock_id')
 
         locks = db_api.get_named_locks()
 
         self.assertEqual(1, len(locks))
 
-        db_api.delete_named_lock(locks[0].name)
+        db_api.delete_named_lock(locks[0].id)
 
         locks = db_api.get_named_locks()
 

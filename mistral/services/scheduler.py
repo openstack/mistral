@@ -37,7 +37,7 @@ _schedulers = {}
 
 
 def schedule_call(factory_method_path, target_method_name,
-                  run_after, serializers=None, unique_key=None, **method_args):
+                  run_after, serializers=None, key=None, **method_args):
     """Schedules call and lately invokes target_method.
 
     Add this call specification to DB, and then after run_after
@@ -54,11 +54,8 @@ def schedule_call(factory_method_path, target_method_name,
         { "result": "mistral.utils.serializer.ResultSerializer"}
         Serializer for the object type must implement serializer interface
         in mistral/utils/serializer.py
-    :param unique_key: Unique key which in combination with 'processing'
-        flag restricts a number of delayed calls if it's passed. For example,
-        if we schedule two calls but pass the same unique key for them then
-        we won't get two of them in DB if both have same value of 'processing'
-        flag.
+    :param key: Key which can potentially be used for squashing similar
+        delayed calls.
     :param method_args: Target method keyword arguments.
     """
     ctx_serializer = context.RpcContextSerializer(
@@ -95,12 +92,12 @@ def schedule_call(factory_method_path, target_method_name,
         'execution_time': execution_time,
         'auth_context': ctx,
         'serializers': serializers,
-        'unique_key': unique_key,
+        'key': key,
         'method_arguments': method_args,
         'processing': False
     }
 
-    db_api.insert_or_ignore_delayed_call(values)
+    db_api.create_delayed_call(values)
 
 
 class CallScheduler(periodic_task.PeriodicTasks):

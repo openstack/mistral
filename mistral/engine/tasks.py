@@ -47,21 +47,29 @@ class Task(object):
 
     @profiler.trace('task-create')
     def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None):
+                 unique_key=None, waiting=False):
         self.wf_ex = wf_ex
         self.task_spec = task_spec
         self.ctx = ctx
         self.task_ex = task_ex
         self.wf_spec = wf_spec
         self.unique_key = unique_key
-        self.waiting = False
+        self.waiting = waiting
         self.reset_flag = False
+        self.created = False
+        self.state_changed = False
 
     def is_completed(self):
         return self.task_ex and states.is_completed(self.task_ex.state)
 
     def is_waiting(self):
         return self.waiting
+
+    def is_created(self):
+        return self.created
+
+    def is_state_changed(self):
+        return self.state_changed
 
     @abc.abstractmethod
     def on_action_complete(self, action_ex):
@@ -82,21 +90,24 @@ class Task(object):
 
         This method puts task to a waiting state.
         """
-        if not self.task_ex:
-            t_execs = db_api.get_task_executions(
-                workflow_execution_id=self.wf_ex.id,
-                name=self.task_spec.get_name()
-            )
+        with db_api.named_lock(self.unique_key):
+            if not self.task_ex:
+                t_execs = db_api.get_task_executions(
+                    workflow_execution_id=self.wf_ex.id,
+                    unique_key=self.unique_key
+                )
 
-            self.task_ex = t_execs[0] if t_execs else None
+                self.task_ex = t_execs[0] if t_execs else None
 
-        if not self.task_ex:
-            self._create_task_execution()
+            msg = 'Task is waiting.'
 
-        if self.task_ex:
-            self.set_state(states.WAITING, 'Task is deferred.')
-
-        self.waiting = True
+            if not self.task_ex:
+                self._create_task_execution(
+                    state=states.WAITING,
+                    state_info=msg
+                )
+            elif self.task_ex.state != states.WAITING:
+                self.set_state(states.WAITING, msg)
 
     def reset(self):
         self.reset_flag = True
@@ -123,6 +134,8 @@ class Task(object):
                  state,
                  state_info)
             )
+
+            self.state_changed = True
 
         self.task_ex.state = state
         self.task_ex.state_info = state_info
@@ -172,7 +185,7 @@ class Task(object):
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow(self.task_ex)
+        cmds = wf_ctrl.continue_workflow(task_ex=self.task_ex)
 
         # Mark task as processed after all decisions have been made
         # upon its completion.
@@ -192,14 +205,20 @@ class Task(object):
         for p in policies.build_policies(policies_spec, self.wf_spec):
             p.after_task_complete(self.task_ex, self.task_spec)
 
-    def _create_task_execution(self, state=states.RUNNING):
+    def _create_task_execution(self, state=states.RUNNING, state_info=None):
+        task_id = utils.generate_unicode_uuid()
+        task_name = self.task_spec.get_name()
+
+        data_flow.add_current_task_to_context(self.ctx, task_id, task_name)
+
         values = {
-            'id': utils.generate_unicode_uuid(),
-            'name': self.task_spec.get_name(),
+            'id': task_id,
+            'name': task_name,
             'workflow_execution_id': self.wf_ex.id,
             'workflow_name': self.wf_ex.workflow_name,
             'workflow_id': self.wf_ex.workflow_id,
             'state': state,
+            'state_info': state_info,
             'spec': self.task_spec.to_dict(),
             'unique_key': self.unique_key,
             'in_context': self.ctx,
@@ -208,23 +227,13 @@ class Task(object):
             'project_id': self.wf_ex.project_id
         }
 
-        db_api.insert_or_ignore_task_execution(values)
-
-        # Since 'insert_or_ignore' cannot return a valid count of updated
-        # rows the only reliable way to check if insert operation has created
-        # an object is try to load this object by just generated uuid.
-        task_ex = db_api.load_task_execution(values['id'])
-
-        if not task_ex:
-            return False
-
-        self.task_ex = task_ex
+        self.task_ex = db_api.create_task_execution(values)
 
         # Add to collection explicitly so that it's in a proper
         # state within the current session.
         self.wf_ex.task_executions.append(self.task_ex)
 
-        return True
+        self.created = True
 
     def _get_action_defaults(self):
         action_name = self.task_spec.get_action_name()
@@ -262,12 +271,12 @@ class RegularTask(Task):
             self._run_existing()
 
     def _run_new(self):
-        if not self._create_task_execution():
-            # Task with the same unique key has already been created.
+        if self.waiting:
+            self.defer()
+
             return
 
-        if self.waiting:
-            return
+        self._create_task_execution()
 
         LOG.debug(
             'Starting task [workflow=%s, task_spec=%s, init_state=%s]' %

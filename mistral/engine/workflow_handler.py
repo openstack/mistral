@@ -27,7 +27,9 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
-_ON_TASK_COMPLETE_PATH = 'mistral.engine.workflow_handler._on_task_complete'
+_CHECK_AND_COMPLETE_PATH = (
+    'mistral.engine.workflow_handler._check_and_complete'
+)
 
 
 @profiler.trace('workflow-handler-start-workflow')
@@ -37,6 +39,8 @@ def start_workflow(wf_identifier, wf_input, desc, params):
     )
 
     wf.start(wf_input, desc=desc, params=params)
+
+    _schedule_check_and_complete(wf.wf_ex)
 
     return wf.wf_ex
 
@@ -73,13 +77,11 @@ def cancel_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.CANCELLED, msg)
 
 
-@profiler.trace('workflow-handler-on-task-complete')
-def _on_task_complete(task_ex_id):
+@profiler.trace('workflow-handler-check-and-complete')
+def _check_and_complete(wf_ex_id):
     # Note: This method can only be called via scheduler.
     with db_api.transaction():
-        task_ex = db_api.get_task_execution(task_ex_id)
-
-        wf_ex = task_ex.workflow_execution
+        wf_ex = db_api.get_workflow_execution(wf_ex_id)
 
         wf = workflows.Workflow(
             db_api.get_workflow_definition(wf_ex.workflow_id),
@@ -87,11 +89,11 @@ def _on_task_complete(task_ex_id):
         )
 
         try:
-            wf.on_task_complete(task_ex)
+            wf.check_and_complete()
         except exc.MistralException as e:
             msg = (
-                "Failed to handle task completion [wf_ex=%s, task_ex=%s]:"
-                " %s\n%s" % (wf_ex, task_ex, e, tb.format_exc())
+                "Failed to check and complete [wf_ex=%s]:"
+                " %s\n%s" % (wf_ex, e, tb.format_exc())
             )
 
             LOG.error(msg)
@@ -105,7 +107,7 @@ def _on_task_complete(task_ex_id):
             # algorithm for increasing delay for rescheduling so that we don't
             # put too serious load onto scheduler.
             delay = 1
-            schedule_on_task_complete(task_ex, delay)
+            _schedule_check_and_complete(wf_ex, delay)
 
 
 def pause_workflow(wf_ex, msg=None):
@@ -127,6 +129,11 @@ def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
     )
 
     wf.rerun(task_ex, reset=reset, env=env)
+
+    _schedule_check_and_complete(wf_ex)
+
+    if wf_ex.task_execution_id:
+        _schedule_check_and_complete(wf_ex.task_execution.workflow_execution)
 
 
 def resume_workflow(wf_ex, env=None):
@@ -153,9 +160,9 @@ def set_workflow_state(wf_ex, state, msg=None):
         )
 
 
-@profiler.trace('workflow-handler-schedule-on-task-complete')
-def schedule_on_task_complete(task_ex, delay=0):
-    """Schedules task completion check.
+@profiler.trace('workflow-handler-schedule-check-and-complete')
+def _schedule_check_and_complete(wf_ex, delay=0):
+    """Schedules workflow completion check.
 
     This method provides transactional decoupling of task completion from
     workflow completion check. It's needed in non-locking model in order to
@@ -165,16 +172,17 @@ def schedule_on_task_complete(task_ex, delay=0):
     have in this case (time between transactions) whereas scheduler is a
     special component that is designed to be resistant to failures.
 
-    :param task_ex: Task execution.
+    :param wf_ex: Workflow execution.
     :param delay: Minimum amount of time before task completion check
         should be made.
     """
-    key = 'wfh_on_t_c-%s' % task_ex.workflow_execution_id
+    # TODO(rakhmerov): update docstring
+    key = 'wfh_on_c_a_c-%s' % wf_ex.id
 
     scheduler.schedule_call(
         None,
-        _ON_TASK_COMPLETE_PATH,
+        _CHECK_AND_COMPLETE_PATH,
         delay,
-        unique_key=key,
-        task_ex_id=task_ex.id
+        key=key,
+        wf_ex_id=wf_ex.id
     )

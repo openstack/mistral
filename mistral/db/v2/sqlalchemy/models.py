@@ -227,7 +227,7 @@ class TaskExecution(Execution):
 
     # Main properties.
     action_spec = sa.Column(st.JsonLongDictType())
-    unique_key = sa.Column(sa.String(200), nullable=True)
+    unique_key = sa.Column(sa.String(250), nullable=True)
 
     # Whether the task is fully processed (publishing and calculating commands
     # after it). It allows to simplify workflow controller implementations
@@ -242,7 +242,7 @@ class TaskExecution(Execution):
     def executions(self):
         return (
             self.action_executions
-            if self.spec.get('action')
+            if not self.spec.get('workflow')
             else self.workflow_executions
         )
 
@@ -328,24 +328,21 @@ class DelayedCall(mb.MistralModelBase):
 
     __tablename__ = 'delayed_calls_v2'
 
-    __table_args__ = (
-        sa.Index(
-            '%s_processing_execution_time' % __tablename__,
-            'processing',
-            'execution_time'
-        ),
-        sa.UniqueConstraint('unique_key', 'processing')
-    )
-
     id = mb.id_column()
     factory_method_path = sa.Column(sa.String(200), nullable=True)
     target_method_name = sa.Column(sa.String(80), nullable=False)
     method_arguments = sa.Column(st.JsonDictType())
     serializers = sa.Column(st.JsonDictType())
-    unique_key = sa.Column(sa.String(80), nullable=True)
+    key = sa.Column(sa.String(250), nullable=True)
     auth_context = sa.Column(st.JsonDictType())
     execution_time = sa.Column(sa.DateTime, nullable=False)
     processing = sa.Column(sa.Boolean, default=False, nullable=False)
+
+
+sa.Index(
+    '%s_execution_time' % DelayedCall.__tablename__,
+    DelayedCall.execution_time
+)
 
 
 class Environment(mb.MistralSecureModelBase):

@@ -56,10 +56,18 @@ class Workflow(object):
     def __init__(self, wf_def, wf_ex=None):
         self.wf_def = wf_def
         self.wf_ex = wf_ex
-        self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-            wf_def.id,
-            wf_def.updated_at
-        )
+
+        if wf_ex:
+            # We're processing a workflow that's already in progress.
+            self.wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+                wf_ex.id
+            )
+        else:
+            # New workflow execution.
+            self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+                wf_def.id,
+                wf_def.updated_at
+            )
 
     @profiler.trace('workflow-start')
     def start(self, input_dict, desc='', params=None):
@@ -114,17 +122,6 @@ class Workflow(object):
             return self._fail_workflow(msg)
         elif state == states.CANCELLED:
             return self._cancel_workflow(msg)
-
-    @profiler.trace('workflow-on-task-complete')
-    def on_task_complete(self, task_ex):
-        """Handle task completion event.
-
-        :param task_ex: Task execution that's completed.
-        """
-
-        assert self.wf_ex
-
-        self._check_and_complete()
 
     def resume(self, env=None):
         """Resume workflow.
@@ -190,10 +187,10 @@ class Workflow(object):
             if states.is_completed(t_ex.state) and not t_ex.processed:
                 t_ex.processed = True
 
-        dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
-
-        if not cmds:
-            self._check_and_complete()
+        if cmds:
+            dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
+        else:
+            self.check_and_complete()
 
     @profiler.trace('workflow-lock')
     def lock(self):
@@ -276,13 +273,16 @@ class Workflow(object):
             parent_task_ex.state_info = None
             parent_task_ex.processed = False
 
-    def _check_and_complete(self):
+    @profiler.trace('workflow-check-and-complete')
+    def check_and_complete(self):
         if states.is_paused_or_completed(self.wf_ex.state):
             return
 
         # Workflow is not completed if there are any incomplete task
         # executions.
-        incomplete_tasks = wf_utils.find_incomplete_task_executions(self.wf_ex)
+        incomplete_tasks = db_api.get_incomplete_task_executions(
+            workflow_execution_id=self.wf_ex.id,
+        )
 
         if incomplete_tasks:
             return

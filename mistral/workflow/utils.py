@@ -70,6 +70,12 @@ class ResultSerializer(serializers.Serializer):
         )
 
 
+# TODO(rakhmerov): Most of these 'find..' methods should be replaced
+# with corresponding methods on DB API because in most cases
+# we don't need to fetch the whole collection of task executions
+# from DB. We can just query only needed objects by needed criteria.
+# In practice it leads to serious performance loss.
+
 def find_task_execution_not_state(wf_ex, task_spec, state):
     task_execs = [
         t for t in wf_ex.task_executions
@@ -121,11 +127,6 @@ def find_completed_tasks(wf_ex):
 
 def find_successful_task_executions(wf_ex):
     return find_task_executions_with_state(wf_ex, states.SUCCESS)
-
-
-def find_incomplete_task_executions(wf_ex):
-    return [t for t in wf_ex.task_executions
-            if not states.is_completed(t.state)]
 
 
 def find_error_task_executions(wf_ex):

@@ -141,8 +141,8 @@ class EngineTestCase(base.DbTestCase):
 
             for w in wf_execs:
                 print(
-                    "\n%s [state=%s, state_info=%s, output=%s]" %
-                    (w.name, w.state, w.state_info, w.output)
+                    "\n%s (%s) [state=%s, state_info=%s, output=%s]" %
+                    (w.name, w.id, w.state, w.state_info, w.output)
                 )
 
                 for t in w.task_executions:
