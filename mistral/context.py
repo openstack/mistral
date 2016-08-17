@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import base64
+
 from keystoneclient.v3 import client as keystone_client
 import logging
 from oslo_config import cfg
@@ -26,12 +28,8 @@ from mistral import auth
 from mistral import exceptions as exc
 from mistral import utils
 
-
 LOG = logging.getLogger(__name__)
-
-
 CONF = cfg.CONF
-
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 ALLOWED_WITHOUT_AUTH = ['/', '/v2/']
 
@@ -78,6 +76,7 @@ class MistralContext(BaseContext):
         "project_id",
         "auth_token",
         "service_catalog",
+        "target_service_catalog",
         "user_name",
         "project_name",
         "roles",
@@ -115,6 +114,7 @@ def context_from_headers_and_env(headers, env):
     project_id = params['project_id']
     user_id = params['user_id']
     user_name = params['user_name']
+    target_service_catalog = params['target_service_catalog']
 
     token_info = env.get('keystone.token_info')
 
@@ -124,7 +124,7 @@ def context_from_headers_and_env(headers, env):
         user_id=user_id,
         project_id=project_id,
         auth_token=auth_token,
-        service_catalog=headers.get('X-Service-Catalog'),
+        target_service_catalog=target_service_catalog,
         user_name=user_name,
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(","),
@@ -134,6 +134,8 @@ def context_from_headers_and_env(headers, env):
 
 
 def _extract_auth_params_from_headers(headers):
+    target_service_catalog = None
+
     if headers.get("X-Target-Auth-Uri"):
         params = {
             # TODO(akovi): Target cert not handled yet
@@ -148,6 +150,10 @@ def _extract_auth_params_from_headers(headers):
             raise (exc.MistralException(
                 'Target auth URI (X-Target-Auth-Uri) target auth token '
                 '(X-Target-Auth-Token) must be present'))
+
+        target_service_catalog = _extract_service_catalog_from_headers(
+            headers
+        )
     else:
         params = {
             'auth_cacert': CONF.keystone_authtoken.cafile,
@@ -157,7 +163,21 @@ def _extract_auth_params_from_headers(headers):
             'user_id': headers.get('X-User-Id'),
             'user_name': headers.get('X-User-Name'),
         }
+
+    params['target_service_catalog'] = target_service_catalog
+
     return params
+
+
+def _extract_service_catalog_from_headers(headers):
+    target_service_catalog_header = headers.get(
+        'X-Target-Service-Catalog')
+    if target_service_catalog_header:
+        decoded_catalog = base64.b64decode(
+            target_service_catalog_header).decode()
+        return jsonutils.loads(decoded_catalog)
+    else:
+        return None
 
 
 def context_from_config():

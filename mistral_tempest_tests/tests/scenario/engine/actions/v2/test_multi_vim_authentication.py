@@ -11,11 +11,14 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-import json
-from mistral_tempest_tests.tests import base
-from tempest import test
+import base64
 from urlparse import urlparse
 import uuid
+
+from oslo_serialization import jsonutils
+from tempest import test
+
+from mistral_tempest_tests.tests import base
 
 
 class MultiVimActionsTests(base.TestCase):
@@ -26,42 +29,95 @@ class MultiVimActionsTests(base.TestCase):
         super(MultiVimActionsTests, cls).resource_setup()
 
     @test.attr(type='openstack')
-    def test_multi_vim_support(self):
-
+    def test_multi_vim_support_target_headers(self):
         client_1 = self.alt_client
         client_2 = self.client
 
-        stack_name = 'multi_vim_test_stack_{}'.format(str(uuid.uuid4())[:8])
-        create_request = {
-            'name': 'heat.stacks_create',
-            'input': {
-                'stack_name': stack_name,
-                "template": {"heat_template_version": "2013-05-23"}
-            }
-        }
-        _, body = client_2.create_action_execution(create_request)
-        stack_id = str(json.loads(body['output'])['result']['stack']['id'])
+        # Create stack with client2.
+        result = _execute_action(client_2, _get_create_stack_request())
+        stack_id = str(
+            jsonutils.loads(result['output'])['result']['stack']['id']
+        )
 
-        u = urlparse(client_2.auth_provider.auth_url)
-        v3_auth_url = '{}://{}/identity/v3/'.format(u.scheme, u.netloc)
-        extra_headers = {
-            'X-Target-Auth-Token': client_2.token,
-            'X-Target-Auth-Uri': v3_auth_url,
-            'X-Target-Project-Id': client_2.tenant_id,
-            'X-Target-User-Id': client_2.user_id,
-            'X-Target-User-Name': client_2.user,
-        }
+        # List stacks with client1, and assert that there is no stack.
+        result = _execute_action(client_1, _get_list_stack_request())
+        self.assertEmpty(jsonutils.loads(result['output'])['result'])
 
-        list_request = {
-            'name': 'heat.stacks_list',
-        }
-
-        _, body = client_1.create_action_execution(list_request)
-        self.assertEmpty(json.loads(body['output'])['result'])
-
-        _, body = client_1.create_action_execution(list_request,
-                                                   extra_headers=extra_headers)
+        # List stacks with client1, but with the target headers of client2,
+        # and assert the created stack is there.
+        result = _execute_action(
+            client_1,
+            _get_list_stack_request(),
+            extra_headers=_extract_target_headers_from_client(client_2)
+        )
         self.assertEqual(
             stack_id,
-            str(json.loads(body['output'])['result'][0]['id'])
+            str(jsonutils.loads(result['output'])['result'][0]['id'])
         )
+
+    @test.attr(type='openstack')
+    def test_multi_vim_support_target_headers_and_service_catalog(self):
+        client_1 = self.alt_client
+        client_2 = self.client
+
+        # List stacks with client1, but with the target headers of client2,
+        # and additionally with an invalid X-Target-Service-Catalog.
+        extra_headers = _extract_target_headers_from_client(client_2)
+        service_dict = dict(client_2.auth_provider.cache[1])
+
+        for endpoint in service_dict['serviceCatalog']:
+            if endpoint['name'] == 'heat':
+                endpoint['endpoints'][0]['publicURL'] = "invalid"
+
+        service_catalog = {
+            "X-Target-Service-Catalog": base64.b64encode(
+                jsonutils.dumps(service_dict)
+            )
+        }
+        extra_headers.update(service_catalog)
+        result = _execute_action(
+            client_1,
+            _get_list_stack_request(),
+            extra_headers=extra_headers
+        )
+
+        # Assert that the invalid catalog was used.
+        self.assertIn("Invalid URL", result['output'])
+
+
+def _extract_target_headers_from_client(client):
+    u = urlparse(client.auth_provider.auth_url)
+    v3_auth_url = '{}://{}/identity/v3/'.format(u.scheme, u.netloc)
+    return {
+        'X-Target-Auth-Token': client.token,
+        'X-Target-Auth-Uri': v3_auth_url,
+        'X-Target-Project-Id': client.tenant_id,
+        'X-Target-User-Id': client.user_id,
+    }
+
+
+def _execute_action(client, request, extra_headers={}):
+    _, result = client.create_action_execution(
+        request,
+        extra_headers=extra_headers
+    )
+
+    return result
+
+
+def _get_create_stack_request():
+    stack_name = 'multi_vim_test_stack_{}'.format(str(uuid.uuid4())[:8])
+
+    return {
+        'name': 'heat.stacks_create',
+        'input': {
+            'stack_name': stack_name,
+            "template": {"heat_template_version": "2013-05-23"}
+        }
+    }
+
+
+def _get_list_stack_request():
+    return {
+        'name': 'heat.stacks_list',
+    }
