@@ -417,7 +417,7 @@ class EngineClient(base.Engine):
         :return: Workflow execution.
         """
 
-        return self._client.call(
+        return self._client.sync_call(
             auth_ctx.ctx(),
             'rerun_workflow',
             task_ex_id=task_ex_id,
