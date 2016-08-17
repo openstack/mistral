@@ -2071,3 +2071,38 @@ class EventTriggerTest(SQLAlchemyTest):
             db_api.get_event_trigger,
             created.id
         )
+
+
+class LockTest(SQLAlchemyTest):
+    def test_create_lock(self):
+        # This test just ensures that DB model is OK.
+        # It doesn't test the real intention of this model though.
+        db_api.create_named_lock('lock1')
+
+        locks = db_api.get_named_locks()
+
+        self.assertEqual(1, len(locks))
+
+        self.assertEqual('lock1', locks[0].name)
+
+        db_api.delete_named_lock('invalid_lock_name')
+
+        locks = db_api.get_named_locks()
+
+        self.assertEqual(1, len(locks))
+
+        db_api.delete_named_lock(locks[0].name)
+
+        locks = db_api.get_named_locks()
+
+        self.assertEqual(0, len(locks))
+
+    def test_with_named_lock(self):
+        name = 'lock1'
+
+        with db_api.named_lock(name):
+            # Make sure that within 'with' section the lock record exists.
+            self.assertEqual(1, len(db_api.get_named_locks()))
+
+        # Make sure that outside 'with' section the lock record does not exist.
+        self.assertEqual(0, len(db_api.get_named_locks()))

@@ -1391,3 +1391,42 @@ def _get_event_trigger(id, insecure=False):
 
 def ensure_event_trigger_exists(id):
     get_event_trigger(id)
+
+
+# Locks.
+
+@b.session_aware()
+def create_named_lock(name, session=None):
+    # This method has to work without SQLAlchemy session because
+    # session may not immediately issue an SQL query to a database
+    # and instead just schedule it whereas we need to make sure to
+    # issue a query immediately.
+    insert = models.NamedLock.__table__.insert()
+
+    session.execute(insert.values(name=name))
+
+
+def get_named_locks(**kwargs):
+    return _get_collection(models.NamedLock, **kwargs)
+
+
+@b.session_aware()
+def delete_named_lock(name, session=None):
+    # This method has to work without SQLAlchemy session because
+    # session may not immediately issue an SQL query to a database
+    # and instead just schedule it whereas we need to make sure to
+    # issue a query immediately.
+    table = models.NamedLock.__table__
+
+    delete = table.delete()
+
+    session.execute(delete.where(table.c.name == name))
+
+
+@contextlib.contextmanager
+def named_lock(name):
+    try:
+        create_named_lock(name)
+        yield
+    finally:
+        delete_named_lock(name)
