@@ -191,6 +191,11 @@ event_engine_opts = [
         default='mistral_event_engine',
         help='The message topic that the event engine listens on.'
     ),
+    cfg.StrOpt(
+        'event_definitions_cfg_file',
+        default='/etc/mistral/event_definitions.yaml',
+        help='Configuration file for event definitions.'
+    ),
 ]
 
 execution_expiration_policy_opts = [
