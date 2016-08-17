@@ -701,3 +701,71 @@ List all services.
 
 .. seealso::
    `Workflow service command-line client <http://docs.openstack.org/cli-reference/mistral.html>`_.
+
+Targeting non-preconfigured clouds
+----------------------------------
+
+Mistral is capable of executing workflows on external OpenStack clouds, different from the one defined in the `mistral.conf`
+file in the `keystone_authtoken` section. (More detail in the :doc:`configuration_guide`).
+
+For example, if the mistral server is configured to authenticate with the `http://keystone1.example.com` cloud
+and the user wants to execute the workflow on the `http://keystone2.example.com` cloud.
+
+The mistral.conf will look like::
+
+    [keystone_authtoken]
+    auth_uri = http://keystone1.example.com:5000/v3
+    ...
+
+The client side parameters will be::
+
+    export OS_AUTH_URL=http://keystone1.example.com:5000/v3
+    export OS_USERNAME=mistral_user
+    ...
+    export OS_TARGET_AUTH_URL=http://keystone2.example.com:5000/v3
+    export OS_TARGET_USERNAME=cloud_user
+    ...
+
+.. note:: Every `OS_*` parameter has an `OS_TARGET_*` correspondent. For more detail, check out `mistral --help`
+
+The `OS_*` parameters are used to authenticate and authorize the user with Mistral,
+that is, to check if the user is allowed to utilize the Mistral service. Whereas
+the `OS_TARGET_*` parameters are used to define the user that executes the workflow
+on the external cloud, keystone2.example.com/.
+
+Use cases
+^^^^^^^^^
+
+**Authenticate in Mistral and execute OpenStack actions with different users**
+
+As a user of Mistral, I want to execute a workflow with a different user on the cloud.
+
+**Execute workflows on any OpenStack cloud**
+
+As a user of Mistral, I want to execute a workflow on a cloud of my choice.
+
+Special cases
+^^^^^^^^^^^^^
+
+**Using Mistral with zero OpenStack configuration**:
+
+With the targeting feature, it is possible to execute a workflow on any arbitrary cloud
+without additional configuration on the Mistral server side.  If authentication is
+turned off in the Mistral server (Pecan's `auth_enable = False` option in `mistral.conf`), there
+is no need to set the `keystone_authtoken` section. It is possible to have Mistral 
+use an external OpenStack cloud even when it isn't deploy in an OpenStack 
+environment (i.e. no Keystone integration).
+
+With this setup, the following call will return the heat stack list::
+
+    mistral \
+      --os-target-auth-url=http://keystone2.example.com:5000/v3 \
+      --os-target-username=testuser \
+      --os-target-tenant=testtenant \
+      --os-target-password="MistralRuleZ" \
+      run-action heat.stacks_list
+
+This setup is particularly useful when Mistral is used in standalone mode, when the
+Mistral service is not part of the OpenStack cloud and runs separately.
+
+Note that only the OS-TARGET-* parameters enable this operation.
