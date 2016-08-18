@@ -23,7 +23,7 @@ either with real OpenStack environment or without OpenStack environment.
     admin_tenant_name = <tenant>
 
 4. If you want to configure SSL for Mistral API server, provide following options in config file::
-    
+
     [api]
     enable_ssl_api = True
 
@@ -32,7 +32,7 @@ either with real OpenStack environment or without OpenStack environment.
     cert_file = <path-to-certificate file>
     key_file = <path-to-key file>
 
-5. **If you don't use OpenStack**, provide ``auth_enable = False`` in config file::
+5. **If you don't use OpenStack or you want to disable authentication for the Mistral service**, provide ``auth_enable = False`` in the config file::
 
     [pecan]
     auth_enable = False
