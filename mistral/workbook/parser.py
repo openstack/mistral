@@ -13,8 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from cachetools import cached
-from cachetools import LRUCache
+import cachetools
 from threading import RLock
 import yaml
 from yaml import error
@@ -34,10 +33,10 @@ V2_0 = '2.0'
 ALL_VERSIONS = [V2_0]
 
 
-_WF_EX_CACHE = LRUCache(maxsize=100)
+_WF_EX_CACHE = cachetools.LRUCache(maxsize=100)
 _WF_EX_CACHE_LOCK = RLock()
 
-_WF_DEF_CACHE = LRUCache(maxsize=100)
+_WF_DEF_CACHE = cachetools.LRUCache(maxsize=100)
 _WF_DEF_CACHE_LOCK = RLock()
 
 
@@ -190,7 +189,7 @@ def _parse_def_from_wb(wb_def, section_name, item_name):
 # Methods for obtaining specifications in a more efficient way using
 # caching techniques.
 
-@cached(_WF_EX_CACHE, lock=_WF_EX_CACHE_LOCK)
+@cachetools.cached(_WF_EX_CACHE, lock=_WF_EX_CACHE_LOCK)
 def get_workflow_spec_by_execution_id(wf_ex_id):
     """Gets workflow specification by workflow execution id.
 
@@ -208,7 +207,7 @@ def get_workflow_spec_by_execution_id(wf_ex_id):
     return get_workflow_spec(wf_ex.spec)
 
 
-@cached(_WF_DEF_CACHE, lock=_WF_DEF_CACHE_LOCK)
+@cachetools.cached(_WF_DEF_CACHE, lock=_WF_DEF_CACHE_LOCK)
 def get_workflow_spec_by_definition_id(wf_def_id, wf_def_updated_at):
     """Gets specification by workflow definition id and its 'updated_at'.
 

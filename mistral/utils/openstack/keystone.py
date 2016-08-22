@@ -16,7 +16,7 @@
 import keystoneauth1.identity.generic as auth_plugins
 from keystoneauth1 import session as ks_session
 from keystoneclient.v3 import client as ks_client
-from keystoneclient.v3.endpoints import Endpoint
+from keystoneclient.v3 import endpoints as enp
 from oslo_config import cfg
 
 from mistral import context
@@ -105,7 +105,7 @@ def select_service_endpoints(service_name, service_type, services):
 
         for endpoint in catalog["endpoints"]:
             if endpoint["interface"] == 'public':
-                endpoints.append(Endpoint(None, endpoint, loaded=True))
+                endpoints.append(enp.Endpoint(None, endpoint, loaded=True))
 
     return endpoints
 
