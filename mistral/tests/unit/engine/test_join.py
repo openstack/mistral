@@ -373,7 +373,7 @@ class JoinEngineTest(base.EngineTestCase):
         success_count = sum([1 for t in tasks if t.state == states.SUCCESS])
 
         # At least task4 and two others must be successfully completed.
-        self.assertTrue(success_count >= 3)
+        self.assertGreaterEqual(success_count, 3)
 
         result5 = task5.published['result5']
 
@@ -383,7 +383,7 @@ class JoinEngineTest(base.EngineTestCase):
         # task5 started it can get different inbound context with.
         # But at least two inbound results should be accessible at task5
         # which logically corresponds to 'join' cardinality 2.
-        self.assertTrue(result5.count('True') >= 2)
+        self.assertGreaterEqual(result5.count('True'), 2)
 
     def test_discriminator(self):
         wf_text = """---
@@ -450,13 +450,13 @@ class JoinEngineTest(base.EngineTestCase):
         success_count = sum([1 for t in tasks if t.state == states.SUCCESS])
 
         # At least task4 and one of others must be successfully completed.
-        self.assertTrue(success_count >= 2)
+        self.assertGreaterEqual(success_count, 2)
 
         result4 = task4.published['result4']
 
         self.assertIsNotNone(result4)
-        self.assertTrue(result4.count('False') < 3)
-        self.assertTrue(result4.count('True') >= 1)
+        self.assertLess(result4.count('False'), 3)
+        self.assertGreaterEqual(result4.count('True'), 1)
 
     def test_full_join_parallel_published_vars(self):
         wfs_tasks_join_complex = """---

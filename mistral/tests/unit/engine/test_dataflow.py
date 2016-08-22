@@ -300,7 +300,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertEqual(1, wf_ex.output['var1'])
         self.assertEqual(12, wf_ex.output['var12'])
-        self.assertFalse('var13' in wf_ex.output)
+        self.assertNotIn('var13', wf_ex.output)
         self.assertEqual(14, wf_ex.output['var14'])
         self.assertEqual(2, wf_ex.output['var2'])
         self.assertEqual(21, wf_ex.output['var21'])

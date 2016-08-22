@@ -288,7 +288,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         # The exact number of tasks depends on which of two tasks
         # 'task1' and 'task2' completed earlier.
-        self.assertTrue(len(task_execs) >= 2)
+        self.assertGreaterEqual(len(task_execs), 2)
 
         task1_ex = self._assert_single_item(task_execs, name='task1')
         task2_ex = self._assert_single_item(task_execs, name='task2')
