@@ -490,3 +490,38 @@ class EventTrigger(mb.MistralSecureModelBase):
     event = sa.Column(sa.String(80), nullable=False)
 
     trust_id = sa.Column(sa.String(80))
+
+
+class NamedLock(mb.MistralModelBase):
+    """Contains info about named locks.
+
+    Usage of named locks is based on properties of READ COMMITTED
+    transactions of the most generally used SQL databases such as
+    Postgres, MySQL, Oracle etc.
+
+    The locking scenario is as follows:
+    1. Transaction A (TX-A) inserts a row with unique 'id' and
+        some value that identifies a locked object stored in 'name'.
+    2. Transaction B (TX-B) and any subsequent transactions tries
+        to insert a row with unique 'id' and the same value of 'name'
+        field and it waits till TX-A is completed due to transactional
+        properties of READ COMMITTED.
+    3. If TX-A then immediately deletes the record and commits then
+        TX-B and or one of the subsequent transactions are released
+        and its 'insert' is completed.
+    4. Then the scenario repeats with step #2 where the role of TX-A
+        will be playing a transaction that just did insert.
+
+    Practically, this table should never contain any committed rows.
+    All its usage is around the play with transactional storages.
+    """
+
+    __tablename__ = 'named_locks'
+
+    sa.UniqueConstraint('name')
+
+    id = mb.id_column()
+    name = sa.Column(sa.String(250))
+
+
+sa.UniqueConstraint(NamedLock.name)

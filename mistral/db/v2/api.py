@@ -521,3 +521,23 @@ def delete_event_triggers(**kwargs):
 
 def ensure_event_trigger_exists(id):
     return IMPL.ensure_event_trigger_exists(id)
+
+
+# Locks.
+
+def create_named_lock(name):
+    return IMPL.create_named_lock(name)
+
+
+def get_named_locks(limit=None, marker=None):
+    return IMPL.get_named_locks(limit=limit, marker=marker)
+
+
+def delete_named_lock(name):
+    return IMPL.delete_named_lock(name)
+
+
+@contextlib.contextmanager
+def named_lock(name):
+    with IMPL.named_lock(name):
+        yield
