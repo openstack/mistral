@@ -21,7 +21,7 @@ import pecan
 import six
 
 from oslo_log import log as logging
-from webob import Response
+import webob
 from wsme import exc as wsme_exc
 
 from mistral import exceptions as exc
@@ -61,7 +61,7 @@ def wrap_pecan_controller_exception(func):
         try:
             return func(*args, **kwargs)
         except (exc.MistralException, exc.MistralError) as e:
-            return Response(
+            return webob.Response(
                 status=e.http_code,
                 content_type='application/json',
                 body=json.dumps(dict(faultstring=six.text_type(e)))

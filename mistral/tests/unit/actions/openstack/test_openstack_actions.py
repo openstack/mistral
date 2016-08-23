@@ -15,7 +15,7 @@
 import mock
 
 from mistral.actions.openstack import actions
-from mistral.config import CONF
+from mistral import config
 from mistral import context as ctx
 from oslotest import base
 
@@ -48,7 +48,7 @@ class OpenStackActionTest(base.BaseTestCase):
                                          mock_ks_endpoint_v2):
 
         # this is the default, but be explicit
-        CONF.set_default('os_actions_endpoint_type', 'publicURL')
+        config.CONF.set_default('os_actions_endpoint_type', 'publicURL')
 
         test_ctx = ctx.MistralContext(
             user_id=None,

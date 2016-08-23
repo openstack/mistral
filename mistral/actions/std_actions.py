@@ -15,7 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from email.header import Header
+from email import header
 from email.mime import text
 
 import json
@@ -290,7 +290,7 @@ class SendEmailAction(base.Action):
                   self.smtp_server, self.body[:128]))
 
         message = text.MIMEText(self.body, _charset='utf-8')
-        message['Subject'] = Header(self.subject, 'utf-8')
+        message['Subject'] = header.Header(self.subject, 'utf-8')
         message['From'] = self.sender
         message['To'] = ', '.join(self.to)
 
