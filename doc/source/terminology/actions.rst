@@ -2,8 +2,8 @@ Actions
 =======
 
 A particular instruction associated with a task that needs to be performed once the task runs. It can be anything like
-running a shell script, HTTP request, AMQP message or any signal sent to any system external to Mistral. Actions can be
-synchronous or asynchronous.
+running a shell script, HTTP request or sending a signal to some system external to Mistral. Actions can be synchronous
+or asynchronous.
 
 In case of synchronous action, Mistral will send a signal to Mistral Executor and will be waiting for the result from
 Executor. Once Executor completes action, it sends the result to Mistral Engine.
