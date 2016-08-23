@@ -371,6 +371,58 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task4.published
         )
 
+    def test_sequential_tasks_publishing_same_structured(self):
+        var_overwrite_wf = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          tasks:
+            task1:
+              publish:
+                greeting: {"a": "b"}
+              on-success:
+                - task2
+
+            task2:
+              publish:
+                greeting: {}
+              on-success:
+                - task3
+
+            task3:
+              publish:
+                result: <% $.greeting %>
+        """
+
+        wf_service.create_workflows(var_overwrite_wf)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {},
+            env={'from': 'Neo'}
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+
+        tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+        task3 = self._assert_single_item(tasks, name='task3')
+
+        self.assertEqual(states.SUCCESS, task3.state)
+        self.assertDictEqual({'greeting': {'a': 'b'}}, task1.published)
+        self.assertDictEqual({'greeting': {}}, task2.published)
+        self.assertDictEqual({'result': {}}, task3.published)
+
     def test_linear_dataflow_implicit_publish(self):
         linear_wf = """---
         version: '2.0'

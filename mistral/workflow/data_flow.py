@@ -116,7 +116,7 @@ def evaluate_task_outbound_context(task_ex):
     in_context = (copy.deepcopy(dict(task_ex.in_context))
                   if task_ex.in_context is not None else {})
 
-    return utils.merge_dicts(in_context, task_ex.published)
+    return utils.update_dict(in_context, task_ex.published)
 
 
 def evaluate_workflow_output(wf_spec, ctx):

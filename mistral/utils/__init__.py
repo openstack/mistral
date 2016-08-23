@@ -148,6 +148,25 @@ def merge_dicts(left, right, overwrite=True):
     return left
 
 
+def update_dict(left, right):
+    """Updates left dict with content from right dict
+
+    :param left: Left dict.
+    :param right: Right dict.
+    :return: the updated left dictionary.
+    """
+
+    if left is None:
+        return right
+
+    if right is None:
+        return left
+
+    left.update(right)
+
+    return left
+
+
 def get_file_list(directory):
     base_path = pkg.resource_filename(
         version.version_info.package,
@@ -190,7 +209,7 @@ def iter_subclasses(cls, _seen=None):
 
     try:
         subs = cls.__subclasses__()
-    except TypeError:   # fails only when cls is type
+    except TypeError:  # fails only when cls is type
         subs = cls.__subclasses__(cls)
 
     for sub in subs:
