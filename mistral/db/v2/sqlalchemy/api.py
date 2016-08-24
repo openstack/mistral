@@ -30,6 +30,7 @@ from sqlalchemy.sql.expression import Insert
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import sqlite_lock
+from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import security
@@ -173,7 +174,7 @@ def _delete_all(model, session=None, **kwargs):
 
 
 def _get_collection(model, insecure=False, limit=None, marker=None,
-                    sort_keys=None, sort_dirs=None, fields=None, **kwargs):
+                    sort_keys=None, sort_dirs=None, fields=None, **filters):
     columns = (
         tuple([getattr(model, f) for f in fields if hasattr(model, f)])
         if fields else ()
@@ -181,21 +182,7 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
 
     query = (b.model_query(model, *columns) if insecure
              else _secure_query(model, *columns))
-    query = query.filter_by(**kwargs)
-
-    tags = kwargs.pop('tags', None)
-
-    # To match the tag list, a resource must contain at least all of the
-    # tags present in the filter parameter.
-    if tags:
-        tag_attr = getattr(model, 'tags')
-
-        if len(tags) == 1:
-            expr = tag_attr.contains(tags)
-        else:
-            expr = sa.and_(*[tag_attr.contains(tag) for tag in tags])
-
-        query = query.filter(expr)
+    query = db_filters.apply_filters(query, model, **filters)
 
     query = _paginate_query(
         model,

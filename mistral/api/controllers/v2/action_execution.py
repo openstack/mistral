@@ -27,6 +27,7 @@ from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
@@ -178,13 +179,12 @@ class ActionExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text,
-                         types.uniquelist, wtypes.text, wtypes.text,
-                         wtypes.text, types.uuid, wtypes.text, wtypes.text,
-                         bool, types.jsontype, types.jsontype, types.jsontype,
-                         wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text, types.uuid,
+                         wtypes.text, wtypes.text, bool, types.jsontype,
+                         types.jsontype, types.jsontype, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', created_at=None, name=None,
-                tag=None, tags=None, updated_at=None, workflow_name=None,
+                tags=None, updated_at=None, workflow_name=None,
                 task_name=None, task_execution_id=None, state=None,
                 state_info=None, accepted=None, input=None, output=None,
                 params=None, description=None):
@@ -224,9 +224,6 @@ class ActionExecutionsController(rest.RestController):
         :param params: Optional. Keep only resources with specific parameters.
         :param description: Optional. Keep only resources with a specific
                             description.
-        :param tag: Optional. Keep only resources with a specific tag. If it is
-                    used with 'tags', it will be appended to the list of
-                    matching tags.
         :param tags: Optional. Keep only resources containing specific tags.
         :param created_at: Optional. Keep only resources created at a specific
                            time and date.
@@ -235,13 +232,7 @@ class ActionExecutionsController(rest.RestController):
         """
         acl.enforce('action_executions:list', context.ctx())
 
-        if tag is not None:
-            if tags is None:
-                tags = [tag]
-            else:
-                tags.append(tag)
-
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             name=name,
             tags=tags,
@@ -299,13 +290,13 @@ class ActionExecutionsController(rest.RestController):
 class TasksActionExecutionController(rest.RestController):
     @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, types.uuid,
                          int, types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, types.uniquelist,
+                         wtypes.text, types.uniquelist, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text, wtypes.text,
-                         wtypes.text, wtypes.text, bool, types.jsontype,
-                         types.jsontype, types.jsontype, wtypes.text)
+                         wtypes.text, bool, types.jsontype, types.jsontype,
+                         types.jsontype, wtypes.text)
     def get_all(self, task_execution_id, marker=None, limit=None,
                 sort_keys='created_at', sort_dirs='asc', fields='',
-                created_at=None, name=None, tag=None, tags=None,
+                created_at=None, name=None, tags=None,
                 updated_at=None, workflow_name=None, task_name=None,
                 state=None, state_info=None, accepted=None, input=None,
                 output=None, params=None, description=None):
@@ -345,9 +336,6 @@ class TasksActionExecutionController(rest.RestController):
         :param params: Optional. Keep only resources with specific parameters.
         :param description: Optional. Keep only resources with a specific
                             description.
-        :param tag: Optional. Keep only resources with a specific tag. If it is
-                    used with 'tags', it will be appended to the list of
-                    matching tags.
         :param tags: Optional. Keep only resources containing specific tags.
         :param created_at: Optional. Keep only resources created at a specific
                            time and date.
@@ -356,13 +344,7 @@ class TasksActionExecutionController(rest.RestController):
         """
         acl.enforce('action_executions:list', context.ctx())
 
-        if tag is not None:
-            if tags is None:
-                tags = [tag]
-            else:
-                tags.append(tag)
-
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             name=name,
             tags=tags,

@@ -29,6 +29,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
+from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workflow import states
 
@@ -260,7 +261,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:list', context.ctx())
 
-        filters = rest_utils.filters_to_dict(
+        filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
