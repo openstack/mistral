@@ -14,6 +14,8 @@
 
 # This script is executed inside post_test_hook function in devstack gate.
 
+set -ex
+
 sudo chmod -R a+rw /opt/stack/
 (cd $BASE/new/tempest/; sudo virtualenv .venv)
 source $BASE/new/tempest/.venv/bin/activate
