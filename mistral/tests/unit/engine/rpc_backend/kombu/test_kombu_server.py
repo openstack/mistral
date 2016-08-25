@@ -69,7 +69,7 @@ class KombuServerTestCase(base.KombuTestCase):
             routing_key=reply_to,
             correlation_id=corr_id,
             type=type,
-            serializer=None
+            serializer='mistral_serialization'
         )
 
     def test_run_launch_successfully(self):
@@ -164,7 +164,7 @@ class KombuServerTestCase(base.KombuTestCase):
             test_exception,
             reply_to,
             correlation_id,
-            type='error'
+            res_type='error'
         )
 
     @mock.patch.object(

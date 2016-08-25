@@ -33,6 +33,8 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
     def __init__(self, conf):
         super(KombuRPCClient, self).__init__(conf)
 
+        self._register_mistral_serialization()
+
         self.exchange = conf.get('exchange', '')
         self.user_id = conf.get('user_id', 'guest')
         self.password = conf.get('password', 'guest')
@@ -158,6 +160,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
                 routing_key=self.topic,
                 reply_to=self.callback_queue.name,
                 correlation_id=utils.get_thread_local(CORR_ID),
+                serializer='mistral_serialization',
                 delivery_mode=2
             )
 

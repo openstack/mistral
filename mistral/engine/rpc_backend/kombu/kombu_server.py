@@ -18,7 +18,7 @@ import threading
 import kombu
 from oslo_log import log as logging
 
-from mistral import context as auth_context
+from mistral import context as auth_ctx
 from mistral.engine.rpc_backend import base as rpc_base
 from mistral.engine.rpc_backend.kombu import base as kombu_base
 from mistral import exceptions as exc
@@ -30,6 +30,8 @@ LOG = logging.getLogger(__name__)
 class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
     def __init__(self, conf):
         super(KombuRPCServer, self).__init__(conf)
+
+        self._register_mistral_serialization()
 
         self.exchange = conf.get('exchange', '')
         self.user_id = conf.get('user_id', 'guest')
@@ -112,20 +114,21 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         if not isinstance(ctx, dict):
             return
 
-        context = auth_context.MistralContext(**ctx)
-        auth_context.set_ctx(context)
+        context = auth_ctx.MistralContext(**ctx)
+        auth_ctx.set_ctx(context)
 
         return context
 
-    def publish_message(self, body, reply_to, corr_id, type='response'):
+    def publish_message(self, body, reply_to, corr_id, res_type='response'):
         with kombu.producers[self.conn].acquire(block=True) as producer:
             producer.publish(
                 body=body,
                 exchange=self.exchange,
                 routing_key=reply_to,
                 correlation_id=corr_id,
-                type=type,
-                serializer='pickle' if type == 'error' else None
+                serializer='pickle' if res_type == 'error'
+                else 'mistral_serialization',
+                type=res_type
             )
 
     def _on_message_safe(self, request, message):
@@ -136,7 +139,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                 e,
                 message.properties['reply_to'],
                 message.properties['correlation_id'],
-                type='error'
+                res_type='error'
             )
         finally:
             message.ack()

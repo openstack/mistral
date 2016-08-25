@@ -13,6 +13,9 @@
 #    limitations under the License.
 
 import kombu
+from kombu import serialization
+
+from mistral.utils import serializers
 
 
 class Base(object):
@@ -96,4 +99,17 @@ class Base(object):
             durable=durable,
             auto_delete=auto_delete,
             **kwargs
+        )
+
+    @staticmethod
+    def _register_mistral_serialization():
+        """Adds mistral serializer to available serializers in kombu.
+
+        :return: None
+        """
+        serialization.register(
+            'mistral_serialization',
+            encoder=serializers.KombuSerializer.serialize,
+            decoder=serializers.KombuSerializer.deserialize,
+            content_type='application/json'
         )
