@@ -666,6 +666,20 @@ anyone. It is also possible to add system actions for specific Mistral
 installation via a special plugin mechanism. Currently, built-in system
 actions are:
 
+std.fail
+''''''''
+
+Fail the current workflow. This action can be used to manually set the workflow
+state to error.
+
+Example:
+
+.. code-block:: yaml
+
+    manual_fail:
+      action: std.fail
+
+
 std.http
 ''''''''
 
