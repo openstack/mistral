@@ -15,7 +15,6 @@
 
 import abc
 from oslo_config import cfg
-from oslo_log import log as logging
 from osprofiler import profiler
 import six
 
@@ -34,8 +33,6 @@ from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
-
-LOG = logging.getLogger(__name__)
 
 _RUN_EXISTING_ACTION_PATH = 'mistral.engine.actions._run_existing_action'
 

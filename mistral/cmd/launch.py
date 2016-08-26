@@ -56,8 +56,6 @@ from mistral import version
 
 CONF = cfg.CONF
 
-LOG = logging.getLogger(__name__)
-
 
 def launch_executor():
     profiler.setup('mistral-executor', cfg.CONF.executor.host)
