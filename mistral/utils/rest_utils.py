@@ -20,13 +20,10 @@ import json
 import pecan
 import six
 
-from oslo_log import log as logging
 import webob
 from wsme import exc as wsme_exc
 
 from mistral import exceptions as exc
-
-LOG = logging.getLogger(__name__)
 
 
 def wrap_wsme_controller_exception(func):
