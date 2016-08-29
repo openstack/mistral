@@ -14,7 +14,7 @@
 #    limitations under the License.
 
 import cachetools
-from threading import RLock
+import threading
 import yaml
 from yaml import error
 
@@ -34,10 +34,10 @@ ALL_VERSIONS = [V2_0]
 
 
 _WF_EX_CACHE = cachetools.LRUCache(maxsize=100)
-_WF_EX_CACHE_LOCK = RLock()
+_WF_EX_CACHE_LOCK = threading.RLock()
 
 _WF_DEF_CACHE = cachetools.LRUCache(maxsize=100)
-_WF_DEF_CACHE_LOCK = RLock()
+_WF_DEF_CACHE_LOCK = threading.RLock()
 
 
 def parse_yaml(text):
