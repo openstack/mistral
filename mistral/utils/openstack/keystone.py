@@ -18,6 +18,7 @@ from keystoneauth1 import session as ks_session
 from keystoneclient.v3 import client as ks_client
 from keystoneclient.v3 import endpoints as enp
 from oslo_config import cfg
+from oslo_utils import timeutils
 
 from mistral import context
 
@@ -148,3 +149,10 @@ def get_admin_session():
         project_domain_name='Default')
 
     return ks_session.Session(auth=auth)
+
+
+def will_expire_soon(expires_at):
+    stale_duration = CONF.expiration_token_duration
+    assert stale_duration, "expiration_token_duration must be specified"
+    expires = timeutils.parse_isotime(expires_at)
+    return timeutils.is_soon(expires, stale_duration)
