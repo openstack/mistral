@@ -70,6 +70,7 @@ def create_context(trust_id, project_id):
             project_id=project_id,
             auth_token=client.auth_token,
             is_trust_scoped=True,
+            trust_id=trust_id,
         )
 
     return auth_ctx.MistralContext(

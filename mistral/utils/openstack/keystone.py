@@ -74,7 +74,20 @@ def get_endpoint_for_project(service_name=None, service_type=None):
     ctx = context.ctx()
 
     token = ctx.auth_token
-    response = client().tokens.get_token_data(token, include_catalog=True)
+
+    if (ctx.is_trust_scoped and is_token_trust_scoped(token)):
+        if ctx.trust_id is None:
+            raise Exception(
+                "'trust_id' must be provided in the admin context."
+            )
+
+        trust_client = client_for_trusts(ctx.trust_id)
+        response = trust_client.tokens.get_token_data(
+            token,
+            include_catalog=True
+        )
+    else:
+        response = client().tokens.get_token_data(token, include_catalog=True)
 
     endpoints = select_service_endpoints(
         service_name,

@@ -87,6 +87,7 @@ class MistralContext(BaseContext):
         "is_trust_scoped",
         "redelivered",
         "expires_at",
+        "trust_id",
     ])
 
     def __repr__(self):
