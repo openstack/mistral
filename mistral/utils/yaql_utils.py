@@ -16,6 +16,7 @@
 import yaql
 
 from mistral.db.v2 import api as db_api
+from mistral import utils
 from mistral.workflow import utils as wf_utils
 from oslo_serialization import jsonutils
 from stevedore import extension
@@ -107,3 +108,7 @@ def task_(context, task_name):
         'result': data_flow.get_task_execution_result(task_ex),
         'published': task_ex.published
     }
+
+
+def uuid_(context):
+    return utils.generate_unicode_uuid()
