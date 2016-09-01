@@ -47,6 +47,14 @@ STATE_TYPES = wtypes.Enum(
 )
 
 
+def _get_execution_resource(ex):
+    # We need to refer to this lazy-load field explicitly in
+    # order to make sure that it is correctly loaded.
+    hasattr(ex, 'output')
+
+    return resources.Execution.from_dict(ex.to_dict())
+
+
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
 
@@ -218,12 +226,13 @@ class ExecutionsController(rest.RestController):
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, types.uuid, wtypes.text, types.jsontype,
                          types.uuid, STATE_TYPES, wtypes.text, types.jsontype,
-                         types.jsontype, wtypes.text, wtypes.text)
+                         types.jsontype, wtypes.text, wtypes.text, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', workflow_name=None,
                 workflow_id=None, description=None, params=None,
                 task_execution_id=None, state=None, state_info=None,
-                input=None, output=None, created_at=None, updated_at=None):
+                input=None, output=None, created_at=None, updated_at=None,
+                include_output=None):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -258,6 +267,8 @@ class ExecutionsController(rest.RestController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param include_output: Optional. Include the output for all executions
+                               in the list
         """
         acl.enforce('executions:list', context.ctx())
 
@@ -281,11 +292,17 @@ class ExecutionsController(rest.RestController):
             filters
         )
 
+        if include_output:
+            resource_function = _get_execution_resource
+        else:
+            resource_function = None
+
         return rest_utils.get_all(
             resources.Executions,
             resources.Execution,
             db_api.get_workflow_executions,
             db_api.get_workflow_execution,
+            resource_function=resource_function,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,

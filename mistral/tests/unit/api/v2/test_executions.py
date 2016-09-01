@@ -25,6 +25,7 @@ import oslo_messaging
 import uuid
 from webtest import app as webtest_app
 
+from mistral.api.controllers.v2 import execution
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import api as sql_db_api
 from mistral.db.v2.sqlalchemy import models
@@ -32,6 +33,7 @@ from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral import utils
+from mistral.utils import rest_utils
 from mistral.workflow import states
 
 # This line is needed for correct initialization of messaging config.
@@ -604,3 +606,27 @@ class TestExecutionsController(base.APITest):
             SUB_WF_EX_JSON_WITH_DESC,
             resp.json['executions'][0]
         )
+
+    @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
+    @mock.patch.object(rest_utils, 'get_all')
+    def test_get_all_executions_with_output(self, mock_get_all):
+        resp = self.app.get('/v2/executions?include_output=true')
+
+        self.assertEqual(200, resp.status_int)
+
+        args, kwargs = mock_get_all.call_args
+        resource_function = kwargs['resource_function']
+
+        self.assertEqual(execution._get_execution_resource, resource_function)
+
+    @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
+    @mock.patch.object(rest_utils, 'get_all')
+    def test_get_all_executions_without_output(self, mock_get_all):
+        resp = self.app.get('/v2/executions')
+
+        self.assertEqual(200, resp.status_int)
+
+        args, kwargs = mock_get_all.call_args
+        resource_function = kwargs['resource_function']
+
+        self.assertEqual(None, resource_function)
