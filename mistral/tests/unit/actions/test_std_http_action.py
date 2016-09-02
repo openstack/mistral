@@ -162,3 +162,46 @@ class HTTPActionTest(base.BaseTest):
             proxies=None,
             verify=None
         )
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_with_headers(self, mocked_method):
+        mocked_method.return_value = get_success_fake_response()
+
+        headers = {'int_header': 33, 'bool_header': True,
+                   'float_header': 3.0, 'regular_header': 'teststring'}
+
+        safe_headers = {'int_header': '33', 'bool_header': 'True',
+                        'float_header': '3.0', 'regular_header': 'teststring'}
+
+        action = std.HTTPAction(
+            url=URL,
+            method='POST',
+            body=DATA,
+            headers=headers.copy(),
+        )
+
+        data_str = json.dumps(DATA)
+
+        self.assertEqual(data_str, action.body)
+        self.assertEqual(URL, action.url)
+
+        result = action.run()
+
+        self.assertIsInstance(result, dict)
+        self.assertEqual(DATA, result['content'])
+        self.assertIn('headers', result)
+        self.assertEqual(200, result['status'])
+
+        mocked_method.assert_called_with(
+            'POST',
+            URL,
+            data=data_str,
+            headers=safe_headers,
+            cookies=None,
+            params=None,
+            timeout=None,
+            auth=None,
+            allow_redirects=None,
+            proxies=None,
+            verify=None
+        )
