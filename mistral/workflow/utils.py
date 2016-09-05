@@ -47,6 +47,9 @@ class Result(object):
             self.cancel == other.cancel
         )
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def to_dict(self):
         return ({'result': self.data}
                 if self.is_success() else {'result': self.error})
