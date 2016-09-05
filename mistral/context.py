@@ -138,6 +138,8 @@ def context_from_headers_and_env(headers, env):
     user_id = params['user_id']
     user_name = params['user_name']
 
+    token_info = env.get('keystone.token_info')
+
     return MistralContext(
         auth_uri=auth_uri,
         auth_cacert=auth_cacert,
@@ -149,7 +151,7 @@ def context_from_headers_and_env(headers, env):
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(","),
         is_trust_scoped=False,
-        expires_at=env.get('keystone.token_info')['token']['expires_at'],
+        expires_at=token_info['token']['expires_at'] if token_info else None,
     )
 
 
