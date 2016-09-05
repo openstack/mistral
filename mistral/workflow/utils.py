@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.db.v2 import api as db_api
 from mistral.utils import serializers
 from mistral.workflow import states
 
@@ -70,32 +71,11 @@ class ResultSerializer(serializers.Serializer):
         )
 
 
-# TODO(rakhmerov): Most of these 'find..' methods should be replaced
-# with corresponding methods on DB API because in most cases
-# we don't need to fetch the whole collection of task executions
-# from DB. We can just query only needed objects by needed criteria.
-# In practice it leads to serious performance loss.
-
-def find_task_execution_not_state(wf_ex, task_spec, state):
-    task_execs = [
-        t for t in wf_ex.task_executions
-        if t.name == task_spec.get_name() and t.state != state
-    ]
-
-    return task_execs[0] if len(task_execs) > 0 else None
-
-
-def find_task_execution_with_state(wf_ex, task_spec, state):
-    task_execs = [
-        t for t in wf_ex.task_executions
-        if t.name == task_spec.get_name() and t.state == state
-    ]
-
-    return task_execs[0] if len(task_execs) > 0 else None
-
-
 def find_task_executions_by_name(wf_ex, task_name):
-    return [t for t in wf_ex.task_executions if t.name == task_name]
+    return db_api.get_task_executions(
+        workflow_execution_id=wf_ex.id,
+        name=task_name
+    )
 
 
 def find_task_executions_by_spec(wf_ex, task_spec):
@@ -112,17 +92,14 @@ def find_task_executions_by_specs(wf_ex, task_specs):
 
 
 def find_task_executions_with_state(wf_ex, state):
-    return [t for t in wf_ex.task_executions if t.state == state]
+    return db_api.get_task_executions(
+        workflow_execution_id=wf_ex.id,
+        state=state
+    )
 
 
 def find_running_task_executions(wf_ex):
     return find_task_executions_with_state(wf_ex, states.RUNNING)
-
-
-def find_completed_tasks(wf_ex):
-    return [
-        t for t in wf_ex.task_executions if states.is_completed(t.state)
-    ]
 
 
 def find_successful_task_executions(wf_ex):
