@@ -16,7 +16,7 @@
 """add a Boolean column 'processed' to the table  delayed_calls_v2
 
 Revision ID: 006
-Revises: 004
+Revises: 005
 Create Date: 2015-08-09 09:44:38.289271
 
 """
