@@ -26,6 +26,7 @@ from oslo_messaging.notify import dispatcher
 from oslo_messaging.notify import listener
 from oslo_messaging import target
 from oslo_messaging import transport
+from oslo_utils import timeutils
 import six
 
 LOG = logging.getLogger(__name__)
@@ -52,12 +53,16 @@ def handle_event(self, ctxt, publisher_id, event_type, payload, metadata):
               'payload: %s, metadata: %s.', publisher_id, event_type, payload,
               metadata)
 
-    self.event_engine.process_notification_event(
-        ctxt,
-        event_type,
-        payload,
-        metadata
-    )
+    notification = {
+        'event_type': event_type,
+        'payload': payload,
+        'publisher': publisher_id,
+        'timestamp': metadata.get('timestamp',
+                                  ctxt.get('timestamp', timeutils.utcnow())),
+        'context': ctxt
+    }
+
+    self.event_engine.process_notification_event(notification)
 
     return dispatcher.NotificationResult.HANDLED
 
