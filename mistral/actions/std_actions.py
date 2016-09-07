@@ -20,6 +20,7 @@ from email.mime import text
 
 import json
 import requests
+import six
 import smtplib
 import time
 
@@ -142,6 +143,11 @@ class HTTPAction(base.Action):
             self.auth = (auth.split(':')[0], auth.split(':')[1])
         else:
             self.auth = auth
+
+        if isinstance(headers, dict):
+            for key, val in headers.items():
+                if isinstance(val, (six.integer_types, float)):
+                    headers[key] = str(val)
 
         self.url = url
         self.method = method
