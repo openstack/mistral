@@ -144,6 +144,142 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
+    def test_filter_workbooks_by_equal_value(self):
+        db_api.create_workbook(WORKBOOKS[0])
+
+        created = db_api.create_workbook(WORKBOOKS[1])
+        _filter = filter_utils.create_or_update_filter(
+            'name',
+            created.name,
+            'eq'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created, fetched[0])
+
+    def test_filter_workbooks_by_not_equal_value(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'name',
+            created0.name,
+            'neq'
+        )
+
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workbooks_by_greater_than_value(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created0['created_at'],
+            'gt'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workbooks_by_greater_than_equal_value(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created0['created_at'],
+            'gte'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_workbooks_by_less_than_value(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created1['created_at'],
+            'lt'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
+    def test_filter_workbooks_by_less_than_equal_value(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created1['created_at'],
+            'lte'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_workbooks_by_values_in_list(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+
+        db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at']],
+            'in'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
+    def test_filter_workbooks_by_values_notin_list(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at']],
+            'nin'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workbooks_by_multiple_columns(self):
+        created0 = db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at'], created1['created_at']],
+            'in'
+        )
+        _filter = filter_utils.create_or_update_filter(
+            'name',
+            'my_workbook2',
+            'eq',
+            _filter
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
     def test_delete_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
@@ -279,6 +415,142 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_workflow_definition(created.id)
 
         self.assertEqual(created, fetched)
+
+    def test_filter_workflow_definitions_by_equal_value(self):
+        db_api.create_workbook(WF_DEFINITIONS[0])
+
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+        _filter = filter_utils.create_or_update_filter(
+            'name',
+            created.name,
+            'eq'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created, fetched[0])
+
+    def test_filter_workflow_definition_by_not_equal_valiue(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'name',
+            created0.name,
+            'neq'
+        )
+
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workflow_definition_by_greater_than_value(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created0['created_at'],
+            'gt'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workflow_definition_by_greater_than_equal_value(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created0['created_at'],
+            'gte'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_workflow_definition_by_less_than_value(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created1['created_at'],
+            'lt'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
+    def test_filter_workflow_definition_by_less_than_equal_value(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            created1['created_at'],
+            'lte'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(2, len(fetched))
+        self.assertEqual(created0, fetched[0])
+        self.assertEqual(created1, fetched[1])
+
+    def test_filter_workflow_definition_by_values_in_list(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at']],
+            'in'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created0, fetched[0])
+
+    def test_filter_workflow_definition_by_values_notin_list(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at']],
+            'nin'
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workflow_definition_by_multiple_columns(self):
+        created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'created_at',
+            [created0['created_at'], created1['created_at']],
+            'in'
+        )
+        _filter = filter_utils.create_or_update_filter(
+            'name',
+            'my_wf2',
+            'eq',
+            _filter
+        )
+        fetched = db_api.get_workflow_definitions(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
 
     def test_create_workflow_definition_duplicate_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
@@ -630,7 +902,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(1, len(fetched))
         self.assertEqual(created2, fetched[0])
 
-    def test_filter_action_definitions_by_notEqual_value(self):
+    def test_filter_action_definitions_by_not_equal_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
         created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
 
@@ -647,7 +919,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
-    def test_filter_action_definitions_by_greaterThan_value(self):
+    def test_filter_action_definitions_by_greater_than_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
         created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
         created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
@@ -663,7 +935,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[0])
         self.assertEqual(created2, fetched[1])
 
-    def test_filter_action_definitions_by_greaterThanEqual_value(self):
+    def test_filter_action_definitions_by_greater_than_equal_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
         created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
         created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
@@ -680,7 +952,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[1])
         self.assertEqual(created2, fetched[2])
 
-    def test_filter_action_definitions_by_lessThan_value(self):
+    def test_filter_action_definitions_by_less_than_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
         created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
         created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
@@ -696,7 +968,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
-    def test_filter_action_definitions_by_lessThanEqual_value(self):
+    def test_filter_action_definitions_by_less_than_equal_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
         created1 = db_api.create_action_definition(ACTION_DEFINITIONS[1])
         created2 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
