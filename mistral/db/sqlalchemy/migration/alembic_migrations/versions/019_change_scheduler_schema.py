@@ -27,14 +27,24 @@ down_revision = '018'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.engine import reflection
 
 
 def upgrade():
-    op.drop_index(
-        'delayed_calls_v2_processing_execution_time',
-        table_name='delayed_calls_v2'
-    )
-    op.drop_index('unique_key', table_name='delayed_calls_v2')
+    inspect = reflection.Inspector.from_engine(op.get_bind())
+    unique_constraints = [
+        uc['name'] for uc in inspect.get_unique_constraints('delayed_calls_v2')
+    ]
+
+    if 'delayed_calls_v2_processing_execution_time' in unique_constraints:
+        op.drop_index(
+            'delayed_calls_v2_processing_execution_time',
+            table_name='delayed_calls_v2'
+        )
+
+    if 'unique_key' in unique_constraints:
+        op.drop_index('unique_key', table_name='delayed_calls_v2')
+
     op.drop_column('delayed_calls_v2', 'unique_key')
 
     op.add_column(
