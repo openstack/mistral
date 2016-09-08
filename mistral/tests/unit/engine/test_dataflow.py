@@ -163,6 +163,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual(exp_published_arr[0], task1.published)
         self.assertDictEqual(exp_published_arr[1], task2.published)
         self.assertDictEqual(exp_published_arr[2], task3.published)
+
         self.assertIn(exp_published_arr[0]['progress'], notify_published_arr)
         self.assertIn(exp_published_arr[1]['progress'], notify_published_arr)
         self.assertIn(exp_published_arr[2]['progress'], notify_published_arr)

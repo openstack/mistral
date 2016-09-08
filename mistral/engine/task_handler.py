@@ -72,19 +72,8 @@ def run_task(wf_cmd):
 
         return
 
-    if not task.task_ex:
-        # It is possible that task execution was not created
-        # (and therefore not associated with Task instance).
-        # For example, in case of 'join' that has already been
-        # created by a different transaction. In this case
-        # we should skip post completion scheduled checks.
-        return
-
-    if task.is_waiting():
+    if task.is_waiting() and (task.is_created() or task.is_state_changed()):
         _schedule_refresh_task_state(task.task_ex)
-
-    if task.is_completed():
-        wf_handler.schedule_on_task_complete(task.task_ex)
 
 
 @profiler.trace('task-handler-on-action-complete')
@@ -128,9 +117,6 @@ def _on_action_complete(action_ex):
 
         return
 
-    if task.is_completed():
-        wf_handler.schedule_on_task_complete(task_ex)
-
 
 def fail_task(task_ex, msg):
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
@@ -171,9 +157,6 @@ def continue_task(task_ex):
 
         return
 
-    if task.is_completed():
-        wf_handler.schedule_on_task_complete(task_ex)
-
 
 def complete_task(task_ex, state, state_info):
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
@@ -200,15 +183,12 @@ def complete_task(task_ex, state, state_info):
 
         return
 
-    if task.is_completed():
-        wf_handler.schedule_on_task_complete(task_ex)
 
-
-def _build_task_from_execution(wf_spec, task_ex, task_spec=None):
+def _build_task_from_execution(wf_spec, task_ex):
     return _create_task(
         task_ex.workflow_execution,
         wf_spec,
-        task_spec or spec_parser.get_task_spec(task_ex.spec),
+        wf_spec.get_task(task_ex.name),
         task_ex.in_context,
         task_ex
     )
@@ -223,7 +203,8 @@ def _build_task_from_command(cmd):
             spec_parser.get_task_spec(cmd.task_ex.spec),
             cmd.ctx,
             task_ex=cmd.task_ex,
-            unique_key=cmd.task_ex.unique_key
+            unique_key=cmd.task_ex.unique_key,
+            waiting=cmd.task_ex.state == states.WAITING
         )
 
         if cmd.reset:
@@ -237,11 +218,9 @@ def _build_task_from_command(cmd):
             cmd.wf_spec,
             cmd.task_spec,
             cmd.ctx,
-            unique_key=cmd.unique_key
+            unique_key=cmd.unique_key,
+            waiting=cmd.is_waiting()
         )
-
-        if cmd.is_waiting():
-            task.defer()
 
         return task
 
@@ -249,27 +228,16 @@ def _build_task_from_command(cmd):
 
 
 def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None):
+                 unique_key=None, waiting=False):
     if task_spec.get_with_items():
-        return tasks.WithItemsTask(
-            wf_ex,
-            wf_spec,
-            task_spec,
-            ctx,
-            task_ex,
-            unique_key
-        )
+        cls = tasks.WithItemsTask
+    else:
+        cls = tasks.RegularTask
 
-    return tasks.RegularTask(
-        wf_ex,
-        wf_spec,
-        task_spec,
-        ctx,
-        task_ex,
-        unique_key
-    )
+    return cls(wf_ex, wf_spec, task_spec, ctx, task_ex, unique_key, waiting)
 
 
+@profiler.trace('task-handler-refresh-task-state')
 def _refresh_task_state(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.get_task_execution(task_ex_id)
@@ -315,7 +283,6 @@ def _schedule_refresh_task_state(task_ex, delay=0):
 
     :param task_ex: Task execution.
     :param delay: Delay.
-    :return:
     """
     key = 'th_c_t_s_a-%s' % task_ex.id
 
@@ -323,7 +290,7 @@ def _schedule_refresh_task_state(task_ex, delay=0):
         None,
         _REFRESH_TASK_STATE_PATH,
         delay,
-        unique_key=key,
+        key=key,
         task_ex_id=task_ex.id
     )
 
@@ -366,7 +333,7 @@ def schedule_on_action_complete(action_ex, delay=0):
         None,
         _SCHEDULED_ON_ACTION_COMPLETE_PATH,
         delay,
-        unique_key=key,
+        key=key,
         action_ex_id=action_ex.id,
         wf_action=isinstance(action_ex, models.WorkflowExecution)
     )

@@ -113,6 +113,8 @@ class DirectWorkflowController(base.WorkflowController):
 
         cmds = []
 
+        ctx = data_flow.evaluate_task_outbound_context(task_ex)
+
         for t_n, params in self._find_next_tasks(task_ex):
             t_s = self.wf_spec.get_tasks()[t_n]
 
@@ -126,7 +128,7 @@ class DirectWorkflowController(base.WorkflowController):
                 self.wf_ex,
                 self.wf_spec,
                 t_s,
-                data_flow.evaluate_task_outbound_context(task_ex),
+                ctx,
                 params
             )
 

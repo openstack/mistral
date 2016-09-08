@@ -308,12 +308,12 @@ def get_task_executions(limit=None, marker=None, sort_keys=['created_at'],
     )
 
 
+def get_incomplete_task_executions(**kwargs):
+    return IMPL.get_incomplete_task_executions(**kwargs)
+
+
 def create_task_execution(values):
     return IMPL.create_task_execution(values)
-
-
-def insert_or_ignore_task_execution(values):
-    return IMPL.insert_or_ignore_task_execution(values)
 
 
 def update_task_execution(id, values):
@@ -340,10 +340,6 @@ def get_delayed_calls_to_start(time):
 
 def create_delayed_call(values):
     return IMPL.create_delayed_call(values)
-
-
-def insert_or_ignore_delayed_call(values):
-    return IMPL.insert_or_ignore_delayed_call(values)
 
 
 def delete_delayed_call(id):
@@ -533,8 +529,8 @@ def get_named_locks(limit=None, marker=None):
     return IMPL.get_named_locks(limit=limit, marker=marker)
 
 
-def delete_named_lock(name):
-    return IMPL.delete_named_lock(name)
+def delete_named_lock(lock_id):
+    return IMPL.delete_named_lock(lock_id)
 
 
 @contextlib.contextmanager

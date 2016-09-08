@@ -174,9 +174,10 @@ class Action(object):
         if prev_state != state:
             wf_trace.info(
                 None,
-                "Action '%s' (%s) [%s -> %s, %s]" %
+                "Action '%s' (%s)(task=%s) [%s -> %s, %s]" %
                 (self.action_ex.name,
                  self.action_ex.id,
+                 self.task_ex.name if self.task_ex else None,
                  prev_state,
                  state,
                  _result_msg())

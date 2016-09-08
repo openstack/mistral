@@ -48,7 +48,7 @@ class OsloRPCServer(rpc_base.RPCServer):
             rpc.get_transport(),
             target,
             self.endpoints,
-            executor='eventlet',
+            executor='blocking',
             serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
         )
 

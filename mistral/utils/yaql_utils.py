@@ -20,6 +20,8 @@ from mistral import utils
 from mistral.workflow import utils as wf_utils
 from oslo_serialization import jsonutils
 from stevedore import extension
+
+
 ROOT_CONTEXT = None
 
 
@@ -37,6 +39,7 @@ def get_yaql_context(data_context):
     if isinstance(data_context, dict):
         new_ctx['__env'] = data_context.get('__env')
         new_ctx['__execution'] = data_context.get('__execution')
+        new_ctx['__task_execution'] = data_context.get('__task_execution')
 
     return new_ctx
 
@@ -86,11 +89,18 @@ def task_(context, task_name):
 
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
-    task_execs = wf_utils.find_task_executions_by_name(wf_ex, task_name)
+    # This section may not exist in a context if it's calculated not in
+    # task scope.
+    cur_task = context['__task_execution']
 
-    # TODO(rakhmerov): Account for multiple executions (i.e. in case of
-    # cycles).
-    task_ex = task_execs[-1] if len(task_execs) > 0 else None
+    if cur_task and cur_task['name'] == task_name:
+        task_ex = db_api.get_task_execution(cur_task['id'])
+    else:
+        task_execs = wf_utils.find_task_executions_by_name(wf_ex, task_name)
+
+        # TODO(rakhmerov): Account for multiple executions (i.e. in case of
+        # cycles).
+        task_ex = task_execs[-1] if len(task_execs) > 0 else None
 
     if not task_ex:
         raise ValueError(
