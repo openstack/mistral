@@ -228,6 +228,11 @@ class Workflow(object):
         data_flow.add_environment_to_context(self.wf_ex)
         data_flow.add_workflow_variables_to_context(self.wf_ex, self.wf_spec)
 
+        spec_parser.cache_workflow_spec_by_execution_id(
+            self.wf_ex.id,
+            self.wf_spec
+        )
+
     @profiler.trace('workflow-set-state')
     def set_state(self, state, state_info=None, recursive=False):
         assert self.wf_ex

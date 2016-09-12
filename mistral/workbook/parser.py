@@ -234,6 +234,11 @@ def get_workflow_spec_by_definition_id(wf_def_id, wf_def_updated_at):
     return get_workflow_spec(wf_def.spec)
 
 
+def cache_workflow_spec_by_execution_id(wf_ex_id, wf_spec):
+    with _WF_EX_CACHE_LOCK:
+        _WF_EX_CACHE[cachetools.hashkey(wf_ex_id)] = wf_spec
+
+
 def get_wf_execution_spec_cache_size():
     return len(_WF_EX_CACHE)
 
