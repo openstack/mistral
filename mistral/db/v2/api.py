@@ -312,6 +312,10 @@ def get_incomplete_task_executions(**kwargs):
     return IMPL.get_incomplete_task_executions(**kwargs)
 
 
+def get_incomplete_task_executions_count(**kwargs):
+    return IMPL.get_incomplete_task_executions_count(**kwargs)
+
+
 def create_task_execution(values):
     return IMPL.create_task_execution(values)
 
