@@ -29,12 +29,12 @@ All API v2 urls are relative to API v2 root.
 Workbooks
 ---------
 
-.. autotype:: mistral.api.controllers.v2.workbook.Workbook
+.. autotype:: mistral.api.controllers.v2.resources.Workbook
    :members:
 
 `name` is immutable. tags is a list of values associated with a workbook that a user can use to group workbooks by some criteria (deployment workbooks, Big Data processing workbooks etc.). Note that name and tags get inferred from workbook definition when Mistral service receives a POST request. So they can't be changed in another way.
 
-.. autotype:: mistral.api.controllers.v2.workbook.Workbooks
+.. autotype:: mistral.api.controllers.v2.resources.Workbooks
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.workbook:WorkbooksController
@@ -44,12 +44,12 @@ Workbooks
 Workflows
 ---------
 
-.. autotype:: mistral.api.controllers.v2.workflow.Workflow
+.. autotype:: mistral.api.controllers.v2.resources.Workflow
    :members:
 
 `name` is immutable. tags is a list of values associated with a workflow that a user can use to group workflows by some criteria. Note that name and tags get inferred from workflow definition when Mistral service receives a POST request. So they can't be changed in another way.
 
-.. autotype:: mistral.api.controllers.v2.workflow.Workflows
+.. autotype:: mistral.api.controllers.v2.resources.Workflows
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.workflow:WorkflowsController
@@ -58,10 +58,10 @@ Workflows
 Actions
 -------
 
-.. autotype:: mistral.api.controllers.v2.action.Action
+.. autotype:: mistral.api.controllers.v2.resources.Action
    :members:
 
-.. autotype:: mistral.api.controllers.v2.action.Actions
+.. autotype:: mistral.api.controllers.v2.resources.Actions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.action:ActionsController
@@ -71,10 +71,10 @@ Actions
 Executions
 ----------
 
-.. autotype:: mistral.api.controllers.v2.execution.Execution
+.. autotype:: mistral.api.controllers.v2.resources.Execution
    :members:
 
-.. autotype:: mistral.api.controllers.v2.execution.Executions
+.. autotype:: mistral.api.controllers.v2.resources.Executions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.execution:ExecutionsController
@@ -87,10 +87,10 @@ Tasks
 When a workflow starts Mistral creates an execution. It in turn consists of a set of tasks. So Task is an instance of a task described in a Workflow that belongs to a particular execution.
 
 
-.. autotype:: mistral.api.controllers.v2.task.Task
+.. autotype:: mistral.api.controllers.v2.resources.Task
    :members:
 
-.. autotype:: mistral.api.controllers.v2.task.Tasks
+.. autotype:: mistral.api.controllers.v2.resources.Tasks
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.task:TasksController
@@ -106,10 +106,10 @@ Action Executions
 When a Task starts Mistral creates a set of Action Executions. So Action Execution is an instance of an action call described in a Workflow Task that belongs to a particular execution.
 
 
-.. autotype:: mistral.api.controllers.v2.action_execution.ActionExecution
+.. autotype:: mistral.api.controllers.v2.resources.ActionExecution
    :members:
 
-.. autotype:: mistral.api.controllers.v2.action_execution.ActionExecutions
+.. autotype:: mistral.api.controllers.v2.resources.ActionExecutions
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.action_execution:ActionExecutionsController
@@ -124,10 +124,10 @@ Cron Triggers
 Cron trigger is an object that allows to run Mistral workflows according to a time pattern (Unix crontab patterns format). Once a trigger is created it will run a specified workflow according to its properties: pattern, first_execution_time and remaining_executions.
 
 
-.. autotype:: mistral.api.controllers.v2.cron_trigger.CronTrigger
+.. autotype:: mistral.api.controllers.v2.resources.CronTrigger
    :members:
 
-.. autotype:: mistral.api.controllers.v2.cron_trigger.CronTriggers
+.. autotype:: mistral.api.controllers.v2.resources.CronTriggers
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.cron_trigger:CronTriggersController
@@ -161,10 +161,10 @@ Example of creating action defaults::
 
 Note: using CLI, Environment can be created via JSON or YAML file.
 
-.. autotype:: mistral.api.controllers.v2.environment.Environment
+.. autotype:: mistral.api.controllers.v2.resources.Environment
    :members:
 
-.. autotype:: mistral.api.controllers.v2.environment.Environments
+.. autotype:: mistral.api.controllers.v2.resources.Environments
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.environment:EnvironmentController
@@ -178,10 +178,10 @@ Through service management API, system administrator or operator can retrieve Mi
 
 There are three service groups according to Mistral architecture currently, namely api_group, engine_group and executor_group. The service identifier contains name of the host the service is running on and the process identifier of the service on that host.
 
-.. autotype:: mistral.api.controllers.v2.service.Service
+.. autotype:: mistral.api.controllers.v2.resources.Service
    :members:
 
-.. autotype:: mistral.api.controllers.v2.service.Services
+.. autotype:: mistral.api.controllers.v2.resources.Services
    :members:
 
 .. rest-controller:: mistral.api.controllers.v2.service:ServicesController
