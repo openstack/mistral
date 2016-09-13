@@ -280,11 +280,11 @@ class Workflow(object):
 
         # Workflow is not completed if there are any incomplete task
         # executions.
-        incomplete_tasks = db_api.get_incomplete_task_executions(
+        incomplete_tasks_count = db_api.get_incomplete_task_executions_count(
             workflow_execution_id=self.wf_ex.id,
         )
 
-        if incomplete_tasks:
+        if incomplete_tasks_count > 0:
             return
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)

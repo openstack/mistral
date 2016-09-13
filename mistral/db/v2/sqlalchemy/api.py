@@ -797,7 +797,7 @@ def get_task_executions(**kwargs):
     return _get_task_executions(**kwargs)
 
 
-def get_incomplete_task_executions(**kwargs):
+def _get_incomplete_task_executions_query(kwargs):
     query = b.model_query(models.TaskExecution)
 
     query = query.filter_by(**kwargs)
@@ -811,7 +811,19 @@ def get_incomplete_task_executions(**kwargs):
         )
     )
 
+    return query
+
+
+def get_incomplete_task_executions(**kwargs):
+    query = _get_incomplete_task_executions_query(kwargs)
+
     return query.all()
+
+
+def get_incomplete_task_executions_count(**kwargs):
+    query = _get_incomplete_task_executions_query(kwargs)
+
+    return query.count()
 
 
 @b.session_aware()

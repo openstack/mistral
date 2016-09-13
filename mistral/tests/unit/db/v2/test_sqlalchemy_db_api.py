@@ -1401,6 +1401,51 @@ class TaskExecutionTest(SQLAlchemyTest):
             created.id
         )
 
+    def test_get_incomplete_task_executions(self):
+        wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
+
+        values = copy.deepcopy(TASK_EXECS[0])
+        values.update({'workflow_execution_id': wf_ex.id})
+        values['state'] = 'RUNNING'
+
+        task_ex1 = db_api.create_task_execution(values)
+
+        task_execs = db_api.get_incomplete_task_executions(
+            workflow_execution_id=wf_ex.id
+        )
+
+        self.assertEqual(1, len(task_execs))
+        self.assertEqual(task_ex1, task_execs[0])
+        self.assertEqual(
+            1,
+            db_api.get_incomplete_task_executions_count(
+                workflow_execution_id=wf_ex.id
+            )
+        )
+
+        # Add one more task.
+
+        values = copy.deepcopy(TASK_EXECS[1])
+        values.update({'workflow_execution_id': wf_ex.id})
+        values['state'] = 'SUCCESS'
+
+        db_api.create_task_execution(values)
+
+        # It should be still one incompleted task.
+
+        task_execs = db_api.get_incomplete_task_executions(
+            workflow_execution_id=wf_ex.id
+        )
+
+        self.assertEqual(1, len(task_execs))
+        self.assertEqual(task_ex1, task_execs[0])
+        self.assertEqual(
+            1,
+            db_api.get_incomplete_task_executions_count(
+                workflow_execution_id=wf_ex.id
+            )
+        )
+
     def test_task_execution_repr(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
 

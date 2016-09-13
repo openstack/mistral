@@ -52,6 +52,7 @@ def on_action_complete(action_ex, result):
         task_handler.schedule_on_action_complete(action_ex)
 
 
+@profiler.trace('action-handler-build-action')
 def _build_action(action_ex):
     if isinstance(action_ex, models.WorkflowExecution):
         return actions.WorkflowAction(None, action_ex=action_ex)
