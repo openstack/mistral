@@ -49,7 +49,11 @@ class CronTriggersController(rest.RestController):
         status_code=201
     )
     def post(self, cron_trigger):
-        """Creates a new cron trigger."""
+        """Creates a new cron trigger.
+
+        :param cron_trigger: Required. Cron trigger structure.
+
+        """
         acl.enforce('cron_triggers:create', context.ctx())
 
         LOG.info('Create cron trigger: %s' % cron_trigger)
