@@ -73,7 +73,7 @@ def run_task(wf_cmd):
         return
 
     if task.is_waiting() and (task.is_created() or task.is_state_changed()):
-        _schedule_refresh_task_state(task.task_ex)
+        _schedule_refresh_task_state(task.task_ex, 1)
 
 
 @profiler.trace('task-handler-on-action-complete')
@@ -251,15 +251,27 @@ def _refresh_task_state(task_ex_id):
             wf_spec
         )
 
-        state, state_info = wf_ctrl.get_logical_task_state(task_ex)
+        state, state_info, cardinality = wf_ctrl.get_logical_task_state(
+            task_ex
+        )
 
         if state == states.RUNNING:
             continue_task(task_ex)
         elif state == states.ERROR:
             fail_task(task_ex, state_info)
         elif state == states.WAITING:
-            # TODO(rakhmerov): Algorithm for increasing rescheduling delay.
-            _schedule_refresh_task_state(task_ex, 1)
+            # Let's assume that a task takes 0.01 sec in average to complete
+            # and based on this assumption calculate a time of the next check.
+            # The estimation is very rough, of course, but this delay will be
+            # decreasing as task preconditions will be completing which will
+            # give a decent asymptotic approximation.
+            # For example, if a 'join' task has 100 inbound incomplete tasks
+            # then the next 'refresh_task_state' call will happen in 10
+            # seconds. For 500 tasks it will be 50 seconds. The larger the
+            # workflow is, the more beneficial this mechanism will be.
+            delay = int(cardinality * 0.01)
+
+            _schedule_refresh_task_state(task_ex, max(1, delay))
         else:
             # Must never get here.
             raise RuntimeError(

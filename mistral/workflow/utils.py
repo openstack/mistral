@@ -14,9 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.db.v2 import api as db_api
 from mistral.utils import serializers
-from mistral.workflow import states
 
 
 class Result(object):
@@ -72,46 +70,3 @@ class ResultSerializer(serializers.Serializer):
             entity['error'],
             entity.get('cancel', False)
         )
-
-
-def find_task_executions_by_name(wf_ex, task_name):
-    return db_api.get_task_executions(
-        workflow_execution_id=wf_ex.id,
-        name=task_name
-    )
-
-
-def find_task_executions_by_spec(wf_ex, task_spec):
-    return find_task_executions_by_name(wf_ex, task_spec.get_name())
-
-
-def find_task_executions_by_specs(wf_ex, task_specs):
-    res = []
-
-    for t_s in task_specs:
-        res = res + find_task_executions_by_spec(wf_ex, t_s)
-
-    return res
-
-
-def find_task_executions_with_state(wf_ex, state):
-    return db_api.get_task_executions(
-        workflow_execution_id=wf_ex.id,
-        state=state
-    )
-
-
-def find_running_task_executions(wf_ex):
-    return find_task_executions_with_state(wf_ex, states.RUNNING)
-
-
-def find_successful_task_executions(wf_ex):
-    return find_task_executions_with_state(wf_ex, states.SUCCESS)
-
-
-def find_error_task_executions(wf_ex):
-    return find_task_executions_with_state(wf_ex, states.ERROR)
-
-
-def find_cancelled_task_executions(wf_ex):
-    return find_task_executions_with_state(wf_ex, states.CANCELLED)

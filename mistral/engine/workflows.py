@@ -34,6 +34,7 @@ from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
+from mistral.workflow import lookup_utils
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
@@ -157,6 +158,11 @@ class Workflow(object):
         """
 
         assert self.wf_ex
+
+        # Since some lookup utils functions may use cache for completed tasks
+        # we need to clean caches to make sure that stale objects can't be
+        # retrieved.
+        lookup_utils.clean_caches()
 
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
@@ -429,7 +435,7 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
     failed_tasks = sorted(
         filter(
             lambda t: not wf_ctrl.is_error_handled_for(t),
-            wf_utils.find_error_task_executions(wf_ex)
+            lookup_utils.find_error_task_executions(wf_ex.id)
         ),
         key=lambda t: t.name
     )
@@ -468,7 +474,7 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
 def _build_cancel_info_message(wf_ctrl, wf_ex):
     # Try to find where cancel is exactly.
     cancelled_tasks = sorted(
-        wf_utils.find_cancelled_task_executions(wf_ex),
+        lookup_utils.find_cancelled_task_executions(wf_ex.id),
         key=lambda t: t.name
     )
 

@@ -36,6 +36,7 @@ from mistral.tests.unit import config as test_config
 from mistral.utils import inspect_utils as i_utils
 from mistral import version
 from mistral.workbook import parser as spec_parser
+from mistral.workflow import lookup_utils
 
 RESOURCES_PATH = 'tests/resources/'
 LOG = logging.getLogger(__name__)
@@ -244,6 +245,8 @@ class DbTestCase(BaseTest):
         action_manager.sync_db()
 
     def _clean_db(self):
+        lookup_utils.clean_caches()
+
         contexts = [
             get_context(default=False),
             get_context(default=True)
