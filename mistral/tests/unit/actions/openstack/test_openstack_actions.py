@@ -48,7 +48,7 @@ class OpenStackActionTest(base.BaseTestCase):
                                          mock_ks_endpoint_v2):
 
         # this is the default, but be explicit
-        config.CONF.set_default('os_actions_endpoint_type', 'publicURL')
+        config.CONF.set_default('os_actions_endpoint_type', 'public')
 
         test_ctx = ctx.MistralContext(
             user_id=None,
@@ -62,7 +62,7 @@ class OpenStackActionTest(base.BaseTestCase):
         ctx.set_ctx(test_ctx)
 
         # attributes mirror keystone Endpoint object exactly
-        # (with endpoint type publicURL)
+        # (with endpoint type public)
         keystone_attrs = {
             'url': 'http://192.0.2.1:5000/v2.0',
             'enabled': True,
@@ -107,7 +107,7 @@ class OpenStackActionTest(base.BaseTestCase):
             2,
             username=None,
             api_key=None,
-            endpoint_type='publicURL',
+            endpoint_type='public',
             service_type='compute',
             auth_token=test_ctx.auth_token,
             tenant_id=test_ctx.project_id,
@@ -138,7 +138,7 @@ class OpenStackActionTest(base.BaseTestCase):
             2,
             username=None,
             api_key=None,
-            endpoint_type='publicURL',
+            endpoint_type='public',
             service_type='compute',
             auth_token=test_ctx.auth_token,
             tenant_id=test_ctx.project_id,
