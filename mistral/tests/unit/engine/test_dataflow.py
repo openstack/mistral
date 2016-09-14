@@ -83,6 +83,14 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task3.published
         )
 
+        # Make sure that task inbound context doesn't contain workflow
+        # specification, input and params.
+        ctx = task1.in_context
+
+        self.assertFalse('spec' in ctx['__execution'])
+        self.assertFalse('input' in ctx['__execution'])
+        self.assertFalse('params' in ctx['__execution'])
+
     def test_linear_with_branches_dataflow(self):
         linear_with_branches_wf = """---
         version: '2.0'
