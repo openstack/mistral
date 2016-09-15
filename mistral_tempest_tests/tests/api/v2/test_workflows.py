@@ -251,6 +251,25 @@ class WorkflowTestsV2(base.TestCase):
             self.client.triggers.remove(tr_name)
 
     @test.attr(type='negative')
+    def test_delete_wf_with_event_trigger_associate(self):
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        wf_id = body['workflows'][0]['id']
+        resp, body = self.client.create_event_trigger(
+            wf_id, 'openstack', 'notification', 'fake.event')
+        self.assertEqual(201, resp.status)
+
+        try:
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.client.delete_obj,
+                'workflows',
+                wf_id
+            )
+        finally:
+            self.client.delete_obj('event_triggers', body['id'])
+            self.client.event_triggers.remove(body['id'])
+
+    @test.attr(type='negative')
     def test_delete_wf_with_trigger_associate_in_other_tenant(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
         tr_name = 'trigger'

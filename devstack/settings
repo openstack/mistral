@@ -10,7 +10,7 @@
 # is an incorrect way to run services and all services by default will run in one screen
 
 
-enable_service mistral mistral-api mistral-engine mistral-executor
+enable_service mistral mistral-api mistral-engine mistral-executor mistral-event-engine
 
 
 # Set up default repos
