@@ -72,7 +72,15 @@ def env_(context):
 
 
 def execution_(context):
-    return context['__execution']
+    wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
+
+    return {
+        'id': wf_ex.id,
+        'name': wf_ex.name,
+        'spec': wf_ex.spec,
+        'input': wf_ex.input,
+        'params': wf_ex.params
+    }
 
 
 def json_pp_(data):

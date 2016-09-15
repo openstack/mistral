@@ -163,3 +163,57 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
         self.assertIsNotNone(result)
         self.assertEqual(36, len(result))
         self.assertEqual(4, result.count('-'))
+
+    def test_execution_function(self):
+        wf_text = """---
+            version: '2.0'
+
+            wf:
+              input:
+                - k1
+                - k2: v2_default
+
+              tasks:
+                task1:
+                  action: std.echo output=<% execution() %>
+                  publish:
+                    result: <% task(task1).result %>
+            """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {'k1': 'v1'},
+            param1='blablabla'
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = task_execs[0]
+
+        execution = task_ex.published['result']
+
+        self.assertIsInstance(execution, dict)
+
+        spec = execution['spec']
+
+        self.assertEqual('2.0', spec['version'])
+        self.assertEqual('wf', spec['name'])
+        self.assertIn('tasks', spec)
+        self.assertEqual(1, len(spec['tasks']))
+
+        self.assertDictEqual(
+            {
+                'k1': 'v1',
+                'k2': 'v2_default'
+            },
+            execution['input']
+        )
+
+        self.assertDictEqual({'param1': 'blablabla'}, execution['params'])

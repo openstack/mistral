@@ -163,10 +163,7 @@ def add_execution_to_context(wf_ex):
     wf_ex.context = wf_ex.context or {}
 
     wf_ex.context['__execution'] = {
-        'id': wf_ex.id,
-        'spec': wf_ex.spec,
-        'params': wf_ex.params,
-        'input': wf_ex.input
+        'id': wf_ex.id
     }
 
 
