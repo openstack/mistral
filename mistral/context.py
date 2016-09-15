@@ -22,9 +22,8 @@ from oslo_serialization import jsonutils
 from osprofiler import profiler
 import pecan
 from pecan import hooks
-import pprint
-import requests
 
+from mistral import auth
 from mistral import exceptions as exc
 from mistral import utils
 
@@ -260,10 +259,8 @@ class AuthHook(hooks.PecanHook):
             return
 
         try:
-            if CONF.auth_type == 'keystone':
-                authenticate_with_keystone(state.request)
-            elif CONF.auth_type == 'keycloak-oidc':
-                authenticate_with_keycloak(state.request)
+            auth_handler = auth.get_auth_handler()
+            auth_handler.authenticate(state.request)
         except Exception as e:
             msg = "Failed to validate access token: %s" % str(e)
 
@@ -272,54 +269,6 @@ class AuthHook(hooks.PecanHook):
                 detail=msg,
                 headers={'Server-Error-Message': msg}
             )
-
-
-def authenticate_with_keystone(req):
-    # Note(nmakhotkin): Since we have deferred authentication,
-    # need to check for auth manually (check for corresponding
-    # headers according to keystonemiddleware docs.
-    identity_status = req.headers.get('X-Identity-Status')
-    service_identity_status = req.headers.get('X-Service-Identity-Status')
-
-    if (identity_status == 'Confirmed' or
-            service_identity_status == 'Confirmed'):
-        return
-
-    if req.headers.get('X-Auth-Token'):
-        msg = 'Auth token is invalid: %s' % req.headers['X-Auth-Token']
-    else:
-        msg = 'Authentication required'
-
-    raise exc.UnauthorizedException(msg)
-
-
-def authenticate_with_keycloak(req):
-    realm_name = req.headers.get('X-Project-Id')
-
-    # NOTE(rakhmerov): There's a special endpoint for introspecting
-    # access tokens described in OpenID Connect specification but it's
-    # available in KeyCloak starting only with version 1.8.Final so we have
-    # to use user info endpoint which also takes exactly one parameter
-    # (access token) and replies with error if token is invalid.
-    user_info_endpoint = (
-        "%s/realms/%s/protocol/openid-connect/userinfo" %
-        (CONF.keycloak_oidc.auth_url, realm_name)
-    )
-
-    access_token = req.headers.get('X-Auth-Token')
-
-    resp = requests.get(
-        user_info_endpoint,
-        headers={"Authorization": "Bearer %s" % access_token},
-        verify=not CONF.keycloak_oidc.insecure
-    )
-
-    resp.raise_for_status()
-
-    LOG.debug(
-        "HTTP response from OIDC provider: %s" %
-        pprint.pformat(resp.json())
-    )
 
 
 class ContextHook(hooks.PecanHook):
