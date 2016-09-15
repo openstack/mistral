@@ -27,6 +27,7 @@ LOG = logging.getLogger(__name__)
 IS_RECEIVED = 'kombu_rpc_is_received'
 RESULT = 'kombu_rpc_result'
 CORR_ID = 'kombu_rpc_correlation_id'
+TYPE = 'kombu_rpc_type'
 
 
 class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
@@ -108,10 +109,8 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
                     message.properties['correlation_id']):
                 utils.set_thread_local(IS_RECEIVED, True)
 
-                # TODO(ddeja): Decide if raising exception to kombu is best
-                # behaviour.
                 if message.properties.get('type') == 'error':
-                    raise response
+                    utils.set_thread_local(TYPE, 'error')
                 utils.set_thread_local(RESULT, response)
 
     def _wait_for_result(self):
@@ -170,8 +169,12 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
 
         self._wait_for_result()
         result = utils.get_thread_local(RESULT)
+        res_type = utils.get_thread_local(TYPE)
 
         self._clear_thread_local()
+
+        if res_type == 'error':
+            raise result
 
         return result
 
@@ -180,6 +183,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         utils.set_thread_local(RESULT, None)
         utils.set_thread_local(CORR_ID, None)
         utils.set_thread_local(IS_RECEIVED, None)
+        utils.set_thread_local(TYPE, None)
 
     def sync_call(self, ctx, method, target=None, **kwargs):
         return self._call(ctx, method, async=False, target=target, **kwargs)

@@ -20,7 +20,6 @@ from mistral import utils
 
 import mock
 import socket
-import sys
 
 with mock.patch.dict('sys.modules', kombu=fake_kombu):
     from mistral.engine.rpc_backend.kombu import kombu_client
@@ -74,12 +73,36 @@ class KombuClientTestCase(base.KombuTestCase):
             side_effect=socket.timeout
         )
 
-        self.client._timeout = sys.float_info.epsilon
         self.assertRaises(
             exc.MistralException,
             self.client.sync_call,
             self.ctx,
             'method_not_found'
+        )
+        # Check if consumer.consume was called once.
+        self.assertEqual(self.client.consumer.consume.call_count, 1)
+
+    @mock.patch.object(utils, 'set_thread_local', mock.MagicMock())
+    @mock.patch.object(utils, 'get_thread_local')
+    def test_sync_call_result_type_error(self, get_thread_local):
+
+        def side_effect(var_name):
+            if var_name == kombu_client.IS_RECEIVED:
+                return True
+            elif var_name == kombu_client.RESULT:
+                return TestException()
+            elif var_name == kombu_client.TYPE:
+                return 'error'
+
+        get_thread_local.side_effect = side_effect
+
+        self.client.conn.drain_events = mock.MagicMock()
+
+        self.assertRaises(
+            TestException,
+            self.client.sync_call,
+            self.ctx,
+            'method'
         )
         # check if consumer.consume was called once
         self.assertEqual(self.client.consumer.consume.call_count, 1)
@@ -143,15 +166,11 @@ class KombuClientTestCase(base.KombuTestCase):
 
         kombu_client.LOG = mock.MagicMock()
 
-        self.assertRaises(
-            TestException,
-            self.client._on_response,
-            response,
-            message
-        )
+        self.client._on_response(response, message)
+
         self.assertEqual(kombu_client.LOG.debug.call_count, 2)
         self.assertEqual(kombu_client.LOG.exception.call_count, 0)
-        self.assertEqual(set_thread_local.call_count, 1)
+        self.assertEqual(set_thread_local.call_count, 3)
 
     @mock.patch.object(utils, 'set_thread_local')
     @mock.patch.object(utils, 'get_thread_local', mock.MagicMock(
