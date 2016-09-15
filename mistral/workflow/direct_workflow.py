@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
@@ -20,8 +21,8 @@ from mistral import utils
 from mistral.workflow import base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
+from mistral.workflow import lookup_utils
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -46,8 +47,8 @@ class DirectWorkflowController(base.WorkflowController):
         return list(
             filter(
                 lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
-                wf_utils.find_task_executions_by_specs(
-                    self.wf_ex,
+                lookup_utils.find_task_executions_by_specs(
+                    self.wf_ex.id,
                     self.wf_spec.find_inbound_task_specs(task_spec)
                 )
             )
@@ -60,7 +61,7 @@ class DirectWorkflowController(base.WorkflowController):
         if not t_spec.get_join():
             return not t_ex_candidate.processed
 
-        induced_state = self._get_induced_join_state(
+        induced_state, _ = self._get_induced_join_state(
             self.wf_spec.get_tasks()[t_ex_candidate.name],
             t_spec
         )
@@ -173,7 +174,7 @@ class DirectWorkflowController(base.WorkflowController):
             # A simple 'non-join' task does not have any preconditions
             # based on state of other tasks so its logical state always
             # equals to its real state.
-            return task_ex.state, task_ex.state_info
+            return task_ex.state, task_ex.state_info, 0
 
         return self._get_join_logical_state(task_spec)
 
@@ -181,8 +182,7 @@ class DirectWorkflowController(base.WorkflowController):
         return bool(self.wf_spec.get_on_error_clause(task_ex.name))
 
     def all_errors_handled(self):
-        for t_ex in wf_utils.find_error_task_executions(self.wf_ex):
-
+        for t_ex in lookup_utils.find_error_task_executions(self.wf_ex.id):
             tasks_on_error = self._find_next_tasks_for_clause(
                 self.wf_spec.get_on_error_clause(t_ex.name),
                 data_flow.evaluate_task_outbound_context(t_ex)
@@ -197,7 +197,7 @@ class DirectWorkflowController(base.WorkflowController):
         return list(
             filter(
                 lambda t_ex: not self._has_outbound_tasks(t_ex),
-                wf_utils.find_successful_task_executions(self.wf_ex)
+                lookup_utils.find_successful_task_executions(self.wf_ex.id)
             )
         )
 
@@ -270,64 +270,94 @@ class DirectWorkflowController(base.WorkflowController):
             if not condition or expr.evaluate(condition, ctx)
         ]
 
+    @profiler.trace('direct-wf-controller-get-join-logical-state')
     def _get_join_logical_state(self, task_spec):
+        """Evaluates logical state of 'join' task.
+
+        :param task_spec: 'join' task specification.
+        :return: Tuple (state, state_info, spec_cardinality) where 'state' and
+            'state_info' describe the logical state of the given 'join'
+            task and 'spec_cardinality' gives the remaining number of
+            unfulfilled preconditions. If logical state is not WAITING then
+            'spec_cardinality' should always be 0.
+        """
+
         # TODO(rakhmerov): We need to use task_ex instead of task_spec
         # in order to cover a use case when there's more than one instance
         # of the same 'join' task in a workflow.
+        # TODO(rakhmerov): In some cases this method will be expensive because
+        # it uses a multistep recursive search. We need to optimize it moving
+        # forward (e.g. with Workflow Execution Graph).
+
         join_expr = task_spec.get_join()
 
         in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
         if not in_task_specs:
-            return states.RUNNING
+            return states.RUNNING, None, 0
 
-        # List of tuples (task_name, state).
+        # List of tuples (task_name, (state, depth)).
         induced_states = [
             (t_s.get_name(), self._get_induced_join_state(t_s, task_spec))
             for t_s in in_task_specs
         ]
 
         def count(state):
-            return len(list(filter(lambda s: s[1] == state, induced_states)))
+            cnt = 0
+            total_depth = 0
 
-        error_count = count(states.ERROR)
-        running_count = count(states.RUNNING)
+            for s in induced_states:
+                if s[1][0] == state:
+                    cnt += 1
+                    total_depth += s[1][1]
+
+            return cnt, total_depth
+
+        errors_tuples = count(states.ERROR)
+        runnings_tuple = count(states.RUNNING)
         total_count = len(induced_states)
 
         def _blocked_message():
             return (
                 'Blocked by tasks: %s' %
-                [s[0] for s in induced_states if s[1] == states.WAITING]
+                [s[0] for s in induced_states if s[1][0] == states.WAITING]
             )
 
         def _failed_message():
             return (
                 'Failed by tasks: %s' %
-                [s[0] for s in induced_states if s[1] == states.ERROR]
+                [s[0] for s in induced_states if s[1][0] == states.ERROR]
             )
 
         # If "join" is configured as a number or 'one'.
         if isinstance(join_expr, int) or join_expr == 'one':
-            cardinality = 1 if join_expr == 'one' else join_expr
+            spec_cardinality = 1 if join_expr == 'one' else join_expr
 
-            if running_count >= cardinality:
-                return states.RUNNING, None
+            if runnings_tuple[0] >= spec_cardinality:
+                return states.RUNNING, None, 0
 
             # E.g. 'join: 3' with inbound [ERROR, ERROR, RUNNING, WAITING]
             # No chance to get 3 RUNNING states.
-            if error_count > (total_count - cardinality):
-                return states.ERROR, _failed_message()
+            if errors_tuples[0] > (total_count - spec_cardinality):
+                return states.ERROR, _failed_message(), 0
 
-            return states.WAITING, _blocked_message()
+            # Calculate how many tasks need to finish to trigger this 'join'.
+            cardinality = spec_cardinality - runnings_tuple[0]
+
+            return states.WAITING, _blocked_message(), cardinality
 
         if join_expr == 'all':
-            if total_count == running_count:
-                return states.RUNNING, None
+            if total_count == runnings_tuple[0]:
+                return states.RUNNING, None, 0
 
-            if error_count > 0:
-                return states.ERROR, _failed_message()
+            if errors_tuples[0] > 0:
+                return states.ERROR, _failed_message(), 0
 
-            return states.WAITING, _blocked_message()
+            # Remaining cardinality is just a difference between all tasks and
+            # a number of those tasks that induce RUNNING state.
+            cardinality = total_count - runnings_tuple[1]
+
+            return states.WAITING, _blocked_message(), cardinality
 
         raise RuntimeError('Unexpected join expression: %s' % join_expr)
 
@@ -337,51 +367,54 @@ class DirectWorkflowController(base.WorkflowController):
     def _get_induced_join_state(self, inbound_task_spec, join_task_spec):
         join_task_name = join_task_spec.get_name()
 
-        in_task_ex = self._find_task_execution_by_spec(inbound_task_spec)
+        in_task_ex = self._find_task_execution_by_name(
+            inbound_task_spec.get_name()
+        )
 
         if not in_task_ex:
-            if self._possible_route(inbound_task_spec):
-                return states.WAITING
+            possible, depth = self._possible_route(inbound_task_spec)
+
+            if possible:
+                return states.WAITING, depth
             else:
-                return states.ERROR
+                return states.ERROR, depth
 
         if not states.is_completed(in_task_ex.state):
-            return states.WAITING
+            return states.WAITING, 1
 
         if join_task_name not in self._find_next_task_names(in_task_ex):
-            return states.ERROR
+            return states.ERROR, 1
 
-        return states.RUNNING
+        return states.RUNNING, 1
 
-    def _find_task_execution_by_spec(self, task_spec):
-        in_t_execs = wf_utils.find_task_executions_by_spec(
-            self.wf_ex,
-            task_spec
+    def _find_task_execution_by_name(self, t_name):
+        # Note: in case of 'join' completion check it's better to initialize
+        # the entire task_executions collection to avoid too many DB queries.
+        t_execs = lookup_utils.find_task_executions_by_name(
+            self.wf_ex.id,
+            t_name
         )
 
         # TODO(rakhmerov): Temporary hack. See the previous comment.
-        return in_t_execs[-1] if in_t_execs else None
+        return t_execs[-1] if t_execs else None
 
-    def _possible_route(self, task_spec):
-        # TODO(rakhmerov): In some cases this method will be expensive because
-        # it uses a multistep recursive search with DB queries.
-        # It will be optimized with Workflow Execution Graph moving forward.
+    def _possible_route(self, task_spec, depth=1):
         in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
         if not in_task_specs:
-            return True
+            return True, depth
 
         for t_s in in_task_specs:
-            t_ex = self._find_task_execution_by_spec(t_s)
+            t_ex = self._find_task_execution_by_name(t_s.get_name())
 
             if not t_ex:
-                if self._possible_route(t_s):
-                    return True
+                if self._possible_route(t_s, depth + 1):
+                    return True, depth
             else:
                 t_name = task_spec.get_name()
 
                 if (not states.is_completed(t_ex.state) or
                         t_name in self._find_next_task_names(t_ex)):
-                    return True
+                    return True, depth
 
-        return False
+        return False, depth

@@ -26,13 +26,14 @@ from mistral import utils as u
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import commands
 from mistral.workflow import data_flow
+from mistral.workflow import lookup_utils
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
 
 
+@profiler.trace('wf-controller-get-controller')
 def get_controller(wf_ex, wf_spec=None):
     """Gets a workflow controller instance by given workflow execution object.
 
@@ -130,8 +131,13 @@ class WorkflowController(object):
         """Determines a logical state of the given task.
 
         :param task_ex: Task execution.
-        :return: Tuple (state, state_info) which the given task should have
-            according to workflow rules and current states of other tasks.
+        :return: Tuple (state, state_info, cardinality) where 'state' and
+            'state_info' are the corresponding values which the given
+             task should have according to workflow rules and current
+            states of other tasks. 'cardinality' gives the estimation on
+            the number of preconditions that are not yet met in case if
+            state is WAITING. This number can be used to estimate how
+            frequently we can refresh the state of this task.
         """
         raise NotImplementedError
 
@@ -159,7 +165,9 @@ class WorkflowController(object):
 
         :return: True if there is one or more tasks in cancelled state.
         """
-        return len(wf_utils.find_cancelled_task_executions(self.wf_ex)) > 0
+        t_execs = lookup_utils.find_cancelled_task_executions(self.wf_ex.id)
+
+        return len(t_execs) > 0
 
     @abc.abstractmethod
     def evaluate_workflow_final_context(self):
@@ -214,8 +222,8 @@ class WorkflowController(object):
             return []
 
         # Add all tasks in IDLE state.
-        idle_tasks = wf_utils.find_task_executions_with_state(
-            self.wf_ex,
+        idle_tasks = lookup_utils.find_task_executions_with_state(
+            self.wf_ex.id,
             states.IDLE
         )
 

@@ -19,8 +19,8 @@ from mistral import exceptions as exc
 from mistral.workflow import base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
+from mistral.workflow import lookup_utils
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
 
 
 class ReverseWorkflowController(base.WorkflowController):
@@ -92,13 +92,16 @@ class ReverseWorkflowController(base.WorkflowController):
         return list(
             filter(
                 lambda t_e: t_e.state == states.SUCCESS,
-                wf_utils.find_task_executions_by_specs(self.wf_ex, t_specs)
+                lookup_utils.find_task_executions_by_specs(
+                    self.wf_ex.id,
+                    t_specs
+                )
             )
         )
 
     def evaluate_workflow_final_context(self):
-        task_execs = wf_utils.find_task_executions_by_spec(
-            self.wf_ex,
+        task_execs = lookup_utils.find_task_executions_by_spec(
+            self.wf_ex.id,
             self._get_target_task_specification()
         )
 
@@ -110,13 +113,15 @@ class ReverseWorkflowController(base.WorkflowController):
 
     def get_logical_task_state(self, task_ex):
         # TODO(rakhmerov): Implement.
-        return task_ex.state, task_ex.state_info
+        return task_ex.state, task_ex.state_info, 0
 
     def is_error_handled_for(self, task_ex):
         return task_ex.state != states.ERROR
 
     def all_errors_handled(self):
-        return len(wf_utils.find_error_task_executions(self.wf_ex)) == 0
+        task_execs = lookup_utils.find_error_task_executions(self.wf_ex.id)
+
+        return len(task_execs) == 0
 
     def _find_task_specs_with_satisfied_dependencies(self):
         """Given a target task name finds tasks with no dependencies.
@@ -139,7 +144,8 @@ class ReverseWorkflowController(base.WorkflowController):
         ]
 
     def _is_satisfied_task(self, task_spec):
-        if wf_utils.find_task_executions_by_spec(self.wf_ex, task_spec):
+        if lookup_utils.find_task_executions_by_spec(
+                self.wf_ex.id, task_spec):
             return False
 
         if not self.wf_spec.get_task_requires(task_spec):
