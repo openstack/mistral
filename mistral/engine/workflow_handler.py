@@ -89,7 +89,7 @@ def _check_and_complete(wf_ex_id):
         )
 
         try:
-            wf.check_and_complete()
+            incomplete_tasks_count = wf.check_and_complete()
         except exc.MistralException as e:
             msg = (
                 "Failed to check and complete [wf_ex=%s]:"
@@ -103,10 +103,17 @@ def _check_and_complete(wf_ex_id):
             return
 
         if not states.is_completed(wf_ex.state):
-            # TODO(rakhmerov): Moving forward we can implement some more fancy
-            # algorithm for increasing delay for rescheduling so that we don't
-            # put too serious load onto scheduler.
-            delay = 1
+            # Let's assume that a task takes 0.01 sec in average to complete
+            # and based on this assumption calculate a time of the next check.
+            # The estimation is very rough but this delay will be decreasing
+            # as tasks will be completing which will give a decent
+            # approximation.
+            # For example, if a workflow has 100 incomplete tasks then the
+            # next check call will happen in 10 seconds. For 500 tasks it will
+            # be 50 seconds. The larger the workflow is, the more beneficial
+            # this mechanism will be.
+            delay = int(incomplete_tasks_count * 0.01)
+
             _schedule_check_and_complete(wf_ex, delay)
 
 

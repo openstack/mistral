@@ -286,8 +286,16 @@ class Workflow(object):
 
     @profiler.trace('workflow-check-and-complete')
     def check_and_complete(self):
+        """Completes the workflow if it needs to be completed.
+
+        The method simply checks if there are any tasks that are not
+        in a terminal state. If there aren't any then it performs all
+        necessary logic to finalize the workflow (calculate output etc.).
+        :return: Number of incomplete tasks.
+        """
+
         if states.is_paused_or_completed(self.wf_ex.state):
-            return
+            return 0
 
         # Workflow is not completed if there are any incomplete task
         # executions.
@@ -296,7 +304,7 @@ class Workflow(object):
         )
 
         if incomplete_tasks_count > 0:
-            return
+            return incomplete_tasks_count
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
@@ -308,6 +316,8 @@ class Workflow(object):
             self._succeed_workflow(wf_ctrl.evaluate_workflow_final_context())
         else:
             self._fail_workflow(_build_fail_info_message(wf_ctrl, self.wf_ex))
+
+        return 0
 
     def _succeed_workflow(self, final_context, msg=None):
         self.wf_ex.output = data_flow.evaluate_workflow_output(
