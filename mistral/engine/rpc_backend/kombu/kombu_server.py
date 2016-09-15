@@ -135,8 +135,9 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         try:
             return self._on_message(request, message)
         except Exception as e:
+            # Wrap exception into another exception for compability with oslo.
             self.publish_message(
-                e,
+                exc.KombuException(e),
                 message.properties['reply_to'],
                 message.properties['correlation_id'],
                 res_type='error'
