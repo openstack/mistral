@@ -127,7 +127,7 @@ class ActionTestsV2(base.TestCase):
         )
 
     @test.attr(type='smoke')
-    def test_get_list_actions_equalto_filter(self):
+    def test_get_list_actions_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
@@ -142,7 +142,7 @@ class ActionTestsV2(base.TestCase):
             self.assertFalse(act['is_system'])
 
     @test.attr(type='smoke')
-    def test_get_list_actions_notEqualto_filter(self):
+    def test_get_list_actions_not_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
@@ -157,7 +157,7 @@ class ActionTestsV2(base.TestCase):
             self.assertTrue(act['is_system'])
 
     @test.attr(type='smoke')
-    def test_get_list_actions_inList_filter(self):
+    def test_get_list_actions_in_list_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
@@ -173,7 +173,7 @@ class ActionTestsV2(base.TestCase):
         self.assertListEqual(created_acts, action_names)
 
     @test.attr(type='smoke')
-    def test_get_list_actions_notinList_filter(self):
+    def test_get_list_actions_not_in_list_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
@@ -190,7 +190,7 @@ class ActionTestsV2(base.TestCase):
             self.assertNotIn(act, action_names)
 
     @test.attr(type='smoke')
-    def test_get_list_actions_greaterThan_filter(self):
+    def test_get_list_actions_greater_than_filter(self):
         time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         resp, body = self.client.get_list_obj(
             'actions?created_at=gt:' + time.replace(' ', '%20')
@@ -200,7 +200,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual([], body['actions'])
 
     @test.attr(type='smoke')
-    def test_get_list_actions_greaterThanEqualto_filter(self):
+    def test_get_list_actions_greater_than_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
@@ -216,7 +216,7 @@ class ActionTestsV2(base.TestCase):
         self.assertIn(created_acts[0], actions)
 
     @test.attr(type='smoke')
-    def test_get_list_actions_lessThan_filter(self):
+    def test_get_list_actions_less_than_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
@@ -232,7 +232,7 @@ class ActionTestsV2(base.TestCase):
         self.assertNotIn(created_acts[0], actions)
 
     @test.attr(type='smoke')
-    def test_get_list_actions_lessThanEqualto_filter(self):
+    def test_get_list_actions_less_than_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
