@@ -175,8 +175,15 @@ class TaskPolicy(object):
         :param task_ex: DB model for task that is about to start.
         :param task_spec: Task specification.
         """
-        # No-op by default.
-        data_flow.evaluate_object_fields(self, task_ex.in_context)
+        wf_ex = task_ex.workflow_execution
+
+        ctx_view = data_flow.ContextView(
+            task_ex.in_context,
+            wf_ex.context,
+            wf_ex.input
+        )
+
+        data_flow.evaluate_object_fields(self, ctx_view)
 
         self._validate()
 
@@ -186,8 +193,15 @@ class TaskPolicy(object):
         :param task_ex: Completed task DB model.
         :param task_spec: Completed task specification.
         """
-        # No-op by default.
-        data_flow.evaluate_object_fields(self, task_ex.in_context)
+        wf_ex = task_ex.workflow_execution
+
+        ctx_view = data_flow.ContextView(
+            task_ex.in_context,
+            wf_ex.context,
+            wf_ex.input
+        )
+
+        data_flow.evaluate_object_fields(self, ctx_view)
 
         self._validate()
 

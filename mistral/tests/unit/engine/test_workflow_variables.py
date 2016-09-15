@@ -64,14 +64,6 @@ class WorkflowVariablesTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task1.state)
 
-        self._assert_dict_contains_subset(
-            {
-                'literal_var': 'Literal value',
-                'yaql_var': 'Hello Renat'
-            },
-            task1.in_context
-        )
-
         self.assertDictEqual(
             {
                 'literal_var': 'Literal value',
