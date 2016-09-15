@@ -208,7 +208,12 @@ class WorkflowExecution(Execution):
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
     params = sa.Column(st.JsonLongDictType())
 
-    # TODO(rakhmerov): We need to get rid of this field at all.
+    # Initial workflow context containing workflow variables, environment,
+    # openstack security context etc.
+    # NOTES:
+    #   * Data stored in this structure should not be copied into inbound
+    #     contexts of tasks. No need to duplicate it.
+    #   * This structure does not contain workflow input.
     context = sa.Column(st.JsonLongDictType())
 
 

@@ -20,6 +20,7 @@ from oslo_log import log as logging
 
 from mistral import context as auth_ctx
 from mistral.db.v2.sqlalchemy import models
+from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral import utils
 from mistral.utils import inspect_utils
@@ -29,6 +30,101 @@ from mistral.workflow import with_items
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
+
+
+class ContextView(dict):
+    """Workflow context view.
+
+    It's essentially an immutable composite structure providing fast lookup
+    over multiple dictionaries w/o having to merge those dictionaries every
+    time. The lookup algorithm simply iterates over provided dictionaries
+    one by one and returns a value taken from the first dictionary where
+    the provided key exists. This means that these dictionaries must be
+    provided in the order of decreasing priorities.
+
+    Note: Although this class extends built-in 'dict' it shouldn't be
+    considered a normal dictionary because it may not implement all
+    methods and account for all corner cases. It's only a read-only view.
+    """
+
+    def __init__(self, *dicts):
+        super(ContextView, self).__init__()
+
+        self.dicts = dicts or []
+
+    def __getitem__(self, key):
+        for d in self.dicts:
+            if key in d:
+                return d[key]
+
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        for d in self.dicts:
+            if key in d:
+                return d[key]
+
+        return default
+
+    def __contains__(self, key):
+        return any(key in d for d in self.dicts)
+
+    def keys(self):
+        keys = set()
+
+        for d in self.dicts:
+            keys.update(d.keys())
+
+        return keys
+
+    def items(self):
+        return [(k, self[k]) for k in self.keys()]
+
+    def values(self):
+        return [self[k] for k in self.keys()]
+
+    def iteritems(self):
+        # NOTE: This is for compatibility with Python 2.7
+        # YAQL converts output objects after they are evaluated
+        # to basic types and it uses six.iteritems() internally
+        # which calls d.items() in case of Python 2.7 and d.iteritems()
+        # for Python 2.7
+        return iter(self.items())
+
+    def iterkeys(self):
+        # NOTE: This is for compatibility with Python 2.7
+        # See the comment for iteritems().
+        return iter(self.keys())
+
+    def itervalues(self):
+        # NOTE: This is for compatibility with Python 2.7
+        # See the comment for iteritems().
+        return iter(self.values())
+
+    def __len__(self):
+        return len(self.keys())
+
+    @staticmethod
+    def _raise_immutable_error():
+        raise exc.MistralError('Context view is immutable.')
+
+    def __setitem__(self, key, value):
+        self._raise_immutable_error()
+
+    def update(self, E=None, **F):
+        self._raise_immutable_error()
+
+    def clear(self):
+        self._raise_immutable_error()
+
+    def pop(self, k, d=None):
+        self._raise_immutable_error()
+
+    def popitem(self):
+        self._raise_immutable_error()
+
+    def __delitem__(self, key):
+        self._raise_immutable_error()
 
 
 def evaluate_upstream_context(upstream_task_execs):
@@ -90,7 +186,13 @@ def publish_variables(task_ex, task_spec):
     if task_ex.state != states.SUCCESS:
         return
 
-    expr_ctx = task_ex.in_context
+    wf_ex = task_ex.workflow_execution
+
+    expr_ctx = ContextView(
+        task_ex.in_context,
+        wf_ex.context,
+        wf_ex.input
+    )
 
     if task_ex.name in expr_ctx:
         LOG.warning(
@@ -112,26 +214,28 @@ def evaluate_task_outbound_context(task_ex):
     :param task_ex: DB task.
     :return: Outbound task Data Flow context.
     """
-
-    in_context = (copy.deepcopy(dict(task_ex.in_context))
-                  if task_ex.in_context is not None else {})
+    in_context = (
+        copy.deepcopy(dict(task_ex.in_context))
+        if task_ex.in_context is not None else {}
+    )
 
     return utils.update_dict(in_context, task_ex.published)
 
 
-def evaluate_workflow_output(wf_spec, ctx):
+def evaluate_workflow_output(wf_ex, wf_spec, ctx):
     """Evaluates workflow output.
 
+    :param wf_ex: Workflow execution.
     :param wf_spec: Workflow specification.
     :param ctx: Final Data Flow context (cause task's outbound context).
     """
 
-    ctx = copy.deepcopy(ctx)
-
     output_dict = wf_spec.get_output()
 
-    # Evaluate workflow 'publish' clause using the final workflow context.
-    output = expr.evaluate_recursively(output_dict, ctx)
+    # Evaluate workflow 'output' clause using the final workflow context.
+    ctx_view = ContextView(ctx, wf_ex.context, wf_ex.input)
+
+    output = expr.evaluate_recursively(output_dict, ctx_view)
 
     # TODO(rakhmerov): Many don't like that we return the whole context
     # if 'output' is not explicitly defined.
@@ -168,6 +272,7 @@ def add_execution_to_context(wf_ex):
 
 
 def add_environment_to_context(wf_ex):
+    # TODO(rakhmerov): This is redundant, we can always get env from WF params
     wf_ex.context = wf_ex.context or {}
 
     # If env variables are provided, add an evaluated copy into the context.
@@ -181,10 +286,13 @@ def add_environment_to_context(wf_ex):
 def add_workflow_variables_to_context(wf_ex, wf_spec):
     wf_ex.context = wf_ex.context or {}
 
-    return utils.merge_dicts(
-        wf_ex.context,
-        expr.evaluate_recursively(wf_spec.get_vars(), wf_ex.context)
-    )
+    # The context for calculating workflow variables is workflow input
+    # and other data already stored in workflow initial context.
+    ctx_view = ContextView(wf_ex.context, wf_ex.input)
+
+    wf_vars = expr.evaluate_recursively(wf_spec.get_vars(), ctx_view)
+
+    utils.merge_dicts(wf_ex.context, wf_vars)
 
 
 def evaluate_object_fields(obj, context):
