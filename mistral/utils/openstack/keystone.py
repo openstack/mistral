@@ -118,7 +118,9 @@ def select_service_endpoints(service_name, service_type, services):
             continue
 
         for endpoint in catalog["endpoints"]:
-            if endpoint["interface"] == 'public':
+            # Keystone v2.0 uses <interface>URL while v3 only uses the
+            # interface without the URL suffix.
+            if CONF.os_actions_endpoint_type in endpoint["interface"]:
                 endpoints.append(enp.Endpoint(None, endpoint, loaded=True))
 
     return endpoints
