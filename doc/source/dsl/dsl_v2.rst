@@ -183,10 +183,9 @@ attributes:
 
 -  **description** - Arbitrary text containing task description.
    *Optional*.
--  **action** - Name of the action associated with the task. *Required
-   but mutually exclusive with* **workflow**.
+-  **action** - Name of the action associated with the task. *Mutually exclusive with* **workflow**. If neither action nor workflow are provided then the action 'std.noop' will be used.
 -  **workflow** - Name of the workflow associated with the task.
-   *Required but mutually exclusive with* **action**.
+   *Mutually exclusive with* **action**.
 -  **input** - Actual input parameter values of the task. *Optional*.
    Value of each parameter is a JSON-compliant type such as number,
    string etc, dictionary or list. It can also be a YAQL expression to
