@@ -53,7 +53,7 @@ Workbooks
 Create new workbook.
 
 positional arguments:
-  definition - Workbook definition file
+  definition - Workbook definition file.
 
 **workbook-delete**:
 ::
@@ -73,7 +73,7 @@ positional arguments:
 Show specific workbook.
 
 positional arguments:
-  name - Workbook name
+  name - Workbook name.
 
 **workbook-get-definition**:
 ::
@@ -83,7 +83,7 @@ positional arguments:
 Show workbook definition.
 
 positional arguments:
-  name - Workbook name
+  name - Workbook name.
 
 **workbook-list**:
 ::
@@ -100,7 +100,7 @@ List all workbooks.
 Update workbook.
 
 positional arguments:
-  definition - Workbook definition file
+  definition - Workbook definition file.
 
 **workbook-validate**:
 ::
@@ -110,7 +110,7 @@ positional arguments:
 Validate workbook.
 
 positional arguments:
-  definition - Workbook definition file
+  definition - Workbook definition file.
 
 Workflows
 ^^^^^^^^^
@@ -123,7 +123,7 @@ Workflows
 Create new workflow.
 
 positional arguments:
-  definition - Workflow definition file
+  definition - Workflow definition file.
 
 optional arguments:
   --public - With this flag workflow will be marked as "public".
@@ -146,7 +146,7 @@ positional arguments:
 Show specific workflow.
 
 positional arguments:
-  name - Workflow name
+  name - Workflow name.
 
 **workflow-get-definition**:
 ::
@@ -156,7 +156,7 @@ positional arguments:
 Show workflow definition.
 
 positional arguments:
-  name - Workflow name
+  name - Workflow name.
 
 **workflow-list**:
 ::
@@ -196,7 +196,7 @@ Actions
 Create new action.
 
 positional arguments:
-  definition - Action definition file
+  definition - Action definition file.
 
 optional arguments:
   --public - With this flag action will be marked as "public".
@@ -204,22 +204,22 @@ optional arguments:
 **action-delete**:
 ::
 
-    usage: mistral action-delete <name> [<name> ...]
+    usage: mistral action-delete action [action ...]
 
 Delete action.
 
 positional arguments:
-  name - Name of action(s).
+  action - Name or ID of action(s).
 
 **action-get**:
 ::
 
-    usage: mistral action-get <name>
+    usage: mistral action-get <action>
 
 Show specific action.
 
 positional arguments:
-  name - Action name.
+  action - Action (name or ID).
 
 **action-get-definition**:
 ::
@@ -241,9 +241,23 @@ List all actions.
 **action-update**:
 ::
 
-    usage: mistral action-update <definition>
+    usage: mistral action-update [--public] [--id ID] <definition>
 
 Update action.
+
+positional arguments:
+  definition - Action definition file.
+
+optional arguments:
+  --id ID               Action ID.
+  --public              With this flag, action will be marked as "public".
+
+**action-validate**:
+::
+
+    usage: mistral action-validate <definition>
+
+Validate action.
 
 positional arguments:
   definition - Action definition file.
@@ -254,12 +268,14 @@ Workflow executions
 **execution-create**:
 ::
 
-    usage: mistral execution-create <workflow_name> [<workflow_input>] [<params>]
+    usage: mistral execution-create [-d DESCRIPTION]
+                                    <workflow_identifier> [<workflow_input>] [<params>]
 
-Create new execution.
+Create a new execution.
 
 positional arguments:
-  workflow_name - Workflow name.
+  workflow_identifier - Workflow ID or name. Workflow name has been deprecated
+                        since Mitaka.
   workflow_input - Workflow input.
   params - Workflow additional parameters.
 
@@ -270,22 +286,22 @@ optional arguments:
 **execution-delete**:
 ::
 
-    usage: mistral execution-delete <id> [<id> ...]
+    usage: mistral execution-delete <execution> [<execution> ...]
 
 Delete execution.
 
 positional arguments:
-  id - Id of execution identifier(s).
+  execution - Id of execution identifier(s).
 
 **execution-get**:
 ::
 
-    usage: mistral execution-get <id>
+    usage: mistral execution-get <execution>
 
 Show specific execution.
 
 positional arguments:
-  id - Execution identifier
+  execution - Execution identifier.
 
 **execution-get-input**:
 ::
@@ -295,38 +311,56 @@ positional arguments:
 Show execution input data.
 
 positional arguments:
-  id - Execution ID
+  id - Execution ID.
 
 **execution-get-output**:
 ::
 
-    usage: mistral execution-get-output <id>
+    usage: mistral execution-get-output [-h] id
 
 Show execution output data.
 
 positional arguments:
-  id - Execution ID
+  id - Execution ID.
 
 **execution-list**:
 ::
 
-    usage: mistral execution-list
+    usage: mistral execution-list [--marker [MARKER]] [--limit [LIMIT]]
+                                  [--sort_keys [SORT_KEYS]]
+                                  [--sort_dirs [SORT_DIRS]]
 
 List all executions.
+
+optional arguments:
+  --marker [MARKER]     The last execution uuid of the previous page, displays
+                        list of executions after "marker".
+  --limit [LIMIT]       Maximum number of executions to return in a single
+                        result.
+  --sort_keys [SORT_KEYS]
+                        Comma-separated list of sort keys to sort results by.
+                        Default: created_at. Example: mistral execution-list
+                        --sort_keys=id,description
+  --sort_dirs [SORT_DIRS]
+                        Comma-separated list of sort directions. Default: asc.
+                        Example: mistral execution-list
+                        --sort_keys=id,description --sort_dirs=asc,desc
 
 **execution-update**:
 ::
 
-    usage: mistral execution-update (-s {RUNNING,PAUSED,SUCCESS,ERROR} | -d <DESCRIPTION>) <id>
+    usage: mistral execution-update [-s {RUNNING,PAUSED,SUCCESS,ERROR,CANCELLED}]
+                                    [-e ENV] [-d DESCRIPTION] <id>
 
 Update execution.
 
 positional arguments:
-  id - Execution identifier
+  id - Execution identifier.
 
 optional arguments:
-  -s {RUNNING,PAUSED,SUCCESS,ERROR}, --state {RUNNING,PAUSED,SUCCESS,ERROR}
+  -s {RUNNING,PAUSED,SUCCESS,ERROR,CANCELLED}, --state {RUNNING,PAUSED,SUCCESS,ERROR,CANCELLED}
                         Execution state
+  -e ENV, --env ENV     Environment variables
   -d DESCRIPTION, --description DESCRIPTION
                         Execution description
 
@@ -341,7 +375,7 @@ Task executions
 Show specific task.
 
 positional arguments:
-  id - Task identifier
+  id - Task identifier.
 
 **task-get-published**:
 ::
@@ -351,7 +385,7 @@ positional arguments:
 Show task published variables.
 
 positional arguments:
-  id - Task ID
+  id - Task ID.
 
 **task-get-result**:
 ::
@@ -361,30 +395,55 @@ positional arguments:
 Show task output data.
 
 positional arguments:
-  id - Task ID
+  id - Task ID.
 
 **task-list**:
 ::
 
-    usage: mistral task-list [<workflow_execution-id>]
+    usage: mistral task-list [<workflow_execution>]
 
 List all tasks.
 
 positional arguments:
-  workflow_execution-id - Workflow execution ID associated with list of Tasks.
+  workflow_execution - Workflow execution ID associated with list of Tasks.
+
+**task-rerun**:
+::
+
+    usage: mistral task-rerun [--resume] [-e ENV] <id>
+
+Rerun an existing task.
+
+positional arguments:
+  id - Task identifier.
+
+optional arguments:
+  --resume              rerun only failed or unstarted action executions for
+                        with-items task.
+  -e ENV, --env ENV     Environment variables.
 
 Action executions
 ^^^^^^^^^^^^^^^^^
 
+**action-execution-delete**:
+::
+
+    usage: mistral action-execution-delete <action_execution> [<action_execution> ...]
+
+Delete action execution.
+
+positional arguments:
+  action_execution - Action execution ID.
+
 **action-execution-get**:
 ::
 
-    usage: mistral action-execution-get <id>
+    usage: mistral action-execution-get <action_execution>
 
 Show specific Action execution.
 
 positional arguments:
-  id - Action execution ID.
+  action_execution - Action execution ID.
 
 **action-execution-get-input**:
 ::
@@ -456,13 +515,13 @@ Cron-triggers
     usage: mistral cron-trigger-create [--params <PARAMS>] [--pattern <* * * * *>]
                                        [--first-time <YYYY-MM-DD HH:MM>]
                                        [--count <integer>]
-                                       <name> <workflow_name> [<workflow_input>]
+                                       <name> <workflow_identifier> [<workflow_input>]
 
 Create new trigger.
 
 positional arguments:
   name - Cron trigger name.
-  workflow_name - Workflow name.
+  workflow_identifier - Workflow name or ID.
   workflow_input - Workflow input.
 
 optional arguments:
@@ -511,17 +570,17 @@ Environments
 Create new environment.
 
 positional arguments:
-  file - Environment configuration file in JSON or YAML
+  file - Environment configuration file in JSON or YAML.
 
 **environment-delete**:
 ::
 
-    usage: mistral environment-delete <name> [<name> ...]
+    usage: mistral environment-delete <environment> [<environment> ...]
 
 Delete environment.
 
 positional arguments:
-  name - Name of environment(s).
+  environment - Name of environment(s).
 
 **environment-get**:
 ::
@@ -531,7 +590,7 @@ positional arguments:
 Show specific environment.
 
 positional arguments:
-  name - Environment name
+  name - Environment name.
 
 **environment-list**:
 ::
@@ -548,4 +607,90 @@ List all environments.
 Update environment.
 
 positional arguments:
-  file - Environment configuration file in JSON or YAML
+  file - Environment configuration file in JSON or YAML.
+
+
+Members
+^^^^^^^
+
+**member-create**:
+::
+
+    usage: mistral member-create <resource_id> <resource_type> <member_id>
+
+Shares a resource to another tenant.
+
+positional arguments:
+  resource_id - Resource ID to be shared.
+  resource_type - Resource type.
+  member_id - Project ID to whom the resource is shared to.
+
+**member-delete**:
+::
+
+    usage: mistral member-delete <resource> <resource_type> <member_id>
+
+Delete a resource sharing relationship.
+
+positional arguments:
+  resource - Resource ID to be shared.
+  resource_type - Resource type.
+  member_id - Project ID to whom the resource is shared to.
+
+**member-get**:
+::
+
+    usage: mistral member-get [-m MEMBER_ID]
+                              <resource> <resource_type>
+
+Show specific member information.
+
+positional arguments:
+  resource - Resource ID to be shared.
+  resource_type - Resource type.
+
+optional arguments:
+  -m MEMBER_ID, --member-id MEMBER_ID
+                        Project ID to whom the resource is shared to. No need
+                        to provide this param if you are the resource member.
+
+**member-list**:
+::
+
+    usage: mistral member-list <resource_id> <resource_type>
+
+List all members.
+
+positional arguments:
+  resource_id - Resource id to be shared.
+  resource_type - Resource type.
+
+**member-update**:
+::
+
+    usage: mistral member-update [-m MEMBER_ID]
+                                 [-s {pending,accepted,rejected}]
+                                 <resource_id> <resource_type>
+
+Update resource sharing status.
+
+positional arguments:
+  resource_id - Resource ID to be shared.
+  resource_type - Resource type.
+
+optional arguments:
+  -m MEMBER_ID, --member-id MEMBER_ID
+                        Project ID to whom the resource is shared to. No need
+                        to provide this param if you are the resource member.
+  -s {pending,accepted,rejected}, --status {pending,accepted,rejected}
+                        status of the sharing.
+
+Services API
+^^^^^^^^^^^^
+
+**service-list**:
+::
+
+    usage: mistral service-list
+
+List all services.
