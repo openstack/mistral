@@ -13,7 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import eventlet
 from keystoneclient.v3 import client as keystone_client
 import logging
 from oslo_config import cfg
@@ -107,26 +106,6 @@ def ctx():
 
 def set_ctx(new_ctx):
     utils.set_thread_local(_CTX_THREAD_LOCAL_NAME, new_ctx)
-
-
-def _wrapper(context, thread_desc, thread_group, func, *args, **kwargs):
-    try:
-        set_ctx(context)
-        func(*args, **kwargs)
-    except Exception as e:
-        if thread_group and not thread_group.exc:
-            thread_group.exc = e
-            thread_group.failed_thread = thread_desc
-    finally:
-        if thread_group:
-            thread_group._on_thread_exit()
-
-        set_ctx(None)
-
-
-def spawn(thread_description, func, *args, **kwargs):
-    eventlet.spawn(_wrapper, ctx().clone(), thread_description,
-                   None, func, *args, **kwargs)
 
 
 def context_from_headers_and_env(headers, env):
