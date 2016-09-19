@@ -15,12 +15,14 @@
 import abc
 import json
 
+from oslo_config import cfg
 from oslo_utils import importutils
 
 from mistral import exceptions as exc
 
-
+CONF = cfg.CONF
 _PYV8 = importutils.try_import('PyV8')
+_V8EVAL = importutils.try_import('v8eval')
 
 
 class JSEvaluator(object):
@@ -31,7 +33,7 @@ class JSEvaluator(object):
         pass
 
 
-class V8Evaluator(JSEvaluator):
+class PyV8Evaluator(JSEvaluator):
     @classmethod
     def evaluate(cls, script, context):
         if not _PYV8:
@@ -46,8 +48,22 @@ class V8Evaluator(JSEvaluator):
             result = ctx.eval(script)
             return _PYV8.convert(result)
 
-# TODO(nmakhotkin) Make it configurable.
-EVALUATOR = V8Evaluator
+
+class V8EvalEvaluator(JSEvaluator):
+    @classmethod
+    def evaluate(cls, script, context):
+        if not _V8EVAL:
+            raise exc.MistralException(
+                "v8eval module is not available. Please install v8eval."
+            )
+
+        v8 = _V8EVAL.V8()
+        return v8.eval(('$ = %s; %s' % (json.dumps(context), script)).encode(
+            encoding='UTF-8'))
+
+
+EVALUATOR = (V8EvalEvaluator if CONF.js_implementation == 'v8eval'
+             else PyV8Evaluator)
 
 
 def evaluate(script, context):
