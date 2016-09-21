@@ -71,7 +71,7 @@ def launch_executor():
     executor_v2.register_membership()
 
     try:
-        executor_server.run()
+        executor_server.run(executor='threading')
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
@@ -100,6 +100,10 @@ def launch_engine():
     engine_v2.register_membership()
 
     try:
+        # Note(ddeja): Engine needs to be run in default (blocking) mode
+        # since using another mode may lead to deadlock.
+        # See https://review.openstack.org/#/c/356343/
+        # for more info.
         engine_server.run()
     except (KeyboardInterrupt, SystemExit):
         pass
