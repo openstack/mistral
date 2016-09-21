@@ -54,7 +54,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         """Return whether server is running."""
         return self._running.is_set()
 
-    def run(self):
+    def run(self, executor='blocking'):
         """Start the server."""
         self.conn = self._make_connection(
             self.host,

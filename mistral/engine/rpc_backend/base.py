@@ -70,7 +70,7 @@ class RPCServer(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self):
+    def run(self, executor='blocking'):
         """Runs the RPC server.
 
         """
