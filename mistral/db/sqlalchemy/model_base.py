@@ -60,6 +60,9 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
         return True
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def to_dict(self):
         """sqlalchemy based automatic to_dict method."""
         d = {}
