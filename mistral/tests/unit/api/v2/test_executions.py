@@ -629,4 +629,4 @@ class TestExecutionsController(base.APITest):
         args, kwargs = mock_get_all.call_args
         resource_function = kwargs['resource_function']
 
-        self.assertEqual(None, resource_function)
+        self.assertIsNone(resource_function)
