@@ -38,7 +38,7 @@ class OsloRPCServer(rpc_base.RPCServer):
     def register_endpoint(self, endpoint):
         self.endpoints.append(endpoint)
 
-    def run(self):
+    def run(self, executor='blocking'):
         target = messaging.Target(
             topic=self.topic,
             server=self.server_id
@@ -48,7 +48,7 @@ class OsloRPCServer(rpc_base.RPCServer):
             rpc.get_transport(),
             target,
             self.endpoints,
-            executor='blocking',
+            executor=executor,
             serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
         )
 
