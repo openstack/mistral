@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@
 import functools
 import json
 
+from oslo_log import log as logging
 import pecan
 import six
 
@@ -24,6 +26,8 @@ import webob
 from wsme import exc as wsme_exc
 
 from mistral import exceptions as exc
+
+LOG = logging.getLogger(__name__)
 
 
 def wrap_wsme_controller_exception(func):
@@ -39,6 +43,7 @@ def wrap_wsme_controller_exception(func):
         except (exc.MistralException, exc.MistralError) as e:
             pecan.response.translatable_error = e
 
+            LOG.error('Error during API call: %s' % str(e))
             raise wsme_exc.ClientSideError(
                 msg=six.text_type(e),
                 status_code=e.http_code
@@ -58,6 +63,7 @@ def wrap_pecan_controller_exception(func):
         try:
             return func(*args, **kwargs)
         except (exc.MistralException, exc.MistralError) as e:
+            LOG.error('Error during API call: %s' % str(e))
             return webob.Response(
                 status=e.http_code,
                 content_type='application/json',

@@ -12,6 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import expressions
+
+
 NONEMPTY_STRING = {
     "type": "string",
     "minLength": 1
@@ -34,16 +37,18 @@ POSITIVE_NUMBER = {
     "minimum": 0.0
 }
 
-YAQL = {
-    "type": "string",
-    "pattern": "^<%.*?%>\\s*$"
+EXPRESSION = {
+    "oneOf": [{
+        "type": "string",
+        "pattern": "^%s\\s*$" % expressions.patterns[name]
+    } for name in expressions.patterns]
 }
 
-YAQL_CONDITION = {
+EXPRESSION_CONDITION = {
     "type": "object",
     "minProperties": 1,
     "patternProperties": {
-        "^\w+$": YAQL
+        "^\w+$": EXPRESSION
     }
 }
 
@@ -54,8 +59,7 @@ ANY = {
         {"type": "integer"},
         {"type": "number"},
         {"type": "object"},
-        {"type": "string"},
-        YAQL
+        {"type": "string"}
     ]
 }
 
@@ -67,8 +71,7 @@ ANY_NULLABLE = {
         {"type": "integer"},
         {"type": "number"},
         {"type": "object"},
-        {"type": "string"},
-        YAQL
+        {"type": "string"}
     ]
 }
 
@@ -89,31 +92,31 @@ ONE_KEY_DICT = {
     }
 }
 
-STRING_OR_YAQL_CONDITION = {
+STRING_OR_EXPRESSION_CONDITION = {
     "oneOf": [
         NONEMPTY_STRING,
-        YAQL_CONDITION
+        EXPRESSION_CONDITION
     ]
 }
 
-YAQL_OR_POSITIVE_INTEGER = {
+EXPRESSION_OR_POSITIVE_INTEGER = {
     "oneOf": [
-        YAQL,
+        EXPRESSION,
         POSITIVE_INTEGER
     ]
 }
 
-YAQL_OR_BOOLEAN = {
+EXPRESSION_OR_BOOLEAN = {
     "oneOf": [
-        YAQL,
+        EXPRESSION,
         {"type": "boolean"}
     ]
 }
 
 
-UNIQUE_STRING_OR_YAQL_CONDITION_LIST = {
+UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST = {
     "type": "array",
-    "items": STRING_OR_YAQL_CONDITION,
+    "items": STRING_OR_EXPRESSION_CONDITION,
     "uniqueItems": True,
     "minItems": 1
 }

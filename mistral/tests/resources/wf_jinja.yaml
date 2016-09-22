@@ -1,0 +1,34 @@
+---
+version: '2.0'
+
+wf:
+  type: direct
+
+  tasks:
+    hello:
+      action: std.echo output="Hello"
+      wait-before: 1
+      publish:
+        result: '{{ task("hello").result }}'
+
+wf1:
+  type: reverse
+  input:
+    - farewell
+
+  tasks:
+    addressee:
+      action: std.echo output="John"
+      publish:
+        name: '{{ task("addressee").result }}'
+
+    goodbye:
+      action: std.echo output="{{ _.farewell }}, {{ _.name }}"
+      requires: [addressee]
+
+wf2:
+  type: direct
+
+  tasks:
+    hello:
+      action: std.echo output="Hello"

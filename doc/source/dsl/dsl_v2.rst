@@ -30,8 +30,8 @@ will be described in details below:
 Prerequisites
 -------------
 
-Mistral DSL takes advantage of
-`YAQL <https://pypi.python.org/pypi/yaql/1.0.0>`__ expression language to
+Mistral DSL supports `YAQL <https://pypi.python.org/pypi/yaql/1.0.0>`__ and
+`Jinja2 <http://jinja.pocoo.org/docs/dev/>`__ expression languages to
 reference workflow context variables and thereby implements passing data
 between workflow tasks. It's also referred to as Data Flow mechanism.
 YAQL is a simple but powerful query language that allows to extract
@@ -51,11 +51,12 @@ in the following sections of DSL:
 
 Mistral DSL is fully based on YAML and knowledge of YAML is a plus for
 better understanding of the material in this specification. It also
-takes advantage of YAQL query language to define expressions in workflow
+takes advantage of supported query languages to define expressions in workflow
 and action definitions.
 
 -  Yet Another Markup Language (YAML): http://yaml.org
 -  Yet Another Query Language (YAQL): https://pypi.python.org/pypi/yaql/1.0.0
+-  Jinja 2: http://jinja.pocoo.org/docs/dev/
 
 Workflows
 ---------
@@ -124,7 +125,7 @@ Common Workflow Attributes
 -  **description** - Arbitrary text containing workflow description. *Optional*.
 -  **input** - List defining required input parameter names and
    optionally their default values in a form "my_param: 123". *Optional*.
--  **output** - Any data structure arbitrarily containing YAQL
+-  **output** - Any data structure arbitrarily containing
    expressions that defines workflow output. May be nested. *Optional*.
 -  **task-defaults** - Default settings for some of task attributes
    defined at workflow level. *Optional*. Corresponding attribute
@@ -188,15 +189,15 @@ attributes:
    *Mutually exclusive with* **action**.
 -  **input** - Actual input parameter values of the task. *Optional*.
    Value of each parameter is a JSON-compliant type such as number,
-   string etc, dictionary or list. It can also be a YAQL expression to
+   string etc, dictionary or list. It can also be an expression to
    retrieve value from task context or any of the mentioned types
-   containing inline YAQL expressions (for example, string "<%
+   containing inline expressions (for example, string "<%
    $.movie_name %> is a cool movie!")
 -  **publish** - Dictionary of variables to publish to the workflow
    context. Any JSON-compatible data structure optionally containing
-   YAQL expression to select precisely what needs to be published.
+   expression to select precisely what needs to be published.
    Published variables will be accessible for downstream tasks via using
-   YAQL expressions. *Optional*.
+   expressions. *Optional*.
 -  **with-items** - If configured, it allows to run action or workflow
    associated with a task multiple times on a provided list of items.
    See `Processing collections using
@@ -278,10 +279,10 @@ Defines a pattern how task should be repeated in case of an error.
    repeated.
 -  **delay** - Defines a delay in seconds between subsequent task
    iterations.
--  **break-on** - Defines a YAQL expression that will break iteration
+-  **break-on** - Defines an expression that will break iteration
    loop if it evaluates to 'true'. If it fires then the task is
    considered error.
--  **continue-on** - Defines a YAQL expression that will continue iteration
+-  **continue-on** - Defines an expression that will continue iteration
    loop if it evaluates to 'true'. If it fires then the task is
    considered successful. If it evaluates to 'false' then policy will break the iteration.
 
@@ -293,7 +294,7 @@ Retry policy can also be configured on a single line as:
       action: my_action
       retry: count=10 delay=5 break-on=<% $.foo = 'bar' %>
 
-All parameter values for any policy can be defined as YAQL expressions.
+All parameter values for any policy can be defined as expressions.
 
 Simplified Input Syntax
 '''''''''''''''''''''''
@@ -407,7 +408,7 @@ Transitions with YAQL expressions
 '''''''''''''''''''''''''''''''''
 
 Task transitions can be determined by success/error/completeness of the
-previous tasks and also by additional YAQL guard expressions that can
+previous tasks and also by additional guard expressions that can
 access any data produced by upstream tasks. So in the example above task
 'create_vm' could also have a YAQL expression on transition to task
 'send_success_email' as follows:
@@ -420,8 +421,8 @@ access any data produced by upstream tasks. So in the example above task
        - send_success_email: <% $.vm_id != null %>
 
 And this would tell Mistral to run 'send_success_email' task only if
-'vm_id' variable published by task 'create_vm' is not empty. YAQL
-expressions can also be applied to 'on-error' and 'on-complete'.
+'vm_id' variable published by task 'create_vm' is not empty.
+Expressions can also be applied to 'on-error' and 'on-complete'.
 
 Fork
 ''''
@@ -475,7 +476,7 @@ run only if all upstream tasks (ones that lead to this task) are
 completed and corresponding conditions have triggered. Task A is
 considered an upstream task of Task B if Task A has Task B mentioned in
 any of its "on-success", "on-error" and "on-complete" clauses regardless
-of YAQL guard expressions.
+of guard expressions.
 
 Partial Join (join: 2)
 
@@ -945,14 +946,14 @@ Attributes
    used only for documenting purposes. Mistral now does not enforce
    actual input parameters to exactly correspond to this list. Based
    parameters will be calculated based on provided actual parameters
-   with using YAQL expressions so what's used in expressions implicitly
+   with using expressions so what's used in expressions implicitly
    define real input parameters. Dictionary of actual input parameters
-   is referenced in YAQL as '$.'. Redundant parameters will be simply
-   ignored.
+   (expression context) is referenced as '$.' in YAQL and as '_.' in Jinja.
+   Redundant parameters will be simply ignored.
 -  **output** - Any data structure defining how to calculate output of
    this action based on output of base action. It can optionally have
-   YAQL expressions to access properties of base action output
-   referenced in YAQL as '$.'.
+   expressions to access properties of base action output through expression
+   context.
 
 Workbooks
 ---------
@@ -1045,7 +1046,7 @@ Attributes
 Predefined Values/Functions in execution data context
 -----------------------------------------------------
 
-Using YAQL it is possible to use some predefined values in Mistral DSL.
+Using expressions it is possible to use some predefined values in Mistral DSL.
 
 -  **OpenStack context**
 -  **Task result**

@@ -77,9 +77,9 @@ class WorkflowSpec(base.BaseSpec):
                 "Workflow doesn't have any tasks [data=%s]" % self._data
             )
 
-        # Validate YAQL expressions.
-        self.validate_yaql_expr(self._data.get('output', {}))
-        self.validate_yaql_expr(self._data.get('vars', {}))
+        # Validate expressions.
+        self.validate_expr(self._data.get('output', {}))
+        self.validate_expr(self._data.get('vars', {}))
 
     def validate_semantics(self):
         super(WorkflowSpec, self).validate_semantics()

@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -112,8 +113,15 @@ class DSLParsingException(MistralException):
     http_code = 400
 
 
-class YaqlGrammarException(DSLParsingException):
+class ExpressionGrammarException(DSLParsingException):
     http_code = 400
+
+
+class JinjaGrammarException(ExpressionGrammarException):
+    message = "Invalid grammar of Jinja expression"
+
+
+class YaqlGrammarException(ExpressionGrammarException):
     message = "Invalid grammar of YAQL expression"
 
 
@@ -124,8 +132,15 @@ class InvalidModelException(DSLParsingException):
 
 # Various common exceptions and errors.
 
-class YaqlEvaluationException(MistralException):
+class EvaluationException(MistralException):
     http_code = 400
+
+
+class JinjaEvaluationException(EvaluationException):
+    message = "Can not evaluate Jinja expression"
+
+
+class YaqlEvaluationException(EvaluationException):
     message = "Can not evaluate YAQL expression"
 
 

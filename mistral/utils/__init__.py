@@ -2,6 +2,7 @@
 #
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - Huawei Technologies Co. Ltd
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -44,6 +45,15 @@ _th_loc_storage = threading.local()
 
 def generate_unicode_uuid():
     return six.text_type(str(uuid.uuid4()))
+
+
+def is_valid_uuid(uuid_string):
+    try:
+        val = uuid.UUID(uuid_string, version=4)
+    except ValueError:
+        return False
+
+    return val.hex == uuid_string.replace('-', '')
 
 
 def _get_greenlet_local_storage():
