@@ -373,7 +373,7 @@ class ActionExecution(resource.Resource):
             output={'some_output': 'Hello, John Doe!'},
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
-            params={'save_result': True}
+            params={'save_result': True, "run_sync": False}
         )
 
 

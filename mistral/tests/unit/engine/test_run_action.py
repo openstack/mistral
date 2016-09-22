@@ -126,6 +126,39 @@ class RunActionEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, action_ex.state)
         self.assertEqual({'result': 'Hello!'}, action_ex.output)
 
+    def test_run_action_run_sync(self):
+        # Start action.
+        action_ex = self.engine.start_action(
+            'std.echo',
+            {'output': 'Hello!'},
+            run_sync=True
+        )
+
+        self.assertEqual('Hello!', action_ex.output['result'])
+        self.assertEqual(states.SUCCESS, action_ex.state)
+
+    def test_run_action_save_result_and_run_sync(self):
+        # Start action.
+        action_ex = self.engine.start_action(
+            'std.echo',
+            {'output': 'Hello!'},
+            save_result=True,
+            run_sync=True
+        )
+
+        self.assertEqual('Hello!', action_ex.output['result'])
+        self.assertEqual(states.SUCCESS, action_ex.state)
+
+        db_action_ex = db_api.get_action_execution(action_ex.id)
+        self.assertEqual(states.SUCCESS, db_action_ex.state)
+        self.assertEqual({'result': 'Hello!'}, db_action_ex.output)
+
+    def test_run_action_run_sync_error(self):
+        # Start action.
+        self.assertRaises(
+            exc.InputException,
+            self.engine.start_action, 'std.async_noop', {}, run_sync=True)
+
     def test_run_action_async(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
@@ -281,5 +314,5 @@ class RunActionEngineTest(base.EngineTestCase):
         run_mock.assert_called_once_with(
             {'input': 'Hello'},
             None,
-            save=None
+            save=False
         )
