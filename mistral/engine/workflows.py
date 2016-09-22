@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import abc
-import copy
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -220,7 +219,6 @@ class Workflow(object):
         })
 
         self.wf_ex.input = input_dict or {}
-        self.wf_ex.context = copy.deepcopy(input_dict) or {}
 
         env = _get_environment(params)
 
@@ -309,18 +307,23 @@ class Workflow(object):
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         if wf_ctrl.any_cancels():
-            self._cancel_workflow(
-                _build_cancel_info_message(wf_ctrl, self.wf_ex)
-            )
+            msg = _build_cancel_info_message(wf_ctrl, self.wf_ex)
+
+            self._cancel_workflow(msg)
         elif wf_ctrl.all_errors_handled():
-            self._succeed_workflow(wf_ctrl.evaluate_workflow_final_context())
+            ctx = wf_ctrl.evaluate_workflow_final_context()
+
+            self._succeed_workflow(ctx)
         else:
-            self._fail_workflow(_build_fail_info_message(wf_ctrl, self.wf_ex))
+            msg = _build_fail_info_message(wf_ctrl, self.wf_ex)
+
+            self._fail_workflow(msg)
 
         return 0
 
     def _succeed_workflow(self, final_context, msg=None):
         self.wf_ex.output = data_flow.evaluate_workflow_output(
+            self.wf_ex,
             self.wf_spec,
             final_context
         )

@@ -17,6 +17,7 @@ from oslo_config import cfg
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
@@ -364,18 +365,29 @@ class PoliciesTest(base.EngineTestCase):
                 "delay": {"type": "integer"}
             }
         }
-        task_db = type('Task', (object,), {'in_context': {'int_var': 5}})
+
+        wf_ex = models.WorkflowExecution(
+            id='1-2-3-4',
+            context={},
+            input={}
+        )
+
+        task_ex = models.TaskExecution(in_context={'int_var': 5})
+        task_ex.workflow_execution = wf_ex
+
         policy.delay = "<% $.int_var %>"
 
         # Validation is ok.
-        policy.before_task_start(task_db, None)
+        policy.before_task_start(task_ex, None)
 
         policy.delay = "some_string"
 
         # Validation is failing now.
         exception = self.assertRaises(
             exc.InvalidModelException,
-            policy.before_task_start, task_db, None
+            policy.before_task_start,
+            task_ex,
+            None
         )
 
         self.assertIn("Invalid data type in TaskPolicy", str(exception))
@@ -494,7 +506,11 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
-        self.assertEqual(2, task_ex.in_context['wait_after'])
+
+        # TODO(rakhmerov): This check doesn't make sense anymore because
+        # we don't store evaluated value anywhere.
+        # Need to create a better test.
+        # self.assertEqual(2, task_ex.in_context['wait_after'])
 
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB)
@@ -535,8 +551,11 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
-        self.assertEqual(3, task_ex.in_context["count"])
-        self.assertEqual(1, task_ex.in_context["delay"])
+        # TODO(rakhmerov): This check doesn't make sense anymore because
+        # we don't store evaluated values anywhere.
+        # Need to create a better test.
+        # self.assertEqual(3, task_ex.in_context["count"])
+        # self.assertEqual(1, task_ex.in_context["delay"])
 
     def test_retry_policy_never_happen(self):
         retry_wb = """---
@@ -908,7 +927,10 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, task_ex.state)
 
-        self.assertEqual(1, task_ex.in_context['timeout'])
+        # TODO(rakhmerov): This check doesn't make sense anymore because
+        # we don't store evaluated 'timeout' value anywhere.
+        # Need to create a better test.
+        # self.assertEqual(1, task_ex.in_context['timeout'])
 
     def test_pause_before_policy(self):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
@@ -1012,9 +1034,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task_ex.state)
 
-        runtime_context = task_ex.runtime_context
-
-        self.assertEqual(4, runtime_context['concurrency'])
+        self.assertEqual(4, task_ex.runtime_context['concurrency'])
 
     def test_concurrency_is_in_runtime_context_from_var(self):
         wb_service.create_workbook_v2(CONCURRENCY_WB_FROM_VAR)
@@ -1023,12 +1043,13 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wb.wf1', {'concurrency': 4})
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
         task_ex = self._assert_single_item(
             wf_ex.task_executions,
             name='task1'
         )
 
-        self.assertEqual(4, task_ex.in_context['concurrency'])
+        self.assertEqual(4, task_ex.runtime_context['concurrency'])
 
     def test_wrong_policy_prop_type(self):
         wb = """---

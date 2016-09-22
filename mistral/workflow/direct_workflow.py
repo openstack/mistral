@@ -183,9 +183,15 @@ class DirectWorkflowController(base.WorkflowController):
 
     def all_errors_handled(self):
         for t_ex in lookup_utils.find_error_task_executions(self.wf_ex.id):
+            ctx_view = data_flow.ContextView(
+                data_flow.evaluate_task_outbound_context(t_ex),
+                self.wf_ex.context,
+                self.wf_ex.input
+            )
+
             tasks_on_error = self._find_next_tasks_for_clause(
                 self.wf_spec.get_on_error_clause(t_ex.name),
-                data_flow.evaluate_task_outbound_context(t_ex)
+                ctx_view
             )
 
             if not tasks_on_error:
@@ -218,7 +224,11 @@ class DirectWorkflowController(base.WorkflowController):
         t_state = task_ex.state
         t_name = task_ex.name
 
-        ctx = data_flow.evaluate_task_outbound_context(task_ex)
+        ctx_view = data_flow.ContextView(
+            data_flow.evaluate_task_outbound_context(task_ex),
+            self.wf_ex.context,
+            self.wf_ex.input
+        )
 
         t_names_and_params = []
 
@@ -226,7 +236,7 @@ class DirectWorkflowController(base.WorkflowController):
             t_names_and_params += (
                 self._find_next_tasks_for_clause(
                     self.wf_spec.get_on_complete_clause(t_name),
-                    ctx
+                    ctx_view
                 )
             )
 
@@ -234,7 +244,7 @@ class DirectWorkflowController(base.WorkflowController):
             t_names_and_params += (
                 self._find_next_tasks_for_clause(
                     self.wf_spec.get_on_error_clause(t_name),
-                    ctx
+                    ctx_view
                 )
             )
 
@@ -242,7 +252,7 @@ class DirectWorkflowController(base.WorkflowController):
             t_names_and_params += (
                 self._find_next_tasks_for_clause(
                     self.wf_spec.get_on_success_clause(t_name),
-                    ctx
+                    ctx_view
                 )
             )
 

@@ -182,16 +182,15 @@ class WorkflowController(object):
         # to cover 'split' (aka 'merge') use case.
         upstream_task_execs = self._get_upstream_task_executions(task_spec)
 
-        upstream_ctx = data_flow.evaluate_upstream_context(upstream_task_execs)
+        ctx = data_flow.evaluate_upstream_context(upstream_task_execs)
 
-        ctx = u.merge_dicts(
-            copy.deepcopy(self.wf_ex.context),
-            upstream_ctx
-        )
-
+        # TODO(rakhmerov): Seems like we can fully get rid of '__env' in
+        # task context if we are OK to have it only in workflow execution
+        # object (wf_ex.context). Now we can selectively modify env
+        # for some tasks if we resume or re-run a workflow.
         if self.wf_ex.context:
             ctx['__env'] = u.merge_dicts(
-                copy.deepcopy(upstream_ctx.get('__env', {})),
+                copy.deepcopy(ctx.get('__env', {})),
                 copy.deepcopy(self.wf_ex.context.get('__env', {}))
             )
 
