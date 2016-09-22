@@ -80,6 +80,14 @@ api_opts = [
     )
 ]
 
+js_impl_opt = cfg.StrOpt(
+    'js_implementation',
+    default='pyv8',
+    choices=['pyv8', 'v8eval'],
+    help='The JavaScript implementation to be used by the std.javascript '
+         'action to evaluate scripts.'
+)
+
 rpc_impl_opt = cfg.StrOpt(
     'rpc_implementation',
     default='oslo',
@@ -275,6 +283,7 @@ CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
+CONF.register_opt(js_impl_opt)
 CONF.register_opt(rpc_impl_opt)
 CONF.register_opt(rpc_response_timeout_opt)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
@@ -288,8 +297,8 @@ CLI_OPTS = [
 
 default_group_opts = itertools.chain(
     CLI_OPTS,
-    [wf_trace_log_name_opt, auth_type_opt, rpc_impl_opt, os_endpoint_type,
-     rpc_response_timeout_opt, expiration_token_duration]
+    [wf_trace_log_name_opt, auth_type_opt, js_impl_opt, rpc_impl_opt,
+     os_endpoint_type, rpc_response_timeout_opt, expiration_token_duration]
 )
 
 CONF.register_cli_opts(CLI_OPTS)
