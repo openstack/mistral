@@ -28,6 +28,7 @@ from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.services import workflows as wf_service
 from mistral import utils
+from mistral.utils import merge_dicts
 from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
@@ -106,21 +107,11 @@ class Workflow(object):
         assert self.wf_ex
 
         if state == states.SUCCESS:
-            wf_ctrl = wf_base.get_controller(self.wf_ex)
-
-            final_context = {}
-
-            try:
-                final_context = wf_ctrl.evaluate_workflow_final_context()
-            except Exception as e:
-                LOG.warning(
-                    'Failed to get final context for %s: %s' % (self.wf_ex, e)
-                )
-
-            return self._succeed_workflow(final_context, msg)
+            return self._succeed_workflow(self._get_final_context(), msg)
         elif state == states.ERROR:
-            return self._fail_workflow(msg)
+            return self._fail_workflow(self._get_final_context(), msg)
         elif state == states.CANCELLED:
+
             return self._cancel_workflow(msg)
 
     def resume(self, env=None):
@@ -195,6 +186,17 @@ class Workflow(object):
         assert self.wf_ex
 
         return db_api.acquire_lock(db_models.WorkflowExecution, self.wf_ex.id)
+
+    def _get_final_context(self):
+        wf_ctrl = wf_base.get_controller(self.wf_ex)
+        final_context = {}
+        try:
+            final_context = wf_ctrl.evaluate_workflow_final_context()
+        except Exception as e:
+            LOG.warning(
+                'Failed to get final context for %s: %s' % (self.wf_ex, e)
+            )
+        return final_context
 
     def _create_execution(self, input_dict, desc, params):
         self.wf_ex = db_api.create_workflow_execution({
@@ -309,15 +311,15 @@ class Workflow(object):
             self._succeed_workflow(ctx)
         else:
             msg = _build_fail_info_message(wf_ctrl, self.wf_ex)
-
-            self._fail_workflow(msg)
+            final_context = wf_ctrl.evaluate_workflow_final_context()
+            self._fail_workflow(final_context, msg)
 
         return 0
 
     def _succeed_workflow(self, final_context, msg=None):
         self.wf_ex.output = data_flow.evaluate_workflow_output(
             self.wf_ex,
-            self.wf_spec,
+            self.wf_spec.get_output(),
             final_context
         )
 
@@ -327,9 +329,24 @@ class Workflow(object):
         if self.wf_ex.task_execution_id:
             self._schedule_send_result_to_parent_workflow()
 
-    def _fail_workflow(self, msg):
+    def _fail_workflow(self, final_context, msg):
         if states.is_paused_or_completed(self.wf_ex.state):
             return
+
+        output_on_error = {}
+        try:
+            output_on_error = data_flow.evaluate_workflow_output(
+                self.wf_ex,
+                self.wf_spec.get_output_on_error(),
+                final_context
+            )
+        except exc.MistralException as e:
+            msg = (
+                "Failed to evaluate expression in output-on-error! "
+                "(output-on-error: '%s', exception: '%s' Cause: '%s'"
+                % (self.wf_spec.get_output_on_error(), e, msg)
+            )
+            LOG.error(msg)
 
         self.set_state(states.ERROR, state_info=msg)
 
@@ -340,7 +357,7 @@ class Workflow(object):
             cfg.CONF.engine.execution_field_size_limit_kb
         )
 
-        self.wf_ex.output = {'result': msg}
+        self.wf_ex.output = merge_dicts({'result': msg}, output_on_error)
 
         if self.wf_ex.task_execution_id:
             self._schedule_send_result_to_parent_workflow()

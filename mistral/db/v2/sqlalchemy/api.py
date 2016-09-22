@@ -35,6 +35,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral import utils
+from mistral.workflow import states
 
 
 CONF = cfg.CONF
@@ -797,6 +798,28 @@ def get_task_executions(**kwargs):
     return _get_task_executions(**kwargs)
 
 
+def _get_completed_task_executions_query(kwargs):
+    query = b.model_query(models.TaskExecution)
+
+    query = query.filter_by(**kwargs)
+
+    query = query.filter(
+        sa.or_(
+            models.TaskExecution.state == states.ERROR,
+            models.TaskExecution.state == states.CANCELLED,
+            models.TaskExecution.state == states.SUCCESS
+        )
+    )
+
+    return query
+
+
+def get_completed_task_executions(**kwargs):
+    query = _get_completed_task_executions_query(kwargs)
+
+    return query.all()
+
+
 def _get_incomplete_task_executions_query(kwargs):
     query = b.model_query(models.TaskExecution)
 
@@ -804,10 +827,10 @@ def _get_incomplete_task_executions_query(kwargs):
 
     query = query.filter(
         sa.or_(
-            models.TaskExecution.state == 'IDLE',
-            models.TaskExecution.state == 'RUNNING',
-            models.TaskExecution.state == 'WAITING',
-            models.TaskExecution.state == 'DELAYED'
+            models.TaskExecution.state == states.IDLE,
+            models.TaskExecution.state == states.RUNNING,
+            models.TaskExecution.state == states.WAITING,
+            models.TaskExecution.state == states.RUNNING_DELAYED
         )
     )
 
@@ -971,9 +994,9 @@ def get_expired_executions(time, session=None):
     query = query.filter(models.WorkflowExecution.updated_at < time)
     query = query.filter(
         sa.or_(
-            models.WorkflowExecution.state == "SUCCESS",
-            models.WorkflowExecution.state == "ERROR",
-            models.WorkflowExecution.state == "CANCELLED"
+            models.WorkflowExecution.state == states.SUCCESS,
+            models.WorkflowExecution.state == states.ERROR,
+            models.WorkflowExecution.state == states.CANCELLED
         )
     )
 

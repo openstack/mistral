@@ -19,6 +19,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base as engine_test_base
@@ -548,6 +549,96 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         result = data_flow.get_task_execution_result(task1)
 
         self.assertListEqual([], result)
+
+    def test_publish_on_error(self):
+        wf_def = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output-on-error:
+            out: <% $.hi %>
+
+          tasks:
+            task1:
+              action: std.fail
+              publish-on-error:
+                hi: hello_from_error
+                err: <% task(task1).result %>
+        """
+
+        wf_service.create_workflows(wf_def)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+
+        tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self.assertEqual(states.ERROR, task1.state)
+        self.assertEqual('hello_from_error', task1.published['hi'])
+        self.assertIn('Fail action expected exception', task1.published['err'])
+        self.assertEqual('hello_from_error', wf_ex.output['out'])
+        self.assertIn('Fail action expected exception', wf_ex.output['result'])
+
+    def test_output_on_error_wb_yaql_failed(self):
+        wb_def = """---
+            version: '2.0'
+
+            name: wb
+
+            workflows:
+              wf1:
+                type: direct
+                output-on-error:
+                    message: <% $.message %>
+
+                tasks:
+                  task1:
+                    workflow: wf2
+                    publish-on-error:
+                        message: <% task(task1).result.message %>
+
+              wf2:
+                type: direct
+                output-on-error:
+                    message: <% $.not_existing_variable %>
+
+                tasks:
+                    task1:
+                        action: std.fail
+                        publish-on-error:
+                            message: <% task(task1).result %>
+        """
+
+        wb_service.create_workbook_v2(wb_def)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        # Note: We need to reread execution to access related tasks.
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIn('Failed to evaluate expression in output-on-error!',
+                      wf_ex.state_info)
+        self.assertIn('$.message', wf_ex.state_info)
+
+        tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+        self.assertIn('task(task1).result.message', task1.state_info)
 
 
 class DataFlowTest(test_base.BaseTest):

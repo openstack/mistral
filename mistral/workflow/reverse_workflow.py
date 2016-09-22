@@ -109,7 +109,10 @@ class ReverseWorkflowController(base.WorkflowController):
         # executions for one task.
         assert len(task_execs) <= 1
 
-        return data_flow.evaluate_task_outbound_context(task_execs[0])
+        if len(task_execs) == 1:
+            return data_flow.evaluate_task_outbound_context(task_execs[0])
+        else:
+            return {}
 
     def get_logical_task_state(self, task_ex):
         # TODO(rakhmerov): Implement.

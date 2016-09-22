@@ -200,11 +200,19 @@ class DirectWorkflowController(base.WorkflowController):
         return True
 
     def _find_end_tasks(self):
+        def is_end_task(t_ex):
+            try:
+                return not self._has_outbound_tasks(t_ex)
+            except exc.MistralException:
+                # If some error happened during the evaluation of outbound
+                # tasks we consider that the given task is an end task.
+                # Due to this output-on-error could reach the outbound context
+                # of given task also.
+                return True
+
         return list(
-            filter(
-                lambda t_ex: not self._has_outbound_tasks(t_ex),
-                lookup_utils.find_successful_task_executions(self.wf_ex.id)
-            )
+            filter(is_end_task,
+                   lookup_utils.find_completed_tasks(self.wf_ex.id))
         )
 
     def _has_outbound_tasks(self, task_ex):
