@@ -55,7 +55,7 @@ def enforce(action, context, target=None, do_raise=True,
                    For object creation, this should be a dictionary
                    representing the location of the object.
                    e.g. ``{'project_id': context.project_id}``
-    :param do_raise: if True (the default), raises specified excepion.
+    :param do_raise: if True (the default), raises specified exception.
     :param exc: Exception to be raised if not authorized. Default is
                 mistral.exceptions.NotAllowedException.
 
