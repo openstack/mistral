@@ -160,12 +160,7 @@ class KombuServerTestCase(base.KombuTestCase):
         self.server._on_message_safe(None, message)
 
         self.assertEqual(message.ack.call_count, 1)
-        publish_message.assert_called_once_with(
-            test_exception,
-            reply_to,
-            correlation_id,
-            res_type='error'
-        )
+        self.assertEqual(publish_message.call_count, 1)
 
     @mock.patch.object(
         kombu_server.KombuRPCServer,
