@@ -66,6 +66,34 @@ AD_HOC_ACTION_EX_DB = models.ActionExecution(
     updated_at=datetime.datetime(1970, 1, 1)
 )
 
+AD_HOC_ACTION_EX_ERROR = models.ActionExecution(
+    id='123',
+    state=states.ERROR,
+    state_info=states.ERROR,
+    tags=['foo', 'fee'],
+    name='std.echo',
+    description='something',
+    accepted=True,
+    input={},
+    output={},
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1)
+)
+
+AD_HOC_ACTION_EX_CANCELLED = models.ActionExecution(
+    id='123',
+    state=states.CANCELLED,
+    state_info=states.CANCELLED,
+    tags=['foo', 'fee'],
+    name='std.echo',
+    description='something',
+    accepted=True,
+    input={},
+    output={},
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1)
+)
+
 ACTION_EX_DB_NOT_COMPLETE = models.ActionExecution(
     id='123',
     state=states.RUNNING,
@@ -144,6 +172,14 @@ MOCK_ACTION = mock.MagicMock(return_value=ACTION_EX_DB)
 MOCK_ACTION_NOT_COMPLETE = mock.MagicMock(
     return_value=ACTION_EX_DB_NOT_COMPLETE
 )
+
+MOCK_ACTION_COMPLETE_ERROR = mock.MagicMock(
+    return_value=AD_HOC_ACTION_EX_ERROR
+)
+MOCK_ACTION_COMPLETE_CANCELLED = mock.MagicMock(
+    return_value=AD_HOC_ACTION_EX_CANCELLED
+)
+
 MOCK_AD_HOC_ACTION = mock.MagicMock(return_value=AD_HOC_ACTION_EX_DB)
 MOCK_ACTIONS = mock.MagicMock(return_value=[ACTION_EX_DB])
 MOCK_EMPTY = mock.MagicMock(return_value=[])
@@ -440,3 +476,29 @@ class TestActionExecutionsController(base.APITest):
             "Only completed action execution can be deleted",
             resp.body.decode()
         )
+
+    @mock.patch.object(
+        db_api,
+        'get_action_execution',
+        MOCK_ACTION_COMPLETE_ERROR
+    )
+    @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
+    def test_delete_action_exeuction_complete_error(self):
+        cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
+
+        resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
+
+        self.assertEqual(204, resp.status_int)
+
+    @mock.patch.object(
+        db_api,
+        'get_action_execution',
+        MOCK_ACTION_COMPLETE_CANCELLED
+    )
+    @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
+    def test_delete_action_exeuction_complete_cancelled(self):
+        cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
+
+        resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
+
+        self.assertEqual(204, resp.status_int)
