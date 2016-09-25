@@ -240,16 +240,21 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
 @profiler.trace('task-handler-refresh-task-state')
 def _refresh_task_state(task_ex_id):
     with db_api.transaction():
-        task_ex = db_api.get_task_execution(task_ex_id)
+        task_ex = db_api.load_task_execution(task_ex_id)
+
+        if not task_ex:
+            return
+
+        wf_ex = task_ex.workflow_execution
+
+        if states.is_completed(wf_ex.state):
+            return
 
         wf_spec = spec_parser.get_workflow_spec_by_execution_id(
             task_ex.workflow_execution_id
         )
 
-        wf_ctrl = wf_base.get_controller(
-            task_ex.workflow_execution,
-            wf_spec
-        )
+        wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
         state, state_info, cardinality = wf_ctrl.get_logical_task_state(
             task_ex
