@@ -609,3 +609,30 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             lambda:
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
+
+    def test_delete_workflow_completion_on_execution_delete(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            async_task:
+              action: std.async_noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        calls = db_api.get_delayed_calls()
+
+        mtd_name = 'mistral.engine.workflow_handler._check_and_complete'
+
+        self._assert_single_item(calls, target_method_name=mtd_name)
+
+        db_api.delete_workflow_execution(wf_ex.id)
+
+        self._await(
+            lambda:
+            len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
+        )
