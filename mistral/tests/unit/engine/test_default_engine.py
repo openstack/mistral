@@ -398,7 +398,14 @@ class DefaultEngineTest(base.DbTestCase):
     def test_stop_workflow_fail(self):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+            'wb.wf',
+            {
+                'param1': 'Hey',
+                'param2': 'Hi'
+            },
+            task_name="task2"
+        )
+
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -413,7 +420,14 @@ class DefaultEngineTest(base.DbTestCase):
     def test_stop_workflow_succeed(self):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+            'wb.wf',
+            {
+                'param1': 'Hey',
+                'param2': 'Hi'
+            },
+            task_name="task2"
+        )
+
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -427,7 +441,14 @@ class DefaultEngineTest(base.DbTestCase):
 
     def test_stop_workflow_bad_status(self):
         wf_ex = self.engine.start_workflow(
-            'wb.wf', {'param1': 'Hey', 'param2': 'Hi'}, task_name="task2")
+            'wb.wf',
+            {
+                'param1': 'Hey',
+                'param2': 'Hi'
+            },
+            task_name="task2"
+        )
+
         # Re-read execution to access related tasks.
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 

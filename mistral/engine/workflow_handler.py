@@ -81,7 +81,10 @@ def cancel_workflow(wf_ex, msg=None):
 def _check_and_complete(wf_ex_id):
     # Note: This method can only be called via scheduler.
     with db_api.transaction():
-        wf_ex = db_api.get_workflow_execution(wf_ex_id)
+        wf_ex = db_api.load_workflow_execution(wf_ex_id)
+
+        if not wf_ex or states.is_completed(wf_ex.state):
+            return
 
         wf = workflows.Workflow(
             db_api.get_workflow_definition(wf_ex.workflow_id),
@@ -167,6 +170,10 @@ def set_workflow_state(wf_ex, state, msg=None):
         )
 
 
+def _get_completion_check_key(wf_ex):
+    return 'wfh_on_c_a_c-%s' % wf_ex.id
+
+
 @profiler.trace('workflow-handler-schedule-check-and-complete')
 def _schedule_check_and_complete(wf_ex, delay=0):
     """Schedules workflow completion check.
@@ -183,8 +190,7 @@ def _schedule_check_and_complete(wf_ex, delay=0):
     :param delay: Minimum amount of time before task completion check
         should be made.
     """
-    # TODO(rakhmerov): update docstring
-    key = 'wfh_on_c_a_c-%s' % wf_ex.id
+    key = _get_completion_check_key(wf_ex)
 
     scheduler.schedule_call(
         None,
