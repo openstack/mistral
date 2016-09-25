@@ -866,3 +866,58 @@ class JoinEngineTest(base.EngineTestCase):
             lambda:
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
+
+    def delete_join_completion_check_on_execution_delete(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: join_task
+
+            task2:
+              description: Never ends
+              action: std.async_noop
+              on-success: join_task
+
+            join_task:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
+
+        self.assertTrue(len(tasks) >= 2)
+
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self.await_task_success(task1.id)
+
+        # Once task1 is finished we know that join_task must be created.
+
+        tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
+
+        self._assert_single_item(
+            tasks,
+            name='join_task',
+            state=states.WAITING
+        )
+
+        calls = db_api.get_delayed_calls()
+
+        mtd_name = 'mistral.engine.task_handler._refresh_task_state'
+
+        self._assert_single_item(calls, target_method_name=mtd_name)
+
+        # Stop the workflow.
+        db_api.delete_workflow_execution(wf_ex.id)
+
+        self._await(
+            lambda:
+            len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
+        )
