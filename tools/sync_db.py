@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import sys
+
 import keystonemiddleware.opts as keystonemw_opts
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -49,4 +51,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

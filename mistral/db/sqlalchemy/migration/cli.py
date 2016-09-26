@@ -21,6 +21,7 @@ from alembic import util as alembic_u
 from oslo_config import cfg
 from oslo_utils import importutils
 import six
+import sys
 
 from mistral.services import action_manager
 from mistral.services import workflows
@@ -129,4 +130,4 @@ def main():
     CONF.command.func(config, CONF.command.name)
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
