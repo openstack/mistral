@@ -116,6 +116,7 @@ def update_workflow_execution_env(wf_ex, env):
         )
 
     wf_ex.params['env'] = utils.merge_dicts(wf_ex.params['env'], env)
+
     data_flow.add_environment_to_context(wf_ex)
 
     return wf_ex
