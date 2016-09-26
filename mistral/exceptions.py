@@ -192,3 +192,11 @@ class NotAllowedException(MistralException):
 class UnauthorizedException(MistralException):
     http_code = 401
     message = "Unauthorized"
+
+
+class KombuException(Exception):
+    def __init__(self, e):
+        super(KombuException, self).__init__(e)
+
+        self.exc_type = e.__class__.__name__
+        self.value = str(e)

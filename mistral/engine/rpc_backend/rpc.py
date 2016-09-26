@@ -311,7 +311,7 @@ def wrap_messaging_exception(method):
 
         except exc.MistralException:
             raise
-        except (client.RemoteError, Exception) as e:
+        except (client.RemoteError, exc.KombuException, Exception) as e:
             if hasattr(e, 'exc_type') and hasattr(exc, e.exc_type):
                 exc_cls = getattr(exc, e.exc_type)
                 raise exc_cls(e.value)
