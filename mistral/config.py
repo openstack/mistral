@@ -98,8 +98,8 @@ rpc_response_timeout_opt = cfg.IntOpt(
 
 os_endpoint_type = cfg.StrOpt(
     'os-actions-endpoint-type',
-    default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'publicURL'),
-    choices=['publicURL', 'adminURL', 'internalURL'],
+    default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'public'),
+    choices=['public', 'admin', 'internal'],
     help='Type of endpoint in identity service catalog to use for'
          ' communication with OpenStack services.'
 )
