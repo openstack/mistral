@@ -87,7 +87,7 @@ class OpenStackAction(base.Action):
         ctx = context.ctx()
         client_class = self.__class__.__name__
         # Colon character is reserved (rfc3986) which avoids key collisions.
-        key = client_class + ':' + ctx.project_name + ':' + ctx.project_id
+        key = client_class + ':' + ctx.project_id
 
         def create_cached_client():
             new_client = self._create_client()
