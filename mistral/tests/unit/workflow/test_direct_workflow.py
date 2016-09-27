@@ -36,7 +36,9 @@ class DirectWorkflowControllerTest(base.DbTestCase):
             id='1-2-3-4',
             spec=wf_spec.to_dict(),
             state=states.RUNNING,
-            workflow_id=wfs[0].id
+            workflow_id=wfs[0].id,
+            input={},
+            context={}
         )
 
         self.wf_ex = wf_ex

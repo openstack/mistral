@@ -17,6 +17,8 @@ from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
+from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base as engine_test_base
@@ -84,12 +86,8 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         )
 
         # Make sure that task inbound context doesn't contain workflow
-        # specification, input and params.
-        ctx = task1.in_context
-
-        self.assertFalse('spec' in ctx['__execution'])
-        self.assertFalse('input' in ctx['__execution'])
-        self.assertFalse('params' in ctx['__execution'])
+        # execution info.
+        self.assertFalse('__execution' in task1.in_context)
 
     def test_linear_with_branches_dataflow(self):
         linear_with_branches_wf = """---
@@ -595,3 +593,106 @@ class DataFlowTest(test_base.BaseTest):
             [1, 1],
             data_flow.get_task_execution_result(task_ex)
         )
+
+    def test_context_view(self):
+        ctx = data_flow.ContextView(
+            {
+                'k1': 'v1',
+                'k11': 'v11',
+                'k3': 'v3'
+            },
+            {
+                'k2': 'v2',
+                'k21': 'v21',
+                'k3': 'v32'
+            }
+        )
+
+        self.assertIsInstance(ctx, dict)
+        self.assertEqual(5, len(ctx))
+
+        self.assertIn('k1', ctx)
+        self.assertIn('k11', ctx)
+        self.assertIn('k3', ctx)
+        self.assertIn('k2', ctx)
+        self.assertIn('k21', ctx)
+
+        self.assertEqual('v1', ctx['k1'])
+        self.assertEqual('v1', ctx.get('k1'))
+        self.assertEqual('v11', ctx['k11'])
+        self.assertEqual('v11', ctx.get('k11'))
+        self.assertEqual('v3', ctx['k3'])
+        self.assertEqual('v2', ctx['k2'])
+        self.assertEqual('v2', ctx.get('k2'))
+        self.assertEqual('v21', ctx['k21'])
+        self.assertEqual('v21', ctx.get('k21'))
+
+        self.assertIsNone(ctx.get('Not existing key'))
+
+        self.assertRaises(exc.MistralError, ctx.update)
+        self.assertRaises(exc.MistralError, ctx.clear)
+        self.assertRaises(exc.MistralError, ctx.pop, 'k1')
+        self.assertRaises(exc.MistralError, ctx.popitem)
+        self.assertRaises(exc.MistralError, ctx.__setitem__, 'k5', 'v5')
+        self.assertRaises(exc.MistralError, ctx.__delitem__, 'k2')
+
+        self.assertEqual('v1', expr.evaluate('<% $.k1 %>', ctx))
+        self.assertEqual('v2', expr.evaluate('<% $.k2 %>', ctx))
+        self.assertEqual('v3', expr.evaluate('<% $.k3 %>', ctx))
+
+        # Now change the order of dictionaries and make sure to have
+        # a different for key 'k3'.
+        ctx = data_flow.ContextView(
+            {
+                'k2': 'v2',
+                'k21': 'v21',
+                'k3': 'v32'
+            },
+            {
+                'k1': 'v1',
+                'k11': 'v11',
+                'k3': 'v3'
+            }
+        )
+
+        self.assertEqual('v32', expr.evaluate('<% $.k3 %>', ctx))
+
+    def test_context_view_eval_root_with_yaql(self):
+        ctx = data_flow.ContextView(
+            {'k1': 'v1'},
+            {'k2': 'v2'}
+        )
+
+        res = expr.evaluate('<% $ %>', ctx)
+
+        self.assertIsNotNone(res)
+        self.assertIsInstance(res, dict)
+        self.assertEqual(2, len(res))
+
+    def test_context_view_eval_keys(self):
+        ctx = data_flow.ContextView(
+            {'k1': 'v1'},
+            {'k2': 'v2'}
+        )
+
+        res = expr.evaluate('<% $.keys() %>', ctx)
+
+        self.assertIsNotNone(res)
+        self.assertIsInstance(res, list)
+        self.assertEqual(2, len(res))
+        self.assertIn('k1', res)
+        self.assertIn('k2', res)
+
+    def test_context_view_eval_values(self):
+        ctx = data_flow.ContextView(
+            {'k1': 'v1'},
+            {'k2': 'v2'}
+        )
+
+        res = expr.evaluate('<% $.values() %>', ctx)
+
+        self.assertIsNotNone(res)
+        self.assertIsInstance(res, list)
+        self.assertEqual(2, len(res))
+        self.assertIn('v1', res)
+        self.assertIn('v2', res)

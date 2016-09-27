@@ -158,7 +158,7 @@ class SpecificationCachingTest(base.DbTestCase):
         self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
         self.assertEqual(2, spec_parser.get_wf_definition_spec_cache_size())
 
-    def test_update_workflow_spec_for_execution(self):
+    def test_cache_workflow_spec_by_execution_id(self):
         wf_text = """
         version: '2.0'
 

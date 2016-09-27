@@ -116,7 +116,6 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertEqual('my execution', wf_ex.description)
-        self._assert_dict_contains_subset(wf_input, wf_ex.context)
         self.assertIn('__execution', wf_ex.context)
 
         # Note: We need to reread execution to access related tasks.
@@ -133,9 +132,6 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({}, task_ex.runtime_context)
 
         # Data Flow properties.
-        self._assert_dict_contains_subset(wf_input, task_ex.in_context)
-        self.assertIn('__execution', task_ex.in_context)
-
         action_execs = db_api.get_action_executions(
             task_execution_id=task_ex.id
         )
@@ -159,7 +155,6 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex.state)
-        self._assert_dict_contains_subset(wf_input, wf_ex.context)
         self.assertIn('__execution', wf_ex.context)
 
         # Note: We need to reread execution to access related tasks.
@@ -176,9 +171,6 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({}, task_ex.runtime_context)
 
         # Data Flow properties.
-        self._assert_dict_contains_subset(wf_input, task_ex.in_context)
-        self.assertIn('__execution', task_ex.in_context)
-
         action_execs = db_api.get_action_executions(
             task_execution_id=task_ex.id
         )
@@ -318,8 +310,7 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(states.RUNNING, task1_ex.state)
         self.assertIsNotNone(task1_ex.spec)
         self.assertDictEqual({}, task1_ex.runtime_context)
-        self._assert_dict_contains_subset(wf_input, task1_ex.in_context)
-        self.assertIn('__execution', task1_ex.in_context)
+        self.assertNotIn('__execution', task1_ex.in_context)
 
         action_execs = db_api.get_action_executions(
             task_execution_id=task1_ex.id
@@ -345,8 +336,6 @@ class DefaultEngineTest(base.DbTestCase):
         # Data Flow properties.
         task1_ex = db_api.get_task_execution(task1_ex.id)  # Re-read the state.
 
-        self._assert_dict_contains_subset(wf_input, task1_ex.in_context)
-        self.assertIn('__execution', task1_ex.in_context)
         self.assertDictEqual({'var': 'Hey'}, task1_ex.published)
         self.assertDictEqual({'output': 'Hey'}, task1_action_ex.input)
         self.assertDictEqual({'result': 'Hey'}, task1_action_ex.output)
@@ -396,7 +385,6 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual(states.SUCCESS, task2_action_ex.state)
 
         # Data Flow properties.
-        self.assertIn('__execution', task1_ex.in_context)
         self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
         self.assertDictEqual({}, task2_ex.published)
         self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
