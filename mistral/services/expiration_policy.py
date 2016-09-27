@@ -86,8 +86,8 @@ def run_execution_expiration_policy(self, ctx):
                 )
                 db_api.delete_workflow_execution(execution.id)
             except Exception as e:
-                msg = "Failed to delete [execution_id=%s]\n %s" \
-                      % (execution.id, traceback.format_exc(e))
+                msg = ("Failed to delete [execution_id=%s]\n %s"
+                       % (execution.id, traceback.format_exc(e)))
                 LOG.warning(msg)
             finally:
                 auth_ctx.set_ctx(None)

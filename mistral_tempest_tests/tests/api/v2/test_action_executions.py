@@ -126,8 +126,9 @@ class ActionExecutionTestsV2(base.TestCase):
         resp, body = self.client.create_action_execution(
             {
                 'name': 'std.http',
-                'input': '{{"url": "http://localhost:8989/v2/workflows",\
-                           "headers": {{"X-Auth-Token": "{}"}}}}'.format(token)
+                'input': ('{{"url": "http://localhost:8989/v2/workflows",'
+                          '"headers": {{"X-Auth-Token": "{}"}}}}'
+                          ).format(token)
             }
         )
 

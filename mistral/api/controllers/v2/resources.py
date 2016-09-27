@@ -213,8 +213,8 @@ class Execution(resource.Resource):
     "description of workflow execution."
 
     params = types.jsontype
-    "params define workflow type specific parameters. For example, reverse \
-    workflow takes one parameter 'task_name' that defines a target task."
+    ("params define workflow type specific parameters. For example, reverse "
+     "workflow takes one parameter 'task_name' that defines a target task.")
 
     task_execution_id = wtypes.text
     "reference to the parent task execution"
@@ -282,8 +282,8 @@ class Task(resource.Resource):
     workflow_execution_id = wtypes.text
 
     state = wtypes.text
-    "state can take one of the following values: \
-    IDLE, RUNNING, SUCCESS, ERROR, DELAYED"
+    ("state can take one of the following values: "
+     "IDLE, RUNNING, SUCCESS, ERROR, DELAYED")
 
     state_info = wtypes.text
     "an optional state information string"
