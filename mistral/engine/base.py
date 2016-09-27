@@ -56,7 +56,8 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def on_action_complete(self, action_ex_id, result, wf_action=False):
+    def on_action_complete(self, action_ex_id, result, wf_action=False,
+                           async=False):
         """Accepts action result and continues the workflow.
 
         Action execution result here is a result which comes from an
@@ -68,6 +69,8 @@ class Engine(object):
             a workflow execution rather than action execution. It happens
             when a nested workflow execution sends its result to a parent
             workflow.
+        :param async: If True, run action in asynchronous mode (w/o waiting
+            for completion).
         :return: Action(or workflow if wf_action=True) execution object.
         """
         raise NotImplementedError
