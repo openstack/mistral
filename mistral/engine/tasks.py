@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import abc
-import copy
 import operator
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -241,7 +240,7 @@ class Task(object):
         if not action_name:
             return {}
 
-        env = self.task_ex.in_context.get('__env', {})
+        env = self.wf_ex.context.get('__env', {})
 
         return env.get('__actions', {}).get(action_name, {})
 
@@ -351,12 +350,16 @@ class RegularTask(Task):
         )
 
     def _get_target(self, input_dict):
+        ctx_view = data_flow.ContextView(
+            input_dict,
+            self.ctx,
+            self.wf_ex.context,
+            self.wf_ex.input
+        )
+
         return expr.evaluate_recursively(
             self.task_spec.get_target(),
-            utils.merge_dicts(
-                copy.deepcopy(input_dict),
-                copy.deepcopy(self.ctx)
-            )
+            ctx_view
         )
 
     def _get_action_input(self, ctx=None):
