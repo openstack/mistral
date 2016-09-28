@@ -120,7 +120,7 @@ class KombuClientTestCase(base.KombuTestCase):
         get_thread_local.side_effect = side_effect
 
         response = self.client.async_call(self.ctx, 'method')
-        self.assertEqual(response, None)
+        self.assertIsNone(response)
         # check if consumer.consume was called once
         self.assertEqual(self.client.consumer.consume.call_count, 1)
 

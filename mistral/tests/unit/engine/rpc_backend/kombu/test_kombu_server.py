@@ -122,7 +122,7 @@ class KombuServerTestCase(base.KombuTestCase):
         acquire_mock.drain_events.side_effect = KeyboardInterrupt()
         fake_kombu.connection.acquire.return_value = acquire_mock
 
-        self.assertEqual(self.server.run(), None)
+        self.assertIsNone(self.server.run())
         self.assertFalse(self.server.is_running)
 
     @mock.patch.object(
