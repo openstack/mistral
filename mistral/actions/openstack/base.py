@@ -84,6 +84,13 @@ class OpenStackAction(base.Action):
         (e.g. Nova, Glance, Heat, Keystone etc)
 
         """
+
+        # TODO(d0ugal): Caching has caused some security problems and
+        #               regressions in Mistral. It is disabled for now and
+        #               will be revisited in Ocata. See:
+        #               https://bugs.launchpad.net/mistral/+bug/1627689
+        return self._create_client()
+
         ctx = context.ctx()
         client_class = self.__class__.__name__
         # Colon character is reserved (rfc3986) which avoids key collisions.
