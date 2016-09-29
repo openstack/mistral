@@ -1,30 +1,43 @@
 Quick Start
 ===========
 
-Install and Run Mistral
------------------------
+Prerequisites
+-------------
 
-* Go through the installation manual: :doc:`Mistral Installation Guide </guides/installation_guide>`
+Before you start following this guide, make sure you have completed these
+three prerequisites.
+
+Install and Run Mistral
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Go through the installation manual: :doc:`Mistral Installation Guide </guides/installation_guide>`
 
 Install Mistral Client
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
-* For installing mistralclient, please refer to :doc:`Mistral Client / CLI Guide </guides/mistralclient_guide>`
+To install mistralclient, please refer to :doc:`Mistral Client / CLI Guide </guides/mistralclient_guide>`
 
 Export Keystone Credentials
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To use the OpenStack command line tools you should specify environment variables with the configuration details for your OpenStack installation. The following example assumes that the Identity service is at ``127.0.0.1:5000``, with a user ``admin`` in the ``admin`` tenant whose password is ``password``::
+To use the OpenStack command line tools you should specify environment
+variables with the configuration details for your OpenStack installation. The
+following example assumes that the Identity service is at ``127.0.0.1:5000``,
+with a user ``admin`` in the ``admin`` tenant whose password is ``password``:
+
+.. code-block:: bash
 
     $ export OS_AUTH_URL=http://127.0.0.1:5000/v2.0/
     $ export OS_TENANT_NAME=admin
     $ export OS_USERNAME=admin
     $ export OS_PASSWORD=password
 
-Write Workflow
---------------
+Write a Workflow
+----------------
 
-For example, we have the following workflow::
+For example, we have the following workflow.
+
+.. code-block:: yaml
 
     ---
     version: "2.0"
@@ -44,17 +57,21 @@ For example, we have the following workflow::
         task2:
           action: std.echo output="Done"
 
-This simple workflow iterates through the given list of names in its first task (using "with-items"), stores
-them as a task result (using echo action) and then stores the word "Done" as a result of the second task.
+This simple workflow iterates through a list of names in ``task1`` (using
+`with-items`), stores them as a task result (using the `std.echo` action) and
+then stores the word "Done" as a result of the second task (`task2`).
 
-Create Workflow Object
-----------------------
+To learn more about the Mistral Workflows and what you can do, read the
+:doc:`Mistral DSL specification </dsl/dsl_v2>`
 
-Use *Mistral CLI* to create the workflow::
+Upload the Workflow
+-------------------
 
-    mistral workflow-create <workflow.yaml>
+Use the *Mistral CLI* to create the workflow::
 
-Make sure that output is like the following::
+    $ mistral workflow-create <workflow.yaml>
+
+The output should look similar to this::
 
     +-------------+--------+---------+---------------------+------------+
     | Name        | Tags   | Input   | Created at          | Updated at |
@@ -63,12 +80,13 @@ Make sure that output is like the following::
     +-------------+--------+---------+---------------------+------------+
 
 
-Run Workflow and Check the Result
----------------------------------
+Run the Workflow and Check the Result
+-------------------------------------
 
-Use *Mistral CLI* to run the newly-created workflow. Pass the variable **names** as **workflow_input**::
+Use the *Mistral CLI* to start the new workflow, passing in a list of names
+as JSON::
 
-    mistral execution-create my_workflow '{"names": ["John", "Mistral", "Ivan", "Crystal"]}'
+    $ mistral execution-create my_workflow '{"names": ["John", "Mistral", "Ivan", "Crystal"]}'
 
 Make sure the output is like the following::
 
@@ -84,9 +102,10 @@ Make sure the output is like the following::
     | Updated at  | 2015-08-28 09:05:00.844990           |
     +-------------+--------------------------------------+
 
-After a while, check the status of the workflow execution (replace the example execution id with the real one)::
+After a moment, check the status of the workflow execution (replace the
+example execution id with the ID output above)::
 
-    mistral execution-get 056c2ed1-695f-4ccd-92af-e31bc6153784
+    $ mistral execution-get 056c2ed1-695f-4ccd-92af-e31bc6153784
 
     +-------------+--------------------------------------+
     | Field       | Value                                |
@@ -102,7 +121,7 @@ After a while, check the status of the workflow execution (replace the example e
 
 The status of each **task** also can be checked::
 
-    mistral task-list 056c2ed1-695f-4ccd-92af-e31bc6153784
+    $ mistral task-list 056c2ed1-695f-4ccd-92af-e31bc6153784
 
     +--------------------------------------+-------+---------------+--------------------------------------+---------+
     | ID                                   | Name  | Workflow name | Execution ID                         | State   |
@@ -113,7 +132,7 @@ The status of each **task** also can be checked::
 
 Check the result of task *'task1'*::
 
-    mistral task-get-result 91874635-dcd4-4718-a864-ac90408c1085
+    $ mistral task-get-result 91874635-dcd4-4718-a864-ac90408c1085
 
     [
         "John",
@@ -122,9 +141,10 @@ Check the result of task *'task1'*::
         "Crystal"
     ]
 
-If needed, we can go deeper and look at a list of the results of the **action_executions** of a single task::
+If needed, we can go deeper and look at a list of the results of the
+**action_executions** of a single task::
 
-    mistral action-execution-list 91874635-dcd4-4718-a864-ac90408c1085
+    $ mistral action-execution-list 91874635-dcd4-4718-a864-ac90408c1085
 
     +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
     | ID                                   | Name     | Workflow name | Task name | State   | State info | Is accepted |
@@ -137,7 +157,7 @@ If needed, we can go deeper and look at a list of the results of the **action_ex
 
 Check the result of the first **action_execution**::
 
-    mistral action-execution-get-output 20c2b65d-b899-437f-8e1b-50fe477fbf4b
+    $ mistral action-execution-get-output 20c2b65d-b899-437f-8e1b-50fe477fbf4b
 
     {
         "result": "John"
