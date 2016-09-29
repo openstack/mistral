@@ -16,7 +16,6 @@
 #    limitations under the License.
 
 import abc
-import copy
 
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -182,19 +181,7 @@ class WorkflowController(object):
         # to cover 'split' (aka 'merge') use case.
         upstream_task_execs = self._get_upstream_task_executions(task_spec)
 
-        ctx = data_flow.evaluate_upstream_context(upstream_task_execs)
-
-        # TODO(rakhmerov): Seems like we can fully get rid of '__env' in
-        # task context if we are OK to have it only in workflow execution
-        # object (wf_ex.context). Now we can selectively modify env
-        # for some tasks if we resume or re-run a workflow.
-        if self.wf_ex.context:
-            ctx['__env'] = u.merge_dicts(
-                copy.deepcopy(ctx.get('__env', {})),
-                copy.deepcopy(self.wf_ex.context.get('__env', {}))
-            )
-
-        return ctx
+        return data_flow.evaluate_upstream_context(upstream_task_execs)
 
     @abc.abstractmethod
     def _get_upstream_task_executions(self, task_spec):
