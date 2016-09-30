@@ -15,8 +15,9 @@
 
 import keystoneauth1.identity.generic as auth_plugins
 from keystoneauth1 import session as ks_session
+from keystoneclient import service_catalog as ks_service_catalog
 from keystoneclient.v3 import client as ks_client
-from keystoneclient.v3 import endpoints as enp
+from keystoneclient.v3 import endpoints as ks_endpoints
 from oslo_config import cfg
 from oslo_utils import timeutils
 
@@ -73,9 +74,55 @@ def get_endpoint_for_project(service_name=None, service_type=None):
 
     ctx = context.ctx()
 
-    token = ctx.auth_token
+    service_catalog = obtain_service_catalog(ctx)
 
-    if (ctx.is_trust_scoped and is_token_trust_scoped(token)):
+    catalog = service_catalog.get_endpoints(
+        service_name=service_name,
+        service_type=service_type
+    )
+
+    endpoint = None
+    for service_type in catalog:
+        service = catalog.get(service_type)
+        for interface in service:
+            # is V3 interface?
+            if 'interface' in interface:
+                interface_type = interface['interface']
+                if CONF.os_actions_endpoint_type in interface_type:
+                    endpoint = ks_endpoints.Endpoint(
+                        None,
+                        interface,
+                        loaded=True
+                    )
+                    break
+            # is V2 interface?
+            if 'publicURL' in interface:
+                endpoint_data = {
+                    'url': interface['publicURL'],
+                    'region': interface['region']
+                }
+                endpoint = ks_endpoints.Endpoint(
+                    None,
+                    endpoint_data,
+                    loaded=True
+                )
+                break
+
+    if not endpoint:
+        raise Exception(
+            "No endpoints found [service_name=%s, service_type=%s]"
+            % (service_name, service_type)
+        )
+    else:
+        # TODO(rakhmerov): We may have more than one endpoint because
+        # TODO(rakhmerov): of regions and ideally we need a config option
+        # TODO(rakhmerov): for region
+        return endpoint
+
+
+def obtain_service_catalog(ctx):
+    token = ctx.auth_token
+    if ctx.is_trust_scoped and is_token_trust_scoped(token):
         if ctx.trust_id is None:
             raise Exception(
                 "'trust_id' must be provided in the admin context."
@@ -85,45 +132,16 @@ def get_endpoint_for_project(service_name=None, service_type=None):
         response = trust_client.tokens.get_token_data(
             token,
             include_catalog=True
-        )
+        )['token']
     else:
-        response = client().tokens.get_token_data(token, include_catalog=True)
-
-    endpoints = select_service_endpoints(
-        service_name,
-        service_type,
-        response["token"]["catalog"])
-
-    if not endpoints:
-        raise Exception(
-            "No endpoints found [service_name=%s, service_type=%s]"
-            % (service_name, service_type)
-        )
-    else:
-        # TODO(rakhmerov): We may have more than one endpoint because
-        # TODO(rakhmerov): of regions and ideally we need a config option
-        # TODO(rakhmerov): for region
-        return endpoints[0]
-
-
-def select_service_endpoints(service_name, service_type, services):
-    endpoints = []
-
-    for catalog in services:
-
-        if service_name and catalog["name"] != service_name:
-            continue
-
-        if service_type and catalog["type"] != service_type:
-            continue
-
-        for endpoint in catalog["endpoints"]:
-            # Keystone v2.0 uses <interface>URL while v3 only uses the
-            # interface without the URL suffix.
-            if CONF.os_actions_endpoint_type in endpoint["interface"]:
-                endpoints.append(enp.Endpoint(None, endpoint, loaded=True))
-
-    return endpoints
+        if not ctx.target_service_catalog:
+            response = client().tokens.get_token_data(
+                token,
+                include_catalog=True)['token']
+        else:
+            response = ctx.target_service_catalog
+    service_catalog = ks_service_catalog.ServiceCatalog.factory(response)
+    return service_catalog
 
 
 def get_keystone_endpoint_v2():
@@ -167,6 +185,8 @@ def get_admin_session():
 
 
 def will_expire_soon(expires_at):
+    if not expires_at:
+        return False
     stale_duration = CONF.expiration_token_duration
     assert stale_duration, "expiration_token_duration must be specified"
     expires = timeutils.parse_isotime(expires_at)
