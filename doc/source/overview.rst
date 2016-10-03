@@ -7,7 +7,7 @@ What is Mistral?
 Mistral is a workflow service. Most business processes consist of multiple
 distinct interconnected steps that need to be executed in a particular order
 in a distributed environment. A user can describe such a process as a set of
-tasks and their transitions. After that it is possible to upload such a
+tasks and their transitions. After that, it is possible to upload such a
 description to Mistral, which will take care of state management, correct
 execution order, parallelism, synchronization and high availability. Mistral
 also provides flexible task scheduling so that it can run a process according
@@ -18,7 +18,7 @@ relations between them is called a **workflow**.
 Main use cases
 --------------
 
-Task Scheduling - Cloud Cron
+Task scheduling - Cloud Cron
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A user can use Mistral to schedule tasks to run within a cloud. Tasks can be
 anything from executing local processes (shell scripts, binaries) on specified
@@ -31,7 +31,7 @@ possible) and fault tolerance, and will provide workflow execution
 management/monitoring capabilities (stop, resume, current status, errors and
 other statistics).
 
-Cloud Environment Deployment
+Cloud environment deployment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A user or a framework can use Mistral to specify workflows needed for
 deploying environments consisting of multiple VMs and applications.
