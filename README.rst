@@ -270,6 +270,28 @@ and run the following command in *pdb*, *PyDev* or *PyCharm*::
 
   mistral/cmd/launch.py --server all --config-file etc/mistral.conf --use-debugger
 
+.. note::
+
+    In PyCharm, you also need to enable the Gevent compatibility flag in
+    Settings -> Build, Execution, Deployment -> Python Debugger -> Gevent
+    compatible. Without this setting, PyCharm will not show variable values
+    and become unstable during debugging.
+
+
+Running unit tests in PyCharm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to be able to conveniently run unit tests, you need to:
+
+1. Set unit tests as the default runner:
+
+  Settings -> Tools -> Python Integrated Tools -> Default test runner: Unittests
+
+2. Enable test detection for all classes:
+
+  Run/Debug Configurations -> Defaults -> Python tests -> Unittests -> uncheck
+  Inspect only subclasses of unittest.TestCase
+
 Running examples
 ~~~~~~~~~~~~~~~~
 
