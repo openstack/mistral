@@ -7,17 +7,17 @@ Prerequisites
 Before you start following this guide, make sure you have completed these
 three prerequisites.
 
-Install and Run Mistral
+Install and run Mistral
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Go through the installation manual: :doc:`Mistral Installation Guide </guides/installation_guide>`
 
-Install Mistral Client
+Install Mistral client
 ~~~~~~~~~~~~~~~~~~~~~~
 
 To install mistralclient, please refer to :doc:`Mistral Client / CLI Guide </guides/mistralclient_guide>`
 
-Export Keystone Credentials
+Export Keystone credentials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use the OpenStack command line tools you should specify environment
@@ -32,7 +32,7 @@ with a user ``admin`` in the ``admin`` tenant whose password is ``password``:
     $ export OS_USERNAME=admin
     $ export OS_PASSWORD=password
 
-Write a Workflow
+Write a workflow
 ----------------
 
 For example, we have the following workflow.
@@ -64,7 +64,7 @@ then stores the word "Done" as a result of the second task (`task2`).
 To learn more about the Mistral Workflows and what you can do, read the
 :doc:`Mistral DSL specification </dsl/dsl_v2>`
 
-Upload the Workflow
+Upload the workflow
 -------------------
 
 Use the *Mistral CLI* to create the workflow::
@@ -80,7 +80,7 @@ The output should look similar to this::
     +-------------+--------+---------+---------------------+------------+
 
 
-Run the Workflow and Check the Result
+Run the workflow and check the result
 -------------------------------------
 
 Use the *Mistral CLI* to start the new workflow, passing in a list of names

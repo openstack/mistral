@@ -1,7 +1,7 @@
 Troubleshooting And Debugging
 =============================
 
-Mistral-Dashboard Debug Instructions
+Mistral-Dashboard debug instructions
 ------------------------------------
 
 **Pycharm**
@@ -66,6 +66,6 @@ After a successful login bring the port back - it will continue your session.
 - If you would like to manually restart the apache server,
   open a terminal and run::
 
-    sudo service apache2 restart
+    $ sudo service apache2 restart
 
   *(if not under Ubuntu, replace "sudo" with an identical command)*

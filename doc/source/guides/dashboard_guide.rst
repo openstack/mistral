@@ -31,7 +31,9 @@ The following should get you started:
 
     $ cp -b <mistral-dashboard>/_50_mistral.py.example <horizon>/openstack_dashboard/local/enabled/_50_mistral.py
 
-3. Since Mistral only supports Identity v3, you must ensure that the dashboard points the proper OPENSTACK_KEYSTONE_URL in <horizon>/openstack_dashboard/local/local_settings.py file::
+3. Since Mistral only supports Identity v3, you must ensure that the dashboard
+   points the proper OPENSTACK_KEYSTONE_URL in
+   <horizon>/openstack_dashboard/local/local_settings.py file::
 
     OPENSTACK_API_VERSIONS = {
         "identity": 3,
@@ -39,7 +41,9 @@ The following should get you started:
 
     OPENSTACK_KEYSTONE_URL = "http://%s:5000/v3" % OPENSTACK_HOST
 
-4. Also, make sure you have changed OPENSTACK_HOST to point to your Keystone server and check all endpoints are accessible. You may want to change OPENSTACK_ENDPOINT_TYPE to "publicURL" if some of them are not.
+4. Also, make sure you have changed OPENSTACK_HOST to point to your Keystone
+   server and check all endpoints are accessible. You may want to change 
+   OPENSTACK_ENDPOINT_TYPE to "publicURL" if some of them are not.
 
 5. When you're ready, you would need to either restart your apache::
 
@@ -50,6 +54,6 @@ The following should get you started:
     $ cd ../horizon/
     $ tox -evenv -- python manage.py runserver
 
-Debug Instructions
+Debug instructions
 ------------------
 Please refer to :doc:`Mistral Troubleshooting <../developer/troubleshooting>`
