@@ -1,28 +1,30 @@
 V2 API
 ======
 
-This API describes the ways of interacting with Mistral service via HTTP protocol using Representational State Transfer concept (ReST).
+This API describes the ways of interacting with Mistral service via HTTP protocol
+using Representational State Transfer concept (ReST).
 
 
 Basics
 -------
 
 
-Media Types
+Media types
 ^^^^^^^^^^^
 
 Currently this API relies on JSON to represent states of REST resources.
 
-Error States
+Error states
 ^^^^^^^^^^^^
 
 The common HTTP Response Status Codes (https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.
 
-Application Root [/]
+Application root [/]
 ^^^^^^^^^^^^^^^^^^^^
-Application Root provides links to all possible API methods for Mistral. URLs for other resources described below are relative to Application Root.
+Application Root provides links to all possible API methods for Mistral. URLs
+for other resources described below are relative to Application Root.
 
-API v2 Root [/v2/]
+API v2 root [/v2/]
 ^^^^^^^^^^^^^^^^^^
 All API v2 urls are relative to API v2 root.
 
@@ -32,7 +34,11 @@ Workbooks
 .. autotype:: mistral.api.controllers.v2.resources.Workbook
    :members:
 
-`name` is immutable. tags is a list of values associated with a workbook that a user can use to group workbooks by some criteria (deployment workbooks, Big Data processing workbooks etc.). Note that name and tags get inferred from workbook definition when Mistral service receives a POST request. So they can't be changed in another way.
+`name` is immutable. tags is a list of values associated with a workbook that
+a user can use to group workbooks by some criteria (deployment workbooks,
+Big Data processing workbooks etc.). Note that name and tags get inferred from
+workbook definition when Mistral service receives a POST request. So they
+can't be changed in another way.
 
 .. autotype:: mistral.api.controllers.v2.resources.Workbooks
    :members:
@@ -47,7 +53,10 @@ Workflows
 .. autotype:: mistral.api.controllers.v2.resources.Workflow
    :members:
 
-`name` is immutable. tags is a list of values associated with a workflow that a user can use to group workflows by some criteria. Note that name and tags get inferred from workflow definition when Mistral service receives a POST request. So they can't be changed in another way.
+`name` is immutable. tags is a list of values associated with a workflow that
+a user can use to group workflows by some criteria. Note that name and tags get
+inferred from workflow definition when Mistral service receives a POST request.
+So they can't be changed in another way.
 
 .. autotype:: mistral.api.controllers.v2.resources.Workflows
    :members:
@@ -84,7 +93,9 @@ Executions
 Tasks
 -----
 
-When a workflow starts Mistral creates an execution. It in turn consists of a set of tasks. So Task is an instance of a task described in a Workflow that belongs to a particular execution.
+When a workflow starts Mistral creates an execution. It in turn consists of a
+set of tasks. So Task is an instance of a task described in a Workflow that
+belongs to a particular execution.
 
 
 .. autotype:: mistral.api.controllers.v2.resources.Task
@@ -103,7 +114,9 @@ When a workflow starts Mistral creates an execution. It in turn consists of a se
 Action Executions
 -----------------
 
-When a Task starts Mistral creates a set of Action Executions. So Action Execution is an instance of an action call described in a Workflow Task that belongs to a particular execution.
+When a Task starts Mistral creates a set of Action Executions. So Action Execution
+is an instance of an action call described in a Workflow Task that belongs to a
+particular execution.
 
 
 .. autotype:: mistral.api.controllers.v2.resources.ActionExecution
@@ -121,7 +134,10 @@ When a Task starts Mistral creates a set of Action Executions. So Action Executi
 Cron Triggers
 -------------
 
-Cron trigger is an object that allows to run Mistral workflows according to a time pattern (Unix crontab patterns format). Once a trigger is created it will run a specified workflow according to its properties: pattern, first_execution_time and remaining_executions.
+Cron trigger is an object that allows to run Mistral workflows according to a time
+pattern (Unix crontab patterns format). Once a trigger is created it will run a
+specified workflow according to its properties: pattern, first_execution_time and
+remaining_executions.
 
 
 .. autotype:: mistral.api.controllers.v2.resources.CronTrigger
@@ -137,16 +153,23 @@ Cron trigger is an object that allows to run Mistral workflows according to a ti
 Environments
 ------------
 
-Environment contains a set of variables which can be used in specific workflow. Using Environment possible to create and map action default values - just provide '__actions' key in 'variables'. All these variables can be accessed in workflow DSL by <% $.__env %> expression.
+Environment contains a set of variables which can be used in specific workflow.
+Using Environment possible to create and map action default values - just provide
+'__actions' key in 'variables'. All these variables can be accessed in workflow
+DSL by <% $.__env %> expression.
 
-Example of using in DSL::
+Example of using in DSL
+
+.. code-block:: yaml
 
   workflow:
     tasks:
       task1:
         action: std.echo output=<% $.__env.my_echo_output %>
 
-Example of creating action defaults::
+Example of creating action defaults
+
+.. code-block:: yaml
 
 
   ...ENV...
@@ -174,9 +197,17 @@ Note: using CLI, Environment can be created via JSON or YAML file.
 Services
 --------
 
-Through service management API, system administrator or operator can retrieve Mistral services information of the system, including service group and service identifier. The internal implementation of this feature make use of tooz library, which needs coordinator backend(the most commonly used at present is Zookeeper) installed, please refer to tooz official documentation for more detailed instruction.
+Through service management API, system administrator or operator can retrieve
+Mistral services information of the system, including service group and service
+identifier. The internal implementation of this feature make use of tooz library,
+which needs coordinator backend(the most commonly used at present is Zookeeper)
+installed, please refer to tooz official documentation for more detailed
+instruction.
 
-There are three service groups according to Mistral architecture currently, namely api_group, engine_group and executor_group. The service identifier contains name of the host the service is running on and the process identifier of the service on that host.
+There are three service groups according to Mistral architecture currently, namely
+api_group, engine_group and executor_group. The service identifier contains name
+of the host the service is running on and the process identifier of the service on
+that host.
 
 .. autotype:: mistral.api.controllers.v2.resources.Service
    :members:
@@ -190,7 +221,8 @@ There are three service groups according to Mistral architecture currently, name
 Validation
 ----------
 
-Validation endpoints allow to check correctness of workbook, workflow and ad-hoc action DSL without having to upload them into Mistral.
+Validation endpoints allow to check correctness of workbook, workflow and ad-hoc
+action DSL without having to upload them into Mistral.
 
 **POST /v2/workbooks/validation**
   Validate workbook content (DSL grammar and semantics).
@@ -201,4 +233,5 @@ Validation endpoints allow to check correctness of workbook, workflow and ad-hoc
 **POST /v2/actions/validation**
   Validate ad-hoc action content (DSL grammar and semantics).
 
-These endpoints expect workbook, workflow or ad-hoc action  text (DSL) correspondingly in a request body.
+These endpoints expect workbook, workflow or ad-hoc action  text (DSL) correspondingly
+in a request body.

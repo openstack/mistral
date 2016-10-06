@@ -10,9 +10,9 @@ Tutorial
 
 .. code-block:: bash
 
-   mkdir my_project
-   cd my_project
-   vim setup.py
+   $ mkdir my_project
+   $ cd my_project
+   $ vim setup.py
 
 .. code-block:: python
 
@@ -68,9 +68,9 @@ the paths or file names used.
 
 .. code-block:: bash
 
-    mkdir -p my_package/sub_package
-    touch my_package/__init__.py
-    touch my_package/sub_package/__init__.py
+    $ mkdir -p my_package/sub_package
+    $ touch my_package/__init__.py
+    $ touch my_package/sub_package/__init__.py
 
 3. Write a function in ``yaql.py``.
 
@@ -79,8 +79,8 @@ YAQL context available inside the function.
 
 .. code-block:: bash
 
-    cd my_package/sub_package
-    vim yaql.py
+    $ cd my_package/sub_package
+    $ vim yaql.py
 
 .. code-block:: python
 
@@ -120,15 +120,15 @@ For more information about YAQL, read the `official YAQL documentation <http://y
 
 .. code-block:: bash
 
-    curl https://bootstrap.pypa.io/get-pip.py | python
-    pip install --upgrade setuptools
-    cd -
+    $ curl https://bootstrap.pypa.io/get-pip.py | python
+    $ pip install --upgrade setuptools
+    $ cd -
 
 5. Install the package (note that there is a dot ``.`` at the end of the line).
 
 .. code-block:: bash
 
-    pip install .
+    $ pip install .
 
 6. The YAQL function can be called in Mistral using its name ``random_uuid``.
 
@@ -165,8 +165,8 @@ parent folder of ``my_package`` is ``/path/to/my_project``.
 
 .. code-block:: bash
 
-    export PYTHONPATH=$PYTHONPATH:/path/to/my_project
-    vim $(find / -name "mistral.*egg-info*")/entry_points.txt
+    $ export PYTHONPATH=$PYTHONPATH:/path/to/my_project
+    $ vim $(find / -name "mistral.*egg-info*")/entry_points.txt
 
 .. code-block:: ini
 
