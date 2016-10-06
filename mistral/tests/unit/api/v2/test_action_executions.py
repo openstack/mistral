@@ -225,7 +225,7 @@ class TestActionExecutionsController(base.APITest):
             {
                 'name': 'std.echo',
                 'input': "{}",
-                'params': '{"save_result": true}'
+                'params': '{"save_result": true, "run_sync": true}'
             }
         )
 
@@ -240,7 +240,8 @@ class TestActionExecutionsController(base.APITest):
             action_exec['name'],
             json.loads(action_exec['input']),
             description=None,
-            save_result=True
+            save_result=True,
+            run_sync=True
         )
 
     @mock.patch.object(rpc.EngineClient, 'start_action')

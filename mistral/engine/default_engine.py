@@ -23,6 +23,7 @@ from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
 from mistral.engine import base
 from mistral.engine import workflow_handler as wf_handler
+from mistral import exceptions
 from mistral import utils as u
 from mistral.workflow import states
 
@@ -62,27 +63,48 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             action.validate_input(action_input)
 
+            sync = params.get('run_sync')
             save = params.get('save_result')
             target = params.get('target')
 
-            if save or not action.is_sync(action_input):
+            is_action_sync = action.is_sync(action_input)
+
+            if sync and not is_action_sync:
+                raise exceptions.InputException(
+                    "Action does not support synchronous execution.")
+
+            if not sync and (save or not is_action_sync):
                 action.schedule(action_input, target)
 
                 return action.action_ex.get_clone()
 
-            output = action.run(action_input, target, save=save)
+            output = action.run(action_input, target, save=False)
 
             state = states.SUCCESS if output.is_success() else states.ERROR
 
-            # Action execution is not created but we need to return similar
-            # object to a client anyway.
-            return db_models.ActionExecution(
-                name=action_name,
-                description=description,
-                input=action_input,
-                output=output.to_dict(),
-                state=state
-            )
+            if not save:
+                # Action execution is not created but we need to return similar
+                # object to a client anyway.
+                return db_models.ActionExecution(
+                    name=action_name,
+                    description=description,
+                    input=action_input,
+                    output=output.to_dict(),
+                    state=state
+                )
+
+            action_ex_id = u.generate_unicode_uuid()
+
+            values = {
+                'id': action_ex_id,
+                'name': action_name,
+                'description': description,
+                'input': action_input,
+                'output': output.to_dict(),
+                'state': state,
+            }
+
+            return db_api.create_action_execution(values)
 
     @u.log_exec(LOG)
     @profiler.trace('engine-on-action-complete')
