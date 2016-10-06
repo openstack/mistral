@@ -19,15 +19,15 @@ import re
 import six
 
 from mistral import exceptions as exc
-from mistral import expressions as expr
+from mistral import expressions
 from mistral import utils
 from mistral.workbook import types
 from mistral.workbook.v2 import base
 from mistral.workbook.v2 import policies
 
-
+_expr_ptrns = [expressions.patterns[name] for name in expressions.patterns]
 WITH_ITEMS_PTRN = re.compile(
-    "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % expr.INLINE_YAQL_REGEXP
+    "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % '|'.join(_expr_ptrns)
 )
 RESERVED_TASK_NAMES = [
     'noop',
@@ -62,8 +62,8 @@ class TaskSpec(base.BaseSpec):
             "pause-before": policies.PAUSE_BEFORE_SCHEMA,
             "concurrency": policies.CONCURRENCY_SCHEMA,
             "target": types.NONEMPTY_STRING,
-            "keep-result": types.YAQL_OR_BOOLEAN,
-            "safe-rerun": types.YAQL_OR_BOOLEAN
+            "keep-result": types.EXPRESSION_OR_BOOLEAN,
+            "safe-rerun": types.EXPRESSION_OR_BOOLEAN
         },
         "additionalProperties": False,
         "anyOf": [
@@ -122,12 +122,12 @@ class TaskSpec(base.BaseSpec):
         # Validate YAQL expressions.
         if action or workflow:
             inline_params = self._parse_cmd_and_input(action or workflow)[1]
-            self.validate_yaql_expr(inline_params)
+            self.validate_expr(inline_params)
 
-        self.validate_yaql_expr(self._data.get('input', {}))
-        self.validate_yaql_expr(self._data.get('publish', {}))
-        self.validate_yaql_expr(self._data.get('keep-result', {}))
-        self.validate_yaql_expr(self._data.get('safe-rerun', {}))
+        self.validate_expr(self._data.get('input', {}))
+        self.validate_expr(self._data.get('publish', {}))
+        self.validate_expr(self._data.get('keep-result', {}))
+        self.validate_expr(self._data.get('safe-rerun', {}))
 
     def _transform_with_items(self):
         raw = self._data.get('with-items', [])
@@ -149,11 +149,13 @@ class TaskSpec(base.BaseSpec):
                        "%s" % self._data)
                 raise exc.InvalidModelException(msg)
 
-            var_name, array = match.groups()
+            match_groups = match.groups()
+            var_name = match_groups[0]
+            array = match_groups[1]
 
             # Validate YAQL expression that may follow after "in" for the
             # with-items syntax "var in {[some, list] | <% $.array %> }".
-            self.validate_yaql_expr(array)
+            self.validate_expr(array)
 
             if array.startswith('['):
                 try:
@@ -223,7 +225,7 @@ class DirectWorkflowTaskSpec(TaskSpec):
     _on_clause_type = {
         "oneOf": [
             types.NONEMPTY_STRING,
-            types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+            types.UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST
         ]
     }
 
@@ -271,7 +273,7 @@ class DirectWorkflowTaskSpec(TaskSpec):
     def _validate_transitions(self, on_clause):
         val = self._data.get(on_clause, [])
 
-        [self.validate_yaql_expr(t)
+        [self.validate_expr(t)
          for t in ([val] if isinstance(val, six.string_types) else val)]
 
     @staticmethod

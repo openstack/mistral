@@ -27,7 +27,7 @@ from mistral.workbook import types
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\(\s\"]*")
 
-INLINE_YAQL = expr.INLINE_YAQL_REGEXP
+EXPRESSION = '|'.join([expr.patterns[name] for name in expr.patterns])
 _ALL_IN_BRACKETS = "\[.*\]\s*"
 _ALL_IN_QUOTES = "\"[^\"]*\"\s*"
 _ALL_IN_APOSTROPHES = "'[^']*'\s*"
@@ -37,7 +37,7 @@ _FALSE = "false"
 _NULL = "null"
 
 ALL = (
-    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, INLINE_YAQL,
+    _ALL_IN_QUOTES, _ALL_IN_APOSTROPHES, EXPRESSION,
     _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
 )
 
@@ -194,7 +194,7 @@ class BaseSpec(object):
         """
         pass
 
-    def validate_yaql_expr(self, dsl_part):
+    def validate_expr(self, dsl_part):
         if isinstance(dsl_part, six.string_types):
             expr.validate(dsl_part)
         elif isinstance(dsl_part, list):
@@ -278,9 +278,10 @@ class BaseSpec(object):
 
         params = {}
 
-        for k, v in re.findall(PARAMS_PTRN, cmd_str):
+        for match in re.findall(PARAMS_PTRN, cmd_str):
+            k = match[0]
             # Remove embracing quotes.
-            v = v.strip()
+            v = match[1].strip()
             if v[0] == '"' or v[0] == "'":
                 v = v[1:-1]
             else:

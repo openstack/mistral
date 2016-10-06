@@ -6,16 +6,16 @@ greeting:
   tags: [hello]
   base: std.echo
   base-input:
-    output: 'Hello,  <% $.name %>'
+    output: 'Hello,  {{ _.name }}'
   input:
     - name
   output:
-    string: <% $ %>
+    string: '{{ _ }}'
 
 farewell:
   base: std.echo
   base-input:
     output: 'Bye!'
   output:
-    info: <% $ %>
+    info: '{{ _ }}'
 

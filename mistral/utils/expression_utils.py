@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -12,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from functools import partial
 
 from oslo_serialization import jsonutils
 from stevedore import extension
@@ -21,18 +23,17 @@ from mistral.db.v2 import api as db_api
 from mistral import utils
 
 
-ROOT_CONTEXT = None
+ROOT_YAQL_CONTEXT = None
 
 
 def get_yaql_context(data_context):
-    global ROOT_CONTEXT
+    global ROOT_YAQL_CONTEXT
 
-    if not ROOT_CONTEXT:
-        ROOT_CONTEXT = yaql.create_context()
+    if not ROOT_YAQL_CONTEXT:
+        ROOT_YAQL_CONTEXT = yaql.create_context()
 
-        _register_functions(ROOT_CONTEXT)
-
-    new_ctx = ROOT_CONTEXT.create_child_context()
+        _register_yaql_functions(ROOT_YAQL_CONTEXT)
+    new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
     new_ctx['$'] = data_context
 
     if isinstance(data_context, dict):
@@ -43,24 +44,50 @@ def get_yaql_context(data_context):
     return new_ctx
 
 
-def _register_custom_functions(yaql_ctx):
-    """Register custom YAQL functions
+def get_jinja_context(data_context):
+    new_ctx = {
+        '_': data_context
+    }
 
-    Custom YAQL functions must be added as entry points in the
-    'mistral.yaql_functions' namespace
-    :param yaql_ctx: YAQL context object
+    _register_jinja_functions(new_ctx)
+
+    if isinstance(data_context, dict):
+        new_ctx['__env'] = data_context.get('__env')
+        new_ctx['__execution'] = data_context.get('__execution')
+        new_ctx['__task_execution'] = data_context.get('__task_execution')
+
+    return new_ctx
+
+
+def get_custom_functions():
+    """Get custom functions
+
+    Retreives the list of custom evaluation functions
     """
+    functions = dict()
+
     mgr = extension.ExtensionManager(
-        namespace='mistral.yaql_functions',
+        namespace='mistral.expression.functions',
         invoke_on_load=False
     )
     for name in mgr.names():
-        yaql_function = mgr[name].plugin
-        yaql_ctx.register_function(yaql_function, name=name)
+        functions[name] = mgr[name].plugin
+
+    return functions
 
 
-def _register_functions(yaql_ctx):
-    _register_custom_functions(yaql_ctx)
+def _register_yaql_functions(yaql_ctx):
+    functions = get_custom_functions()
+
+    for name in functions:
+        yaql_ctx.register_function(functions[name], name=name)
+
+
+def _register_jinja_functions(jinja_ctx):
+    functions = get_custom_functions()
+
+    for name in functions:
+        jinja_ctx[name] = partial(functions[name], jinja_ctx['_'])
 
 
 # Additional YAQL functions needed by Mistral.
@@ -83,9 +110,9 @@ def execution_(context):
     }
 
 
-def json_pp_(data):
+def json_pp_(context, data=None):
     return jsonutils.dumps(
-        data,
+        data or context,
         indent=4
     ).replace("\\n", "\n").replace(" \n", "\n")
 
@@ -128,5 +155,5 @@ def task_(context, task_name):
     }
 
 
-def uuid_(context):
+def uuid_(context=None):
     return utils.generate_unicode_uuid()

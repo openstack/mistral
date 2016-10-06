@@ -32,7 +32,7 @@ class TaskDefaultsSpec(base.BaseSpec):
     _on_clause_type = {
         "oneOf": [
             types.NONEMPTY_STRING,
-            types.UNIQUE_STRING_OR_YAQL_CONDITION_LIST
+            types.UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST
         ]
     }
 
@@ -93,7 +93,7 @@ class TaskDefaultsSpec(base.BaseSpec):
     def _validate_transitions(self, on_clause):
         val = self._data.get(on_clause, [])
 
-        [self.validate_yaql_expr(t)
+        [self.validate_expr(t)
          for t in ([val] if isinstance(val, six.string_types) else val)]
 
     def get_policies(self):

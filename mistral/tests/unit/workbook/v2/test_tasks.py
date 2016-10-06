@@ -1,5 +1,6 @@
 # Copyright 2015 - Huawei Technologies Co. Ltd
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -55,12 +56,18 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'action': 'std.http url=<% $.url %>'}, False),
             ({'action': 'std.http url=<% $.url %> timeout=<% $.t %>'}, False),
             ({'action': 'std.http url=<% * %>'}, True),
+            ({'action': 'std.http url={{ _.url }}'}, False),
+            ({'action': 'std.http url={{ _.url }} timeout={{ _.t }}'}, False),
+            ({'action': 'std.http url={{ $ }}'}, True),
             ({'workflow': 'test.wf'}, False),
             ({'workflow': 'test.wf k1="v1"'}, False),
             ({'workflow': 'test.wf k1="v1" k2="v2"'}, False),
             ({'workflow': 'test.wf k1=<% $.v1 %>'}, False),
             ({'workflow': 'test.wf k1=<% $.v1 %> k2=<% $.v2 %>'}, False),
             ({'workflow': 'test.wf k1=<% * %>'}, True),
+            ({'workflow': 'test.wf k1={{ _.v1 }}'}, False),
+            ({'workflow': 'test.wf k1={{ _.v1 }} k2={{ _.v2 }}'}, False),
+            ({'workflow': 'test.wf k1={{ $ }}'}, True),
             ({'action': 'std.noop', 'workflow': 'test.wf'}, True),
             ({'action': 123}, True),
             ({'workflow': 123}, True),
@@ -87,7 +94,10 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'input': {'k1': 'v1'}}, False),
             ({'input': {'k1': '<% $.v1 %>'}}, False),
             ({'input': {'k1': '<% 1 + 2 %>'}}, False),
-            ({'input': {'k1': '<% * %>'}}, True)
+            ({'input': {'k1': '<% * %>'}}, True),
+            ({'input': {'k1': '{{ _.v1 }}'}}, False),
+            ({'input': {'k1': '{{ 1 + 2 }}'}}, False),
+            ({'input': {'k1': '{{ * }}'}}, True)
         ]
 
         for task_input, expect_error in tests:
@@ -116,7 +126,15 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'with-items': ['x in <% $.y %>', 'i in [1, 2, 3]']}, False),
             ({'with-items': ['x in <% $.y %>', 'i in <% $.j %>']}, False),
             ({'with-items': ['x in <% * %>']}, True),
-            ({'with-items': ['x in <% $.y %>', 'i in <% * %>']}, True)
+            ({'with-items': ['x in <% $.y %>', 'i in <% * %>']}, True),
+            ({'with-items': '{{ _.y }}'}, True),
+            ({'with-items': 'x in {{ _.y }}'}, False),
+            ({'with-items': ['x in [1, 2, 3]']}, False),
+            ({'with-items': ['x in {{ _.y }}']}, False),
+            ({'with-items': ['x in {{ _.y }}', 'i in [1, 2, 3]']}, False),
+            ({'with-items': ['x in {{ _.y }}', 'i in {{ _.j }}']}, False),
+            ({'with-items': ['x in {{ * }}']}, True),
+            ({'with-items': ['x in {{ _.y }}', 'i in {{ * }}']}, True)
         ]
 
         for with_item, expect_error in tests:
@@ -136,7 +154,10 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'publish': {'k1': 'v1'}}, False),
             ({'publish': {'k1': '<% $.v1 %>'}}, False),
             ({'publish': {'k1': '<% 1 + 2 %>'}}, False),
-            ({'publish': {'k1': '<% * %>'}}, True)
+            ({'publish': {'k1': '<% * %>'}}, True),
+            ({'publish': {'k1': '{{ _.v1 }}'}}, False),
+            ({'publish': {'k1': '{{ 1 + 2 }}'}}, False),
+            ({'publish': {'k1': '{{ * }}'}}, True)
         ]
 
         for output, expect_error in tests:
@@ -164,39 +185,61 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'retry': {'count': '<% * %>', 'delay': 1}}, True),
             ({'retry': {'count': 3, 'delay': '<% 1 %>'}}, False),
             ({'retry': {'count': 3, 'delay': '<% * %>'}}, True),
+            ({'retry': {
+                'continue-on': '{{ 1 }}', 'delay': 2,
+                'break-on': '{{ 1 }}', 'count': 2
+            }}, False),
+            ({'retry': {
+                'count': 3, 'delay': 1, 'continue-on': '{{ 1 }}'
+            }}, False),
+            ({'retry': {'count': '{{ 3 }}', 'delay': 1}}, False),
+            ({'retry': {'count': '{{ * }}', 'delay': 1}}, True),
+            ({'retry': {'count': 3, 'delay': '{{ 1 }}'}}, False),
+            ({'retry': {'count': 3, 'delay': '{{ * }}'}}, True),
             ({'retry': {'count': -3, 'delay': 1}}, True),
             ({'retry': {'count': 3, 'delay': -1}}, True),
             ({'retry': {'count': '3', 'delay': 1}}, True),
             ({'retry': {'count': 3, 'delay': '1'}}, True),
             ({'retry': 'count=3 delay=1 break-on=<% false %>'}, False),
+            ({'retry': 'count=3 delay=1 break-on={{ false }}'}, False),
             ({'retry': 'count=3 delay=1'}, False),
             ({'retry': 'coun=3 delay=1'}, True),
             ({'retry': None}, True),
             ({'wait-before': 1}, False),
             ({'wait-before': '<% 1 %>'}, False),
             ({'wait-before': '<% * %>'}, True),
+            ({'wait-before': '{{ 1 }}'}, False),
+            ({'wait-before': '{{ * }}'}, True),
             ({'wait-before': -1}, True),
             ({'wait-before': 1.0}, True),
             ({'wait-before': '1'}, True),
             ({'wait-after': 1}, False),
             ({'wait-after': '<% 1 %>'}, False),
             ({'wait-after': '<% * %>'}, True),
+            ({'wait-after': '{{ 1 }}'}, False),
+            ({'wait-after': '{{ * }}'}, True),
             ({'wait-after': -1}, True),
             ({'wait-after': 1.0}, True),
             ({'wait-after': '1'}, True),
             ({'timeout': 300}, False),
             ({'timeout': '<% 300 %>'}, False),
             ({'timeout': '<% * %>'}, True),
+            ({'timeout': '{{ 300 }}'}, False),
+            ({'timeout': '{{ * }}'}, True),
             ({'timeout': -300}, True),
             ({'timeout': 300.0}, True),
             ({'timeout': '300'}, True),
             ({'pause-before': False}, False),
             ({'pause-before': '<% False %>'}, False),
             ({'pause-before': '<% * %>'}, True),
+            ({'pause-before': '{{ False }}'}, False),
+            ({'pause-before': '{{ * }}'}, True),
             ({'pause-before': 'False'}, True),
             ({'concurrency': 10}, False),
             ({'concurrency': '<% 10 %>'}, False),
             ({'concurrency': '<% * %>'}, True),
+            ({'concurrency': '{{ 10 }}'}, False),
+            ({'concurrency': '{{ * }}'}, True),
             ({'concurrency': -10}, True),
             ({'concurrency': 10.0}, True),
             ({'concurrency': '10'}, True)
@@ -218,6 +261,10 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'on-success': [{'email': '<% 1 %>'}, 'echo']}, False),
             ({'on-success': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
             ({'on-success': [{'email': '<% * %>'}]}, True),
+            ({'on-success': [{'email': '{{ 1 }}'}]}, False),
+            ({'on-success': [{'email': '{{ 1 }}'}, 'echo']}, False),
+            ({'on-success': [{'email': '{{ _.v1 in _.v2 }}'}]}, False),
+            ({'on-success': [{'email': '{{ * }}'}]}, True),
             ({'on-success': 'email'}, False),
             ({'on-success': None}, True),
             ({'on-success': ['']}, True),
@@ -229,6 +276,10 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'on-error': [{'email': '<% 1 %>'}, 'echo']}, False),
             ({'on-error': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
             ({'on-error': [{'email': '<% * %>'}]}, True),
+            ({'on-error': [{'email': '{{ 1 }}'}]}, False),
+            ({'on-error': [{'email': '{{ 1 }}'}, 'echo']}, False),
+            ({'on-error': [{'email': '{{ _.v1 in _.v2 }}'}]}, False),
+            ({'on-error': [{'email': '{{ * }}'}]}, True),
             ({'on-error': 'email'}, False),
             ({'on-error': None}, True),
             ({'on-error': ['']}, True),
@@ -240,6 +291,10 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'on-complete': [{'email': '<% 1 %>'}, 'echo']}, False),
             ({'on-complete': [{'email': '<% $.v1 in $.v2 %>'}]}, False),
             ({'on-complete': [{'email': '<% * %>'}]}, True),
+            ({'on-complete': [{'email': '{{ 1 }}'}]}, False),
+            ({'on-complete': [{'email': '{{ 1 }}'}, 'echo']}, False),
+            ({'on-complete': [{'email': '{{ _.v1 in _.v2 }}'}]}, False),
+            ({'on-complete': [{'email': '{{ * }}'}]}, True),
             ({'on-complete': 'email'}, False),
             ({'on-complete': None}, True),
             ({'on-complete': ['']}, True),
@@ -322,7 +377,10 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
             ({'keep-result': False}, False),
             ({'keep-result': "<% 'a' in $.val %>"}, False),
             ({'keep-result': '<% 1 + 2 %>'}, False),
-            ({'keep-result': '<% * %>'}, True)
+            ({'keep-result': '<% * %>'}, True),
+            ({'keep-result': "{{ 'a' in _.val }}"}, False),
+            ({'keep-result': '{{ 1 + 2 }}'}, False),
+            ({'keep-result': '{{ * }}'}, True)
         ]
 
         for keep_result, expect_error in tests:

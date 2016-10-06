@@ -54,12 +54,12 @@ class ActionSpec(base.BaseSpec):
 
         # Validate YAQL expressions.
         inline_params = self._parse_cmd_and_input(self._data.get('base'))[1]
-        self.validate_yaql_expr(inline_params)
+        self.validate_expr(inline_params)
 
-        self.validate_yaql_expr(self._data.get('base-input', {}))
+        self.validate_expr(self._data.get('base-input', {}))
 
         if isinstance(self._data.get('output'), six.string_types):
-            self.validate_yaql_expr(self._data.get('output'))
+            self.validate_expr(self._data.get('output'))
 
     def get_name(self):
         return self._name

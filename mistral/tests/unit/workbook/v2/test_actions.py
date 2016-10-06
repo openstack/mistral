@@ -1,4 +1,5 @@
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -37,7 +38,10 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
             ({'actions': {'a1': {'base': 'std.echo output="foo"'}}}, False),
             ({'actions': {'a1': {'base': 'std.echo output="<% $.x %>"'}}},
              False),
-            ({'actions': {'a1': {'base': 'std.echo output="<% * %>"'}}}, True)
+            ({'actions': {'a1': {'base': 'std.echo output="<% * %>"'}}}, True),
+            ({'actions': {'a1': {'base': 'std.echo output="{{ _.x }}"'}}},
+             False),
+            ({'actions': {'a1': {'base': 'std.echo output="{{ * }}"'}}}, True)
         ]
 
         for actions, expect_error in tests:
@@ -49,7 +53,9 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
             ({'base-input': {}}, True),
             ({'base-input': None}, True),
             ({'base-input': {'k1': 'v1', 'k2': '<% $.v2 %>'}}, False),
-            ({'base-input': {'k1': 'v1', 'k2': '<% * %>'}}, True)
+            ({'base-input': {'k1': 'v1', 'k2': '<% * %>'}}, True),
+            ({'base-input': {'k1': 'v1', 'k2': '{{ _.v2 }}'}}, False),
+            ({'base-input': {'k1': 'v1', 'k2': '{{ * }}'}}, True)
         ]
 
         actions = {
@@ -100,6 +106,8 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
             ({'output': 'foobar'}, False),
             ({'output': '<% $.x %>'}, False),
             ({'output': '<% * %>'}, True),
+            ({'output': '{{ _.x }}'}, False),
+            ({'output': '{{ * }}'}, True),
             ({'output': ['v1']}, False),
             ({'output': {'k1': 'v1'}}, False)
         ]

@@ -26,15 +26,15 @@ class RetrySpec(base.BaseSpec):
         "properties": {
             "count": {
                 "oneOf": [
-                    types.YAQL,
+                    types.EXPRESSION,
                     types.POSITIVE_INTEGER
                 ]
             },
-            "break-on": types.YAQL,
-            "continue-on": types.YAQL,
+            "break-on": types.EXPRESSION,
+            "continue-on": types.EXPRESSION,
             "delay": {
                 "oneOf": [
-                    types.YAQL,
+                    types.EXPRESSION,
                     types.POSITIVE_INTEGER
                 ]
             },
@@ -74,10 +74,10 @@ class RetrySpec(base.BaseSpec):
         super(RetrySpec, self).validate_schema()
 
         # Validate YAQL expressions.
-        self.validate_yaql_expr(self._data.get('count'))
-        self.validate_yaql_expr(self._data.get('delay'))
-        self.validate_yaql_expr(self._data.get('break-on'))
-        self.validate_yaql_expr(self._data.get('continue-on'))
+        self.validate_expr(self._data.get('count'))
+        self.validate_expr(self._data.get('delay'))
+        self.validate_expr(self._data.get('break-on'))
+        self.validate_expr(self._data.get('continue-on'))
 
     def get_count(self):
         return self._count

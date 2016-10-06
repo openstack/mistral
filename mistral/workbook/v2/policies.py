@@ -19,11 +19,11 @@ from mistral.workbook.v2 import retry_policy
 
 
 RETRY_SCHEMA = retry_policy.RetrySpec.get_schema(includes=None)
-WAIT_BEFORE_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
-WAIT_AFTER_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
-TIMEOUT_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
-PAUSE_BEFORE_SCHEMA = types.YAQL_OR_BOOLEAN
-CONCURRENCY_SCHEMA = types.YAQL_OR_POSITIVE_INTEGER
+WAIT_BEFORE_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
+WAIT_AFTER_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
+TIMEOUT_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
+PAUSE_BEFORE_SCHEMA = types.EXPRESSION_OR_BOOLEAN
+CONCURRENCY_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
 
 
 class PoliciesSpec(base.BaseSpec):
@@ -59,11 +59,11 @@ class PoliciesSpec(base.BaseSpec):
         super(PoliciesSpec, self).validate_schema()
 
         # Validate YAQL expressions.
-        self.validate_yaql_expr(self._data.get('wait-before', 0))
-        self.validate_yaql_expr(self._data.get('wait-after', 0))
-        self.validate_yaql_expr(self._data.get('timeout', 0))
-        self.validate_yaql_expr(self._data.get('pause-before', False))
-        self.validate_yaql_expr(self._data.get('concurrency', 0))
+        self.validate_expr(self._data.get('wait-before', 0))
+        self.validate_expr(self._data.get('wait-after', 0))
+        self.validate_expr(self._data.get('timeout', 0))
+        self.validate_expr(self._data.get('pause-before', False))
+        self.validate_expr(self._data.get('concurrency', 0))
 
     def get_retry(self):
         return self._retry
