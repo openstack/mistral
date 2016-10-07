@@ -323,7 +323,7 @@ class RetryPolicy(base.TaskPolicy):
 
         state = task_ex.state
 
-        if not states.is_completed(state):
+        if not states.is_completed(state) or states.is_cancelled(state):
             return
 
         policy_context = runtime_context[context_key]
@@ -336,12 +336,20 @@ class RetryPolicy(base.TaskPolicy):
 
         retries_remain = retry_no + 1 < self.count
 
-        stop_continue_flag = (task_ex.state == states.SUCCESS and
-                              not self._continue_on_clause)
-        stop_continue_flag = (stop_continue_flag or
-                              (self._continue_on_clause and
-                               not continue_on_evaluation))
-        break_triggered = task_ex.state == states.ERROR and self.break_on
+        stop_continue_flag = (
+            task_ex.state == states.SUCCESS and
+            not self._continue_on_clause
+        )
+
+        stop_continue_flag = (
+            stop_continue_flag or
+            (self._continue_on_clause and not continue_on_evaluation)
+        )
+
+        break_triggered = (
+            task_ex.state == states.ERROR and
+            self.break_on
+        )
 
         if not retries_remain or break_triggered or stop_continue_flag:
             return

@@ -451,8 +451,8 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         self.await_workflow_cancelled(subwf_exs[0].id)
         self.await_workflow_error(subwf_exs[1].id)
-        self.await_task_error(task_ex.id)
-        self.await_workflow_error(wf_ex.id)
+        self.await_task_cancelled(task_ex.id)
+        self.await_workflow_cancelled(wf_ex.id)
 
         wf_execs = db_api.get_workflow_executions()
 
@@ -464,10 +464,10 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.assertEqual("Cancelled by user.", subwf_exs[0].state_info)
         self.assertEqual(states.ERROR, subwf_exs[1].state)
         self.assertEqual("Failed by user.", subwf_exs[1].state_info)
-        self.assertEqual(states.ERROR, task_ex.state)
-        self.assertIn("failed", task_ex.state_info)
-        self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIn("Failed by user.", wf_ex.state_info)
+        self.assertEqual(states.CANCELLED, task_ex.state)
+        self.assertIn("cancelled", task_ex.state_info)
+        self.assertEqual(states.CANCELLED, wf_ex.state)
+        self.assertEqual("Cancelled tasks: taskx", wf_ex.state_info)
 
     def test_fail_then_cancel_with_items_child_workflow(self):
         workbook = """
@@ -520,8 +520,8 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         self.await_workflow_cancelled(subwf_exs[0].id)
         self.await_workflow_error(subwf_exs[1].id)
-        self.await_task_error(task_ex.id)
-        self.await_workflow_error(wf_ex.id)
+        self.await_task_cancelled(task_ex.id)
+        self.await_workflow_cancelled(wf_ex.id)
 
         wf_execs = db_api.get_workflow_executions()
 
@@ -533,7 +533,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.assertEqual("Cancelled by user.", subwf_exs[0].state_info)
         self.assertEqual(states.ERROR, subwf_exs[1].state)
         self.assertEqual("Failed by user.", subwf_exs[1].state_info)
-        self.assertEqual(states.ERROR, task_ex.state)
-        self.assertIn("failed", task_ex.state_info)
-        self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIn("Failed by user.", wf_ex.state_info)
+        self.assertEqual(states.CANCELLED, task_ex.state)
+        self.assertIn("cancelled", task_ex.state_info)
+        self.assertEqual(states.CANCELLED, wf_ex.state)
+        self.assertEqual("Cancelled tasks: taskx", wf_ex.state_info)

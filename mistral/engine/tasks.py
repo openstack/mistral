@@ -327,7 +327,10 @@ class RegularTask(Task):
             execs = self.task_ex.executions
         else:
             execs = filter(
-                lambda e: e.accepted and e.state == states.ERROR,
+                lambda e: (
+                    e.accepted and
+                    e.state in [states.ERROR, states.CANCELLED]
+                ),
                 self.task_ex.executions
             )
 

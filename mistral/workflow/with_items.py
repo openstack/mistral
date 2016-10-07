@@ -44,8 +44,12 @@ def get_count(task_ex):
 
 
 def is_completed(task_ex):
-    execs = list(filter(lambda t: t.accepted, task_ex.executions))
+    find_cancel = lambda x: x.accepted and x.state == states.CANCELLED
 
+    if list(filter(find_cancel, task_ex.executions)):
+        return True
+
+    execs = list(filter(lambda t: t.accepted, task_ex.executions))
     count = get_count(task_ex) or 1
 
     return count == len(execs)
@@ -69,10 +73,10 @@ def get_final_state(task_ex):
     find_error = lambda x: x.accepted and x.state == states.ERROR
     find_cancel = lambda x: x.accepted and x.state == states.CANCELLED
 
-    if list(filter(find_error, task_ex.executions)):
-        return states.ERROR
-    elif list(filter(find_cancel, task_ex.executions)):
+    if list(filter(find_cancel, task_ex.executions)):
         return states.CANCELLED
+    elif list(filter(find_error, task_ex.executions)):
+        return states.ERROR
     else:
         return states.SUCCESS
 

@@ -240,7 +240,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         t_names_and_params = []
 
-        if states.is_completed(t_state):
+        if states.is_completed(t_state) and not states.is_cancelled(t_state):
             t_names_and_params += (
                 self._find_next_tasks_for_clause(
                     self.wf_spec.get_on_complete_clause(t_name),

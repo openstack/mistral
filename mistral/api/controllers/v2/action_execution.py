@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -166,10 +165,14 @@ class ActionExecutionsController(rest.RestController):
             if not output:
                 output = 'Unknown error'
             result = wf_utils.Result(error=output)
+        elif action_ex.state == states.CANCELLED:
+            result = wf_utils.Result(cancel=True)
         else:
             raise exc.InvalidResultException(
-                "Error. Expected on of %s, actual: %s" %
-                ([states.SUCCESS, states.ERROR], action_ex.state)
+                "Error. Expected one of %s, actual: %s" % (
+                    [states.SUCCESS, states.ERROR, states.CANCELLED],
+                    action_ex.state
+                )
             )
 
         values = rpc.get_engine_client().on_action_complete(id, result)
