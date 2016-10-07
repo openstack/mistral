@@ -79,7 +79,8 @@ class NovaAction(base.OpenStackAction):
             auth_token=ctx.auth_token,
             tenant_id=ctx.project_id,
             region_name=keystone_endpoint.region,
-            auth_url=keystone_endpoint.url
+            auth_url=keystone_endpoint.url,
+            insecure=ctx.insecure
         )
 
         client.client.management_url = keystone_utils.format_url(
@@ -110,7 +111,8 @@ class GlanceAction(base.OpenStackAction):
         return self._get_client_class()(
             glance_endpoint.url,
             region_name=glance_endpoint.region,
-            token=ctx.auth_token
+            token=ctx.auth_token,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -137,6 +139,7 @@ class KeystoneAction(base.OpenStackAction):
             'auth_url': ctx.auth_uri,
             'project_id': ctx.project_id,
             'cacert': ctx.auth_cacert,
+            'insecure': ctx.insecure
         }
 
         # In case of trust-scoped token explicitly pass endpoint parameter.
@@ -188,7 +191,8 @@ class CeilometerAction(base.OpenStackAction):
             endpoint_url,
             region_name=ceilometer_endpoint.region,
             token=ctx.auth_token,
-            username=ctx.user_name
+            username=ctx.user_name,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -221,7 +225,8 @@ class HeatAction(base.OpenStackAction):
             endpoint_url,
             region_name=heat_endpoint.region,
             token=ctx.auth_token,
-            username=ctx.user_name
+            username=ctx.user_name,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -246,7 +251,8 @@ class NeutronAction(base.OpenStackAction):
             endpoint_url=neutron_endpoint.url,
             region_name=neutron_endpoint.region,
             token=ctx.auth_token,
-            auth_url=ctx.auth_uri
+            auth_url=ctx.auth_uri,
+            insecure=ctx.insecure
         )
 
 
@@ -278,7 +284,8 @@ class CinderAction(base.OpenStackAction):
             ctx.auth_token,
             project_id=ctx.project_id,
             auth_url=cinder_url,
-            region_name=cinder_endpoint.region
+            region_name=cinder_endpoint.region,
+            insecure=ctx.insecure
         )
 
         client.client.auth_token = ctx.auth_token
@@ -320,7 +327,8 @@ class MistralAction(base.OpenStackAction):
             auth_token=ctx.auth_token,
             project_id=ctx.project_id,
             user_id=ctx.user_id,
-            auth_url=auth_url
+            auth_url=auth_url,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -353,7 +361,8 @@ class TroveAction(base.OpenStackAction):
             ctx.auth_token,
             project_id=ctx.project_id,
             auth_url=trove_url,
-            region_name=trove_endpoint.region
+            region_name=trove_endpoint.region,
+            insecure=ctx.insecure
         )
 
         client.client.auth_token = ctx.auth_token
@@ -383,7 +392,8 @@ class IronicAction(base.OpenStackAction):
             ironic_endpoint.url,
             token=ctx.auth_token,
             region_name=ironic_endpoint.region,
-            os_ironic_api_version=IRONIC_API_VERSION
+            os_ironic_api_version=IRONIC_API_VERSION,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -432,6 +442,7 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
             api_version=1,
             inspector_url=inspector_endpoint.url,
             auth_token=ctx.auth_token,
+            insecure=ctx.insecure
         )
 
 
@@ -450,7 +461,8 @@ class SwiftAction(base.OpenStackAction):
 
         kwargs = {
             'preauthurl': swift_endpoint.url % {'tenant_id': ctx.project_id},
-            'preauthtoken': ctx.auth_token
+            'preauthtoken': ctx.auth_token,
+            'insecure': ctx.insecure
         }
 
         return self._get_client_class()(**kwargs)
@@ -475,6 +487,7 @@ class ZaqarAction(base.OpenStackAction):
             'os_auth_token': ctx.auth_token,
             'os_auth_url': keystone_endpoint.url,
             'os_project_id': ctx.project_id,
+            'insecure': ctx.insecure,
         }
         auth_opts = {'backend': 'keystone', 'options': opts}
         conf = {'auth_opts': auth_opts}
@@ -576,7 +589,8 @@ class BarbicanAction(base.OpenStackAction):
         return self._get_client_class()(
             project_id=ctx.project_id,
             endpoint=barbican_endpoint.url,
-            auth=auth
+            auth=auth,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -679,7 +693,8 @@ class DesignateAction(base.OpenStackAction):
             tenant_id=ctx.project_id,
             auth_url=ctx.auth_uri,
             region_name=designate_endpoint.region,
-            service_type='dns'
+            service_type='dns',
+            insecure=ctx.insecure
         )
 
         client.client.auth_token = ctx.auth_token
@@ -712,7 +727,8 @@ class MagnumAction(base.OpenStackAction):
             auth_token=ctx.auth_token,
             project_id=ctx.project_id,
             user_id=ctx.user_id,
-            auth_url=auth_url
+            auth_url=auth_url,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -739,7 +755,8 @@ class MuranoAction(base.OpenStackAction):
             token=ctx.auth_token,
             tenant=ctx.project_id,
             region_name=murano_endpoint.region,
-            auth_url=keystone_endpoint.url
+            auth_url=keystone_endpoint.url,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -766,7 +783,8 @@ class TackerAction(base.OpenStackAction):
             token=ctx.auth_token,
             tenant_id=ctx.project_id,
             region_name=tacker_endpoint.region,
-            auth_url=keystone_endpoint.url
+            auth_url=keystone_endpoint.url,
+            insecure=ctx.insecure
         )
 
     @classmethod
@@ -793,7 +811,8 @@ class SenlinAction(base.OpenStackAction):
             token=ctx.auth_token,
             tenant_id=ctx.project_id,
             region_name=senlin_endpoint.region,
-            auth_url=keystone_endpoint.url
+            auth_url=keystone_endpoint.url,
+            insecure=ctx.insecure
         )
 
         @classmethod
@@ -825,7 +844,8 @@ class AodhAction(base.OpenStackAction):
             endpoint_url,
             region_name=aodh_endpoint.region,
             token=ctx.auth_token,
-            username=ctx.user_name
+            username=ctx.user_name,
+            insecure=ctx.insecure
         )
 
     @classmethod
