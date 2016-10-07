@@ -138,9 +138,7 @@ def task_(context, task_name):
         task_ex = task_execs[-1] if len(task_execs) > 0 else None
 
     if not task_ex:
-        raise ValueError(
-            'Failed to find task execution with name: %s' % task_name
-        )
+        return None
 
     # We don't use to_dict() db model method because not all fields
     # make sense for user.

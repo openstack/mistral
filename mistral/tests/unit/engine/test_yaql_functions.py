@@ -108,6 +108,46 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
             task2.published
         )
 
+    def test_task_function_returns_null(self):
+        wf_text = """---
+            version: '2.0'
+
+            wf:
+              output:
+                task2: <% task(task2) %>
+                task2bool: <% task(task2) = null %>
+
+              tasks:
+                task1:
+                  action: std.noop
+                  on-success:
+                    - task2: <% false %>
+
+                task2:
+                  action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertDictEqual(
+                {
+                    'task2': None,
+                    'task2bool': True
+                },
+                wf_ex.output
+            )
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
     def test_task_function_non_existing(self):
         wf_text = """---
             version: '2.0'
