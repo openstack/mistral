@@ -101,7 +101,8 @@ html_title = 'Mistral'
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
     'index': [
-        'sidebarlinks.html', 'localtoc.html', 'searchbox.html', 'sourcelink.html'
+        'sidebarlinks.html', 'localtoc.html', 'searchbox.html',
+        'sourcelink.html'
     ],
     '**': [
         'localtoc.html', 'relations.html',
