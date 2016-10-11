@@ -14,14 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
-
 from mistral.tests.unit.workbook.v2 import base as v2_base
 from mistral import utils
 from mistral.workbook.v2 import workflows
-
-
-LOG = logging.getLogger(__name__)
 
 
 class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):

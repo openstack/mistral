@@ -13,14 +13,10 @@
 # under the License.
 
 from oslo_concurrency.fixture import lockutils
-from oslo_log import log as logging
 from tempest.lib import exceptions
 from tempest import test
 
 from mistral_tempest_tests.tests import base
-
-
-LOG = logging.getLogger(__name__)
 
 
 class CronTriggerTestsV2(base.TestCase):
