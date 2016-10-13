@@ -15,14 +15,11 @@
 import abc
 
 from oslo_config import cfg
-from oslo_log import log as logging
 import six
 from stevedore import driver
 
 from mistral import exceptions as exc
 
-
-LOG = logging.getLogger(__name__)
 
 _IMPL_AUTH_HANDLER = None
 
