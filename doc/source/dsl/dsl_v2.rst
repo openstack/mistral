@@ -128,6 +128,9 @@ Common workflow attributes
    optionally their default values in a form "my_param: 123". *Optional*.
 -  **output** - Any data structure arbitrarily containing
    expressions that defines workflow output. May be nested. *Optional*.
+-  **output-on-error** - Any data structure arbitrarily containing YAQL
+   expressions that defines output of a workflow to be returned if it goes into
+   error state. May be nested. *Optional*.
 -  **task-defaults** - Default settings for some of task attributes
    defined at workflow level. *Optional*. Corresponding attribute
    defined for a specific task always takes precedence. Specific task
@@ -201,6 +204,8 @@ attributes:
    expression to select precisely what needs to be published.
    Published variables will be accessible for downstream tasks via using
    expressions. *Optional*.
+-  **publish-on-error** - Same as **publish** but evaluated in case of
+    task execution failures. *Optional*
 -  **with-items** - If configured, it allows to run action or workflow
    associated with a task multiple times on a provided list of items.
    See `Processing collections using

@@ -40,6 +40,7 @@ class WorkflowSpec(base.BaseSpec):
             "task-defaults": _task_defaults_schema,
             "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
             "output": types.NONEMPTY_DICT,
+            "output-on-error": types.NONEMPTY_DICT,
             "vars": types.NONEMPTY_DICT
         },
         "required": ["tasks"],
@@ -55,6 +56,7 @@ class WorkflowSpec(base.BaseSpec):
         self._type = data['type'] if 'type' in data else 'direct'
         self._input = utils.get_input_dict(data.get('input', []))
         self._output = data.get('output', {})
+        self._output_on_error = data.get('output-on-error', {})
         self._vars = data.get('vars', {})
 
         self._task_defaults = self._spec_property(
@@ -121,6 +123,9 @@ class WorkflowSpec(base.BaseSpec):
 
     def get_output(self):
         return self._output
+
+    def get_output_on_error(self):
+        return self._output_on_error
 
     def get_vars(self):
         return self._vars

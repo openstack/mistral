@@ -183,7 +183,7 @@ def get_task_execution_result(task_ex):
 
 
 def publish_variables(task_ex, task_spec):
-    if task_ex.state != states.SUCCESS:
+    if task_ex.state not in [states.SUCCESS, states.ERROR]:
         return
 
     wf_ex = task_ex.workflow_execution
@@ -200,10 +200,10 @@ def publish_variables(task_ex, task_spec):
             task_ex.name
         )
 
-    task_ex.published = expr.evaluate_recursively(
-        task_spec.get_publish(),
-        expr_ctx
-    )
+    data = (task_spec.get_publish()
+            if task_ex.state == states.SUCCESS
+            else task_spec.get_publish_on_error())
+    task_ex.published = expr.evaluate_recursively(data, expr_ctx)
 
 
 def evaluate_task_outbound_context(task_ex):
@@ -222,20 +222,18 @@ def evaluate_task_outbound_context(task_ex):
     return utils.update_dict(in_context, task_ex.published)
 
 
-def evaluate_workflow_output(wf_ex, wf_spec, ctx):
+def evaluate_workflow_output(wf_ex, wf_output, ctx):
     """Evaluates workflow output.
 
     :param wf_ex: Workflow execution.
-    :param wf_spec: Workflow specification.
+    :param wf_output: Workflow output.
     :param ctx: Final Data Flow context (cause task's outbound context).
     """
-
-    output_dict = wf_spec.get_output()
 
     # Evaluate workflow 'output' clause using the final workflow context.
     ctx_view = ContextView(ctx, wf_ex.context, wf_ex.input)
 
-    output = expr.evaluate_recursively(output_dict, ctx_view)
+    output = expr.evaluate_recursively(wf_output, ctx_view)
 
     # TODO(rakhmerov): Many don't like that we return the whole context
     # if 'output' is not explicitly defined.

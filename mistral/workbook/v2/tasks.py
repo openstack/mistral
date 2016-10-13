@@ -55,6 +55,7 @@ class TaskSpec(base.BaseSpec):
                 ]
             },
             "publish": types.NONEMPTY_DICT,
+            "publish-on-error": types.NONEMPTY_DICT,
             "retry": policies.RETRY_SCHEMA,
             "wait-before": policies.WAIT_BEFORE_SCHEMA,
             "wait-after": policies.WAIT_AFTER_SCHEMA,
@@ -98,6 +99,7 @@ class TaskSpec(base.BaseSpec):
         self._input = data.get('input', {})
         self._with_items = self._transform_with_items()
         self._publish = data.get('publish', {})
+        self._publish_on_error = data.get('publish-on-error', {})
         self._policies = self._group_spec(
             policies.PoliciesSpec,
             'retry',
@@ -211,6 +213,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_publish(self):
         return self._publish
+
+    def get_publish_on_error(self):
+        return self._publish_on_error
 
     def get_keep_result(self):
         return self._keep_result

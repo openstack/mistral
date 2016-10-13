@@ -308,6 +308,10 @@ def get_task_executions(limit=None, marker=None, sort_keys=['created_at'],
     )
 
 
+def get_completed_task_executions(**kwargs):
+    return IMPL.get_completed_task_executions(**kwargs)
+
+
 def get_incomplete_task_executions(**kwargs):
     return IMPL.get_incomplete_task_executions(**kwargs)
 
