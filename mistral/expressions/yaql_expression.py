@@ -44,8 +44,10 @@ class YAQLEvaluator(Evaluator):
 
     @classmethod
     def evaluate(cls, expression, data_context):
-        LOG.debug("Evaluating YAQL expression [expression='%s', context=%s]"
-                  % (expression, data_context))
+        LOG.debug(
+            "Evaluating YAQL expression [expression='%s', context=%s]"
+            % (expression, data_context)
+        )
 
         try:
             result = YAQL_ENGINE(expression).evaluate(
@@ -53,8 +55,8 @@ class YAQLEvaluator(Evaluator):
             )
         except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
             raise exc.YaqlEvaluationException(
-                "Can not evaluate YAQL expression: %s, data = %s; error:"
-                " %s" % (expression, data_context, str(e))
+                "Can not evaluate YAQL expression: %s, error=%s, data = %s"
+                % (expression, str(e), data_context)
             )
 
         LOG.debug("YAQL expression result: %s" % result)
@@ -79,8 +81,9 @@ class InlineYAQLEvaluator(YAQLEvaluator):
             "Validating inline YAQL expression [expression='%s']", expression)
 
         if not isinstance(expression, six.string_types):
-            raise exc.YaqlEvaluationException("Unsupported type '%s'." %
-                                              type(expression))
+            raise exc.YaqlEvaluationException(
+                "Unsupported type '%s'." % type(expression)
+            )
 
         found_expressions = cls.find_inline_expressions(expression)
 
