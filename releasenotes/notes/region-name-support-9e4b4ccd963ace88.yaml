@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    [`bug 1633345 <https://bugs.launchpad.net/mistral/+bug/1633345>`_]
+
+    User now could define the target region for the openstack actions.
+    It could be done via API in X-Region-Name and X-Target-Region-Name
+    in case of multi-vim feature is used.
