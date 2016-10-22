@@ -68,7 +68,7 @@ def run_task(wf_cmd):
 
         task.set_state(states.ERROR, msg)
 
-        wf_handler.fail_workflow(wf_ex, msg)
+        wf_handler.force_fail_workflow(wf_ex, msg)
 
         return
 
@@ -113,12 +113,24 @@ def _on_action_complete(action_ex):
 
         task.set_state(states.ERROR, msg)
 
-        wf_handler.fail_workflow(wf_ex, msg)
+        wf_handler.force_fail_workflow(wf_ex, msg)
 
         return
 
 
-def fail_task(task_ex, msg):
+def force_fail_task(task_ex, msg):
+    """Forces the given task to fail.
+
+    This method implements the 'forced' task fail without giving a chance
+    to a workflow controller to handle the error. Its main purpose is to
+    reflect errors caused by workflow structure (errors 'publish', 'on-xxx'
+    clauses etc.) rather than failed actions. If such an error happens
+    we should also force the entire workflow to fail. I.e., this kind of
+    error must be propagated to a higher level, to the workflow.
+
+    :param task_ex: Task execution.
+    :param msg: Error message.
+    """
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
         task_ex.workflow_execution_id
     )
@@ -127,7 +139,7 @@ def fail_task(task_ex, msg):
 
     task.set_state(states.ERROR, msg)
 
-    wf_handler.fail_workflow(task_ex.workflow_execution, msg)
+    wf_handler.force_fail_workflow(task_ex.workflow_execution, msg)
 
 
 def continue_task(task_ex):
@@ -153,7 +165,7 @@ def continue_task(task_ex):
 
         task.set_state(states.ERROR, msg)
 
-        wf_handler.fail_workflow(wf_ex, msg)
+        wf_handler.force_fail_workflow(wf_ex, msg)
 
         return
 
@@ -179,7 +191,7 @@ def complete_task(task_ex, state, state_info):
 
         task.set_state(states.ERROR, msg)
 
-        wf_handler.fail_workflow(wf_ex, msg)
+        wf_handler.force_fail_workflow(wf_ex, msg)
 
         return
 
@@ -263,7 +275,9 @@ def _refresh_task_state(task_ex_id):
         if state == states.RUNNING:
             continue_task(task_ex)
         elif state == states.ERROR:
-            fail_task(task_ex, state_info)
+            task = _build_task_from_execution(wf_spec, task_ex)
+
+            task.complete(state, state_info)
         elif state == states.WAITING:
             # Let's assume that a task takes 0.01 sec in average to complete
             # and based on this assumption calculate a time of the next check.
