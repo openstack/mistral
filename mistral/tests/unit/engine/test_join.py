@@ -812,7 +812,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         self._assert_multiple_items(task_execs, 4, state=states.SUCCESS)
 
-    def delete_join_completion_check_on_stop(self):
+    def test_delete_join_completion_check_on_stop(self):
         wf_text = """---
         version: '2.0'
 
@@ -867,7 +867,7 @@ class JoinEngineTest(base.EngineTestCase):
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
 
-    def delete_join_completion_check_on_execution_delete(self):
+    def test_delete_join_completion_check_on_execution_delete(self):
         wf_text = """---
         version: '2.0'
 
@@ -921,3 +921,43 @@ class JoinEngineTest(base.EngineTestCase):
             lambda:
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
+
+    def test_no_workflow_error_after_inbound_error(self):
+        wf_text = """---
+        version: "2.0"
+
+        wf:
+          output:
+            continue_flag: <% $.get(continue_flag) %>
+
+          task-defaults:
+            on-error:
+              - change_continue_flag
+
+          tasks:
+            task_a:
+              action: std.fail
+              on-success:
+                - task_c: <% $.get(continue_flag) = null %>
+                - task_a_process
+
+            task_a_process:
+              action: std.noop
+
+            task_b:
+              on-success:
+                - task_c: <% $.get(continue_flag) = null %>
+
+            task_c:
+              join: all
+
+            change_continue_flag:
+              publish:
+                continue_flag: false
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)

@@ -69,7 +69,7 @@ def stop_workflow(wf_ex, state, msg=None):
                     stop_workflow(sub_wf_ex, state, msg=msg)
 
 
-def fail_workflow(wf_ex, msg=None):
+def force_fail_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.ERROR, msg)
 
 
@@ -101,7 +101,7 @@ def _check_and_complete(wf_ex_id):
 
             LOG.error(msg)
 
-            fail_workflow(wf.wf_ex, msg)
+            force_fail_workflow(wf.wf_ex, msg)
 
             return
 
