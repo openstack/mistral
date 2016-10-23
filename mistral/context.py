@@ -118,6 +118,9 @@ def context_from_headers_and_env(headers, env):
 
     token_info = env.get('keystone.token_info')
 
+    if token_info and target_service_catalog is None:
+        target_service_catalog = token_info['token']
+
     return MistralContext(
         auth_uri=auth_uri,
         auth_cacert=auth_cacert,
