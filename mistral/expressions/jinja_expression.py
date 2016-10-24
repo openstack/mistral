@@ -47,18 +47,23 @@ class JinjaEvaluator(Evaluator):
     @classmethod
     def validate(cls, expression):
         LOG.debug(
-            "Validating Jinja expression [expression='%s']", expression)
+            "Validating Jinja expression [expression='%s']",
+            expression
+        )
 
         if not isinstance(expression, six.string_types):
-            raise exc.JinjaEvaluationException("Unsupported type '%s'." %
-                                               type(expression))
+            raise exc.JinjaEvaluationException(
+                "Unsupported type '%s'." % type(expression)
+            )
 
         try:
             parser = jinja_parse.Parser(cls._env, expression, state='variable')
+
             parser.parse_expression()
         except jinja2.exceptions.TemplateError as e:
-            raise exc.JinjaGrammarException("Syntax error '%s'." %
-                                            str(e))
+            raise exc.JinjaGrammarException(
+                "Syntax error '%s'." % str(e)
+            )
 
     @classmethod
     def evaluate(cls, expression, data_context):
@@ -67,9 +72,7 @@ class JinjaEvaluator(Evaluator):
             % (expression, data_context)
         )
 
-        opts = {
-            'undefined_to_none': False
-        }
+        opts = {'undefined_to_none': False}
 
         ctx = expression_utils.get_jinja_context(data_context)
 
@@ -81,8 +84,9 @@ class JinjaEvaluator(Evaluator):
             # to access it is to try and cast it to string.
             str(result)
         except jinja2.exceptions.UndefinedError as e:
-            raise exc.JinjaEvaluationException("Undefined error '%s'." %
-                                               str(e))
+            raise exc.JinjaEvaluationException(
+                "Undefined error '%s'." % str(e)
+            )
 
         LOG.debug("Jinja expression result: %s" % result)
 
@@ -106,17 +110,21 @@ class InlineJinjaEvaluator(Evaluator):
     @classmethod
     def validate(cls, expression):
         LOG.debug(
-            "Validating Jinja expression [expression='%s']", expression)
+            "Validating Jinja expression [expression='%s']",
+            expression
+        )
 
         if not isinstance(expression, six.string_types):
-            raise exc.JinjaEvaluationException("Unsupported type '%s'." %
-                                               type(expression))
+            raise exc.JinjaEvaluationException(
+                "Unsupported type '%s'." % type(expression)
+            )
 
         try:
             cls._env.parse(expression)
         except jinja2.exceptions.TemplateError as e:
-            raise exc.JinjaGrammarException("Syntax error '%s'." %
-                                            str(e))
+            raise exc.JinjaGrammarException(
+                "Syntax error '%s'." % str(e)
+            )
 
     @classmethod
     def evaluate(cls, expression, data_context):
@@ -126,6 +134,7 @@ class InlineJinjaEvaluator(Evaluator):
         )
 
         patterns = cls.find_expression_pattern.findall(expression)
+
         if patterns[0][0] == expression:
             result = JinjaEvaluator.evaluate(patterns[0][1], data_context)
         else:
