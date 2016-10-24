@@ -84,7 +84,7 @@ def get_thread_local(var_name):
 
 
 def set_thread_local(var_name, val):
-    if not val and has_thread_local(var_name):
+    if val is None and has_thread_local(var_name):
         gl_storage = _get_greenlet_local_storage()
 
         # Delete variable from greenlet local storage.
@@ -95,7 +95,7 @@ def set_thread_local(var_name, val):
         if gl_storage and len(gl_storage) == 0:
             del _th_loc_storage.greenlet_locals[corolocal.get_ident()]
 
-    if val:
+    if val is not None:
         gl_storage = _get_greenlet_local_storage()
         if not gl_storage:
             gl_storage = _th_loc_storage.greenlet_locals[

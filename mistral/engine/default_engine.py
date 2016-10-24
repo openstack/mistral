@@ -21,6 +21,7 @@ from mistral import coordination
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
+from mistral.engine import action_queue
 from mistral.engine import base
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions
@@ -41,6 +42,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
         coordination.Service.__init__(self, 'engine_group')
 
+    @action_queue.process
     @u.log_exec(LOG)
     @profiler.trace('engine-start-workflow')
     def start_workflow(self, wf_identifier, wf_input, description='',
@@ -55,6 +57,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             return wf_ex.get_clone()
 
+    @action_queue.process
     @u.log_exec(LOG)
     def start_action(self, action_name, action_input,
                      description=None, **params):
@@ -106,6 +109,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             return db_api.create_action_execution(values)
 
+    @action_queue.process
     @u.log_exec(LOG)
     @profiler.trace('engine-on-action-complete')
     def on_action_complete(self, action_ex_id, result, wf_action=False):
@@ -128,6 +132,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             return wf_ex.get_clone()
 
+    @action_queue.process
     @u.log_exec(LOG)
     def rerun_workflow(self, task_ex_id, reset=True, env=None):
         with db_api.transaction():
@@ -139,6 +144,7 @@ class DefaultEngine(base.Engine, coordination.Service):
 
             return wf_ex.get_clone()
 
+    @action_queue.process
     @u.log_exec(LOG)
     def resume_workflow(self, wf_ex_id, env=None):
         with db_api.transaction():
