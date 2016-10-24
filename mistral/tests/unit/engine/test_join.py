@@ -921,3 +921,58 @@ class JoinEngineTest(base.EngineTestCase):
             lambda:
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
+
+    def test_join_with_deep_dependencies_tree(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task_a_1:
+              on-success:
+                - task_with_join
+
+            task_b_1:
+              action: std.fail
+              on-success:
+                - task_b_2
+
+            task_b_2:
+              on-success:
+                - task_b_3
+
+            task_b_3:
+              on-success:
+                - task_with_join
+
+            task_with_join:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(3, len(task_execs))
+        self._assert_single_item(
+            task_execs,
+            name='task_a_1',
+            state=states.SUCCESS
+        )
+        self._assert_single_item(
+            task_execs,
+            name='task_b_1',
+            state=states.ERROR
+        )
+        self._assert_single_item(
+            task_execs,
+            name='task_with_join',
+            state=states.ERROR
+        )
