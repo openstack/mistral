@@ -426,7 +426,9 @@ class DirectWorkflowController(base.WorkflowController):
             t_ex = self._find_task_execution_by_name(t_s.get_name())
 
             if not t_ex:
-                if self._possible_route(t_s, depth + 1):
+                possible, depth = self._possible_route(t_s, depth + 1)
+
+                if possible:
                     return True, depth
             else:
                 t_name = task_spec.get_name()
