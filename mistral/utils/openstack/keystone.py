@@ -20,8 +20,10 @@ from keystoneclient.v3 import client as ks_client
 from keystoneclient.v3 import endpoints as ks_endpoints
 from oslo_config import cfg
 from oslo_utils import timeutils
+import six
 
 from mistral import context
+from mistral import exceptions
 
 CONF = cfg.CONF
 
@@ -76,30 +78,29 @@ def get_endpoint_for_project(service_name=None, service_type=None):
 
     service_catalog = obtain_service_catalog(ctx)
 
-    catalog = service_catalog.get_endpoints(
+    service_endpoints = service_catalog.get_endpoints(
         service_name=service_name,
         service_type=service_type
     )
 
     endpoint = None
-    for service_type in catalog:
-        service = catalog.get(service_type)
-        for interface in service:
+    for endpoints in six.itervalues(service_endpoints):
+        for ep in endpoints:
             # is V3 interface?
-            if 'interface' in interface:
-                interface_type = interface['interface']
+            if 'interface' in ep:
+                interface_type = ep['interface']
                 if CONF.os_actions_endpoint_type in interface_type:
                     endpoint = ks_endpoints.Endpoint(
                         None,
-                        interface,
+                        ep,
                         loaded=True
                     )
                     break
             # is V2 interface?
-            if 'publicURL' in interface:
+            if 'publicURL' in ep:
                 endpoint_data = {
-                    'url': interface['publicURL'],
-                    'region': interface['region']
+                    'url': ep['publicURL'],
+                    'region': ep['region']
                 }
                 endpoint = ks_endpoints.Endpoint(
                     None,
@@ -122,6 +123,7 @@ def get_endpoint_for_project(service_name=None, service_type=None):
 
 def obtain_service_catalog(ctx):
     token = ctx.auth_token
+
     if ctx.is_trust_scoped and is_token_trust_scoped(token):
         if ctx.trust_id is None:
             raise Exception(
@@ -134,22 +136,29 @@ def obtain_service_catalog(ctx):
             include_catalog=True
         )['token']
     else:
-        if not ctx.target_service_catalog:
+        response = ctx.service_catalog
+
+        # Target service catalog may not be passed via API.
+        if not response and ctx.is_target:
             response = client().tokens.get_token_data(
                 token,
-                include_catalog=True)['token']
-        else:
-            response = ctx.target_service_catalog
+                include_catalog=True
+            )['token']
+
+    if not response:
+        raise exceptions.UnauthorizedException()
+
     service_catalog = ks_service_catalog.ServiceCatalog.factory(response)
+
     return service_catalog
 
 
 def get_keystone_endpoint_v2():
-    return get_endpoint_for_project('keystone')
+    return get_endpoint_for_project('keystone', service_type='identity')
 
 
 def get_keystone_url_v2():
-    return get_endpoint_for_project('keystone').url
+    return get_endpoint_for_project('keystone', service_type='identity').url
 
 
 def format_url(url_template, values):

@@ -12,7 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import config
+from mistral import context as auth_context
+from mistral import exceptions
 from mistral.tests.unit import base
 from mistral.utils.openstack import keystone
 
@@ -22,10 +23,6 @@ class KeystoneUtilsTest(base.BaseTest):
         super(KeystoneUtilsTest, self).setUp()
 
         self.values = {'id': 'my_id'}
-
-    def override_config(self, name, override, group=None):
-        config.CONF.set_override(name, override, group)
-        self.addCleanup(config.CONF.clear_override, name, group)
 
     def test_format_url_dollar_sign(self):
         url_template = "http://host:port/v1/$(id)s"
@@ -45,4 +42,15 @@ class KeystoneUtilsTest(base.BaseTest):
         self.assertEqual(
             expected,
             keystone.format_url(url_template, self.values)
+        )
+
+    def test_get_endpoint_for_project_noauth(self):
+        # service_catalog is not set by default.
+        auth_context.set_ctx(base.get_context())
+        self.addCleanup(auth_context.set_ctx, None)
+
+        self.assertRaises(
+            exceptions.UnauthorizedException,
+            keystone.get_endpoint_for_project,
+            'keystone'
         )

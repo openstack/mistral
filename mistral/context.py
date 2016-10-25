@@ -76,7 +76,6 @@ class MistralContext(BaseContext):
         "project_id",
         "auth_token",
         "service_catalog",
-        "target_service_catalog",
         "user_name",
         "project_name",
         "roles",
@@ -85,6 +84,7 @@ class MistralContext(BaseContext):
         "redelivered",
         "expires_at",
         "trust_id",
+        "is_target",
     ])
 
     def __repr__(self):
@@ -108,18 +108,19 @@ def set_ctx(new_ctx):
 
 def context_from_headers_and_env(headers, env):
     params = _extract_auth_params_from_headers(headers)
+
     auth_cacert = params['auth_cacert']
     auth_token = params['auth_token']
     auth_uri = params['auth_uri']
     project_id = params['project_id']
     user_id = params['user_id']
     user_name = params['user_name']
-    target_service_catalog = params['target_service_catalog']
+    is_target = params['is_target']
 
-    token_info = env.get('keystone.token_info')
+    token_info = env.get('keystone.token_info', {})
 
-    if token_info and target_service_catalog is None:
-        target_service_catalog = token_info['token']
+    service_catalog = (params['service_catalog'] if is_target
+                       else token_info.get('token', {}))
 
     return MistralContext(
         auth_uri=auth_uri,
@@ -127,7 +128,8 @@ def context_from_headers_and_env(headers, env):
         user_id=user_id,
         project_id=project_id,
         auth_token=auth_token,
-        target_service_catalog=target_service_catalog,
+        is_target=is_target,
+        service_catalog=service_catalog,
         user_name=user_name,
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(","),
@@ -137,7 +139,7 @@ def context_from_headers_and_env(headers, env):
 
 
 def _extract_auth_params_from_headers(headers):
-    target_service_catalog = None
+    service_catalog = None
 
     if headers.get("X-Target-Auth-Uri"):
         params = {
@@ -148,13 +150,17 @@ def _extract_auth_params_from_headers(headers):
             'project_id': headers.get('X-Target-Project-Id'),
             'user_id': headers.get('X-Target-User-Id'),
             'user_name': headers.get('X-Target-User-Name'),
+            'is_target': True
         }
         if not params['auth_token']:
             raise (exc.MistralException(
                 'Target auth URI (X-Target-Auth-Uri) target auth token '
                 '(X-Target-Auth-Token) must be present'))
 
-        target_service_catalog = _extract_service_catalog_from_headers(
+        # It's possible that target service catalog is not provided, in this
+        # case, Mistral needs to get target service catalog dynamically when
+        # talking to target openstack deployment later on.
+        service_catalog = _extract_service_catalog_from_headers(
             headers
         )
     else:
@@ -165,9 +171,10 @@ def _extract_auth_params_from_headers(headers):
             'project_id': headers.get('X-Project-Id'),
             'user_id': headers.get('X-User-Id'),
             'user_name': headers.get('X-User-Name'),
+            'is_target': False
         }
 
-    params['target_service_catalog'] = target_service_catalog
+    params['service_catalog'] = service_catalog
 
     return params
 
