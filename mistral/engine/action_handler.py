@@ -44,7 +44,7 @@ def on_action_complete(action_ex, result):
         action.fail(msg)
 
         if task_ex:
-            task_handler.fail_task(task_ex, msg)
+            task_handler.force_fail_task(task_ex, msg)
 
         return
 
