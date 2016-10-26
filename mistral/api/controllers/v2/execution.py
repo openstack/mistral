@@ -207,7 +207,7 @@ class ExecutionsController(rest.RestController):
             exec_dict.get('workflow_id', exec_dict.get('workflow_name')),
             exec_dict.get('input'),
             exec_dict.get('description', ''),
-            **exec_dict.get('params') or {}
+            **exec_dict.get('params', {})
         )
 
         return resources.Execution.from_dict(result)
