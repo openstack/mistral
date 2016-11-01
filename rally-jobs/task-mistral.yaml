@@ -45,3 +45,33 @@
         failure_rate:
           max: 0
 
+  MistralExecutions.create_execution_from_workbook:
+    -
+      args:
+        definition: "/home/jenkins/.rally/extra/mistral_wb.yaml"
+        do_delete: true
+      runner:
+        type: "constant"
+        times: 20
+        concurrency: 5
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
+
+  MistralExecutions.list_executions:
+    -
+      runner:
+        type: "constant"
+        times: 50
+        concurrency: 10
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
