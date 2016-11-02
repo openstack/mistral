@@ -101,7 +101,7 @@ directory.
     [executor]
     host = my_favorite_executor
 
- Then, this executor can be referred in DSL by
+ Then, this executor can be referred in Workflow Language by
 
  .. code-block:: yaml
 

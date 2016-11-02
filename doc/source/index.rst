@@ -14,7 +14,6 @@ Overview
     overview
     quickstart
     architecture
-    Roadmap <https://wiki.openstack.org/wiki/Mistral/Roadmap>
     terminology/index
     main_features
     cookbooks
@@ -47,6 +46,13 @@ User guide
 
    dsl/index
 
+**CLI**
+
+.. toctree::
+   :maxdepth: 1
+
+   guides/cli_guide
+
 Developer guide
 ---------------
 
@@ -54,7 +60,6 @@ Developer guide
    :maxdepth: 2
 
    developer/index
-   
 
 Indices and tables
 ==================

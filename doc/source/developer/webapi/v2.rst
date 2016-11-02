@@ -154,11 +154,11 @@ Environments
 ------------
 
 Environment contains a set of variables which can be used in specific workflow.
-Using Environment possible to create and map action default values - just provide
-'__actions' key in 'variables'. All these variables can be accessed in workflow
-DSL by <% $.__env %> expression.
+Using an Environment it is possible to create and map action default values -
+just provide '__actions' key in 'variables'. All these variables can be
+accessed using the Workflow Language with the ``<% $.__env %>`` expression.
 
-Example of using in DSL
+Example of usage:
 
 .. code-block:: yaml
 
@@ -222,16 +222,16 @@ Validation
 ----------
 
 Validation endpoints allow to check correctness of workbook, workflow and ad-hoc
-action DSL without having to upload them into Mistral.
+action Workflow Language without having to upload them into Mistral.
 
 **POST /v2/workbooks/validation**
-  Validate workbook content (DSL grammar and semantics).
+  Validate workbook content (Workflow Language grammar and semantics).
 
 **POST /v2/workflows/validation**
-  Validate workflow content (DSL grammar and semantics).
+  Validate workflow content (Workflow Language grammar and semantics).
 
 **POST /v2/actions/validation**
-  Validate ad-hoc action content (DSL grammar and semantics).
+  Validate ad-hoc action content (Workflow Language grammar and semantics).
 
-These endpoints expect workbook, workflow or ad-hoc action  text (DSL) correspondingly
+These endpoints expect workbook, workflow or ad-hoc action  text (Workflow Language) correspondingly
 in a request body.
