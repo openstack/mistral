@@ -88,8 +88,9 @@ def end_tx():
 
 @contextlib.contextmanager
 def transaction():
+    start_tx()
+
     try:
-        start_tx()
         yield
         commit_tx()
     finally:
