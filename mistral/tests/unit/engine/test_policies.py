@@ -872,6 +872,52 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertDictEqual({'result': 'mocked result'}, wf_ex.output)
 
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.MagicMock(side_effect=[exc.ActionException(), 'value'])
+    )
+    def test_retry_policy_succeed_after_failure_with_publish(self):
+        retry_wf = """---
+        version: '2.0'
+
+        wf1:
+            output:
+              result: <% task(task2).result %>
+
+            tasks:
+              task1:
+                action: std.noop
+                publish:
+                  key: value
+                on-success:
+                  - task2
+
+              task2:
+                action: std.echo output=<% $.key %>
+                retry:
+                  count: 3
+                  delay: 1
+        """
+        wf_service.create_workflows(retry_wf)
+        wf_ex = self.engine.start_workflow('wf1', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        retry_task = self._assert_single_item(
+            wf_ex.task_executions,
+            name='task2'
+        )
+
+        self.assertDictEqual(
+            {'retry_no': 1},
+            retry_task.runtime_context['retry_task_policy']
+        )
+
+        self.assertDictEqual({'result': 'value'}, wf_ex.output)
+
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB)
 
