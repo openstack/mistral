@@ -19,22 +19,19 @@ from osprofiler import profiler
 import six
 
 from mistral.db.v2 import api as db_api
+from mistral.engine import action_queue
 from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as e_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.services import action_manager as a_m
-from mistral.services import scheduler
 from mistral.services import security
 from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
-
-
-_RUN_EXISTING_ACTION_PATH = 'mistral.engine.actions._run_existing_action'
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -227,13 +224,7 @@ class PythonAction(Action):
             action_ex_id=action_ex_id
         )
 
-        scheduler.schedule_call(
-            None,
-            _RUN_EXISTING_ACTION_PATH,
-            0,
-            action_ex_id=self.action_ex.id,
-            target=target
-        )
+        action_queue.schedule(self.action_ex, self.action_def, target)
 
     @profiler.trace('action-run')
     def run(self, input_dict, target, index=0, desc='', save=True,
@@ -505,22 +496,6 @@ class WorkflowAction(Action):
     def validate_input(self, input_dict):
         # TODO(rakhmerov): Implement.
         pass
-
-
-def _run_existing_action(action_ex_id, target):
-    action_ex = db_api.get_action_execution(action_ex_id)
-    action_def = db_api.get_action_definition(action_ex.name)
-
-    result = rpc.get_executor_client().run_action(
-        action_ex_id,
-        action_def.action_class,
-        action_def.attributes or {},
-        action_ex.input,
-        target,
-        safe_rerun=action_ex.runtime_context.get('safe_rerun', False)
-    )
-
-    return result.to_dict() if result else None
 
 
 def resolve_action_definition(action_spec_name, wf_name=None,

@@ -21,6 +21,7 @@ import traceback as tb
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
+from mistral.engine import action_queue
 from mistral.engine import tasks
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
@@ -249,6 +250,7 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
     return cls(wf_ex, wf_spec, task_spec, ctx, task_ex, unique_key, waiting)
 
 
+@action_queue.process
 @profiler.trace('task-handler-refresh-task-state')
 def _refresh_task_state(task_ex_id):
     with db_api.transaction():
@@ -326,6 +328,7 @@ def _schedule_refresh_task_state(task_ex, delay=0):
     )
 
 
+@action_queue.process
 def _scheduled_on_action_complete(action_ex_id, wf_action):
     with db_api.transaction():
         if wf_action:
