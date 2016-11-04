@@ -54,7 +54,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         """
 
         acl.enforce('actions:get', context.ctx())
-        LOG.info("Fetch action [identifier=%s]" % identifier)
+        LOG.info("Fetch action [identifier=%s]", identifier)
 
         db_model = db_api.get_action_definition(identifier)
 
@@ -70,7 +70,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('actions:update', context.ctx())
         definition = pecan.request.text
-        LOG.info("Update action(s) [definition=%s]" % definition)
+        LOG.info("Update action(s) [definition=%s]", definition)
         scope = pecan.request.GET.get('scope', 'private')
 
         if scope not in resources.SCOPE_TYPES.values:
@@ -110,7 +110,7 @@ class ActionsController(rest.RestController, hooks.HookController):
                 "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
-        LOG.info("Create action(s) [definition=%s]" % definition)
+        LOG.info("Create action(s) [definition=%s]", definition)
 
         with db_api.transaction():
             db_acts = actions.create_actions(definition, scope=scope)
@@ -125,7 +125,7 @@ class ActionsController(rest.RestController, hooks.HookController):
     def delete(self, identifier):
         """Delete the named action."""
         acl.enforce('actions:delete', context.ctx())
-        LOG.info("Delete action [identifier=%s]" % identifier)
+        LOG.info("Delete action [identifier=%s]", identifier)
 
         with db_api.transaction():
             db_model = db_api.get_action_definition(identifier)

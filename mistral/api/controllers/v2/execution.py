@@ -67,7 +67,7 @@ class ExecutionsController(rest.RestController):
         """Return the specified Execution."""
         acl.enforce("executions:get", context.ctx())
 
-        LOG.info("Fetch execution [id=%s]" % id)
+        LOG.info("Fetch execution [id=%s]", id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(id)
@@ -191,7 +191,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:create', context.ctx())
 
-        LOG.info('Create execution [execution=%s]' % wf_ex)
+        LOG.info("Create execution [execution=%s]", wf_ex)
 
         engine = rpc.get_engine_client()
         exec_dict = wf_ex.to_dict()
@@ -218,7 +218,7 @@ class ExecutionsController(rest.RestController):
         """Delete the specified Execution."""
         acl.enforce('executions:delete', context.ctx())
 
-        LOG.info('Delete execution [id=%s]' % id)
+        LOG.info("Delete execution [id=%s]", id)
 
         return db_api.delete_workflow_execution(id)
 
