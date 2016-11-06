@@ -363,7 +363,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
-    def test_error_message_format_key_error(self):
+    def test_error_message_format(self):
         wf_text = """
         version: '2.0'
 
@@ -373,34 +373,6 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
               action: std.noop
               on-success:
                 - succeed: <% $.invalid_yaql %>
-        """
-
-        wf_service.create_workflows(wf_text)
-
-        wf_ex = self.engine.start_workflow('wf', {})
-
-        self.await_workflow_error(wf_ex.id)
-
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
-            task_ex = wf_ex.task_executions[0]
-
-        state_info = task_ex.state_info
-
-        self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error') < state_info.find('data'))
-
-    def test_error_message_format_unknown_function(self):
-        wf_text = """
-        version: '2.0'
-
-        wf:
-          tasks:
-            task1:
-              action: std.noop
-              publish:
-                my_var: <% invalid_yaql_function() %>
         """
 
         wf_service.create_workflows(wf_text)
