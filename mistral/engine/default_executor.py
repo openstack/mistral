@@ -107,7 +107,11 @@ class DefaultExecutor(base.Executor, coordination.Service):
 
         try:
             if action_ex_id and (action.is_sync() or result.is_error()):
-                self._engine_client.on_action_complete(action_ex_id, result)
+                self._engine_client.on_action_complete(
+                    action_ex_id,
+                    result,
+                    async=True
+                )
 
         except Exception as e:
             msg = ("Exception occurred when calling engine on_action_complete"
