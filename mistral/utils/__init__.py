@@ -27,11 +27,11 @@ import socket
 import sys
 import tempfile
 import threading
-import uuid
 
 import eventlet
 from eventlet import corolocal
 from oslo_concurrency import processutils
+from oslo_utils import uuidutils
 import pkg_resources as pkg
 import random
 
@@ -44,16 +44,11 @@ _th_loc_storage = threading.local()
 
 
 def generate_unicode_uuid():
-    return six.text_type(str(uuid.uuid4()))
+    return uuidutils.generate_uuid()
 
 
 def is_valid_uuid(uuid_string):
-    try:
-        val = uuid.UUID(uuid_string, version=4)
-    except ValueError:
-        return False
-
-    return val.hex == uuid_string.replace('-', '')
+    return uuidutils.is_uuid_like(uuid_string)
 
 
 def _get_greenlet_local_storage():

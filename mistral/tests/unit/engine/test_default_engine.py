@@ -14,11 +14,11 @@
 #    limitations under the License.
 
 import datetime
-import uuid
 
 import mock
 from oslo_config import cfg
 from oslo_messaging.rpc import client as rpc_client
+from oslo_utils import uuidutils
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -64,7 +64,7 @@ workflows:
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 ENVIRONMENT = {
-    'id': str(uuid.uuid4()),
+    'id': uuidutils.generate_uuid(),
     'name': 'test',
     'description': 'my test settings',
     'variables': {

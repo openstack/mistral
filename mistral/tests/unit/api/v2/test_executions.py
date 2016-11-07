@@ -22,7 +22,6 @@ import json
 import mock
 from oslo_config import cfg
 import oslo_messaging
-import uuid
 from webtest import app as webtest_app
 
 from mistral.api.controllers.v2 import execution
@@ -35,6 +34,7 @@ from mistral.tests.unit.api import base
 from mistral import utils
 from mistral.utils import rest_utils
 from mistral.workflow import states
+from oslo_utils import uuidutils
 
 # This line is needed for correct initialization of messaging config.
 oslo_messaging.get_transport(cfg.CONF)
@@ -69,7 +69,7 @@ WF_EX_JSON = {
 }
 
 SUB_WF_EX = models.WorkflowExecution(
-    id=str(uuid.uuid4()),
+    id=uuidutils.generate_uuid(),
     workflow_name='some',
     workflow_id='123e4567-e89b-12d3-a456-426655441111',
     description='foobar',
@@ -81,7 +81,7 @@ SUB_WF_EX = models.WorkflowExecution(
     params={'env': {'k1': 'abc'}},
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
-    task_execution_id=str(uuid.uuid4())
+    task_execution_id=uuidutils.generate_uuid()
 )
 
 SUB_WF_EX_JSON = {

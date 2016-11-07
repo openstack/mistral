@@ -13,9 +13,9 @@
 #    limitations under the License.
 
 import mock
-import uuid
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import osprofiler
 
 from mistral import context
@@ -59,8 +59,8 @@ class EngineProfilerTest(base.EngineTestCase):
         ctx = {
             'trace_info': {
                 'hmac_key': cfg.CONF.profiler.hmac_keys,
-                'base_id': str(uuid.uuid4()),
-                'parent_id': str(uuid.uuid4())
+                'base_id': uuidutils.generate_uuid(),
+                'parent_id': uuidutils.generate_uuid()
             }
         }
 
