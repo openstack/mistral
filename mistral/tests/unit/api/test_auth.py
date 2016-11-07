@@ -38,8 +38,9 @@ PKI_TOKEN_VERIFIED = {
         'methods': ['password'],
         'roles': [{'id': uuid.uuid4().hex,
                    'name': 'admin'}],
-        'expires_at': timeutils.isotime(datetime.datetime.utcnow() +
-                                        datetime.timedelta(seconds=60)),
+        'expires_at': datetime.datetime.isoformat(
+            datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
+        ),
         'project': {
             'domain': {'id': 'default', 'name': 'Default'},
             'id': uuid.uuid4().hex,
@@ -52,7 +53,7 @@ PKI_TOKEN_VERIFIED = {
             'id': uuid.uuid4().hex,
             'name': 'admin'
         },
-        'issued_at': timeutils.isotime()
+        'issued_at': datetime.datetime.isoformat(timeutils.utcnow())
     }
 }
 
