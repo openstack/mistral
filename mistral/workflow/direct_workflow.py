@@ -59,7 +59,7 @@ class DirectWorkflowController(base.WorkflowController):
             return False
 
         if not t_spec.get_join():
-            return not t_ex_candidate.processed
+            return t_ex_candidate.processed
 
         induced_state, _ = self._get_induced_join_state(
             self.wf_spec.get_tasks()[t_ex_candidate.name],
