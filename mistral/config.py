@@ -353,20 +353,25 @@ def set_config_defaults():
 
 def set_cors_middleware_defaults():
     """Update default configuration options for oslo.middleware."""
-    # CORS Defaults
-    # TODO(krotscheck): Update with https://review.openstack.org/#/c/285368/
-    cfg.set_defaults(
-        cors.CORS_OPTS,
-        allow_headers=[
-            'X-Auth-Token', 'X-Identity-Status', 'X-Roles',
-            'X-Service-Catalog', 'X-User-Id', 'X-Tenant-Id',
-            'X-Project-Id', 'X-User-Name', 'X-Project-Name'
-        ],
-        allow_methods=[
-            'GET', 'PUT', 'POST', 'DELETE', 'PATCH'
-        ],
-        expose_headers=[
-            'X-Auth-Token', 'X-Subject-Token', 'X-Service-Token',
-            'X-Project-Id', 'X-User-Name', 'X-Project-Name'
-        ]
+    cors.set_defaults(
+        allow_headers=['X-Auth-Token',
+                       'X-Identity-Status',
+                       'X-Roles',
+                       'X-Service-Catalog',
+                       'X-User-Id',
+                       'X-Tenant-Id',
+                       'X-Project-Id',
+                       'X-User-Name',
+                       'X-Project-Name'],
+        allow_methods=['GET',
+                       'PUT',
+                       'POST',
+                       'DELETE',
+                       'PATCH'],
+        expose_headers=['X-Auth-Token',
+                        'X-Subject-Token',
+                        'X-Service-Token',
+                        'X-Project-Id',
+                        'X-User-Name',
+                        'X-Project-Name']
     )
