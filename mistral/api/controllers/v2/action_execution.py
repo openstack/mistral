@@ -111,7 +111,7 @@ class ActionExecutionsController(rest.RestController):
         """Return the specified action_execution."""
         acl.enforce('action_executions:get', context.ctx())
 
-        LOG.info("Fetch action_execution [id=%s]" % id)
+        LOG.info("Fetch action_execution [id=%s]", id)
 
         return _get_action_execution(id)
 
@@ -122,7 +122,7 @@ class ActionExecutionsController(rest.RestController):
         """Create new action_execution."""
         acl.enforce('action_executions:create', context.ctx())
 
-        LOG.info("Create action_execution [action_execution=%s]" % action_ex)
+        LOG.info("Create action_execution [action_execution=%s]", action_ex)
 
         name = action_ex.name
         description = action_ex.description or None
@@ -268,7 +268,7 @@ class ActionExecutionsController(rest.RestController):
         """Delete the specified action_execution."""
         acl.enforce('action_executions:delete', context.ctx())
 
-        LOG.info("Delete action_execution [id=%s]" % id)
+        LOG.info("Delete action_execution [id=%s]", id)
 
         if not cfg.CONF.api.allow_action_execution_deletion:
             raise exc.NotAllowedException("Action execution deletion is not "
@@ -380,6 +380,6 @@ class TasksActionExecutionController(rest.RestController):
         """Return the specified action_execution."""
         acl.enforce('action_executions:get', context.ctx())
 
-        LOG.info("Fetch action_execution [id=%s]" % action_ex_id)
+        LOG.info("Fetch action_execution [id=%s]", action_ex_id)
 
         return _get_action_execution(action_ex_id)

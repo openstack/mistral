@@ -81,7 +81,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """Return the named workflow."""
         acl.enforce('workflows:get', context.ctx())
 
-        LOG.info("Fetch workflow [identifier=%s]" % identifier)
+        LOG.info("Fetch workflow [identifier=%s]", identifier)
 
         db_model = db_api.get_workflow_definition(identifier)
 
@@ -109,7 +109,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                 "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
-        LOG.info("Update workflow(s) [definition=%s]" % definition)
+        LOG.info("Update workflow(s) [definition=%s]", definition)
 
         db_wfs = workflows.update_workflows(
             definition,
@@ -145,7 +145,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                 "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
-        LOG.info("Create workflow(s) [definition=%s]" % definition)
+        LOG.info("Create workflow(s) [definition=%s]", definition)
 
         db_wfs = workflows.create_workflows(definition, scope=scope)
         models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
@@ -161,7 +161,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     def delete(self, identifier):
         """Delete a workflow."""
         acl.enforce('workflows:delete', context.ctx())
-        LOG.info("Delete workflow [identifier=%s]" % identifier)
+        LOG.info("Delete workflow [identifier=%s]", identifier)
 
         with db_api.transaction():
             db_api.delete_workflow_definition(identifier)
