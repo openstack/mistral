@@ -222,6 +222,7 @@ class ExecutionsController(rest.RestController):
 
         return db_api.delete_workflow_execution(id)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, types.uuid, wtypes.text, types.jsontype,

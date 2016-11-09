@@ -48,6 +48,7 @@ def _get_task_resource_with_result(task_ex):
 
 
 class TaskExecutionsController(rest.RestController):
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, types.uuid, wtypes.text, types.jsontype,
@@ -143,6 +144,7 @@ class TasksController(rest.RestController):
 
         return _get_task_resource_with_result(task_ex)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
                          wtypes.text, types.uuid, types.uuid, STATE_TYPES,
@@ -286,6 +288,7 @@ class TasksController(rest.RestController):
 
 
 class ExecutionTasksController(rest.RestController):
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, types.uuid, STATE_TYPES,
