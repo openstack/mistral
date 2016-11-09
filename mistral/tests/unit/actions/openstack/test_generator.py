@@ -35,7 +35,8 @@ MODULE_MAPPING = {
     'designate': ['designate.domains_list', actions.DesignateAction],
     'magnum': ['magnum.bays_list', actions.MagnumAction],
     'murano': ['murano.deployments_list', actions.MuranoAction],
-    'tacker': ['tacker.list_vims', actions.TackerAction]
+    'tacker': ['tacker.list_vims', actions.TackerAction],
+    'senlin': ['senlin.get_profile', actions.SenlinAction]
 }
 
 EXTRA_MODULES = ['neutron', 'swift', 'zaqar', 'tacker']

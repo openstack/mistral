@@ -359,3 +359,17 @@ class OpenStackActionTest(base.BaseTestCase):
         mocked().show_vim.assert_called_once_with(
             vim_id="1234-abcd"
         )
+
+    @mock.patch.object(actions.SenlinAction, '_get_client')
+    def test_senlin_action(self, mocked):
+        action_class = actions.SenlinAction
+        action_class.client_method_name = "get_cluster"
+        action = action_class(cluster_id='1234-abcd')
+
+        action.run()
+
+        self.assertTrue(mocked().get_cluster.called)
+
+        mocked().get_cluster.assert_called_once_with(
+            cluster_id="1234-abcd"
+        )
