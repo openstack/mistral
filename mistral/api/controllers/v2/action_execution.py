@@ -176,6 +176,7 @@ class ActionExecutionsController(rest.RestController):
 
         return resources.ActionExecution.from_dict(values)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text,
@@ -288,6 +289,7 @@ class ActionExecutionsController(rest.RestController):
 
 
 class TasksActionExecutionController(rest.RestController):
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.ActionExecutions, types.uuid, types.uuid,
                          int, types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, types.uniquelist, wtypes.text,

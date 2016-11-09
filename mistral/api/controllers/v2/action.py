@@ -136,6 +136,7 @@ class ActionsController(rest.RestController, hooks.HookController):
 
             db_api.delete_action_definition(identifier)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Actions, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
                          wtypes.text, resources.SCOPE_TYPES, wtypes.text,

@@ -83,6 +83,7 @@ class CronTriggersController(rest.RestController):
 
         db_api.delete_cron_trigger(name)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CronTriggers, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, types.uuid, types.jsontype,

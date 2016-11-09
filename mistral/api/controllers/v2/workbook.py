@@ -93,6 +93,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         db_api.delete_workbook(name)
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Workbooks, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text,

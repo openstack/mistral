@@ -116,6 +116,7 @@ class EventTriggersController(rest.RestController):
 
         triggers.delete_event_trigger(event_trigger.to_dict())
 
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.EventTriggers, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          types.jsontype)

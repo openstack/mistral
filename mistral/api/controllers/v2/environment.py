@@ -33,6 +33,7 @@ LOG = logging.getLogger(__name__)
 
 
 class EnvironmentController(rest.RestController):
+    @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Environments, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, types.jsontype,
