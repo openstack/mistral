@@ -13,10 +13,10 @@
 # under the License.
 
 import copy
-import uuid
 
 import mock
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from mistral.db.v2 import api as db_api
 from mistral.services import security
@@ -85,7 +85,7 @@ class TestMembersController(base.APITest):
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_create_membership_nonexistent_wf(self, auth_mock):
-        nonexistent_wf_id = str(uuid.uuid4())
+        nonexistent_wf_id = uuidutils.generate_uuid()
 
         resp = self.app.post_json(
             '/v2/workflows/%s/members' % nonexistent_wf_id,
@@ -165,7 +165,7 @@ class TestMembersController(base.APITest):
 
     @mock.patch('mistral.context.AuthHook.before')
     def test_get_memberships_nonexistent_wf(self, auth_mock):
-        nonexistent_wf_id = str(uuid.uuid4())
+        nonexistent_wf_id = uuidutils.generate_uuid()
 
         resp = self.app.get(
             '/v2/workflows/%s/members' % nonexistent_wf_id,

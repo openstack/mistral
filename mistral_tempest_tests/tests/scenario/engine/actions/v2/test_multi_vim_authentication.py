@@ -13,9 +13,9 @@
 #    limitations under the License.
 import base64
 from urlparse import urlparse
-import uuid
 
 from oslo_serialization import jsonutils
+from oslo_utils import uuidutils
 from tempest import test
 
 from mistral_tempest_tests.tests import base
@@ -106,7 +106,8 @@ def _execute_action(client, request, extra_headers={}):
 
 
 def _get_create_stack_request():
-    stack_name = 'multi_vim_test_stack_{}'.format(str(uuid.uuid4())[:8])
+    stack_name = 'multi_vim_test_stack_{}'.format(
+        uuidutils.generate_uuid()[:8])
 
     return {
         'name': 'heat.stacks_create',

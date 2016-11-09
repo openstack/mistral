@@ -15,7 +15,6 @@
 import copy
 import datetime
 import json
-import uuid
 
 import mock
 import six
@@ -25,7 +24,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
-
+from oslo_utils import uuidutils
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -62,7 +61,7 @@ ENVIRONMENT_FOR_UPDATE_NO_SCOPE = {
 
 
 ENVIRONMENT = {
-    'id': str(uuid.uuid4()),
+    'id': uuidutils.generate_uuid(),
     'name': 'test',
     'description': 'my test settings',
     'variables': VARIABLES,
@@ -72,7 +71,7 @@ ENVIRONMENT = {
 }
 
 ENVIRONMENT_WITH_ILLEGAL_FIELD = {
-    'id': str(uuid.uuid4()),
+    'id': uuidutils.generate_uuid(),
     'name': 'test',
     'description': 'my test settings',
     'extra_field': 'I can add whatever I want here',
