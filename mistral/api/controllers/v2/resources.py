@@ -276,6 +276,7 @@ class Task(resource.Resource):
 
     id = wtypes.text
     name = wtypes.text
+    type = wtypes.text
 
     workflow_name = wtypes.text
     workflow_id = wtypes.text

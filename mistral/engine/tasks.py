@@ -207,6 +207,7 @@ class Task(object):
     def _create_task_execution(self, state=states.RUNNING, state_info=None):
         task_id = utils.generate_unicode_uuid()
         task_name = self.task_spec.get_name()
+        task_type = self.task_spec.get_type()
 
         data_flow.add_current_task_to_context(self.ctx, task_id, task_name)
 
@@ -223,7 +224,8 @@ class Task(object):
             'in_context': self.ctx,
             'published': {},
             'runtime_context': {},
-            'project_id': self.wf_ex.project_id
+            'project_id': self.wf_ex.project_id,
+            'type': task_type
         }
 
         self.task_ex = db_api.create_task_execution(values)

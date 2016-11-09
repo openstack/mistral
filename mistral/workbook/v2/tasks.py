@@ -36,6 +36,9 @@ RESERVED_TASK_NAMES = [
     'pause'
 ]
 
+ACTION_TASK_TYPE = 'ACTION'
+WORKFLOW_TASK_TYPE = 'WORKFLOW'
+
 
 class TaskSpec(base.BaseSpec):
     # See http://json-schema.org
@@ -190,9 +193,6 @@ class TaskSpec(base.BaseSpec):
     def get_description(self):
         return self._description
 
-    def get_type(self):
-        return self._type
-
     def get_action_name(self):
         return self._action if self._action else None
 
@@ -222,6 +222,11 @@ class TaskSpec(base.BaseSpec):
 
     def get_safe_rerun(self):
         return self._safe_rerun
+
+    def get_type(self):
+        if self._workflow:
+            return WORKFLOW_TASK_TYPE
+        return ACTION_TASK_TYPE
 
 
 class DirectWorkflowTaskSpec(TaskSpec):

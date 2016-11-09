@@ -233,6 +233,7 @@ class TaskExecution(Execution):
     # Main properties.
     action_spec = sa.Column(st.JsonLongDictType())
     unique_key = sa.Column(sa.String(250), nullable=True)
+    type = sa.Column(sa.String(10))
 
     # Whether the task is fully processed (publishing and calculating commands
     # after it). It allows to simplify workflow controller implementations

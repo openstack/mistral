@@ -55,3 +55,39 @@ class TasksTestsV2(base.TestCase):
         self.assertEqual(
             self.direct_wf_name, body['tasks'][-1]['workflow_name']
         )
+
+
+class TaskTypesTestsV2(base.TestCase):
+
+    _service = 'workflowv2'
+
+    def setUp(self):
+        super(TaskTypesTestsV2, self).setUp()
+
+        self.useFixture(lockutils.LockFixture('mistral-workflow'))
+
+        _, wb_body = self.client.create_workbook('wb_with_nested_wf.yaml')
+        self.nested_wf_name = 'wb_with_nested_wf.wrapping_wf'
+        _, execution = self.client.create_execution(self.nested_wf_name)
+
+    @test.attr(type='sanity')
+    def test_task_type(self):
+        resp, body = self.client.get_list_obj('tasks')
+
+        self.assertEqual(200, resp.status)
+
+        bt = body['tasks']
+        ll = [[v for k, v in d.iteritems() if 'type' in k] for d in bt]
+        types_list = [item for sublist in ll for item in sublist]
+
+        self.assertIn(
+            'WORKFLOW', types_list
+        )
+        self.assertIn(
+            'ACTION', types_list
+        )
+
+        # there are 2 tasks in the workflow one of each type
+        self.assertEqual(
+            2, len(types_list)
+        )
