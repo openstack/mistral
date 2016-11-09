@@ -1,0 +1,73 @@
+---
+version: "2.0"
+
+name: wb
+
+workflows:
+
+  wrapping_wf:
+    type: direct
+    tasks:
+      call_inner_wf_1:
+        workflow: inner_wf
+      call_inner_wf_2:
+        workflow: inner_wf
+      call_inner_wf_3:
+        workflow: inner_wf
+      call_inner_wf_4:
+        workflow: inner_wf
+
+  inner_wf:
+    type: direct
+    tasks:
+      hello1:
+        action: std.echo output="Hello"
+        publish:
+            result: $
+      hello2:
+        action: std.echo output="Hello"
+        publish:
+            result: $
+        on-success:
+          - world
+      hello3:
+        action: std.echo output="Hello"
+        publish:
+            result: $
+        on-success:
+          - world
+      hello4:
+        action: std.echo output="Hello"
+        publish:
+            result: $
+        on-success:
+          - world
+
+      world:
+        action: std.echo output="World"
+        join: all
+        publish:
+            result: $
+        on-success:
+          - test1
+          - test2
+          - test3
+          - test4
+
+      test1:
+        action: std.echo output="Test!!"
+        publish:
+            result: $
+      test2:
+        action: std.echo output="Test!!"
+        publish:
+            result: $
+      test3:
+        action: std.echo output="Test!!"
+        publish:
+            result: $
+      test4:
+        action: std.echo output="Test!!"
+        publish:
+            result: $
+
