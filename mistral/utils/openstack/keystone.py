@@ -70,7 +70,7 @@ def client_for_trusts(trust_id):
 
 def get_endpoint_for_project(service_name=None, service_type=None):
     if service_name is None and service_type is None:
-        raise Exception(
+        raise exceptions.MistralException(
             "Either 'service_name' or 'service_type' must be provided."
         )
 
@@ -80,7 +80,8 @@ def get_endpoint_for_project(service_name=None, service_type=None):
 
     service_endpoints = service_catalog.get_endpoints(
         service_name=service_name,
-        service_type=service_type
+        service_type=service_type,
+        region_name=ctx.region_name
     )
 
     endpoint = None
@@ -110,14 +111,12 @@ def get_endpoint_for_project(service_name=None, service_type=None):
                 break
 
     if not endpoint:
-        raise Exception(
-            "No endpoints found [service_name=%s, service_type=%s]"
-            % (service_name, service_type)
+        raise exceptions.MistralException(
+            "No endpoints found [service_name=%s, service_type=%s,"
+            " region_name=%s]"
+            % (service_name, service_type, ctx.region_name)
         )
     else:
-        # TODO(rakhmerov): We may have more than one endpoint because
-        # TODO(rakhmerov): of regions and ideally we need a config option
-        # TODO(rakhmerov): for region
         return endpoint
 
 

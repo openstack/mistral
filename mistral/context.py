@@ -77,6 +77,7 @@ class MistralContext(BaseContext):
         "auth_token",
         "service_catalog",
         "user_name",
+        "region_name",
         "project_name",
         "roles",
         "is_admin",
@@ -113,6 +114,7 @@ def context_from_headers_and_env(headers, env):
     auth_token = params['auth_token']
     auth_uri = params['auth_uri']
     project_id = params['project_id']
+    region_name = params['region_name']
     user_id = params['user_id']
     user_name = params['user_name']
     is_target = params['is_target']
@@ -131,6 +133,7 @@ def context_from_headers_and_env(headers, env):
         is_target=is_target,
         service_catalog=service_catalog,
         user_name=user_name,
+        region_name=region_name,
         project_name=headers.get('X-Project-Name'),
         roles=headers.get('X-Roles', "").split(","),
         is_trust_scoped=False,
@@ -150,6 +153,7 @@ def _extract_auth_params_from_headers(headers):
             'project_id': headers.get('X-Target-Project-Id'),
             'user_id': headers.get('X-Target-User-Id'),
             'user_name': headers.get('X-Target-User-Name'),
+            'region_name': headers.get('X-Target-Region-Name'),
             'is_target': True
         }
         if not params['auth_token']:
@@ -171,6 +175,7 @@ def _extract_auth_params_from_headers(headers):
             'project_id': headers.get('X-Project-Id'),
             'user_id': headers.get('X-User-Id'),
             'user_name': headers.get('X-User-Name'),
+            'region_name': headers.get('X-Region-Name'),
             'is_target': False
         }
 
