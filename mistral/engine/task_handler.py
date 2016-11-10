@@ -60,8 +60,8 @@ def run_task(wf_cmd):
         task_spec = wf_cmd.task_spec
 
         msg = (
-            "Failed to run task [wf=%s, task=%s]: %s\n%s" %
-            (wf_ex, task_spec.get_name(), e, tb.format_exc())
+            "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
+            (e, wf_ex, task_spec.get_name(), tb.format_exc())
         )
 
         LOG.error(msg)
@@ -157,8 +157,8 @@ def continue_task(task_ex):
         wf_ex = task_ex.workflow_execution
 
         msg = (
-            "Failed to run task [wf=%s, task=%s]: %s\n%s" %
-            (wf_ex, task_ex.name, e, tb.format_exc())
+            "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
+            (e, wf_ex, task_ex.name, tb.format_exc())
         )
 
         LOG.error(msg)
