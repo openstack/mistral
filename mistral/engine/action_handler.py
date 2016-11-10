@@ -36,8 +36,10 @@ def on_action_complete(action_ex, result):
     try:
         action.complete(result)
     except exc.MistralException as e:
-        msg = ("Failed to complete action [action=%s, task=%s]: %s\n%s" %
-               (action_ex.name, task_ex.name, e, tb.format_exc()))
+        msg = (
+            "Failed to complete action [error=%s, action=%s, task=%s]:\n%s"
+            % (e, action_ex.name, task_ex.name, tb.format_exc())
+        )
 
         LOG.error(msg)
 

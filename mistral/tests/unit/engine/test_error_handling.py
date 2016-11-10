@@ -16,6 +16,7 @@ from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
@@ -538,3 +539,42 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertIsNotNone(state_info)
         self.assertTrue(state_info.find('error=') > 0)
         self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+
+    def test_error_message_format_on_adhoc_action_error(self):
+        wb_text = """
+        version: '2.0'
+
+        name: wb
+
+        actions:
+          my_action:
+            input:
+              - output
+            output: <% invalid_yaql_function() %>
+            base: std.echo
+            base-input:
+              output: <% $.output %>
+
+        workflows:
+          wf:
+            tasks:
+              task1:
+                action: my_action output="test"
+        """
+
+        wb_service.create_workbook_v2(wb_text)
+
+        wf_ex = self.engine.start_workflow('wb.wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        state_info = task_ex.state_info
+
+        self.assertIsNotNone(state_info)
+        self.assertTrue(state_info.find('error=') > 0)
+        self.assertTrue(state_info.find('error=') < state_info.find('action='))
