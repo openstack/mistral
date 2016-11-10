@@ -44,6 +44,8 @@ class YAQLEvaluator(Evaluator):
 
     @classmethod
     def evaluate(cls, expression, data_context):
+        expression = expression.strip() if expression else expression
+
         LOG.debug(
             "Evaluating YAQL expression [expression='%s', context=%s]"
             % (expression, data_context)
@@ -55,8 +57,8 @@ class YAQLEvaluator(Evaluator):
             )
         except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
             raise exc.YaqlEvaluationException(
-                "Can not evaluate YAQL expression: %s, error=%s, data = %s"
-                % (expression, str(e), data_context)
+                "Can not evaluate YAQL expression [expression=%s, error=%s"
+                ", data=%s]" % (expression, str(e), data_context)
             )
 
         LOG.debug("YAQL expression result: %s" % result)

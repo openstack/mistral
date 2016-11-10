@@ -400,7 +400,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf', None)
 
         self.assertIn(
-            "Can not evaluate YAQL expression:  wrong(yaql)",
+            "Can not evaluate YAQL expression [expression=wrong(yaql)",
             wf_ex.state_info
         )
         self.assertEqual(states.ERROR, wf_ex.state)
