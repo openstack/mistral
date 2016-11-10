@@ -482,3 +482,67 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertIsNotNone(state_info)
         self.assertTrue(state_info.find('error=') > 0)
         self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+
+    def test_error_message_format_on_action_complete(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                my_var: <% invalid_yaql_function() %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        state_info = task_ex.state_info
+
+        print(state_info)
+
+        self.assertIsNotNone(state_info)
+        self.assertTrue(state_info.find('error=') > 0)
+        self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+
+    def test_error_message_format_complete_task(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              wait-after: 1
+              on-success:
+                - task2: <% invalid_yaql_function() %>
+
+            task2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        state_info = task_ex.state_info
+
+        self.assertIsNotNone(state_info)
+        self.assertTrue(state_info.find('error=') > 0)
+        self.assertTrue(state_info.find('error=') < state_info.find('wf='))

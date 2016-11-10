@@ -105,9 +105,9 @@ def _on_action_complete(action_ex):
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution
 
-        msg = ("Failed to handle action completion [wf=%s, task=%s,"
-               " action=%s]: %s\n%s" %
-               (wf_ex.name, task_ex.name, action_ex.name, e, tb.format_exc()))
+        msg = ("Failed to handle action completion [error=%s, wf=%s, task=%s,"
+               " action=%s]:\n%s" %
+               (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
 
         LOG.error(msg)
 
@@ -183,8 +183,8 @@ def complete_task(task_ex, state, state_info):
         wf_ex = task_ex.workflow_execution
 
         msg = (
-            "Failed to complete task [wf=%s, task=%s]: %s\n%s" %
-            (wf_ex, task_ex.name, e, tb.format_exc())
+            "Failed to complete task [error=%s, wf=%s, task=%s]:\n%s" %
+            (e, wf_ex, task_ex.name, tb.format_exc())
         )
 
         LOG.error(msg)

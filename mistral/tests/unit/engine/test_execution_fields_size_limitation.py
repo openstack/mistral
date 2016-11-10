@@ -198,9 +198,11 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
         self.assertIn(
-            'Failed to handle action completion [wf=wf, task=task1',
+            'Failed to handle action completion [error=Size of',
             wf_ex.state_info
         )
+
+        self.assertIn('wf=wf, task=task1', wf_ex.state_info)
 
         task_ex = self._assert_single_item(task_execs, name='task1')
 
