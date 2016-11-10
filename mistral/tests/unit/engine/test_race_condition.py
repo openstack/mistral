@@ -143,27 +143,36 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf', None)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertEqual(states.RUNNING, wf_ex.task_executions[0].state)
+        self.assertEqual(states.RUNNING, task_execs[0].state)
 
         self.wait_for_action()
 
-        # Here's the point when the action is blocked but already running.
-        # Do the same check again, it should always pass.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Here's the point when the action is blocked but already running.
+            # Do the same check again, it should always pass.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertEqual(states.RUNNING, wf_ex.task_executions[0].state)
+        self.assertEqual(states.RUNNING, task_execs[0].state)
 
         self.unblock_action()
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual({'result': 'test'}, wf_ex.output)
+            wf_output = wf_ex.output
+
+        self.assertDictEqual({'result': 'test'}, wf_output)
 
     # TODO(rakhmerov): Should periodically fail now because of poor
     # transaction isolation support in SQLite. Requires more research

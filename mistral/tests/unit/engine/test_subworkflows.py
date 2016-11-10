@@ -145,21 +145,27 @@ class SubworkflowsTest(base.EngineTestCase):
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf1_ex.id)
 
-        wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
+        with db_api.transaction():
+            wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
+
+            wf1_output = wf1_ex.output
 
         self.assertDictEqual(
             {'final_result': "'Bonnie & Clyde'"},
-            wf1_ex.output
+            wf1_output
         )
 
         # Wait till workflow 'wf2' is completed.
         self.await_workflow_success(wf2_ex.id, timeout=4)
 
-        wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
+        with db_api.transaction():
+            wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
+
+            wf2_output = wf2_ex.output
 
         self.assertDictEqual(
             {'slogan': "'Bonnie & Clyde' is a cool movie!"},
-            wf2_ex.output
+            wf2_output
         )
 
         # Check project_id in tasks.

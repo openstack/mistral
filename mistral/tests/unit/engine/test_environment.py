@@ -102,11 +102,7 @@ class EnvironmentTest(base.EngineTestCase):
 
     @mock.patch.object(rpc.ExecutorClient, 'run_action', MOCK_RUN_AT_TARGET)
     def _test_subworkflow(self, env):
-        wf2_ex = self.engine.start_workflow(
-            'my_wb.wf2',
-            {},
-            env=env
-        )
+        wf2_ex = self.engine.start_workflow('my_wb.wf2', {}, env=env)
 
         # Execution of 'wf2'.
         self.assertIsNotNone(wf2_ex)
@@ -142,40 +138,45 @@ class EnvironmentTest(base.EngineTestCase):
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf1_ex.id)
 
-        wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
+        with db_api.transaction():
+            wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
 
-        expected_wf1_output = {'final_result': "'Bonnie & Clyde'"}
-
-        self.assertDictEqual(wf1_ex.output, expected_wf1_output)
+            self.assertDictEqual(
+                {'final_result': "'Bonnie & Clyde'"},
+                wf1_ex.output
+            )
 
         # Wait till workflow 'wf2' is completed.
         self.await_workflow_success(wf2_ex.id)
 
-        wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
+        with db_api.transaction():
+            wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
 
-        expected_wf2_output = {'slogan': "'Bonnie & Clyde' is a cool movie!\n"}
-
-        self.assertDictEqual(wf2_ex.output, expected_wf2_output)
-
-        # Check if target is resolved.
-        wf1_task_execs = db_api.get_task_executions(
-            workflow_execution_id=wf1_ex.id
-        )
-
-        self._assert_single_item(wf1_task_execs, name='task1')
-        self._assert_single_item(wf1_task_execs, name='task2')
-
-        for t_ex in wf1_task_execs:
-            a_ex = t_ex.action_executions[0]
-
-            rpc.ExecutorClient.run_action.assert_any_call(
-                a_ex.id,
-                'mistral.actions.std_actions.EchoAction',
-                {},
-                a_ex.input,
-                TARGET,
-                safe_rerun=False
+            self.assertDictEqual(
+                {'slogan': "'Bonnie & Clyde' is a cool movie!\n"},
+                wf2_ex.output
             )
+
+        with db_api.transaction():
+            # Check if target is resolved.
+            wf1_task_execs = db_api.get_task_executions(
+                workflow_execution_id=wf1_ex.id
+            )
+
+            self._assert_single_item(wf1_task_execs, name='task1')
+            self._assert_single_item(wf1_task_execs, name='task2')
+
+            for t_ex in wf1_task_execs:
+                a_ex = t_ex.action_executions[0]
+
+                rpc.ExecutorClient.run_action.assert_any_call(
+                    a_ex.id,
+                    'mistral.actions.std_actions.EchoAction',
+                    {},
+                    a_ex.input,
+                    TARGET,
+                    safe_rerun=False
+                )
 
     def test_subworkflow_env_task_input(self):
         env = {

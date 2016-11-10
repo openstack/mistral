@@ -412,10 +412,13 @@ def _get_environment(params):
 
 
 def _send_result_to_parent_workflow(wf_ex_id):
-    wf_ex = db_api.get_workflow_execution(wf_ex_id)
+    with db_api.transaction():
+        wf_ex = db_api.get_workflow_execution(wf_ex_id)
+
+        wf_output = wf_ex.output
 
     if wf_ex.state == states.SUCCESS:
-        result = wf_utils.Result(data=wf_ex.output)
+        result = wf_utils.Result(data=wf_output)
     elif wf_ex.state == states.ERROR:
         err_msg = (
             wf_ex.state_info or

@@ -169,7 +169,7 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
     return query
 
 
-def _delete_all(model, session=None, **kwargs):
+def _delete_all(model, **kwargs):
     # NOTE(kong): Because we use 'in_' operator in _secure_query(), delete()
     # method will raise error with default parameter. Please refer to
     # http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete
@@ -323,7 +323,8 @@ def insert_or_ignore(model_cls, values, session=None):
 
 # Workbook definitions.
 
-def get_workbook(name):
+@b.session_aware()
+def get_workbook(name, session=None):
     wb = _get_db_object_by_name(models.Workbook, name)
 
     if not wb:
@@ -334,11 +335,13 @@ def get_workbook(name):
     return wb
 
 
-def load_workbook(name):
+@b.session_aware()
+def load_workbook(name, session=None):
     return _get_db_object_by_name(models.Workbook, name)
 
 
-def get_workbooks(**kwargs):
+@b.session_aware()
+def get_workbooks(session=None, **kwargs):
     return _get_collection_sorted_by_name(models.Workbook, **kwargs)
 
 
@@ -383,13 +386,14 @@ def delete_workbook(name, session=None):
 
 
 @b.session_aware()
-def delete_workbooks(**kwargs):
+def delete_workbooks(session=None, **kwargs):
     return _delete_all(models.Workbook, **kwargs)
 
 
 # Workflow definitions.
 
-def get_workflow_definition(identifier):
+@b.session_aware()
+def get_workflow_definition(identifier, session=None):
     """Gets workflow definition by name or uuid.
 
     :param identifier: Identifier could be in the format of plain string or
@@ -409,7 +413,8 @@ def get_workflow_definition(identifier):
     return wf_def
 
 
-def get_workflow_definition_by_id(id):
+@b.session_aware()
+def get_workflow_definition_by_id(id, session=None):
     wf_def = _get_db_object_by_id(models.WorkflowDefinition, id)
 
     if not wf_def:
@@ -420,11 +425,14 @@ def get_workflow_definition_by_id(id):
     return wf_def
 
 
-def load_workflow_definition(name):
+@b.session_aware()
+def load_workflow_definition(name, session=None):
     return _get_db_object_by_name(models.WorkflowDefinition, name)
 
 
-def get_workflow_definitions(sort_keys=['created_at'], fields=None, **kwargs):
+@b.session_aware()
+def get_workflow_definitions(sort_keys=['created_at'], fields=None,
+                             session=None, **kwargs):
     if fields and 'input' in fields:
         fields.remove('input')
         fields.append('spec')
@@ -544,13 +552,14 @@ def delete_workflow_definition(identifier, session=None):
 
 
 @b.session_aware()
-def delete_workflow_definitions(**kwargs):
+def delete_workflow_definitions(session=None, **kwargs):
     return _delete_all(models.WorkflowDefinition, **kwargs)
 
 
 # Action definitions.
 
-def get_action_definition_by_id(id):
+@b.session_aware()
+def get_action_definition_by_id(id, session=None):
     action_def = _get_db_object_by_id(models.ActionDefinition, id)
 
     if not action_def:
@@ -561,7 +570,8 @@ def get_action_definition_by_id(id):
     return action_def
 
 
-def get_action_definition(identifier):
+@b.session_aware()
+def get_action_definition(identifier, session=None):
     a_def = _get_db_object_by_name_or_id(
         models.ActionDefinition,
         identifier
@@ -575,11 +585,13 @@ def get_action_definition(identifier):
     return a_def
 
 
-def load_action_definition(name):
+@b.session_aware()
+def load_action_definition(name, session=None):
     return _get_db_object_by_name(models.ActionDefinition, name)
 
 
-def get_action_definitions(**kwargs):
+@b.session_aware()
+def get_action_definitions(session=None, **kwargs):
     return _get_collection_sorted_by_name(
         model=models.ActionDefinition,
         **kwargs
@@ -627,13 +639,14 @@ def delete_action_definition(identifier, session=None):
 
 
 @b.session_aware()
-def delete_action_definitions(**kwargs):
+def delete_action_definitions(session=None, **kwargs):
     return _delete_all(models.ActionDefinition, **kwargs)
 
 
 # Action executions.
 
-def get_action_execution(id):
+@b.session_aware()
+def get_action_execution(id, session=None):
     a_ex = _get_db_object_by_id(models.ActionExecution, id)
 
     if not a_ex:
@@ -644,15 +657,18 @@ def get_action_execution(id):
     return a_ex
 
 
-def load_action_execution(id):
+@b.session_aware()
+def load_action_execution(id, session=None):
     return _get_db_object_by_id(models.ActionExecution, id)
 
 
-def ensure_action_execution_exists(id):
+@b.session_aware()
+def ensure_action_execution_exists(id, session=None):
     get_action_execution(id)
 
 
-def get_action_executions(**kwargs):
+@b.session_aware()
+def get_action_executions(session=None, **kwargs):
     return _get_action_executions(**kwargs)
 
 
@@ -697,7 +713,7 @@ def delete_action_execution(id, session=None):
 
 
 @b.session_aware()
-def delete_action_executions(**kwargs):
+def delete_action_executions(session=None, **kwargs):
     return _delete_all(models.ActionExecution, **kwargs)
 
 
@@ -707,7 +723,8 @@ def _get_action_executions(**kwargs):
 
 # Workflow executions.
 
-def get_workflow_execution(id):
+@b.session_aware()
+def get_workflow_execution(id, session=None):
     wf_ex = _get_db_object_by_id(models.WorkflowExecution, id)
 
     if not wf_ex:
@@ -718,15 +735,18 @@ def get_workflow_execution(id):
     return wf_ex
 
 
-def load_workflow_execution(id):
+@b.session_aware()
+def load_workflow_execution(id, session=None):
     return _get_db_object_by_id(models.WorkflowExecution, id)
 
 
-def ensure_workflow_execution_exists(id):
+@b.session_aware()
+def ensure_workflow_execution_exists(id, session=None):
     get_workflow_execution(id)
 
 
-def get_workflow_executions(**kwargs):
+@b.session_aware()
+def get_workflow_executions(session=None, **kwargs):
     return _get_collection_sorted_by_time(
         models.WorkflowExecution,
         **kwargs
@@ -774,13 +794,14 @@ def delete_workflow_execution(id, session=None):
 
 
 @b.session_aware()
-def delete_workflow_executions(**kwargs):
+def delete_workflow_executions(session=None, **kwargs):
     return _delete_all(models.WorkflowExecution, **kwargs)
 
 
 # Tasks executions.
 
-def get_task_execution(id):
+@b.session_aware()
+def get_task_execution(id, session=None):
     task_ex = _get_db_object_by_id(models.TaskExecution, id)
 
     if not task_ex:
@@ -791,11 +812,13 @@ def get_task_execution(id):
     return task_ex
 
 
-def load_task_execution(id):
+@b.session_aware()
+def load_task_execution(id, session=None):
     return _get_db_object_by_id(models.TaskExecution, id)
 
 
-def get_task_executions(**kwargs):
+@b.session_aware()
+def get_task_executions(session=None, **kwargs):
     return _get_task_executions(**kwargs)
 
 
@@ -815,7 +838,8 @@ def _get_completed_task_executions_query(kwargs):
     return query
 
 
-def get_completed_task_executions(**kwargs):
+@b.session_aware()
+def get_completed_task_executions(session=None, **kwargs):
     query = _get_completed_task_executions_query(kwargs)
 
     return query.all()
@@ -838,13 +862,15 @@ def _get_incomplete_task_executions_query(kwargs):
     return query
 
 
-def get_incomplete_task_executions(**kwargs):
+@b.session_aware()
+def get_incomplete_task_executions(session=None, **kwargs):
     query = _get_incomplete_task_executions_query(kwargs)
 
     return query.all()
 
 
-def get_incomplete_task_executions_count(**kwargs):
+@b.session_aware()
+def get_incomplete_task_executions_count(session=None, **kwargs):
     query = _get_incomplete_task_executions_query(kwargs)
 
     return query.count()
@@ -891,7 +917,7 @@ def delete_task_execution(id, session=None):
 
 
 @b.session_aware()
-def delete_task_executions(**kwargs):
+def delete_task_executions(session=None, **kwargs):
     return _delete_all(models.TaskExecution, **kwargs)
 
 
@@ -973,7 +999,8 @@ def get_delayed_call(id, session=None):
     return delayed_call
 
 
-def get_delayed_calls(**kwargs):
+@b.session_aware()
+def get_delayed_calls(session=None, **kwargs):
     return _get_collection(
         model=models.DelayedCall,
         **kwargs
@@ -981,7 +1008,7 @@ def get_delayed_calls(**kwargs):
 
 
 @b.session_aware()
-def delete_delayed_calls(**kwargs):
+def delete_delayed_calls(session=None, **kwargs):
     return _delete_all(models.DelayedCall, **kwargs)
 
 
@@ -1006,7 +1033,8 @@ def get_expired_executions(time, session=None):
 
 # Cron triggers.
 
-def get_cron_trigger(name):
+@b.session_aware()
+def get_cron_trigger(name, session=None):
     cron_trigger = _get_db_object_by_name(models.CronTrigger, name)
 
     if not cron_trigger:
@@ -1017,11 +1045,13 @@ def get_cron_trigger(name):
     return cron_trigger
 
 
-def load_cron_trigger(name):
+@b.session_aware()
+def load_cron_trigger(name, session=None):
     return _get_db_object_by_name(models.CronTrigger, name)
 
 
-def get_cron_triggers(insecure=False, **kwargs):
+@b.session_aware()
+def get_cron_triggers(insecure=False, session=None, **kwargs):
     return _get_collection_sorted_by_name(
         models.CronTrigger,
         insecure=insecure,
@@ -1120,13 +1150,14 @@ def delete_cron_trigger(name, session=None):
 
 
 @b.session_aware()
-def delete_cron_triggers(**kwargs):
+def delete_cron_triggers(session=None, **kwargs):
     return _delete_all(models.CronTrigger, **kwargs)
 
 
 # Environments.
 
-def get_environment(name):
+@b.session_aware()
+def get_environment(name, session=None):
     env = _get_db_object_by_name(models.Environment, name)
 
     if not env:
@@ -1137,11 +1168,13 @@ def get_environment(name):
     return env
 
 
-def load_environment(name):
+@b.session_aware()
+def load_environment(name, session=None):
     return _get_db_object_by_name(models.Environment, name)
 
 
-def get_environments(**kwargs):
+@b.session_aware()
+def get_environments(session=None, **kwargs):
     return _get_collection_sorted_by_name(models.Environment, **kwargs)
 
 
@@ -1188,7 +1221,7 @@ def delete_environment(name, session=None):
 
 
 @b.session_aware()
-def delete_environments(**kwargs):
+def delete_environments(session=None, **kwargs):
     return _delete_all(models.Environment, **kwargs)
 
 
@@ -1245,7 +1278,8 @@ def create_resource_member(values, session=None):
     return res_member
 
 
-def get_resource_member(resource_id, res_type, member_id):
+@b.session_aware()
+def get_resource_member(resource_id, res_type, member_id, session=None):
     query = _secure_query(models.ResourceMember).filter_by(
         resource_type=res_type
     )
@@ -1267,7 +1301,8 @@ def get_resource_member(resource_id, res_type, member_id):
     return res_member
 
 
-def get_resource_members(resource_id, res_type):
+@b.session_aware()
+def get_resource_members(resource_id, res_type, session=None):
     query = _secure_query(models.ResourceMember).filter_by(
         resource_type=res_type
     )
@@ -1334,7 +1369,7 @@ def delete_resource_member(resource_id, res_type, member_id, session=None):
 
 
 @b.session_aware()
-def delete_resource_members(**kwargs):
+def delete_resource_members(session=None, **kwargs):
     return _delete_all(models.ResourceMember, **kwargs)
 
 
@@ -1352,7 +1387,8 @@ def _get_accepted_resources(res_type):
 
 # Event triggers.
 
-def get_event_trigger(id, insecure=False):
+@b.session_aware()
+def get_event_trigger(id, insecure=False, session=None):
     event_trigger = _get_event_trigger(id, insecure)
 
     if not event_trigger:
@@ -1363,7 +1399,8 @@ def get_event_trigger(id, insecure=False):
     return event_trigger
 
 
-def get_event_triggers(insecure=False, **kwargs):
+@b.session_aware()
+def get_event_triggers(insecure=False, session=None, **kwargs):
     return _get_collection_sorted_by_time(
         model=models.EventTrigger,
         insecure=insecure,
@@ -1411,7 +1448,7 @@ def delete_event_trigger(id, session=None):
 
 
 @b.session_aware()
-def delete_event_triggers(**kwargs):
+def delete_event_triggers(session=None, **kwargs):
     return _delete_all(models.EventTrigger, **kwargs)
 
 
@@ -1422,7 +1459,8 @@ def _get_event_trigger(id, insecure=False):
         return _get_db_object_by_id(models.EventTrigger, id)
 
 
-def ensure_event_trigger_exists(id):
+@b.session_aware()
+def ensure_event_trigger_exists(id, session=None):
     get_event_trigger(id)
 
 
@@ -1447,7 +1485,8 @@ def create_named_lock(name, session=None):
     return lock_id
 
 
-def get_named_locks(**kwargs):
+@b.session_aware()
+def get_named_locks(session=None, **kwargs):
     return _get_collection(models.NamedLock, **kwargs)
 
 

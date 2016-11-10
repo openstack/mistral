@@ -171,21 +171,21 @@ class EngineTestCase(base.DbTestCase):
                              a.output)
                         )
 
-        print("\nPrinting standalone action executions...")
+            print("\nPrinting standalone action executions...")
 
-        child_execs = db_api.get_action_executions(task_execution_id=None)
+            child_execs = db_api.get_action_executions(task_execution_id=None)
 
-        for a in child_execs:
-            print(
-                "\t\t%s [id=%s, state=%s, state_info=%s, accepted=%s,"
-                " output=%s]" %
-                (a.name,
-                 a.id,
-                 a.state,
-                 a.state_info,
-                 a.accepted,
-                 a.output)
-            )
+            for a in child_execs:
+                print(
+                    "\t\t%s [id=%s, state=%s, state_info=%s, accepted=%s,"
+                    " output=%s]" %
+                    (a.name,
+                     a.id,
+                     a.state,
+                     a.state_info,
+                     a.accepted,
+                     a.output)
+                )
 
     # Various methods for action execution objects.
 

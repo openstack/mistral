@@ -199,23 +199,30 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertEqual(2, len(task_execs))
 
         self.engine.resume_workflow(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(wf_ex.task_executions))
+            self.assertEqual(2, len(wf_ex.task_executions))
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertEqual(2, len(task_execs))
 
     def test_resume_reverse(self):
         wb_service.create_workbook_v2(RESUME_WORKBOOK_REVERSE)
@@ -227,14 +234,16 @@ class WorkflowResumeTest(base.EngineTestCase):
             task_name='task2'
         )
 
-        # Note: We need to reread execution to access related tasks.
-
         self.engine.pause_workflow(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(1, len(wf_ex.task_executions))
+        self.assertEqual(1, len(task_execs))
 
         self.engine.resume_workflow(wf_ex.id)
 
@@ -243,10 +252,14 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
 
         self.await_workflow_success(wf_ex.id)
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertEqual(2, len(task_execs))
 
     def test_resume_two_branches(self):
         wb_service.create_workbook_v2(WORKBOOK_TWO_BRANCHES)
@@ -256,21 +269,27 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(3, len(wf_ex.task_executions))
+        self.assertEqual(3, len(task_execs))
 
         wf_ex = self.engine.resume_workflow(wf_ex.id)
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
 
         # We can see 3 tasks in execution.
-        self.assertEqual(3, len(wf_ex.task_executions))
+        self.assertEqual(3, len(task_execs))
 
     def test_resume_two_start_tasks(self):
         wb_service.create_workbook_v2(WORKBOOK_TWO_START_TASKS)
@@ -280,11 +299,12 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-
-        task_execs = wf_ex.task_executions
 
         # The exact number of tasks depends on which of two tasks
         # 'task1' and 'task2' completed earlier.
@@ -300,10 +320,13 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-        self.assertEqual(3, len(wf_ex.task_executions))
+        self.assertEqual(3, len(task_execs))
 
     def test_resume_different_task_states(self):
         wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
@@ -313,11 +336,12 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-
-        task_execs = wf_ex.task_executions
 
         self.assertEqual(3, len(task_execs))
 
@@ -345,10 +369,13 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state, wf_ex.state_info)
-        self.assertEqual(4, len(wf_ex.task_executions))
+        self.assertEqual(4, len(task_execs))
 
     def test_resume_fails(self):
         # Start and pause workflow.
@@ -390,20 +417,16 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+            task_execs = wf_ex.task_executions
 
-        task_2_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        task_1_ex = self._assert_single_item(task_execs, name='task1')
+        task_2_ex = self._assert_single_item(task_execs, name='task2')
 
         self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertEqual(2, len(task_execs))
         self.assertDictEqual(env, wf_ex.params['env'])
         self.assertDictEqual(env, wf_ex.context['__env'])
         self.assertEqual(states.SUCCESS, task_1_ex.state)
@@ -420,17 +443,17 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertDictEqual(updated_env, wf_ex.params['env'])
         self.assertDictEqual(updated_env, wf_ex.context['__env'])
-        self.assertEqual(3, len(wf_ex.task_executions))
+        self.assertEqual(3, len(task_execs))
 
         # Check result of task2.
-        task_2_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        task_2_ex = self._assert_single_item(task_execs, name='task2')
 
         self.assertEqual(states.SUCCESS, task_2_ex.state)
 
@@ -445,7 +468,7 @@ class WorkflowResumeTest(base.EngineTestCase):
 
         # Check result of task3.
         task_3_ex = self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task3'
         )
 

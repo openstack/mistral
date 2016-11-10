@@ -118,12 +118,15 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertEqual('my execution', wf_ex.description)
         self.assertIn('__execution', wf_ex.context)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
 
-        task_ex = wf_ex.task_executions[0]
+        self.assertEqual(1, len(task_execs))
+
+        task_ex = task_execs[0]
 
         self.assertEqual('wb.wf', task_ex.workflow_name)
         self.assertEqual('task1', task_ex.name)
@@ -158,11 +161,14 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIn('__execution', wf_ex.context)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
 
-        task_ex = wf_ex.task_executions[0]
+        self.assertEqual(1, len(task_execs))
+
+        task_ex = task_execs[0]
 
         self.assertEqual('wb.wf', task_ex.workflow_name)
         self.assertEqual('task1', task_ex.name)
@@ -299,12 +305,15 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex.state)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
 
-        task1_ex = wf_ex.task_executions[0]
+        self.assertEqual(1, len(task_execs))
+
+        task1_ex = task_execs[0]
 
         self.assertEqual('task1', task1_ex.name)
         self.assertEqual(states.RUNNING, task1_ex.state)
@@ -340,17 +349,17 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({'output': 'Hey'}, task1_action_ex.input)
         self.assertDictEqual({'result': 'Hey'}, task1_action_ex.output)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertIsNotNone(wf_ex)
-        self.assertEqual(states.RUNNING, wf_ex.state)
+            self.assertIsNotNone(wf_ex)
+            self.assertEqual(states.RUNNING, wf_ex.state)
 
-        self.assertEqual(2, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
 
-        task2_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        self.assertEqual(2, len(task_execs))
+
+        task2_ex = self._assert_single_item(task_execs, name='task2')
 
         self.assertEqual(states.RUNNING, task2_ex.state)
 
@@ -371,9 +380,12 @@ class DefaultEngineTest(base.DbTestCase):
             wf_utils.Result(data='Hi')
         )
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertIsNotNone(wf_ex)
+            self.assertIsNotNone(wf_ex)
+
+            task_execs = wf_ex.task_executions
 
         # Workflow completion check is done separate with scheduler
         # but scheduler doesn't start in this test (in fact, it's just
@@ -390,10 +402,10 @@ class DefaultEngineTest(base.DbTestCase):
         self.assertDictEqual({'output': 'Hi'}, task2_action_ex.input)
         self.assertDictEqual({'result': 'Hi'}, task2_action_ex.output)
 
-        self.assertEqual(2, len(wf_ex.task_executions))
+        self.assertEqual(2, len(task_execs))
 
-        self._assert_single_item(wf_ex.task_executions, name='task1')
-        self._assert_single_item(wf_ex.task_executions, name='task2')
+        self._assert_single_item(task_execs, name='task1')
+        self._assert_single_item(task_execs, name='task2')
 
     def test_stop_workflow_fail(self):
         # Start workflow.

@@ -98,17 +98,16 @@ class AdhocActionsTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.maxDiff = None
-
-        self.assertDictEqual(
-            {
-                'workflow_result': 'a+b and a+b',
-                'concat_task_result': 'a+b and a+b'
-            },
-            wf_ex.output
-        )
+            self.assertDictEqual(
+                {
+                    'workflow_result': 'a+b and a+b',
+                    'concat_task_result': 'a+b and a+b'
+                },
+                wf_ex.output
+            )
 
     def test_run_adhoc_action_without_input_value(self):
         wf_ex = self.engine.start_workflow(
@@ -118,17 +117,15 @@ class AdhocActionsTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        expected_output = {
+            'workflow_result': 'a+b and a+b',
+            'concat_task_result': 'a+b and a+b'
+        }
 
-        self.maxDiff = None
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(
-            {
-                'workflow_result': 'a+b and a+b',
-                'concat_task_result': 'a+b and a+b'
-            },
-            wf_ex.output
-        )
+            self.assertDictEqual(expected_output, wf_ex.output)
 
     def test_run_adhoc_action_without_sufficient_input_value(self):
         wf_ex = self.engine.start_workflow(
