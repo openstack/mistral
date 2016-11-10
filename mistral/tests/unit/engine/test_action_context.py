@@ -64,11 +64,16 @@ class ActionContextTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.SUCCESS, wf_ex.state)
-        task_ex = self._assert_single_item(wf_ex.task_executions, name='task1')
-        action_ex = self._assert_single_item(task_ex.executions)
+            self.assertEqual(states.SUCCESS, wf_ex.state)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+            action_ex = self._assert_single_item(task_ex.executions)
 
         headers = {
             'Mistral-Workflow-Name': wf_ex.workflow_name,

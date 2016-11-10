@@ -93,23 +93,24 @@ class ErrorResultTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
-        self.assertEqual(2, len(tasks))
+            self.assertEqual(2, len(tasks))
 
-        task1 = self._assert_single_item(tasks, name='task1')
-        task2 = self._assert_single_item(tasks, name='task2')
+            task1 = self._assert_single_item(tasks, name='task1')
+            task2 = self._assert_single_item(tasks, name='task2')
 
-        self.assertEqual(states.ERROR, task1.state)
-        self.assertEqual(states.SUCCESS, task2.state)
+            self.assertEqual(states.ERROR, task1.state)
+            self.assertEqual(states.SUCCESS, task2.state)
 
-        # "publish" clause is ignored in case of ERROR so task execution field
-        # must be empty.
-        self.assertDictEqual({}, task1.published)
-        self.assertEqual(2, data_flow.get_task_execution_result(task1))
+            # "publish" clause is ignored in case of ERROR so task execution
+            # field must be empty.
+            self.assertDictEqual({}, task1.published)
+            self.assertEqual(2, data_flow.get_task_execution_result(task1))
 
     def test_error_result2(self):
         wf_service.create_workflows(WF)
@@ -125,23 +126,24 @@ class ErrorResultTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
-        self.assertEqual(2, len(tasks))
+            self.assertEqual(2, len(tasks))
 
-        task1 = self._assert_single_item(tasks, name='task1')
-        task3 = self._assert_single_item(tasks, name='task3')
+            task1 = self._assert_single_item(tasks, name='task1')
+            task3 = self._assert_single_item(tasks, name='task3')
 
-        self.assertEqual(states.ERROR, task1.state)
-        self.assertEqual(states.SUCCESS, task3.state)
+            self.assertEqual(states.ERROR, task1.state)
+            self.assertEqual(states.SUCCESS, task3.state)
 
-        # "publish" clause is ignored in case of ERROR so task execution field
-        # must be empty.
-        self.assertDictEqual({}, task1.published)
-        self.assertEqual(3, data_flow.get_task_execution_result(task1))
+            # "publish" clause is ignored in case of ERROR so task execution
+            # field must be empty.
+            self.assertDictEqual({}, task1.published)
+            self.assertEqual(3, data_flow.get_task_execution_result(task1))
 
     def test_success_result(self):
         wf_service.create_workflows(WF)
@@ -157,18 +159,22 @@ class ErrorResultTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
-        self.assertEqual(1, len(tasks))
+            self.assertEqual(1, len(tasks))
 
-        task1 = self._assert_single_item(tasks, name='task1')
+            task1 = self._assert_single_item(tasks, name='task1')
 
-        self.assertEqual(states.SUCCESS, task1.state)
+            self.assertEqual(states.SUCCESS, task1.state)
 
-        # "publish" clause is ignored in case of ERROR so task execution field
-        # must be empty.
-        self.assertDictEqual({'p_var': 'success'}, task1.published)
-        self.assertEqual('success', data_flow.get_task_execution_result(task1))
+            # "publish" clause is ignored in case of ERROR so task execution
+            # field must be empty.
+            self.assertDictEqual({'p_var': 'success'}, task1.published)
+            self.assertEqual(
+                'success',
+                data_flow.get_task_execution_result(task1)
+            )

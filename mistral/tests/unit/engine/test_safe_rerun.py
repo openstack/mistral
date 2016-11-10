@@ -76,10 +76,11 @@ class TestSafeRerun(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
         self.assertEqual(len(tasks), 2)
 
@@ -121,10 +122,11 @@ class TestSafeRerun(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
         self.assertEqual(len(tasks), 2)
 
@@ -155,18 +157,19 @@ class TestSafeRerun(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
-        self.assertEqual(len(tasks), 1)
+            self.assertEqual(len(tasks), 1)
 
-        task1 = self._assert_single_item(tasks, name='task1')
+            task1 = self._assert_single_item(tasks, name='task1')
 
-        self.assertEqual(task1.state, states.SUCCESS)
+            self.assertEqual(task1.state, states.SUCCESS)
 
-        result = data_flow.get_task_execution_result(task1)
+            result = data_flow.get_task_execution_result(task1)
 
         self.assertIn(1, result)
         self.assertIn(2, result)

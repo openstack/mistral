@@ -66,12 +66,13 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -135,12 +136,13 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -170,9 +172,18 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual(exp_published_arr[1], task2.published)
         self.assertDictEqual(exp_published_arr[2], task3.published)
 
-        self.assertIn(exp_published_arr[0]['progress'], notify_published_arr)
-        self.assertIn(exp_published_arr[1]['progress'], notify_published_arr)
-        self.assertIn(exp_published_arr[2]['progress'], notify_published_arr)
+        self.assertIn(
+            exp_published_arr[0]['progress'],
+            notify_published_arr
+        )
+        self.assertIn(
+            exp_published_arr[1]['progress'],
+            notify_published_arr
+        )
+        self.assertIn(
+            exp_published_arr[2]['progress'],
+            notify_published_arr
+        )
 
     def test_parallel_tasks(self):
         parallel_tasks_wf = """---
@@ -200,12 +211,14 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         self.assertEqual(2, len(tasks))
 
@@ -218,8 +231,8 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'var1': 1}, task1.published)
         self.assertDictEqual({'var2': 2}, task2.published)
 
-        self.assertEqual(1, wf_ex.output['var1'])
-        self.assertEqual(2, wf_ex.output['var2'])
+        self.assertEqual(1, wf_output['var1'])
+        self.assertEqual(2, wf_output['var2'])
 
     def test_parallel_tasks_complex(self):
         parallel_tasks_complex_wf = """---
@@ -276,12 +289,14 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         self.assertEqual(6, len(tasks))
 
@@ -305,12 +320,12 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'var2': 2}, task2.published)
         self.assertDictEqual({'var21': 21}, task21.published)
 
-        self.assertEqual(1, wf_ex.output['var1'])
-        self.assertEqual(12, wf_ex.output['var12'])
-        self.assertNotIn('var13', wf_ex.output)
-        self.assertEqual(14, wf_ex.output['var14'])
-        self.assertEqual(2, wf_ex.output['var2'])
-        self.assertEqual(21, wf_ex.output['var21'])
+        self.assertEqual(1, wf_output['var1'])
+        self.assertEqual(12, wf_output['var12'])
+        self.assertNotIn('var13', wf_output)
+        self.assertEqual(14, wf_output['var14'])
+        self.assertEqual(2, wf_output['var2'])
+        self.assertEqual(21, wf_output['var21'])
 
     def test_sequential_tasks_publishing_same_var(self):
         var_overwrite_wf = """---
@@ -357,12 +372,13 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -415,11 +431,12 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
         # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task2 = self._assert_single_item(tasks, name='task2')
@@ -468,10 +485,12 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
+
         task4 = self._assert_single_item(tasks, name='task4')
 
         self.assertDictEqual(
@@ -501,14 +520,15 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            tasks = wf_ex.task_executions
 
-        task1 = self._assert_single_item(tasks, name='task1')
+            task1 = self._assert_single_item(tasks, name='task1')
 
-        result = data_flow.get_task_execution_result(task1)
+            result = data_flow.get_task_execution_result(task1)
 
         # Published vars are saved.
         self.assertDictEqual(
@@ -540,12 +560,16 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task1 = self._assert_single_item(wf_ex.task_executions, name='task1')
+            task1 = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
 
-        result = data_flow.get_task_execution_result(task1)
+            result = data_flow.get_task_execution_result(task1)
 
         self.assertListEqual([], result)
 
