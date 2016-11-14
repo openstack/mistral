@@ -74,7 +74,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self._run_workflow(wf_text)
 
-        tasks = wf_ex.task_executions
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
         task3 = self._assert_single_item(tasks, name='task3')
@@ -116,8 +119,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        tasks = wf_ex.task_executions
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
 
@@ -271,7 +276,10 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
 
-        task_execs = wf_ex.task_executions
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(2, len(task_execs))
 
@@ -324,13 +332,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # and async action execution are RUNNING.
         wf_ex = self._run_workflow(wf_text, states.RUNNING)
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertEqual(1, len(wf_ex.task_executions))
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(1, len(task_execs))
+
+        task_1_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.RUNNING, task_1_ex.state)
 
@@ -347,12 +357,13 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_utils.Result(data='foobar')
         )
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
-
-        task_execs = wf_ex.task_executions
 
         self.assertEqual(2, len(task_execs))
 
@@ -478,11 +489,16 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
 
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
         # Assert that there is only one task execution and it's SUCCESS.
-        self.assertEqual(1, len(wf_ex.task_executions))
+        self.assertEqual(1, len(task_execs))
 
         task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1'
         )
 
@@ -518,12 +534,15 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self._run_workflow(wf_text, states.RUNNING)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
-        self.assertEqual(1, len(wf_ex.task_executions))
 
-        task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task_1_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.RUNNING, task_1_ex.state)
 
@@ -541,16 +560,16 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         )
 
         # Assert that task1 is SUCCESS and workflow is ERROR.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
-        self.assertEqual(1, len(wf_ex.task_executions))
+        self.assertEqual(1, len(task_execs))
 
-        task_1_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+        task_1_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.ERROR, task_1_ex.state)
 

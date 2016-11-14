@@ -66,12 +66,13 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)
-
-        tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(
             tasks,

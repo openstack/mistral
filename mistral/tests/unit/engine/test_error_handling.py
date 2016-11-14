@@ -82,9 +82,10 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_execs = wf_ex.task_executions
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(1, len(task_execs))
 
@@ -109,9 +110,10 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_execs = wf_ex.task_executions
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(1, len(task_execs))
 
@@ -138,22 +140,23 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        # Now we need to make sure that task is in ERROR state but action
-        # is in SUCCESS because error occurred in 'publish' clause which
-        # must not affect action state.
-        task_execs = wf_ex.task_executions
+            # Now we need to make sure that task is in ERROR state but action
+            # is in SUCCESS because error occurred in 'publish' clause which
+            # must not affect action state.
+            task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.ERROR
-        )
+            task_ex = self._assert_single_item(
+                task_execs,
+                name='task1',
+                state=states.ERROR
+            )
 
-        action_execs = task_ex.executions
+            action_execs = task_ex.executions
 
         self.assertEqual(1, len(action_execs))
 
@@ -195,24 +198,26 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        # Now we need to make sure that task is in ERROR state but action
-        # is in SUCCESS because error occurred in 'publish' clause which
-        # must not affect action state.
-        task_execs = wf_ex.task_executions
+            # Now we need to make sure that task is in ERROR state but action
+            # is in SUCCESS because error occurred in 'publish' clause which
+            # must not affect action state.
+            task_execs = wf_ex.task_executions
 
-        # NOTE: task3 must not run because on-error handler triggers only
-        # on error outcome of an action (or workflow) associated with a task.
-        self.assertEqual(1, len(task_execs))
+            # NOTE: task3 must not run because on-error handler triggers
+            # only on error outcome of an action (or workflow) associated
+            # with a task.
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.ERROR
-        )
+            task_ex = self._assert_single_item(
+                task_execs,
+                name='task1',
+                state=states.ERROR
+            )
 
-        action_execs = task_ex.executions
+            action_execs = task_ex.executions
 
         self.assertEqual(1, len(action_execs))
 
@@ -244,22 +249,23 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        # Now we need to make sure that task and action are in SUCCESS
-        # state because mistake at workflow level (output evaluation)
-        # must not affect them.
-        task_execs = wf_ex.task_executions
+            # Now we need to make sure that task and action are in SUCCESS
+            # state because mistake at workflow level (output evaluation)
+            # must not affect them.
+            task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.SUCCESS
-        )
+            task_ex = self._assert_single_item(
+                task_execs,
+                name='task1',
+                state=states.SUCCESS
+            )
 
-        action_execs = task_ex.executions
+            action_execs = task_ex.executions
 
         self.assertEqual(1, len(action_execs))
 
@@ -295,19 +301,20 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_execs = wf_ex.task_executions
+            task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.ERROR
-        )
+            task_ex = self._assert_single_item(
+                task_execs,
+                name='task1',
+                state=states.ERROR
+            )
 
-        action_execs = task_ex.executions
+            action_execs = task_ex.executions
 
         self.assertEqual(0, len(action_execs))
 
@@ -342,19 +349,20 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_execs = wf_ex.task_executions
+            task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = self._assert_single_item(
-            task_execs,
-            name='task1',
-            state=states.ERROR
-        )
+            task_ex = self._assert_single_item(
+                task_execs,
+                name='task1',
+                state=states.ERROR
+            )
 
-        action_execs = task_ex.executions
+            action_execs = task_ex.executions
 
         self.assertEqual(1, len(action_execs))
 

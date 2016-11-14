@@ -424,9 +424,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING_DELAYED, task_ex.state)
         self.assertDictEqual(
@@ -440,15 +442,17 @@ class PoliciesTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WAIT_BEFORE_FROM_VAR)
 
         # Start workflow.
-        exec_db = self.engine.start_workflow('wb.wf1', {'wait_before': 1})
+        wf_ex = self.engine.start_workflow('wb.wf1', {'wait_before': 1})
 
-        # Note: We need to reread execution to access related tasks.
-        exec_db = db_api.get_workflow_execution(exec_db.id)
-        task_db = exec_db.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(states.RUNNING_DELAYED, task_db.state)
+            task_ex = wf_ex.task_executions[0]
 
-        self.await_workflow_success(exec_db.id)
+        self.assertEqual(states.RUNNING_DELAYED, task_ex.state)
+
+        self.await_workflow_success(wf_ex.id)
 
     def test_wait_before_policy_two_tasks(self):
         wf_text = """---
@@ -472,6 +476,7 @@ class PoliciesTest(base.EngineTestCase):
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
             task_execs = wf_ex.task_executions
 
         self.assertEqual(2, len(task_execs))
@@ -484,9 +489,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
@@ -500,9 +507,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {'wait_after': 2})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
@@ -518,9 +527,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
@@ -530,8 +541,10 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             2,
@@ -544,9 +557,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {'count': 3, 'delay': 1})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
@@ -572,21 +587,26 @@ class PoliciesTest(base.EngineTestCase):
                   count: 3
                   delay: 1
         """
+
         wb_service.create_workbook_v2(retry_wb)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_success(task_ex.id)
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             {},
@@ -616,16 +636,20 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             {},
@@ -655,16 +679,20 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             2,
@@ -695,16 +723,20 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_success(task_ex.id)
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             2,
@@ -732,16 +764,19 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_success(task_ex.id)
-
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             {},
@@ -768,16 +803,19 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
-
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             2,
@@ -811,15 +849,18 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.main', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_error(task_ex.id)
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
             2,
@@ -854,23 +895,27 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.await_task_success(task_ex.id)
-
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+            task_ex = wf_ex.task_executions[0]
 
         self.assertDictEqual(
             {'retry_no': 1},
             task_ex.runtime_context['retry_task_policy']
         )
 
-        self.assertDictEqual({'result': 'mocked result'}, wf_ex.output)
+        self.assertDictEqual({'result': 'mocked result'}, wf_output)
 
     @mock.patch.object(
         std_actions.EchoAction,
@@ -899,24 +944,26 @@ class PoliciesTest(base.EngineTestCase):
                   count: 3
                   delay: 1
         """
+
         wf_service.create_workflows(retry_wf)
         wf_ex = self.engine.start_workflow('wf1', {})
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        retry_task = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+            wf_output = wf_ex.output
+            task_execs = wf_ex.task_executions
+
+        retry_task = self._assert_single_item(task_execs, name='task2')
 
         self.assertDictEqual(
             {'retry_no': 1},
             retry_task.runtime_context['retry_task_policy']
         )
 
-        self.assertDictEqual({'result': 'value'}, wf_ex.output)
+        self.assertDictEqual({'result': 'value'}, wf_output)
 
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB)
@@ -924,17 +971,22 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
 
         self.await_task_error(task_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self._assert_single_item(wf_ex.task_executions, name='task1')
+            task_execs = wf_ex.task_executions
+
+        self._assert_single_item(task_execs, name='task1')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -944,9 +996,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
 
@@ -955,11 +1009,13 @@ class PoliciesTest(base.EngineTestCase):
         # Wait until timeout exceeds.
         self._sleep(1)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        tasks_db = wf_ex.task_executions
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         # Make sure that engine did not create extra tasks.
-        self.assertEqual(1, len(tasks_db))
+        self.assertEqual(1, len(task_execs))
 
     def test_timeout_policy_from_var(self):
         wb_service.create_workbook_v2(TIMEOUT_FROM_VAR)
@@ -967,9 +1023,11 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {'timeout': 1})
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.RUNNING, task_ex.state)
 
@@ -984,11 +1042,12 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.IDLE, task_ex.state)
 
@@ -998,20 +1057,22 @@ class PoliciesTest(base.EngineTestCase):
 
         self.engine.resume_workflow(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        self._assert_single_item(wf_ex.task_executions, name='task1')
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self._assert_single_item(task_execs, name='task1')
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
-        next_task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='task1')
+        next_task_ex = self._assert_single_item(task_execs, name='task2')
 
         self.assertEqual(states.SUCCESS, task_ex.state)
         self.assertEqual(states.SUCCESS, next_task_ex.state)
@@ -1022,11 +1083,12 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {})
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.IDLE, task_ex.state)
 
@@ -1042,24 +1104,27 @@ class PoliciesTest(base.EngineTestCase):
         self.await_workflow_paused(wf_ex.id)
 
         task_ex = db_api.get_task_execution(task_ex.id)
+
         self.assertEqual(states.IDLE, task_ex.state)
 
         self.engine.resume_workflow(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        self._assert_single_item(wf_ex.task_executions, name='task1')
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self._assert_single_item(task_execs, name='task1')
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
-        next_task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='task1')
+        next_task_ex = self._assert_single_item(task_execs, name='task2')
 
         self.assertEqual(states.SUCCESS, task_ex.state)
         self.assertEqual(states.SUCCESS, next_task_ex.state)
@@ -1072,14 +1137,14 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(states.SUCCESS, task_ex.state)
-
         self.assertEqual(4, task_ex.runtime_context['concurrency'])
 
     def test_concurrency_is_in_runtime_context_from_var(self):
@@ -1088,12 +1153,12 @@ class PoliciesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1', {'concurrency': 4})
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        task_ex = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task1'
-        )
+            task_execs = wf_ex.task_executions
+
+        task_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertEqual(4, task_ex.runtime_context['concurrency'])
 
@@ -1143,7 +1208,8 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(wf_ex.task_executions))
+            self.assertEqual(2, len(wf_ex.task_executions))
