@@ -17,7 +17,7 @@ import six
 
 from oslo_config import cfg
 from oslo_db import options
-from oslo_db.sqlalchemy import session as db_session
+from oslo_db.sqlalchemy import enginefacade
 import osprofiler.sqlalchemy
 import sqlalchemy as sa
 
@@ -39,7 +39,7 @@ def _get_facade():
     global _facade
 
     if not _facade:
-        _facade = db_session.EngineFacade(
+        _facade = enginefacade.LegacyEngineFacade(
             cfg.CONF.database.connection,
             sqlite_fk=True,
             autocommit=False,
