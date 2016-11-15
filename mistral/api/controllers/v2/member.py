@@ -121,20 +121,21 @@ class MembersController(rest.RestController):
             msg = "Member id must be provided."
             raise exc.WorkflowException(msg)
 
-        wf_db = db_api.get_workflow_definition(self.resource_id)
+        with db_api.transaction():
+            wf_db = db_api.get_workflow_definition(self.resource_id)
 
-        if wf_db.scope != 'private':
-            msg = "Only private resource could be shared."
-            raise exc.WorkflowException(msg)
+            if wf_db.scope != 'private':
+                msg = "Only private resource could be shared."
+                raise exc.WorkflowException(msg)
 
-        resource_member = {
-            'resource_id': self.resource_id,
-            'resource_type': self.type,
-            'member_id': member_info.member_id,
-            'status': 'pending'
-        }
+            resource_member = {
+                'resource_id': self.resource_id,
+                'resource_type': self.type,
+                'member_id': member_info.member_id,
+                'status': 'pending'
+            }
 
-        db_member = db_api.create_resource_member(resource_member)
+            db_member = db_api.create_resource_member(resource_member)
 
         return resources.Member.from_dict(db_member.to_dict())
 

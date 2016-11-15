@@ -43,9 +43,10 @@ def _load_deferred_output_field(action_ex):
 
 
 def _get_action_execution(id):
-    action_ex = db_api.get_action_execution(id)
+    with db_api.transaction():
+        action_ex = db_api.get_action_execution(id)
 
-    return _get_action_execution_resource(action_ex)
+        return _get_action_execution_resource(action_ex)
 
 
 def _get_action_execution_resource(action_ex):
@@ -275,17 +276,20 @@ class ActionExecutionsController(rest.RestController):
             raise exc.NotAllowedException("Action execution deletion is not "
                                           "allowed.")
 
-        action_ex = db_api.get_action_execution(id)
+        with db_api.transaction():
+            action_ex = db_api.get_action_execution(id)
 
-        if action_ex.task_execution_id:
-            raise exc.NotAllowedException("Only ad-hoc action execution can "
-                                          "be deleted.")
+            if action_ex.task_execution_id:
+                raise exc.NotAllowedException(
+                    "Only ad-hoc action execution can be deleted."
+                )
 
-        if not states.is_completed(action_ex.state):
-            raise exc.NotAllowedException("Only completed action execution "
-                                          "can be deleted.")
+            if not states.is_completed(action_ex.state):
+                raise exc.NotAllowedException(
+                    "Only completed action execution can be deleted."
+                )
 
-        return db_api.delete_action_execution(id)
+            return db_api.delete_action_execution(id)
 
 
 class TasksActionExecutionController(rest.RestController):
