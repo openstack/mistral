@@ -1,6 +1,6 @@
-=============================
-How to write an Action Plugin
-=============================
+============================
+How to write a Custom Action
+============================
 
 1. Write a class inherited from mistral.actions.base.Action
 
