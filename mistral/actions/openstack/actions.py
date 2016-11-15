@@ -35,6 +35,7 @@ mistralclient = importutils.try_import('mistralclient.api.v2.client')
 muranoclient = importutils.try_import('muranoclient.v1.client')
 neutronclient = importutils.try_import('neutronclient.v2_0.client')
 novaclient = importutils.try_import('novaclient.client')
+senlinclient = importutils.try_import('senlinclient.v1.client')
 swift_client = importutils.try_import('swiftclient.client')
 tackerclient = importutils.try_import('tackerclient.v1_0.client')
 troveclient = importutils.try_import('troveclient.v1.client')
@@ -761,3 +762,30 @@ class TackerAction(base.OpenStackAction):
     @classmethod
     def _get_fake_client(cls):
         return cls._get_client_class()()
+
+
+class SenlinAction(base.OpenStackAction):
+
+    @classmethod
+    def _get_client_class(cls):
+        return senlinclient.Client
+
+    def _create_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Senlin action security context: %s" % ctx)
+
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        senlin_endpoint = keystone_utils.get_endpoint_for_project('senlin')
+
+        return self._get_client_class()(
+            endpoint_url=senlin_endpoint.url,
+            token=ctx.auth_token,
+            tenant_id=ctx.project_id,
+            region_name=senlin_endpoint.region,
+            auth_url=keystone_endpoint.url
+        )
+
+        @classmethod
+        def _get_fake_client(cls):
+            return cls._get_client_class()("http://127.0.0.1:8778")
