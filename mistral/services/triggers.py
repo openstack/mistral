@@ -158,30 +158,28 @@ def create_event_trigger(name, exchange, topic, event, workflow_id,
 
 
 def delete_event_trigger(event_trigger):
-    with db_api.transaction():
-        db_api.delete_event_trigger(event_trigger['id'])
+    db_api.delete_event_trigger(event_trigger['id'])
 
-        trigs = db_api.get_event_triggers(
-            insecure=True,
-            exchange=event_trigger['exchange'],
-            topic=event_trigger['topic']
-        )
-        events = set([t.event for t in trigs])
+    trigs = db_api.get_event_triggers(
+        insecure=True,
+        exchange=event_trigger['exchange'],
+        topic=event_trigger['topic']
+    )
+    events = set([t.event for t in trigs])
 
-        # NOTE(kong): Send RPC message within the db transaction, rollback if
-        # any error occurs.
-        rpc.get_event_engine_client().delete_event_trigger(
-            event_trigger,
-            list(events)
-        )
+    # NOTE(kong): Send RPC message within the db transaction, rollback if
+    # any error occurs.
+    rpc.get_event_engine_client().delete_event_trigger(
+        event_trigger,
+        list(events)
+    )
 
 
 def update_event_trigger(id, values):
-    with db_api.transaction():
-        trig = db_api.update_event_trigger(id, values)
+    trig = db_api.update_event_trigger(id, values)
 
-        # NOTE(kong): Send RPC message within the db transaction, rollback if
-        # any error occurs.
-        rpc.get_event_engine_client().update_event_trigger(trig.to_dict())
+    # NOTE(kong): Send RPC message within the db transaction, rollback if
+    # any error occurs.
+    rpc.get_event_engine_client().update_event_trigger(trig.to_dict())
 
     return trig

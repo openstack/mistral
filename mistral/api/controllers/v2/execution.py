@@ -95,49 +95,49 @@ class ExecutionsController(rest.RestController):
 
         LOG.info('Update execution [id=%s, execution=%s]' % (id, wf_ex))
 
-        db_api.ensure_workflow_execution_exists(id)
+        with db_api.transaction():
+            db_api.ensure_workflow_execution_exists(id)
 
-        delta = {}
+            delta = {}
 
-        if wf_ex.state:
-            delta['state'] = wf_ex.state
+            if wf_ex.state:
+                delta['state'] = wf_ex.state
 
-        if wf_ex.description:
-            delta['description'] = wf_ex.description
+            if wf_ex.description:
+                delta['description'] = wf_ex.description
 
-        if wf_ex.params and wf_ex.params.get('env'):
-            delta['env'] = wf_ex.params.get('env')
+            if wf_ex.params and wf_ex.params.get('env'):
+                delta['env'] = wf_ex.params.get('env')
 
-        # Currently we can change only state, description, or env.
-        if len(delta.values()) <= 0:
-            raise exc.InputException(
-                'The property state, description, or env '
-                'is not provided for update.'
-            )
+            # Currently we can change only state, description, or env.
+            if len(delta.values()) <= 0:
+                raise exc.InputException(
+                    'The property state, description, or env '
+                    'is not provided for update.'
+                )
 
-        # Description cannot be updated together with state.
-        if delta.get('description') and delta.get('state'):
-            raise exc.InputException(
-                'The property description must be updated '
-                'separately from state.'
-            )
+            # Description cannot be updated together with state.
+            if delta.get('description') and delta.get('state'):
+                raise exc.InputException(
+                    'The property description must be updated '
+                    'separately from state.'
+                )
 
-        # If state change, environment cannot be updated if not RUNNING.
-        if (delta.get('env') and
-                delta.get('state') and delta['state'] != states.RUNNING):
-            raise exc.InputException(
-                'The property env can only be updated when workflow '
-                'execution is not running or on resume from pause.'
-            )
+            # If state change, environment cannot be updated if not RUNNING.
+            if (delta.get('env') and
+                    delta.get('state') and delta['state'] != states.RUNNING):
+                raise exc.InputException(
+                    'The property env can only be updated when workflow '
+                    'execution is not running or on resume from pause.'
+                )
 
-        if delta.get('description'):
-            wf_ex = db_api.update_workflow_execution(
-                id,
-                {'description': delta['description']}
-            )
+            if delta.get('description'):
+                wf_ex = db_api.update_workflow_execution(
+                    id,
+                    {'description': delta['description']}
+                )
 
-        if not delta.get('state') and delta.get('env'):
-            with db_api.transaction():
+            if not delta.get('state') and delta.get('env'):
                 wf_ex = db_api.get_workflow_execution(id)
                 wf_ex = wf_service.update_workflow_execution_env(
                     wf_ex,
