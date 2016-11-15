@@ -82,10 +82,12 @@ class NoopTaskEngineTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -99,7 +101,7 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task4.state)
 
-        self.assertDictEqual({'result': 4}, wf_ex.output)
+        self.assertDictEqual({'result': 4}, wf_output)
 
     def test_noop_task2(self):
         wf_service.create_workflows(WF)
@@ -109,10 +111,12 @@ class NoopTaskEngineTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        tasks = wf_ex.task_executions
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
 
         self.assertEqual(4, len(tasks))
 
@@ -126,4 +130,4 @@ class NoopTaskEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task3.state)
         self.assertEqual(states.SUCCESS, task5.state)
 
-        self.assertDictEqual({'result': 5}, wf_ex.output)
+        self.assertDictEqual({'result': 5}, wf_output)

@@ -62,11 +62,14 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -76,11 +79,14 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -90,11 +96,14 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -139,11 +148,14 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -153,11 +165,14 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -167,11 +182,14 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -249,11 +267,14 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -263,18 +284,18 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
-        task2_db = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        task2_db = self._assert_single_item(task_execs, name='task2')
 
         self.await_task_success(task2_db.id)
         self.await_workflow_error(wf_ex.id)
@@ -284,11 +305,14 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -298,18 +322,18 @@ class OrderEngineCommandsTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(2, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
-        task2_db = self._assert_single_item(
-            wf_ex.task_executions,
-            name='task2'
-        )
+        task2_db = self._assert_single_item(task_execs, name='task2')
 
         self.await_task_error(task2_db.id)
         self.await_workflow_success(wf_ex.id)
@@ -351,11 +375,14 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -367,11 +394,14 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -383,11 +413,14 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -433,11 +466,14 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -449,11 +485,14 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
 
         self.await_workflow_success(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )
@@ -465,11 +504,14 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
 
         self.await_workflow_paused(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertEqual(1, len(wf_ex.task_executions))
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
         self._assert_single_item(
-            wf_ex.task_executions,
+            task_execs,
             name='task1',
             state=states.SUCCESS
         )

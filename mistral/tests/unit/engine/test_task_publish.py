@@ -71,12 +71,15 @@ class TaskPublishTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
 
         self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertEqual(1, len(wf_ex.task_executions))
+        self.assertEqual(1, len(task_execs))
 
-        task_1_ex = self._assert_single_item(wf_ex.task_executions, name='t1')
+        task_1_ex = self._assert_single_item(task_execs, name='t1')
 
         # Task 1 should have failed.
         self.assertEqual(states.ERROR, task_1_ex.state)
@@ -84,7 +87,8 @@ class TaskPublishTest(base.EngineTestCase):
 
         # Action execution of task 1 should have succeeded.
         task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id)
+            task_execution_id=task_1_ex.id
+        )
 
         self.assertEqual(1, len(task_1_action_exs))
         self.assertEqual(states.SUCCESS, task_1_action_exs[0].state)
