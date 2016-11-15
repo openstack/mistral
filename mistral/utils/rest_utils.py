@@ -25,6 +25,7 @@ import six
 import webob
 from wsme import exc as wsme_exc
 
+from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 
 LOG = logging.getLogger(__name__)
@@ -163,30 +164,31 @@ def get_all(list_cls, cls, get_all_function, get_function,
     list_to_return = []
 
     if resource_function:
-        # do not filter fields yet, resource_function needs the ORM object
-        db_list = get_all_function(
-            limit=limit,
-            marker=marker_obj,
-            sort_keys=sort_keys,
-            sort_dirs=sort_dirs,
-            **filters
-        )
+        with db_api.transaction():
+            # do not filter fields yet, resource_function needs the ORM object
+            db_list = get_all_function(
+                limit=limit,
+                marker=marker_obj,
+                sort_keys=sort_keys,
+                sort_dirs=sort_dirs,
+                **filters
+            )
 
-        for data in db_list:
-            obj = resource_function(data)
+            for data in db_list:
+                obj = resource_function(data)
 
-            # filter fields using a loop instead of the ORM
-            if fields:
-                data = []
-                for f in fields:
-                    if hasattr(obj, f):
-                        data.append(getattr(obj, f))
+                # filter fields using a loop instead of the ORM
+                if fields:
+                    data = []
+                    for f in fields:
+                        if hasattr(obj, f):
+                            data.append(getattr(obj, f))
 
-                dict_data = dict(zip(fields, data))
-            else:
-                dict_data = obj.to_dict()
+                    dict_data = dict(zip(fields, data))
+                else:
+                    dict_data = obj.to_dict()
 
-            list_to_return.append(cls.from_dict(dict_data))
+                list_to_return.append(cls.from_dict(dict_data))
     else:
         db_list = get_all_function(
             limit=limit,
