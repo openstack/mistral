@@ -13,7 +13,9 @@
 #    limitations under the License.
 
 import datetime as dt
+import mock
 from oslo_config import cfg
+import requests
 
 from mistral.db.v2 import api as db_api
 from mistral.services import scheduler
@@ -28,6 +30,12 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
+
+    @mock.patch.object(
+        requests,
+        'request',
+        mock.MagicMock(side_effect=Exception())
+    )
     def test_task_defaults_on_error(self):
         wf_text = """---
         version: '2.0'

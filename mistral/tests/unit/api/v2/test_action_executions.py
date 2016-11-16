@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -131,6 +130,12 @@ UPDATED_ACTION_EX_DB['task_name'] = 'task1'
 UPDATED_ACTION = copy.deepcopy(ACTION_EX)
 UPDATED_ACTION['state'] = 'SUCCESS'
 UPDATED_ACTION_OUTPUT = UPDATED_ACTION['output']
+
+CANCELLED_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
+CANCELLED_ACTION_EX_DB['state'] = 'CANCELLED'
+CANCELLED_ACTION_EX_DB['task_name'] = 'task1'
+CANCELLED_ACTION = copy.deepcopy(ACTION_EX)
+CANCELLED_ACTION['state'] = 'CANCELLED'
 
 ERROR_ACTION_EX = copy.copy(ACTION_EX_DB).to_dict()
 ERROR_ACTION_EX['state'] = 'ERROR'
@@ -373,6 +378,20 @@ class TestActionExecutionsController(base.APITest):
             wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
         )
 
+    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    def test_put_cancelled(self, on_action_complete_mock_func):
+        on_action_complete_mock_func.return_value = CANCELLED_ACTION_EX_DB
+
+        resp = self.app.put_json('/v2/action_executions/123', CANCELLED_ACTION)
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(CANCELLED_ACTION, resp.json)
+
+        on_action_complete_mock_func.assert_called_once_with(
+            CANCELLED_ACTION['id'],
+            wf_utils.Result(cancel=True)
+        )
+
     @mock.patch.object(
         rpc.EngineClient,
         'on_action_complete',
@@ -386,6 +405,19 @@ class TestActionExecutionsController(base.APITest):
         )
 
         self.assertEqual(404, resp.status_int)
+
+    def test_put_bad_state(self):
+        action = copy.deepcopy(ACTION_EX)
+        action['state'] = 'PAUSED'
+
+        resp = self.app.put_json(
+            '/v2/action_executions/123',
+            action,
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn('Expected one of', resp.json['faultstring'])
 
     def test_put_bad_result(self):
         resp = self.app.put_json(

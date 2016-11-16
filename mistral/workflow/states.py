@@ -42,7 +42,7 @@ _VALID_TRANSITIONS = {
     RUNNING_DELAYED: [RUNNING, ERROR, CANCELLED],
     PAUSED: [RUNNING, ERROR, CANCELLED],
     SUCCESS: [],
-    CANCELLED: [],
+    CANCELLED: [RUNNING],
     ERROR: [RUNNING]
 }
 
@@ -57,6 +57,10 @@ def is_invalid(state):
 
 def is_completed(state):
     return state in [SUCCESS, ERROR, CANCELLED]
+
+
+def is_cancelled(state):
+    return state == CANCELLED
 
 
 def is_running(state):
