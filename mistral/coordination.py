@@ -18,7 +18,7 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log
 from oslo_service import threadgroup
-from retrying import retry
+import tenacity
 import tooz.coordination
 
 from mistral import utils
@@ -95,7 +95,7 @@ class ServiceCoordinator(object):
 
             self._started = False
 
-    @retry(stop_max_attempt_number=5)
+    @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     def join_group(self, group_id):
         if not self.is_active() or not group_id:
             return
