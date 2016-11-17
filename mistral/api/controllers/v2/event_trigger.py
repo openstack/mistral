@@ -96,11 +96,12 @@ class EventTriggersController(rest.RestController):
                     UPDATE_NOT_ALLOWED
                 )
 
-        db_api.ensure_event_trigger_exists(id)
-
         LOG.info('Update event trigger: [id=%s, values=%s]', id, values)
 
-        db_model = triggers.update_event_trigger(id, values)
+        with db_api.transaction():
+            db_api.ensure_event_trigger_exists(id)
+
+            db_model = triggers.update_event_trigger(id, values)
 
         return resources.EventTrigger.from_dict(db_model.to_dict())
 
@@ -112,9 +113,10 @@ class EventTriggersController(rest.RestController):
 
         LOG.info("Delete event trigger [id=%s]", id)
 
-        event_trigger = db_api.get_event_trigger(id)
+        with db_api.transaction():
+            event_trigger = db_api.get_event_trigger(id)
 
-        triggers.delete_event_trigger(event_trigger.to_dict())
+            triggers.delete_event_trigger(event_trigger.to_dict())
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.EventTriggers, types.uuid, int,

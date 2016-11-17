@@ -140,9 +140,10 @@ class TasksController(rest.RestController):
         acl.enforce('tasks:get', context.ctx())
         LOG.info("Fetch task [id=%s]" % id)
 
-        task_ex = db_api.get_task_execution(id)
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(id)
 
-        return _get_task_resource_with_result(task_ex)
+            return _get_task_resource_with_result(task_ex)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, int, types.uniquelist,
@@ -245,16 +246,20 @@ class TasksController(rest.RestController):
 
         LOG.info("Update task execution [id=%s, task=%s]" % (id, task))
 
-        task_ex = db_api.get_task_execution(id)
-        task_spec = spec_parser.get_task_spec(task_ex.spec)
-        task_name = task.name or None
-        reset = task.reset
-        env = task.env or None
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(id)
+            task_spec = spec_parser.get_task_spec(task_ex.spec)
+            task_name = task.name or None
+            reset = task.reset
+            env = task.env or None
 
-        if task_name and task_name != task_ex.name:
-            raise exc.WorkflowException('Task name does not match.')
+            if task_name and task_name != task_ex.name:
+                raise exc.WorkflowException('Task name does not match.')
 
-        wf_ex = db_api.get_workflow_execution(task_ex.workflow_execution_id)
+            wf_ex = db_api.get_workflow_execution(
+                task_ex.workflow_execution_id
+            )
+
         wf_name = task.workflow_name or None
 
         if wf_name and wf_name != wf_ex.name:
@@ -262,7 +267,8 @@ class TasksController(rest.RestController):
 
         if task.state != states.RUNNING:
             raise exc.WorkflowException(
-                'Invalid task state. Only updating task to rerun is supported.'
+                'Invalid task state. '
+                'Only updating task to rerun is supported.'
             )
 
         if task_ex.state != states.ERROR:
@@ -282,9 +288,10 @@ class TasksController(rest.RestController):
             env=env
         )
 
-        task_ex = db_api.get_task_execution(id)
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(id)
 
-        return _get_task_resource_with_result(task_ex)
+            return _get_task_resource_with_result(task_ex)
 
 
 class ExecutionTasksController(rest.RestController):
