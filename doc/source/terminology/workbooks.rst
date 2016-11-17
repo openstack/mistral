@@ -1,16 +1,28 @@
 Workbooks
 =========
 
-Using workbooks users can combine multiple entities of any type (workflows and actions) into one document and upload to Mistral service. When uploading a workbook Mistral will parse it and save its workflows and actions as independent objects which will be accessible via their own API endpoints (/workflows and /actions). Once it's done the workbook comes out of the game. User can just start workflows and use references to workflows/actions as if they were uploaded without workbook in the first place. However, if need to modify these individual objects user can modify the same workbook definition and re-upload it to Mistral (or, of course, user can do it independently).
+Using workbooks users can combine multiple entities of any type (workflows and
+actions) into one document and upload to Mistral service. When uploading a
+workbook, Mistral will parse it and save its workflows and actions as
+independent objects which will be accessible via their own API endpoints
+(/workflows and /actions). Once it's done the workbook comes out of the game.
+User can just start workflows and use references to workflows/actions as if
+they were uploaded without workbook in the first place. However, if need to
+modify these individual objects user can modify the same workbook definition
+and re-upload it to Mistral (or, of course, user can do it independently).
 
 **Namespacing**
 
-One thing that's worth noting is that when using a workbook Mistral uses its name as a prefix for generating final names of workflows and actions included into the workbook. To illustrate this principle let's take a look at the figure below.
+One thing that's worth noting is that when using a workbook Mistral uses its
+name as a prefix for generating final names of workflows and actions included
+into the workbook. To illustrate this principle let's take a look at the
+figure below:
 
 .. image:: /img/Mistral_workbook_namespacing.png
     :align: center
 
-So after a workbook has been uploaded its workflows and actions become independent objects but with slightly different names.
+So after a workbook has been uploaded its workflows and actions become
+independent objects but with slightly different names.
 
 YAML example
 ^^^^^^^^^^^^
@@ -55,7 +67,9 @@ YAML example
           - str2
         base: std.echo output="<% $.str1 %><% $.str2 %>"
 
-**NOTE:** Even though names of objects inside workbooks change upon uploading Mistral allows referencing between those objects using local names declared in the original workbook.
+**NOTE:** Even though names of objects inside workbooks change upon uploading
+Mistral allows referencing between those objects using local names declared in
+the original workbook.
 
 **Attributes**
 

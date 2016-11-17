@@ -1,7 +1,9 @@
 Cron-triggers
 =============
 
-Cron trigger is an object allowing to run workflow on a schedule. User specifies what workflow with what input needs to be run and also specifies how often it should be run.
+Cron trigger is an object allowing to run workflow on a schedule. User
+specifies what workflow with what input needs to be run and also specifies
+how often it should be run.
 
 .. image:: /img/Mistral_cron_trigger.png
     :align: center
