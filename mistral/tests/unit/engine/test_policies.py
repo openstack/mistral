@@ -14,6 +14,7 @@
 
 import mock
 from oslo_config import cfg
+import requests
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
@@ -521,6 +522,11 @@ class PoliciesTest(base.EngineTestCase):
         # Need to create a better test.
         # self.assertEqual(2, task_ex.in_context['wait_after'])
 
+    @mock.patch.object(
+        requests,
+        'request',
+        mock.MagicMock(side_effect=Exception())
+    )
     def test_retry_policy(self):
         wb_service.create_workbook_v2(RETRY_WB)
 
