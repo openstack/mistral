@@ -89,7 +89,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         # Make sure that task inbound context doesn't contain workflow
         # execution info.
-        self.assertFalse('__execution' in task1.in_context)
+        self.assertNotIn('__execution', task1.in_context)
 
     def test_linear_with_branches_dataflow(self):
         linear_with_branches_wf = """---
