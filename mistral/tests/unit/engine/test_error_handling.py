@@ -586,3 +586,39 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertIsNotNone(state_info)
         self.assertTrue(state_info.find('error=') > 0)
         self.assertTrue(state_info.find('error=') < state_info.find('action='))
+
+    def test_publish_bad_yaql(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          input:
+            - my_dict:
+              - id: 1
+                value: 11
+
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                problem_var: <% $.my_dict.where($.value = 13).id.first() %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+            action_ex = task_ex.action_executions[0]
+
+        self.assertEqual(states.SUCCESS, action_ex.state)
+        self.assertEqual(states.ERROR, task_ex.state)
+        self.assertIsNotNone(task_ex.state_info)
+        self.assertEqual(states.ERROR, wf_ex.state)

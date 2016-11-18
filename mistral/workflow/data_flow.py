@@ -200,9 +200,12 @@ def publish_variables(task_ex, task_spec):
             task_ex.name
         )
 
-    data = (task_spec.get_publish()
-            if task_ex.state == states.SUCCESS
-            else task_spec.get_publish_on_error())
+    data = (
+        task_spec.get_publish()
+        if task_ex.state == states.SUCCESS
+        else task_spec.get_publish_on_error()
+    )
+
     task_ex.published = expr.evaluate_recursively(data, expr_ctx)
 
 
