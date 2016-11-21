@@ -83,9 +83,10 @@ class JinjaEvaluator(Evaluator):
             # the value is accessed, not when it gets created. The simplest way
             # to access it is to try and cast it to string.
             str(result)
-        except jinja2.exceptions.UndefinedError as e:
+        except Exception as e:
             raise exc.JinjaEvaluationException(
-                "Undefined error '%s'." % str(e)
+                "Can not evaluate Jinja expression [expression=%s, error=%s"
+                ", data=%s]" % (expression, str(e), data_context)
             )
 
         LOG.debug("Jinja expression result: %s" % result)
