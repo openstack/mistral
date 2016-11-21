@@ -1050,10 +1050,10 @@ class WithItemsEngineTest(base.EngineTestCase):
             task1_executions = task1_ex.executions
 
         self.assertEqual(
-            2,
+            3,
             task1_ex.runtime_context['retry_task_policy']['retry_no']
         )
-        self.assertEqual(9, len(task1_executions))
+        self.assertEqual(12, len(task1_executions))
         self._assert_multiple_items(task1_executions, 3, accepted=True)
 
     @testtools.skip('Restore concurrency support.')
