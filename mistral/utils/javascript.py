@@ -15,12 +15,11 @@
 import abc
 import json
 
-from oslo_config import cfg
 from oslo_utils import importutils
 
+from mistral import config as cfg
 from mistral import exceptions as exc
 
-CONF = cfg.CONF
 _PYV8 = importutils.try_import('PyV8')
 _V8EVAL = importutils.try_import('v8eval')
 
@@ -62,7 +61,7 @@ class V8EvalEvaluator(JSEvaluator):
             encoding='UTF-8'))
 
 
-EVALUATOR = (V8EvalEvaluator if CONF.js_implementation == 'v8eval'
+EVALUATOR = (V8EvalEvaluator if cfg.CONF.js_implementation == 'v8eval'
              else PyV8Evaluator)
 
 
