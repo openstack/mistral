@@ -16,6 +16,7 @@
 
 import contextlib
 import sys
+import threading
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -42,6 +43,10 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
+_SCHEMA_LOCK = threading.RLock()
+_initialized = False
+
+
 def get_backend():
     """Consumed by openstack common code.
 
@@ -52,20 +57,33 @@ def get_backend():
 
 
 def setup_db():
-    try:
-        models.Workbook.metadata.create_all(b.get_engine())
-    except sa.exc.OperationalError as e:
-        raise exc.DBError("Failed to setup database: %s" % e)
+    global _initialized
+
+    with _SCHEMA_LOCK:
+        if _initialized:
+            return
+
+        try:
+            models.Workbook.metadata.create_all(b.get_engine())
+
+            _initialized = True
+        except sa.exc.OperationalError as e:
+            raise exc.DBError("Failed to setup database: %s" % e)
 
 
 def drop_db():
-    global _facade
+    global _initialized
 
-    try:
-        models.Workbook.metadata.drop_all(b.get_engine())
-        _facade = None
-    except Exception as e:
-        raise exc.DBError("Failed to drop database: %s" % e)
+    with _SCHEMA_LOCK:
+        if not _initialized:
+            return
+
+        try:
+            models.Workbook.metadata.drop_all(b.get_engine())
+
+            _initialized = False
+        except Exception as e:
+            raise exc.DBError("Failed to drop database: %s" % e)
 
 
 # Transaction management.

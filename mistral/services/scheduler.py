@@ -200,21 +200,33 @@ class CallScheduler(periodic_task.PeriodicTasks):
                     )
 
 
-def setup():
+def start():
     tg = threadgroup.ThreadGroup()
 
-    scheduler = CallScheduler(CONF)
+    sched = CallScheduler(CONF)
 
     tg.add_dynamic_timer(
-        scheduler.run_periodic_tasks,
+        sched.run_periodic_tasks,
         initial_delay=None,
         periodic_interval_max=1,
         context=None
     )
 
-    _schedulers[scheduler] = tg
+    _schedulers[sched] = tg
 
-    return tg
+    return sched
+
+
+def stop_scheduler(sched, graceful=False):
+    if sched:
+        tg = _schedulers[sched]
+
+        tg.stop()
+
+        del _schedulers[sched]
+
+        if graceful:
+            tg.wait()
 
 
 def stop_all_schedulers():

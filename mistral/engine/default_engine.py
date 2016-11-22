@@ -17,7 +17,6 @@
 from oslo_log import log as logging
 from osprofiler import profiler
 
-from mistral import coordination
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
@@ -36,17 +35,13 @@ LOG = logging.getLogger(__name__)
 # the submodules are referenced.
 
 
-class DefaultEngine(base.Engine, coordination.Service):
-    def __init__(self, engine_client):
-        self._engine_client = engine_client
-
-        coordination.Service.__init__(self, 'engine_group')
-
+class DefaultEngine(base.Engine):
     @action_queue.process
     @u.log_exec(LOG)
     @profiler.trace('engine-start-workflow')
     def start_workflow(self, wf_identifier, wf_input, description='',
                        **params):
+
         with db_api.transaction():
             wf_ex = wf_handler.start_workflow(
                 wf_identifier,

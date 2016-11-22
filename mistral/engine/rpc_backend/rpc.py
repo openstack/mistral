@@ -52,6 +52,9 @@ def cleanup():
     _EVENT_ENGINE_CLIENT = None
 
 
+# TODO(rakhmerov): This method seems misplaced. Now we have different kind
+# of transports (oslo, kombu) and this module should not have any oslo
+# specific things anymore.
 def get_transport():
     global _TRANSPORT
 
@@ -118,174 +121,6 @@ def get_rpc_client_driver():
         ).driver
 
     return _IMPL_CLIENT
-
-
-class EngineServer(object):
-    """RPC Engine server."""
-
-    def __init__(self, engine):
-        self._engine = engine
-
-    def start_workflow(self, rpc_ctx, workflow_identifier, workflow_input,
-                       description, params):
-        """Receives calls over RPC to start workflows on engine.
-
-        :param rpc_ctx: RPC request context.
-        :param workflow_identifier: Workflow definition identifier.
-        :param workflow_input: Workflow input.
-        :param description: Workflow execution description.
-        :param params: Additional workflow type specific parameters.
-        :return: Workflow execution.
-        """
-
-        LOG.info(
-            "Received RPC request 'start_workflow'[rpc_ctx=%s,"
-            " workflow_identifier=%s, workflow_input=%s, description=%s, "
-            "params=%s]"
-            % (rpc_ctx, workflow_identifier, workflow_input, description,
-               params)
-        )
-
-        return self._engine.start_workflow(
-            workflow_identifier,
-            workflow_input,
-            description,
-            **params
-        )
-
-    def start_action(self, rpc_ctx, action_name,
-                     action_input, description, params):
-        """Receives calls over RPC to start actions on engine.
-
-        :param rpc_ctx: RPC request context.
-        :param action_name: name of the Action.
-        :param action_input: input dictionary for Action.
-        :param description: description of new Action execution.
-        :param params: extra parameters to run Action.
-        :return: Action execution.
-        """
-        LOG.info(
-            "Received RPC request 'start_action'[rpc_ctx=%s,"
-            " name=%s, input=%s, description=%s, params=%s]"
-            % (rpc_ctx, action_name, action_input, description, params)
-        )
-
-        return self._engine.start_action(
-            action_name,
-            action_input,
-            description,
-            **params
-        )
-
-    def on_task_state_change(self, rpc_ctx, task_ex_id, state,
-                             state_info=None):
-        return self._engine.on_task_state_change(task_ex_id, state, state_info)
-
-    def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
-                           result_error, wf_action):
-        """Receives RPC calls to communicate action result to engine.
-
-        :param rpc_ctx: RPC request context.
-        :param action_ex_id: Action execution id.
-        :param result_data: Action result data.
-        :param result_error: Action result error.
-        :param wf_action: True if given id points to a workflow execution.
-        :return: Action execution.
-        """
-
-        result = wf_utils.Result(result_data, result_error)
-
-        LOG.info(
-            "Received RPC request 'on_action_complete'[rpc_ctx=%s,"
-            " action_ex_id=%s, result=%s]" % (rpc_ctx, action_ex_id, result)
-        )
-
-        return self._engine.on_action_complete(action_ex_id, result, wf_action)
-
-    def pause_workflow(self, rpc_ctx, execution_id):
-        """Receives calls over RPC to pause workflows on engine.
-
-        :param rpc_ctx: Request context.
-        :param execution_id: Workflow execution id.
-        :return: Workflow execution.
-        """
-
-        LOG.info(
-            "Received RPC request 'pause_workflow'[rpc_ctx=%s,"
-            " execution_id=%s]" % (rpc_ctx, execution_id)
-        )
-
-        return self._engine.pause_workflow(execution_id)
-
-    def rerun_workflow(self, rpc_ctx, task_ex_id, reset=True, env=None):
-        """Receives calls over RPC to rerun workflows on engine.
-
-        :param rpc_ctx: RPC request context.
-        :param task_ex_id: Task execution id.
-        :param reset: If true, then purge action execution for the task.
-        :param env: Environment variables to update.
-        :return: Workflow execution.
-        """
-
-        LOG.info(
-            "Received RPC request 'rerun_workflow'[rpc_ctx=%s, "
-            "task_ex_id=%s]" % (rpc_ctx, task_ex_id)
-        )
-
-        return self._engine.rerun_workflow(task_ex_id, reset, env)
-
-    def resume_workflow(self, rpc_ctx, wf_ex_id, env=None):
-        """Receives calls over RPC to resume workflows on engine.
-
-        :param rpc_ctx: RPC request context.
-        :param wf_ex_id: Workflow execution id.
-        :param env: Environment variables to update.
-        :return: Workflow execution.
-        """
-
-        LOG.info(
-            "Received RPC request 'resume_workflow'[rpc_ctx=%s, "
-            "wf_ex_id=%s]" % (rpc_ctx, wf_ex_id)
-        )
-
-        return self._engine.resume_workflow(wf_ex_id, env)
-
-    def stop_workflow(self, rpc_ctx, execution_id, state, message=None):
-        """Receives calls over RPC to stop workflows on engine.
-
-        Sets execution state to SUCCESS or ERROR. No more tasks will be
-        scheduled. Running tasks won't be killed, but their results
-        will be ignored.
-
-        :param rpc_ctx: RPC request context.
-        :param execution_id: Workflow execution id.
-        :param state: State assigned to the workflow. Permitted states are
-            SUCCESS or ERROR.
-        :param message: Optional information string.
-
-        :return: Workflow execution.
-        """
-
-        LOG.info(
-            "Received RPC request 'stop_workflow'[rpc_ctx=%s, execution_id=%s,"
-            " state=%s, message=%s]" % (rpc_ctx, execution_id, state, message)
-        )
-
-        return self._engine.stop_workflow(execution_id, state, message)
-
-    def rollback_workflow(self, rpc_ctx, execution_id):
-        """Receives calls over RPC to rollback workflows on engine.
-
-        :param rpc_ctx: RPC request context.
-        :return: Workflow execution.
-        """
-
-        LOG.info(
-            "Received RPC request 'rollback_workflow'[rpc_ctx=%s,"
-            " execution_id=%s]" % (rpc_ctx, execution_id)
-        )
-
-        return self._engine.resume_workflow(execution_id)
 
 
 def _wrap_exception_and_reraise(exception):
@@ -498,43 +333,6 @@ class EngineClient(base.Engine):
         )
 
 
-class ExecutorServer(object):
-    """RPC Executor server."""
-
-    def __init__(self, executor):
-        self._executor = executor
-
-    def run_action(self, rpc_ctx, action_ex_id, action_class_str,
-                   attributes, params, safe_rerun):
-        """Receives calls over RPC to run action on executor.
-
-        :param rpc_ctx: RPC request context dictionary.
-        :param action_ex_id: Action execution id.
-        :param action_class_str: Action class name.
-        :param attributes: Action class attributes.
-        :param params: Action input parameters.
-        :param safe_rerun: Tells if given action can be safely rerun.
-        :return: Action result.
-        """
-
-        LOG.info(
-            "Received RPC request 'run_action'[rpc_ctx=%s,"
-            " action_ex_id=%s, action_class=%s, attributes=%s, params=%s]"
-            % (rpc_ctx, action_ex_id, action_class_str, attributes, params)
-        )
-
-        redelivered = rpc_ctx.redelivered or False
-
-        return self._executor.run_action(
-            action_ex_id,
-            action_class_str,
-            attributes,
-            params,
-            safe_rerun,
-            redelivered
-        )
-
-
 class ExecutorClient(base.Executor):
     """RPC Executor client."""
 
@@ -586,37 +384,6 @@ class ExecutorClient(base.Executor):
             wf_utils.Result(data=res['data'], error=res['error'])
             if res else None
         )
-
-
-class EventEngineServer(object):
-    """RPC EventEngine server."""
-
-    def __init__(self, event_engine):
-        self._event_engine = event_engine
-
-    def create_event_trigger(self, rpc_ctx, trigger, events):
-        LOG.info(
-            "Received RPC request 'create_event_trigger'[rpc_ctx=%s,"
-            " trigger=%s, events=%s", rpc_ctx, trigger, events
-        )
-
-        return self._event_engine.create_event_trigger(trigger, events)
-
-    def delete_event_trigger(self, rpc_ctx, trigger, events):
-        LOG.info(
-            "Received RPC request 'delete_event_trigger'[rpc_ctx=%s,"
-            " trigger=%s, events=%s", rpc_ctx, trigger, events
-        )
-
-        return self._event_engine.delete_event_trigger(trigger, events)
-
-    def update_event_trigger(self, rpc_ctx, trigger):
-        LOG.info(
-            "Received RPC request 'update_event_trigger'[rpc_ctx=%s,"
-            " trigger=%s", rpc_ctx, trigger
-        )
-
-        return self._event_engine.update_event_trigger(trigger)
 
 
 class EventEngineClient(base.EventEngine):

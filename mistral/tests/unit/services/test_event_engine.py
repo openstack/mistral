@@ -18,7 +18,8 @@ import mock
 from oslo_config import cfg
 
 from mistral.db.v2.sqlalchemy import api as db_api
-from mistral.services import event_engine
+from mistral.engine.rpc_backend import rpc
+from mistral.event_engine import event_engine
 from mistral.services import workflows
 from mistral.tests.unit import base
 
@@ -55,10 +56,13 @@ class EventEngineTest(base.DbTestCase):
         super(EventEngineTest, self).setUp()
 
         self.wf = workflows.create_workflows(WORKFLOW_LIST)[0]
+
         EVENT_TRIGGER['workflow_id'] = self.wf.id
 
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_event_engine_start_with_no_triggers(self):
-        e_engine = event_engine.EventEngine(mock.Mock())
+        e_engine = event_engine.EventEngine()
+
         self.addCleanup(e_engine.handler_tg.stop)
 
         self.assertEqual(0, len(e_engine.event_triggers_map))
@@ -66,10 +70,12 @@ class EventEngineTest(base.DbTestCase):
         self.assertEqual(0, len(e_engine.exchange_topic_listener_map))
 
     @mock.patch('mistral.messaging.start_listener')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_event_engine_start_with_triggers(self, mock_start):
         trigger = db_api.create_event_trigger(EVENT_TRIGGER)
 
-        e_engine = event_engine.EventEngine(mock.MagicMock())
+        e_engine = event_engine.EventEngine()
+
         self.addCleanup(e_engine.handler_tg.stop)
 
         self.assertEqual(1, len(e_engine.exchange_topic_events_map))
@@ -86,11 +92,12 @@ class EventEngineTest(base.DbTestCase):
         self.assertEqual(1, len(e_engine.exchange_topic_listener_map))
 
     @mock.patch('mistral.messaging.start_listener')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_process_event_queue(self, mock_start):
         db_api.create_event_trigger(EVENT_TRIGGER)
 
-        client = mock.MagicMock()
-        e_engine = event_engine.EventEngine(client)
+        e_engine = event_engine.EventEngine()
+
         self.addCleanup(e_engine.handler_tg.stop)
 
         event = {
@@ -103,6 +110,7 @@ class EventEngineTest(base.DbTestCase):
 
         with mock.patch.object(e_engine, 'engine_client') as client_mock:
             e_engine.event_queue.put(event)
+
             time.sleep(1)
 
             self.assertEqual(1, client_mock.start_workflow.call_count)

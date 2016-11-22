@@ -47,6 +47,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         self.channel = None
         self.conn = None
         self._running = threading.Event()
+        self._stopped = threading.Event()
         self.endpoints = []
 
     @property
@@ -63,6 +64,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
             self.password,
             self.virtual_host,
         )
+
         LOG.info("Connected to AMQP at %s:%s" % (self.host, self.port))
 
         try:
@@ -84,7 +86,10 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                     callbacks=[self._on_message_safe],
             ) as consumer:
                 consumer.qos(prefetch_count=1)
+
                 self._running.set()
+                self._stopped.clear()
+
                 while self.is_running:
                     try:
                         conn.drain_events(timeout=1)
@@ -92,15 +97,24 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                         pass
                     except KeyboardInterrupt:
                         self.stop()
+
                         LOG.info("Server with id='{0}' stopped.".format(
                             self.server_id))
+
                         return
         except socket.error as e:
             raise exc.MistralException("Broker connection failed: %s" % e)
+        finally:
+            self._stopped.set()
 
-    def stop(self):
-        """Stop the server."""
+    def stop(self, graceful=False):
         self._running.clear()
+
+        if graceful:
+            self.wait()
+
+    def wait(self):
+        self._stopped.wait()
 
     def _get_rpc_method(self, method_name):
         for endpoint in self.endpoints:

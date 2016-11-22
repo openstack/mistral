@@ -21,9 +21,9 @@ import pecan
 from mistral.api import access_control
 from mistral import config as m_config
 from mistral import context as ctx
-from mistral import coordination
 from mistral.db.v2 import api as db_api_v2
 from mistral.engine.rpc_backend import rpc
+from mistral.service import coordination
 from mistral.services import periodic
 
 
@@ -68,6 +68,7 @@ def setup_app(config=None):
     # Set up access control.
     app = access_control.setup(app)
 
+    # TODO(rakhmerov): need to get rid of this call.
     # Set up RPC related flags in config
     rpc.get_transport()
 

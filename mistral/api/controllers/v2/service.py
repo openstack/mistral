@@ -21,10 +21,12 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
 from mistral.api.controllers.v2 import resources
+# TODO(rakhmerov): invalid dependency, a REST controller must not depend on
+# a launch script.
 from mistral.cmd import launch
 from mistral import context
-from mistral import coordination
 from mistral import exceptions as exc
+from mistral.service import coordination
 from mistral.utils import rest_utils
 
 

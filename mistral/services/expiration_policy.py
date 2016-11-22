@@ -110,3 +110,5 @@ def setup():
         periodic_interval_max=1,
         context=ctx
     )
+
+    return tg

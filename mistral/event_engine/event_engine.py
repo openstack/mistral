@@ -24,15 +24,17 @@ import six
 import yaml
 
 from mistral import context as auth_ctx
-from mistral import coordination
 from mistral.db.v2 import api as db_api
+from mistral.engine.rpc_backend import rpc
 from mistral import exceptions
 from mistral import expressions
 from mistral import messaging as mistral_messaging
 from mistral.services import security
 
+
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
+
 
 DEFAULT_PROPERTIES = {
     'service': '<% $.publisher %>',
@@ -124,16 +126,14 @@ class NotificationsConverter(object):
         return edef.convert(event)
 
 
-class EventEngine(coordination.Service):
+class EventEngine(object):
     """Event engine server.
 
     A separate service that is responsible for listening event notification
-    and trigger workflows defined by end user.
+    and triggering workflows defined by end user.
     """
-    def __init__(self, engine_client):
-        coordination.Service.__init__(self, 'event_engine_group')
-
-        self.engine_client = engine_client
+    def __init__(self):
+        self.engine_client = rpc.get_engine_client()
         self.event_queue = six.moves.queue.Queue()
         self.handler_tg = threadgroup.ThreadGroup()
 
