@@ -33,14 +33,12 @@ function create_mistral_accounts {
 
     create_service_user "mistral" "admin"
 
-    if [[ "$KEYSTONE_CATALOG_BACKEND" = 'sql' ]]; then
-        get_or_create_service "mistral" "workflowv2" "Workflow Service v2"
-        get_or_create_endpoint "workflowv2" \
-            "$REGION_NAME" \
-            "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
-            "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2"
-    fi
+    get_or_create_service "mistral" "workflowv2" "Workflow Service v2"
+    get_or_create_endpoint "workflowv2" \
+        "$REGION_NAME" \
+        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2" \
+        "$MISTRAL_SERVICE_PROTOCOL://$MISTRAL_SERVICE_HOST:$MISTRAL_SERVICE_PORT/v2"
 }
 
 
