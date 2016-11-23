@@ -41,6 +41,8 @@ from mistral import version
 
 # Thread local storage.
 _th_loc_storage = threading.local()
+ACTION_TASK_TYPE = 'ACTION'
+WORKFLOW_TASK_TYPE = 'WORKFLOW'
 
 
 def generate_unicode_uuid():

@@ -18,6 +18,7 @@ from mistral import exceptions as exc
 from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
 from mistral import utils
+import mock
 
 DATA = {
     "server": {
@@ -135,6 +136,48 @@ class YaqlEvaluatorTest(base.BaseTest):
         uuid = self._evaluator.evaluate('uuid()', {})
 
         self.assertTrue(utils.is_valid_uuid(uuid))
+
+    @mock.patch('mistral.db.v2.api.get_task_executions')
+    @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
+    def test_filter_tasks_without_task_execution(self, task_execution_result,
+                                                 task_executions):
+
+        task_execution_result.return_value = 'task_execution_result'
+        task = type("obj", (object,), {
+            'id': 'id',
+            'name': 'name',
+            'published': 'published',
+            'result': task_execution_result(),
+            'spec': 'spec',
+            'state': 'state',
+            'state_info': 'state_info',
+            'type': 'type',
+            'workflow_execution_id': 'workflow_execution_id'
+        })()
+
+        task_executions.return_value = [task]
+
+        ctx = {
+            '__task_execution': None,
+            '__execution': {
+                'id': 'some'
+            }
+        }
+
+        result = self._evaluator.evaluate('tasks(some)', ctx)
+
+        self.assertEqual(1, len(result))
+        self.assertDictEqual({
+            'id': task.id,
+            'name': task.name,
+            'published': task.published,
+            'result': task.result,
+            'spec': task.spec,
+            'state': task.state,
+            'state_info': task.state_info,
+            'type': task.type,
+            'workflow_execution_id': task.workflow_execution_id
+        }, result[0])
 
     def test_function_env(self):
         ctx = {'__env': 'some'}

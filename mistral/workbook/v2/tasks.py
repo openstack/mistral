@@ -36,9 +36,6 @@ RESERVED_TASK_NAMES = [
     'pause'
 ]
 
-ACTION_TASK_TYPE = 'ACTION'
-WORKFLOW_TASK_TYPE = 'WORKFLOW'
-
 
 class TaskSpec(base.BaseSpec):
     # See http://json-schema.org
@@ -225,8 +222,8 @@ class TaskSpec(base.BaseSpec):
 
     def get_type(self):
         if self._workflow:
-            return WORKFLOW_TASK_TYPE
-        return ACTION_TASK_TYPE
+            return utils.WORKFLOW_TASK_TYPE
+        return utils.ACTION_TASK_TYPE
 
 
 class DirectWorkflowTaskSpec(TaskSpec):
