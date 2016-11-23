@@ -9,9 +9,9 @@ directory.
 
 1. Generate *mistral.conf* (if it does not already exist)::
 
-    $ oslo-config-generator --config-file tools/config/config-generator.mistral.conf --output-file etc/mistral.conf
+    $ oslo-config-generator --config-file tools/config/config-generator.mistral.conf --output-file /etc/mistral/mistral.conf
 
-2. Edit file **etc/mistral.conf**.
+2. Edit file **/etc/mistral/mistral.conf**.
 
 3. **If you are not using OpenStack, skip this item.** Provide valid keystone
    auth properties::
@@ -89,7 +89,7 @@ directory.
 
     connection = postgresql://<user>:<password>@<database-host>:5432/mistral
 
-9. **If you are not using OpenStack, skip this item.** 
+9. **If you are not using OpenStack, skip this item.**
    Update mistral/actions/openstack/mapping.json file which contains all allowed
    OpenStack actions, according to the specific client versions of OpenStack
    projects in your deployment. Please find more detailed information in
