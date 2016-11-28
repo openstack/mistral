@@ -13,10 +13,12 @@
 #    limitations under the License.
 
 import copy
+import mock
 from oslo_config import cfg
 import testtools
 
 from mistral.actions import base as action_base
+from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
@@ -1255,7 +1257,9 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertListEqual(sorted(result), sorted(names))
 
-    def test_with_items_and_adhoc_action(self):
+    @mock.patch.object(std_actions.HTTPAction, 'run')
+    def test_with_items_and_adhoc_action(self, mock_http_action):
+
         wb_text = """---
         version: "2.0"
 
@@ -1314,3 +1318,5 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(2, len(task_execs))
         self.assertEqual(states.SUCCESS, task1_ex.state)
         self.assertEqual(states.SUCCESS, task2_ex.state)
+
+        self.assertEqual(1, mock_http_action.call_count)
