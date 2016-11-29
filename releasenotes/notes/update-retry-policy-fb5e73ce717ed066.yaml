@@ -1,0 +1,8 @@
+---
+critical:
+    - Due to bug https://bugs.launchpad.net/mistral/+bug/1631140,
+      Mistral was not considering retry with value 1. After this bug is
+      fixed, Mistral now considers count value 1 as a value for retry.
+    - Mistral does not consider the initial task run as a retry but
+      only considers the retry value after the failure of initial task
+      execution.
