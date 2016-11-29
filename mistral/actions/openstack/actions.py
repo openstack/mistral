@@ -52,6 +52,13 @@ LOG = log.getLogger(__name__)
 CONF = cfg.CONF
 
 
+IRONIC_API_VERSION = '1.22'
+"""The default microversion to pass to Ironic API.
+
+1.22 corresponds to Newton final.
+"""
+
+
 class NovaAction(base.OpenStackAction):
     def _create_client(self):
         ctx = context.ctx()
@@ -373,7 +380,8 @@ class IronicAction(base.OpenStackAction):
         return self._get_client_class()(
             ironic_endpoint.url,
             token=ctx.auth_token,
-            region_name=ironic_endpoint.region
+            region_name=ironic_endpoint.region,
+            os_ironic_api_version=IRONIC_API_VERSION
         )
 
     @classmethod
