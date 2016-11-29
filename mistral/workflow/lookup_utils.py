@@ -15,7 +15,7 @@
 
 """
 The intention of the module is providing various DB related lookup functions
-for more convenient usage withing the workflow engine.
+ for more convenient usage within the workflow engine.
 
 Some of the functions may provide caching capabilities.
 
