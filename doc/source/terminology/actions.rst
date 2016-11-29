@@ -39,7 +39,4 @@ Ad-hoc actions are always created as a wrapper around any other existing
 system actions and their main goal is to simplify using same actions
 many times with similar pattern.
 
-.. note:: Nested ad-hoc actions currently are not supported (i.e. ad-hoc
-action around another ad-hoc action).
-
-.. note:: More about actions - :ref:`actions-dsl`.
+.. note:: Nested ad-hoc actions currently are not supported (i.e. ad-hoc action around another ad-hoc action). More about actions - :ref:`actions-dsl`.

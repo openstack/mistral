@@ -83,10 +83,10 @@ YAML example
             - send_success_email
         send_error_email:
           action: send_email to='admin@mysite.org' body='Failed to create a VM'
-          on_complete:
+          on-complete:
             - fail
         send_success_email:
-          action: send_email to='admin@mysite.org' body='Vm is successfully created and its id: <% $.vm_id %>'
+          action: send_email to='admin@mysite.org' body='Vm is successfully created and its id is <% $.vm_id %>'
 
 Reverse workflow
 ----------------
