@@ -334,7 +334,7 @@ class RetryPolicy(base.TaskPolicy):
             retry_no = policy_context['retry_no']
             del policy_context['retry_no']
 
-        retries_remain = retry_no + 1 < self.count
+        retries_remain = retry_no < self.count
 
         stop_continue_flag = (
             task_ex.state == states.SUCCESS and

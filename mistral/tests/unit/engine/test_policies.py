@@ -553,7 +553,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            2,
+            3,
             task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
@@ -701,7 +701,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            2,
+            3,
             task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
@@ -824,7 +824,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            2,
+            3,
             task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
@@ -869,7 +869,7 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(
-            2,
+            3,
             task_ex.runtime_context['retry_task_policy']['retry_no']
         )
 
