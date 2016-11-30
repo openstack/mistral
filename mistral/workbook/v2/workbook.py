@@ -17,6 +17,9 @@ from mistral.workbook.v2 import actions as act
 from mistral.workbook.v2 import base
 from mistral.workbook.v2 import workflows as wf
 
+# We want to match any single word that isn't exactly "version"
+NON_VERSION_WORD_REGEX = "^(?!version$)\w+$"
+
 
 class WorkbookSpec(base.BaseSpec):
     # See http://json-schema.org
@@ -33,17 +36,19 @@ class WorkbookSpec(base.BaseSpec):
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
-                    "version": {"enum": ["2.0", 2.0]},
-                    "^(?!version)\w+$": _action_schema
-                }
+                    "^version$": {"enum": ["2.0", 2.0]},
+                    NON_VERSION_WORD_REGEX: _action_schema
+                },
+                "additionalProperties": False
             },
             "workflows": {
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
-                    "version": {"enum": ["2.0", 2.0]},
-                    "^(?!version)\w+$": _workflow_schema
-                }
+                    "^version$": {"enum": ["2.0", 2.0]},
+                    NON_VERSION_WORD_REGEX: _workflow_schema
+                },
+                "additionalProperties": False
             }
         },
         "additionalProperties": False

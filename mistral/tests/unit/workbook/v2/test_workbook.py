@@ -14,11 +14,13 @@
 #    limitations under the License.
 
 import copy
+import re
 
 import yaml
 
 from mistral import exceptions as exc
 from mistral.tests.unit.workbook.v2 import base
+from mistral.workbook.v2 import workbook
 
 
 class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
@@ -379,3 +381,52 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
         for workflows, expect_error in tests:
             self._parse_dsl_spec(changes=workflows,
                                  expect_error=expect_error)
+
+    def test_workflow_name_validation(self):
+        wb_spec = self._parse_dsl_spec(dsl_file='workbook_schema_test.yaml')
+
+        d = wb_spec.to_dict()
+
+        self.assertEqual('2.0', d['version'])
+        self.assertEqual('2.0', d['workflows']['version'])
+
+        workflow_names = ['workflowversion', 'versionworkflow',
+                          'workflowversionworkflow', 'version_workflow']
+
+        action_names = ['actionversion', 'versionaction',
+                        'actionversionaction']
+
+        for name in workflow_names:
+            self.assertEqual('2.0', d['workflows'][name]['version'])
+            self.assertEqual(name, d['workflows'][name]['name'])
+
+        for name in action_names:
+            self.assertEqual('2.0', d['actions'][name]['version'])
+            self.assertEqual(name, d['actions'][name]['name'])
+
+    def test_name_regex(self):
+
+        # We want to match a string containing version at any point.
+        valid_names = (
+            "workflowversion",
+            "versionworkflow",
+            "workflowversionworkflow",
+            "version_workflow",
+        )
+
+        for valid in valid_names:
+            result = re.match(workbook.NON_VERSION_WORD_REGEX, valid)
+            self.assertNotEqual(None, result,
+                                "Expected match for: {}".format(valid))
+
+        # ... except, we don't want to match a string that isn't just one word
+        # or is exactly "version"
+        invalid_names = (
+            "version",
+            "my workflow",
+        )
+
+        for invalid in invalid_names:
+            result = re.match(workbook.NON_VERSION_WORD_REGEX, invalid)
+            self.assertEqual(None, result,
+                             "Didn't expected match for: {}".format(invalid))
