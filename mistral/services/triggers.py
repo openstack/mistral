@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from croniter import croniter
+import croniter
 import datetime
 import six
 
@@ -25,7 +25,7 @@ from mistral.workbook import parser
 
 
 def get_next_execution_time(pattern, start_time):
-    return croniter(pattern, start_time).get_next(datetime.datetime)
+    return croniter.croniter(pattern, start_time).get_next(datetime.datetime)
 
 
 # Triggers v2.
@@ -52,7 +52,7 @@ def validate_cron_trigger_input(pattern, first_time, count):
             )
     if pattern:
         try:
-            croniter(pattern)
+            croniter.croniter(pattern)
         except (ValueError, KeyError):
             raise exc.InvalidModelException(
                 'The specified pattern is not valid: {}'.format(pattern)
