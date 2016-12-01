@@ -131,7 +131,7 @@ class BaseSpec(object):
 
     _definitions = {}
 
-    _version = '1.0'
+    _version = '2.0'
 
     @classmethod
     def get_schema(cls, includes=['meta', 'definitions']):
@@ -349,7 +349,7 @@ class BaseListSpec(BaseSpec):
 class BaseSpecList(object):
     item_class = None
 
-    _version = '1.0'
+    _version = '2.0'
 
     def __init__(self, data):
         self.items = {}
