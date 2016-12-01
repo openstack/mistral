@@ -1,0 +1,10 @@
+---
+features:
+  - It is now possible to use the Bare metal (Ironic) API features introduced
+    in API version 1.10 to 1.22.
+upgrade:
+  - Required Ironic API version was bumped to '1.22' (corresponding to Ironic
+    6.2.0 - Newton final release).
+  - Due to the default Ironic API version change to '1.22', new bare metal
+    nodes created with 'node_create' action appears in "enroll" provision state
+    instead of "available". Please update your workflows accordingly.
