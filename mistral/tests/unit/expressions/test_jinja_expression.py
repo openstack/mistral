@@ -183,8 +183,8 @@ class JinjaEvaluatorTest(base.BaseTest):
 
     @mock.patch('mistral.db.v2.api.get_task_executions')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
-    def test_filter_task_without_taskexecution(self, task_execution_result,
-                                               task_executions):
+    def test_filter_task_without_task_execution(self, task_execution_result,
+                                                task_executions):
         task = mock.MagicMock(return_value={})
         task_executions.return_value = [task]
         ctx = {
@@ -203,8 +203,37 @@ class JinjaEvaluatorTest(base.BaseTest):
             'result': task_execution_result(),
             'spec': task.spec,
             'state': task.state,
-            'state_info': task.state_info
+            'state_info': task.state_info,
+            'type': task.type,
+            'workflow_execution_id': task.workflow_execution_id
         }, result)
+
+    @mock.patch('mistral.db.v2.api.get_task_executions')
+    @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
+    def test_filter_tasks_without_task_execution(self, task_execution_result,
+                                                 task_executions):
+        task = mock.MagicMock(return_value={})
+        task_executions.return_value = [task]
+        ctx = {
+            '__task_execution': None,
+            '__execution': {
+                'id': 'some'
+            }
+        }
+
+        result = self._evaluator.evaluate('_|tasks()', ctx)
+
+        self.assertEqual([{
+            'id': task.id,
+            'name': task.name,
+            'published': task.published,
+            'result': task_execution_result(),
+            'spec': task.spec,
+            'state': task.state,
+            'state_info': task.state_info,
+            'type': task.type,
+            'workflow_execution_id': task.workflow_execution_id
+        }], result)
 
     @mock.patch('mistral.db.v2.api.get_task_execution')
     @mock.patch('mistral.workflow.data_flow.get_task_execution_result')
@@ -226,7 +255,9 @@ class JinjaEvaluatorTest(base.BaseTest):
             'result': task_execution_result(),
             'spec': task_execution().spec,
             'state': task_execution().state,
-            'state_info': task_execution().state_info
+            'state_info': task_execution().state_info,
+            'type': task_execution().type,
+            'workflow_execution_id': task_execution().workflow_execution_id
         }, result)
 
     @mock.patch('mistral.db.v2.api.get_task_execution')
@@ -248,7 +279,9 @@ class JinjaEvaluatorTest(base.BaseTest):
             'result': task_execution_result(),
             'spec': task_execution().spec,
             'state': task_execution().state,
-            'state_info': task_execution().state_info
+            'state_info': task_execution().state_info,
+            'type': task_execution().type,
+            'workflow_execution_id': task_execution().workflow_execution_id
         }, result)
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')

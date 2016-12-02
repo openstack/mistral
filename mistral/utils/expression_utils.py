@@ -118,8 +118,6 @@ def json_pp_(context, data=None):
 
 
 def task_(context, task_name):
-    # Importing data_flow in order to break cycle dependency between modules.
-    from mistral.workflow import data_flow
 
     # This section may not exist in a context if it's calculated not in
     # task scope.
@@ -142,6 +140,105 @@ def task_(context, task_name):
 
     # We don't use to_dict() db model method because not all fields
     # make sense for user.
+    return _convert_to_user_model(task_ex)
+
+
+def _should_pass_filter(t, state, flat):
+    # Start from assuming all is true, check only if needed.
+    state_match = True
+    flat_match = True
+
+    if state:
+        state_match = t['state'] == state
+
+    if flat:
+        is_action = t['type'] == utils.ACTION_TASK_TYPE
+
+        if not is_action:
+            nested_execs = db_api.get_workflow_executions(
+                task_execution_id=t.id
+            )
+
+            for n in nested_execs:
+                flat_match = flat_match and n.state != t.state
+
+    return state_match and flat_match
+
+
+def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
+                       flat=False):
+    task_execs = []
+    nested_task_exs = []
+
+    kwargs = {}
+
+    if workflow_execution_id:
+        kwargs['workflow_execution_id'] = workflow_execution_id
+
+    # We can't add state to query if we want to filter by workflow_execution_id
+    # recursively. There might be a workflow_execution in one state with a
+    # nested workflow execution that has a task in the desired state until we
+    # have an optimization for queering all workflow executions under a given
+    # top level workflow execution, this is the way to go.
+    if state and not (workflow_execution_id and recursive):
+        kwargs['state'] = state
+
+    task_execs.extend(db_api.get_task_executions(**kwargs))
+
+    # If it is not recursive no need to check nested workflows.
+    # If there is no workflow execution id, we already have all we need, and
+    # doing more queries will just create duplication in the results.
+    if recursive and workflow_execution_id:
+        for t in task_execs:
+            if t.type == utils.WORKFLOW_TASK_TYPE:
+                # Get nested workflow execution that matches the task.
+                nested_workflow_executions = db_api.get_workflow_executions(
+                    task_execution_id=t.id
+                )
+
+                # There might be zero nested executions.
+                for nested_workflow_execution in nested_workflow_executions:
+                    nested_task_exs.extend(
+                        _get_tasks_from_db(
+                            nested_workflow_execution.id,
+                            recursive,
+                            state,
+                            flat
+                        )
+                    )
+
+    if state or flat:
+        # Filter by state and flat.
+        task_execs = [
+            t for t in task_execs if _should_pass_filter(t, state, flat)
+        ]
+
+    # The nested tasks were already filtered, since this is a recursion.
+    task_execs.extend(nested_task_exs)
+
+    return task_execs
+
+
+def tasks_(context, workflow_execution_id=None, recursive=False, state=None,
+           flat=False):
+
+    task_execs = _get_tasks_from_db(
+        workflow_execution_id,
+        recursive,
+        state,
+        flat
+    )
+
+    # Convert task_execs to user model and return.
+    return [_convert_to_user_model(t) for t in task_execs]
+
+
+def _convert_to_user_model(task_ex):
+    # Importing data_flow in order to break cycle dependency between modules.
+    from mistral.workflow import data_flow
+
+    # We don't use to_dict() db model method because not all fields
+    # make sense for user.
     return {
         'id': task_ex.id,
         'name': task_ex.name,
@@ -149,7 +246,9 @@ def task_(context, task_name):
         'state': task_ex.state,
         'state_info': task_ex.state_info,
         'result': data_flow.get_task_execution_result(task_ex),
-        'published': task_ex.published
+        'published': task_ex.published,
+        'type': task_ex.type,
+        'workflow_execution_id': task_ex.workflow_execution_id
     }
 
 
