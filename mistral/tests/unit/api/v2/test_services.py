@@ -17,7 +17,7 @@ from oslo_config import cfg
 import tooz.coordination
 from webtest import app as webtest_app
 
-from mistral import coordination
+from mistral.service import coordination
 from mistral.tests.unit.api import base
 
 
@@ -54,7 +54,7 @@ class TestServicesController(base.APITest):
 
         self.assertIn('Service API is not supported', context.args[0])
 
-    @mock.patch('mistral.coordination.ServiceCoordinator.get_members',
+    @mock.patch('mistral.service.coordination.ServiceCoordinator.get_members',
                 side_effect=tooz.coordination.ToozError('error message'))
     def test_get_all_with_get_members_error(self, mock_get_members):
         cfg.CONF.set_default('backend_url', 'zake://', 'coordination')

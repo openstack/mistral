@@ -18,13 +18,12 @@ import eventlet
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
+from oslo_service import service
 
-from mistral import context as ctx
 from mistral.db.v2 import api as db_api
-from mistral.engine import default_engine as def_eng
-from mistral.engine import default_executor as def_exec
+from mistral.engine import engine_server
+from mistral.engine import executor_server
 from mistral.engine.rpc_backend import rpc
-from mistral.services import scheduler
 from mistral.tests.unit import base
 from mistral.workflow import states
 
@@ -36,54 +35,12 @@ DEFAULT_DELAY = 1
 DEFAULT_TIMEOUT = 30
 
 
-def launch_engine_server(transport, engine):
-    target = messaging.Target(
-        topic=cfg.CONF.engine.topic,
-        server=cfg.CONF.engine.host
-    )
+def launch_service(s):
+    launcher = service.ServiceLauncher(cfg.CONF)
 
-    server = messaging.get_rpc_server(
-        transport,
-        target,
-        [rpc.EngineServer(engine)],
-        executor='blocking',
-        serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
-    )
+    launcher.launch_service(s)
 
-    try:
-        server.start()
-        while True:
-            eventlet.sleep(604800)
-    except (KeyboardInterrupt, SystemExit):
-        LOG.info("Stopping engine service...")
-    finally:
-        server.stop()
-        server.wait()
-
-
-def launch_executor_server(transport, executor):
-    target = messaging.Target(
-        topic=cfg.CONF.executor.topic,
-        server=cfg.CONF.executor.host
-    )
-
-    server = messaging.get_rpc_server(
-        transport,
-        target,
-        [rpc.ExecutorServer(executor)],
-        executor='blocking',
-        serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
-    )
-
-    try:
-        server.start()
-        while True:
-            eventlet.sleep(604800)
-    except (KeyboardInterrupt, SystemExit):
-        LOG.info("Stopping executor service...")
-    finally:
-        server.stop()
-        server.wait()
+    launcher.wait()
 
 
 class EngineTestCase(base.DbTestCase):
@@ -100,28 +57,35 @@ class EngineTestCase(base.DbTestCase):
 
         # Drop all RPC objects (transport, clients).
         rpc.cleanup()
-        transport = rpc.get_transport()
 
         self.engine_client = rpc.get_engine_client()
         self.executor_client = rpc.get_executor_client()
 
-        self.engine = def_eng.DefaultEngine(self.engine_client)
-        self.executor = def_exec.DefaultExecutor(self.engine_client)
-
         LOG.info("Starting engine and executor threads...")
 
+        engine_service = engine_server.get_oslo_service(setup_profiler=False)
+        executor_service = executor_server.get_oslo_service(
+            setup_profiler=False
+        )
+
+        self.engine = engine_service.engine
+        self.executor = executor_service.executor
+
         self.threads = [
-            eventlet.spawn(launch_engine_server, transport, self.engine),
-            eventlet.spawn(launch_executor_server, transport, self.executor),
+            eventlet.spawn(launch_service, executor_service),
+            eventlet.spawn(launch_service, engine_service)
         ]
 
         self.addOnException(self.print_executions)
 
-        # Start scheduler.
-        scheduler_thread_group = scheduler.setup()
-
+        self.addCleanup(executor_service.stop, True)
+        self.addCleanup(engine_service.stop, True)
         self.addCleanup(self.kill_threads)
-        self.addCleanup(scheduler_thread_group.stop)
+
+        # Make sure that both services fully started, otherwise
+        # the test may run too early.
+        executor_service.wait_started()
+        engine_service.wait_started()
 
     def kill_threads(self):
         LOG.info("Finishing engine and executor threads...")

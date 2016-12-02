@@ -26,8 +26,9 @@ class WSGIService(service.ServiceBase):
     def __init__(self, name):
         self.name = name
         self.app = app.setup_app()
-        self.workers = (cfg.CONF.api.api_workers or
-                        processutils.get_worker_count())
+        self.workers = (
+            cfg.CONF.api.api_workers or processutils.get_worker_count()
+        )
 
         self.server = wsgi.Server(
             cfg.CONF,
@@ -49,7 +50,3 @@ class WSGIService(service.ServiceBase):
 
     def reset(self):
         self.server.reset()
-
-
-def process_launcher():
-    return service.ProcessLauncher(cfg.CONF)

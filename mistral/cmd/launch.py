@@ -39,18 +39,14 @@ if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_service import service
 
-from mistral.api import service as mistral_service
+from mistral.api import service as api_service
 from mistral import config
-from mistral.db.v2 import api as db_api
-from mistral.engine import default_engine as def_eng
-from mistral.engine import default_executor as def_executor
+from mistral.engine import engine_server
+from mistral.engine import executor_server
 from mistral.engine.rpc_backend import rpc
-from mistral.services import event_engine
-from mistral.services import expiration_policy
-from mistral.services import scheduler
-from mistral.utils import profiler
-from mistral.utils import rpc_utils
+from mistral.event_engine import event_engine_server
 from mistral import version
 
 
@@ -58,84 +54,48 @@ CONF = cfg.CONF
 
 
 def launch_executor():
-    profiler.setup('mistral-executor', cfg.CONF.executor.host)
-
-    executor_v2 = def_executor.DefaultExecutor(rpc.get_engine_client())
-    executor_endpoint = rpc.ExecutorServer(executor_v2)
-
-    executor_server = rpc.get_rpc_server_driver()(
-        rpc_utils.get_rpc_info_from_oslo(CONF.executor)
-    )
-    executor_server.register_endpoint(executor_endpoint)
-
-    executor_v2.register_membership()
-
     try:
-        executor_server.run(executor='threading')
-    except (KeyboardInterrupt, SystemExit):
-        pass
-    finally:
-        print("Stopping executor service...")
+        launcher = service.ServiceLauncher(CONF)
+
+        launcher.launch_service(executor_server.get_oslo_service())
+
+        launcher.wait()
+    except RuntimeError as e:
+        sys.stderr.write("ERROR: %s\n" % e)
+        sys.exit(1)
 
 
 def launch_engine():
-    profiler.setup('mistral-engine', cfg.CONF.engine.host)
-
-    engine_v2 = def_eng.DefaultEngine(rpc.get_engine_client())
-
-    engine_endpoint = rpc.EngineServer(engine_v2)
-
-    # Setup scheduler in engine.
-    db_api.setup_db()
-    scheduler.setup()
-
-    # Setup expiration policy
-    expiration_policy.setup()
-
-    engine_server = rpc.get_rpc_server_driver()(
-        rpc_utils.get_rpc_info_from_oslo(CONF.engine)
-    )
-    engine_server.register_endpoint(engine_endpoint)
-
-    engine_v2.register_membership()
-
     try:
-        # Note(ddeja): Engine needs to be run in default (blocking) mode
-        # since using another mode may lead to deadlock.
-        # See https://review.openstack.org/#/c/356343/
-        # for more info.
-        engine_server.run()
-    except (KeyboardInterrupt, SystemExit):
-        pass
-    finally:
-        print("Stopping engine service...")
+        launcher = service.ServiceLauncher(CONF)
+
+        launcher.launch_service(engine_server.get_oslo_service())
+
+        launcher.wait()
+    except RuntimeError as e:
+        sys.stderr.write("ERROR: %s\n" % e)
+        sys.exit(1)
 
 
 def launch_event_engine():
-    profiler.setup('mistral-event-engine', cfg.CONF.event_engine.host)
-
-    event_eng = event_engine.EventEngine(rpc.get_engine_client())
-    endpoint = rpc.EventEngineServer(event_eng)
-
-    event_engine_server = rpc.get_rpc_server_driver()(
-        rpc_utils.get_rpc_info_from_oslo(CONF.event_engine)
-    )
-    event_engine_server.register_endpoint(endpoint)
-
-    event_eng.register_membership()
-
     try:
-        event_engine_server.run()
-    except (KeyboardInterrupt, SystemExit):
-        pass
-    finally:
-        print("Stopping event_engine service...")
+        launcher = service.ServiceLauncher(CONF)
+
+        launcher.launch_service(event_engine_server.get_oslo_service())
+
+        launcher.wait()
+    except RuntimeError as e:
+        sys.stderr.write("ERROR: %s\n" % e)
+        sys.exit(1)
 
 
 def launch_api():
-    launcher = mistral_service.process_launcher()
-    server = mistral_service.WSGIService('mistral_api')
+    launcher = service.ProcessLauncher(cfg.CONF)
+
+    server = api_service.WSGIService('mistral_api')
+
     launcher.launch_service(server, workers=server.workers)
+
     launcher.wait()
 
 
@@ -143,8 +103,6 @@ def launch_any(options):
     # Launch the servers on different threads.
     threads = [eventlet.spawn(LAUNCH_OPTIONS[option])
                for option in options]
-
-    print('Server started.')
 
     [thread.wait() for thread in threads]
 

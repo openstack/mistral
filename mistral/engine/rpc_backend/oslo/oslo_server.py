@@ -34,6 +34,7 @@ class OsloRPCServer(rpc_base.RPCServer):
         self.channel = None
         self.connection = None
         self.endpoints = []
+        self.oslo_server = None
 
     def register_endpoint(self, endpoint):
         self.endpoints.append(endpoint)
@@ -44,7 +45,9 @@ class OsloRPCServer(rpc_base.RPCServer):
             server=self.server_id
         )
 
-        server = messaging.get_rpc_server(
+        # TODO(rakhmerov): rpc.get_transport() should be in oslo.messaging
+        # related module.
+        self.oslo_server = messaging.get_rpc_server(
             rpc.get_transport(),
             target,
             self.endpoints,
@@ -52,5 +55,13 @@ class OsloRPCServer(rpc_base.RPCServer):
             serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
         )
 
-        server.start()
-        server.wait()
+        self.oslo_server.start()
+
+    def stop(self, graceful=False):
+        self.oslo_server.stop()
+
+        if graceful:
+            self.oslo_server.wait()
+
+    def wait(self):
+        self.oslo_server.wait()

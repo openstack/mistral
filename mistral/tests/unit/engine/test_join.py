@@ -221,13 +221,18 @@ class JoinEngineTest(base.EngineTestCase):
         task4 = self._assert_single_item(tasks, name='task4')
 
         # NOTE(xylan): We ensure task4 is successful here because of the
-        # uncertainty of its running parallelly with task3.
+        # uncertainty of its running in parallel with task3.
         self.await_task_success(task4.id)
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
-        self.assertEqual(states.WAITING, task3.state)
+
+        # NOTE(rakhmerov): Task 3 must fail because task2->task3 transition
+        # will never trigger due to its condition.
+        self.await_task_error(task3.id)
+
+        self.await_workflow_error(wf_ex.id)
 
     def test_partial_join(self):
         wf_text = """---

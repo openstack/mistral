@@ -17,8 +17,8 @@ from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.actions import action_factory as a_f
-from mistral import coordination
 from mistral.engine import base
+from mistral.engine.rpc_backend import rpc
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 
@@ -26,11 +26,9 @@ from mistral.workflow import utils as wf_utils
 LOG = logging.getLogger(__name__)
 
 
-class DefaultExecutor(base.Executor, coordination.Service):
-    def __init__(self, engine_client):
-        self._engine_client = engine_client
-
-        coordination.Service.__init__(self, 'executor_group')
+class DefaultExecutor(base.Executor):
+    def __init__(self):
+        self._engine_client = rpc.get_engine_client()
 
     @profiler.trace('executor-run-action')
     def run_action(self, action_ex_id, action_class_str, attributes,

@@ -73,5 +73,22 @@ class RPCServer(object):
     def run(self, executor='blocking'):
         """Runs the RPC server.
 
+        :param executor: Executor used to process incoming requests. Different
+            implementations may support different options.
         """
         raise NotImplementedError
+
+    def stop(self, graceful=False):
+        """Stop the RPC server.
+
+        :param graceful: True if this method call should wait till all
+            internal threads are finished.
+        :return:
+        """
+        # No-op by default.
+        pass
+
+    def wait(self):
+        """Wait till all internal threads are finished."""
+        # No-op by default.
+        pass

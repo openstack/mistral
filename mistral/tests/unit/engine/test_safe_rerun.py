@@ -27,7 +27,7 @@ from mistral.workflow import states
 def _run_at_target(action_ex_id, action_class_str, attributes,
                    action_params, target=None, async=True, safe_rerun=False):
     # We'll just call executor directly for testing purposes.
-    executor = default_executor.DefaultExecutor(rpc.get_engine_client())
+    executor = default_executor.DefaultExecutor()
 
     executor.run_action(
         action_ex_id,
@@ -43,7 +43,6 @@ MOCK_RUN_AT_TARGET = mock.MagicMock(side_effect=_run_at_target)
 
 
 class TestSafeRerun(base.EngineTestCase):
-
     @mock.patch.object(rpc.ExecutorClient, 'run_action', MOCK_RUN_AT_TARGET)
     def test_safe_rerun_true(self):
         wf_text = """---

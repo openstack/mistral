@@ -18,7 +18,6 @@ from oslo_config import cfg
 import requests
 
 from mistral.db.v2 import api as db_api
-from mistral.services import scheduler
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
@@ -83,13 +82,6 @@ class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
 
 
 class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
-    def setUp(self):
-        super(TaskDefaultsReverseWorkflowEngineTest, self).setUp()
-
-        thread_group = scheduler.setup()
-
-        self.addCleanup(thread_group.stop)
-
     def test_task_defaults_retry_policy(self):
         wf_text = """---
         version: '2.0'
