@@ -425,7 +425,7 @@ class WithItemsTask(RegularTask):
         assert self.task_ex
 
         # TODO(rakhmerov): Here we can define more informative messages
-        # cases when action is successful and when it's not. For example,
+        # in cases when action is successful and when it's not. For example,
         # in state_info we can specify the cause action.
         # The use of action_ex.output.get('result') for state_info is not
         # accurate because there could be action executions that had
