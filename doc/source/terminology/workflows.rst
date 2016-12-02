@@ -35,7 +35,7 @@ YAML example
             delay: 5
             count: 15
 
-Workflow Types
+Workflow types
 --------------
 
 Mistral DSL v2 introduces different workflow types and the structure of
@@ -47,7 +47,7 @@ provides two workflow types:
 
 See corresponding sections for details.
 
-Direct Workflow
+Direct workflow
 ---------------
 
 Direct workflow consists of tasks combined in a graph where every next
@@ -88,7 +88,7 @@ YAML example
         send_success_email:
           action: send_email to='admin@mysite.org' body='Vm is successfully created and its id: <% $.vm_id %>'
 
-Reverse Workflow
+Reverse workflow
 ----------------
 
 In reverse workflow all relationships in workflow task graph are
