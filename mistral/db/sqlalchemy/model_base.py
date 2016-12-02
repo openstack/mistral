@@ -122,6 +122,8 @@ class MistralSecureModelBase(MistralModelBase):
 
     scope = sa.Column(sa.String(80), default='private')
     project_id = sa.Column(sa.String(80), default=security.get_project_id)
+    created_at = sa.Column(sa.DateTime, default=lambda: utils.utc_now_sec())
+    updated_at = sa.Column(sa.DateTime, onupdate=lambda: utils.utc_now_sec())
 
 
 def _set_project_id(target, value, oldvalue, initiator):

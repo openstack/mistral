@@ -759,13 +759,17 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
             'Task 1.2 [%s]' % updated_env['var1']   # Task 1 item 2 (rerun).
         ]
 
-        result = zip(task_1_action_exs, expected_inputs)
+        # Assert that every expected input is in actual task input.
+        for action_ex in task_1_action_exs:
+            self.assertIn(action_ex.input['output'], expected_inputs)
 
-        for (action_ex, expected_input) in result:
-            self.assertDictEqual(
-                {'output': expected_input},
-                action_ex.input
-            )
+        # Assert that there was same number of unique inputs as action execs.
+        self.assertEqual(
+            len(task_1_action_exs),
+            len(set(
+                [action_ex.input['output'] for action_ex in task_1_action_exs]
+            ))
+        )
 
         # Check action executions of task 2.
         self.assertEqual(states.SUCCESS, task_2_ex.state)

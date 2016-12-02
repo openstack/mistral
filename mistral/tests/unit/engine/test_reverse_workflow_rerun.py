@@ -269,16 +269,33 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_2_action_exs))
-        self.assertEqual(states.ERROR, task_2_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_2_action_exs[1].state)
 
-        self.assertDictEqual(
-            {'output': env['var1']},
-            task_2_action_exs[0].input
+        # Assert that one action ex is in error and one in success states.
+        self.assertIn(
+            task_2_action_exs[0].state,
+            [states.ERROR, states.SUCCESS]
+        )
+        self.assertIn(
+            task_2_action_exs[1].state,
+            [states.ERROR, states.SUCCESS]
+        )
+        self.assertNotEqual(
+            task_2_action_exs[0].state,
+            task_2_action_exs[1].state
         )
 
-        self.assertDictEqual(
-            {'output': updated_env['var1']},
+        # Assert that one action ex got first env and one got second env
+        self.assertIn(
+            task_2_action_exs[0].input['output'],
+            [env['var1'], updated_env['var1']]
+        )
+        self.assertIn(
+            task_2_action_exs[1].input['output'],
+            [env['var1'], updated_env['var1']]
+        )
+
+        self.assertNotEqual(
+            task_2_action_exs[0].input,
             task_2_action_exs[1].input
         )
 
