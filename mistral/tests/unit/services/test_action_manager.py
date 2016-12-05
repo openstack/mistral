@@ -32,7 +32,7 @@ class ActionManagerTest(base.DbTestCase):
 
         std_email_input = (
             "from_addr, to_addrs, smtp_server, "
-            "smtp_password, subject=null, body=null"
+            "smtp_password=null, subject=null, body=null"
         )
 
         self.assertEqual(std_email_input, std_email.input)
