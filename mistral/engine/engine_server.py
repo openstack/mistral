@@ -132,10 +132,6 @@ class EngineServer(service_base.MistralService):
             **params
         )
 
-    def on_task_state_change(self, rpc_ctx, task_ex_id, state,
-                             state_info=None):
-        return self.engine.on_task_state_change(task_ex_id, state, state_info)
-
     def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
                            result_error, wf_action):
         """Receives RPC calls to communicate action result to engine.

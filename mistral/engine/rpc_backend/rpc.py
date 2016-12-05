@@ -198,15 +198,6 @@ class EngineClient(base.Engine):
             params=params
         )
 
-    def on_task_state_change(self, task_ex_id, state, state_info=None):
-        return self._client.sync_call(
-            auth_ctx.ctx(),
-            'on_task_state_change',
-            task_ex_id=task_ex_id,
-            state=state,
-            state_info=state_info
-        )
-
     @wrap_messaging_exception
     def on_action_complete(self, action_ex_id, result, wf_action=False,
                            async=False):
