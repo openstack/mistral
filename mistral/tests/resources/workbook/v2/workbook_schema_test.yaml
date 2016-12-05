@@ -1,0 +1,43 @@
+version: '2.0'
+
+name: workbook_schema_test
+description: >
+  This is a test workbook to verify workbook the schema validation.
+  Specifically we want to test the validation of workflow names.
+  See bug #1645354 for more details.
+
+actions:
+    actionversion:
+        base: std.noop
+
+    versionaction:
+        base: std.noop
+
+    actionversionaction:
+        base: std.noop
+
+workflows:
+
+  workflowversion:
+    description: Workflow name ending with version
+    tasks:
+      task1:
+        action: actionversion
+
+  versionworkflow:
+    description: Workflow name starting with version
+    tasks:
+      task1:
+        action: versionaction
+
+  workflowversionworkflow:
+    description: Workflow name with version in the middle
+    tasks:
+      task1:
+        action: actionversionaction
+
+  version_workflow:
+    description: Workflow name starting with version and an underscore
+    tasks:
+      task1:
+        workflow: workflowversion
