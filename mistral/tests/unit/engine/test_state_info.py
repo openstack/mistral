@@ -151,6 +151,21 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         )
 
         self.assertEqual(3, len(task_1_action_exs))
-        self.assertIn(task_1_action_exs[0].id, wf_ex.state_info)
-        self.assertNotIn(task_1_action_exs[1].id, wf_ex.state_info)
-        self.assertIn(task_1_action_exs[2].id, wf_ex.state_info)
+
+        error_actions = [
+            action_ex for action_ex in task_1_action_exs if
+            action_ex.state == states.ERROR
+        ]
+        self.assertEqual(2, len(error_actions))
+
+        success_actions = [
+            action_ex for action_ex in task_1_action_exs if
+            action_ex.state == states.SUCCESS
+        ]
+        self.assertEqual(1, len(success_actions))
+
+        for action_ex in error_actions:
+            self.assertIn(action_ex.id, wf_ex.state_info)
+
+        for action_ex in success_actions:
+            self.assertNotIn(action_ex.id, wf_ex.state_info)

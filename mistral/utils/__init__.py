@@ -31,6 +31,7 @@ import threading
 import eventlet
 from eventlet import corolocal
 from oslo_concurrency import processutils
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import pkg_resources as pkg
 import random
@@ -366,3 +367,10 @@ def generate_key_pair(key_length=2048):
         public_key = open(public_key_path).read()
 
         return private_key, public_key
+
+
+def utc_now_sec():
+    """Returns current time and drops microseconds."""
+
+    d = timeutils.utcnow()
+    return d.replace(microsecond=0)

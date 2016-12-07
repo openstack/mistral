@@ -40,7 +40,8 @@ WORKBOOKS = [
         'scope': 'public',
         'updated_at': None,
         'project_id': '1233',
-        'trust_id': '1234'
+        'trust_id': '1234',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
     },
     {
         'name': 'my_workbook2',
@@ -51,7 +52,8 @@ WORKBOOKS = [
         'scope': 'private',
         'updated_at': None,
         'project_id': '1233',
-        'trust_id': '12345'
+        'trust_id': '12345',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
     },
 ]
 
@@ -368,7 +370,8 @@ WF_DEFINITIONS = [
         'tags': ['mc'],
         'scope': 'public',
         'project_id': '1233',
-        'trust_id': '1234'
+        'trust_id': '1234',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
     },
     {
         'name': 'my_wf2',
@@ -377,7 +380,8 @@ WF_DEFINITIONS = [
         'tags': ['mc'],
         'scope': 'private',
         'project_id': '1233',
-        'trust_id': '12345'
+        'trust_id': '12345',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
     },
 ]
 
@@ -830,7 +834,8 @@ ACTION_DEFINITIONS = [
         'is_system': True,
         'action_class': 'mypackage.my_module.Action1',
         'attributes': None,
-        'project_id': '<default-project>'
+        'project_id': '<default-project>',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
     },
     {
         'name': 'action2',
@@ -838,7 +843,8 @@ ACTION_DEFINITIONS = [
         'is_system': True,
         'action_class': 'mypackage.my_module.Action2',
         'attributes': None,
-        'project_id': '<default-project>'
+        'project_id': '<default-project>',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
     },
     {
         'name': 'action3',
@@ -847,7 +853,8 @@ ACTION_DEFINITIONS = [
         'tags': ['mc', 'abc'],
         'action_class': 'mypackage.my_module.Action3',
         'attributes': None,
-        'project_id': '<default-project>'
+        'project_id': '<default-project>',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 2, 0)
     },
 ]
 
@@ -1308,7 +1315,7 @@ WF_EXECS = [
         'start_params': {'task': 'my_task1'},
         'state': 'IDLE',
         'state_info': "Running...",
-        'created_at': None,
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
         'updated_at': None,
         'context': None,
         'task_id': None,
@@ -1321,7 +1328,7 @@ WF_EXECS = [
         'start_params': {'task': 'my_task1'},
         'state': 'RUNNING',
         'state_info': "Running...",
-        'created_at': None,
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
         'updated_at': None,
         'context': {'image_id': '123123'},
         'task_id': None,
@@ -1647,7 +1654,7 @@ TASK_EXECS = [
         'tags': ['deployment'],
         'in_context': None,
         'runtime_context': None,
-        'created_at': None,
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
         'updated_at': None
     },
     {
@@ -1660,7 +1667,7 @@ TASK_EXECS = [
         'tags': ['deployment'],
         'in_context': {'image_id': '123123'},
         'runtime_context': None,
-        'created_at': None,
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
         'updated_at': None
     },
 ]
