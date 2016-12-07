@@ -19,6 +19,7 @@ from osprofiler import profiler
 from mistral.actions import action_factory as a_f
 from mistral.engine import base
 from mistral.engine.rpc_backend import rpc
+from mistral import exceptions as exc
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 
@@ -111,8 +112,25 @@ class DefaultExecutor(base.Executor):
                     async=True
                 )
 
+        except exc.MistralException as e:
+            # In case of a Mistral exception we can try to send error info to
+            # engine because most likely it's not related to the infrastructure
+            # such as message bus or network. One known case is when the action
+            # returns a bad result (e.g. invalid unicode) which can't be
+            # serialized.
+            msg = ("Failed to call engine's on_action_complete() method due"
+                   " to a Mistral exception"
+                   " [action_ex_id=%s, action_cls='%s',"
+                   " attributes='%s', params='%s']\n %s"
+                   % (action_ex_id, action_cls, attributes, action_params, e))
+            LOG.exception(msg)
+
+            return send_error_back(msg)
         except Exception as e:
-            msg = ("Exception occurred when calling engine on_action_complete"
+            # If it's not a Mistral exception all we can do is only
+            # log the error.
+            msg = ("Failed to call engine's on_action_complete() method due"
+                   " to an unexpected exception"
                    " [action_ex_id=%s, action_cls='%s',"
                    " attributes='%s', params='%s']\n %s"
                    % (action_ex_id, action_cls, attributes, action_params, e))

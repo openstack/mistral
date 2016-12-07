@@ -14,6 +14,7 @@
 
 from oslo_config import cfg
 
+from mistral.actions import base as actions_base
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
@@ -25,6 +26,17 @@ from mistral.workflow import states
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
+
+
+class InvalidUnicodeAction(actions_base.Action):
+    def __init__(self):
+        pass
+
+    def run(self):
+        return b'\xf8'
+
+    def test(self):
+        pass
 
 
 class ErrorHandlingEngineTest(base.EngineTestCase):
@@ -693,3 +705,38 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertIn('Can not evaluate YAQL expression', t2.state_info)
         self.assertIsNotNone(wf_ex.state_info)
         self.assertIn('Can not evaluate YAQL expression', wf_ex.state_info)
+
+    def test_invalid_action_result(self):
+        self.register_action_class(
+            'test.invalid_unicode_action',
+            InvalidUnicodeAction
+        )
+
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: test.invalid_unicode_action
+              on-success: task2
+
+            task2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(1, len(wf_ex.task_executions))
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertIn('UnicodeDecodeError: utf', wf_ex.state_info)
+        self.assertIn('UnicodeDecodeError: utf', task_ex.state_info)
