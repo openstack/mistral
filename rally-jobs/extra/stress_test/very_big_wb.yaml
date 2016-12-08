@@ -1,0 +1,895 @@
+---
+version: "2.0"
+name: very_big_wb
+actions:
+  my_action:
+    input:
+      - action_parameter_05: xyz
+      - action_parameter_06: "xyz"
+      - env
+      - action_parameter_07: xyz
+      - action_parameter_04: null
+      - action_parameter_03: "xyz"
+      - action_parameter_02: ""
+      - action_parameter_08: ""
+      - action_parameter_09: xyz
+      - action_param_01: ""
+      - action_parameter_01: "xyz"
+      - action_parameter_10: "xyz"
+      - output: output
+
+
+    base: std.http
+    base-input:
+      url: <% $.env.working_url %>
+      allow_redirects: true
+      verify: 'xyz'
+      headers:
+        "Content-Type": "application/json"
+        "Header1": <% $.env.env_param_01.env_param_01_nested_01 %>
+        "Header2": <% $.env.env_param_01.env_param_01_nested_01 + ' ' + $.env.env_param_02.env_param_02_nested_01 %>
+      method: PATCH
+      body:
+        xyz: <% $.action_parameter_05 %>
+
+
+workflows:
+  my_workflow:
+    input:
+      - workflow_parameter_04: "workflow_parameter_04"
+      - workflow_parameter_03: "workflow_parameter_03"
+      - workflow_parameter_02: "workflow_parameter_02"
+      - workflow_parameter_01: null
+
+      - workflow_parameter_05: "workflow_parameter_05"
+      - workflow_parameter_06: "workflow_parameter_06"
+
+    output:
+          wf_output_01: xyz
+          wf_output_02: <% env().env_param_01 %>
+
+    task-defaults:
+      on-error:
+        - wf_default_on_error
+    tasks:
+      wf_task_01:
+        action: my_action
+        input:
+          env: "<% env() %>"
+          action_parameter_02: ""
+          action_parameter_03: xyz
+          action_parameter_04: '<% env().env_param_02.env_param_02_nested_01 %>'
+        on-error:
+          - fail
+        on-success:
+          - wf_task_02
+        publish:
+          wf_published_01:
+            nested_01: "xyz"
+      wf_task_02:
+        action: std.http
+        input:
+          url: <% env().working_url %>
+          method: POST
+          allow_redirects: true
+
+          headers:
+            "Content-Type": "application/json"
+            "X-Flow-ID": <% env().env_param_02.env_param_02_nested_01 %>
+            "xyz": <% $.wf_published_01.nested_01 %>
+            "Authorization": <% env().env_param_02.env_param_02_nested_01 + ' ' + env().env_param_02.env_param_02_nested_01 %>
+          body:
+            env_param_01_nested_01: <% env().env_param_01.env_param_01_nested_01 %>
+            aaaaa:
+              a1: <% $.workflow_parameter_03 %>
+              a2: <% $.workflow_parameter_02 %>
+              a3: <% $.workflow_parameter_01 %>
+              a4: <% env().env_param_02 %>
+              a5: <% $.workflow_parameter_04 %>
+        on-success:
+          - wf_task_05
+
+      wf_task_03:
+        action: std.echo
+        input:
+          output: "<% $ %>"
+      wf_task_04:
+        action: std.echo
+        input:
+          output: "<% $ %>"
+        on-complete:
+          - fail
+      wf_default_on_error:
+        action: my_action
+        input:
+          action_parameter_02: ''
+          action_parameter_01: "<% $.wf_published_01.nested_01 %>"
+          action_parameter_03: fxyz
+          env: "<% env() %>"
+        on-error:
+          - wf_task_04
+        on-success:
+          - wf_task_04
+      wf_task_05:
+        action: my_action
+        input:
+          env: "<% env() %>"
+          action_parameter_02: ""
+          action_parameter_01: "<% $.wf_published_01.nested_01 %>"
+          action_parameter_03: xyz
+        on-error:
+          - wf_task_03
+
+
+  top_level_workflow:
+    tasks:
+      task_01_top_level:
+        action: "std.echo"
+        input:
+          output: "<% $ %>"
+        on-success:
+        - "do_work"
+      do_work:
+        workflow: "big_wf"
+        on-success:
+        - more_work
+        - make_sure_no_errors
+      task_12:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_parameter_06: "xxx"
+          action_parameter_03: "<% env().env_param_01.env_param_01_nested_01 %>"
+          action_parameter_10: "ggg"
+        on-complete:
+            - make_sure_no_errors
+      more_work:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_parameter_06: "xxx"
+          action_parameter_03: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_12"
+      make_sure_no_errors:
+        action: std.noop
+        publish:
+          tasks_in_error: "<% tasks(execution().id, true, ERROR) %>"
+        on-success:
+          - do_fail: "<% len($.tasks_in_error) > 0 %>"
+      do_fail:
+        action: std.fail
+
+
+  big_wf:
+    input:
+    - attribute_01: "attribute_01"
+    - attribute_02: "attribute_02"
+    - attribute_03: "attribute_03"
+    - attribute_04: "attribute_04"
+    - attribute_05: "attribute_05"
+    - attribute_06: "attribute_06"
+    - attribute_07: "attribute_07"
+    - attribute_08: "attribute_08"
+    - attribute_09: "attribute_09"
+    - attribute_10: "attribute_10"
+    - attribute_11: "attribute_11"
+    - attribute_12: "attribute_12"
+    - attribute_13: "attribute_13"
+    - attribute_14: "attribute_14"
+    - attribute_15: "attribute_15"
+    - attribute_16: "attribute_16"
+    - attribute_17: "attribute_17"
+    - attribute_18: "attribute_18"
+    - attribute_19: "attribute_19"
+    - attribute_20: "attribute_20"
+    - attribute_21: "attribute_21"
+    - attribute_22: "attribute_22"
+    - attribute_23: "attribute_23"
+    - attribute_24: "attribute_24"
+    - attribute_25: "attribute_25"
+    - attribute_26: "attribute_26"
+    - attribute_27: "attribute_27"
+    - attribute_28: "attribute_28"
+    - attribute_29: "attribute_29"
+    - input_01: "input_01"
+    - input_02: "input_02"
+    - input_03: "input_03"
+    - input_04: "input_04"
+    - input_05: "input_05"
+    - input_06: "input_06"
+    - input_07: "input_07"
+    - input_08: "input_08"
+    - property_01: null
+    - property_02: "*"
+    - property_03: null
+    - property_04: "xyz"
+    - property_05: null
+    - property_06: null
+    - property_07: null
+    - property_08: "1232"
+    - property_09: "xyz"
+    - property_10: "*"
+    - property_11: "*"
+    - property_12: "xyz"
+    - property_13: false
+    - property_14: null
+    - property_15: "xyz"
+    - property_16: null
+    - property_17: "xyz"
+    - property_18: null
+    - property_19: "xyz"
+    - property_20: "1"
+    - property_21: "xyz"
+    - property_22: 123
+    - property_23: false
+    task-defaults:
+      on-error:
+      - "system_task_on_error"
+    tasks:
+      task_01:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_30) %>"
+        publish:
+          attribute_31: "<%  $.get(attribute_30) %>"
+        on-success:
+        - "task_08"
+        - "task_18"
+        - "task_23"
+        - "task_25"
+      task_02:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_30) %>"
+        publish:
+          attribute_63: "<% $.get(attribute_30) %>"
+        on-success:
+        - "task_08"
+        - "task_18"
+        - "task_23"
+        - "task_25"
+      task_03:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_30) %>"
+        publish:
+          attribute_32: "<%  $.get(attribute_30) %>"
+        on-success:
+        - "task_08"
+        - "task_18"
+        - "task_23"
+        - "task_25"
+      task_04:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            workflow_parameter_01_nested_param: "<% $.get(input_01) %>"
+          workflow_parameter_02: "<% $.get(attribute_01) %>"
+          workflow_parameter_03: "<% $.get(attribute_03) %>"
+          workflow_parameter_04: "<% $.get(attribute_02) %>"
+        publish:
+          task_04_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_30: "<%  env().env_param_01.env_param_01_nested_01 %>"
+          attribute_33: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_01"
+        - "task_02"
+        - "task_03"
+        - "task_04_2"
+      task_04_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_04_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_05:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_01: "<% $.get(property_04) %>"
+            xyz_02: "<% $.get(attribute_34) %>"
+            xyz_03: "<% $.get(attribute_35) %>"
+            xyz_04: "<% $.get(attribute_36) %>"
+            xyz_05: "<% $.get(property_06) %>"
+            xyz_06: "<% $.get(attribute_37) %>"
+            xyz_07: "<% $.get(property_07) %>"
+            xyz_08: "<% $.get(attribute_38) %>"
+            xyz_09: "<% $.get(attribute_39) %>"
+            xyz_10: "<% $.get(attribute_40) %>"
+            xyz_11: "<% $.get(attribute_41) %>"
+            xyz_12: "<% $.get(attribute_42) %>"
+            xyz_13: "<% $.get(property_02) %>"
+            xyz_14: "<% $.get(property_01) %>"
+            xyz_15: "<% $.get(property_05) %>"
+            xyz_16: "<% $.get(attribute_43) %>"
+            xyz_17: "<% $.get(attribute_44) %>"
+            xyz_18: "<% $.get(property_03) %>"
+          workflow_parameter_02: "<% $.get(attribute_04) %>"
+          workflow_parameter_03: "<% $.get(attribute_06) %>"
+          workflow_parameter_04: "<% $.get(attribute_05) %>"
+        publish:
+          task_05_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_45: "<%  env().env_param_01.env_param_01_nested_01 %>"
+          attribute_46: "<%  env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_05_2"
+        - "task_23"
+      task_05_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_05_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_06:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(property_11) %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(property_10) %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(property_09) %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(property_08) %>"
+        publish:
+          attribute_37: "<%  $.get(property_08) %>"
+          attribute_34: "<%  $.get(property_09) %>"
+          attribute_42: "<%  $.get(property_10) %>"
+          attribute_38: "<%  $.get(property_11) %>"
+        on-success:
+        - "task_05"
+        - "task_08"
+        - "task_18"
+        - "task_23"
+      task_07:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_11: "<% $.get(attribute_53) %>"
+          workflow_parameter_02: "<% $.get(property_18) %>"
+          workflow_parameter_03: "<% $.get(attribute_19) %>"
+          workflow_parameter_04: "<% $.get(property_17) %>"
+          workflow_parameter_05: "<% $.get(property_19) %>"
+          workflow_parameter_06: "<% $.get(property_20) %>"
+          workflow_parameter_07: "<% $.get(attribute_20) %>"
+        publish:
+          task_07_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            outputs: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_65: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_66: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_07_2"
+        - "task_08"
+        - "task_18"
+      task_07_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_07_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_08:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_01: "<% $.get(property_12) %>"
+            xyz_02: "<% $.get(attribute_65) %>"
+            xyz_03: "<% $.get(attribute_32) %>"
+            xyz_04: "<% $.get(property_13) %>"
+          workflow_parameter_02: "<% $.get(attribute_07) %>"
+          workflow_parameter_03: "<% $.get(attribute_09) %>"
+          workflow_parameter_04: "<% $.get(attribute_08) %>"
+        publish:
+          task_08_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_67: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_68: "<% env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_05"
+        - "task_08_2"
+        - "task_09"
+      task_08_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_08_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_09:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "xyz"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_67) %>"
+        publish:
+          attribute_43: "xyz"
+          attribute_44: "<%  $.get(attribute_67) %>"
+        on-success:
+        - "task_05"
+        - "task_23"
+      task_10:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_01: "<% $.get(attribute_45) %>"
+            xyz_11: "<% $.get(attribute_46) %>"
+            xyz_21: "<% $.get(input_01) %>"
+            xyz_22: "<% $.get(attribute_47) %>"
+            xyz_23: "<% $.get(attribute_48) %>"
+          workflow_parameter_02: "<% $.get(attribute_10) %>"
+          workflow_parameter_03: "<% $.get(attribute_12) %>"
+          workflow_parameter_04: "<% $.get(attribute_11) %>"
+        publish:
+          task_10_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_49: "<%  env().env_param_01.env_param_01_nested_01 %>"
+          attribute_50: "<%  env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_07"
+        - "task_10_2"
+      task_10_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_10_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_11:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_51) %>"
+        publish:
+          attribute_46: "<%  $.get(attribute_51) %>"
+        on-success:
+        - "task_10"
+        - "task_23"
+      task_12:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_02: "<% $.get(attribute_13) %>"
+          workflow_parameter_03: "<% $.get(attribute_15) %>"
+          workflow_parameter_04: "<% $.get(attribute_14) %>"
+        publish:
+          task_12_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_51: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_52: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_53: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_11"
+        - "task_12_2"
+      task_12_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_12_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_13:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_54) %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(property_15) %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(input_02) %>"
+        publish:
+          attribute_47: "<% $.get(input_02) %>"
+          attribute_45: "<%  $.get(property_15) %>"
+          attribute_48: "<%  $.get(attribute_54) %>"
+        on-success:
+        - "task_05"
+        - "task_10"
+        - "task_17"
+        - "task_23"
+      task_14:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_54) %>"
+        publish:
+          attribute_55: "<%  $.get(attribute_54) %>"
+        on-success:
+        - "task_05"
+        - "task_10"
+        - "task_17"
+        - "task_23"
+      task_15:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_17) %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_54) %>"
+        publish:
+          attribute_39: "<%  $.get(attribute_54) %>"
+          attribute_35: "<%  $.get(attribute_17) %>"
+        on-success:
+        - "task_05"
+        - "task_10"
+        - "task_17"
+        - "task_23"
+      task_16:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_01: "<% $.get(property_15) %>"
+            xyz_02: "<% $.get(input_03) %>"
+            xyz_03: "<% $.get(attribute_56) %>"
+            xyz_04: "<% $.get(property_16) %>"
+            xyz_05: "<% $.get(property_14) %>"
+            xyz_06: "<% $.get(input_02) %>"
+          workflow_parameter_02: "<% $.get(attribute_16) %>"
+          workflow_parameter_03: "<% $.get(attribute_18) %>"
+          workflow_parameter_04: "<% $.get(attribute_17) %>"
+        publish:
+          task_16_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_54: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_57: "<% env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_05"
+        - "task_10"
+        - "task_13"
+        - "task_14"
+        - "task_15"
+        - "task_16_2"
+        - "task_17"
+      task_16_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_16_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_17:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_01: "<% $.get(input_05) %>"
+            xyz_02: "<% $.get(input_06) %>"
+            xyz_03: "<% $.get(property_21) %>"
+            xyz_04: "<% $.get(input_08) %>"
+            xyz_05: "<% $.get(input_04) %>"
+            xyz_06: "<% $.get(input_07) %>"
+            xyz_07: "<% $.get(attribute_55) %>"
+          workflow_parameter_02: "<% $.get(attribute_21) %>"
+          workflow_parameter_03: "<% $.get(attribute_23) %>"
+          workflow_parameter_04: "<% $.get(attribute_22) %>"
+        publish:
+          attribute_58: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_59: "<% env().env_param_01.env_param_01_nested_01 %>"
+          task_17_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_17_2"
+        - "task_23"
+      task_17_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_17_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_18:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_15: "<% $.get(property_22) %>"
+            xyz_16: "<% $.get(attribute_31) %>"
+          workflow_parameter_02: "<% $.get(attribute_24) %>"
+          workflow_parameter_03: "<% $.get(attribute_26) %>"
+          workflow_parameter_04: "<% $.get(attribute_25) %>"
+        publish:
+          attribute_60: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_61: "<% env().env_param_01.env_param_01_nested_01 %>"
+          task_18_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_05"
+        - "task_18_2"
+        - "task_19"
+      task_18_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_18_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+      task_19:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_60) %>"
+        publish:
+          attribute_40: "<%  $.get(attribute_60) %>"
+        on-success:
+        - "task_05"
+        - "task_23"
+      task_20:
+        action: "my_action"
+        input:
+          output: "<% $ %>"
+        on-complete:
+        - "fail"
+      task_21:
+        workflow: "my_workflow"
+        on-success:
+        - "task_04"
+        - "task_06"
+        - "task_12"
+      problematic_task:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_parameter_02: "problematic_task"
+          action_parameter_01: "<% env().env_param_02.env_param_02_nested_01 %>"
+          action_parameter_03: "xyz"
+        on-success:
+        - "task_20"
+        on-error:
+        - "task_20"
+      task_22:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_parameter_02: ""
+          action_parameter_01: "<% env().env_param_02.env_param_02_nested_01 %>"
+          action_parameter_03: "xyz"
+        on-error:
+        - "task_20"
+      task_23:
+        workflow: "my_workflow"
+        input:
+          env: "<% env() %>"
+          workflow_parameter_05: "xyz"
+          workflow_parameter_06: "xyz"
+        join: "all"
+        on-success:
+        - "task_22"
+      system_task_on_error:
+        workflow: "my_workflow"
+        input:
+          env: "<% env() %>"
+          workflow_parameter_05: "xyz"
+          workflow_parameter_06: "xyz"
+        join: 1
+        on-complete:
+        - "problematic_task"
+      task_24:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% $.get(attribute_62) %>"
+        publish:
+          attribute_56: "<%  $.get(attribute_62) %>"
+        on-success:
+        - "task_16"
+        - "task_23"
+      task_25:
+        workflow: "my_workflow"
+        input:
+          workflow_parameter_01:
+            xyz_01: "<% $.get(attribute_63) %>"
+            xyz_02: "<% $.get(property_23) %>"
+          workflow_parameter_02: "<% $.get(attribute_27) %>"
+          workflow_parameter_03: "<% $.get(attribute_29) %>"
+          workflow_parameter_04: "<% $.get(attribute_28) %>"
+        publish:
+          attribute_62: "<% env().env_param_01.env_param_01_nested_01 %>"
+          attribute_64: "<% env().env_param_01.env_param_01_nested_01 %>"
+          task_25_workflow_outputs:
+            published_01: "<% env().env_param_01.env_param_01_nested_01 %>"
+            published_02: "<% env().env_param_01.env_param_01_nested_01 %>"
+        join: "all"
+        on-success:
+        - "task_16"
+        - "task_24"
+        - "task_25_2"
+      task_25_2:
+        action: "my_action"
+        input:
+          env: "<% env() %>"
+          action_param_01:
+            action_param_01_nested_02:
+              xyz: "xyz"
+              xyzn: "xyz"
+              xyznm: "xyz"
+              xyznmt: "<% $.task_25_workflow_outputs %>"
+            action_param_01_nested_param:
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+            - xyz_30: "xyz"
+              xyznm: "xyz"
+              xyznmtv: "<% env().env_param_01.env_param_01_nested_01 %>"
+        on-success:
+        - "task_23"
+
+
+

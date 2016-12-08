@@ -1,0 +1,12 @@
+{
+  "env": {
+    "env_param_01": {
+      "env_param_01_nested_01": "xyz"
+    },
+    "env_param_02": {
+      "env_param_02_nested_01": "xyz"
+    },
+    "working_url": "http://httpstat.us/200",
+    "return_error_code_url": "https://httpbin.org/status/418"
+  }
+}
