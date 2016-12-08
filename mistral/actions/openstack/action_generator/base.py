@@ -39,10 +39,9 @@ def get_mapping():
                 delete_comment(value)
         if '_comment' in map_part:
             del map_part['_comment']
-
-    mapping = json.loads(open(pkg.resource_filename(
-                         version.version_info.package,
-                         MAPPING_PATH)).read())
+    package = version.version_info.package
+    with open(pkg.resource_filename(package, MAPPING_PATH)) as fh:
+        mapping = json.load(fh)
 
     for k, v in mapping.items():
         if isinstance(v, dict):
