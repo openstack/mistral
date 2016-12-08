@@ -18,6 +18,8 @@ import inspect
 import json
 import os
 
+from aodhclient.v2 import base as aodh_base
+from aodhclient.v2 import client as aodhclient
 from barbicanclient import base as barbican_base
 from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
@@ -86,6 +88,7 @@ BASE_IRONIC_MANAGER = ironic_base.Manager
 BASE_BARBICAN_MANAGER = barbican_base.BaseEntityManager
 BASE_MAGNUM_MANAGER = magnum_base.Manager
 BASE_MURANO_MANAGER = murano_base.Manager
+BASE_AODH_MANAGER = aodh_base.Manager
 
 
 def get_parser():
@@ -199,6 +202,10 @@ def get_murano_client(**kwargs):
     return muranoclient.Client('')
 
 
+def get_aodh_client(**kwargs):
+    return aodhclient.Client('')
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -213,6 +220,7 @@ CLIENTS = {
     'designate': get_designate_client,
     'magnum': get_magnum_client,
     'murano': get_murano_client,
+    'aodh': get_aodh_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -232,6 +240,7 @@ BASE_MANAGERS = {
     'designate': None,
     'magnum': BASE_MAGNUM_MANAGER,
     'murano': BASE_MURANO_MANAGER,
+    'aodh': BASE_AODH_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...
