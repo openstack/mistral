@@ -78,14 +78,14 @@ YAML example
     create_vm:
       description: Simple workflow example
       type: direct
-     
+
       input:
         - vm_name
         - image_ref
         - flavor_ref
       output:
         vm_id: <% $.vm_id %>
-     
+
       tasks:
         create_server:
           action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
@@ -188,7 +188,7 @@ attributes:
 
 -  **description** - Arbitrary text containing task description.
    *Optional*.
--  **action** - Name of the action associated with the task. 
+-  **action** - Name of the action associated with the task.
    *Mutually exclusive with* **workflow**. If neither action nor workflow are
    provided then the action 'std.noop' will be used.
 -  **workflow** - Name of the workflow associated with the task.
@@ -318,7 +318,7 @@ Full syntax:
     my_task:
       action: std.http
       input:
-         url: http://mywebsite.org
+        url: http://mywebsite.org
         method: GET
 
 Simplified syntax:
@@ -599,7 +599,7 @@ YAML example
     version: '2.0'
 
     create_vms:
-      description: Creating multiple virtual servers using "with-items". 
+      description: Creating multiple virtual servers using "with-items".
 
       input:
         - vm_names
@@ -772,7 +772,7 @@ Example:
             -- Thanks, Mistral Team.
           from_addr: mistral@openstack.org
           smtp_server: smtp.google.com
-          smtp_password: SECRET 
+          smtp_password: SECRET
 
 The syntax of 'std.emal' action is pretty verbose. However, it can be
 significantly simplified using Ad-hoc actions. More about them
