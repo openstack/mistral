@@ -151,7 +151,7 @@ class ExpressionsTest(base.BaseTest):
             'verbose': True,
             '__actions': {
                 'std.sql': {
-                    'conn': 'mysql://admin:secrete@<% env().host %>'
+                    'conn': 'mysql://admin:secret@<% env().host %>'
                             '/<% env().db %>'
                 }
             }
@@ -163,7 +163,7 @@ class ExpressionsTest(base.BaseTest):
 
         defaults = context['__env']['__actions']['std.sql']
         applied = expr.evaluate_recursively(defaults, context)
-        expected = 'mysql://admin:secrete@vm1234.example.com/test'
+        expected = 'mysql://admin:secret@vm1234.example.com/test'
 
         self.assertEqual(expected, applied['conn'])
 

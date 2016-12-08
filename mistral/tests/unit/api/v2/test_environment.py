@@ -35,7 +35,7 @@ VARIABLES = {
     'verbose': True,
     '__actions': {
         'std.sql': {
-            'conn': 'mysql://admin:secrete@<% env().host %>/<% env().db %>'
+            'conn': 'mysql://admin:secret@<% env().host %>/<% env().db %>'
         }
     }
 }
