@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import datetime
+import time
 
 import mock
 from oslo_config import cfg
@@ -145,8 +146,11 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             None
         )
 
+        first_second = time.mktime(first_time.timetuple())
+        first_utc_time = datetime.datetime.utcfromtimestamp(first_second)
+
         self.assertEqual(
-            first_time,
+            first_utc_time,
             cron_trigger.next_execution_time
         )
 

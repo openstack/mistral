@@ -329,3 +329,9 @@ class TriggerServiceV2Test(base.DbTestCase):
         eventlet.sleep(1)
 
         return trigger_count == start_wf_mock.call_count
+
+    def test_get_next_execution_time(self):
+        pattern = '*/20 * * * *'
+        start_time = datetime.datetime(2016, 3, 22, 23, 40)
+        result = t_s.get_next_execution_time(pattern, start_time)
+        self.assertEqual(result, datetime.datetime(2016, 3, 23, 0, 0))

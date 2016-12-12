@@ -15,6 +15,7 @@
 import croniter
 import datetime
 import six
+import time
 
 from mistral.db.v2 import api as db_api
 from mistral.engine.rpc_backend import rpc
@@ -25,14 +26,19 @@ from mistral.workbook import parser
 
 
 def get_next_execution_time(pattern, start_time):
-    return croniter.croniter(pattern, start_time).get_next(datetime.datetime)
+    local_time = croniter.croniter(pattern, start_time).get_next(
+        datetime.datetime
+    )
+    epoch_second = time.mktime(local_time.timetuple())
+    utc_time = datetime.datetime.utcfromtimestamp(epoch_second)
+    return utc_time
 
 
 # Triggers v2.
 
 def get_next_cron_triggers():
     return db_api.get_next_cron_triggers(
-        datetime.datetime.now() + datetime.timedelta(0, 2)
+        datetime.datetime.utcnow() + datetime.timedelta(0, 2)
     )
 
 
@@ -42,7 +48,10 @@ def validate_cron_trigger_input(pattern, first_time, count):
             'Pattern or first_execution_time must be specified.'
         )
     if first_time:
-        if (datetime.datetime.now() + datetime.timedelta(0, 60)) > first_time:
+        first_second = time.mktime(first_time.timetuple())
+        first_utc_time = datetime.datetime.utcfromtimestamp(first_second)
+        sum_time = datetime.datetime.utcnow() + datetime.timedelta(0, 60)
+        if sum_time > first_utc_time:
             raise exc.InvalidModelException(
                 'first_execution_time must be at least 1 minute in the future.'
             )
@@ -76,8 +85,12 @@ def create_cron_trigger(name, workflow_name, workflow_input,
 
     validate_cron_trigger_input(pattern, first_time, count)
 
+    first_utc_time = first_time
+
     if first_time:
-        next_time = first_time
+        first_second = time.mktime(first_time.timetuple())
+        first_utc_time = datetime.datetime.utcfromtimestamp(first_second)
+        next_time = first_utc_time
 
         if not (pattern or count):
             count = 1
@@ -98,7 +111,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
         values = {
             'name': name,
             'pattern': pattern,
-            'first_execution_time': first_time,
+            'first_execution_time': first_utc_time,
             'next_execution_time': next_time,
             'remaining_executions': count,
             'workflow_name': wf_def.name,
