@@ -687,7 +687,7 @@ class DataFlowTest(test_base.BaseTest):
                 'action': 'my_action'
             },
             runtime_context={
-                'with_items_context': {'count': 1}
+                'with_items': {'count': 1}
             }
         )
 

@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import abc
+import copy
 from oslo_log import log as logging
 from osprofiler import profiler
 import six
@@ -29,7 +30,6 @@ from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
-from mistral.workflow import with_items
 
 
 LOG = logging.getLogger(__name__)
@@ -414,6 +414,17 @@ class WithItemsTask(RegularTask):
     Takes care of processing "with-items" tasks.
     """
 
+    _CAPACITY = 'capacity'
+    _CONCURRENCY = 'concurrency'
+    _COUNT = 'count'
+    _WITH_ITEMS = 'with_items'
+
+    _DEFAULT_WITH_ITEMS = {
+        _COUNT: 0,
+        _CONCURRENCY: 0,
+        _CAPACITY: 0
+    }
+
     @profiler.trace('with-items-task-on-action-complete')
     def on_action_complete(self, action_ex):
         assert self.task_ex
@@ -430,32 +441,27 @@ class WithItemsTask(RegularTask):
             states.CANCELLED: 'One or more action executions was cancelled.'
         }
 
-        with_items.increase_capacity(self.task_ex)
+        self._increase_capacity()
 
-        if with_items.is_completed(self.task_ex):
-            state = with_items.get_final_state(self.task_ex)
+        if self.is_completed():
+            state = self._get_final_state()
 
             self.complete(state, state_info[state])
 
             return
 
-        if (with_items.has_more_iterations(self.task_ex)
-                and with_items.get_concurrency(self.task_ex)):
+        if self._has_more_iterations() and self._get_concurrency():
             self._schedule_actions()
 
     def _schedule_actions(self):
         with_items_values = self._get_with_items_values()
 
-        if with_items.is_new(self.task_ex):
-            with_items.validate_values(with_items_values)
+        if self._is_new():
+            self._validate_values(with_items_values)
 
             action_count = len(six.next(iter(with_items_values.values())))
 
-            with_items.prepare_runtime_context(
-                self.task_ex,
-                self.task_spec,
-                action_count
-            )
+            self._prepare_runtime_context(action_count)
 
         input_dicts = self._get_input_dicts(with_items_values)
 
@@ -478,7 +484,7 @@ class WithItemsTask(RegularTask):
                 safe_rerun=self.task_spec.get_safe_rerun()
             )
 
-            with_items.decrease_capacity(self.task_ex, 1)
+            self._decrease_capacity(1)
 
     def _get_with_items_values(self):
         """Returns all values evaluated from 'with-items' expression.
@@ -510,6 +516,24 @@ class WithItemsTask(RegularTask):
             ctx_view
         )
 
+    def _validate_values(self, with_items_values):
+        # Take only mapped values and check them.
+        values = list(with_items_values.values())
+
+        if not all([isinstance(v, list) for v in values]):
+            raise exc.InputException(
+                "Wrong input format for: %s. List type is"
+                " expected for each value." % with_items_values
+            )
+
+        required_len = len(values[0])
+
+        if not all(len(v) == required_len for v in values):
+            raise exc.InputException(
+                "Wrong input format for: %s. All arrays must"
+                " have the same length." % with_items_values
+            )
+
     def _get_input_dicts(self, with_items_values):
         """Calculate input dictionaries for another portion of actions.
 
@@ -518,7 +542,7 @@ class WithItemsTask(RegularTask):
         """
         result = []
 
-        for i in with_items.get_next_indices(self.task_ex):
+        for i in self._get_next_indexes():
             ctx = {}
 
             for k, v in with_items_values.items():
@@ -529,3 +553,139 @@ class WithItemsTask(RegularTask):
             result.append((i, self._get_action_input(ctx)))
 
         return result
+
+    def _get_with_items_context(self):
+        return self.task_ex.runtime_context.get(
+            self._WITH_ITEMS,
+            self._DEFAULT_WITH_ITEMS
+        )
+
+    def _get_with_items_count(self):
+        return self._get_with_items_context()[self._COUNT]
+
+    def _get_with_items_capacity(self):
+        return self._get_with_items_context()[self._CAPACITY]
+
+    def _get_concurrency(self):
+        return self.task_ex.runtime_context.get(self._CONCURRENCY)
+
+    def is_completed(self):
+        find_cancelled = lambda x: x.accepted and x.state == states.CANCELLED
+
+        if list(filter(find_cancelled, self.task_ex.executions)):
+            return True
+
+        execs = list(filter(lambda t: t.accepted, self.task_ex.executions))
+        count = self._get_with_items_count() or 1
+
+        return count == len(execs)
+
+    def _get_final_state(self):
+        find_error = lambda x: x.accepted and x.state == states.ERROR
+        find_cancelled = lambda x: x.accepted and x.state == states.CANCELLED
+
+        if list(filter(find_cancelled, self.task_ex.executions)):
+            return states.CANCELLED
+        elif list(filter(find_error, self.task_ex.executions)):
+            return states.ERROR
+        else:
+            return states.SUCCESS
+
+    def _get_accepted_executions(self):
+        # Choose only if not accepted but completed.
+        return list(
+            filter(
+                lambda x: x.accepted and states.is_completed(x.state),
+                self.task_ex.executions
+            )
+        )
+
+    def _get_unaccepted_executions(self):
+        # Choose only if not accepted but completed.
+        return list(
+            filter(
+                lambda x: not x.accepted and states.is_completed(x.state),
+                self.task_ex.executions
+            )
+        )
+
+    def _get_next_start_index(self):
+        f = lambda x: (
+            x.accepted or
+            states.is_running(x.state) or
+            states.is_idle(x.state)
+        )
+
+        return len(list(filter(f, self.task_ex.executions)))
+
+    def _get_next_indexes(self):
+        capacity = self._get_with_items_capacity()
+        count = self._get_with_items_count()
+
+        def _get_indexes(exs):
+            return sorted(set([ex.runtime_context['index'] for ex in exs]))
+
+        accepted = _get_indexes(self._get_accepted_executions())
+        unaccepted = _get_indexes(self._get_unaccepted_executions())
+
+        candidates = sorted(list(set(unaccepted) - set(accepted)))
+
+        if candidates:
+            indices = copy.copy(candidates)
+
+            if max(candidates) < count - 1:
+                indices += list(six.moves.range(max(candidates) + 1, count))
+        else:
+            i = self._get_next_start_index()
+            indices = list(six.moves.range(i, count))
+
+        return indices[:capacity]
+
+    def _increase_capacity(self):
+        ctx = self._get_with_items_context()
+        concurrency = self._get_concurrency()
+
+        if concurrency and ctx[self._CAPACITY] < concurrency:
+            ctx[self._CAPACITY] += 1
+
+            self.task_ex.runtime_context.update({self._WITH_ITEMS: ctx})
+
+    def _decrease_capacity(self, count):
+        ctx = self._get_with_items_context()
+
+        capacity = ctx[self._CAPACITY]
+
+        if capacity is not None:
+            if capacity >= count:
+                ctx[self._CAPACITY] -= count
+            else:
+                raise RuntimeError(
+                    "Can't decrease with-items capacity"
+                    " [capacity=%s, count=%s]" % (capacity, count)
+                )
+
+        self.task_ex.runtime_context.update({self._WITH_ITEMS: ctx})
+
+    def _is_new(self):
+        return not self.task_ex.runtime_context.get(self._WITH_ITEMS)
+
+    def _prepare_runtime_context(self, action_count):
+        runtime_ctx = self.task_ex.runtime_context
+        with_items_spec = self.task_spec.get_with_items()
+
+        if with_items_spec and not runtime_ctx.get(self._WITH_ITEMS):
+            # Prepare current indexes and parallel limitation.
+            runtime_ctx[self._WITH_ITEMS] = {
+                self._CAPACITY: self._get_concurrency(),
+                self._COUNT: action_count
+            }
+
+    def _has_more_iterations(self):
+        # See action executions which have been already
+        # accepted or are still running.
+        action_exs = list(filter(
+            lambda x: x.accepted or x.state == states.RUNNING,
+            self.task_ex.executions
+        ))
+
+        return self._get_with_items_count() > len(action_exs)
