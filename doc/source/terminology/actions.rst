@@ -1,20 +1,20 @@
 Actions
 =======
 
-A particular instruction associated with a task that needs to be performed
-once the task runs. It can be anything like: running a shell script, HTTP
-request or sending a signal to some system external to Mistral. Actions can be
+Actions are a particular instruction associated with a task that will be
+performed when the task runs. For instance: running a shell script, making an
+HTTP request, or sending a signal to an external system. Actions can be
 synchronous or asynchronous.
 
-In case of synchronous action, Mistral will send a signal to the Mistral
-Executor and will be waiting for the result from the Executor. Once the
-Executor completes the action, it sends the result to the Mistral Engine.
+With synchronous actions, Mistral will send a signal to the Mistral Executor
+and wait for a result. Once the Executor completes the action, the result will
+be sent to the Mistral Engine.
 
-In case of asynchronous action, Mistral will send a signal to third party
-service and will be waiting for a corresponding action result to be delivered
-back to the Mistral API. Once the signal is sent, Mistral won't care more
-about action state and result. Third party service should send a request to
-the Mistral API and provide info about corresponding *action execution* and
+With asynchronous actions, Mistral will send a signal to a third party service
+and wait for a corresponding action result to be delivered back via the Mistral
+API. Once the signal has been sent, Mistral isn't responsible for the state and
+result of the action. The third-party service should send a request to the
+Mistral API and provide information corresponding to the *action execution* and
 its state and result.
 
 .. image:: /img/Mistral_actions.png
@@ -24,9 +24,8 @@ its state and result.
 System actions
 --------------
 
-System actions are provided by Mistral out of the box and can be used by
-anyone. It is also possible to add system actions for specific Mistral
-installation via a special plugin mechanism.
+System actions are provided by Mistral out of the box and are available to all
+users. Additional actions can be added via the custom action plugin mechanism.
 
 :doc:`How to write an Action Plugin </developer/creating_custom_action>`
 
@@ -34,9 +33,15 @@ installation via a special plugin mechanism.
 Ad-hoc actions
 --------------
 
-Ad-hoc actions are a special types of actions that can be created by user.
-Ad-hoc actions are always created as a wrapper around any other existing
-system actions and their main goal is to simplify using same actions
-many times with similar pattern.
+Ad-hoc actions are defined in YAML files by users. They wrap existing actions
+and their main goal is to simplify using the same action multiple times.  For
+example, if the same HTTP request is used in multiple workflows, it can be
+defined in one place and then re-used without the need to duplicate all of the
+parameters.
 
-.. note:: Nested ad-hoc actions currently are not supported (i.e. ad-hoc action around another ad-hoc action). More about actions - :ref:`actions-dsl`.
+More about actions; :ref:`actions-dsl`.
+
+.. note::
+
+    Nested ad-hoc actions (i.e. ad-hoc actions wrapping around other ad-hoc
+    actions) are not currently supported.
