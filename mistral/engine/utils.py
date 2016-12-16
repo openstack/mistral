@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import copy
-import six
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -33,7 +32,7 @@ def validate_input(definition, input_dict, spec=None):
     spec_input = (spec.get_input() if spec else
                   utils.get_dict_from_string(definition.input))
 
-    for p_name, p_value in six.iteritems(spec_input):
+    for p_name, p_value in spec_input.items():
         if p_value is utils.NotDefined and p_name not in input_param_names:
             missing_param_names.append(str(p_name))
 

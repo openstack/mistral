@@ -15,7 +15,6 @@
 import copy
 import datetime
 import json
-import six
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -40,7 +39,7 @@ def log_to_file(info, context=None):
 
         db_info['params'] = {
             k: str(v) if isinstance(v, datetime.datetime) else v
-            for k, v in six.iteritems(db_info.get('params', {}))
+            for k, v in db_info.get('params', {}).items()
         }
 
         attrs.append(json.dumps(db_info))

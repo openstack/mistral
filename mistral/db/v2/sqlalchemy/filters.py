@@ -12,14 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
 import sqlalchemy as sa
 
 
 def apply_filters(query, model, **filters):
     filter_dict = {}
 
-    for key, value in six.iteritems(filters):
+    for key, value in filters.items():
         column_attr = getattr(model, key)
         if isinstance(value, dict):
             if 'in' in value:

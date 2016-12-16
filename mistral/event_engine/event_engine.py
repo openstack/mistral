@@ -219,7 +219,7 @@ class EventEngine(object):
             trigger_info = trigger.to_dict()
             self.event_triggers_map[trigger.event].append(trigger_info)
 
-        for (ex_t, events) in six.iteritems(self.exchange_topic_events_map):
+        for (ex_t, events) in self.exchange_topic_events_map.items():
             exchange, topic = ex_t
             self._add_event_listener(exchange, topic, events)
 

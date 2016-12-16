@@ -13,7 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
 
 from oslo_config import cfg
 from oslo_db import options
@@ -43,7 +42,7 @@ def _get_facade():
             cfg.CONF.database.connection,
             sqlite_fk=True,
             autocommit=False,
-            **dict(six.iteritems(cfg.CONF.database))
+            **dict(cfg.CONF.database.items())
         )
 
         if cfg.CONF.profiler.enabled:
