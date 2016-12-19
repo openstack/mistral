@@ -111,7 +111,17 @@ an OpenStack environment.
 
     $ oslo-config-generator \
       --config-file tools/config/config-generator.mistral.conf \
-      --output-file /etc/mistral/mistral.conf
+      --output-file etc/mistral.conf.sample
+
+#. Copy service configuration files::
+
+    $ sudo mkdir /etc/mistral
+    $ sudo chown `whoami` /etc/mistral
+    $ cp etc/event_definitionas.yml.sample /etc/mistral/event_definitions.yml
+    $ cp etc/logging.conf.sample /etc/mistral/logging.conf
+    $ cp etc/policy.json /etc/mistral/policy.json
+    $ cp etc/wf_trace_logging.conf.sample /etc/mistral/wf_trace_logging.conf
+    $ cp etc/mistral.conf.sample /etc/mistral/mistral.conf
 
 #. Edit file ``/etc/mistral/mistral.conf`` according to your setup. Pay attention to
    the following sections and options::
@@ -135,8 +145,8 @@ an OpenStack environment.
 #. Provide valid keystone auth properties::
 
     [keystone_authtoken]
-    auth_uri = http://<Keystone-host>:5000/v3
-    identity_uri = http://<Keystone-host:35357/
+    auth_uri = http://<Keystone-host>/identity_v2_admin/v3
+    identity_uri = http://<Keystone-host/identity_v2_admin
     auth_version = v3
     admin_user = <user>
     admin_password = <password>
@@ -146,11 +156,9 @@ an OpenStack environment.
 
     $ MISTRAL_URL="http://[host]:[port]/v2"
     $ openstack service create --name mistral workflowv2
-    $ openstack endpoint create \
-        --publicurl $MISTRAL_URL \
-        --adminurl $MISTRAL_URL \
-        --internalurl $MISTRAL_URL \
-        mistral
+    $ openstack endpoint create mistral public $MISTRAL_URL
+    $ openstack endpoint create mistral internal $MISTRAL_URL
+    $ openstack endpoint create mistral admin $MISTRAL_URL
 
 #. Update the ``mistral/actions/openstack/mapping.json`` file which contains
    all available OpenStack actions, according to the specific client versions
