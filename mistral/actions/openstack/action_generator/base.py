@@ -89,9 +89,9 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
 
             try:
                 client_method = clazz.get_fake_client_method()
-            except Exception as e:
-                LOG.warning("Failed to create action: %s.%s %s" %
-                            (cls.action_namespace, action_name, e))
+            except Exception:
+                LOG.exception("Failed to create action: %s.%s" %
+                              (cls.action_namespace, action_name))
                 client_method = None
 
             if client_method:
