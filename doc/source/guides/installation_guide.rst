@@ -42,7 +42,9 @@ Generate config::
 
     $ tox -egenconfig
 
-Configure Mistral as needed. The configuration file is located in ``/etc/mistral/mistral.conf``.
+Configure Mistral as needed. The configuration file is located in
+``etc/mistral.conf.sample``. You will need to modify the configuration options
+and then copy it into ``/etc/mistral/mistral.conf``.
 For details see :doc:`Mistral Configuration Guide </guides/configuration_guide>`
 
 **Virtualenv installation**::
