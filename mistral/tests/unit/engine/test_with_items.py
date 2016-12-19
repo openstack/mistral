@@ -15,7 +15,6 @@
 import copy
 import mock
 from oslo_config import cfg
-import testtools
 
 from mistral.actions import base as action_base
 from mistral.actions import std_actions
@@ -1098,8 +1097,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(12, len(task1_executions))
         self._assert_multiple_items(task1_executions, 3, accepted=True)
 
-    @testtools.skip('Repair with-items concurrency')
-    def test_with_items_retry_policy_concurrency(self):
+    def test_with_items_concurrency_retry_policy(self):
         wf_text = """---
         version: "2.0"
 
@@ -1139,7 +1137,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
             task1_execs = task1_ex.executions
 
-        self.assertEqual(12, len(task1_execs))
+        self.assertEqual(16, len(task1_execs))
         self._assert_multiple_items(task1_execs, 4, accepted=True)
 
     def test_with_items_env(self):
