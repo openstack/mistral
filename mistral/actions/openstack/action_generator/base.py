@@ -85,25 +85,21 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
         action_classes = []
 
         for action_name, method_name in method_dict.items():
-            clazz = cls.create_action_class(method_name)
+            class_ = cls.create_action_class(method_name)
 
             try:
-                client_method = clazz.get_fake_client_method()
+                client_method = class_.get_fake_client_method()
             except Exception:
                 LOG.exception("Failed to create action: %s.%s" %
                               (cls.action_namespace, action_name))
-                client_method = None
+                continue
 
-            if client_method:
-                arg_list = i_u.get_arg_list_as_str(client_method)
-                description = i_u.get_docstring(client_method)
-            else:
-                arg_list = ''
-                description = None
+            arg_list = i_u.get_arg_list_as_str(client_method)
+            description = i_u.get_docstring(client_method)
 
             action_classes.append(
                 {
-                    'class': clazz,
+                    'class': class_,
                     'name': "%s.%s" % (cls.action_namespace, action_name),
                     'description': description,
                     'arg_list': arg_list,
