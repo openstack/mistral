@@ -92,3 +92,22 @@
       sla:
         failure_rate:
           max: 0
+
+    -
+      args:
+        definition: "/home/jenkins/.rally/extra/stress_test/very_big_wb.yaml"
+        workflow_name: "top_level_workflow"
+        params:
+          "/home/jenkins/.rally/extra/stress_test/stress_test_params.json"
+        do_delete: true
+      runner:
+        type: "constant"
+        times: 20
+        concurrency: 5
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
