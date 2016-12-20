@@ -414,8 +414,8 @@ class WithItemsTask(RegularTask):
     Takes care of processing "with-items" tasks.
     """
 
-    _CAPACITY = 'capacity'
     _CONCURRENCY = 'concurrency'
+    _CAPACITY = 'capacity'
     _COUNT = 'count'
     _WITH_ITEMS = 'with_items'
 
@@ -467,11 +467,6 @@ class WithItemsTask(RegularTask):
 
         if self._has_more_iterations() and self._get_concurrency():
             self._schedule_actions()
-
-    def _reset_with_items_capacity(self):
-        ctx = self._get_with_items_context()
-
-        ctx[self._CAPACITY] = self._get_concurrency()
 
     def _schedule_actions(self):
         with_items_values = self._get_with_items_values()
@@ -683,7 +678,6 @@ class WithItemsTask(RegularTask):
             self.task_ex.runtime_context.update({self._WITH_ITEMS: ctx})
 
     def _decrease_capacity(self, count):
-        # TODO(rakhmerov): create generic method for accessing context values
         ctx = self._get_with_items_context()
 
         capacity = ctx[self._CAPACITY]
@@ -704,9 +698,8 @@ class WithItemsTask(RegularTask):
 
     def _prepare_runtime_context(self, action_count):
         runtime_ctx = self.task_ex.runtime_context
-        with_items_spec = self.task_spec.get_with_items()
 
-        if with_items_spec and not runtime_ctx.get(self._WITH_ITEMS):
+        if not runtime_ctx.get(self._WITH_ITEMS):
             # Prepare current indexes and parallel limitation.
             runtime_ctx[self._WITH_ITEMS] = {
                 self._CAPACITY: self._get_concurrency(),
