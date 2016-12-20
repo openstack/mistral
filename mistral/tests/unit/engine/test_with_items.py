@@ -605,14 +605,11 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertIn(task1_ex.published['result'], ['Guy'])
 
-    @testtools.skip('Restore concurrency support.')
     def test_with_items_concurrency_1(self):
         wf_with_concurrency_1 = """---
         version: "2.0"
 
-        concurrency_test:
-          type: direct
-
+        wf:
           input:
            - names: ["John", "Ivan", "Mistral"]
 
@@ -626,12 +623,12 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_with_concurrency_1)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('concurrency_test', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-            # Also initialize a lazy collections.
+            # Also initialize lazy collections.
             task_ex = wf_ex.task_executions[0]
 
             self._assert_capacity(0, task_ex)
@@ -642,6 +639,10 @@ class WithItemsEngineTest(base.EngineTestCase):
             self._get_incomplete_action(task_ex).id,
             wf_utils.Result("John")
         )
+
+        # Wait till the delayed on_action_complete is processed.
+        # 1 is always there to periodically check WF completion.
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex.id)
@@ -655,6 +656,8 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("Ivan")
         )
 
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -666,6 +669,8 @@ class WithItemsEngineTest(base.EngineTestCase):
             self._get_incomplete_action(task_ex).id,
             wf_utils.Result("Mistral")
         )
+
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -761,7 +766,6 @@ class WithItemsEngineTest(base.EngineTestCase):
         )
         self.assertEqual(states.ERROR, wf_ex.state)
 
-    @testtools.skip('Restore concurrency support.')
     def test_with_items_concurrency_2(self):
         wf_with_concurrency_2 = """---
         version: "2.0"
@@ -800,6 +804,10 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("John")
         )
 
+        # Wait till the delayed on_action_complete is processed.
+        # 1 is always there to periodically check WF completion.
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -813,6 +821,8 @@ class WithItemsEngineTest(base.EngineTestCase):
             self._get_incomplete_action(task_ex).id,
             wf_utils.Result("Ivan")
         )
+
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex.id)
@@ -828,16 +838,22 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("Mistral")
         )
 
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex.id)
 
             self._assert_capacity(1, task_ex)
 
+            incomplete_action = self._get_incomplete_action(task_ex)
+
         # 4th iteration complete.
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            incomplete_action.id,
             wf_utils.Result("Hello")
         )
+
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -861,7 +877,6 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task_ex.state)
 
-    @testtools.skip('Restore concurrency support.')
     def test_with_items_concurrency_2_fail(self):
         wf_with_concurrency_2_fail = """---
         version: "2.0"
@@ -903,7 +918,6 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual('With-items failed', result)
 
-    @testtools.skip('Restore concurrency support.')
     def test_with_items_concurrency_3(self):
         wf_with_concurrency_3 = """---
         version: "2.0"
@@ -942,25 +956,39 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("John")
         )
 
-        task_ex = db_api.get_task_execution(task_ex.id)
+        # Wait till the delayed on_action_complete is processed.
+        # 1 is always there to periodically check WF completion.
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
-        self._assert_capacity(1, task_ex)
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex.id)
+
+            self._assert_capacity(1, task_ex)
+
+            incomplete_action = self._get_incomplete_action(task_ex)
 
         # 2nd iteration complete.
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            incomplete_action.id,
             wf_utils.Result("Ivan")
         )
 
-        task_ex = db_api.get_task_execution(task_ex.id)
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
-        self._assert_capacity(2, task_ex)
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex.id)
+
+            self._assert_capacity(2, task_ex)
+
+            incomplete_action = self._get_incomplete_action(task_ex)
 
         # 3rd iteration complete.
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            incomplete_action.id,
             wf_utils.Result("Mistral")
         )
+
+        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -1070,12 +1098,12 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(12, len(task1_executions))
         self._assert_multiple_items(task1_executions, 3, accepted=True)
 
-    @testtools.skip('Restore concurrency support.')
+    @testtools.skip('Repair with-items concurrency')
     def test_with_items_retry_policy_concurrency(self):
         wf_text = """---
         version: "2.0"
 
-        with_items_retry_concurrency:
+        wf:
           tasks:
             task1:
               with-items: i in [1, 2, 3, 4]
@@ -1093,7 +1121,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('with_items_retry_concurrency', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -1118,7 +1146,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_text = """---
         version: "2.0"
 
-        with_items_env:
+        wf:
           tasks:
             task1:
               with-items: i in [1, 2, 3, 4]
@@ -1128,11 +1156,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'with_items_env',
-            {},
-            env={'name': 'Mistral'}
-        )
+        wf_ex = self.engine.start_workflow('wf', {}, env={'name': 'Mistral'})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -1217,7 +1241,6 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertIn(3, result_task2)
         self.assertIn(4, result_task2)
 
-    @testtools.skip('Restore concurrency support.')
     def test_with_items_subflow_concurrency_gt_list_length(self):
         wb_text = """---
         version: "2.0"

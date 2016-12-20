@@ -43,10 +43,18 @@ def get_count(task_ex):
     return _get_context(task_ex)[_COUNT]
 
 
-def is_completed(task_ex):
-    find_cancel = lambda x: x.accepted and x.state == states.CANCELLED
+def get_capacity(task_ex):
+    return _get_context(task_ex)[_CAPACITY]
 
-    if list(filter(find_cancel, task_ex.executions)):
+
+def get_concurrency(task_ex):
+    return task_ex.runtime_context.get(_CONCURRENCY)
+
+
+def is_completed(task_ex):
+    find_cancelled = lambda x: x.accepted and x.state == states.CANCELLED
+
+    if list(filter(find_cancelled, task_ex.executions)):
         return True
 
     execs = list(filter(lambda t: t.accepted, task_ex.executions))
@@ -65,15 +73,11 @@ def get_index(task_ex):
     return len(list(filter(f, task_ex.executions)))
 
 
-def get_concurrency(task_ex):
-    return task_ex.runtime_context.get(_CONCURRENCY)
-
-
 def get_final_state(task_ex):
     find_error = lambda x: x.accepted and x.state == states.ERROR
-    find_cancel = lambda x: x.accepted and x.state == states.CANCELLED
+    find_cancelled = lambda x: x.accepted and x.state == states.CANCELLED
 
-    if list(filter(find_cancel, task_ex.executions)):
+    if list(filter(find_cancelled, task_ex.executions)):
         return states.CANCELLED
     elif list(filter(find_error, task_ex.executions)):
         return states.ERROR
@@ -110,11 +114,8 @@ def _get_unaccepted_executions(task_ex):
     )
 
 
-def get_indices_for_loop(task_ex):
-    # TODO(rakhmerov): For now we assume that capacity is unlimited.
-    # TODO(rakhmerov): We need to re-implement 'concurrency' completely.
-    # capacity = _get_context(task_ex)[_CAPACITY]
-    capacity = get_concurrency(task_ex)
+def get_next_indices(task_ex):
+    capacity = get_capacity(task_ex)
     count = get_count(task_ex)
 
     accepted = _get_with_item_indices(_get_accepted_executions(task_ex))
@@ -133,49 +134,57 @@ def get_indices_for_loop(task_ex):
     return indices[:capacity]
 
 
-def decrease_capacity(task_ex, count):
-    with_items_context = _get_context(task_ex)
+def increase_capacity(task_ex):
+    ctx = _get_context(task_ex)
+    concurrency = get_concurrency(task_ex)
 
-    if with_items_context[_CAPACITY] is not None:
-        if with_items_context[_CAPACITY] >= count:
-            with_items_context[_CAPACITY] -= count
+    if concurrency and ctx[_CAPACITY] < concurrency:
+        ctx[_CAPACITY] += 1
+
+        task_ex.runtime_context.update({_WITH_ITEMS: ctx})
+
+
+def decrease_capacity(task_ex, count):
+    ctx = _get_context(task_ex)
+
+    capacity = ctx[_CAPACITY]
+
+    if capacity is not None:
+        if capacity >= count:
+            ctx[_CAPACITY] -= count
         else:
-            raise exc.WorkflowException(
-                "Impossible to apply current with-items concurrency."
+            raise RuntimeError(
+                "Can't decrease with-items capacity [capacity=%s, count=%s]"
+                % (capacity, count)
             )
 
-    task_ex.runtime_context.update({_WITH_ITEMS: with_items_context})
+    task_ex.runtime_context.update({_WITH_ITEMS: ctx})
 
 
-def increase_capacity(task_ex):
-    with_items_context = _get_context(task_ex)
-    max_concurrency = get_concurrency(task_ex)
-
-    if max_concurrency and with_items_context[_CAPACITY] < max_concurrency:
-        with_items_context[_CAPACITY] += 1
-        task_ex.runtime_context.update({_WITH_ITEMS: with_items_context})
+def is_new(task_ex):
+    return not task_ex.runtime_context.get(_WITH_ITEMS)
 
 
-def prepare_runtime_context(task_ex, task_spec, input_dicts):
-    runtime_context = task_ex.runtime_context
+def prepare_runtime_context(task_ex, task_spec, action_count):
+    runtime_ctx = task_ex.runtime_context
     with_items_spec = task_spec.get_with_items()
 
-    if with_items_spec and not runtime_context.get(_WITH_ITEMS):
+    if with_items_spec and not runtime_ctx.get(_WITH_ITEMS):
         # Prepare current indexes and parallel limitation.
-        runtime_context[_WITH_ITEMS] = {
+        runtime_ctx[_WITH_ITEMS] = {
             _CAPACITY: get_concurrency(task_ex),
-            _COUNT: len(input_dicts)
+            _COUNT: action_count
         }
 
 
-def validate_input(with_items_input):
+def validate_values(with_items_values):
     # Take only mapped values and check them.
-    values = list(with_items_input.values())
+    values = list(with_items_values.values())
 
     if not all([isinstance(v, list) for v in values]):
         raise exc.InputException(
             "Wrong input format for: %s. List type is"
-            " expected for each value." % with_items_input
+            " expected for each value." % with_items_values
         )
 
     required_len = len(values[0])
@@ -183,7 +192,7 @@ def validate_input(with_items_input):
     if not all(len(v) == required_len for v in values):
         raise exc.InputException(
             "Wrong input format for: %s. All arrays must"
-            " have the same length." % with_items_input
+            " have the same length." % with_items_values
         )
 
 

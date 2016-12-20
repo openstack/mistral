@@ -28,7 +28,7 @@ class WithItemsTest(base.BaseTest):
             runtime_context={'index': index}
         )
 
-    def test_get_indices(self):
+    def test_get_next_indices(self):
         # Task execution for running 6 items with concurrency=3.
         task_ex = models.TaskExecution(
             spec={
@@ -52,9 +52,6 @@ class WithItemsTest(base.BaseTest):
         ]
 
         # Then call get_indices and expect [2, 3, 4].
-        indices = with_items.get_indices_for_loop(task_ex)
+        indices = with_items.get_next_indices(task_ex)
 
-        # TODO(rakhmerov): Restore concurrency support.
-        # With disabled 'concurrency' support we expect indices 2,3,4,5
-        # because overall count is 6 and two indices were already processed.
-        self.assertListEqual([2, 3, 4, 5], indices)
+        self.assertListEqual([2, 3, 4], indices)

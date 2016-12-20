@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import abc
-import operator
 from oslo_log import log as logging
 from osprofiler import profiler
 import six
@@ -409,11 +408,6 @@ class RegularTask(Task):
         return actions.PythonAction(action_def, task_ex=self.task_ex)
 
 
-# TODO(rakhmerov): Concurrency support is currently dropped since it doesn't
-# fit into non-locking transactional model. It needs to be restored later on.
-# A possible solution should be able to read and write a number of currently
-# running actions atomically which is now impossible w/o locks with JSON
-# field "runtime_context".
 class WithItemsTask(RegularTask):
     """With-items task.
 
@@ -450,14 +444,27 @@ class WithItemsTask(RegularTask):
             self._schedule_actions()
 
     def _schedule_actions(self):
-        input_dicts = self._get_with_items_input()
+        with_items_values = self._get_with_items_values()
+
+        if with_items.is_new(self.task_ex):
+            with_items.validate_values(with_items_values)
+
+            action_count = len(six.next(iter(with_items_values.values())))
+
+            with_items.prepare_runtime_context(
+                self.task_ex,
+                self.task_spec,
+                action_count
+            )
+
+        input_dicts = self._get_input_dicts(with_items_values)
 
         if not input_dicts:
             self.complete(states.SUCCESS)
 
             return
 
-        for idx, input_dict in input_dicts:
+        for i, input_dict in input_dicts:
             target = self._get_target(input_dict)
 
             action = self._build_action()
@@ -467,33 +474,30 @@ class WithItemsTask(RegularTask):
             action.schedule(
                 input_dict,
                 target,
-                index=idx,
+                index=i,
                 safe_rerun=self.task_spec.get_safe_rerun()
             )
 
-    def _get_with_items_input(self):
-        """Calculate input array for separating each action input.
+            with_items.decrease_capacity(self.task_ex, 1)
+
+    def _get_with_items_values(self):
+        """Returns all values evaluated from 'with-items' expression.
 
         Example:
           DSL:
-            with_items:
-              - itemX in <% $.arrayI %>
-              - itemY in <% $.arrayJ %>
+            with-items:
+              - var1 in <% $.arrayI %>
+              - var2 in <% $.arrayJ %>
 
-          Assume arrayI = [1, 2], arrayJ = ['a', 'b'].
-          with_items_input = {
-            "itemX": [1, 2],
-            "itemY": ['a', 'b']
-          }
+        where arrayI = [1,2,3] and arrayJ = [a,b,c]
 
-          Then we get separated input:
-          inputs_per_item = [
-            {'itemX': 1, 'itemY': 'a'},
-            {'itemX': 2, 'itemY': 'b'}
-          ]
+        The result of the method in this case will be:
+            {
+                'var1': [1,2,3],
+                'var2': [a,b,c]
+            }
 
-        :return: the list of tuples containing indexes
-        and the corresponding input dict.
+        :return: Evaluated 'with-items' expression values.
         """
         ctx_view = data_flow.ContextView(
             self.ctx,
@@ -501,48 +505,27 @@ class WithItemsTask(RegularTask):
             self.wf_ex.input
         )
 
-        with_items_inputs = expr.evaluate_recursively(
+        return expr.evaluate_recursively(
             self.task_spec.get_with_items(),
             ctx_view
         )
 
-        with_items.validate_input(with_items_inputs)
+    def _get_input_dicts(self, with_items_values):
+        """Calculate input dictionaries for another portion of actions.
 
-        inputs_per_item = []
+        :return: a list of tuples containing indexes and
+            corresponding input dicts.
+        """
+        result = []
 
-        for key, value in with_items_inputs.items():
-            for index, item in enumerate(value):
-                iter_context = {key: item}
+        for i in with_items.get_next_indices(self.task_ex):
+            ctx = {}
 
-                if index >= len(inputs_per_item):
-                    inputs_per_item.append(iter_context)
-                else:
-                    inputs_per_item[index].update(iter_context)
+            for k, v in with_items_values.items():
+                ctx.update({k: v[i]})
 
-        action_inputs = []
+            ctx = utils.merge_dicts(ctx, self.ctx)
 
-        for item_input in inputs_per_item:
-            new_ctx = utils.merge_dicts(item_input, self.ctx)
+            result.append((i, self._get_action_input(ctx)))
 
-            action_inputs.append(self._get_action_input(new_ctx))
-
-        with_items.prepare_runtime_context(
-            self.task_ex,
-            self.task_spec,
-            action_inputs
-        )
-
-        indices = with_items.get_indices_for_loop(self.task_ex)
-
-        with_items.decrease_capacity(self.task_ex, len(indices))
-
-        if indices:
-            current_inputs = operator.itemgetter(*indices)(action_inputs)
-
-            return zip(
-                indices,
-                current_inputs if isinstance(current_inputs, tuple)
-                else [current_inputs]
-            )
-
-        return []
+        return result
