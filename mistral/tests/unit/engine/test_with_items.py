@@ -40,10 +40,10 @@ WB = """
 ---
 version: "2.0"
 
-name: wb1
+name: wb
 
 workflows:
-  with_items:
+  wf:
     type: direct
 
     input:
@@ -62,10 +62,10 @@ WB_WITH_STATIC_VAR = """
 ---
 version: "2.0"
 
-name: wb1
+name: wb
 
 workflows:
-  with_items:
+  wf:
     type: direct
 
     input:
@@ -85,10 +85,10 @@ WB_MULTI_ARRAY = """
 ---
 version: "2.0"
 
-name: wb1
+name: wb
 
 workflows:
-  with_items:
+  wf:
     type: direct
 
     input:
@@ -111,10 +111,10 @@ WB_ACTION_CONTEXT = """
 ---
 version: "2.0"
 
-name: wb1
+name: wb
 
 workflows:
-  wf1_with_items:
+  wf:
     type: direct
 
     input:
@@ -170,7 +170,7 @@ class WithItemsEngineTest(base.EngineTestCase):
     def _assert_capacity(self, capacity, task_ex):
         self.assertEqual(
             capacity,
-            task_ex.runtime_context['with_items_context']['capacity']
+            task_ex.runtime_context['with_items']['capacity']
         )
 
     @staticmethod
@@ -187,7 +187,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WB)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.with_items', WF_INPUT)
+        wf_ex = self.engine.start_workflow('wb.wf', WF_INPUT)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -199,7 +199,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         task1_ex = self._assert_single_item(task_execs, name='task1')
 
-        with_items_ctx = task1_ex.runtime_context['with_items_context']
+        with_items_ctx = task1_ex.runtime_context['with_items']
 
         self.assertEqual(3, with_items_ctx['count'])
 
@@ -227,7 +227,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_text = """---
         version: "2.0"
 
-        with_items:
+        wf:
           type: direct
 
           tasks:
@@ -243,7 +243,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('with_items', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -257,7 +257,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_text = """---
         version: "2.0"
 
-        with_items:
+        wf:
           type: direct
 
           tasks:
@@ -269,7 +269,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('with_items', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
         self.await_workflow_error(wf_ex.id)
 
@@ -294,19 +294,19 @@ class WithItemsEngineTest(base.EngineTestCase):
         name: wb1
 
         workflows:
-          with_items:
+          wf:
             type: direct
 
             tasks:
               task1:
                 with-items: i in [1, 2, 3]
-                workflow: subworkflow
+                workflow: subwf
                 on-error: task2
 
               task2:
                 action: std.echo output="With-items failed"
 
-          subworkflow:
+          subwf:
             type: direct
 
             tasks:
@@ -317,7 +317,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(wb_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.with_items', {})
+        wf_ex = self.engine.start_workflow('wb1.wf', {})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -334,7 +334,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_input.update({'greeting': 'Hello'})
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
+        wf_ex = self.engine.start_workflow('wb.wf', wf_input)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -362,7 +362,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_input = {'arrayI': ['a', 'b', 'c'], 'arrayJ': [1, 2, 3]}
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.with_items', wf_input)
+        wf_ex = self.engine.start_workflow('wb.wf', wf_input)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -391,7 +391,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WB_ACTION_CONTEXT)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.wf1_with_items', WF_INPUT_URLS)
+        wf_ex = self.engine.start_workflow('wb.wf', WF_INPUT_URLS)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -580,7 +580,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WB)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb1.with_items', WF_INPUT_ONE_ITEM)
+        wf_ex = self.engine.start_workflow('wb.wf', WF_INPUT_ONE_ITEM)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -770,7 +770,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_with_concurrency_2 = """---
         version: "2.0"
 
-        concurrency_test:
+        wf:
           type: direct
 
           input:
@@ -786,7 +786,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_with_concurrency_2)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('concurrency_test', {})
+        wf_ex = self.engine.start_workflow('wf', {})
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)

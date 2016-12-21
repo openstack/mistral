@@ -26,7 +26,6 @@ from mistral import utils
 from mistral.utils import inspect_utils
 from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
-from mistral.workflow import with_items
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
@@ -174,7 +173,10 @@ def get_task_execution_result(task_ex):
     task_spec = spec_parser.get_task_spec(task_ex.spec)
 
     if task_spec.get_with_items():
-        if with_items.get_count(task_ex) > 0:
+        # TODO(rakhmerov): Smell: violation of 'with-items' encapsulation.
+        with_items_ctx = task_ex.runtime_context.get('with_items')
+
+        if with_items_ctx and with_items_ctx.get('count') > 0:
             return results
         else:
             return []
