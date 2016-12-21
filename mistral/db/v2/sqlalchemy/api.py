@@ -116,6 +116,11 @@ def transaction():
 
 
 @b.session_aware()
+def refresh(model, session=None):
+    session.refresh(model)
+
+
+@b.session_aware()
 def acquire_lock(model, id, session=None):
     # Expire all so all objects queried after lock is acquired
     # will be up-to-date from the DB and not from cache.

@@ -438,6 +438,14 @@ class WithItemsTask(RegularTask):
             # from modifying runtime context simultaneously by multiple
             # transactions.
             with db_api.named_lock('with-items-%s' % self.task_ex.id):
+                # NOTE: We need to refresh task execution object right
+                # after the lock is acquired to make sure that we're
+                # working with a fresh state of its runtime context.
+                # Otherwise, SQLAlchemy session can contain a stale
+                # cached version of it so that we don't modify actual
+                # values (i.e. capacity).
+                db_api.refresh(self.task_ex)
+
                 self._on_action_complete(action_ex)
 
     def _on_action_complete(self, action_ex):
