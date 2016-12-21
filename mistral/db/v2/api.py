@@ -58,6 +58,10 @@ def transaction():
         yield
 
 
+def refresh(model):
+    IMPL.refresh(model)
+
+
 # Locking.
 
 
