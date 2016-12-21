@@ -429,22 +429,33 @@ class WithItemsTask(RegularTask):
     def on_action_complete(self, action_ex):
         assert self.task_ex
 
-        # TODO(rakhmerov): Here we can define more informative messages
-        # in cases when action is successful and when it's not. For example,
-        # in state_info we can specify the cause action.
-        # The use of action_ex.output.get('result') for state_info is not
-        # accurate because there could be action executions that had
-        # failed or was cancelled prior to this action execution.
-        state_info = {
-            states.SUCCESS: None,
-            states.ERROR: 'One or more action executions had failed.',
-            states.CANCELLED: 'One or more action executions was cancelled.'
-        }
+        if not self._get_concurrency():
+            self._on_action_complete()
+        else:
+            # If we need to control 'concurrency' we need to do atomic
+            # reads/writes to task runtime context. Locking prevents us
+            # from modifying runtime context simultaneously by multiple
+            # transactions.
+            with db_api.named_lock('with-items-%s' % self.task_ex.id):
+                self._on_action_complete()
 
+    def _on_action_complete(self):
         self._increase_capacity()
 
         if self.is_completed():
             state = self._get_final_state()
+
+            # TODO(rakhmerov): Here we can define more informative messages
+            # in cases when action is successful and when it's not.
+            # For example, in state_info we can specify the cause action.
+            # The use of action_ex.output.get('result') for state_info is not
+            # accurate because there could be action executions that had
+            # failed or was cancelled prior to this action execution.
+            state_info = {
+                states.SUCCESS: None,
+                states.ERROR: 'One or more actions had failed.',
+                states.CANCELLED: 'One or more actions was cancelled.'
+            }
 
             self.complete(state, state_info[state])
 
