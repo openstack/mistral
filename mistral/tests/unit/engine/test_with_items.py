@@ -670,7 +670,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("Mistral")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(lambda: len(db_api.get_delayed_calls()) in (0, 1))
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -853,7 +853,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("Hello")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(lambda: len(db_api.get_delayed_calls()) in (0, 1))
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
@@ -988,7 +988,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_utils.Result("Mistral")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(lambda: len(db_api.get_delayed_calls()) in (0, 1))
 
         task_ex = db_api.get_task_execution(task_ex.id)
 
