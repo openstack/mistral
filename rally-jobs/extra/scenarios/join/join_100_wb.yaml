@@ -1,0 +1,212 @@
+---
+version: '2.0'
+
+name: join_100_wb
+
+workflows:
+  wf:
+    description: contains "join" that joins 100 parallel tasks
+
+    tasks:
+      join_task:
+        join: all
+      task_1:
+        on-success: join_task
+      task_2:
+        on-success: join_task
+      task_3:
+        on-success: join_task
+      task_4:
+        on-success: join_task
+      task_5:
+        on-success: join_task
+      task_6:
+        on-success: join_task
+      task_7:
+        on-success: join_task
+      task_8:
+        on-success: join_task
+      task_9:
+        on-success: join_task
+      task_10:
+        on-success: join_task
+      task_11:
+        on-success: join_task
+      task_12:
+        on-success: join_task
+      task_13:
+        on-success: join_task
+      task_14:
+        on-success: join_task
+      task_15:
+        on-success: join_task
+      task_16:
+        on-success: join_task
+      task_17:
+        on-success: join_task
+      task_18:
+        on-success: join_task
+      task_19:
+        on-success: join_task
+      task_20:
+        on-success: join_task
+      task_21:
+        on-success: join_task
+      task_22:
+        on-success: join_task
+      task_23:
+        on-success: join_task
+      task_24:
+        on-success: join_task
+      task_25:
+        on-success: join_task
+      task_26:
+        on-success: join_task
+      task_27:
+        on-success: join_task
+      task_28:
+        on-success: join_task
+      task_29:
+        on-success: join_task
+      task_30:
+        on-success: join_task
+      task_31:
+        on-success: join_task
+      task_32:
+        on-success: join_task
+      task_33:
+        on-success: join_task
+      task_34:
+        on-success: join_task
+      task_35:
+        on-success: join_task
+      task_36:
+        on-success: join_task
+      task_37:
+        on-success: join_task
+      task_38:
+        on-success: join_task
+      task_39:
+        on-success: join_task
+      task_40:
+        on-success: join_task
+      task_41:
+        on-success: join_task
+      task_42:
+        on-success: join_task
+      task_43:
+        on-success: join_task
+      task_44:
+        on-success: join_task
+      task_45:
+        on-success: join_task
+      task_46:
+        on-success: join_task
+      task_47:
+        on-success: join_task
+      task_48:
+        on-success: join_task
+      task_49:
+        on-success: join_task
+      task_50:
+        on-success: join_task
+      task_51:
+        on-success: join_task
+      task_52:
+        on-success: join_task
+      task_53:
+        on-success: join_task
+      task_54:
+        on-success: join_task
+      task_55:
+        on-success: join_task
+      task_56:
+        on-success: join_task
+      task_57:
+        on-success: join_task
+      task_58:
+        on-success: join_task
+      task_59:
+        on-success: join_task
+      task_60:
+        on-success: join_task
+      task_61:
+        on-success: join_task
+      task_62:
+        on-success: join_task
+      task_63:
+        on-success: join_task
+      task_64:
+        on-success: join_task
+      task_65:
+        on-success: join_task
+      task_66:
+        on-success: join_task
+      task_67:
+        on-success: join_task
+      task_68:
+        on-success: join_task
+      task_69:
+        on-success: join_task
+      task_70:
+        on-success: join_task
+      task_71:
+        on-success: join_task
+      task_72:
+        on-success: join_task
+      task_73:
+        on-success: join_task
+      task_74:
+        on-success: join_task
+      task_75:
+        on-success: join_task
+      task_76:
+        on-success: join_task
+      task_77:
+        on-success: join_task
+      task_78:
+        on-success: join_task
+      task_79:
+        on-success: join_task
+      task_80:
+        on-success: join_task
+      task_81:
+        on-success: join_task
+      task_82:
+        on-success: join_task
+      task_83:
+        on-success: join_task
+      task_84:
+        on-success: join_task
+      task_85:
+        on-success: join_task
+      task_86:
+        on-success: join_task
+      task_87:
+        on-success: join_task
+      task_88:
+        on-success: join_task
+      task_89:
+        on-success: join_task
+      task_90:
+        on-success: join_task
+      task_91:
+        on-success: join_task
+      task_92:
+        on-success: join_task
+      task_93:
+        on-success: join_task
+      task_94:
+        on-success: join_task
+      task_95:
+        on-success: join_task
+      task_96:
+        on-success: join_task
+      task_97:
+        on-success: join_task
+      task_98:
+        on-success: join_task
+      task_99:
+        on-success: join_task
+      task_100:
+        on-success: join_task
