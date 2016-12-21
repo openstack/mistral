@@ -11,6 +11,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations
 # under the License.
+import json
 
 from oslo_concurrency.fixture import lockutils
 from tempest.lib import exceptions
@@ -41,6 +42,62 @@ class WorkflowTestsV2(base.TestCase):
         self.assertIn('std.create_instance', names)
 
         self.assertNotIn('next', body)
+
+    @test.attr(type='smoke')
+    def test_get_list_workflows_by_admin(self):
+        self.useFixture(lockutils.LockFixture('mistral-workflow'))
+
+        _, body = self.client.create_workflow('wf_v2.yaml')
+        name = body['workflows'][0]['name']
+
+        resp, raw_body = self.admin_client.get('workflows?all_projects=true')
+        body = json.loads(raw_body)
+
+        self.assertEqual(200, resp.status)
+
+        names = [wf['name'] for wf in body['workflows']]
+
+        self.assertIn(name, names)
+
+    @test.attr(type='smoke')
+    def test_get_list_workflows_with_project_by_admin(self):
+        self.useFixture(lockutils.LockFixture('mistral-workflow'))
+
+        _, body = self.client.create_workflow('wf_v2.yaml')
+
+        name = body['workflows'][0]['name']
+
+        resp, raw_body = self.admin_client.get(
+            'workflows?project_id=%s' %
+            self.client.auth_provider.credentials.tenant_id
+        )
+        body = json.loads(raw_body)
+
+        self.assertEqual(200, resp.status)
+
+        names = [wf['name'] for wf in body['workflows']]
+
+        self.assertIn(name, names)
+
+    @test.attr(type='smoke')
+    def test_get_list_other_project_private_workflows(self):
+        self.useFixture(lockutils.LockFixture('mistral-workflow'))
+
+        _, body = self.client.create_workflow('wf_v2.yaml')
+
+        name = body['workflows'][0]['name']
+
+        resp, raw_body = self.alt_client.get(
+            'workflows?project_id=%s' %
+            self.client.auth_provider.credentials.tenant_id
+        )
+        body = json.loads(raw_body)
+
+        self.assertEqual(200, resp.status)
+
+        names = [wf['name'] for wf in body['workflows']]
+
+        self.assertNotIn(name, names)
 
     @test.attr(type='smoke')
     def test_get_list_workflows_with_fields(self):

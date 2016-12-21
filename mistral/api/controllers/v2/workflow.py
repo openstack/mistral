@@ -171,11 +171,12 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text, wtypes.text,
                          resources.SCOPE_TYPES, types.uuid, wtypes.text,
-                         wtypes.text)
+                         wtypes.text, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', name=None, input=None,
                 definition=None, tags=None, scope=None,
-                project_id=None, created_at=None, updated_at=None):
+                project_id=None, created_at=None, updated_at=None,
+                all_projects=False):
         """Return a list of workflows.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -203,8 +204,12 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param all_projects: Optional. Get resources of all projects.
         """
         acl.enforce('workflows:list', context.ctx())
+
+        if all_projects:
+            acl.enforce('workflows:list:all_projects', context.ctx())
 
         filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
@@ -218,8 +223,9 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         )
 
         LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, fields=%s, filters=%s", marker, limit,
-                 sort_keys, sort_dirs, fields, filters)
+                 "sort_dirs=%s, fields=%s, filters=%s, all_projects=%s",
+                 marker, limit, sort_keys, sort_dirs, fields, filters,
+                 all_projects)
 
         return rest_utils.get_all(
             resources.Workflows,
@@ -231,5 +237,6 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
+            all_projects=all_projects,
             **filters
         )

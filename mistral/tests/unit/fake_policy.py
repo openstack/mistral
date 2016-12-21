@@ -68,5 +68,6 @@ policy_data = """{
     "workflows:delete": "rule:admin_or_owner",
     "workflows:get": "rule:admin_or_owner",
     "workflows:list": "rule:admin_or_owner",
+    "workflows:list:all_projects": "rule:admin_only",
     "workflows:update": "rule:admin_or_owner",
 }"""

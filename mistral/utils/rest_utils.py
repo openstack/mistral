@@ -25,6 +25,7 @@ import six
 import webob
 from wsme import exc as wsme_exc
 
+from mistral import context as auth_ctx
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 
@@ -125,7 +126,8 @@ def filters_to_dict(**kwargs):
 
 def get_all(list_cls, cls, get_all_function, get_function,
             resource_function=None, marker=None, limit=None,
-            sort_keys='created_at', sort_dirs='asc', fields='', **filters):
+            sort_keys='created_at', sort_dirs='asc', fields='',
+            all_projects=False, **filters):
     """Return a list of cls.
 
     :param list_cls: Collection class (e.g.: Actions, Workflows, ...).
@@ -149,12 +151,20 @@ def get_all(list_cls, cls, get_all_function, get_function,
                    fields if it's provided, since it will be used when
                    constructing 'next' link.
     :param filters: Optional. A specified dictionary of filters to match.
+    :param all_projects: Optional. Get resources of all projects.
     """
     if fields and 'id' not in fields:
         fields.insert(0, 'id')
 
     validate_query_params(limit, sort_keys, sort_dirs)
     validate_fields(fields, cls.get_fields())
+
+    # Admin user can get all tenants resources, no matter they are private or
+    # public.
+    insecure = False
+    if (all_projects or
+            (auth_ctx.ctx().is_admin and filters.get('project_id', ''))):
+        insecure = True
 
     marker_obj = None
 
@@ -171,6 +181,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
                 marker=marker_obj,
                 sort_keys=sort_keys,
                 sort_dirs=sort_dirs,
+                insecure=insecure,
                 **filters
             )
 
@@ -196,6 +207,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
+            insecure=insecure,
             **filters
         )
 
