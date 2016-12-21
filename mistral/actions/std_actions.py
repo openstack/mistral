@@ -282,7 +282,7 @@ class SendEmailAction(base.Action):
         # Task invocation parameters.
         self.to = to_addrs
         self.subject = subject or "<No subject>"
-        self.body = body
+        self.body = body or "<No body>"
 
         # Action provider settings.
         self.smtp_server = smtp_server
