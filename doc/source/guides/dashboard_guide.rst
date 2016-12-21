@@ -29,7 +29,7 @@ The following should get you started:
 
  and then::
 
-    $ cp -b <mistral-dashboard>/_50_mistral.py.example <horizon>/openstack_dashboard/local/enabled/_50_mistral.py
+    $ cp -b <mistral-dashboard>/mistraldashboard/enabled/_50_mistral.py <horizon>/openstack_dashboard/local/enabled/_50_mistral.py
 
 3. Since Mistral only supports Identity v3, you must ensure that the dashboard
    points the proper OPENSTACK_KEYSTONE_URL in
