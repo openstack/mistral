@@ -111,3 +111,21 @@
       sla:
         failure_rate:
           max: 0
+
+    -
+      args:
+        definition: "/home/jenkins/.rally/extra/scenarios/with_items/wb.yaml"
+        params:
+          "/home/jenkins/.rally/extra/scenarios/with_items/count_100_concurrency_10.json"
+        do_delete: true
+      runner:
+        type: "constant"
+        times: 20
+        concurrency: 5
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
