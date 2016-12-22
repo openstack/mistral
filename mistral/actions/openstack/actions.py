@@ -21,6 +21,7 @@ from oslo_utils import importutils
 from keystoneclient.auth import identity
 from keystoneclient import httpclient
 
+aodhclient = importutils.try_import('aodhclient.v2.client')
 barbicanclient = importutils.try_import('barbicanclient.client')
 ceilometerclient = importutils.try_import('ceilometerclient.v2.client')
 cinderclient = importutils.try_import('cinderclient.v2.client')
@@ -797,3 +798,35 @@ class SenlinAction(base.OpenStackAction):
         @classmethod
         def _get_fake_client(cls):
             return cls._get_client_class()("http://127.0.0.1:8778")
+
+
+class AodhAction(base.OpenStackAction):
+
+    @classmethod
+    def _get_client_class(cls):
+        return aodhclient.Client
+
+    def _create_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Aodh action security context: %s" % ctx)
+
+        aodh_endpoint = keystone_utils.get_endpoint_for_project(
+            'aodh'
+        )
+
+        endpoint_url = keystone_utils.format_url(
+            aodh_endpoint.url,
+            {'tenant_id': ctx.project_id}
+        )
+
+        return self._get_client_class()(
+            endpoint_url,
+            region_name=aodh_endpoint.region,
+            token=ctx.auth_token,
+            username=ctx.user_name
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()()

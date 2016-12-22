@@ -373,3 +373,15 @@ class OpenStackActionTest(base.BaseTestCase):
         mocked().get_cluster.assert_called_once_with(
             cluster_id="1234-abcd"
         )
+
+    @mock.patch.object(actions.AodhAction, '_get_client')
+    def test_aodh_action(self, mocked):
+        method_name = "alarm.get"
+        action_class = actions.AodhAction
+        action_class.client_method_name = method_name
+        params = {'alarm_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().alarm.get.called)
+        mocked().alarm.get.assert_called_once_with(alarm_id="1234-abcd")

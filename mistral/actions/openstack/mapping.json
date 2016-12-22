@@ -521,6 +521,20 @@
         "trait_descriptions_list": "trait_descriptions.list",
         "traits_list": "traits.list"
     },
+    "aodh": {
+        "_comment": "It uses aodhclient.v2.",
+        "capabilities_list": "capabilities.list",
+        "alarm_create": "alarm.create",
+        "alarm_delete": "alarm.delete",
+        "alarm_get": "alarm.get",
+        "alarm_get_state": "alarm.get_state",
+        "alarm_list": "alarm.list",
+        "alarm_set_state": "alarm.set_state",
+        "alarm_update": "alarm.update",
+        "alarm_query": "alarm.query",
+        "alarm_history_get": "alarm_history.get",
+        "alarm_history_search": "alarm_history.search"
+    },
     "neutron": {
         "_comment": "It uses neutronclient.v2_0.",
         "add_gateway_router": "add_gateway_router",
