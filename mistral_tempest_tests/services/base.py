@@ -17,7 +17,6 @@ import json
 import os
 import time
 
-import six
 
 from tempest import config
 from tempest.lib import auth
@@ -36,7 +35,7 @@ def get_resource(path):
 
 def find_items(items, **props):
     def _matches(item, **props):
-        for prop_name, prop_val in six.iteritems(props):
+        for prop_name, prop_val in props.items():
             if item[prop_name] != prop_val:
                 return False
 

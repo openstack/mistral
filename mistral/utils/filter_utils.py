@@ -22,7 +22,7 @@ def create_filters_from_request_params(**params):
     :return: filters dictionary.
     """
     filters = {}
-    for column, data in six.iteritems(params):
+    for column, data in params.items():
         if data is not None:
             if isinstance(data, six.string_types):
                 f_type, value = _extract_filter_type_and_value(data)

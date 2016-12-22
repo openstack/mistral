@@ -22,7 +22,6 @@ import logging
 import os
 from os import path
 import shutil
-import six
 import socket
 import sys
 import tempfile
@@ -142,7 +141,7 @@ def merge_dicts(left, right, overwrite=True):
     if right is None:
         return left
 
-    for k, v in six.iteritems(right):
+    for k, v in right.items():
         if k not in left:
             left[k] = v
         else:
