@@ -28,7 +28,7 @@ API_STATUS = wtypes.Enum(str, 'SUPPORTED', 'CURRENT', 'DEPRECATED')
 
 
 class APIVersion(resource.Resource):
-    """API Version."""
+    """An API Version."""
 
     id = wtypes.text
     "The version identifier."
@@ -36,7 +36,7 @@ class APIVersion(resource.Resource):
     status = API_STATUS
     "The status of the API (SUPPORTED, CURRENT or DEPRECATED)."
 
-    link = resource.Link
+    links = wtypes.ArrayType(resource.Link)
     "The link to the versioned API."
 
     @classmethod
@@ -44,17 +44,28 @@ class APIVersion(resource.Resource):
         return cls(
             id='v1.0',
             status='CURRENT',
-            link=resource.Link(
-                target_name='v1',
-                href='http://example.com:9777/v1'
-            )
+            links=[
+                resource.Link(target_name='v1',
+                              href='http://example.com:9777/v1')
+            ]
         )
+
+
+class APIVersions(resource.Resource):
+    """API Versions."""
+    versions = wtypes.ArrayType(APIVersion)
+
+    @classmethod
+    def sample(cls):
+        v2 = APIVersion(id='v2.0', status='CURRENT',
+                        href='http://example.com:9777/v2')
+        return cls(versions=[v2])
 
 
 class RootController(object):
     v2 = v2_root.Controller()
 
-    @wsme_pecan.wsexpose([APIVersion])
+    @wsme_pecan.wsexpose(APIVersions)
     def index(self):
         LOG.debug("Fetching API versions.")
 
@@ -62,7 +73,7 @@ class RootController(object):
         api_v2 = APIVersion(
             id='v2.0',
             status='CURRENT',
-            link=resource.Link(href=host_url_v2, target='v2')
+            links=[resource.Link(href=host_url_v2, target='v2')]
         )
 
-        return [api_v2]
+        return APIVersions(versions=[api_v2])
