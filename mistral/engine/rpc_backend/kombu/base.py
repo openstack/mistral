@@ -17,6 +17,11 @@ from kombu import serialization
 
 from mistral.utils import serializers
 
+IS_RECEIVED = 'kombu_rpc_is_received'
+RESULT = 'kombu_rpc_result'
+CORR_ID = 'kombu_rpc_correlation_id'
+TYPE = 'kombu_rpc_type'
+
 
 class Base(object):
     """Base class for Client and Server."""
