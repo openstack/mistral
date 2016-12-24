@@ -1,0 +1,16 @@
+---
+version: '2.0'
+
+name: with_items_wb
+
+workflows:
+  wf:
+    input:
+      - count: 10
+      - concurrency: 0
+
+    tasks:
+      task1:
+        with-items: i in <% range(0, $.count) %>
+        action: std.echo output=<% $.i %>
+        concurrency: <% $.concurrency %>
