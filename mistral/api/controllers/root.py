@@ -45,7 +45,7 @@ class APIVersion(resource.Resource):
             id='v1.0',
             status='CURRENT',
             links=[
-                resource.Link(target_name='v1',
+                resource.Link(target_name='v1', rel="self",
                               href='http://example.com:9777/v1')
             ]
         )
@@ -57,7 +57,7 @@ class APIVersions(resource.Resource):
 
     @classmethod
     def sample(cls):
-        v2 = APIVersion(id='v2.0', status='CURRENT',
+        v2 = APIVersion(id='v2.0', status='CURRENT', rel="self",
                         href='http://example.com:9777/v2')
         return cls(versions=[v2])
 
@@ -73,7 +73,8 @@ class RootController(object):
         api_v2 = APIVersion(
             id='v2.0',
             status='CURRENT',
-            links=[resource.Link(href=host_url_v2, target='v2')]
+            links=[resource.Link(href=host_url_v2, target='v2',
+                                 rel="self",)]
         )
 
         return APIVersions(versions=[api_v2])

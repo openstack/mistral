@@ -30,7 +30,7 @@ class TestRootController(base.APITest):
         self.assertEqual('v2.0', data[0]['id'])
         self.assertEqual('CURRENT', data[0]['status'])
         self.assertEqual(
-            [{'href': 'http://localhost/v2', 'target': 'v2'}],
+            [{'href': 'http://localhost/v2', 'rel': 'self', 'target': 'v2'}],
             data[0]['links']
         )
 
@@ -58,7 +58,7 @@ class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
         self.assertEqual('v2.0', data[0]['id'])
         self.assertEqual('CURRENT', data[0]['status'])
         self.assertEqual(
-            [{'href': 'http://localhost/v2', 'target': 'v2'}],
+            [{'href': 'http://localhost/v2', 'rel': 'self', 'target': 'v2'}],
             data[0]['links']
         )
 

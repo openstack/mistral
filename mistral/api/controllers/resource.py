@@ -149,8 +149,9 @@ class Link(Resource):
 
     href = wtypes.text
     target = wtypes.text
+    rel = wtypes.text
 
     @classmethod
     def sample(cls):
         return cls(href='http://example.com/here',
-                   target='here')
+                   target='here', rel='self')
