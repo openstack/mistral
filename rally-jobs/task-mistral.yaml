@@ -95,10 +95,10 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/stress_test/very_big_wb.yaml"
+        definition: "/home/jenkins/.rally/extra/scenarios/complex_wf/complex_wf_wb.yaml"
         workflow_name: "top_level_workflow"
         params:
-          "/home/jenkins/.rally/extra/stress_test/stress_test_params.json"
+          "/home/jenkins/.rally/extra/scenarios/complex_wf/complex_wf_params.json"
         do_delete: true
       runner:
         type: "constant"
