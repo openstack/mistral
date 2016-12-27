@@ -22,13 +22,16 @@ def create_filters_from_request_params(**params):
     :return: filters dictionary.
     """
     filters = {}
+
     for column, data in params.items():
         if data is not None:
             if isinstance(data, six.string_types):
                 f_type, value = _extract_filter_type_and_value(data)
+
                 create_or_update_filter(column, value, f_type, filters)
             else:
                 create_or_update_filter(column, data, _filter=filters)
+
     return filters
 
 
@@ -47,6 +50,7 @@ def create_or_update_filter(column, value, filter_type='eq', _filter=None):
     """
     if _filter is None:
         _filter = {}
+
     _filter[column] = {filter_type: value}
 
     return _filter
@@ -84,6 +88,9 @@ def _extract_filter_type_and_value(data):
     elif data.startswith("eq:"):
         value = six.text_type(data[3:])
         filter_type = 'eq'
+    elif data.startswith("has:"):
+        value = six.text_type(data[4:])
+        filter_type = 'has'
     else:
         value = data
         filter_type = 'eq'
