@@ -17,6 +17,7 @@
 #    limitations under the License.
 
 import contextlib
+import functools
 import json
 import logging
 import os
@@ -108,6 +109,7 @@ def log_exec(logger, level=logging.DEBUG):
     """
 
     def _decorator(func):
+        @functools.wraps(func)
         def _logged(*args, **kw):
             params_repr = ("[args=%s, kw=%s]" % (str(args), str(kw))
                            if args or kw else "")

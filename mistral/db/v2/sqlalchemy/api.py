@@ -1491,7 +1491,7 @@ def ensure_event_trigger_exists(id, session=None):
 
 @b.session_aware()
 def create_named_lock(name, session=None):
-    # This method has to work without SQLAlchemy session because
+    # This method has to work not through SQLAlchemy session because
     # session may not immediately issue an SQL query to a database
     # and instead just schedule it whereas we need to make sure to
     # issue a query immediately.
@@ -1533,6 +1533,7 @@ def delete_named_lock(lock_id, session=None):
 @contextlib.contextmanager
 def named_lock(name):
     lock_id = None
+
     try:
         lock_id = create_named_lock(name)
         yield

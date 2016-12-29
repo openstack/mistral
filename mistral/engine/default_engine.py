@@ -17,6 +17,7 @@
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import action_handler
@@ -104,10 +105,12 @@ class DefaultEngine(base.Engine):
 
             return db_api.create_action_execution(values)
 
+    @db_utils.retry_on_deadlock
     @action_queue.process
     @u.log_exec(LOG)
     @profiler.trace('engine-on-action-complete')
-    def on_action_complete(self, action_ex_id, result, wf_action=False):
+    def on_action_complete(self, action_ex_id, result, wf_action=False,
+                           async=False):
         with db_api.transaction():
             if wf_action:
                 action_ex = db_api.get_workflow_execution(action_ex_id)
