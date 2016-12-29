@@ -327,13 +327,9 @@ class RegularTask(Task):
         if self.reset_flag:
             execs = self.task_ex.executions
         else:
-            execs = filter(
-                lambda e: (
-                    e.accepted and
-                    e.state in [states.ERROR, states.CANCELLED]
-                ),
-                self.task_ex.executions
-            )
+            execs = [e for e in self.task_ex.executions if
+                     (e.accepted and
+                      e.state in [states.ERROR, states.CANCELLED])]
 
         for ex in execs:
             ex.accepted = False
@@ -598,7 +594,7 @@ class WithItemsTask(RegularTask):
         if list(filter(find_cancelled, self.task_ex.executions)):
             return True
 
-        execs = list(filter(lambda t: t.accepted, self.task_ex.executions))
+        execs = list([t for t in self.task_ex.executions if t.accepted])
         count = self._get_with_items_count() or 1
 
         # We need to make sure that method on_action_complete() has been
@@ -629,10 +625,8 @@ class WithItemsTask(RegularTask):
     def _get_accepted_executions(self):
         # Choose only if not accepted but completed.
         return list(
-            filter(
-                lambda x: x.accepted and states.is_completed(x.state),
-                self.task_ex.executions
-            )
+            [x for x in self.task_ex.executions
+             if x.accepted and states.is_completed(x.state)]
         )
 
     def _get_unaccepted_executions(self):

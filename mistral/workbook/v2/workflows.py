@@ -335,7 +335,7 @@ class DirectWorkflowSpec(WorkflowSpec):
 
     @staticmethod
     def _remove_task_from_clause(on_clause, t_name):
-        return list(filter(lambda tup: tup[0] != t_name, on_clause))
+        return list([tup for tup in on_clause if tup[0] != t_name])
 
 
 class ReverseWorkflowSpec(WorkflowSpec):

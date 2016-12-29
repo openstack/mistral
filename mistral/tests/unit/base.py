@@ -136,7 +136,7 @@ class BaseTest(base.BaseTestCase):
             return True
 
         filtered_items = list(
-            filter(lambda item: _matches(item, **props), items)
+            [item for item in items if _matches(item, **props)]
         )
 
         found = len(filtered_items)

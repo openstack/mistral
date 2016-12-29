@@ -165,7 +165,7 @@ class Workflow(object):
         # commands because workflow controller takes tasks that
         # completed within the period when the workflow was paused.
         cmds = list(
-            filter(lambda c: not isinstance(c, commands.PauseWorkflow), cmds)
+            [c for c in cmds if not isinstance(c, commands.PauseWorkflow)]
         )
 
         # Since there's no explicit task causing the operation

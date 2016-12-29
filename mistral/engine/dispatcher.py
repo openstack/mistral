@@ -49,7 +49,7 @@ def _rearrange_commands(cmds):
     """
 
     # Remove all 'noop' commands.
-    cmds = list(filter(lambda c: not isinstance(c, commands.Noop), cmds))
+    cmds = list([c for c in cmds if not isinstance(c, commands.Noop)])
 
     state_cmd_idx = -1
     state_cmd = None

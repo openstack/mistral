@@ -79,7 +79,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             'floating_ips'
         )
         free_ips = list(
-            filter(lambda fl_ip: fl_ip['instance_id'] is None, all_ips)
+            [fl_ip for fl_ip in all_ips if fl_ip['instance_id'] is None]
         )
 
         if free_ips:
