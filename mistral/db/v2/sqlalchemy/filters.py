@@ -20,6 +20,7 @@ def apply_filters(query, model, **filters):
 
     for key, value in filters.items():
         column_attr = getattr(model, key)
+
         if isinstance(value, dict):
             if 'in' in value:
                 query = query.filter(column_attr.in_(value['in']))
@@ -37,6 +38,10 @@ def apply_filters(query, model, **filters):
                 query = query.filter(column_attr <= value['lte'])
             elif 'eq' in value:
                 query = query.filter(column_attr == value['eq'])
+            elif 'has' in value:
+                like_pattern = '%{0}%'.format(value['has'])
+
+                query = query.filter(column_attr.like(like_pattern))
         else:
             filter_dict[key] = value
 

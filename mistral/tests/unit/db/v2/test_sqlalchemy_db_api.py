@@ -1045,6 +1045,24 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(0, len(fetched))
 
+    def test_filter_action_definitions_by_has_filter(self):
+        db_api.create_action_definition(ACTION_DEFINITIONS[0])
+        db_api.create_action_definition(ACTION_DEFINITIONS[1])
+        created3 = db_api.create_action_definition(ACTION_DEFINITIONS[2])
+
+        f = filter_utils.create_or_update_filter('name', "3", 'has')
+
+        fetched = db_api.get_action_definitions(**f)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created3, fetched[0])
+
+        f = filter_utils.create_or_update_filter('name', "Action", 'has')
+
+        fetched = db_api.get_action_definitions(**f)
+
+        self.assertEqual(3, len(fetched))
+
     def test_update_action_definition_with_name(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
 
