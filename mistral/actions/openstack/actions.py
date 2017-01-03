@@ -27,10 +27,11 @@ ceilometerclient = importutils.try_import('ceilometerclient.v2.client')
 cinderclient = importutils.try_import('cinderclient.v2.client')
 designateclient = importutils.try_import('designateclient.v1')
 glanceclient = importutils.try_import('glanceclient.v2.client')
+gnocchiclient = importutils.try_import('gnocchiclient.v1.client')
 heatclient = importutils.try_import('heatclient.v1.client')
-keystoneclient = importutils.try_import('keystoneclient.v3.client')
 ironic_inspector_client = importutils.try_import('ironic_inspector_client.v1')
 ironicclient = importutils.try_import('ironicclient.v1.client')
+keystoneclient = importutils.try_import('keystoneclient.v3.client')
 magnumclient = importutils.try_import('magnumclient.v1.client')
 mistralclient = importutils.try_import('mistralclient.api.v2.client')
 muranoclient = importutils.try_import('muranoclient.v1.client')
@@ -823,6 +824,38 @@ class AodhAction(base.OpenStackAction):
         return self._get_client_class()(
             endpoint_url,
             region_name=aodh_endpoint.region,
+            token=ctx.auth_token,
+            username=ctx.user_name
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()()
+
+
+class GnocchiAction(base.OpenStackAction):
+
+    @classmethod
+    def _get_client_class(cls):
+        return gnocchiclient.Client
+
+    def _create_client(self):
+        ctx = context.ctx()
+
+        LOG.debug("Gnocchi action security context: %s" % ctx)
+
+        gnocchi_endpoint = keystone_utils.get_endpoint_for_project(
+            'gnocchi'
+        )
+
+        endpoint_url = keystone_utils.format_url(
+            gnocchi_endpoint.url,
+            {'tenant_id': ctx.project_id}
+        )
+
+        return self._get_client_class()(
+            endpoint_url,
+            region_name=gnocchi_endpoint.region,
             token=ctx.auth_token,
             username=ctx.user_name
         )
