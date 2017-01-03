@@ -438,8 +438,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error=') > 0)
-        self.assertTrue(state_info.find('error=') < state_info.find('data='))
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('data='))
 
     def test_error_message_format_invalid_on_task_run(self):
         wf_text = """
@@ -465,8 +465,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error=') > 0)
-        self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
 
     def test_error_message_format_on_task_continue(self):
         wf_text = """
@@ -493,8 +493,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error=') > 0)
-        self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
 
     def test_error_message_format_on_action_complete(self):
         wf_text = """
@@ -524,8 +524,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         print(state_info)
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error=') > 0)
-        self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
 
     def test_error_message_format_complete_task(self):
         wf_text = """
@@ -557,8 +557,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error=') > 0)
-        self.assertTrue(state_info.find('error=') < state_info.find('wf='))
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('wf='))
 
     def test_error_message_format_on_adhoc_action_error(self):
         wb_text = """
@@ -596,8 +596,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error=') > 0)
-        self.assertTrue(state_info.find('error=') < state_info.find('action='))
+        self.assertGreater(state_info.find('error='), 0)
+        self.assertLess(state_info.find('error='), state_info.find('action='))
 
     def test_publish_bad_yaql(self):
         wf_text = """---
