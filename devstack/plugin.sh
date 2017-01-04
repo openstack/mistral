@@ -127,7 +127,7 @@ function install_mistral {
 function _install_mistraldashboard {
     git_clone $MISTRAL_DASHBOARD_REPO $MISTRAL_DASHBOARD_DIR $MISTRAL_DASHBOARD_BRANCH
     setup_develop $MISTRAL_DASHBOARD_DIR
-    ln -fs $MISTRAL_DASHBOARD_DIR/_50_mistral.py.example $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
+    ln -fs $MISTRAL_DASHBOARD_DIR/mistraldashboard/enabled/_50_mistral.py $HORIZON_DIR/openstack_dashboard/local/enabled/_50_mistral.py
 }
 
 
