@@ -27,34 +27,36 @@ from osprofiler import opts as profiler
 
 from mistral import version
 
+from mistral._i18n import _
+
 # Options under default group.
 launch_opt = cfg.ListOpt(
     'server',
     default=['all'],
-    help='Specifies which mistral server to start by the launch script. '
-         'Valid options are all or any combination of '
-         'api, engine, and executor.'
+    help=_('Specifies which mistral server to start by the launch script. '
+           'Valid options are all or any combination of '
+           'api, engine, and executor.')
 )
 
 wf_trace_log_name_opt = cfg.StrOpt(
     'workflow_trace_log_name',
     default='workflow_trace',
-    help='Logger name for pretty workflow trace output.'
+    help=_('Logger name for pretty workflow trace output.')
 )
 
 use_debugger_opt = cfg.BoolOpt(
     'use-debugger',
     default=False,
-    help='Enables debugger. Note that using this option changes how the '
-         'eventlet library is used to support async IO. This could result '
-         'in failures that do not occur under normal operation. '
-         'Use at your own risk.'
+    help=_('Enables debugger. Note that using this option changes how the '
+           'eventlet library is used to support async IO. This could result '
+           'in failures that do not occur under normal operation. '
+           'Use at your own risk.')
 )
 
 auth_type_opt = cfg.StrOpt(
     'auth_type',
     default='keystone',
-    help='Authentication type (valid options: keystone, keycloak-oidc)'
+    help=_('Authentication type (valid options: keystone, keycloak-oidc)')
 )
 
 api_opts = [
@@ -63,20 +65,20 @@ api_opts = [
     cfg.BoolOpt(
         'allow_action_execution_deletion',
         default=False,
-        help='Enables the ability to delete action_execution which '
-             'has no relationship with workflows.'
+        help=_('Enables the ability to delete action_execution which '
+               'has no relationship with workflows.')
     ),
     cfg.BoolOpt(
         'enable_ssl_api',
         default=False,
-        help='Enable the integrated stand-alone API to service requests'
-             'via HTTPS instead of HTTP.'
+        help=_('Enable the integrated stand-alone API to service requests'
+               'via HTTPS instead of HTTP.')
     ),
     cfg.IntOpt(
         'api_workers',
-        help='Number of workers for Mistral API service '
-             'default is equal to the number of CPUs available if that can '
-             'be determined, else a default worker count of 1 is returned.'
+        help=_('Number of workers for Mistral API service '
+               'default is equal to the number of CPUs available if that can '
+               'be determined, else a default worker count of 1 is returned.')
     )
 ]
 
@@ -84,16 +86,16 @@ js_impl_opt = cfg.StrOpt(
     'js_implementation',
     default='pyv8',
     choices=['pyv8', 'v8eval'],
-    help='The JavaScript implementation to be used by the std.javascript '
-         'action to evaluate scripts.'
+    help=_('The JavaScript implementation to be used by the std.javascript '
+           'action to evaluate scripts.')
 )
 
 rpc_impl_opt = cfg.StrOpt(
     'rpc_implementation',
     default='oslo',
     choices=['oslo', 'kombu'],
-    help='Specifies RPC implementation for RPC client and server. Support of '
-         'kombu driver is experimental.'
+    help=_('Specifies RPC implementation for RPC client and server. '
+           'Support of kombu driver is experimental.')
 )
 
 # TODO(ddeja): This config option is a part of oslo RPCClient
@@ -101,45 +103,45 @@ rpc_impl_opt = cfg.StrOpt(
 rpc_response_timeout_opt = cfg.IntOpt(
     'rpc_response_timeout',
     default=60,
-    help='Seconds to wait for a response from a call.'
+    help=_('Seconds to wait for a response from a call.')
 )
 
 os_endpoint_type = cfg.StrOpt(
     'os-actions-endpoint-type',
     default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'public'),
     choices=['public', 'admin', 'internal'],
-    help='Type of endpoint in identity service catalog to use for'
-         ' communication with OpenStack services.'
+    help=_('Type of endpoint in identity service catalog to use for'
+           ' communication with OpenStack services.')
 )
 
 expiration_token_duration = cfg.IntOpt(
     'expiration_token_duration',
     default=30,
-    help='Window of seconds to determine whether the given token is about'
-         ' to expire.'
+    help=_('Window of seconds to determine whether the given token is about'
+           ' to expire.')
 )
 
 pecan_opts = [
     cfg.StrOpt(
         'root',
         default='mistral.api.controllers.root.RootController',
-        help='Pecan root controller'
+        help=_('Pecan root controller')
     ),
     cfg.ListOpt(
         'modules',
         default=["mistral.api"],
-        help='A list of modules where pecan will search for applications.'
+        help=_('A list of modules where pecan will search for applications.')
     ),
     cfg.BoolOpt(
         'debug',
         default=False,
-        help='Enables the ability to display tracebacks in the browser and'
-             ' interactively debug during development.'
+        help=_('Enables the ability to display tracebacks in the browser and'
+               ' interactively debug during development.')
     ),
     cfg.BoolOpt(
         'auth_enable',
         default=True,
-        help='Enables user authentication in pecan.'
+        help=_('Enables user authentication in pecan.')
     )
 ]
 
@@ -148,21 +150,21 @@ engine_opts = [
     cfg.StrOpt(
         'host',
         default='0.0.0.0',
-        help='Name of the engine node. This can be an opaque '
-             'identifier. It is not necessarily a hostname, '
-             'FQDN, or IP address.'
+        help=_('Name of the engine node. This can be an opaque '
+               'identifier. It is not necessarily a hostname, '
+               'FQDN, or IP address.')
     ),
     cfg.StrOpt(
         'topic',
         default='mistral_engine',
-        help='The message topic that the engine listens on.'
+        help=_('The message topic that the engine listens on.')
     ),
     cfg.StrOpt('version', default='1.0', help='The version of the engine.'),
     cfg.IntOpt(
         'execution_field_size_limit_kb',
         default=1024,
-        help='The default maximum size in KB of large text fields '
-             'of runtime execution objects. Use -1 for no limit.'
+        help=_('The default maximum size in KB of large text fields '
+               'of runtime execution objects. Use -1 for no limit.')
     )
 ]
 
@@ -170,19 +172,19 @@ executor_opts = [
     cfg.StrOpt(
         'host',
         default='0.0.0.0',
-        help='Name of the executor node. This can be an opaque '
-             'identifier. It is not necessarily a hostname, '
-             'FQDN, or IP address.'
+        help=_('Name of the executor node. This can be an opaque '
+               'identifier. It is not necessarily a hostname, '
+               'FQDN, or IP address.')
     ),
     cfg.StrOpt(
         'topic',
         default='mistral_executor',
-        help='The message topic that the executor listens on.'
+        help=_('The message topic that the executor listens on.')
     ),
     cfg.StrOpt(
         'version',
         default='1.0',
-        help='The version of the executor.'
+        help=_('The version of the executor.')
     )
 ]
 
@@ -190,49 +192,49 @@ event_engine_opts = [
     cfg.StrOpt(
         'host',
         default='0.0.0.0',
-        help='Name of the event engine node. This can be an opaque '
-             'identifier. It is not necessarily a hostname, '
-             'FQDN, or IP address.'
+        help=_('Name of the event engine node. This can be an opaque '
+               'identifier. It is not necessarily a hostname, '
+               'FQDN, or IP address.')
     ),
     cfg.StrOpt(
         'topic',
         default='mistral_event_engine',
-        help='The message topic that the event engine listens on.'
+        help=_('The message topic that the event engine listens on.')
     ),
     cfg.StrOpt(
         'event_definitions_cfg_file',
         default='/etc/mistral/event_definitions.yaml',
-        help='Configuration file for event definitions.'
+        help=_('Configuration file for event definitions.')
     ),
 ]
 
 execution_expiration_policy_opts = [
     cfg.IntOpt(
         'evaluation_interval',
-        help='How often will the executions be evaluated '
-             '(in minutes). For example for value 120 the interval '
-             'will be 2 hours (every 2 hours).'
+        help=_('How often will the executions be evaluated '
+               '(in minutes). For example for value 120 the interval '
+               'will be 2 hours (every 2 hours).')
     ),
     cfg.IntOpt(
         'older_than',
-        help='Evaluate from which time remove executions in minutes. '
-             'For example when older_than = 60, remove all executions '
-             'that finished a 60 minutes ago or more. '
-             'Minimum value is 1. '
-             'Note that only final state execution will remove '
-             '( SUCCESS / ERROR ).'
+        help=_('Evaluate from which time remove executions in minutes. '
+               'For example when older_than = 60, remove all executions '
+               'that finished a 60 minutes ago or more. '
+               'Minimum value is 1. '
+               'Note that only final state execution will remove '
+               '( SUCCESS / ERROR ).')
     )
 ]
 
 coordination_opts = [
     cfg.StrOpt(
         'backend_url',
-        help='The backend URL to be used for coordination'
+        help=_('The backend URL to be used for coordination')
     ),
     cfg.FloatOpt(
         'heartbeat_interval',
         default=5.0,
-        help='Number of seconds between heartbeats for coordination.'
+        help=_('Number of seconds between heartbeats for coordination.')
     )
 ]
 
@@ -241,19 +243,19 @@ profiler_opts.append(
     cfg.StrOpt(
         'profiler_log_name',
         default='profiler_trace',
-        help='Logger name for the osprofiler trace output.'
+        help=_('Logger name for the osprofiler trace output.')
     )
 )
 
 keycloak_oidc_opts = [
     cfg.StrOpt(
         'auth_url',
-        help='Keycloak base url (e.g. https://my.keycloak:8443/auth)'
+        help=_('Keycloak base url (e.g. https://my.keycloak:8443/auth)')
     ),
     cfg.StrOpt(
         'insecure',
         default=False,
-        help='If True, SSL/TLS certificate verification is disabled'
+        help=_('If True, SSL/TLS certificate verification is disabled')
     )
 ]
 
