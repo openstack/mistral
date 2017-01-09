@@ -151,8 +151,20 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_2_action_exs))
-        self.assertEqual(states.ERROR, task_2_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_2_action_exs[1].state)
+
+        # Check there is exactly 1 action in Success and 1 in Error state.
+        # Order doesn't matter.
+        self.assertEqual(
+            1,
+            len([act_ex for act_ex in task_2_action_exs
+                 if act_ex.state == states.SUCCESS])
+        )
+
+        self.assertEqual(
+            1,
+            len([act_ex for act_ex in task_2_action_exs
+                 if act_ex.state == states.ERROR])
+        )
 
         # Check action executions of task 3.
         self.assertEqual(states.SUCCESS, task_3_ex.state)
