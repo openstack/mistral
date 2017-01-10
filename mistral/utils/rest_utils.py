@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 #
