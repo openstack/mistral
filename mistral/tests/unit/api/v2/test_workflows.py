@@ -15,12 +15,14 @@
 
 import copy
 import datetime
+
 import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral.tests.unit import base as unit_base
 from mistral import utils
 
 WF_DEFINITION = """
@@ -419,6 +421,26 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
 
         self.assertEqual(0, len(resp.json['workflows']))
+
+    @mock.patch('mistral.db.v2.api.get_workflow_definitions')
+    @mock.patch('mistral.context.context_from_headers_and_env')
+    def test_get_all_projects_admin(self, mock_context, mock_get_wf_defs):
+        admin_ctx = unit_base.get_context(admin=True)
+        mock_context.return_value = admin_ctx
+
+        resp = self.app.get('/v2/workflows?all_projects=true')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertTrue(mock_get_wf_defs.call_args[1].get('insecure', False))
+
+    def test_get_all_projects_normal_user(self):
+        resp = self.app.get(
+            '/v2/workflows?all_projects=true',
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_WFS)
     def test_get_all_pagination(self):

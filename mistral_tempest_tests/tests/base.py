@@ -25,7 +25,7 @@ CONF = config.CONF
 
 
 class TestCase(test.BaseTestCase):
-    credentials = ['primary', 'alt']
+    credentials = ['admin', 'primary', 'alt']
 
     @classmethod
     def skip_checks(cls):
@@ -46,12 +46,15 @@ class TestCase(test.BaseTestCase):
         if 'WITHOUT_AUTH' in os.environ:
             cls.mgr = mock.MagicMock()
             cls.mgr.auth_provider = service_base.AuthProv()
-            cls.alt_mgr = cls.mgr
+            cls.admin_mgr = cls.alt_mgr = cls.mgr
         else:
+            cls.admin_mgr = cls.admin_manager
             cls.mgr = cls.manager
             cls.alt_mgr = cls.alt_manager
 
         if cls._service == 'workflowv2':
+            cls.admin_client = mistral_client.MistralClientV2(
+                cls.admin_mgr.auth_provider, cls._service)
             cls.client = mistral_client.MistralClientV2(
                 cls.mgr.auth_provider, cls._service)
             cls.alt_client = mistral_client.MistralClientV2(
