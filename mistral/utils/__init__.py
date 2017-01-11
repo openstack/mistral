@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - Huawei Technologies Co. Ltd
 # Copyright 2016 - Brocade Communications Systems, Inc.
