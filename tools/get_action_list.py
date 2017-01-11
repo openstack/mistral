@@ -27,6 +27,8 @@ from cinderclient.openstack.common.apiclient import base as cinder_base
 from cinderclient.v2 import client as cinderclient
 from designateclient import client as designateclient
 from glanceclient.v2 import client as glanceclient
+from gnocchiclient.v1 import base as gnocchi_base
+from gnocchiclient.v1 import client as gnocchiclient
 from heatclient.openstack.common.apiclient import base as heat_base
 from heatclient.v1 import client as heatclient
 from ironicclient.common import base as ironic_base
@@ -89,6 +91,7 @@ BASE_BARBICAN_MANAGER = barbican_base.BaseEntityManager
 BASE_MAGNUM_MANAGER = magnum_base.Manager
 BASE_MURANO_MANAGER = murano_base.Manager
 BASE_AODH_MANAGER = aodh_base.Manager
+BASE_GNOCCHI_MANAGER = gnocchi_base.Manager
 
 
 def get_parser():
@@ -206,6 +209,10 @@ def get_aodh_client(**kwargs):
     return aodhclient.Client('')
 
 
+def get_gnocchi_client(**kwargs):
+    return gnocchiclient.Client()
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -221,6 +228,7 @@ CLIENTS = {
     'magnum': get_magnum_client,
     'murano': get_murano_client,
     'aodh': get_aodh_client,
+    'gnocchi': get_gnocchi_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -241,6 +249,7 @@ BASE_MANAGERS = {
     'magnum': BASE_MAGNUM_MANAGER,
     'murano': BASE_MURANO_MANAGER,
     'aodh': BASE_AODH_MANAGER,
+    'gnocchi': BASE_GNOCCHI_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...

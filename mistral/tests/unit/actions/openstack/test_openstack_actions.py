@@ -385,3 +385,15 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().alarm.get.called)
         mocked().alarm.get.assert_called_once_with(alarm_id="1234-abcd")
+
+    @mock.patch.object(actions.GnocchiAction, '_get_client')
+    def test_gnocchi_action(self, mocked):
+        method_name = "metric.get"
+        action_class = actions.GnocchiAction
+        action_class.client_method_name = method_name
+        params = {'metric_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run()
+
+        self.assertTrue(mocked().metric.get.called)
+        mocked().metric.get.assert_called_once_with(metric_id="1234-abcd")
