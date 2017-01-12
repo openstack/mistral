@@ -187,7 +187,7 @@ class ActionTestsV2(base.TestCase):
 
     @test.attr(type='smoke')
     def test_get_list_actions_greater_than_filter(self):
-        time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        time = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         resp, body = self.client.get_list_obj(
             'actions?created_at=gt:' + time.replace(' ', '%20')
         )
