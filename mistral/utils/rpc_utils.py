@@ -47,8 +47,10 @@ def _get_rpc_info(rpc_backend, transport):
     elif transport and len(transport.hosts) == 1:
         # TODO(ddeja): Handle multiple hosts.
         return _get_rpc_info_from_transport_url(transport, rpc_backend)
-    elif rpc_backend in ['rabbit', 'fake']:
+    elif rpc_backend == 'rabbit':
         return _get_rabbit_info_from_oslo()
+    elif rpc_backend == 'fake':
+        return {}
     else:
         raise exc.MistralException(
             'Mistral cannot run with rpc_backend %s' % rpc_backend
