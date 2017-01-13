@@ -135,8 +135,10 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
 
         self.assertEqual(states.RUNNING, wf1_t1_ex.state)
         self.assertEqual(2, len(wf1_t1_action_exs))
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[0].state)
-        self.assertEqual(states.RUNNING, wf1_t1_action_exs[1].state)
+        # Check there is exactly 1 action in Running and 1 in Cancelled state.
+        # Order doesn't matter.
+        self._assert_single_item(wf1_t1_action_exs, state=states.RUNNING)
+        self._assert_single_item(wf1_t1_action_exs, state=states.CANCELLED)
 
         self.engine.on_action_complete(
             wf1_t1_action_exs[1].id,
@@ -168,8 +170,10 @@ class ReverseWorkflowRerunCancelledTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(wf1_t1_action_exs))
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, wf1_t1_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in Cancelled state.
+        # Order doesn't matter.
+        self._assert_single_item(wf1_t1_action_exs, state=states.SUCCESS)
+        self._assert_single_item(wf1_t1_action_exs, state=states.CANCELLED)
 
         # Check action executions of task 2.
         self.assertEqual(states.SUCCESS, wf1_t2_ex.state)
