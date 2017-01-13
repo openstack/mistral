@@ -72,6 +72,7 @@ class MistralContext(BaseContext):
     _elements = set([
         "auth_uri",
         "auth_cacert",
+        "insecure",
         "user_id",
         "project_id",
         "auth_token",
@@ -111,6 +112,7 @@ def context_from_headers_and_env(headers, env):
     params = _extract_auth_params_from_headers(headers)
 
     auth_cacert = params['auth_cacert']
+    insecure = params['insecure']
     auth_token = params['auth_token']
     auth_uri = params['auth_uri']
     project_id = params['project_id']
@@ -130,6 +132,7 @@ def context_from_headers_and_env(headers, env):
     return MistralContext(
         auth_uri=auth_uri,
         auth_cacert=auth_cacert,
+        insecure=insecure,
         user_id=user_id,
         project_id=project_id,
         auth_token=auth_token,
@@ -152,6 +155,7 @@ def _extract_auth_params_from_headers(headers):
         params = {
             # TODO(akovi): Target cert not handled yet
             'auth_cacert': None,
+            'insecure': headers.get('X-Target-Insecure', False),
             'auth_token': headers.get('X-Target-Auth-Token'),
             'auth_uri': headers.get('X-Target-Auth-Uri'),
             'project_id': headers.get('X-Target-Project-Id'),
@@ -174,6 +178,7 @@ def _extract_auth_params_from_headers(headers):
     else:
         params = {
             'auth_cacert': CONF.keystone_authtoken.cafile,
+            'insecure': False,
             'auth_token': headers.get('X-Auth-Token'),
             'auth_uri': CONF.keystone_authtoken.auth_uri,
             'project_id': headers.get('X-Project-Id'),
