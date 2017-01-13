@@ -12,22 +12,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import socket
+from six import moves
 
 import kombu
 from oslo_log import log as logging
 
 from mistral.engine.rpc_backend import base as rpc_base
 from mistral.engine.rpc_backend.kombu import base as kombu_base
+from mistral.engine.rpc_backend.kombu import kombu_listener
 from mistral import exceptions as exc
 from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
-IS_RECEIVED = 'kombu_rpc_is_received'
-RESULT = 'kombu_rpc_result'
-CORR_ID = 'kombu_rpc_correlation_id'
-TYPE = 'kombu_rpc_type'
 
 
 class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
@@ -63,68 +60,34 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         )
 
         # Create queue.
-        queue_name = utils.generate_unicode_uuid()
+        self.queue_name = utils.generate_unicode_uuid()
         self.callback_queue = kombu.Queue(
-            queue_name,
+            self.queue_name,
             exchange=exchange,
-            routing_key=queue_name,
+            routing_key=self.queue_name,
             durable=False,
             exclusive=True,
             auto_delete=True
         )
 
-        # Create consumer.
-        self.consumer = kombu.Consumer(
-            channel=self.conn.channel(),
-            queues=self.callback_queue,
-            callbacks=[self._on_response],
-            accept=['pickle', 'json']
+        self._listener = kombu_listener.KombuRPCListener(
+            connection=self.conn,
+            callback_queue=self.callback_queue
         )
-        self.consumer.qos(prefetch_count=1)
 
-    @staticmethod
-    def _on_response(response, message):
-        """Callback on response.
+        self._listener.start()
 
-        This method is automatically called when a response is incoming and
-        decides if it is the message we are waiting for - the message with the
-        result.
-
-        :param response: the body of the amqp message already deserialized
-            by kombu
-        :param message: the plain amqp kombu.message with additional
-            information
-        """
-        LOG.debug("Got response: {0}".format(response))
-
-        try:
-            message.ack()
-        except Exception as e:
-            LOG.exception("Failed to acknowledge AMQP message: %s" % e)
-        else:
-            LOG.debug("AMQP message acknowledged.")
-
-            # Process response.
-            if (utils.get_thread_local(CORR_ID) ==
-                    message.properties['correlation_id']):
-                utils.set_thread_local(IS_RECEIVED, True)
-
-                if message.properties.get('type') == 'error':
-                    utils.set_thread_local(TYPE, 'error')
-                utils.set_thread_local(RESULT, response)
-
-    def _wait_for_result(self):
+    def _wait_for_result(self, correlation_id):
         """Waits for the result from the server.
 
         Waits for the result from the server, checks every second if
         a timeout occurred. If a timeout occurred - the `RpcTimeout` exception
         will be raised.
         """
-        while not utils.get_thread_local(IS_RECEIVED):
-            try:
-                self.conn.drain_events(timeout=self._timeout)
-            except socket.timeout:
-                raise exc.MistralException("RPC Request timeout")
+        try:
+            return self._listener.get_result(correlation_id, self._timeout)
+        except moves.queue.Empty:
+            raise exc.MistralException("RPC Request timeout")
 
     def _call(self, ctx, method, target, async=False, **kwargs):
         """Performs a remote call for the given method.
@@ -137,10 +100,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
             asynchronous or not.
         :return: result of the method or None if async.
         """
-        utils.set_thread_local(CORR_ID, utils.generate_unicode_uuid())
-        utils.set_thread_local(IS_RECEIVED, False)
-
-        self.consumer.consume()
+        correlation_id = utils.generate_unicode_uuid()
 
         body = {
             'rpc_ctx': ctx.to_dict(),
@@ -151,39 +111,37 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
 
         LOG.debug("Publish request: {0}".format(body))
 
-        # Publish request.
-        with kombu.producers[self.conn].acquire(block=True) as producer:
-            producer.publish(
-                body=body,
-                exchange=self.exchange,
-                routing_key=self.topic,
-                reply_to=self.callback_queue.name,
-                correlation_id=utils.get_thread_local(CORR_ID),
-                serializer='mistral_serialization',
-                delivery_mode=2
-            )
+        try:
+            if not async:
+                self._listener.add_listener(correlation_id)
 
-        # Start waiting for response.
-        if async:
-            return
+            # Publish request.
+            with kombu.producers[self.conn].acquire(block=True) as producer:
+                producer.publish(
+                    body=body,
+                    exchange=self.exchange,
+                    routing_key=self.topic,
+                    reply_to=self.queue_name,
+                    correlation_id=correlation_id,
+                    serializer='mistral_serialization',
+                    delivery_mode=2
+                )
 
-        self._wait_for_result()
-        result = utils.get_thread_local(RESULT)
-        res_type = utils.get_thread_local(TYPE)
+            # Start waiting for response.
+            if async:
+                return
 
-        self._clear_thread_local()
+            result = self._wait_for_result(correlation_id)
+            res_type = result[kombu_base.TYPE]
+            res_object = result[kombu_base.RESULT]
 
-        if res_type == 'error':
-            raise result
+            if res_type == 'error':
+                raise res_object
+        finally:
+            if not async:
+                self._listener.remove_listener(correlation_id)
 
-        return result
-
-    @staticmethod
-    def _clear_thread_local():
-        utils.set_thread_local(RESULT, None)
-        utils.set_thread_local(CORR_ID, None)
-        utils.set_thread_local(IS_RECEIVED, None)
-        utils.set_thread_local(TYPE, None)
+        return res_object
 
     def sync_call(self, ctx, method, target=None, **kwargs):
         return self._call(ctx, method, async=False, target=target, **kwargs)
