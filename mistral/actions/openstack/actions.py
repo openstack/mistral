@@ -442,7 +442,6 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
             api_version=1,
             inspector_url=inspector_endpoint.url,
             auth_token=ctx.auth_token,
-            insecure=ctx.insecure
         )
 
 
