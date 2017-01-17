@@ -28,6 +28,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
 
+from mistral import context as auth_ctx
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import sqlite_lock
@@ -487,14 +488,15 @@ def create_workflow_definition(values, session=None):
 @b.session_aware()
 def update_workflow_definition(identifier, values, session=None):
     wf_def = get_workflow_definition(identifier)
+    ctx = auth_ctx.ctx()
 
-    if wf_def.project_id != security.get_project_id():
+    if not ctx.is_admin and wf_def.project_id != security.get_project_id():
         raise exc.NotAllowedException(
             "Can not update workflow of other tenants. "
             "[workflow_identifier=%s]" % identifier
         )
 
-    if wf_def.is_system:
+    if not ctx.is_admin and wf_def.is_system:
         raise exc.InvalidActionException(
             "Attempt to modify a system workflow: %s" % identifier
         )

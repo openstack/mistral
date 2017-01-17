@@ -615,6 +615,48 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             {'definition': 'my new definition', 'scope': 'private'}
         )
 
+    def test_update_other_project_workflow_by_admin(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        # Switch to admin.
+        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+
+        updated = db_api.update_workflow_definition(
+            created['id'],
+            {
+                'definition': 'my new definition',
+                'scope': 'public',
+            }
+        )
+
+        self.assertEqual('my new definition', updated.definition)
+
+        # Switch back.
+        auth_context.set_ctx(test_base.get_context())
+
+        fetched = db_api.get_workflow_definition(created['id'])
+
+        self.assertEqual(updated, fetched)
+
+    def test_update_system_workflow_by_admin(self):
+        system_workflow = copy.deepcopy(WF_DEFINITIONS[0])
+        system_workflow['is_system'] = True
+
+        created = db_api.create_workflow_definition(system_workflow)
+
+        # Switch to admin.
+        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+
+        updated = db_api.update_workflow_definition(
+            created['id'],
+            {
+                'definition': 'my new definition',
+                'scope': 'public'
+            }
+        )
+
+        self.assertEqual('my new definition', updated.definition)
+
     def test_create_or_update_workflow_definition(self):
         name = WF_DEFINITIONS[0]['name']
 
