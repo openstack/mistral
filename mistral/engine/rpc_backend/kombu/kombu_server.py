@@ -18,11 +18,13 @@ import threading
 import kombu
 from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging as messaging
 from stevedore import driver
 
 from mistral import context as auth_ctx
 from mistral.engine.rpc_backend import base as rpc_base
 from mistral.engine.rpc_backend.kombu import base as kombu_base
+from mistral.engine.rpc_backend.kombu import kombu_hosts
 from mistral import exceptions as exc
 
 
@@ -43,17 +45,22 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         self._register_mistral_serialization()
         CONF.register_opts(_pool_opts)
 
+        self._transport_url = messaging.TransportURL.parse(
+            CONF,
+            CONF.transport_url
+        )
+        self._check_backend()
+
+        self.topic = conf.topic
+        self.server_id = conf.host
+
+        self._hosts = kombu_hosts.KombuHosts(CONF)
+
         self._executor_threads = CONF.executor_thread_pool_size
-        self.exchange = conf.get('exchange', '')
-        self.user_id = conf.get('user_id', 'guest')
-        self.password = conf.get('password', 'guest')
-        self.topic = conf.get('topic', 'mistral')
-        self.server_id = conf.get('server_id', '')
-        self.host = conf.get('host', 'localhost')
-        self.port = conf.get('port', 5672)
-        self.virtual_host = conf.get('virtual_host', '/')
-        self.durable_queue = conf.get('durable_queues', False)
-        self.auto_delete = conf.get('auto_delete', False)
+        self.exchange = CONF.control_exchange
+        self.virtual_host = CONF.oslo_messaging_rabbit.rabbit_virtual_host
+        self.durable_queue = CONF.oslo_messaging_rabbit.amqp_durable_queues
+        self.auto_delete = CONF.oslo_messaging_rabbit.amqp_auto_delete
         self.routing_key = self.topic
         self.channel = None
         self.conn = None
@@ -70,16 +77,17 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
     def run(self, executor='blocking'):
         """Start the server."""
         self._prepare_worker(executor)
+        host = self._hosts.get_host()
 
         self.conn = self._make_connection(
-            self.host,
-            self.port,
-            self.user_id,
-            self.password,
+            host.hostname,
+            host.port,
+            host.username,
+            host.password,
             self.virtual_host,
         )
 
-        LOG.info("Connected to AMQP at %s:%s" % (self.host, self.port))
+        LOG.info("Connected to AMQP at %s:%s" % (host.hostname, host.port))
 
         try:
             conn = kombu.connections[self.conn].acquire(block=True)

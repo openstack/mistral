@@ -22,9 +22,7 @@ class RPCClient(object):
         RPC Client is responsible for sending requests to RPC Server.
         All RPC client drivers have to inherit from this class.
 
-        :param conf: dict containing credentials such as
-            'user_id', 'password', and also exchange and connection info:
-            'exchange', 'topic', 'host', 'port', 'virtual_host'.
+        :param conf: Additional config provided by upper layer.
         """
         self.conf = conf
 
@@ -54,9 +52,7 @@ class RPCServer(object):
         respond to them respectively to the registered endpoints.
         All RPC server drivers have to inherit from this class.
 
-        :param conf: dict containing credentials such as
-            'user_id', 'password', and also exchange and connection info:
-            'exchange', 'topic', 'rabbit_host', 'rabbit_port', 'virtual_host'.
+        :param conf: Additional config provided by upper layer.
         """
         self.conf = conf
 

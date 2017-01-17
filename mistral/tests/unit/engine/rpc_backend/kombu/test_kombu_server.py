@@ -34,8 +34,7 @@ class KombuServerTestCase(base.KombuTestCase):
     def setUp(self):
         super(KombuServerTestCase, self).setUp()
 
-        self.conf = {}
-        self.conf['exchange'] = 'test_exchange'
+        self.conf = mock.MagicMock()
         self.server = kombu_server.KombuRPCServer(self.conf)
         self.ctx = type('context', (object,), {'to_dict': lambda self: {}})()
 

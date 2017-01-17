@@ -27,8 +27,8 @@ class OsloRPCServer(rpc_base.RPCServer):
     def __init__(self, conf):
         super(OsloRPCServer, self).__init__(conf)
 
-        self.topic = conf.get('topic', '')
-        self.server_id = conf.get('server_id', '')
+        self.topic = conf.topic
+        self.server_id = conf.host
         self.queue = self.topic
         self.routing_key = self.topic
         self.channel = None

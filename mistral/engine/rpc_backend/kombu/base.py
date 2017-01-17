@@ -15,6 +15,8 @@
 import kombu
 from kombu import serialization
 
+from mistral import exceptions as exc
+from mistral.utils import rpc_utils
 from mistral.utils import serializers
 
 IS_RECEIVED = 'kombu_rpc_is_received'
@@ -25,6 +27,8 @@ TYPE = 'kombu_rpc_type'
 
 class Base(object):
     """Base class for Client and Server."""
+    def __init__(self):
+        self._transport_url = None
 
     @staticmethod
     def _make_connection(amqp_host, amqp_port, amqp_user, amqp_password,
@@ -118,3 +122,9 @@ class Base(object):
             decoder=serializers.KombuSerializer.deserialize,
             content_type='application/json'
         )
+
+    def _check_backend(self):
+        backend = rpc_utils.get_rpc_backend(self._transport_url)
+
+        if backend not in ['rabbit', 'kombu']:
+            raise exc.MistralException("Unsupported backend: %s" % backend)

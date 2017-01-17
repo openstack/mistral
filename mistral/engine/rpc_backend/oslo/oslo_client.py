@@ -22,7 +22,7 @@ from mistral.engine.rpc_backend import rpc
 class OsloRPCClient(rpc_base.RPCClient):
     def __init__(self, conf):
         super(OsloRPCClient, self).__init__(conf)
-        self.topic = conf.get('topic', '')
+        self.topic = conf.topic
 
         serializer = auth_ctx.RpcContextSerializer(
             auth_ctx.JsonPayloadSerializer())
