@@ -61,7 +61,7 @@ def run_execution_expiration_policy(self, ctx):
     LOG.debug("Starting expiration policy task.")
 
     older_than = CONF.execution_expiration_policy.older_than
-    exp_time = (datetime.datetime.now()
+    exp_time = (datetime.datetime.utcnow()
                 - datetime.timedelta(minutes=older_than))
 
     with db_api.transaction():
