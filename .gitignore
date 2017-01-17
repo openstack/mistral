@@ -54,3 +54,6 @@ releasenotes/build
 
 # Files created by doc build
 doc/source/api
+
+# Files created by API build
+api-ref/build/
