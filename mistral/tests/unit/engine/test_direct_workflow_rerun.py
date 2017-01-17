@@ -287,8 +287,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_2_action_exs))
-        self.assertEqual(states.ERROR, task_2_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_2_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        self._assert_single_item(task_2_action_exs, state=states.SUCCESS)
+        self._assert_single_item(task_2_action_exs, state=states.ERROR)
 
         # Check action executions of task 3.
         self.assertEqual(states.SUCCESS, task_3_ex.state)
@@ -405,17 +407,25 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_21_action_exs))
-        self.assertEqual(states.ERROR, task_21_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_21_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        task_21_action_exs_1 = self._assert_single_item(
+            task_21_action_exs,
+            state=states.ERROR
+        )
+        task_21_action_exs_2 = self._assert_single_item(
+            task_21_action_exs,
+            state=states.SUCCESS
+        )
 
         self.assertDictEqual(
             {'output': env['var1']},
-            task_21_action_exs[0].input
+            task_21_action_exs_1.input
         )
 
         self.assertDictEqual(
             {'output': updated_env['var1']},
-            task_21_action_exs[1].input
+            task_21_action_exs_2.input
         )
 
         # Check action executions of task 22.
@@ -873,8 +883,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_3_action_exs))
-        self.assertEqual(states.ERROR, task_3_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_3_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        self._assert_single_item(task_3_action_exs, state=states.SUCCESS)
+        self._assert_single_item(task_3_action_exs, state=states.ERROR)
 
     @mock.patch.object(
         std_actions.EchoAction,
@@ -991,8 +1003,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_1_action_exs))
-        self.assertEqual(states.ERROR, task_1_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_1_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        self._assert_single_item(task_1_action_exs, state=states.SUCCESS)
+        self._assert_single_item(task_1_action_exs, state=states.ERROR)
 
         # Check action executions of task 2.
         self.assertEqual(states.SUCCESS, task_2_ex.state)
@@ -1003,8 +1017,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_2_action_exs))
-        self.assertEqual(states.ERROR, task_2_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_2_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        self._assert_single_item(task_2_action_exs, state=states.SUCCESS)
+        self._assert_single_item(task_2_action_exs, state=states.ERROR)
 
         # Check action executions of task 3.
         self.assertEqual(states.SUCCESS, task_3_ex.state)
@@ -1252,8 +1268,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(task_2_action_exs))
-        self.assertEqual(states.ERROR, task_2_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, task_2_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        self._assert_single_item(task_2_action_exs, state=states.SUCCESS)
+        self._assert_single_item(task_2_action_exs, state=states.ERROR)
 
         # Check action executions of task 3.
         self.assertEqual(states.SUCCESS, task_3_ex.state)
@@ -1361,8 +1379,13 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         )
 
         self.assertEqual(2, len(sub_wf_task_ex_action_exs))
-        self.assertEqual(states.ERROR, sub_wf_task_ex_action_exs[0].state)
-        self.assertEqual(states.SUCCESS, sub_wf_task_ex_action_exs[1].state)
+        # Check there is exactly 1 action in Success and 1 in error state.
+        # Order doesn't matter.
+        self._assert_single_item(
+            sub_wf_task_ex_action_exs,
+            state=states.SUCCESS
+        )
+        self._assert_single_item(sub_wf_task_ex_action_exs, state=states.ERROR)
 
         # Wait for the main workflow to succeed.
         self.await_workflow_success(wf_ex.id)
