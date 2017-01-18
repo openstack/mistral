@@ -33,6 +33,7 @@ def get_yaql_context(data_context):
         ROOT_YAQL_CONTEXT = yaql.create_context()
 
         _register_yaql_functions(ROOT_YAQL_CONTEXT)
+
     new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
     new_ctx['$'] = data_context
 
@@ -62,7 +63,7 @@ def get_jinja_context(data_context):
 def get_custom_functions():
     """Get custom functions
 
-    Retreives the list of custom evaluation functions
+    Retrieves the list of custom evaluation functions
     """
     functions = dict()
 
@@ -70,6 +71,7 @@ def get_custom_functions():
         namespace='mistral.expression.functions',
         invoke_on_load=False
     )
+
     for name in mgr.names():
         functions[name] = mgr[name].plugin
 
@@ -118,7 +120,6 @@ def json_pp_(context, data=None):
 
 
 def task_(context, task_name):
-
     # This section may not exist in a context if it's calculated not in
     # task scope.
     cur_task = context['__task_execution']
