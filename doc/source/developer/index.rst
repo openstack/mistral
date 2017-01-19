@@ -8,4 +8,5 @@ Developer's Reference
    extending_yaql
    asynchronous_actions
    devstack
+   debug
    troubleshooting
