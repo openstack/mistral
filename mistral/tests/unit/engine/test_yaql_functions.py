@@ -174,6 +174,61 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn('non_existing_task', wf_ex.state_info)
 
+    def test_task_function_no_arguments(self):
+        wf_text = """---
+            version: '2.0'
+
+            wf:
+              tasks:
+                task1:
+                  action: std.echo output=1
+                  publish:
+                    task1_id: <% task().id %>
+                    task1_result:  <% task().result %>
+                    task1_state: <% task().state %>
+                  on-success: task2
+
+                task2:
+                  action: std.echo output=2
+                  publish:
+                    task2_id: <% task().id %>
+                    task2_result:  <% task().result %>
+                    task2_state: <% task().state %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task1_ex = self._assert_single_item(
+                wf_ex.task_executions, name='task1'
+            )
+            task2_ex = self._assert_single_item(
+                wf_ex.task_executions, name='task2'
+            )
+
+            self.assertDictEqual(
+                {
+                    'task1_id': task1_ex.id,
+                    'task1_result': 1,
+                    'task1_state': states.SUCCESS
+                },
+                task1_ex.published
+            )
+            self.assertDictEqual(
+                {
+                    'task2_id': task2_ex.id,
+                    'task2_result': 2,
+                    'task2_state': states.SUCCESS
+                },
+                task2_ex.published
+            )
+
     def test_uuid_function(self):
         wf_text = """---
             version: '2.0'
