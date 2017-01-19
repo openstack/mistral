@@ -463,3 +463,28 @@ class SleepAction(base.Action):
         time.sleep(1)
 
         return None
+
+
+class TestDictAction(base.Action):
+    """Generates test dict."""
+
+    def __init__(self, size=0, key_prefix='', val=''):
+        self.size = size
+        self.key_prefix = key_prefix
+        self.val = val
+
+    def run(self):
+        LOG.info(
+            'Running test_dict action [size=%s, key_prefix=%s, val=%s]' %
+            (self.size, self.key_prefix, self.val)
+        )
+
+        res = {}
+
+        for i in range(self.size):
+            res['%s%s' % (self.key_prefix, i)] = self.val
+
+        return res
+
+    def test(self):
+        return {}
