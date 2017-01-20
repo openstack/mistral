@@ -412,6 +412,7 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
             "versionworkflow",
             "workflowversionworkflow",
             "version_workflow",
+            "version-workflow",
         )
 
         for valid in valid_names:

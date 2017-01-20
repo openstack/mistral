@@ -16,6 +16,9 @@ actions:
     actionversionaction:
         base: std.noop
 
+    action-action:
+        base: std.noop
+
 workflows:
 
   workflowversion:
@@ -41,3 +44,9 @@ workflows:
     tasks:
       task1:
         workflow: workflowversion
+
+  workflow-with-hyphen:
+    description: Workflow name containing -
+    tasks:
+      task1:
+        action: action-action
