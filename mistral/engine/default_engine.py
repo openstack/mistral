@@ -110,7 +110,7 @@ class DefaultEngine(base.Engine):
     @u.log_exec(LOG)
     @profiler.trace('engine-on-action-complete')
     def on_action_complete(self, action_ex_id, result, wf_action=False,
-                           async=False):
+                           async_=False):
         with db_api.transaction():
             if wf_action:
                 action_ex = db_api.get_workflow_execution(action_ex_id)

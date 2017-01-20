@@ -200,7 +200,7 @@ class EngineClient(base.Engine):
 
     @wrap_messaging_exception
     def on_action_complete(self, action_ex_id, result, wf_action=False,
-                           async=False):
+                           async_=False):
         """Conveys action result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
@@ -223,7 +223,7 @@ class EngineClient(base.Engine):
         :return: Action(or workflow if wf_action=True) execution object.
         """
 
-        call = self._client.async_call if async else self._client.sync_call
+        call = self._client.async_call if async_ else self._client.sync_call
 
         return call(
             auth_ctx.ctx(),
@@ -337,7 +337,7 @@ class ExecutorClient(base.Executor):
         self._client = get_rpc_client_driver()(rpc_conf_dict)
 
     def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params, target=None, async=True, safe_rerun=False):
+                   action_params, target=None, async_=True, safe_rerun=False):
         """Sends a request to run action to executor.
 
         :param action_ex_id: Action execution id.
@@ -361,7 +361,7 @@ class ExecutorClient(base.Executor):
         }
 
         rpc_client_method = (self._client.async_call
-                             if async else self._client.sync_call)
+                             if async_ else self._client.sync_call)
 
         res = rpc_client_method(auth_ctx.ctx(), 'run_action', **kwargs)
 
