@@ -19,6 +19,7 @@ from mistral.tests.unit.engine.rpc_backend.kombu import fake_kombu
 
 import mock
 import socket
+from stevedore import driver
 
 with mock.patch.dict('sys.modules', kombu=fake_kombu):
     from mistral.engine.rpc_backend.kombu import kombu_server
@@ -259,4 +260,30 @@ class KombuServerTestCase(base.KombuTestCase):
             result,
             reply_to,
             correlation_id
+        )
+
+    @mock.patch('stevedore.driver.DriverManager')
+    def test__prepare_worker(self, driver_manager_mock):
+        worker_mock = mock.MagicMock()
+        mgr_mock = mock.MagicMock()
+        mgr_mock.driver.return_value = worker_mock
+
+        def side_effect(*args, **kwargs):
+            return mgr_mock
+
+        driver_manager_mock.side_effect = side_effect
+
+        self.server._prepare_worker('blocking')
+
+        self.assertEqual(self.server._worker, worker_mock)
+
+    @mock.patch('stevedore.driver.DriverManager')
+    def test__prepare_worker_no_valid_executor(self, driver_manager_mock):
+
+        driver_manager_mock.side_effect = driver.NoMatches()
+
+        self.assertRaises(
+            driver.NoMatches,
+            self.server._prepare_worker,
+            'non_valid_executor'
         )
