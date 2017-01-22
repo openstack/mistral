@@ -2,7 +2,7 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 
-alembic>=0.8.4 # MIT
+alembic>=0.8.10 # MIT
 aodhclient>=0.7.0 # Apache-2.0
 Babel>=2.3.4 # BSD
 croniter>=0.3.4 # MIT License
@@ -44,7 +44,7 @@ python-senlinclient>=1.1.0 # Apache-2.0
 python-swiftclient>=3.2.0 # Apache-2.0
 python-tackerclient>=0.8.0 # Apache-2.0
 python-troveclient>=2.2.0 # Apache-2.0
-python-ironicclient>=1.9.0 # Apache-2.0
+python-ironicclient>=1.10.0 # Apache-2.0
 python-ironic-inspector-client>=1.5.0 # Apache-2.0
 python-zaqarclient>=1.0.0 # Apache-2.0
 PyYAML>=3.10.0 # MIT
