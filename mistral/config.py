@@ -223,6 +223,14 @@ execution_expiration_policy_opts = [
                'Minimum value is 1. '
                'Note that only final state execution will remove '
                '( SUCCESS / ERROR ).')
+    ),
+    cfg.IntOpt(
+        'batch_size',
+        default=0,
+        help=_('Size of batch of expired executions to be deleted.'
+               'The default value is 0. If it is set to 0, '
+               'size of batch is total number of expired executions'
+               'that is going to be deleted.')
     )
 ]
 

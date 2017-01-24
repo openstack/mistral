@@ -159,6 +159,94 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         self.assertEqual(0, len(execs))
 
+    def test_deletion_of_expired_executions_with_batch_size_scenario1(self):
+        # Scenario1 test will test with batch_size of 3,
+        # 5 expired executions and different values of "older_than"
+        # which is 30 and 5 minutes respectively.
+        # Expected_result: All expired executions are successfully deleted.
+
+        cfg.CONF.set_default(
+            'batch_size',
+            3,
+            group='execution_expiration_policy'
+        )
+
+        # Since we are removing other projects execution,
+        # we want to load the executions with other project_id.
+        _switch_context('non_admin_project', False)
+
+        _create_workflow_executions()
+
+        # Switch context to Admin since expiration policy running as Admin.
+        _switch_context(None, True)
+
+        _set_expiration_policy_config(1, 30)
+
+        # Call for all expired wfs execs.
+        now = datetime.datetime.now()
+        execs = db_api.get_expired_executions(now)
+
+        # Should be only 5, the RUNNING execution shouldn't return,
+        # so the child wf (that has parent task id).
+        self.assertEqual(5, len(execs))
+
+        older_than = cfg.CONF.execution_expiration_policy.older_than
+        exp_time = (datetime.datetime.now()
+                    - datetime.timedelta(minutes=older_than))
+        batch_size = cfg.CONF.execution_expiration_policy.batch_size
+        expiration_policy._delete_expired_executions(
+            batch_size,
+            exp_time
+        )
+        execs = db_api.get_expired_executions(now)
+        self.assertEqual(2, len(execs))
+
+        _set_expiration_policy_config(1, 5)
+        expiration_policy.run_execution_expiration_policy(self, ctx)
+        execs = db_api.get_expired_executions(now)
+        self.assertEqual(0, len(execs))
+
+    def test_deletion_of_expired_executions_with_batch_size_scenario2(self):
+        # Scenario2 will test with batch_size of 2, 5 expired executions
+        # with value of "older_than" that is 5 minutes.
+        # Expected_result: All expired executions are successfully deleted.
+
+        cfg.CONF.set_default(
+            'batch_size',
+            2,
+            group='execution_expiration_policy'
+        )
+
+        # Since we are removing other projects execution,
+        # we want to load the executions with other project_id.
+        _switch_context('non_admin_project', False)
+
+        _create_workflow_executions()
+
+        # Switch context to Admin since expiration policy running as Admin.
+        _switch_context(None, True)
+
+        _set_expiration_policy_config(1, 5)
+
+        # Call for all expired wfs execs.
+        now = datetime.datetime.now()
+        execs = db_api.get_expired_executions(now)
+
+        # Should be only 5, the RUNNING execution shouldn't return,
+        # so the child wf (that has parent task id).
+        self.assertEqual(5, len(execs))
+
+        older_than = cfg.CONF.execution_expiration_policy.older_than
+        exp_time = (datetime.datetime.now()
+                    - datetime.timedelta(minutes=older_than))
+        batch_size = cfg.CONF.execution_expiration_policy.batch_size
+        expiration_policy._delete_expired_executions(
+            batch_size,
+            exp_time
+        )
+        execs = db_api.get_expired_executions(now)
+        self.assertEqual(0, len(execs))
+
     def test_negative_wrong_conf_values(self):
         _set_expiration_policy_config(None, None)
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
