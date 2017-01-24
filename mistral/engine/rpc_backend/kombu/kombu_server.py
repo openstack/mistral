@@ -12,8 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import amqp
 import socket
 import threading
+import time
 
 import kombu
 from oslo_config import cfg
@@ -69,6 +71,10 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         self.endpoints = []
         self._worker = None
 
+        # TODO(ddeja): Those 2 options should be gathered from config.
+        self._sleep_time = 1
+        self._max_sleep_time = 512
+
     @property
     def is_running(self):
         """Return whether server is running."""
@@ -77,57 +83,75 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
     def run(self, executor='blocking'):
         """Start the server."""
         self._prepare_worker(executor)
-        host = self._hosts.get_host()
 
-        self.conn = self._make_connection(
-            host.hostname,
-            host.port,
-            host.username,
-            host.password,
-            self.virtual_host,
-        )
+        while True:
+            try:
+                host = self._hosts.get_host()
 
-        LOG.info("Connected to AMQP at %s:%s" % (host.hostname, host.port))
+                self.conn = self._make_connection(
+                    host.hostname,
+                    host.port,
+                    host.username,
+                    host.password,
+                    self.virtual_host,
+                )
 
-        try:
-            conn = kombu.connections[self.conn].acquire(block=True)
-            exchange = self._make_exchange(
-                self.exchange,
-                durable=self.durable_queue,
-                auto_delete=self.auto_delete
-            )
-            queue = self._make_queue(
-                self.topic,
-                exchange,
-                routing_key=self.routing_key,
-                durable=self.durable_queue,
-                auto_delete=self.auto_delete
-            )
-            with conn.Consumer(
-                    queues=queue,
-                    callbacks=[self._process_message],
-            ) as consumer:
-                consumer.qos(prefetch_count=1)
+                conn = kombu.connections[self.conn].acquire(block=True)
 
-                self._running.set()
-                self._stopped.clear()
+                exchange = self._make_exchange(
+                    self.exchange,
+                    durable=self.durable_queue,
+                    auto_delete=self.auto_delete
+                )
 
-                while self.is_running:
-                    try:
-                        conn.drain_events(timeout=1)
-                    except socket.timeout:
-                        pass
-                    except KeyboardInterrupt:
-                        self.stop()
+                queue = self._make_queue(
+                    self.topic,
+                    exchange,
+                    routing_key=self.routing_key,
+                    durable=self.durable_queue,
+                    auto_delete=self.auto_delete
+                )
+                with conn.Consumer(
+                        queues=queue,
+                        callbacks=[self._process_message],
+                ) as consumer:
+                    consumer.qos(prefetch_count=1)
 
-                        LOG.info("Server with id='{0}' stopped.".format(
-                            self.server_id))
+                    self._running.set()
+                    self._stopped.clear()
 
-                        return
-        except socket.error as e:
-            raise exc.MistralException("Broker connection failed: %s" % e)
-        finally:
-            self._stopped.set()
+                    LOG.info("Connected to AMQP at %s:%s" % (
+                        host.hostname,
+                        host.port
+                    ))
+
+                    while self.is_running:
+                        try:
+                            conn.drain_events(timeout=1)
+                        except socket.timeout:
+                            pass
+                        except KeyboardInterrupt:
+                            self.stop()
+
+                            LOG.info("Server with id='{0}' stopped.".format(
+                                self.server_id))
+
+                            return
+            except (socket.error, amqp.exceptions.ConnectionForced) as e:
+                LOG.debug("Broker connection failed: %s" % e)
+            finally:
+                self._stopped.set()
+
+                LOG.debug("Sleeping for %s seconds, than retrying connection" %
+                          self._sleep_time
+                          )
+
+                time.sleep(self._sleep_time)
+
+                self._sleep_time = min(
+                    self._sleep_time * 2,
+                    self._max_sleep_time
+                )
 
     def stop(self, graceful=False):
         self._running.clear()

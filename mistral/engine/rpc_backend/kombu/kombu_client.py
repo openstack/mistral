@@ -56,15 +56,21 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         self._timeout = CONF.rpc_response_timeout
         self.routing_key = self.topic
 
-        host = self._hosts.get_host()
+        hosts = self._hosts.get_hosts()
 
-        self.conn = self._make_connection(
-            host.hostname,
-            host.port,
-            host.username,
-            host.password,
-            self.virtual_host
-        )
+        self._connections = []
+
+        for host in hosts:
+            conn = self._make_connection(
+                host.hostname,
+                host.port,
+                host.username,
+                host.password,
+                self.virtual_host
+            )
+            self._connections.append(conn)
+
+        self.conn = self._connections[0]
 
         # Create exchange.
         exchange = self._make_exchange(
@@ -85,7 +91,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         )
 
         self._listener = kombu_listener.KombuRPCListener(
-            connection=self.conn,
+            connections=self._connections,
             callback_queue=self.callback_queue
         )
 
