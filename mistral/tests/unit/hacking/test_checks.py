@@ -59,6 +59,16 @@ class BaseLoggingCheckTest(base.BaseTest):
 
         self.assertEqual(expected_errors or [], actual_errors)
 
+    def test_assert_equal_none(self):
+        self.assertEqual(len(list(checks.assert_equal_none(
+            "self.assertEqual(A, None)"))), 1)
+
+        self.assertEqual(len(list(checks.assert_equal_none(
+            "self.assertEqual(None, A)"))), 1)
+
+        self.assertEqual(
+            len(list(checks.assert_equal_none("self.assertIsNone()"))), 0)
+
 
 class TestLoggingWithWarn(BaseLoggingCheckTest):
 
