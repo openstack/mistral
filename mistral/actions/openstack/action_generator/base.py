@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import json
+import os
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -29,7 +30,6 @@ os_actions_mapping_path = cfg.StrOpt('openstack_actions_mapping_path',
 CONF = cfg.CONF
 CONF.register_opt(os_actions_mapping_path)
 LOG = logging.getLogger(__name__)
-MAPPING_PATH = CONF.openstack_actions_mapping_path
 
 
 def get_mapping():
@@ -40,7 +40,17 @@ def get_mapping():
         if '_comment' in map_part:
             del map_part['_comment']
     package = version.version_info.package
-    with open(pkg.resource_filename(package, MAPPING_PATH)) as fh:
+
+    if os.path.isabs(CONF.openstack_actions_mapping_path):
+        mapping_file_path = CONF.openstack_actions_mapping_path
+    else:
+        path = CONF.openstack_actions_mapping_path
+        mapping_file_path = pkg.resource_filename(package, path)
+
+    LOG.info("Processing OpenStack action mapping from file: %s",
+             mapping_file_path)
+
+    with open(mapping_file_path) as fh:
         mapping = json.load(fh)
 
     for k, v in mapping.items():
