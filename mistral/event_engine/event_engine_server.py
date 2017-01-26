@@ -19,7 +19,6 @@ from mistral.engine.rpc_backend import rpc
 from mistral.event_engine import event_engine
 from mistral.service import base as service_base
 from mistral.utils import profiler as profiler_utils
-from mistral.utils import rpc_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -50,9 +49,7 @@ class EventEngineServer(service_base.MistralService):
 
         # Initialize and start RPC server.
 
-        self._rpc_server = rpc.get_rpc_server_driver()(
-            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.event_engine)
-        )
+        self._rpc_server = rpc.get_rpc_server_driver()(cfg.CONF.event_engine)
         self._rpc_server.register_endpoint(self)
 
         self._rpc_server.run()

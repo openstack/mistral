@@ -15,16 +15,21 @@
 from six import moves
 
 import kombu
+from oslo_config import cfg
 from oslo_log import log as logging
+import oslo_messaging as messaging
 
 from mistral.engine.rpc_backend import base as rpc_base
 from mistral.engine.rpc_backend.kombu import base as kombu_base
+from mistral.engine.rpc_backend.kombu import kombu_hosts
 from mistral.engine.rpc_backend.kombu import kombu_listener
 from mistral import exceptions as exc
 from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
+CONF.import_opt('rpc_response_timeout', 'mistral.config')
 
 
 class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
@@ -33,22 +38,31 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
 
         self._register_mistral_serialization()
 
-        self.exchange = conf.get('exchange', '')
-        self.user_id = conf.get('user_id', 'guest')
-        self.password = conf.get('password', 'guest')
-        self.topic = conf.get('topic', 'mistral')
-        self.server_id = conf.get('server_id', '')
-        self.host = conf.get('host', 'localhost')
-        self.port = conf.get('port', 5672)
-        self.virtual_host = conf.get('virtual_host', '/')
-        self.durable_queue = conf.get('durable_queues', False)
-        self.auto_delete = conf.get('auto_delete', False)
-        self._timeout = conf.get('timeout', 60)
+        self._transport_url = messaging.TransportURL.parse(
+            CONF,
+            CONF.transport_url
+        )
+        self._check_backend()
+
+        self.topic = conf.topic
+        self.server_id = conf.host
+
+        self._hosts = kombu_hosts.KombuHosts(CONF)
+
+        self.exchange = CONF.control_exchange
+        self.virtual_host = CONF.oslo_messaging_rabbit.rabbit_virtual_host
+        self.durable_queue = CONF.oslo_messaging_rabbit.amqp_durable_queues
+        self.auto_delete = CONF.oslo_messaging_rabbit.amqp_auto_delete
+        self._timeout = CONF.rpc_response_timeout
+        self.routing_key = self.topic
+
+        host = self._hosts.get_host()
+
         self.conn = self._make_connection(
-            self.host,
-            self.port,
-            self.user_id,
-            self.password,
+            host.hostname,
+            host.port,
+            host.username,
+            host.password,
             self.virtual_host
         )
 

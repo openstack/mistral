@@ -22,7 +22,6 @@ from stevedore import driver
 from mistral import context as auth_ctx
 from mistral.engine import base
 from mistral import exceptions as exc
-from mistral.utils import rpc_utils
 from mistral.workflow import utils as wf_utils
 
 
@@ -68,9 +67,7 @@ def get_engine_client():
     global _ENGINE_CLIENT
 
     if not _ENGINE_CLIENT:
-        _ENGINE_CLIENT = EngineClient(
-            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.engine)
-        )
+        _ENGINE_CLIENT = EngineClient(cfg.CONF.engine)
 
     return _ENGINE_CLIENT
 
@@ -79,9 +76,7 @@ def get_executor_client():
     global _EXECUTOR_CLIENT
 
     if not _EXECUTOR_CLIENT:
-        _EXECUTOR_CLIENT = ExecutorClient(
-            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.executor)
-        )
+        _EXECUTOR_CLIENT = ExecutorClient(cfg.CONF.executor)
 
     return _EXECUTOR_CLIENT
 
@@ -90,9 +85,7 @@ def get_event_engine_client():
     global _EVENT_ENGINE_CLIENT
 
     if not _EVENT_ENGINE_CLIENT:
-        _EVENT_ENGINE_CLIENT = EventEngineClient(
-            rpc_utils.get_rpc_info_from_oslo(cfg.CONF.event_engine)
-        )
+        _EVENT_ENGINE_CLIENT = EventEngineClient(cfg.CONF.event_engine)
 
     return _EVENT_ENGINE_CLIENT
 
