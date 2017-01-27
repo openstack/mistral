@@ -52,3 +52,6 @@ class KombuHosts(object):
 
     def get_host(self):
         return self._hosts_cycle.next()
+
+    def get_hosts(self):
+        return self._hosts
