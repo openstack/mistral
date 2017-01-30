@@ -159,6 +159,7 @@ class Action(object):
                 self.action_def.action_class, self.action_def.attributes):
             input_dict.update(a_m.get_empty_action_context())
 
+    @profiler.trace('action-log-result')
     def _log_result(self, prev_state, result):
         state = self.action_ex.state
 

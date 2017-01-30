@@ -203,6 +203,7 @@ class Task(object):
         for p in policies.build_policies(policies_spec, self.wf_spec):
             p.after_task_complete(self.task_ex, self.task_spec)
 
+    @profiler.trace('task-create-task-execution')
     def _create_task_execution(self, state=states.RUNNING, state_info=None):
         task_id = utils.generate_unicode_uuid()
         task_name = self.task_spec.get_name()
@@ -270,6 +271,7 @@ class RegularTask(Task):
         else:
             self._run_existing()
 
+    @profiler.trace('task-run-new')
     def _run_new(self):
         if self.waiting:
             self.defer()
@@ -291,6 +293,7 @@ class RegularTask(Task):
 
         self._schedule_actions()
 
+    @profiler.trace('task-run-existing')
     def _run_existing(self):
         if self.waiting:
             return
@@ -349,6 +352,7 @@ class RegularTask(Task):
             safe_rerun=self.task_spec.get_safe_rerun()
         )
 
+    @profiler.trace('regular-task-get-target')
     def _get_target(self, input_dict):
         ctx_view = data_flow.ContextView(
             input_dict,
@@ -362,6 +366,7 @@ class RegularTask(Task):
             ctx_view
         )
 
+    @profiler.trace('regular-task-get-action-input')
     def _get_action_input(self, ctx=None):
         ctx = ctx or self.ctx
 
