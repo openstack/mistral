@@ -109,7 +109,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         except moves.queue.Empty:
             raise exc.MistralException("RPC Request timeout")
 
-    def _call(self, ctx, method, target, async=False, **kwargs):
+    def _call(self, ctx, method, target, async_=False, **kwargs):
         """Performs a remote call for the given method.
 
         :param ctx: authentication context associated with mistral
@@ -126,13 +126,13 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
             'rpc_ctx': ctx.to_dict(),
             'rpc_method': method,
             'arguments': kwargs,
-            'async': async
+            'async': async_
         }
 
         LOG.debug("Publish request: {0}".format(body))
 
         try:
-            if not async:
+            if not async_:
                 self._listener.add_listener(correlation_id)
 
             # Publish request.
@@ -148,7 +148,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
                 )
 
             # Start waiting for response.
-            if async:
+            if async_:
                 return
 
             result = self._wait_for_result(correlation_id)
@@ -158,13 +158,13 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
             if res_type == 'error':
                 raise res_object
         finally:
-            if not async:
+            if not async_:
                 self._listener.remove_listener(correlation_id)
 
         return res_object
 
     def sync_call(self, ctx, method, target=None, **kwargs):
-        return self._call(ctx, method, async=False, target=target, **kwargs)
+        return self._call(ctx, method, async_=False, target=target, **kwargs)
 
     def async_call(self, ctx, method, target=None, **kwargs):
-        return self._call(ctx, method, async=True, target=target, **kwargs)
+        return self._call(ctx, method, async_=True, target=target, **kwargs)

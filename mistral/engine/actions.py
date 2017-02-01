@@ -257,7 +257,7 @@ class PythonAction(Action):
             self.action_def.attributes or {},
             input_dict,
             target,
-            async=False,
+            async_=False,
             safe_rerun=safe_rerun
         )
 

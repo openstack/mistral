@@ -55,7 +55,7 @@ class Engine(object):
 
     @abc.abstractmethod
     def on_action_complete(self, action_ex_id, result, wf_action=False,
-                           async=False):
+                           async_=False):
         """Accepts action result and continues the workflow.
 
         Action execution result here is a result which comes from an

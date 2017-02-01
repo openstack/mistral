@@ -109,7 +109,7 @@ class DefaultExecutor(base.Executor):
                 self._engine_client.on_action_complete(
                     action_ex_id,
                     result,
-                    async=True
+                    async_=True
                 )
 
         except exc.MistralException as e:
