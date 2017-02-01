@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral import config as cfg
 from mistral.db.v2 import api as db_api
@@ -129,6 +130,7 @@ class EngineServer(service_base.MistralService):
             **params
         )
 
+    @profiler.trace('engine-server-on-action-complete')
     def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
                            result_error, wf_action):
         """Receives RPC calls to communicate action result to engine.

@@ -116,7 +116,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         ctx = data_flow.evaluate_task_outbound_context(task_ex)
 
-        for t_n, params in self._find_next_tasks(task_ex):
+        for t_n, params in self._find_next_tasks(task_ex, ctx=ctx):
             t_s = self.wf_spec.get_tasks()[t_n]
 
             if not (t_s or t_n in commands.RESERVED_CMDS):
@@ -228,12 +228,12 @@ class DirectWorkflowController(base.WorkflowController):
     def _find_next_task_names(self, task_ex):
         return [t[0] for t in self._find_next_tasks(task_ex)]
 
-    def _find_next_tasks(self, task_ex):
+    def _find_next_tasks(self, task_ex, ctx=None):
         t_state = task_ex.state
         t_name = task_ex.name
 
         ctx_view = data_flow.ContextView(
-            data_flow.evaluate_task_outbound_context(task_ex),
+            ctx or data_flow.evaluate_task_outbound_context(task_ex),
             self.wf_ex.context,
             self.wf_ex.input
         )

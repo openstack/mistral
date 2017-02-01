@@ -17,6 +17,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_messaging.rpc import client
+from osprofiler import profiler
 from stevedore import driver
 
 from mistral import context as auth_ctx
@@ -192,6 +193,7 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
+    @profiler.trace('engine-client-on-action-complete')
     def on_action_complete(self, action_ex_id, result, wf_action=False,
                            async=False):
         """Conveys action result to Mistral Engine.
