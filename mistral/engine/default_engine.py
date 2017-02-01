@@ -14,7 +14,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.db import utils as db_utils
@@ -28,8 +27,6 @@ from mistral import exceptions
 from mistral import utils as u
 from mistral.workflow import states
 
-LOG = logging.getLogger(__name__)
-
 
 # Submodules of mistral.engine will throw NoSuchOptError if configuration
 # options required at top level of this  __init__.py are not imported before
@@ -38,7 +35,6 @@ LOG = logging.getLogger(__name__)
 
 class DefaultEngine(base.Engine):
     @action_queue.process
-    @u.log_exec(LOG)
     @profiler.trace('engine-start-workflow')
     def start_workflow(self, wf_identifier, wf_input, description='',
                        **params):
@@ -54,7 +50,6 @@ class DefaultEngine(base.Engine):
             return wf_ex.get_clone()
 
     @action_queue.process
-    @u.log_exec(LOG)
     def start_action(self, action_name, action_input,
                      description=None, **params):
         with db_api.transaction():
@@ -107,8 +102,7 @@ class DefaultEngine(base.Engine):
 
     @db_utils.retry_on_deadlock
     @action_queue.process
-    @u.log_exec(LOG)
-    @profiler.trace('engine-on-action-complete')
+    @profiler.trace('engine-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex_id, result, wf_action=False,
                            async=False):
         with db_api.transaction():
@@ -121,7 +115,6 @@ class DefaultEngine(base.Engine):
 
             return action_ex.get_clone()
 
-    @u.log_exec(LOG)
     def pause_workflow(self, wf_ex_id):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)
@@ -131,7 +124,6 @@ class DefaultEngine(base.Engine):
             return wf_ex.get_clone()
 
     @action_queue.process
-    @u.log_exec(LOG)
     def rerun_workflow(self, task_ex_id, reset=True, env=None):
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex_id)
@@ -143,7 +135,6 @@ class DefaultEngine(base.Engine):
             return wf_ex.get_clone()
 
     @action_queue.process
-    @u.log_exec(LOG)
     def resume_workflow(self, wf_ex_id, env=None):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)
@@ -152,7 +143,6 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
-    @u.log_exec(LOG)
     def stop_workflow(self, wf_ex_id, state, message=None):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)
@@ -161,7 +151,6 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
-    @u.log_exec(LOG)
     def rollback_workflow(self, wf_ex_id):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError

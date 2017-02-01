@@ -193,7 +193,7 @@ class EngineClient(base.Engine):
         )
 
     @wrap_messaging_exception
-    @profiler.trace('engine-client-on-action-complete')
+    @profiler.trace('engine-client-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex_id, result, wf_action=False,
                            async=False):
         """Conveys action result to Mistral Engine.
@@ -331,6 +331,7 @@ class ExecutorClient(base.Executor):
         self.topic = cfg.CONF.executor.topic
         self._client = get_rpc_client_driver()(rpc_conf_dict)
 
+    @profiler.trace('executor-client-run-action')
     def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params, target=None, async=True, safe_rerun=False):
         """Sends a request to run action to executor.

@@ -159,7 +159,7 @@ class Action(object):
                 self.action_def.action_class, self.action_def.attributes):
             input_dict.update(a_m.get_empty_action_context())
 
-    @profiler.trace('action-log-result')
+    @profiler.trace('action-log-result', hide_args=True)
     def _log_result(self, prev_state, result):
         state = self.action_ex.state
 
@@ -185,7 +185,7 @@ class Action(object):
 class PythonAction(Action):
     """Regular Python action."""
 
-    @profiler.trace('action-complete')
+    @profiler.trace('action-complete', hide_args=True)
     def complete(self, result):
         assert self.action_ex
 
@@ -206,7 +206,7 @@ class PythonAction(Action):
 
         self._log_result(prev_state, result)
 
-    @profiler.trace('action-schedule')
+    @profiler.trace('action-schedule', hide_args=True)
     def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False):
         assert not self.action_ex
 
@@ -227,7 +227,7 @@ class PythonAction(Action):
 
         action_queue.schedule(self.action_ex, self.action_def, target)
 
-    @profiler.trace('action-run')
+    @profiler.trace('action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
             safe_rerun=False):
         assert not self.action_ex
@@ -436,12 +436,12 @@ class AdHocAction(PythonAction):
 class WorkflowAction(Action):
     """Workflow action."""
 
-    @profiler.trace('action-complete')
+    @profiler.trace('workflow-action-complete', hide_args=True)
     def complete(self, result):
         # No-op because in case of workflow result is already processed.
         pass
 
-    @profiler.trace('action-schedule')
+    @profiler.trace('workflkow-action-schedule', hide_args=True)
     def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False):
         assert not self.action_ex
 
@@ -485,7 +485,7 @@ class WorkflowAction(Action):
             wf_params
         )
 
-    @profiler.trace('action-run')
+    @profiler.trace('workflow-action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
             safe_rerun=True):
         raise NotImplementedError('Does not apply to this WorkflowAction.')

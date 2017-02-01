@@ -14,7 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import utils
 from mistral.utils import serializers
+from osprofiler import profiler
 
 
 class Result(object):
@@ -26,8 +28,20 @@ class Result(object):
         self.cancel = cancel
 
     def __repr__(self):
+        try:
+            profiler.start("action-result-repr")
+            import traceback
+            traceback.print_stack()
+
+            return 'Result [data=%s, error=%s, cancel=%s]' % (
+                repr(self.data), repr(self.error), str(self.cancel)
+            )
+        finally:
+            profiler.stop()
+
+    def cut_repr(self):
         return 'Result [data=%s, error=%s, cancel=%s]' % (
-            repr(self.data), repr(self.error), str(self.cancel)
+            utils.cut(self.data), utils.cut(self.error), str(self.cancel)
         )
 
     def is_cancel(self):

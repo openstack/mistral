@@ -27,7 +27,7 @@ from mistral.workbook import parser as spec_parser
 LOG = logging.getLogger(__name__)
 
 
-@profiler.trace('action-handler-on-action-complete')
+@profiler.trace('action-handler-on-action-complete', hide_args=True)
 def on_action_complete(action_ex, result):
     task_ex = action_ex.task_execution
 
@@ -54,7 +54,7 @@ def on_action_complete(action_ex, result):
         task_handler.schedule_on_action_complete(action_ex)
 
 
-@profiler.trace('action-handler-build-action')
+@profiler.trace('action-handler-build-action', hide_args=True)
 def _build_action(action_ex):
     if isinstance(action_ex, models.WorkflowExecution):
         return actions.WorkflowAction(None, action_ex=action_ex)
