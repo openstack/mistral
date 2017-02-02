@@ -21,28 +21,6 @@ from oslo_utils import importutils
 from keystoneclient.auth import identity
 from keystoneclient import httpclient
 
-aodhclient = importutils.try_import('aodhclient.v2.client')
-barbicanclient = importutils.try_import('barbicanclient.client')
-ceilometerclient = importutils.try_import('ceilometerclient.v2.client')
-cinderclient = importutils.try_import('cinderclient.v2.client')
-designateclient = importutils.try_import('designateclient.v1')
-glanceclient = importutils.try_import('glanceclient.v2.client')
-gnocchiclient = importutils.try_import('gnocchiclient.v1.client')
-heatclient = importutils.try_import('heatclient.v1.client')
-ironic_inspector_client = importutils.try_import('ironic_inspector_client.v1')
-ironicclient = importutils.try_import('ironicclient.v1.client')
-keystoneclient = importutils.try_import('keystoneclient.v3.client')
-magnumclient = importutils.try_import('magnumclient.v1.client')
-mistralclient = importutils.try_import('mistralclient.api.v2.client')
-muranoclient = importutils.try_import('muranoclient.v1.client')
-neutronclient = importutils.try_import('neutronclient.v2_0.client')
-novaclient = importutils.try_import('novaclient.client')
-senlinclient = importutils.try_import('senlinclient.v1.client')
-swift_client = importutils.try_import('swiftclient.client')
-tackerclient = importutils.try_import('tackerclient.v1_0.client')
-troveclient = importutils.try_import('troveclient.v1.client')
-zaqarclient = importutils.try_import('zaqarclient.queues.v2.client')
-
 from mistral.actions.openstack import base
 from mistral import context
 from mistral.utils import inspect_utils
@@ -59,6 +37,39 @@ IRONIC_API_VERSION = '1.22'
 
 1.22 corresponds to Newton final.
 """
+
+
+def _try_import(module_name):
+    try:
+        return importutils.try_import(module_name)
+    except Exception as e:
+        msg = 'Unable to load module "%s". %s' % (module_name, e.message)
+        LOG.error(msg)
+        print('ERROR [%s] %s' % (__name__, msg))
+        return None
+
+
+aodhclient = _try_import('aodhclient.v2.client')
+barbicanclient = _try_import('barbicanclient.client')
+ceilometerclient = _try_import('ceilometerclient.v2.client')
+cinderclient = _try_import('cinderclient.v2.client')
+designateclient = _try_import('designateclient.v1')
+glanceclient = _try_import('glanceclient.v2.client')
+gnocchiclient = _try_import('gnocchiclient.v1.client')
+heatclient = _try_import('heatclient.v1.client')
+ironic_inspector_client = _try_import('ironic_inspector_client.v1')
+ironicclient = _try_import('ironicclient.v1.client')
+keystoneclient = _try_import('keystoneclient.v3.client')
+magnumclient = _try_import('magnumclient.v1.client')
+mistralclient = _try_import('mistralclient.api.v2.client')
+muranoclient = _try_import('muranoclient.v1.client')
+neutronclient = _try_import('neutronclient.v2_0.client')
+novaclient = _try_import('novaclient.client')
+senlinclient = _try_import('senlinclient.v1.client')
+swift_client = _try_import('swiftclient.client')
+tackerclient = _try_import('tackerclient.v1_0.client')
+troveclient = _try_import('troveclient.v1.client')
+zaqarclient = _try_import('zaqarclient.queues.v2.client')
 
 
 class NovaAction(base.OpenStackAction):
