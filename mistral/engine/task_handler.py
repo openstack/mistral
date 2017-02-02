@@ -45,7 +45,7 @@ _SCHEDULED_ON_ACTION_COMPLETE_PATH = (
 )
 
 
-@profiler.trace('task-handler-run-task')
+@profiler.trace('task-handler-run-task', hide_args=True)
 def run_task(wf_cmd):
     """Runs workflow task.
 
@@ -77,7 +77,7 @@ def run_task(wf_cmd):
         _schedule_refresh_task_state(task.task_ex, 1)
 
 
-@profiler.trace('task-handler-on-action-complete')
+@profiler.trace('task-handler-on-action-complete', hide_args=True)
 def _on_action_complete(action_ex):
     """Handles action completion event.
 
@@ -207,7 +207,7 @@ def _build_task_from_execution(wf_spec, task_ex):
     )
 
 
-@profiler.trace('task-handler-build-task-from-command')
+@profiler.trace('task-handler-build-task-from-command', hide_args=True)
 def _build_task_from_command(cmd):
     if isinstance(cmd, wf_cmds.RunExistingTask):
         task = _create_task(
@@ -251,7 +251,7 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
 
 
 @action_queue.process
-@profiler.trace('task-handler-refresh-task-state')
+@profiler.trace('task-handler-refresh-task-state', hide_args=True)
 def _refresh_task_state(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.load_task_execution(task_ex_id)

@@ -31,7 +31,7 @@ class DefaultExecutor(base.Executor):
     def __init__(self):
         self._engine_client = rpc.get_engine_client()
 
-    @profiler.trace('executor-run-action')
+    @profiler.trace('executor-run-action', hide_args=True)
     def run_action(self, action_ex_id, action_class_str, attributes,
                    action_params, safe_rerun, redelivered=False):
         """Runs action.

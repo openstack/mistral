@@ -18,6 +18,7 @@ from mistral import config as cfg
 from mistral.engine import default_executor
 from mistral.engine.rpc_backend import rpc
 from mistral.service import base as service_base
+from mistral import utils
 from mistral.utils import profiler as profiler_utils
 
 LOG = logging.getLogger(__name__)
@@ -74,7 +75,8 @@ class ExecutorServer(service_base.MistralService):
         LOG.info(
             "Received RPC request 'run_action'[rpc_ctx=%s,"
             " action_ex_id=%s, action_class=%s, attributes=%s, params=%s]"
-            % (rpc_ctx, action_ex_id, action_class_str, attributes, params)
+            % (rpc_ctx, action_ex_id, action_class_str, attributes,
+               utils.cut(params))
         )
 
         redelivered = rpc_ctx.redelivered or False

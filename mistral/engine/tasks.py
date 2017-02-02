@@ -43,7 +43,6 @@ class Task(object):
     Mistral engine or its components in order to manipulate with tasks.
     """
 
-    @profiler.trace('task-create')
     def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None,
                  unique_key=None, waiting=False):
         self.wf_ex = wf_ex
@@ -253,7 +252,7 @@ class RegularTask(Task):
     Takes care of processing regular tasks with one action.
     """
 
-    @profiler.trace('regular-task-on-action-complete')
+    @profiler.trace('regular-task-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex):
         state = action_ex.state
         # TODO(rakhmerov): Here we can define more informative messages
@@ -352,7 +351,7 @@ class RegularTask(Task):
             safe_rerun=self.task_spec.get_safe_rerun()
         )
 
-    @profiler.trace('regular-task-get-target')
+    @profiler.trace('regular-task-get-target', hide_args=True)
     def _get_target(self, input_dict):
         ctx_view = data_flow.ContextView(
             input_dict,
@@ -366,7 +365,7 @@ class RegularTask(Task):
             ctx_view
         )
 
-    @profiler.trace('regular-task-get-action-input')
+    @profiler.trace('regular-task-get-action-input', hide_args=True)
     def _get_action_input(self, ctx=None):
         ctx = ctx or self.ctx
 
@@ -426,7 +425,7 @@ class WithItemsTask(RegularTask):
         _CAPACITY: 0
     }
 
-    @profiler.trace('with-items-task-on-action-complete')
+    @profiler.trace('with-items-task-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex):
         assert self.task_ex
 
