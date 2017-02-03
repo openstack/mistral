@@ -40,9 +40,7 @@ class EngineProfilerTest(base.EngineTestCase):
         self.mock_profiler_log_func = mock.Mock(return_value=None)
         osprofiler.notifier.set(self.mock_profiler_log_func)
 
-        self.ctx_serializer = context.RpcContextSerializer(
-            context.JsonPayloadSerializer()
-        )
+        self.ctx_serializer = context.RpcContextSerializer()
 
     def test_profile_trace(self):
         wf_def = """
