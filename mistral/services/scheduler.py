@@ -58,9 +58,7 @@ def schedule_call(factory_method_path, target_method_name,
         delayed calls.
     :param method_args: Target method keyword arguments.
     """
-    ctx_serializer = context.RpcContextSerializer(
-        context.JsonPayloadSerializer()
-    )
+    ctx_serializer = context.RpcContextSerializer()
 
     ctx = (
         ctx_serializer.serialize_context(context.ctx())
@@ -167,9 +165,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 (target_auth_context, target_method, method_args)
             )
 
-        ctx_serializer = context.RpcContextSerializer(
-            context.JsonPayloadSerializer()
-        )
+        ctx_serializer = context.RpcContextSerializer()
 
         for (target_auth_context, target_method, method_args) in delayed_calls:
             try:

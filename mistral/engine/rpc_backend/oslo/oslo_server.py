@@ -52,7 +52,7 @@ class OsloRPCServer(rpc_base.RPCServer):
             target,
             self.endpoints,
             executor=executor,
-            serializer=ctx.RpcContextSerializer(ctx.JsonPayloadSerializer())
+            serializer=ctx.RpcContextSerializer()
         )
 
         self.oslo_server.start()
