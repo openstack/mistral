@@ -125,7 +125,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         body = {
             'rpc_ctx': ctx.to_dict(),
             'rpc_method': method,
-            'arguments': kwargs,
+            'arguments': self._serialize_message(kwargs),
             'async': async_
         }
 
@@ -143,7 +143,6 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
                     routing_key=self.topic,
                     reply_to=self.queue_name,
                     correlation_id=correlation_id,
-                    serializer='mistral_serialization',
                     delivery_mode=2
                 )
 
@@ -157,6 +156,9 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
 
             if res_type == 'error':
                 raise res_object
+            else:
+                res_object = self._deserialize_message(res_object)['body']
+
         finally:
             if not async_:
                 self._listener.remove_listener(correlation_id)

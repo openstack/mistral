@@ -13,11 +13,10 @@
 #    limitations under the License.
 
 import kombu
-from kombu import serialization
 
 from mistral import exceptions as exc
+from mistral import serialization as mistral_serialization
 from mistral.utils import rpc_utils
-from mistral.utils import serializers
 
 IS_RECEIVED = 'kombu_rpc_is_received'
 RESULT = 'kombu_rpc_result'
@@ -29,6 +28,7 @@ class Base(object):
     """Base class for Client and Server."""
     def __init__(self):
         self._transport_url = None
+        self.serializer = None
 
     @staticmethod
     def _make_connection(amqp_host, amqp_port, amqp_user, amqp_password,
@@ -110,21 +110,31 @@ class Base(object):
             **kwargs
         )
 
-    @staticmethod
-    def _register_mistral_serialization():
+    def _register_mistral_serialization(self):
         """Adds mistral serializer to available serializers in kombu.
 
         :return: None
         """
-        serialization.register(
-            'mistral_serialization',
-            encoder=serializers.KombuSerializer.serialize,
-            decoder=serializers.KombuSerializer.deserialize,
-            content_type='application/json'
-        )
+        self.serializer = mistral_serialization.get_polymorphic_serializer()
 
     def _check_backend(self):
         backend = rpc_utils.get_rpc_backend(self._transport_url)
 
         if backend not in ['rabbit', 'kombu']:
             raise exc.MistralException("Unsupported backend: %s" % backend)
+
+    def _serialize_message(self, kwargs):
+        result = {}
+
+        for argname, arg in kwargs.items():
+            result[argname] = self.serializer.serialize(arg)
+
+        return result
+
+    def _deserialize_message(self, kwargs):
+        result = {}
+
+        for argname, arg in kwargs.items():
+            result[argname] = self.serializer.deserialize(arg)
+
+        return result

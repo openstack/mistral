@@ -738,5 +738,5 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-        self.assertIn('UnicodeDecodeError: utf', wf_ex.state_info)
-        self.assertIn('UnicodeDecodeError: utf', task_ex.state_info)
+        self.assertIn("UnicodeDecodeError: utf", wf_ex.state_info)
+        self.assertIn("UnicodeDecodeError: utf", task_ex.state_info)

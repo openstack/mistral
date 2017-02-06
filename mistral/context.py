@@ -19,7 +19,6 @@ from keystoneclient.v3 import client as keystone_client
 import logging
 from oslo_config import cfg
 import oslo_messaging as messaging
-from oslo_messaging import serializer as messaging_serializer
 from oslo_serialization import jsonutils
 from osprofiler import profiler
 import pecan
@@ -27,6 +26,7 @@ from pecan import hooks
 
 from mistral import auth
 from mistral import exceptions as exc
+from mistral import serialization
 from mistral import utils
 
 LOG = logging.getLogger(__name__)
@@ -227,20 +227,22 @@ def context_from_config():
 
 
 class RpcContextSerializer(messaging.Serializer):
-    def __init__(self, base=None):
-        self._base = base or messaging_serializer.JsonPayloadSerializer()
+    def __init__(self, entity_serializer=None):
+        self.entity_serializer = (
+            entity_serializer or serialization.get_polymorphic_serializer()
+        )
 
     def serialize_entity(self, context, entity):
-        if not self._base:
+        if not self.entity_serializer:
             return entity
 
-        return self._base.serialize_entity(context, entity)
+        return self.entity_serializer.serialize(entity)
 
     def deserialize_entity(self, context, entity):
-        if not self._base:
+        if not self.entity_serializer:
             return entity
 
-        return self._base.deserialize_entity(context, entity)
+        return self.entity_serializer.deserialize(entity)
 
     def serialize_context(self, context):
         ctx = context.to_dict()
