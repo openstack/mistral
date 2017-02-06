@@ -14,12 +14,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral import serialization
 from mistral import utils
-from mistral.utils import serializers
-from osprofiler import profiler
 
 
-class Result(object):
+class Result(serialization.MistralSerializable):
     """Explicit data structure containing a result of task execution."""
 
     def __init__(self, data=None, error=None, cancel=False):
@@ -28,16 +27,9 @@ class Result(object):
         self.cancel = cancel
 
     def __repr__(self):
-        try:
-            profiler.start("action-result-repr")
-            import traceback
-            traceback.print_stack()
-
-            return 'Result [data=%s, error=%s, cancel=%s]' % (
-                repr(self.data), repr(self.error), str(self.cancel)
-            )
-        finally:
-            profiler.stop()
+        return 'Result [data=%s, error=%s, cancel=%s]' % (
+            repr(self.data), repr(self.error), str(self.cancel)
+        )
 
     def cut_repr(self):
         return 'Result [data=%s, error=%s, cancel=%s]' % (
@@ -68,19 +60,19 @@ class Result(object):
                 if self.is_success() else {'result': self.error})
 
 
-class ResultSerializer(serializers.Serializer):
-    @staticmethod
-    def serialize(entity):
+class ResultSerializer(serialization.DictBasedSerializer):
+    def serialize_to_dict(self, entity):
         return {
             'data': entity.data,
             'error': entity.error,
             'cancel': entity.cancel
         }
 
-    @staticmethod
-    def deserialize(entity):
+    def deserialize_from_dict(self, entity_dict):
         return Result(
-            entity['data'],
-            entity['error'],
-            entity.get('cancel', False)
+            entity_dict['data'],
+            entity_dict['error'],
+            entity_dict.get('cancel', False)
         )
+
+serialization.register_serializer(Result, ResultSerializer())

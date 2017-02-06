@@ -23,7 +23,6 @@ from mistral.services import expiration_policy
 from mistral.services import scheduler
 from mistral import utils
 from mistral.utils import profiler as profiler_utils
-from mistral.workflow import utils as wf_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -131,19 +130,15 @@ class EngineServer(service_base.MistralService):
             **params
         )
 
-    def on_action_complete(self, rpc_ctx, action_ex_id, result_data,
-                           result_error, wf_action):
+    def on_action_complete(self, rpc_ctx, action_ex_id, result, wf_action):
         """Receives RPC calls to communicate action result to engine.
 
         :param rpc_ctx: RPC request context.
         :param action_ex_id: Action execution id.
-        :param result_data: Action result data.
-        :param result_error: Action result error.
+        :param result: Action result data.
         :param wf_action: True if given id points to a workflow execution.
         :return: Action execution.
         """
-
-        result = wf_utils.Result(result_data, result_error)
 
         LOG.info(
             "Received RPC request 'on_action_complete'[rpc_ctx=%s,"

@@ -23,7 +23,6 @@ from stevedore import driver
 from mistral import context as auth_ctx
 from mistral.engine import base
 from mistral import exceptions as exc
-from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -224,8 +223,7 @@ class EngineClient(base.Engine):
             auth_ctx.ctx(),
             'on_action_complete',
             action_ex_id=action_ex_id,
-            result_data=result.data,
-            result_error=result.error,
+            result=result,
             wf_action=wf_action
         )
 
@@ -359,18 +357,7 @@ class ExecutorClient(base.Executor):
         rpc_client_method = (self._client.async_call
                              if async_ else self._client.sync_call)
 
-        res = rpc_client_method(auth_ctx.ctx(), 'run_action', **kwargs)
-
-        # TODO(rakhmerov): It doesn't seem a good approach since we have
-        # a serializer for Result class. A better solution would be to
-        # use a composite serializer that dispatches serialization and
-        # deserialization to concrete serializers depending on object
-        # type.
-
-        return (
-            wf_utils.Result(data=res['data'], error=res['error'])
-            if res else None
-        )
+        return rpc_client_method(auth_ctx.ctx(), 'run_action', **kwargs)
 
 
 class EventEngineClient(base.EventEngine):
