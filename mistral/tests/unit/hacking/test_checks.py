@@ -69,6 +69,13 @@ class BaseLoggingCheckTest(base.BaseTest):
         self.assertEqual(
             len(list(checks.assert_equal_none("self.assertIsNone()"))), 0)
 
+    def test_check_python3_xrange(self):
+        func = checks.check_python3_xrange
+        self.assertEqual(1, len(list(func('for i in xrange(10)'))))
+        self.assertEqual(1, len(list(func('for i in xrange    (10)'))))
+        self.assertEqual(0, len(list(func('for i in range(10)'))))
+        self.assertEqual(0, len(list(func('for i in six.moves.range(10)'))))
+
 
 class TestLoggingWithWarn(BaseLoggingCheckTest):
 
