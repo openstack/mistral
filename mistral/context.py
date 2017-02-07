@@ -19,6 +19,7 @@ from keystoneclient.v3 import client as keystone_client
 import logging
 from oslo_config import cfg
 import oslo_messaging as messaging
+from oslo_messaging import serializer as messaging_serializer
 from oslo_serialization import jsonutils
 from osprofiler import profiler
 import pecan
@@ -225,15 +226,9 @@ def context_from_config():
     )
 
 
-class JsonPayloadSerializer(messaging.NoOpSerializer):
-    @staticmethod
-    def serialize_entity(context, entity):
-        return jsonutils.to_primitive(entity, convert_instances=True)
-
-
 class RpcContextSerializer(messaging.Serializer):
     def __init__(self, base=None):
-        self._base = base or messaging.NoOpSerializer()
+        self._base = base or messaging_serializer.JsonPayloadSerializer()
 
     def serialize_entity(self, context, entity):
         if not self._base:
