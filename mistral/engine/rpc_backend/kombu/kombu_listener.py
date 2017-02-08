@@ -32,7 +32,7 @@ class KombuRPCListener(ConsumerMixin):
         self._connections = itertools.cycle(connections)
         self._callback_queue = callback_queue
         self._thread = None
-        self.connection = self._connections.next()
+        self.connection = six.next(self._connections)
 
         # TODO(ddeja): Those 2 options should be gathered from config.
         self._sleep_time = 1
