@@ -35,6 +35,6 @@ class HackingLogging(fixtures.Fixture):
                 LOG.warn('text')
         """,
         'expected_errors': [
-            (4, 9, 'M001'),
+            (8, 9, 'M001'),
         ],
     }
