@@ -655,3 +655,28 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             lambda:
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
+
+    def test_direct_workfow_output(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="Hi Mistral!"
+              on-success: task2
+
+            task2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertDictEqual({}, wf_ex.output)

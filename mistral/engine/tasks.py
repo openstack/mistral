@@ -316,6 +316,7 @@ class RegularTask(Task):
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec)
+
         utils.update_dict(self.task_ex.in_context, self.ctx)
 
     def _reset_actions(self):
