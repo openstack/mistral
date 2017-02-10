@@ -10,21 +10,11 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-import contextlib
-import os
-
-from oslo_config import cfg
 
 from mistral.actions import generator_factory
 from mistral.actions.openstack import actions
 from mistral.tests.unit import base
 
-ABSOLUTE_TEST_MAPPING_PATH = os.path.realpath(
-    os.path.join(os.path.dirname(__file__),
-                 "../../../resources/openstack/test_mapping.json")
-)
-
-RELATIVE_TEST_MAPPING_PATH = "tests/resources/openstack/test_mapping.json"
 
 MODULE_MAPPING = {
     'nova': ['nova.servers_get', actions.NovaAction],
@@ -54,9 +44,6 @@ MODULE_MAPPING = {
 EXTRA_MODULES = ['neutron', 'swift', 'zaqar', 'tacker']
 
 
-CONF = cfg.CONF
-
-
 class GeneratorTest(base.BaseTest):
     def test_generator(self):
         for generator_cls in generator_factory.all_generators():
@@ -78,38 +65,3 @@ class GeneratorTest(base.BaseTest):
 
             self.assertTrue(issubclass(action['class'], action_cls))
             self.assertEqual(method_name, action['class'].client_method_name)
-
-    def test_missing_module_from_mapping(self):
-        with _patch_openstack_action_mapping_path(RELATIVE_TEST_MAPPING_PATH):
-            for generator_cls in generator_factory.all_generators():
-                action_classes = generator_cls.create_actions()
-                action_names = [action['name'] for action in action_classes]
-
-                cls = MODULE_MAPPING.get(generator_cls.action_namespace)[1]
-                if cls == actions.NovaAction:
-                    self.assertEqual(['nova.servers_get'], action_names)
-                else:
-                    self.assertEqual([], action_names)
-
-    def test_absolute_mapping_path(self):
-        with _patch_openstack_action_mapping_path(ABSOLUTE_TEST_MAPPING_PATH):
-            self.assertTrue(os.path.isabs(ABSOLUTE_TEST_MAPPING_PATH),
-                            "Mapping path is relative: %s" %
-                            ABSOLUTE_TEST_MAPPING_PATH)
-            for generator_cls in generator_factory.all_generators():
-                action_classes = generator_cls.create_actions()
-                action_names = [action['name'] for action in action_classes]
-
-                cls = MODULE_MAPPING.get(generator_cls.action_namespace)[1]
-                if cls == actions.NovaAction:
-                    self.assertEqual(['nova.servers_get'], action_names)
-                else:
-                    self.assertEqual([], action_names)
-
-
-@contextlib.contextmanager
-def _patch_openstack_action_mapping_path(path):
-    original_path = CONF.openstack_actions_mapping_path
-    CONF.set_default("openstack_actions_mapping_path", path)
-    yield
-    CONF.set_default("openstack_actions_mapping_path", original_path)

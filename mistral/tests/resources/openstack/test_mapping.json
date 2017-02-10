@@ -1,6 +1,0 @@
-{
-    "_comment": "Mapping OpenStack action namespaces to all its actions. Each action name is mapped to python-client method name in this namespace.",
-    "nova": {
-        "servers_get": "servers.get"
-    }
-}

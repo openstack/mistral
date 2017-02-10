@@ -1,7 +1,0 @@
----
-features:
-  - Openstack action mapping file could be specified at sync_db.sh script.
-    For more details see 'sync_db.sh --help'.
-    Additionally it is not required from now to list all of the modules
-    in mapping file.
-
