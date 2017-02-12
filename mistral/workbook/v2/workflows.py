@@ -53,7 +53,7 @@ class WorkflowSpec(base.BaseSpec):
         self._name = data['name']
         self._description = data.get('description')
         self._tags = data.get('tags', [])
-        self._type = data['type'] if 'type' in data else 'direct'
+        self._type = data.get('type', 'direct')
         self._input = utils.get_input_dict(data.get('input', []))
         self._output = data.get('output', {})
         self._output_on_error = data.get('output-on-error', {})
