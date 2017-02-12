@@ -62,10 +62,15 @@ class CronTrigger(resource.Resource):
                    updated_at='1970-01-01T00:00:00.000000')
 
 
-class CronTriggers(resource.Resource):
+class CronTriggers(resource.ResourceList):
     """A collection of cron triggers."""
 
     cron_triggers = [CronTrigger]
+
+    def __init__(self, **kwargs):
+        self._type = 'cron_triggers'
+
+        super(CronTriggers, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -114,15 +119,19 @@ class CronTriggersController(rest.RestController):
 
         db_api.delete_cron_trigger(name)
 
-    @wsme_pecan.wsexpose(CronTriggers)
-    def get_all(self):
+    @wsme_pecan.wsexpose(CronTriggers, types.uuid, int, types.uniquelist,
+                         types.list, types.uniquelist)
+    def get_all(self, marker=None, limit=None, sort_keys='created_at',
+                sort_dirs='asc', fields=''):
         """Return all cron triggers."""
 
-        LOG.info("Fetch cron triggers.")
-
-        _list = [
-            CronTrigger.from_dict(db_model.to_dict())
-            for db_model in db_api.get_cron_triggers()
-        ]
-
-        return CronTriggers(cron_triggers=_list)
+        return rest_utils.get_all(CronTriggers,
+                                  CronTrigger,
+                                  db_api.get_cron_triggers,
+                                  db_api.get_cron_trigger,
+                                  "cron triggers",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
+                                  fields=fields)

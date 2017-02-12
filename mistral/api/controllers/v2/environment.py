@@ -59,10 +59,15 @@ class Environment(resource.Resource):
                    updated_at='1970-01-01T00:00:00.000000')
 
 
-class Environments(resource.Resource):
+class Environments(resource.ResourceList):
     """A collection of Environment resources."""
 
     environments = [Environment]
+
+    def __init__(self, **kwargs):
+        self._type = 'environments'
+
+        super(Environments, self).__init__(**kwargs)
 
     @classmethod
     def sample(cls):
@@ -70,21 +75,42 @@ class Environments(resource.Resource):
 
 
 class EnvironmentController(rest.RestController):
-    @wsme_pecan.wsexpose(Environments)
-    def get_all(self):
+    @wsme_pecan.wsexpose(Environments, types.uuid, int, types.uniquelist,
+                         types.list, types.uniquelist)
+    def get_all(self, marker=None, limit=None, sort_keys='created_at',
+                sort_dirs='asc', fields=''):
         """Return all environments.
 
         Where project_id is the same as the requestor or
         project_id is different but the scope is public.
+
+        :param marker: Optional. Pagination marker for large data sets.
+        :param limit: Optional. Maximum number of resources to return in a
+                      single result. Default value is None for backward
+                      compatibility.
+        :param sort_keys: Optional. Columns to sort results by.
+                          Default: created_at, which is backward compatible.
+        :param sort_dirs: Optional. Directions to sort corresponding to
+                          sort_keys, "asc" or "desc" can be chosen.
+                          Default: desc. The length of sort_dirs can be equal
+                          or less than that of sort_keys.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's provided, since it will be used when
+                       constructing 'next' link.
+
         """
-        LOG.info("Fetch environments.")
 
-        environments = [
-            Environment.from_dict(db_model.to_dict())
-            for db_model in db_api.get_environments()
-        ]
-
-        return Environments(environments=environments)
+        return rest_utils.get_all(Environments,
+                                  Environment,
+                                  db_api.get_environments,
+                                  db_api.get_environment,
+                                  "environments",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
+                                  fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(Environment, wtypes.text)

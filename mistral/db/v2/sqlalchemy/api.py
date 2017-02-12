@@ -153,20 +153,54 @@ def _delete_all(model, session=None, **kwargs):
     _secure_query(model).filter_by(**kwargs).delete(synchronize_session=False)
 
 
-def _get_collection_sorted_by_name(model, **kwargs):
+def _get_collection(model, limit=None, marker=None, sort_keys=None,
+                    sort_dirs=None, fields=None, query=None, **kwargs):
+    columns = (
+        tuple(COL_MAPPINGS.get(model, {}).get(f) for f in fields)
+        if fields else ()
+    )
+
+    if query is None:
+        query = _secure_query(model, *columns).filter_by(**kwargs)
+
+    try:
+        return _paginate_query(
+            model,
+            limit,
+            marker,
+            sort_keys,
+            sort_dirs,
+            query
+        )
+    except Exception as e:
+        raise exc.DBQueryEntryException(
+            "Failed when querying database, error type: %s, "
+            "error message: %s" % (e.__class__.__name__, e.message)
+        )
+
+
+def _get_collection_sorted_by_name(model, fields=None, sort_keys=['name'],
+                                   **kwargs):
     # Note(lane): Sometimes tenant_A needs to get resources of tenant_B,
     # especially in resource sharing scenario, the resource owner needs to
     # check if the resource is used by a member.
-    query = (b.model_query(model) if 'project_id' in kwargs
-             else _secure_query(model))
+    columns = (
+        tuple(COL_MAPPINGS.get(model,
+                               {}).get(f) for f in fields) if fields else ()
+    )
 
-    return query.filter_by(**kwargs).order_by(model.name).all()
+    query = (b.model_query(model, *columns) if 'project_id' in kwargs
+             else _secure_query(model, *columns))
+
+    return _get_collection(model=model,
+                           query=query,
+                           sort_keys=sort_keys,
+                           fields=fields,
+                           **kwargs)
 
 
-def _get_collection_sorted_by_time(model, **kwargs):
-    query = _secure_query(model)
-
-    return query.filter_by(**kwargs).order_by(model.created_at).all()
+def _get_collection_sorted_by_time(model, sort_keys=['created_at'], **kwargs):
+    return _get_collection(model, sort_keys=sort_keys, **kwargs)
 
 
 def _get_db_object_by_name(model, name):
@@ -178,6 +212,17 @@ def _get_db_object_by_id(model, id):
 
 
 # Workbook definitions.
+
+WORKBOOK_COL_MAPPING = {
+    'id': models.Workbook.id,
+    'name': models.Workbook.name,
+    'scope': models.Workbook.scope,
+    'definition': models.Workbook.definition,
+    'tags': models.Workbook.tags,
+    'created_at': models.Workbook.created_at,
+    'updated_at': models.Workbook.updated_at
+}
+
 
 def get_workbook(name):
     wb = _get_workbook(name)
@@ -303,28 +348,10 @@ def load_workflow_definition(name):
     return _get_workflow_definition(name)
 
 
-def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
-                             sort_dirs=None, fields=None, **kwargs):
-    columns = (
-        tuple(WORKFLOW_COL_MAPPING.get(f) for f in fields) if fields else ()
-    )
-
-    query = _secure_query(models.WorkflowDefinition, *columns)
-
-    try:
-        return _paginate_query(
-            models.WorkflowDefinition,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
-    except Exception as e:
-        raise exc.DBQueryEntryException(
-            "Failed when querying database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
-        )
+def get_workflow_definitions(sort_keys=['created_at'], **kwargs):
+    return _get_collection(model=models.WorkflowDefinition,
+                           sort_keys=sort_keys,
+                           **kwargs)
 
 
 @b.session_aware()
@@ -442,6 +469,20 @@ def _get_workflow_definition_by_id(id):
 
 # Action definitions.
 
+ACTION_COL_MAPPING = {
+    'id': models.ActionDefinition.id,
+    'name': models.ActionDefinition.name,
+    'definition': models.ActionDefinition.definition,
+    'description': models.ActionDefinition.description,
+    'is_system': models.ActionDefinition.is_system,
+    'input': models.ActionDefinition.input,
+    'tags': models.ActionDefinition.tags,
+    'scope': models.ActionDefinition.scope,
+    'created_at': models.ActionDefinition.created_at,
+    'updated_at': models.ActionDefinition.updated_at
+}
+
+
 def get_action_definition_by_id(id):
     action_def = _get_db_object_by_id(models.ActionDefinition, id)
 
@@ -468,24 +509,10 @@ def load_action_definition(name):
     return _get_action_definition(name)
 
 
-def get_action_definitions(limit=None, marker=None, sort_keys=['name'],
-                           sort_dirs=None, **kwargs):
-    query = _secure_query(models.ActionDefinition).filter_by(**kwargs)
-
-    try:
-        return _paginate_query(
-            models.ActionDefinition,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
-    except Exception as e:
-        raise exc.DBQueryEntryException(
-            "Failed when querying database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
-        )
+def get_action_definitions(sort_keys=['name'], **kwargs):
+    return _get_collection(model=models.ActionDefinition,
+                           sort_keys=sort_keys,
+                           **kwargs)
 
 
 @b.session_aware()
@@ -722,6 +749,20 @@ def _get_action_execution(id):
 
 # Workflow executions.
 
+WORKFLOW_EXECUTION_COL_MAPPING = {
+    'id': models.WorkflowExecution.id,
+    'description': models.WorkflowExecution.description,
+    'input': models.WorkflowExecution.input,
+    'output': models.WorkflowExecution.output,
+    'params': models.WorkflowExecution.params,
+    'workflow_id': models.WorkflowExecution.workflow_id,
+    'workflow_name': models.WorkflowExecution.workflow_name,
+    'state': models.WorkflowExecution.state,
+    'created_at': models.WorkflowExecution.created_at,
+    'updated_at': models.WorkflowExecution.updated_at
+}
+
+
 def get_workflow_execution(id):
     wf_ex = _get_workflow_execution(id)
 
@@ -739,24 +780,10 @@ def ensure_workflow_execution_exists(id):
     get_workflow_execution(id)
 
 
-def get_workflow_executions(limit=None, marker=None, sort_keys=['created_at'],
-                            sort_dirs=None, **kwargs):
-    query = _secure_query(models.WorkflowExecution).filter_by(**kwargs)
-
-    try:
-        return _paginate_query(
-            models.WorkflowExecution,
-            limit,
-            marker,
-            sort_keys,
-            sort_dirs,
-            query
-        )
-    except Exception as e:
-        raise exc.DBQueryEntryException(
-            "Failed when quering database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, e.message)
-        )
+def get_workflow_executions(sort_keys=['created_at'], **kwargs):
+    return _get_collection(models.WorkflowExecution,
+                           sort_keys=sort_keys,
+                           **kwargs)
 
 
 @b.session_aware()
@@ -996,6 +1023,24 @@ def _get_delayed_call(id, session=None):
 
 # Cron triggers.
 
+CRON_TRIGGER_COL_MAPPING = {
+    'id': models.CronTrigger.id,
+    'name': models.CronTrigger.name,
+    'pattern': models.CronTrigger.pattern,
+    'project_id': models.CronTrigger.project_id,
+    'remaining_executions': models.CronTrigger.remaining_executions,
+    'workflow_id': models.CronTrigger.workflow_id,
+    'workflow_name': models.CronTrigger.workflow_name,
+    'workflow_input': models.CronTrigger.workflow_input,
+    'workflow_params': models.CronTrigger.workflow_params,
+    'scope': models.CronTrigger.scope,
+    'first_execution_time': models.CronTrigger.first_execution_time,
+    'next_execution_time': models.CronTrigger.next_execution_time,
+    'created_at': models.CronTrigger.created_at,
+    'updated_at': models.CronTrigger.updated_at
+}
+
+
 def get_cron_trigger(name):
     cron_trigger = _get_cron_trigger(name)
 
@@ -1115,13 +1160,27 @@ def _get_cron_trigger(name):
     return _get_db_object_by_name(models.CronTrigger, name)
 
 
-def _get_cron_triggers(**kwargs):
+def _get_cron_triggers(*columns, **kwargs):
     query = b.model_query(models.CronTrigger)
 
-    return query.filter_by(**kwargs).all()
+    return _get_collection(models.CronTrigger,
+                           query=query,
+                           *columns,
+                           **kwargs)
 
 
 # Environments.
+
+ENVIRONMENT_COL_MAPPING = {
+    'id': models.Environment.id,
+    'name': models.Environment.name,
+    'description': models.Environment.description,
+    'variables': models.Environment.variables,
+    'scope': models.Environment.scope,
+    'created_at': models.Environment.created_at,
+    'updated_at': models.Environment.updated_at
+}
+
 
 def get_environment(name):
     env = _get_environment(name)
@@ -1353,3 +1412,13 @@ def _get_accepted_resources(res_type):
     ).all()
 
     return resources
+
+
+COL_MAPPINGS = {
+    models.WorkflowDefinition: WORKFLOW_COL_MAPPING,
+    models.WorkflowExecution: WORKFLOW_EXECUTION_COL_MAPPING,
+    models.ActionDefinition: ACTION_COL_MAPPING,
+    models.CronTrigger: CRON_TRIGGER_COL_MAPPING,
+    models.Environment: ENVIRONMENT_COL_MAPPING,
+    models.Workbook: WORKBOOK_COL_MAPPING
+}

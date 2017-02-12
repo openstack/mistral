@@ -252,41 +252,14 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         Where project_id is the same as the requester or
         project_id is different but the scope is public.
         """
-        LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, fields=%s", marker, limit, sort_keys,
-                 sort_dirs, fields)
 
-        if fields and 'id' not in fields:
-            fields.insert(0, 'id')
-
-        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
-        rest_utils.validate_fields(fields, Workflow.get_fields())
-
-        marker_obj = None
-
-        if marker:
-            marker_obj = db_api.get_workflow_definition_by_id(marker)
-
-        db_workflows = db_api.get_workflow_definitions(
-            limit=limit,
-            marker=marker_obj,
-            sort_keys=sort_keys,
-            sort_dirs=sort_dirs,
-            fields=fields
-        )
-
-        workflows_list = []
-
-        for data in db_workflows:
-            workflow_dict = (dict(zip(fields, data)) if fields else
-                             data.to_dict())
-            workflows_list.append(Workflow.from_dict(workflow_dict))
-
-        return Workflows.convert_with_links(
-            workflows_list,
-            limit,
-            pecan.request.host_url,
-            sort_keys=','.join(sort_keys),
-            sort_dirs=','.join(sort_dirs),
-            fields=','.join(fields) if fields else ''
-        )
+        return rest_utils.get_all(Workflows,
+                                  Workflow,
+                                  db_api.get_workflow_definitions,
+                                  db_api.get_workflow_definition_by_id,
+                                  "workflows",
+                                  marker=marker,
+                                  limit=limit,
+                                  sort_keys=sort_keys,
+                                  sort_dirs=sort_dirs,
+                                  fields=fields)
