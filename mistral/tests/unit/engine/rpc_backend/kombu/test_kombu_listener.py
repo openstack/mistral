@@ -36,7 +36,7 @@ class KombuListenerTestCase(base.KombuTestCase):
         super(KombuListenerTestCase, self).setUp()
 
         self.listener = kombu_listener.KombuRPCListener(
-            mock.MagicMock(),
+            [mock.MagicMock()],
             mock.MagicMock()
         )
         self.ctx = type('context', (object,), {'to_dict': lambda self: {}})()
