@@ -45,7 +45,9 @@ class KombuClientTestCase(base.KombuTestCase):
         self.client._listener.get_result = mock.MagicMock(
             return_value={
                 kombu_base.TYPE: None,
-                kombu_base.RESULT: self._RESPONSE
+                kombu_base.RESULT: self.client._serialize_message({
+                    'body': self._RESPONSE
+                })
             }
         )
         response = self.client.sync_call(self.ctx, 'method')

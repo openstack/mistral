@@ -86,6 +86,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
         while True:
             try:
+                _retry_connection = False
                 host = self._hosts.get_host()
 
                 self.conn = self._make_connection(
@@ -139,19 +140,22 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                             return
             except (socket.error, amqp.exceptions.ConnectionForced) as e:
                 LOG.debug("Broker connection failed: %s" % e)
+                _retry_connection = True
             finally:
                 self._stopped.set()
 
-                LOG.debug("Sleeping for %s seconds, than retrying connection" %
-                          self._sleep_time
-                          )
+                if _retry_connection:
+                    LOG.debug(
+                        "Sleeping for %s seconds, than retrying connection" %
+                        self._sleep_time
+                    )
 
-                time.sleep(self._sleep_time)
+                    time.sleep(self._sleep_time)
 
-                self._sleep_time = min(
-                    self._sleep_time * 2,
-                    self._max_sleep_time
-                )
+                    self._sleep_time = min(
+                        self._sleep_time * 2,
+                        self._max_sleep_time
+                    )
 
     def stop(self, graceful=False):
         self._running.clear()
