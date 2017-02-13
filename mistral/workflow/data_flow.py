@@ -224,6 +224,8 @@ def evaluate_task_outbound_context(task_ex):
         if task_ex.in_context is not None else {}
     )
 
+    remove_current_task_from_context(in_context)
+
     return utils.update_dict(in_context, task_ex.published)
 
 
@@ -252,6 +254,11 @@ def add_current_task_to_context(ctx, task_id, task_name):
     }
 
     return ctx
+
+
+def remove_current_task_from_context(ctx):
+    if '__task_execution' in ctx:
+        del ctx['__task_execution']
 
 
 def add_openstack_data_to_context(wf_ex):
