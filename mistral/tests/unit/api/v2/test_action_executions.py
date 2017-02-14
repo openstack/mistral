@@ -22,11 +22,13 @@ import mock
 from oslo_config import cfg
 import oslo_messaging
 
+from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral.utils import rest_utils
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
@@ -448,6 +450,29 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(1, len(resp.json['action_executions']))
         self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
 
+    @mock.patch.object(db_api, 'get_action_executions', MOCK_ACTIONS)
+    @mock.patch.object(rest_utils, 'get_all')
+    def test_get_all_with_and_without_output(self, mock_get_all):
+        resp = self.app.get('/v2/action_executions')
+        args, kwargs = mock_get_all.call_args
+        resource_function = kwargs['resource_function']
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(
+            action_execution._get_action_execution_resource_for_list,
+            resource_function
+        )
+
+        resp = self.app.get('/v2/action_executions?include_output=true')
+        args, kwargs = mock_get_all.call_args
+        resource_function = kwargs['resource_function']
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(
+            action_execution._get_action_execution_resource,
+            resource_function
+        )
+
     @mock.patch.object(db_api, 'get_action_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/action_executions')
@@ -483,7 +508,7 @@ class TestActionExecutionsController(base.APITest):
         )
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_ACTION)
-    def test_delete_action_exeuction_with_task(self):
+    def test_delete_action_execution_with_task(self):
         cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
 
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
@@ -499,7 +524,7 @@ class TestActionExecutionsController(base.APITest):
         'get_action_execution',
         MOCK_ACTION_NOT_COMPLETE
     )
-    def test_delete_action_exeuction_not_complete(self):
+    def test_delete_action_execution_not_complete(self):
         cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
 
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
@@ -516,7 +541,7 @@ class TestActionExecutionsController(base.APITest):
         MOCK_ACTION_COMPLETE_ERROR
     )
     @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
-    def test_delete_action_exeuction_complete_error(self):
+    def test_delete_action_execution_complete_error(self):
         cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
 
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)
@@ -529,7 +554,7 @@ class TestActionExecutionsController(base.APITest):
         MOCK_ACTION_COMPLETE_CANCELLED
     )
     @mock.patch.object(db_api, 'delete_action_execution', MOCK_DELETE)
-    def test_delete_action_exeuction_complete_cancelled(self):
+    def test_delete_action_execution_complete_cancelled(self):
         cfg.CONF.set_default('allow_action_execution_deletion', True, 'api')
 
         resp = self.app.delete('/v2/action_executions/123', expect_errors=True)

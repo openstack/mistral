@@ -75,6 +75,9 @@ class MistralClientV2(base.MistralClientBase):
 
         return resp, json.loads(body)
 
+    def get_action_execution(self, action_execution_id):
+        return self.get('action_executions/%s' % action_execution_id)
+
     def create_execution(self, identifier, wf_input=None, params=None):
         if uuidutils.is_uuid_like(identifier):
             body = {"workflow_id": "%s" % identifier}
@@ -130,9 +133,11 @@ class MistralClientV2(base.MistralClientBase):
         return [t for t in all_tasks if t['workflow_name'] == wf_name]
 
     def create_action_execution(self, request_body, extra_headers={}):
-        resp, body = self.post_json('action_executions',
-                                    request_body,
-                                    extra_headers)
+        resp, body = self.post_json(
+            'action_executions',
+            request_body,
+            extra_headers
+        )
 
         params = json.loads(request_body.get('params', '{}'))
         if params.get('save_result', False):
