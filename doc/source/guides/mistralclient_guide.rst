@@ -21,8 +21,8 @@ If Keystone is used for authentication in Mistral, then the environment should
 have auth variables::
 
     $ export OS_AUTH_URL=http://<Keystone_host>:5000/v2.0
-    $ export OS_USERNAME=admin
     $ export OS_TENANT_NAME=tenant
+    $ export OS_USERNAME=admin
     $ export OS_PASSWORD=secret
     $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2  (optional, by default URL=http://localhost:8989/v2)
 
@@ -39,6 +39,37 @@ You can see the list of available commands by typing::
 To make sure Mistral client works, type::
 
     $ mistral workbook-list
+
+Configure authentication against Keycloak
+-----------------------------------------
+
+Mistral also supports authentication against Keycloak server via OpenID Connect protocol.
+In order to use it on the client side the environment should look as follows::
+
+    $ export MISTRAL_AUTH_TYPE=keycloak-oidc
+    $ export OS_AUTH_URL=https://<Keycloak-server-host>:<Keycloak-server-port>/auth
+    $ export OS_TENANT_NAME=my_keycloak_realm
+    $ export OS_USERNAME=admin
+    $ export OS_PASSWORD=secret
+    $ export OPENID_CLIENT_ID=my_keycloak_client
+    $ export OPENID_CLIENT_SECRET=my_keycloak_client_secret
+    $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2  (optional, by default URL=http://localhost:8989/v2)
+
+.. note:: Variables OS_TENANT_NAME, OS_USERNAME, OS_PASSWORD are used for both Keystone and Keycloak
+    authentication. OS_TENANT_NAME in case of Keycloak needs to correspond a Keycloak realm. Unlike
+    Keystone, Keycloak requires to register a client that access some resources (Mistral server in
+    our case) protected by Keycloak in advance. For this reason, OPENID_CLIENT_ID and
+    OPENID_CLIENT_SECRET variables should be assigned with correct values as registered in Keycloak.
+
+Similar to Keystone OS_CACERT variable can also be added to provide a certification for SSL/TLS
+verification::
+
+    $ export OS_CACERT=<path_to_ca_cert>
+
+In order to disable SSL/TLS certificate verification MISTRALCLIENT_INSECURE variable needs to be set
+to True::
+
+    $ export MISTRALCLIENT_INSECURE=True
 
 Targeting non-preconfigured clouds
 ----------------------------------
