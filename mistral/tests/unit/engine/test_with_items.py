@@ -1300,6 +1300,7 @@ class WithItemsEngineTest(base.EngineTestCase):
 
     @mock.patch.object(std_actions.HTTPAction, 'run')
     def test_with_items_and_adhoc_action(self, mock_http_action):
+        mock_http_action.return_value = ''
 
         wb_text = """---
         version: "2.0"

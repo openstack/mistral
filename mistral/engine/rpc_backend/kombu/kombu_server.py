@@ -184,14 +184,16 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         return context
 
     def publish_message(self, body, reply_to, corr_id, res_type='response'):
+        if res_type != 'error':
+            body = self._serialize_message({'body': body})
+
         with kombu.producers[self.conn].acquire(block=True) as producer:
             producer.publish(
                 body=body,
                 exchange=self.exchange,
                 routing_key=reply_to,
                 correlation_id=corr_id,
-                serializer='pickle' if res_type == 'error'
-                else 'mistral_serialization',
+                serializer='pickle' if res_type == 'error' else 'json',
                 type=res_type
             )
 
@@ -199,6 +201,12 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         try:
             return self._on_message(request, message)
         except Exception as e:
+            LOG.warning(
+                "Got exception while consuming message. Exception would be "
+                "send back to the caller."
+            )
+            LOG.debug("Exceptions: %s" % str(e))
+
             # Wrap exception into another exception for compability with oslo.
             self.publish_message(
                 exc.KombuException(e),
@@ -217,7 +225,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         rpc_ctx = request.get('rpc_ctx')
         redelivered = message.delivery_info.get('redelivered', None)
         rpc_method_name = request.get('rpc_method')
-        arguments = request.get('arguments')
+        arguments = self._deserialize_message(request.get('arguments'))
         correlation_id = message.properties['correlation_id']
         reply_to = message.properties['reply_to']
 
