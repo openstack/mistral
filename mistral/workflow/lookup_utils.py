@@ -35,8 +35,21 @@ import threading
 from mistral.db.v2 import api as db_api
 from mistral.workflow import states
 
-_TASK_EXECUTIONS_CACHE_LOCK = threading.RLock()
-_TASK_EXECUTIONS_CACHE = cachetools.LRUCache(maxsize=20000)
+
+def _create_lru_cache_for_workflow_execution(wf_ex_id):
+    return cachetools.LRUCache(maxsize=500)
+
+# This is a two-level caching structure.
+# First level: [<workflow execution id> -> <task execution cache>]
+# Second level (task execution cache): [<task_name> -> <task executions>]
+# The first level (by workflow execution id) allows to invalidate
+# needed cache entry when the workflow gets completed.
+_TASK_EX_CACHE = cachetools.LRUCache(
+    maxsize=100,
+    missing=_create_lru_cache_for_workflow_execution
+)
+
+_CACHE_LOCK = threading.RLock()
 
 
 def find_task_executions_by_name(wf_ex_id, task_name):
@@ -46,10 +59,8 @@ def find_task_executions_by_name(wf_ex_id, task_name):
     :param task_name: Task name.
     :return: Task executions (possibly a cached value).
     """
-    cache_key = (wf_ex_id, task_name)
-
-    with _TASK_EXECUTIONS_CACHE_LOCK:
-        t_execs = _TASK_EXECUTIONS_CACHE.get(cache_key)
+    with _CACHE_LOCK:
+        t_execs = _TASK_EX_CACHE[wf_ex_id].get(task_name)
 
     if t_execs:
         return t_execs
@@ -66,8 +77,8 @@ def find_task_executions_by_name(wf_ex_id, task_name):
     )
 
     if all_finished:
-        with _TASK_EXECUTIONS_CACHE_LOCK:
-            _TASK_EXECUTIONS_CACHE[cache_key] = t_execs
+        with _CACHE_LOCK:
+            _TASK_EX_CACHE[wf_ex_id][task_name] = t_execs
 
     return t_execs
 
@@ -108,6 +119,16 @@ def find_completed_tasks(wf_ex_id):
     return db_api.get_completed_task_executions(workflow_execution_id=wf_ex_id)
 
 
-def clean_caches():
-    with _TASK_EXECUTIONS_CACHE_LOCK:
-        _TASK_EXECUTIONS_CACHE.clear()
+def get_task_execution_cache_size():
+    return len(_TASK_EX_CACHE)
+
+
+def invalidate_cached_task_executions(wf_ex_id):
+    with _CACHE_LOCK:
+        if wf_ex_id in _TASK_EX_CACHE:
+            del _TASK_EX_CACHE[wf_ex_id]
+
+
+def clear_caches():
+    with _CACHE_LOCK:
+        _TASK_EX_CACHE.clear()

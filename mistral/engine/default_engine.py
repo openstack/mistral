@@ -38,7 +38,6 @@ class DefaultEngine(base.Engine):
     @profiler.trace('engine-start-workflow')
     def start_workflow(self, wf_identifier, wf_input, description='',
                        **params):
-
         with db_api.transaction():
             wf_ex = wf_handler.start_workflow(
                 wf_identifier,
