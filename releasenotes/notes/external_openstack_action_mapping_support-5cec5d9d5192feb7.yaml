@@ -1,0 +1,9 @@
+---
+features:
+  - External OpenStack action mapping file could be specified at sync_db.sh or
+    mistral-db-mange script.
+    For more details see 'sync_db.sh --help' or 'mistral-db-manage --help'.
+
+  - From now it is optional to list openstack modules in mapping file which
+    you would not include into supported action set.
+

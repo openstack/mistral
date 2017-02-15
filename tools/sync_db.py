@@ -23,7 +23,6 @@ from mistral.db.v2 import api as db_api
 from mistral.services import action_manager
 from mistral.services import workflows
 
-
 CONF = cfg.CONF
 
 
@@ -35,6 +34,8 @@ def main():
     # favor of keystoneauth1.
     for group, opts in keystonemw_opts.list_auth_token_opts():
         CONF.register_opts(opts, group=group)
+
+    CONF.register_cli_opt(config.os_actions_mapping_path)
 
     config.parse_args()
 

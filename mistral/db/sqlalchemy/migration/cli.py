@@ -23,6 +23,7 @@ from oslo_utils import importutils
 import six
 import sys
 
+from mistral import config
 from mistral.services import action_manager
 from mistral.services import workflows
 
@@ -113,6 +114,7 @@ command_opt = cfg.SubCommandOpt('command',
                                 handler=add_command_parsers)
 
 CONF.register_cli_opt(command_opt)
+CONF.register_cli_opt(config.os_actions_mapping_path)
 
 
 def main():

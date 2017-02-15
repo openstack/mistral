@@ -259,6 +259,18 @@ keycloak_oidc_opts = [
     )
 ]
 
+# note: this command line option is used only from sync_db and
+# mistral-db-manage
+os_actions_mapping_path = cfg.StrOpt(
+    'openstack_actions_mapping_path',
+    short='m',
+    metavar='MAPPING_PATH',
+    default='actions/openstack/mapping.json',
+    help='Path to openstack action mapping json file.'
+         'It could be relative to mistral package '
+         'directory or absolute.'
+)
+
 CONF = cfg.CONF
 
 API_GROUP = 'api'
