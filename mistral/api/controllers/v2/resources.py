@@ -354,7 +354,7 @@ class ActionExecution(resource.Resource):
     output = types.jsontype
     created_at = wtypes.text
     updated_at = wtypes.text
-    params = types.jsontype
+    params = types.jsontype  # TODO(rakhmerov): What is this??
 
     @classmethod
     def sample(cls):

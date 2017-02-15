@@ -81,7 +81,11 @@ class Workflow(object):
 
         assert not self.wf_ex
 
-        wf_trace.info(self.wf_ex, "Starting workflow: %s" % self.wf_def)
+        wf_trace.info(
+            self.wf_ex,
+            "Starting workflow [name=%s, input=%s]" %
+            (self.wf_def.name, utils.cut(input_dict))
+        )
 
         # TODO(rakhmerov): This call implicitly changes input_dict! Fix it!
         # After fix we need to move validation after adding risky fields.
@@ -147,7 +151,7 @@ class Workflow(object):
         # Since some lookup utils functions may use cache for completed tasks
         # we need to clean caches to make sure that stale objects can't be
         # retrieved.
-        lookup_utils.clean_caches()
+        lookup_utils.clear_caches()
 
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
@@ -257,6 +261,11 @@ class Workflow(object):
         # Workflow result should be accepted by parent workflows (if any)
         # only if it completed successfully or failed.
         self.wf_ex.accepted = states.is_completed(state)
+
+        if states.is_completed(state):
+            # No need to keep task executions of this workflow in the
+            # lookup cache anymore.
+            lookup_utils.invalidate_cached_task_executions(self.wf_ex.id)
 
         if recursive and self.wf_ex.task_execution_id:
             parent_task_ex = db_api.get_task_execution(
