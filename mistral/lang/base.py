@@ -21,11 +21,19 @@ import six
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.expressions.jinja_expression import ANY_JINJA_REGEXP
+from mistral.expressions.yaql_expression import INLINE_YAQL_REGEXP
 from mistral.lang import types
 from mistral import utils
 
-
-CMD_PTRN = re.compile("^[\w\.]+[^=\(\s\"]*")
+ACTION_PATTRENS = {
+    "command": "[\w\.]+[^=\(\s\"]*",
+    "yaql_expression": INLINE_YAQL_REGEXP,
+    "jinja_expression": ANY_JINJA_REGEXP,
+}
+CMD_PTRN = re.compile(
+    "^({})".format("|".join(six.itervalues(ACTION_PATTRENS)))
+)
 
 EXPRESSION = '|'.join([expr.patterns[name] for name in expr.patterns])
 _ALL_IN_BRACKETS = "\[.*\]\s*"

@@ -492,6 +492,10 @@ class AdHocAction(PythonAction):
 class WorkflowAction(Action):
     """Workflow action."""
 
+    def __init__(self, wf_name, **kwargs):
+        super(WorkflowAction, self).__init__(None, **kwargs)
+        self.wf_name = wf_name
+
     @profiler.trace('workflow-action-complete', hide_args=True)
     def complete(self, result):
         # No-op because in case of workflow result is already processed.
@@ -506,15 +510,11 @@ class WorkflowAction(Action):
             parent_wf_ex.id
         )
 
-        task_spec = spec_parser.get_task_spec(self.task_ex.spec)
-
-        wf_spec_name = task_spec.get_workflow_name()
-
         wf_def = engine_utils.resolve_workflow_definition(
             parent_wf_ex.workflow_name,
             parent_wf_spec.get_name(),
             namespace=parent_wf_ex.params['namespace'],
-            wf_spec_name=wf_spec_name
+            wf_spec_name=self.wf_name
         )
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(

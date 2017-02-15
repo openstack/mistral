@@ -425,18 +425,14 @@ class RegularTask(Task):
 
     @profiler.trace('regular-task-get-action-input', hide_args=True)
     def _get_action_input(self, ctx=None):
-        ctx = ctx or self.ctx
+        input_dict = self._evaluate_expression(self.task_spec.get_input(), ctx)
 
-        ctx_view = data_flow.ContextView(
-            ctx,
-            self.wf_ex.context,
-            self.wf_ex.input
-        )
-
-        input_dict = expr.evaluate_recursively(
-            self.task_spec.get_input(),
-            ctx_view
-        )
+        if not isinstance(input_dict, dict):
+            raise exc.InputException(
+                "Wrong dynamic input for task: %s. Dict type is expected. "
+                "Actual type: %s. Actual value: %s" %
+                (self.task_spec.get_name(), type(input_dict), str(input_dict))
+            )
 
         return utils.merge_dicts(
             input_dict,
@@ -444,12 +440,28 @@ class RegularTask(Task):
             overwrite=False
         )
 
+    def _evaluate_expression(self, expression, ctx=None):
+        ctx = ctx or self.ctx
+        ctx_view = data_flow.ContextView(
+            ctx,
+            self.wf_ex.context,
+            self.wf_ex.input
+        )
+        input_dict = expr.evaluate_recursively(
+            expression,
+            ctx_view
+        )
+        return input_dict
+
     def _build_action(self):
         action_name = self.task_spec.get_action_name()
         wf_name = self.task_spec.get_workflow_name()
 
         if wf_name:
-            return actions.WorkflowAction(wf_name, task_ex=self.task_ex)
+            return actions.WorkflowAction(
+                wf_name=self._evaluate_expression(wf_name),
+                task_ex=self.task_ex
+            )
 
         if not action_name:
             action_name = 'std.noop'
