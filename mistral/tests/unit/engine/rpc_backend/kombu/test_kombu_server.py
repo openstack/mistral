@@ -64,12 +64,12 @@ class KombuServerTestCase(base.KombuTestCase):
 
         self.server.publish_message(body, reply_to, corr_id, type)
         enter_mock.publish.assert_called_once_with(
-            body=body,
-            exchange=self.conf['exchange'],
+            body={'body': '"body"'},
+            exchange='openstack',
             routing_key=reply_to,
             correlation_id=corr_id,
             type=type,
-            serializer='mistral_serialization'
+            serializer='json'
         )
 
     def test_run_launch_successfully(self):
@@ -84,7 +84,7 @@ class KombuServerTestCase(base.KombuTestCase):
 
         def side_effect(*args, **kwargs):
             self.assertTrue(self.server.is_running)
-            self.server.stop()
+            raise KeyboardInterrupt
 
         acquire_mock = mock.MagicMock()
         acquire_mock.drain_events.side_effect = side_effect
@@ -92,13 +92,21 @@ class KombuServerTestCase(base.KombuTestCase):
 
         self.server.run()
         self.assertFalse(self.server.is_running)
+        self.assertEqual(self.server._sleep_time, 1)
 
-    def test_run_raise_mistral_exception(self):
+    def test_run_socket_error_reconnect(self):
+
+        def side_effect(*args, **kwargs):
+            if acquire_mock.drain_events.call_count == 1:
+                raise socket.error()
+            raise TestException()
+
         acquire_mock = mock.MagicMock()
-        acquire_mock.drain_events.side_effect = socket.error()
+        acquire_mock.drain_events.side_effect = side_effect
         fake_kombu.connection.acquire.return_value = acquire_mock
 
-        self.assertRaises(exc.MistralException, self.server.run)
+        self.assertRaises(TestException, self.server.run)
+        self.assertEqual(self.server._sleep_time, 2)
 
     def test_run_socket_timeout_still_running(self):
 
@@ -197,10 +205,10 @@ class KombuServerTestCase(base.KombuTestCase):
             'async': True,
             'rpc_ctx': {},
             'rpc_method': 'found_method',
-            'arguments': {
+            'arguments': self.server._serialize_message({
                 'a': 1,
                 'b': 2
-            }
+            })
         }
 
         message = mock.MagicMock()
@@ -231,10 +239,10 @@ class KombuServerTestCase(base.KombuTestCase):
             'async': False,
             'rpc_ctx': {},
             'rpc_method': 'found_method',
-            'arguments': {
+            'arguments': self.server._serialize_message({
                 'a': 1,
                 'b': 2
-            }
+            })
         }
 
         reply_to = 'reply_to'
