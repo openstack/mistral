@@ -191,14 +191,16 @@ attributes:
 -  **action** - Name of the action associated with the task.
    *Mutually exclusive with* **workflow**. If neither action nor workflow are
    provided then the action 'std.noop' will be used.
--  **workflow** - Name of the workflow associated with the task.
+-  **workflow** - Name of the workflow associated with the task. Can be static
+   value or an expression (for example,  "{{ _.subworkflow_name }}").
    *Mutually exclusive with* **action**.
 -  **input** - Actual input parameter values of the task. *Optional*.
    Value of each parameter is a JSON-compliant type such as number,
    string etc, dictionary or list. It can also be an expression to
    retrieve value from task context or any of the mentioned types
    containing inline expressions (for example, string "<%
-   $.movie_name %> is a cool movie!")
+   $.movie_name %> is a cool movie!") Can be an expression that evaluates to
+   a JSON object.
 -  **publish** - Dictionary of variables to publish to the workflow
    context. Any JSON-compatible data structure optionally containing
    expression to select precisely what needs to be published.
@@ -225,6 +227,66 @@ attributes:
 -  **safe-rerun** - Boolean value allowing to rerun task if executor dies
    during action execution. If set to 'true' task may be run twice.
    *Optional*. By default set to 'false'.
+
+Workflow
+''''''''
+Synchronously starts a sub-workflow with the given name.
+
+Example static workflow call:
+
+.. code-block:: mistral
+
+    my_task:
+      workflow: name_of_my_workflow
+
+Example dynamic workflow selection:
+
+.. code-block:: mistral
+
+  ---
+  version: '2.0'
+
+  name: weather_data_processing
+
+  workflows:
+    framework:
+      input:
+        - magic_workflow_name: show_weather
+
+      tasks:
+        weather_data:
+          action: std.echo
+          input:
+            output:
+              location: wherever
+              temperature: "22C"
+          publish:
+            weather_data: <% task(weather_data).result %>
+          on-success:
+            - do_magic
+
+        do_magic:
+          # reference workflow by parameter
+          workflow: <% $.magic_workflow_name %>
+          # expand dictionary to input parameters
+          input: <% $.weather_data %>
+
+    show_weather:
+      input:
+        - location
+        - temperature
+
+      tasks:
+        write_data:
+          action: std.echo
+          input:
+            output: "<% $.location %>: <% $.temperature %>"
+
+
+Note: Typical use for the dynamic workflow selection is when parts of a
+workflow can be customized. E.g. collect some weather data and then execute
+some custom workflow on it.
+
 
 Policies
 ''''''''
@@ -307,8 +369,8 @@ Retry policy can also be configured on a single line as:
 
 All parameter values for any policy can be defined as expressions.
 
-Simplified input syntax
-'''''''''''''''''''''''
+Input syntax
+''''''''''''
 
 When describing a workflow task it's possible to specify its input
 parameters in two ways:
@@ -330,6 +392,25 @@ Simplified syntax:
     my_task:
       action: std.http url="http://mywebsite.org" method="GET"
 
+Syntax with dynamic input parameter map:
+
+.. code-block:: mistral
+
+    ---
+    version: '2.0'
+
+    example_workflow:
+      input:
+        - http_request_parameters:
+            url: http://mywebsite.org
+            method: GET
+
+      tasks:
+        setup_task:
+          action: std.http
+          input: <% $.http_request_parameters %>
+
+
 The same rules apply to tasks associated with workflows.
 
 Full syntax:
@@ -348,6 +429,22 @@ Simplified syntax:
 
     my_task:
       workflow: some_nested_workflow param1='val1' param2='val2'
+
+Syntax with dynamic input parameter map:
+
+.. code-block:: mistral
+
+    ---
+    version: '2.0'
+
+    example_workflow:
+      input:
+        - nested_params: {"param1": "val1", "param2": "val2"}
+
+      tasks:
+        setup_task:
+          workflow: some_nested_workflow
+          input: <% $.nested_params %>
 
 **NOTE**: It's also possible to merge these two approaches and specify a part
 of parameters using simplified key-value pairs syntax and using keyword *input*.
