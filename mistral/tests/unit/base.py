@@ -245,7 +245,7 @@ class DbTestCase(BaseTest):
         action_manager.sync_db()
 
     def _clean_db(self):
-        lookup_utils.clean_caches()
+        lookup_utils.clear_caches()
 
         contexts = [
             get_context(default=False),
