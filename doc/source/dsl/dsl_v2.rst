@@ -205,7 +205,7 @@ attributes:
    Published variables will be accessible for downstream tasks via using
    expressions. *Optional*.
 -  **publish-on-error** - Same as **publish** but evaluated in case of
-    task execution failures. *Optional*
+   task execution failures. *Optional*
 -  **with-items** - If configured, it allows to run action or workflow
    associated with a task multiple times on a provided list of items.
    See `Processing collections using
@@ -412,6 +412,19 @@ Direct workflow task attributes
    completed with an error. *Optional*.
 -  **on-complete** - List of tasks which will run after the task has
    completed regardless of whether it is successful or not. *Optional*.
+
+It is important to understand the semantics of **on-success**, **on-error**
+and **on-complete** around handling action errors.
+
+In case if task action returned an error **on-success** and **on-complete**
+won't prevent from failing the entire workflow execution. Only **on-error**
+will. The closest analogy is *try-catch-finally* blocks in regular
+programming languages. **on-error** is similar to *catch* and it serves
+as an exception handler for possible errors expected by design. Whereas
+**on-complete** is like *finally* that will run in any case but it won't
+stop the exception from bubbling up to an upper layer. So **on-complete**
+should only be understood as a language construction that allows to
+define some clean up actions.
 
 Transitions with YAQL expressions
 '''''''''''''''''''''''''''''''''
