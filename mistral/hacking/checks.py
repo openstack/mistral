@@ -67,6 +67,12 @@ def check_oslo_namespace_imports(logical_line):
         yield(0, msg)
 
 
+def check_python3_xrange(logical_line):
+    if re.search(r"\bxrange\s*\(", logical_line):
+        yield(0, "M327: Do not use xrange(). 'xrange()' is not compatible "
+              "with Python 3. Use range() or six.moves.range() instead.")
+
+
 class BaseASTChecker(ast.NodeVisitor):
     """Provides a simple framework for writing AST-based checks.
 
