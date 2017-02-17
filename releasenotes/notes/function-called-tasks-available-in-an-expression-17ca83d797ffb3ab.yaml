@@ -1,0 +1,8 @@
+---
+
+features:
+    - |
+       New function, called tasks, available from within an expression (Yaql,
+       Jinja2). This function allows to filter all tasks of a user by workflow
+       execution id and/or state. In addition it is possible to get tasks
+       recursively and flatten the tasks list.
