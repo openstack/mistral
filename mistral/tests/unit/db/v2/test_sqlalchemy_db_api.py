@@ -616,7 +616,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         )
 
     def test_update_other_project_workflow_by_admin(self):
-        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 
         # Switch to admin.
         auth_context.set_ctx(test_base.get_context(default=False, admin=True))

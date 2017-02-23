@@ -259,8 +259,8 @@ def _get_db_object_by_id(model, id):
     return _secure_query(model).filter_by(id=id).first()
 
 
-def _get_db_object_by_name_or_id(model, identifier):
-    query = _secure_query(model)
+def _get_db_object_by_name_or_id(model, identifier, insecure=False):
+    query = b.model_query(model) if insecure else _secure_query(model)
     query = query.filter(
         sa.or_(
             model.id == identifier,
@@ -417,16 +417,19 @@ def delete_workbooks(session=None, **kwargs):
 # Workflow definitions.
 
 @b.session_aware()
-def get_workflow_definition(identifier, session=None):
+def get_workflow_definition(identifier, session=None, insecure=False):
     """Gets workflow definition by name or uuid.
 
     :param identifier: Identifier could be in the format of plain string or
                        uuid.
+    :param insecure: If True, will search all records, otherwise will narrow
+        scope to project id.
     :return: Workflow definition.
     """
     wf_def = _get_db_object_by_name_or_id(
         models.WorkflowDefinition,
-        identifier
+        identifier,
+        insecure=insecure
     )
 
     if not wf_def:
@@ -487,7 +490,7 @@ def create_workflow_definition(values, session=None):
 
 @b.session_aware()
 def update_workflow_definition(identifier, values, session=None):
-    wf_def = get_workflow_definition(identifier)
+    wf_def = get_workflow_definition(identifier, insecure=True)
     ctx = auth_ctx.ctx()
 
     if not ctx.is_admin and wf_def.project_id != security.get_project_id():

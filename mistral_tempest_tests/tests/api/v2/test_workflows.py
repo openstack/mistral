@@ -235,10 +235,10 @@ class WorkflowTestsV2(base.TestCase):
     @decorators.idempotent_id('f516aad0-9a50-4ace-a217-fa1931fd9335')
     def test_update_workflow(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
-        _, body = self.client.create_workflow('wf_v2.yaml')
+        _, body = self.client.create_workflow('single_wf.yaml')
         name = body['workflows'][0]['name']
 
-        resp, body = self.client.update_request('workflows', 'wf_v2.yaml')
+        resp, body = self.client.update_request('workflows', 'single_wf.yaml')
 
         self.assertEqual(200, resp.status)
         self.assertEqual(name, body['workflows'][0]['name'])

@@ -1,0 +1,11 @@
+---
+version: '2.0'
+
+single_wf:
+  type: direct
+
+  tasks:
+    hello:
+      action: std.echo output="Hello"
+      publish:
+        result: <% task(hello).result %>
