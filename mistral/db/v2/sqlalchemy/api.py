@@ -28,10 +28,10 @@ import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
 
-from mistral import context as auth_ctx
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import sqlite_lock
+from mistral.db import utils as mdb_utils
 from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
@@ -491,18 +491,8 @@ def create_workflow_definition(values, session=None):
 @b.session_aware()
 def update_workflow_definition(identifier, values, session=None):
     wf_def = get_workflow_definition(identifier, insecure=True)
-    ctx = auth_ctx.ctx()
 
-    if not ctx.is_admin and wf_def.project_id != security.get_project_id():
-        raise exc.NotAllowedException(
-            "Can not update workflow of other tenants. "
-            "[workflow_identifier=%s]" % identifier
-        )
-
-    if not ctx.is_admin and wf_def.is_system:
-        raise exc.InvalidActionException(
-            "Attempt to modify a system workflow: %s" % identifier
-        )
+    mdb_utils.check_db_obj_access(wf_def)
 
     if wf_def.scope == 'public' and values['scope'] == 'private':
         # Check cron triggers.
@@ -546,15 +536,7 @@ def create_or_update_workflow_definition(name, values, session=None):
 def delete_workflow_definition(identifier, session=None):
     wf_def = get_workflow_definition(identifier)
 
-    if wf_def.project_id != security.get_project_id():
-        raise exc.NotAllowedException(
-            "Can not delete workflow of other users. [workflow_identifier=%s]"
-            % identifier
-        )
-
-    if wf_def.is_system:
-        msg = "Attempt to delete a system workflow: %s" % identifier
-        raise exc.DataAccessException(msg)
+    mdb_utils.check_db_obj_access(wf_def)
 
     cron_triggers = get_cron_triggers(insecure=True, workflow_id=wf_def.id)
     if cron_triggers:
