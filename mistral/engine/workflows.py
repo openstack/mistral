@@ -54,8 +54,7 @@ class Workflow(object):
     Mistral engine or its components in order to manipulate with workflows.
     """
 
-    def __init__(self, wf_def, wf_ex=None):
-        self.wf_def = wf_def
+    def __init__(self, wf_ex=None):
         self.wf_ex = wf_ex
 
         if wf_ex:
@@ -64,16 +63,13 @@ class Workflow(object):
                 wf_ex.id
             )
         else:
-            # New workflow execution.
-            self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
-                wf_def.id,
-                wf_def.updated_at
-            )
+            self.wf_spec = None
 
     @profiler.trace('workflow-start')
-    def start(self, input_dict, desc='', params=None):
+    def start(self, wf_def, input_dict, desc='', params=None):
         """Start workflow.
 
+        :param wf_def: Workflow definition.
         :param input_dict: Workflow input.
         :param desc: Workflow execution description.
         :param params: Workflow type specific parameters.
@@ -81,17 +77,23 @@ class Workflow(object):
 
         assert not self.wf_ex
 
+        # New workflow execution.
+        self.wf_spec = spec_parser.get_workflow_spec_by_definition_id(
+            wf_def.id,
+            wf_def.updated_at
+        )
+
         wf_trace.info(
             self.wf_ex,
             "Starting workflow [name=%s, input=%s]" %
-            (self.wf_def.name, utils.cut(input_dict))
+            (wf_def.name, utils.cut(input_dict))
         )
 
         # TODO(rakhmerov): This call implicitly changes input_dict! Fix it!
         # After fix we need to move validation after adding risky fields.
-        eng_utils.validate_input(self.wf_def, input_dict, self.wf_spec)
+        eng_utils.validate_input(wf_def, input_dict, self.wf_spec)
 
-        self._create_execution(input_dict, desc, params)
+        self._create_execution(wf_def, input_dict, desc, params)
 
         self.set_state(states.RUNNING)
 
@@ -202,12 +204,12 @@ class Workflow(object):
             )
         return final_context
 
-    def _create_execution(self, input_dict, desc, params):
+    def _create_execution(self, wf_def, input_dict, desc, params):
         self.wf_ex = db_api.create_workflow_execution({
-            'name': self.wf_def.name,
+            'name': wf_def.name,
             'description': desc,
-            'workflow_name': self.wf_def.name,
-            'workflow_id': self.wf_def.id,
+            'workflow_name': wf_def.name,
+            'workflow_id': wf_def.id,
             'spec': self.wf_spec.to_dict(),
             'state': states.IDLE,
             'output': {},
@@ -272,10 +274,7 @@ class Workflow(object):
                 self.wf_ex.task_execution_id
             )
 
-            parent_wf = Workflow(
-                db_api.get_workflow_definition(parent_task_ex.workflow_id),
-                parent_task_ex.workflow_execution
-            )
+            parent_wf = Workflow(wf_ex=parent_task_ex.workflow_execution)
 
             parent_wf.lock()
 

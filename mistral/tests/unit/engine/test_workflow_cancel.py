@@ -71,6 +71,33 @@ class WorkflowCancelTest(base.EngineTestCase):
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.SUCCESS, task_1_ex.state)
 
+    def test_cancel_workflow_if_definition_deleted(self):
+        workflow = """
+        version: '2.0'
+
+        wf:
+          type: direct
+          tasks:
+            task1:
+              action: std.echo output="foo"
+              wait-before: 5
+        """
+
+        wf = wf_service.create_workflows(workflow)[0]
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        with db_api.transaction():
+            db_api.delete_workflow_definition(wf.id)
+
+        self.engine.stop_workflow(
+            wf_ex.id,
+            states.CANCELLED,
+            "Cancelled by user."
+        )
+
+        self.await_workflow_cancelled(wf_ex.id)
+
     def test_cancel_paused_workflow(self):
         workflow = """
         version: '2.0'
