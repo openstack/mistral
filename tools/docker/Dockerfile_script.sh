@@ -14,6 +14,7 @@ apt-get install -y  \
 		python-dev \
 		python-pip \
 		python-setuptools \
+		sudo
 
 sudo pip install tox==1.6.1 python-mistralclient
 
