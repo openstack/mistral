@@ -13,6 +13,7 @@
 # under the License.
 
 from oslo_concurrency.fixture import lockutils
+from tempest.lib import decorators
 from tempest import test
 
 from mistral_tempest_tests.tests import base
@@ -42,6 +43,7 @@ class TasksTestsV2(base.TestCase):
         super(TasksTestsV2, self).tearDown()
 
     @test.attr(type='smoke')
+    @decorators.idempotent_id('81159dce-3802-44ee-a8d4-5ddca106fd91')
     def test_get_tasks_list(self):
         resp, body = self.client.get_list_obj('tasks')
 
@@ -49,6 +51,7 @@ class TasksTestsV2(base.TestCase):
         self.assertNotEmpty(body['tasks'])
 
     @test.attr(type='sanity')
+    @decorators.idempotent_id('f62664de-bd2b-4153-8d0f-5a76d78abbad')
     def test_get_task(self):
         resp, body = self.client.get_list_obj('tasks')
 
@@ -58,6 +61,7 @@ class TasksTestsV2(base.TestCase):
         )
 
     @test.attr(type='sanity')
+    @decorators.idempotent_id('3230d694-40fd-4094-ad12-024f40a21b94')
     def test_get_tasks_of_execution(self):
         resp, body = self.client.get_list_obj(
             'tasks?workflow_execution_id=%s' % self.execution_id
@@ -83,6 +87,7 @@ class TaskTypesTestsV2(base.TestCase):
         _, execution = self.client.create_execution(self.nested_wf_name)
 
     @test.attr(type='sanity')
+    @decorators.idempotent_id('1ac726eb-b945-4b82-8755-a2fb2dc009bc')
     def test_task_type(self):
         resp, body = self.client.get_list_obj('tasks')
 
