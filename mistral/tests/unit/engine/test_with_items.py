@@ -1060,10 +1060,10 @@ class WithItemsEngineTest(base.EngineTestCase):
         with_items_retry:
           tasks:
             task1:
-              with-items: i in [1, 2, 3]
+              with-items: i in [1, 2]
               action: std.fail
               retry:
-                count: 3
+                count: 1
                 delay: 1
               on-error: task2
 
@@ -1091,11 +1091,11 @@ class WithItemsEngineTest(base.EngineTestCase):
             task1_executions = task1_ex.executions
 
         self.assertEqual(
-            3,
+            1,
             task1_ex.runtime_context['retry_task_policy']['retry_no']
         )
-        self.assertEqual(12, len(task1_executions))
-        self._assert_multiple_items(task1_executions, 3, accepted=True)
+        self.assertEqual(4, len(task1_executions))
+        self._assert_multiple_items(task1_executions, 2, accepted=True)
 
     def test_with_items_concurrency_retry_policy(self):
         wf_text = """---
@@ -1104,10 +1104,10 @@ class WithItemsEngineTest(base.EngineTestCase):
         wf:
           tasks:
             task1:
-              with-items: i in [1, 2, 3, 4]
+              with-items: i in [1, 2]
               action: std.fail
               retry:
-                count: 3
+                count: 2
                 delay: 1
               concurrency: 2
               on-error: task2
@@ -1137,8 +1137,8 @@ class WithItemsEngineTest(base.EngineTestCase):
 
             task1_execs = task1_ex.executions
 
-        self.assertEqual(16, len(task1_execs))
-        self._assert_multiple_items(task1_execs, 4, accepted=True)
+        self.assertEqual(6, len(task1_execs))
+        self._assert_multiple_items(task1_execs, 2, accepted=True)
 
     def test_with_items_env(self):
         wf_text = """---
