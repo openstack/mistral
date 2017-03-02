@@ -34,11 +34,14 @@ _CHECK_AND_COMPLETE_PATH = (
 
 @profiler.trace('workflow-handler-start-workflow')
 def start_workflow(wf_identifier, wf_input, desc, params):
-    wf = workflows.Workflow(
-        db_api.get_workflow_definition(wf_identifier)
-    )
+    wf = workflows.Workflow()
 
-    wf.start(wf_input, desc=desc, params=params)
+    wf.start(
+        wf_def=db_api.get_workflow_definition(wf_identifier),
+        input_dict=wf_input,
+        desc=desc,
+        params=params
+    )
 
     _schedule_check_and_complete(wf.wf_ex)
 
@@ -46,10 +49,7 @@ def start_workflow(wf_identifier, wf_input, desc, params):
 
 
 def stop_workflow(wf_ex, state, msg=None):
-    wf = workflows.Workflow(
-        db_api.get_workflow_definition(wf_ex.workflow_id),
-        wf_ex=wf_ex
-    )
+    wf = workflows.Workflow(wf_ex=wf_ex)
 
     # In this case we should not try to handle possible errors. Instead,
     # we need to let them pop up since the typical way of failing objects
@@ -86,10 +86,7 @@ def _check_and_complete(wf_ex_id):
         if not wf_ex or states.is_completed(wf_ex.state):
             return
 
-        wf = workflows.Workflow(
-            db_api.get_workflow_definition(wf_ex.workflow_id),
-            wf_ex=wf_ex
-        )
+        wf = workflows.Workflow(wf_ex=wf_ex)
 
         try:
             incomplete_tasks_count = wf.check_and_complete()
@@ -121,10 +118,7 @@ def _check_and_complete(wf_ex_id):
 
 
 def pause_workflow(wf_ex, msg=None):
-    wf = workflows.Workflow(
-        db_api.get_workflow_definition(wf_ex.workflow_id),
-        wf_ex=wf_ex
-    )
+    wf = workflows.Workflow(wf_ex=wf_ex)
 
     wf.set_state(states.PAUSED, msg)
 
@@ -133,10 +127,7 @@ def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
     if wf_ex.state == states.PAUSED:
         return wf_ex.get_clone()
 
-    wf = workflows.Workflow(
-        db_api.get_workflow_definition(wf_ex.workflow_id),
-        wf_ex=wf_ex
-    )
+    wf = workflows.Workflow(wf_ex=wf_ex)
 
     wf.rerun(task_ex, reset=reset, env=env)
 
@@ -150,10 +141,7 @@ def resume_workflow(wf_ex, env=None):
     if not states.is_paused_or_idle(wf_ex.state):
         return wf_ex.get_clone()
 
-    wf = workflows.Workflow(
-        db_api.get_workflow_definition(wf_ex.workflow_id),
-        wf_ex=wf_ex
-    )
+    wf = workflows.Workflow(wf_ex=wf_ex)
 
     wf.resume(env=env)
 
