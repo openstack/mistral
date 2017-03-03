@@ -18,11 +18,11 @@ import six
 import threading
 
 from mistral import exceptions as exc
+from mistral.lang import types
+from mistral.lang.v2 import base
+from mistral.lang.v2 import task_defaults
+from mistral.lang.v2 import tasks
 from mistral import utils
-from mistral.workbook import types
-from mistral.workbook.v2 import base
-from mistral.workbook.v2 import task_defaults
-from mistral.workbook.v2 import tasks
 
 
 class WorkflowSpec(base.BaseSpec):

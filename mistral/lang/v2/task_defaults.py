@@ -15,10 +15,10 @@
 
 import six
 
-from mistral.workbook import types
-from mistral.workbook.v2 import base
-from mistral.workbook.v2 import policies
-from mistral.workbook.v2 import tasks
+from mistral.lang import types
+from mistral.lang.v2 import base
+from mistral.lang.v2 import policies
+from mistral.lang.v2 import tasks
 
 
 direct_wf_ts = tasks.DirectWorkflowTaskSpec

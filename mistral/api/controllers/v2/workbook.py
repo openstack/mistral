@@ -27,10 +27,10 @@ from mistral.api.controllers.v2 import validation
 from mistral.api.hooks import content_type as ct_hook
 from mistral import context
 from mistral.db.v2 import api as db_api
+from mistral.lang import parser as spec_parser
 from mistral.services import workbooks
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
-from mistral.workbook import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)

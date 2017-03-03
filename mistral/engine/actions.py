@@ -25,11 +25,11 @@ from mistral.engine import utils as e_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.lang import parser as spec_parser
 from mistral.services import action_manager as a_m
 from mistral.services import security
 from mistral import utils
 from mistral.utils import wf_trace
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 

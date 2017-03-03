@@ -19,8 +19,8 @@ import re
 import yaml
 
 from mistral import exceptions as exc
-from mistral.tests.unit.workbook.v2 import base
-from mistral.workbook.v2 import workbook
+from mistral.lang.v2 import workbook
+from mistral.tests.unit.lang.v2 import base
 
 
 class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):

@@ -12,8 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook import base
-from mistral.workbook import types
+from mistral.lang import base
+from mistral.lang import types
 
 
 class BaseSpec(base.BaseSpec):

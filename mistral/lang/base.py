@@ -21,8 +21,8 @@ import six
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.lang import types
 from mistral import utils
-from mistral.workbook import types
 
 
 CMD_PTRN = re.compile("^[\w\.]+[^=\(\s\"]*")

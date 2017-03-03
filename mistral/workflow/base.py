@@ -21,8 +21,8 @@ from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral import utils as u
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import lookup_utils

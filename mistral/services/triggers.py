@@ -21,8 +21,8 @@ from mistral.db.v2 import api as db_api
 from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
+from mistral.lang import parser
 from mistral.services import security
-from mistral.workbook import parser
 
 
 def get_next_execution_time(pattern, start_time):

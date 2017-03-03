@@ -21,7 +21,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine import actions
 from mistral.engine import task_handler
 from mistral import exceptions as exc
-from mistral.workbook import parser as spec_parser
+from mistral.lang import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)

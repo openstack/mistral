@@ -20,10 +20,10 @@ import six
 
 from mistral import exceptions as exc
 from mistral import expressions
+from mistral.lang import types
+from mistral.lang.v2 import base
+from mistral.lang.v2 import policies
 from mistral import utils
-from mistral.workbook import types
-from mistral.workbook.v2 import base
-from mistral.workbook.v2 import policies
 
 _expr_ptrns = [expressions.patterns[name] for name in expressions.patterns]
 WITH_ITEMS_PTRN = re.compile(

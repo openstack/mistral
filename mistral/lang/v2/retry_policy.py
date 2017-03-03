@@ -15,8 +15,8 @@
 
 import six
 
-from mistral.workbook import types
-from mistral.workbook.v2 import base
+from mistral.lang import types
+from mistral.lang.v2 import base
 
 
 class RetrySpec(base.BaseSpec):

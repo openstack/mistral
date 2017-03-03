@@ -28,9 +28,9 @@ from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import data_flow
 from mistral.workflow import states
 

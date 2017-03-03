@@ -13,8 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook import parser as spec_parser
-from mistral.workbook.v2 import tasks
+from mistral.lang import parser as spec_parser
+from mistral.lang.v2 import tasks
 from mistral.workflow import states
 
 

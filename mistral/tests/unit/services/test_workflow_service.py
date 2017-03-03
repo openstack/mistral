@@ -19,10 +19,10 @@ from oslo_config import cfg
 
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral import utils
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
 
