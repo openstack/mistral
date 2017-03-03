@@ -43,13 +43,16 @@ def _load_deferred_output_field(action_ex):
 
 def _get_action_execution(id):
     with db_api.transaction():
-        action_ex = db_api.get_action_execution(id)
-
-        return _get_action_execution_resource(action_ex)
+        return _get_action_execution_resource(db_api.get_action_execution(id))
 
 
 def _get_action_execution_resource(action_ex):
     _load_deferred_output_field(action_ex)
+
+    return _get_action_execution_resource_for_list(action_ex)
+
+
+def _get_action_execution_resource_for_list(action_ex):
 
     # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
     # TODO(nmakhotkin): Use db_model for this instead.
@@ -64,7 +67,7 @@ def _get_action_execution_resource(action_ex):
 
 def _get_action_executions(task_execution_id=None, marker=None, limit=None,
                            sort_keys='created_at', sort_dirs='asc',
-                           fields='', **filters):
+                           fields='', include_output=False, **filters):
     """Return all action executions.
 
     Where project_id is the same as the requester or
@@ -89,12 +92,17 @@ def _get_action_executions(task_execution_id=None, marker=None, limit=None,
     if task_execution_id:
         filters['task_execution_id'] = task_execution_id
 
+    if include_output:
+        resource_function = _get_action_execution_resource
+    else:
+        resource_function = _get_action_execution_resource_for_list
+
     return rest_utils.get_all(
         resources.ActionExecutions,
         resources.ActionExecution,
         db_api.get_action_executions,
         db_api.get_action_execution,
-        resource_function=_get_action_execution_resource,
+        resource_function=resource_function,
         marker=marker,
         limit=limit,
         sort_keys=sort_keys,
@@ -186,13 +194,13 @@ class ActionExecutionsController(rest.RestController):
                          wtypes.text, wtypes.text, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text, types.uuid,
                          wtypes.text, wtypes.text, bool, types.jsontype,
-                         types.jsontype, types.jsontype, wtypes.text)
+                         types.jsontype, types.jsontype, wtypes.text, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', created_at=None, name=None,
                 tags=None, updated_at=None, workflow_name=None,
                 task_name=None, task_execution_id=None, state=None,
                 state_info=None, accepted=None, input=None, output=None,
-                params=None, description=None):
+                params=None, description=None, include_output=False):
         """Return all tasks within the execution.
 
         Where project_id is the same as the requester or
@@ -234,6 +242,8 @@ class ActionExecutionsController(rest.RestController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param include_output: Optional. Include the output for all executions
+                               in the list
         """
         acl.enforce('action_executions:list', context.ctx())
 
@@ -264,6 +274,7 @@ class ActionExecutionsController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
+            include_output=include_output,
             **filters
         )
 
@@ -302,13 +313,14 @@ class TasksActionExecutionController(rest.RestController):
                          wtypes.text, types.uniquelist, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text, wtypes.text,
                          wtypes.text, bool, types.jsontype, types.jsontype,
-                         types.jsontype, wtypes.text)
+                         types.jsontype, wtypes.text, bool)
     def get_all(self, task_execution_id, marker=None, limit=None,
                 sort_keys='created_at', sort_dirs='asc', fields='',
                 created_at=None, name=None, tags=None,
                 updated_at=None, workflow_name=None, task_name=None,
                 state=None, state_info=None, accepted=None, input=None,
-                output=None, params=None, description=None):
+                output=None, params=None, description=None,
+                include_output=None):
         """Return all tasks within the execution.
 
         Where project_id is the same as the requester or
@@ -350,6 +362,8 @@ class TasksActionExecutionController(rest.RestController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param include_output: Optional. Include the output for all executions
+                               in the list
         """
         acl.enforce('action_executions:list', context.ctx())
 
@@ -380,6 +394,7 @@ class TasksActionExecutionController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
+            include_output=include_output,
             **filters
         )
 

@@ -1,0 +1,16 @@
+---
+
+features:
+  - |
+
+    New parameter called 'include_output' added to action execution api.
+    By default output field does not return when calling list action executions
+    API
+
+critical:
+  - |
+
+    By default, output field will not return when calling list action
+    executions. In the previous version it did, so if a user used this, and/or
+    wants to get output field when calling list action executions API, it will
+    be possible only by using the new include output parameter.

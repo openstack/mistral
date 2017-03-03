@@ -29,6 +29,17 @@ class ActionExecutionTestsV2(base.TestCase):
     _service = 'workflowv2'
 
     @classmethod
+    def resource_setup(cls):
+        super(ActionExecutionTestsV2, cls).resource_setup()
+
+        cls.client.create_action_execution(
+            {
+                'name': 'std.echo',
+                'input': '{"output": "Hello, Mistral!"}'
+            }
+        )
+
+    @classmethod
     def resource_cleanup(cls):
         for action_ex in cls.client.action_executions:
             try:
@@ -57,6 +68,60 @@ class ActionExecutionTestsV2(base.TestCase):
             {'result': 'Hello, Mistral!'},
             output
         )
+
+    @test.attr(type='sanity')
+    def test_list_action_executions(self):
+        resp, body = self.client.get_list_obj('action_executions')
+
+        self.assertEqual(200, resp.status)
+
+    @test.attr(type='sanity')
+    def test_output_appear_in_response_only_when_needed(self):
+        resp, body = self.client.get_list_obj('action_executions')
+
+        self.assertEqual(200, resp.status)
+        action_execution = body['action_executions'][0]
+        self.assertNotIn("output", action_execution)
+
+        resp, body = self.client.get_list_obj(
+            'action_executions?include_output=True'
+        )
+
+        self.assertEqual(200, resp.status)
+        action_execution = body['action_executions'][0]
+        self.assertIn("output", action_execution)
+
+        resp, body = self.client.get_action_execution(action_execution['id'])
+        self.assertIn("output", body)
+
+        # Test when passing task execution ID
+
+        resp, body = self.client.create_workflow('wf_v2.yaml')
+        wf_name = body['workflows'][0]['name']
+        self.assertEqual(201, resp.status)
+        resp, body = self.client.create_execution(wf_name)
+        self.assertEqual(201, resp.status)
+        resp, body = self.client.get_list_obj('tasks')
+        self.assertEqual(200, resp.status)
+        task_id = body['tasks'][0]['id']
+
+        resp, body = self.client.get_list_obj(
+            'action_executions?include_output=true&task_execution_id=%s' %
+            task_id
+        )
+
+        self.assertEqual(200, resp.status)
+        action_execution = body['action_executions'][0]
+        self.assertIn("output", action_execution)
+
+        resp, body = self.client.get_list_obj(
+            'action_executions?&task_execution_id=%s' %
+            task_id
+        )
+
+        self.assertEqual(200, resp.status)
+        action_execution = body['action_executions'][0]
+        self.assertNotIn("output", action_execution)
 
     @test.attr(type='sanity')
     def test_run_action_std_http(self):
