@@ -90,8 +90,9 @@ class GeneratorTest(base.BaseTest):
 
                 cls = MODULE_MAPPING.get(generator_cls.action_namespace)[1]
                 if cls == actions.NovaAction:
-                    self.assertEqual(['nova.servers_get'], action_names)
-                else:
+                    self.assertIn('nova.servers_get', action_names)
+                    self.assertEqual(3, len(action_names))
+                elif cls not in (actions.GlanceAction, actions.KeystoneAction):
                     self.assertEqual([], action_names)
 
     def test_absolute_mapping_path(self):
@@ -105,8 +106,9 @@ class GeneratorTest(base.BaseTest):
 
                 cls = MODULE_MAPPING.get(generator_cls.action_namespace)[1]
                 if cls == actions.NovaAction:
-                    self.assertEqual(['nova.servers_get'], action_names)
-                else:
+                    self.assertIn('nova.servers_get', action_names)
+                    self.assertEqual(3, len(action_names))
+                elif cls not in (actions.GlanceAction, actions.KeystoneAction):
                     self.assertEqual([], action_names)
 
 
