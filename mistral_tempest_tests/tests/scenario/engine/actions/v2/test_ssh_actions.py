@@ -20,6 +20,7 @@ import time
 from oslo_log import log as logging
 from paramiko import ssh_exception
 from tempest import config
+from tempest.lib import decorators
 from tempest.lib import exceptions
 from tempest import test
 
@@ -246,6 +247,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         super(SSHActionsTestsV2, cls).resource_cleanup()
 
     @test.attr(type='sanity')
+    @decorators.idempotent_id('3e12a2ad-5b10-46b0-ae1f-ed34d3cc6ae2')
     def test_run_ssh_action(self):
         input_data = {
             'cmd': 'hostname',
@@ -268,6 +270,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
         self.assertIn(self.public_vm['name'], output['result'])
 
     @test.attr(type='sanity')
+    @decorators.idempotent_id('6c09fb04-70b4-43a6-b5f8-a53ca92e66e0')
     def test_run_ssh_proxied_action(self):
         guest_vm_ip = self.guest_vm['addresses'].popitem()[1][0]['addr']
 

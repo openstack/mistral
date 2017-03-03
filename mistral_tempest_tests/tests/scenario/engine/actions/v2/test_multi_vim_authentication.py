@@ -16,6 +16,7 @@ from urlparse import urlparse
 
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
+from tempest.lib import decorators
 from tempest import test
 
 from mistral_tempest_tests.tests import base
@@ -29,6 +30,7 @@ class MultiVimActionsTests(base.TestCase):
         super(MultiVimActionsTests, cls).resource_setup()
 
     @test.attr(type='openstack')
+    @decorators.idempotent_id('dadc9960-9c03-41a9-9a9d-7e97d527e6dd')
     def test_multi_vim_support_target_headers(self):
         client_1 = self.alt_client
         client_2 = self.client
@@ -56,6 +58,7 @@ class MultiVimActionsTests(base.TestCase):
         )
 
     @test.attr(type='openstack')
+    @decorators.idempotent_id('bc0e9b99-62b0-4d96-95c9-016a3f69b02a')
     def test_multi_vim_support_target_headers_and_service_catalog(self):
         client_1 = self.alt_client
         client_2 = self.client
