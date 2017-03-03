@@ -23,12 +23,8 @@ from mistral.actions import action_generator
 from mistral.utils import inspect_utils as i_u
 from mistral import version
 
-os_actions_mapping_path = cfg.StrOpt('openstack_actions_mapping_path',
-                                     default='actions/openstack/mapping.json')
-
-
 CONF = cfg.CONF
-CONF.register_opt(os_actions_mapping_path)
+
 LOG = logging.getLogger(__name__)
 
 
@@ -84,7 +80,7 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
     @classmethod
     def create_actions(cls):
         mapping = get_mapping()
-        method_dict = mapping[cls.action_namespace]
+        method_dict = mapping.get(cls.action_namespace, {})
 
         action_classes = []
 
