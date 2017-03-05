@@ -559,7 +559,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_success(wf_ex.id, delay=10)
+        self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -646,7 +646,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_success(wf_ex.id, delay=10)
+        self.await_workflow_success(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -739,7 +739,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_success(wf_ex.id, delay=10)
+        self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -1088,7 +1088,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_error(wf_ex.id, delay=10)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1109,7 +1109,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_error(wf_ex.id, delay=10)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1130,7 +1130,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_error(wf_ex.id, delay=10)
+        self.await_workflow_error(wf_ex.id)
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -1151,7 +1151,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
 
-        self.await_workflow_success(wf_ex.id, delay=10)
+        self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
