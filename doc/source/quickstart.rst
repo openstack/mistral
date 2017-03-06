@@ -73,11 +73,11 @@ Use the *Mistral CLI* to create the workflow::
 
 The output should look similar to this::
 
-    +-------------+--------+---------+---------------------+------------+
-    | Name        | Tags   | Input   | Created at          | Updated at |
-    +-------------+--------+---------+---------------------+------------+
-    | my_workflow | <none> | names   | 2015-08-13 08:44:49 | None       |
-    +-------------+--------+---------+---------------------+------------+
+    +------------------------------------+-------------+--------+---------+---------------------+------------+
+    |ID                                  | Name        | Tags   | Input   | Created at          | Updated at |
+    +------------------------------------+-------------+--------+---------+---------------------+------------+
+    |9b719d62-2ced-47d3-b500-73261bb0b2ad| my_workflow | <none> | names   | 2015-08-13 08:44:49 | None       |
+    +------------------------------------+-------------+--------+---------+---------------------+------------+
 
 
 Run the workflow and check the result
@@ -90,49 +90,53 @@ as JSON::
 
 Make sure the output is like the following::
 
-    +-------------+--------------------------------------+
-    | Field       | Value                                |
-    +-------------+--------------------------------------+
-    | ID          | 056c2ed1-695f-4ccd-92af-e31bc6153784 |
-    | Workflow    | my_workflow                          |
-    | Description |                                      |
-    | State       | RUNNING                              |
-    | State info  | None                                 |
-    | Created at  | 2015-08-28 09:05:00.065917           |
-    | Updated at  | 2015-08-28 09:05:00.844990           |
-    +-------------+--------------------------------------+
+    +-------------------+--------------------------------------+
+    | Field             | Value                                |
+    +-------------------+--------------------------------------+
+    | ID                | 49213eb5-196c-421f-b436-775849b55040 |
+    | Workflow ID       | 9b719d62-2ced-47d3-b500-73261bb0b2ad |
+    | Workflow name     | my_workflow                          |
+    | Description       |                                      |
+    | Task Execution ID | <none>                               |
+    | State             | RUNNING                              |
+    | State info        | None                                 |
+    | Created at        | 2017-03-06 11:24:10                  |
+    | Updated at        | 2017-03-06 11:24:10                  |
+    +-------------------+--------------------------------------+
 
 After a moment, check the status of the workflow execution (replace the
 example execution id with the ID output above)::
 
-    $ mistral execution-get 056c2ed1-695f-4ccd-92af-e31bc6153784
+    $ mistral execution-get 49213eb5-196c-421f-b436-775849b55040
 
-    +-------------+--------------------------------------+
-    | Field       | Value                                |
-    +-------------+--------------------------------------+
-    | ID          | 056c2ed1-695f-4ccd-92af-e31bc6153784 |
-    | Workflow    | my_workflow                          |
-    | Description |                                      |
-    | State       | SUCCESS                              |
-    | State info  | None                                 |
-    | Created at  | 2015-08-28 09:05:00                  |
-    | Updated at  | 2015-08-28 09:05:03                  |
-    +-------------+--------------------------------------+
+    +-------------------+--------------------------------------+
+    | Field             | Value                                |
+    +-------------------+--------------------------------------+
+    | ID                | 49213eb5-196c-421f-b436-775849b55040 |
+    | Workflow ID       | 9b719d62-2ced-47d3-b500-73261bb0b2ad |
+    | Workflow name     | my_workflow                          |
+    | Description       |                                      |
+    | Task Execution ID | <none>                               |
+    | State             | SUCCESS                              |
+    | State info        | None                                 |
+    | Created at        | 2017-03-06 11:24:10                  |
+    | Updated at        | 2017-03-06 11:24:20                  |
+    +-------------------+--------------------------------------+
 
 The status of each **task** also can be checked::
 
-    $ mistral task-list 056c2ed1-695f-4ccd-92af-e31bc6153784
+    $ mistral task-list 49213eb5-196c-421f-b436-775849b55040
 
-    +--------------------------------------+-------+---------------+--------------------------------------+---------+
-    | ID                                   | Name  | Workflow name | Execution ID                         | State   |
-    +--------------------------------------+-------+---------------+--------------------------------------+---------+
-    | 91874635-dcd4-4718-a864-ac90408c1085 | task1 | my_workflow   | 056c2ed1-695f-4ccd-92af-e31bc6153784 | SUCCESS |
-    | 3bf82863-28cb-4148-bfb8-1a6c3c115022 | task2 | my_workflow   | 056c2ed1-695f-4ccd-92af-e31bc6153784 | SUCCESS |
-    +--------------------------------------+-------+---------------+--------------------------------------+---------+
+    +--------------------------------------+-------+---------------+--------------------------------------+---------+------------+---------------------+---------------------+
+    | ID                                   | Name  | Workflow name | Execution ID                         | State   | State info | Created at          | Updated at          |
+    +--------------------------------------+-------+---------------+--------------------------------------+---------+------------+---------------------+---------------------+
+    | f639e7a9-9609-468e-aa08-7650e1472efe | task1 | my_workflow   | 49213eb5-196c-421f-b436-775849b55040 | SUCCESS | None       | 2017-03-06 11:24:11 | 2017-03-06 11:24:17 |
+    | d565c5a0-f46f-4ebe-8655-9eb6796307a3 | task2 | my_workflow   | 49213eb5-196c-421f-b436-775849b55040 | SUCCESS | None       | 2017-03-06 11:24:17 | 2017-03-06 11:24:18 |
+    +--------------------------------------+-------+---------------+--------------------------------------+---------+------------+---------------------+---------------------+
 
 Check the result of task *'task1'*::
 
-    $ mistral task-get-result 91874635-dcd4-4718-a864-ac90408c1085
+    $ mistral task-get-result f639e7a9-9609-468e-aa08-7650e1472efe
 
     [
         "John",
@@ -144,20 +148,20 @@ Check the result of task *'task1'*::
 If needed, we can go deeper and look at a list of the results of the
 **action_executions** of a single task::
 
-    $ mistral action-execution-list 91874635-dcd4-4718-a864-ac90408c1085
+    $ mistral action-execution-list f639e7a9-9609-468e-aa08-7650e1472efe
 
-    +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
-    | ID                                   | Name     | Workflow name | Task name | State   | State info | Is accepted |
-    +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
-    | 20c2b65d-b899-437f-8e1b-50fe477fbf4b | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
-    | 6773c887-6eff-46e6-bed9-d6b67d77813b | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
-    | 753a9e39-d93e-4751-a3c1-569d1b4eac64 | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
-    | 9872ddbc-61c5-4511-aa7e-dc4016607822 | std.echo | my_workflow   | task1     | SUCCESS | None       | True        |
-    +--------------------------------------+----------+---------------+-----------+---------+------------+-------------+
+    +--------------------------------------+----------+---------------+-----------+--------------------------------------+---------+----------+---------------------+---------------------+
+    | ID                                   | Name     | Workflow name | Task name | Task ID                              | State   | Accepted | Created at          | Updated at          |
+    +--------------------------------------+----------+---------------+-----------+--------------------------------------+---------+----------+---------------------+---------------------+
+    | 4e0a60be-04df-42d7-aa59-5107e599d079 | std.echo | my_workflow   | task1     | f639e7a9-9609-468e-aa08-7650e1472efe | SUCCESS | True     | 2017-03-06 11:24:12 | 2017-03-06 11:24:16 |
+    | 5bd95da4-9b29-4a79-bcb1-298abd659bd6 | std.echo | my_workflow   | task1     | f639e7a9-9609-468e-aa08-7650e1472efe | SUCCESS | True     | 2017-03-06 11:24:12 | 2017-03-06 11:24:16 |
+    | 6ae6c19e-b51b-4910-9e0e-96c788093715 | std.echo | my_workflow   | task1     | f639e7a9-9609-468e-aa08-7650e1472efe | SUCCESS | True     | 2017-03-06 11:24:12 | 2017-03-06 11:24:16 |
+    | bed5a6a2-c1d8-460f-a2a5-b36f72f85e19 | std.echo | my_workflow   | task1     | f639e7a9-9609-468e-aa08-7650e1472efe | SUCCESS | True     | 2017-03-06 11:24:12 | 2017-03-06 11:24:17 |
+    +--------------------------------------+----------+---------------+-----------+--------------------------------------+---------+----------+---------------------+---------------------+
 
 Check the result of the first **action_execution**::
 
-    $ mistral action-execution-get-output 20c2b65d-b899-437f-8e1b-50fe477fbf4b
+    $ mistral action-execution-get-output 4e0a60be-04df-42d7-aa59-5107e599d079
 
     {
         "result": "John"
