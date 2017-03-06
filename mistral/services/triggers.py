@@ -26,12 +26,9 @@ from mistral.workbook import parser
 
 
 def get_next_execution_time(pattern, start_time):
-    local_time = croniter.croniter(pattern, start_time).get_next(
+    return croniter.croniter(pattern, start_time).get_next(
         datetime.datetime
     )
-    epoch_second = time.mktime(local_time.timetuple())
-    utc_time = datetime.datetime.utcfromtimestamp(epoch_second)
-    return utc_time
 
 
 # Triggers v2.
@@ -72,7 +69,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
                         workflow_params=None, pattern=None, first_time=None,
                         count=None, start_time=None, workflow_id=None):
     if not start_time:
-        start_time = datetime.datetime.now()
+        start_time = datetime.datetime.utcnow()
 
     if isinstance(first_time, six.string_types):
         try:
@@ -85,12 +82,8 @@ def create_cron_trigger(name, workflow_name, workflow_input,
 
     validate_cron_trigger_input(pattern, first_time, count)
 
-    first_utc_time = first_time
-
     if first_time:
-        first_second = time.mktime(first_time.timetuple())
-        first_utc_time = datetime.datetime.utcfromtimestamp(first_second)
-        next_time = first_utc_time
+        next_time = first_time
 
         if not (pattern or count):
             count = 1
@@ -111,7 +104,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
         values = {
             'name': name,
             'pattern': pattern,
-            'first_execution_time': first_utc_time,
+            'first_execution_time': first_time,
             'next_execution_time': next_time,
             'remaining_executions': count,
             'workflow_name': wf_def.name,

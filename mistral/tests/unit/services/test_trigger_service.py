@@ -15,6 +15,7 @@
 import datetime
 import eventlet
 import mock
+
 from oslo_config import cfg
 
 from mistral.engine.rpc_backend import rpc
@@ -231,11 +232,8 @@ class TriggerServiceV2Test(base.DbTestCase):
             t1_name,
             self.wf.name,
             {},
-            {},
-            '*/5 * * * *',
-            None,
-            None,
-            datetime.datetime(2010, 8, 25)
+            pattern='*/5 * * * *',
+            start_time=datetime.datetime(2010, 8, 25)
         )
 
         t2_name = 'trigger-%s' % utils.generate_unicode_uuid()
@@ -244,11 +242,8 @@ class TriggerServiceV2Test(base.DbTestCase):
             t2_name,
             self.wf.name,
             {},
-            {},
-            '*/1 * * * *',
-            None,
-            None,
-            datetime.datetime(2010, 8, 22)
+            pattern='*/1 * * * *',
+            start_time=datetime.datetime(2010, 8, 22)
         )
 
         t3_name = 'trigger-%s' % utils.generate_unicode_uuid()
@@ -257,11 +252,8 @@ class TriggerServiceV2Test(base.DbTestCase):
             t3_name,
             self.wf.name,
             {},
-            {},
-            '*/2 * * * *',
-            None,
-            None,
-            datetime.datetime(2010, 9, 21)
+            pattern='*/2 * * * *',
+            start_time=datetime.datetime(2010, 9, 21)
         )
 
         t4_name = 'trigger-%s' % utils.generate_unicode_uuid()
@@ -270,11 +262,8 @@ class TriggerServiceV2Test(base.DbTestCase):
             t4_name,
             self.wf.name,
             {},
-            {},
-            '*/3 * * * *',
-            None,
-            None,
-            datetime.datetime.now() + datetime.timedelta(0, 50)
+            pattern='*/3 * * * *',
+            start_time=datetime.datetime.utcnow() + datetime.timedelta(0, 50)
         )
 
         trigger_names = [t.name for t in t_s.get_next_cron_triggers()]

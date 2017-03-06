@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import datetime
-import time
 
 import mock
 from oslo_config import cfg
@@ -128,7 +127,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         # Make the first_time 1 sec later than current time, in order to make
         # it executed by next cron-trigger task.
-        first_time = datetime.datetime.now() + datetime.timedelta(0, 1)
+        first_time = datetime.datetime.utcnow() + datetime.timedelta(0, 1)
 
         # Creates a cron-trigger with pattern and first time, ensure the
         # cron-trigger can be executed more than once, and cron-trigger will
@@ -146,11 +145,8 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             None
         )
 
-        first_second = time.mktime(first_time.timetuple())
-        first_utc_time = datetime.datetime.utcfromtimestamp(first_second)
-
         self.assertEqual(
-            first_utc_time,
+            first_time,
             cron_trigger.next_execution_time
         )
 
