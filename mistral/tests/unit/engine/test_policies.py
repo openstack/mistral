@@ -572,11 +572,20 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
-        # TODO(rakhmerov): This check doesn't make sense anymore because
-        # we don't store evaluated values anywhere.
-        # Need to create a better test.
-        # self.assertEqual(3, task_ex.in_context["count"])
-        # self.assertEqual(1, task_ex.in_context["delay"])
+        self.await_task_delayed(task_ex.id, delay=0.5)
+        self.await_task_error(task_ex.id)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(
+            3,
+            task_ex.runtime_context["retry_task_policy"]["retry_no"]
+        )
 
     def test_retry_policy_never_happen(self):
         retry_wb = """---
