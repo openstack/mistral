@@ -26,7 +26,7 @@ git checkout HEAD^
 
 baseline_report=$(mktemp -t mistral_coverageXXXXXXX)
 find . -type f -name "*.pyc" -delete && python setup.py testr --coverage --testr-args="$*"
-coverage report > $baseline_report
+coverage report -m > $baseline_report
 baseline_missing=$(awk 'END { print $3 }' $baseline_report)
 previous_sha=$(git rev-parse HEAD);
 
@@ -40,7 +40,7 @@ coverage erase;
 # Generate and save coverage report
 current_report=$(mktemp -t mistral_coverageXXXXXXX)
 find . -type f -name "*.pyc" -delete && python setup.py testr --coverage --testr-args="$*"
-coverage report > $current_report
+coverage report -m > $current_report
 current_missing=$(awk 'END { print $3 }' $current_report)
 
 # Show coverage details
