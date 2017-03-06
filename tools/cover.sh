@@ -33,6 +33,9 @@ baseline_missing=$(awk 'END { print $3 }' $baseline_report)
 git checkout -
 [[ -n $uncommitted ]] && git stash pop > /dev/null
 
+# Erase previously collected coverage data.
+coverage erase;
+
 # Generate and save coverage report
 current_report=$(mktemp -t mistral_coverageXXXXXXX)
 find . -type f -name "*.pyc" -delete && python setup.py testr --coverage --testr-args="$*"
