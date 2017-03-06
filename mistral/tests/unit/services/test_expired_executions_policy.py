@@ -24,7 +24,7 @@ from oslo_config import cfg
 
 
 def _create_workflow_executions():
-    time_now = datetime.datetime.now()
+    time_now = datetime.datetime.utcnow()
 
     wf_execs = [
         {
@@ -126,7 +126,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         _create_workflow_executions()
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
 
         # This execution has a parent wf and testing that we are
         # querying only for parent wfs.
