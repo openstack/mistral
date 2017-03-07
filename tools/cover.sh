@@ -19,7 +19,7 @@ show_diff () {
     diff -U 0 $1 $2 | sed 1,2d
 }
 
-# Stash uncommitted changes, checkout master and save coverage report
+# Stash uncommitted changes, checkout previous commit and save coverage report
 uncommitted=$(git status --porcelain | grep -v "^??")
 [[ -n $uncommitted ]] && git stash > /dev/null
 git checkout HEAD^
@@ -28,6 +28,7 @@ baseline_report=$(mktemp -t mistral_coverageXXXXXXX)
 find . -type f -name "*.pyc" -delete && python setup.py testr --coverage --testr-args="$*"
 coverage report > $baseline_report
 baseline_missing=$(awk 'END { print $3 }' $baseline_report)
+previous_sha=$(git rev-parse HEAD);
 
 # Checkout back and unstash uncommitted changes (if any)
 git checkout -
@@ -46,7 +47,8 @@ current_missing=$(awk 'END { print $3 }' $current_report)
 allowed_missing=$((baseline_missing+ALLOWED_EXTRA_MISSING))
 
 echo "Allowed to introduce missing lines : ${ALLOWED_EXTRA_MISSING}"
-echo "Missing lines in master            : ${baseline_missing}"
+echo "Copmared against ${previous_sha}";
+echo "Missing lines in previous commit   : ${baseline_missing}"
 echo "Missing lines in proposed change   : ${current_missing}"
 
 if [ $allowed_missing -gt $current_missing ];
