@@ -13,9 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook import types
-from mistral.workbook.v2 import base
-from mistral.workbook.v2 import retry_policy
+from mistral.lang import types
+from mistral.lang.v2 import base
+from mistral.lang.v2 import retry_policy
 
 
 RETRY_SCHEMA = retry_policy.RetrySpec.get_schema(includes=None)

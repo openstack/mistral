@@ -13,9 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral.workbook.v2 import actions as act
-from mistral.workbook.v2 import base
-from mistral.workbook.v2 import workflows as wf
+from mistral.lang.v2 import actions as act
+from mistral.lang.v2 import base
+from mistral.lang.v2 import workflows as wf
 
 # We want to match any single word that isn't exactly "version"
 NON_VERSION_WORD_REGEX = "^(?!version$)[\w-]+$"

@@ -18,7 +18,7 @@ import copy
 import yaml
 
 from mistral import exceptions as exc
-from mistral.tests.unit.workbook.v2 import base
+from mistral.tests.unit.lang.v2 import base
 from mistral import utils
 
 

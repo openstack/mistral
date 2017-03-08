@@ -22,9 +22,9 @@ from mistral import context as auth_ctx
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.lang import parser as spec_parser
 from mistral import utils
 from mistral.utils import inspect_utils
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)

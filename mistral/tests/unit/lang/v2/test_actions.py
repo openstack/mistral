@@ -15,7 +15,7 @@
 
 import copy
 
-from mistral.tests.unit.workbook.v2 import base
+from mistral.tests.unit.lang.v2 import base
 from mistral import utils
 
 

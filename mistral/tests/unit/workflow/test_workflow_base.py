@@ -13,8 +13,8 @@
 #    limitations under the License.
 
 
+from mistral.lang import parser as spec_parser
 from mistral.tests.unit import base
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import direct_workflow as direct_wf
 from mistral.workflow import reverse_workflow as reverse_wf

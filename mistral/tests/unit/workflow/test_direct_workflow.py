@@ -17,9 +17,9 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import direct_workflow as d_wf
 from mistral.workflow import states
 

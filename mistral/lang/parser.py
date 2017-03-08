@@ -22,11 +22,11 @@ import six
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.workbook import base
-from mistral.workbook.v2 import actions as actions_v2
-from mistral.workbook.v2 import tasks as tasks_v2
-from mistral.workbook.v2 import workbook as wb_v2
-from mistral.workbook.v2 import workflows as wf_v2
+from mistral.lang import base
+from mistral.lang.v2 import actions as actions_v2
+from mistral.lang.v2 import tasks as tasks_v2
+from mistral.lang.v2 import workbook as wb_v2
+from mistral.lang.v2 import workflows as wf_v2
 
 V2_0 = '2.0'
 

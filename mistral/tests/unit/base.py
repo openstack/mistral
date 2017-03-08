@@ -29,12 +29,12 @@ from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2 import api as db_api
+from mistral.lang import parser as spec_parser
 from mistral.services import action_manager
 from mistral.services import security
 from mistral.tests.unit import config as test_config
 from mistral.utils import inspect_utils as i_utils
 from mistral import version
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import lookup_utils
 
 RESOURCES_PATH = 'tests/resources/'

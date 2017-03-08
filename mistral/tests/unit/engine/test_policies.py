@@ -21,10 +21,10 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import states
 
 

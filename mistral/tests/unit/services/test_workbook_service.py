@@ -15,9 +15,9 @@
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.lang import parser as spec_parser
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit import base
-from mistral.workbook import parser as spec_parser
 
 
 # Use the set_default method to set value otherwise in certain test cases

@@ -25,12 +25,12 @@ from mistral.engine import dispatcher
 from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.services import scheduler
 from mistral.services import workflows as wf_service
 from mistral import utils
 from mistral.utils import merge_dicts
 from mistral.utils import wf_trace
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
 from mistral.workflow import data_flow

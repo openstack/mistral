@@ -25,8 +25,8 @@ from mistral.engine import action_queue
 from mistral.engine import tasks
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.services import scheduler
-from mistral.workbook import parser as spec_parser
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands as wf_cmds
 from mistral.workflow import states

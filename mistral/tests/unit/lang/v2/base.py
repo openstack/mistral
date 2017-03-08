@@ -17,9 +17,9 @@ import copy
 import yaml
 
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.tests.unit import base
 from mistral import utils
-from mistral.workbook import parser as spec_parser
 
 
 class WorkflowSpecValidationTestCase(base.BaseTest):
