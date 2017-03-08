@@ -1,22 +1,66 @@
-If you would like to contribute to the development of OpenStack,
-you must follow the steps in this page:
+=======================
+Contributing to Mistral
+=======================
 
-   http://docs.openstack.org/infra/manual/developers.html
+If you're interested in contributing to the Mistral project,
+the following will help get you started.
 
-Once those steps have been completed, changes to OpenStack
-should be submitted for review via the Gerrit tool, following
-the workflow documented at:
+Contributor License Agreement
+=============================
 
-   http://docs.openstack.org/infra/manual/developers.html#development-workflow
+In order to contribute to the Mistral project, you need to have
+signed OpenStack's contributor's agreement:
 
-You can get the mistral documentation at:
-
-   http://docs.openstack.org/developer/mistral
-
-Pull requests submitted through GitHub will be ignored.
-
-Bugs should be filed on Launchpad, not GitHub:
-
-   https://bugs.launchpad.net/mistral
+* http://docs.openstack.org/infra/manual/developers.html
+* http://wiki.openstack.org/CLA
 
 
+Project Hosting Details
+=======================
+
+* Bug trackers
+    * General mistral tracker: https://launchpad.net/mistral
+
+    * Python client tracker: https://launchpad.net/python-mistralclient
+
+* Mailing list (prefix subjects with ``[Mistral]`` for faster responses)
+    http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
+
+* Documentation
+    * http://docs.openstack.org/developer/mistral/
+
+* IRC channel
+    * #openstack-mistral at FreeNode
+
+    * https://wiki.openstack.org/wiki/Mistral/Meetings_Meetings
+
+* Code Hosting
+    * https://github.com/openstack/mistral
+
+    * https://github.com/openstack/python-mistralclient
+
+    * https://github.com/openstack/mistral-dashboard
+
+    * https://github.com/openstack/mistral-lib
+
+    * https://github.com/openstack/mistral-specs
+
+    * https://github.com/openstack/mistral-specs
+
+* Code Review
+    * https://review.openstack.org/#/q/mistral
+
+    * https://review.openstack.org/#/q/python-mistralclient
+
+    * https://review.openstack.org/#/q/mistral-dashboard
+
+    * https://review.openstack.org/#/q/mistral-lib
+
+    * https://review.openstack.org/#/q/mistral-extra
+
+    * https://review.openstack.org/#/q/mistral-specs
+
+    * http://docs.openstack.org/infra/manual/developers.html#development-workflow
+
+* Mistral Design Specifications
+    * https://specs.openstack.org/openstack/mistral-specs/
