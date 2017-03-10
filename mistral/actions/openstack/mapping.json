@@ -1097,6 +1097,7 @@
         "put_container": "put_container",
         "post_container": "post_container",
         "delete_container": "delete_container",
+        "head_object": "head_object",
         "get_object": "get_object",
         "put_object": "put_object",
         "post_object": "post_object",
