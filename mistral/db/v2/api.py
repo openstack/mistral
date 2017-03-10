@@ -393,8 +393,8 @@ def get_next_cron_triggers(time):
     return IMPL.get_next_cron_triggers(time)
 
 
-def get_expired_executions(time):
-    return IMPL.get_expired_executions(time)
+def get_expired_executions(time, limit=None):
+    return IMPL.get_expired_executions(time, limit=limit)
 
 
 def create_cron_trigger(values):

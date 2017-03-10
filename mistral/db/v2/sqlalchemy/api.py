@@ -1041,7 +1041,7 @@ def delete_delayed_calls(session=None, **kwargs):
 
 
 @b.session_aware()
-def get_expired_executions(time, session=None):
+def get_expired_executions(time, session=None, limit=None):
     query = b.model_query(models.WorkflowExecution)
 
     # Only WorkflowExecution that are not a child of other WorkflowExecution.
@@ -1055,6 +1055,9 @@ def get_expired_executions(time, session=None):
             models.WorkflowExecution.state == states.CANCELLED
         )
     )
+
+    if limit:
+        query = query.limit(limit)
 
     return query.all()
 
