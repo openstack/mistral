@@ -288,27 +288,37 @@ can be resolved by setting an expiration policy.
 
 **By default this feature is disabled.**
 
-When enabled, the policy will define the maximum age of an execution in
-minutes since the last updated time. To enable and set a policy, edit the
-Mistral configuration file and specify ``older_than`` and
-``evaluation_interval`` in minutes.
+This policy defines the maximum age of an execution since the last updated time
+(in minutes) and the maximum number of finished executions. Each evaluation will
+satisfy these conditions, so the expired executions (older than specified) will
+be deleted, and the number of execution in finished state (regardless of expiration)
+will be limited to max_finished_executions.
+
+To enable the policy, edit the Mistral configuration file and specify
+``evaluation_interval`` and at least one of the ``older_than``
+or ``evaluation_interval`` options.
 
 .. code-block:: cfg
 
     [execution_expiration_policy]
-    older_than = 10080  # 1 week
     evaluation_interval = 120  # 2 hours
-
-For the expiration policy to be enabled, both of these configuration options
-must be set.
-
-- **older_than**
-
- This defines the maximum age of an execution in minutes since it was last
- updated. It must be greater or equal to ``1``.
+    older_than = 10080  # 1 week
+    max_finished_executions = 500
 
 - **evaluation_interval**
 
- The evaluation interval defines how frequently Mistral will check and expire
- old executions. In the above example it is set to two hours, so every two
- hours Mistral will clean up and look for expired executions.
+ The evaluation interval defines how frequently Mistral will check and ensure
+ the above mentioned constraints. In the above example it is set to two hours,
+ so every two hours Mistral will remove executions older than 1 week, and
+ keep only the 500 latest finished executions.
+
+- **older_than**
+
+ Defines the maximum age of an execution in minutes since it was last
+ updated. It must be greater or equal to ``1``.
+
+- **max_finished_executions**
+
+ Defines the maximum number of finished executions.
+ It must be greater or equal to ``1``.
+

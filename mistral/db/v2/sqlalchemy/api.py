@@ -35,6 +35,7 @@ from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db import utils as m_dbutils
 from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
+from mistral.db.v2.sqlalchemy.models import WorkflowExecution
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral import utils
@@ -1034,13 +1035,37 @@ def delete_delayed_calls(session=None, **kwargs):
 
 
 @b.session_aware()
-def get_expired_executions(time, session=None, limit=None):
-    query = b.model_query(models.WorkflowExecution)
+def get_executions_to_clean(expiration_time, limit=None,
+                            max_finished_executions=None, columns=(),
+                            session=None):
+    # Get the ids of the executions that won't be deleted.
+    # These are the not expired executions,
+    # limited by the new max_finished_executions constraint.
+    query = _get_completed_root_executions_query((WorkflowExecution.id,))
+    query = query.filter(
+        models.WorkflowExecution.updated_at >= expiration_time
+    )
+    query = query.order_by(models.WorkflowExecution.updated_at.desc())
 
+    if max_finished_executions:
+        query = query.limit(max_finished_executions)
+
+    # And take the inverse of that set.
+    inverse = _get_completed_root_executions_query(columns)
+    inverse = inverse.filter(~WorkflowExecution.id.in_(query))
+    inverse = inverse.order_by(models.WorkflowExecution.updated_at.asc())
+
+    if limit:
+        inverse.limit(limit)
+
+    return inverse.all()
+
+
+def _get_completed_root_executions_query(columns):
+    query = b.model_query(models.WorkflowExecution, columns=columns)
     # Only WorkflowExecution that are not a child of other WorkflowExecution.
     query = query.filter(models.WorkflowExecution.
                          task_execution_id == sa.null())
-    query = query.filter(models.WorkflowExecution.updated_at < time)
     query = query.filter(
         sa.or_(
             models.WorkflowExecution.state == states.SUCCESS,
@@ -1048,14 +1073,8 @@ def get_expired_executions(time, session=None, limit=None):
             models.WorkflowExecution.state == states.CANCELLED
         )
     )
+    return query
 
-    if limit:
-        query = query.limit(limit)
-
-    return query.all()
-
-
-# Cron triggers.
 
 @b.session_aware()
 def get_cron_trigger(name, session=None):
