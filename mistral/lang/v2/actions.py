@@ -42,7 +42,7 @@ class ActionSpec(base.BaseSpec):
         self._tags = data.get('tags', [])
         self._base = data['base']
         self._base_input = data.get('base-input', {})
-        self._input = utils.get_input_dict(data.get('input', []))
+        self._input = utils.get_dict_from_entries(data.get('input', []))
         self._output = data.get('output')
 
         self._base, _input = self._parse_cmd_and_input(self._base)

@@ -100,25 +100,26 @@ class UtilsTest(base.BaseTest):
 
         self.assertEqual([B, C, D], list(utils.iter_subclasses(A)))
 
-    def test_get_input_dict(self):
+    def test_get_dict_from_entries(self):
         input = ['param1', {'param2': 2}]
-        input_dict = utils.get_input_dict(input)
+        input_dict = utils.get_dict_from_entries(input)
 
         self.assertIn('param1', input_dict)
         self.assertIn('param2', input_dict)
         self.assertEqual(2, input_dict.get('param2'))
         self.assertIs(input_dict.get('param1'), utils.NotDefined)
 
-    def test_get_input_dict_from_input_string(self):
-        input_string = 'param1, param2=2, param3="var3"'
-        input_dict = utils.get_dict_from_string(input_string)
+    def test_get_input_dict_from_string(self):
+        self.assertDictEqual(
+            {
+                'param1': utils.NotDefined,
+                'param2': 2,
+                'param3': 'var3'
+            },
+            utils.get_dict_from_string('param1, param2=2, param3="var3"')
+        )
 
-        self.assertIn('param1', input_dict)
-        self.assertIn('param2', input_dict)
-        self.assertIn('param3', input_dict)
-        self.assertEqual(2, input_dict.get('param2'))
-        self.assertEqual('var3', input_dict.get('param3'))
-        self.assertIs(input_dict.get('param1'), utils.NotDefined)
+        self.assertDictEqual({}, utils.get_dict_from_string(''))
 
     def test_paramiko_to_private_key(self):
         self.assertRaises(

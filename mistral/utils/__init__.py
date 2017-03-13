@@ -343,53 +343,50 @@ class NotDefined(object):
     pass
 
 
-def get_dict_from_string(input_string, delimiter=','):
-    # TODO(rakhmerov): Why is it here? This module is too generic.
-    if not input_string:
+def get_dict_from_string(string, delimiter=','):
+    if not string:
         return {}
 
-    raw_inputs = input_string.split(delimiter)
+    kv_dicts = []
 
-    inputs = []
+    for kv_pair_str in string.split(delimiter):
+        kv_str = kv_pair_str.strip()
+        kv_list = kv_str.split('=')
 
-    for raw in raw_inputs:
-        input = raw.strip()
-        name_value = input.split('=')
-
-        if len(name_value) > 1:
+        if len(kv_list) > 1:
             try:
-                value = json.loads(name_value[1])
+                value = json.loads(kv_list[1])
             except ValueError:
-                value = name_value[1]
+                value = kv_list[1]
 
-            inputs += [{name_value[0]: value}]
+            kv_dicts += [{kv_list[0]: value}]
         else:
-            inputs += [name_value[0]]
+            kv_dicts += [kv_list[0]]
 
-    return get_input_dict(inputs)
+    return get_dict_from_entries(kv_dicts)
 
 
-def get_input_dict(inputs):
-    # TODO(rakhmerov): Why is it here? This module is too generic.
-    # TODO(rakhmerov): Move it to the spec.
+def get_dict_from_entries(entries):
+    """Transforms a list of entries into dictionary.
 
-    """Transform input list to dictionary.
-
-    Ensure every input param has a default value(it will be a NotDefined
-    object if it's not provided).
+    :param entries: A list of entries.
+        If an entry is a dictionary the method simply updates the result
+        dictionary with its content.
+        If an entry is not a dict adds {entry, NotDefined} into the result.
     """
-    input_dict = {}
 
-    for x in inputs:
-        if isinstance(x, dict):
-            input_dict.update(x)
+    result = {}
+
+    for e in entries:
+        if isinstance(e, dict):
+            result.update(e)
         else:
-            # NOTE(xylan): we put a NotDefined class here as the value of
-            # param without value specified, to distinguish from the valid
-            # values such as None, ''(empty string), etc.
-            input_dict[x] = NotDefined
+            # NOTE(xylan): we put NotDefined here as the value of
+            # param without value specified, to distinguish from
+            # the valid values such as None, ''(empty string), etc.
+            result[e] = NotDefined
 
-    return input_dict
+    return result
 
 
 def get_process_identifier():
