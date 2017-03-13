@@ -53,10 +53,9 @@ def validate_input(definition, input_dict, spec=None):
 
         msg += ']'
 
-        raise exc.InputException(
-            msg % tuple(msg_props)
-        )
+        raise exc.InputException(msg % tuple(msg_props))
     else:
+        # TODO(rakhmerov): See the comment above. This is ugly.
         utils.merge_dicts(input_dict, spec_input, overwrite=False)
 
 

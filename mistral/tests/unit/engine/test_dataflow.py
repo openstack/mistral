@@ -674,6 +674,45 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertIn('task(task1).result.message', task1.state_info)
 
+    def test_override_json_input(self):
+        wf_text = """---
+        version: 2.0
+
+        wf:
+          input:
+            - a:
+                aa: aa
+                bb: bb
+
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                published_a: <% $.a %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_input = {
+            'a': {
+                'cc': 'cc',
+                'dd': 'dd'
+            }
+        }
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', wf_input)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task1 = wf_ex.task_executions[0]
+
+        self.assertDictEqual(wf_input['a'], task1.published['published_a'])
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):
