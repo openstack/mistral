@@ -187,9 +187,7 @@ def get_action_context(task_ex, action_ex_id, save=True):
 
 
 def get_empty_action_context():
-    return {
-        _ACTION_CTX_PARAM: {}
-    }
+    return {_ACTION_CTX_PARAM: {}}
 
 
 def _has_argument(action, attributes, argument_name):

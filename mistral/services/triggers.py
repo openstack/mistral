@@ -95,10 +95,17 @@ def create_cron_trigger(name, workflow_name, workflow_input,
             workflow_id if workflow_id else workflow_name
         )
 
+        wf_spec = parser.get_workflow_spec_by_definition_id(
+            wf_def.id,
+            wf_def.updated_at
+        )
+
+        # TODO(rakhmerov): Use Workflow object here instead of utils.
         eng_utils.validate_input(
-            wf_def,
-            workflow_input or {},
-            parser.get_workflow_spec(wf_def.spec)
+            wf_spec.get_input(),
+            workflow_input,
+            wf_spec.get_name(),
+            wf_spec.__class__.__name__
         )
 
         values = {
@@ -126,13 +133,17 @@ def create_event_trigger(name, exchange, topic, event, workflow_id,
     with db_api.transaction():
         wf_def = db_api.get_workflow_definition_by_id(workflow_id)
 
+        wf_spec = parser.get_workflow_spec_by_definition_id(
+            wf_def.id,
+            wf_def.updated_at
+        )
+
+        # TODO(rakhmerov): Use Workflow object here instead of utils.
         eng_utils.validate_input(
-            wf_def,
-            workflow_input or {},
-            parser.get_workflow_spec_by_definition_id(
-                wf_def.id,
-                wf_def.updated_at
-            )
+            wf_spec.get_input(),
+            workflow_input,
+            wf_spec.get_name(),
+            wf_spec.__class__.__name__
         )
 
         values = {

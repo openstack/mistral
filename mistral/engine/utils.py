@@ -20,43 +20,50 @@ from mistral import exceptions as exc
 from mistral import utils
 
 
-# TODO(rakhmerov): This method is too abstract, validation rules may vary
-#  depending on object type (action, wf), it's not clear what it can be
-# applied to.
-# TODO(rakhmerov): It must not do any manipulations with parameters
-#  (input_dict)!
-def validate_input(definition, input_dict, spec=None):
-    input_param_names = copy.deepcopy(list((input_dict or {}).keys()))
-    missing_param_names = []
+def _compare_parameters(expected_input, actual_input):
+    """Compares the expected parameters with the actual parameters.
 
-    spec_input = (spec.get_input() if spec else
-                  utils.get_dict_from_string(definition.input))
+    :param expected_input: Expected dict of parameters.
+    :param actual_input: Actual dict of parameters.
+    :return: Tuple {missing parameter names, unexpected parameter names}
+    """
 
-    for p_name, p_value in spec_input.items():
-        if p_value is utils.NotDefined and p_name not in input_param_names:
-            missing_param_names.append(str(p_name))
+    missing_params = []
+    unexpected_params = copy.deepcopy(list((actual_input or {}).keys()))
 
-        if p_name in input_param_names:
-            input_param_names.remove(p_name)
+    for p_name, p_value in expected_input.items():
+        if p_value is utils.NotDefined and p_name not in unexpected_params:
+            missing_params.append(str(p_name))
 
-    if missing_param_names or input_param_names:
+        if p_name in unexpected_params:
+            unexpected_params.remove(p_name)
+
+    return missing_params, unexpected_params
+
+
+def validate_input(expected_input, actual_input, obj_name, obj_class):
+    actual_input = actual_input or {}
+
+    missing, unexpected = _compare_parameters(
+        expected_input,
+        actual_input
+    )
+
+    if missing or unexpected:
         msg = 'Invalid input [name=%s, class=%s'
-        msg_props = [definition.name, spec.__class__.__name__]
+        msg_props = [obj_name, obj_class]
 
-        if missing_param_names:
+        if missing:
             msg += ', missing=%s'
-            msg_props.append(missing_param_names)
+            msg_props.append(missing)
 
-        if input_param_names:
+        if unexpected:
             msg += ', unexpected=%s'
-            msg_props.append(input_param_names)
+            msg_props.append(unexpected)
 
         msg += ']'
 
         raise exc.InputException(msg % tuple(msg_props))
-    else:
-        # TODO(rakhmerov): See the comment above. This is ugly.
-        utils.merge_dicts(input_dict, spec_input, overwrite=False)
 
 
 def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,

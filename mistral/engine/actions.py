@@ -21,7 +21,7 @@ import six
 from mistral.db.v2 import api as db_api
 from mistral.engine import action_queue
 from mistral.engine.rpc_backend import rpc
-from mistral.engine import utils as e_utils
+from mistral.engine import utils as engine_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
 from mistral import expressions as expr
@@ -276,8 +276,17 @@ class PythonAction(Action):
 
         # NOTE(xylan): Don't validate action input if action initialization
         # method contains ** argument.
-        if '**' not in self.action_def.input:
-            e_utils.validate_input(self.action_def, input_dict)
+        if '**' in self.action_def.input:
+            return
+
+        expected_input = utils.get_dict_from_string(self.action_def.input)
+
+        engine_utils.validate_input(
+            expected_input,
+            input_dict,
+            self.action_def.name,
+            self.action_def.action_class
+        )
 
     def _prepare_input(self, input_dict):
         """Template method to do manipulations with input parameters.
@@ -342,10 +351,13 @@ class AdHocAction(PythonAction):
         self.adhoc_action_def = action_def
 
     def validate_input(self, input_dict):
-        e_utils.validate_input(
-            self.adhoc_action_def,
+        expected_input = self.action_spec.get_input()
+
+        engine_utils.validate_input(
+            expected_input,
             input_dict,
-            self.action_spec
+            self.adhoc_action_def.name,
+            self.action_spec.__class__.__name__
         )
 
         super(AdHocAction, self).validate_input(
@@ -353,11 +365,16 @@ class AdHocAction(PythonAction):
         )
 
     def _prepare_input(self, input_dict):
+        for k, v in self.action_spec.get_input().items():
+            if k not in input_dict or input_dict[k] is utils.NotDefined:
+                input_dict[k] = v
+
         base_input_dict = input_dict
 
         for action_def in self.adhoc_action_defs:
             action_spec = spec_parser.get_action_spec(action_def.spec)
             base_input_expr = action_spec.get_base_input()
+
             if base_input_expr:
                 base_input_dict = expr.evaluate_recursively(
                     base_input_expr,
@@ -404,6 +421,7 @@ class AdHocAction(PythonAction):
         An ad-hoc action may be based on another ad-hoc action (and this
         recursively). Using twice the same base action is not allowed to
         avoid infinite loops. It stores the list of ad-hoc actions.
+
         :param action_def: Action definition
         :type action_def: ActionDefinition
         :param base_action_def: Original base action definition
@@ -411,11 +429,13 @@ class AdHocAction(PythonAction):
         :return; The definition of the base system action
         :rtype; ActionDefinition
         """
+
         self.adhoc_action_defs = [action_def]
         original_base_name = self.action_spec.get_name()
         action_names = set([original_base_name])
 
         base = base_action_def
+
         while not base.is_system and base.name not in action_names:
             action_names.add(base.name)
             self.adhoc_action_defs.append(base)
@@ -454,7 +474,7 @@ class WorkflowAction(Action):
 
         wf_spec_name = task_spec.get_workflow_name()
 
-        wf_def = e_utils.resolve_workflow_definition(
+        wf_def = engine_utils.resolve_workflow_definition(
             parent_wf_ex.workflow_name,
             parent_wf_spec.get_name(),
             wf_spec_name
