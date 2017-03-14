@@ -79,7 +79,7 @@ class DefaultExecutor(base.Executor):
                    " Actual init params = %s. More info: %s"
                    % (action_class_str, i_u.get_arg_list(action_cls.__init__),
                       action_params.keys(), e))
-            LOG.warning(msg)
+            LOG.exception(msg)
 
             return send_error_back(msg)
 
