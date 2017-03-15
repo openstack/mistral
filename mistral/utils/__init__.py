@@ -357,7 +357,6 @@ def get_dict_from_string(input_string, delimiter=','):
         name_value = input.split('=')
 
         if len(name_value) > 1:
-
             try:
                 value = json.loads(name_value[1])
             except ValueError:
