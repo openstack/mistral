@@ -332,12 +332,19 @@ def random_sleep(limit=1):
 
 
 class NotDefined(object):
-    """This class is just a marker of input params without value."""
+    """Marker of an empty value.
+
+    In a number of cases None can't be used to express the semantics of
+    a not defined value because None is just a normal value rather than
+    a value set to denote that it's not defined. This class can be used
+    in such cases instead of None.
+    """
 
     pass
 
 
 def get_dict_from_string(input_string, delimiter=','):
+    # TODO(rakhmerov): Why is it here? This module is too generic.
     if not input_string:
         return {}
 
@@ -364,12 +371,16 @@ def get_dict_from_string(input_string, delimiter=','):
 
 
 def get_input_dict(inputs):
+    # TODO(rakhmerov): Why is it here? This module is too generic.
+    # TODO(rakhmerov): Move it to the spec.
+
     """Transform input list to dictionary.
 
     Ensure every input param has a default value(it will be a NotDefined
     object if it's not provided).
     """
     input_dict = {}
+
     for x in inputs:
         if isinstance(x, dict):
             input_dict.update(x)

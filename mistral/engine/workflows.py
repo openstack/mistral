@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 import abc
+import copy
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -23,7 +24,6 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import dispatcher
 from mistral.engine.rpc_backend import rpc
-from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.services import scheduler
@@ -85,23 +85,27 @@ class Workflow(object):
 
         wf_trace.info(
             self.wf_ex,
-            "Starting workflow [name=%s, input=%s]" %
+            'Starting workflow [name=%s, input=%s]' %
             (wf_def.name, utils.cut(input_dict))
         )
 
-        # TODO(rakhmerov): This call implicitly changes input_dict! Fix it!
-        # After fix we need to move validation after adding risky fields.
-        eng_utils.validate_input(wf_def, input_dict, self.wf_spec)
+        self.validate_input(input_dict)
 
-        self._create_execution(wf_def, input_dict, desc, params)
+        self._create_execution(
+            wf_def,
+            self.prepare_input(input_dict),
+            desc,
+            params
+        )
 
         self.set_state(states.RUNNING)
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
-        cmds = wf_ctrl.continue_workflow()
-
-        dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
+        dispatcher.dispatch_workflow_commands(
+            self.wf_ex,
+            wf_ctrl.continue_workflow()
+        )
 
     def stop(self, state, msg=None):
         """Stop workflow.
@@ -138,6 +142,43 @@ class Workflow(object):
         cmds = wf_ctrl.continue_workflow()
 
         self._continue_workflow(cmds)
+
+    def prepare_input(self, input_dict):
+        for k, v in self.wf_spec.get_input().items():
+            if k not in input_dict or input_dict[k] is utils.NotDefined:
+                input_dict[k] = v
+
+        return input_dict
+
+    def validate_input(self, input_dict):
+        input_param_names = copy.deepcopy(list((input_dict or {}).keys()))
+        missing_param_names = []
+
+        for p_name, p_value in self.wf_spec.get_input().items():
+            if p_value is utils.NotDefined and p_name not in input_param_names:
+                missing_param_names.append(str(p_name))
+
+            if p_name in input_param_names:
+                input_param_names.remove(p_name)
+
+        if missing_param_names or input_param_names:
+            msg = 'Invalid input [name=%s, class=%s'
+            msg_props = [
+                self.wf_spec.get_name(),
+                self.wf_spec.__class__.__name__
+            ]
+
+            if missing_param_names:
+                msg += ', missing=%s'
+                msg_props.append(missing_param_names)
+
+            if input_param_names:
+                msg += ', unexpected=%s'
+                msg_props.append(input_param_names)
+
+            msg += ']'
+
+            raise exc.InputException(msg % tuple(msg_props))
 
     def rerun(self, task_ex, reset=True, env=None):
         """Rerun workflow from the given task.
