@@ -18,7 +18,9 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_service import loopingcall
 
-from mistral import context as ctx
+from mistral import context
+from mistral import exceptions as exc
+from mistral.services import security
 
 
 LOG = logging.getLogger(__name__)
@@ -35,9 +37,9 @@ def _with_auth_context(auth_ctx, func, *args, **kw):
     :param kw: Function keywork arguments.
     :return: Function result.
     """
-    old_auth_ctx = ctx.ctx() if ctx.has_ctx() else None
+    old_auth_ctx = context.ctx() if context.has_ctx() else None
 
-    ctx.set_ctx(auth_ctx)
+    context.set_ctx(auth_ctx)
 
     try:
         return func(*args, **kw)
@@ -48,7 +50,7 @@ def _with_auth_context(auth_ctx, func, *args, **kw):
 
         raise e
     finally:
-        ctx.set_ctx(old_auth_ctx)
+        context.set_ctx(old_auth_ctx)
 
 
 def retry_on_deadlock(func):
@@ -67,8 +69,26 @@ def retry_on_deadlock(func):
         # auth context in the new thread that RetryDecorator spawns.
         # In order to do that we need an additional helper function.
 
-        auth_ctx = ctx.ctx() if ctx.has_ctx() else None
+        auth_ctx = context.ctx() if context.has_ctx() else None
 
         return _with_auth_context(auth_ctx, func, *args, **kw)
 
     return decorate
+
+
+def check_db_obj_access(db_obj):
+    """Check accessbility to db object."""
+    ctx = context.ctx()
+    is_admin = ctx.is_admin
+
+    if not is_admin and db_obj.project_id != security.get_project_id():
+        raise exc.NotAllowedException(
+            "Can not access %s resource of other projects, ID: %s" %
+            (db_obj.__class__.__name__, db_obj.id)
+        )
+
+    if not is_admin and hasattr(db_obj, 'is_system') and db_obj.is_system:
+        raise exc.InvalidActionException(
+            "Can not modify a system %s resource, ID: %s" %
+            (db_obj.__class__.__name__, db_obj.id)
+        )

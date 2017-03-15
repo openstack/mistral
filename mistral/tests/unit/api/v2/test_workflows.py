@@ -236,7 +236,7 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
-            "Attempt to modify a system workflow",
+            "Can not modify a system",
             resp.body.decode()
         )
 
@@ -395,7 +395,7 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
-            "Attempt to delete a system workflow",
+            "Can not modify a system",
             resp.body.decode()
         )
 
