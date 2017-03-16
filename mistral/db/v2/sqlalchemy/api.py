@@ -31,7 +31,7 @@ from sqlalchemy.sql.expression import Insert
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import sqlite_lock
-from mistral.db import utils as mdb_utils
+from mistral.db import utils as m_dbutils
 from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
@@ -492,7 +492,7 @@ def create_workflow_definition(values, session=None):
 def update_workflow_definition(identifier, values, session=None):
     wf_def = get_workflow_definition(identifier, insecure=True)
 
-    mdb_utils.check_db_obj_access(wf_def)
+    m_dbutils.check_db_obj_access(wf_def)
 
     if wf_def.scope == 'public' and values['scope'] == 'private':
         # Check cron triggers.
@@ -536,7 +536,7 @@ def create_or_update_workflow_definition(name, values, session=None):
 def delete_workflow_definition(identifier, session=None):
     wf_def = get_workflow_definition(identifier)
 
-    mdb_utils.check_db_obj_access(wf_def)
+    m_dbutils.check_db_obj_access(wf_def)
 
     cron_triggers = get_cron_triggers(insecure=True, workflow_id=wf_def.id)
     if cron_triggers:

@@ -818,6 +818,23 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             created.name
         )
 
+    def test_delete_other_project_workflow_definition_by_admin(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        # Switch to admin.
+        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+
+        db_api.delete_workflow_definition(created['id'])
+
+        # Switch back.
+        auth_context.set_ctx(test_base.get_context())
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_workflow_definition,
+            created['id']
+        )
+
     def test_workflow_definition_private(self):
         # Create a workflow(scope=private) as under one project
         # then make sure it's NOT visible for other projects.
