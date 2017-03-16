@@ -73,6 +73,27 @@ def check_python3_xrange(logical_line):
               "with Python 3. Use range() or six.moves.range() instead.")
 
 
+def check_python3_no_iteritems(logical_line):
+    msg = ("M328: Use six.iteritems() instead of dict.iteritems().")
+
+    if re.search(r".*\.iteritems\(\)", logical_line):
+        yield(0, msg)
+
+
+def check_python3_no_iterkeys(logical_line):
+    msg = ("M329: Use six.iterkeys() instead of dict.iterkeys().")
+
+    if re.search(r".*\.iterkeys\(\)", logical_line):
+        yield(0, msg)
+
+
+def check_python3_no_itervalues(logical_line):
+    msg = ("M330: Use six.itervalues() instead of dict.itervalues().")
+
+    if re.search(r".*\.itervalues\(\)", logical_line):
+        yield(0, msg)
+
+
 class BaseASTChecker(ast.NodeVisitor):
     """Provides a simple framework for writing AST-based checks.
 
@@ -236,3 +257,7 @@ def factory(register):
     register(assert_equal_none)
     register(check_oslo_namespace_imports)
     register(CheckForLoggingIssues)
+    register(check_python3_no_iteritems)
+    register(check_python3_no_iterkeys)
+    register(check_python3_no_itervalues)
+    register(check_python3_xrange)
