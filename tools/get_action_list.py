@@ -23,13 +23,13 @@ from aodhclient.v2 import client as aodhclient
 from barbicanclient import base as barbican_base
 from barbicanclient import client as barbicanclient
 from ceilometerclient.v2 import client as ceilometerclient
-from cinderclient.openstack.common.apiclient import base as cinder_base
+from cinderclient.apiclient import base as cinder_base
 from cinderclient.v2 import client as cinderclient
 from designateclient import client as designateclient
 from glanceclient.v2 import client as glanceclient
 from gnocchiclient.v1 import base as gnocchi_base
 from gnocchiclient.v1 import client as gnocchiclient
-from heatclient.openstack.common.apiclient import base as heat_base
+from heatclient.common import base as heat_base
 from heatclient.v1 import client as heatclient
 from ironicclient.common import base as ironic_base
 from ironicclient.v1 import client as ironicclient
