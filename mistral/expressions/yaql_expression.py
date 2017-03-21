@@ -35,8 +35,6 @@ INLINE_YAQL_REGEXP = '<%.*?%>'
 class YAQLEvaluator(Evaluator):
     @classmethod
     def validate(cls, expression):
-        LOG.debug("Validating YAQL expression [expression='%s']", expression)
-
         try:
             YAQL_ENGINE(expression)
         except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
@@ -45,11 +43,6 @@ class YAQLEvaluator(Evaluator):
     @classmethod
     def evaluate(cls, expression, data_context):
         expression = expression.strip() if expression else expression
-
-        LOG.debug(
-            "Evaluating YAQL expression [expression='%s', context=%s]"
-            % (expression, data_context)
-        )
 
         try:
             result = YAQL_ENGINE(expression).evaluate(
@@ -60,8 +53,6 @@ class YAQLEvaluator(Evaluator):
                 "Can not evaluate YAQL expression [expression=%s, error=%s"
                 ", data=%s]" % (expression, str(e), data_context)
             )
-
-        LOG.debug("YAQL expression result: %s" % result)
 
         return result if not inspect.isgenerator(result) else list(result)
 
@@ -79,9 +70,6 @@ class InlineYAQLEvaluator(YAQLEvaluator):
 
     @classmethod
     def validate(cls, expression):
-        LOG.debug(
-            "Validating inline YAQL expression [expression='%s']", expression)
-
         if not isinstance(expression, six.string_types):
             raise exc.YaqlEvaluationException(
                 "Unsupported type '%s'." % type(expression)
@@ -96,7 +84,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
     @classmethod
     def evaluate(cls, expression, data_context):
         LOG.debug(
-            "Evaluating inline YAQL expression [expression='%s', context=%s]"
+            "Start to evaluate YAQL expression. [expression='%s', context=%s]"
             % (expression, data_context)
         )
 
@@ -113,7 +101,10 @@ class InlineYAQLEvaluator(YAQLEvaluator):
                 else:
                     result = result.replace(expr, str(evaluated))
 
-        LOG.debug("Inline YAQL expression result: %s" % result)
+        LOG.debug(
+            "Finished evaluation. [expression='%s', result: %s]" %
+            (expression, result)
+        )
 
         return result
 
