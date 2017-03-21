@@ -325,17 +325,14 @@ default_group_opts = itertools.chain(
 
 CONF.register_cli_opts(CLI_OPTS)
 
+
 _DEFAULT_LOG_LEVELS = [
-    'amqp=WARN',
-    'sqlalchemy=WARN',
-    'oslo_messaging=INFO',
-    'iso8601=WARN',
     'eventlet.wsgi.server=WARN',
-    'stevedore=INFO',
     'oslo_service.periodic_task=INFO',
     'oslo_service.loopingcall=INFO',
     'mistral.services.periodic=INFO',
-    'kazoo.client=WARN'
+    'kazoo.client=WARN',
+    'oslo_db=WARN'
 ]
 
 
@@ -355,7 +352,9 @@ def list_opts():
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
-    log.set_defaults(default_log_levels=_DEFAULT_LOG_LEVELS)
+    default_log_levels = log.get_default_log_levels()
+    default_log_levels.extend(_DEFAULT_LOG_LEVELS)
+    log.set_defaults(default_log_levels=default_log_levels)
 
     log.register_options(CONF)
 
