@@ -1100,6 +1100,8 @@
         "get_object": "get_object",
         "put_object": "put_object",
         "post_object": "post_object",
+        "delete_object": "delete_object",
+        "copy_object": "copy_object",
         "get_capabilities": "get_capabilities"
     },
     "zaqar": {
