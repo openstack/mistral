@@ -280,8 +280,8 @@ class RegularTask(Task):
         self._create_task_execution()
 
         LOG.debug(
-            'Starting task [workflow=%s, task_spec=%s, init_state=%s]' %
-            (self.wf_ex.name, self.task_spec, self.task_ex.state)
+            'Starting task [workflow=%s, task=%s, init_state=%s]' %
+            (self.wf_ex.name, self.task_spec.get_name(), self.task_ex.state)
         )
 
         self._before_task_start()

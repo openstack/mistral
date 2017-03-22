@@ -62,7 +62,7 @@ def run_task(wf_cmd):
 
         msg = (
             "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex, task_spec.get_name(), tb.format_exc())
+            (e, wf_ex.name, task_spec.get_name(), tb.format_exc())
         )
 
         LOG.error(msg)
@@ -159,7 +159,7 @@ def continue_task(task_ex):
 
         msg = (
             "Failed to run task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex, task_ex.name, tb.format_exc())
+            (e, wf_ex.name, task_ex.name, tb.format_exc())
         )
 
         LOG.error(msg)
@@ -185,7 +185,7 @@ def complete_task(task_ex, state, state_info):
 
         msg = (
             "Failed to complete task [error=%s, wf=%s, task=%s]:\n%s" %
-            (e, wf_ex, task_ex.name, tb.format_exc())
+            (e, wf_ex.name, task_ex.name, tb.format_exc())
         )
 
         LOG.error(msg)
@@ -296,8 +296,8 @@ def _refresh_task_state(task_ex_id):
         else:
             # Must never get here.
             raise RuntimeError(
-                'Unexpected logical task state [task_ex=%s, state=%s]' %
-                (task_ex, state)
+                'Unexpected logical task state [task_ex_id=%s, task_name=%s, '
+                'state=%s]' % (task_ex_id, task_ex.name, state)
             )
 
 

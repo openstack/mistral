@@ -219,8 +219,11 @@ class Workflow(object):
             final_context = wf_ctrl.evaluate_workflow_final_context()
         except Exception as e:
             LOG.warning(
-                'Failed to get final context for %s: %s' % (self.wf_ex, e)
+                'Failed to get final context for workflow execution. '
+                '[wf_ex_id: %s, wf_name: %s, error: %s]' %
+                (self.wf_ex.id, self.wf_ex.name, str(e))
             )
+
         return final_context
 
     def _create_execution(self, wf_def, input_dict, desc, params):
