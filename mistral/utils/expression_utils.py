@@ -108,7 +108,8 @@ def execution_(context):
         'name': wf_ex.name,
         'spec': wf_ex.spec,
         'input': wf_ex.input,
-        'params': wf_ex.params
+        'params': wf_ex.params,
+        'created_at': wf_ex.created_at.isoformat(' ')
     }
 
 

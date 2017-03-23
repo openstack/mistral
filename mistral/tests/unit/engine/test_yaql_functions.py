@@ -313,3 +313,8 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
         )
 
         self.assertDictEqual({'param1': 'blablabla'}, execution['params'])
+
+        self.assertEqual(
+            wf_ex.created_at.isoformat(' '),
+            execution['created_at']
+        )
