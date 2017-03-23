@@ -156,6 +156,22 @@ class ActionExecutionTestsV2(base.TestCase):
         self.assertEqual(404, output['result']['status'])
 
     @test.attr(type='sanity')
+    @test.related_bug('1667415')
+    @decorators.idempotent_id('3c73de7a-4af0-4657-90d6-d7ebd3c7da18')
+    def test_run_action_std_http_non_utf8_response(self):
+        resp, body = self.client.create_action_execution(
+            {
+                'name': 'std.http',
+                'input':
+                    '{"url": "https://www.google.co.il/search?q=testTest"}'
+            }
+        )
+
+        self.assertEqual(201, resp.status)
+        output = json.loads(body['output'])
+        self.assertEqual(200, output['result']['status'])
+
+    @test.attr(type='sanity')
     @decorators.idempotent_id('d98586bf-fdc4-44f6-9837-700d35b5f889')
     def test_create_action_execution(self):
         resp, body = self.client.create_action_execution(

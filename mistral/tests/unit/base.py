@@ -81,7 +81,7 @@ def register_action_class(name, cls, attributes=None, desc=None):
 
 class FakeHTTPResponse(object):
     def __init__(self, text, status_code, reason=None, headers=None,
-                 history=None, encoding='utf8', url='', cookies=None,
+                 history=None, encoding='utf-8', url='', cookies=None,
                  elapsed=None):
         self.text = text
         self.content = text
@@ -94,8 +94,8 @@ class FakeHTTPResponse(object):
         self.cookies = cookies or {}
         self.elapsed = elapsed or datetime.timedelta(milliseconds=123)
 
-    def json(self):
-        return json.loads(self.text)
+    def json(self, **kwargs):
+        return json.loads(self.text, **kwargs)
 
 
 class BaseTest(base.BaseTestCase):
