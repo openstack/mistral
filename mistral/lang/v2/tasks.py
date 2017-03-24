@@ -128,6 +128,7 @@ class TaskSpec(base.BaseSpec):
 
         self.validate_expr(self._data.get('input', {}))
         self.validate_expr(self._data.get('publish', {}))
+        self.validate_expr(self._data.get('publish-on-error', {}))
         self.validate_expr(self._data.get('keep-result', {}))
         self.validate_expr(self._data.get('safe-rerun', {}))
 
