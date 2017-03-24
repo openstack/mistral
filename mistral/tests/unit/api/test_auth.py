@@ -11,10 +11,9 @@
 #    limitations under the License.
 
 import datetime
-import uuid
-
 from oslo_config import cfg
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 import pecan
 import pecan.testing
 
@@ -34,21 +33,21 @@ WORKBOOKS = [
 PKI_TOKEN_VERIFIED = {
     'token': {
         'methods': ['password'],
-        'roles': [{'id': uuid.uuid4().hex,
+        'roles': [{'id': uuidutils.generate_uuid(dashed=False),
                    'name': 'admin'}],
         'expires_at': datetime.datetime.isoformat(
             datetime.datetime.utcnow() + datetime.timedelta(seconds=60)
         ),
         'project': {
             'domain': {'id': 'default', 'name': 'Default'},
-            'id': uuid.uuid4().hex,
+            'id': uuidutils.generate_uuid(dashed=False),
             'name': 'Mistral'
         },
         'catalog': [],
         'extras': {},
         'user': {
             'domain': {'id': 'default', 'name': 'Default'},
-            'id': uuid.uuid4().hex,
+            'id': uuidutils.generate_uuid(dashed=False),
             'name': 'admin'
         },
         'issued_at': datetime.datetime.isoformat(timeutils.utcnow())
