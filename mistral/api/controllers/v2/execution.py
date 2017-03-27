@@ -227,13 +227,14 @@ class ExecutionsController(rest.RestController):
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, types.uuid, wtypes.text, types.jsontype,
                          types.uuid, STATE_TYPES, wtypes.text, types.jsontype,
-                         types.jsontype, wtypes.text, wtypes.text, bool)
+                         types.jsontype, wtypes.text, wtypes.text, bool,
+                         types.uuid, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', workflow_name=None,
                 workflow_id=None, description=None, params=None,
                 task_execution_id=None, state=None, state_info=None,
                 input=None, output=None, created_at=None, updated_at=None,
-                include_output=None):
+                include_output=None, project_id=None, all_projects=False):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -269,9 +270,16 @@ class ExecutionsController(rest.RestController):
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
         :param include_output: Optional. Include the output for all executions
-                               in the list
+                               in the list.
+        :param project_id: Optional. Only get exectuions belong to the project.
+            Admin required.
+        :param all_projects: Optional. Get resources of all projects. Admin
+            required.
         """
         acl.enforce('executions:list', context.ctx())
+
+        if all_projects or project_id:
+            acl.enforce('executions:list:all_projects', context.ctx())
 
         filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
@@ -284,13 +292,14 @@ class ExecutionsController(rest.RestController):
             input=input,
             output=output,
             updated_at=updated_at,
-            description=description
+            description=description,
+            project_id=project_id
         )
 
         LOG.info(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s, filters=%s", marker, limit, sort_keys, sort_dirs,
-            filters
+            "sort_dirs=%s, filters=%s, all_projects=%s", marker, limit,
+            sort_keys, sort_dirs, filters, all_projects
         )
 
         if include_output:
@@ -309,5 +318,6 @@ class ExecutionsController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
+            all_projects=all_projects,
             **filters
         )

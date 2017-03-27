@@ -22,6 +22,7 @@ import json
 import mock
 from oslo_config import cfg
 import oslo_messaging
+from oslo_utils import uuidutils
 from webtest import app as webtest_app
 
 from mistral.api.controllers.v2 import execution
@@ -31,10 +32,10 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral.tests.unit import base as unit_base
 from mistral import utils
 from mistral.utils import rest_utils
 from mistral.workflow import states
-from oslo_utils import uuidutils
 
 # This line is needed for correct initialization of messaging config.
 oslo_messaging.get_transport(cfg.CONF)
@@ -630,3 +631,40 @@ class TestExecutionsController(base.APITest):
         resource_function = kwargs['resource_function']
 
         self.assertIsNone(resource_function)
+
+    @mock.patch('mistral.db.v2.api.get_workflow_executions')
+    @mock.patch('mistral.context.context_from_headers_and_env')
+    def test_get_all_projects_admin(self, mock_context, mock_get_execs):
+        admin_ctx = unit_base.get_context(admin=True)
+        mock_context.return_value = admin_ctx
+
+        resp = self.app.get('/v2/executions?all_projects=true')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertTrue(mock_get_execs.call_args[1].get('insecure', False))
+
+    def test_get_all_projects_normal_user(self):
+        resp = self.app.get(
+            '/v2/executions?all_projects=true',
+            expect_errors=True
+        )
+
+        self.assertEqual(403, resp.status_int)
+
+    @mock.patch('mistral.db.v2.api.get_workflow_executions')
+    @mock.patch('mistral.context.context_from_headers_and_env')
+    def test_get_all_filter_by_project_id(self, mock_context, mock_get_execs):
+        admin_ctx = unit_base.get_context(admin=True)
+        mock_context.return_value = admin_ctx
+
+        fake_project_id = uuidutils.generate_uuid()
+
+        resp = self.app.get('/v2/executions?project_id=%s' % fake_project_id)
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertTrue(mock_get_execs.call_args[1].get('insecure', False))
+        self.assertTrue(
+            mock_get_execs.call_args[1].get('project_id', fake_project_id)
+        )
