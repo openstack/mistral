@@ -124,6 +124,8 @@ class DirectWorkflowController(base.WorkflowController):
             elif not t_s:
                 t_s = self.wf_spec.get_tasks()[task_ex.name]
 
+            data_flow.remove_internal_data_from_context(ctx)
+
             cmd = commands.create_command(
                 t_n,
                 self.wf_ex,
@@ -164,6 +166,7 @@ class DirectWorkflowController(base.WorkflowController):
                 ctx,
                 data_flow.evaluate_task_outbound_context(t_ex)
             )
+            data_flow.remove_internal_data_from_context(ctx)
 
         return ctx
 
