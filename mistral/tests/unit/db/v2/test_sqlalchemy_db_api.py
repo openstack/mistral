@@ -1695,6 +1695,33 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             created.id
         )
 
+    def test_delete_workflow_execution_by_admin(self):
+        with db_api.transaction():
+            created = db_api.create_workflow_execution(WF_EXECS[0])
+            fetched = db_api.get_workflow_execution(created.id)
+
+            self.assertEqual(created, fetched)
+
+        auth_context.set_ctx(ADM_CTX)
+        db_api.delete_workflow_execution(created.id)
+        auth_context.set_ctx(DEFAULT_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_workflow_execution,
+            created.id
+        )
+
+    def test_delete_workflow_execution_by_other_fail(self):
+        created = db_api.create_workflow_execution(WF_EXECS[0])
+        auth_context.set_ctx(USER_CTX)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.delete_workflow_execution,
+            created.id
+        )
+
     def test_trim_status_info(self):
         created = db_api.create_workflow_execution(WF_EXECS[0])
 
