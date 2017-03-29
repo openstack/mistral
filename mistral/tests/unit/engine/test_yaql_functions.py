@@ -229,6 +229,31 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
                 task2_ex.published
             )
 
+    def test_task_function_no_name_on_complete_case(self):
+        wf_text = """---
+            version: '2.0'
+
+            wf:
+              tasks:
+                task1:
+                  action: std.echo output=1
+                  on-complete:
+                    - fail(msg=<% task() %>)
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(states.ERROR, wf_ex.state)
+            self.assertIsNotNone(wf_ex.state_info)
+            self.assertIn(wf_ex.id, wf_ex.state_info)
+
     def test_uuid_function(self):
         wf_text = """---
             version: '2.0'
