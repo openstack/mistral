@@ -166,6 +166,31 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
                 expect_error=expect_error
             )
 
+    def test_publish_on_error(self):
+        tests = [
+            ({'publish-on-error': ''}, True),
+            ({'publish-on-error': {}}, True),
+            ({'publish-on-error': None}, True),
+            ({'publish-on-error': {'k1': 'v1'}}, False),
+            ({'publish-on-error': {'k1': '<% $.v1 %>'}}, False),
+            ({'publish-on-error': {'k1': '<% 1 + 2 %>'}}, False),
+            ({'publish-on-error': {'k1': '<% * %>'}}, True),
+            ({'publish-on-error': {'k1': '{{ _.v1 }}'}}, False),
+            ({'publish-on-error': {'k1': '{{ 1 + 2 }}'}}, False),
+            ({'publish-on-error': {'k1': '{{ * }}'}}, True)
+        ]
+
+        for output, expect_error in tests:
+            overlay = {'test': {'tasks': {'task1': {'action': 'test.mock'}}}}
+
+            utils.merge_dicts(overlay['test']['tasks']['task1'], output)
+
+            self._parse_dsl_spec(
+                add_tasks=False,
+                changes=overlay,
+                expect_error=expect_error
+            )
+
     def test_policies(self):
         tests = [
             ({'retry': {'count': 3, 'delay': 1}}, False),
