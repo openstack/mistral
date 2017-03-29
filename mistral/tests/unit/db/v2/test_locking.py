@@ -19,6 +19,7 @@ from oslo_config import cfg
 import random
 import testtools
 
+from mistral import context as auth_context
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
@@ -89,6 +90,9 @@ class SQLiteLocksTest(test_base.DbTestCase):
         self.assertEqual(0, len(sqlite_lock.get_locks()))
 
     def _run_correct_locking(self, wf_ex):
+        # Set context info for the thread.
+        auth_context.set_ctx(test_base.get_context())
+
         self._random_sleep()
 
         with db_api.transaction():

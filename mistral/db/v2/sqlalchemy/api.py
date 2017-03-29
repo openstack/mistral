@@ -28,6 +28,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import Insert
 
+from mistral import context
 from mistral.db.sqlalchemy import base as b
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import sqlite_lock
@@ -255,8 +256,10 @@ def _get_db_object_by_name(model, name):
     return _secure_query(model).filter_by(name=name).first()
 
 
-def _get_db_object_by_id(model, id):
-    return _secure_query(model).filter_by(id=id).first()
+def _get_db_object_by_id(model, id, insecure=False):
+    query = b.model_query(model) if insecure else _secure_query(model)
+
+    return query.filter_by(id=id).first()
 
 
 def _get_db_object_by_name_or_id(model, identifier, insecure=False):
@@ -735,7 +738,13 @@ def _get_action_executions(**kwargs):
 
 @b.session_aware()
 def get_workflow_execution(id, session=None):
-    wf_ex = _get_db_object_by_id(models.WorkflowExecution, id)
+    ctx = context.ctx()
+
+    wf_ex = _get_db_object_by_id(
+        models.WorkflowExecution,
+        id,
+        insecure=ctx.is_admin
+    )
 
     if not wf_ex:
         raise exc.DBEntityNotFoundError(
@@ -782,6 +791,8 @@ def create_workflow_execution(values, session=None):
 @b.session_aware()
 def update_workflow_execution(id, values, session=None):
     wf_ex = get_workflow_execution(id)
+
+    m_dbutils.check_db_obj_access(wf_ex)
 
     wf_ex.update(values.copy())
 
