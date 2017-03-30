@@ -22,8 +22,11 @@ from mistral import exceptions as exc
 from mistral import expressions
 from mistral.lang import types
 from mistral.lang.v2 import base
+from mistral.lang.v2 import on_clause
 from mistral.lang.v2 import policies
+from mistral.lang.v2 import publish
 from mistral import utils
+from mistral.workflow import states
 
 _expr_ptrns = [expressions.patterns[name] for name in expressions.patterns]
 WITH_ITEMS_PTRN = re.compile(
@@ -141,8 +144,9 @@ class TaskSpec(base.BaseSpec):
 
         for item in raw:
             if not isinstance(item, six.string_types):
-                raise exc.InvalidModelException("'with-items' elements should"
-                                                " be strings: %s" % self._data)
+                raise exc.InvalidModelException(
+                    "'with-items' elements should be strings: %s" % self._data
+                )
 
             match = re.match(WITH_ITEMS_PTRN, item)
 
@@ -209,11 +213,17 @@ class TaskSpec(base.BaseSpec):
     def get_target(self):
         return self._target
 
-    def get_publish(self):
-        return self._publish
+    def get_publish(self, state):
+        spec = None
 
-    def get_publish_on_error(self):
-        return self._publish_on_error
+        if state == states.SUCCESS and self._publish:
+            spec = publish.PublishSpec({'branch': self._publish})
+        elif state == states.ERROR and self._publish_on_error:
+            spec = publish.PublishSpec(
+                {'branch': self._publish_on_error}
+            )
+
+        return spec
 
     def get_keep_result(self):
         return self._keep_result
@@ -222,20 +232,14 @@ class TaskSpec(base.BaseSpec):
         return self._safe_rerun
 
     def get_type(self):
-        if self._workflow:
-            return utils.WORKFLOW_TASK_TYPE
-        return utils.ACTION_TASK_TYPE
+        return (utils.WORKFLOW_TASK_TYPE if self._workflow
+                else utils.ACTION_TASK_TYPE)
 
 
 class DirectWorkflowTaskSpec(TaskSpec):
     _polymorphic_value = 'direct'
 
-    _on_clause_type = {
-        "oneOf": [
-            types.NONEMPTY_STRING,
-            types.UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST
-        ]
-    }
+    _on_clause_schema = on_clause.OnClauseSpec._schema
 
     _direct_workflow_schema = {
         "type": "object",
@@ -247,52 +251,62 @@ class DirectWorkflowTaskSpec(TaskSpec):
                     types.POSITIVE_INTEGER
                 ]
             },
-            "on-complete": _on_clause_type,
-            "on-success": _on_clause_type,
-            "on-error": _on_clause_type
+            "on-complete": _on_clause_schema,
+            "on-success": _on_clause_schema,
+            "on-error": _on_clause_schema
         }
     }
 
-    _schema = utils.merge_dicts(copy.deepcopy(TaskSpec._schema),
-                                _direct_workflow_schema)
+    _schema = utils.merge_dicts(
+        copy.deepcopy(TaskSpec._schema),
+        _direct_workflow_schema
+    )
 
     def __init__(self, data):
         super(DirectWorkflowTaskSpec, self).__init__(data)
 
         self._join = data.get('join')
-        self._on_complete = self.prepare_on_clause(
-            self._as_list_of_tuples('on-complete')
-        )
-        self._on_success = self.prepare_on_clause(
-            self._as_list_of_tuples('on-success')
-        )
-        self._on_error = self.prepare_on_clause(
-            self._as_list_of_tuples('on-error')
-        )
 
-    def validate_schema(self):
-        super(DirectWorkflowTaskSpec, self).validate_schema()
+        on_spec_cls = on_clause.OnClauseSpec
 
+        self._on_complete = self._spec_property('on-complete', on_spec_cls)
+        self._on_success = self._spec_property('on-success', on_spec_cls)
+        self._on_error = self._spec_property('on-error', on_spec_cls)
+
+    def validate_semantics(self):
         # Validate YAQL expressions.
-        self._validate_transitions('on-complete')
-        self._validate_transitions('on-success')
-        self._validate_transitions('on-error')
+        self._validate_transitions(self._on_complete)
+        self._validate_transitions(self._on_success)
+        self._validate_transitions(self._on_error)
 
-    def _validate_transitions(self, on_clause):
-        val = self._data.get(on_clause, [])
+    def _validate_transitions(self, on_clause_spec):
+        val = on_clause_spec.get_next() if on_clause_spec else []
+
+        if not val:
+            return
 
         [self.validate_expr(t)
-         for t in ([val] if isinstance(val, six.string_types) else val)]
+            for t in ([val] if isinstance(val, six.string_types) else val)]
 
-    @staticmethod
-    def prepare_on_clause(list_of_tuples):
-        for i, task in enumerate(list_of_tuples):
-            task_name, params = DirectWorkflowTaskSpec._parse_cmd_and_input(
-                task[0]
-            )
-            list_of_tuples[i] = (task_name, task[1], params)
+    def get_publish(self, state):
+        spec = super(DirectWorkflowTaskSpec, self).get_publish(state)
 
-        return list_of_tuples
+        # TODO(rakhmerov): How do we need to resolve a possible conflict
+        # between 'on-complete' and 'on-success/on-error' and
+        # 'publish/publish-on-error'? For now we assume that 'on-error'
+        # and 'on-success' take precedence over on-complete.
+
+        on_clause = self._on_complete
+
+        if state == states.SUCCESS:
+            on_clause = self._on_success
+        elif state == states.ERROR:
+            on_clause = self._on_error
+
+        if not on_clause:
+            return spec
+
+        return on_clause.get_publish() or spec
 
     def get_join(self):
         return self._join

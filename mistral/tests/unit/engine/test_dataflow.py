@@ -713,6 +713,43 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertDictEqual(wf_input['a'], task1.published['published_a'])
 
+    def test_advanced_publishing_branch(self):
+        wf_text = """---
+        version: 2.0
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success:
+                publish:
+                  branch:
+                    my_var: my branch value
+                next: task2
+
+            task2:
+              action: std.echo output=<% $.my_var %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self._assert_single_item(tasks, name='task2')
+
+        self.assertDictEqual({"my_var": "my branch value"}, task1.published)
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):

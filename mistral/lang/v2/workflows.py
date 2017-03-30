@@ -292,42 +292,57 @@ class DirectWorkflowSpec(WorkflowSpec):
         return to_task_name in t_names
 
     def get_on_error_clause(self, t_name):
-        result = self.get_tasks()[t_name].get_on_error()
+        result = []
+
+        on_clause = self.get_tasks()[t_name].get_on_error()
+
+        if on_clause:
+            result = on_clause.get_next()
 
         if not result:
             t_defaults = self.get_task_defaults()
 
-            if t_defaults:
+            if t_defaults and t_defaults.get_on_error():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_error(),
+                    t_defaults.get_on_error().get_next(),
                     t_name
                 )
 
         return result
 
     def get_on_success_clause(self, t_name):
-        result = self.get_tasks()[t_name].get_on_success()
+        result = []
+
+        on_clause = self.get_tasks()[t_name].get_on_success()
+
+        if on_clause:
+            result = on_clause.get_next()
 
         if not result:
             t_defaults = self.get_task_defaults()
 
-            if t_defaults:
+            if t_defaults and t_defaults.get_on_success():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_success(),
+                    t_defaults.get_on_success().get_next(),
                     t_name
                 )
 
         return result
 
     def get_on_complete_clause(self, t_name):
-        result = self.get_tasks()[t_name].get_on_complete()
+        result = []
+
+        on_clause = self.get_tasks()[t_name].get_on_complete()
+
+        if on_clause:
+            result = on_clause.get_next()
 
         if not result:
             t_defaults = self.get_task_defaults()
 
-            if t_defaults:
+            if t_defaults and t_defaults.get_on_complete():
                 result = self._remove_task_from_clause(
-                    t_defaults.get_on_complete(),
+                    t_defaults.get_on_complete().get_next(),
                     t_name
                 )
 
