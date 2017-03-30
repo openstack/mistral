@@ -64,9 +64,6 @@ def fake_evaluate(_, context):
 
 
 class JavaScriptEngineTest(base.EngineTestCase):
-    def setUp(self):
-        super(JavaScriptEngineTest, self).setUp()
-
     @testtools.skip('It requires installed JS engine.')
     def test_javascript_action(self):
         wb_service.create_workbook_v2(WORKBOOK)
