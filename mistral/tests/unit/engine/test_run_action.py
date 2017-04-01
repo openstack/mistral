@@ -88,9 +88,6 @@ class RunActionEngineTest(base.EngineTestCase):
         """
         actions.create_actions(action)
 
-    def tearDown(self):
-        super(RunActionEngineTest, self).tearDown()
-
     def test_run_action_sync(self):
         # Start action and see the result.
         action_ex = self.engine.start_action('std.echo', {'output': 'Hello!'})
