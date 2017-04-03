@@ -67,7 +67,8 @@ def wrap_pecan_controller_exception(func):
             return webob.Response(
                 status=e.http_code,
                 content_type='application/json',
-                body=json.dumps(dict(faultstring=six.text_type(e)))
+                body=json.dumps(dict(faultstring=six.text_type(e))),
+                charset='UTF-8'
             )
 
     return wrapped
