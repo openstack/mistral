@@ -29,9 +29,6 @@ def _print_commands(cmds):
 
 
 class CommandDispatcherTest(base.BaseTest):
-    def setUp(self):
-        super(CommandDispatcherTest, self).setUp()
-
     def test_rearrange_commands(self):
         no_wait = commands.RunTask(None, None, None, None)
         fail = commands.FailWorkflow(None, None, None, None)
