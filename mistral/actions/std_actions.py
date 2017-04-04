@@ -196,12 +196,19 @@ class HTTPAction(base.Action):
             "HTTP action response:\n%s\n%s" % (resp.status_code, resp.content)
         )
 
+        # TODO(akuznetsova): Need to refactor Mistral serialiser and
+        # deserializer to have an ability to pass needed encoding and work
+        # with it. Now it can process only default 'utf-8' encoding.
+        # Appropriate bug #1676411 was created.
+
         # Represent important resp data as a dictionary.
         try:
-            content = resp.json()
+            content = resp.json(encoding=resp.encoding)
         except Exception as e:
             LOG.debug("HTTP action response is not json.")
             content = resp.content
+            if resp.encoding != 'utf-8':
+                content = content.decode(resp.encoding).encode('utf-8')
 
         _result = {
             'content': content,
