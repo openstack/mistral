@@ -129,9 +129,7 @@ This command will update "state" and "output" of action execution object with
 corresponding id. That way Mistral will know what the result of this action
 is and decide how to proceed with workflow execution.
 
-Using raw HTTP:
-
- .. code-block:: HTTP
+Using raw HTTP::
 
   POST <Mistral-Callback-URL>/v2/action-executions/<id>
 
