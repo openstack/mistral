@@ -7,7 +7,7 @@ Task result / Data flow
 
 Mistral supports transferring data from one task to another. In other words,
 if *taskA* produces a value then *taskB* which follows *taskA* can use it.
-In order to use this data Mistral relies on a query language called `YAQL <https://github.com/openstack/yaql>`_. 
+In order to use this data Mistral relies on a query language called `YAQL <https://github.com/openstack/yaql>`_.
 YAQL is a powerful yet simple tool that allows the user to filter information,
 transform data and call functions. Find more information about it in the
 `YAQL official documentation <http://yaql.readthedocs.org>`_ . This mechanism
@@ -17,7 +17,7 @@ referred to as Data Flow.
 Below is a simple example of how Mistral Data Flow looks like from the DSL
 (workflow language) perspective:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
  version: '2.0'
 
