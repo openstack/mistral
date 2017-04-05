@@ -12,8 +12,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import six
-
 from oslo_concurrency.fixture import lockutils
 from tempest.lib import decorators
 from tempest import test
@@ -96,7 +94,7 @@ class TaskTypesTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
 
         bt = body['tasks']
-        ll = [[v for k, v in six.iteritems(d) if 'type' in k] for d in bt]
+        ll = [[v for k, v in d.items() if 'type' in k] for d in bt]
         types_list = [item for sublist in ll for item in sublist]
 
         self.assertIn(
