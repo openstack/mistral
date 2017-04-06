@@ -133,7 +133,12 @@ class CallScheduler(periodic_task.PeriodicTasks):
                     calls_to_make.append(result)
 
         for call in calls_to_make:
-            LOG.debug('Processing next delayed call: %s', call)
+            LOG.debug(
+                'Processing next delayed call. '
+                '[ID=%s, factory_method_path=%s, target_method_name=%s, '
+                'method_arguments=%s]', call.id, call.factory_method_path,
+                call.target_method_name, call.method_arguments
+            )
 
             target_auth_context = copy.deepcopy(call.auth_context)
 

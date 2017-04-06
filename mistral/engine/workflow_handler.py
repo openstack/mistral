@@ -92,8 +92,8 @@ def _check_and_complete(wf_ex_id):
             incomplete_tasks_count = wf.check_and_complete()
         except exc.MistralException as e:
             msg = (
-                "Failed to check and complete [wf_ex=%s]:"
-                " %s\n%s" % (wf_ex, e, tb.format_exc())
+                "Failed to check and complete [wf_ex_id=%s, wf_name=%s]:"
+                " %s\n%s" % (wf_ex_id, wf_ex.name, e, tb.format_exc())
             )
 
             LOG.error(msg)
@@ -154,7 +154,8 @@ def set_workflow_state(wf_ex, state, msg=None):
         pause_workflow(wf_ex, msg)
     else:
         raise exc.MistralError(
-            'Invalid workflow state [wf_ex=%s, state=%s]' % (wf_ex, state)
+            'Invalid workflow execution state [wf_ex_id=%s, wf_name=%s, '
+            'state=%s]' % (wf_ex.id, wf_ex.name, state)
         )
 
 

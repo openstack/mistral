@@ -265,8 +265,6 @@ def add_openstack_data_to_context(wf_ex):
     if CONF.pecan.auth_enable:
         exec_ctx = auth_ctx.ctx()
 
-        LOG.debug('Data flow security context: %s' % exec_ctx)
-
         if exec_ctx:
             wf_ex.context.update({'openstack': exec_ctx.to_dict()})
 

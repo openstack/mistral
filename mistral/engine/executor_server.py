@@ -73,9 +73,9 @@ class ExecutorServer(service_base.MistralService):
         """
 
         LOG.info(
-            "Received RPC request 'run_action'[rpc_ctx=%s,"
-            " action_ex_id=%s, action_class=%s, attributes=%s, params=%s]"
-            % (rpc_ctx, action_ex_id, action_class_str, attributes,
+            "Received RPC request 'run_action'[action_ex_id=%s, "
+            "action_class=%s, attributes=%s, params=%s]"
+            % (action_ex_id, action_class_str, attributes,
                utils.cut(params))
         )
 
