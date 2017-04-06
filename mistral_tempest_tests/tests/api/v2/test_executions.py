@@ -206,6 +206,33 @@ class ExecutionTestsV2(base.TestCase):
         self.assertEqual('ERROR', body['state'])
         self.assertEqual('Forced', body['state_info'])
 
+    @test.attr(type='sanity')
+    @decorators.idempotent_id('b5ce0d18-7d78-45bb-813e-ed94cea65fd0')
+    def test_update_execution_by_admin(self):
+        _, execution = self.client.create_execution(self.direct_wf_name)
+        resp, body = self.admin_client.update_execution(
+            execution['id'], '{"description": "description set by admin"}')
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual('description set by admin', body['description'])
+
+        resp, body = self.client.get_object('executions', execution['id'])
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual("description set by admin", body['description'])
+
+    @test.attr(type='sanity')
+    @decorators.idempotent_id('c6247362-a082-49ad-a2c3-aaf12419a477')
+    def test_update_execution_by_other_fail(self):
+        _, execution = self.client.create_execution(self.direct_wf_name)
+
+        self.assertRaises(
+            exceptions.NotFound,
+            self.alt_client.update_execution,
+            execution['id'],
+            '{"description": "description set by admin"}'
+        )
+
     @test.attr(type='negative')
     @decorators.idempotent_id('d8bde271-6785-4ace-9173-a8a3a01d5eaa')
     def test_get_nonexistent_execution(self):
@@ -283,3 +310,21 @@ class ExecutionTestsV2(base.TestCase):
         self.assertEqual('RUNNING', execution['state'])
 
         self.client.wait_execution(execution, target_state='ERROR')
+
+    @test.attr(type='sanity')
+    @decorators.idempotent_id('acc8e401-2b26-4c41-9e79-8da791da85c0')
+    def test_delete_execution_by_admin(self):
+        _, body = self.client.create_execution(self.direct_wf_id)
+        exec_id = body['id']
+        resp, _ = self.admin_client.delete_obj('executions', exec_id)
+
+        self.assertEqual(204, resp.status)
+
+        self.client.executions.remove(exec_id)
+
+        self.assertRaises(
+            exceptions.NotFound,
+            self.client.get_object,
+            'executions',
+            exec_id
+        )
