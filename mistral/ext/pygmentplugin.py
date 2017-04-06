@@ -10,6 +10,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import re
+
 from pygments import lexer
 from pygments import token
 
@@ -19,9 +21,12 @@ class MistralLexer(lexer.RegexLexer):
     name = 'Mistral'
     aliases = ['mistral']
 
+    flags = re.MULTILINE | re.UNICODE
+
     tokens = {
         "root": [
-            (r'^(\s)*(workflows|tasks|input|type)(\s)*:', token.Keyword),
+            (r'^(\s)*(workflows|tasks|input|output|type)(\s)*:',
+                token.Keyword),
             (r'^(\s)*(version|name|description)(\s)*:', token.Keyword),
             (r'^(\s)*(publish|timeout|retry|with\-items)(\s)*:',
                 token.Keyword),
@@ -48,10 +53,12 @@ class MistralLexer(lexer.RegexLexer):
             lexer.default('#pop'),
         ],
         "generic": [
-            (r'(\-|:|=|!|\[|\])', token.Operator),
+            (r'%>', token.Name.Entity, '#pop'),
+            (r'}\\}', token.Name.Entity, '#pop'),
+            (r'(\-|:|=|!|\[|\]|<|>|\/|\*)', token.Operator),
             (r'(null|None|True|False)', token.Name.Builtin),
             (r'"(\\\\|\\"|[^"])*"', token.String.Double),
             (r"'(\\\\|\\'|[^'])*'", token.String.Single),
-            (r'\w|\s|\(|\)|,|\.', token.Text),
+            (r'\W|\w|\s|\(|\)|,|\.', token.Text),
         ]
     }
