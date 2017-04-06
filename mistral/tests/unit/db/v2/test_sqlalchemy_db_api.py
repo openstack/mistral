@@ -29,7 +29,9 @@ from mistral.tests.unit import base as test_base
 from mistral.utils import filter_utils
 
 
-user_context = test_base.get_context(default=False)
+DEFAULT_CTX = test_base.get_context()
+USER_CTX = test_base.get_context(default=False)
+ADM_CTX = test_base.get_context(default=False, admin=True)
 
 WORKBOOKS = [
     {
@@ -305,7 +307,7 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(created, fetched[0])
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         created = db_api.create_workbook(WORKBOOKS[1])
         fetched = db_api.get_workbooks()
@@ -324,7 +326,7 @@ class WorkbookTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[0])
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_workbooks()
 
@@ -347,7 +349,7 @@ class WorkbookTest(SQLAlchemyTest):
                             auth_context.ctx().project_id)
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_workbooks()
 
@@ -606,7 +608,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         # Switch to another project.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
             exc.NotAllowedException,
@@ -619,7 +621,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 
         # Switch to admin.
-        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+        auth_context.set_ctx(ADM_CTX)
 
         updated = db_api.update_workflow_definition(
             created['id'],
@@ -632,7 +634,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual('my new definition', updated.definition)
 
         # Switch back.
-        auth_context.set_ctx(test_base.get_context())
+        auth_context.set_ctx(DEFAULT_CTX)
 
         fetched = db_api.get_workflow_definition(created['id'])
 
@@ -645,7 +647,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(system_workflow)
 
         # Switch to admin.
-        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+        auth_context.set_ctx(ADM_CTX)
 
         updated = db_api.update_workflow_definition(
             created['id'],
@@ -689,13 +691,13 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         cron_trigger = copy.copy(CRON_TRIGGER)
         cron_trigger['workflow_id'] = created.id
         db_api.create_cron_trigger(cron_trigger)
 
-        auth_context.set_ctx(test_base.get_context(default=True))
+        auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
             exc.NotAllowedException,
@@ -708,7 +710,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         # Switch to another user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         event_trigger = copy.copy(EVENT_TRIGGERS[0])
         event_trigger.update({'workflow_id': created.id})
@@ -716,7 +718,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         db_api.create_event_trigger(event_trigger)
 
         # Switch back.
-        auth_context.set_ctx(test_base.get_context(default=True))
+        auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
             exc.NotAllowedException,
@@ -810,7 +812,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         # Switch to another project.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
             exc.NotAllowedException,
@@ -822,12 +824,12 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
 
         # Switch to admin.
-        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+        auth_context.set_ctx(ADM_CTX)
 
         db_api.delete_workflow_definition(created['id'])
 
         # Switch back.
-        auth_context.set_ctx(test_base.get_context())
+        auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
@@ -846,7 +848,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created1, fetched[0])
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_workflow_definitions()
 
@@ -871,7 +873,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         )
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_workflow_definitions()
 
@@ -1352,7 +1354,7 @@ class ActionExecutionTest(SQLAlchemyTest):
         created = db_api.create_action_execution(ACTION_EXECS[0])
 
         # Create a new user.
-        auth_context.set_ctx(test_base.get_context(default=False))
+        auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
@@ -1454,6 +1456,43 @@ class WorkflowExecutionTest(SQLAlchemyTest):
 
             self.assertEqual(updated, fetched)
             self.assertIsNotNone(fetched.updated_at)
+
+    def test_update_workflow_execution_by_admin(self):
+        with db_api.transaction():
+            created = db_api.create_workflow_execution(WF_EXECS[0])
+
+            auth_context.set_ctx(ADM_CTX)
+
+            updated = db_api.update_workflow_execution(
+                created.id,
+                {'state': 'RUNNING', 'state_info': "Running..."}
+            )
+
+            auth_context.set_ctx(DEFAULT_CTX)
+
+            self.assertEqual('RUNNING', updated.state)
+            self.assertEqual(
+                'RUNNING',
+                db_api.load_workflow_execution(updated.id).state
+            )
+
+            fetched = db_api.get_workflow_execution(created.id)
+
+            self.assertEqual(updated, fetched)
+            self.assertIsNotNone(fetched.updated_at)
+
+    def test_update_workflow_execution_by_others_fail(self):
+        with db_api.transaction():
+            created = db_api.create_workflow_execution(WF_EXECS[0])
+
+            auth_context.set_ctx(USER_CTX)
+
+            self.assertRaises(
+                exc.DBEntityNotFoundError,
+                db_api.update_workflow_execution,
+                created.id,
+                {'state': 'RUNNING', 'state_info': "Running..."}
+            )
 
     def test_create_or_update_workflow_execution(self):
         id = 'not-existing-id'
@@ -2243,7 +2282,7 @@ class CronTriggerTest(SQLAlchemyTest):
         created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_cron_triggers(
             insecure=True,
@@ -2559,7 +2598,7 @@ RESOURCE_MEMBERS = [
         'resource_id': '123e4567-e89b-12d3-a456-426655440000',
         'resource_type': 'workflow',
         'project_id': security.get_project_id(),
-        'member_id': user_context.project_id,
+        'member_id': USER_CTX.project_id,
         'status': 'pending',
     },
     {
@@ -2580,18 +2619,18 @@ class ResourceMemberTest(SQLAlchemyTest):
         fetched = db_api.get_resource_member(
             '123e4567-e89b-12d3-a456-426655440000',
             'workflow',
-            user_context.project_id
+            USER_CTX.project_id
         )
 
         self.assertEqual(created_1, fetched)
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_resource_member(
             '123e4567-e89b-12d3-a456-426655440000',
             'workflow',
-            user_context.project_id
+            USER_CTX.project_id
         )
 
         self.assertEqual(created_1, fetched)
@@ -2630,7 +2669,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         db_api.create_resource_member(RESOURCE_MEMBERS[1])
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         fetched = db_api.get_resource_members(
             created.resource_id,
@@ -2644,12 +2683,12 @@ class ResourceMemberTest(SQLAlchemyTest):
         created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         updated = db_api.update_resource_member(
             created.resource_id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
             {'status': 'accepted'}
         )
 
@@ -2664,7 +2703,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             db_api.update_resource_member,
             created.resource_id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
             {'status': 'accepted'}
         )
 
@@ -2674,7 +2713,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         db_api.delete_resource_member(
             created.resource_id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
         )
 
         fetched = db_api.get_resource_members(
@@ -2688,14 +2727,14 @@ class ResourceMemberTest(SQLAlchemyTest):
         created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.delete_resource_member,
             created.resource_id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
         )
 
     def test_delete_resource_member_already_deleted(self):
@@ -2704,7 +2743,7 @@ class ResourceMemberTest(SQLAlchemyTest):
         db_api.delete_resource_member(
             created.resource_id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
         )
 
         self.assertRaises(
@@ -2712,7 +2751,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             db_api.delete_resource_member,
             created.resource_id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
         )
 
     def test_delete_nonexistent_resource_member(self):
@@ -2730,7 +2769,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         wf = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
@@ -2739,25 +2778,25 @@ class WorkflowSharingTest(SQLAlchemyTest):
         )
 
         # Switch to original tenant, share workflow to another tenant.
-        auth_context.set_ctx(test_base.get_context())
+        auth_context.set_ctx(DEFAULT_CTX)
 
         workflow_sharing = {
             'resource_id': wf.id,
             'resource_type': 'workflow',
             'project_id': security.get_project_id(),
-            'member_id': user_context.project_id,
+            'member_id': USER_CTX.project_id,
             'status': 'pending',
         }
 
         db_api.create_resource_member(workflow_sharing)
 
         # Switch to another tenant, accept the sharing, get workflows.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         db_api.update_resource_member(
             wf.id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
             {'status': 'accepted'}
         )
 
@@ -2772,19 +2811,19 @@ class WorkflowSharingTest(SQLAlchemyTest):
             'resource_id': wf.id,
             'resource_type': 'workflow',
             'project_id': security.get_project_id(),
-            'member_id': user_context.project_id,
+            'member_id': USER_CTX.project_id,
             'status': 'pending',
         }
 
         db_api.create_resource_member(workflow_sharing)
 
         # Switch to another tenant, accept the sharing.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         db_api.update_resource_member(
             wf.id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
             {'status': 'accepted'}
         )
 
@@ -2793,12 +2832,12 @@ class WorkflowSharingTest(SQLAlchemyTest):
         self.assertEqual(wf, fetched)
 
         # Switch to original tenant, delete the workflow.
-        auth_context.set_ctx(test_base.get_context())
+        auth_context.set_ctx(DEFAULT_CTX)
 
         db_api.delete_workflow_definition(wf.id)
 
         # Switch to another tenant, can not see that workflow.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
@@ -2813,19 +2852,19 @@ class WorkflowSharingTest(SQLAlchemyTest):
             'resource_id': wf.id,
             'resource_type': 'workflow',
             'project_id': security.get_project_id(),
-            'member_id': user_context.project_id,
+            'member_id': USER_CTX.project_id,
             'status': 'pending',
         }
 
         db_api.create_resource_member(workflow_sharing)
 
         # Switch to another tenant, accept the sharing.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         db_api.update_resource_member(
             wf.id,
             'workflow',
-            user_context.project_id,
+            USER_CTX.project_id,
             {'status': 'accepted'}
         )
 
@@ -2834,7 +2873,7 @@ class WorkflowSharingTest(SQLAlchemyTest):
         db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
         # Switch to original tenant, try to delete the workflow.
-        auth_context.set_ctx(test_base.get_context())
+        auth_context.set_ctx(DEFAULT_CTX)
 
         self.assertRaises(
             exc.DBError,
@@ -2893,7 +2932,7 @@ class EventTriggerTest(SQLAlchemyTest):
         db_api.create_event_trigger(EVENT_TRIGGERS[0])
 
         # Switch to another tenant.
-        auth_context.set_ctx(user_context)
+        auth_context.set_ctx(USER_CTX)
 
         db_api.create_event_trigger(EVENT_TRIGGERS[1])
         fetched = db_api.get_event_triggers()
