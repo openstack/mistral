@@ -420,19 +420,19 @@ def delete_workbooks(session=None, **kwargs):
 # Workflow definitions.
 
 @b.session_aware()
-def get_workflow_definition(identifier, session=None, insecure=False):
+def get_workflow_definition(identifier, session=None):
     """Gets workflow definition by name or uuid.
 
     :param identifier: Identifier could be in the format of plain string or
                        uuid.
-    :param insecure: If True, will search all records, otherwise will narrow
-        scope to project id.
     :return: Workflow definition.
     """
+    ctx = context.ctx()
+
     wf_def = _get_db_object_by_name_or_id(
         models.WorkflowDefinition,
         identifier,
-        insecure=insecure
+        insecure=ctx.is_admin
     )
 
     if not wf_def:
@@ -493,7 +493,7 @@ def create_workflow_definition(values, session=None):
 
 @b.session_aware()
 def update_workflow_definition(identifier, values, session=None):
-    wf_def = get_workflow_definition(identifier, insecure=True)
+    wf_def = get_workflow_definition(identifier)
 
     m_dbutils.check_db_obj_access(wf_def)
 

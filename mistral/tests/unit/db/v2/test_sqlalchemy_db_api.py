@@ -422,6 +422,16 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
 
         self.assertEqual(created, fetched)
 
+    def test_get_workflow_definition_by_admin(self):
+        created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+        # Switch to admin project.
+        auth_context.set_ctx(test_base.get_context(default=False, admin=True))
+
+        fetched = db_api.get_workflow_definition(created.id)
+
+        self.assertEqual(created, fetched)
+
     def test_filter_workflow_definitions_by_equal_value(self):
         db_api.create_workbook(WF_DEFINITIONS[0])
 
