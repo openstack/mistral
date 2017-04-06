@@ -15,6 +15,8 @@ import os
 
 from oslo_config import cfg
 
+import mock
+
 from mistral.actions import generator_factory
 from mistral.actions.openstack import actions
 from mistral import config
@@ -61,12 +63,28 @@ CONF.register_opt(config.os_actions_mapping_path)
 
 
 class GeneratorTest(base.BaseTest):
+
+    def setUp(self):
+        super(GeneratorTest, self).setUp()
+
+        # The baremetal inspector client expects the service to be running
+        # when it is initialised and attempts to connect. This mocks out this
+        # service only and returns a simple function that can be used by the
+        # inspection utils.
+        self.baremetal_patch = mock.patch.object(
+            actions.BaremetalIntrospectionAction,
+            "get_fake_client_method",
+            return_value=lambda x: None)
+
+        self.baremetal_patch.start()
+        self.addCleanup(self.baremetal_patch.stop)
+
     def test_generator(self):
         for generator_cls in generator_factory.all_generators():
             action_classes = generator_cls.create_actions()
 
-            action_name = MODULE_MAPPING.get(generator_cls.action_namespace)[0]
-            action_cls = MODULE_MAPPING.get(generator_cls.action_namespace)[1]
+            action_name = MODULE_MAPPING[generator_cls.action_namespace][0]
+            action_cls = MODULE_MAPPING[generator_cls.action_namespace][1]
             method_name_pre = action_name.split('.')[1]
             method_name = (
                 method_name_pre
