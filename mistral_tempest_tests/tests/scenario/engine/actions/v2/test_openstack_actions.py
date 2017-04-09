@@ -46,9 +46,9 @@ class OpenStackActionsTestsV2(base.TestCase):
     @decorators.idempotent_id('81bdc1c9-cd9a-4c97-b8ce-e44f5211eace')
     def test_keystone_actions(self):
         wf_name = self.wb['name'] + '.keystone'
-        _, execution = self.client.create_execution(wf_name)
-        self.client.wait_execution_success(execution)
-        executed_task = self.client.get_wf_tasks(wf_name)[-1]
+        _, execution = self.admin_client.create_execution(wf_name)
+        self.admin_client.wait_execution_success(execution)
+        executed_task = self.admin_client.get_wf_tasks(wf_name)[-1]
 
         self.assertEqual('SUCCESS', executed_task['state'])
 
