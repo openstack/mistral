@@ -16,6 +16,7 @@ import re
 
 import jinja2
 from jinja2 import parser as jinja_parse
+from jinja2.sandbox import SandboxedEnvironment
 from oslo_log import log as logging
 import six
 
@@ -29,7 +30,7 @@ LOG = logging.getLogger(__name__)
 JINJA_REGEXP = '({{(.*)}})'
 JINJA_BLOCK_REGEXP = '({%(.*)%})'
 
-_environment = jinja2.Environment(
+_environment = SandboxedEnvironment(
     undefined=jinja2.StrictUndefined,
     trim_blocks=True,
     lstrip_blocks=True
