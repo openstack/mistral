@@ -213,16 +213,27 @@ execution_expiration_policy_opts = [
         'evaluation_interval',
         help=_('How often will the executions be evaluated '
                '(in minutes). For example for value 120 the interval '
-               'will be 2 hours (every 2 hours).')
+               'will be 2 hours (every 2 hours).'
+               'Note that only final state executions will be removed: '
+               '( SUCCESS / ERROR / CANCELLED ).')
     ),
     cfg.IntOpt(
         'older_than',
         help=_('Evaluate from which time remove executions in minutes. '
                'For example when older_than = 60, remove all executions '
                'that finished a 60 minutes ago or more. '
-               'Minimum value is 1. '
-               'Note that only final state execution will remove '
-               '( SUCCESS / ERROR ).')
+               'Minimum value is 1.')
+    ),
+    cfg.IntOpt(
+        'max_finished_executions',
+        default=0,
+        help=_('The maximum number of finished workflow executions'
+               'to be stored. For example when max_finished_executions = 100,'
+               'only the 100 latest finished executions will be preserved.'
+               'This means that even unexpired executions are eligible'
+               'for deletion, to decrease the number of executions in the'
+               'database. The default value is 0. If it is set to 0,'
+               'this constraint won\'t be applied.')
     ),
     cfg.IntOpt(
         'batch_size',
