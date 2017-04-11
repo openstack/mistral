@@ -70,7 +70,7 @@ exact steps should be made during workflow execution.
 YAML example
 ^^^^^^^^^^^^
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -167,7 +167,7 @@ produce output. In Mistral DSL v2 task can be associated with an action
 or a workflow. In the example below there are two tasks of different
 types:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     action_based_task:
       action: std.http url='openstack.org'
@@ -234,7 +234,7 @@ configured policies.
 
 YAML example
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     my_task:
       action: my_action
@@ -297,7 +297,7 @@ Defines a pattern how task should be repeated in case of an error.
 
 Retry policy can also be configured on a single line as:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     task1:
       action: my_action
@@ -313,7 +313,7 @@ parameters in two ways:
 
 Full syntax:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     my_task:
       action: std.http
@@ -323,7 +323,7 @@ Full syntax:
 
 Simplified syntax:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     my_task:
       action: std.http url="http://mywebsite.org" method="GET"
@@ -332,7 +332,7 @@ The same rules apply to tasks associated with workflows.
 
 Full syntax:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     my_task:
       workflow: some_nested_workflow
@@ -342,7 +342,7 @@ Full syntax:
 
 Simplified syntax:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     my_task:
       workflow: some_nested_workflow param1='val1' param2='val2'
@@ -369,7 +369,7 @@ Figure 1. Mistral Direct Workflow.
 YAML example
 ''''''''''''
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -435,7 +435,7 @@ access any data produced by upstream tasks. So in the example above task
 'create_vm' could also have a YAQL expression on transition to task
 'send_success_email' as follows:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     create_vm:
      ...
@@ -452,7 +452,7 @@ Fork
 There are situations when we need to be able to run more than one task after
 some task has completed.
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     create_vm:
       ...
@@ -472,7 +472,7 @@ branches and aggregate their data.
 
 Full Join (join: all)
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     register_vm_in_load_balancer:
       ...
@@ -502,7 +502,7 @@ of guard expressions.
 
 Partial Join (join: 2)
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     register_vm_in_load_balancer:
       ...
@@ -559,7 +559,7 @@ route in the directed graph from **T1** to **T3** or **T4**.
 YAML example
 ''''''''''''
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -606,7 +606,7 @@ Processing collections
 YAML example
 ''''''''''''
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -648,7 +648,7 @@ an expression in the form: in <% YAQL_expression %>.
 
 The most common form is:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     with-items:
       - var1 in <% YAQL_expression_1 %>
@@ -696,7 +696,7 @@ state to error.
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     manual_fail:
       action: std.fail
@@ -730,7 +730,7 @@ Input parameters:
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     http_task:
       action: std.http url='google.com'
@@ -773,7 +773,7 @@ Sends an email message via SMTP protocol.
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     send_email_task:
       action: std.email
@@ -802,7 +802,7 @@ Input parameters:
    executed. *Required*.
 -  **host** - Host name that the command needs to be executed on.
    *Required*.
--  **username** - User name to authenticate on the host. *Required*. 
+-  **username** - User name to authenticate on the host. *Required*.
 -  **password** - User password to to authenticate on the host. *Optional*.
 -  **private_key_filename** - Private key file name which will be used for authentication on remote host.
 All private keys should be on executor host in **<home-user-directory>/.ssh/**.
@@ -855,7 +855,7 @@ its wrapper - PyV8. For installing it, do the next steps:
 
 Example:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -886,7 +886,7 @@ Example:
 
 Another example for getting the current date and time:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
       ---
       version: '2.0'
@@ -924,7 +924,7 @@ action around another ad-hoc action).
 YAML example
 ''''''''''''
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -948,7 +948,7 @@ YAML example
 Once this action is uploaded to Mistral any workflow will be able to use
 it as follows:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     my_workflow:
       tasks:
@@ -1008,7 +1008,7 @@ So after a workbook has been uploaded its workflows and actions become independe
 YAML example
 ''''''''''''
 
-.. code-block:: yaml
+.. code-block:: mistral
 
     ---
     version: '2.0'
@@ -1139,7 +1139,7 @@ Example:
 
 Workflow definition:
 
-.. code-block:: yaml
+.. code-block:: mistral
 
   ---
   version: "v2.0"
