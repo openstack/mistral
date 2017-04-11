@@ -169,8 +169,7 @@ Example of usage:
 
 Example of creating action defaults
 
-.. code-block:: yaml
-
+::
 
   ...ENV...
   "variables": {
