@@ -59,12 +59,12 @@ class TaskSpec(base.BaseSpec):
             },
             "publish": types.NONEMPTY_DICT,
             "publish-on-error": types.NONEMPTY_DICT,
-            "retry": policies.RETRY_SCHEMA,
-            "wait-before": policies.WAIT_BEFORE_SCHEMA,
-            "wait-after": policies.WAIT_AFTER_SCHEMA,
-            "timeout": policies.TIMEOUT_SCHEMA,
-            "pause-before": policies.PAUSE_BEFORE_SCHEMA,
-            "concurrency": policies.CONCURRENCY_SCHEMA,
+            "retry": types.ANY,
+            "wait-before": types.ANY,
+            "wait-after": types.ANY,
+            "timeout": types.ANY,
+            "pause-before": types.ANY,
+            "concurrency": types.ANY,
             "target": types.NONEMPTY_STRING,
             "keep-result": types.EXPRESSION_OR_BOOLEAN,
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN
@@ -239,8 +239,6 @@ class TaskSpec(base.BaseSpec):
 class DirectWorkflowTaskSpec(TaskSpec):
     _polymorphic_value = 'direct'
 
-    _on_clause_schema = on_clause.OnClauseSpec._schema
-
     _direct_workflow_schema = {
         "type": "object",
         "properties": {
@@ -251,9 +249,9 @@ class DirectWorkflowTaskSpec(TaskSpec):
                     types.POSITIVE_INTEGER
                 ]
             },
-            "on-complete": _on_clause_schema,
-            "on-success": _on_clause_schema,
-            "on-error": _on_clause_schema
+            "on-complete": types.ANY,
+            "on-success": types.ANY,
+            "on-error": types.ANY
         }
     }
 
@@ -334,8 +332,10 @@ class ReverseWorkflowTaskSpec(TaskSpec):
         }
     }
 
-    _schema = utils.merge_dicts(copy.deepcopy(TaskSpec._schema),
-                                _reverse_workflow_schema)
+    _schema = utils.merge_dicts(
+        copy.deepcopy(TaskSpec._schema),
+        _reverse_workflow_schema
+    )
 
     def __init__(self, data):
         super(ReverseWorkflowTaskSpec, self).__init__(data)

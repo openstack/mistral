@@ -28,28 +28,18 @@ from mistral.lang.v2 import policies
 
 class TaskDefaultsSpec(base.BaseSpec):
     # See http://json-schema.org
-    _task_policies_schema = policies.PoliciesSpec.get_schema(
-        includes=None)
-
-    _on_clause_type = {
-        "oneOf": [
-            types.NONEMPTY_STRING,
-            types.UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST
-        ]
-    }
-
     _schema = {
         "type": "object",
         "properties": {
-            "retry": policies.RETRY_SCHEMA,
-            "wait-before": policies.WAIT_BEFORE_SCHEMA,
-            "wait-after": policies.WAIT_AFTER_SCHEMA,
-            "timeout": policies.TIMEOUT_SCHEMA,
-            "pause-before": policies.PAUSE_BEFORE_SCHEMA,
-            "concurrency": policies.CONCURRENCY_SCHEMA,
-            "on-complete": _on_clause_type,
-            "on-success": _on_clause_type,
-            "on-error": _on_clause_type,
+            "retry": types.ANY,
+            "wait-before": types.ANY,
+            "wait-after": types.ANY,
+            "timeout": types.ANY,
+            "pause-before": types.ANY,
+            "concurrency": types.ANY,
+            "on-complete": types.ANY,
+            "on-success": types.ANY,
+            "on-error": types.ANY,
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
             }

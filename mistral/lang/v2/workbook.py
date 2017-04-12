@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.lang import types
 from mistral.lang.v2 import actions as act
 from mistral.lang.v2 import base
 from mistral.lang.v2 import workflows as wf
@@ -24,10 +25,6 @@ NON_VERSION_WORD_REGEX = "^(?!version$)[\w-]+$"
 class WorkbookSpec(base.BaseSpec):
     # See http://json-schema.org
 
-    _action_schema = act.ActionSpec.get_schema(includes=None)
-
-    _workflow_schema = wf.WorkflowSpec.get_schema(includes=None)
-
     _schema = {
         "type": "object",
         "properties": {
@@ -37,7 +34,7 @@ class WorkbookSpec(base.BaseSpec):
                 "minProperties": 1,
                 "patternProperties": {
                     "^version$": {"enum": ["2.0", 2.0]},
-                    NON_VERSION_WORD_REGEX: _action_schema
+                    NON_VERSION_WORD_REGEX: types.ANY
                 },
                 "additionalProperties": False
             },
@@ -46,7 +43,7 @@ class WorkbookSpec(base.BaseSpec):
                 "minProperties": 1,
                 "patternProperties": {
                     "^version$": {"enum": ["2.0", 2.0]},
-                    NON_VERSION_WORD_REGEX: _workflow_schema
+                    NON_VERSION_WORD_REGEX: types.ANY
                 },
                 "additionalProperties": False
             }
@@ -57,7 +54,7 @@ class WorkbookSpec(base.BaseSpec):
     def __init__(self, data):
         super(WorkbookSpec, self).__init__(data)
 
-        self._inject_version(['actions', 'workflows', 'triggers'])
+        self._inject_version(['actions', 'workflows'])
 
         self._name = data['name']
         self._description = data.get('description')

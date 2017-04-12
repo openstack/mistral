@@ -66,6 +66,15 @@ def instantiate_spec(spec_cls, data):
 
         return spec
 
+    # In order to do polymorphic search we need to make sure that
+    # a spec is backed by a dictionary. Otherwise we can't extract
+    # a polymorphic key.
+    if not isinstance(data, dict):
+        raise exc.InvalidModelException(
+            "A specification with polymorphic key must be backed by"
+            " a dictionary [spec_cls=%s, data=%s]" % (spec_cls, data)
+        )
+
     key = spec_cls._polymorphic_key
 
     if not isinstance(key, tuple):
@@ -210,7 +219,10 @@ class BaseSpec(object):
     def _spec_property(self, prop_name, spec_cls):
         prop_val = self._data.get(prop_name)
 
-        return instantiate_spec(spec_cls, prop_val) if prop_val else None
+        return (
+            instantiate_spec(spec_cls, prop_val) if prop_val is not None
+            else None
+        )
 
     def _group_spec(self, spec_cls, *prop_names):
         if not prop_names:
@@ -342,8 +354,13 @@ class BaseSpecList(object):
 
         for k, v in data.items():
             if k != 'version':
-                v['name'] = k
-                v['version'] = self._version
+                # At this point, we don't know if item schema is valid,
+                # it may not be even a dictionary. So we should check the
+                # type first before manipulating with it.
+                if isinstance(v, dict):
+                    v['name'] = k
+                    v['version'] = self._version
+
                 self.items[k] = instantiate_spec(self.item_class, v)
 
     def item_keys(self):
