@@ -137,6 +137,15 @@ class PolymorphicSerializer(Serializer):
 
         self.serializers[key] = serializer
 
+    def unregister(self, entity_cls):
+        key = self._get_serialization_key(entity_cls)
+
+        if not key:
+            return
+
+        if key in self.serializers:
+            del self.serializers[key]
+
     def cleanup(self):
         self.serializers.clear()
 
@@ -153,6 +162,11 @@ class PolymorphicSerializer(Serializer):
             )
 
         serializer = self.serializers.get(key)
+
+        if not serializer:
+            raise RuntimeError(
+                "Failed to find a serializer for the key: %s" % key
+            )
 
         result = {
             '__serial_key': key,
@@ -186,6 +200,10 @@ def get_polymorphic_serializer():
 
 def register_serializer(entity_cls, serializer):
     get_polymorphic_serializer().register(entity_cls, serializer)
+
+
+def unregister_serializer(entity_cls):
+    get_polymorphic_serializer().unregister(entity_cls)
 
 
 def cleanup():

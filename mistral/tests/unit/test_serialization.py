@@ -42,7 +42,7 @@ class SerializationTest(base.BaseTest):
 
         serialization.register_serializer(MyClass, MyClassSerializer())
 
-        self.addCleanup(serialization.cleanup)
+        self.addCleanup(serialization.unregister_serializer, MyClass)
 
     def test_dict_based_serializer(self):
         obj = MyClass('a', 'b')
