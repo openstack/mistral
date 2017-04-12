@@ -1,0 +1,4 @@
+---
+features:
+  - By default, admin user could get/list/update/delete other projects'
+    resources. In Pike, only workflow/execution are supported.
