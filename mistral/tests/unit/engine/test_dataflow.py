@@ -832,6 +832,100 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertDictEqual({'result': 'We got an error'}, task2.published)
 
+    def test_global_publishing_success_access_via_function(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success:
+                publish:
+                  branch:
+                    my_var: Branch local value
+                  global:
+                    my_var: Global value
+                next:
+                  - task2
+
+            task2:
+              action: std.noop
+              publish:
+                local: <% $.my_var %>
+                global: <% global(my_var) %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+
+        self.assertDictEqual(
+            {
+                'local': 'Branch local value',
+                'global': 'Global value'
+            },
+            task2.published
+        )
+
+    def test_global_publishing_error_access_via_function(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.fail
+              on-error:
+                publish:
+                  branch:
+                    my_var: Branch local value
+                  global:
+                    my_var: Global value
+                next:
+                  - task2
+
+            task2:
+              action: std.noop
+              publish:
+                local: <% $.my_var %>
+                global: <% global(my_var) %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+
+        self.assertDictEqual(
+            {
+                'local': 'Branch local value',
+                'global': 'Global value'
+            },
+            task2.published
+        )
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):

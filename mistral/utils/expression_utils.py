@@ -262,3 +262,9 @@ def _convert_to_user_model(task_ex):
 
 def uuid_(context=None):
     return utils.generate_unicode_uuid()
+
+
+def global_(context, var_name):
+    wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
+
+    return wf_ex.context.get(var_name)
