@@ -129,26 +129,6 @@ class Engine(object):
 
 
 @six.add_metaclass(abc.ABCMeta)
-class Executor(object):
-    """Action executor interface."""
-
-    @abc.abstractmethod
-    def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params, safe_rerun, redelivered=False):
-        """Runs action.
-
-        :param action_ex_id: Corresponding action execution id.
-        :param action_class_str: Path to action class in dot notation.
-        :param attributes: Attributes of action class which will be set to.
-        :param action_params: Action parameters.
-        :param safe_rerun: Tells if given action can be safely rerun.
-        :param redelivered: Tells if given action was run before on another
-            executor.
-        """
-        raise NotImplementedError()
-
-
-@six.add_metaclass(abc.ABCMeta)
 class EventEngine(object):
     """Action event trigger interface."""
 

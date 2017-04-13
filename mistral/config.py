@@ -170,6 +170,16 @@ engine_opts = [
 
 executor_opts = [
     cfg.StrOpt(
+        'type',
+        choices=['local', 'remote'],
+        default='remote',
+        help=(
+            'Type of executor. Use local to run the executor within the '
+            'engine server. Use remote if the executor is launched as '
+            'a separate server to run action executions.'
+        )
+    ),
+    cfg.StrOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the executor node. This can be an opaque '

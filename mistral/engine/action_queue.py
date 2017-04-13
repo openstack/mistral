@@ -15,7 +15,9 @@
 
 import functools
 
-from mistral.engine.rpc_backend import rpc
+from oslo_config import cfg
+
+from mistral.executors import base as exe
 from mistral import utils
 
 
@@ -44,14 +46,16 @@ def _get_queue():
 
 
 def _run_actions():
+    executor = exe.get_executor(cfg.CONF.executor.type)
+
     for action_ex, action_def, target in _get_queue():
-        rpc.get_executor_client().run_action(
+        executor.run_action(
             action_ex.id,
             action_def.action_class,
             action_def.attributes or {},
             action_ex.input,
-            target,
-            safe_rerun=action_ex.runtime_context.get('safe_rerun', False)
+            action_ex.runtime_context.get('safe_rerun', False),
+            target=target
         )
 
 

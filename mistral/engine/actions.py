@@ -15,15 +15,16 @@
 
 import abc
 from oslo_config import cfg
+from oslo_log import log as logging
 from osprofiler import profiler
 import six
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import action_queue
-from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as engine_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
+from mistral.executors import base as exe
 from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
 from mistral.services import action_manager as a_m
@@ -32,6 +33,9 @@ from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
+
+
+LOG = logging.getLogger(__name__)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -251,14 +255,16 @@ class PythonAction(Action):
                 action_ex_id=action_ex_id
             )
 
-        result = rpc.get_executor_client().run_action(
+        executor = exe.get_executor(cfg.CONF.executor.type)
+
+        result = executor.run_action(
             self.action_ex.id if self.action_ex else None,
             self.action_def.action_class,
             self.action_def.attributes or {},
             input_dict,
-            target,
-            async_=False,
-            safe_rerun=safe_rerun
+            safe_rerun=safe_rerun,
+            target=target,
+            async_=False
         )
 
         return self._prepare_output(result)
@@ -528,6 +534,7 @@ def resolve_action_definition(action_spec_name, wf_name=None,
     :param wf_spec_name: Workflow name according to a spec.
     :return: Action definition (python or ad-hoc).
     """
+
     action_db = None
 
     if wf_name and wf_name != wf_spec_name:

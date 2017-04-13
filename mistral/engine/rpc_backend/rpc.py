@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2017 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -21,8 +22,9 @@ from osprofiler import profiler
 from stevedore import driver
 
 from mistral import context as auth_ctx
-from mistral.engine import base
+from mistral.engine import base as eng
 from mistral import exceptions as exc
+from mistral.executors import base as exe
 
 
 LOG = logging.getLogger(__name__)
@@ -149,7 +151,7 @@ def wrap_messaging_exception(method):
     return decorator
 
 
-class EngineClient(base.Engine):
+class EngineClient(eng.Engine):
     """RPC Engine client."""
 
     def __init__(self, rpc_conf_dict):
@@ -317,50 +319,50 @@ class EngineClient(base.Engine):
         )
 
 
-class ExecutorClient(base.Executor):
+class ExecutorClient(exe.Executor):
     """RPC Executor client."""
 
     def __init__(self, rpc_conf_dict):
-        """Constructs an RPC client for the Executor.
-
-        :param rpc_conf_dict: Dict containing RPC configuration.
-        """
+        """Constructs an RPC client for the Executor."""
 
         self.topic = cfg.CONF.executor.topic
         self._client = get_rpc_client_driver()(rpc_conf_dict)
 
     @profiler.trace('executor-client-run-action')
-    def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params, target=None, async_=True, safe_rerun=False):
+    def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
+                   params, safe_rerun, redelivered=False,
+                   target=None, async_=True):
         """Sends a request to run action to executor.
 
         :param action_ex_id: Action execution id.
-        :param action_class_str: Action class name.
-        :param attributes: Action class attributes.
-        :param action_params: Action input parameters.
-        :param target: Target (group of action executors).
-        :param async: If True, run action in asynchronous mode (w/o waiting
-            for completion).
+        :param action_cls_str: Action class name.
+        :param action_cls_attrs: Action class attributes.
+        :param params: Action input parameters.
         :param safe_rerun: If true, action would be re-run if executor dies
             during execution.
+        :param redelivered: Tells if given action was run before on another
+            executor.
+        :param target: Target (group of action executors).
+        :param async_: If True, run action in asynchronous mode (w/o waiting
+            for completion).
         :return: Action result.
         """
 
-        kwargs = {
+        rpc_kwargs = {
             'action_ex_id': action_ex_id,
-            'action_class_str': action_class_str,
-            'attributes': attributes,
-            'params': action_params,
+            'action_cls_str': action_cls_str,
+            'action_cls_attrs': action_cls_attrs,
+            'params': params,
             'safe_rerun': safe_rerun
         }
 
         rpc_client_method = (self._client.async_call
                              if async_ else self._client.sync_call)
 
-        return rpc_client_method(auth_ctx.ctx(), 'run_action', **kwargs)
+        return rpc_client_method(auth_ctx.ctx(), 'run_action', **rpc_kwargs)
 
 
-class EventEngineClient(base.EventEngine):
+class EventEngineClient(eng.EventEngine):
     """RPC EventEngine client."""
 
     def __init__(self, rpc_conf_dict):

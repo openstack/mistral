@@ -17,9 +17,9 @@ from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.actions import action_factory as a_f
-from mistral.engine import base
 from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.executors import base
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 
@@ -31,18 +31,24 @@ class DefaultExecutor(base.Executor):
     def __init__(self):
         self._engine_client = rpc.get_engine_client()
 
-    @profiler.trace('executor-run-action', hide_args=True)
-    def run_action(self, action_ex_id, action_class_str, attributes,
-                   action_params, safe_rerun, redelivered=False):
+    @profiler.trace('default-executor-run-action', hide_args=True)
+    def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
+                   params, safe_rerun, redelivered=False,
+                   target=None, async_=True):
         """Runs action.
 
         :param action_ex_id: Action execution id.
-        :param action_class_str: Path to action class in dot notation.
-        :param attributes: Attributes of action class which will be set to.
-        :param action_params: Action parameters.
+        :param action_cls_str: Path to action class in dot notation.
+        :param action_cls_attrs: Attributes of action class which
+            will be set to.
+        :param params: Action parameters.
         :param safe_rerun: Tells if given action can be safely rerun.
         :param redelivered: Tells if given action was run before on another
             executor.
+        :param target: Target (group of action executors).
+        :param async_: If True, run action in asynchronous mode (w/o waiting
+            for completion).
+        :return: Action result.
         """
 
         def send_error_back(error_msg):
@@ -60,31 +66,38 @@ class DefaultExecutor(base.Executor):
 
         if redelivered and not safe_rerun:
             msg = (
-                "Request to run action %s was redelivered, but action %s"
-                " cannot be re-run safely. The only safe thing to do is fail"
-                " action."
-                % (action_class_str, action_class_str)
+                "Request to run action %s was redelivered, but action %s "
+                "cannot be re-run safely. The only safe thing to do is fail "
+                "action." % (action_cls_str, action_cls_str)
             )
 
             return send_error_back(msg)
 
-        action_cls = a_f.construct_action_class(action_class_str, attributes)
+        # Load action module.
+        action_cls = a_f.construct_action_class(
+            action_cls_str,
+            action_cls_attrs
+        )
 
         # Instantiate action.
-
         try:
-            action = action_cls(**action_params)
+            action = action_cls(**params)
         except Exception as e:
-            msg = ("Failed to initialize action %s. Action init params = %s."
-                   " Actual init params = %s. More info: %s"
-                   % (action_class_str, i_u.get_arg_list(action_cls.__init__),
-                      action_params.keys(), e))
-            LOG.exception(msg)
+            msg = (
+                "Failed to initialize action %s. Action init params = %s. "
+                "Actual init params = %s. More info: %s" % (
+                    action_cls_str,
+                    i_u.get_arg_list(action_cls.__init__),
+                    params.keys(),
+                    e
+                )
+            )
+
+            LOG.warning(msg)
 
             return send_error_back(msg)
 
         # Run action.
-
         try:
             result = action.run()
 
@@ -95,15 +108,22 @@ class DefaultExecutor(base.Executor):
                 result = wf_utils.Result(data=result)
 
         except Exception as e:
-            msg = ("Failed to run action [action_ex_id=%s, action_cls='%s',"
-                   " attributes='%s', params='%s']\n %s"
-                   % (action_ex_id, action_cls, attributes, action_params, e))
+            msg = (
+                "Failed to run action [action_ex_id=%s, action_cls='%s', "
+                "attributes='%s', params='%s']\n %s" % (
+                    action_ex_id,
+                    action_cls,
+                    action_cls_attrs,
+                    params,
+                    e
+                )
+            )
+
             LOG.exception(msg)
 
             return send_error_back(msg)
 
         # Send action result.
-
         try:
             if action_ex_id and (action.is_sync() or result.is_error()):
                 self._engine_client.on_action_complete(
@@ -118,22 +138,36 @@ class DefaultExecutor(base.Executor):
             # such as message bus or network. One known case is when the action
             # returns a bad result (e.g. invalid unicode) which can't be
             # serialized.
-            msg = ("Failed to call engine's on_action_complete() method due"
-                   " to a Mistral exception"
-                   " [action_ex_id=%s, action_cls='%s',"
-                   " attributes='%s', params='%s']\n %s"
-                   % (action_ex_id, action_cls, attributes, action_params, e))
+            msg = (
+                "Failed to complete action due to a Mistral exception "
+                "[action_ex_id=%s, action_cls='%s', "
+                "attributes='%s', params='%s']\n %s" % (
+                    action_ex_id,
+                    action_cls,
+                    action_cls_attrs,
+                    params,
+                    e
+                )
+            )
+
             LOG.exception(msg)
 
             return send_error_back(msg)
         except Exception as e:
             # If it's not a Mistral exception all we can do is only
             # log the error.
-            msg = ("Failed to call engine's on_action_complete() method due"
-                   " to an unexpected exception"
-                   " [action_ex_id=%s, action_cls='%s',"
-                   " attributes='%s', params='%s']\n %s"
-                   % (action_ex_id, action_cls, attributes, action_params, e))
+            msg = (
+                "Failed to complete action due to an unexpected exception "
+                "[action_ex_id=%s, action_cls='%s', "
+                "attributes='%s', params='%s']\n %s" % (
+                    action_ex_id,
+                    action_cls,
+                    action_cls_attrs,
+                    params,
+                    e
+                )
+            )
+
             LOG.exception(msg)
 
         return result

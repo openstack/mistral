@@ -15,8 +15,8 @@
 from oslo_log import log as logging
 
 from mistral import config as cfg
-from mistral.engine import default_executor
 from mistral.engine.rpc_backend import rpc
+from mistral.executors import default_executor as exe
 from mistral.service import base as service_base
 from mistral import utils
 from mistral.utils import profiler as profiler_utils
@@ -59,14 +59,14 @@ class ExecutorServer(service_base.MistralService):
         if self._rpc_server:
             self._rpc_server.stop(graceful)
 
-    def run_action(self, rpc_ctx, action_ex_id, action_class_str,
-                   attributes, params, safe_rerun):
+    def run_action(self, rpc_ctx, action_ex_id, action_cls_str,
+                   action_cls_attrs, params, safe_rerun):
         """Receives calls over RPC to run action on executor.
 
         :param rpc_ctx: RPC request context dictionary.
         :param action_ex_id: Action execution id.
-        :param action_class_str: Action class name.
-        :param attributes: Action class attributes.
+        :param action_cls_str: Action class name.
+        :param action_cls_attrs: Action class attributes.
         :param params: Action input parameters.
         :param safe_rerun: Tells if given action can be safely rerun.
         :return: Action result.
@@ -74,17 +74,20 @@ class ExecutorServer(service_base.MistralService):
 
         LOG.info(
             "Received RPC request 'run_action'[action_ex_id=%s, "
-            "action_class=%s, attributes=%s, params=%s]"
-            % (action_ex_id, action_class_str, attributes,
-               utils.cut(params))
+            "action_cls_str=%s, action_cls_attrs=%s, params=%s]" % (
+                action_ex_id,
+                action_cls_str,
+                action_cls_attrs,
+                utils.cut(params)
+            )
         )
 
         redelivered = rpc_ctx.redelivered or False
 
         return self.executor.run_action(
             action_ex_id,
-            action_class_str,
-            attributes,
+            action_cls_str,
+            action_cls_attrs,
             params,
             safe_rerun,
             redelivered
@@ -93,6 +96,6 @@ class ExecutorServer(service_base.MistralService):
 
 def get_oslo_service(setup_profiler=True):
     return ExecutorServer(
-        default_executor.DefaultExecutor(),
+        exe.DefaultExecutor(),
         setup_profiler=setup_profiler
     )

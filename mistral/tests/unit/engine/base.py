@@ -22,8 +22,9 @@ from oslo_service import service
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import engine_server
-from mistral.engine import executor_server
 from mistral.engine.rpc_backend import rpc
+from mistral.executors import base as exe
+from mistral.executors import executor_server
 from mistral.tests.unit import base
 from mistral.workflow import states
 
@@ -57,40 +58,42 @@ class EngineTestCase(base.DbTestCase):
 
         # Drop all RPC objects (transport, clients).
         rpc.cleanup()
+        exe.cleanup()
 
+        self.threads = []
+
+        # Start remote executor.
+        if cfg.CONF.executor.type == 'remote':
+            LOG.info("Starting remote executor threads...")
+            self.executor_client = rpc.get_executor_client()
+            exe_svc = executor_server.get_oslo_service(setup_profiler=False)
+            self.executor = exe_svc.executor
+            self.threads.append(eventlet.spawn(launch_service, exe_svc))
+            self.addCleanup(exe_svc.stop, True)
+
+        # Start engine.
+        LOG.info("Starting engine threads...")
         self.engine_client = rpc.get_engine_client()
-        self.executor_client = rpc.get_executor_client()
-
-        LOG.info("Starting engine and executor threads...")
-
-        engine_service = engine_server.get_oslo_service(setup_profiler=False)
-        executor_service = executor_server.get_oslo_service(
-            setup_profiler=False
-        )
-
-        self.engine = engine_service.engine
-        self.executor = executor_service.executor
-
-        self.threads = [
-            eventlet.spawn(launch_service, executor_service),
-            eventlet.spawn(launch_service, engine_service)
-        ]
+        eng_svc = engine_server.get_oslo_service(setup_profiler=False)
+        self.engine = eng_svc.engine
+        self.threads.append(eventlet.spawn(launch_service, eng_svc))
+        self.addCleanup(eng_svc.stop, True)
 
         self.addOnException(self.print_executions)
-
-        self.addCleanup(executor_service.stop, True)
-        self.addCleanup(engine_service.stop, True)
         self.addCleanup(self.kill_threads)
 
         # Make sure that both services fully started, otherwise
         # the test may run too early.
-        executor_service.wait_started()
-        engine_service.wait_started()
+        if cfg.CONF.executor.type == 'remote':
+            exe_svc.wait_started()
+
+        eng_svc.wait_started()
 
     def kill_threads(self):
         LOG.info("Finishing engine and executor threads...")
 
-        [thread.kill() for thread in self.threads]
+        for thread in self.threads:
+            thread.kill()
 
     @staticmethod
     def print_executions(exc_info=None):

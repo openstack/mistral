@@ -23,8 +23,8 @@ from oslo_utils import uuidutils
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import default_engine as d_eng
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.executors import base as exe
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit import base
 from mistral.tests.unit.engine import base as eng_test_base
@@ -93,7 +93,7 @@ MOCK_ENVIRONMENT = mock.MagicMock(return_value=ENVIRONMENT_DB)
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 
 
-@mock.patch.object(rpc, 'get_executor_client', mock.Mock())
+@mock.patch.object(exe, 'get_executor', mock.Mock())
 class DefaultEngineTest(base.DbTestCase):
     def setUp(self):
         super(DefaultEngineTest, self).setUp()

@@ -16,8 +16,8 @@ import mock
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import default_executor
-from mistral.engine.rpc_backend import rpc
+from mistral.executors import default_executor as d_exe
+from mistral.executors import remote_executor as r_exe
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 
@@ -77,16 +77,17 @@ workflows:
 """
 
 
-def _run_at_target(action_ex_id, action_class_str, attributes,
-                   action_params, target=None, async_=True, safe_rerun=False):
+def _run_at_target(action_ex_id, action_cls_str, action_cls_attrs,
+                   params, safe_rerun, target=None, async_=True):
+
     # We'll just call executor directly for testing purposes.
-    executor = default_executor.DefaultExecutor()
+    executor = d_exe.DefaultExecutor()
 
     executor.run_action(
         action_ex_id,
-        action_class_str,
-        attributes,
-        action_params,
+        action_cls_str,
+        action_cls_attrs,
+        params,
         safe_rerun
     )
 
@@ -100,7 +101,7 @@ class EnvironmentTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(WORKBOOK)
 
-    @mock.patch.object(rpc.ExecutorClient, 'run_action', MOCK_RUN_AT_TARGET)
+    @mock.patch.object(r_exe.RemoteExecutor, 'run_action', MOCK_RUN_AT_TARGET)
     def _test_subworkflow(self, env):
         wf2_ex = self.engine.start_workflow('my_wb.wf2', {}, env=env)
 
@@ -169,13 +170,13 @@ class EnvironmentTest(base.EngineTestCase):
             for t_ex in wf1_task_execs:
                 a_ex = t_ex.action_executions[0]
 
-                rpc.ExecutorClient.run_action.assert_any_call(
+                r_exe.RemoteExecutor.run_action.assert_any_call(
                     a_ex.id,
                     'mistral.actions.std_actions.EchoAction',
                     {},
                     a_ex.input,
-                    TARGET,
-                    safe_rerun=False
+                    False,
+                    target=TARGET
                 )
 
     def test_subworkflow_env_task_input(self):
