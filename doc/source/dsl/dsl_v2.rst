@@ -426,6 +426,59 @@ stop the exception from bubbling up to an upper layer. So **on-complete**
 should only be understood as a language construction that allows to
 define some clean up actions.
 
+Engine Commands
+'''''''''''''''
+
+Mistral has a number of engine commands that can be called within direct
+workflows. These commands are used to change the Workflow state.
+
+-  **succeed** - will end the current workflow with the state SUCCESS.
+-  **pause** - will end the current workflow with the state PAUSED.
+-  **fail** - will end the current workflow with the state ERROR.
+
+Each of the engine commands accepts a ``msg`` input. This is optional, but if
+provided will be stored in the state info on the workflow execution.
+
+Workflows that have been ended with ``succeed`` or ``fail`` may not be resumed
+later, but workflows that have been ended with ``pause`` may be.
+
+YAML example
+''''''''''''
+
+.. code-block:: mistral
+
+    ---
+    version: '2.0'
+
+    send_error_mail:
+      tasks:
+        create_server:
+          action: nova.servers_create name=<% $.vm_name %>
+          publish:
+            vm_id: <% task(create_server).result.id %>
+          on-complete:
+            - fail: <% not $.vm_id %>
+
+In this example we have a short workflow with one task that creates a server
+in Nova. The task publishes the ID of the virtual machine, but if this value
+is empty then it will fail the workflow.
+
+.. code-block:: mistral
+
+    on-complete:
+      - taskA
+      - fail
+      - taskB
+
+When the engine commands are used with task names in a single list, they are
+processed one at a time until the workflow reaches a terminal state. In the
+above example, the ``on-complete`` has three steps to complete - these are
+executed in order until the workflow reaches a terminal state. So in this case
+``taskA`` is called first, then the ``fail`` engine command and ``taskB`` would
+never be called. ``taskB`` would not be called if ``succeed`` was used in this
+example either, but if ``pause`` was used ``taskB`` would be called after the
+workflow is resumed.
+
 Transitions with YAQL expressions
 '''''''''''''''''''''''''''''''''
 
