@@ -44,9 +44,9 @@ from oslo_service import service
 from mistral.api import service as api_service
 from mistral import config
 from mistral.engine import engine_server
-from mistral.engine.rpc_backend import rpc
 from mistral.event_engine import event_engine_server
 from mistral.executors import executor_server
+from mistral.rpc import base as rpc
 from mistral import version
 
 

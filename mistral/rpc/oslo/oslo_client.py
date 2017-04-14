@@ -15,11 +15,10 @@
 import oslo_messaging as messaging
 
 from mistral import context as auth_ctx
-from mistral.engine.rpc_backend import base as rpc_base
-from mistral.engine.rpc_backend import rpc
+from mistral.rpc import base as rpc
 
 
-class OsloRPCClient(rpc_base.RPCClient):
+class OsloRPCClient(rpc.RPCClient):
     def __init__(self, conf):
         super(OsloRPCClient, self).__init__(conf)
         self.topic = conf.topic

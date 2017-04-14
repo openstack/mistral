@@ -14,7 +14,7 @@
 
 import sys
 
-from mistral.engine.rpc_backend.kombu import kombu_client
+from mistral.rpc.kombu import kombu_client
 
 
 # Example of using Kombu based RPC client.

@@ -22,7 +22,7 @@ from mistral.api import access_control
 from mistral import config as m_config
 from mistral import context as ctx
 from mistral.db.v2 import api as db_api_v2
-from mistral.engine.rpc_backend import rpc
+from mistral.rpc import base as rpc
 from mistral.service import coordination
 from mistral.services import periodic
 

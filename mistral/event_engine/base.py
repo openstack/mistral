@@ -1,3 +1,4 @@
+# Copyright 2014 - Mirantis, Inc.
 # Copyright 2017 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,19 +13,22 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_config import cfg
-from oslo_log import log as logging
-
-from mistral.rpc import base as rpc_base
-from mistral.rpc import clients as rpc_clients
+import abc
+import six
 
 
-LOG = logging.getLogger(__name__)
+@six.add_metaclass(abc.ABCMeta)
+class EventEngine(object):
+    """Action event trigger interface."""
 
+    @abc.abstractmethod
+    def create_event_trigger(self, trigger, events):
+        raise NotImplementedError()
 
-class RemoteExecutor(rpc_clients.ExecutorClient):
-    """Executor that passes execution request to a remote executor."""
+    @abc.abstractmethod
+    def update_event_trigger(self, trigger):
+        raise NotImplementedError()
 
-    def __init__(self):
-        self.topic = cfg.CONF.executor.topic
-        self._client = rpc_base.get_rpc_client_driver()(cfg.CONF.executor)
+    @abc.abstractmethod
+    def delete_event_trigger(self, trigger, events):
+        raise NotImplementedError()

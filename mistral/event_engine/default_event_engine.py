@@ -1,4 +1,5 @@
 # Copyright 2016 Catalyst IT Ltd
+# Copyright 2017 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -25,10 +26,11 @@ import yaml
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
-from mistral.engine.rpc_backend import rpc
+from mistral.event_engine import base
 from mistral import exceptions
 from mistral import expressions
 from mistral import messaging as mistral_messaging
+from mistral.rpc import clients as rpc
 from mistral.services import security
 
 
@@ -126,7 +128,7 @@ class NotificationsConverter(object):
         return edef.convert(event)
 
 
-class EventEngine(object):
+class DefaultEventEngine(base.EventEngine):
     """Event engine server.
 
     A separate service that is responsible for listening event notification

@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2017 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -126,19 +127,6 @@ class Engine(object):
         :return: Workflow execution object.
         """
         raise NotImplementedError
-
-
-@six.add_metaclass(abc.ABCMeta)
-class EventEngine(object):
-    """Action event trigger interface."""
-
-    @abc.abstractmethod
-    def create_event_trigger(self, trigger, events):
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def delete_event_trigger(self, trigger, events):
-        raise NotImplementedError()
 
 
 @six.add_metaclass(abc.ABCMeta)

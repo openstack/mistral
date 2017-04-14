@@ -20,7 +20,7 @@ import threading
 
 from oslo_log import log as logging
 
-from mistral.engine.rpc_backend.kombu import base as kombu_base
+from mistral.rpc.kombu import base as kombu_base
 
 LOG = logging.getLogger(__name__)
 

@@ -20,8 +20,8 @@ import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.rpc import clients as rpc
 from mistral.tests.unit.api import base
 from mistral.workflow import data_flow
 from mistral.workflow import states

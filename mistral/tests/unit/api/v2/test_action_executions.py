@@ -25,8 +25,9 @@ import oslo_messaging
 from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.rpc import base as rpc_base
+from mistral.rpc import clients as rpc_clients
 from mistral.tests.unit.api import base
 from mistral.utils import rest_utils
 from mistral.workflow import states
@@ -194,7 +195,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
 
-@mock.patch.object(rpc, '_IMPL_CLIENT', mock.Mock())
+@mock.patch.object(rpc_base, '_IMPL_CLIENT', mock.Mock())
 class TestActionExecutionsController(base.APITest):
     def setUp(self):
         super(TestActionExecutionsController, self).setUp()
@@ -223,7 +224,7 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(rpc.EngineClient, 'start_action')
+    @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post(self, f):
         f.return_value = ACTION_EX_DB.to_dict()
 
@@ -251,7 +252,7 @@ class TestActionExecutionsController(base.APITest):
             run_sync=True
         )
 
-    @mock.patch.object(rpc.EngineClient, 'start_action')
+    @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post_json(self, f):
         f.return_value = ACTION_EX_DB.to_dict()
 
@@ -278,7 +279,7 @@ class TestActionExecutionsController(base.APITest):
             save_result=True
         )
 
-    @mock.patch.object(rpc.EngineClient, 'start_action')
+    @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post_without_input(self, f):
         f.return_value = ACTION_EX_DB.to_dict()
         f.return_value['output'] = {'result': '123'}
@@ -320,7 +321,7 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
 
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put(self, f):
         f.return_value = UPDATED_ACTION_EX_DB
 
@@ -334,7 +335,7 @@ class TestActionExecutionsController(base.APITest):
             wf_utils.Result(data=ACTION_EX_DB.output)
         )
 
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put_error_with_output(self, f):
         f.return_value = ERROR_ACTION_EX_WITH_OUTPUT
 
@@ -351,7 +352,7 @@ class TestActionExecutionsController(base.APITest):
             wf_utils.Result(error=ERROR_ACTION_RES_WITH_OUTPUT)
         )
 
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put_error_with_unknown_reason(self, f):
         f.return_value = ERROR_ACTION_EX_FOR_EMPTY_OUTPUT
         resp = self.app.put_json('/v2/action_executions/123', ERROR_ACTION)
@@ -364,7 +365,7 @@ class TestActionExecutionsController(base.APITest):
             wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
         )
 
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put_error_with_unknown_reason_output_none(self, f):
         f.return_value = ERROR_ACTION_EX_FOR_EMPTY_OUTPUT
         resp = self.app.put_json(
@@ -380,7 +381,7 @@ class TestActionExecutionsController(base.APITest):
             wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
         )
 
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put_cancelled(self, on_action_complete_mock_func):
         on_action_complete_mock_func.return_value = CANCELLED_ACTION_EX_DB
 
@@ -395,7 +396,7 @@ class TestActionExecutionsController(base.APITest):
         )
 
     @mock.patch.object(
-        rpc.EngineClient,
+        rpc_clients.EngineClient,
         'on_action_complete',
         MOCK_NOT_FOUND
     )
@@ -430,7 +431,7 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
 
-    @mock.patch.object(rpc.EngineClient, 'on_action_complete')
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
     def test_put_without_result(self, f):
         action_ex = copy.deepcopy(UPDATED_ACTION)
         del action_ex['output']

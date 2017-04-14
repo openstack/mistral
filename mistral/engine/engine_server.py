@@ -17,7 +17,7 @@ from oslo_log import log as logging
 from mistral import config as cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine
-from mistral.engine.rpc_backend import rpc
+from mistral.rpc import base as rpc
 from mistral.service import base as service_base
 from mistral.services import expiration_policy
 from mistral.services import scheduler

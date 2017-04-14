@@ -17,9 +17,9 @@ from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.actions import action_factory as a_f
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.executors import base
+from mistral.rpc import clients as rpc
 from mistral.utils import inspect_utils as i_u
 from mistral.workflow import utils as wf_utils
 

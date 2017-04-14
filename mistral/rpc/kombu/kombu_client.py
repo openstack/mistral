@@ -19,11 +19,11 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
 
-from mistral.engine.rpc_backend import base as rpc_base
-from mistral.engine.rpc_backend.kombu import base as kombu_base
-from mistral.engine.rpc_backend.kombu import kombu_hosts
-from mistral.engine.rpc_backend.kombu import kombu_listener
 from mistral import exceptions as exc
+from mistral.rpc import base as rpc_base
+from mistral.rpc.kombu import base as kombu_base
+from mistral.rpc.kombu import kombu_hosts
+from mistral.rpc.kombu import kombu_listener
 from mistral import utils
 
 

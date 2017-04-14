@@ -24,10 +24,10 @@ import oslo_messaging as messaging
 from stevedore import driver
 
 from mistral import context as auth_ctx
-from mistral.engine.rpc_backend import base as rpc_base
-from mistral.engine.rpc_backend.kombu import base as kombu_base
-from mistral.engine.rpc_backend.kombu import kombu_hosts
 from mistral import exceptions as exc
+from mistral.rpc import base as rpc_base
+from mistral.rpc.kombu import base as kombu_base
+from mistral.rpc.kombu import kombu_hosts
 
 
 LOG = logging.getLogger(__name__)

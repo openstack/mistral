@@ -16,23 +16,17 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging as messaging
-from oslo_messaging.rpc import client
 from osprofiler import profiler
-from stevedore import driver
 
 from mistral import context as auth_ctx
 from mistral.engine import base as eng
-from mistral import exceptions as exc
+from mistral.event_engine import base as evt_eng
 from mistral.executors import base as exe
+from mistral.rpc import base
 
 
 LOG = logging.getLogger(__name__)
 
-
-_IMPL_CLIENT = None
-_IMPL_SERVER = None
-_TRANSPORT = None
 
 _ENGINE_CLIENT = None
 _EXECUTOR_CLIENT = None
@@ -42,27 +36,13 @@ _EVENT_ENGINE_CLIENT = None
 def cleanup():
     """Intended to be used by tests to recreate all RPC related objects."""
 
-    global _TRANSPORT
     global _ENGINE_CLIENT
     global _EXECUTOR_CLIENT
     global _EVENT_ENGINE_CLIENT
 
-    _TRANSPORT = None
     _ENGINE_CLIENT = None
     _EXECUTOR_CLIENT = None
     _EVENT_ENGINE_CLIENT = None
-
-
-# TODO(rakhmerov): This method seems misplaced. Now we have different kind
-# of transports (oslo, kombu) and this module should not have any oslo
-# specific things anymore.
-def get_transport():
-    global _TRANSPORT
-
-    if not _TRANSPORT:
-        _TRANSPORT = messaging.get_transport(cfg.CONF)
-
-    return _TRANSPORT
 
 
 def get_engine_client():
@@ -92,65 +72,6 @@ def get_event_engine_client():
     return _EVENT_ENGINE_CLIENT
 
 
-def get_rpc_server_driver():
-    rpc_impl = cfg.CONF.rpc_implementation
-
-    global _IMPL_SERVER
-    if not _IMPL_SERVER:
-        _IMPL_SERVER = driver.DriverManager(
-            'mistral.engine.rpc_backend',
-            '%s_server' % rpc_impl
-        ).driver
-
-    return _IMPL_SERVER
-
-
-def get_rpc_client_driver():
-    rpc_impl = cfg.CONF.rpc_implementation
-
-    global _IMPL_CLIENT
-    if not _IMPL_CLIENT:
-        _IMPL_CLIENT = driver.DriverManager(
-            'mistral.engine.rpc_backend',
-            '%s_client' % rpc_impl
-        ).driver
-
-    return _IMPL_CLIENT
-
-
-def _wrap_exception_and_reraise(exception):
-    message = "%s: %s" % (exception.__class__.__name__, exception.args[0])
-
-    raise exc.MistralException(message)
-
-
-def wrap_messaging_exception(method):
-    """This decorator unwrap remote error in one of MistralException.
-
-    oslo.messaging has different behavior on raising exceptions
-    when fake or rabbit transports are used. In case of rabbit
-    transport it raises wrapped RemoteError which forwards directly
-    to API. Wrapped RemoteError contains one of MistralException raised
-    remotely on Engine and for correct exception interpretation we
-    need to unwrap and raise given exception and manually send it to
-    API layer.
-    """
-    def decorator(*args, **kwargs):
-        try:
-            return method(*args, **kwargs)
-
-        except exc.MistralException:
-            raise
-        except (client.RemoteError, exc.KombuException, Exception) as e:
-            if hasattr(e, 'exc_type') and hasattr(exc, e.exc_type):
-                exc_cls = getattr(exc, e.exc_type)
-                raise exc_cls(e.value)
-
-            _wrap_exception_and_reraise(e)
-
-    return decorator
-
-
 class EngineClient(eng.Engine):
     """RPC Engine client."""
 
@@ -159,9 +80,9 @@ class EngineClient(eng.Engine):
 
         :param rpc_conf_dict: Dict containing RPC configuration.
         """
-        self._client = get_rpc_client_driver()(rpc_conf_dict)
+        self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def start_workflow(self, wf_identifier, wf_input, description='',
                        **params):
         """Starts workflow sending a request to engine over RPC.
@@ -177,7 +98,7 @@ class EngineClient(eng.Engine):
             params=params
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def start_action(self, action_name, action_input,
                      description=None, **params):
         """Starts action sending a request to engine over RPC.
@@ -193,7 +114,7 @@ class EngineClient(eng.Engine):
             params=params
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     @profiler.trace('engine-client-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex_id, result, wf_action=False,
                            async_=False):
@@ -229,7 +150,7 @@ class EngineClient(eng.Engine):
             wf_action=wf_action
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def pause_workflow(self, wf_ex_id):
         """Stops the workflow with the given execution id.
 
@@ -243,7 +164,7 @@ class EngineClient(eng.Engine):
             execution_id=wf_ex_id
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def rerun_workflow(self, task_ex_id, reset=True, env=None):
         """Rerun the workflow.
 
@@ -265,7 +186,7 @@ class EngineClient(eng.Engine):
             env=env
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def resume_workflow(self, wf_ex_id, env=None):
         """Resumes the workflow with the given execution id.
 
@@ -281,7 +202,7 @@ class EngineClient(eng.Engine):
             env=env
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def stop_workflow(self, wf_ex_id, state, message=None):
         """Stops workflow execution with given status.
 
@@ -303,7 +224,7 @@ class EngineClient(eng.Engine):
             message=message
         )
 
-    @wrap_messaging_exception
+    @base.wrap_messaging_exception
     def rollback_workflow(self, wf_ex_id):
         """Rolls back the workflow with the given execution id.
 
@@ -326,7 +247,7 @@ class ExecutorClient(exe.Executor):
         """Constructs an RPC client for the Executor."""
 
         self.topic = cfg.CONF.executor.topic
-        self._client = get_rpc_client_driver()(rpc_conf_dict)
+        self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     @profiler.trace('executor-client-run-action')
     def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
@@ -362,12 +283,12 @@ class ExecutorClient(exe.Executor):
         return rpc_client_method(auth_ctx.ctx(), 'run_action', **rpc_kwargs)
 
 
-class EventEngineClient(eng.EventEngine):
+class EventEngineClient(evt_eng.EventEngine):
     """RPC EventEngine client."""
 
     def __init__(self, rpc_conf_dict):
         """Constructs an RPC client for the EventEngine service."""
-        self._client = get_rpc_client_driver()(rpc_conf_dict)
+        self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     def create_event_trigger(self, trigger, events):
         return self._client.sync_call(

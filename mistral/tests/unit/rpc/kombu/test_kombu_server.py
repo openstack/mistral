@@ -14,15 +14,15 @@
 #    under the License.
 
 from mistral import exceptions as exc
-from mistral.tests.unit.engine.rpc_backend.kombu import base
-from mistral.tests.unit.engine.rpc_backend.kombu import fake_kombu
+from mistral.tests.unit.rpc.kombu import base
+from mistral.tests.unit.rpc.kombu import fake_kombu
 
 import mock
 import socket
 from stevedore import driver
 
 with mock.patch.dict('sys.modules', kombu=fake_kombu):
-    from mistral.engine.rpc_backend.kombu import kombu_server
+    from mistral.rpc.kombu import kombu_server
 
 
 class TestException(exc.MistralError):

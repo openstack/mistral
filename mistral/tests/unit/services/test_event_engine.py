@@ -1,4 +1,5 @@
 # Copyright 2016 Catalyst IT Ltd
+# Copyright 2017 Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,8 +19,8 @@ import mock
 from oslo_config import cfg
 
 from mistral.db.v2.sqlalchemy import api as db_api
-from mistral.engine.rpc_backend import rpc
-from mistral.event_engine import event_engine
+from mistral.event_engine import default_event_engine as evt_eng
+from mistral.rpc import clients as rpc
 from mistral.services import workflows
 from mistral.tests.unit import base
 
@@ -61,7 +62,7 @@ class EventEngineTest(base.DbTestCase):
 
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_event_engine_start_with_no_triggers(self):
-        e_engine = event_engine.EventEngine()
+        e_engine = evt_eng.DefaultEventEngine()
 
         self.addCleanup(e_engine.handler_tg.stop)
 
@@ -74,7 +75,7 @@ class EventEngineTest(base.DbTestCase):
     def test_event_engine_start_with_triggers(self, mock_start):
         trigger = db_api.create_event_trigger(EVENT_TRIGGER)
 
-        e_engine = event_engine.EventEngine()
+        e_engine = evt_eng.DefaultEventEngine()
 
         self.addCleanup(e_engine.handler_tg.stop)
 
@@ -96,7 +97,7 @@ class EventEngineTest(base.DbTestCase):
     def test_process_event_queue(self, mock_start):
         db_api.create_event_trigger(EVENT_TRIGGER)
 
-        e_engine = event_engine.EventEngine()
+        e_engine = evt_eng.DefaultEventEngine()
 
         self.addCleanup(e_engine.handler_tg.stop)
 
@@ -138,8 +139,8 @@ class NotificationsConverterTest(base.BaseTest):
             }
         ]
 
-        converter = event_engine.NotificationsConverter()
-        converter.definitions = [event_engine.EventDefinition(event_def)
+        converter = evt_eng.NotificationsConverter()
+        converter.definitions = [evt_eng.EventDefinition(event_def)
                                  for event_def in reversed(definition_cfg)]
 
         notification = {
@@ -165,8 +166,8 @@ class NotificationsConverterTest(base.BaseTest):
             }
         ]
 
-        converter = event_engine.NotificationsConverter()
-        converter.definitions = [event_engine.EventDefinition(event_def)
+        converter = evt_eng.NotificationsConverter()
+        converter.definitions = [evt_eng.EventDefinition(event_def)
                                  for event_def in reversed(definition_cfg)]
 
         notification = {

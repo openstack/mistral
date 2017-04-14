@@ -1,4 +1,5 @@
 # Copyright 2016 - Nokia Networks
+# Copyright 2017 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,8 +16,8 @@
 from oslo_log import log as logging
 
 from mistral import config as cfg
-from mistral.engine.rpc_backend import rpc
-from mistral.event_engine import event_engine
+from mistral.event_engine import default_event_engine as evt_eng
+from mistral.rpc import base as rpc
 from mistral.service import base as service_base
 from mistral.utils import profiler as profiler_utils
 
@@ -88,4 +89,4 @@ class EventEngineServer(service_base.MistralService):
 
 
 def get_oslo_service():
-    return EventEngineServer(event_engine.EventEngine())
+    return EventEngineServer(evt_eng.DefaultEventEngine())

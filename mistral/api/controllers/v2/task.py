@@ -26,9 +26,9 @@ from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
+from mistral.rpc import clients as rpc
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workflow import data_flow

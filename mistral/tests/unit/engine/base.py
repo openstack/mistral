@@ -22,9 +22,10 @@ from oslo_service import service
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import engine_server
-from mistral.engine.rpc_backend import rpc
 from mistral.executors import base as exe
 from mistral.executors import executor_server
+from mistral.rpc import base as rpc_base
+from mistral.rpc import clients as rpc_clients
 from mistral.tests.unit import base
 from mistral.workflow import states
 
@@ -57,7 +58,8 @@ class EngineTestCase(base.DbTestCase):
         cfg.CONF.set_default('rpc_backend', 'fake')
 
         # Drop all RPC objects (transport, clients).
-        rpc.cleanup()
+        rpc_base.cleanup()
+        rpc_clients.cleanup()
         exe.cleanup()
 
         self.threads = []
@@ -65,7 +67,7 @@ class EngineTestCase(base.DbTestCase):
         # Start remote executor.
         if cfg.CONF.executor.type == 'remote':
             LOG.info("Starting remote executor threads...")
-            self.executor_client = rpc.get_executor_client()
+            self.executor_client = rpc_clients.get_executor_client()
             exe_svc = executor_server.get_oslo_service(setup_profiler=False)
             self.executor = exe_svc.executor
             self.threads.append(eventlet.spawn(launch_service, exe_svc))
@@ -73,7 +75,7 @@ class EngineTestCase(base.DbTestCase):
 
         # Start engine.
         LOG.info("Starting engine threads...")
-        self.engine_client = rpc.get_engine_client()
+        self.engine_client = rpc_clients.get_engine_client()
         eng_svc = engine_server.get_oslo_service(setup_profiler=False)
         self.engine = eng_svc.engine
         self.threads.append(eventlet.spawn(launch_service, eng_svc))

@@ -18,10 +18,10 @@ import six
 import time
 
 from mistral.db.v2 import api as db_api
-from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as eng_utils
 from mistral import exceptions as exc
 from mistral.lang import parser
+from mistral.rpc import clients as rpc
 from mistral.services import security
 
 

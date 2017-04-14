@@ -15,8 +15,8 @@
 from oslo_log import log as logging
 
 from mistral import config as cfg
-from mistral.engine.rpc_backend import rpc
 from mistral.executors import default_executor as exe
+from mistral.rpc import base as rpc
 from mistral.service import base as service_base
 from mistral import utils
 from mistral.utils import profiler as profiler_utils

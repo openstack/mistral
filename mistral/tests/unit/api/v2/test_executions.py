@@ -29,8 +29,9 @@ from mistral.api.controllers.v2 import execution
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import api as sql_db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.rpc import base as rpc_base
+from mistral.rpc import clients as rpc_clients
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
 from mistral import utils
@@ -131,7 +132,7 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
 
 
-@mock.patch.object(rpc, '_IMPL_CLIENT', mock.Mock())
+@mock.patch.object(rpc_base, '_IMPL_CLIENT', mock.Mock())
 class TestExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     def test_get(self):
@@ -159,7 +160,7 @@ class TestExecutionsController(base.APITest):
         mock.MagicMock(return_value=None)
     )
     @mock.patch.object(
-        rpc.EngineClient,
+        rpc_clients.EngineClient,
         'pause_workflow',
         MOCK_UPDATED_WF_EX
     )
@@ -182,7 +183,7 @@ class TestExecutionsController(base.APITest):
         'ensure_workflow_execution_exists',
         mock.MagicMock(return_value=None)
     )
-    @mock.patch.object(rpc.EngineClient, 'stop_workflow')
+    @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_error(self, mock_stop_wf):
         update_exec = {
             'id': WF_EX['id'],
@@ -210,7 +211,7 @@ class TestExecutionsController(base.APITest):
         'ensure_workflow_execution_exists',
         mock.MagicMock(return_value=None)
     )
-    @mock.patch.object(rpc.EngineClient, 'stop_workflow')
+    @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_cancelled(self, mock_stop_wf):
         update_exec = {
             'id': WF_EX['id'],
@@ -243,7 +244,7 @@ class TestExecutionsController(base.APITest):
         'ensure_workflow_execution_exists',
         mock.MagicMock(return_value=None)
     )
-    @mock.patch.object(rpc.EngineClient, 'resume_workflow')
+    @mock.patch.object(rpc_clients.EngineClient, 'resume_workflow')
     def test_put_state_resume(self, mock_resume_wf):
         update_exec = {
             'id': WF_EX['id'],
@@ -297,7 +298,7 @@ class TestExecutionsController(base.APITest):
         'ensure_workflow_execution_exists',
         mock.MagicMock(return_value=None)
     )
-    @mock.patch.object(rpc.EngineClient, 'stop_workflow')
+    @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
     def test_put_state_info_unset(self, mock_stop_wf):
         update_exec = {
             'id': WF_EX['id'],
@@ -454,7 +455,7 @@ class TestExecutionsController(base.APITest):
 
         self.assertIn(expected_fault, resp.json['faultstring'])
 
-    @mock.patch.object(rpc.EngineClient, 'start_workflow')
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_post(self, f):
         f.return_value = WF_EX.to_dict()
 
@@ -472,7 +473,11 @@ class TestExecutionsController(base.APITest):
             **json.loads(exec_dict['params'])
         )
 
-    @mock.patch.object(rpc.EngineClient, 'start_workflow', MOCK_ACTION_EXC)
+    @mock.patch.object(
+        rpc_clients.EngineClient,
+        'start_workflow',
+        MOCK_ACTION_EXC
+    )
     def test_post_throws_exception(self):
         context = self.assertRaises(
             webtest_app.AppError,

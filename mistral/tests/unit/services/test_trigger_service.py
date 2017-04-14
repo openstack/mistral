@@ -18,8 +18,8 @@ import mock
 
 from oslo_config import cfg
 
-from mistral.engine.rpc_backend import rpc
 from mistral import exceptions as exc
+from mistral.rpc import clients as rpc
 from mistral.services import periodic
 from mistral.services import security
 from mistral.services import triggers as t_s

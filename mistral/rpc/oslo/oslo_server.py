@@ -16,14 +16,13 @@ from oslo_log import log as logging
 import oslo_messaging as messaging
 
 from mistral import context as ctx
-from mistral.engine.rpc_backend import base as rpc_base
-from mistral.engine.rpc_backend import rpc
+from mistral.rpc import base as rpc
 
 
 LOG = logging.getLogger(__name__)
 
 
-class OsloRPCServer(rpc_base.RPCServer):
+class OsloRPCServer(rpc.RPCServer):
     def __init__(self, conf):
         super(OsloRPCServer, self).__init__(conf)
 

@@ -85,7 +85,7 @@ class TestEventTriggerController(base.APITest):
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_event_trigger", MOCK_TRIGGER)
     @mock.patch.object(db_api, "get_event_triggers", MOCK_TRIGGERS)
-    @mock.patch('mistral.engine.rpc_backend.rpc.get_event_engine_client')
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
     def test_post(self, mock_rpc_client):
         client = mock.Mock()
         mock_rpc_client.return_value = client
@@ -134,7 +134,7 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(404, resp.status_int)
 
     @mock.patch.object(db_api, 'ensure_event_trigger_exists', MOCK_NONE)
-    @mock.patch('mistral.engine.rpc_backend.rpc.get_event_engine_client')
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
     def test_put(self, mock_update, mock_rpc_client):
         client = mock.Mock()
@@ -167,7 +167,7 @@ class TestEventTriggerController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
 
-    @mock.patch('mistral.engine.rpc_backend.rpc.get_event_engine_client')
+    @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch.object(db_api, "get_event_trigger", MOCK_TRIGGER)
     @mock.patch.object(db_api, "get_event_triggers",
                        mock.MagicMock(return_value=[]))

@@ -22,10 +22,10 @@ import six
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
 from mistral.engine import dispatcher
-from mistral.engine.rpc_backend import rpc
 from mistral.engine import utils as engine_utils
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
+from mistral.rpc import clients as rpc
 from mistral.services import scheduler
 from mistral.services import workflows as wf_service
 from mistral import utils

@@ -14,7 +14,7 @@
 
 import sys
 
-from mistral.engine.rpc_backend.kombu import kombu_server
+from mistral.rpc.kombu import kombu_server
 
 
 # Simple example of endpoint of RPC server, which just
