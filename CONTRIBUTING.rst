@@ -11,8 +11,8 @@ Contributor License Agreement
 In order to contribute to the Mistral project, you need to have
 signed OpenStack's contributor's agreement:
 
-* http://docs.openstack.org/infra/manual/developers.html
-* http://wiki.openstack.org/CLA
+* https://docs.openstack.org/infra/manual/developers.html
+* https://wiki.openstack.org/CLA
 
 
 Project Hosting Details
@@ -24,10 +24,10 @@ Project Hosting Details
     * Python client tracker: https://launchpad.net/python-mistralclient
 
 * Mailing list (prefix subjects with ``[Mistral]`` for faster responses)
-    http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
+    https://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
 
 * Documentation
-    * http://docs.openstack.org/developer/mistral/
+    * https://docs.openstack.org/developer/mistral/
 
 * IRC channel
     * #openstack-mistral at FreeNode
@@ -60,7 +60,7 @@ Project Hosting Details
 
     * https://review.openstack.org/#/q/mistral-specs
 
-    * http://docs.openstack.org/infra/manual/developers.html#development-workflow
+    * https://docs.openstack.org/infra/manual/developers.html#development-workflow
 
 * Mistral Design Specifications
     * https://specs.openstack.org/openstack/mistral-specs/
