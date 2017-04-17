@@ -22,16 +22,17 @@ class WorkflowCommand(object):
     """Workflow command.
 
     A set of workflow commands form a communication protocol between workflow
-    handler and its clients. When workflow handler makes a decision about
+    controller and its clients. When workflow controller makes a decision about
     how to continue a workflow it returns a set of commands so that a caller
     knows what to do next.
     """
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx):
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, triggered_by=None):
         self.wf_ex = wf_ex
         self.wf_spec = wf_spec
         self.task_spec = task_spec
         self.ctx = ctx or {}
+        self.triggered_by = triggered_by
 
 
 class Noop(WorkflowCommand):
@@ -44,8 +45,14 @@ class Noop(WorkflowCommand):
 class RunTask(WorkflowCommand):
     """Instruction to run a workflow task."""
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx):
-        super(RunTask, self).__init__(wf_ex, wf_spec, task_spec, ctx)
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, triggered_by=None):
+        super(RunTask, self).__init__(
+            wf_ex,
+            wf_spec,
+            task_spec,
+            ctx,
+            triggered_by=triggered_by
+        )
 
         self.wait = False
         self.unique_key = None
@@ -82,8 +89,15 @@ class RunExistingTask(WorkflowCommand):
 class SetWorkflowState(WorkflowCommand):
     """Instruction to change a workflow state."""
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx, new_state, msg):
-        super(SetWorkflowState, self).__init__(wf_ex, wf_spec, task_spec, ctx)
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, new_state, msg=None,
+                 triggered_by=None):
+        super(SetWorkflowState, self).__init__(
+            wf_ex,
+            wf_spec,
+            task_spec,
+            ctx,
+            triggered_by=triggered_by
+        )
 
         self.new_state = new_state
         self.msg = msg
@@ -92,14 +106,16 @@ class SetWorkflowState(WorkflowCommand):
 class FailWorkflow(SetWorkflowState):
     """Instruction to fail a workflow."""
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx, msg=None):
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, msg=None,
+                 triggered_by=None):
         super(FailWorkflow, self).__init__(
             wf_ex,
             wf_spec,
             task_spec,
             ctx,
             states.ERROR,
-            msg
+            msg=msg,
+            triggered_by=triggered_by
         )
 
     def __repr__(self):
@@ -109,14 +125,16 @@ class FailWorkflow(SetWorkflowState):
 class SucceedWorkflow(SetWorkflowState):
     """Instruction to succeed a workflow."""
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx, msg=None):
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, msg=None,
+                 triggered_by=None):
         super(SucceedWorkflow, self).__init__(
             wf_ex,
             wf_spec,
             task_spec,
             ctx,
             states.SUCCESS,
-            msg
+            msg=msg,
+            triggered_by=triggered_by
         )
 
     def __repr__(self):
@@ -126,14 +144,16 @@ class SucceedWorkflow(SetWorkflowState):
 class PauseWorkflow(SetWorkflowState):
     """Instruction to pause a workflow."""
 
-    def __init__(self, wf_ex, wf_spec, task_spec, ctx, msg=None):
+    def __init__(self, wf_ex, wf_spec, task_spec, ctx, msg=None,
+                 triggered_by=None):
         super(PauseWorkflow, self).__init__(
             wf_ex,
             wf_spec,
             task_spec,
             ctx,
             states.PAUSED,
-            msg
+            msg=msg,
+            triggered_by=triggered_by
         )
 
     def __repr__(self):
@@ -155,7 +175,7 @@ def get_command_class(cmd_name):
 
 
 def create_command(cmd_name, wf_ex, wf_spec, task_spec, ctx,
-                   explicit_params=None):
+                   params=None, triggered_by=None):
     cmd_cls = get_command_class(cmd_name) or RunTask
 
     if issubclass(cmd_cls, SetWorkflowState):
@@ -164,7 +184,14 @@ def create_command(cmd_name, wf_ex, wf_spec, task_spec, ctx,
             wf_spec,
             task_spec,
             ctx,
-            explicit_params.get('msg')
+            msg=params.get('msg'),
+            triggered_by=triggered_by
         )
     else:
-        return cmd_cls(wf_ex, wf_spec, task_spec, ctx)
+        return cmd_cls(
+            wf_ex,
+            wf_spec,
+            task_spec,
+            ctx,
+            triggered_by=triggered_by
+        )

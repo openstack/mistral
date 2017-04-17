@@ -232,7 +232,8 @@ def _build_task_from_command(cmd):
             cmd.task_spec,
             cmd.ctx,
             unique_key=cmd.unique_key,
-            waiting=cmd.is_waiting()
+            waiting=cmd.is_waiting(),
+            triggered_by=cmd.triggered_by
         )
 
         return task
@@ -241,13 +242,22 @@ def _build_task_from_command(cmd):
 
 
 def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None, waiting=False):
+                 unique_key=None, waiting=False, triggered_by=None):
     if task_spec.get_with_items():
         cls = tasks.WithItemsTask
     else:
         cls = tasks.RegularTask
 
-    return cls(wf_ex, wf_spec, task_spec, ctx, task_ex, unique_key, waiting)
+    return cls(
+        wf_ex,
+        wf_spec,
+        task_spec,
+        ctx,
+        task_ex=task_ex,
+        unique_key=unique_key,
+        waiting=waiting,
+        triggered_by=triggered_by
+    )
 
 
 @action_queue.process

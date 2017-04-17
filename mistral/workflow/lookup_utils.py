@@ -115,7 +115,7 @@ def find_cancelled_task_executions(wf_ex_id):
     return find_task_executions_with_state(wf_ex_id, states.CANCELLED)
 
 
-def find_completed_tasks(wf_ex_id):
+def find_completed_task_executions(wf_ex_id):
     return db_api.get_completed_task_executions(workflow_execution_id=wf_ex_id)
 
 
