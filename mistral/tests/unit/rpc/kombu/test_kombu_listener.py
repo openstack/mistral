@@ -51,10 +51,7 @@ class KombuListenerTestCase(base.KombuTestCase):
             moves.queue.Queue
         )
 
-        self.assertEqual(
-            self.listener._results[correlation_id].qsize(),
-            0
-        )
+        self.assertEqual(0, self.listener._results[correlation_id].qsize())
 
     def test_remove_listener_correlation_id_in_results(self):
         correlation_id = utils.generate_unicode_uuid()
@@ -123,6 +120,7 @@ class KombuListenerTestCase(base.KombuTestCase):
 
     def test_get_result_not_in_queue(self):
         correlation_id = utils.generate_unicode_uuid()
+
         self.listener.add_listener(correlation_id)
 
         self.assertRaises(

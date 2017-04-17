@@ -15,10 +15,9 @@
 from six import moves
 
 import kombu
-from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging as messaging
 
+from mistral import config as cfg
 from mistral import exceptions as exc
 from mistral.rpc import base as rpc_base
 from mistral.rpc.kombu import base as kombu_base
@@ -28,7 +27,9 @@ from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
+
 CONF = cfg.CONF
+
 CONF.import_opt('rpc_response_timeout', 'mistral.config')
 
 
@@ -36,13 +37,9 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
     def __init__(self, conf):
         super(KombuRPCClient, self).__init__(conf)
 
-        self._register_mistral_serialization()
+        kombu_base.set_transport_options()
 
-        self._transport_url = messaging.TransportURL.parse(
-            CONF,
-            CONF.transport_url
-        )
-        self._check_backend()
+        self._register_mistral_serialization()
 
         self.topic = conf.topic
         self.server_id = conf.host
