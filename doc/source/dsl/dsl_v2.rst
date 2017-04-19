@@ -276,7 +276,9 @@ automatically by engine if hasn't completed.
 **concurrency**
 
 Defines a max number of actions running simultaneously in a task. *Applicable*
-only for tasks that have *with-items*.
+only for tasks that have *with-items*. If *concurrency* task property is not
+set then actions (or workflows in case of nested workflows) of the task
+will be scheduled for execution all at once.
 
 
 **retry**
