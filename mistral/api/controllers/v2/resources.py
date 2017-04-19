@@ -289,6 +289,8 @@ class Task(resource.Resource):
     state_info = wtypes.text
     "an optional state information string"
 
+    runtime_context = types.jsontype
+
     result = wtypes.text
     published = types.jsontype
     processed = bool
@@ -310,6 +312,14 @@ class Task(resource.Resource):
             workflow_execution_id='123e4567-e89b-12d3-a456-426655440000',
             name='task',
             state=states.SUCCESS,
+            runtime_context={
+                'triggered_by': [
+                    {
+                        'task_id': '123-123-123',
+                        'event': 'on-success'
+                    }
+                ]
+            },
             result='task result',
             published={'key': 'value'},
             processed=True,
