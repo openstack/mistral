@@ -56,6 +56,7 @@ class RetrySpec(base.BaseSpec):
 
     def __init__(self, data):
         data = self._transform_retry_one_line(data)
+
         super(RetrySpec, self).__init__(data)
 
         self._break_on = data.get('break-on')

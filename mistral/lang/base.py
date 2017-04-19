@@ -102,7 +102,8 @@ class BaseSpec(object):
     It represents a DSL entity such as workflow or task as a python object
     providing more convenient API to analyse DSL than just working with raw
     data in form of a dictionary. Specification classes also implement
-    all required validation logic by overriding instance method 'validate()'.
+    all required validation logic by overriding instance methods
+    'validate_schema()' and 'validate_semantics()'.
 
     Note that the specification mechanism allows to have polymorphic entities
     in DSL. For example, if we find it more convenient to have separate
@@ -197,7 +198,7 @@ class BaseSpec(object):
     def validate_expr(self, dsl_part):
         if isinstance(dsl_part, six.string_types):
             expr.validate(dsl_part)
-        elif isinstance(dsl_part, list):
+        elif isinstance(dsl_part, (list, tuple)):
             for expression in dsl_part:
                 if isinstance(expression, six.string_types):
                     expr.validate(expression)
@@ -249,21 +250,6 @@ class BaseSpec(object):
             return result
         elif isinstance(prop_val, six.string_types):
             return {prop_val: ''}
-
-    def _as_list_of_tuples(self, prop_name):
-        prop_val = self._data.get(prop_name)
-
-        if not prop_val:
-            return []
-
-        if isinstance(prop_val, six.string_types):
-            return [self._as_tuple(prop_val)]
-
-        return [self._as_tuple(item) for item in prop_val]
-
-    @staticmethod
-    def _as_tuple(val):
-        return list(val.items())[0] if isinstance(val, dict) else (val, '')
 
     @staticmethod
     def _parse_cmd_and_input(cmd_str):

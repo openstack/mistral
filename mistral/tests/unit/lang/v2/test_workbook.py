@@ -121,15 +121,15 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
 
         self.assertListEqual(
             [('fail', '<% $.my_val = 0 %>', {})],
-            task_defaults_spec.get_on_error()
+            task_defaults_spec.get_on_error().get_next()
         )
         self.assertListEqual(
             [('pause', '', {})],
-            task_defaults_spec.get_on_success()
+            task_defaults_spec.get_on_success().get_next()
         )
         self.assertListEqual(
             [('succeed', '', {})],
-            task_defaults_spec.get_on_complete()
+            task_defaults_spec.get_on_complete().get_next()
         )
 
         task3_spec = wf2_spec.get_tasks().get('task3')
@@ -150,15 +150,15 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
         )
         self.assertListEqual(
             [('task4', '<% $.my_val = 1 %>', {})],
-            task3_spec.get_on_error()
+            task3_spec.get_on_error().get_next()
         )
         self.assertListEqual(
             [('task5', '<% $.my_val = 2 %>', {})],
-            task3_spec.get_on_success()
+            task3_spec.get_on_success().get_next()
         )
         self.assertListEqual(
             [('task6', '<% $.my_val = 3 %>', {})],
-            task3_spec.get_on_complete()
+            task3_spec.get_on_complete().get_next()
         )
 
         task7_spec = wf2_spec.get_tasks().get('task7')

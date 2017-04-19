@@ -190,11 +190,7 @@ def publish_variables(task_ex, task_spec):
 
     wf_ex = task_ex.workflow_execution
 
-    expr_ctx = ContextView(
-        task_ex.in_context,
-        wf_ex.context,
-        wf_ex.input
-    )
+    expr_ctx = ContextView(task_ex.in_context, wf_ex.context, wf_ex.input)
 
     if task_ex.name in expr_ctx:
         LOG.warning(
@@ -202,13 +198,20 @@ def publish_variables(task_ex, task_spec):
             task_ex.name
         )
 
-    data = (
-        task_spec.get_publish()
-        if task_ex.state == states.SUCCESS
-        else task_spec.get_publish_on_error()
-    )
+    publish_spec = task_spec.get_publish(task_ex.state)
 
-    task_ex.published = expr.evaluate_recursively(data, expr_ctx)
+    if not publish_spec:
+        return
+
+    branch_vars = publish_spec.get_branch()
+
+    task_ex.published = expr.evaluate_recursively(branch_vars, expr_ctx)
+
+    # TODO(rakhmerov):
+    # 1. Publish global and atomic variables.
+    # 2. Add the field "publish" in TaskExecution model similar to "published"
+    #    but containing info as
+    #    {'branch': {vars}, 'global': {vars}, 'atomic': {vars}}
 
 
 def evaluate_task_outbound_context(task_ex):

@@ -334,6 +334,306 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
                 expect_error=expect_error
             )
 
+    def test_direct_transition_advanced_schema(self):
+        tests = [
+            ({'on-success': {'publish': {'var1': 1234}}}, True),
+            ({'on-success': {'publish': {'branch': {'var1': 1234}}}}, False),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        }
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': '<% * %>'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        }
+                    }
+                },
+                True
+            ),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': 'email'
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': ['email']
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% 1 %>'}]
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% $.v1 and $.v2 %>'}]
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-success': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% * %>'}]
+                    }
+                },
+                True
+            ),
+            ({'on-success': {'next': [{'email': '<% $.v1 %>'}]}}, False),
+            ({'on-success': {'next': 'email'}}, False),
+            ({'on-success': {'next': ['email']}}, False),
+            ({'on-success': {'next': [{'email': 'email'}]}}, True),
+            ({'on-error': {'publish': {'var1': 1234}}}, True),
+            ({'on-error': {'publish': {'branch': {'var1': 1234}}}}, False),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        }
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': '<% * %>'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        }
+                    }
+                },
+                True
+            ),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': 'email'
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': ['email']
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% 1 %>'}]
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% $.v1 and $.v2 %>'}]
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-error': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% * %>'}]
+                    }
+                },
+                True
+            ),
+            ({'on-error': {'next': [{'email': '<% $.v1 %>'}]}}, False),
+            ({'on-error': {'next': 'email'}}, False),
+            ({'on-error': {'next': ['email']}}, False),
+            ({'on-error': {'next': [{'email': 'email'}]}}, True),
+            ({'on-complete': {'publish': {'var1': 1234}}}, True),
+            ({'on-complete': {'publish': {'branch': {'var1': 1234}}}}, False),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        }
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': '<% * %>'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        }
+                    }
+                },
+                True
+            ),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': 'email'
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': ['email']
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% 1 %>'}]
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% $.v1 and $.v2 %>'}]
+                    }
+                },
+                False
+            ),
+            (
+                {
+                    'on-complete': {
+                        'publish': {
+                            'branch': {'var1': 1234},
+                            'global': {'global_var1': 'val'},
+                            'atomic': {'atomic_var1': '<% my_func() %>'}
+                        },
+                        'next': [{'email': '<% * %>'}]
+                    }
+                },
+                True
+            ),
+            ({'on-complete': {'next': [{'email': '<% $.v1 %>'}]}}, False),
+            ({'on-complete': {'next': 'email'}}, False),
+            ({'on-complete': {'next': ['email']}}, False),
+            ({'on-complete': {'next': [{'email': 'email'}]}}, True)
+        ]
+
+        for transition, expect_error in tests:
+            overlay = {'test': {'tasks': {}}}
+
+            utils.merge_dicts(overlay['test']['tasks'], {'get': transition})
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
+
     def test_join(self):
         tests = [
             ({'join': ''}, True),

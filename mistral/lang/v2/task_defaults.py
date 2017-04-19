@@ -17,11 +17,13 @@ import six
 
 from mistral.lang import types
 from mistral.lang.v2 import base
+from mistral.lang.v2 import on_clause
 from mistral.lang.v2 import policies
-from mistral.lang.v2 import tasks
 
 
-direct_wf_ts = tasks.DirectWorkflowTaskSpec
+# TODO(rakhmerov): This specification should be broken into two separate
+# specs for direct and reverse workflows. It's weird to combine them into
+# one because they address different use cases.
 
 
 class TaskDefaultsSpec(base.BaseSpec):
@@ -71,30 +73,31 @@ class TaskDefaultsSpec(base.BaseSpec):
             'pause-before',
             'concurrency'
         )
-        self._on_complete = direct_wf_ts.prepare_on_clause(
-            self._as_list_of_tuples('on-complete')
-        )
-        self._on_success = direct_wf_ts.prepare_on_clause(
-            self._as_list_of_tuples('on-success')
-        )
-        self._on_error = direct_wf_ts.prepare_on_clause(
-            self._as_list_of_tuples('on-error')
-        )
+
+        on_spec_cls = on_clause.OnClauseSpec
+
+        self._on_complete = self._spec_property('on-complete', on_spec_cls)
+        self._on_success = self._spec_property('on-success', on_spec_cls)
+        self._on_error = self._spec_property('on-error', on_spec_cls)
+
+        # TODO(rakhmerov): 'requires' should reside in a different spec for
+        # reverse workflows.
         self._requires = data.get('requires', [])
 
-    def validate_schema(self):
-        super(TaskDefaultsSpec, self).validate_schema()
-
+    def validate_semantics(self):
         # Validate YAQL expressions.
-        self._validate_transitions('on-complete')
-        self._validate_transitions('on-success')
-        self._validate_transitions('on-error')
+        self._validate_transitions(self._on_complete)
+        self._validate_transitions(self._on_success)
+        self._validate_transitions(self._on_error)
 
-    def _validate_transitions(self, on_clause):
-        val = self._data.get(on_clause, [])
+    def _validate_transitions(self, on_clause_spec):
+        val = on_clause_spec.get_next() if on_clause_spec else []
+
+        if not val:
+            return
 
         [self.validate_expr(t)
-         for t in ([val] if isinstance(val, six.string_types) else val)]
+            for t in ([val] if isinstance(val, six.string_types) else val)]
 
     def get_policies(self):
         return self._policies
