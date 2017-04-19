@@ -713,7 +713,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         self.assertDictEqual(wf_input['a'], task1.published['published_a'])
 
-    def test_advanced_publishing_branch(self):
+    def test_branch_publishing_success(self):
         wf_text = """---
         version: 2.0
 
@@ -749,6 +749,88 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self._assert_single_item(tasks, name='task2')
 
         self.assertDictEqual({"my_var": "my branch value"}, task1.published)
+
+    def test_global_publishing_success_access_via_root_context_(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="Hi"
+              on-success:
+                publish:
+                  global:
+                    my_var: <% task().result %>
+                next:
+                  - task2
+
+            task2:
+              action: std.echo output=<% $.my_var %>
+              publish:
+                result: <% task().result %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+
+        self.assertDictEqual({'result': 'Hi'}, task2.published)
+
+    def test_global_publishing_error_access_via_root_context(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.fail
+              on-success:
+                publish:
+                  global:
+                    my_var: "We got success"
+                next:
+                  - task2
+              on-error:
+                publish:
+                  global:
+                    my_var: "We got an error"
+                next:
+                  - task2
+
+            task2:
+              action: std.echo output=<% $.my_var %>
+              publish:
+                result: <% task().result %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        self._assert_single_item(tasks, name='task1')
+        task2 = self._assert_single_item(tasks, name='task2')
+
+        self.assertDictEqual({'result': 'We got an error'}, task2.published)
 
 
 class DataFlowTest(test_base.BaseTest):

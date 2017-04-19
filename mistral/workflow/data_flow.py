@@ -203,12 +203,21 @@ def publish_variables(task_ex, task_spec):
     if not publish_spec:
         return
 
+    # Publish branch variables.
     branch_vars = publish_spec.get_branch()
 
     task_ex.published = expr.evaluate_recursively(branch_vars, expr_ctx)
 
+    # Publish global variables.
+    global_vars = publish_spec.get_global()
+
+    utils.merge_dicts(
+        task_ex.workflow_execution.context,
+        expr.evaluate_recursively(global_vars, expr_ctx)
+    )
+
     # TODO(rakhmerov):
-    # 1. Publish global and atomic variables.
+    # 1. Publish atomic variables.
     # 2. Add the field "publish" in TaskExecution model similar to "published"
     #    but containing info as
     #    {'branch': {vars}, 'global': {vars}, 'atomic': {vars}}
