@@ -1,0 +1,28 @@
+Listen %PUBLICPORT%
+
+<VirtualHost *:%PUBLICPORT%>
+    WSGIDaemonProcess mistral-api processes=%API_WORKERS% threads=1 user=%USER% display-name=%{GROUP} %VIRTUALENV%
+    WSGIProcessGroup mistral-api
+    WSGIScriptAlias / %MISTRAL_BIN_DIR%/mistral-wsgi-api
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    AllowEncodedSlashes On
+    <IfVersion >= 2.4>
+      ErrorLogFormat "%{cu}t %M"
+    </IfVersion>
+    ErrorLog /var/log/%APACHE_NAME%/mistral_api.log
+    CustomLog /var/log/%APACHE_NAME%/mistral_api_access.log combined
+    %SSLENGINE%
+    %SSLCERTFILE%
+    %SSLKEYFILE%
+
+    <Directory %MISTRAL_BIN_DIR%>
+        <IfVersion >= 2.4>
+            Require all granted
+        </IfVersion>
+        <IfVersion < 2.4>
+            Order allow,deny
+            Allow from all
+        </IfVersion>
+    </Directory>
+</VirtualHost>
