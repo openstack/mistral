@@ -61,8 +61,9 @@ class DirectWorkflowController(base.WorkflowController):
         if not t_spec.get_join():
             return t_ex_candidate.processed
 
-        induced_state, _ = self._get_induced_join_state(
+        induced_state, _, _ = self._get_induced_join_state(
             self.wf_spec.get_tasks()[t_ex_candidate.name],
+            self._find_task_execution_by_name(t_ex_candidate.name),
             t_spec
         )
 
@@ -126,6 +127,13 @@ class DirectWorkflowController(base.WorkflowController):
 
             data_flow.remove_internal_data_from_context(ctx)
 
+            triggered_by = [
+                {
+                    'task_id': task_ex.id,
+                    'event': event_name
+                }
+            ]
+
             cmd = commands.create_command(
                 t_n,
                 self.wf_ex,
@@ -133,7 +141,7 @@ class DirectWorkflowController(base.WorkflowController):
                 t_s,
                 ctx,
                 params=params,
-                triggered_by=(task_ex, event_name)
+                triggered_by=triggered_by
             )
 
             self._configure_if_join(cmd)
@@ -179,7 +187,7 @@ class DirectWorkflowController(base.WorkflowController):
             # A simple 'non-join' task does not have any preconditions
             # based on state of other tasks so its logical state always
             # equals to its real state.
-            return task_ex.state, task_ex.state_info, 0
+            return base.TaskLogicalState(task_ex.state, task_ex.state_info)
 
         return self._get_join_logical_state(task_spec)
 
@@ -245,7 +253,7 @@ class DirectWorkflowController(base.WorkflowController):
             self.wf_ex.input
         )
 
-        # [(task_name, 'on-success'|'on-error'|'on-complete', params), ...]
+        # [(task_name, params, 'on-success'|'on-error'|'on-complete'), ...]
         result = []
 
         def process_clause(clause, event_name):
@@ -300,18 +308,18 @@ class DirectWorkflowController(base.WorkflowController):
         """Evaluates logical state of 'join' task.
 
         :param task_spec: 'join' task specification.
-        :return: Tuple (state, state_info, spec_cardinality) where 'state' and
-            'state_info' describe the logical state of the given 'join'
-            task and 'spec_cardinality' gives the remaining number of
-            unfulfilled preconditions. If logical state is not WAITING then
-            'spec_cardinality' should always be 0.
+        :return: TaskLogicalState (state, state_info, cardinality,
+            triggered_by) where 'state' and 'state_info' describe the logical
+            state of the given 'join' task and 'cardinality' gives the
+            remaining number of unfulfilled preconditions. If logical state
+            is not WAITING then 'cardinality' should always be 0.
         """
 
         # TODO(rakhmerov): We need to use task_ex instead of task_spec
         # in order to cover a use case when there's more than one instance
         # of the same 'join' task in a workflow.
         # TODO(rakhmerov): In some cases this method will be expensive because
-        # it uses a multistep recursive search. We need to optimize it moving
+        # it uses a multi-step recursive search. We need to optimize it moving
         # forward (e.g. with Workflow Execution Graph).
 
         join_expr = task_spec.get_join()
@@ -319,102 +327,142 @@ class DirectWorkflowController(base.WorkflowController):
         in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
         if not in_task_specs:
-            return states.RUNNING, None, 0
+            return base.TaskLogicalState(states.RUNNING)
 
-        # List of tuples (task_name, (state, depth)).
-        induced_states = [
-            (t_s.get_name(), self._get_induced_join_state(t_s, task_spec))
-            for t_s in in_task_specs
-        ]
+        # List of tuples (task_name, task_ex, state, depth, event_name).
+        induced_states = []
+
+        for t_s in in_task_specs:
+            t_ex = self._find_task_execution_by_name(t_s.get_name())
+
+            tup = self._get_induced_join_state(t_s, t_ex, task_spec)
+
+            induced_states.append(
+                (
+                    t_s.get_name(),
+                    t_ex,
+                    tup[0],
+                    tup[1],
+                    tup[2]
+                )
+            )
 
         def count(state):
             cnt = 0
             total_depth = 0
 
             for s in induced_states:
-                if s[1][0] == state:
+                if s[2] == state:
                     cnt += 1
-                    total_depth += s[1][1]
+                    total_depth += s[3]
 
             return cnt, total_depth
 
-        errors_tuples = count(states.ERROR)
+        errors_tuple = count(states.ERROR)
         runnings_tuple = count(states.RUNNING)
         total_count = len(induced_states)
 
         def _blocked_message():
             return (
                 'Blocked by tasks: %s' %
-                [s[0] for s in induced_states if s[1][0] == states.WAITING]
+                [s[0] for s in induced_states if s[2] == states.WAITING]
             )
 
         def _failed_message():
             return (
                 'Failed by tasks: %s' %
-                [s[0] for s in induced_states if s[1][0] == states.ERROR]
+                [s[0] for s in induced_states if s[2] == states.ERROR]
             )
+
+        def _triggered_by(state):
+            return [
+                {'task_id': s[1].id, 'event': s[4]}
+                for s in induced_states
+                if s[2] == state and s[1] is not None
+            ]
 
         # If "join" is configured as a number or 'one'.
         if isinstance(join_expr, int) or join_expr == 'one':
             spec_cardinality = 1 if join_expr == 'one' else join_expr
 
             if runnings_tuple[0] >= spec_cardinality:
-                return states.RUNNING, None, 0
+                return base.TaskLogicalState(
+                    states.RUNNING,
+                    triggered_by=_triggered_by(states.RUNNING)
+                )
 
             # E.g. 'join: 3' with inbound [ERROR, ERROR, RUNNING, WAITING]
             # No chance to get 3 RUNNING states.
-            if errors_tuples[0] > (total_count - spec_cardinality):
-                return states.ERROR, _failed_message(), 0
+            if errors_tuple[0] > (total_count - spec_cardinality):
+                return base.TaskLogicalState(states.ERROR, _failed_message())
 
             # Calculate how many tasks need to finish to trigger this 'join'.
             cardinality = spec_cardinality - runnings_tuple[0]
 
-            return states.WAITING, _blocked_message(), cardinality
+            return base.TaskLogicalState(
+                states.WAITING,
+                _blocked_message(),
+                cardinality=cardinality
+            )
 
         if join_expr == 'all':
             if total_count == runnings_tuple[0]:
-                return states.RUNNING, None, 0
+                return base.TaskLogicalState(
+                    states.RUNNING,
+                    triggered_by=_triggered_by(states.RUNNING)
+                )
 
-            if errors_tuples[0] > 0:
-                return states.ERROR, _failed_message(), 0
+            if errors_tuple[0] > 0:
+                return base.TaskLogicalState(
+                    states.ERROR,
+                    _failed_message(),
+                    triggered_by=_triggered_by(states.ERROR)
+                )
 
             # Remaining cardinality is just a difference between all tasks and
             # a number of those tasks that induce RUNNING state.
             cardinality = total_count - runnings_tuple[1]
 
-            return states.WAITING, _blocked_message(), cardinality
+            return base.TaskLogicalState(
+                states.WAITING,
+                _blocked_message(),
+                cardinality=cardinality
+            )
 
         raise RuntimeError('Unexpected join expression: %s' % join_expr)
 
     # TODO(rakhmerov): Method signature is incorrect given that
     # we may have multiple task executions for a task. It should
     # accept inbound task execution rather than a spec.
-    def _get_induced_join_state(self, inbound_task_spec, join_task_spec):
+    def _get_induced_join_state(self, in_task_spec, in_task_ex,
+                                join_task_spec):
         join_task_name = join_task_spec.get_name()
 
-        in_task_ex = self._find_task_execution_by_name(
-            inbound_task_spec.get_name()
-        )
-
         if not in_task_ex:
-            possible, depth = self._possible_route(inbound_task_spec)
+            possible, depth = self._possible_route(in_task_spec)
 
             if possible:
-                return states.WAITING, depth
+                return states.WAITING, depth, None
             else:
-                return states.ERROR, depth
+                return states.ERROR, depth, 'impossible route'
 
         if not states.is_completed(in_task_ex.state):
-            return states.WAITING, 1
+            return states.WAITING, 1, None
 
-        if join_task_name not in self._find_next_task_names(in_task_ex):
-            return states.ERROR, 1
+        # [(task name, params, event name), ...]
+        next_tasks_tuples = self._find_next_tasks(in_task_ex)
 
-        return states.RUNNING, 1
+        next_tasks_dict = {tup[0]: tup[2] for tup in next_tasks_tuples}
+
+        if join_task_name not in next_tasks_dict:
+            return states.ERROR, 1, "not triggered"
+
+        return states.RUNNING, 1, next_tasks_dict[join_task_name]
 
     def _find_task_execution_by_name(self, t_name):
         # Note: in case of 'join' completion check it's better to initialize
         # the entire task_executions collection to avoid too many DB queries.
+
         t_execs = lookup_utils.find_task_executions_by_name(
             self.wf_ex.id,
             t_name

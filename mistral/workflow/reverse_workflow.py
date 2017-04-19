@@ -116,7 +116,7 @@ class ReverseWorkflowController(base.WorkflowController):
 
     def get_logical_task_state(self, task_ex):
         # TODO(rakhmerov): Implement.
-        return task_ex.state, task_ex.state_info, 0
+        return base.TaskLogicalState(task_ex.state, task_ex.state_info)
 
     def is_error_handled_for(self, task_ex):
         return task_ex.state != states.ERROR

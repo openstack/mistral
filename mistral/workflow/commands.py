@@ -65,20 +65,26 @@ class RunTask(WorkflowCommand):
 
     def __repr__(self):
         return (
-            "Run task [workflow=%s, task=%s, waif_flag=%s]"
-            % (self.wf_ex.name, self.task_spec.get_name(), self.wait)
+            "Run task [workflow=%s, task=%s, waif_flag=%s, triggered_by=%s]" %
+            (
+                self.wf_ex.name,
+                self.task_spec.get_name(),
+                self.wait,
+                self.triggered_by
+            )
         )
 
 
 class RunExistingTask(WorkflowCommand):
     """Command for running already existent task."""
 
-    def __init__(self, wf_ex, wf_spec, task_ex, reset=True):
+    def __init__(self, wf_ex, wf_spec, task_ex, reset=True, triggered_by=None):
         super(RunExistingTask, self).__init__(
             wf_ex,
             wf_spec,
             spec_parser.get_task_spec(task_ex.spec),
-            task_ex.in_context
+            task_ex.in_context,
+            triggered_by=triggered_by
         )
 
         self.task_ex = task_ex
