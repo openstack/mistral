@@ -81,7 +81,8 @@ function configure_mistral {
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_user $MISTRAL_ADMIN_USER
     iniset $MISTRAL_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
-    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri "http://${KEYSTONE_AUTH_HOST}:5000/v3"
+    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_AUTH_URI_V3
+    iniset $MISTRAL_CONF_FILE keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
 
     # Setup RabbitMQ credentials
     iniset $MISTRAL_CONF_FILE oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
