@@ -42,7 +42,9 @@ class ProcessCronTriggerTest(base.EngineTestCase):
     @mock.patch.object(security,
                        'create_trust',
                        type('trust', (object,), {'id': 'my_trust_id'}))
-    def test_start_workflow(self):
+    @mock.patch('mistral.rpc.clients.get_engine_client')
+    def test_start_workflow(self, rpc_mock):
+
         cfg.CONF.set_default('auth_enable', True, group='pecan')
 
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
@@ -66,6 +68,13 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         next_execution_time_before = next_trigger.next_execution_time
 
         periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+
+        start_workflow_mock = rpc_mock.return_value.start_workflow
+        start_workflow_mock.assert_called_once()
+        self.assertIn(
+            t.id,
+            start_workflow_mock.mock_calls[0][2]['description']
+        )
 
         next_triggers = triggers.get_next_cron_triggers()
 

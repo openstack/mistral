@@ -61,7 +61,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                         trigger.workflow.name,
                         trigger.workflow_input,
                         description="Workflow execution created "
-                                    "by cron trigger.",
+                                    "by cron trigger '(%s)'." % trigger.id,
                         **trigger.workflow_params
                     )
             except Exception:
