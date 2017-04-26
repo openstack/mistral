@@ -17,10 +17,10 @@ Installation
 
 The following are the steps to install Mistral on debian-based systems.
 
-To install Mistral, you have to install the following prerequisites:
+To install Mistral, you have to install the following prerequisites::
 
  $ apt-get install python-dev python-setuptools libffi-dev \
-    libxslt1-dev libxml2-dev libyaml-dev libssl-dev
+   libxslt1-dev libxml2-dev libyaml-dev libssl-dev
 
 **Mistral can be used without authentication at all or it can work with
 OpenStack.**
@@ -69,9 +69,9 @@ an OpenStack environment.
    * Create the database and grant privileges::
 
      $ mysql -u root -p
-       CREATE DATABASE mistral;
-       USE mistral
-       GRANT ALL ON mistral.* TO 'root'@'localhost';
+     mysql> CREATE DATABASE mistral;
+     mysql> USE mistral
+     mysql> GRANT ALL ON mistral.* TO 'root'@'localhost';
 
 #. Generate ``mistral.conf`` file::
 
@@ -157,7 +157,7 @@ Running Mistral API server
 To run Mistral API server::
 
   $ tox -evenv -- python mistral/cmd/launch.py \
-      --server api --config-file <path_to_config>
+    --server api --config-file <path_to_config>
 
 Running Mistral Engines
 -----------------------
@@ -165,7 +165,7 @@ Running Mistral Engines
 To run Mistral Engine::
 
   $ tox -evenv -- python mistral/cmd/launch.py \
-      --server engine --config-file <path_to_config>
+    --server engine --config-file <path_to_config>
 
 Running Mistral Task Executors
 ------------------------------
@@ -173,7 +173,7 @@ Running Mistral Task Executors
 To run Mistral Task Executor instance::
 
   $ tox -evenv -- python mistral/cmd/launch.py \
-      --server executor --config-file <path_to_config>
+    --server executor --config-file <path_to_config>
 
 Note that at least one Engine instance and one Executor instance should be
 running in order for workflow tasks to be processed by Mistral.
@@ -201,7 +201,7 @@ To run more than one server (API, Engine, or Task Executor) on the same
 process::
 
   $ tox -evenv -- python mistral/cmd/launch.py \
-      --server api,engine --config-file <path_to_config>
+    --server api,engine --config-file <path_to_config>
 
 The value for the ``--server`` option can be a comma-delimited list. The valid
 options are ``all`` (which is the default if not specified) or any combination
