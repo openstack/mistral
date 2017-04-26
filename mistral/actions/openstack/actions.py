@@ -73,23 +73,26 @@ zaqarclient = _try_import('zaqarclient.queues.v2.client')
 
 
 class NovaAction(base.OpenStackAction):
+    _service_name = 'nova'
+    _service_type = 'compute'
+
     def _create_client(self):
         ctx = context.ctx()
 
         LOG.debug("Nova action security context: %s" % ctx)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
-        nova_endpoint = keystone_utils.get_endpoint_for_project('nova')
+        nova_endpoint = self.get_service_endpoint()
 
         client = novaclient.Client(
             2,
             username=None,
             api_key=None,
-            endpoint_type=CONF.os_actions_endpoint_type,
+            endpoint_type=CONF.openstack_actions.os_actions_endpoint_type,
             service_type='compute',
             auth_token=ctx.auth_token,
             tenant_id=ctx.project_id,
-            region_name=keystone_endpoint.region,
+            region_name=nova_endpoint.region,
             auth_url=keystone_endpoint.url,
             insecure=ctx.insecure
         )
@@ -107,6 +110,7 @@ class NovaAction(base.OpenStackAction):
 
 
 class GlanceAction(base.OpenStackAction):
+    _service_name = 'glance'
 
     @classmethod
     def _get_client_class(cls):
@@ -117,7 +121,7 @@ class GlanceAction(base.OpenStackAction):
 
         LOG.debug("Glance action security context: %s" % ctx)
 
-        glance_endpoint = keystone_utils.get_endpoint_for_project('glance')
+        glance_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
             glance_endpoint.url,
@@ -179,6 +183,7 @@ class KeystoneAction(base.OpenStackAction):
 
 
 class CeilometerAction(base.OpenStackAction):
+    _service_name = 'ceilometer'
 
     @classmethod
     def _get_client_class(cls):
@@ -189,9 +194,7 @@ class CeilometerAction(base.OpenStackAction):
 
         LOG.debug("Ceilometer action security context: %s" % ctx)
 
-        ceilometer_endpoint = keystone_utils.get_endpoint_for_project(
-            'ceilometer'
-        )
+        ceilometer_endpoint = self.get_service_endpoint()
 
         endpoint_url = keystone_utils.format_url(
             ceilometer_endpoint.url,
@@ -212,6 +215,7 @@ class CeilometerAction(base.OpenStackAction):
 
 
 class HeatAction(base.OpenStackAction):
+    _service_name = 'heat'
 
     @classmethod
     def _get_client_class(cls):
@@ -222,7 +226,7 @@ class HeatAction(base.OpenStackAction):
 
         LOG.debug("Heat action security context: %s" % ctx)
 
-        heat_endpoint = keystone_utils.get_endpoint_for_project('heat')
+        heat_endpoint = self.get_service_endpoint()
 
         endpoint_url = keystone_utils.format_url(
             heat_endpoint.url,
@@ -246,6 +250,7 @@ class HeatAction(base.OpenStackAction):
 
 
 class NeutronAction(base.OpenStackAction):
+    _service_name = 'neutron'
 
     @classmethod
     def _get_client_class(cls):
@@ -256,7 +261,7 @@ class NeutronAction(base.OpenStackAction):
 
         LOG.debug("Neutron action security context: %s" % ctx)
 
-        neutron_endpoint = keystone_utils.get_endpoint_for_project('neutron')
+        neutron_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
             endpoint_url=neutron_endpoint.url,
@@ -268,6 +273,7 @@ class NeutronAction(base.OpenStackAction):
 
 
 class CinderAction(base.OpenStackAction):
+    _service_type = 'volumev2'
 
     @classmethod
     def _get_client_class(cls):
@@ -278,9 +284,7 @@ class CinderAction(base.OpenStackAction):
 
         LOG.debug("Cinder action security context: %s" % ctx)
 
-        cinder_endpoint = keystone_utils.get_endpoint_for_project(
-            service_type='volumev2'
-        )
+        cinder_endpoint = self.get_service_endpoint()
 
         cinder_url = keystone_utils.format_url(
             cinder_endpoint.url,
@@ -348,6 +352,7 @@ class MistralAction(base.OpenStackAction):
 
 
 class TroveAction(base.OpenStackAction):
+    _service_type = 'database'
 
     @classmethod
     def _get_client_class(cls):
@@ -358,9 +363,7 @@ class TroveAction(base.OpenStackAction):
 
         LOG.debug("Trove action security context: %s" % ctx)
 
-        trove_endpoint = keystone_utils.get_endpoint_for_project(
-            service_type='database'
-        )
+        trove_endpoint = self.get_service_endpoint()
 
         trove_url = keystone_utils.format_url(
             trove_endpoint.url,
@@ -387,6 +390,7 @@ class TroveAction(base.OpenStackAction):
 
 
 class IronicAction(base.OpenStackAction):
+    _service_name = 'ironic'
 
     @classmethod
     def _get_client_class(cls):
@@ -397,7 +401,7 @@ class IronicAction(base.OpenStackAction):
 
         LOG.debug("Ironic action security context: %s" % ctx)
 
-        ironic_endpoint = keystone_utils.get_endpoint_for_project('ironic')
+        ironic_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
             ironic_endpoint.url,
@@ -679,6 +683,7 @@ class BarbicanAction(base.OpenStackAction):
 
 
 class DesignateAction(base.OpenStackAction):
+    _service_type = 'dns'
 
     @classmethod
     def _get_client_class(cls):
@@ -689,9 +694,7 @@ class DesignateAction(base.OpenStackAction):
 
         LOG.debug("Designate action security context: %s" % ctx)
 
-        designate_endpoint = keystone_utils.get_endpoint_for_project(
-            service_type='dns'
-        )
+        designate_endpoint = self.get_service_endpoint()
 
         designate_url = keystone_utils.format_url(
             designate_endpoint.url,
@@ -747,6 +750,7 @@ class MagnumAction(base.OpenStackAction):
 
 
 class MuranoAction(base.OpenStackAction):
+    _service_name = 'murano'
 
     @classmethod
     def _get_client_class(cls):
@@ -758,7 +762,7 @@ class MuranoAction(base.OpenStackAction):
         LOG.debug("Murano action security context: %s" % ctx)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
-        murano_endpoint = keystone_utils.get_endpoint_for_project('murano')
+        murano_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
             endpoint=murano_endpoint.url,
@@ -775,6 +779,7 @@ class MuranoAction(base.OpenStackAction):
 
 
 class TackerAction(base.OpenStackAction):
+    _service_name = 'tacker'
 
     @classmethod
     def _get_client_class(cls):
@@ -786,7 +791,7 @@ class TackerAction(base.OpenStackAction):
         LOG.debug("Tacker action security context: %s" % ctx)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
-        tacker_endpoint = keystone_utils.get_endpoint_for_project('tacker')
+        tacker_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
             endpoint_url=tacker_endpoint.url,
@@ -803,6 +808,7 @@ class TackerAction(base.OpenStackAction):
 
 
 class SenlinAction(base.OpenStackAction):
+    _service_name = 'senlin'
 
     @classmethod
     def _get_client_class(cls):
@@ -814,7 +820,7 @@ class SenlinAction(base.OpenStackAction):
         LOG.debug("Senlin action security context: %s" % ctx)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
-        senlin_endpoint = keystone_utils.get_endpoint_for_project('senlin')
+        senlin_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
             endpoint_url=senlin_endpoint.url,
@@ -831,6 +837,7 @@ class SenlinAction(base.OpenStackAction):
 
 
 class AodhAction(base.OpenStackAction):
+    _service_name = 'aodh'
 
     @classmethod
     def _get_client_class(cls):
@@ -841,9 +848,7 @@ class AodhAction(base.OpenStackAction):
 
         LOG.debug("Aodh action security context: %s" % ctx)
 
-        aodh_endpoint = keystone_utils.get_endpoint_for_project(
-            'aodh'
-        )
+        aodh_endpoint = self.get_service_endpoint()
 
         endpoint_url = keystone_utils.format_url(
             aodh_endpoint.url,
@@ -864,6 +869,7 @@ class AodhAction(base.OpenStackAction):
 
 
 class GnocchiAction(base.OpenStackAction):
+    _service_name = 'gnocchi'
 
     @classmethod
     def _get_client_class(cls):
@@ -874,9 +880,7 @@ class GnocchiAction(base.OpenStackAction):
 
         LOG.debug("Gnocchi action security context: %s" % ctx)
 
-        gnocchi_endpoint = keystone_utils.get_endpoint_for_project(
-            'gnocchi'
-        )
+        gnocchi_endpoint = self.get_service_endpoint()
 
         endpoint_url = keystone_utils.format_url(
             gnocchi_endpoint.url,

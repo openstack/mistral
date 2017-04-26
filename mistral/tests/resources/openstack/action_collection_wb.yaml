@@ -14,8 +14,8 @@ workflows:
   nova:
     type: direct
     tasks:
-      networks_list:
-        action: nova.networks_list
+      flavors_list:
+        action: nova.flavors_list
         publish:
            result: <% task().result %>
 

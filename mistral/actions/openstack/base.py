@@ -40,9 +40,12 @@ class OpenStackAction(base.Action):
     client_method_name = None
     _clients = LRUCache(100)
     _lock = Lock()
+    _service_name = None
+    _service_type = None
 
     def __init__(self, **kwargs):
         self._kwargs_for_run = kwargs
+        self.action_region = self._kwargs_for_run.pop('action_region', None)
 
     @abc.abstractmethod
     def _create_client(self):
@@ -119,6 +122,20 @@ class OpenStackAction(base.Action):
         LOG.debug("cache not expiring soon, will return cached client")
 
         return client
+
+    def get_service_endpoint(self):
+        """Get OpenStack service endpoint.
+
+        'service_name' and 'service_type' are defined in specific OpenStack
+        service action.
+        """
+        endpoint = keystone_utils.get_endpoint_for_project(
+            service_name=self._service_name,
+            service_type=self._service_type,
+            region_name=self.action_region
+        )
+
+        return endpoint
 
     def run(self):
         try:

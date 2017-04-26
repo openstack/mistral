@@ -280,7 +280,7 @@ class PythonAction(Action):
         if self.action_def.action_class:
             self._inject_action_ctx_for_validating(input_dict)
 
-        # NOTE(xylan): Don't validate action input if action initialization
+        # NOTE(kong): Don't validate action input if action initialization
         # method contains ** argument.
         if '**' in self.action_def.input:
             return

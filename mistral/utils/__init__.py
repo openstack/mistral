@@ -381,7 +381,7 @@ def get_dict_from_entries(entries):
         if isinstance(e, dict):
             result.update(e)
         else:
-            # NOTE(xylan): we put NotDefined here as the value of
+            # NOTE(kong): we put NotDefined here as the value of
             # param without value specified, to distinguish from
             # the valid values such as None, ''(empty string), etc.
             result[e] = NotDefined

@@ -68,6 +68,56 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
     base_action_class = None
 
     @classmethod
+    def prepare_action_inputs(cls, origin_inputs, added=[]):
+        """Modify action input string.
+
+        Sometimes we need to change the default action input definition for
+        OpenStack actions in order to make the workflow more powerful.
+
+        Examples::
+
+            >>> prepare_action_inputs('a,b,c', added=['region=RegionOne'])
+            a, b, c, region=RegionOne
+            >>> prepare_action_inputs('a,b,c=1', added=['region=RegionOne'])
+            a, b, region=RegionOne, c=1
+            >>> prepare_action_inputs('a,b,c=1,**kwargs',
+                                      added=['region=RegionOne'])
+            a, b, region=RegionOne, c=1, **kwargs
+            >>> prepare_action_inputs('**kwargs', added=['region=RegionOne'])
+            region=RegionOne, **kwargs
+            >>> prepare_action_inputs('', added=['region=RegionOne'])
+            region=RegionOne
+
+        :param origin_inputs: A string consists of action inputs, separated by
+            comma.
+        :param added: (Optional) A list of params to add to input string.
+        :return: The new action input string.
+        """
+        if not origin_inputs:
+            return ", ".join(added)
+
+        inputs = [i.strip() for i in origin_inputs.split(',')]
+        kwarg_index = None
+
+        for index, input in enumerate(inputs):
+            if "=" in input:
+                kwarg_index = index
+            if "**" in input:
+                kwarg_index = index - 1
+
+        kwarg_index = len(inputs) if kwarg_index is None else kwarg_index
+        kwarg_index = kwarg_index + 1 if kwarg_index < 0 else kwarg_index
+
+        for a in added:
+            if "=" not in a:
+                inputs.insert(0, a)
+                kwarg_index += 1
+            else:
+                inputs.insert(kwarg_index, a)
+
+        return ", ".join(inputs)
+
+    @classmethod
     def create_action_class(cls, method_name):
         if not method_name:
             return None
@@ -95,6 +145,15 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
                 continue
 
             arg_list = i_u.get_arg_list_as_str(client_method)
+
+            # Support specifying region for OpenStack actions.
+            modules = CONF.openstack_actions.modules_support_region
+            if cls.action_namespace in modules:
+                arg_list = cls.prepare_action_inputs(
+                    arg_list,
+                    added=['action_region=""']
+                )
+
             description = i_u.get_docstring(client_method)
 
             action_classes.append(

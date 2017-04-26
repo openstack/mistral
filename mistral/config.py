@@ -106,14 +106,6 @@ rpc_response_timeout_opt = cfg.IntOpt(
     help=_('Seconds to wait for a response from a call.')
 )
 
-os_endpoint_type = cfg.StrOpt(
-    'os-actions-endpoint-type',
-    default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'public'),
-    choices=['public', 'admin', 'internal'],
-    help=_('Type of endpoint in identity service catalog to use for'
-           ' communication with OpenStack services.')
-)
-
 expiration_token_duration = cfg.IntOpt(
     'expiration_token_duration',
     default=30,
@@ -288,6 +280,24 @@ keycloak_oidc_opts = [
     )
 ]
 
+openstack_actions_opts = [
+    cfg.StrOpt(
+        'os-actions-endpoint-type',
+        default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'public'),
+        choices=['public', 'admin', 'internal'],
+        deprecated_group='DEFAULT',
+        help=_('Type of endpoint in identity service catalog to use for'
+               ' communication with OpenStack services.')
+    ),
+    cfg.ListOpt(
+        'modules-support-region',
+        default=['nova', 'glance', 'ceilometer', 'heat', 'neutron', 'cinder',
+                 'trove', 'ironic', 'designate', 'murano', 'tacker', 'senlin',
+                 'aodh', 'gnocchi'],
+        help=_('List of module names that support region in actions.')
+    )
+]
+
 # note: this command line option is used only from sync_db and
 # mistral-db-manage
 os_actions_mapping_path = cfg.StrOpt(
@@ -311,9 +321,14 @@ COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
+OPENSTACK_ACTIONS_GROUP = 'openstack_actions'
 
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(auth_type_opt)
+CONF.register_opt(js_impl_opt)
+CONF.register_opt(rpc_impl_opt)
+CONF.register_opt(rpc_response_timeout_opt)
+CONF.register_opt(expiration_token_duration)
 
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
@@ -326,12 +341,8 @@ CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
-CONF.register_opt(js_impl_opt)
-CONF.register_opt(rpc_impl_opt)
-CONF.register_opt(rpc_response_timeout_opt)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
-CONF.register_opt(os_endpoint_type)
-CONF.register_opt(expiration_token_duration)
+CONF.register_opts(openstack_actions_opts, group=OPENSTACK_ACTIONS_GROUP)
 
 CLI_OPTS = [
     use_debugger_opt,
@@ -341,7 +352,7 @@ CLI_OPTS = [
 default_group_opts = itertools.chain(
     CLI_OPTS,
     [wf_trace_log_name_opt, auth_type_opt, js_impl_opt, rpc_impl_opt,
-     os_endpoint_type, rpc_response_timeout_opt, expiration_token_duration]
+     rpc_response_timeout_opt, expiration_token_duration]
 )
 
 CONF.register_cli_opts(CLI_OPTS)
@@ -368,6 +379,7 @@ def list_opts():
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
+        (OPENSTACK_ACTIONS_GROUP, openstack_actions_opts),
         (None, default_group_opts)
     ]
 

@@ -68,7 +68,8 @@ def client_for_trusts(trust_id):
     return _admin_client(trust_id=trust_id)
 
 
-def get_endpoint_for_project(service_name=None, service_type=None):
+def get_endpoint_for_project(service_name=None, service_type=None,
+                             region_name=None):
     if service_name is None and service_type is None:
         raise exceptions.MistralException(
             "Either 'service_name' or 'service_type' must be provided."
@@ -78,19 +79,27 @@ def get_endpoint_for_project(service_name=None, service_type=None):
 
     service_catalog = obtain_service_catalog(ctx)
 
+    # When region_name is not passed, first get from context as region_name
+    # could be passed to rest api in http header ('X-Region-Name'). Otherwise,
+    # just get region from mistral configuration.
+    region = (region_name or ctx.region_name or
+              CONF.keystone_authtoken.region_name)
+
     service_endpoints = service_catalog.get_endpoints(
         service_name=service_name,
         service_type=service_type,
-        region_name=ctx.region_name
+        region_name=region
     )
 
     endpoint = None
+    os_actions_endpoint_type = CONF.openstack_actions.os_actions_endpoint_type
+
     for endpoints in six.itervalues(service_endpoints):
         for ep in endpoints:
             # is V3 interface?
             if 'interface' in ep:
                 interface_type = ep['interface']
-                if CONF.os_actions_endpoint_type in interface_type:
+                if os_actions_endpoint_type in interface_type:
                     endpoint = ks_endpoints.Endpoint(
                         None,
                         ep,
@@ -114,7 +123,7 @@ def get_endpoint_for_project(service_name=None, service_type=None):
         raise exceptions.MistralException(
             "No endpoints found [service_name=%s, service_type=%s,"
             " region_name=%s]"
-            % (service_name, service_type, ctx.region_name)
+            % (service_name, service_type, region)
         )
     else:
         return endpoint
