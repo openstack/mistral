@@ -20,6 +20,15 @@ from mistral.utils import inspect_utils as i_u
 from mistral.workflow import commands
 
 
+class ClassWithProperties(object):
+
+    a = 1
+
+    @property
+    def prop(self):
+        pass
+
+
 class InspectUtilsTest(base.BaseTest):
     def test_get_parameters_str(self):
         action_class = std_actions.HTTPAction
@@ -48,3 +57,9 @@ class InspectUtilsTest(base.BaseTest):
         parameters_str = i_u.get_arg_list_as_str(test_func)
 
         self.assertEqual("foo, bar=null", parameters_str)
+
+    def test_get_public_fields(self):
+
+        attrs = i_u.get_public_fields(ClassWithProperties)
+
+        self.assertEqual(attrs, {'a': 1})
