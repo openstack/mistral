@@ -16,7 +16,6 @@
 import base64
 
 from keystoneclient.v3 import client as keystone_client
-import logging
 from oslo_config import cfg
 import oslo_messaging as messaging
 from oslo_serialization import jsonutils
@@ -29,7 +28,6 @@ from mistral import exceptions as exc
 from mistral import serialization
 from mistral import utils
 
-LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 ALLOWED_WITHOUT_AUTH = ['/', '/v2/']

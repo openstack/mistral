@@ -13,13 +13,9 @@
 #    limitations under the License.
 
 from eventlet import event
-from oslo_log import log
 from oslo_service import service
 
 from mistral.service import coordination
-
-
-LOG = log.getLogger(__name__)
 
 
 class MistralService(service.Service):

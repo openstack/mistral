@@ -15,7 +15,6 @@
 #    limitations under the License.
 
 from oslo_config import cfg
-from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral import context as auth_ctx
@@ -23,9 +22,6 @@ from mistral.engine import base as eng
 from mistral.event_engine import base as evt_eng
 from mistral.executors import base as exe
 from mistral.rpc import base
-
-
-LOG = logging.getLogger(__name__)
 
 
 _ENGINE_CLIENT = None

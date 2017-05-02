@@ -12,14 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from oslo_log import log as logging
 import oslo_messaging as messaging
 
 from mistral import context as ctx
 from mistral.rpc import base as rpc
-
-
-LOG = logging.getLogger(__name__)
 
 
 class OsloRPCServer(rpc.RPCServer):
