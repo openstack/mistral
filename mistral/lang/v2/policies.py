@@ -18,25 +18,17 @@ from mistral.lang.v2 import base
 from mistral.lang.v2 import retry_policy
 
 
-RETRY_SCHEMA = retry_policy.RetrySpec.get_schema(includes=None)
-WAIT_BEFORE_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
-WAIT_AFTER_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
-TIMEOUT_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
-PAUSE_BEFORE_SCHEMA = types.EXPRESSION_OR_BOOLEAN
-CONCURRENCY_SCHEMA = types.EXPRESSION_OR_POSITIVE_INTEGER
-
-
 class PoliciesSpec(base.BaseSpec):
     # See http://json-schema.org
     _schema = {
         "type": "object",
         "properties": {
-            "retry": RETRY_SCHEMA,
-            "wait-before": WAIT_BEFORE_SCHEMA,
-            "wait-after": WAIT_AFTER_SCHEMA,
-            "timeout": TIMEOUT_SCHEMA,
-            "pause-before": PAUSE_BEFORE_SCHEMA,
-            "concurrency": CONCURRENCY_SCHEMA,
+            "retry": types.ANY,
+            "wait-before": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "wait-after": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "pause-before": types.EXPRESSION_OR_BOOLEAN,
+            "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
         },
         "additionalProperties": False
     }

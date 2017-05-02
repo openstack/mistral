@@ -24,8 +24,7 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
     def test_base_required(self):
         actions = {'actions': {'a1': {}}}
 
-        exception = self._parse_dsl_spec(changes=actions,
-                                         expect_error=True)
+        exception = self._parse_dsl_spec(changes=actions, expect_error=True)
 
         self.assertIn("'base' is a required property", exception.message)
 
@@ -45,8 +44,7 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
         ]
 
         for actions, expect_error in tests:
-            self._parse_dsl_spec(changes=actions,
-                                 expect_error=expect_error)
+            self._parse_dsl_spec(changes=actions, expect_error=expect_error)
 
     def test_base_input(self):
         tests = [
@@ -66,9 +64,10 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
 
         for base_inputs, expect_error in tests:
             overlay = {'actions': copy.deepcopy(actions)}
+
             utils.merge_dicts(overlay['actions']['a1'], base_inputs)
-            self._parse_dsl_spec(changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(changes=overlay, expect_error=expect_error)
 
     def test_input(self):
         tests = [
@@ -93,9 +92,10 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
 
         for inputs, expect_error in tests:
             overlay = {'actions': copy.deepcopy(actions)}
+
             utils.merge_dicts(overlay['actions']['a1'], inputs)
-            self._parse_dsl_spec(changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(changes=overlay, expect_error=expect_error)
 
     def test_output(self):
         tests = [
@@ -120,6 +120,7 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
 
         for outputs, expect_error in tests:
             overlay = {'actions': copy.deepcopy(actions)}
+
             utils.merge_dicts(overlay['actions']['a1'], outputs)
-            self._parse_dsl_spec(changes=overlay,
-                                 expect_error=expect_error)
+
+            self._parse_dsl_spec(changes=overlay, expect_error=expect_error)

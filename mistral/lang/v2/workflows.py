@@ -30,14 +30,11 @@ class WorkflowSpec(base.BaseSpec):
 
     _polymorphic_key = ('type', 'direct')
 
-    _task_defaults_schema = task_defaults.TaskDefaultsSpec.get_schema(
-        includes=None)
-
     _meta_schema = {
         "type": "object",
         "properties": {
             "type": types.WORKFLOW_TYPE,
-            "task-defaults": _task_defaults_schema,
+            "task-defaults": types.NONEMPTY_DICT,
             "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
             "output": types.NONEMPTY_DICT,
             "output-on-error": types.NONEMPTY_DICT,
@@ -149,8 +146,7 @@ class DirectWorkflowSpec(WorkflowSpec):
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
-                    "^\w+$":
-                        tasks.DirectWorkflowTaskSpec.get_schema(includes=None)
+                    "^\w+$": types.NONEMPTY_DICT
                 }
             },
         }
@@ -362,8 +358,7 @@ class ReverseWorkflowSpec(WorkflowSpec):
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
-                    "^\w+$":
-                        tasks.ReverseWorkflowTaskSpec.get_schema(includes=None)
+                    "^\w+$": types.NONEMPTY_DICT
                 }
             },
         }

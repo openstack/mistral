@@ -31,7 +31,7 @@ class OnClauseSpec(base.BaseSpec):
     _advanced_schema = {
         "type": "object",
         "properties": {
-            "publish": publish.PublishSpec.get_schema(includes=None),
+            "publish": types.NONEMPTY_DICT,
             "next": _simple_schema,
         },
         "additionalProperties": False

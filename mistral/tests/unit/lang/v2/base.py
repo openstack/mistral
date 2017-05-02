@@ -111,7 +111,7 @@ class WorkbookSpecValidationTestCase(WorkflowSpecValidationTestCase):
             'name': 'test_wb'
         }
 
-    def _parse_dsl_spec(self, dsl_file=None,
+    def _parse_dsl_spec(self, dsl_file=None, add_tasks=False,
                         changes=None, expect_error=False):
         return super(WorkbookSpecValidationTestCase, self)._parse_dsl_spec(
             dsl_file=dsl_file, add_tasks=False, changes=changes,
