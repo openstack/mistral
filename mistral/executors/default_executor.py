@@ -16,7 +16,10 @@
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral_lib import actions as mistral_lib
+
 from mistral.actions import action_factory as a_f
+from mistral import context
 from mistral import exceptions as exc
 from mistral.executors import base
 from mistral.rpc import clients as rpc
@@ -99,7 +102,14 @@ class DefaultExecutor(base.Executor):
 
         # Run action.
         try:
-            result = action.run()
+
+            # NOTE(d0ugal): If the action is a subclass of mistral-lib we know
+            # that it expects to be passed the context. We should deprecate
+            # the builtin action class in Mistral.
+            if isinstance(action, mistral_lib.Action):
+                result = action.run(context.ctx())
+            else:
+                result = action.run()
 
             # Note: it's made for backwards compatibility with already
             # existing Mistral actions which don't return result as
