@@ -21,7 +21,6 @@ import oslo_messaging as messaging
 
 
 class KombuHosts(object):
-
     def __init__(self, conf):
         self._conf = conf
 
@@ -35,10 +34,12 @@ class KombuHosts(object):
         else:
             username = self._conf.oslo_messaging_rabbit.rabbit_userid
             password = self._conf.oslo_messaging_rabbit.rabbit_password
+
             self._hosts = []
 
             for host in self._conf.oslo_messaging_rabbit.rabbit_hosts:
                 hostname, port = host.split(':')
+
                 self._hosts.append(messaging.TransportHost(
                     hostname,
                     port,

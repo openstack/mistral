@@ -17,8 +17,8 @@ from oslo_config import cfg
 CONF = cfg.CONF
 
 
-def get_rpc_backend(transport):
-    if transport:
-        return transport.transport
+def get_rpc_backend(transport_url):
+    if transport_url:
+        return transport_url.transport
 
     return CONF.rpc_backend

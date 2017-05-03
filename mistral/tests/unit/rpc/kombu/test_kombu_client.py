@@ -35,9 +35,18 @@ class KombuClientTestCase(base.KombuTestCase):
 
     def setUp(self):
         super(KombuClientTestCase, self).setUp()
+
         conf = mock.MagicMock()
 
+        listener_class = kombu_client.kombu_listener.KombuRPCListener
+
         kombu_client.kombu_listener.KombuRPCListener = mock.MagicMock()
+
+        def restore_listener():
+            kombu_client.kombu_listener.KombuRPCListener = listener_class
+
+        self.addCleanup(restore_listener)
+
         self.client = kombu_client.KombuRPCClient(conf)
         self.ctx = type('context', (object,), {'to_dict': lambda self: {}})()
 
@@ -50,6 +59,7 @@ class KombuClientTestCase(base.KombuTestCase):
                 })
             }
         )
+
         response = self.client.sync_call(self.ctx, 'method')
 
         self.assertEqual(response, self._RESPONSE)
@@ -67,12 +77,11 @@ class KombuClientTestCase(base.KombuTestCase):
         )
 
     def test_sync_call_result_type_error(self):
-
         def side_effect(*args, **kwargs):
-            result = {}
-            result[kombu_base.TYPE] = 'error'
-            result[kombu_base.RESULT] = TestException()
-            return result
+            return {
+                kombu_base.TYPE: 'error',
+                kombu_base.RESULT: TestException()
+            }
 
         self.client._wait_for_result = mock.MagicMock(side_effect=side_effect)
 
@@ -84,5 +93,4 @@ class KombuClientTestCase(base.KombuTestCase):
         )
 
     def test_async_call(self):
-        response = self.client.async_call(self.ctx, 'method')
-        self.assertIsNone(response)
+        self.assertIsNone(self.client.async_call(self.ctx, 'method'))

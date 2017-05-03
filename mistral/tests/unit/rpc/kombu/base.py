@@ -13,8 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_config import cfg
-
+from mistral import config as cfg
+from mistral.rpc.kombu import base as kombu_base
 from mistral.tests.unit import base
 
 
@@ -22,5 +22,7 @@ class KombuTestCase(base.BaseTest):
 
     def setUp(self):
         super(KombuTestCase, self).setUp()
+
+        kombu_base.set_transport_options(check_backend=False)
 
         cfg.CONF.set_default('rpc_backend', 'kombu')

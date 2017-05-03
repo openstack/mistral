@@ -20,7 +20,6 @@ import time
 import kombu
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging as messaging
 from stevedore import driver
 
 from mistral import context as auth_ctx
@@ -31,7 +30,9 @@ from mistral.rpc.kombu import kombu_hosts
 
 
 LOG = logging.getLogger(__name__)
+
 CONF = cfg.CONF
+
 _pool_opts = [
     cfg.IntOpt('executor_thread_pool_size',
                default=64,
@@ -45,14 +46,11 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
     def __init__(self, conf):
         super(KombuRPCServer, self).__init__(conf)
 
-        self._register_mistral_serialization()
         CONF.register_opts(_pool_opts)
 
-        self._transport_url = messaging.TransportURL.parse(
-            CONF,
-            CONF.transport_url
-        )
-        self._check_backend()
+        kombu_base.set_transport_options()
+
+        self._register_mistral_serialization()
 
         self.topic = conf.topic
         self.server_id = conf.host
@@ -166,6 +164,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
     def wait(self):
         self._stopped.wait()
+
         try:
             self._worker.shutdown(wait=True)
         except AttributeError as e:
@@ -263,6 +262,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         mgr = driver.DriverManager('kombu_driver.executors', executor)
 
         executor_opts = {}
+
         if executor == 'threading':
             executor_opts['max_workers'] = self._executor_threads
 

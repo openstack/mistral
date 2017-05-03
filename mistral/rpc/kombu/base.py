@@ -14,6 +14,9 @@
 
 import kombu
 
+import oslo_messaging as messaging
+
+from mistral import config as cfg
 from mistral import exceptions as exc
 from mistral import serialization as mistral_serialization
 from mistral.utils import rpc_utils
@@ -24,10 +27,26 @@ CORR_ID = 'kombu_rpc_correlation_id'
 TYPE = 'kombu_rpc_type'
 
 
+CONF = cfg.CONF
+
+
+def set_transport_options(check_backend=True):
+    # We can be sure that all needed transport options are registered
+    # only if we at least once called method get_transport(). Because
+    # this is the method that registers them.
+    messaging.get_transport(CONF)
+
+    backend = rpc_utils.get_rpc_backend(
+        messaging.TransportURL.parse(CONF, CONF.transport_url)
+    )
+
+    if check_backend and backend not in ['rabbit', 'kombu']:
+        raise exc.MistralException("Unsupported backend: %s" % backend)
+
+
 class Base(object):
     """Base class for Client and Server."""
     def __init__(self):
-        self._transport_url = None
         self.serializer = None
 
     @staticmethod
@@ -111,17 +130,9 @@ class Base(object):
         )
 
     def _register_mistral_serialization(self):
-        """Adds mistral serializer to available serializers in kombu.
+        """Adds mistral serializer to available serializers in kombu."""
 
-        :return: None
-        """
         self.serializer = mistral_serialization.get_polymorphic_serializer()
-
-    def _check_backend(self):
-        backend = rpc_utils.get_rpc_backend(self._transport_url)
-
-        if backend not in ['rabbit', 'kombu']:
-            raise exc.MistralException("Unsupported backend: %s" % backend)
 
     def _serialize_message(self, kwargs):
         result = {}
