@@ -47,9 +47,16 @@ def client():
 def _admin_client(trust_id=None, project_name=None):
     auth_url = CONF.keystone_authtoken.auth_uri
 
+    username = (
+        CONF.keystone_authtoken.admin_user or
+        CONF.keystone_authtoken.username)
+    password = (
+        CONF.keystone_authtoken.admin_password or
+        CONF.keystone_authtoken.password)
+
     cl = ks_client.Client(
-        username=CONF.keystone_authtoken.admin_user,
-        password=CONF.keystone_authtoken.admin_password,
+        username=username,
+        password=password,
         project_name=project_name,
         auth_url=auth_url,
         trust_id=trust_id
@@ -168,7 +175,9 @@ def format_url(url_template, values):
 
 
 def is_token_trust_scoped(auth_token):
-    admin_project_name = CONF.keystone_authtoken.admin_tenant_name
+    admin_project_name = (
+        CONF.keystone_authtoken.admin_tenant_name or
+        CONF.keystone_authtoken.project_name)
     keystone_client = _admin_client(project_name=admin_project_name)
 
     token_info = keystone_client.tokens.validate(auth_token)
@@ -179,15 +188,27 @@ def is_token_trust_scoped(auth_token):
 def get_admin_session():
     """Returns a keystone session from Mistral's service credentials."""
 
+    username = (
+        CONF.keystone_authtoken.username or
+        CONF.keystone_authtoken.admin_user)
+    password = (
+        CONF.keystone_authtoken.password or
+        CONF.keystone_authtoken.admin_password)
+    project_name = (
+        CONF.keystone_authtoken.project_name or
+        CONF.keystone_authtoken.admin_tenant_name)
+    user_domain_name = (
+        CONF.keystone_authtoken.user_domain_name or 'Default')
+    project_domain_name = (
+        CONF.keystone_authtoken.project_domain_name or 'Default')
+
     auth = auth_plugins.Password(
         CONF.keystone_authtoken.auth_uri,
-        username=CONF.keystone_authtoken.admin_user,
-        password=CONF.keystone_authtoken.admin_password,
-        project_name=CONF.keystone_authtoken.admin_tenant_name,
-        # NOTE(jaosorior): Once mistral supports keystone v3 properly, we can
-        # fetch the following values from the configuration.
-        user_domain_name='Default',
-        project_domain_name='Default')
+        username=username,
+        password=password,
+        project_name=project_name,
+        user_domain_name=user_domain_name,
+        project_domain_name=project_domain_name)
 
     return ks_session.Session(auth=auth)
 

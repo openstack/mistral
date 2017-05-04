@@ -88,6 +88,8 @@ class MistralContext(BaseContext):
         "expires_at",
         "trust_id",
         "is_target",
+        "user_domain_name",
+        "project_domain_name",
     ])
 
     def __repr__(self):
@@ -206,10 +208,25 @@ def _extract_service_catalog_from_headers(headers):
 
 
 def context_from_config():
+    username = (
+        CONF.keystone_authtoken.username or
+        CONF.keystone_authtoken.admin_user)
+    password = (
+        CONF.keystone_authtoken.password or
+        CONF.keystone_authtoken.admin_password)
+    project_name = (
+        CONF.keystone_authtoken.project_name or
+        CONF.keystone_authtoken.admin_tenant_name)
+    user_domain_name = (
+        CONF.keystone_authtoken.user_domain_name or 'Default')
+    project_domain_name = (
+        CONF.keystone_authtoken.project_domain_name or 'Default')
     keystone = keystone_client.Client(
-        username=CONF.keystone_authtoken.admin_user,
-        password=CONF.keystone_authtoken.admin_password,
-        tenant_name=CONF.keystone_authtoken.admin_tenant_name,
+        username=username,
+        password=password,
+        project_name=project_name,
+        user_domain_name=user_domain_name,
+        project_domain_name=project_domain_name,
         auth_url=CONF.keystone_authtoken.auth_uri,
         is_trust_scoped=False,
     )
@@ -220,8 +237,10 @@ def context_from_config():
         user_id=keystone.user_id,
         project_id=keystone.project_id,
         auth_token=keystone.auth_token,
-        project_name=CONF.keystone_authtoken.admin_tenant_name,
-        user_name=CONF.keystone_authtoken.admin_user,
+        project_name=project_name,
+        user_name=username,
+        user_domain_name=user_domain_name,
+        project_domain_name=project_domain_name,
         is_trust_scoped=False,
     )
 
