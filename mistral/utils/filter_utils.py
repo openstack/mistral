@@ -43,7 +43,7 @@ def create_or_update_filter(column, value, filter_type='eq', _filter=None):
     :param filter_type: filter type. Filter type can be
                         'eq', 'neq', 'gt', 'gte', 'lte', 'in',
                         'lt', 'nin'. Default is 'eq'.
-    :parma _filter: Optional. If provided same filter dictionary will
+    :param _filter: Optional. If provided same filter dictionary will
                     be updated.
     :return: filter dictionary.
 
