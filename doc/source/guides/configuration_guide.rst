@@ -57,8 +57,8 @@ directory.
    and Mistral endpoints on Keystone::
 
     $ MISTRAL_URL="http://[host]:[port]/v2"
-    $ openstack service create workflow --name mistral --description 'OpenStack Workflow service'
-    $ openstack endpoint create workflow --publicurl $MISTRAL_URL --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
+    $ openstack service create workflowv2 --name mistral --description 'OpenStack Workflow service'
+    $ openstack endpoint create workflowv2 --publicurl $MISTRAL_URL --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
 
 #. Configure transport properties in the corresponding config section: for
    RabbitMQ it is **oslo_messaging_rabbit**::
