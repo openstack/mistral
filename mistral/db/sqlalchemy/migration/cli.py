@@ -19,6 +19,7 @@ from alembic import command as alembic_cmd
 from alembic import config as alembic_cfg
 from alembic import util as alembic_u
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import importutils
 import six
 import sys
@@ -34,6 +35,7 @@ importutils.try_import('mistral.api.app')
 
 
 CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 
 
 def do_alembic_command(config, cmd, *args, **kwargs):
@@ -69,6 +71,7 @@ def do_stamp(config, cmd):
 
 
 def do_populate(config, cmd):
+    LOG.info("populating db")
     action_manager.sync_db()
     workflows.sync_db()
 
@@ -127,8 +130,10 @@ def main():
     )
     # attach the Mistral conf to the Alembic conf
     config.mistral_config = CONF
+    logging.register_options(CONF)
 
     CONF(project='mistral')
+    logging.setup(CONF, 'Mistral')
     CONF.command.func(config, CONF.command.name)
 
 if __name__ == '__main__':
