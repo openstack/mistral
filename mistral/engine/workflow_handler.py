@@ -32,7 +32,7 @@ _CHECK_AND_COMPLETE_PATH = (
 )
 
 
-@profiler.trace('workflow-handler-start-workflow')
+@profiler.trace('workflow-handler-start-workflow', hide_args=True)
 def start_workflow(wf_identifier, wf_input, desc, params):
     wf = workflows.Workflow(
         db_api.get_workflow_definition(wf_identifier)
@@ -77,7 +77,7 @@ def cancel_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.CANCELLED, msg)
 
 
-@profiler.trace('workflow-handler-check-and-complete')
+@profiler.trace('workflow-handler-check-and-complete', hide_args=True)
 def _check_and_complete(wf_ex_id):
     # Note: This method can only be called via scheduler.
     with db_api.transaction():
@@ -158,7 +158,7 @@ def resume_workflow(wf_ex, env=None):
     wf.resume(env=env)
 
 
-@profiler.trace('workflow-handler-set-state')
+@profiler.trace('workflow-handler-set-state', hide_args=True)
 def set_workflow_state(wf_ex, state, msg=None):
     if states.is_completed(state):
         stop_workflow(wf_ex, state, msg)
@@ -174,7 +174,7 @@ def _get_completion_check_key(wf_ex):
     return 'wfh_on_c_a_c-%s' % wf_ex.id
 
 
-@profiler.trace('workflow-handler-schedule-check-and-complete')
+@profiler.trace('workflow-handler-schedule-check-and-complete', hide_args=True)
 def _schedule_check_and_complete(wf_ex, delay=0):
     """Schedules workflow completion check.
 
