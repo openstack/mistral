@@ -1,0 +1,16 @@
+---
+fixes:
+  - When we pass a workflow environment to workflow parameters
+    using 'env' Mistral first evaluates it assuming that it
+    can contain expressions (YAQL/Jinja) For example, one
+    environment variable can be expressed through the other.
+    In some cases it causes problems. For example, if the
+    environment is too big and has many expressions, especially
+    something like <% $ %> or <% env() %>. Also, in some cases
+    we don't want any evaluations to happen if we want to
+    have some informative text in the environment containing
+    expressions.
+    In order to address that the 'evaluate_env' workflow parameter
+    was added, defaulting to True for backwards compatibility.
+    If it's set to False then it disables evaluation of
+    expressions in the environment.
