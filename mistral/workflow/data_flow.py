@@ -297,8 +297,14 @@ def add_environment_to_context(wf_ex):
     if 'env' in wf_ex.params:
         env = copy.deepcopy(wf_ex.params['env'])
 
-        # An env variable can be an expression of other env variables.
-        wf_ex.context['__env'] = expr.evaluate_recursively(env, {'__env': env})
+        if ('evaluate_env' in wf_ex.params and
+                not wf_ex.params['evaluate_env']):
+            wf_ex.context['__env'] = env
+        else:
+            wf_ex.context['__env'] = expr.evaluate_recursively(
+                env,
+                {'__env': env}
+            )
 
 
 def add_workflow_variables_to_context(wf_ex, wf_spec):
