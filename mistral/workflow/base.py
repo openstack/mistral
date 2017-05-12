@@ -32,7 +32,7 @@ from mistral.workflow import states
 LOG = logging.getLogger(__name__)
 
 
-@profiler.trace('wf-controller-get-controller')
+@profiler.trace('wf-controller-get-controller', hide_args=True)
 def get_controller(wf_ex, wf_spec=None):
     """Gets a workflow controller instance by given workflow execution object.
 
@@ -85,7 +85,7 @@ class WorkflowController(object):
 
         self.wf_spec = wf_spec
 
-    @profiler.trace('workflow-controller-continue-workflow')
+    @profiler.trace('workflow-controller-continue-workflow', hide_args=True)
     def continue_workflow(self, task_ex=None):
         """Calculates a list of commands to continue the workflow.
 
