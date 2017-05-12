@@ -24,7 +24,8 @@ class JavascriptActionTest(base.BaseTest):
         javascript, 'evaluate', mock.Mock(return_value="3")
     )
     def test_js_action(self):
+        mock_ctx = mock.Mock()
         script = "return 1 + 2"
         action = std.JavaScriptAction(script)
 
-        self.assertEqual("3", action.run())
+        self.assertEqual("3", action.run(mock_ctx))

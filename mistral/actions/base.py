@@ -13,6 +13,12 @@
 #    limitations under the License.
 
 import abc
+import warnings
+
+warnings.warn(
+    "mistral.actions.Action is deprecated as of the 5.0.0 release in favor of"
+    "mistral_lib. It will be removed in a future release.", DeprecationWarning
+)
 
 
 class Action(object):

@@ -53,6 +53,7 @@ class HTTPActionTest(base.BaseTest):
     @mock.patch.object(requests, 'request')
     def test_http_action(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
+        mock_ctx = mock.Mock()
 
         action = std.HTTPAction(
             url=URL,
@@ -67,7 +68,7 @@ class HTTPActionTest(base.BaseTest):
         self.assertEqual(DATA_STR, action.body)
         self.assertEqual(URL, action.url)
 
-        result = action.run()
+        result = action.run(mock_ctx)
 
         self.assertIsInstance(result, dict)
         self.assertEqual(DATA, result['content'])
@@ -91,6 +92,7 @@ class HTTPActionTest(base.BaseTest):
     @mock.patch.object(requests, 'request')
     def test_http_action_error_result(self, mocked_method):
         mocked_method.return_value = get_error_fake_response()
+        mock_ctx = mock.Mock()
 
         action = std.HTTPAction(
             url=URL,
@@ -105,7 +107,7 @@ class HTTPActionTest(base.BaseTest):
         self.assertEqual(DATA_STR, action.body)
         self.assertEqual(URL, action.url)
 
-        result = action.run()
+        result = action.run(mock_ctx)
 
         self.assertIsInstance(result, wf_utils.Result)
         self.assertEqual(401, result.error['status'])
@@ -127,6 +129,7 @@ class HTTPActionTest(base.BaseTest):
     @mock.patch.object(requests, 'request')
     def test_http_action_with_auth(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
+        mock_ctx = mock.Mock()
 
         action = std.HTTPAction(
             url=URL,
@@ -140,7 +143,7 @@ class HTTPActionTest(base.BaseTest):
         self.assertEqual(data_str, action.body)
         self.assertEqual(URL, action.url)
 
-        result = action.run()
+        result = action.run(mock_ctx)
 
         self.assertIsInstance(result, dict)
         self.assertEqual(DATA, result['content'])
@@ -164,6 +167,7 @@ class HTTPActionTest(base.BaseTest):
     @mock.patch.object(requests, 'request')
     def test_http_action_with_headers(self, mocked_method):
         mocked_method.return_value = get_success_fake_response()
+        mock_ctx = mock.Mock()
 
         headers = {'int_header': 33, 'bool_header': True,
                    'float_header': 3.0, 'regular_header': 'teststring'}
@@ -183,7 +187,7 @@ class HTTPActionTest(base.BaseTest):
         self.assertEqual(data_str, action.body)
         self.assertEqual(URL, action.url)
 
-        result = action.run()
+        result = action.run(mock_ctx)
 
         self.assertIsInstance(result, dict)
         self.assertEqual(DATA, result['content'])
