@@ -19,6 +19,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import default_executor
 from mistral.engine.rpc_backend import rpc
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 
 
@@ -198,3 +199,71 @@ class EnvironmentTest(base.EngineTestCase):
         }
 
         self._test_subworkflow(env)
+
+    def test_evaluate_env_parameter(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                var1: <% env().var1 %>
+                var2: <% env().var2 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        env = {
+            "var1": "val1",
+            "var2": "<% env().var1 %>"
+        }
+
+        # Run with 'evaluate_env' set to True.
+
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {},
+            env=env,
+            evaluate_env=True
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t = self._assert_single_item(wf_ex.task_executions, name='task1')
+
+            self.assertDictEqual(
+                {
+                    "var1": "val1",
+                    "var2": "val1"
+                },
+                t.published
+            )
+
+        # Run with 'evaluate_env' set to False.
+
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {},
+            env=env,
+            evaluate_env=False
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t = self._assert_single_item(wf_ex.task_executions, name='task1')
+
+            self.assertDictEqual(
+                {
+                    "var1": "val1",
+                    "var2": "<% env().var1 %>"
+                },
+                t.published
+            )
