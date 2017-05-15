@@ -79,7 +79,7 @@ def _rearrange_commands(cmds):
     return res
 
 
-@profiler.trace('dispatcher-dispatch-commands')
+@profiler.trace('dispatcher-dispatch-commands', hide_args=True)
 def dispatch_workflow_commands(wf_ex, wf_cmds):
     # TODO(rakhmerov): I don't like these imports but otherwise we have
     # import cycles.
