@@ -31,6 +31,7 @@ from mistral.services import action_manager as a_m
 from mistral.services import security
 from mistral import utils
 from mistral.utils import wf_trace
+from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
@@ -338,7 +339,8 @@ class PythonAction(Action):
 class AdHocAction(PythonAction):
     """Ad-hoc action."""
 
-    def __init__(self, action_def, action_ex=None, task_ex=None):
+    def __init__(self, action_def, action_ex=None, task_ex=None, task_ctx=None,
+                 wf_ctx=None):
         self.action_spec = spec_parser.get_action_spec(action_def.spec)
 
         base_action_def = db_api.get_action_definition(
@@ -355,6 +357,8 @@ class AdHocAction(PythonAction):
         )
 
         self.adhoc_action_def = action_def
+        self.task_ctx = task_ctx or {}
+        self.wf_ctx = wf_ctx or {}
 
     def validate_input(self, input_dict):
         expected_input = self.action_spec.get_input()
@@ -382,9 +386,14 @@ class AdHocAction(PythonAction):
             base_input_expr = action_spec.get_base_input()
 
             if base_input_expr:
+                ctx_view = data_flow.ContextView(
+                    base_input_dict,
+                    self.task_ctx,
+                    self.wf_ctx
+                )
                 base_input_dict = expr.evaluate_recursively(
                     base_input_expr,
-                    base_input_dict
+                    ctx_view
                 )
             else:
                 base_input_dict = {}
