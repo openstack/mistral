@@ -18,6 +18,7 @@ from oslo_config import cfg
 import mock
 
 from mistral.actions import generator_factory
+from mistral.actions.openstack.action_generator import base as generator_base
 from mistral.actions.openstack import actions
 from mistral import config
 
@@ -100,6 +101,10 @@ class GeneratorTest(base.BaseTest):
             self.assertTrue(issubclass(action['class'], action_cls))
             self.assertEqual(method_name, action['class'].client_method_name)
 
+            modules = CONF.openstack_actions.modules_support_region
+            if generator_cls.action_namespace in modules:
+                self.assertIn('action_region', action['arg_list'])
+
     def test_missing_module_from_mapping(self):
         with _patch_openstack_action_mapping_path(RELATIVE_TEST_MAPPING_PATH):
             for generator_cls in generator_factory.all_generators():
@@ -128,6 +133,42 @@ class GeneratorTest(base.BaseTest):
                     self.assertEqual(3, len(action_names))
                 elif cls not in (actions.GlanceAction, actions.KeystoneAction):
                     self.assertEqual([], action_names)
+
+    def test_prepare_action_inputs(self):
+        inputs = generator_base.OpenStackActionGenerator.prepare_action_inputs(
+            'a,b,c',
+            added=['region=RegionOne']
+        )
+
+        self.assertEqual('a, b, c, region=RegionOne', inputs)
+
+        inputs = generator_base.OpenStackActionGenerator.prepare_action_inputs(
+            'a,b,c=1',
+            added=['region=RegionOne']
+        )
+
+        self.assertEqual('a, b, region=RegionOne, c=1', inputs)
+
+        inputs = generator_base.OpenStackActionGenerator.prepare_action_inputs(
+            'a,b,c=1,**kwargs',
+            added=['region=RegionOne']
+        )
+
+        self.assertEqual('a, b, region=RegionOne, c=1, **kwargs', inputs)
+
+        inputs = generator_base.OpenStackActionGenerator.prepare_action_inputs(
+            '**kwargs',
+            added=['region=RegionOne']
+        )
+
+        self.assertEqual('region=RegionOne, **kwargs', inputs)
+
+        inputs = generator_base.OpenStackActionGenerator.prepare_action_inputs(
+            '',
+            added=['region=RegionOne']
+        )
+
+        self.assertEqual('region=RegionOne', inputs)
 
 
 @contextlib.contextmanager

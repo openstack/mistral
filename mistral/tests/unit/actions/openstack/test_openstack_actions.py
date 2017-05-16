@@ -15,7 +15,6 @@
 import mock
 
 from mistral.actions.openstack import actions
-from mistral import config
 from mistral import context as ctx
 from oslotest import base
 
@@ -46,9 +45,6 @@ class OpenStackActionTest(base.BaseTestCase):
     def test_nova_action_config_endpoint(self, mock_novaclient,
                                          mock_nova_endpoint,
                                          mock_ks_endpoint_v2):
-
-        # this is the default, but be explicit
-        config.CONF.set_default('os_actions_endpoint_type', 'public')
 
         test_ctx = ctx.MistralContext(
             user_id=None,
@@ -112,7 +108,7 @@ class OpenStackActionTest(base.BaseTestCase):
             service_type='compute',
             auth_token=test_ctx.auth_token,
             tenant_id=test_ctx.project_id,
-            region_name=mock_ks_endpoint_v2().region,
+            region_name=mock_nova_endpoint().region,
             auth_url=mock_ks_endpoint_v2().url,
             insecure=test_ctx.insecure
         )
@@ -145,7 +141,7 @@ class OpenStackActionTest(base.BaseTestCase):
             service_type='compute',
             auth_token=test_ctx.auth_token,
             tenant_id=test_ctx.project_id,
-            region_name=mock_ks_endpoint_v2().region,
+            region_name=mock_nova_endpoint().region,
             auth_url=mock_ks_endpoint_v2().url,
             insecure=test_ctx.insecure
         )
