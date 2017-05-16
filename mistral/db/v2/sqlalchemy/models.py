@@ -425,8 +425,8 @@ class CronTrigger(mb.MistralSecureModelBase):
     def to_dict(self):
         d = super(CronTrigger, self).to_dict()
 
-        mb.datetime_to_str(d, 'first_execution_time')
-        mb.datetime_to_str(d, 'next_execution_time')
+        utils.datetime_to_str_in_dict(d, 'first_execution_time')
+        utils.datetime_to_str_in_dict(d, 'next_execution_time')
 
         return d
 

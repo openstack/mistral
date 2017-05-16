@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from oslo_db.sqlalchemy import models as oslo_models
 import sqlalchemy as sa
 from sqlalchemy import event
@@ -63,7 +61,19 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
     def to_dict(self):
         """sqlalchemy based automatic to_dict method."""
-        d = {}
+
+        d = {col_name: col_val for col_name, col_val in self.iter_columns()}
+
+        utils.datetime_to_str_in_dict(d, 'created_at')
+        utils.datetime_to_str_in_dict(d, 'updated_at')
+
+        return d
+
+    def iter_column_names(self):
+        """Returns an iterator for loaded column names.
+
+        :return: A generator function for column names.
+        """
 
         # If a column is unloaded at this point, it is
         # probably deferred. We do not want to access it
@@ -72,12 +82,17 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
 
         for col in self.__table__.columns:
             if col.name not in unloaded and hasattr(self, col.name):
-                d[col.name] = getattr(self, col.name)
+                yield col.name
 
-        datetime_to_str(d, 'created_at')
-        datetime_to_str(d, 'updated_at')
+    def iter_columns(self):
+        """Returns an iterator for loaded columns.
 
-        return d
+        :return: A generator function that generates
+            tuples (column name, column value).
+        """
+
+        for col_name in self.iter_column_names():
+            yield col_name, getattr(self, col_name)
 
     def get_clone(self):
         """Clones current object, loads all fields and returns the result."""
@@ -87,24 +102,23 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
             if hasattr(self, col.name):
                 setattr(m, col.name, getattr(self, col.name))
 
-        setattr(m, 'created_at', getattr(self, 'created_at').isoformat(' '))
+        setattr(
+            m,
+            'created_at',
+            utils.datetime_to_str(getattr(self, 'created_at'))
+        )
 
         updated_at = getattr(self, 'updated_at')
+
         # NOTE(nmakhotkin): 'updated_at' field is empty for just created
         # object since it has not updated yet.
         if updated_at:
-            setattr(m, 'updated_at', updated_at.isoformat(' '))
+            setattr(m, 'updated_at', utils.datetime_to_str(updated_at))
 
         return m
 
     def __repr__(self):
         return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
-
-
-def datetime_to_str(dct, attr_name):
-    if (dct.get(attr_name) is not None
-            and not isinstance(dct.get(attr_name), six.string_types)):
-        dct[attr_name] = dct[attr_name].isoformat(' ')
 
 
 MistralModelBase = declarative.declarative_base(cls=_MistralModelBase)
