@@ -13,13 +13,10 @@
 #    limitations under the License.
 
 from oslo_config import cfg
-from oslo_log import log as logging
 
 from mistral import auth
 from mistral import exceptions as exc
 
-
-LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
