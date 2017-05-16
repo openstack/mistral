@@ -1,0 +1,11 @@
+---
+features:
+  - Support to specify 'action_region' for OpenStack actions so that it's
+    possible to operate different resources in different regions in one single
+    workflow.
+upgrade:
+  - Run ``python tools/sync_db.py --config-file <mistral-conf-file>`` to
+    re-populate database.
+deprecations:
+  - The config option 'os-actions-endpoint-type' is moved from DEFAULT group
+    to 'openstack_actions' group.
