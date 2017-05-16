@@ -24,6 +24,7 @@ from mistral.services import action_manager
 from mistral.services import workflows
 
 CONF = cfg.CONF
+LOG = logging.getLogger(__name__)
 
 
 def main():
@@ -37,16 +38,21 @@ def main():
 
     CONF.register_cli_opt(config.os_actions_mapping_path)
 
+    logging.register_options(CONF)
+
     config.parse_args()
 
     if len(CONF.config_file) == 0:
         print("Usage: sync_db --config-file <path-to-config-file>")
         return exit(1)
-
     logging.setup(CONF, 'Mistral')
 
+    LOG.info("Starting db_sync")
+
+    LOG.debug("Setting up db")
     db_api.setup_db()
 
+    LOG.debug("populating db")
     action_manager.sync_db()
     workflows.sync_db()
 

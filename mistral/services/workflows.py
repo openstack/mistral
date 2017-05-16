@@ -18,12 +18,15 @@ from mistral.lang import parser as spec_parser
 from mistral import utils
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from oslo_log import log as logging
 
 
 STD_WF_PATH = 'resources/workflows'
+LOG = logging.getLogger(__name__)
 
 
 def register_standard_workflows(run_in_tx=True):
+    LOG.debug("registering standard workflows")
     workflow_paths = utils.get_file_list(STD_WF_PATH)
 
     for wf_path in workflow_paths:
@@ -42,6 +45,7 @@ def _clear_system_workflow_db():
 
 
 def sync_db():
+    LOG.debug("Syncing db")
     with db_api.transaction():
         _clear_system_workflow_db()
         register_standard_workflows(run_in_tx=False)
@@ -49,6 +53,7 @@ def sync_db():
 
 def create_workflows(definition, scope='private', is_system=False,
                      run_in_tx=True):
+    LOG.debug("creating workflows")
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     db_wfs = []
 
@@ -81,6 +86,7 @@ def _append_all_workflows(definition, is_system, scope, wf_list_spec, db_wfs):
 
 
 def update_workflows(definition, scope='private', identifier=None):
+    LOG.debug("updating workflows")
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     wfs = wf_list_spec.get_workflows()
 
