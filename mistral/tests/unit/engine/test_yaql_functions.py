@@ -254,6 +254,38 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
             self.assertIsNotNone(wf_ex.state_info)
             self.assertIn(wf_ex.id, wf_ex.state_info)
 
+    def test_task_function_no_name_on_success_case(self):
+        wf_text = """---
+            version: '2.0'
+
+            wf:
+              tasks:
+                task1:
+                  action: std.echo output=1
+                  on-success:
+                    - task2: <% task().result = 1 %>
+                    - task3: <% task().result = 100 %>
+
+                task2:
+                  action: std.echo output=2
+
+                task3:
+                  action: std.echo output=3
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(2, len(wf_ex.task_executions))
+            self._assert_single_item(wf_ex.task_executions, name='task1')
+            self._assert_single_item(wf_ex.task_executions, name='task2')
+
     def test_uuid_function(self):
         wf_text = """---
             version: '2.0'
