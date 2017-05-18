@@ -161,6 +161,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     # Admin user can get all tenants resources, no matter they are private or
     # public.
     insecure = False
+
     if (all_projects or
             (auth_ctx.ctx().is_admin and filters.get('project_id', ''))):
         insecure = True
@@ -174,7 +175,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
 
     if resource_function:
         with db_api.transaction():
-            # do not filter fields yet, resource_function needs the ORM object
+            # Do not filter fields yet, resource_function needs the ORM object.
             db_list = get_all_function(
                 limit=limit,
                 marker=marker_obj,
@@ -187,9 +188,10 @@ def get_all(list_cls, cls, get_all_function, get_function,
             for data in db_list:
                 obj = resource_function(data)
 
-                # filter fields using a loop instead of the ORM
+                # Filter fields using a loop instead of the ORM.
                 if fields:
                     data = []
+
                     for f in fields:
                         if hasattr(obj, f):
                             data.append(getattr(obj, f))

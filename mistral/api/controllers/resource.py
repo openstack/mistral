@@ -27,6 +27,7 @@ class Resource(wtypes.Base):
 
         for attr in self._wsme_attributes:
             attr_val = getattr(self, attr.name)
+
             if not isinstance(attr_val, wtypes.UnsetType):
                 d[attr.name] = attr_val
 
@@ -41,6 +42,12 @@ class Resource(wtypes.Base):
                 setattr(obj, key, val)
 
         return obj
+
+    @classmethod
+    def from_db_model(cls):
+        # TODO(rakhmerov): Once we implement this method,
+        # this will significantly reduce memory footprint.
+        raise NotImplementedError
 
     def __str__(self):
         """WSME based implementation of __str__."""
@@ -81,18 +88,18 @@ class ResourceList(Resource):
     @classmethod
     def convert_with_links(cls, resources, limit, url=None, fields=None,
                            **kwargs):
-        resource_collection = cls()
+        resource_list = cls()
 
-        setattr(resource_collection, resource_collection._type, resources)
+        setattr(resource_list, resource_list._type, resources)
 
-        resource_collection.next = resource_collection.get_next(
+        resource_list.next = resource_list.get_next(
             limit,
             url=url,
             fields=fields,
             **kwargs
         )
 
-        return resource_collection
+        return resource_list
 
     def has_next(self, limit):
         """Return whether resources has more items."""

@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import contextlib
+import datetime
 import functools
 import json
 import logging
@@ -467,5 +468,30 @@ def generate_key_pair(key_length=2048):
 def utc_now_sec():
     """Returns current time and drops microseconds."""
 
-    d = timeutils.utcnow()
-    return d.replace(microsecond=0)
+    return timeutils.utcnow().replace(microsecond=0)
+
+
+def datetime_to_str(val, sep=' '):
+    """Converts datetime value to string.
+
+    :param val: datetime value.
+    :param sep: Separator between date and time.
+    :return: Datetime as a string.
+    """
+    if isinstance(val, datetime.datetime):
+        return val.isoformat(sep)
+
+    return val
+
+
+def datetime_to_str_in_dict(d, key, sep=' '):
+    """Converts datetime value in te given dict to string.
+
+    :param d: A dictionary.
+    :param key: The key for which we need to convert the value.
+    :param sep: Separator between date and time.
+    """
+    val = d.get(key)
+
+    if val is not None:
+        d[key] = datetime_to_str(d[key], sep=sep)
