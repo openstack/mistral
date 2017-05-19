@@ -404,7 +404,9 @@ class RegularTask(Task):
         )
 
         if action_def.spec:
-            return actions.AdHocAction(action_def, task_ex=self.task_ex)
+            return actions.AdHocAction(action_def, task_ex=self.task_ex,
+                                       task_ctx=self.ctx,
+                                       wf_ctx=self.wf_ex.context)
 
         return actions.PythonAction(action_def, task_ex=self.task_ex)
 

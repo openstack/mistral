@@ -1,0 +1,5 @@
+---
+fixes:
+  - Added support for referencing task and workflow context data, including
+    environment variables via env(), when using YAQL/Jinja2 expressions inside AdHoc Actions.
+    YAQL/Jinja2 expressions can reference env() and other context data in the base-input section.
