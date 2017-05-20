@@ -83,7 +83,7 @@ def get_endpoint_for_project(service_name=None, service_type=None,
     # could be passed to rest api in http header ('X-Region-Name'). Otherwise,
     # just get region from mistral configuration.
     region = (region_name or ctx.region_name or
-              CONF.keystone_authtoken.region_name)
+              CONF.openstack_actions.default_region)
 
     service_endpoints = service_catalog.get_endpoints(
         service_name=service_name,

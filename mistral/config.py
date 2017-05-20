@@ -295,7 +295,11 @@ openstack_actions_opts = [
                  'trove', 'ironic', 'designate', 'murano', 'tacker', 'senlin',
                  'aodh', 'gnocchi'],
         help=_('List of module names that support region in actions.')
-    )
+    ),
+    cfg.StrOpt(
+        'default_region',
+        help=_('Default region name for openstack actions supporting region.')
+    ),
 ]
 
 # note: this command line option is used only from sync_db and
