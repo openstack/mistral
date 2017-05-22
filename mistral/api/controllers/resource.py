@@ -36,26 +36,23 @@ class Resource(wtypes.Base):
         return d
 
     @classmethod
-    def from_dict(cls, d):
+    def from_tuples(cls, tuple_iterator):
         obj = cls()
 
-        for key, val in d.items():
-            if hasattr(obj, key):
-                # Convert all datetime values to strings.
-                setattr(obj, key, utils.datetime_to_str(val))
-
-        return obj
-
-    @classmethod
-    def from_db_model(cls, db_model):
-        obj = cls()
-
-        for col_name, col_val in db_model.iter_columns():
+        for col_name, col_val in tuple_iterator:
             if hasattr(obj, col_name):
                 # Convert all datetime values to strings.
                 setattr(obj, col_name, utils.datetime_to_str(col_val))
 
         return obj
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls.from_tuples(d.items())
+
+    @classmethod
+    def from_db_model(cls, db_model):
+        return cls.from_tuples(db_model.iter_columns())
 
     def __str__(self):
         """WSME based implementation of __str__."""
