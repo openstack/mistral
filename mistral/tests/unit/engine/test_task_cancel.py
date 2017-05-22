@@ -32,7 +32,6 @@ class TaskCancelTest(base.EngineTestCase):
         version: '2.0'
 
         wf:
-          type: direct
           tasks:
             task1:
               action: std.async_noop
@@ -119,13 +118,11 @@ class TaskCancelTest(base.EngineTestCase):
 
         workflows:
             wf:
-              type: direct
               tasks:
                 taskx:
                   workflow: subwf
 
             subwf:
-              type: direct
               tasks:
                 task1:
                   action: std.async_noop
@@ -207,7 +204,6 @@ class TaskCancelTest(base.EngineTestCase):
         version: '2.0'
 
         wf:
-          type: direct
           tasks:
             task1:
               action: std.async_noop
@@ -294,10 +290,11 @@ class TaskCancelTest(base.EngineTestCase):
     def test_cancel_with_items_concurrency(self):
         wb_def = """
             version: '2.0'
+
             name: wb1
+
             workflows:
               wf1:
-                type: direct
                 tasks:
                   t1:
                     with-items: i in <% list(range(0, 4)) %>

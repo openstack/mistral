@@ -116,7 +116,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         ctx = data_flow.evaluate_task_outbound_context(task_ex)
 
-        for t_n, params in self._find_next_tasks(task_ex, ctx=ctx):
+        for t_n, params, event_name in self._find_next_tasks(task_ex, ctx=ctx):
             t_s = self.wf_spec.get_tasks()[t_n]
 
             if not (t_s or t_n in commands.RESERVED_CMDS):
@@ -132,7 +132,8 @@ class DirectWorkflowController(base.WorkflowController):
                 self.wf_spec,
                 t_s,
                 ctx,
-                params
+                params=params,
+                triggered_by=(task_ex, event_name)
             )
 
             self._configure_if_join(cmd)
@@ -161,11 +162,12 @@ class DirectWorkflowController(base.WorkflowController):
     def evaluate_workflow_final_context(self):
         ctx = {}
 
-        for t_ex in self._find_end_tasks():
+        for t_ex in self._find_end_task_executions():
             ctx = utils.merge_dicts(
                 ctx,
                 data_flow.evaluate_task_outbound_context(t_ex)
             )
+
             data_flow.remove_internal_data_from_context(ctx)
 
         return ctx
@@ -202,7 +204,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         return True
 
-    def _find_end_tasks(self):
+    def _find_end_task_executions(self):
         def is_end_task(t_ex):
             try:
                 return not self._has_outbound_tasks(t_ex)
@@ -214,8 +216,10 @@ class DirectWorkflowController(base.WorkflowController):
                 return True
 
         return list(
-            filter(is_end_task,
-                   lookup_utils.find_completed_tasks(self.wf_ex.id))
+            filter(
+                is_end_task,
+                lookup_utils.find_completed_task_executions(self.wf_ex.id)
+            )
         )
 
     def _has_outbound_tasks(self, task_ex):
@@ -241,33 +245,33 @@ class DirectWorkflowController(base.WorkflowController):
             self.wf_ex.input
         )
 
-        t_names_and_params = []
+        # [(task_name, 'on-success'|'on-error'|'on-complete', params), ...]
+        result = []
+
+        def process_clause(clause, event_name):
+            task_tuples = self._find_next_tasks_for_clause(clause, ctx_view)
+
+            for t in task_tuples:
+                result.append((t[0], t[1], event_name))
+
+        if t_state == states.SUCCESS:
+            process_clause(
+                self.wf_spec.get_on_success_clause(t_name),
+                'on-success'
+            )
+        elif t_state == states.ERROR:
+            process_clause(
+                self.wf_spec.get_on_error_clause(t_name),
+                'on-error'
+            )
 
         if states.is_completed(t_state) and not states.is_cancelled(t_state):
-            t_names_and_params += (
-                self._find_next_tasks_for_clause(
-                    self.wf_spec.get_on_complete_clause(t_name),
-                    ctx_view
-                )
+            process_clause(
+                self.wf_spec.get_on_complete_clause(t_name),
+                'on-complete'
             )
 
-        if t_state == states.ERROR:
-            t_names_and_params += (
-                self._find_next_tasks_for_clause(
-                    self.wf_spec.get_on_error_clause(t_name),
-                    ctx_view
-                )
-            )
-
-        elif t_state == states.SUCCESS:
-            t_names_and_params += (
-                self._find_next_tasks_for_clause(
-                    self.wf_spec.get_on_success_clause(t_name),
-                    ctx_view
-                )
-            )
-
-        return t_names_and_params
+        return result
 
     @staticmethod
     def _find_next_tasks_for_clause(clause, ctx):
@@ -276,7 +280,7 @@ class DirectWorkflowController(base.WorkflowController):
          This method finds next task(command) base on given {name: condition}
          dictionary.
 
-        :param clause: Dictionary {task_name: condition} taken from
+        :param clause: Tuple (task_name, condition, parameters) taken from
             'on-complete', 'on-success' or 'on-error' clause.
         :param ctx: Context that clause expressions should be evaluated
             against of.

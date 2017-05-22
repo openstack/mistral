@@ -38,7 +38,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         return db_api.get_workflow_execution(wf_ex.id)
 
-    def test_direct_workflow_on_closures(self):
+    def test_on_closures(self):
         wf_text = """
         version: '2.0'
 
@@ -48,7 +48,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
           tasks:
             task1:
               description: |
-                Explicit 'fail' command should lead to workflow failure.
+                Explicit 'succeed' command should lead to workflow success.
               action: std.echo output="Echo"
               on-success:
                 - task2
@@ -72,7 +72,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
               action: std.noop
         """
 
-        wf_ex = self._run_workflow(wf_text)
+        wf_ex = self._run_workflow(wf_text, expected_state=states.SUCCESS)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -80,18 +80,16 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             tasks = wf_ex.task_executions
 
         task1 = self._assert_single_item(tasks, name='task1')
-        task3 = self._assert_single_item(tasks, name='task3')
-        task4 = self._assert_single_item(tasks, name='task4')
+        task2 = self._assert_single_item(tasks, name='task2')
 
-        self.assertEqual(3, len(tasks))
+        self.assertEqual(2, len(tasks))
 
         self.await_task_success(task1.id)
-        self.await_task_success(task3.id)
-        self.await_task_success(task4.id)
+        self.await_task_success(task2.id)
 
         self.assertTrue(wf_ex.state, states.ERROR)
 
-    def test_direct_workflow_condition_transition_not_triggering(self):
+    def test_condition_transition_not_triggering(self):
         wf_text = """---
         version: '2.0'
 
@@ -132,7 +130,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertTrue(wf_ex.state, states.ERROR)
 
-    def test_direct_workflow_change_state_after_success(self):
+    def test_change_state_after_success(self):
         wf_text = """
         version: '2.0'
 
@@ -656,7 +654,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
         )
 
-    def test_direct_workfow_output(self):
+    def test_output(self):
         wf_text = """---
         version: '2.0'
 
@@ -680,3 +678,77 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self.assertDictEqual({}, wf_ex.output)
+
+    def test_triggered_by(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: task2
+
+            task2:
+              action: std.fail
+              on-error: task3
+
+            task3:
+              action: std.fail
+              on-error: noop
+              on-success: task4
+              on-complete: task4
+
+            task4:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        task1 = self._assert_single_item(task_execs, name='task1')
+        task2 = self._assert_single_item(task_execs, name='task2')
+        task3 = self._assert_single_item(task_execs, name='task3')
+        task4 = self._assert_single_item(task_execs, name='task4')
+
+        key = 'triggered_by'
+
+        self.assertIsNone(task1.runtime_context.get(key))
+
+        self.assertListEqual(
+            [
+                {
+                    "task_id": task1.id,
+                    "event": "on-success"
+                }
+            ],
+            task2.runtime_context.get(key)
+        )
+
+        self.assertListEqual(
+            [
+                {
+                    "task_id": task2.id,
+                    "event": "on-error"
+                }
+            ],
+            task3.runtime_context.get(key)
+        )
+
+        self.assertListEqual(
+            [
+                {
+                    "task_id": task3.id,
+                    "event": "on-complete"
+                }
+            ],
+            task4.runtime_context.get(key)
+        )

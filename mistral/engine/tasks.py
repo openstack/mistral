@@ -44,7 +44,7 @@ class Task(object):
     """
 
     def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None, waiting=False):
+                 unique_key=None, waiting=False, triggered_by=None):
         self.wf_ex = wf_ex
         self.task_spec = task_spec
         self.ctx = ctx
@@ -52,6 +52,7 @@ class Task(object):
         self.wf_spec = wf_spec
         self.unique_key = unique_key
         self.waiting = waiting
+        self.triggered_by = triggered_by
         self.reset_flag = False
         self.created = False
         self.state_changed = False
@@ -226,6 +227,14 @@ class Task(object):
             'project_id': self.wf_ex.project_id,
             'type': task_type
         }
+
+        if self.triggered_by:
+            values['runtime_context']['triggered_by'] = [
+                {
+                    'task_id': self.triggered_by[0].id,
+                    'event': self.triggered_by[1]
+                }
+            ]
 
         self.task_ex = db_api.create_task_execution(values)
 
