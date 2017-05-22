@@ -20,17 +20,16 @@ from cachetools import LRUCache
 
 from oslo_log import log
 
-from mistral.actions import base
-from mistral import context
 from mistral import exceptions as exc
 from mistral.utils.openstack import keystone as keystone_utils
+from mistral_lib import actions
 
 from threading import Lock
 
 LOG = log.getLogger(__name__)
 
 
-class OpenStackAction(base.Action):
+class OpenStackAction(actions.Action):
     """OpenStack Action.
 
     OpenStack Action is the basis of all OpenStack-specific actions,
@@ -80,7 +79,7 @@ class OpenStackAction(base.Action):
     def get_fake_client_method(cls):
         return cls._get_client_method(cls._get_fake_client())
 
-    def _get_client(self):
+    def _get_client(self, context):
         """Returns python-client instance via cache or creation
 
         Gets client instance according to specific OpenStack Service
@@ -92,16 +91,15 @@ class OpenStackAction(base.Action):
         #               regressions in Mistral. It is disabled for now and
         #               will be revisited in Ocata. See:
         #               https://bugs.launchpad.net/mistral/+bug/1627689
-        return self._create_client()
+        return self._create_client(context)
 
-        ctx = context.ctx()
         client_class = self.__class__.__name__
         # Colon character is reserved (rfc3986) which avoids key collisions.
-        key = client_class + ':' + ctx.project_id
+        key = client_class + ':' + context.project_id
 
         def create_cached_client():
-            new_client = self._create_client()
-            new_client._mistral_ctx_expires_at = ctx.expires_at
+            new_client = self._create_client(context)
+            new_client._mistral_ctx_expires_at = context.expires_at
 
             with self._lock:
                 self._clients[key] = new_client
@@ -137,9 +135,9 @@ class OpenStackAction(base.Action):
 
         return endpoint
 
-    def run(self):
+    def run(self, context):
         try:
-            method = self._get_client_method(self._get_client())
+            method = self._get_client_method(self._get_client(context))
 
             result = method(**self._kwargs_for_run)
 
@@ -159,7 +157,7 @@ class OpenStackAction(base.Action):
                 (self.__class__.__name__, self.client_method_name, e_str)
             )
 
-    def test(self):
+    def test(self, context):
         return dict(
             zip(self._kwargs_for_run, ['test'] * len(self._kwargs_for_run))
         )

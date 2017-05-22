@@ -14,11 +14,13 @@
 
 from mistral.actions import std_actions as std
 from mistral.tests.unit import base
+import mock
 
 
 class EchoActionTest(base.BaseTest):
     def test_fake_action(self):
         expected = "my output"
+        mock_ctx = mock.Mock()
         action = std.EchoAction(expected)
 
-        self.assertEqual(expected, action.run())
+        self.assertEqual(expected, action.run(mock_ctx))

@@ -61,6 +61,7 @@ class SendEmailActionTest(base.BaseTest):
         self.from_addr = "bot@example.com"
 
         self.to_addrs_str = ", ".join(self.to_addrs)
+        self.ctx = mock.Mock()
 
     @testtools.skipIf(not LOCAL_SMTPD, "Setup local smtpd to run it")
     def test_send_email_real(self):
@@ -68,7 +69,7 @@ class SendEmailActionTest(base.BaseTest):
             self.from_addr, self.to_addrs,
             self.smtp_server, None, self.subject, self.body
         )
-        action.run()
+        action.run(self.ctx)
 
     @testtools.skipIf(not REMOTE_SMTP, "Configure Remote SMTP to run it")
     def test_with_password_real(self):
@@ -82,7 +83,7 @@ class SendEmailActionTest(base.BaseTest):
             self.smtp_server, self.smtp_password, self.subject, self.body
         )
 
-        action.run()
+        action.run(self.ctx)
 
     @mock.patch('smtplib.SMTP')
     def test_with_mutli_to_addrs(self, smtp):
@@ -91,7 +92,7 @@ class SendEmailActionTest(base.BaseTest):
             self.from_addr, self.to_addrs,
             self.smtp_server, smtp_password, self.subject, self.body
         )
-        action.run()
+        action.run(self.ctx)
 
     @mock.patch('smtplib.SMTP')
     def test_with_one_to_addr(self, smtp):
@@ -102,7 +103,7 @@ class SendEmailActionTest(base.BaseTest):
             self.from_addr, to_addr,
             self.smtp_server, smtp_password, self.subject, self.body
         )
-        action.run()
+        action.run(self.ctx)
 
     @mock.patch('smtplib.SMTP')
     def test_send_email(self, smtp):
@@ -111,7 +112,7 @@ class SendEmailActionTest(base.BaseTest):
             self.smtp_server, None, self.subject, self.body
         )
 
-        action.run()
+        action.run(self.ctx)
 
         smtp.assert_called_once_with(self.smtp_server)
 
@@ -157,7 +158,7 @@ class SendEmailActionTest(base.BaseTest):
             self.smtp_server, self.smtp_password, self.subject, self.body
         )
 
-        action.run()
+        action.run(self.ctx)
 
         smtpmock = smtp.return_value
         calls = [mock.call.ehlo(), mock.call.starttls(), mock.call.ehlo(),
@@ -177,7 +178,7 @@ class SendEmailActionTest(base.BaseTest):
         )
 
         try:
-            action.run()
+            action.run(self.ctx)
         except exc.ActionException:
             pass
         else:

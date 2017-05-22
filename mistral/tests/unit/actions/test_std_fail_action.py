@@ -11,6 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import mock
 
 from mistral.actions import std_actions as std
 from mistral import exceptions as exc
@@ -21,4 +22,4 @@ class FailActionTest(base.BaseTest):
     def test_fail_action(self):
         action = std.FailAction()
 
-        self.assertRaises(exc.ActionException, action.run)
+        self.assertRaises(exc.ActionException, action.run, mock.Mock)

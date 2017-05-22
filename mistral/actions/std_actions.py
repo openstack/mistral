@@ -22,17 +22,17 @@ import six
 import smtplib
 import time
 
-from mistral.actions import base
 from mistral import exceptions as exc
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
 from mistral.workflow import utils as wf_utils
+from mistral_lib import actions
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
-class EchoAction(base.Action):
+class EchoAction(actions.Action):
     """Echo action.
 
     This action just returns a configured value as a result without doing
@@ -45,16 +45,16 @@ class EchoAction(base.Action):
     def __init__(self, output):
         self.output = output
 
-    def run(self):
+    def run(self, context):
         LOG.info('Running echo action [output=%s]' % self.output)
 
         return self.output
 
-    def test(self):
+    def test(self, context):
         return 'Echo'
 
 
-class NoOpAction(base.Action):
+class NoOpAction(actions.Action):
     """No-operation action.
 
     This action does nothing. It can be mostly useful for testing and
@@ -63,12 +63,12 @@ class NoOpAction(base.Action):
     def __init__(self):
         pass
 
-    def run(self):
+    def run(self, context):
         LOG.info('Running no-op action')
 
         return None
 
-    def test(self):
+    def test(self, context):
         return None
 
 
@@ -78,7 +78,7 @@ class AsyncNoOpAction(NoOpAction):
         return False
 
 
-class FailAction(base.Action):
+class FailAction(actions.Action):
     """'Always fail' action.
 
     This action just always throws an instance of ActionException.
@@ -89,16 +89,16 @@ class FailAction(base.Action):
     def __init__(self):
         pass
 
-    def run(self):
+    def run(self, context):
         LOG.info('Running fail action.')
 
         raise exc.ActionException('Fail action expected exception.')
 
-    def test(self):
+    def test(self, context):
         raise exc.ActionException('Fail action expected exception.')
 
 
-class HTTPAction(base.Action):
+class HTTPAction(actions.Action):
     """Constructs an HTTP action.
 
     :param url: URL for the new HTTP request.
@@ -158,7 +158,7 @@ class HTTPAction(base.Action):
         self.proxies = proxies
         self.verify = verify
 
-    def run(self):
+    def run(self, context):
         LOG.info("Running HTTP action "
                  "[url=%s, method=%s, params=%s, body=%s, headers=%s,"
                  " cookies=%s, auth=%s, timeout=%s, allow_redirects=%s,"
@@ -227,12 +227,13 @@ class HTTPAction(base.Action):
 
         return _result
 
-    def test(self):
+    def test(self, context):
         # TODO(rakhmerov): Implement.
         return None
 
 
 class MistralHTTPAction(HTTPAction):
+
     def __init__(self,
                  action_context,
                  url,
@@ -275,11 +276,11 @@ class MistralHTTPAction(HTTPAction):
     def is_sync(self):
         return False
 
-    def test(self):
+    def test(self, context):
         return None
 
 
-class SendEmailAction(base.Action):
+class SendEmailAction(actions.Action):
     def __init__(self, from_addr, to_addrs, smtp_server,
                  smtp_password=None, subject=None, body=None):
         # TODO(dzimine): validate parameters
@@ -294,7 +295,7 @@ class SendEmailAction(base.Action):
         self.sender = from_addr
         self.password = smtp_password
 
-    def run(self):
+    def run(self, context):
         LOG.info("Sending email message "
                  "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]" %
                  (self.sender, self.to, self.subject,
@@ -322,7 +323,7 @@ class SendEmailAction(base.Action):
             raise exc.ActionException("Failed to send an email message: %s"
                                       % e)
 
-    def test(self):
+    def test(self, context):
         # Just logging the operation since this action is not supposed
         # to return a result.
         LOG.info("Sending email message "
@@ -331,7 +332,7 @@ class SendEmailAction(base.Action):
                   self.smtp_server, self.body[:128]))
 
 
-class SSHAction(base.Action):
+class SSHAction(actions.Action):
     """Runs Secure Shell (SSH) command on provided single or multiple hosts.
 
     It is allowed to provide either a single host or a list of hosts in
@@ -359,7 +360,7 @@ class SSHAction(base.Action):
             'private_key_filename': self.private_key_filename
         }
 
-    def run(self):
+    def run(self, context):
         def raise_exc(parent_exc=None):
             message = ("Failed to execute ssh cmd "
                        "'%s' on %s" % (self.cmd, self.host))
@@ -390,7 +391,7 @@ class SSHAction(base.Action):
         except Exception as e:
             return raise_exc(parent_exc=e)
 
-    def test(self):
+    def test(self, context):
         # TODO(rakhmerov): Implement.
         return None
 
@@ -423,30 +424,36 @@ class SSHProxiedAction(SSHAction):
         )
 
 
-class JavaScriptAction(base.Action):
+class JavaScriptAction(actions.Action):
     """Evaluates given JavaScript.
 
     """
-    def __init__(self, script, context=None):
-        self.script = script
-        self.context = context
 
-    def run(self):
+    def __init__(self, script, context=None):
+        """Context here refers to a javasctript context
+
+        Not the usual mistral context. That is passed during the run method
+        """
+
+        self.script = script
+        self.js_context = context
+
+    def run(self, context):
         try:
             script = """function f() {
                 %s
             }
             f()
             """ % self.script
-            return javascript.evaluate(script, self.context)
+            return javascript.evaluate(script, self.js_context)
         except Exception as e:
             raise exc.ActionException("JavaScriptAction failed: %s" % str(e))
 
-    def test(self):
+    def test(self, context):
         return self.script
 
 
-class SleepAction(base.Action):
+class SleepAction(actions.Action):
     """Sleep action.
 
     This action sleeps for given amount of seconds. It can be mostly useful
@@ -459,20 +466,20 @@ class SleepAction(base.Action):
         except ValueError:
             self._seconds = 0
 
-    def run(self):
+    def run(self, context):
         LOG.info('Running sleep action [seconds=%s]' % self._seconds)
 
         time.sleep(self._seconds)
 
         return None
 
-    def test(self):
+    def test(self, context):
         time.sleep(1)
 
         return None
 
 
-class TestDictAction(base.Action):
+class TestDictAction(actions.Action):
     """Generates test dict."""
 
     def __init__(self, size=0, key_prefix='', val=''):
@@ -480,7 +487,7 @@ class TestDictAction(base.Action):
         self.key_prefix = key_prefix
         self.val = val
 
-    def run(self):
+    def run(self, context):
         LOG.info(
             'Running test_dict action [size=%s, key_prefix=%s, val=%s]' %
             (self.size, self.key_prefix, self.val)
@@ -493,5 +500,5 @@ class TestDictAction(base.Action):
 
         return res
 
-    def test(self):
+    def test(self, context):
         return {}
