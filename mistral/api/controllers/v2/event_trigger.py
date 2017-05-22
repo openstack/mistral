@@ -43,7 +43,7 @@ class EventTriggersController(rest.RestController):
 
         db_model = db_api.get_event_trigger(id)
 
-        return resources.EventTrigger.from_dict(db_model.to_dict())
+        return resources.EventTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.EventTrigger, body=resources.EventTrigger,
@@ -73,7 +73,7 @@ class EventTriggersController(rest.RestController):
             workflow_params=values.get('workflow_params'),
         )
 
-        return resources.EventTrigger.from_dict(db_model.to_dict())
+        return resources.EventTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.EventTrigger, types.uuid,
@@ -103,7 +103,7 @@ class EventTriggersController(rest.RestController):
 
             db_model = triggers.update_event_trigger(id, values)
 
-        return resources.EventTrigger.from_dict(db_model.to_dict())
+        return resources.EventTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, types.uuid, status_code=204)

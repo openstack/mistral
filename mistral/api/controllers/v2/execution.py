@@ -47,12 +47,12 @@ STATE_TYPES = wtypes.Enum(
 )
 
 
-def _get_execution_resource(ex):
+def _get_execution_resource(wf_ex):
     # We need to refer to this lazy-load field explicitly in
     # order to make sure that it is correctly loaded.
-    hasattr(ex, 'output')
+    hasattr(wf_ex, 'output')
 
-    return resources.Execution.from_dict(ex.to_dict())
+    return resources.Execution.from_db_model(wf_ex)
 
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
@@ -77,7 +77,7 @@ class ExecutionsController(rest.RestController):
             # amount of DB queries and network traffic.
             hasattr(wf_ex, 'output')
 
-        return resources.Execution.from_dict(wf_ex.to_dict())
+        return resources.Execution.from_db_model(wf_ex)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(

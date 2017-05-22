@@ -41,7 +41,8 @@ STATE_TYPES = wtypes.Enum(str, states.IDLE, states.RUNNING, states.SUCCESS,
 
 
 def _get_task_resource_with_result(task_ex):
-    task = resources.Task.from_dict(task_ex.to_dict())
+    task = resources.Task.from_db_model(task_ex)
+
     task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
 
     return task

@@ -58,10 +58,18 @@ class ServicesController(rest.RestController):
         try:
             for group in service_group:
                 members = service_coordinator.get_members(group)
-                services_list.extend(
-                    [resources.Service.from_dict(
-                        {'type': group, 'name': member}) for member in members]
-                )
+
+                members_list = [
+                    resources.Service.from_dict(
+                        {
+                            'type': group,
+                            'name': member
+                        }
+                    )
+                    for member in members
+                ]
+
+                services_list.extend(members_list)
         except tooz.coordination.ToozError as e:
             # In the scenario of network interruption or manually shutdown
             # connection shutdown, ToozError will be raised.

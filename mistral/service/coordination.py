@@ -144,6 +144,7 @@ class ServiceCoordinator(object):
             return []
 
         get_members_req = self._coordinator.get_members(group_id)
+
         try:
             members = get_members_req.get()
 

@@ -412,6 +412,9 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
 
         self.assertEqual(1, len(resp.json['workflows']))
+
+        print(resp.json['workflows'][0])
+
         self.assertDictEqual(WF, resp.json['workflows'][0])
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_EMPTY)

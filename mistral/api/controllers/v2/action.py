@@ -54,11 +54,12 @@ class ActionsController(rest.RestController, hooks.HookController):
         """
 
         acl.enforce('actions:get', context.ctx())
+
         LOG.info("Fetch action [identifier=%s]", identifier)
 
         db_model = db_api.get_action_definition(identifier)
 
-        return resources.Action.from_dict(db_model.to_dict())
+        return resources.Action.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -69,8 +70,11 @@ class ActionsController(rest.RestController, hooks.HookController):
             of multiple actions. In this case they all will be updated.
         """
         acl.enforce('actions:update', context.ctx())
+
         definition = pecan.request.text
+
         LOG.info("Update action(s) [definition=%s]", definition)
+
         scope = pecan.request.GET.get('scope', 'private')
 
         if scope not in resources.SCOPE_TYPES.values:
@@ -86,8 +90,9 @@ class ActionsController(rest.RestController, hooks.HookController):
                 identifier=identifier
             )
 
-        models_dicts = [db_act.to_dict() for db_act in db_acts]
-        action_list = [resources.Action.from_dict(act) for act in models_dicts]
+        action_list = [
+            resources.Action.from_db_model(db_act) for db_act in db_acts
+        ]
 
         return resources.Actions(actions=action_list).to_json()
 
@@ -100,6 +105,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             of multiple actions. In this case they all will be created.
         """
         acl.enforce('actions:create', context.ctx())
+
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
@@ -115,8 +121,9 @@ class ActionsController(rest.RestController, hooks.HookController):
         with db_api.transaction():
             db_acts = actions.create_actions(definition, scope=scope)
 
-        models_dicts = [db_act.to_dict() for db_act in db_acts]
-        action_list = [resources.Action.from_dict(act) for act in models_dicts]
+        action_list = [
+            resources.Action.from_db_model(db_act) for db_act in db_acts
+        ]
 
         return resources.Actions(actions=action_list).to_json()
 
@@ -125,6 +132,7 @@ class ActionsController(rest.RestController, hooks.HookController):
     def delete(self, identifier):
         """Delete the named action."""
         acl.enforce('actions:delete', context.ctx())
+
         LOG.info("Delete action [identifier=%s]", identifier)
 
         with db_api.transaction():

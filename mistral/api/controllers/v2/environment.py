@@ -109,7 +109,7 @@ class EnvironmentController(rest.RestController):
 
         db_model = db_api.get_environment(name)
 
-        return resources.Environment.from_dict(db_model.to_dict())
+        return resources.Environment.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
@@ -130,7 +130,7 @@ class EnvironmentController(rest.RestController):
 
         db_model = db_api.create_environment(env.to_dict())
 
-        return resources.Environment.from_dict(db_model.to_dict())
+        return resources.Environment.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Environment, body=resources.Environment)
@@ -155,7 +155,7 @@ class EnvironmentController(rest.RestController):
 
         db_model = db_api.update_environment(env.name, env.to_dict())
 
-        return resources.Environment.from_dict(db_model.to_dict())
+        return resources.Environment.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

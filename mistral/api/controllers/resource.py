@@ -16,6 +16,8 @@ import json
 
 from wsme import types as wtypes
 
+from mistral import utils
+
 
 class Resource(wtypes.Base):
     """REST API Resource."""
@@ -39,15 +41,21 @@ class Resource(wtypes.Base):
 
         for key, val in d.items():
             if hasattr(obj, key):
-                setattr(obj, key, val)
+                # Convert all datetime values to strings.
+                setattr(obj, key, utils.datetime_to_str(val))
 
         return obj
 
     @classmethod
-    def from_db_model(cls):
-        # TODO(rakhmerov): Once we implement this method,
-        # this will significantly reduce memory footprint.
-        raise NotImplementedError
+    def from_db_model(cls, db_model):
+        obj = cls()
+
+        for col_name, col_val in db_model.iter_columns():
+            if hasattr(obj, col_name):
+                # Convert all datetime values to strings.
+                setattr(obj, col_name, utils.datetime_to_str(col_val))
+
+        return obj
 
     def __str__(self):
         """WSME based implementation of __str__."""

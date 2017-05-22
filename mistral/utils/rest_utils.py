@@ -196,11 +196,14 @@ def get_all(list_cls, cls, get_all_function, get_function,
                         if hasattr(obj, f):
                             data.append(getattr(obj, f))
 
-                    dict_data = dict(zip(fields, data))
+                    # TODO(rakhmerov): This still can be expensive
+                    # due to creation of extra dictionary.
+                    list_to_return.append(
+                        cls.from_dict(dict(zip(fields, data)))
+                    )
                 else:
-                    dict_data = obj.to_dict()
+                    list_to_return.append(obj)
 
-                list_to_return.append(cls.from_dict(dict_data))
     else:
         db_list = get_all_function(
             limit=limit,
@@ -213,10 +216,12 @@ def get_all(list_cls, cls, get_all_function, get_function,
         )
 
         for data in db_list:
-            dict_data = (dict(zip(fields, data)) if fields else
-                         data.to_dict())
-
-            list_to_return.append(cls.from_dict(dict_data))
+            if fields:
+                list_to_return.append(
+                    cls.from_dict(dict(zip(fields, data)))
+                )
+            else:
+                list_to_return.append(cls.from_db_model(data))
 
     return list_cls.convert_with_links(
         list_to_return,

@@ -66,13 +66,13 @@ class MembersController(rest.RestController):
             member_id
         )
 
-        member_dict = db_api.get_resource_member(
+        member_db = db_api.get_resource_member(
             self.resource_id,
             self.type,
             member_id
-        ).to_dict()
+        )
 
-        return resources.Member.from_dict(member_dict)
+        return resources.Member.from_db_model(member_db)
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
@@ -91,9 +91,10 @@ class MembersController(rest.RestController):
             self.resource_id,
             self.type
         )
+
         members = [
-            resources.Member.from_dict(member.to_dict())
-            for member in db_members
+            resources.Member.from_db_model(db_member)
+            for db_member in db_members
         ]
 
         return resources.Members(members=members)
@@ -118,15 +119,15 @@ class MembersController(rest.RestController):
         )
 
         if not member_info.member_id:
-            msg = "Member id must be provided."
-            raise exc.WorkflowException(msg)
+            raise exc.WorkflowException("Member id must be provided.")
 
         with db_api.transaction():
             wf_db = db_api.get_workflow_definition(self.resource_id)
 
             if wf_db.scope != 'private':
-                msg = "Only private resource could be shared."
-                raise exc.WorkflowException(msg)
+                raise exc.WorkflowException(
+                    "Only private resource could be shared."
+                )
 
             resource_member = {
                 'resource_id': self.resource_id,
@@ -137,7 +138,7 @@ class MembersController(rest.RestController):
 
             db_member = db_api.create_resource_member(resource_member)
 
-        return resources.Member.from_dict(db_member.to_dict())
+        return resources.Member.from_db_model(db_member)
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check
@@ -165,7 +166,7 @@ class MembersController(rest.RestController):
             {'status': member_info.status}
         )
 
-        return resources.Member.from_dict(db_member.to_dict())
+        return resources.Member.from_db_model(db_member)
 
     @rest_utils.wrap_pecan_controller_exception
     @auth_enable_check

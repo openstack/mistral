@@ -40,7 +40,7 @@ class CronTriggersController(rest.RestController):
 
         db_model = db_api.get_cron_trigger(name)
 
-        return resources.CronTrigger.from_dict(db_model.to_dict())
+        return resources.CronTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
@@ -71,7 +71,7 @@ class CronTriggersController(rest.RestController):
             workflow_id=values.get('workflow_id')
         )
 
-        return resources.CronTrigger.from_dict(db_model.to_dict())
+        return resources.CronTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)

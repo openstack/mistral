@@ -85,7 +85,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
         db_model = db_api.get_workflow_definition(identifier)
 
-        return resources.Workflow.from_dict(db_model.to_dict())
+        return resources.Workflow.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -117,9 +117,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             identifier=identifier
         )
 
-        models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
         workflow_list = [
-            resources.Workflow.from_dict(wf) for wf in models_dicts
+            resources.Workflow.from_db_model(db_wf) for db_wf in db_wfs
         ]
 
         return (workflow_list[0].to_json() if identifier
@@ -148,10 +147,9 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         LOG.info("Create workflow(s) [definition=%s]", definition)
 
         db_wfs = workflows.create_workflows(definition, scope=scope)
-        models_dicts = [db_wf.to_dict() for db_wf in db_wfs]
 
         workflow_list = [
-            resources.Workflow.from_dict(wf) for wf in models_dicts
+            resources.Workflow.from_db_model(db_wf) for db_wf in db_wfs
         ]
 
         return resources.Workflows(workflows=workflow_list).to_json()
@@ -161,6 +159,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     def delete(self, identifier):
         """Delete a workflow."""
         acl.enforce('workflows:delete', context.ctx())
+
         LOG.info("Delete workflow [identifier=%s]", identifier)
 
         with db_api.transaction():

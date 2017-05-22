@@ -95,16 +95,12 @@ class Workflow(resource.Resource):
                    updated_at='1970-01-01T00:00:00.000000')
 
     @classmethod
-    def from_dict(cls, d):
-        e = cls()
+    def _set_input(cls, obj, wf_spec):
         input_list = []
 
-        for key, val in d.items():
-            if hasattr(e, key):
-                setattr(e, key, val)
+        if wf_spec:
+            input = wf_spec.get('input', [])
 
-        if 'spec' in d:
-            input = d.get('spec', {}).get('input', [])
             for param in input:
                 if isinstance(param, dict):
                     for k, v in param.items():
@@ -112,9 +108,21 @@ class Workflow(resource.Resource):
                 else:
                     input_list.append(param)
 
-            setattr(e, 'input', ", ".join(input_list) if input_list else '')
+            setattr(obj, 'input', ", ".join(input_list) if input_list else '')
 
-        return e
+        return obj
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = super(Workflow, cls).from_dict(d)
+
+        return cls._set_input(obj, d.get('spec'))
+
+    @classmethod
+    def from_db_model(cls, db_model):
+        obj = super(Workflow, cls).from_db_model(db_model)
+
+        return cls._set_input(obj, db_model.spec)
 
 
 class Workflows(resource.ResourceList):

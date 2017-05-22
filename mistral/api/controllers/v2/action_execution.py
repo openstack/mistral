@@ -56,7 +56,7 @@ def _get_action_execution_resource_for_list(action_ex):
 
     # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
     # TODO(nmakhotkin): Use db_model for this instead.
-    res = resources.ActionExecution.from_dict(action_ex.to_dict())
+    res = resources.ActionExecution.from_db_model(action_ex)
 
     task_name = (action_ex.task_execution.name
                  if action_ex.task_execution else None)
@@ -142,14 +142,14 @@ class ActionExecutionsController(rest.RestController):
                 "Please provide at least action name to run action."
             )
 
-        action_ex = rpc.get_engine_client().start_action(
+        values = rpc.get_engine_client().start_action(
             name,
             action_input,
             description=description,
             **params
         )
 
-        return resources.ActionExecution.from_dict(action_ex)
+        return resources.ActionExecution.from_dict(values)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(

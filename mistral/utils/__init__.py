@@ -474,6 +474,9 @@ def utc_now_sec():
 def datetime_to_str(val, sep=' '):
     """Converts datetime value to string.
 
+    If the given value is not an instance of datetime then the method
+    returns the same value.
+
     :param val: datetime value.
     :param sep: Separator between date and time.
     :return: Datetime as a string.
