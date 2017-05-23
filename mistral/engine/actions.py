@@ -507,6 +507,7 @@ class WorkflowAction(Action):
 
         if 'env' in parent_wf_ex.params:
             wf_params['env'] = parent_wf_ex.params['env']
+            wf_params['evaluate_env'] = parent_wf_ex.params.get('evaluate_env')
 
         for k, v in list(input_dict.items()):
             if k not in wf_spec.get_input():
