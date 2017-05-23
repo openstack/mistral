@@ -267,3 +267,89 @@ class EnvironmentTest(base.EngineTestCase):
                 },
                 t.published
             )
+
+    def test_evaluate_env_parameter_subworkflow(self):
+        wf_text = """---
+        version: '2.0'
+
+        parent_wf:
+          tasks:
+            task1:
+              workflow: sub_wf
+
+        sub_wf:
+          output:
+            result: <% $.result %>
+
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                result: <% env().dummy %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Run with 'evaluate_env' set to False.
+
+        env = {"dummy": "<% $.ENSURE.MISTRAL.DOESNT.EVALUATE.ENV %>"}
+
+        parent_wf_ex = self.engine.start_workflow(
+            'parent_wf',
+            {},
+            env=env,
+            evaluate_env=False
+        )
+
+        self.await_workflow_success(parent_wf_ex.id)
+
+        with db_api.transaction():
+            parent_wf_ex = db_api.get_workflow_execution(parent_wf_ex.id)
+
+            t = self._assert_single_item(
+                parent_wf_ex.task_executions,
+                name='task1'
+            )
+
+            sub_wf_ex = db_api.get_workflow_executions(
+                task_execution_id=t.id
+            )[0]
+
+            self.assertDictEqual(
+                {
+                    "result": "<% $.ENSURE.MISTRAL.DOESNT.EVALUATE.ENV %>"
+                },
+                sub_wf_ex.output
+            )
+
+        # Run with 'evaluate_env' set to True.
+
+        env = {"dummy": "<% 1 + 1 %>"}
+
+        parent_wf_ex = self.engine.start_workflow(
+            'parent_wf',
+            {},
+            env=env,
+            evaluate_env=True
+        )
+
+        self.await_workflow_success(parent_wf_ex.id)
+
+        with db_api.transaction():
+            parent_wf_ex = db_api.get_workflow_execution(parent_wf_ex.id)
+
+            t = self._assert_single_item(
+                parent_wf_ex.task_executions,
+                name='task1'
+            )
+
+            sub_wf_ex = db_api.get_workflow_executions(
+                task_execution_id=t.id
+            )[0]
+
+            self.assertDictEqual(
+                {
+                    "result": 2
+                },
+                sub_wf_ex.output
+            )
