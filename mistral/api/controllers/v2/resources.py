@@ -1,4 +1,5 @@
 # Copyright 2013 - Mirantis, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -284,18 +285,39 @@ class Execution(resource.Resource):
 
     @classmethod
     def sample(cls):
-        return cls(id='123e4567-e89b-12d3-a456-426655440000',
-                   workflow_name='flow',
-                   workflow_namespace='some_namespace',
-                   workflow_id='123e4567-e89b-12d3-a456-426655441111',
-                   description='this is the first execution.',
-                   project_id='40a908dbddfe48ad80a87fb30fa70a03',
-                   state='SUCCESS',
-                   input={},
-                   output={},
-                   params={'env': {'k1': 'abc', 'k2': 123}},
-                   created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            workflow_name='flow',
+            workflow_namespace='some_namespace',
+            workflow_id='123e4567-e89b-12d3-a456-426655441111',
+            description='this is the first execution.',
+            project_id='40a908dbddfe48ad80a87fb30fa70a03',
+            state='SUCCESS',
+            input={},
+            output={},
+            params={
+                'env': {'k1': 'abc', 'k2': 123},
+                'notify': [
+                    {
+                        'type': 'webhook',
+                        'url': 'http://endpoint/of/webhook',
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'X-Auth-Token': '123456789'
+                        }
+                    },
+                    {
+                        'type': 'queue',
+                        'topic': 'failover_queue',
+                        'backend': 'rabbitmq',
+                        'host': '127.0.0.1',
+                        'port': 5432
+                    }
+                ]
+            },
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000'
+        )
 
 
 class Executions(resource.ResourceList):

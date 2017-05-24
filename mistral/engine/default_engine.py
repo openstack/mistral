@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,6 +15,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_config import cfg
 from osprofiler import profiler
 
 from mistral.db import utils as db_utils
@@ -41,6 +43,12 @@ class DefaultEngine(base.Engine):
                        wf_input=None, description='', **params):
         if wf_namespace:
             params['namespace'] = wf_namespace
+
+        if cfg.CONF.notifier.notify:
+            if 'notify' not in params or not params['notify']:
+                params['notify'] = []
+
+            params['notify'].extend(cfg.CONF.notifier.notify)
 
         try:
             with db_api.transaction():

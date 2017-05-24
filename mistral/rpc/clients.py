@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2017 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from osprofiler import profiler
 import threading
 
@@ -22,8 +24,11 @@ from mistral import context as auth_ctx
 from mistral.engine import base as eng
 from mistral.event_engine import base as evt_eng
 from mistral.executors import base as exe
+from mistral.notifiers import base as notif
 from mistral.rpc import base
 
+
+LOG = logging.getLogger(__name__)
 
 _ENGINE_CLIENT = None
 _ENGINE_CLIENT_LOCK = threading.Lock()
@@ -33,6 +38,9 @@ _EXECUTOR_CLIENT_LOCK = threading.Lock()
 
 _EVENT_ENGINE_CLIENT = None
 _EVENT_ENGINE_CLIENT_LOCK = threading.Lock()
+
+_NOTIFIER_CLIENT = None
+_NOTIFIER_CLIENT_LOCK = threading.Lock()
 
 
 def cleanup():
@@ -46,15 +54,17 @@ def cleanup():
     global _ENGINE_CLIENT
     global _EXECUTOR_CLIENT
     global _EVENT_ENGINE_CLIENT
+    global _NOTIFIER_CLIENT
 
     _ENGINE_CLIENT = None
     _EXECUTOR_CLIENT = None
     _EVENT_ENGINE_CLIENT = None
+    _NOTIFIER_CLIENT = None
 
 
 def get_engine_client():
     global _ENGINE_CLIENT
-    global _EVENT_ENGINE_CLIENT_LOCK
+    global _ENGINE_CLIENT_LOCK
 
     with _ENGINE_CLIENT_LOCK:
         if not _ENGINE_CLIENT:
@@ -83,6 +93,17 @@ def get_event_engine_client():
             _EVENT_ENGINE_CLIENT = EventEngineClient(cfg.CONF.event_engine)
 
     return _EVENT_ENGINE_CLIENT
+
+
+def get_notifier_client():
+    global _NOTIFIER_CLIENT
+    global _NOTIFIER_CLIENT_LOCK
+
+    with _NOTIFIER_CLIENT_LOCK:
+        if not _NOTIFIER_CLIENT:
+            _NOTIFIER_CLIENT = NotifierClient(cfg.CONF.notifier)
+
+    return _NOTIFIER_CLIENT
 
 
 class EngineClient(eng.Engine):
@@ -379,3 +400,25 @@ class EventEngineClient(evt_eng.EventEngine):
             'update_event_trigger',
             trigger=trigger,
         )
+
+
+class NotifierClient(notif.Notifier):
+    """RPC Notifier client."""
+
+    def __init__(self, rpc_conf_dict):
+        """Constructs an RPC client for the Notifier service."""
+        self._client = base.get_rpc_client_driver()(rpc_conf_dict)
+
+    def notify(self, ex_id, data, event, timestamp, publishers):
+        try:
+            return self._client.async_call(
+                auth_ctx.ctx(),
+                'notify',
+                ex_id=ex_id,
+                data=data,
+                event=event,
+                timestamp=timestamp,
+                publishers=publishers
+            )
+        except Exception:
+            LOG.exception('Unable to send notification.')

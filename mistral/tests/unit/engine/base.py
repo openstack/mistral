@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -24,6 +25,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import engine_server
 from mistral.executors import base as exe
 from mistral.executors import executor_server
+from mistral.notifiers import notification_server as notif_server
 from mistral.rpc import base as rpc_base
 from mistral.rpc import clients as rpc_clients
 from mistral.tests.unit import base
@@ -76,6 +78,18 @@ class EngineTestCase(base.DbTestCase):
             self.threads.append(eventlet.spawn(launch_service, exe_svc))
             self.addCleanup(exe_svc.stop, True)
 
+        # Start remote notifier.
+        if cfg.CONF.notifier.type == 'remote':
+            LOG.info("Starting remote notifier threads...")
+
+            self.notifier_client = rpc_clients.get_notifier_client()
+
+            notif_svc = notif_server.get_oslo_service(setup_profiler=False)
+
+            self.notifier = notif_svc.notifier
+            self.threads.append(eventlet.spawn(launch_service, notif_svc))
+            self.addCleanup(notif_svc.stop, True)
+
         # Start engine.
         LOG.info("Starting engine threads...")
 
@@ -94,6 +108,9 @@ class EngineTestCase(base.DbTestCase):
         # the test may run too early.
         if cfg.CONF.executor.type == 'remote':
             exe_svc.wait_started()
+
+        if cfg.CONF.notifier.type == 'remote':
+            notif_svc.wait_started()
 
         eng_svc.wait_started()
 

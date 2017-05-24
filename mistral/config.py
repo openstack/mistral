@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -300,6 +301,37 @@ event_engine_opts = [
     ),
 ]
 
+notifier_opts = [
+    cfg.StrOpt(
+        'type',
+        choices=['local', 'remote'],
+        default='remote',
+        help=(
+            'Type of notifier. Use local to run the notifier within the '
+            'engine server. Use remote if the notifier is launched as '
+            'a separate server to process events.'
+        )
+    ),
+    cfg.StrOpt(
+        'host',
+        default='0.0.0.0',
+        help=_('Name of the notifier node. This can be an opaque '
+               'identifier. It is not necessarily a hostname, '
+               'FQDN, or IP address.')
+    ),
+    cfg.StrOpt(
+        'topic',
+        default='mistral_notifier',
+        help=_('The message topic that the notifier server listens on.')
+    ),
+    cfg.ListOpt(
+        'notify',
+        item_type=eval,
+        bounds=True,
+        help=_('List of publishers to publish notification.')
+    )
+]
+
 execution_expiration_policy_opts = [
     cfg.IntOpt(
         'evaluation_interval',
@@ -425,6 +457,7 @@ EXECUTOR_GROUP = 'executor'
 SCHEDULER_GROUP = 'scheduler'
 CRON_TRIGGER_GROUP = 'cron_trigger'
 EVENT_ENGINE_GROUP = 'event_engine'
+NOTIFIER_GROUP = 'notifier'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
@@ -450,6 +483,7 @@ CONF.register_opts(
     group=EXECUTION_EXPIRATION_POLICY_GROUP
 )
 CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
+CONF.register_opts(notifier_opts, group=NOTIFIER_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
@@ -494,6 +528,7 @@ def list_opts():
         (EVENT_ENGINE_GROUP, event_engine_opts),
         (SCHEDULER_GROUP, scheduler_opts),
         (CRON_TRIGGER_GROUP, cron_trigger_opts),
+        (NOTIFIER_GROUP, notifier_opts),
         (PECAN_GROUP, pecan_opts),
         (COORDINATION_GROUP, coordination_opts),
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),

@@ -1,5 +1,6 @@
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -557,6 +558,9 @@ class WorkflowAction(Action):
         if 'env' in parent_wf_ex.params:
             wf_params['env'] = parent_wf_ex.params['env']
             wf_params['evaluate_env'] = parent_wf_ex.params.get('evaluate_env')
+
+        if 'notify' in parent_wf_ex.params:
+            wf_params['notify'] = parent_wf_ex.params['notify']
 
         for k, v in list(input_dict.items()):
             if k not in wf_spec.get_input():

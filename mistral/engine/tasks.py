@@ -1,5 +1,6 @@
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 
 import abc
 import copy
+from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 import six
@@ -25,6 +27,8 @@ from mistral.engine import dispatcher
 from mistral.engine import policies
 from mistral import exceptions as exc
 from mistral import expressions as expr
+from mistral.notifiers import base as notif
+from mistral.notifiers import notification_events as events
 from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
@@ -56,6 +60,23 @@ class Task(object):
         self.reset_flag = False
         self.created = False
         self.state_changed = False
+
+    def notify(self, old_task_state, new_task_state):
+        publishers = self.wf_ex.params.get('notify')
+
+        if not publishers and not isinstance(publishers, list):
+            return
+
+        notifier = notif.get_notifier(cfg.CONF.notifier.type)
+        event = events.identify_task_event(old_task_state, new_task_state)
+
+        notifier.notify(
+            self.task_ex.id,
+            self.task_ex.to_dict(),
+            event,
+            self.task_ex.updated_at,
+            publishers
+        )
 
     def is_completed(self):
         return self.task_ex and states.is_completed(self.task_ex.state)
@@ -177,8 +198,15 @@ class Task(object):
 
         assert self.task_ex
 
+        # Record the current task state.
+        old_task_state = self.task_ex.state
+
         # Ignore if task already completed.
         if self.is_completed():
+            # Publish task event again so subscribers know
+            # task completed state is being processed again.
+            self.notify(old_task_state, self.task_ex.state)
+
             return
 
         # If we were unable to change the task state it means that it was
@@ -205,6 +233,9 @@ class Task(object):
         # If workflow is paused we shouldn't schedule new commands
         # and mark task as processed.
         if states.is_paused(self.wf_ex.state):
+            # Publish task event even if the workflow is paused.
+            self.notify(old_task_state, self.task_ex.state)
+
             return
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
@@ -215,6 +246,9 @@ class Task(object):
         # Mark task as processed after all decisions have been made
         # upon its completion.
         self.task_ex.processed = True
+
+        # Publish task event.
+        self.notify(old_task_state, self.task_ex.state)
 
         dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
 
@@ -230,8 +264,15 @@ class Task(object):
 
         assert self.task_ex
 
+        # Record the current task state.
+        old_task_state = self.task_ex.state
+
         # Ignore if task already completed.
         if states.is_completed(self.task_ex.state):
+            # Publish task event again so subscribers know
+            # task completed state is being processed again.
+            self.notify(old_task_state, self.task_ex.state)
+
             return
 
         # Update only if state transition is valid.
@@ -246,6 +287,9 @@ class Task(object):
             return
 
         self.set_state(state, state_info)
+
+        # Publish event.
+        self.notify(old_task_state, self.task_ex.state)
 
     def _before_task_start(self):
         policies_spec = self.task_spec.get_policies()
@@ -340,6 +384,9 @@ class RegularTask(Task):
 
         self._create_task_execution()
 
+        # Publish event.
+        self.notify(None, self.task_ex.state)
+
         LOG.debug(
             'Starting task [workflow=%s, task=%s, init_state=%s]',
             self.wf_ex.name,
@@ -367,7 +414,13 @@ class RegularTask(Task):
                 'Rerunning succeeded tasks is not supported.'
             )
 
+        # Record the current task state.
+        old_task_state = self.task_ex.state
+
         self.set_state(states.RUNNING, None, processed=False)
+
+        # Publish event.
+        self.notify(old_task_state, self.task_ex.state)
 
         self._update_inbound_context()
         self._update_triggered_by()

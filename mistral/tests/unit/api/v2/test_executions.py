@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 Huawei Technologies Co., Ltd.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -505,13 +506,15 @@ class TestExecutionsController(base.APITest):
 
         load_wf_ex_func.assert_not_called()
 
+        kwargs = json.loads(expected_json['params'])
+        kwargs['description'] = expected_json['description']
+
         start_wf_func.assert_called_once_with(
             expected_json['workflow_id'],
             '',
             None,
             json.loads(expected_json['input']),
-            expected_json['description'],
-            **json.loads(expected_json['params'])
+            **kwargs
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
@@ -540,13 +543,15 @@ class TestExecutionsController(base.APITest):
 
         load_wf_ex_func.assert_called_once_with(expected_json['id'])
 
+        kwargs = json.loads(expected_json['params'])
+        kwargs['description'] = expected_json['description']
+
         start_wf_func.assert_called_once_with(
             expected_json['workflow_id'],
             '',
             expected_json['id'],
             json.loads(expected_json['input']),
-            expected_json['description'],
-            **json.loads(expected_json['params'])
+            **kwargs
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
@@ -600,7 +605,7 @@ class TestExecutionsController(base.APITest):
             '',
             exec_dict['id'],
             json.loads(exec_dict['input']),
-            exec_dict['description'],
+            description=exec_dict['description'],
             **json.loads(exec_dict['params'])
         )
 
@@ -629,7 +634,7 @@ class TestExecutionsController(base.APITest):
             '',
             '',
             json.loads(exec_dict['input']),
-            exec_dict['description'],
+            description=exec_dict['description'],
             **json.loads(exec_dict['params'])
         )
 
@@ -659,7 +664,7 @@ class TestExecutionsController(base.APITest):
             '',
             exec_dict['id'],
             json.loads(exec_dict['input']),
-            exec_dict['description'],
+            description=exec_dict['description'],
             **json.loads(exec_dict['params'])
         )
 

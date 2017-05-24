@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -46,6 +47,7 @@ from mistral import config
 from mistral.engine import engine_server
 from mistral.event_engine import event_engine_server
 from mistral.executors import executor_server
+from mistral.notifiers import notification_server
 from mistral.rpc import base as rpc
 from mistral import version
 
@@ -93,6 +95,10 @@ def launch_event_engine():
     launch_thread(event_engine_server.get_oslo_service())
 
 
+def launch_notifier():
+    launch_thread(notification_server.get_oslo_service())
+
+
 def launch_api():
     server = api_service.WSGIService('mistral_api')
     launch_process(server, workers=server.workers)
@@ -118,7 +124,8 @@ LAUNCH_OPTIONS = {
     'api': launch_api,
     'engine': launch_engine,
     'executor': launch_executor,
-    'event-engine': launch_event_engine
+    'event-engine': launch_event_engine,
+    'notifier': launch_notifier
 }
 
 

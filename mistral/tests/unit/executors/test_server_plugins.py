@@ -1,4 +1,5 @@
 # Copyright 2017 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,10 +14,11 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from stevedore import exception as sd_exc
 
 from mistral.executors import base as exe
-from mistral.executors import default_executor as d_exe
-from mistral.executors import remote_executor as r_exe
+from mistral.executors import default_executor as d
+from mistral.executors import remote_executor as r
 from mistral.tests.unit.executors import base
 
 
@@ -32,9 +34,12 @@ class PluginTestCase(base.ExecutorTestCase):
     def test_get_local_executor(self):
         executor = exe.get_executor('local')
 
-        self.assertIsInstance(executor, d_exe.DefaultExecutor)
+        self.assertIsInstance(executor, d.DefaultExecutor)
 
     def test_get_remote_executor(self):
         executor = exe.get_executor('remote')
 
-        self.assertIsInstance(executor, r_exe.RemoteExecutor)
+        self.assertIsInstance(executor, r.RemoteExecutor)
+
+    def test_get_bad_executor(self):
+        self.assertRaises(sd_exc.NoMatches, exe.get_executor, 'foobar')

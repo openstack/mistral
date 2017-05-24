@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2015 Huawei Technologies Co., Ltd.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -258,8 +259,8 @@ class ExecutionsController(rest.RestController):
             result_exec_dict.get('workflow_namespace', ''),
             exec_id,
             result_exec_dict.get('input'),
-            result_exec_dict.get('description', ''),
-            **result_exec_dict.get('params') or {}
+            description=result_exec_dict.get('description', ''),
+            **result_exec_dict.get('params', {})
         )
 
         return resources.Execution.from_dict(result)

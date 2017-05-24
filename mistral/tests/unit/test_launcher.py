@@ -1,4 +1,5 @@
 # Copyright 2017 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Extreme Networks, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -47,7 +48,7 @@ class ServiceLauncherTest(base.DbTestCase):
         api_workers = api_server.workers
 
         self._await(lambda: len(svr_proc_mgr.children.keys()) == api_workers)
-        self._await(lambda: len(svr_thrd_mgr.services.services) == 3)
+        self._await(lambda: len(svr_thrd_mgr.services.services) == 4)
 
     def test_launch_process(self):
         eventlet.spawn(launch.launch_any, ['api'])
