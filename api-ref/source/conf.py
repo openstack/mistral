@@ -99,8 +99,8 @@ modindex_common_prefix = ['mistral.']
 # html_last_updated_fmt = '%b %d, %Y'
 git_cmd = ["git", "log", "--pretty=format:'%ad, commit %h'", "--date=local",
            "-n1"]
-html_last_updated_fmt = subprocess.Popen(
-    git_cmd, stdout=subprocess.PIPE).communicate()[0]
+html_last_updated_fmt = subprocess.check_output(
+    git_cmd).decode('utf-8')
 
 # The name for this set of Sphinx documents. If None, it defaults to
 # "<project> v<release> documentation".
