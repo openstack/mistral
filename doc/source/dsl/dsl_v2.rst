@@ -1199,22 +1199,22 @@ Workflow definition:
   ---
   version: "v2.0"
   wf:
-  tasks:
-    task:
-      action: std.noop
-      publish:
-        all_tasks_in_this_wf_yaql: <% tasks(execution().id) %>
-        all_tasks_in_this_wf_jinja: "{{ tasks(execution().id) }}"
+    tasks:
+      task:
+        action: std.noop
+        publish:
+          all_tasks_in_this_wf_yaql: <% tasks(execution().id) %>
+          all_tasks_in_this_wf_jinja: "{{ tasks(execution().id) }}"
 
-        all_tasks_in_error_yaql: <% tasks(null, false, ERROR) %>
-        all_tasks_in_error_jinja: "{{ tasks(None, false, 'ERROR') }}"
-        all_tasks_in_error_yaql_with_kw: <% tasks(state => ERROR) %>
-        all_tasks_in_error_jinja_with_kw: "{{ tasks(state='ERROR') }}"
+          all_tasks_in_error_yaql: <% tasks(null, false, ERROR) %>
+          all_tasks_in_error_jinja: "{{ tasks(None, false, 'ERROR') }}"
+          all_tasks_in_error_yaql_with_kw: <% tasks(state => ERROR) %>
+          all_tasks_in_error_jinja_with_kw: "{{ tasks(state='ERROR') }}"
 
-        all_tasks_yaql_option1: <% tasks() %>
-        all_tasks_yaql_option2: <% tasks(null, false, null, false) %>
-        all_tasks_jinja_option1: "{{ tasks() }}"
-        all_tasks_jinja_option2: "{{ tasks(None, false, None, false) }}"
+          all_tasks_yaql_option1: <% tasks() %>
+          all_tasks_yaql_option2: <% tasks(null, false, null, false) %>
+          all_tasks_jinja_option1: "{{ tasks() }}"
+          all_tasks_jinja_option2: "{{ tasks(None, false, None, false) }}"
 
 Task publish result (partial to keep the documentation short):
 
