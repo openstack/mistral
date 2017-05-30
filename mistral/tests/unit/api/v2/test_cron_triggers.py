@@ -19,6 +19,7 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services import security
 from mistral.tests.unit.api import base
 
 WF = models.WorkflowDefinition(
@@ -101,11 +102,13 @@ class TestCronTriggerController(base.APITest):
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(db_api, "create_cron_trigger", MOCK_DUPLICATE)
-    def test_post_dup(self):
+    @mock.patch.object(security, "delete_trust")
+    def test_post_dup(self, delete_trust):
         resp = self.app.post_json(
             '/v2/cron_triggers', TRIGGER, expect_errors=True
         )
 
+        self.assertEqual(1, delete_trust.call_count)
         self.assertEqual(409, resp.status_int)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
@@ -122,9 +125,11 @@ class TestCronTriggerController(base.APITest):
 
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_DELETE)
-    def test_delete(self):
+    @mock.patch.object(security, "delete_trust")
+    def test_delete(self, delete_trust):
         resp = self.app.delete('/v2/cron_triggers/my_cron_trigger')
 
+        self.assertEqual(1, delete_trust.call_count)
         self.assertEqual(204, resp.status_int)
 
     @mock.patch.object(db_api, "delete_cron_trigger", MOCK_NOT_FOUND)

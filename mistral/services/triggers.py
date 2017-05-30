@@ -123,9 +123,23 @@ def create_cron_trigger(name, workflow_name, workflow_input,
 
         security.add_trust_id(values)
 
-        trig = db_api.create_cron_trigger(values)
+        try:
+            trig = db_api.create_cron_trigger(values)
+        except Exception:
+            # Delete trust before raising exception.
+            security.delete_trust(values.get('trust_id'))
+            raise
 
     return trig
+
+
+def delete_cron_trigger(name, trust_id=None):
+    if not trust_id:
+        trigger = db_api.get_cron_trigger(name)
+        trust_id = trigger.trust_id
+
+    security.delete_trust(trust_id)
+    return db_api.delete_cron_trigger(name)
 
 
 def create_event_trigger(name, exchange, topic, event, workflow_id,
