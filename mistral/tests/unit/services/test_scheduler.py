@@ -62,7 +62,7 @@ def compare_context_values(expected, actual):
 
 
 def target_check_context_method(expected_project_id):
-    actual_project_id = auth_context.ctx()._BaseContext__values['project_id']
+    actual_project_id = auth_context.ctx().project_id
     compare_context_values(expected_project_id, actual_project_id)
 
 
@@ -152,8 +152,9 @@ class SchedulerServiceTest(base.DbTestCase):
         default_context = base.get_context(default=True)
         auth_context.set_ctx(default_context)
         default_project_id = (
-            default_context._BaseContext__values['project_id']
+            default_context.project_id
         )
+
         method_args1 = {'expected_project_id': default_project_id}
 
         scheduler.schedule_call(
@@ -166,7 +167,7 @@ class SchedulerServiceTest(base.DbTestCase):
         second_context = base.get_context(default=False)
         auth_context.set_ctx(second_context)
         second_project_id = (
-            second_context._BaseContext__values['project_id']
+            second_context.project_id
         )
         method_args2 = {'expected_project_id': second_project_id}
 

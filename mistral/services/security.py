@@ -66,16 +66,16 @@ def create_context(trust_id, project_id):
         client = keystone.client_for_trusts(trust_id)
 
         return auth_ctx.MistralContext(
-            user_id=client.user_id,
-            project_id=project_id,
+            user=client.user_id,
+            tenant=project_id,
             auth_token=client.auth_token,
             is_trust_scoped=True,
             trust_id=trust_id,
         )
 
     return auth_ctx.MistralContext(
-        user_id=None,
-        project_id=None,
+        user=None,
+        tenant=None,
         auth_token=None,
         is_admin=True
     )

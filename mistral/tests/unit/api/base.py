@@ -56,7 +56,7 @@ class APITest(base.DbTestCase):
 
         # Make sure the api get the correct context.
         self.patch_ctx = mock.patch(
-            'mistral.context.context_from_headers_and_env'
+            'mistral.context.MistralContext.from_environ'
         )
         self.mock_ctx = self.patch_ctx.start()
         self.mock_ctx.return_value = self.ctx

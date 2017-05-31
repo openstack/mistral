@@ -48,8 +48,8 @@ class OpenStackActionTest(base.BaseTestCase):
                                          mock_ks_endpoint_v2):
 
         test_ctx = ctx.MistralContext(
-            user_id=None,
-            project_id='1234',
+            user=None,
+            tenant='1234',
             project_name='admin',
             auth_token=None,
             is_admin=False,

@@ -119,8 +119,8 @@ def setup():
     pt = MistralPeriodicTasks(CONF)
 
     ctx = auth_ctx.MistralContext(
-        user_id=None,
-        project_id=None,
+        user=None,
+        tenant=None,
         auth_token=None,
         is_admin=True
     )

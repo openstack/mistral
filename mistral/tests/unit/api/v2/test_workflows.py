@@ -426,7 +426,7 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(0, len(resp.json['workflows']))
 
     @mock.patch('mistral.db.v2.api.get_workflow_definitions')
-    @mock.patch('mistral.context.context_from_headers_and_env')
+    @mock.patch('mistral.context.MistralContext.from_environ')
     def test_get_all_projects_admin(self, mock_context, mock_get_wf_defs):
         admin_ctx = unit_base.get_context(admin=True)
         mock_context.return_value = admin_ctx

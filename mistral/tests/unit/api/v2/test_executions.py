@@ -638,7 +638,7 @@ class TestExecutionsController(base.APITest):
         self.assertIsNone(resource_function)
 
     @mock.patch('mistral.db.v2.api.get_workflow_executions')
-    @mock.patch('mistral.context.context_from_headers_and_env')
+    @mock.patch('mistral.context.MistralContext.from_environ')
     def test_get_all_projects_admin(self, mock_context, mock_get_execs):
         admin_ctx = unit_base.get_context(admin=True)
         mock_context.return_value = admin_ctx
@@ -658,7 +658,7 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(403, resp.status_int)
 
     @mock.patch('mistral.db.v2.api.get_workflow_executions')
-    @mock.patch('mistral.context.context_from_headers_and_env')
+    @mock.patch('mistral.context.MistralContext.from_environ')
     def test_get_all_filter_by_project_id(self, mock_context, mock_get_execs):
         admin_ctx = unit_base.get_context(admin=True)
         mock_context.return_value = admin_ctx

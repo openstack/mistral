@@ -182,7 +182,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         if not isinstance(ctx, dict):
             return
 
-        context = auth_ctx.MistralContext(**ctx)
+        context = auth_ctx.MistralContext.from_dict(ctx)
         auth_ctx.set_ctx(context)
 
         return context
