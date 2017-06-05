@@ -217,7 +217,8 @@ def _build_task_from_command(cmd):
             cmd.ctx,
             task_ex=cmd.task_ex,
             unique_key=cmd.task_ex.unique_key,
-            waiting=cmd.task_ex.state == states.WAITING
+            waiting=cmd.task_ex.state == states.WAITING,
+            triggered_by=cmd.triggered_by
         )
 
         if cmd.reset:
@@ -280,16 +281,20 @@ def _refresh_task_state(task_ex_id):
 
         wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
-        state, state_info, cardinality = wf_ctrl.get_logical_task_state(
+        log_state = wf_ctrl.get_logical_task_state(
             task_ex
         )
+
+        state = log_state.state
+        state_info = log_state.state_info
+
+        # Update 'triggered_by' because it could have changed.
+        task_ex.runtime_context['triggered_by'] = log_state.triggered_by
 
         if state == states.RUNNING:
             continue_task(task_ex)
         elif state == states.ERROR:
-            task = _build_task_from_execution(wf_spec, task_ex)
-
-            task.complete(state, state_info)
+            complete_task(task_ex, state, state_info)
         elif state == states.WAITING:
             # Let's assume that a task takes 0.01 sec in average to complete
             # and based on this assumption calculate a time of the next check.
@@ -300,7 +305,7 @@ def _refresh_task_state(task_ex_id):
             # then the next 'refresh_task_state' call will happen in 10
             # seconds. For 500 tasks it will be 50 seconds. The larger the
             # workflow is, the more beneficial this mechanism will be.
-            delay = int(cardinality * 0.01)
+            delay = int(log_state.cardinality * 0.01)
 
             _schedule_refresh_task_state(task_ex, max(1, delay))
         else:

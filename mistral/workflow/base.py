@@ -62,6 +62,33 @@ def get_controller(wf_ex, wf_spec=None):
     return ctrl_cls(wf_ex, wf_spec)
 
 
+class TaskLogicalState(object):
+    """Task logical state.
+
+    This data structure describes what state a task should have according
+    to the logic of the workflow type and state of other tasks.
+    """
+
+    def __init__(self, state, state_info=None, cardinality=0,
+                 triggered_by=None):
+        self.state = state
+        self.state_info = state_info
+        self.cardinality = cardinality
+        self.triggered_by = triggered_by or []
+
+    def get_state(self):
+        return self.state
+
+    def get_state_info(self):
+        return self.state_info
+
+    def get_cardinality(self):
+        return self.cardinality
+
+    def get_triggered_by(self):
+        return self.get_triggered_by
+
+
 class WorkflowController(object):
     """Workflow Controller base class.
 

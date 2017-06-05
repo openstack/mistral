@@ -229,12 +229,7 @@ class Task(object):
         }
 
         if self.triggered_by:
-            values['runtime_context']['triggered_by'] = [
-                {
-                    'task_id': self.triggered_by[0].id,
-                    'event': self.triggered_by[1]
-                }
-            ]
+            values['runtime_context']['triggered_by'] = self.triggered_by
 
         self.task_ex = db_api.create_task_execution(values)
 
@@ -316,6 +311,7 @@ class RegularTask(Task):
         self.set_state(states.RUNNING, None, processed=False)
 
         self._update_inbound_context()
+        self._update_triggered_by()
         self._reset_actions()
         self._schedule_actions()
 
@@ -327,6 +323,14 @@ class RegularTask(Task):
         self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec)
 
         utils.update_dict(self.task_ex.in_context, self.ctx)
+
+    def _update_triggered_by(self):
+        assert self.task_ex
+
+        if not self.triggered_by:
+            return
+
+        self.task_ex.runtime_context['triggered_by'] = self.triggered_by
 
     def _reset_actions(self):
         """Resets task state.
