@@ -81,7 +81,10 @@ def advance_cron_trigger(t):
 
         # If this is the last execution.
         if t.remaining_executions == 0:
-            modified_count = db_api_v2.delete_cron_trigger(t.name)
+            modified_count = triggers.delete_cron_trigger(
+                t.name,
+                trust_id=t.trust_id
+            )
         else:  # if remaining execution = None or > 0.
             next_time = triggers.get_next_execution_time(
                 t.pattern,

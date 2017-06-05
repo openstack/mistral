@@ -225,6 +225,40 @@ class TriggerServiceV2Test(base.DbTestCase):
 
         self.assertEqual('my_trust_id', trigger.trust_id)
 
+    @mock.patch.object(security, 'create_trust',
+                       type('trust', (object,), {'id': 'my_trust_id'}))
+    @mock.patch.object(security, 'create_context', mock.Mock())
+    @mock.patch.object(rpc.EngineClient, 'start_workflow', mock.Mock())
+    @mock.patch(
+        'mistral.services.periodic.advance_cron_trigger',
+        mock.MagicMock(side_effect=new_advance_cron_trigger)
+    )
+    @mock.patch.object(security, 'delete_trust')
+    def test_create_delete_trust_in_trigger(self, delete_trust):
+        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        trigger_thread = periodic.setup()
+        self.addCleanup(trigger_thread.stop)
+        self.addCleanup(
+            cfg.CONF.set_default, 'auth_enable',
+            False, group='pecan'
+        )
+
+        t_s.create_cron_trigger(
+            'trigger-%s' % utils.generate_unicode_uuid(),
+            self.wf.name,
+            {},
+            {},
+            '* * * * * *',
+            None,
+            1,
+            datetime.datetime(2010, 8, 25)
+        )
+
+        self._await(
+            lambda: delete_trust.call_count == 1, timeout=10
+        )
+        self.assertEqual('my_trust_id', delete_trust.mock_calls[0][1][0])
+
     def test_get_trigger_in_correct_orders(self):
         t1_name = 'trigger-%s' % utils.generate_unicode_uuid()
 

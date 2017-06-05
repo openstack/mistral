@@ -81,7 +81,7 @@ class CronTriggersController(rest.RestController):
 
         LOG.info("Delete cron trigger [name=%s]" % name)
 
-        db_api.delete_cron_trigger(name)
+        triggers.delete_cron_trigger(name)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CronTriggers, types.uuid, int,

@@ -13,11 +13,13 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 
 from mistral import context as auth_ctx
 from mistral.utils.openstack import keystone
 
 
+LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 # Make sure to import 'auth_enable' option before using it.
@@ -79,12 +81,16 @@ def create_context(trust_id, project_id):
     )
 
 
-def delete_trust(workbook):
-    if not workbook.trust_id:
+def delete_trust(trust_id):
+    if not trust_id:
         return
 
-    keystone_client = keystone.client_for_trusts(workbook.trust_id)
-    keystone_client.trusts.delete(workbook.trust_id)
+    keystone_client = keystone.client_for_trusts(trust_id)
+
+    try:
+        keystone_client.trusts.delete(trust_id)
+    except Exception as e:
+        LOG.warning("Failed to delete trust [id=%s]: %s" % (trust_id, e))
 
 
 def add_trust_id(secure_object_values):
