@@ -60,18 +60,10 @@ directory.
     $ openstack service create workflowv2 --name mistral --description 'OpenStack Workflow service'
     $ openstack endpoint create workflowv2 --publicurl $MISTRAL_URL --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
 
-#. Configure transport properties in the corresponding config section: for
-   RabbitMQ it is **oslo_messaging_rabbit**::
-
-    [oslo_messaging_rabbit]
-    rabbit_userid = <user_id>
-    rabbit_password = <password>
-    rabbit_host = <host>
-
-   **NOTE**: Make sure that backend transport configuration is correct. Example for RabbitMQ::
+#. Configure transport properties in the [DEFAULT] section::
 
     [DEFAULT]
-    rpc_backend = rabbit
+    transport_url = rabbit://<user_id>:<password>@<host>:5672/
 
 #. Configure database. **SQLite can't be used in production**. Use *MySQL* or
    *PostgreSQL* instead. Here are the steps how to connect *MySQL* DB to Mistral:
