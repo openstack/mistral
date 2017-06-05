@@ -49,6 +49,34 @@ def assert_equal_none(logical_line):
         yield (0, msg)
 
 
+def no_assert_equal_true_false(logical_line):
+    """Check for assertTrue/assertFalse sentences
+
+    M319
+    """
+    _start_re = re.compile(r'assert(Not)?Equal\((True|False),')
+    _end_re = re.compile(r'assert(Not)?Equal\(.*,\s+(True|False)\)$')
+
+    if _start_re.search(logical_line) or _end_re.search(logical_line):
+        yield (0, "M319: assertEqual(A, True|False), "
+               "assertEqual(True|False, A), assertNotEqual(A, True|False), "
+               "or assertEqual(True|False, A) sentences must not be used. "
+               "Use assertTrue(A) or assertFalse(A) instead")
+
+
+def no_assert_true_false_is_not(logical_line):
+    """Check for assertIs/assertIsNot sentences
+
+    M320
+    """
+    _re = re.compile(r'assert(True|False)\(.+\s+is\s+(not\s+)?.+\)$')
+
+    if _re.search(logical_line):
+        yield (0, "M320: assertTrue(A is|is not B) or "
+               "assertFalse(A is|is not B) sentences must not be used. "
+               "Use assertIs(A, B) or assertIsNot(A, B) instead")
+
+
 def check_oslo_namespace_imports(logical_line):
     if re.match(oslo_namespace_imports_from_dot, logical_line):
         msg = ("O323: '%s' must be used instead of '%s'.") % (
@@ -255,6 +283,8 @@ class CheckForLoggingIssues(BaseASTChecker):
 
 def factory(register):
     register(assert_equal_none)
+    register(no_assert_equal_true_false)
+    register(no_assert_true_false_is_not)
     register(check_oslo_namespace_imports)
     register(CheckForLoggingIssues)
     register(check_python3_no_iteritems)
