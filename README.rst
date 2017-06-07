@@ -218,8 +218,8 @@ Project Goals 2017
 #. **Complete Mistral documentation**.
 
    Mistral documentation should be more usable. It requires focused work to
-   make it well structured, eliminate gaps in API/DSL specifications, add more
-   examples and tutorials.
+   make it well structured, eliminate gaps in API/Mistral Workflow Language
+   specifications, add more examples and tutorials.
 
    *Definition of done*:
    All capabilities are covered, all documentation topics are written using

@@ -1,28 +1,27 @@
-Mistral DSL v2 specification
-============================
+Mistral Workflow Language v2 specification
+==========================================
 
 Introduction
 ------------
 
-This document fully describes Domain Specific Language (DSL) version 2
-of Mistral Workflow Service. Since version 1 issued in May 2014 Mistral
-team completely reworked the language pursuing the goal in mind to make
-it easier to understand while more consistent and flexible.
+This document fully describes Mistral Workflow Language version 2 of Mistral
+Workflow Service. Since version 1 issued in May 2014 Mistral team completely
+reworked the language pursuing the goal in mind to make it easier to understand
+while more consistent and flexible.
 
-Unlike Mistral DSLv1 DSL v2 assumes that all
-entities that Mistral works with like workflows and actions are
-completely independent in terms of how they're referenced and accessed
-through API (and also Python Client API and CLI). Workbook, the entity
-that can combine workflows and actions still exists in the
-language but only for namespacing and convenience purposes. See
+Unlike Mistral Workflow Language v1, v2 assumes that all entities that Mistral
+works with like workflows and actions are completely independent in terms of
+how they're referenced and accessed through API (and also Python Client API and
+CLI). Workbook, the entity that can combine workflows and actions still exists
+in the language but only for namespacing and convenience purposes. See
 `Workbooks section <#workbooks>`__ for more details.
 
-**NOTE**: DSL and API of version 1 has not been supported since April 2015 and
-DSL and API of version 2 is now the only way to interact with Mistral
+**NOTE**: Mistral Workflow Language and API of version 1 has not been supported
+since April 2015 and version 2 is now the only way to interact with Mistral
 service.
 
-Mistral DSL consists of the following main object(entity) types that
-will be described in details below:
+Mistral Workflow Language consists of the following main object(entity) types
+that will be described in details below:
 
 -  `Workflows <#workflows>`__
 -  `Actions <#actions>`__
@@ -30,13 +29,14 @@ will be described in details below:
 Prerequisites
 -------------
 
-Mistral DSL supports `YAQL <https://pypi.python.org/pypi/yaql/1.0.0>`__ and
-`Jinja2 <http://jinja.pocoo.org/docs/dev/>`__ expression languages to
-reference workflow context variables and thereby implements passing data
-between workflow tasks. It's also referred to as Data Flow mechanism.
-YAQL is a simple but powerful query language that allows to extract
-needed information from JSON structured data. It is allowed to use YAQL
-in the following sections of DSL:
+Mistral Workflow Language supports
+`YAQL <https://pypi.python.org/pypi/yaql/1.0.0>`__ and
+`Jinja2 <http://jinja.pocoo.org/docs/dev/>`__ expression languages to reference
+workflow context variables and thereby implements passing data between workflow
+tasks. It's also referred to as Data Flow mechanism. YAQL is a simple but
+powerful query language that allows to extract needed information from JSON
+structured data. It is allowed to use YAQL in the following sections of
+Mistral Workflow Language:
 
 -  Workflow `'output' attribute <#common-workflow-attributes>`__
 -  Workflow `'task-defaults' attribute <#common-workflow-attributes>`__
@@ -49,8 +49,8 @@ in the following sections of DSL:
 -  Action `'base-input' attribute <#attributes>`__
 -  Action `'output' attribute <#attributes>`__
 
-Mistral DSL is fully based on YAML and knowledge of YAML is a plus for
-better understanding of the material in this specification. It also
+Mistral Workflow Language is fully based on YAML and knowledge of YAML is a
+plus for better understanding of the material in this specification. It also
 takes advantage of supported query languages to define expressions in workflow
 and action definitions.
 
@@ -61,11 +61,11 @@ and action definitions.
 Workflows
 ---------
 
-Workflow is the main building block of Mistral DSL, the reason why the
-project exists. Workflow represents a process that can be described in a
-various number of ways and that can do some job interesting to the end
-user. Each workflow consists of tasks (at least one) describing what
-exact steps should be made during workflow execution.
+Workflow is the main building block of Mistral Workflow Language, the reason
+why the project exists. Workflow represents a process that can be described in
+a various number of ways and that can do some job interesting to the end user.
+Each workflow consists of tasks (at least one) describing what exact steps
+should be made during workflow execution.
 
 YAML example
 ^^^^^^^^^^^^
@@ -107,11 +107,11 @@ created using special "retry" policy.
 Workflow types
 ^^^^^^^^^^^^^^
 
-Mistral DSL v2 introduces different workflow types and the structure of
-each workflow type varies according to its semantics. Basically,
-workflow type encapsulates workflow processing logic, a set of meta
-rules defining how all workflows of this type should work. Currently,
-Mistral provides two workflow types:
+Mistral Workflow Language v2 introduces different workflow types and the
+structure of each workflow type varies according to its semantics. Basically,
+workflow type encapsulates workflow processing logic, a set of meta rules
+defining how all workflows of this type should work. Currently, Mistral
+provides two workflow types:
 
 -  `Direct workflow <#direct-workflow>`__
 -  `Reverse workflow <#reverse-workflow>`__
@@ -163,8 +163,8 @@ Tasks
 
 Task is what a workflow consists of. It defines a specific computational
 step in the workflow. Each task can optionally take input data and
-produce output. In Mistral DSL v2 task can be associated with an action
-or a workflow. In the example below there are two tasks of different
+produce output. In Mistral Workflow Language v2, task can be associated with an
+action or a workflow. In the example below there are two tasks of different
 types:
 
 .. code-block:: mistral
@@ -277,8 +277,8 @@ automatically by engine if hasn't completed.
 
 Defines a max number of actions running simultaneously in a task. *Applicable*
 only for tasks that have *with-items*. If *concurrency* task property is not
-set then actions (or workflows in case of nested workflows) of the task
-will be scheduled for execution all at once.
+set then actions (or workflows in case of nested workflows) of the task will
+be scheduled for execution all at once.
 
 
 **retry**
@@ -349,20 +349,19 @@ Simplified syntax:
     my_task:
       workflow: some_nested_workflow param1='val1' param2='val2'
 
-**NOTE**: It's also possible to merge these two approaches and specify a
-part of parameters using simplified key-value pairs syntax and using
-keyword *input*. In this case all the parameters will be effectively
-merged. If the same parameter is specified in both ways then the one
-under *input* keyword takes precedence.
+**NOTE**: It's also possible to merge these two approaches and specify a part
+of parameters using simplified key-value pairs syntax and using keyword *input*.
+In this case all the parameters will be effectively merged. If the same
+parameter is specified in both ways then the one under *input* keyword takes
+precedence.
 
 Direct workflow
 ^^^^^^^^^^^^^^^
 
-Direct workflow consists of tasks combined in a graph where every next
-task starts after another one depending on produced result. So direct
-workflow has a notion of transition. Direct workflow is considered to be
-completed if there aren't any transitions left that could be used to
-jump to next tasks.
+Direct workflow consists of tasks combined in a graph where every next task
+starts after another one depending on produced result. So direct workflow has a
+notion of transition. Direct workflow is considered to be completed if there
+aren't any transitions left that could be used to jump to next tasks.
 
 .. image:: /img/Mistral_direct_workflow.png
 
@@ -485,10 +484,10 @@ Transitions with YAQL expressions
 '''''''''''''''''''''''''''''''''
 
 Task transitions can be determined by success/error/completeness of the
-previous tasks and also by additional guard expressions that can
-access any data produced by upstream tasks. So in the example above task
-'create_vm' could also have a YAQL expression on transition to task
-'send_success_email' as follows:
+previous tasks and also by additional guard expressions that can access any
+data produced by upstream tasks. So in the example above task 'create_vm' could
+also have a YAQL expression on transition to task 'send_success_email' as
+follows:
 
 .. code-block:: mistral
 
@@ -497,9 +496,9 @@ access any data produced by upstream tasks. So in the example above task
      on-success:
        - send_success_email: <% $.vm_id != null %>
 
-And this would tell Mistral to run 'send_success_email' task only if
-'vm_id' variable published by task 'create_vm' is not empty.
-Expressions can also be applied to 'on-error' and 'on-complete'.
+And this would tell Mistral to run 'send_success_email' task only if 'vm_id'
+variable published by task 'create_vm' is not empty. Expressions can also be
+applied to 'on-error' and 'on-complete'.
 
 Fork
 ''''
@@ -515,15 +514,14 @@ some task has completed.
         - register_vm_in_load_balancer
         - register_vm_in_dns
 
-In this case Mistral will run both "register_xxx" tasks simultaneously
-and this will lead to multiple independent workflow routes being
-processed in parallel.
+In this case Mistral will run both "register_xxx" tasks simultaneously and this
+will lead to multiple independent workflow routes being processed in parallel.
 
 Join
 ''''
 
-Join flow control allows to synchronize multiple parallel workflow
-branches and aggregate their data.
+Join flow control allows to synchronize multiple parallel workflow branches and
+aggregate their data.
 
 Full Join (join: all)
 
@@ -548,12 +546,11 @@ Full Join (join: all)
       join: all
       action: send_email
 
-When a task has property "join" assigned with value "all" the task will
-run only if all upstream tasks (ones that lead to this task) are
-completed and corresponding conditions have triggered. Task A is
-considered an upstream task of Task B if Task A has Task B mentioned in
-any of its "on-success", "on-error" and "on-complete" clauses regardless
-of guard expressions.
+When a task has property "join" assigned with value "all" the task will run
+only if all upstream tasks (ones that lead to this task) are completed and
+corresponding conditions have triggered. Task A is considered an upstream task
+of Task B if Task A has Task B mentioned in any of its "on-success", "on-error"
+and "on-complete" clauses regardless of guard expressions.
 
 Partial Join (join: 2)
 
@@ -578,38 +575,37 @@ Partial Join (join: 2)
       join: 2
       action: send_email
 
-When a task has property "join" assigned with a numeric value then the
-task will run once at least this number of upstream tasks are completed
-and corresponding conditions have triggered. In the example above task
+When a task has property "join" assigned with a numeric value then the task
+will run once at least this number of upstream tasks are completed and
+corresponding conditions have triggered. In the example above task
 "wait_for_two_registrations" will run if two any of
 "register_vm_xxx" tasks complete.
 
 Discriminator (join: one)
 
 
-Discriminator is a special case of Partial Join when "join" property has
-value 1. It means Mistral will wait for any completed task.
-In this case instead of 1 it is possible to specify special
-string value "one" which is introduced for symmetry with "all". However,
-it's up to the user whether to use "1" or "one".
+Discriminator is a special case of Partial Join when "join" property has value
+1. It means Mistral will wait for any completed task. In this case instead of 1
+it is possible to specify special string value "one" which is introduced for
+symmetry with "all". However, it's up to the user whether to use "1" or "one".
 
 Reverse workflow
 ^^^^^^^^^^^^^^^^
 
-In reverse workflow all relationships in workflow task graph are
-dependencies. In order to run this type of workflow we need to specify a
-task that needs to be completed, it can be conventionally called 'target
-task'. When Mistral Engine starts a workflow it recursively identifies
-all the dependencies that need to be completed first.
+In reverse workflow all relationships in workflow task graph are dependencies.
+In order to run this type of workflow we need to specify a task that needs to
+be completed, it can be conventionally called 'target task'. When Mistral
+Engine starts a workflow it recursively identifies all the dependencies that
+need to be completed first.
 
 .. image:: /img/Mistral_reverse_workflow.png
 
-Figure 2 explains how reverse workflow works. In the example, task
-**T1** is chosen a target task. So when the workflow starts Mistral will
-run only tasks **T7**, **T8**, **T5**, **T6**, **T2** and **T1** in the
-specified order (starting from tasks that have no dependencies). Tasks
-**T3** and **T4** won't be a part of this workflow because there's no
-route in the directed graph from **T1** to **T3** or **T4**.
+Figure 2 explains how reverse workflow works. In the example, task **T1** is
+chosen a target task. So when the workflow starts Mistral will run only tasks
+**T7**, **T8**, **T5**, **T6**, **T2** and **T1** in the specified order
+(starting from tasks that have no dependencies). Tasks **T3** and **T4** won't
+be a part of this workflow because there's no route in the directed graph from
+**T1** to **T3** or **T4**.
 
 YAML example
 ''''''''''''
@@ -693,13 +689,13 @@ YAML example
             delay: 5
             count: <% $.vm_names.len() * 10 %>
 
-Workflow "create_vms" in this example creates as many virtual servers
-as we provide in "vm_names" input parameter. E.g., if we specify
-vm_names=["vm1", "vm2"] then it'll create servers with these names
-based on same image and flavor. It is possible because of using
-"with-items" keyword that makes an action or a workflow associated with
-a task run multiple times. Value of "with-items" task property contains
-an expression in the form: in <% YAQL_expression %>.
+Workflow "create_vms" in this example creates as many virtual servers as we
+provide in "vm_names" input parameter. E.g., if we specify
+vm_names=["vm1", "vm2"] then it'll create servers with these names based on
+same image and flavor. It is possible because of using "with-items" keyword
+that makes an action or a workflow associated with a task run multiple times.
+Value of "with-items" task property contains an expression in the form: in
+<% YAQL_expression %>.
 
 The most common form is:
 
@@ -712,18 +708,18 @@ The most common form is:
       - varN in <% YAQL_expression_N %>
 
 where collections expressed as YAQL_expression_1, YAQL_expression_2,
-YAQL_expression_N must have equal sizes. When a task gets started
-Mistral will iterate over all collections in parallel, i.e. number of
-iterations will be equal to length of any collections.
+YAQL_expression_N must have equal sizes. When a task gets started Mistral will
+iterate over all collections in parallel, i.e. number of iterations will be
+equal to length of any collections.
 
-Note that in case of using "with-items" task result accessible in
-workflow context as <% task(task_name).result %> will be a list containing results
-of corresponding action/workflow calls. If at least one action/workflow
-call has failed then the whole task will get into ERROR state. It's also
-possible to apply retry policy for tasks with "with-items" property. In
-this case retry policy will be relaunching all action/workflow calls
-according to "with-items" configuration. Other policies can also be used
-the same way as with regular non "with-items" tasks.
+Note that in case of using "with-items" task result accessible in workflow
+context as <% task(task_name).result %> will be a list containing results of
+corresponding action/workflow calls. If at least one action/workflow call has
+failed then the whole task will get into ERROR state. It's also possible to
+apply retry policy for tasks with "with-items" property. In this case retry
+policy will be relaunching all action/workflow calls according to "with-items"
+configuration. Other policies can also be used the same way as with regular non
+"with-items" tasks.
 
 .. _actions-dsl:
 
@@ -731,17 +727,16 @@ Actions
 -------
 
 Action defines what exactly needs to be done when task starts. Action is
-similar to a regular function in general purpose programming language
-like Python. It has a name and parameters. Mistral distinguishes 'system
-actions' and 'Ad-hoc actions'.
+similar to a regular function in general purpose programming language like
+Python. It has a name and parameters. Mistral distinguishes 'system actions'
+and 'Ad-hoc actions'.
 
 System actions
 ^^^^^^^^^^^^^^
 
-System actions are provided by Mistral out of the box and can be used by
-anyone. It is also possible to add system actions for specific Mistral
-installation via a special plugin mechanism. Currently, built-in system
-actions are:
+System actions are provided by Mistral out of the box and can be used by anyone.
+It is also possible to add system actions for specific Mistral installation via
+a special plugin mechanism. Currently, built-in system actions are:
 
 std.fail
 ''''''''
@@ -793,8 +788,8 @@ Example:
 std.mistral_http
 ''''''''''''''''
 
-This action works just like 'std.http' with the only exception: when
-sending a request it inserts the following HTTP headers:
+This action works just like 'std.http' with the only exception: when sending a
+request it inserts the following HTTP headers:
 
 -  **Mistral-Workflow-Name** - Name of the workflow that the current
    action execution is associated with.
@@ -805,14 +800,13 @@ sending a request it inserts the following HTTP headers:
 -  **Mistral-Action-Execution-Id** - Identifier of the current action
    execution.
 
-Using this action makes it possible to do any work in asynchronous
-manner triggered via HTTP protocol. That means that Mistral can send a
-request using 'std.mistral_http' and then any time later whatever
-system that received this request can notify Mistral back (using its
-public API) with the result of this action. Header
-**Mistral-Action-Execution-Id** is required for this operation because
-it is used a key to find corresponding action execution in Mistral
-to attach the result to.
+Using this action makes it possible to do any work in asynchronous manner
+triggered via HTTP protocol. That means that Mistral can send a request using
+'std.mistral_http' and then any time later whatever system that received this
+request can notify Mistral back (using its public API) with the result of this
+action. Header **Mistral-Action-Execution-Id** is required for this operation
+because it is used a key to find corresponding action execution in Mistral to
+attach the result to.
 
 std.email
 '''''''''
@@ -859,9 +853,11 @@ Input parameters:
    *Required*.
 -  **username** - User name to authenticate on the host. *Required*.
 -  **password** - User password to to authenticate on the host. *Optional*.
--  **private_key_filename** - Private key file name which will be used for authentication on remote host.
+-  **private_key_filename** - Private key file name which will be used for
+   authentication on remote host.
 All private keys should be on executor host in **<home-user-directory>/.ssh/**.
-**<home-user-directory>** should refer to user directory under which service is running. *Optional*.
+**<home-user-directory>** should refer to user directory under which service is
+running. *Optional*.
 
 **NOTE**: Authentication using key pairs is supported, key should be
 on Mistral Executor server machine.
@@ -869,8 +865,8 @@ on Mistral Executor server machine.
 std.echo
 ''''''''
 
-Simple action mostly needed for testing purposes that returns a
-predefined result.
+Simple action mostly needed for testing purposes that returns a predefined
+result.
 
 Input parameters:
 
@@ -888,10 +884,11 @@ Input parameters:
    executed. *Required*.
 
 **To use std.javascript, it is needed to install a number of
-dependencies and JS engine.** Currently Mistral uses only V8 Engine and
-its wrapper - PyV8. For installing it, do the next steps:
+dependencies and JS engine.** Currently Mistral uses only V8 Engine and its
+wrapper - PyV8. For installing it, do the next steps:
 
-1. Install required libraries - boost, g++, libtool, autoconf, subversion, libv8-legacy-dev: On Ubuntu::
+1. Install required libraries - boost, g++, libtool, autoconf, subversion,
+libv8-legacy-dev: On Ubuntu::
 
     $ sudo apt-get install libboost-all-dev g++ libtool autoconf libv8-legacy-dev subversion make
 
@@ -968,13 +965,13 @@ Another example for getting the current date and time:
 Ad-hoc actions
 ^^^^^^^^^^^^^^
 
-Ad-hoc action is a special type of action that can be created by user.
-Ad-hoc action is always created as a wrapper around any other existing
-system action and its main goal is to simplify using same actions many
-times with similar pattern.
+Ad-hoc action is a special type of action that can be created by user. Ad-hoc
+action is always created as a wrapper around any other existing system action
+and its main goal is to simplify using same actions many times with similar
+pattern.
 
-**NOTE**: Nested ad-hoc actions currently are not supported (i.e. ad-hoc
-action around another ad-hoc action).
+**NOTE**: Nested ad-hoc actions currently are not supported (i.e. ad-hoc action
+around another ad-hoc action).
 
 YAML example
 ''''''''''''
@@ -1000,8 +997,8 @@ YAML example
         smtp_server: 'smtp.google.com'
         smtp_password: 'SECRET'
 
-Once this action is uploaded to Mistral any workflow will be able to use
-it as follows:
+Once this action is uploaded to Mistral any workflow will be able to use it as
+follows:
 
 .. code-block:: mistral
 
@@ -1016,49 +1013,47 @@ Attributes
 
 -  **base** - Name of base action that this action is built on top of.
    *Required*.
--  **base-input** - Actual input parameters provided to base action.
-   Look at the example above. *Optional*.
--  **input** - List of declared action parameters which should be
-   specified as corresponding task input. This attribute is optional and
-   used only for documenting purposes. Mistral now does not enforce
-   actual input parameters to exactly correspond to this list. Based
-   parameters will be calculated based on provided actual parameters
-   with using expressions so what's used in expressions implicitly
-   define real input parameters. Dictionary of actual input parameters
-   (expression context) is referenced as '$.' in YAQL and as '_.' in Jinja.
-   Redundant parameters will be simply ignored.
--  **output** - Any data structure defining how to calculate output of
-   this action based on output of base action. It can optionally have
-   expressions to access properties of base action output through expression
-   context.
+-  **base-input** - Actual input parameters provided to base action. Look at the
+   example above. *Optional*.
+-  **input** - List of declared action parameters which should be specified as
+   corresponding task input. This attribute is optional and used only for
+   documenting purposes. Mistral now does not enforce actual input parameters to
+   exactly correspond to this list. Based parameters will be calculated based on
+   provided actual parameters with using expressions so what's used in
+   expressions implicitly define real input parameters. Dictionary of actual
+   input parameters (expression context) is referenced as '$.' in YAQL and as
+   '_.' in Jinja. Redundant parameters will be simply ignored.
+-  **output** - Any data structure defining how to calculate output of this
+   action based on output of base action. It can optionally have expressions to
+   access properties of base action output through expression context.
 
 Workbooks
 ---------
 
-As mentioned before, workbooks still exist in Mistral DSL version 2 but
-purely for convenience. Using workbooks users can combine multiple
-entities of any type (workflows, actions and triggers) into one document
-and upload to Mistral service. When uploading a workbook Mistral will
-parse it and save its workflows, actions and triggers as independent
-objects which will be accessible via their own API endpoints
-(/workflows, /actions and /triggers/). Once it's done the workbook comes
-out of the game. User can just start workflows and use references to
-workflows/actions/triggers as if they were uploaded without workbook in
-the first place. However, if we want to modify these individual objects
-we can modify the same workbook definition and re-upload it to Mistral
-(or, of course, we can do it independently).
+As mentioned before, workbooks still exist in Mistral Workflow Language version
+2 but purely for convenience. Using workbooks users can combine multiple
+entities of any type (workflows, actions and triggers) into one document and
+upload to Mistral service. When uploading a workbook Mistral will parse it and
+save its workflows, actions and triggers as independent objects which will be
+accessible via their own API endpoints (/workflows, /actions and /triggers/).
+Once it's done the workbook comes out of the game. User can just start workflows
+and use references to workflows/actions/triggers as if they were uploaded
+without workbook in the first place. However, if we want to modify these
+individual objects we can modify the same workbook definition and re-upload it
+to Mistral (or, of course, we can do it independently).
 
 Namespacing
 ^^^^^^^^^^^
 
-One thing that's worth noting is that when using a workbook Mistral uses
-its name as a prefix for generating final names of workflows, actions
-and triggers included into the workbook. To illustrate this principle
-let's take a look at the figure below.
+One thing that's worth noting is that when using a workbook Mistral uses its
+name as a prefix for generating final names of workflows, actions and triggers
+included into the workbook. To illustrate this principle let's take a look at
+the figure below.
 
 .. image:: /img/Mistral_workbook_namespacing.png
 
-So after a workbook has been uploaded its workflows and actions become independent objects but with slightly different names.
+So after a workbook has been uploaded its workflows and actions become
+independent objects but with slightly different names.
 
 YAML example
 ''''''''''''
@@ -1104,9 +1099,9 @@ YAML example
           - str2
         base: std.echo output="<% $.str1 %><% $.str2 %>"
 
-**NOTE**: Even though names of objects inside workbooks change upon
-uploading Mistral allows referencing between those objects using local
-names declared in the original workbook.
+**NOTE**: Even though names of objects inside workbooks change upon uploading
+Mistral allows referencing between those objects using local names declared in
+the original workbook.
 
 Attributes
 ^^^^^^^^^^
@@ -1123,7 +1118,8 @@ Attributes
 Predefined values/Functions in execution data context
 -----------------------------------------------------
 
-Using expressions it is possible to use some predefined values in Mistral DSL.
+Using expressions it is possible to use some predefined values in Mistral
+Workflow Language.
 
 -  **OpenStack context**
 -  **Task result**
@@ -1133,9 +1129,9 @@ Using expressions it is possible to use some predefined values in Mistral DSL.
 OpenStack context
 ^^^^^^^^^^^^^^^^^
 
-OpenStack context is available by **$.openstack**. It contains
-**auth_token,** **project_id**, **user_id**, **service_catalog**,
-**user_name**, **project_name**, **roles**, **is_admin** properties.
+OpenStack context is available by **$.openstack**. It contains **auth_token**,
+**project_id**, **user_id**, **service_catalog**, **user_name**,
+**project_name**, **roles**, **is_admin** properties.
 
 
 Builtin functions in expressions
@@ -1279,14 +1275,14 @@ Task publish result (partial to keep the documentation short):
 Task result
 '''''''''''
 
-Task result is available by **task(<task_name>).result**. It contains task result
-and directly depends on action output structure. Note that the *task(<task_name>)*
-function itself returns more than only task result. It returns the following
-fields of task executions:
+Task result is available by **task(<task_name>).result**. It contains task
+result and directly depends on action output structure. Note that the
+*task(<task_name>)* function itself returns more than only task result. It
+returns the following fields of task executions:
 
 * **id** - task execution UUID.
 * **name** - task execution name.
-* **spec** - task execution spec dict (loaded from DSL).
+* **spec** - task execution spec dict (loaded from Mistral Workflow Language).
 * **state** - task execution state.
 * **state_info** - task execution state info.
 * **result** - task execution result.
@@ -1302,5 +1298,5 @@ information about execution itself such as **id**, **wf_spec**,
 Environment
 ^^^^^^^^^^^
 
-Environment info is available by **env()**. It is passed when user submit workflow execution.
-It contains variables specified by user.
+Environment info is available by **env()**. It is passed when user submit
+workflow execution. It contains variables specified by user.

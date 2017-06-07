@@ -79,4 +79,5 @@ the original workbook.
 * **workflows** - Dictionary containing workflow definitions. *Optional*.
 * **actions** - Dictionary containing ad-hoc action definitions. *Optional*.
 
-For more details about DSL itself, please see :doc:`Mistral DSL specification </dsl/index>`
+For more details about Mistral Workflow Language itself, please see
+:doc:`Mistral Workflow Language specification </dsl/index>`

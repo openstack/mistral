@@ -14,8 +14,8 @@ transform data and call functions. Find more information about it in the
 for transferring data plays a central role in the workflow concept and is
 referred to as Data Flow.
 
-Below is a simple example of how Mistral Data Flow looks like from the DSL
-(workflow language) perspective:
+Below is a simple example of how Mistral Data Flow looks like from the Mistral
+Workflow Language perspective:
 
 .. code-block:: mistral
 
@@ -59,7 +59,7 @@ To enable the task affinity feature, edit the "host" property in the
     host = my_favorite_executor
 
 Then start (restart) the executor. Use the "target" task property to specify
-this executor in Workflow DSL::
+this executor in Mistral Workflow Language::
 
     ... Workflow YAML ...
     task1:

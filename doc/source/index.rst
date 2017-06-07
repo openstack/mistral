@@ -39,7 +39,7 @@ User guide
 
    developer/webapi/index
 
-**DSL**
+**Mistral Workflow Language**
 
 .. toctree::
    :maxdepth: 2

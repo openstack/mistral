@@ -1,11 +1,11 @@
 Mistral Workflows
 =================
 
-Workflow is the main building block of Mistral DSL, the reason why the
-project exists. Workflow represents a process that can be described in a
-various number of ways and that can do some job interesting to the end
-user. Each workflow consists of tasks (at least one) describing what
-exact steps should be made during workflow execution.
+Workflow is the main building block of Mistral Workflow Language, the reason
+why the project exists. Workflow represents a process that can be described in
+a various number of ways and that can do some job interesting to the end user.
+Each workflow consists of tasks (at least one) describing what exact steps
+should be made during workflow execution.
 
 YAML example
 ^^^^^^^^^^^^
@@ -38,9 +38,9 @@ YAML example
 Workflow types
 --------------
 
-Mistral DSL v2 introduces different workflow types and the structure of
-each workflow type varies according to its semantics. Currently, Mistral
-provides two workflow types:
+Mistral Workflow Language v2 introduces different workflow types and the
+structure of each workflow type varies according to its semantics. Currently,
+Mistral provides two workflow types:
 
 -  `Direct workflow <#direct-workflow>`__
 -  `Reverse workflow <#reverse-workflow>`__
@@ -136,4 +136,5 @@ YAML example
           action: send_email to='admin@mysite.org' body='Vm is created and id <% $.vm_id %> and ip address <% $.vm_ip %>'
           requires: [create_vm, associate_ip]
 
-For more details about DSL itself, please see :doc:`Mistral DSL specification </dsl/index>`
+For more details about Mistral Workflow Language itself, please see
+:doc:`Mistral Workflow Language specification </dsl/index>`
