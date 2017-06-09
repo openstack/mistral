@@ -41,7 +41,7 @@ First of all, clone the repo and go to the repo directory::
 **Devstack installation**
 
 Information about how to install Mistral with devstack can be found
-`here <http://docs.openstack.org/developer/mistral/developer/devstack.html>`_.
+`here <https://docs.openstack.org/developer/mistral/developer/devstack.html>`_.
 
 Configuring Mistral
 ~~~~~~~~~~~~~~~~~~~
@@ -256,7 +256,7 @@ Project Goals 2017
 Project Resources
 -----------------
 
-* `Mistral Official Documentation <http://docs.openstack.org/developer/mistral/>`_
+* `Mistral Official Documentation <https://docs.openstack.org/developer/mistral/>`_
 
 * Project status, bugs, and blueprints are tracked on
   `Launchpad <https://launchpad.net/mistral/>`_

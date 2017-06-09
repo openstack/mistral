@@ -61,7 +61,7 @@ After a successful login bring the port back - it will continue your session.
 **Further notes**
 
 - If you need help with PyCharm and general debugging, please refer to:
-  `JetBrains PyCharm developer guide <http://www.jetbrains.com/pycharm/help/debugging.html.>`_
+  `JetBrains PyCharm developer guide <https://www.jetbrains.com/pycharm/help/debugging.html.>`_
 
 - If you would like to manually restart the apache server,
   open a terminal and run::

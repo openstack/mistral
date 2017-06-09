@@ -43,7 +43,7 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
             'get': {
                 'action': 'std.http',
                 'input': {
-                    'url': 'http://www.openstack.org'
+                    'url': 'https://www.openstack.org'
                 }
             },
             'echo': {
