@@ -83,7 +83,7 @@ an OpenStack environment.
 
     $ sudo mkdir /etc/mistral
     $ sudo chown `whoami` /etc/mistral
-    $ cp etc/event_definitionas.yml.sample /etc/mistral/event_definitions.yml
+    $ cp etc/event_definitions.yml.sample /etc/mistral/event_definitions.yml
     $ cp etc/logging.conf.sample /etc/mistral/logging.conf
     $ cp etc/policy.json /etc/mistral/policy.json
     $ cp etc/wf_trace_logging.conf.sample /etc/mistral/wf_trace_logging.conf
