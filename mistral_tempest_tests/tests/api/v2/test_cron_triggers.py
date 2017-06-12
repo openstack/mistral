@@ -48,7 +48,7 @@ class CronTriggerTestsV2(base.TestCase):
         resp, body = self.client.get_list_obj('cron_triggers')
 
         self.assertEqual(200, resp.status)
-        self.assertEqual([], body['cron_triggers'])
+        self.assertEmpty(body['cron_triggers'])
 
     @test.attr(type='sanity')
     @decorators.idempotent_id('fbc641fa-8704-45b3-b259-136eb956394c')
