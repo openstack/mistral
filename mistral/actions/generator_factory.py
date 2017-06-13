@@ -21,6 +21,7 @@ SUPPORTED_MODULES = [
     'Nova', 'Glance', 'Keystone', 'Heat', 'Neutron', 'Cinder', 'Ceilometer',
     'Trove', 'Ironic', 'Baremetal Introspection', 'Swift', 'Zaqar', 'Barbican',
     'Mistral', 'Designate', 'Magnum', 'Murano', 'Tacker', 'Aodh', 'Gnocchi',
+    'Glare'
 ]
 
 

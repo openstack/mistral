@@ -1366,5 +1366,24 @@
         "get_event": "get_event",
         "actions": "actions",
         "get_action": "get_action"
+    },
+    "glare": {
+        "_comment": "It uses glareclient.v1.",
+        "artifacts_create": "artifacts.create",
+        "artifacts_delete": "artifacts.delete",
+        "artifacts_get": "artifacts.get",
+        "artifacts_list": "artifacts.list",
+        "artifacts_update": "artifacts.update",
+        "artifacts_activate": "artifacts.activate",
+        "artifacts_deactivate": "artifacts.deactivate",
+        "artifacts_reactivate": "artifacts.reactivate",
+        "artifacts_publish": "artifacts.publish",
+        "artifacts_add_tag": "artifacts.add_tag",
+        "artifacts_remove_tag": "artifacts.remove_tag",
+        "artifacts_get_type_list": "artifacts.get_type_list",
+        "artifacts_get_type_schema": "artifacts.get_type_schema",
+        "artifacts_upload_blob": "artifacts.upload_blob",
+        "artifacts_download_blob": "artifacts.download_blob",
+        "artifacts_add_external_location": "artifacts.add_external_location"
     }
 }

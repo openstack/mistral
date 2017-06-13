@@ -27,6 +27,7 @@ from cinderclient.apiclient import base as cinder_base
 from cinderclient.v2 import client as cinderclient
 from designateclient import client as designateclient
 from glanceclient.v2 import client as glanceclient
+from glareclient.v1 import client as glareclient
 from gnocchiclient.v1 import base as gnocchi_base
 from gnocchiclient.v1 import client as gnocchiclient
 from heatclient.common import base as heat_base
@@ -150,6 +151,9 @@ DESIGNATE_NAMESPACE_LIST = [
 ]
 
 
+GLARE_NAMESPACE_LIST = ['artifacts', 'versions']
+
+
 def get_nova_client(**kwargs):
     return novaclient.Client(2)
 
@@ -213,6 +217,10 @@ def get_gnocchi_client(**kwargs):
     return gnocchiclient.Client()
 
 
+def get_glare_client(**kwargs):
+    return glareclient.Client('')
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -229,6 +237,7 @@ CLIENTS = {
     'murano': get_murano_client,
     'aodh': get_aodh_client,
     'gnocchi': get_gnocchi_client,
+    'glare': get_glare_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -250,6 +259,7 @@ BASE_MANAGERS = {
     'murano': BASE_MURANO_MANAGER,
     'aodh': BASE_AODH_MANAGER,
     'gnocchi': BASE_GNOCCHI_MANAGER,
+    'glare': None,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -258,7 +268,8 @@ BASE_MANAGERS = {
 NAMESPACES = {
     'glance': GLANCE_NAMESPACE_LIST,
     'ceilometer': CEILOMETER_NAMESPACE_LIST,
-    'designate': DESIGNATE_NAMESPACE_LIST
+    'designate': DESIGNATE_NAMESPACE_LIST,
+    'glare': GLARE_NAMESPACE_LIST
 }
 ALLOWED_ATTRS = ['service_catalog', 'catalog']
 FORBIDDEN_METHODS = [
