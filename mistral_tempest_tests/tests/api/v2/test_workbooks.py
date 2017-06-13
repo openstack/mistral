@@ -37,7 +37,7 @@ class WorkbookTestsV2(base.TestCase):
         resp, body = self.client.get_list_obj('workbooks')
 
         self.assertEqual(200, resp.status)
-        self.assertEqual([], body['workbooks'])
+        self.assertEmpty(body['workbooks'])
 
     @test.attr(type='sanity')
     @decorators.idempotent_id('1a078ca2-bcf9-4eb9-8ed5-e3545038aa76')
@@ -55,7 +55,7 @@ class WorkbookTestsV2(base.TestCase):
         self.client.workbooks.remove(name)
 
         _, body = self.client.get_list_obj('workbooks')
-        self.assertEqual([], body['workbooks'])
+        self.assertEmpty(body['workbooks'])
 
     @test.attr(type='sanity')
     @decorators.idempotent_id('80f7d7a6-2821-4ab0-b090-ca45c98258ba')
@@ -117,7 +117,7 @@ class WorkbookTestsV2(base.TestCase):
         self.client.workbooks.remove(name)
         _, body = self.client.get_list_obj('workbooks')
 
-        self.assertEqual([], body['workbooks'])
+        self.assertEmpty(body['workbooks'])
 
     @test.attr(type='negative')
     @decorators.idempotent_id('1cd6f6f7-b166-454e-96d2-bf1f95c23015')

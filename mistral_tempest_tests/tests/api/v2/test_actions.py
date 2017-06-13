@@ -43,7 +43,7 @@ class ActionTestsV2(base.TestCase):
         resp, body = self.client.get_list_obj('actions')
 
         self.assertEqual(200, resp.status)
-        self.assertNotEqual([], body['actions'])
+        self.assertNotEmpty(body['actions'])
         self.assertNotIn('next', body)
 
     @test.attr(type='smoke')
@@ -139,7 +139,7 @@ class ActionTestsV2(base.TestCase):
         )
 
         self.assertEqual(200, resp.status)
-        self.assertNotEqual([], body['actions'])
+        self.assertNotEmpty(body['actions'])
 
         for act in body['actions']:
             self.assertFalse(act['is_system'])
@@ -155,7 +155,7 @@ class ActionTestsV2(base.TestCase):
         )
 
         self.assertEqual(200, resp.status)
-        self.assertNotEqual([], body['actions'])
+        self.assertNotEmpty(body['actions'])
 
         for act in body['actions']:
             self.assertTrue(act['is_system'])
@@ -204,7 +204,7 @@ class ActionTestsV2(base.TestCase):
         )
 
         self.assertEqual(200, resp.status)
-        self.assertEqual([], body['actions'])
+        self.assertEmpty(body['actions'])
 
     @test.attr(type='smoke')
     @decorators.idempotent_id('7f598dba-f169-47ec-a487-f0ed31484aff')
