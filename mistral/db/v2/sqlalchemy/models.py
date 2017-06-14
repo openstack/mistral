@@ -256,9 +256,16 @@ class TaskExecution(Execution):
 for cls in utils.iter_subclasses(Execution):
     event.listen(
         # Catch and trim Execution.state_info to always fit allocated size.
+        # Note that the limit is 65500 which is less than 65535 (2^16 -1).
+        # The reason is that utils.cut() is not exactly accurate in case if
+        # the value is not a string, but, for example, a dictionary. If we
+        # limit it exactly to 65535 then once in a while it may go slightly
+        # beyond the allowed maximum size. It may depend on the order of
+        # keys in a string representation and other things that are hidden
+        # inside utils.cut_dict() method.
         cls.state_info,
         'set',
-        lambda t, v, o, i: utils.cut(v, 65532),
+        lambda t, v, o, i: utils.cut(v, 65500),
         retval=True
     )
 

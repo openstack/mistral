@@ -185,6 +185,27 @@ def get_file_list(directory):
 
 
 def cut_dict(d, length=100):
+    """Removes dictionary entries according to the given length.
+
+    This method removes a number of entries, if needed, so that a
+    string representation would fit into the given length.
+    The intention of this method is to optimize truncation of string
+    representation for dictionaries where the exact precision is not
+    critically important. Otherwise, we'd always have to convert a dict
+    into a string first and then shrink it to a needed size which will
+    increase memory footprint and reduce performance in case of large
+    dictionaries (i.e. tens of thousands entries).
+    Note that the method, due to complexity of the algorithm, has some
+    non-zero precision which depends on exact keys and values placed into
+    the dict. So for some dicts their reduced string representations will
+    be only approximately equal to the given value (up to around several
+    chars difference).
+
+    :param d: A dictionary.
+    :param length: A length limiting the dictionary string representation.
+    :return: A dictionary which is a subset of the given dictionary.
+    """
+
     if not isinstance(d, dict):
         raise ValueError("A dictionary is expected, got: %s" % type(d))
 

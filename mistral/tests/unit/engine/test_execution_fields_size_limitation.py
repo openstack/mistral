@@ -15,6 +15,7 @@
 from oslo_config import cfg
 
 from mistral.actions import base as actions_base
+
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
@@ -36,27 +37,42 @@ wf:
   input:
     - workflow_input: '__WORKFLOW_INPUT__'
     - action_output_length: 0
+    - action_output_dict: false
+    - action_error: false
 
   tasks:
     task1:
       action: my_action
       input:
-        action_input: '__ACTION_INPUT__'
-        action_output_length: <% $.action_output_length %>
+        input: '__ACTION_INPUT__'
+        output_length: <% $.action_output_length %>
+        output_dict: <% $.action_output_dict %>
+        error: <% $.action_error %>
       publish:
         p_var: '__TASK_PUBLISHED__'
 """
 
 
 class MyAction(actions_base.Action):
-    def __init__(self, action_input, action_output_length):
-        self.action_input = action_input
-        self.action_output_length = action_output_length
+    def __init__(self, input, output_length, output_dict=False, error=False):
+        self.input = input
+        self.output_length = output_length
+        self.output_dict = output_dict
+        self.error = error
 
     def run(self):
-        return wf_utils.Result(
-            data=''.join('A' for _ in range(self.action_output_length))
-        )
+        if not self.output_dict:
+            result = ''.join('A' for _ in range(self.output_length))
+        else:
+            result = {}
+
+            for i in range(self.output_length):
+                result[i] = 'A'
+
+        if not self.error:
+            return wf_utils.Result(data=result)
+        else:
+            return wf_utils.Result(error=result)
 
     def test(self):
         raise NotImplementedError
@@ -229,3 +245,39 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             "Size of 'params' is 1KB which exceeds the limit of 0KB",
             e.message
         )
+
+    def test_task_execution_state_info_trimmed(self):
+        # No limit on output, input and other JSON fields.
+        cfg.CONF.set_default(
+            'execution_field_size_limit_kb',
+            -1,
+            group='engine'
+        )
+
+        wf_service.create_workflows(WF)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            {
+                'action_output_length': 80000,
+                'action_output_dict': True,
+                'action_error': True
+            }
+        )
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                state=states.ERROR
+            )
+
+            # "state_info" must be trimmed so that it's not greater than 65535.
+            self.assertLess(len(task_ex.state_info), 65536)
+            self.assertGreater(len(task_ex.state_info), 65490)
+            self.assertLess(len(wf_ex.state_info), 65536)
+            self.assertGreater(len(wf_ex.state_info), 65490)
