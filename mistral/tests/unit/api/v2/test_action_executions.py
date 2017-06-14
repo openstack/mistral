@@ -34,7 +34,7 @@ from mistral.workflow import states
 from mistral.workflow import utils as wf_utils
 
 # This line is needed for correct initialization of messaging config.
-oslo_messaging.get_transport(cfg.CONF)
+oslo_messaging.get_rpc_transport(cfg.CONF)
 
 
 ACTION_EX_DB = models.ActionExecution(
