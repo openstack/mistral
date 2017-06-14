@@ -315,25 +315,16 @@ class MistralAction(base.OpenStackAction):
 
         LOG.debug("Mistral action security context: %s" % context)
 
-        # Check for trust scope token. This may occur if the action is
-        # called from a workflow triggered by a Mistral cron trigger.
-        if context.is_trust_scoped:
-            auth_url = None
-            mistral_endpoint = keystone_utils.get_endpoint_for_project(
-                'mistral'
-            )
-            mistral_url = mistral_endpoint.url
-        else:
-            keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
-            auth_url = keystone_endpoint.url
-            mistral_url = None
+        mistral_endpoint = keystone_utils.get_endpoint_for_project(
+            'mistral'
+        )
+        mistral_url = mistral_endpoint.url
 
         return self._get_client_class()(
             mistral_url=mistral_url,
             auth_token=context.auth_token,
             project_id=context.project_id,
             user_id=context.user_id,
-            auth_url=auth_url,
             insecure=context.insecure
         )
 
