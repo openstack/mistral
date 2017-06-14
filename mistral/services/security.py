@@ -95,6 +95,7 @@ def delete_trust(trust_id):
 
 def add_trust_id(secure_object_values):
     if cfg.CONF.pecan.auth_enable:
+        trust = create_trust()
         secure_object_values.update({
-            'trust_id': create_trust().id
+            'trust_id': trust.id
         })

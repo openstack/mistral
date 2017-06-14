@@ -42,9 +42,8 @@ def _try_import(module_name):
     try:
         return importutils.try_import(module_name)
     except Exception as e:
-        msg = 'Unable to load module "%s". %s' % (module_name, e.message)
+        msg = 'Unable to load module "%s". %s' % (module_name, str(e))
         LOG.error(msg)
-        print('ERROR [%s] %s' % (__name__, msg))
         return None
 
 
@@ -72,43 +71,24 @@ zaqarclient = _try_import('zaqarclient.queues.v2.client')
 
 
 class NovaAction(base.OpenStackAction):
-    _service_name = 'nova'
     _service_type = 'compute'
 
-    def _create_client(self, context):
+    @classmethod
+    def _get_client_class(cls):
+        return novaclient.Client
 
+    def _create_client(self, context):
         LOG.debug("Nova action security context: %s" % context)
 
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
-        nova_endpoint = self.get_service_endpoint()
-
-        client = novaclient.Client(
-            2,
-            username=None,
-            api_key=None,
-            endpoint_type=CONF.openstack_actions.os_actions_endpoint_type,
-            service_type='compute',
-            auth_token=context.auth_token,
-            tenant_id=context.project_id,
-            region_name=nova_endpoint.region,
-            auth_url=keystone_endpoint.url,
-            insecure=context.insecure
-        )
-
-        client.client.management_url = keystone_utils.format_url(
-            nova_endpoint.url,
-            {'tenant_id': context.project_id}
-        )
-
-        return client
+        return novaclient.Client(2, **self.get_session_and_auth(context))
 
     @classmethod
     def _get_fake_client(cls):
-        return novaclient.Client(2)
+        return cls._get_client_class()(2)
 
 
 class GlanceAction(base.OpenStackAction):
-    _service_name = 'glance'
+    _service_type = 'image'
 
     @classmethod
     def _get_client_class(cls):
@@ -123,8 +103,7 @@ class GlanceAction(base.OpenStackAction):
         return self._get_client_class()(
             glance_endpoint.url,
             region_name=glance_endpoint.region,
-            token=context.auth_token,
-            insecure=context.insecure
+            **self.get_session_and_auth(context)
         )
 
     @classmethod
@@ -134,6 +113,8 @@ class GlanceAction(base.OpenStackAction):
 
 class KeystoneAction(base.OpenStackAction):
 
+    _service_type = 'identity'
+
     @classmethod
     def _get_client_class(cls):
         return keystoneclient.Client
@@ -142,25 +123,14 @@ class KeystoneAction(base.OpenStackAction):
 
         LOG.debug("Keystone action security context: %s" % context)
 
-        # TODO(akovi) cacert is deprecated in favor of session
-        # TODO(akovi) this piece of code should be refactored
-        # TODO(akovi) to follow the new guide lines
-        kwargs = {
-            'token': context.auth_token,
-            'auth_url': context.auth_uri,
-            'project_id': context.project_id,
-            'cacert': context.auth_cacert,
-            'insecure': context.insecure
-        }
+        kwargs = self.get_session_and_auth(context)
 
-        # In case of trust-scoped token explicitly pass endpoint parameter.
-        if (context.is_trust_scoped
-                or keystone_utils.is_token_trust_scoped(context.auth_token)):
-            kwargs['endpoint'] = context.auth_uri
+        # NOTE(akovi): the endpoint in the token messes up
+        # keystone. The auth parameter should not be provided for
+        # these operations.
+        kwargs.pop('auth')
 
         client = self._get_client_class()(**kwargs)
-
-        client.management_url = context.auth_uri
 
         return client
 
@@ -179,7 +149,7 @@ class KeystoneAction(base.OpenStackAction):
 
 
 class CeilometerAction(base.OpenStackAction):
-    _service_name = 'ceilometer'
+    _service_type = 'metering'
 
     @classmethod
     def _get_client_class(cls):
@@ -210,7 +180,7 @@ class CeilometerAction(base.OpenStackAction):
 
 
 class HeatAction(base.OpenStackAction):
-    _service_name = 'heat'
+    _service_type = 'orchestration'
 
     @classmethod
     def _get_client_class(cls):
@@ -233,9 +203,7 @@ class HeatAction(base.OpenStackAction):
         return self._get_client_class()(
             endpoint_url,
             region_name=heat_endpoint.region,
-            token=context.auth_token,
-            username=context.user_name,
-            insecure=context.insecure
+            **self.get_session_and_auth(context)
         )
 
     @classmethod
@@ -244,7 +212,7 @@ class HeatAction(base.OpenStackAction):
 
 
 class NeutronAction(base.OpenStackAction):
-    _service_name = 'neutron'
+    _service_type = 'network'
 
     @classmethod
     def _get_client_class(cls):
@@ -306,6 +274,7 @@ class CinderAction(base.OpenStackAction):
 
 
 class MistralAction(base.OpenStackAction):
+    _service_type = 'workflowv2'
 
     @classmethod
     def _get_client_class(cls):
@@ -315,17 +284,10 @@ class MistralAction(base.OpenStackAction):
 
         LOG.debug("Mistral action security context: %s" % context)
 
-        mistral_endpoint = keystone_utils.get_endpoint_for_project(
-            'mistral'
-        )
-        mistral_url = mistral_endpoint.url
-
+        session_and_auth = self.get_session_and_auth(context)
         return self._get_client_class()(
-            mistral_url=mistral_url,
-            auth_token=context.auth_token,
-            project_id=context.project_id,
-            user_id=context.user_id,
-            insecure=context.insecure
+            mistral_url=session_and_auth['auth'].endpoint,
+            **session_and_auth
         )
 
     @classmethod
@@ -501,15 +463,18 @@ class ZaqarAction(base.OpenStackAction):
         def wrap(*args, **kwargs):
             return method(client, *args, **kwargs)
 
-        args = inspect_utils.get_arg_list_as_str(method)
+        arguments = inspect_utils.get_arg_list_as_str(method)
         # Remove client
-        wrap.__arguments__ = args.split(', ', 1)[1]
+        wrap.__arguments__ = arguments.split(', ', 1)[1]
 
         return wrap
 
     @staticmethod
     def queue_messages(client, queue_name, **params):
         """Gets a list of messages from the queue.
+
+        :param client: the Zaqar client
+        :type client: zaqarclient.queues.client
 
         :param queue_name: Name of the target queue.
         :type queue_name: `six.string_type`
@@ -528,6 +493,9 @@ class ZaqarAction(base.OpenStackAction):
     def queue_post(client, queue_name, messages):
         """Posts one or more messages to a queue.
 
+        :param client: the Zaqar client
+        :type client: zaqarclient.queues.client
+
         :param queue_name: Name of the target queue.
         :type queue_name: `six.string_type`
 
@@ -544,6 +512,9 @@ class ZaqarAction(base.OpenStackAction):
     @staticmethod
     def queue_pop(client, queue_name, count=1):
         """Pop `count` messages from the queue.
+
+        :param client: the Zaqar client
+        :type client: zaqarclient.queues.client
 
         :param queue_name: Name of the target queue.
         :type queue_name: `six.string_type`
@@ -604,10 +575,10 @@ class BarbicanAction(base.OpenStackAction):
         def wrap(*args, **kwargs):
             return method(client, *args, **kwargs)
 
-        args = inspect_utils.get_arg_list_as_str(method)
+        arguments = inspect_utils.get_arg_list_as_str(method)
 
         # Remove client.
-        wrap.__arguments__ = args.split(', ', 1)[1]
+        wrap.__arguments__ = arguments.split(', ', 1)[1]
 
         return wrap
 
@@ -620,6 +591,9 @@ class BarbicanAction(base.OpenStackAction):
                       secret_type=None,
                       mode=None, expiration=None):
         """Create and Store a secret in Barbican.
+
+        :param client: the Zaqar client
+        :type client: zaqarclient.queues.client
 
         :param name: A friendly name for the Secret
         :type name: string
@@ -805,13 +779,13 @@ class SenlinAction(base.OpenStackAction):
             insecure=context.insecure
         )
 
-        @classmethod
-        def _get_fake_client(cls):
-            return cls._get_client_class()("http://127.0.0.1:8778")
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()("http://127.0.0.1:8778")
 
 
 class AodhAction(base.OpenStackAction):
-    _service_name = 'aodh'
+    _service_type = 'alarming'
 
     @classmethod
     def _get_client_class(cls):
@@ -842,7 +816,7 @@ class AodhAction(base.OpenStackAction):
 
 
 class GnocchiAction(base.OpenStackAction):
-    _service_name = 'gnocchi'
+    _service_type = 'metric'
 
     @classmethod
     def _get_client_class(cls):

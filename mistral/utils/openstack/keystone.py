@@ -15,6 +15,7 @@
 
 import keystoneauth1.identity.generic as auth_plugins
 from keystoneauth1 import session as ks_session
+from keystoneauth1.token_endpoint import Token
 from keystoneclient import service_catalog as ks_service_catalog
 from keystoneclient.v3 import client as ks_client
 from keystoneclient.v3 import endpoints as ks_endpoints
@@ -42,6 +43,52 @@ def client():
     cl.management_url = auth_url
 
     return cl
+
+
+def _determine_verify(ctx):
+    if ctx.insecure:
+        return False
+    elif ctx.auth_cacert:
+        return ctx.auth_cacert
+    else:
+        return True
+
+
+def get_session_and_auth(context, **kwargs):
+    """Get session and auth parameters
+
+    :param context: action context
+    :return: dict to be used as kwargs for client serviceinitialization
+    """
+
+    if not context:
+        raise AssertionError('context is mandatory')
+
+    project_endpoint = get_endpoint_for_project(**kwargs)
+    endpoint = format_url(
+        project_endpoint.url,
+        {
+            'tenant_id': context.project_id,
+            'project_id': context.project_id
+        }
+    )
+
+    auth = Token(endpoint=endpoint, token=context.auth_token)
+
+    auth_uri = context.auth_uri or CONF.keystone_authtoken.auth_uri
+    ks_auth = Token(
+        endpoint=auth_uri,
+        token=context.auth_token
+    )
+    session = ks_session.Session(
+        auth=ks_auth,
+        verify=_determine_verify(context)
+    )
+
+    return {
+        "session": session,
+        "auth": auth
+    }
 
 
 def _admin_client(trust_id=None, project_name=None):
@@ -144,10 +191,11 @@ def obtain_service_catalog(ctx):
             )
 
         trust_client = client_for_trusts(ctx.trust_id)
-        response = trust_client.tokens.get_token_data(
+        token_data = trust_client.tokens.get_token_data(
             token,
             include_catalog=True
-        )['token']
+        )
+        response = token_data['token']
     else:
         response = ctx.service_catalog
 

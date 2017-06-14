@@ -108,7 +108,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
             wf_spec.__class__.__name__
         )
 
-        values = {
+        trigger_parameters = {
             'name': name,
             'pattern': pattern,
             'first_execution_time': first_time,
@@ -121,13 +121,13 @@ def create_cron_trigger(name, workflow_name, workflow_input,
             'scope': 'private'
         }
 
-        security.add_trust_id(values)
+        security.add_trust_id(trigger_parameters)
 
         try:
-            trig = db_api.create_cron_trigger(values)
+            trig = db_api.create_cron_trigger(trigger_parameters)
         except Exception:
             # Delete trust before raising exception.
-            security.delete_trust(values.get('trust_id'))
+            security.delete_trust(trigger_parameters.get('trust_id'))
             raise
 
     return trig
