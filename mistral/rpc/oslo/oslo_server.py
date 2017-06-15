@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import oslo_messaging as messaging
+from oslo_messaging.rpc import dispatcher
 
 from mistral import context as ctx
 from mistral.rpc import base as rpc
@@ -42,12 +43,14 @@ class OsloRPCServer(rpc.RPCServer):
 
         # TODO(rakhmerov): rpc.get_transport() should be in oslo.messaging
         # related module.
+        access_policy = dispatcher.DefaultRPCAccessPolicy
         self.oslo_server = messaging.get_rpc_server(
             rpc.get_transport(),
             target,
             self.endpoints,
             executor=executor,
-            serializer=ctx.RpcContextSerializer()
+            serializer=ctx.RpcContextSerializer(),
+            access_policy=access_policy
         )
 
         self.oslo_server.start()
