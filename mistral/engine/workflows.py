@@ -36,7 +36,7 @@ from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import lookup_utils
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 LOG = logging.getLogger(__name__)
@@ -448,21 +448,21 @@ def _send_result_to_parent_workflow(wf_ex_id):
         wf_output = wf_ex.output
 
     if wf_ex.state == states.SUCCESS:
-        result = wf_utils.Result(data=wf_output)
+        result = ml_actions.Result(data=wf_output)
     elif wf_ex.state == states.ERROR:
         err_msg = (
             wf_ex.state_info or
             'Failed subworkflow [execution_id=%s]' % wf_ex.id
         )
 
-        result = wf_utils.Result(error=err_msg)
+        result = ml_actions.Result(error=err_msg)
     elif wf_ex.state == states.CANCELLED:
         err_msg = (
             wf_ex.state_info or
             'Cancelled subworkflow [execution_id=%s]' % wf_ex.id
         )
 
-        result = wf_utils.Result(error=err_msg, cancel=True)
+        result = ml_actions.Result(error=err_msg, cancel=True)
     else:
         raise RuntimeError(
             "Method _send_result_to_parent_workflow() must never be called"

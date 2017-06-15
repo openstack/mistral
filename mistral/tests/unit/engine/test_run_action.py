@@ -22,7 +22,7 @@ from mistral import exceptions as exc
 from mistral.services import actions
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -188,7 +188,7 @@ class RunActionEngineTest(base.EngineTestCase):
 
     @mock.patch.object(
         std_actions.AsyncNoOpAction, 'run',
-        mock.MagicMock(return_value=wf_utils.Result(error='Invoke erred.')))
+        mock.MagicMock(return_value=ml_actions.Result(error='Invoke erred.')))
     def test_run_action_async_invoke_with_error(self):
         action_ex = self.engine.start_action('std.async_noop', {})
 
@@ -303,7 +303,7 @@ class RunActionEngineTest(base.EngineTestCase):
             'scope': 'public'
         })
         def_mock.return_value = action_def
-        run_mock.return_value = wf_utils.Result(data='Hello')
+        run_mock.return_value = ml_actions.Result(data='Hello')
 
         class_ret = mock.MagicMock()
         class_mock.return_value = class_ret

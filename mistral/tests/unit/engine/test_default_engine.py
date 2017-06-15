@@ -29,7 +29,7 @@ from mistral.services import workbooks as wb_service
 from mistral.tests.unit import base
 from mistral.tests.unit.engine import base as eng_test_base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -337,7 +337,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Finish action of 'task1'.
         task1_action_ex = self.engine.on_action_complete(
             task1_action_ex.id,
-            wf_utils.Result(data='Hey')
+            ml_actions.Result(data='Hey')
         )
 
         self.assertIsInstance(task1_action_ex, models.ActionExecution)
@@ -379,7 +379,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Finish 'task2'.
         task2_action_ex = self.engine.on_action_complete(
             task2_action_ex.id,
-            wf_utils.Result(data='Hi')
+            ml_actions.Result(data='Hi')
         )
 
         with db_api.transaction():

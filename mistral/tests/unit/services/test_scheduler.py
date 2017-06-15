@@ -22,7 +22,7 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.tests.unit import base
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 FACTORY_METHOD_PATH = (
@@ -195,7 +195,7 @@ class SchedulerServiceTest(base.DbTestCase):
     def test_scheduler_with_serializer(self, factory):
         target_method = 'run_something'
 
-        task_result = wf_utils.Result('data', 'error')
+        task_result = ml_actions.Result('data', 'error')
 
         method_args = {
             'name': 'task',
@@ -230,7 +230,7 @@ class SchedulerServiceTest(base.DbTestCase):
 
         result = factory().run_something.call_args[1].get('result')
 
-        self.assertIsInstance(result, wf_utils.Result)
+        self.assertIsInstance(result, ml_actions.Result)
         self.assertEqual('data', result.data)
         self.assertEqual('error', result.error)
 

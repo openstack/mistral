@@ -22,7 +22,7 @@ from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
-from mistral.workflow import utils
+from mistral_lib import actions as ml_actions
 
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -365,7 +365,7 @@ class WorkflowResumeTest(base.EngineTestCase):
             task_execution_id=task2_ex.id
         )[0]
 
-        self.engine.on_action_complete(task2_action_ex.id, utils.Result())
+        self.engine.on_action_complete(task2_action_ex.id, ml_actions.Result())
 
         self.await_workflow_success(wf_ex.id)
 

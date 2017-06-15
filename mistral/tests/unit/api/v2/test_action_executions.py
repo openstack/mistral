@@ -31,7 +31,7 @@ from mistral.rpc import clients as rpc_clients
 from mistral.tests.unit.api import base
 from mistral.utils import rest_utils
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 # This line is needed for correct initialization of messaging config.
 oslo_messaging.get_rpc_transport(cfg.CONF)
@@ -332,7 +332,7 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             UPDATED_ACTION['id'],
-            wf_utils.Result(data=ACTION_EX_DB.output)
+            ml_actions.Result(data=ACTION_EX_DB.output)
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -349,7 +349,7 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             ERROR_ACTION_WITH_OUTPUT['id'],
-            wf_utils.Result(error=ERROR_ACTION_RES_WITH_OUTPUT)
+            ml_actions.Result(error=ERROR_ACTION_RES_WITH_OUTPUT)
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -362,7 +362,7 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             ERROR_ACTION_FOR_EMPTY_OUTPUT['id'],
-            wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
+            ml_actions.Result(error=DEFAULT_ERROR_OUTPUT)
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -378,7 +378,7 @@ class TestActionExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             ERROR_ACTION_FOR_EMPTY_OUTPUT['id'],
-            wf_utils.Result(error=DEFAULT_ERROR_OUTPUT)
+            ml_actions.Result(error=DEFAULT_ERROR_OUTPUT)
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'on_action_complete')
@@ -392,7 +392,7 @@ class TestActionExecutionsController(base.APITest):
 
         on_action_complete_mock_func.assert_called_once_with(
             CANCELLED_ACTION['id'],
-            wf_utils.Result(cancel=True)
+            ml_actions.Result(cancel=True)
         )
 
     @mock.patch.object(

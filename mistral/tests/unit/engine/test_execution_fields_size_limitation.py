@@ -14,7 +14,7 @@
 
 from oslo_config import cfg
 
-from mistral_lib.actions import base as actions_base
+from mistral_lib import actions as actions_base
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -22,8 +22,6 @@ from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
-
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -70,9 +68,9 @@ class MyAction(actions_base.Action):
                 result[i] = 'A'
 
         if not self.error:
-            return wf_utils.Result(data=result)
+            return actions_base.Result(data=result)
         else:
-            return wf_utils.Result(error=result)
+            return actions_base.Result(error=result)
 
     def test(self):
         raise NotImplementedError

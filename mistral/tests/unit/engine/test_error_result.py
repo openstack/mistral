@@ -14,15 +14,13 @@
 
 from oslo_config import cfg
 
-from mistral.actions import base as actions_base
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
-
+from mistral_lib import actions as actions_base
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -63,8 +61,8 @@ class MyAction(actions_base.Action):
         self.success_result = success_result
         self.error_result = error_result
 
-    def run(self):
-        return wf_utils.Result(
+    def run(self, context):
+        return actions_base.Result(
             data=self.success_result,
             error=self.error_result
         )

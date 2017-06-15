@@ -25,7 +25,6 @@ import time
 from mistral import exceptions as exc
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
-from mistral.workflow import utils as wf_utils
 from mistral_lib import actions
 from oslo_log import log as logging
 
@@ -223,7 +222,7 @@ class HTTPAction(actions.Action):
         }
 
         if resp.status_code not in range(200, 307):
-            return wf_utils.Result(error=_result)
+            return actions.Result(error=_result)
 
         return _result
 
