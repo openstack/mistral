@@ -1385,7 +1385,7 @@ class ActionExecutionTest(SQLAlchemyTest):
         self.assertEqual('FAILED', updated.state)
         state_info = db_api.load_action_execution(updated.id).state_info
         self.assertEqual(
-            65535,
+            65503,
             len(state_info)
         )
 
@@ -1745,7 +1745,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
         self.assertEqual('FAILED', updated.state)
         state_info = db_api.load_workflow_execution(updated.id).state_info
         self.assertEqual(
-            65535,
+            65503,
             len(state_info)
         )
 
