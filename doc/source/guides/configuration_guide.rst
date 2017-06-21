@@ -18,7 +18,7 @@ directory.
 
     [keystone_authtoken]
     auth_uri = http://<Keystone-host>:5000/v3
-    identity_uri = http://<Keystone-host:35357/
+    identity_uri = http://<Keystone-host:35357
     auth_version = v3
     admin_user = <user>
     admin_password = <password>
@@ -58,7 +58,9 @@ directory.
 
     $ MISTRAL_URL="http://[host]:[port]/v2"
     $ openstack service create workflowv2 --name mistral --description 'OpenStack Workflow service'
-    $ openstack endpoint create workflowv2 --publicurl $MISTRAL_URL --adminurl $MISTRAL_URL --internalurl $MISTRAL_URL
+    $ openstack endpoint create workflowv2 public $MISTRAL_URL
+    $ openstack endpoint create workflowv2 internal $MISTRAL_URL
+    $ openstack endpoint create workflowv2 admin $MISTRAL_URL
 
 #. Configure transport properties in the [DEFAULT] section::
 
