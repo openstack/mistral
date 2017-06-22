@@ -1,5 +1,5 @@
 Mistral Client Installation Guide
-=================================
+---------------------------------
 
 To install ``python-mistralclient``, it is required to have ``pip``
 (in most cases). Make sure that ``pip`` is installed. Then type::
@@ -15,7 +15,7 @@ After ``python-mistralclient`` is installed you will see command ``mistral``
 in your environment.
 
 Configure authentication against Keystone
------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If Keystone is used for authentication in Mistral, then the environment should
 have auth variables::
@@ -43,7 +43,7 @@ To make sure Mistral client works, type::
     $ mistral workbook-list
 
 Configure authentication against Keycloak
------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Mistral also supports authentication against Keycloak server via OpenID Connect
 protocol.
@@ -80,7 +80,7 @@ to True::
     $ export MISTRALCLIENT_INSECURE=True
 
 Targeting non-preconfigured clouds
-----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
 
 Mistral is capable of executing workflows on external OpenStack clouds,
 different from the one defined in the `mistral.conf` file in the
@@ -114,7 +114,7 @@ service. Whereas the `OS_TARGET_*` parameters are used to define the user that
 executes the workflow on the external cloud, keystone2.example.com/.
 
 Use cases
-^^^^^^^^^
+"""""""""
 
 **Authenticate in Mistral and execute OpenStack actions with different users**
 
@@ -126,7 +126,7 @@ cloud.
 As a user of Mistral, I want to execute a workflow on a cloud of my choice.
 
 Special cases
-^^^^^^^^^^^^^
+"""""""""""""
 
 **Using Mistral with zero OpenStack configuration**:
 

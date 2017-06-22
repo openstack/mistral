@@ -333,4 +333,3 @@ or ``evaluation_interval`` options.
 
  Defines the maximum number of finished executions.
  It must be greater or equal to ``1``.
-
