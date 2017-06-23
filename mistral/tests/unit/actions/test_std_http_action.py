@@ -19,7 +19,7 @@ import requests
 
 from mistral.actions import std_actions as std
 from mistral.tests.unit import base
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 URL = 'http://some_url'
@@ -109,7 +109,7 @@ class HTTPActionTest(base.BaseTest):
 
         result = action.run(mock_ctx)
 
-        self.assertIsInstance(result, wf_utils.Result)
+        self.assertIsInstance(result, ml_actions.Result)
         self.assertEqual(401, result.error['status'])
 
         mocked_method.assert_called_with(

@@ -17,12 +17,12 @@ from eventlet import semaphore
 from oslo_config import cfg
 import testtools
 
-from mistral.actions import base as action_base
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
+from mistral_lib import actions as actions_base
 
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -88,7 +88,7 @@ ACTION_SEMAPHORE = None
 TEST_SEMAPHORE = None
 
 
-class BlockingAction(action_base.Action):
+class BlockingAction(actions_base.Action):
     def __init__(self):
         pass
 
@@ -100,7 +100,7 @@ class BlockingAction(action_base.Action):
     def wait_for_test():
         ACTION_SEMAPHORE.acquire()
 
-    def run(self):
+    def run(self, context):
         self.unblock_test()
         self.wait_for_test()
 

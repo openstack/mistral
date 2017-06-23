@@ -24,7 +24,6 @@ from mistral import exceptions as exc
 from mistral.executors import base
 from mistral.rpc import clients as rpc
 from mistral.utils import inspect_utils as i_u
-from mistral.workflow import utils as wf_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -55,7 +54,7 @@ class DefaultExecutor(base.Executor):
         """
 
         def send_error_back(error_msg):
-            error_result = wf_utils.Result(error=error_msg)
+            error_result = mistral_lib.Result(error=error_msg)
 
             if action_ex_id:
                 self._engine_client.on_action_complete(
@@ -114,8 +113,8 @@ class DefaultExecutor(base.Executor):
             # Note: it's made for backwards compatibility with already
             # existing Mistral actions which don't return result as
             # instance of workflow.utils.Result.
-            if not isinstance(result, wf_utils.Result):
-                result = wf_utils.Result(data=result)
+            if not isinstance(result, mistral_lib.Result):
+                result = mistral_lib.Result(data=result)
 
         except Exception as e:
             msg = (

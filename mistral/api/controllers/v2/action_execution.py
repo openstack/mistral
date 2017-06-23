@@ -29,7 +29,7 @@ from mistral.rpc import clients as rpc
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 LOG = logging.getLogger(__name__)
@@ -169,13 +169,13 @@ class ActionExecutionsController(rest.RestController):
         output = action_ex.output
 
         if action_ex.state == states.SUCCESS:
-            result = wf_utils.Result(data=output)
+            result = ml_actions.Result(data=output)
         elif action_ex.state == states.ERROR:
             if not output:
                 output = 'Unknown error'
-            result = wf_utils.Result(error=output)
+            result = ml_actions.Result(error=output)
         elif action_ex.state == states.CANCELLED:
-            result = wf_utils.Result(cancel=True)
+            result = ml_actions.Result(cancel=True)
         else:
             raise exc.InvalidResultException(
                 "Error. Expected one of %s, actual: %s" % (

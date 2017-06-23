@@ -33,7 +33,7 @@ from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 LOG = logging.getLogger(__name__)
@@ -410,7 +410,7 @@ class AdHocAction(PythonAction):
             transformer = adhoc_action_spec.get_output()
 
             if transformer is not None:
-                result = wf_utils.Result(
+                result = ml_actions.Result(
                     data=expr.evaluate_recursively(transformer, result.data),
                     error=result.error
                 )

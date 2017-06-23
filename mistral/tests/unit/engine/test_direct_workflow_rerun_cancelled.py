@@ -21,7 +21,7 @@ from mistral.db.v2 import api as db_api
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -88,7 +88,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Cancel action execution for task.
         self.engine.on_action_complete(
             wf1_t1_action_exs[0].id,
-            wf_utils.Result(cancel=True)
+            ml_actions.Result(cancel=True)
         )
 
         self.await_task_cancelled(wf1_t1_ex.id)
@@ -134,7 +134,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         self.engine.on_action_complete(
             wf1_t1_action_exs[1].id,
-            wf_utils.Result(data={'foo': 'bar'})
+            ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflow to succeed.
@@ -333,7 +333,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Mark async action execution complete.
         self.engine.on_action_complete(
             wf2_t1_action_exs[0].id,
-            wf_utils.Result(data={'foo': 'bar'})
+            ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflows to succeed.
@@ -457,7 +457,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Cancel action execution for task.
         self.engine.on_action_complete(
             wf2_t1_action_exs[0].id,
-            wf_utils.Result(cancel=True)
+            ml_actions.Result(cancel=True)
         )
 
         self.await_workflow_cancelled(wf2_ex.id)
@@ -507,7 +507,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         # Mark async action execution complete.
         self.engine.on_action_complete(
             wf2_t1_action_exs[1].id,
-            wf_utils.Result(data={'foo': 'bar'})
+            ml_actions.Result(data={'foo': 'bar'})
         )
 
         # Wait for the workflows to succeed.
@@ -587,7 +587,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         for wf1_t1_action_ex in wf1_t1_action_exs:
             self.engine.on_action_complete(
                 wf1_t1_action_ex.id,
-                wf_utils.Result(cancel=True)
+                ml_actions.Result(cancel=True)
             )
 
         self.await_workflow_cancelled(wf1_ex.id)
@@ -633,7 +633,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         for i in range(3, 6):
             self.engine.on_action_complete(
                 wf1_t1_action_exs[i].id,
-                wf_utils.Result(data={'foo': 'bar'})
+                ml_actions.Result(data={'foo': 'bar'})
             )
 
         # Wait for the workflows to succeed.

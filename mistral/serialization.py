@@ -12,87 +12,20 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import abc
-
+from mistral_lib import serialization as ml_serialization
 from oslo_serialization import jsonutils
-
 
 _SERIALIZER = None
 
-
-class Serializer(object):
-    """Base interface for entity serializers.
-
-    A particular serializer knows how to convert a certain object
-    into a string and back from that string into an object whose
-    state is equivalent to the initial object.
-    """
-
-    @abc.abstractmethod
-    def serialize(self, entity):
-        """Converts the given object into a string.
-
-        :param entity: A object to be serialized.
-        :return String containing the state of the object in serialized form.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def deserialize(self, data_str):
-        """Converts the given string into an object.
-
-        :param data_str: String containing the state of the object in
-            serialized form.
-        :return: An object.
-        """
-        raise NotImplementedError
+# Backwards compatibility
+Serializer = ml_serialization.Serializer
+DictBasedSerializer = ml_serialization.DictBasedSerializer
+MistralSerializable = ml_serialization.MistralSerializable
 
 
-class DictBasedSerializer(Serializer):
-    """Dictionary-based serializer.
-
-    It slightly simplifies implementing custom serializers by introducing
-    a contract based on dictionary. A serializer class extending this class
-    just needs to implement conversion from object into dict and from dict
-    to object. It doesn't need to convert into string and back as required
-    bye the base serializer contract. Conversion into string is implemented
-    once with regard to possible problems that may occur for collection and
-    primitive types as circular dependencies, correct date format etc.
-    """
-
-    def serialize(self, entity):
-        if entity is None:
-            return None
-
-        entity_dict = self.serialize_to_dict(entity)
-
-        return jsonutils.dumps(
-            jsonutils.to_primitive(entity_dict, convert_instances=True)
-        )
-
-    def deserialize(self, data_str):
-        if data_str is None:
-            return None
-
-        entity_dict = jsonutils.loads(data_str)
-
-        return self.deserialize_from_dict(entity_dict)
-
-    @abc.abstractmethod
-    def serialize_to_dict(self, entity):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def deserialize_from_dict(self, entity_dict):
-        raise NotImplementedError
-
-
-class MistralSerializable(object):
-    """A mixin to generate a serialization key for a custom object."""
-
-    @classmethod
-    def get_serialization_key(cls):
-        return "%s.%s" % (cls.__module__, cls.__name__)
+# PolymorphicSerializer cannot be used from mistral-lib yet
+# as mistral-lib does not have the unregister method.
+# Once it does this will be removed also in favor of mistral-lib
 
 
 class PolymorphicSerializer(Serializer):

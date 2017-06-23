@@ -20,7 +20,7 @@ from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -352,7 +352,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # Update async action execution result.
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            wf_utils.Result(data='foobar')
+            ml_actions.Result(data='foobar')
         )
 
         with db_api.transaction():
@@ -554,7 +554,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # Update async action execution result.
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            wf_utils.Result(data='foobar')
+            ml_actions.Result(data='foobar')
         )
 
         # Assert that task1 is SUCCESS and workflow is ERROR.

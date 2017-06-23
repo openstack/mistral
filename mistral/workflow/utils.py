@@ -14,65 +14,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from mistral import serialization
-from mistral import utils
+from mistral_lib.actions import types
 
+# For backwards compatibility
 
-class Result(serialization.MistralSerializable):
-    """Explicit data structure containing a result of task execution."""
-
-    def __init__(self, data=None, error=None, cancel=False):
-        self.data = data
-        self.error = error
-        self.cancel = cancel
-
-    def __repr__(self):
-        return 'Result [data=%s, error=%s, cancel=%s]' % (
-            repr(self.data), repr(self.error), str(self.cancel)
-        )
-
-    def cut_repr(self):
-        return 'Result [data=%s, error=%s, cancel=%s]' % (
-            utils.cut(self.data), utils.cut(self.error), str(self.cancel)
-        )
-
-    def is_cancel(self):
-        return self.cancel
-
-    def is_error(self):
-        return self.error is not None and not self.is_cancel()
-
-    def is_success(self):
-        return not self.is_error() and not self.is_cancel()
-
-    def __eq__(self, other):
-        return (
-            self.data == other.data and
-            self.error == other.error and
-            self.cancel == other.cancel
-        )
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def to_dict(self):
-        return ({'result': self.data}
-                if self.is_success() else {'result': self.error})
-
-
-class ResultSerializer(serialization.DictBasedSerializer):
-    def serialize_to_dict(self, entity):
-        return {
-            'data': entity.data,
-            'error': entity.error,
-            'cancel': entity.cancel
-        }
-
-    def deserialize_from_dict(self, entity_dict):
-        return Result(
-            entity_dict['data'],
-            entity_dict['error'],
-            entity_dict.get('cancel', False)
-        )
-
-serialization.register_serializer(Result, ResultSerializer())
+Result = types.Result
+ResultSerializer = types.ResultSerializer

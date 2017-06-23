@@ -22,7 +22,7 @@ from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
-from mistral.workflow import utils as wf_utils
+from mistral_lib import actions as ml_actions
 
 
 class TaskCancelTest(base.EngineTestCase):
@@ -75,7 +75,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            wf_utils.Result(cancel=True)
+            ml_actions.Result(cancel=True)
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -171,7 +171,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            wf_utils.Result(cancel=True)
+            ml_actions.Result(cancel=True)
         )
 
         self.await_workflow_cancelled(subwf_ex.id)
@@ -242,7 +242,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         self.engine.on_action_complete(
             task_1_action_exs[0].id,
-            wf_utils.Result(cancel=True)
+            ml_actions.Result(cancel=True)
         )
 
         self.await_workflow_cancelled(wf_ex.id)
@@ -333,7 +333,7 @@ class TaskCancelTest(base.EngineTestCase):
         for wf1_t1_action_ex in wf1_t1_action_exs:
             self.engine.on_action_complete(
                 wf1_t1_action_ex.id,
-                wf_utils.Result(cancel=True)
+                ml_actions.Result(cancel=True)
             )
 
         self.await_task_cancelled(wf1_t1_ex.id)
