@@ -60,7 +60,11 @@ auth_type_opt = cfg.StrOpt(
 )
 
 api_opts = [
-    cfg.StrOpt('host', default='0.0.0.0', help='Mistral API server host'),
+    cfg.HostAddressOpt(
+        'host',
+        default='0.0.0.0',
+        help='Mistral API server host'
+    ),
     cfg.PortOpt('port', default=8989, help='Mistral API server port'),
     cfg.BoolOpt(
         'allow_action_execution_deletion',
@@ -139,7 +143,7 @@ pecan_opts = [
 
 engine_opts = [
     cfg.StrOpt('engine', default='default', help='Mistral engine plugin'),
-    cfg.StrOpt(
+    cfg.HostAddressOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the engine node. This can be an opaque '
@@ -171,7 +175,7 @@ executor_opts = [
             'a separate server to run action executions.'
         )
     ),
-    cfg.StrOpt(
+    cfg.HostAddressOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the executor node. This can be an opaque '
@@ -191,7 +195,7 @@ executor_opts = [
 ]
 
 event_engine_opts = [
-    cfg.StrOpt(
+    cfg.HostAddressOpt(
         'host',
         default='0.0.0.0',
         help=_('Name of the event engine node. This can be an opaque '
@@ -273,7 +277,7 @@ keycloak_oidc_opts = [
         'auth_url',
         help=_('Keycloak base url (e.g. https://my.keycloak:8443/auth)')
     ),
-    cfg.StrOpt(
+    cfg.BoolOpt(
         'insecure',
         default=False,
         help=_('If True, SSL/TLS certificate verification is disabled')
