@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from mistral import context
 from mistral import exceptions as exc
 from mistral.tests.unit.rpc.kombu import base
 from mistral.tests.unit.rpc.kombu import fake_kombu
@@ -197,8 +198,8 @@ class KombuServerTestCase(base.KombuTestCase):
 
     @mock.patch.object(kombu_server.KombuRPCServer, 'publish_message')
     @mock.patch.object(kombu_server.KombuRPCServer, '_get_rpc_method')
-    @mock.patch('mistral.context.MistralContext')
-    def test__on_message_is_async(self, mistral_context, get_rpc_method,
+    @mock.patch('mistral.context.MistralContext.from_dict')
+    def test__on_message_is_async(self, mock_get_context, get_rpc_method,
                                   publish_message):
         result = 'result'
         request = {
@@ -221,9 +222,13 @@ class KombuServerTestCase(base.KombuTestCase):
         rpc_method = mock.MagicMock(return_value=result)
         get_rpc_method.return_value = rpc_method
 
+        ctx = context.MistralContext()
+        mock_get_context.return_value = ctx
+
         self.server._on_message(request, message)
+
         rpc_method.assert_called_once_with(
-            rpc_ctx=mistral_context(),
+            rpc_ctx=ctx,
             a=1,
             b=2
         )
@@ -231,8 +236,8 @@ class KombuServerTestCase(base.KombuTestCase):
 
     @mock.patch.object(kombu_server.KombuRPCServer, 'publish_message')
     @mock.patch.object(kombu_server.KombuRPCServer, '_get_rpc_method')
-    @mock.patch('mistral.context.MistralContext')
-    def test__on_message_is_sync(self, mistral_context, get_rpc_method,
+    @mock.patch('mistral.context.MistralContext.from_dict')
+    def test__on_message_is_sync(self, mock_get_context, get_rpc_method,
                                  publish_message):
         result = 'result'
         request = {
@@ -257,9 +262,13 @@ class KombuServerTestCase(base.KombuTestCase):
         rpc_method = mock.MagicMock(return_value=result)
         get_rpc_method.return_value = rpc_method
 
+        ctx = context.MistralContext()
+        mock_get_context.return_value = ctx
+
         self.server._on_message(request, message)
+
         rpc_method.assert_called_once_with(
-            rpc_ctx=mistral_context(),
+            rpc_ctx=ctx,
             a=1,
             b=2
         )

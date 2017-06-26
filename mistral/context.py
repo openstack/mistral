@@ -15,8 +15,8 @@
 
 import base64
 
-from keystoneclient.v3 import client as keystone_client
 from oslo_config import cfg
+from oslo_context import context as oslo_context
 import oslo_messaging as messaging
 from oslo_serialization import jsonutils
 from osprofiler import profiler
@@ -33,63 +33,83 @@ _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 ALLOWED_WITHOUT_AUTH = ['/', '/v2/']
 
 
-class BaseContext(object):
-    """Container for context variables."""
+class MistralContext(oslo_context.RequestContext):
+    def __init__(self, auth_uri=None, auth_cacert=None, insecure=False,
+                 service_catalog=None, region_name=None, is_trust_scoped=False,
+                 redelivered=False, expires_at=None, trust_id=None,
+                 is_target=False, **kwargs):
+        self.auth_uri = auth_uri
+        self.auth_cacert = auth_cacert
+        self.insecure = insecure
+        self.service_catalog = service_catalog
+        self.region_name = region_name
+        self.is_trust_scoped = is_trust_scoped
+        self.redelivered = redelivered
+        self.expires_at = expires_at
+        self.trust_id = trust_id
+        self.is_target = is_target
 
-    _elements = set()
+        # We still use Mistral thread local variable. Maybe could consider
+        # using the variable provided by oslo_context in future.
+        super(MistralContext, self).__init__(overwrite=False, **kwargs)
 
-    def __init__(self, __mapping=None, **kwargs):
-        if __mapping is None:
-            self.__values = dict(**kwargs)
-        else:
-            if isinstance(__mapping, BaseContext):
-                __mapping = __mapping.__values
-            self.__values = dict(__mapping)
-            self.__values.update(**kwargs)
+    def convert_to_dict(self):
+        """Return a dictionary of context attributes.
 
-        bad_keys = set(self.__values) - self._elements
+        Use get_logging_values() instead of to_dict() from parent class to get
+        more information from the context. This method is not named "to_dict"
+        to avoid recursive call.
+        """
+        ctx_dict = self.get_logging_values()
+        ctx_dict.update(
+            {
+                'auth_uri': self.auth_uri,
+                'auth_cacert': self.auth_cacert,
+                'insecure': self.insecure,
+                'service_catalog': self.service_catalog,
+                'region_name': self.region_name,
+                'is_trust_scoped': self.is_trust_scoped,
+                'redelivered': self.redelivered,
+                'expires_at': self.expires_at,
+                'trust_id': self.trust_id,
+                'is_target': self.is_target,
+            }
+        )
 
-        if bad_keys:
-            raise TypeError("Only %s keys are supported. %s given" %
-                            (tuple(self._elements), tuple(bad_keys)))
+        return ctx_dict
 
-    def __getattr__(self, name):
-        try:
-            return self.__values[name]
-        except KeyError:
-            if name in self._elements:
-                return None
-            else:
-                raise AttributeError(name)
+    @classmethod
+    def from_dict(cls, values, **kwargs):
+        """Construct a context object from a provided dictionary."""
+        kwargs.setdefault('auth_uri', values.get('auth_uri'))
+        kwargs.setdefault('auth_cacert', values.get('auth_cacert'))
+        kwargs.setdefault('insecure', values.get('insecure', False))
+        kwargs.setdefault('service_catalog', values.get('service_catalog'))
+        kwargs.setdefault('region_name', values.get('region_name'))
+        kwargs.setdefault(
+            'is_trust_scoped', values.get('is_trust_scoped', False)
+        )
+        kwargs.setdefault('redelivered', values.get('redelivered', False))
+        kwargs.setdefault('expires_at', values.get('expires_at'))
+        kwargs.setdefault('trust_id', values.get('trust_id'))
+        kwargs.setdefault('is_target', values.get('is_target', False))
 
-    def to_dict(self):
-        return self.__values
+        return super(MistralContext, cls).from_dict(values, **kwargs)
 
+    @classmethod
+    def from_environ(cls, headers, env):
+        kwargs = _extract_mistral_auth_params(headers)
 
-class MistralContext(BaseContext):
-    # Use set([...]) since set literals are not supported in Python 2.6.
-    _elements = set([
-        "auth_uri",
-        "auth_cacert",
-        "insecure",
-        "user_id",
-        "project_id",
-        "auth_token",
-        "service_catalog",
-        "user_name",
-        "region_name",
-        "project_name",
-        "roles",
-        "is_admin",
-        "is_trust_scoped",
-        "redelivered",
-        "expires_at",
-        "trust_id",
-        "is_target",
-    ])
+        token_info = env.get('keystone.token_info', {})
+        if not kwargs['is_target']:
+            kwargs['service_catalog'] = token_info.get('token', {})
+        kwargs['expires_at'] = (token_info['token']['expires_at']
+                                if token_info else None)
 
-    def __repr__(self):
-        return "MistralContext %s" % self.to_dict()
+        context = super(MistralContext, cls).from_environ(env, **kwargs)
+        context.is_admin = True if 'admin' in context.roles else False
+
+        return context
 
 
 def has_ctx():
@@ -107,47 +127,7 @@ def set_ctx(new_ctx):
     utils.set_thread_local(_CTX_THREAD_LOCAL_NAME, new_ctx)
 
 
-def context_from_headers_and_env(headers, env):
-    params = _extract_auth_params_from_headers(headers)
-
-    auth_cacert = params['auth_cacert']
-    insecure = params['insecure']
-    auth_token = params['auth_token']
-    auth_uri = params['auth_uri']
-    project_id = params['project_id']
-    region_name = params['region_name']
-    user_id = params['user_id']
-    user_name = params['user_name']
-    is_target = params['is_target']
-
-    token_info = env.get('keystone.token_info', {})
-
-    service_catalog = (params['service_catalog'] if is_target
-                       else token_info.get('token', {}))
-
-    roles = headers.get('X-Roles', "").split(",")
-    is_admin = True if 'admin' in roles else False
-
-    return MistralContext(
-        auth_uri=auth_uri,
-        auth_cacert=auth_cacert,
-        insecure=insecure,
-        user_id=user_id,
-        project_id=project_id,
-        auth_token=auth_token,
-        is_target=is_target,
-        service_catalog=service_catalog,
-        user_name=user_name,
-        region_name=region_name,
-        project_name=headers.get('X-Project-Name'),
-        roles=roles,
-        is_trust_scoped=False,
-        expires_at=token_info['token']['expires_at'] if token_info else None,
-        is_admin=is_admin
-    )
-
-
-def _extract_auth_params_from_headers(headers):
+def _extract_mistral_auth_params(headers):
     service_catalog = None
 
     if headers.get("X-Target-Auth-Uri"):
@@ -157,8 +137,8 @@ def _extract_auth_params_from_headers(headers):
             'insecure': headers.get('X-Target-Insecure', False),
             'auth_token': headers.get('X-Target-Auth-Token'),
             'auth_uri': headers.get('X-Target-Auth-Uri'),
-            'project_id': headers.get('X-Target-Project-Id'),
-            'user_id': headers.get('X-Target-User-Id'),
+            'tenant': headers.get('X-Target-Project-Id'),
+            'user': headers.get('X-Target-User-Id'),
             'user_name': headers.get('X-Target-User-Name'),
             'region_name': headers.get('X-Target-Region-Name'),
             'is_target': True
@@ -176,13 +156,9 @@ def _extract_auth_params_from_headers(headers):
         )
     else:
         params = {
+            'auth_uri': CONF.keystone_authtoken.auth_uri,
             'auth_cacert': CONF.keystone_authtoken.cafile,
             'insecure': False,
-            'auth_token': headers.get('X-Auth-Token'),
-            'auth_uri': CONF.keystone_authtoken.auth_uri,
-            'project_id': headers.get('X-Project-Id'),
-            'user_id': headers.get('X-User-Id'),
-            'user_name': headers.get('X-User-Name'),
             'region_name': headers.get('X-Region-Name'),
             'is_target': False
         }
@@ -201,27 +177,6 @@ def _extract_service_catalog_from_headers(headers):
         return jsonutils.loads(decoded_catalog)
     else:
         return None
-
-
-def context_from_config():
-    keystone = keystone_client.Client(
-        username=CONF.keystone_authtoken.admin_user,
-        password=CONF.keystone_authtoken.admin_password,
-        tenant_name=CONF.keystone_authtoken.admin_tenant_name,
-        auth_url=CONF.keystone_authtoken.auth_uri,
-        is_trust_scoped=False,
-    )
-
-    keystone.authenticate()
-
-    return MistralContext(
-        user_id=keystone.user_id,
-        project_id=keystone.project_id,
-        auth_token=keystone.auth_token,
-        project_name=CONF.keystone_authtoken.admin_tenant_name,
-        user_name=CONF.keystone_authtoken.admin_user,
-        is_trust_scoped=False,
-    )
 
 
 class RpcContextSerializer(messaging.Serializer):
@@ -243,7 +198,7 @@ class RpcContextSerializer(messaging.Serializer):
         return self.entity_serializer.deserialize(entity)
 
     def serialize_context(self, context):
-        ctx = context.to_dict()
+        ctx = context.convert_to_dict()
 
         pfr = profiler.get()
 
@@ -262,7 +217,7 @@ class RpcContextSerializer(messaging.Serializer):
         if trace_info:
             profiler.init(**trace_info)
 
-        ctx = MistralContext(**context)
+        ctx = MistralContext.from_dict(context)
         set_ctx(ctx)
 
         return ctx
@@ -291,10 +246,11 @@ class AuthHook(hooks.PecanHook):
 
 class ContextHook(hooks.PecanHook):
     def before(self, state):
-        set_ctx(context_from_headers_and_env(
-            state.request.headers,
-            state.request.environ
-        ))
+        context = MistralContext.from_environ(
+            state.request.headers, state.request.environ
+        )
+
+        set_ctx(context)
 
     def after(self, state):
         set_ctx(None)

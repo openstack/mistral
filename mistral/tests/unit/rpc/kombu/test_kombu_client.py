@@ -48,7 +48,11 @@ class KombuClientTestCase(base.KombuTestCase):
         self.addCleanup(restore_listener)
 
         self.client = kombu_client.KombuRPCClient(conf)
-        self.ctx = type('context', (object,), {'to_dict': lambda self: {}})()
+        self.ctx = type(
+            'context',
+            (object,),
+            {'convert_to_dict': lambda self: {}}
+        )()
 
     def test_sync_call_result_get(self):
         self.client._listener.get_result = mock.MagicMock(

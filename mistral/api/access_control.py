@@ -70,14 +70,20 @@ def enforce(action, context, target=None, do_raise=True,
         'project_id': context.project_id,
         'user_id': context.user_id,
     }
-
     target_obj.update(target or {})
+
+    policy_context = context.to_policy_values()
+    # Because policy.json example in Mistral repo still uses the rule
+    # 'is_admin: True', we insert 'is_admin' key to the default policy
+    # values.
+    policy_context['is_admin'] = context.is_admin
+
     _ensure_enforcer_initialization()
 
     return _ENFORCER.enforce(
         action,
         target_obj,
-        context.to_dict(),
+        policy_context,
         do_raise=do_raise,
         exc=exc
     )
