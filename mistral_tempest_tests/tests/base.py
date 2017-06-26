@@ -48,7 +48,7 @@ class TestCase(test.BaseTestCase):
             cls.mgr.auth_provider = service_base.AuthProv()
             cls.admin_mgr = cls.alt_mgr = cls.mgr
         else:
-            cls.admin_mgr = cls.admin_manager
+            cls.admin_mgr = cls.os_admin
             cls.mgr = cls.manager
             cls.alt_mgr = cls.alt_manager
 
