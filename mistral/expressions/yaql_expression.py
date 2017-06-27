@@ -23,12 +23,52 @@ import six
 from yaql.language import exceptions as yaql_exc
 from yaql.language import factory
 
+from mistral.config import cfg
 from mistral import exceptions as exc
 from mistral.expressions.base_expression import Evaluator
+from mistral import utils
 from mistral.utils import expression_utils
 
 LOG = logging.getLogger(__name__)
-YAQL_ENGINE = factory.YaqlFactory().create()
+
+_YAQL_CONF = cfg.CONF.yaql
+
+
+def get_yaql_engine_options():
+    return {
+        "yaql.limitIterators": _YAQL_CONF.limit_iterators,
+        "yaql.memoryQuota": _YAQL_CONF.memory_quota,
+        "yaql.convertTuplesToLists": _YAQL_CONF.convert_tuples_to_lists,
+        "yaql.convertSetsToLists": _YAQL_CONF.convert_sets_to_lists,
+        "yaql.iterableDicts": _YAQL_CONF.iterable_dicts,
+        "yaql.convertOutputData": True
+    }
+
+
+def create_yaql_engine_class(keyword_operator, allow_delegates,
+                             engine_options):
+    return factory.YaqlFactory(
+        keyword_operator=keyword_operator,
+        allow_delegates=allow_delegates
+    ).create(options=engine_options)
+
+
+YAQL_ENGINE = create_yaql_engine_class(
+    _YAQL_CONF.keyword_operator,
+    _YAQL_CONF.allow_delegates,
+    get_yaql_engine_options()
+)
+
+LOG.info(
+    "YAQL engine has been initialized with the options: \n%s",
+    utils.merge_dicts(
+        get_yaql_engine_options(),
+        {
+            "keyword_operator": _YAQL_CONF.keyword_operator,
+            "allow_delegates": _YAQL_CONF.allow_delegates
+        }
+    )
+)
 
 INLINE_YAQL_REGEXP = '<%.*?%>'
 

@@ -389,3 +389,45 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
             wf_ex.created_at.isoformat(' '),
             execution['created_at']
         )
+
+    def test_yaml_dump_function(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              publish:
+                data: <% {key1 => foo, key2 => bar} %>
+              on-success: task2
+
+            task2:
+              publish:
+                yaml_str: <% yaml_dump($.data) %>
+                json_str: <% json_dump($.data) %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction(read_only=True):
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task2'
+            )
+
+            yaml_str = task_ex.published['yaml_str']
+            json_str = task_ex.published['json_str']
+
+        self.assertIsNotNone(yaml_str)
+        self.assertIn('key1: foo', yaml_str)
+        self.assertIn('key2: bar', yaml_str)
+
+        self.assertIsNotNone(json_str)
+        self.assertIn('"key1": "foo"', json_str)
+        self.assertIn('"key2": "bar"', json_str)

@@ -21,10 +21,13 @@ import warnings
 
 import mock
 
+from mistral.config import cfg
 from mistral import exceptions as exc
 from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
 from mistral import utils
+
+CONF = cfg.CONF
 
 DATA = {
     "server": {
@@ -297,3 +300,40 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
         self.assertRaises(exc.YaqlEvaluationException,
                           self._evaluator.validate,
                           {'a': 1})
+
+    def test_set_of_dicts(self):
+        self.override_config('convert_sets_to_lists', True, 'yaql')
+
+        def _restore_engine(old_engine):
+            expr.YAQL_ENGINE = old_engine
+
+        self.addCleanup(_restore_engine, expr.YAQL_ENGINE)
+
+        expr.YAQL_ENGINE = expr.create_yaql_engine_class(
+            CONF.yaql.keyword_operator,
+            CONF.yaql.allow_delegates,
+            expr.get_yaql_engine_options()
+        )
+
+        my_list = [
+            {
+                "k1": "v1",
+                "k2": "v2"
+            },
+            {
+                "k11": "v11",
+                "k12": "v12"
+            }
+        ]
+
+        res = self._evaluator.evaluate(
+            '<% $.my_list.toSet() %>',
+            {"my_list": my_list}
+        )
+
+        self.assertIsInstance(res, list)
+        self.assertEqual(2, len(res))
+
+        # The order may be different so we can't use "assertListEqual".
+        self.assertTrue(my_list[0] == res[0] or my_list[1] == res[0])
+        self.assertTrue(my_list[0] == res[1] or my_list[1] == res[1])
