@@ -366,7 +366,7 @@ class Environment(mb.MistralSecureModelBase):
     id = mb.id_column()
     name = sa.Column(sa.String(200))
     description = sa.Column(sa.Text())
-    variables = sa.Column(st.JsonLongDictType())
+    variables = sa.Column(st.JsonDictType())
 
 
 class CronTrigger(mb.MistralSecureModelBase):
