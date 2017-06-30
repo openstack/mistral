@@ -35,11 +35,11 @@ _periodic_tasks = {}
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
-        for t in triggers.get_next_cron_triggers():
-            LOG.debug("Processing cron trigger: %s" % t)
+        for trigger in triggers.get_next_cron_triggers():
+            LOG.debug("Processing cron trigger: %s" % trigger)
 
             # Setup admin context before schedule triggers.
-            ctx = security.create_context(t.trust_id, t.project_id)
+            ctx = security.create_context(trigger.trust_id, trigger.project_id)
 
             auth_ctx.set_ctx(ctx)
 
@@ -48,25 +48,27 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             try:
                 # Try to advance the cron trigger next_execution_time and
                 # remaining_executions if relevant.
-                modified = advance_cron_trigger(t)
+                modified = advance_cron_trigger(trigger)
 
                 # If cron trigger was not already modified by another engine.
                 if modified:
                     LOG.debug(
                         "Starting workflow '%s' by cron trigger '%s'",
-                        t.workflow.name, t.name
+                        trigger.workflow.name, trigger.name
                     )
 
                     rpc.get_engine_client().start_workflow(
-                        t.workflow.name,
-                        t.workflow_input,
+                        trigger.workflow.name,
+                        trigger.workflow_input,
                         description="Workflow execution created "
                                     "by cron trigger.",
-                        **t.workflow_params
+                        **trigger.workflow_params
                     )
             except Exception:
                 # Log and continue to next cron trigger.
-                LOG.exception("Failed to process cron trigger %s" % str(t))
+                LOG.exception(
+                    "Failed to process cron trigger %s" % str(trigger)
+                )
             finally:
                 auth_ctx.set_ctx(None)
 
