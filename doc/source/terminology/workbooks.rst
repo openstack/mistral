@@ -80,4 +80,4 @@ the original workbook.
 * **actions** - Dictionary containing ad-hoc action definitions. *Optional*.
 
 For more details about Mistral Workflow Language itself, please see
-:doc:`Mistral Workflow Language specification </dsl/index>`
+:doc:`Mistral Workflow Language specification </admin/dsl_v2>`

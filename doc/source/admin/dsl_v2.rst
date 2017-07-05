@@ -855,6 +855,7 @@ Input parameters:
 -  **password** - User password to to authenticate on the host. *Optional*.
 -  **private_key_filename** - Private key file name which will be used for
    authentication on remote host.
+
 All private keys should be on executor host in **<home-user-directory>/.ssh/**.
 **<home-user-directory>** should refer to user directory under which service is
 running. *Optional*.

@@ -19,7 +19,7 @@ its state and result.
 
 .. image:: /img/Mistral_actions.png
 
-:doc:`How to work with asynchronous actions </developer/asynchronous_actions>`
+:doc:`How to work with asynchronous actions </contributor/asynchronous_actions>`
 
 System actions
 --------------
@@ -27,7 +27,7 @@ System actions
 System actions are provided by Mistral out of the box and are available to all
 users. Additional actions can be added via the custom action plugin mechanism.
 
-:doc:`How to write an Action Plugin </developer/creating_custom_action>`
+:doc:`How to write an Action Plugin </contributor/creating_custom_action>`
 
 
 Ad-hoc actions

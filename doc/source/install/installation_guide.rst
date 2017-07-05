@@ -31,7 +31,7 @@ sure **Keystone v3** is installed.
 Installation
 ------------
 
-**NOTE**: If it is needed to install Mistral using devstack, please refer to :doc:`Mistral Devstack Installation </developer/devstack>`
+**NOTE**: If it is needed to install Mistral using devstack, please refer to :doc:`Mistral Devstack Installation </contributor/devstack>`
 
 First of all, clone the repo and go to the repo directory::
 
@@ -45,7 +45,7 @@ Generate config::
 Configure Mistral as needed. The configuration file is located in
 ``etc/mistral.conf.sample``. You will need to modify the configuration options
 and then copy it into ``/etc/mistral/mistral.conf``.
-For details see :doc:`Mistral Configuration Guide </guides/configuration_guide>`
+For details see :doc:`Mistral Configuration Guide </configuration/index>`
 
 **Virtualenv installation**::
 
@@ -76,7 +76,7 @@ After installation you will see **mistral-server** and **mistral-db-manage** com
 in your environment, either in system or virtual environment.
 
 **NOTE**: In case of using **virtualenv**, all Mistral related commands available via
-**tox -evenv --**. For example, *mistral-server* is available via 
+**tox -evenv --**. For example, *mistral-server* is available via
 *tox -evenv -- mistral-server*.
 
 **mistral-db-manage** command can be used for migrations.
@@ -91,7 +91,7 @@ workflows which Mistral provides for all Mistral users.::
 
     $ mistral-db-manage --config-file <path-to-mistral.conf> populate
 
-For more detailed information about *mistral-db-manage* script please see :doc:`Mistral Upgrade Guide </guides/upgrade_guide>`.
+For more detailed information about *mistral-db-manage* script please see :doc:`Mistral Upgrade Guide </admin/upgrade_guide>`.
 
 **NOTE**: For users who want a dry run with **SQLite** database backend(not
 used in production), *mistral-db-manage* is not recommended for database
@@ -136,7 +136,7 @@ perform the following command in a shell::
 
     $ mistral-server --server api,engine --config-file <path-to-mistral.conf>
 
-The --server command line option can be a comma delimited list. The valid 
+The --server command line option can be a comma delimited list. The valid
 options are "all" (by default if not specified) or any combination of "api",
 "engine", and "executor". It's important to note that the "fake" transport for
 the rpc_backend defined in the config file should only be used if "all" the
@@ -159,7 +159,7 @@ To load this image to docker registry, please run following command::
     $ docker load -i '<path of mistral-docker.tar.gz>'
 
 The Mistral Docker image is configured to store the database in the user's home
-directory. For persistence of these data, you may want to keep this directory 
+directory. For persistence of these data, you may want to keep this directory
 outside of the container. This may be done by the following steps::
 
     $ sudo mkdir '<user-defined-directory>'
@@ -174,4 +174,4 @@ then put customized mistral.conf to '<user-defined-directory>'.
 Mistral Client Installation
 ---------------------------
 
-Please refer to :doc:`Mistral Client / CLI Guide </guides/mistralclient_guide>`
+Please refer to :doc:`Mistral Client / CLI Guide <../cli/index>`

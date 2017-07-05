@@ -76,7 +76,7 @@ Targeting non-preconfigured clouds
 
 Mistral is capable of executing workflows on external OpenStack clouds,
 different from the one defined in the `mistral.conf` file in the
-`keystone_authtoken` section. (More detail in the :doc:`configuration_guide`).
+`keystone_authtoken` section. (More detail in the :doc:`/configuration/index`).
 
 For example, if the mistral server is configured to authenticate with the
 `http://keystone1.example.com` cloud and the user wants to execute the workflow

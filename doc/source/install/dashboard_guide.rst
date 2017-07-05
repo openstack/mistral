@@ -42,7 +42,7 @@ The following should get you started:
     OPENSTACK_KEYSTONE_URL = "http://%s:5000/v3" % OPENSTACK_HOST
 
 4. Also, make sure you have changed OPENSTACK_HOST to point to your Keystone
-   server and check all endpoints are accessible. You may want to change 
+   server and check all endpoints are accessible. You may want to change
    OPENSTACK_ENDPOINT_TYPE to "publicURL" if some of them are not.
 
 5. When you're ready, you would need to either restart your apache::
@@ -56,4 +56,4 @@ The following should get you started:
 
 Debug instructions
 ------------------
-Please refer to :doc:`Mistral Troubleshooting <../developer/troubleshooting>`
+Please refer to :doc:`Mistral Troubleshooting <../contributor/troubleshooting>`
