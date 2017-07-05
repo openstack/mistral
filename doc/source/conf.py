@@ -12,9 +12,7 @@
 # limitations under the License.
 
 import os
-import subprocess
 import sys
-import warnings
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -32,15 +30,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.pecanwsme.rest',
     'wsmeext.sphinxext',
+    'openstackdocstheme',
 ]
-
-if not on_rtd:
-    extensions.append('oslosphinx')
 
 wsme_protocols = ['restjson']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# templates_path = ['_templates']
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
 # text edit cycles.
@@ -83,9 +79,7 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 # html_static_path = ['_static']
 
-if on_rtd:
-    html_theme_path = ['.']
-    html_theme = 'sphinx_rtd_theme'
+html_theme = 'openstackdocs'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project
@@ -95,15 +89,9 @@ modindex_common_prefix = ['mistral.']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-# html_last_updated_fmt = '%b %d, %Y'
-git_cmd = ["git", "log", "--pretty=format:'%ad, commit %h'", "--date=local",
-           "-n1"]
-try:
-    html_last_updated_fmt = subprocess.check_output(
-        git_cmd).decode('utf-8')
-except Exception:
-    warnings.warn('Cannot get last updated time from git repository. '
-                  'Not setting "html_last_updated_fmt".')
+#html_last_updated_fmt = '%b %d, %Y'
+# Must set this variable to include year, month, day, hours, and minutes.
+html_last_updated_fmt = '%Y-%m-%d %H:%M'
 
 # The name for this set of Sphinx documents. If None, it defaults to
 # "<project> v<release> documentation".
@@ -132,3 +120,8 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 man_show_urls = True
+
+# -- Options for openstackdocstheme -------------------------------------------
+repository_name = 'openstack/mistral'
+bug_project = 'mistral'
+bug_tag = ''
