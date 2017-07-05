@@ -59,6 +59,11 @@ function mkdir_chown_stack {
 
 # configure_mistral - Set config files, create data dirs, etc
 function configure_mistral {
+
+    # create and clean up auth cache dir
+    mkdir_chown_stack "$MISTRAL_AUTH_CACHE_DIR"
+    rm -f "$MISTRAL_AUTH_CACHE_DIR"/*
+
     mkdir_chown_stack "$MISTRAL_CONF_DIR"
 
     # Generate Mistral configuration file and configure common parameters.
@@ -75,14 +80,8 @@ function configure_mistral {
     #-------------------------
 
     # Setup keystone_authtoken section
-    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_host $KEYSTONE_AUTH_HOST
-    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_port $KEYSTONE_AUTH_PORT
-    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_protocol $KEYSTONE_AUTH_PROTOCOL
-    iniset $MISTRAL_CONF_FILE keystone_authtoken admin_tenant_name $SERVICE_TENANT_NAME
-    iniset $MISTRAL_CONF_FILE keystone_authtoken admin_user $MISTRAL_ADMIN_USER
-    iniset $MISTRAL_CONF_FILE keystone_authtoken admin_password $SERVICE_PASSWORD
+    configure_auth_token_middleware $MISTRAL_CONF_FILE mistral $MISTRAL_AUTH_CACHE_DIR
     iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_AUTH_URI_V3
-    iniset $MISTRAL_CONF_FILE keystone_authtoken identity_uri $KEYSTONE_AUTH_URI
 
     # Setup RabbitMQ credentials
     iniset $MISTRAL_CONF_FILE oslo_messaging_rabbit rabbit_userid $RABBIT_USERID
@@ -250,8 +249,8 @@ if is_service_enabled mistral; then
         install_mistral_pythonclient
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring mistral"
-        configure_mistral
         create_mistral_accounts
+        configure_mistral
     elif [[ "$1" == "stack" && "$2" == "extra" ]]; then
         echo_summary "Initializing mistral"
         init_mistral
