@@ -5,9 +5,7 @@
 *.so
 
 # Packages
-*.egg
-*.egg-info
-.eggs/
+*.egg*
 dist
 build
 .venv
