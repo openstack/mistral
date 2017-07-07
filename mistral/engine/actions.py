@@ -73,6 +73,23 @@ class Action(object):
         self.action_ex.state = states.ERROR
         self.action_ex.output = {'result': msg}
 
+    def update(self, state):
+        assert self.action_ex
+
+        if state == states.PAUSED and self.is_sync(self.action_ex.input):
+            raise exc.InvalidStateTransitionException(
+                'Transition to the PAUSED state is only supported '
+                'for asynchronous action execution.'
+            )
+
+        if not states.is_valid_transition(self.action_ex.state, state):
+            raise exc.InvalidStateTransitionException(
+                'Invalid state transition from %s to %s.' %
+                (self.action_ex.state, state)
+            )
+
+        self.action_ex.state = state
+
     @abc.abstractmethod
     def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False):
         """Schedule action run.

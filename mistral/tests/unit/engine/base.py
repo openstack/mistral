@@ -208,6 +208,10 @@ class EngineTestCase(base.DbTestCase):
     def is_task_processed(self, task_ex_id):
         return db_api.get_task_execution(task_ex_id).processed
 
+    def await_task_running(self, ex_id, delay=DEFAULT_DELAY,
+                           timeout=DEFAULT_TIMEOUT):
+        self.await_task_state(ex_id, states.RUNNING, delay, timeout)
+
     def await_task_success(self, ex_id, delay=DEFAULT_DELAY,
                            timeout=DEFAULT_TIMEOUT):
         self.await_task_state(ex_id, states.SUCCESS, delay, timeout)
@@ -219,6 +223,10 @@ class EngineTestCase(base.DbTestCase):
     def await_task_cancelled(self, ex_id, delay=DEFAULT_DELAY,
                              timeout=DEFAULT_TIMEOUT):
         self.await_task_state(ex_id, states.CANCELLED, delay, timeout)
+
+    def await_task_paused(self, ex_id, delay=DEFAULT_DELAY,
+                          timeout=DEFAULT_TIMEOUT):
+        self.await_task_state(ex_id, states.PAUSED, delay, timeout)
 
     def await_task_delayed(self, ex_id, delay=DEFAULT_DELAY,
                            timeout=DEFAULT_TIMEOUT):

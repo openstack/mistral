@@ -118,6 +118,21 @@ class DefaultEngine(base.Engine):
 
             return action_ex.get_clone()
 
+    @db_utils.retry_on_deadlock
+    @action_queue.process
+    @profiler.trace('engine-on-action-update', hide_args=True)
+    def on_action_update(self, action_ex_id, state, wf_action=False,
+                         async_=False):
+        with db_api.transaction():
+            if wf_action:
+                action_ex = db_api.get_workflow_execution(action_ex_id)
+            else:
+                action_ex = db_api.get_action_execution(action_ex_id)
+
+            action_handler.on_action_update(action_ex, state)
+
+            return action_ex.get_clone()
+
     def pause_workflow(self, wf_ex_id):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)

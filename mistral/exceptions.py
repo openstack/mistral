@@ -215,3 +215,8 @@ class KombuException(Exception):
 
         self.exc_type = e.__class__.__name__
         self.value = str(e)
+
+
+class InvalidStateTransitionException(MistralException):
+    http_code = 400
+    message = 'Invalid state transition'

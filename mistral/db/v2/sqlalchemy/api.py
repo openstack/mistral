@@ -940,7 +940,8 @@ def _get_incomplete_task_executions_query(kwargs):
             models.TaskExecution.state == states.IDLE,
             models.TaskExecution.state == states.RUNNING,
             models.TaskExecution.state == states.WAITING,
-            models.TaskExecution.state == states.RUNNING_DELAYED
+            models.TaskExecution.state == states.RUNNING_DELAYED,
+            models.TaskExecution.state == states.PAUSED
         )
     )
 

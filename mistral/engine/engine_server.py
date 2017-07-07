@@ -153,6 +153,24 @@ class EngineServer(service_base.MistralService):
 
         return self.engine.on_action_complete(action_ex_id, result, wf_action)
 
+    def on_action_update(self, rpc_ctx, action_ex_id, state, wf_action):
+        """Receives RPC calls to communicate action execution state to engine.
+
+        :param rpc_ctx: RPC request context.
+        :param action_ex_id: Action execution id.
+        :param state: Action execution state.
+        :param wf_action: True if given id points to a workflow execution.
+        :return: Action execution.
+        """
+        LOG.info(
+            "Received RPC request 'on_action_update'"
+            "[action_ex_id=%s, state=%s]",
+            action_ex_id,
+            state
+        )
+
+        return self.engine.on_action_update(action_ex_id, state, wf_action)
+
     def pause_workflow(self, rpc_ctx, execution_id):
         """Receives calls over RPC to pause workflows on engine.
 

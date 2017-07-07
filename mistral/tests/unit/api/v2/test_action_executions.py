@@ -140,6 +140,18 @@ CANCELLED_ACTION_EX_DB['task_name'] = 'task1'
 CANCELLED_ACTION = copy.deepcopy(ACTION_EX)
 CANCELLED_ACTION['state'] = 'CANCELLED'
 
+PAUSED_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
+PAUSED_ACTION_EX_DB['state'] = 'PAUSED'
+PAUSED_ACTION_EX_DB['task_name'] = 'task1'
+PAUSED_ACTION = copy.deepcopy(ACTION_EX)
+PAUSED_ACTION['state'] = 'PAUSED'
+
+RUNNING_ACTION_EX_DB = copy.copy(ACTION_EX_DB).to_dict()
+RUNNING_ACTION_EX_DB['state'] = 'RUNNING'
+RUNNING_ACTION_EX_DB['task_name'] = 'task1'
+RUNNING_ACTION = copy.deepcopy(ACTION_EX)
+RUNNING_ACTION['state'] = 'RUNNING'
+
 ERROR_ACTION_EX = copy.copy(ACTION_EX_DB).to_dict()
 ERROR_ACTION_EX['state'] = 'ERROR'
 ERROR_ACTION_EX['task_name'] = 'task1'
@@ -395,6 +407,34 @@ class TestActionExecutionsController(base.APITest):
             ml_actions.Result(cancel=True)
         )
 
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_update')
+    def test_put_paused(self, on_action_update_mock_func):
+        on_action_update_mock_func.return_value = PAUSED_ACTION_EX_DB
+
+        resp = self.app.put_json('/v2/action_executions/123', PAUSED_ACTION)
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(PAUSED_ACTION, resp.json)
+
+        on_action_update_mock_func.assert_called_once_with(
+            PAUSED_ACTION['id'],
+            PAUSED_ACTION['state']
+        )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'on_action_update')
+    def test_put_resume(self, on_action_update_mock_func):
+        on_action_update_mock_func.return_value = RUNNING_ACTION_EX_DB
+
+        resp = self.app.put_json('/v2/action_executions/123', RUNNING_ACTION)
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(RUNNING_ACTION, resp.json)
+
+        on_action_update_mock_func.assert_called_once_with(
+            RUNNING_ACTION['id'],
+            RUNNING_ACTION['state']
+        )
+
     @mock.patch.object(
         rpc_clients.EngineClient,
         'on_action_complete',
@@ -411,7 +451,7 @@ class TestActionExecutionsController(base.APITest):
 
     def test_put_bad_state(self):
         action = copy.deepcopy(ACTION_EX)
-        action['state'] = 'PAUSED'
+        action['state'] = 'DELAYED'
 
         resp = self.app.put_json(
             '/v2/action_executions/123',
