@@ -42,7 +42,8 @@ def create_trust():
 
     ctx = auth_ctx.ctx()
 
-    trustee_id = keystone.client_for_admin().session.get_user_id()
+    trustee_id = keystone.client_for_admin(
+        CONF.keystone_authtoken.admin_tenant_name).user_id
 
     return client.trusts.create(
         trustor_user=client.user_id,
