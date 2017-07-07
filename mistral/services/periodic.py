@@ -38,14 +38,15 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
         for trigger in triggers.get_next_cron_triggers():
             LOG.debug("Processing cron trigger: %s" % trigger)
 
-            # Setup admin context before schedule triggers.
-            ctx = security.create_context(trigger.trust_id, trigger.project_id)
-
-            auth_ctx.set_ctx(ctx)
-
-            LOG.debug("Cron trigger security context: %s" % ctx)
-
             try:
+                # Setup admin context before schedule triggers.
+                ctx = security.create_context(
+                    trigger.trust_id, trigger.project_id
+                )
+
+                auth_ctx.set_ctx(ctx)
+                LOG.debug("Cron trigger security context: %s" % ctx)
+
                 # Try to advance the cron trigger next_execution_time and
                 # remaining_executions if relevant.
                 modified = advance_cron_trigger(trigger)

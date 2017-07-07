@@ -85,7 +85,15 @@ def delete_trust(trust_id):
     if not trust_id:
         return
 
-    keystone_client = keystone.client_for_trusts(trust_id)
+    ctx = auth_ctx.ctx()
+
+    # If this trust is already in the context then it means that
+    # context already has trust scoped token from exactly this trust_id.
+    # So we don't need request the token from the trust one more time.
+    if ctx.is_trust_scoped and ctx.trust_id == trust_id:
+        keystone_client = keystone.client()
+    else:
+        keystone_client = keystone.client_for_trusts(trust_id)
 
     try:
         keystone_client.trusts.delete(trust_id)
