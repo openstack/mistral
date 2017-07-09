@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import keystoneauth1.identity.generic as auth_plugins
+from keystoneauth1 import loading
 from keystoneauth1 import session as ks_session
 from keystoneauth1.token_endpoint import Token
 from keystoneclient import service_catalog as ks_service_catalog
@@ -27,6 +28,7 @@ from mistral import context
 from mistral import exceptions
 
 CONF = cfg.CONF
+CONF.register_opt(cfg.IntOpt('timeout'), group='keystone_authtoken')
 
 
 def client():
@@ -91,24 +93,48 @@ def get_session_and_auth(context, **kwargs):
     }
 
 
-def _admin_client(trust_id=None, project_name=None):
-    auth_url = CONF.keystone_authtoken.auth_uri
+def _admin_client(trust_id=None):
+    if CONF.keystone_authtoken.auth_type is None:
+        auth_url = CONF.keystone_authtoken.auth_uri
 
-    cl = ks_client.Client(
-        username=CONF.keystone_authtoken.admin_user,
-        password=CONF.keystone_authtoken.admin_password,
-        project_name=project_name,
-        auth_url=auth_url,
-        trust_id=trust_id
-    )
+        cl = ks_client.Client(
+            username=CONF.keystone_authtoken.admin_user,
+            password=CONF.keystone_authtoken.admin_password,
+            project_name=CONF.keystone_authtoken.admin_tenant_name,
+            auth_url=auth_url,
+            trust_id=trust_id
+        )
 
-    cl.management_url = auth_url
+        cl.management_url = auth_url
 
-    return cl
+        return cl
+    else:
+        kwargs = {}
+
+        if trust_id:
+            # Remove project_name and project_id, since we need a trust scoped
+            # auth object
+            kwargs['project_name'] = None
+            kwargs['project_domain_name'] = None
+            kwargs['project_id'] = None
+            kwargs['trust_id'] = trust_id
+
+        auth = loading.load_auth_from_conf_options(
+            CONF,
+            'keystone_authtoken',
+            **kwargs
+        )
+        sess = loading.load_session_from_conf_options(
+            CONF,
+            'keystone_authtoken',
+            auth=auth
+        )
+
+        return ks_client.Client(session=sess)
 
 
-def client_for_admin(project_name):
-    return _admin_client(project_name=project_name)
+def client_for_admin():
+    return _admin_client()
 
 
 def client_for_trusts(trust_id):
@@ -230,28 +256,34 @@ def format_url(url_template, values):
 
 
 def is_token_trust_scoped(auth_token):
-    admin_project_name = CONF.keystone_authtoken.admin_tenant_name
-    keystone_client = _admin_client(project_name=admin_project_name)
-
-    token_info = keystone_client.tokens.validate(auth_token)
-
-    return 'OS-TRUST:trust' in token_info
+    return 'OS-TRUST:trust' in client_for_admin().tokens.validate(auth_token)
 
 
 def get_admin_session():
     """Returns a keystone session from Mistral's service credentials."""
+    if CONF.keystone_authtoken.auth_type is None:
+        auth = auth_plugins.Password(
+            CONF.keystone_authtoken.auth_uri,
+            username=CONF.keystone_authtoken.admin_user,
+            password=CONF.keystone_authtoken.admin_password,
+            project_name=CONF.keystone_authtoken.admin_tenant_name,
+            # NOTE(jaosorior): Once mistral supports keystone v3 properly, we
+            # can fetch the following values from the configuration.
+            user_domain_name='Default',
+            project_domain_name='Default')
 
-    auth = auth_plugins.Password(
-        CONF.keystone_authtoken.auth_uri,
-        username=CONF.keystone_authtoken.admin_user,
-        password=CONF.keystone_authtoken.admin_password,
-        project_name=CONF.keystone_authtoken.admin_tenant_name,
-        # NOTE(jaosorior): Once mistral supports keystone v3 properly, we can
-        # fetch the following values from the configuration.
-        user_domain_name='Default',
-        project_domain_name='Default')
+        return ks_session.Session(auth=auth)
+    else:
+        auth = loading.load_auth_from_conf_options(
+            CONF,
+            'keystone_authtoken'
+        )
 
-    return ks_session.Session(auth=auth)
+        return loading.load_session_from_conf_options(
+            CONF,
+            'keystone_authtoken',
+            auth=auth
+        )
 
 
 def will_expire_soon(expires_at):
