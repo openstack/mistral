@@ -1,4 +1,4 @@
-# Copyright 2013 - Mirantis, Inc.
+# Copyright 2017 - Nokia Networks
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,10 +17,14 @@ import mock
 from oslo_config import cfg
 import pecan
 import pecan.testing
+import requests
 import requests_mock
+import webob
 
+from mistral.auth import keycloak
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
+from mistral import exceptions as exc
 from mistral.services import periodic
 from mistral.tests.unit import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
@@ -29,12 +33,10 @@ from mistral.tests.unit.mstrlfixtures import policy_fixtures
 WF_DEFINITION = """
 ---
 version: '2.0'
-
 flow:
   type: direct
   input:
     - param1
-
   tasks:
     task1:
       action: std.echo output="Hi"
@@ -80,9 +82,112 @@ USER_CLAIMS = {
 }
 
 
-class TestKeyCloakOIDCAuth(base.DbTestCase):
+class TestKeyCloakOIDCAuth(base.BaseTest):
+
     def setUp(self):
         super(TestKeyCloakOIDCAuth, self).setUp()
+        cfg.CONF.set_default('auth_url', AUTH_URL, group='keycloak_oidc')
+        self.auth_handler = keycloak.KeycloakAuthHandler()
+
+    def _build_request(self, token):
+        req = webob.Request.blank("/")
+        req.headers["x-auth-token"] = token
+        req.get_response = lambda app: None
+        return req
+
+    @requests_mock.Mocker()
+    def test_header_parsing(self, req_mock):
+        token = {
+            "iss": "http://localhost:8080/auth/realms/my_realm",
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
+        }
+        # Imitate successful response from KeyCloak with user claims.
+        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+
+        req = self._build_request(token)
+        with mock.patch("jwt.decode", return_value=token):
+            self.auth_handler.authenticate(req)
+        self.assertEqual("Confirmed", req.headers["X-Identity-Status"])
+        self.assertEqual("my_realm", req.headers["X-Project-Id"])
+        self.assertEqual("role1,role2", req.headers["X-Roles"])
+        self.assertEqual(1, req_mock.call_count)
+
+    def test_no_auth_token(self):
+        req = webob.Request.blank("/")
+        self.assertRaises(
+            exc.UnauthorizedException,
+            self.auth_handler.authenticate,
+            req
+        )
+
+    @requests_mock.Mocker()
+    def test_no_realm_roles(self, req_mock):
+        token = {
+            "iss": "http://localhost:8080/auth/realms/my_realm",
+        }
+        # Imitate successful response from KeyCloak with user claims.
+        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+
+        req = self._build_request(token)
+        with mock.patch("jwt.decode", return_value=token):
+            self.auth_handler.authenticate(req)
+        self.assertEqual("Confirmed", req.headers["X-Identity-Status"])
+        self.assertEqual("my_realm", req.headers["X-Project-Id"])
+        self.assertEqual("", req.headers["X-Roles"])
+
+    def test_wrong_token_format(self):
+        req = self._build_request(token="WRONG_FORMAT_TOKEN")
+        self.assertRaises(
+            exc.UnauthorizedException,
+            self.auth_handler.authenticate,
+            req
+        )
+
+    @requests_mock.Mocker()
+    def test_server_unauthorized(self, req_mock):
+        token = {
+            "iss": "http://localhost:8080/auth/realms/my_realm",
+        }
+        # Imitate failure response from KeyCloak.
+        req_mock.get(
+            USER_INFO_ENDPOINT,
+            status_code=401,
+            reason='Access token is invalid'
+        )
+
+        req = self._build_request(token)
+        with mock.patch("jwt.decode", return_value=token):
+            try:
+                self.auth_handler.authenticate(req)
+            except requests.exceptions.HTTPError as e:
+                self.assertIn(
+                    "401 Client Error: Access token is invalid for url",
+                    str(e)
+                )
+            else:
+                raise Exception("Test is broken")
+
+    @requests_mock.Mocker()
+    def test_connection_error(self, req_mock):
+        token = {
+            "iss": "http://localhost:8080/auth/realms/my_realm",
+        }
+        req_mock.get(USER_INFO_ENDPOINT, exc=requests.ConnectionError)
+
+        req = self._build_request(token)
+        with mock.patch("jwt.decode", return_value=token):
+            self.assertRaises(
+                exc.MistralException,
+                self.auth_handler.authenticate,
+                req
+            )
+
+
+class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
+    def setUp(self):
+        super(TestKeyCloakOIDCAuthScenarios, self).setUp()
 
         cfg.CONF.set_default('auth_enable', True, group='pecan')
         cfg.CONF.set_default('auth_type', 'keycloak-oidc')
@@ -130,15 +235,53 @@ class TestKeyCloakOIDCAuth(base.DbTestCase):
         # Imitate successful response from KeyCloak with user claims.
         req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
 
-        headers = {
-            'X-Auth-Token': 'cvbcvbasrtqlwkjasdfasdf',
-            'X-Project-Id': REALM_NAME
+        token = {
+            "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
         }
 
-        resp = self.app.get('/v2/workflows/123', headers=headers)
+        headers = {
+            'X-Auth-Token': str(token)
+        }
+
+        with mock.patch("jwt.decode", return_value=token):
+            resp = self.app.get('/v2/workflows/123', headers=headers)
 
         self.assertEqual(200, resp.status_code)
         self.assertDictEqual(WF, resp.json)
+
+    @mock.patch("requests.get")
+    @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
+    def test_get_workflow_invalid_token_format(self, req_mock):
+        # Imitate successful response from KeyCloak with user claims.
+        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+
+        token = {
+            "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
+        }
+
+        headers = {
+            'X-Auth-Token': str(token)
+        }
+
+        resp = self.app.get(
+            '/v2/workflows/123',
+            headers=headers,
+            expect_errors=True
+        )
+
+        self.assertEqual(401, resp.status_code)
+        self.assertEqual('401 Unauthorized', resp.status)
+        self.assertIn('Failed to validate access token', resp.text)
+        self.assertIn(
+            "Token can't be decoded because of wrong format.",
+            resp.text
+        )
 
     @requests_mock.Mocker()
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
@@ -150,16 +293,23 @@ class TestKeyCloakOIDCAuth(base.DbTestCase):
             reason='Access token is invalid'
         )
 
-        headers = {
-            'X-Auth-Token': 'cvbcvbasrtqlwkjasdfasdf',
-            'X-Project-Id': REALM_NAME
+        token = {
+            "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
         }
 
-        resp = self.app.get(
-            '/v2/workflows/123',
-            headers=headers,
-            expect_errors=True
-        )
+        headers = {
+            'X-Auth-Token': str(token)
+        }
+
+        with mock.patch("jwt.decode", return_value=token):
+            resp = self.app.get(
+                '/v2/workflows/123',
+                headers=headers,
+                expect_errors=True
+            )
 
         self.assertEqual(401, resp.status_code)
         self.assertEqual('401 Unauthorized', resp.status)
