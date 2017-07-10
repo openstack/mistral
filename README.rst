@@ -71,7 +71,8 @@ an OpenStack environment.
      $ mysql -u root -p
      mysql> CREATE DATABASE mistral;
      mysql> USE mistral
-     mysql> GRANT ALL ON mistral.* TO 'root'@'localhost';
+     mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'localhost' IDENTIFIED BY 'MISTRAL_DBPASS';
+     mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'%' IDENTIFIED BY 'MISTRAL_DBPASS';
 
 #. Generate ``mistral.conf`` file::
 
@@ -89,8 +90,8 @@ an OpenStack environment.
     $ cp etc/wf_trace_logging.conf.sample /etc/mistral/wf_trace_logging.conf
     $ cp etc/mistral.conf.sample /etc/mistral/mistral.conf
 
-#. Edit file ``/etc/mistral/mistral.conf`` according to your setup. Pay attention to
-   the following sections and options::
+#. Edit file ``/etc/mistral/mistral.conf`` according to your setup. Pay attention
+   to the following sections and options::
 
     [oslo_messaging_rabbit]
     rabbit_host = <RABBIT_HOST>
@@ -111,8 +112,8 @@ an OpenStack environment.
 #. Provide valid keystone auth properties::
 
     [keystone_authtoken]
-    auth_uri = http://<Keystone-host>/identity_v2_admin/v3
-    identity_uri = http://<Keystone-host/identity_v2_admin
+    auth_uri = http://keystone-host:port/v3
+    identity_uri = http://keystone-host:port
     auth_version = v3
     admin_user = <user>
     admin_password = <password>
