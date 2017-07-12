@@ -81,7 +81,7 @@ class KombuRPCListener(ConsumerMixin):
 
             correlation_id = message.properties['correlation_id']
 
-            queue = self._results.get(correlation_id, None)
+            queue = self._results.get(correlation_id)
 
             if queue:
                 result = {
