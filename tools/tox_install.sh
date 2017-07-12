@@ -50,7 +50,8 @@ fi
 # This is the main purpose of the script: Allow local installation of
 # the current repo. It is listed in constraints file and thus any
 # install will be constrained and we need to unconstrain it.
-edit-constraints $localfile -- $MODULE_NAME "-e file://$PWD#egg=$MODULE_NAME"
+#edit-constraints $localfile -- $MODULE_NAME "-e file://$PWD#egg=$MODULE_NAME"
+edit-constraints $localfile -- --
 
 $install_cmd -U $*
 exit $?

@@ -10,12 +10,12 @@ three prerequisites.
 Install and run Mistral
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Go through the installation manual: :doc:`Mistral Installation Guide </guides/installation_guide>`
+Go through the installation manual: :doc:`Mistral Installation Guide <install/index>`
 
 Install Mistral client
 ~~~~~~~~~~~~~~~~~~~~~~
 
-To install mistralclient, please refer to :doc:`Mistral Client / CLI Guide </guides/mistralclient_guide>`
+To install mistralclient, please refer to :doc:`Mistral Client / CLI Guide <cli/index>`
 
 Export Keystone credentials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,7 +62,7 @@ This simple workflow iterates through a list of names in ``task1`` (using
 then stores the word "Done" as a result of the second task (`task2`).
 
 To learn more about the Mistral Workflows and what you can do, read the
-:doc:`Mistral Workflow Language specification </dsl/dsl_v2>`
+:doc:`Mistral Workflow Language specification <admin/dsl_v2>`
 
 Upload the workflow
 -------------------
