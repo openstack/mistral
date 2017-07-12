@@ -155,10 +155,12 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             states.SUCCESS,
             self.engine.resume_workflow(wf_ex.id).state
         )
+
         self.assertRaises(
             exc.WorkflowException,
             self.engine.pause_workflow, wf_ex.id
         )
+
         self.assertEqual(
             states.SUCCESS,
             self.engine.stop_workflow(wf_ex.id, states.ERROR).state

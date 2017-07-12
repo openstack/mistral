@@ -361,7 +361,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.PAUSED, task_execs[0].state)
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.PAUSED, wf_ex.state)
 
         action_execs = db_api.get_action_executions(
             task_execution_id=task1_ex.id

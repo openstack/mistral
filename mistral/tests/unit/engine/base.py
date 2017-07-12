@@ -249,6 +249,10 @@ class EngineTestCase(base.DbTestCase):
             timeout
         )
 
+    def await_workflow_running(self, ex_id, delay=DEFAULT_DELAY,
+                               timeout=DEFAULT_TIMEOUT):
+        self.await_workflow_state(ex_id, states.RUNNING, delay, timeout)
+
     def await_workflow_success(self, ex_id, delay=DEFAULT_DELAY,
                                timeout=DEFAULT_TIMEOUT):
         self.await_workflow_state(ex_id, states.SUCCESS, delay, timeout)
