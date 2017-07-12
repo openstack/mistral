@@ -212,7 +212,7 @@ class DefaultEventEngine(base.EventEngine):
     def _start_listeners(self):
         triggers = db_api.get_event_triggers(insecure=True)
 
-        LOG.info('Find %s event triggers.', len(triggers))
+        LOG.info('Found %s event triggers.', len(triggers))
 
         for trigger in triggers:
             exchange_topic = (trigger.exchange, trigger.topic)

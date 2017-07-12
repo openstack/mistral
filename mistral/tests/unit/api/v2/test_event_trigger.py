@@ -20,6 +20,7 @@ from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
+from mistral.tests.unit import base as unit_base
 
 WF = models.WorkflowDefinition(
     spec={
@@ -209,3 +210,15 @@ class TestEventTriggerController(base.APITest):
 
         self.assertEqual(1, len(resp.json['event_triggers']))
         self.assertDictEqual(TRIGGER, resp.json['event_triggers'][0])
+
+    @mock.patch('mistral.db.v2.api.get_event_triggers')
+    @mock.patch('mistral.context.MistralContext.from_environ')
+    def test_get_all_projects_admin(self, mock_context, mock_get_wf_defs):
+        admin_ctx = unit_base.get_context(admin=True)
+        mock_context.return_value = admin_ctx
+
+        resp = self.app.get('/v2/event_triggers?all_projects=true')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertTrue(mock_get_wf_defs.call_args[1].get('insecure', False))

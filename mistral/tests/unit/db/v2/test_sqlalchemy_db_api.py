@@ -2957,7 +2957,7 @@ class EventTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(created, fetched)
 
-    def test_get_event_triggers_insecure(self):
+    def test_get_event_triggers_not_insecure(self):
         for t in EVENT_TRIGGERS:
             db_api.create_event_trigger(t)
 
@@ -2965,7 +2965,7 @@ class EventTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(2, len(fetched))
 
-    def test_get_event_triggers_not_insecure(self):
+    def test_get_event_triggers_insecure(self):
         db_api.create_event_trigger(EVENT_TRIGGERS[0])
 
         # Switch to another tenant.
