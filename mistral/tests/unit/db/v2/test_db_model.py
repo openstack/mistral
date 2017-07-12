@@ -39,9 +39,6 @@ WF_EXEC = {
 
 
 class DBModelTest(test_base.DbTestCase):
-    def setUp(self):
-        super(DBModelTest, self).setUp()
-
     def test_iterate_column_names(self):
         wf_ex = db_api.create_workflow_execution(WF_EXEC)
 

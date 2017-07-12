@@ -60,9 +60,6 @@ class TestCase(test.BaseTestCase):
             cls.alt_client = mistral_client.MistralClientV2(
                 cls.alt_mgr.auth_provider, cls._service)
 
-    def setUp(self):
-        super(TestCase, self).setUp()
-
     def tearDown(self):
         super(TestCase, self).tearDown()
 

@@ -197,9 +197,6 @@ workflows:
 
 
 class TasksFunctionTest(base.EngineTestCase):
-    def setUp(self):
-        super(TasksFunctionTest, self).setUp()
-
     def _assert_published_tasks(self, task, published_key,
                                 expected_tasks_count=None,
                                 expected_tasks_names=None):
