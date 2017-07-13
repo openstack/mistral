@@ -29,11 +29,14 @@ sys.path.insert(0, os.path.abspath('./'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.pecanwsme.rest',
+    'sphinxcontrib.httpdomain',
     'wsmeext.sphinxext',
     'openstackdocstheme',
 ]
 
 wsme_protocols = ['restjson']
+
+suppress_warnings = ['app.add_directive']
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
