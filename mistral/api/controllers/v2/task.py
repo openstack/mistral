@@ -137,7 +137,10 @@ class TasksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Task, wtypes.text)
     def get(self, id):
-        """Return the specified task."""
+        """Return the specified task.
+
+        :param id: UUID of task to retrieve
+        """
         acl.enforce('tasks:get', context.ctx())
         LOG.info("Fetch task [id=%s]" % id)
 

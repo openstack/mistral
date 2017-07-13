@@ -33,7 +33,10 @@ class CronTriggersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CronTrigger, wtypes.text)
     def get(self, name):
-        """Returns the named cron_trigger."""
+        """Returns the named cron_trigger.
+
+        :param name: Name of cron trigger to retrieve
+        """
         acl.enforce('cron_triggers:get', context.ctx())
 
         LOG.info('Fetch cron trigger [name=%s]' % name)
@@ -52,7 +55,6 @@ class CronTriggersController(rest.RestController):
         """Creates a new cron trigger.
 
         :param cron_trigger: Required. Cron trigger structure.
-
         """
         acl.enforce('cron_triggers:create', context.ctx())
 
@@ -76,7 +78,10 @@ class CronTriggersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
-        """Delete cron trigger."""
+        """Delete cron trigger.
+
+        :param name: Name of cron trigger to delete
+        """
         acl.enforce('cron_triggers:delete', context.ctx())
 
         LOG.info("Delete cron trigger [name=%s]" % name)

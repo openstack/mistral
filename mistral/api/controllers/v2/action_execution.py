@@ -116,7 +116,10 @@ class ActionExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text)
     def get(self, id):
-        """Return the specified action_execution."""
+        """Return the specified action_execution.
+
+        :param id: UUID of action execution to retrieve
+        """
         acl.enforce('action_executions:get', context.ctx())
 
         LOG.info("Fetch action_execution [id=%s]", id)
@@ -127,7 +130,10 @@ class ActionExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(resources.ActionExecution,
                          body=resources.ActionExecution, status_code=201)
     def post(self, action_ex):
-        """Create new action_execution."""
+        """Create new action_execution.
+
+        :param action_ex: Action to execute
+        """
         acl.enforce('action_executions:create', context.ctx())
 
         LOG.info("Create action_execution [action_execution=%s]", action_ex)
@@ -158,7 +164,11 @@ class ActionExecutionsController(rest.RestController):
         body=resources.ActionExecution
     )
     def put(self, id, action_ex):
-        """Update the specified action_execution."""
+        """Update the specified action_execution.
+
+        :param id: UUID of action execution to update
+        :param action_ex: Action execution for update
+        """
         acl.enforce('action_executions:update', context.ctx())
 
         LOG.info(
@@ -281,7 +291,10 @@ class ActionExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, id):
-        """Delete the specified action_execution."""
+        """Delete the specified action_execution.
+
+        :param id: UUID of action execution to delete
+        """
         acl.enforce('action_executions:delete', context.ctx())
 
         LOG.info("Delete action_execution [id=%s]", id)
@@ -401,7 +414,11 @@ class TasksActionExecutionController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.ActionExecution, wtypes.text, wtypes.text)
     def get(self, task_execution_id, action_ex_id):
-        """Return the specified action_execution."""
+        """Return the specified action_execution.
+
+        :param task_execution_id: Task execution UUID
+        :param action_ex_id: Action execution UUID
+        """
         acl.enforce('action_executions:get', context.ctx())
 
         LOG.info("Fetch action_execution [id=%s]", action_ex_id)
