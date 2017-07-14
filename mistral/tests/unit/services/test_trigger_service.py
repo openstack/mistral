@@ -227,14 +227,15 @@ class TriggerServiceV2Test(base.DbTestCase):
 
     @mock.patch.object(security, 'create_trust',
                        type('trust', (object,), {'id': 'my_trust_id'}))
-    @mock.patch.object(security, 'create_context', mock.Mock())
+    @mock.patch.object(security, 'create_context')
     @mock.patch.object(rpc.EngineClient, 'start_workflow', mock.Mock())
     @mock.patch(
         'mistral.services.periodic.advance_cron_trigger',
         mock.MagicMock(side_effect=new_advance_cron_trigger)
     )
     @mock.patch.object(security, 'delete_trust')
-    def test_create_delete_trust_in_trigger(self, delete_trust):
+    def test_create_delete_trust_in_trigger(self, create_ctx, delete_trust):
+        create_ctx.return_value = self.ctx
         cfg.CONF.set_default('auth_enable', True, group='pecan')
         trigger_thread = periodic.setup()
         self.addCleanup(trigger_thread.stop)

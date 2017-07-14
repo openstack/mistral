@@ -138,8 +138,12 @@ def delete_cron_trigger(name, trust_id=None):
         trigger = db_api.get_cron_trigger(name)
         trust_id = trigger.trust_id
 
-    security.delete_trust(trust_id)
-    return db_api.delete_cron_trigger(name)
+    modified_count = db_api.delete_cron_trigger(name)
+    if modified_count:
+        # Delete trust only together with deleting trigger.
+        security.delete_trust(trust_id)
+
+    return modified_count
 
 
 def create_event_trigger(name, exchange, topic, event, workflow_id,
