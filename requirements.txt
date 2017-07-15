@@ -52,11 +52,11 @@ python-zaqarclient>=1.0.0 # Apache-2.0
 PyYAML>=3.10.0 # MIT
 requests>=2.14.2 # Apache-2.0
 tenacity>=3.2.1 # Apache-2.0
-setuptools!=24.0.0,!=34.0.0,!=34.0.1,!=34.0.2,!=34.0.3,!=34.1.0,!=34.1.1,!=34.2.0,!=34.3.0,!=34.3.1,!=34.3.2,>=16.0 # PSF/ZPL
+setuptools!=24.0.0,!=34.0.0,!=34.0.1,!=34.0.2,!=34.0.3,!=34.1.0,!=34.1.1,!=34.2.0,!=34.3.0,!=34.3.1,!=34.3.2,!=36.2.0,>=16.0 # PSF/ZPL
 six>=1.9.0 # MIT
 SQLAlchemy!=1.1.5,!=1.1.6,!=1.1.7,!=1.1.8,>=1.0.10 # MIT
 stevedore>=1.20.0 # Apache-2.0
 WSME>=0.8 # MIT
 yaql>=1.1.0 # Apache 2.0 License
-tooz>=1.47.0 # Apache-2.0
+tooz!=1.57.4,>=1.47.0 # Apache-2.0
 zake>=0.1.6 # Apache-2.0
