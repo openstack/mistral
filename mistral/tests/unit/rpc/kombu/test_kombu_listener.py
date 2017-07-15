@@ -65,9 +65,8 @@ class KombuListenerTestCase(base.KombuTestCase):
 
         self.listener.remove_listener(correlation_id)
 
-        self.assertEqual(
-            self.listener._results.get(correlation_id),
-            None
+        self.assertIsNone(
+            self.listener._results.get(correlation_id)
         )
 
     def test_remove_listener_correlation_id_not_in_results(self):
