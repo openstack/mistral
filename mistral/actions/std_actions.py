@@ -206,7 +206,7 @@ class HTTPAction(actions.Action):
         except Exception as e:
             LOG.debug("HTTP action response is not json.")
             content = resp.content
-            if resp.encoding != 'utf-8':
+            if content and resp.encoding != 'utf-8':
                 content = content.decode(resp.encoding).encode('utf-8')
 
         _result = {
