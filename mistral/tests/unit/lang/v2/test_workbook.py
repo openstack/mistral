@@ -428,8 +428,7 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
 
         for valid in valid_names:
             result = re.match(workbook.NON_VERSION_WORD_REGEX, valid)
-            self.assertNotEqual(
-                None,
+            self.assertIsNotNone(
                 result,
                 "Expected match for: {}".format(valid)
             )
@@ -440,8 +439,7 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
 
         for invalid in invalid_names:
             result = re.match(workbook.NON_VERSION_WORD_REGEX, invalid)
-            self.assertEqual(
-                None,
+            self.assertIsNone(
                 result,
                 "Didn't expected match for: {}".format(invalid)
             )
