@@ -14,7 +14,6 @@
 
 from tempest.lib import decorators
 from tempest.lib import exceptions
-from tempest import test
 
 from mistral_tempest_tests.tests import base
 
@@ -52,7 +51,7 @@ class EventTriggerTestsV2(base.TestCase):
 
         super(EventTriggerTestsV2, self).tearDown()
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('cfdf9aee-09ce-49bf-af05-97c5542bc131')
     def test_create_get_delete_event_trigger(self):
         name = 'my_event_trigger'
@@ -79,21 +78,21 @@ class EventTriggerTestsV2(base.TestCase):
         trs_names = [tr['name'] for tr in body['event_triggers']]
         self.assertNotIn(name, trs_names)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('20e547d6-9a16-4cac-9b1a-f3520c58cdd7')
     def test_create_event_trigger_without_necessary_param(self):
         self.assertRaises(exceptions.BadRequest,
                           self.client.create_event_trigger,
                           self.wf_id, EXCHANGE, EVENT_ENGINE_TOPIC, '')
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('ed02f500-9436-4a7b-a135-f210e1c32b22')
     def test_create_event_trigger_with_nonexist_wf(self):
         self.assertRaises(exceptions.BadRequest,
                           self.client.create_event_trigger,
                           'nonexist', EXCHANGE, EVENT_ENGINE_TOPIC, EVENT)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('0ab556b6-ab76-492e-8eef-c79955003a93')
     def test_create_event_trigger_duplicate(self):
         name = 'my_event_trigger'
@@ -105,7 +104,7 @@ class EventTriggerTestsV2(base.TestCase):
                           self.client.create_event_trigger,
                           self.wf_id, EXCHANGE, EVENT_ENGINE_TOPIC, EVENT)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('56b90a90-9ff3-42f8-a9eb-04a77198710e')
     def test_get_nonexistent_event_trigger(self):
         fake_id = '123e4567-e89b-12d3-a456-426655440000'

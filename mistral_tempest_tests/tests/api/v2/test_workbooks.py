@@ -15,7 +15,6 @@
 from oslo_concurrency.fixture import lockutils
 from tempest.lib import decorators
 from tempest.lib import exceptions
-from tempest import test
 
 from mistral_tempest_tests.tests import base
 
@@ -31,7 +30,7 @@ class WorkbookTestsV2(base.TestCase):
 
         super(WorkbookTestsV2, self).tearDown()
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('4d8752b9-8d69-4d81-8710-5dd8ef699b95')
     def test_get_list_workbooks(self):
         resp, body = self.client.get_list_obj('workbooks')
@@ -39,7 +38,7 @@ class WorkbookTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertEmpty(body['workbooks'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('1a078ca2-bcf9-4eb9-8ed5-e3545038aa76')
     def test_create_and_delete_workbook(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
@@ -57,7 +56,7 @@ class WorkbookTestsV2(base.TestCase):
         _, body = self.client.get_list_obj('workbooks')
         self.assertEmpty(body['workbooks'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('80f7d7a6-2821-4ab0-b090-ca45c98258ba')
     def test_get_workbook(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
@@ -68,7 +67,7 @@ class WorkbookTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertEqual(name, body['name'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('4d3b1e43-a493-41be-9c8a-389511675403')
     def test_update_workbook(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
@@ -79,7 +78,7 @@ class WorkbookTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertEqual(name, body['name'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('506cdcc2-082f-4e1f-9ab2-717acd7f0eb5')
     def test_get_workbook_definition(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
@@ -90,20 +89,20 @@ class WorkbookTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertIsNotNone(body)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('d99f11c1-05a3-4d90-89c6-8d85558d3708')
     def test_get_nonexistent_workbook_definition(self):
         self.assertRaises(exceptions.NotFound,
                           self.client.get_definition,
                           'workbooks', 'nonexist')
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('61ed021e-ec56-42cb-ad05-eb6979aa00fd')
     def test_get_nonexistent_workbook(self):
         self.assertRaises(exceptions.NotFound, self.client.get_object,
                           'workbooks', 'nonexist')
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('e3d76f8b-220d-4250-8238-0ba27fda6de9')
     def test_double_create_workbook(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
@@ -119,7 +118,7 @@ class WorkbookTestsV2(base.TestCase):
 
         self.assertEmpty(body['workbooks'])
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('1cd6f6f7-b166-454e-96d2-bf1f95c23015')
     def test_create_wb_with_invalid_def(self):
         self.assertRaises(
@@ -128,7 +127,7 @@ class WorkbookTestsV2(base.TestCase):
             'wb_v1.yaml'
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('ac9a05d3-e285-4d88-91eb-fb9ad694a89a')
     def test_update_wb_with_invalid_def(self):
         self.assertRaises(
