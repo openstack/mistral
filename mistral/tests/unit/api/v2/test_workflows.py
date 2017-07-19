@@ -60,6 +60,26 @@ WF = {
     'input': 'param1'
 }
 
+WF_DB_WITHIN_ABC_NAMESPACE = models.WorkflowDefinition(
+    id='234560fe-162a-4060-a16a-a0d9eee9b408',
+    name='flow',
+    namespace='abc',
+    definition=WF_DEFINITION,
+    created_at=datetime.datetime(1970, 1, 1),
+    updated_at=datetime.datetime(1970, 1, 1),
+    spec={'input': ['param1']}
+)
+
+WF_WITH_NAMESPACE = {
+    'id': '234560fe-162a-4060-a16a-a0d9eee9b408',
+    'name': 'flow',
+    'namespace': 'abc',
+    'definition': WF_DEFINITION,
+    'created_at': '1970-01-01 00:00:00',
+    'updated_at': '1970-01-01 00:00:00',
+    'input': 'param1'
+}
+
 WF_DEFINITION_WITH_INPUT = """
 ---
 version: '2.0'
@@ -218,7 +238,8 @@ class TestWorkflowsController(base.APITest):
         update_mock.assert_called_once_with(
             UPDATED_WF_DEFINITION,
             scope='private',
-            identifier='123e4567-e89b-12d3-a456-426655440000'
+            identifier='123e4567-e89b-12d3-a456-426655440000',
+            namespace=''
         )
         self.assertDictEqual(UPDATED_WF, resp.json)
 
@@ -603,3 +624,45 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertFalse(resp.json['valid'])
         self.assertIn("Invalid DSL", resp.json['error'])
+
+    @mock.patch("mistral.services.workflows.update_workflows")
+    @mock.patch.object(db_api, "create_workflow_definition")
+    def test_workflow_within_namespace(self, mock_mtd, update_mock):
+        mock_mtd.return_value = WF_DB_WITHIN_ABC_NAMESPACE
+
+        namespace = 'abc'
+        resp = self.app.post(
+            '/v2/workflows?namespace=%s' % namespace,
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual({'workflows': [WF_WITH_NAMESPACE]}, resp.json)
+
+        self.assertEqual(1, mock_mtd.call_count)
+
+        spec = mock_mtd.call_args[0][0]['spec']
+
+        self.assertIsNotNone(spec)
+        self.assertEqual(WF_DB.name, spec['name'])
+        self.assertEqual(WF_DB_WITHIN_ABC_NAMESPACE.namespace, namespace)
+
+        update_mock.return_value = [WF_DB_WITHIN_ABC_NAMESPACE]
+
+        id_ = '234560fe-162a-4060-a16a-a0d9eee9b408'
+
+        resp = self.app.put(
+            '/v2/workflows/%s?namespace=%s' % (id_, namespace),
+            WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(200, resp.status_int)
+        update_mock.assert_called_once_with(
+            WF_DEFINITION,
+            scope='private',
+            identifier=id_,
+            namespace='abc'
+        )
+        self.assertDictEqual(WF_WITH_NAMESPACE, resp.json)

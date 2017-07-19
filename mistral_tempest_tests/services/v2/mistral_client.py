@@ -24,21 +24,30 @@ CONF = config.CONF
 
 class MistralClientV2(base.MistralClientBase):
 
-    def post_request(self, url, file_name):
+    def post_request(self, url_path, file_name):
         headers = {"headers": "Content-Type:text/plain"}
 
-        return self.post(url, base.get_resource(file_name), headers=headers)
+        return self.post(
+            url_path,
+            base.get_resource(file_name),
+            headers=headers
+        )
 
-    def post_json(self, url, obj, extra_headers={}):
+    def get_request(self, url_path):
+        headers = {"headers": "Content-Type:application/json"}
+
+        return self.get(url_path, headers=headers)
+
+    def post_json(self, url_path, obj, extra_headers={}):
         headers = {"Content-Type": "application/json"}
         headers = dict(headers, **extra_headers)
-        return self.post(url, json.dumps(obj), headers=headers)
+        return self.post(url_path, json.dumps(obj), headers=headers)
 
-    def update_request(self, url, file_name):
+    def update_request(self, url_path, file_name):
         headers = {"headers": "Content-Type:text/plain"}
 
         resp, body = self.put(
-            url,
+            url_path,
             base.get_resource(file_name),
             headers=headers
         )
@@ -64,25 +73,60 @@ class MistralClientV2(base.MistralClientBase):
 
         return resp, json.loads(body)
 
-    def create_workflow(self, yaml_file, scope=None):
+    def create_workflow(self, yaml_file, scope=None, namespace=None):
+        url_path = 'workflows?'
+
         if scope:
-            resp, body = self.post_request('workflows?scope=public', yaml_file)
-        else:
-            resp, body = self.post_request('workflows', yaml_file)
+            url_path += 'scope=public&'
+
+        if namespace:
+            url_path += 'namespace=' + namespace
+
+        resp, body = self.post_request(url_path, yaml_file)
 
         for wf in json.loads(body)['workflows']:
-            self.workflows.append(wf['name'])
+            identifier = wf['id'] if namespace else wf['name']
+            self.workflows.append(identifier)
 
         return resp, json.loads(body)
+
+    def get_workflow(self, wf_identifier, namespace=None):
+
+        url_path = 'workflows/' + wf_identifier
+        if namespace:
+            url_path += 'namespace=' + namespace
+
+        resp, body = self.get_request(url_path)
+
+        return resp, json.loads(body)
+
+    def update_workflow(self, file_name, namespace=None):
+        url_path = "workflows?"
+
+        if namespace:
+            url_path += 'namespace=' + namespace
+
+        return self.update_request(url_path, file_name=file_name)
 
     def get_action_execution(self, action_execution_id):
         return self.get('action_executions/%s' % action_execution_id)
 
-    def create_execution(self, identifier, wf_input=None, params=None):
+    def get_action_executions(self, task_id=None):
+        url_path = 'action_executions'
+        if task_id:
+            url_path += '?task_execution_id=%s' % task_id
+
+        return self.get_list_obj(url_path)
+
+    def create_execution(self, identifier, wf_namespace=None, wf_input=None,
+                         params=None):
         if uuidutils.is_uuid_like(identifier):
             body = {"workflow_id": "%s" % identifier}
         else:
             body = {"workflow_name": "%s" % identifier}
+
+        if wf_namespace:
+            body.update({'workflow_namespace': wf_namespace})
 
         if wf_input:
             body.update({'input': json.dumps(wf_input)})
@@ -99,6 +143,23 @@ class MistralClientV2(base.MistralClientBase):
         resp, body = self.put('executions/%s' % execution_id, put_body)
 
         return resp, json.loads(body)
+
+    def get_execution(self, execution_id):
+        return self.get('executions/%s' % execution_id)
+
+    def get_executions(self, task_id):
+        url_path = 'executions'
+        if task_id:
+            url_path += '?task_execution_id=%s' % task_id
+
+        return self.get_list_obj(url_path)
+
+    def get_tasks(self, execution_id=None):
+        url_path = 'tasks'
+        if execution_id:
+            url_path += '?workflow_execution_id=%s' % execution_id
+
+        return self.get_list_obj(url_path)
 
     def create_cron_trigger(self, name, wf_name, wf_input=None, pattern=None,
                             first_time=None, count=None):
@@ -133,11 +194,8 @@ class MistralClientV2(base.MistralClientBase):
         return [t for t in all_tasks if t['workflow_name'] == wf_name]
 
     def create_action_execution(self, request_body, extra_headers={}):
-        resp, body = self.post_json(
-            'action_executions',
-            request_body,
-            extra_headers
-        )
+        resp, body = self.post_json('action_executions', request_body,
+                                    extra_headers)
 
         params = json.loads(request_body.get('params', '{}'))
         if params.get('save_result', False):

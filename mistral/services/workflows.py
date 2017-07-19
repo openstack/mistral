@@ -36,7 +36,8 @@ def register_standard_workflows(run_in_tx=True):
             workflow_definition,
             scope='public',
             is_system=True,
-            run_in_tx=run_in_tx
+            run_in_tx=run_in_tx,
+            namespace=''
         )
 
 
@@ -52,7 +53,7 @@ def sync_db():
 
 
 def create_workflows(definition, scope='private', is_system=False,
-                     run_in_tx=True):
+                     run_in_tx=True, namespace=''):
     LOG.debug("creating workflows")
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     db_wfs = []
@@ -63,6 +64,7 @@ def create_workflows(definition, scope='private', is_system=False,
                 definition,
                 is_system,
                 scope,
+                namespace,
                 wf_list_spec,
                 db_wfs
             )
@@ -71,6 +73,7 @@ def create_workflows(definition, scope='private', is_system=False,
             definition,
             is_system,
             scope,
+            namespace,
             wf_list_spec,
             db_wfs
         )
@@ -78,14 +81,22 @@ def create_workflows(definition, scope='private', is_system=False,
     return db_wfs
 
 
-def _append_all_workflows(definition, is_system, scope, wf_list_spec, db_wfs):
+def _append_all_workflows(definition, is_system, scope, namespace,
+                          wf_list_spec, db_wfs):
     for wf_spec in wf_list_spec.get_workflows():
         db_wfs.append(
-            _create_workflow(wf_spec, definition, scope, is_system)
+            _create_workflow(
+                wf_spec,
+                definition,
+                scope,
+                namespace,
+                is_system
+            )
         )
 
 
-def update_workflows(definition, scope='private', identifier=None):
+def update_workflows(definition, scope='private', identifier=None,
+                     namespace=''):
     LOG.debug("updating workflows")
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     wfs = wf_list_spec.get_workflows()
@@ -105,6 +116,7 @@ def update_workflows(definition, scope='private', identifier=None):
                 wf_spec,
                 definition,
                 scope,
+                namespace=namespace,
                 identifier=identifier
             ))
 
@@ -128,29 +140,33 @@ def update_workflow_execution_env(wf_ex, env):
     return wf_ex
 
 
-def _get_workflow_values(wf_spec, definition, scope, is_system=False):
+def _get_workflow_values(wf_spec, definition, scope, namespace=None,
+                         is_system=False):
     values = {
         'name': wf_spec.get_name(),
         'tags': wf_spec.get_tags(),
         'definition': definition,
         'spec': wf_spec.to_dict(),
         'scope': scope,
+        'namespace': namespace,
         'is_system': is_system
     }
 
     return values
 
 
-def _create_workflow(wf_spec, definition, scope, is_system):
+def _create_workflow(wf_spec, definition, scope, namespace, is_system):
     return db_api.create_workflow_definition(
-        _get_workflow_values(wf_spec, definition, scope, is_system)
+        _get_workflow_values(wf_spec, definition, scope, namespace, is_system)
     )
 
 
-def _update_workflow(wf_spec, definition, scope, identifier=None):
-    values = _get_workflow_values(wf_spec, definition, scope)
+def _update_workflow(wf_spec, definition, scope, identifier=None,
+                     namespace=''):
+    values = _get_workflow_values(wf_spec, definition, scope, namespace)
 
     return db_api.update_workflow_definition(
         identifier if identifier else values['name'],
-        values
+        values,
+        namespace=namespace
     )

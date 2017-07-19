@@ -107,7 +107,7 @@ class EventTriggerTestsV2(base.TestCase):
     @decorators.attr(type='negative')
     @decorators.idempotent_id('56b90a90-9ff3-42f8-a9eb-04a77198710e')
     def test_get_nonexistent_event_trigger(self):
-        fake_id = '123e4567-e89b-12d3-a456-426655440000'
+        fake_id = '3771c152-d1a7-4a82-8a50-c79d122012dc'
 
         self.assertRaises(exceptions.NotFound,
                           self.client.get_object,

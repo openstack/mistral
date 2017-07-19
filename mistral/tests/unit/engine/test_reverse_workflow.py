@@ -72,6 +72,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
+            '',
             wf_input,
             task_name='task1'
         )
@@ -79,7 +80,10 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         # Execution 1.
         self.assertIsNotNone(wf_ex)
         self.assertDictEqual(wf_input, wf_ex.input)
-        self.assertDictEqual({'task_name': 'task1'}, wf_ex.params)
+        self.assertDictEqual(
+            {'task_name': 'task1', 'namespace': ''},
+            wf_ex.params
+        )
 
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf_ex.id)
@@ -105,6 +109,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
+            '',
             wf_input,
             task_name='task2'
         )
@@ -112,7 +117,10 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
         # Execution 1.
         self.assertIsNotNone(wf_ex)
         self.assertDictEqual(wf_input, wf_ex.input)
-        self.assertDictEqual({'task_name': 'task2'}, wf_ex.params)
+        self.assertDictEqual(
+            {'task_name': 'task2', 'namespace': ''},
+            wf_ex.params
+        )
 
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf_ex.id)
@@ -146,6 +154,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
+            '',
             wf_input,
             task_name='task4'
         )

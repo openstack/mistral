@@ -112,6 +112,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_workflow_with_adhoc_action(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
+            '',
             {'str1': 'a', 'str2': 'b'}
         )
 
@@ -131,6 +132,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_adhoc_action_without_input_value(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf2',
+            '',
             {'str1': 'a', 'str2': 'b'}
         )
 
@@ -149,6 +151,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_adhoc_action_without_sufficient_input_value(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf3',
+            '',
             {'str1': 'a', 'str2': 'b'}
         )
 
@@ -157,7 +160,7 @@ class AdhocActionsTest(base.EngineTestCase):
 
     def test_run_adhoc_action_with_env(self):
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf4', {'str1': 'a'}, env={'foo': 'bar'})
+            'my_wb.wf4', '', {'str1': 'a'}, env={'foo': 'bar'})
 
         self.await_workflow_success(wf_ex.id)
         with db_api.transaction():

@@ -78,12 +78,13 @@ class EngineServer(service_base.MistralService):
         if self._rpc_server:
             self._rpc_server.stop(graceful)
 
-    def start_workflow(self, rpc_ctx, workflow_identifier, workflow_input,
-                       description, params):
+    def start_workflow(self, rpc_ctx, workflow_identifier, workflow_namespace,
+                       workflow_input, description, params):
         """Receives calls over RPC to start workflows on engine.
 
         :param rpc_ctx: RPC request context.
         :param workflow_identifier: Workflow definition identifier.
+        :param workflow_namespace: Workflow definition identifier.
         :param workflow_input: Workflow input.
         :param description: Workflow execution description.
         :param params: Additional workflow type specific parameters.
@@ -101,6 +102,7 @@ class EngineServer(service_base.MistralService):
 
         return self.engine.start_workflow(
             workflow_identifier,
+            workflow_namespace,
             workflow_input,
             description,
             **params

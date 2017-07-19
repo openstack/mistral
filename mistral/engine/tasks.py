@@ -216,6 +216,7 @@ class Task(object):
             'name': task_name,
             'workflow_execution_id': self.wf_ex.id,
             'workflow_name': self.wf_ex.workflow_name,
+            'workflow_namespace': self.wf_ex.workflow_namespace,
             'workflow_id': self.wf_ex.workflow_id,
             'state': state,
             'state_info': state_info,

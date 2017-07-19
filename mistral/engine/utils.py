@@ -67,7 +67,7 @@ def validate_input(expected_input, actual_input, obj_name, obj_class):
 
 
 def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,
-                                wf_spec_name):
+                                namespace, wf_spec_name):
     wf_def = None
 
     if parent_wf_name != parent_wf_spec_name:
@@ -80,14 +80,15 @@ def resolve_workflow_definition(parent_wf_name, parent_wf_spec_name,
 
         wf_full_name = "%s.%s" % (wb_name, wf_spec_name)
 
-        wf_def = db_api.load_workflow_definition(wf_full_name)
+        wf_def = db_api.load_workflow_definition(wf_full_name, namespace)
 
     if not wf_def:
-        wf_def = db_api.load_workflow_definition(wf_spec_name)
+        wf_def = db_api.load_workflow_definition(wf_spec_name, namespace)
 
     if not wf_def:
         raise exc.WorkflowException(
-            "Failed to find workflow [name=%s]" % wf_spec_name
+            "Failed to find workflow [name=%s] [namespace=%s]" %
+            (wf_spec_name, namespace)
         )
 
     return wf_def

@@ -76,27 +76,34 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workflow, wtypes.text)
-    def get(self, identifier):
+    @wsme_pecan.wsexpose(resources.Workflow, wtypes.text, wtypes.text)
+    def get(self, identifier, namespace=''):
         """Return the named workflow.
 
         :param identifier: Name or UUID of the workflow to retrieve.
+        :param namespace: Optional. Namespace of the workflow to retrieve.
         """
         acl.enforce('workflows:get', context.ctx())
 
         LOG.info("Fetch workflow [identifier=%s]", identifier)
 
-        db_model = db_api.get_workflow_definition(identifier)
+        db_model = db_api.get_workflow_definition(
+            identifier,
+            namespace=namespace
+        )
 
         return resources.Workflow.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
-    def put(self, identifier=None):
+    def put(self, identifier=None, namespace=''):
         """Update one or more workflows.
 
         :param identifier: Optional. If provided, it's UUID of a workflow.
             Only one workflow can be updated with identifier param.
+        :param namespace: Optional. If provided int's the namespace of the
+                          workflow/workflows. currently namespace cannot be
+                          changed.
 
         The text is allowed to have definitions of multiple workflows. In this
         case they all will be updated.
@@ -117,7 +124,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         db_wfs = workflows.update_workflows(
             definition,
             scope=scope,
-            identifier=identifier
+            identifier=identifier,
+            namespace=namespace
         )
 
         workflow_list = [
@@ -129,11 +137,15 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
-    def post(self):
+    def post(self, namespace=''):
         """Create a new workflow.
 
         NOTE: The text is allowed to have definitions
             of multiple workflows. In this case they all will be created.
+
+        :param namespace: Optional. The namespace to create the workflow
+            in. Workflows with the same name can be added to a given
+            project if are in two different namespaces.
         """
         acl.enforce('workflows:create', context.ctx())
 
@@ -149,7 +161,11 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
         LOG.info("Create workflow(s) [definition=%s]", definition)
 
-        db_wfs = workflows.create_workflows(definition, scope=scope)
+        db_wfs = workflows.create_workflows(
+            definition,
+            scope=scope,
+            namespace=namespace
+        )
 
         workflow_list = [
             resources.Workflow.from_db_model(db_wf) for db_wf in db_wfs
@@ -158,30 +174,32 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         return resources.Workflows(workflows=workflow_list).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, identifier):
+    @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
+    def delete(self, identifier, namespace=''):
         """Delete a workflow.
 
         :param identifier: Name or ID of workflow to delete.
+        :param namespace: Optional. Namespace of the workflow to delete.
         """
         acl.enforce('workflows:delete', context.ctx())
 
-        LOG.info("Delete workflow [identifier=%s]", identifier)
+        LOG.info("Delete workflow [identifier=%s, namespace=%s]",
+                 identifier, namespace)
 
         with db_api.transaction():
-            db_api.delete_workflow_definition(identifier)
+            db_api.delete_workflow_definition(identifier, namespace)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Workflows, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, wtypes.text, wtypes.text, wtypes.text,
                          resources.SCOPE_TYPES, types.uuid, wtypes.text,
-                         wtypes.text, bool)
+                         wtypes.text, bool, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', name=None, input=None,
                 definition=None, tags=None, scope=None,
                 project_id=None, created_at=None, updated_at=None,
-                all_projects=False):
+                all_projects=False, namespace=None):
         """Return a list of workflows.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -198,6 +216,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                        fields if it's provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
+        :param namespace: Optional. Keep only resources with a specific
+                          namespace
         :param input: Optional. Keep only resources with a specific input.
         :param definition: Optional. Keep only resources with a specific
                            definition.
@@ -224,7 +244,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             updated_at=updated_at,
             input=input,
             definition=definition,
-            project_id=project_id
+            project_id=project_id,
+            namespace=namespace
         )
 
         LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "

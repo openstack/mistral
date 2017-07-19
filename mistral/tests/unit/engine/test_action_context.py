@@ -60,7 +60,7 @@ class ActionContextTest(base.EngineTestCase):
     def test_action_context(self):
         wb_service.create_workbook_v2(WORKBOOK)
 
-        wf_ex = self.engine.start_workflow('wb.wf1', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_success(wf_ex.id)
 

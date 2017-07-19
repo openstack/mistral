@@ -468,6 +468,7 @@ class TestExecutionsController(base.APITest):
 
         f.assert_called_once_with(
             exec_dict['workflow_id'],
+            '',
             json.loads(exec_dict['input']),
             exec_dict['description'],
             **json.loads(exec_dict['params'])

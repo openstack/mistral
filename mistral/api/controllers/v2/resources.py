@@ -69,6 +69,7 @@ class Workflow(resource.Resource):
 
     id = wtypes.text
     name = wtypes.text
+    namespace = wtypes.text
     input = wtypes.text
 
     definition = wtypes.text
@@ -92,7 +93,8 @@ class Workflow(resource.Resource):
                    scope='private',
                    project_id='a7eb669e9819420ea4bd1453e672c0a7',
                    created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
+                   updated_at='1970-01-01T00:00:00.000000',
+                   namespace='')
 
     @classmethod
     def _set_input(cls, obj, wf_spec):
@@ -214,6 +216,14 @@ class Execution(resource.Resource):
     workflow_name = wtypes.text
     "reference to workflow definition"
 
+    workflow_namespace = wtypes.text
+    ("reference to workflow namespace. The workflow namespace is also saved "
+     "under params and passed to all sub-workflow executions. When looking for"
+     " the next sub-workflow to run, The correct workflow will be found by "
+     "name and namespace, where the namespace can be the workflow namespace or"
+     " the default namespace. Workflows in the same namespace will be given "
+     "a higher priority.")
+
     workflow_id = wtypes.text
     "reference to workflow ID"
 
@@ -246,6 +256,7 @@ class Execution(resource.Resource):
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    workflow_name='flow',
+                   workflow_namespace='some_namespace',
                    workflow_id='123e4567-e89b-12d3-a456-426655441111',
                    description='this is the first execution.',
                    state='SUCCESS',
@@ -287,6 +298,7 @@ class Task(resource.Resource):
     type = wtypes.text
 
     workflow_name = wtypes.text
+    workflow_namespace = wtypes.text
     workflow_id = wtypes.text
     workflow_execution_id = wtypes.text
 
@@ -358,6 +370,7 @@ class ActionExecution(resource.Resource):
     id = wtypes.text
 
     workflow_name = wtypes.text
+    workflow_namespace = wtypes.text
     task_name = wtypes.text
     task_execution_id = wtypes.text
 

@@ -52,7 +52,7 @@ class LookupUtilsTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.await_workflow_paused(wf_ex.id)
 

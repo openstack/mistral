@@ -110,6 +110,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             wf_input,
             'my execution',
             task_name='task2'
@@ -154,6 +155,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             wf_input,
             task_name='task1'
         )
@@ -200,6 +202,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             wf_input,
             env=env,
             task_name='task2')
@@ -221,6 +224,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             wf_input,
             env='test',
             task_name='task2'
@@ -238,6 +242,7 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
+            '',
             {
                 'param1': '<% env().key1 %>',
                 'param2': 'some value'
@@ -253,6 +258,7 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
+            '',
             {
                 'param1': '<% env().key1 %>',
                 'param2': 'some value'
@@ -268,6 +274,7 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
+            '',
             None,
             task_name='task2'
         )
@@ -280,6 +287,7 @@ class DefaultEngineTest(base.DbTestCase):
             exc.InputException,
             self.engine.start_workflow,
             'wb.wf',
+            '',
             {
                 'param1': 'Hey',
                 'param2': 'Hi',
@@ -297,6 +305,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             wf_input,
             task_name='task2'
         )
@@ -410,6 +419,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             {
                 'param1': 'Hey',
                 'param2': 'Hi'
@@ -432,6 +442,7 @@ class DefaultEngineTest(base.DbTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             {
                 'param1': 'Hey',
                 'param2': 'Hi'
@@ -453,6 +464,7 @@ class DefaultEngineTest(base.DbTestCase):
     def test_stop_workflow_bad_status(self):
         wf_ex = self.engine.start_workflow(
             'wb.wf',
+            '',
             {
                 'param1': 'Hey',
                 'param2': 'Hi'

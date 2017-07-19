@@ -99,6 +99,7 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'spec': wf_spec.to_dict(),
                 'scope': wb_db.scope,
                 'project_id': wb_db.project_id,
+                'namespace': '',
                 'tags': wf_spec.get_tags()
             }
 
