@@ -971,9 +971,6 @@ action is always created as a wrapper around any other existing system action
 and its main goal is to simplify using same actions many times with similar
 pattern.
 
-**NOTE**: Nested ad-hoc actions currently are not supported (i.e. ad-hoc action
-around another ad-hoc action).
-
 YAML example
 ''''''''''''
 
