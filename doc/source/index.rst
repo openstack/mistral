@@ -51,15 +51,6 @@ User guide
 
    cli/index
 
-Admin guide
------------
-
-.. toctree::
-  :maxdepth: 1
-
-  admin/index
-
-
 Developer guide
 ---------------
 
