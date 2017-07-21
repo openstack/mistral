@@ -84,8 +84,10 @@ class InlineYAQLEvaluator(YAQLEvaluator):
     @classmethod
     def evaluate(cls, expression, data_context):
         LOG.debug(
-            "Start to evaluate YAQL expression. [expression='%s', context=%s]"
-            % (expression, data_context)
+            "Start to evaluate YAQL expression. "
+            "[expression='%s', context=%s]",
+            expression,
+            data_context
         )
 
         result = expression
@@ -102,8 +104,9 @@ class InlineYAQLEvaluator(YAQLEvaluator):
                     result = result.replace(expr, str(evaluated))
 
         LOG.debug(
-            "Finished evaluation. [expression='%s', result: %s]" %
-            (expression, result)
+            "Finished evaluation. [expression='%s', result: %s]",
+            expression,
+            result
         )
 
         return result

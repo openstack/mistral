@@ -98,7 +98,7 @@ def delete_trust(trust_id):
     try:
         keystone_client.trusts.delete(trust_id)
     except Exception as e:
-        LOG.warning("Failed to delete trust [id=%s]: %s" % (trust_id, e))
+        LOG.warning("Failed to delete trust [id=%s]: %s", trust_id, e)
 
 
 def add_trust_id(secure_object_values):

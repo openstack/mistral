@@ -75,7 +75,7 @@ class KombuRPCListener(ConsumerMixin):
         try:
             message.ack()
         except Exception as e:
-            LOG.exception("Failed to acknowledge AMQP message: %s" % e)
+            LOG.exception("Failed to acknowledge AMQP message: %s", e)
         else:
             LOG.debug("AMQP message acknowledged.")
 
@@ -103,7 +103,8 @@ class KombuRPCListener(ConsumerMixin):
     def on_connection_error(self, exc, interval):
         self.connection = six.next(self._connections)
 
-        LOG.debug("Broker connection failed: %s" % exc)
-        LOG.debug("Sleeping for %s seconds, then retrying connection" %
-                  interval
-                  )
+        LOG.debug("Broker connection failed: %s", exc)
+        LOG.debug(
+            "Sleeping for %s seconds, then retrying connection",
+            interval
+        )

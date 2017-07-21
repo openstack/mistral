@@ -78,8 +78,12 @@ def _evaluate_item(item, context):
         try:
             return evaluate(item, context)
         except AttributeError as e:
-            LOG.debug("Expression %s is not evaluated, [context=%s]: %s"
-                      % (item, context, e))
+            LOG.debug(
+                "Expression %s is not evaluated, [context=%s]: %s",
+                item,
+                context,
+                e
+            )
             return item
     else:
         return evaluate_recursively(item, context)

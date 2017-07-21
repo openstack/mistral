@@ -51,7 +51,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workbooks:get', context.ctx())
 
-        LOG.info("Fetch workbook [name=%s]" % name)
+        LOG.info("Fetch workbook [name=%s]", name)
 
         db_model = db_api.get_workbook(name)
 
@@ -65,7 +65,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         definition = pecan.request.text
 
-        LOG.info("Update workbook [definition=%s]" % definition)
+        LOG.info("Update workbook [definition=%s]", definition)
 
         wb_db = workbooks.update_workbook_v2(definition)
 
@@ -79,7 +79,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         definition = pecan.request.text
 
-        LOG.info("Create workbook [definition=%s]" % definition)
+        LOG.info("Create workbook [definition=%s]", definition)
 
         wb_db = workbooks.create_workbook_v2(definition)
 
@@ -96,7 +96,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workbooks:delete', context.ctx())
 
-        LOG.info("Delete workbook [name=%s]" % name)
+        LOG.info("Delete workbook [name=%s]", name)
 
         db_api.delete_workbook(name)
 

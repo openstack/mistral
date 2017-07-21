@@ -148,7 +148,7 @@ class WorkflowController(object):
             for t_e in task_execs
         ]
 
-        LOG.debug("Commands to rerun workflow tasks: %s" % cmds)
+        LOG.debug("Commands to rerun workflow tasks: %s", cmds)
 
         return cmds
 

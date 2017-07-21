@@ -45,7 +45,7 @@ class EchoAction(actions.Action):
         self.output = output
 
     def run(self, context):
-        LOG.info('Running echo action [output=%s]' % self.output)
+        LOG.info('Running echo action [output=%s]', self.output)
 
         return self.output
 
@@ -158,21 +158,23 @@ class HTTPAction(actions.Action):
         self.verify = verify
 
     def run(self, context):
-        LOG.info("Running HTTP action "
-                 "[url=%s, method=%s, params=%s, body=%s, headers=%s,"
-                 " cookies=%s, auth=%s, timeout=%s, allow_redirects=%s,"
-                 " proxies=%s, verify=%s]" %
-                 (self.url,
-                  self.method,
-                  self.params,
-                  self.body,
-                  self.headers,
-                  self.cookies,
-                  self.auth,
-                  self.timeout,
-                  self.allow_redirects,
-                  self.proxies,
-                  self.verify))
+        LOG.info(
+            "Running HTTP action "
+            "[url=%s, method=%s, params=%s, body=%s, headers=%s,"
+            " cookies=%s, auth=%s, timeout=%s, allow_redirects=%s,"
+            " proxies=%s, verify=%s]",
+            self.url,
+            self.method,
+            self.params,
+            self.body,
+            self.headers,
+            self.cookies,
+            self.auth,
+            self.timeout,
+            self.allow_redirects,
+            self.proxies,
+            self.verify
+        )
 
         try:
             resp = requests.request(
@@ -192,7 +194,9 @@ class HTTPAction(actions.Action):
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
 
         LOG.info(
-            "HTTP action response:\n%s\n%s" % (resp.status_code, resp.content)
+            "HTTP action response:\n%s\n%s",
+            resp.status_code,
+            resp.content
         )
 
         # TODO(akuznetsova): Need to refactor Mistral serialiser and
@@ -295,10 +299,15 @@ class SendEmailAction(actions.Action):
         self.password = smtp_password
 
     def run(self, context):
-        LOG.info("Sending email message "
-                 "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]" %
-                 (self.sender, self.to, self.subject,
-                  self.smtp_server, self.body[:128]))
+        LOG.info(
+            "Sending email message "
+            "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]",
+            self.sender,
+            self.to,
+            self.subject,
+            self.smtp_server,
+            self.body[:128]
+        )
 
         message = text.MIMEText(self.body, _charset='utf-8')
         message['Subject'] = header.Header(self.subject, 'utf-8')
@@ -325,10 +334,15 @@ class SendEmailAction(actions.Action):
     def test(self, context):
         # Just logging the operation since this action is not supposed
         # to return a result.
-        LOG.info("Sending email message "
-                 "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]" %
-                 (self.sender, self.to, self.subject,
-                  self.smtp_server, self.body[:128]))
+        LOG.info(
+            "Sending email message "
+            "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]",
+            self.sender,
+            self.to,
+            self.subject,
+            self.smtp_server,
+            self.body[:128]
+        )
 
 
 class SSHAction(actions.Action):
@@ -466,7 +480,7 @@ class SleepAction(actions.Action):
             self._seconds = 0
 
     def run(self, context):
-        LOG.info('Running sleep action [seconds=%s]' % self._seconds)
+        LOG.info('Running sleep action [seconds=%s]', self._seconds)
 
         time.sleep(self._seconds)
 
@@ -488,8 +502,10 @@ class TestDictAction(actions.Action):
 
     def run(self, context):
         LOG.info(
-            'Running test_dict action [size=%s, key_prefix=%s, val=%s]' %
-            (self.size, self.key_prefix, self.val)
+            'Running test_dict action [size=%s, key_prefix=%s, val=%s]',
+            self.size,
+            self.key_prefix,
+            self.val
         )
 
         res = {}

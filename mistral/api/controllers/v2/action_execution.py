@@ -136,7 +136,10 @@ class ActionExecutionsController(rest.RestController):
         """
         acl.enforce('action_executions:create', context.ctx())
 
-        LOG.info("Create action_execution [action_execution=%s]", action_ex)
+        LOG.info(
+            "Create action_execution [action_execution=%s]",
+            action_ex
+        )
 
         name = action_ex.name
         description = action_ex.description or None
@@ -172,8 +175,9 @@ class ActionExecutionsController(rest.RestController):
         acl.enforce('action_executions:update', context.ctx())
 
         LOG.info(
-            "Update action_execution [id=%s, action_execution=%s]"
-            % (id, action_ex)
+            "Update action_execution [id=%s, action_execution=%s]",
+            id,
+            action_ex
         )
 
         output = action_ex.output
@@ -274,9 +278,15 @@ class ActionExecutionsController(rest.RestController):
             description=description
         )
 
-        LOG.info("Fetch action_executions. marker=%s, limit=%s, "
-                 "sort_keys=%s, sort_dirs=%s, filters=%s",
-                 marker, limit, sort_keys, sort_dirs, filters)
+        LOG.info(
+            "Fetch action_executions. marker=%s, limit=%s, "
+            "sort_keys=%s, sort_dirs=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters
+        )
 
         return _get_action_executions(
             marker=marker,
@@ -397,9 +407,15 @@ class TasksActionExecutionController(rest.RestController):
             description=description
         )
 
-        LOG.info("Fetch action_executions. marker=%s, limit=%s, "
-                 "sort_keys=%s, sort_dirs=%s, filters=%s",
-                 marker, limit, sort_keys, sort_dirs, filters)
+        LOG.info(
+            "Fetch action_executions. marker=%s, limit=%s, "
+            "sort_keys=%s, sort_dirs=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters
+        )
 
         return _get_action_executions(
             marker=marker,

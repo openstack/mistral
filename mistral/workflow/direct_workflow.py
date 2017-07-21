@@ -148,7 +148,7 @@ class DirectWorkflowController(base.WorkflowController):
 
             cmds.append(cmd)
 
-        LOG.debug("Found commands: %s" % cmds)
+        LOG.debug("Found commands: %s", cmds)
 
         return cmds
 

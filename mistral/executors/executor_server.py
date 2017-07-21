@@ -74,12 +74,11 @@ class ExecutorServer(service_base.MistralService):
 
         LOG.info(
             "Received RPC request 'run_action'[action_ex_id=%s, "
-            "action_cls_str=%s, action_cls_attrs=%s, params=%s]" % (
-                action_ex_id,
-                action_cls_str,
-                action_cls_attrs,
-                utils.cut(params)
-            )
+            "action_cls_str=%s, action_cls_attrs=%s, params=%s]",
+            action_ex_id,
+            action_cls_str,
+            action_cls_attrs,
+            utils.cut(params)
         )
 
         redelivered = rpc_ctx.redelivered or False

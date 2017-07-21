@@ -36,7 +36,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
         for trigger in triggers.get_next_cron_triggers():
-            LOG.debug("Processing cron trigger: %s" % trigger)
+            LOG.debug("Processing cron trigger: %s", trigger)
 
             try:
                 # Setup admin context before schedule triggers.
@@ -45,7 +45,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                 )
 
                 auth_ctx.set_ctx(ctx)
-                LOG.debug("Cron trigger security context: %s" % ctx)
+                LOG.debug("Cron trigger security context: %s", ctx)
 
                 # Try to advance the cron trigger next_execution_time and
                 # remaining_executions if relevant.
@@ -55,7 +55,8 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                 if modified:
                     LOG.debug(
                         "Starting workflow '%s' by cron trigger '%s'",
-                        trigger.workflow.name, trigger.name
+                        trigger.workflow.name,
+                        trigger.name
                     )
 
                     rpc.get_engine_client().start_workflow(
@@ -68,7 +69,8 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
             except Exception:
                 # Log and continue to next cron trigger.
                 LOG.exception(
-                    "Failed to process cron trigger %s" % str(trigger)
+                    "Failed to process cron trigger %s",
+                    str(trigger)
                 )
             finally:
                 auth_ctx.set_ctx(None)

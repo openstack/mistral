@@ -43,8 +43,10 @@ def get_mapping():
         path = CONF.openstack_actions_mapping_path
         mapping_file_path = pkg.resource_filename(package, path)
 
-    LOG.info("Processing OpenStack action mapping from file: %s",
-             mapping_file_path)
+    LOG.info(
+        "Processing OpenStack action mapping from file: %s",
+        mapping_file_path
+    )
 
     with open(mapping_file_path) as fh:
         mapping = json.load(fh)
@@ -140,8 +142,10 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
             try:
                 client_method = class_.get_fake_client_method()
             except Exception:
-                LOG.exception("Failed to create action: %s.%s" %
-                              (cls.action_namespace, action_name))
+                LOG.exception(
+                    "Failed to create action: %s.%s",
+                    cls.action_namespace, action_name
+                )
                 continue
 
             arg_list = i_u.get_arg_list_as_str(client_method)

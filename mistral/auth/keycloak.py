@@ -79,7 +79,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
         resp.raise_for_status()
 
         LOG.debug(
-            "HTTP response from OIDC provider: %s" %
+            "HTTP response from OIDC provider: %s",
             pprint.pformat(resp.json())
         )
 

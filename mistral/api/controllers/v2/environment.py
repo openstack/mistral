@@ -108,7 +108,7 @@ class EnvironmentController(rest.RestController):
         """
         acl.enforce('environments:get', context.ctx())
 
-        LOG.info("Fetch environment [name=%s]" % name)
+        LOG.info("Fetch environment [name=%s]", name)
 
         db_model = db_api.get_environment(name)
 
@@ -127,7 +127,7 @@ class EnvironmentController(rest.RestController):
         """
         acl.enforce('environments:create', context.ctx())
 
-        LOG.info("Create environment [env=%s]" % env)
+        LOG.info("Create environment [env=%s]", env)
 
         self._validate_environment(
             json.loads(wsme_pecan.pecan.request.body.decode()),
@@ -152,7 +152,7 @@ class EnvironmentController(rest.RestController):
                 'Name of the environment is not provided.'
             )
 
-        LOG.info("Update environment [name=%s, env=%s]" % (env.name, env))
+        LOG.info("Update environment [name=%s, env=%s]", env.name, env)
 
         definition = json.loads(wsme_pecan.pecan.request.body.decode())
         definition.pop('name')
@@ -175,7 +175,7 @@ class EnvironmentController(rest.RestController):
         """
         acl.enforce('environments:delete', context.ctx())
 
-        LOG.info("Delete environment [name=%s]" % name)
+        LOG.info("Delete environment [name=%s]", name)
 
         db_api.delete_environment(name)
 

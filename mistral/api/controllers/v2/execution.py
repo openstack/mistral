@@ -96,7 +96,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:update', context.ctx())
 
-        LOG.info('Update execution [id=%s, execution=%s]' % (id, wf_ex))
+        LOG.info('Update execution [id=%s, execution=%s]', id, wf_ex)
 
         with db_api.transaction():
             db_api.ensure_workflow_execution_exists(id)

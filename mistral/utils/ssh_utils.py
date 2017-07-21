@@ -55,7 +55,7 @@ def _connect(host, username, password=None, pkey=None, proxy=None):
     if isinstance(pkey, six.string_types):
         pkey = _to_paramiko_private_key(pkey, password)
 
-    LOG.debug('Creating SSH connection to %s' % host)
+    LOG.debug('Creating SSH connection to %s', host)
 
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -108,14 +108,14 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
     proxy = None
 
     if proxy_command:
-        LOG.debug('Creating proxy using command: %s' % proxy_command)
+        LOG.debug('Creating proxy using command: %s', proxy_command)
 
         proxy = paramiko.ProxyCommand(proxy_command)
 
     _proxy_ssh_client = paramiko.SSHClient()
     _proxy_ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    LOG.debug('Connecting to proxy gateway at: %s' % gateway_host)
+    LOG.debug('Connecting to proxy gateway at: %s', gateway_host)
 
     if not gateway_username:
         gateway_username = username
@@ -153,6 +153,6 @@ def execute_command(cmd, host, username, password=None,
                     raise_when_error=True):
     ssh_client = _connect(host, username, password, private_key_filename)
 
-    LOG.debug("Executing command %s" % cmd)
+    LOG.debug("Executing command %s", cmd)
 
     return _execute_command(ssh_client, cmd, get_stderr, raise_when_error)
