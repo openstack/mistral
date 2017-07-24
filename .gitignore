@@ -45,8 +45,8 @@ ChangeLog
 etc/*.conf
 etc/mistral.conf.sample
 
-#Linux swap file
-*.swp
+#Linux swap files range from .saa to .swp
+*.s[a-w][a-p]
 
 # Files created by releasenotes build
 releasenotes/build
