@@ -24,7 +24,7 @@ Project Hosting Details
     * Python client tracker: https://launchpad.net/python-mistralclient
 
 * Mailing list (prefix subjects with ``[Mistral]`` for faster responses)
-    https://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
+    http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
 
 * Documentation
     * https://docs.openstack.org/mistral/latest/
