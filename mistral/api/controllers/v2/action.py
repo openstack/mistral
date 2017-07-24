@@ -66,6 +66,9 @@ class ActionsController(rest.RestController, hooks.HookController):
     def put(self, identifier=None):
         """Update one or more actions.
 
+        :param identifier: Optional. If provided, it's UUID or name of an
+            action. Only one action can be updated with identifier param.
+
         NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be updated.
         """
@@ -130,7 +133,10 @@ class ActionsController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, identifier):
-        """Delete the named action."""
+        """Delete the named action.
+
+        :param identifier: Name or UUID of the action to delete.
+        """
         acl.enforce('actions:delete', context.ctx())
 
         LOG.info("Delete action [identifier=%s]", identifier)
@@ -183,9 +189,6 @@ class ActionsController(rest.RestController, hooks.HookController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
-
-        Where project_id is the same as the requester or
-        project_id is different but the scope is public.
         """
         acl.enforce('actions:list', context.ctx())
 

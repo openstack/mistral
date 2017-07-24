@@ -64,7 +64,10 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Execution, wtypes.text)
     def get(self, id):
-        """Return the specified Execution."""
+        """Return the specified Execution.
+
+        :param id: UUID of execution to retrieve.
+        """
         acl.enforce("executions:get", context.ctx())
 
         LOG.info("Fetch execution [id=%s]", id)
@@ -88,7 +91,7 @@ class ExecutionsController(rest.RestController):
     def put(self, id, wf_ex):
         """Update the specified workflow execution.
 
-        :param id: execution ID.
+        :param id: UUID of execution to update.
         :param wf_ex: Execution object.
         """
         acl.enforce('executions:update', context.ctx())
@@ -215,7 +218,10 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, id):
-        """Delete the specified Execution."""
+        """Delete the specified Execution.
+
+        :param id: UUID of execution to delete.
+        """
         acl.enforce('executions:delete', context.ctx())
 
         LOG.info("Delete execution [id=%s]", id)

@@ -78,7 +78,10 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Workflow, wtypes.text)
     def get(self, identifier):
-        """Return the named workflow."""
+        """Return the named workflow.
+
+        :param identifier: Name or UUID of the workflow to retrieve.
+        """
         acl.enforce('workflows:get', context.ctx())
 
         LOG.info("Fetch workflow [identifier=%s]", identifier)
@@ -157,7 +160,10 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, identifier):
-        """Delete a workflow."""
+        """Delete a workflow.
+
+        :param identifier: Name or ID of workflow to delete.
+        """
         acl.enforce('workflows:delete', context.ctx())
 
         LOG.info("Delete workflow [identifier=%s]", identifier)

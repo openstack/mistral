@@ -45,7 +45,10 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Workbook, wtypes.text)
     def get(self, name):
-        """Return the named workbook."""
+        """Return the named workbook.
+
+        :param name: Name of workbook to retrieve
+        """
         acl.enforce('workbooks:get', context.ctx())
 
         LOG.info("Fetch workbook [name=%s]" % name)
@@ -87,7 +90,10 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
     def delete(self, name):
-        """Delete the named workbook."""
+        """Delete the named workbook.
+
+        :param name: Name of workbook to delete
+        """
         acl.enforce('workbooks:delete', context.ctx())
 
         LOG.info("Delete workbook [name=%s]" % name)
@@ -127,9 +133,6 @@ class WorkbooksController(rest.RestController, hooks.HookController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
-
-        Where project_id is the same as the requester or
-        project_id is different but the scope is public.
         """
         acl.enforce('workbooks:list', context.ctx())
 
