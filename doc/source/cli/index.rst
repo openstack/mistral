@@ -2,7 +2,7 @@ Mistral Client Commands Guide
 =============================
 
 The Mistral CLI can be used with ``mistral`` command or via `OpenStackClient
-<https://docs.openstack.org/developer/python-openstackclient/>`_.
+<https://docs.openstack.org/python-openstackclient/latest/>`_.
 
 Mistral Client
 --------------

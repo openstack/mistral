@@ -27,7 +27,7 @@ Project Hosting Details
     https://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-dev
 
 * Documentation
-    * https://docs.openstack.org/developer/mistral/
+    * https://docs.openstack.org/mistral/latest/
 
 * IRC channel
     * #openstack-mistral at FreeNode
