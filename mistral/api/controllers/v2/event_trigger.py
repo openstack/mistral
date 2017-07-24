@@ -61,6 +61,9 @@ class EventTriggersController(rest.RestController):
                 CREATE_MANDATORY
             )
 
+        if values.get('scope') == 'public':
+            acl.enforce('event_triggers:create:public', auth_ctx.ctx())
+
         LOG.info('Create event trigger: %s', values)
 
         db_model = triggers.create_event_trigger(
@@ -69,6 +72,7 @@ class EventTriggersController(rest.RestController):
             values.get('topic'),
             values.get('event'),
             values.get('workflow_id'),
+            values.get('scope'),
             workflow_input=values.get('workflow_input'),
             workflow_params=values.get('workflow_params'),
         )

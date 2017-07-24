@@ -19,6 +19,7 @@ import mock
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services import triggers
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
 
@@ -107,6 +108,21 @@ class TestEventTriggerController(base.APITest):
             ['compute.instance.create.start'],
             client.create_event_trigger.call_args[0][1]
         )
+
+    @mock.patch.object(db_api, "get_workflow_definition_by_id", MOCK_WF)
+    @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
+    @mock.patch.object(triggers, "create_event_trigger")
+    def test_post_public(self, create_trigger):
+        trigger = copy.deepcopy(TRIGGER)
+        trigger['scope'] = 'public'
+        trigger.pop('id')
+
+        resp = self.app.post_json('/v2/event_triggers', trigger)
+
+        self.assertEqual(201, resp.status_int)
+
+        self.assertTrue(create_trigger.called)
+        self.assertEqual('public', create_trigger.call_args[0][5])
 
     def test_post_no_workflow_id(self):
         CREATE_TRIGGER = copy.deepcopy(TRIGGER)
