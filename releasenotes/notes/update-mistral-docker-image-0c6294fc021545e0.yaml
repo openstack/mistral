@@ -1,0 +1,9 @@
+---
+features:
+  - The Mistral docker image and tooling has been updated to significantly
+    ease the starting of a Mistral cluster. The setup now supports
+    all-in-one and multi-container deployments. Also, the scripts were
+    cleaned up and aligned with the Docker best practice.
+
+fixes:
+  - Javascript support in docker image.

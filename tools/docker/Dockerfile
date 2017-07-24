@@ -1,22 +1,53 @@
-FROM ubuntu:16.04
-MAINTAINER hardik.parekh@nectechnologies.in
+FROM krallin/ubuntu-tini:16.04
 
-ADD . /opt/stack/mistral
+MAINTAINER Andras Kovi <akovi@nokia.com>
 
-RUN /opt/stack/mistral/tools/docker/Dockerfile_script.sh
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -qq update && \
+    apt-get install -y  \
+      curl \
+      git \
+      libffi-dev \
+      libssl-dev \
+      libxml2-dev \
+      libxslt1-dev \
+      libyaml-dev \
+      mc \
+      python-dev \
+      python-pip \
+      python-setuptools \
+      swig \
+      cmake \
+      crudini \
+      libuv1 \
+      libuv1-dev
+
+RUN pip install -v v8eval && python -c 'import v8eval'
+
+RUN apt-get install -y libmysqlclient-dev && \
+    pip install mysql-python
+
+RUN pip install -U tox python-mistralclient pip
+
+COPY . /opt/stack/mistral
+
+RUN curl -o /tmp/upper-constraints.txt http://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt && \
+    sed -i '/^mistral.*/d' /tmp/upper-constraints.txt &&\
+    pip install -e /opt/stack/mistral
+
+RUN mkdir -p /etc/mistral
+
+RUN oslo-config-generator \
+      --config-file /opt/stack/mistral/tools/config/config-generator.mistral.conf \
+      --output-file /etc/mistral/mistral.conf
+
+RUN INI_SET="crudini --set /etc/mistral/mistral.conf" && \
+    $INI_SET DEFAULT js_implementation v8eval && \
+    $INI_SET DEFAULT transport_url rabbit://guest:guest@rabbitmq:5672/ && \
+    $INI_SET database connection mysql://root:strangehat@mysql:3306/mistral && \
+    $INI_SET oslo_policy policy_file /opt/stack/mistral/etc/policy.json && \
+    $INI_SET pecan auth_enable false
 
 EXPOSE 8989
 
-VOLUME ["/opt/stack/mistral"]
-VOLUME ["/home/mistral"]
-WORKDIR /home/mistral
-CMD mistral-server --server all --config-file /home/mistral/mistral.conf
-
-ENV TINI_SHA 066ad710107dc7ee05d3aa6e4974f01dc98f3888
-
-# Use tini as subreaper in Docker container to adopt zombie processes
-RUN curl -fsSL https://github.com/krallin/tini/releases/download/v0.5.0/tini-static -o /bin/tini \
-  && chmod +x /bin/tini \
-  && echo "$TINI_SHA  /bin/tini" | sha1sum -c -
-
-ENTRYPOINT ["/bin/tini", "--"]
+CMD mistral-server --server all
