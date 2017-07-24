@@ -441,8 +441,8 @@ class AdHocAction(PythonAction):
         :type action_def: ActionDefinition
         :param base_action_def: Original base action definition
         :type base_action_def: ActionDefinition
-        :return; The definition of the base system action
-        :rtype; ActionDefinition
+        :return: The definition of the base system action
+        :rtype: ActionDefinition
         """
 
         self.adhoc_action_defs = [action_def]
