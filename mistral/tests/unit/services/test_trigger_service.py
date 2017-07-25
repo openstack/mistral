@@ -183,8 +183,8 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 8, 25)
         )
 
-        self.assertIn('Invalid input', exception.message)
-        self.assertIn('some_wf', exception.message)
+        self.assertIn('Invalid input', str(exception))
+        self.assertIn('some_wf', str(exception))
 
     def test_oneshot_trigger_create(self):
         trigger = t_s.create_cron_trigger(

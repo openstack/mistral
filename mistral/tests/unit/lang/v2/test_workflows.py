@@ -165,7 +165,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             yaml.safe_dump(dsl_dict)
         )
 
-        self.assertIn("'version' is a required property", exception.message)
+        self.assertIn("'version' is a required property", str(exception))
 
     def test_version(self):
         tests = [
@@ -259,7 +259,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             expect_error=True
         )
 
-        self.assertIn("'tasks' is a required property", exception.message)
+        self.assertIn("'tasks' is a required property", str(exception))
 
     def test_tasks(self):
         tests = [
@@ -402,7 +402,7 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         exception = self._parse_dsl_spec(changes=overlay, expect_error=True)
 
-        self.assertIn("Invalid DSL", exception.message)
+        self.assertIn("Invalid DSL", str(exception))
 
     def test_invalid_name(self):
         invalid_wf = {
@@ -423,5 +423,5 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
 
         self.assertIn(
             "Workflow name cannot be in the format of UUID",
-            exception.message
+            str(exception)
         )

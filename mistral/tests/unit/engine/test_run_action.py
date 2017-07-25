@@ -268,7 +268,7 @@ class RunActionEngineTest(base.EngineTestCase):
             {'url': 'Hello, ', 'metod': 'John Doe!'}
         )
 
-        self.assertIn('std.http', exception.message)
+        self.assertIn('std.http', str(exception))
 
     def test_adhoc_action_wrong_input(self):
         # Start action and see the result.
@@ -279,7 +279,7 @@ class RunActionEngineTest(base.EngineTestCase):
             {'left': 'Hello, ', 'ri': 'John Doe!'}
         )
 
-        self.assertIn('concat', exception.message)
+        self.assertIn('concat', str(exception))
 
     # TODO(rakhmerov): This is an example of a bad test. It pins to
     # implementation details too much and prevents from making refactoring

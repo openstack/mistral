@@ -506,4 +506,4 @@ class DefaultEngineWithTransportTest(eng_test_base.EngineTestCase):
             'some_description'
         )
 
-        self.assertIn('KeyError: wrong key', exception.message)
+        self.assertIn('KeyError: wrong key', str(exception))

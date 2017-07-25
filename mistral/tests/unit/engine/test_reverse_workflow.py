@@ -181,4 +181,4 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
             wf_text
         )
 
-        self.assertIn("Task 'task1' not found", exception.message)
+        self.assertIn("Task 'task1' not found", str(exception))

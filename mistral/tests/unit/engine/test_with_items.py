@@ -534,7 +534,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             wb_service.create_workbook_v2, wb_text
         )
 
-        self.assertIn("Invalid array in 'with-items'", exception.message)
+        self.assertIn("Invalid array in 'with-items'", str(exception))
 
     def test_with_items_results_order(self):
         wb_text = """---
