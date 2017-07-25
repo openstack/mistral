@@ -90,7 +90,7 @@ class EventTriggersController(rest.RestController):
         values = event_trigger.to_dict()
 
         for field in UPDATE_NOT_ALLOWED:
-            if values.get(field, None):
+            if values.get(field):
                 raise exc.EventTriggerException(
                     "Can not update fields %s of event trigger." %
                     UPDATE_NOT_ALLOWED
