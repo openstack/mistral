@@ -125,14 +125,9 @@ class OpenStackAction(actions.Action):
             # where the issue comes from.
             LOG.warning(traceback.format_exc())
 
-            if hasattr(e, 'message'):
-                e_str = '%s: %s' % (type(e), e.message)
-            else:
-                e_str = str(e)
-
             raise exc.ActionException(
                 "%s.%s failed: %s" %
-                (self.__class__.__name__, self.client_method_name, e_str)
+                (self.__class__.__name__, self.client_method_name, str(e))
             )
 
     def test(self, context):

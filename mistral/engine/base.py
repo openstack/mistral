@@ -185,5 +185,5 @@ class TaskPolicy(object):
             raise exc.InvalidModelException(
                 "Invalid data type in %s: %s. Value(s) can be shown after "
                 "YAQL evaluating. If you use YAQL here, please correct it."
-                % (self.__class__.__name__, e.message)
+                % (self.__class__.__name__, str(e))
             )
