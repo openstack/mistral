@@ -34,6 +34,6 @@ class SpecValidationController(rest.RestController):
         try:
             self._parse_func(definition)
         except exc.DSLParsingException as e:
-            return {'valid': False, 'error': e.message}
+            return {'valid': False, 'error': str(e)}
 
         return {'valid': True}

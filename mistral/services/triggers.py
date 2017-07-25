@@ -78,7 +78,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
                 '%Y-%m-%d %H:%M'
             )
         except ValueError as e:
-            raise exc.InvalidModelException(e.message)
+            raise exc.InvalidModelException(str(e))
 
     validate_cron_trigger_input(pattern, first_time, count)
 
