@@ -21,9 +21,6 @@ from mistral.tests.unit import base
 
 
 class ServiceCoordinatorTest(base.BaseTest):
-    def setUp(self):
-        super(ServiceCoordinatorTest, self).setUp()
-
     def test_start(self):
         cfg.CONF.set_default(
             'backend_url',

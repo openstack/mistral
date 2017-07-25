@@ -42,9 +42,6 @@ RIGHT = {
 
 
 class UtilsTest(base.BaseTest):
-    def setUp(self):
-        super(UtilsTest, self).setUp()
-
     def test_merge_dicts(self):
         left = copy.deepcopy(LEFT)
         right = copy.deepcopy(RIGHT)
