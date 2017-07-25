@@ -54,7 +54,7 @@ class ActionExecutionTestsV2(base.TestCase):
 
         super(ActionExecutionTestsV2, cls).resource_cleanup()
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('a72603bd-5d49-4d92-9747-8da6322e867d')
     def test_run_action_execution(self):
         resp, body = self.client.create_action_execution(
@@ -71,14 +71,14 @@ class ActionExecutionTestsV2(base.TestCase):
             output
         )
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('0623cb62-b20a-45c8-afd9-8da46e1bb3cb')
     def test_list_action_executions(self):
         resp, body = self.client.get_list_obj('action_executions')
 
         self.assertEqual(200, resp.status)
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('cd36ea00-7e22-4c3d-90c3-fb441b93cf12')
     def test_output_appear_in_response_only_when_needed(self):
         resp, body = self.client.get_list_obj('action_executions')
@@ -127,7 +127,7 @@ class ActionExecutionTestsV2(base.TestCase):
         action_execution = body['action_executions'][0]
         self.assertNotIn("output", action_execution)
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('dc76aeda-9243-45cf-bfd2-141d3af8b28b')
     def test_run_action_std_http(self):
         resp, body = self.client.create_action_execution(
@@ -141,7 +141,7 @@ class ActionExecutionTestsV2(base.TestCase):
         output = json.loads(body['output'])
         self.assertTrue(output['result']['status'] in range(200, 307))
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('befa9b1c-01a4-41bc-b060-88cb1b147dfb')
     def test_run_action_std_http_error(self):
         resp, body = self.client.create_action_execution(
@@ -155,7 +155,7 @@ class ActionExecutionTestsV2(base.TestCase):
         output = json.loads(body['output'])
         self.assertEqual(404, output['result']['status'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @test.related_bug('1667415')
     @decorators.idempotent_id('3c73de7a-4af0-4657-90d6-d7ebd3c7da18')
     def test_run_action_std_http_non_utf8_response(self):
@@ -171,7 +171,7 @@ class ActionExecutionTestsV2(base.TestCase):
         output = json.loads(body['output'])
         self.assertEqual(200, output['result']['status'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('d98586bf-fdc4-44f6-9837-700d35b5f889')
     def test_create_action_execution(self):
         resp, body = self.client.create_action_execution(
@@ -199,7 +199,7 @@ class ActionExecutionTestsV2(base.TestCase):
             output
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('99f22c17-6fb4-4480-96d3-4a82672916b7')
     def test_delete_nonexistent_action_execution(self):
         self.assertRaises(
@@ -209,7 +209,7 @@ class ActionExecutionTestsV2(base.TestCase):
             'nonexist'
         )
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('2dbd74ba-4950-4c52-8bd3-070d634dcd05')
     def test_create_action_execution_sync(self):
         token = self.client.auth_provider.get_token()

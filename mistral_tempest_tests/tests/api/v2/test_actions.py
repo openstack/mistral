@@ -15,7 +15,6 @@
 import datetime
 from tempest.lib import decorators
 from tempest.lib import exceptions
-from tempest import test
 
 from mistral import utils
 from mistral_tempest_tests.tests import base
@@ -37,7 +36,7 @@ class ActionTestsV2(base.TestCase):
 
         super(ActionTestsV2, self).tearDown()
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('2e1a578a-1c27-409a-96be-84b5c41498cd')
     def test_get_list_actions(self):
         resp, body = self.client.get_list_obj('actions')
@@ -46,7 +45,7 @@ class ActionTestsV2(base.TestCase):
         self.assertNotEmpty(body['actions'])
         self.assertNotIn('next', body)
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('786ee85c-c32d-4ac9-8f45-79ab6bc47ef1')
     def test_get_list_actions_with_pagination(self):
         resp, body = self.client.get_list_obj(
@@ -86,7 +85,7 @@ class ActionTestsV2(base.TestCase):
 
         self.assertGreater(name_1, name_2)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('5148358e-200f-49c7-8e88-1ddeec61c6a9')
     def test_get_list_actions_nonexist_sort_dirs(self):
         context = self.assertRaises(
@@ -100,7 +99,7 @@ class ActionTestsV2(base.TestCase):
             context.resp_body.get('faultstring')
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('85482ce8-70f4-47a6-9e80-de1ac22b6412')
     def test_get_list_actions_invalid_limit(self):
         context = self.assertRaises(
@@ -114,7 +113,7 @@ class ActionTestsV2(base.TestCase):
             context.resp_body.get('faultstring')
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('a203e75b-2013-422f-b9eb-da4375041058')
     def test_get_list_actions_duplicate_sort_keys(self):
         context = self.assertRaises(
@@ -128,7 +127,7 @@ class ActionTestsV2(base.TestCase):
             context.resp_body.get('faultstring')
         )
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('9a53af71-8f1e-4ad5-b572-2c4c621715c0')
     def test_get_list_actions_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -144,7 +143,7 @@ class ActionTestsV2(base.TestCase):
         for act in body['actions']:
             self.assertFalse(act['is_system'])
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('3c3d28ce-9490-41ae-a918-c28f843841e1')
     def test_get_list_actions_not_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -160,7 +159,7 @@ class ActionTestsV2(base.TestCase):
         for act in body['actions']:
             self.assertTrue(act['is_system'])
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('84823a84-5caa-427d-8a2c-622a1d1893b1')
     def test_get_list_actions_in_list_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -177,7 +176,7 @@ class ActionTestsV2(base.TestCase):
         action_names = [action['name'] for action in body['actions']]
         self.assertListEqual(created_acts, action_names)
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('4b05dfcf-ef39-4032-9528-c8422c7329dd')
     def test_get_list_actions_not_in_list_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -195,7 +194,7 @@ class ActionTestsV2(base.TestCase):
         for act in created_acts:
             self.assertNotIn(act, action_names)
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('20b3d527-447d-492b-8cb7-ac5e3757d7d5')
     def test_get_list_actions_greater_than_filter(self):
         time = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
@@ -206,7 +205,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertEmpty(body['actions'])
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('7f598dba-f169-47ec-a487-f0ed31484aff')
     def test_get_list_actions_greater_than_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -223,7 +222,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertIn(created_acts[0], actions)
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('874fb57d-a762-4dc3-841d-396657510d23')
     def test_get_list_actions_less_than_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -240,7 +239,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertNotIn(created_acts[0], actions)
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('1fda6c31-b0c3-4b78-9f67-b920e1f6c973')
     def test_get_list_actions_less_than_equal_to_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -257,7 +256,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertIn(created_acts[0], actions)
 
-    @test.attr(type='smoke')
+    @decorators.attr(type='smoke')
     @decorators.idempotent_id('cbb716f1-7fc7-4884-8fa9-6ff2bc35ee29')
     def test_get_list_actions_multiple_filter(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -275,7 +274,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertIn(created_acts[0], actions)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('45fdc1f3-4d89-4035-9b76-08ef94c92628')
     def test_get_list_actions_invalid_filter(self):
         self.assertRaises(
@@ -294,7 +293,7 @@ class ActionTestsV2(base.TestCase):
             'actions?created_at>2016-02-23%2008:51:26'
         )
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('5dbceaf3-6a32-4a4f-9427-1bbdb6f3c574')
     def test_create_and_delete_few_actions(self):
         resp, body = self.client.create_action('action_v2.yaml')
@@ -318,7 +317,7 @@ class ActionTestsV2(base.TestCase):
             self.assertNotIn(act, actions)
             self.client.actions.remove(act)
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('d7dad5de-6b1f-4813-b789-78f075252639')
     def test_get_action(self):
         _, body = self.client.create_action('action_v2.yaml')
@@ -328,7 +327,7 @@ class ActionTestsV2(base.TestCase):
         self.assertEqual(200, resp.status)
         self.assertEqual(action_name, body['name'])
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('21a031c8-8e2d-421f-8dfe-71a3b5e44381')
     def test_update_action(self):
         _, body = self.client.create_action('action_v2.yaml')
@@ -352,7 +351,7 @@ class ActionTestsV2(base.TestCase):
         self.assertTrue(all(['updated_at' in item
                              for item in body['actions']]))
 
-    @test.attr(type='sanity')
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('329b1030-c55c-45f0-8129-cc892bc23dcc')
     def test_get_action_definition(self):
         _, body = self.client.create_action('action_v2.yaml')
@@ -363,7 +362,7 @@ class ActionTestsV2(base.TestCase):
         self.assertIsNotNone(body)
         self.assertIn(act_name, body)
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('c2b5be88-571a-4855-922f-9a338dba6adb')
     def test_get_nonexistent_action(self):
         self.assertRaises(
@@ -372,7 +371,7 @@ class ActionTestsV2(base.TestCase):
             'actions', 'nonexist'
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('fc2fafcb-9bb4-4a18-a507-3f9964f4a08a')
     def test_double_creation(self):
         self.client.create_action('action_v2.yaml')
@@ -383,7 +382,7 @@ class ActionTestsV2(base.TestCase):
             'action_v2.yaml'
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('0c456a73-9c39-4aeb-b3ca-3ea4338bc9ab')
     def test_create_action_invalid_def(self):
         self.assertRaises(
@@ -392,7 +391,7 @@ class ActionTestsV2(base.TestCase):
             'wb_v2.yaml'
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('469677b5-22ab-4e2a-aee6-5bcc9dac93de')
     def test_update_action_invalid_def(self):
         self.assertRaises(
@@ -401,7 +400,7 @@ class ActionTestsV2(base.TestCase):
             'actions', 'wb_v2.yaml'
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('ab444607-40fc-47cb-982f-83762d5b64c9')
     def test_delete_nonexistent_action(self):
         self.assertRaises(
@@ -410,7 +409,7 @@ class ActionTestsV2(base.TestCase):
             'actions', 'nonexist'
         )
 
-    @test.attr(type='negative')
+    @decorators.attr(type='negative')
     @decorators.idempotent_id('74d0d480-793a-46ca-b88a-8336c1897f3a')
     def test_delete_standard_action(self):
         self.assertRaises(

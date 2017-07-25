@@ -18,7 +18,6 @@ from keystoneclient import service_catalog as ks_service_catalog
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 from tempest.lib import decorators
-from tempest import test
 
 from mistral_tempest_tests.tests import base
 
@@ -30,7 +29,7 @@ class MultiVimActionsTests(base.TestCase):
     def resource_setup(cls):
         super(MultiVimActionsTests, cls).resource_setup()
 
-    @test.attr(type='openstack')
+    @decorators.attr(type='openstack')
     @decorators.idempotent_id('dadc9960-9c03-41a9-9a9d-7e97d527e6dd')
     def test_multi_vim_support_target_headers(self):
         client_1 = self.alt_client
@@ -58,7 +57,7 @@ class MultiVimActionsTests(base.TestCase):
             str(jsonutils.loads(result['output'])['result'][0]['id'])
         )
 
-    @test.attr(type='openstack')
+    @decorators.attr(type='openstack')
     @decorators.idempotent_id('bc0e9b99-62b0-4d96-95c9-016a3f69b02a')
     def test_multi_vim_support_target_headers_and_service_catalog(self):
         client_1 = self.alt_client
