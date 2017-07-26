@@ -526,7 +526,13 @@ class WorkflowAction(Action):
             wf_def.updated_at
         )
 
+        # If the parent has a root_execution_id, it must be a sub-workflow. So
+        # we should propogate that ID down. Otherwise the parent must be the
+        # root execution and we should use the parents ID.
+        root_execution_id = parent_wf_ex.root_execution_id or parent_wf_ex.id
+
         wf_params = {
+            'root_execution_id': root_execution_id,
             'task_execution_id': self.task_ex.id,
             'index': index,
             'namespace': parent_wf_ex.params['namespace']

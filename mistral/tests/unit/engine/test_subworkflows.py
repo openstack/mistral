@@ -187,7 +187,29 @@ workflows:
     tasks:
         task1:
             action: std.noop
+"""
 
+WB6 = """
+---
+version: '2.0'
+
+name: wb6
+
+workflows:
+  wf1:
+    tasks:
+      task1:
+        workflow: wf2
+
+  wf2:
+    tasks:
+      task1:
+        workflow: wf3
+
+  wf3:
+    tasks:
+      task1:
+        action: std.noop
 """
 
 
@@ -200,6 +222,7 @@ class SubworkflowsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WB3)
         wb_service.create_workbook_v2(WB4)
         wb_service.create_workbook_v2(WB5)
+        wb_service.create_workbook_v2(WB6)
 
     def test_subworkflow_success(self):
         wf2_ex = self.engine.start_workflow('wb1.wf2', '', None)
@@ -415,3 +438,28 @@ class SubworkflowsTest(base.EngineTestCase):
             ex = db_api.get_workflow_execution(ex.id)
 
             self.assertEqual({'sub_wf_out': 'abc'}, ex.output)
+
+    def test_subworkflow_root_execution_id(self):
+        wf1_ex = self.engine.start_workflow('wb6.wf1', '', None)
+
+        self._await(lambda: len(db_api.get_workflow_executions()) == 3, 0.5, 5)
+
+        wf_execs = db_api.get_workflow_executions()
+        wf1_ex = self._assert_single_item(wf_execs, name='wb6.wf1')
+        wf2_ex = self._assert_single_item(wf_execs, name='wb6.wf2')
+        wf3_ex = self._assert_single_item(wf_execs, name='wb6.wf3')
+
+        self.assertEqual(3, len(wf_execs))
+
+        # Wait till workflow 'wf1' is completed (and all the sub-workflows
+        # will be completed also).
+        self.await_workflow_success(wf1_ex.id)
+
+        with db_api.transaction():
+            wf1_ex = db_api.get_workflow_execution(wf1_ex.id)
+            wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
+            wf3_ex = db_api.get_workflow_execution(wf3_ex.id)
+
+        self.assertIsNone(wf1_ex.root_execution_id, None)
+        self.assertEqual(wf2_ex.root_execution_id, wf1_ex.id)
+        self.assertEqual(wf3_ex.root_execution_id, wf1_ex.id)
