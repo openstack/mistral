@@ -100,7 +100,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
     def _wait_until_server_up(cls, server_ip, timeout=120, delay=2):
         seconds_remain = timeout
 
-        LOG.info("Waiting server SSH [IP=%s]..." % server_ip)
+        LOG.info("Waiting server SSH [IP=%s]...", server_ip)
 
         while seconds_remain > 0:
             try:
@@ -123,7 +123,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
     def _wait_until_server_active(cls, server_id, timeout=60, delay=2):
         seconds_remain = timeout
 
-        LOG.info("Waiting server [id=%s]..." % server_id)
+        LOG.info("Waiting server [id=%s]...", server_id)
 
         while seconds_remain > 0:
             server_info = cls.mgr.servers_client.show_server(server_id)
@@ -141,7 +141,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
     def _wait_until_server_delete(cls, server_id, timeout=60, delay=2):
         seconds_remain = timeout
 
-        LOG.info("Deleting server [id=%s]..." % server_id)
+        LOG.info("Deleting server [id=%s]...", server_id)
 
         while seconds_remain > 0:
             try:
@@ -181,9 +181,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
             overwrite=True
         )
 
-        LOG.info(
-            "Private key saved to %s" % cls.key_dir + cls.key_name
-        )
+        LOG.info("Private key saved to %s", cls.key_dir + cls.key_name)
 
         # Create keypair in nova.
         cls.mgr.keypairs_client.create_keypair(

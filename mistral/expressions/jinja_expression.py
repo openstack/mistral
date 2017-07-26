@@ -114,8 +114,10 @@ class InlineJinjaEvaluator(Evaluator):
     @classmethod
     def evaluate(cls, expression, data_context):
         LOG.debug(
-            "Start to evaluate Jinja expression. [expression='%s', context=%s]"
-            % (expression, data_context)
+            "Start to evaluate Jinja expression. "
+            "[expression='%s', context=%s]",
+            expression,
+            data_context
         )
 
         patterns = cls.find_expression_pattern.findall(expression)
@@ -127,8 +129,9 @@ class InlineJinjaEvaluator(Evaluator):
             result = cls._env.from_string(expression).render(**ctx)
 
         LOG.debug(
-            "Finished evaluation. [expression='%s', result: %s]" %
-            (expression, result)
+            "Finished evaluation. [expression='%s', result: %s]",
+            expression,
+            result
         )
 
         return result

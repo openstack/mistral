@@ -39,7 +39,7 @@ class CronTriggersController(rest.RestController):
         """
         acl.enforce('cron_triggers:get', context.ctx())
 
-        LOG.info('Fetch cron trigger [name=%s]' % name)
+        LOG.info('Fetch cron trigger [name=%s]', name)
 
         db_model = db_api.get_cron_trigger(name)
 
@@ -58,7 +58,7 @@ class CronTriggersController(rest.RestController):
         """
         acl.enforce('cron_triggers:create', context.ctx())
 
-        LOG.info('Create cron trigger: %s' % cron_trigger)
+        LOG.info('Create cron trigger: %s', cron_trigger)
 
         values = cron_trigger.to_dict()
 
@@ -84,7 +84,7 @@ class CronTriggersController(rest.RestController):
         """
         acl.enforce('cron_triggers:delete', context.ctx())
 
-        LOG.info("Delete cron trigger [name=%s]" % name)
+        LOG.info("Delete cron trigger [name=%s]", name)
 
         triggers.delete_cron_trigger(name)
 

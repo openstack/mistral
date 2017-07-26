@@ -194,7 +194,8 @@ def publish_variables(task_ex, task_spec):
 
     if task_ex.name in expr_ctx:
         LOG.warning(
-            'Shadowing context variable with task name while publishing: %s' %
+            'Shadowing context variable with task name while '
+            'publishing: %s',
             task_ex.name
         )
 

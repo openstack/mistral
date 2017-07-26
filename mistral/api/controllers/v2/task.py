@@ -142,7 +142,7 @@ class TasksController(rest.RestController):
         :param id: UUID of task to retrieve
         """
         acl.enforce('tasks:get', context.ctx())
-        LOG.info("Fetch task [id=%s]" % id)
+        LOG.info("Fetch task [id=%s]", id)
 
         with db_api.transaction():
             task_ex = db_api.get_task_execution(id)
@@ -248,7 +248,7 @@ class TasksController(rest.RestController):
         """
         acl.enforce('tasks:update', context.ctx())
 
-        LOG.info("Update task execution [id=%s, task=%s]" % (id, task))
+        LOG.info("Update task execution [id=%s, task=%s]", id, task)
 
         with db_api.transaction():
             task_ex = db_api.get_task_execution(id)

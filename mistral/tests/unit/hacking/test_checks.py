@@ -131,6 +131,59 @@ class BaseLoggingCheckTest(base.BaseTest):
         self.assertEqual(0, len(list(checks.check_python3_no_itervalues(
             "six.itervalues(ob))"))))
 
+    def test_check_delayed_string_interpolation(self):
+        checker = checks.check_delayed_string_interpolation
+        code = """
+               msg_w = _LW('Test string (%s)')
+               msg_i = _LI('Test string (%s)')
+               value = 'test'
+
+               LOG.error(_LE("Test string (%s)") % value)
+               LOG.warning(msg_w % 'test%string')
+               LOG.info(msg_i %
+                        "test%string%info")
+               LOG.critical(
+                   _LC('Test string (%s)') % value,
+                   instance=instance)
+               LOG.exception(_LE(" 'Test quotation %s' \"Test\"") % 'test')
+               LOG.debug(' "Test quotation %s" \'Test\'' % "test")
+               LOG.debug('Tesing %(test)s' %
+                         {'test': ','.join(
+                             ['%s=%s' % (name, value)
+                              for name, value in test.items()])})
+               """
+
+        expected_errors = [(5, 34, 'M331'), (6, 18, 'M331'), (7, 15, 'M331'),
+                           (10, 28, 'M331'), (12, 49, 'M331'),
+                           (13, 40, 'M331'), (14, 28, 'M331')]
+        self._assert_has_errors(code, checker, expected_errors=expected_errors)
+        self._assert_has_no_errors(
+            code, checker, filename='mistral/tests/unit/hacking/test_checks.py'
+        )
+
+        code = """
+               msg_w = _LW('Test string (%s)')
+               msg_i = _LI('Test string (%s)')
+               value = 'test'
+
+               LOG.error(_LE("Test string (%s)"), value)
+               LOG.error(_LE("Test string (%s)") % value) # noqa
+               LOG.warn(_LW('Test string (%s)'),
+                        value)
+               LOG.info(msg_i,
+                        "test%string%info")
+               LOG.critical(
+                   _LC('Test string (%s)'), value,
+                   instance=instance)
+               LOG.exception(_LE(" 'Test quotation %s' \"Test\""), 'test')
+               LOG.debug(' "Test quotation %s" \'Test\'', "test")
+               LOG.debug('Tesing %(test)s',
+                         {'test': ','.join(
+                             ['%s=%s' % (name, value)
+                              for name, value in test.items()])})
+               """
+        self._assert_has_no_errors(code, checker)
+
 
 class TestLoggingWithWarn(BaseLoggingCheckTest):
 

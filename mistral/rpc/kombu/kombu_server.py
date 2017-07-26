@@ -120,10 +120,11 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                     self._running.set()
                     self._stopped.clear()
 
-                    LOG.info("Connected to AMQP at %s:%s" % (
+                    LOG.info(
+                        "Connected to AMQP at %s:%s",
                         host.hostname,
                         host.port
-                    ))
+                    )
 
                     while self.is_running:
                         try:
@@ -134,18 +135,20 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                             self.stop()
 
                             LOG.info("Server with id='{0}' stopped.".format(
-                                self.server_id))
+                                self.server_id)
+                            )
 
                             return
             except (socket.error, amqp.exceptions.ConnectionForced) as e:
-                LOG.debug("Broker connection failed: %s" % e)
+                LOG.debug("Broker connection failed: %s", e)
                 _retry_connection = True
             finally:
                 self._stopped.set()
 
                 if _retry_connection:
                     LOG.debug(
-                        "Sleeping for %s seconds, than retrying connection" %
+                        "Sleeping for %s seconds, than retrying "
+                        "connection",
                         self._sleep_time
                     )
 
@@ -168,7 +171,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         try:
             self._worker.shutdown(wait=True)
         except AttributeError as e:
-            LOG.warning("Cannot stop worker in graceful way: %s" % e)
+            LOG.warning("Cannot stop worker in graceful way: %s", e)
 
     def _get_rpc_method(self, method_name):
         for endpoint in self.endpoints:
@@ -209,7 +212,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                 "Got exception while consuming message. Exception would be "
                 "send back to the caller."
             )
-            LOG.debug("Exceptions: %s" % str(e))
+            LOG.debug("Exceptions: %s", str(e))
 
             # Wrap exception into another exception for compability with oslo.
             self.publish_message(
@@ -222,8 +225,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
             message.ack()
 
     def _on_message(self, request, message):
-        LOG.debug('Received message %s',
-                  request)
+        LOG.debug('Received message %s', request)
 
         is_async = request.get('async', False)
         rpc_ctx = request.get('rpc_ctx')

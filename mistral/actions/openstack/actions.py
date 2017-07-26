@@ -78,7 +78,7 @@ class NovaAction(base.OpenStackAction):
         return novaclient.Client
 
     def _create_client(self, context):
-        LOG.debug("Nova action security context: %s" % context)
+        LOG.debug("Nova action security context: %s", context)
 
         return novaclient.Client(2, **self.get_session_and_auth(context))
 
@@ -96,7 +96,7 @@ class GlanceAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Glance action security context: %s" % context)
+        LOG.debug("Glance action security context: %s", context)
 
         glance_endpoint = self.get_service_endpoint()
 
@@ -121,7 +121,7 @@ class KeystoneAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Keystone action security context: %s" % context)
+        LOG.debug("Keystone action security context: %s", context)
 
         kwargs = self.get_session_and_auth(context)
 
@@ -157,7 +157,7 @@ class CeilometerAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Ceilometer action security context: %s" % context)
+        LOG.debug("Ceilometer action security context: %s", context)
 
         ceilometer_endpoint = self.get_service_endpoint()
 
@@ -188,7 +188,7 @@ class HeatAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Heat action security context: %s" % context)
+        LOG.debug("Heat action security context: %s", context)
 
         heat_endpoint = self.get_service_endpoint()
 
@@ -220,7 +220,7 @@ class NeutronAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Neutron action security context: %s" % context)
+        LOG.debug("Neutron action security context: %s", context)
 
         neutron_endpoint = self.get_service_endpoint()
 
@@ -242,7 +242,7 @@ class CinderAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Cinder action security context: %s" % context)
+        LOG.debug("Cinder action security context: %s", context)
 
         cinder_endpoint = self.get_service_endpoint()
 
@@ -282,7 +282,7 @@ class MistralAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Mistral action security context: %s" % context)
+        LOG.debug("Mistral action security context: %s", context)
 
         session_and_auth = self.get_session_and_auth(context)
         return self._get_client_class()(
@@ -304,7 +304,7 @@ class TroveAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Trove action security context: %s" % context)
+        LOG.debug("Trove action security context: %s", context)
 
         trove_endpoint = self.get_service_endpoint()
 
@@ -341,7 +341,7 @@ class IronicAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Ironic action security context: %s" % context)
+        LOG.debug("Ironic action security context: %s", context)
 
         ironic_endpoint = self.get_service_endpoint()
 
@@ -376,7 +376,7 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
             return cls._get_client_class()(session=sess)
         except Exception as e:
             LOG.warning("There was an error trying to create the "
-                        "ironic-inspector client using a session: %s" % str(e))
+                        "ironic-inspector client using a session: %s", str(e))
             # If it's not possible to establish a keystone session, attempt to
             # create a client without it. This should fall back to where the
             # ironic-inspector client tries to get it's own version on the
@@ -389,7 +389,7 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
     def _create_client(self, context):
 
         LOG.debug(
-            "Baremetal introspection action security context: %s" % context)
+            "Baremetal introspection action security context: %s", context)
 
         inspector_endpoint = keystone_utils.get_endpoint_for_project(
             service_type='baremetal-introspection'
@@ -410,7 +410,7 @@ class SwiftAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Swift action security context: %s" % context)
+        LOG.debug("Swift action security context: %s", context)
 
         swift_endpoint = keystone_utils.get_endpoint_for_project('swift')
 
@@ -433,7 +433,7 @@ class ZaqarAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Zaqar action security context: %s" % context)
+        LOG.debug("Zaqar action security context: %s", context)
 
         zaqar_endpoint = keystone_utils.get_endpoint_for_project(
             service_type='messaging')
@@ -538,7 +538,7 @@ class BarbicanAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Barbican action security context: %s" % context)
+        LOG.debug("Barbican action security context: %s", context)
 
         barbican_endpoint = keystone_utils.get_endpoint_for_project('barbican')
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
@@ -644,7 +644,7 @@ class DesignateAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Designate action security context: %s" % context)
+        LOG.debug("Designate action security context: %s", context)
 
         designate_endpoint = self.get_service_endpoint()
 
@@ -680,7 +680,7 @@ class MagnumAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Magnum action security context: %s" % context)
+        LOG.debug("Magnum action security context: %s", context)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         auth_url = keystone_endpoint.url
@@ -709,7 +709,7 @@ class MuranoAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Murano action security context: %s" % context)
+        LOG.debug("Murano action security context: %s", context)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         murano_endpoint = self.get_service_endpoint()
@@ -737,7 +737,7 @@ class TackerAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Tacker action security context: %s" % context)
+        LOG.debug("Tacker action security context: %s", context)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         tacker_endpoint = self.get_service_endpoint()
@@ -765,7 +765,7 @@ class SenlinAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Senlin action security context: %s" % context)
+        LOG.debug("Senlin action security context: %s", context)
 
         keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
         senlin_endpoint = self.get_service_endpoint()
@@ -793,7 +793,7 @@ class AodhAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Aodh action security context: %s" % context)
+        LOG.debug("Aodh action security context: %s", context)
 
         aodh_endpoint = self.get_service_endpoint()
 
@@ -824,7 +824,7 @@ class GnocchiAction(base.OpenStackAction):
 
     def _create_client(self, context):
 
-        LOG.debug("Gnocchi action security context: %s" % context)
+        LOG.debug("Gnocchi action security context: %s", context)
 
         gnocchi_endpoint = self.get_service_endpoint()
 

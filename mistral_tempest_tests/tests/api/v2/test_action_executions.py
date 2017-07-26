@@ -46,9 +46,11 @@ class ActionExecutionTestsV2(base.TestCase):
             try:
                 cls.client.delete_obj('action_executions', action_ex)
             except Exception as e:
-                LOG.exception('Exception raised when deleting '
-                              'action_executions %s, error message: %s.'
-                              % (action_ex, six.text_type(e)))
+                LOG.exception(
+                    'Exception raised when deleting '
+                    'action_executions %s, error message: %s.',
+                    action_ex, six.text_type(e)
+                )
 
         cls.client.action_executions = []
 
