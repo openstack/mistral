@@ -246,7 +246,7 @@ class DefaultEngineTest(base.DbTestCase):
             task_name='task2'
         )
 
-        self.assertEqual("Environment is not found: foo", e.message)
+        self.assertEqual("Environment is not found: foo", str(e))
 
     def test_start_workflow_with_env_type_error(self):
         e = self.assertRaises(
@@ -261,10 +261,7 @@ class DefaultEngineTest(base.DbTestCase):
             task_name='task2'
         )
 
-        self.assertIn(
-            'Unexpected value type for environment',
-            e.message
-        )
+        self.assertIn('Unexpected value type for environment', str(e))
 
     def test_start_workflow_missing_parameters(self):
         e = self.assertRaises(
@@ -275,8 +272,8 @@ class DefaultEngineTest(base.DbTestCase):
             task_name='task2'
         )
 
-        self.assertIn("Invalid input", e.message)
-        self.assertIn("missing=['param2']", e.message)
+        self.assertIn("Invalid input", str(e))
+        self.assertIn("missing=['param2']", str(e))
 
     def test_start_workflow_unexpected_parameters(self):
         e = self.assertRaises(
@@ -291,8 +288,8 @@ class DefaultEngineTest(base.DbTestCase):
             task_name='task2'
         )
 
-        self.assertIn("Invalid input", e.message)
-        self.assertIn("unexpected=['unexpected_param']", e.message)
+        self.assertIn("Invalid input", str(e))
+        self.assertIn("unexpected=['unexpected_param']", str(e))
 
     def test_on_action_complete(self):
         wf_input = {'param1': 'Hey', 'param2': 'Hi'}

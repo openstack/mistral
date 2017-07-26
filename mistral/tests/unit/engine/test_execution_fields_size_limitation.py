@@ -142,7 +142,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertEqual(
             "Size of 'input' is 1KB which exceeds the limit of 0KB",
-            e.message
+            str(e)
         )
 
     def test_workflow_input_limit(self):
@@ -158,7 +158,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertEqual(
             "Size of 'input' is 1KB which exceeds the limit of 0KB",
-            e.message
+            str(e)
         )
 
     def test_action_input_limit(self):
@@ -241,7 +241,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertIn(
             "Size of 'params' is 1KB which exceeds the limit of 0KB",
-            e.message
+            str(e)
         )
 
     def test_task_execution_state_info_trimmed(self):
