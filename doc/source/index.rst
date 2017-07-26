@@ -28,7 +28,6 @@ User guide
 
    install/index
    configuration/index
-   admin/upgrade_guide
 
 **API**
 
@@ -58,6 +57,14 @@ Developer guide
    :maxdepth: 2
 
    contributor/index
+
+Admin guide
+-----------
+
+.. toctree::
+   :maxdepth: 2
+
+   admin/index
 
 Indices and tables
 ==================
