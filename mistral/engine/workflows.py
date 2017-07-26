@@ -270,6 +270,7 @@ class Workflow(object):
             'state': states.IDLE,
             'output': {},
             'task_execution_id': params.get('task_execution_id'),
+            'root_execution_id': params.get('root_execution_id'),
             'runtime_context': {
                 'index': params.get('index', 0)
             },
