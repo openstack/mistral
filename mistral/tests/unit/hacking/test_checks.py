@@ -59,16 +59,6 @@ class BaseLoggingCheckTest(base.BaseTest):
     def _assert_has_no_errors(self, code, checker, filename=None):
         self._assert_has_errors(code, checker, filename=filename)
 
-    def test_assert_equal_none(self):
-        self.assertEqual(len(list(checks.assert_equal_none(
-            "self.assertEqual(A, None)"))), 1)
-
-        self.assertEqual(len(list(checks.assert_equal_none(
-            "self.assertEqual(None, A)"))), 1)
-
-        self.assertEqual(
-            len(list(checks.assert_equal_none("self.assertIsNone()"))), 0)
-
     def test_no_assert_equal_true_false(self):
         code = """
                   self.assertEqual(context_is_admin, True)

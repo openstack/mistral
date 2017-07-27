@@ -7,8 +7,6 @@ Mistral Specific Commandments
 -----------------------------
 
 - [M001] Use LOG.warning(). LOG.warn() is deprecated.
-- [M318] Change assertEqual(A, None) or assertEqual(None, A) by optimal assert
-  like assertIsNone(A)
 - [M319] Enforce use of assertTrue/assertFalse
 - [M320] Enforce use of assertIs/assertIsNot
 - [M327] Do not use xrange(). xrange() is not compatible with Python 3. Use
