@@ -14,4 +14,3 @@ Mistral Specific Commandments
 - [M328] Python 3: do not use dict.iteritems.
 - [M329] Python 3: do not use dict.iterkeys.
 - [M330] Python 3: do not use dict.itervalues.
-- [M331] String interpolation should be delayed at logging calls.
