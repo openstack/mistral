@@ -30,26 +30,9 @@ import six
 oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
 oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
 oslo_namespace_imports_from_root = re.compile(r"from[\s]+oslo[\s]+import[\s]+")
-assert_equal_end_with_none_re = re.compile(
-    r"(.)*assertEqual\((\w|\.|\'|\"|\[|\])+, None\)")
-assert_equal_start_with_none_re = re.compile(
-    r"(.)*assertEqual\(None, (\w|\.|\'|\"|\[|\])+\)")
 log_string_interpolation = re.compile(r".*LOG\.(?:error|warn|warning|info"
                                       r"|critical|exception|debug)"
                                       r"\([^,]*%[^,]*[,)]")
-
-
-def assert_equal_none(logical_line):
-    """Check for assertEqual(A, None) or assertEqual(None, A) sentences
-
-    M318
-    """
-    msg = ("M318: assertEqual(A, None) or assertEqual(None, A) "
-           "sentences not allowed. Use assertIsNone instead.")
-    res = (assert_equal_start_with_none_re.match(logical_line) or
-           assert_equal_end_with_none_re.match(logical_line))
-    if res:
-        yield (0, msg)
 
 
 def no_assert_equal_true_false(logical_line):
@@ -306,7 +289,6 @@ class CheckForLoggingIssues(BaseASTChecker):
 
 
 def factory(register):
-    register(assert_equal_none)
     register(no_assert_equal_true_false)
     register(no_assert_true_false_is_not)
     register(check_oslo_namespace_imports)
