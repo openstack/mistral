@@ -17,6 +17,7 @@ import mock
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.services import periodic
 from mistral.services import security
 from mistral.services import triggers
@@ -173,3 +174,12 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             next_time,
             cron_trigger_db.next_execution_time
         )
+
+    def test_validate_cron_trigger_input_first_time(self):
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        first_time = datetime.datetime.utcnow() + datetime.timedelta(0, 1)
+        self.assertRaises(exc.InvalidModelException,
+                          triggers.validate_cron_trigger_input,
+                          None,
+                          first_time,
+                          None)

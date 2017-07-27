@@ -15,7 +15,6 @@
 import croniter
 import datetime
 import six
-import time
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import utils as eng_utils
@@ -45,10 +44,8 @@ def validate_cron_trigger_input(pattern, first_time, count):
             'Pattern or first_execution_time must be specified.'
         )
     if first_time:
-        first_second = time.mktime(first_time.timetuple())
-        first_utc_time = datetime.datetime.utcfromtimestamp(first_second)
-        sum_time = datetime.datetime.utcnow() + datetime.timedelta(0, 60)
-        if sum_time > first_utc_time:
+        valid_min_time = datetime.datetime.utcnow() + datetime.timedelta(0, 60)
+        if valid_min_time > first_time:
             raise exc.InvalidModelException(
                 'first_execution_time must be at least 1 minute in the future.'
             )
