@@ -18,7 +18,6 @@ import six
 from oslo_log import log as logging
 from tempest.lib import decorators
 from tempest.lib import exceptions
-from tempest import test
 
 from mistral_tempest_tests.tests import base
 
@@ -158,7 +157,7 @@ class ActionExecutionTestsV2(base.TestCase):
         self.assertEqual(404, output['result']['status'])
 
     @decorators.attr(type='sanity')
-    @test.related_bug('1667415')
+    @decorators.related_bug('1667415')
     @decorators.idempotent_id('3c73de7a-4af0-4657-90d6-d7ebd3c7da18')
     def test_run_action_std_http_non_utf8_response(self):
         resp, body = self.client.create_action_execution(
