@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
 from mistral import context as auth_context
 from mistral import exceptions
 from mistral.tests.unit import base
@@ -44,7 +46,10 @@ class KeystoneUtilsTest(base.BaseTest):
             keystone.format_url(url_template, self.values)
         )
 
-    def test_get_endpoint_for_project_noauth(self):
+    @mock.patch.object(keystone, 'client')
+    def test_get_endpoint_for_project_noauth(self, client):
+        client().tokens.get_token_data.return_value = {'token': None}
+
         # service_catalog is not set by default.
         auth_context.set_ctx(base.get_context())
         self.addCleanup(auth_context.set_ctx, None)

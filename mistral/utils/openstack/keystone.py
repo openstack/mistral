@@ -200,7 +200,8 @@ def obtain_service_catalog(ctx):
         response = ctx.service_catalog
 
         # Target service catalog may not be passed via API.
-        if not response and ctx.is_target:
+        # If we don't have the catalog yet, it should be requested.
+        if not response:
             response = client().tokens.get_token_data(
                 token,
                 include_catalog=True
