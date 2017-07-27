@@ -285,7 +285,7 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
             yaml.safe_dump(dsl_dict)
         )
 
-        self.assertIn("'name' is a required property", exception.message)
+        self.assertIn("'name' is a required property", str(exception))
 
     def test_name(self):
         tests = [

@@ -598,7 +598,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             wf_text
         )
 
-        self.assertIn("Task 'task3' not found", exception.message)
+        self.assertIn("Task 'task3' not found", str(exception))
 
     def test_delete_workflow_completion_check_on_stop(self):
         wf_text = """---

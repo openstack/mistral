@@ -26,7 +26,7 @@ class ActionSpecValidation(base.WorkbookSpecValidationTestCase):
 
         exception = self._parse_dsl_spec(changes=actions, expect_error=True)
 
-        self.assertIn("'base' is a required property", exception.message)
+        self.assertIn("'base' is a required property", str(exception))
 
     def test_base(self):
         tests = [

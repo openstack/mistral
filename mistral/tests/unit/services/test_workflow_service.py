@@ -170,7 +170,7 @@ class WorkflowServiceTest(base.DbTestCase):
             WORKFLOW
         )
 
-        self.assertIn("Workflow not found", exception.message)
+        self.assertIn("Workflow not found", str(exception))
 
     def test_invalid_workflow_list(self):
         exception = self.assertRaises(
@@ -179,7 +179,7 @@ class WorkflowServiceTest(base.DbTestCase):
             INVALID_WORKFLOW
         )
 
-        self.assertIn("Invalid DSL", exception.message)
+        self.assertIn("Invalid DSL", str(exception))
 
     def test_update_workflow_execution_env(self):
         wf_exec_template = {
