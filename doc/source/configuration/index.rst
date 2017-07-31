@@ -121,7 +121,7 @@ directory.
      [oslo_policy]
      policy_file = <path-of-policy.json file>
 
-    Default policy.json file is in ``mistral/etc/``. For more deatils see `policy.json file <https://docs.openstack.org/ocata/config-reference/policy-json-file.html>`_.
+    Default policy.json file is in ``mistral/etc/``. For more details see `policy.json file <https://docs.openstack.org/ocata/config-reference/policy-json-file.html>`_.
 
 #. After that try to run mistral engine and see it is running without any error::
 
