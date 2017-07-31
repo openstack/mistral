@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    Creating and running workflows within a namespace. Workflows with the same
+    name can be added to the same project as long as they are within a
+    different namespace. This feature is backwards compatible.
+
+    All existing workflows are assumed to be in the default namespace,
+    represented by an empty string. Also if a workflow is created without a
+    namespace spcified, it is assumed to be in the defualt namespace.
+
+    When a workflow is being executed, the namespace is saved under params and
+    passed to all its sub workflow executions. When looking for the next
+    sub-workflow to run, the correct workflow will be found by name and
+    namespace, where the namespace can be the workflow namespace or the default
+    namespace. Workflows in the same namespace as the top workflow will be
+    given a higher priority.
