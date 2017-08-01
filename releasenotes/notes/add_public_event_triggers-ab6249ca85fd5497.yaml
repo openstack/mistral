@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Added ability to create public event triggers. Public event triggers
+    are applied to all projects, i.e. workflows are triggered by event in
+    any project. Currently public event triggers may be created only by
+    admin but it can be changed in policy.json.
