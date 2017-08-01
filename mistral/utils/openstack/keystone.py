@@ -31,7 +31,7 @@ CONF = cfg.CONF
 
 def client():
     ctx = context.ctx()
-    auth_url = ctx.auth_uri
+    auth_url = ctx.auth_uri or CONF.keystone_authtoken.auth_uri
 
     cl = ks_client.Client(
         user_id=ctx.user_id,
