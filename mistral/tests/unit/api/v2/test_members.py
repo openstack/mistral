@@ -167,9 +167,7 @@ class TestMembersController(base.APITest):
     def test_get_memberships_nonexistent_wf(self, auth_mock):
         nonexistent_wf_id = uuidutils.generate_uuid()
 
-        resp = self.app.get(
-            '/v2/workflows/%s/members' % nonexistent_wf_id,
-        )
+        resp = self.app.get('/v2/workflows/%s/members' % nonexistent_wf_id)
 
         self.assertEqual(200, resp.status_int)
         self.assertEqual(0, len(resp.json['members']))

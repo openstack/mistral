@@ -233,6 +233,7 @@ class Workflow(object):
             'name': wf_def.name,
             'description': desc,
             'workflow_name': wf_def.name,
+            'workflow_namespace': wf_def.namespace,
             'workflow_id': wf_def.id,
             'spec': self.wf_spec.to_dict(),
             'state': states.IDLE,

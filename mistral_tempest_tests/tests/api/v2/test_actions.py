@@ -133,9 +133,7 @@ class ActionTestsV2(base.TestCase):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
-        resp, body = self.client.get_list_obj(
-            'actions?is_system=False'
-        )
+        resp, body = self.client.get_list_obj('actions?is_system=False')
 
         self.assertEqual(200, resp.status)
         self.assertNotEmpty(body['actions'])
@@ -149,9 +147,7 @@ class ActionTestsV2(base.TestCase):
         resp, body = self.client.create_action('action_v2.yaml')
         self.assertEqual(201, resp.status)
 
-        resp, body = self.client.get_list_obj(
-            'actions?is_system=neq:False'
-        )
+        resp, body = self.client.get_list_obj('actions?is_system=neq:False')
 
         self.assertEqual(200, resp.status)
         self.assertNotEmpty(body['actions'])
@@ -169,8 +165,7 @@ class ActionTestsV2(base.TestCase):
         _, body = self.client.get_object('actions', created_acts[0])
         time = body['created_at']
         resp, body = self.client.get_list_obj(
-            'actions?created_at=in:' + time.replace(' ', '%20')
-        )
+            'actions?created_at=in:' + time.replace(' ', '%20'))
 
         self.assertEqual(200, resp.status)
         action_names = [action['name'] for action in body['actions']]

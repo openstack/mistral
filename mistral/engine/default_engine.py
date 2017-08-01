@@ -36,12 +36,16 @@ from mistral.workflow import states
 class DefaultEngine(base.Engine):
     @action_queue.process
     @profiler.trace('engine-start-workflow', hide_args=True)
-    def start_workflow(self, wf_identifier, wf_input, description='',
-                       **params):
+    def start_workflow(self, wf_identifier, wf_namespace='', wf_input=None,
+                       description='', **params):
+        if wf_namespace:
+            params['namespace'] = wf_namespace
+
         with db_api.transaction():
             wf_ex = wf_handler.start_workflow(
                 wf_identifier,
-                wf_input,
+                wf_namespace,
+                wf_input or {},
                 description,
                 params
             )

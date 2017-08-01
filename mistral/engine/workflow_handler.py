@@ -33,11 +33,16 @@ _CHECK_AND_COMPLETE_PATH = (
 
 
 @profiler.trace('workflow-handler-start-workflow', hide_args=True)
-def start_workflow(wf_identifier, wf_input, desc, params):
+def start_workflow(wf_identifier, wf_namespace, wf_input, desc, params):
     wf = workflows.Workflow()
 
+    wf_def = db_api.get_workflow_definition(wf_identifier, wf_namespace)
+
+    if 'namespace' not in params:
+        params['namespace'] = wf_def.namespace
+
     wf.start(
-        wf_def=db_api.get_workflow_definition(wf_identifier),
+        wf_def=wf_def,
         input_dict=wf_input,
         desc=desc,
         params=params

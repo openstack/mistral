@@ -19,6 +19,8 @@ from tempest.lib import exceptions
 from mistral import utils
 from mistral_tempest_tests.tests import base
 
+import json
+
 
 class ExecutionTestsV2(base.TestCase):
 
@@ -72,8 +74,7 @@ class ExecutionTestsV2(base.TestCase):
         self.assertIn(exec_id_2, [ex['id'] for ex in body['executions']])
 
         resp, body = self.client.get_list_obj(
-            'executions?limit=1&sort_keys=workflow_name&sort_dirs=asc'
-        )
+            'executions?limit=1&sort_keys=workflow_name&sort_dirs=asc')
 
         self.assertEqual(200, resp.status)
         self.assertEqual(1, len(body['executions']))
@@ -127,8 +128,8 @@ class ExecutionTestsV2(base.TestCase):
     def test_create_execution_for_reverse_wf(self):
         resp, body = self.client.create_execution(
             self.reverse_wf['name'],
-            {self.reverse_wf['input']: "Bye"},
-            {"task_name": "goodbye"})
+            wf_input={self.reverse_wf['input']: "Bye"},
+            params={"task_name": "goodbye"})
 
         exec_id = body['id']
         self.assertEqual(201, resp.status)
@@ -327,3 +328,91 @@ class ExecutionTestsV2(base.TestCase):
             'executions',
             exec_id
         )
+
+    @decorators.idempotent_id('a882876b-7565-4f7f-9714-d99032ffaabb')
+    @decorators.attr(type='sanity')
+    def test_workflow_execution_of_nested_workflows_within_namespace(self):
+        low_wf = 'for_wf_namespace/lowest_level_wf.yaml'
+        middle_wf = 'for_wf_namespace/middle_wf.yaml'
+        top_wf = 'for_wf_namespace/top_level_wf.yaml'
+
+        resp, wf = self.client.create_workflow(low_wf)
+        self.assertEqual(201, resp.status)
+
+        namespace = 'abc'
+        resp, wf = self.client.create_workflow(low_wf, namespace=namespace)
+        self.assertEqual(201, resp.status)
+
+        resp, wf = self.client.create_workflow(middle_wf)
+        self.assertEqual(201, resp.status)
+
+        resp, wf = self.client.create_workflow(top_wf)
+        self.assertEqual(201, resp.status)
+
+        resp, wf = self.client.create_workflow(top_wf, namespace=namespace)
+        self.assertEqual(201, resp.status)
+
+        wf_name = wf['workflows'][0]['name']
+        resp, top_execution = self.client.create_execution(wf_name, namespace)
+
+        self.assertEqual(201, resp.status)
+        self.assertEqual('RUNNING', top_execution['state'])
+        self.assertEqual(wf_name, top_execution['workflow_name'])
+        self.assertEqual(wf_name, top_execution['workflow_name'])
+        self.assertEqual(namespace, top_execution['workflow_namespace'])
+
+        self.client.wait_execution(top_execution, target_state='SUCCESS')
+
+        self.assertEqual(
+            namespace,
+            json.loads(top_execution['params'])['namespace']
+        )
+
+        resp, tasks = self.client.get_tasks(top_execution['id'])
+        top_task = tasks['tasks'][0]
+
+        self.assertEqual(wf_name, top_task['workflow_name'])
+        self.assertEqual(namespace, top_task['workflow_namespace'])
+
+        resp, executions = self.client.get_executions(top_task['id'])
+        middle_execution = executions['executions'][0]
+
+        self.assertEqual('middle_wf', middle_execution['workflow_name'])
+        self.assertEqual('', middle_execution['workflow_namespace'])
+
+        self.assertEqual(
+            namespace,
+            json.loads(middle_execution['params'])['namespace']
+        )
+
+        resp, tasks = self.client.get_tasks(middle_execution['id'])
+        middle_task = tasks['tasks'][0]
+
+        self.assertEqual('middle_wf', middle_task['workflow_name'])
+        self.assertEqual('', middle_task['workflow_namespace'])
+
+        resp, executions = self.client.get_executions(middle_task['id'])
+        lowest_execution = executions['executions'][0]
+
+        self.assertEqual('lowest_level_wf', lowest_execution['workflow_name'])
+        self.assertEqual(namespace, lowest_execution['workflow_namespace'])
+
+        self.assertEqual(
+            namespace,
+            json.loads(lowest_execution['params'])['namespace']
+        )
+
+        resp, tasks = self.client.get_tasks(lowest_execution['id'])
+        lowest_task = tasks['tasks'][0]
+
+        self.assertEqual('lowest_level_wf', lowest_task['workflow_name'])
+        self.assertEqual(namespace, lowest_task['workflow_namespace'])
+
+        resp, action_executions = self.client.get_action_executions(
+            lowest_task['id']
+        )
+
+        action_execution = action_executions['action_executions'][0]
+
+        self.assertEqual('lowest_level_wf', action_execution['workflow_name'])
+        self.assertEqual(namespace, action_execution['workflow_namespace'])

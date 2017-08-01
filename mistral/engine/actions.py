@@ -144,6 +144,7 @@ class Action(object):
             values.update({
                 'task_execution_id': self.task_ex.id,
                 'workflow_name': self.task_ex.workflow_name,
+                'workflow_namespace': self.task_ex.workflow_namespace,
                 'workflow_id': self.task_ex.workflow_id,
                 'project_id': self.task_ex.project_id,
             })
@@ -492,7 +493,8 @@ class WorkflowAction(Action):
         wf_def = engine_utils.resolve_workflow_definition(
             parent_wf_ex.workflow_name,
             parent_wf_spec.get_name(),
-            wf_spec_name
+            namespace=parent_wf_ex.params['namespace'],
+            wf_spec_name=wf_spec_name
         )
 
         wf_spec = spec_parser.get_workflow_spec_by_definition_id(
@@ -502,7 +504,8 @@ class WorkflowAction(Action):
 
         wf_params = {
             'task_execution_id': self.task_ex.id,
-            'index': index
+            'index': index,
+            'namespace': parent_wf_ex.params['namespace']
         }
 
         if 'env' in parent_wf_ex.params:
@@ -516,6 +519,7 @@ class WorkflowAction(Action):
 
         wf_handler.start_workflow(
             wf_def.id,
+            wf_def.namespace,
             input_dict,
             "sub-workflow execution",
             wf_params

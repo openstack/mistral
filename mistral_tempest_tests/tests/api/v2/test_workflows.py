@@ -243,6 +243,58 @@ class WorkflowTestsV2(base.TestCase):
         self.assertEqual(name, body['workflows'][0]['name'])
 
     @decorators.attr(type='sanity')
+    @decorators.idempotent_id('42f5d135-a2b8-4a31-8135-c5ce8c5f1ed5')
+    def test_workflow_within_namespace(self):
+        self.useFixture(lockutils.LockFixture('mistral-workflow'))
+
+        namespace = 'abc'
+        resp, body = self.client.create_workflow(
+            'single_wf.yaml',
+            namespace=namespace
+        )
+        name = body['workflows'][0]['name']
+        id = body['workflows'][0]['id']
+
+        self.assertEqual(201, resp.status)
+        self.assertEqual(name, body['workflows'][0]['name'])
+
+        resp, body = self.client.get_workflow(
+            id
+        )
+
+        self.assertEqual(namespace, body['namespace'])
+
+        resp, body = self.client.update_workflow('single_wf.yaml', namespace)
+
+        self.assertEqual(200, resp.status)
+        self.assertEqual(name, body['workflows'][0]['name'])
+        self.assertEqual(namespace, body['workflows'][0]['namespace'])
+
+        namespace = 'abc2'
+        resp, body = self.client.create_workflow(
+            'single_wf.yaml',
+            namespace=namespace
+        )
+        name = body['workflows'][0]['name']
+        id = body['workflows'][0]['id']
+
+        self.assertEqual(201, resp.status)
+        self.assertEqual(name, body['workflows'][0]['name'])
+
+        resp, body = self.client.get_workflow(id)
+
+        self.assertEqual(namespace, body['namespace'])
+
+        self.assertRaises(exceptions.NotFound, self.client.get_workflow, name)
+
+        self.client.create_workflow(
+            'single_wf.yaml'
+        )
+
+        resp, body = self.client.get_workflow(id)
+        self.assertEqual(200, resp.status)
+
+    @decorators.attr(type='sanity')
     @decorators.idempotent_id('02bc1fc3-c31a-4e37-bb3d-eda46818505c')
     def test_get_workflow_definition(self):
         self.useFixture(lockutils.LockFixture('mistral-workflow'))
@@ -279,6 +331,15 @@ class WorkflowTestsV2(base.TestCase):
     def test_get_nonexistent_workflow(self):
         self.assertRaises(exceptions.NotFound, self.client.get_object,
                           'workflows', 'nonexist')
+
+        exception = self.assertRaises(
+            exceptions.NotFound,
+            self.client.get_workflow,
+            'nonexist_wf',
+            'nonexist_namespace'
+        )
+        self.assertIn('nonexist_wf', str(exception))
+        self.assertIn('nonexist_namespace', str(exception))
 
     @decorators.attr(type='negative')
     @decorators.idempotent_id('6b917213-7f11-423a-8fe0-55795dcf0fb2')

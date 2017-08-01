@@ -72,8 +72,8 @@ class MistralClientBase(rest_client.RestClient):
         self.action_executions = []
         self.event_triggers = []
 
-    def get_list_obj(self, name):
-        resp, body = self.get(name)
+    def get_list_obj(self, url_path):
+        resp, body = self.get(url_path)
 
         return resp, json.loads(body)
 

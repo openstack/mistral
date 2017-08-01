@@ -123,7 +123,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_service.create_workflows(new_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -137,6 +137,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             exc.SizeLimitExceededException,
             self.engine.start_workflow,
             'wf',
+            '',
             {}
         )
 
@@ -153,6 +154,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             exc.SizeLimitExceededException,
             self.engine.start_workflow,
             'wf',
+            '',
             {'workflow_input': ''.join('A' for _ in range(1024))}
         )
 
@@ -167,7 +169,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_service.create_workflows(new_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn(
@@ -181,6 +183,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf',
+            '',
             {'action_output_length': 1024}
         )
 
@@ -201,7 +204,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_service.create_workflows(new_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.await_workflow_error(wf_ex.id)
 
@@ -234,6 +237,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             exc.SizeLimitExceededException,
             self.engine.start_workflow,
             'wf',
+            '',
             {},
             '',
             env={'param': long_string}
@@ -257,6 +261,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf',
+            '',
             {
                 'action_output_length': 80000,
                 'action_output_dict': True,

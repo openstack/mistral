@@ -72,7 +72,7 @@ class TestSafeRerun(base.EngineTestCase):
         # to true.
 
         wf_service.create_workflows(wf_text)
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -118,7 +118,7 @@ class TestSafeRerun(base.EngineTestCase):
         # to true.
 
         wf_service.create_workflows(wf_text)
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -153,7 +153,7 @@ class TestSafeRerun(base.EngineTestCase):
         """
 
         wf_service.create_workflows(wf_text)
-        wf_ex = self.engine.start_workflow('wf', {})
+        wf_ex = self.engine.start_workflow('wf', '', {})
 
         self.await_workflow_success(wf_ex.id)
 

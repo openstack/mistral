@@ -79,8 +79,8 @@ class EngineClient(eng.Engine):
         self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     @base.wrap_messaging_exception
-    def start_workflow(self, wf_identifier, wf_input, description='',
-                       **params):
+    def start_workflow(self, wf_identifier, wf_namespace, wf_input=None,
+                       description='', **params):
         """Starts workflow sending a request to engine over RPC.
 
         :return: Workflow execution.
@@ -89,6 +89,7 @@ class EngineClient(eng.Engine):
             auth_ctx.ctx(),
             'start_workflow',
             workflow_identifier=wf_identifier,
+            workflow_namespace=wf_namespace,
             workflow_input=wf_input or {},
             description=description,
             params=params

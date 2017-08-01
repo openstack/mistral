@@ -51,7 +51,7 @@ class WorkflowVariablesTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', {'param2': 'Renat'})
+        wf_ex = self.engine.start_workflow('wf', '', {'param2': 'Renat'})
 
         self.await_workflow_success(wf_ex.id)
 

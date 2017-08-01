@@ -1,0 +1,6 @@
+---
+version: '2.0'
+top_level_wf:
+  tasks:
+    run_workflow_with_name_middle_wf:
+      workflow: middle_wf

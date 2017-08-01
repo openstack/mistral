@@ -105,7 +105,7 @@ class ActionDefaultTest(base.EngineTestCase):
     def test_action_defaults_from_env(self):
         wf_service.create_workflows(WORKFLOW1)
 
-        wf_ex = self.engine.start_workflow('wf1', None, env=ENV)
+        wf_ex = self.engine.start_workflow('wf1', env=ENV)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -131,7 +131,7 @@ class ActionDefaultTest(base.EngineTestCase):
     def test_action_defaults_from_env_not_applied(self):
         wf_service.create_workflows(WORKFLOW2)
 
-        wf_ex = self.engine.start_workflow('wf2', None, env=ENV)
+        wf_ex = self.engine.start_workflow('wf2', env=ENV)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -167,6 +167,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf1_with_items',
+            '',
             wf_input,
             env=ENV
         )
@@ -206,6 +207,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf2_with_items',
+            '',
             wf_input,
             env=ENV
         )

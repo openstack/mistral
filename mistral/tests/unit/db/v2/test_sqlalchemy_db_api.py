@@ -373,7 +373,8 @@ WF_DEFINITIONS = [
         'scope': 'public',
         'project_id': '1233',
         'trust_id': '1234',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
+        'namespace': ''
     },
     {
         'name': 'my_wf2',
@@ -383,7 +384,8 @@ WF_DEFINITIONS = [
         'scope': 'private',
         'project_id': '1233',
         'trust_id': '12345',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
+        'namespace': ''
     },
 ]
 

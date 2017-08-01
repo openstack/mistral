@@ -63,8 +63,7 @@ class TasksTestsV2(base.TestCase):
     @decorators.idempotent_id('3230d694-40fd-4094-ad12-024f40a21b94')
     def test_get_tasks_of_execution(self):
         resp, body = self.client.get_list_obj(
-            'tasks?workflow_execution_id=%s' % self.execution_id
-        )
+            'tasks?workflow_execution_id=%s' % self.execution_id)
 
         self.assertEqual(200, resp.status)
         self.assertEqual(

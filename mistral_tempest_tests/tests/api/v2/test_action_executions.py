@@ -226,3 +226,31 @@ class ActionExecutionTestsV2(base.TestCase):
         self.assertEqual(201, resp.status)
         output = json.loads(body['output'])
         self.assertEqual(200, output['result']['status'])
+
+    @decorators.idempotent_id('9438e195-031c-4502-b216-6d72941ec281')
+    @decorators.attr(type='sanity')
+    def test_action_execution_of_workflow_within_namespace(self):
+
+        resp, body = self.client.create_workflow('wf_v2.yaml', namespace='abc')
+        wf_name = body['workflows'][0]['name']
+        wf_namespace = body['workflows'][0]['namespace']
+        self.assertEqual(201, resp.status)
+        resp, body = self.client.create_execution(
+            wf_name,
+            wf_namespace=wf_namespace
+        )
+        self.assertEqual(201, resp.status)
+        resp, body = self.client.get_list_obj('tasks')
+        self.assertEqual(200, resp.status)
+        task_id = body['tasks'][0]['id']
+
+        resp, body = self.client.get_list_obj(
+            'action_executions?include_output=true&task_execution_id=%s' %
+            task_id)
+
+        self.assertEqual(200, resp.status)
+        action_execution = body['action_executions'][0]
+
+        self.assertEqual(200, resp.status)
+        action_execution = body['action_executions'][0]
+        self.assertEqual(wf_namespace, action_execution['workflow_namespace'])
