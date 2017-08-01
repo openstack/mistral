@@ -271,11 +271,25 @@ class DefaultEventEngine(base.EventEngine):
                     # There may be more projects registered the same event.
                     project_ids = [t['project_id'] for t in triggers]
 
+                    any_public = any(
+                        [t['scope'] == 'public' for t in triggers]
+                    )
+
                     # Skip the event doesn't belong to any event trigger owner.
-                    if (CONF.pecan.auth_enable and
+                    if (not any_public and CONF.pecan.auth_enable and
                             context.get('project_id', '') not in project_ids):
                         self.event_queue.task_done()
                         continue
+
+                    # Need to choose what trigger(s) should be called exactly.
+                    triggers_to_call = []
+                    for t in triggers:
+                        project_trigger = (
+                            t['project_id'] == context.get('project_id')
+                        )
+                        public_trigger = t['scope'] == 'public'
+                        if project_trigger or public_trigger:
+                            triggers_to_call.append(t)
 
                     LOG.debug('Start to handle event: %s, %d trigger(s) '
                               'registered.', event_type, len(triggers))
@@ -285,7 +299,7 @@ class DefaultEventEngine(base.EventEngine):
                         event
                     )
 
-                    self._start_workflow(triggers, event_params)
+                    self._start_workflow(triggers_to_call, event_params)
 
             self.event_queue.task_done()
 

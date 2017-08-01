@@ -144,7 +144,8 @@ def delete_cron_trigger(name, trust_id=None):
 
 
 def create_event_trigger(name, exchange, topic, event, workflow_id,
-                         workflow_input=None, workflow_params=None):
+                         scope='private', workflow_input=None,
+                         workflow_params=None):
     with db_api.transaction():
         wf_def = db_api.get_workflow_definition_by_id(workflow_id)
 
@@ -169,6 +170,7 @@ def create_event_trigger(name, exchange, topic, event, workflow_id,
             'exchange': exchange,
             'topic': topic,
             'event': event,
+            'scope': scope,
         }
 
         security.add_trust_id(values)

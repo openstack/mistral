@@ -13,11 +13,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import copy
 import time
 
 import mock
 from oslo_config import cfg
 
+from mistral import context as auth_context
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.event_engine import default_event_engine as evt_eng
 from mistral.rpc import clients as rpc
@@ -94,7 +96,65 @@ class EventEngineTest(base.DbTestCase):
 
     @mock.patch('mistral.messaging.start_listener')
     @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
+    def test_event_engine_public_trigger(self, mock_start):
+        t = copy.deepcopy(EVENT_TRIGGER)
+
+        # Create public trigger as an admin
+        self.ctx = base.get_context(default=False, admin=True)
+        auth_context.set_ctx(self.ctx)
+
+        t['scope'] = 'public'
+        t['project_id'] = self.ctx.tenant
+        trigger = db_api.create_event_trigger(t)
+
+        # Switch to the user.
+        self.ctx = base.get_context(default=True)
+        auth_context.set_ctx(self.ctx)
+
+        e_engine = evt_eng.DefaultEventEngine()
+
+        self.addCleanup(e_engine.handler_tg.stop)
+
+        event = {
+            'event_type': EVENT_TYPE,
+            'payload': {},
+            'publisher': 'fake_publisher',
+            'timestamp': '',
+            'context': {
+                'project_id': '%s' % self.ctx.project_id,
+                'user_id': 'fake_user'
+            },
+        }
+
+        # Moreover, assert that trigger.project_id != event.project_id
+        self.assertNotEqual(
+            trigger.project_id, event['context']['project_id']
+        )
+
+        with mock.patch.object(e_engine, 'engine_client') as client_mock:
+            e_engine.event_queue.put(event)
+
+            time.sleep(1)
+
+            self.assertEqual(1, client_mock.start_workflow.call_count)
+
+            args, kwargs = client_mock.start_workflow.call_args
+
+            self.assertEqual((EVENT_TRIGGER['workflow_id'], {}), args)
+            self.assertDictEqual(
+                {
+                    'service': 'fake_publisher',
+                    'project_id': '%s' % self.ctx.project_id,
+                    'user_id': 'fake_user',
+                    'timestamp': ''
+                },
+                kwargs['event_params']
+            )
+
+    @mock.patch('mistral.messaging.start_listener')
+    @mock.patch.object(rpc, 'get_engine_client', mock.Mock())
     def test_process_event_queue(self, mock_start):
+        EVENT_TRIGGER['project_id'] = self.ctx.project_id
         db_api.create_event_trigger(EVENT_TRIGGER)
 
         e_engine = evt_eng.DefaultEventEngine()
@@ -106,7 +166,10 @@ class EventEngineTest(base.DbTestCase):
             'payload': {},
             'publisher': 'fake_publisher',
             'timestamp': '',
-            'context': {'project_id': 'fake_project', 'user_id': 'fake_user'},
+            'context': {
+                'project_id': '%s' % self.ctx.project_id,
+                'user_id': 'fake_user'
+            },
         }
 
         with mock.patch.object(e_engine, 'engine_client') as client_mock:
@@ -122,7 +185,7 @@ class EventEngineTest(base.DbTestCase):
             self.assertDictEqual(
                 {
                     'service': 'fake_publisher',
-                    'project_id': 'fake_project',
+                    'project_id': '%s' % self.ctx.project_id,
                     'user_id': 'fake_user',
                     'timestamp': ''
                 },
