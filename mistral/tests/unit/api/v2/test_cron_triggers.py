@@ -21,6 +21,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests.unit.api import base
+from mistral.tests.unit import base as unit_base
 
 WF = models.WorkflowDefinition(
     spec={
@@ -149,6 +150,18 @@ class TestCronTriggerController(base.APITest):
 
         self.assertEqual(1, len(resp.json['cron_triggers']))
         self.assertDictEqual(TRIGGER, resp.json['cron_triggers'][0])
+
+    @mock.patch.object(db_api, 'get_cron_triggers')
+    @mock.patch('mistral.context.MistralContext.from_environ')
+    def test_get_all_projects_admin(self, mock_context, mock_get_triggers):
+        admin_ctx = unit_base.get_context(admin=True)
+        mock_context.return_value = admin_ctx
+
+        resp = self.app.get('/v2/cron_triggers?all_projects=true')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertTrue(mock_get_triggers.call_args[1].get('insecure', False))
 
     @mock.patch.object(db_api, "get_cron_triggers", MOCK_EMPTY)
     def test_get_all_empty(self):
