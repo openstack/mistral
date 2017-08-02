@@ -102,7 +102,7 @@ This function returns a random UUID using the current workflow execution ID
 as a namespace.
 
 The ``context`` argument will be passed by Mistral YAQL engine to the
-function. It is invisble to the user. It contains variables from the current
+function. It is invisible to the user. It contains variables from the current
 task execution scope, such as ``__execution`` which is a dictionary with
 information about the current workflow execution such as its ``id``.
 

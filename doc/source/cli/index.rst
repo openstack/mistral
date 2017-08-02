@@ -8,7 +8,7 @@ Mistral Client
 --------------
 
 The best way to learn about all the commands and arguements that are expected
-is to use the ``mistral help`` comand.
+is to use the ``mistral help`` command.
 
 .. code-block:: bash
 
@@ -34,7 +34,7 @@ It can also be used with the name of a sub-command.
 
     positional arguments:
       workflow_identifier   Workflow ID or name. Workflow name will be deprecated
-                            sinceMitaka.
+                            since Mitaka.
     ...
 
 
@@ -81,7 +81,7 @@ Then detailed help output can be requested for an individual command.
 
     positional arguments:
       workflow_identifier   Workflow ID or name. Workflow name will be deprecated
-                            sinceMitaka.
+                            since Mitaka.
       workflow_input        Workflow input
       params                Workflow additional parameters
 
