@@ -94,13 +94,13 @@ class CronTriggersController(rest.RestController):
                          wtypes.text, wtypes.text, types.uuid, types.jsontype,
                          types.jsontype, resources.SCOPE_TYPES, wtypes.text,
                          wtypes.IntegerType(minimum=1), wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', name=None, workflow_name=None,
                 workflow_id=None, workflow_input=None, workflow_params=None,
                 scope=None, pattern=None, remaining_executions=None,
                 first_execution_time=None, next_execution_time=None,
-                created_at=None, updated_at=None):
+                created_at=None, updated_at=None, all_projects=False):
         """Return all cron triggers.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -138,8 +138,12 @@ class CronTriggersController(rest.RestController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param all_projects: Optional. Get resources of all projects.
         """
         acl.enforce('cron_triggers:list', context.ctx())
+
+        if all_projects:
+            acl.enforce('cron_triggers:list:all_projects', context.ctx())
 
         filters = filter_utils.create_filters_from_request_params(
             created_at=created_at,
@@ -158,8 +162,8 @@ class CronTriggersController(rest.RestController):
 
         LOG.info(
             "Fetch cron triggers. marker=%s, limit=%s, sort_keys=%s, "
-            "sort_dirs=%s, filters=%s",
-            marker, limit, sort_keys, sort_dirs, filters
+            "sort_dirs=%s, filters=%s, all_projects=%s",
+            marker, limit, sort_keys, sort_dirs, filters, all_projects
         )
 
         return rest_utils.get_all(
@@ -172,5 +176,6 @@ class CronTriggersController(rest.RestController):
             sort_keys=sort_keys,
             sort_dirs=sort_dirs,
             fields=fields,
+            all_projects=all_projects,
             **filters
         )

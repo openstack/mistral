@@ -19,6 +19,7 @@
     "cron_triggers:delete": "rule:admin_or_owner",
     "cron_triggers:get": "rule:admin_or_owner",
     "cron_triggers:list": "rule:admin_or_owner",
+    "cron_triggers:list:all_projects": "rule:admin_only",
 
     "environments:create": "rule:admin_or_owner",
     "environments:delete": "rule:admin_or_owner",
