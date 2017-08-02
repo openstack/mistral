@@ -81,7 +81,12 @@ def create_context(trust_id, project_id):
     )
 
 
-def delete_trust(trust_id):
+def delete_trust(trust_id=None):
+    if not trust_id:
+        # Try to retrieve trust from context.
+        if auth_ctx.has_ctx():
+            trust_id = auth_ctx.ctx().trust_id
+
     if not trust_id:
         return
 

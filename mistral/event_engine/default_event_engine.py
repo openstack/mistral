@@ -14,6 +14,7 @@
 #    under the License.
 
 from collections import defaultdict
+import json
 import os
 import threading
 
@@ -237,12 +238,23 @@ class DefaultEventEngine(base.EventEngine):
             ctx = security.create_context(t['trust_id'], t['project_id'])
             auth_ctx.set_ctx(ctx)
 
+            description = {
+                "description": (
+                    "Workflow execution created by event"
+                    " trigger '(%s)'." % t['id']
+                ),
+                "triggered_by": {
+                    "type": "event_trigger",
+                    "id": t['id'],
+                    "name": t['name']
+                }
+            }
+
             try:
                 self.engine_client.start_workflow(
                     t['workflow_id'],
                     t['workflow_input'],
-                    description="Workflow execution created by event "
-                                "trigger %s." % t['id'],
+                    description=json.dumps(description),
                     **workflow_params
                 )
             except Exception as e:
@@ -389,5 +401,7 @@ class DefaultEventEngine(base.EventEngine):
             )
 
             return
+
+        security.delete_trust(trigger['trust_id'])
 
         self._add_event_listener(trigger['exchange'], trigger['topic'], events)

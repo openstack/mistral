@@ -504,6 +504,10 @@ def get_event_trigger(id, insecure=False):
     return IMPL.get_event_trigger(id, insecure)
 
 
+def load_event_trigger(id, insecure=False):
+    return IMPL.load_event_trigger(id, insecure)
+
+
 def get_event_triggers(insecure=False, limit=None, marker=None, sort_keys=None,
                        sort_dirs=None, fields=None, **kwargs):
     return IMPL.get_event_triggers(

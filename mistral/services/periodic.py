@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
+
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import periodic_task
@@ -59,11 +61,22 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                         trigger.name
                     )
 
+                    description = {
+                        "description": (
+                            "Workflow execution created by cron"
+                            " trigger '(%s)'." % trigger.id
+                        ),
+                        "triggered_by": {
+                            "type": "cron_trigger",
+                            "id": trigger.id,
+                            "name": trigger.name,
+                        }
+                    }
+
                     rpc.get_engine_client().start_workflow(
                         trigger.workflow.name,
                         trigger.workflow_input,
-                        description="Workflow execution created "
-                                    "by cron trigger '(%s)'." % trigger.id,
+                        description=json.dumps(description),
                         **trigger.workflow_params
                     )
             except Exception:
@@ -88,7 +101,8 @@ def advance_cron_trigger(t):
         if t.remaining_executions == 0:
             modified_count = triggers.delete_cron_trigger(
                 t.name,
-                trust_id=t.trust_id
+                trust_id=t.trust_id,
+                delete_trust=False
             )
         else:  # if remaining execution = None or > 0.
             next_time = triggers.get_next_execution_time(
