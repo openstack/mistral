@@ -217,12 +217,12 @@ class Execution(resource.Resource):
     "reference to workflow definition"
 
     workflow_namespace = wtypes.text
-    ("reference to workflow namespace. The workflow namespace is also saved "
-     "under params and passed to all sub-workflow executions. When looking for"
-     " the next sub-workflow to run, The correct workflow will be found by "
-     "name and namespace, where the namespace can be the workflow namespace or"
-     " the default namespace. Workflows in the same namespace will be given "
-     "a higher priority.")
+    """reference to workflow namespace. The workflow namespace is also saved
+     under params and passed to all sub-workflow executions. When looking for
+     the next sub-workflow to run, The correct workflow will be found by
+     name and namespace, where the namespace can be the workflow namespace or
+     the default namespace. Workflows in the same namespace as the top workflow
+     will be given a higher priority."""
 
     workflow_id = wtypes.text
     "reference to workflow ID"
@@ -231,8 +231,8 @@ class Execution(resource.Resource):
     "description of workflow execution."
 
     params = types.jsontype
-    ("params define workflow type specific parameters. For example, reverse "
-     "workflow takes one parameter 'task_name' that defines a target task.")
+    """params define workflow type specific parameters. For example, reverse
+     workflow takes one parameter 'task_name' that defines a target task."""
 
     task_execution_id = wtypes.text
     "reference to the parent task execution"
@@ -303,8 +303,8 @@ class Task(resource.Resource):
     workflow_execution_id = wtypes.text
 
     state = wtypes.text
-    ("state can take one of the following values: "
-     "IDLE, RUNNING, SUCCESS, ERROR, DELAYED")
+    """state can take one of the following values:
+     IDLE, RUNNING, SUCCESS, ERROR, DELAYED"""
 
     state_info = wtypes.text
     "an optional state information string"
