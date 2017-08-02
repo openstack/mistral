@@ -411,7 +411,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         state_info = task_ex.state_info
 
         self.assertIsNotNone(state_info)
-        self.assertTrue(state_info.find('error') < state_info.find('data'))
+        self.assertLess(state_info.find('error'), state_info.find('data'))
 
     def test_error_message_format_unknown_function(self):
         wf_text = """

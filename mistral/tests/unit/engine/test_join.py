@@ -855,7 +855,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
 
-        self.assertTrue(len(tasks) >= 2)
+        self.assertGreaterEqual(len(tasks), 2)
 
         task1 = self._assert_single_item(tasks, name='task1')
 
@@ -913,7 +913,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
 
-        self.assertTrue(len(tasks) >= 2)
+        self.assertGreaterEqual(len(tasks), 2)
 
         task1 = self._assert_single_item(tasks, name='task1')
 

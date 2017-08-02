@@ -124,8 +124,8 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
             state=states.ERROR
         )
 
-        self.assertTrue(
-            task1.runtime_context['retry_task_policy']['retry_no'] > 0
+        self.assertGreater(
+            task1.runtime_context['retry_task_policy']['retry_no'], 0
         )
 
     def test_task_defaults_timeout_policy(self):
