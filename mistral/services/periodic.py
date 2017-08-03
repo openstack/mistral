@@ -61,6 +61,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
 
                     rpc.get_engine_client().start_workflow(
                         trigger.workflow.name,
+                        trigger.workflow.namespace,
                         trigger.workflow_input,
                         description="Workflow execution created "
                                     "by cron trigger '(%s)'." % trigger.id,
