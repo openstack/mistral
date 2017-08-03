@@ -27,7 +27,9 @@ down_revision = '021'
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.engine import reflection
 from sqlalchemy.sql import table, column
+
 
 # A simple model of the workflow definitions table with only the field needed
 wf_def = table('workflow_definitions_v2', column('namespace'))
@@ -60,7 +62,16 @@ def upgrade():
         )
     )
 
-    op.drop_index('name', table_name='workflow_definitions_v2')
+    inspect = reflection.Inspector.from_engine(op.get_bind())
+
+    unique_constraints = [
+        unique_constraint['name'] for unique_constraint in
+        inspect.get_unique_constraints('workflow_definitions_v2')
+    ]
+
+    if 'name' in unique_constraints:
+        op.drop_index('name', table_name='workflow_definitions_v2')
+
     op.create_unique_constraint(
         None,
         'workflow_definitions_v2',
