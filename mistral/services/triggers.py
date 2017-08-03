@@ -183,8 +183,11 @@ def create_event_trigger(name, exchange, topic, event, workflow_id,
 
         # NOTE(kong): Send RPC message within the db transaction, rollback if
         # any error occurs.
+        trig_dict = trig.to_dict()
+        trig_dict['workflow_namespace'] = wf_def.namespace
+
         rpc.get_event_engine_client().create_event_trigger(
-            trig.to_dict(),
+            trig_dict,
             events
         )
 
