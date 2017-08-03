@@ -469,7 +469,7 @@ def _send_result_to_parent_workflow(wf_ex_id):
     else:
         raise RuntimeError(
             "Method _send_result_to_parent_workflow() must never be called"
-            " if a workflow is not in SUCCESS, ERROR or CNCELLED state."
+            " if a workflow is not in SUCCESS, ERROR or CANCELLED state."
         )
 
     rpc.get_engine_client().on_action_complete(
