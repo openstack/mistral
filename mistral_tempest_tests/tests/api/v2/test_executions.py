@@ -33,6 +33,7 @@ class ExecutionTestsV2(base.TestCase):
 
         self.direct_wf_name = 'wf'
         self.direct_wf2_name = 'wf2'
+        self.sub_wf_name = 'subwf1'
         self.direct_wf_id = body['workflows'][0]['id']
         reverse_wfs = [wf for wf in body['workflows'] if wf['name'] == 'wf1']
         self.reverse_wf = reverse_wfs[0]
@@ -416,3 +417,24 @@ class ExecutionTestsV2(base.TestCase):
 
         self.assertEqual('lowest_level_wf', action_execution['workflow_name'])
         self.assertEqual(namespace, action_execution['workflow_namespace'])
+
+    @decorators.attr(type='sanity')
+    @decorators.idempotent_id('2baa25c5-0b65-4fbe-8d90-2c6599831b6b')
+    def test_root_execution_id(self):
+        resp, execution = self.client.create_execution(self.sub_wf_name)
+
+        self.assertEqual(201, resp.status)
+        self.assertEqual('RUNNING', execution['state'])
+
+        self.client.wait_execution_success(execution)
+
+        resp, body = self.client.get_list_obj(
+            'executions?root_execution_id={}'.format(execution['id']))
+
+        self.assertEqual(200, resp.status)
+        self.assertNotEmpty(body['executions'])
+
+        self.assertEqual(2, len(body['executions']))
+
+        for exc in body['executions']:
+            self.assertEqual(exc['root_execution_id'], execution['id'])
