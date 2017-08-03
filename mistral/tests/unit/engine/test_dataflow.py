@@ -26,6 +26,8 @@ from mistral.tests.unit.engine import base as engine_test_base
 from mistral.workflow import data_flow
 from mistral.workflow import states
 
+import sys
+
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -665,6 +667,55 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         task1 = self._assert_single_item(tasks, name='task1')
 
         self.assertIn('task(task1).result.message', task1.state_info)
+
+    def test_size_of_output_by_execution_field_size_limit_kb(self):
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          type: direct
+
+          output-on-error:
+            custom_error: The action in the task does not exists
+
+          tasks:
+            task1:
+              action: wrong.task
+        """
+        # Note: The number 1121 below added as value for field size
+        # limit is because the output of workflow error comes as
+        # workflow error string + custom error message and total length
+        # might be greater than 1121. It varies depending on the length
+        # of the custom message. This is a random number value used for
+        # test case only.
+        cfg.CONF.set_default(
+            'execution_field_size_limit_kb',
+            1121,
+            group='engine'
+        )
+
+        kilobytes = cfg.CONF.engine.execution_field_size_limit_kb
+
+        bytes_per_char = sys.getsizeof('s') - sys.getsizeof('')
+
+        total_output_length = int(kilobytes * 1024 / bytes_per_char)
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', '', None)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+
+        self.assertLess(
+            len(str(wf_output.get('custom_error'))),
+            total_output_length
+        )
 
     def test_override_json_input(self):
         wf_text = """---
