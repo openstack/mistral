@@ -53,6 +53,7 @@ ceilometerclient = _try_import('ceilometerclient.v2.client')
 cinderclient = _try_import('cinderclient.v2.client')
 designateclient = _try_import('designateclient.v1')
 glanceclient = _try_import('glanceclient.v2.client')
+glareclient = _try_import('glareclient.v1.client')
 gnocchiclient = _try_import('gnocchiclient.v1.client')
 heatclient = _try_import('heatclient.v1.client')
 ironic_inspector_client = _try_import('ironic_inspector_client.v1')
@@ -843,3 +844,31 @@ class GnocchiAction(base.OpenStackAction):
     @classmethod
     def _get_fake_client(cls):
         return cls._get_client_class()()
+
+
+class GlareAction(base.OpenStackAction):
+    _service_name = 'glare'
+
+    @classmethod
+    def _get_client_class(cls):
+        return glareclient.Client
+
+    def _create_client(self, context):
+
+        LOG.debug("Glare action security context: %s", context)
+
+        glare_endpoint = self.get_service_endpoint()
+
+        endpoint_url = keystone_utils.format_url(
+            glare_endpoint.url,
+            {'tenant_id': context.project_id}
+        )
+
+        return self._get_client_class()(
+            endpoint_url,
+            **self.get_session_and_auth(context)
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()("http://127.0.0.1:9494/")

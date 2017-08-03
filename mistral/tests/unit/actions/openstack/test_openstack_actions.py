@@ -303,3 +303,16 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().metric.get.called)
         mocked().metric.get.assert_called_once_with(metric_id="1234-abcd")
+
+    @mock.patch.object(actions.GlareAction, '_get_client')
+    def test_glare_action(self, mocked):
+        mock_ctx = mock.Mock()
+        method_name = "artifacts.get"
+        action_class = actions.GlareAction
+        action_class.client_method_name = method_name
+        params = {'artifact_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run(mock_ctx)
+
+        self.assertTrue(mocked().artifacts.get.called)
+        mocked().artifacts.get.assert_called_once_with(artifact_id="1234-abcd")
