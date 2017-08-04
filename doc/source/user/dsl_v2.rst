@@ -879,6 +879,9 @@ std.javascript
 
 Evaluates given JavaScript code.
 
+**NOTE**: std.js is an alias for std.javascript i.e, std.js can be used in
+place of std.javascript.
+
 Input parameters:
 
 -  **script** - The text of JavaScript snippet that needs to be
