@@ -34,6 +34,14 @@ from mistral_lib import actions as ml_actions
 
 LOG = logging.getLogger(__name__)
 
+SUPPORTED_TRANSITION_STATES = [
+    states.SUCCESS,
+    states.ERROR,
+    states.CANCELLED,
+    states.PAUSED,
+    states.RUNNING
+]
+
 
 def _load_deferred_output_field(action_ex):
     # We need to refer to this lazy-load field explicitly in
@@ -180,25 +188,31 @@ class ActionExecutionsController(rest.RestController):
             action_ex
         )
 
-        output = action_ex.output
-
-        if action_ex.state == states.SUCCESS:
-            result = ml_actions.Result(data=output)
-        elif action_ex.state == states.ERROR:
-            if not output:
-                output = 'Unknown error'
-            result = ml_actions.Result(error=output)
-        elif action_ex.state == states.CANCELLED:
-            result = ml_actions.Result(cancel=True)
-        else:
+        if action_ex.state not in SUPPORTED_TRANSITION_STATES:
             raise exc.InvalidResultException(
                 "Error. Expected one of %s, actual: %s" % (
-                    [states.SUCCESS, states.ERROR, states.CANCELLED],
+                    SUPPORTED_TRANSITION_STATES,
                     action_ex.state
                 )
             )
 
-        values = rpc.get_engine_client().on_action_complete(id, result)
+        if states.is_completed(action_ex.state):
+            output = action_ex.output
+
+            if action_ex.state == states.SUCCESS:
+                result = ml_actions.Result(data=output)
+            elif action_ex.state == states.ERROR:
+                if not output:
+                    output = 'Unknown error'
+                result = ml_actions.Result(error=output)
+            elif action_ex.state == states.CANCELLED:
+                result = ml_actions.Result(cancel=True)
+
+            values = rpc.get_engine_client().on_action_complete(id, result)
+
+        if action_ex.state in [states.PAUSED, states.RUNNING]:
+            state = action_ex.state
+            values = rpc.get_engine_client().on_action_update(id, state)
 
         return resources.ActionExecution.from_dict(values)
 

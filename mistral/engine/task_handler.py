@@ -44,6 +44,10 @@ _SCHEDULED_ON_ACTION_COMPLETE_PATH = (
     'mistral.engine.task_handler._scheduled_on_action_complete'
 )
 
+_SCHEDULED_ON_ACTION_UPDATE_PATH = (
+    'mistral.engine.task_handler._scheduled_on_action_update'
+)
+
 
 @profiler.trace('task-handler-run-task', hide_args=True)
 def run_task(wf_cmd):
@@ -107,6 +111,46 @@ def _on_action_complete(action_ex):
         wf_ex = task_ex.workflow_execution
 
         msg = ("Failed to handle action completion [error=%s, wf=%s, task=%s,"
+               " action=%s]:\n%s" %
+               (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
+
+        LOG.error(msg)
+
+        task.set_state(states.ERROR, msg)
+
+        wf_handler.force_fail_workflow(wf_ex, msg)
+
+
+@profiler.trace('task-handler-on-action-update', hide_args=True)
+def _on_action_update(action_ex):
+    """Handles action update event.
+
+    :param action_ex: Action execution.
+    """
+
+    task_ex = action_ex.task_execution
+
+    if not task_ex:
+        return
+
+    task_spec = spec_parser.get_task_spec(task_ex.spec)
+
+    wf_ex = task_ex.workflow_execution
+
+    task = _create_task(
+        wf_ex,
+        spec_parser.get_workflow_spec_by_execution_id(wf_ex.id),
+        task_spec,
+        task_ex.in_context,
+        task_ex
+    )
+
+    try:
+        task.on_action_update(action_ex)
+    except exc.MistralException as e:
+        wf_ex = task_ex.workflow_execution
+
+        msg = ("Failed to handle action update [error=%s, wf=%s, task=%s,"
                " action=%s]:\n%s" %
                (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
 
@@ -381,6 +425,51 @@ def schedule_on_action_complete(action_ex, delay=0):
     scheduler.schedule_call(
         None,
         _SCHEDULED_ON_ACTION_COMPLETE_PATH,
+        delay,
+        key=key,
+        action_ex_id=action_ex.id,
+        wf_action=isinstance(action_ex, models.WorkflowExecution)
+    )
+
+
+@action_queue.process
+def _scheduled_on_action_update(action_ex_id, wf_action):
+    with db_api.transaction():
+        if wf_action:
+            action_ex = db_api.get_workflow_execution(action_ex_id)
+        else:
+            action_ex = db_api.get_action_execution(action_ex_id)
+
+        _on_action_update(action_ex)
+
+
+def schedule_on_action_update(action_ex, delay=0):
+    """Schedules task update check.
+
+    This method provides transactional decoupling of action update from
+    task update check. It's needed in non-locking model in order to
+    avoid 'phantom read' phenomena when reading state of multiple actions
+    to see if a task is updated. Just starting a separate transaction
+    without using scheduler is not safe due to concurrency window that we'll
+    have in this case (time between transactions) whereas scheduler is a
+    special component that is designed to be resistant to failures.
+
+    :param action_ex: Action execution.
+    :param delay: Minimum amount of time before task update check
+        should be made.
+    """
+
+    # Optimization to avoid opening a new transaction if it's not needed.
+    if not action_ex.task_execution.spec.get('with-items'):
+        _on_action_update(action_ex)
+
+        return
+
+    key = 'th_on_a_c-%s' % action_ex.task_execution_id
+
+    scheduler.schedule_call(
+        None,
+        _SCHEDULED_ON_ACTION_UPDATE_PATH,
         delay,
         key=key,
         action_ex_id=action_ex.id,

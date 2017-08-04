@@ -148,6 +148,40 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
+    @profiler.trace('engine-client-on-action-update', hide_args=True)
+    def on_action_update(self, action_ex_id, state, wf_action=False,
+                         async_=False):
+        """Conveys update of action state to Mistral Engine.
+
+        This method should be used by clients of Mistral Engine to update
+        state of a action execution once action has executed.
+
+        Note: calling this method serves an event notifying Mistral that it
+        may need to change the state of the parent task and workflow. Use
+        on_action_complete if the action execution reached completion state.
+
+        :param action_ex_id: Action execution id.
+        :param action_ex_id: Updated state.
+        :param wf_action: If True it means that the given id points to
+            a workflow execution rather than action execution. It happens
+            when a nested workflow execution sends its result to a parent
+            workflow.
+        :param async: If True, run action in asynchronous mode (w/o waiting
+            for completion).
+        :return: Action(or workflow if wf_action=True) execution object.
+        """
+
+        call = self._client.async_call if async_ else self._client.sync_call
+
+        return call(
+            auth_ctx.ctx(),
+            'on_action_update',
+            action_ex_id=action_ex_id,
+            state=state,
+            wf_action=wf_action
+        )
+
+    @base.wrap_messaging_exception
     def pause_workflow(self, wf_ex_id):
         """Stops the workflow with the given execution id.
 

@@ -78,6 +78,14 @@ class Task(object):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def on_action_update(self, action_ex):
+        """Handle action update.
+
+        :param action_ex: Action execution.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def run(self):
         """Runs task."""
         raise NotImplementedError
@@ -191,6 +199,26 @@ class Task(object):
 
         dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
 
+    @profiler.trace('task-update')
+    def update(self, state, state_info=None):
+        """Update task and set specified state.
+
+        Method sets specified task state.
+
+        :param state: New task state.
+        :param state_info: New state information (i.e. error message).
+        """
+
+        assert self.task_ex
+
+        # Ignore if task already completed.
+        if states.is_completed(self.task_ex.state):
+            return
+
+        # Update only if state transition is valid.
+        if states.is_valid_transition(self.task_ex.state, state):
+            self.set_state(state, state_info)
+
     def _before_task_start(self):
         policies_spec = self.task_spec.get_policies()
 
@@ -267,6 +295,10 @@ class RegularTask(Task):
                       else action_ex.output.get('result'))
 
         self.complete(state, state_info)
+
+    @profiler.trace('regular-task-on-action-update', hide_args=True)
+    def on_action_update(self, action_ex):
+        self.update(action_ex.state)
 
     @profiler.trace('task-run')
     def run(self):

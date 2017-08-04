@@ -26,6 +26,7 @@ from mistral.engine import default_engine as d_eng
 from mistral import exceptions as exc
 from mistral.executors import base as exe
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral.tests.unit.engine import base as eng_test_base
 from mistral.workflow import states
@@ -298,6 +299,130 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIn("Invalid input", str(e))
         self.assertIn("unexpected=['unexpected_param']", str(e))
+
+    def test_on_action_update(self):
+        workflow = """
+        version: '2.0'
+        wf_async:
+            type: direct
+            tasks:
+                task1:
+                    action: std.async_noop
+                    on-success:
+                        - task2
+                task2:
+                    action: std.noop
+        """
+
+        # Start workflow.
+        wf_service.create_workflows(workflow)
+        wf_ex = self.engine.start_workflow('wf_async')
+
+        self.assertIsNotNone(wf_ex)
+        self.assertEqual(states.RUNNING, wf_ex.state)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task1_ex = task_execs[0]
+
+        self.assertEqual('task1', task1_ex.name)
+        self.assertEqual(states.RUNNING, task1_ex.state)
+
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task1_ex.id
+        )
+
+        self.assertEqual(1, len(action_execs))
+
+        task1_action_ex = action_execs[0]
+
+        self.assertEqual(states.RUNNING, task1_action_ex.state)
+
+        # Pause action execution of 'task1'.
+        task1_action_ex = self.engine.on_action_update(
+            task1_action_ex.id,
+            states.PAUSED
+        )
+
+        self.assertIsInstance(task1_action_ex, models.ActionExecution)
+        self.assertEqual(states.PAUSED, task1_action_ex.state)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+        self.assertEqual(states.PAUSED, task_execs[0].state)
+        self.assertEqual(states.RUNNING, wf_ex.state)
+
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task1_ex.id
+        )
+
+        self.assertEqual(1, len(action_execs))
+
+        task1_action_ex = action_execs[0]
+
+        self.assertEqual(states.PAUSED, task1_action_ex.state)
+
+    def test_on_action_update_non_async(self):
+        workflow = """
+        version: '2.0'
+        wf_sync:
+            type: direct
+            tasks:
+                task1:
+                    action: std.noop
+                    on-success:
+                    - task2
+                task2:
+                    action: std.noop
+        """
+
+        # Start workflow.
+        wf_service.create_workflows(workflow)
+        wf_ex = self.engine.start_workflow('wf_sync')
+
+        self.assertIsNotNone(wf_ex)
+        self.assertEqual(states.RUNNING, wf_ex.state)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_execs))
+
+        task1_ex = task_execs[0]
+
+        self.assertEqual('task1', task1_ex.name)
+        self.assertEqual(states.RUNNING, task1_ex.state)
+
+        action_execs = db_api.get_action_executions(
+            task_execution_id=task1_ex.id
+        )
+
+        self.assertEqual(1, len(action_execs))
+
+        task1_action_ex = action_execs[0]
+
+        self.assertEqual(states.RUNNING, task1_action_ex.state)
+
+        self.assertRaises(
+            exc.InvalidStateTransitionException,
+            self.engine.on_action_update,
+            task1_action_ex.id,
+            states.PAUSED
+        )
 
     def test_on_action_complete(self):
         wf_input = {'param1': 'Hey', 'param2': 'Hi'}
