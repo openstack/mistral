@@ -54,7 +54,7 @@ def get_backend():
     """Consumed by openstack common code.
 
     The backend is this module itself.
-    :return Name of db backend.
+    :return: Name of db backend.
     """
     return sys.modules[__name__]
 
