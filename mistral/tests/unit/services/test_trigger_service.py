@@ -234,7 +234,7 @@ class TriggerServiceV2Test(base.DbTestCase):
         mock.MagicMock(side_effect=new_advance_cron_trigger)
     )
     @mock.patch.object(security, 'delete_trust')
-    def test_create_delete_trust_in_trigger(self, create_ctx, delete_trust):
+    def test_create_delete_trust_in_trigger(self, delete_trust, create_ctx):
         create_ctx.return_value = self.ctx
         cfg.CONF.set_default('auth_enable', True, group='pecan')
         trigger_thread = periodic.setup()
@@ -255,10 +255,8 @@ class TriggerServiceV2Test(base.DbTestCase):
             datetime.datetime(2010, 8, 25)
         )
 
-        self._await(
-            lambda: delete_trust.call_count == 1, timeout=10
-        )
-        self.assertEqual('my_trust_id', delete_trust.mock_calls[0][1][0])
+        eventlet.sleep(1)
+        self.assertEqual(0, delete_trust.call_count)
 
     def test_get_trigger_in_correct_orders(self):
         t1_name = 'trigger-%s' % utils.generate_unicode_uuid()

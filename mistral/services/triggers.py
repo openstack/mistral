@@ -14,7 +14,10 @@
 
 import croniter
 import datetime
+import json
 import six
+
+from oslo_log import log as logging
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import utils as eng_utils
@@ -22,6 +25,9 @@ from mistral import exceptions as exc
 from mistral.lang import parser
 from mistral.rpc import clients as rpc
 from mistral.services import security
+
+
+LOG = logging.getLogger(__name__)
 
 
 def get_next_execution_time(pattern, start_time):
@@ -130,13 +136,14 @@ def create_cron_trigger(name, workflow_name, workflow_input,
     return trig
 
 
-def delete_cron_trigger(name, trust_id=None):
+def delete_cron_trigger(name, trust_id=None, delete_trust=True):
     if not trust_id:
         trigger = db_api.get_cron_trigger(name)
         trust_id = trigger.trust_id
 
     modified_count = db_api.delete_cron_trigger(name)
-    if modified_count:
+
+    if modified_count and delete_trust:
         # Delete trust only together with deleting trigger.
         security.delete_trust(trust_id)
 
@@ -217,3 +224,29 @@ def update_event_trigger(id, values):
     rpc.get_event_engine_client().update_event_trigger(trig.to_dict())
 
     return trig
+
+
+def on_workflow_complete(wf_ex):
+    if wf_ex.task_execution_id:
+        return
+
+    try:
+        description = json.loads(wf_ex.description)
+    except ValueError as e:
+        LOG.debug(str(e))
+        return
+
+    if not isinstance(description, dict):
+        return
+
+    triggered = description.get('triggered_by')
+
+    if not triggered:
+        return
+
+    if triggered['type'] == 'cron_trigger':
+        if not db_api.load_cron_trigger(triggered['name']):
+            security.delete_trust()
+    elif triggered['type'] == 'event_trigger':
+        if not db_api.load_event_trigger(triggered['id'], True):
+            security.delete_trust()

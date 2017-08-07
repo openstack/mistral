@@ -27,6 +27,7 @@ from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.rpc import clients as rpc
 from mistral.services import scheduler
+from mistral.services import triggers
 from mistral.services import workflows as wf_service
 from mistral import utils
 from mistral.utils import merge_dicts
@@ -293,6 +294,8 @@ class Workflow(object):
             # No need to keep task executions of this workflow in the
             # lookup cache anymore.
             lookup_utils.invalidate_cached_task_executions(self.wf_ex.id)
+
+            triggers.on_workflow_complete(self.wf_ex)
 
         if recursive and self.wf_ex.task_execution_id:
             parent_task_ex = db_api.get_task_execution(

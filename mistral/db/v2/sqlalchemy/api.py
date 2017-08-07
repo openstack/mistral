@@ -1507,6 +1507,11 @@ def get_event_trigger(id, insecure=False, session=None):
 
 
 @b.session_aware()
+def load_event_trigger(id, insecure=False, session=None):
+    return _get_event_trigger(id, insecure)
+
+
+@b.session_aware()
 def get_event_triggers(insecure=False, session=None, **kwargs):
     return _get_collection_sorted_by_time(
         model=models.EventTrigger,
