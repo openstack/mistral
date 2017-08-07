@@ -30,11 +30,11 @@ osprofiler>=1.4.0 # Apache-2.0
 paramiko>=2.0 # LGPLv2.1+
 pbr!=2.1.0,>=2.0.0 # Apache-2.0
 pecan!=1.0.2,!=1.0.3,!=1.0.4,!=1.2,>=1.0.0 # BSD
-python-barbicanclient!=4.5.0,>=4.0.0 # Apache-2.0
+python-barbicanclient!=4.5.0,!=4.5.1,>=4.0.0 # Apache-2.0
 python-ceilometerclient>=2.5.0 # Apache-2.0
 python-cinderclient>=3.1.0 # Apache-2.0
 python-designateclient>=1.5.0 # Apache-2.0
-python-glanceclient>=2.7.0 # Apache-2.0
+python-glanceclient>=2.8.0 # Apache-2.0
 python-glareclient>=0.3.0 # Apache-2.0
 python-heatclient>=1.6.1 # Apache-2.0
 python-keystoneclient>=3.8.0 # Apache-2.0
