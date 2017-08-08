@@ -83,7 +83,7 @@ class TaskPauseResumeTest(base.EngineTestCase):
             task_execution_id=task_1_ex.id
         )
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.PAUSED, task_1_ex.state)
         self.assertEqual(1, len(task_1_action_exs))
@@ -174,8 +174,9 @@ class TaskPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
+        task_1_action_exs = sorted(
+            db_api.get_action_executions(task_execution_id=task_1_ex.id),
+            key=lambda x: x['runtime_context']['index']
         )
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -201,11 +202,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
+        task_1_action_exs = sorted(
+            db_api.get_action_executions(task_execution_id=task_1_ex.id),
+            key=lambda x: x['runtime_context']['index']
         )
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.PAUSED, task_1_ex.state)
         self.assertEqual(3, len(task_1_action_exs))
@@ -234,11 +236,12 @@ class TaskPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
+        task_1_action_exs = sorted(
+            db_api.get_action_executions(task_execution_id=task_1_ex.id),
+            key=lambda x: x['runtime_context']['index']
         )
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual(1, len(task_execs))
         self.assertEqual(states.PAUSED, task_1_ex.state)
         self.assertEqual(3, len(task_1_action_exs))
@@ -259,8 +262,9 @@ class TaskPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
+        task_1_action_exs = sorted(
+            db_api.get_action_executions(task_execution_id=task_1_ex.id),
+            key=lambda x: x['runtime_context']['index']
         )
 
         self.assertEqual(states.RUNNING, wf_ex.state)
@@ -287,8 +291,9 @@ class TaskPauseResumeTest(base.EngineTestCase):
 
         task_1_ex = self._assert_single_item(task_execs, name='task1')
 
-        task_1_action_exs = db_api.get_action_executions(
-            task_execution_id=task_1_ex.id
+        task_1_action_exs = sorted(
+            db_api.get_action_executions(task_execution_id=task_1_ex.id),
+            key=lambda x: x['runtime_context']['index']
         )
 
         task_2_ex = self._assert_single_item(task_execs, name='task2')

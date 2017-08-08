@@ -147,6 +147,21 @@ def _on_action_update(action_ex):
 
     try:
         task.on_action_update(action_ex)
+
+        if states.is_paused(action_ex.state):
+            wf_handler.pause_workflow(wf_ex)
+
+        if states.is_running(action_ex.state):
+            # If any subworkflow of the parent workflow is paused,
+            # then keep the parent workflow execution paused.
+            for task_ex in wf_ex.task_executions:
+                if states.is_paused(task_ex.state):
+                    return
+
+            # Otherwise if no other subworkflow is paused,
+            # then resume the parent workflow execution.
+            wf_handler.resume_workflow(wf_ex)
+
     except exc.MistralException as e:
         wf_ex = task_ex.workflow_execution
 

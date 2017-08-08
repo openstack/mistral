@@ -123,9 +123,21 @@ def _check_and_complete(wf_ex_id):
 
 
 def pause_workflow(wf_ex, msg=None):
-    wf = workflows.Workflow(wf_ex=wf_ex)
+    # Pause subworkflows first.
+    for task_ex in wf_ex.task_executions:
+        sub_wf_exs = db_api.get_workflow_executions(
+            task_execution_id=task_ex.id
+        )
 
-    wf.set_state(states.PAUSED, msg)
+        for sub_wf_ex in sub_wf_exs:
+            if not states.is_completed(sub_wf_ex.state):
+                pause_workflow(sub_wf_ex, msg=msg)
+
+    # If all subworkflows paused successfully, pause the main workflow.
+    # If any subworkflows failed to pause for temporary reason, this
+    # allows pause to be executed again on the main workflow.
+    wf = workflows.Workflow(wf_ex=wf_ex)
+    wf.pause(msg=msg)
 
 
 def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
@@ -146,8 +158,19 @@ def resume_workflow(wf_ex, env=None):
     if not states.is_paused_or_idle(wf_ex.state):
         return wf_ex.get_clone()
 
-    wf = workflows.Workflow(wf_ex=wf_ex)
+    # Resume subworkflows first.
+    for task_ex in wf_ex.task_executions:
+        sub_wf_exs = db_api.get_workflow_executions(
+            task_execution_id=task_ex.id
+        )
 
+        for sub_wf_ex in sub_wf_exs:
+            if not states.is_completed(sub_wf_ex.state):
+                resume_workflow(sub_wf_ex)
+
+    # Resume current workflow here so to trigger continue workflow only
+    # after all other subworkflows are placed back in running state.
+    wf = workflows.Workflow(wf_ex=wf_ex)
     wf.resume(env=env)
 
 

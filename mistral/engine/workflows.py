@@ -125,6 +125,29 @@ class Workflow(object):
 
             return self._cancel_workflow(msg)
 
+    def pause(self, msg=None):
+        """Pause workflow.
+
+        :param msg: Additional explaining message.
+        """
+
+        assert self.wf_ex
+
+        if states.is_paused(self.wf_ex.state):
+            return
+
+        # Set the state of this workflow to paused.
+        self.set_state(states.PAUSED, state_info=msg)
+
+        # If workflow execution is a subworkflow,
+        # schedule update to the task execution.
+        if self.wf_ex.task_execution_id:
+            # Import the task_handler module here to avoid circular reference.
+            from mistral.engine import task_handler
+            task_handler.schedule_on_action_update(self.wf_ex)
+
+        return
+
     def resume(self, env=None):
         """Resume workflow.
 
@@ -135,7 +158,7 @@ class Workflow(object):
 
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
-        self.set_state(states.RUNNING, recursive=True)
+        self.set_state(states.RUNNING)
 
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
@@ -143,6 +166,13 @@ class Workflow(object):
         cmds = wf_ctrl.continue_workflow()
 
         self._continue_workflow(cmds)
+
+        # If workflow execution is a subworkflow,
+        # schedule update to the task execution.
+        if self.wf_ex.task_execution_id:
+            # Import the task_handler module here to avoid circular reference.
+            from mistral.engine import task_handler
+            task_handler.schedule_on_action_update(self.wf_ex)
 
     def prepare_input(self, input_dict):
         for k, v in self.wf_spec.get_input().items():
