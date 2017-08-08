@@ -70,7 +70,7 @@ an OpenStack environment.
 
      $ mysql -u root -p
        mysql> CREATE DATABASE mistral;
-       mysql> USE mistral
+       mysql> USE mistral;
        mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'localhost' IDENTIFIED BY 'MISTRAL_DBPASS';
        mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'%' IDENTIFIED BY 'MISTRAL_DBPASS';
 

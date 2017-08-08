@@ -26,7 +26,7 @@ for other resources described below are relative to Application Root.
 
 API v2 root [/v2/]
 ^^^^^^^^^^^^^^^^^^
-All API v2 urls are relative to API v2 root.
+All API v2 URLs are relative to API v2 root.
 
 Workbooks
 ---------
