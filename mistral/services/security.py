@@ -64,10 +64,18 @@ def create_context(trust_id, project_id):
     if CONF.pecan.auth_enable:
         client = keystone.client_for_trusts(trust_id)
 
+        if client.session:
+            # Method get_token is deprecated, using get_auth_headers.
+            token = client.session.get_auth_headers().get('X-Auth-Token')
+            user_id = client.session.get_user_id()
+        else:
+            token = client.auth_token
+            user_id = client.user_id
+
         return auth_ctx.MistralContext(
-            user=client.user_id,
+            user=user_id,
             tenant=project_id,
-            auth_token=client.auth_token,
+            auth_token=token,
             is_trust_scoped=True,
             trust_id=trust_id,
         )
