@@ -220,6 +220,7 @@ class DefaultEventEngine(base.EventEngine):
             self.exchange_topic_events_map[exchange_topic].add(trigger.event)
 
             trigger_info = trigger.to_dict()
+            trigger_info['workflow_namespace'] = trigger.workflow.namespace
             self.event_triggers_map[trigger.event].append(trigger_info)
 
         for (ex_t, events) in self.exchange_topic_events_map.items():
@@ -253,6 +254,7 @@ class DefaultEventEngine(base.EventEngine):
             try:
                 self.engine_client.start_workflow(
                     t['workflow_id'],
+                    t['workflow_namespace'],
                     t['workflow_input'],
                     description=json.dumps(description),
                     **workflow_params

@@ -100,8 +100,11 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertEqual(1, client.create_event_trigger.call_count)
 
+        trigger_db = TRIGGER_DB.to_dict()
+        trigger_db['workflow_namespace'] = None
+
         self.assertDictEqual(
-            TRIGGER_DB.to_dict(),
+            trigger_db,
             client.create_event_trigger.call_args[0][0]
         )
         self.assertListEqual(

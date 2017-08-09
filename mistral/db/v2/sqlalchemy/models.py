@@ -497,6 +497,7 @@ class EventTrigger(mb.MistralSecureModelBase):
         sa.String(36),
         sa.ForeignKey(WorkflowDefinition.id)
     )
+    workflow = relationship('WorkflowDefinition', lazy='joined')
     workflow_params = sa.Column(st.JsonDictType())
     workflow_input = sa.Column(st.JsonDictType())
 

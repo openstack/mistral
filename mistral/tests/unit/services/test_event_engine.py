@@ -140,7 +140,7 @@ class EventEngineTest(base.DbTestCase):
 
             args, kwargs = client_mock.start_workflow.call_args
 
-            self.assertEqual((EVENT_TRIGGER['workflow_id'], {}), args)
+            self.assertEqual((EVENT_TRIGGER['workflow_id'], '', {}), args)
             self.assertDictEqual(
                 {
                     'service': 'fake_publisher',
@@ -181,7 +181,7 @@ class EventEngineTest(base.DbTestCase):
 
             args, kwargs = client_mock.start_workflow.call_args
 
-            self.assertEqual((EVENT_TRIGGER['workflow_id'], {}), args)
+            self.assertEqual((EVENT_TRIGGER['workflow_id'], '', {}), args)
             self.assertDictEqual(
                 {
                     'service': 'fake_publisher',
