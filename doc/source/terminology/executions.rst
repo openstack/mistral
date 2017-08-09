@@ -53,9 +53,10 @@ least one *workflow execution*.
 Action execution
 ----------------
 
-Execution of specific action. To see details about actions, please refer to :ref:`actions-dsl`
+Execution of specific action. To see details about actions, please refer to
+:ref:`actions-dsl`
 
 Action execution has a state, input and output data.
 
-Usually action execution belongs to task execution but Mistral also is able to run
-separate action executions.
+Usually action execution belongs to task execution but Mistral also is able
+to run separate action executions.

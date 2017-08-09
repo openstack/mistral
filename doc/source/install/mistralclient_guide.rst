@@ -24,13 +24,15 @@ have auth variables::
     $ export OS_TENANT_NAME=tenant
     $ export OS_USERNAME=admin
     $ export OS_PASSWORD=secret
-    $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2  (optional, by default URL=http://localhost:8989/v2)
+    $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2
+      ( optional, by default URL=http://localhost:8989/v2)
 
 and in the case when you are authenticating against keystone over https::
 
     $ export OS_CACERT=<path_to_ca_cert>
 
-.. note:: In client, we can use both Keystone auth versions - v2.0 and v3. But server supports only v3.
+.. note:: In client, we can use both Keystone auth versions - v2.0 and v3.
+          But server supports only v3.
 
 You can see the list of available commands by typing::
 
@@ -43,7 +45,8 @@ To make sure Mistral client works, type::
 Configure authentication against Keycloak
 -----------------------------------------
 
-Mistral also supports authentication against Keycloak server via OpenID Connect protocol.
+Mistral also supports authentication against Keycloak server via OpenID Connect
+protocol.
 In order to use it on the client side the environment should look as follows::
 
     $ export MISTRAL_AUTH_TYPE=keycloak-oidc
@@ -53,20 +56,25 @@ In order to use it on the client side the environment should look as follows::
     $ export OS_PASSWORD=secret
     $ export OPENID_CLIENT_ID=my_keycloak_client
     $ export OPENID_CLIENT_SECRET=my_keycloak_client_secret
-    $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2  (optional, by default URL=http://localhost:8989/v2)
+    $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2
+     (optional, by default URL=http://localhost:8989/v2)
 
-.. note:: Variables OS_TENANT_NAME, OS_USERNAME, OS_PASSWORD are used for both Keystone and Keycloak
-    authentication. OS_TENANT_NAME in case of Keycloak needs to correspond a Keycloak realm. Unlike
-    Keystone, Keycloak requires to register a client that access some resources (Mistral server in
-    our case) protected by Keycloak in advance. For this reason, OPENID_CLIENT_ID and
-    OPENID_CLIENT_SECRET variables should be assigned with correct values as registered in Keycloak.
+.. note:: Variables OS_TENANT_NAME, OS_USERNAME, OS_PASSWORD are used for
+    both Keystone and Keycloak authentication. OS_TENANT_NAME in case of
+    Keycloak needs to correspond a Keycloak realm. Unlike Keystone, Keycloak
+    requires to register a client that access some resources (Mistral server in
+    our case) protected by Keycloak in advance. For this reason,
+    OPENID_CLIENT_ID and OPENID_CLIENT_SECRET variables should be assigned
+    with correct values as registered in Keycloak.
 
-Similar to Keystone OS_CACERT variable can also be added to provide a certification for SSL/TLS
+Similar to Keystone OS_CACERT variable can also be added to provide a
+certification for SSL/TLS
 verification::
 
     $ export OS_CACERT=<path_to_ca_cert>
 
-In order to disable SSL/TLS certificate verification MISTRALCLIENT_INSECURE variable needs to be set
+In order to disable SSL/TLS certificate verification MISTRALCLIENT_INSECURE
+variable needs to be set
 to True::
 
     $ export MISTRALCLIENT_INSECURE=True
@@ -79,8 +87,8 @@ different from the one defined in the `mistral.conf` file in the
 `keystone_authtoken` section. (More detail in the :doc:`/configuration/index`).
 
 For example, if the mistral server is configured to authenticate with the
-`http://keystone1.example.com` cloud and the user wants to execute the workflow
-on the `http://keystone2.example.com` cloud.
+`http://keystone1.example.com` cloud and the user wants to execute the
+workflow on the `http://keystone2.example.com` cloud.
 
 The mistral.conf will look like::
 

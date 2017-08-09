@@ -1,8 +1,8 @@
 V2 API
 ======
 
-This API describes the ways of interacting with Mistral service via HTTP protocol
-using Representational State Transfer concept (ReST).
+This API describes the ways of interacting with Mistral service via
+HTTP protocol using Representational State Transfer concept (ReST).
 
 
 Basics
@@ -17,7 +17,9 @@ Currently this API relies on JSON to represent states of REST resources.
 Error states
 ^^^^^^^^^^^^
 
-The common HTTP Response Status Codes (https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md) are used.
+The common HTTP Response Status Codes
+(https://github.com/for-GET/know-your-http-well/blob/master/status-codes.md)
+are used.
 
 Application root [/]
 ^^^^^^^^^^^^^^^^^^^^
@@ -114,9 +116,9 @@ belongs to a particular execution.
 Action Executions
 -----------------
 
-When a Task starts Mistral creates a set of Action Executions. So Action Execution
-is an instance of an action call described in a Workflow Task that belongs to a
-particular execution.
+When a Task starts Mistral creates a set of Action Executions. So Action
+Execution is an instance of an action call described in a Workflow Task that
+belongs to a particular execution.
 
 
 .. autotype:: mistral.api.controllers.v2.resources.ActionExecution
@@ -134,10 +136,10 @@ particular execution.
 Cron Triggers
 -------------
 
-Cron trigger is an object that allows to run Mistral workflows according to a time
-pattern (Unix crontab patterns format). Once a trigger is created it will run a
-specified workflow according to its properties: pattern, first_execution_time and
-remaining_executions.
+Cron trigger is an object that allows to run Mistral workflows according to
+a time pattern (Unix crontab patterns format). Once a trigger is created it
+will run a specified workflow according to its properties: pattern,
+first_execution_time and remaining_executions.
 
 
 .. autotype:: mistral.api.controllers.v2.resources.CronTrigger
@@ -198,15 +200,15 @@ Services
 
 Through service management API, system administrator or operator can retrieve
 Mistral services information of the system, including service group and service
-identifier. The internal implementation of this feature make use of tooz library,
-which needs coordinator backend(the most commonly used at present is Zookeeper)
-installed, please refer to tooz official documentation for more detailed
-instruction.
+identifier. The internal implementation of this feature make use of tooz
+library, which needs coordinator backend(the most commonly used at present is
+Zookeeper) installed, please refer to tooz official documentation for more
+detailed instruction.
 
-There are three service groups according to Mistral architecture currently, namely
-api_group, engine_group and executor_group. The service identifier contains name
-of the host the service is running on and the process identifier of the service on
-that host.
+There are three service groups according to Mistral architecture currently,
+namely api_group, engine_group and executor_group. The service identifier
+contains name of the host the service is running on and the process identifier
+of the service on that host.
 
 .. autotype:: mistral.api.controllers.v2.resources.Service
    :members:
@@ -220,8 +222,8 @@ that host.
 Validation
 ----------
 
-Validation endpoints allow to check correctness of workbook, workflow and ad-hoc
-action Workflow Language without having to upload them into Mistral.
+Validation endpoints allow to check correctness of workbook, workflow and
+ad-hoc action Workflow Language without having to upload them into Mistral.
 
 **POST /v2/workbooks/validation**
   Validate workbook content (Workflow Language grammar and semantics).
@@ -232,5 +234,5 @@ action Workflow Language without having to upload them into Mistral.
 **POST /v2/actions/validation**
   Validate ad-hoc action content (Workflow Language grammar and semantics).
 
-These endpoints expect workbook, workflow or ad-hoc action  text (Workflow Language) correspondingly
-in a request body.
+These endpoints expect workbook, workflow or ad-hoc action text
+(Workflow Language) correspondingly in a request body.

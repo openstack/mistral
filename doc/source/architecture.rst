@@ -40,10 +40,10 @@ The API server exposes REST API to operate and monitor the workflow executions.
 Engine
 ------
 
-The Engine picks up the workflows from the workflow queue. It handles the control
-and dataflow of workflow executions. It also computes which tasks are ready and
-places them in a task queue. It passes the data from task to task, deals with
-condition transitions, etc.
+The Engine picks up the workflows from the workflow queue. It handles the
+control and dataflow of workflow executions. It also computes which tasks
+are ready and places them in a task queue. It passes the data from task to
+task, deals with condition transitions, etc.
 
 Task Executors
 --------------

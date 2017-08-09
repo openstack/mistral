@@ -7,7 +7,8 @@ Task result / Data flow
 
 Mistral supports transferring data from one task to another. In other words,
 if *taskA* produces a value then *taskB* which follows *taskA* can use it.
-In order to use this data Mistral relies on a query language called `YAQL <https://github.com/openstack/yaql>`_.
+In order to use this data Mistral relies on a query language called
+`YAQL <https://github.com/openstack/yaql>`_.
 YAQL is a powerful yet simple tool that allows the user to filter information,
 transform data and call functions. Find more information about it in the
 `YAQL official documentation <http://yaql.readthedocs.org>`_ . This mechanism
@@ -29,7 +30,8 @@ Workflow Language perspective:
 
    tasks:
      task1:
-       action: std.ssh host=<% $.host %> username=<% $.username %> password=<% $.password %>
+       action: std.ssh host=<% $.host %> username=<% $.username %> \
+               password=<% $.password %>
        input:
          cmd: "cd ~ && ls"
        on-complete: task2
@@ -206,9 +208,10 @@ tasks are complete.
 
 **Discriminator (join: one)**
 
-Discriminator is the special case of Partial Join where the *"join"* property has the value 1.
-In this case instead of 1 it is possible to specify the special string value *"one"*
-which is introduced for symmetry with *"all"*. However, it's up to the user whether to use *"1"* or *"one"*.
+Discriminator is the special case of Partial Join where the *"join"* property
+has the value 1. In this case instead of 1 it is possible to specify the
+special string value *"one"* which is introduced for symmetry with *"all"*.
+However, it's up to the user whether to use *"1"* or *"one"*.
 
 
 Processing collections (with-items)
@@ -233,7 +236,8 @@ YAML example
       tasks:
         create_servers:
           with-items: vm_name in <% $.vm_names %>
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
+          action: nova.servers_create name=<% $.vm_name %> \
+                  image=<% $.image_ref %> flavor=<% $.flavor_ref %>
           publish:
             vm_ids: <% $.create_servers.id %>
           on-success:
@@ -291,8 +295,8 @@ can be resolved by setting an expiration policy.
 This policy defines the maximum age of an execution since the last updated time
 (in minutes) and the maximum number of finished executions. Each evaluation will
 satisfy these conditions, so the expired executions (older than specified) will
-be deleted, and the number of execution in finished state (regardless of expiration)
-will be limited to max_finished_executions.
+be deleted, and the number of execution in finished state (regardless of
+expiration) will be limited to max_finished_executions.
 
 To enable the policy, edit the Mistral configuration file and specify
 ``evaluation_interval`` and at least one of the ``older_than``

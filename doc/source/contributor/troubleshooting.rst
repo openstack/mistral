@@ -12,7 +12,8 @@ The following instructions should get you sorted to debug both on the same run.
 
 Set PyCharm debug settings:
 
-1. Under File > Settings > Languages and Framework > Django -  Enter the following:
+1. Under File > Settings > Languages and Framework > Django -
+Enter the following:
 
   a. Check "Enable Django Support"
   b. Django project root: your file system path to Horizon project root
@@ -61,7 +62,8 @@ After a successful login bring the port back - it will continue your session.
 **Further notes**
 
 - If you need help with PyCharm and general debugging, please refer to:
-  `JetBrains PyCharm developer guide <https://www.jetbrains.com/pycharm/help/debugging.html.>`_
+  `JetBrains PyCharm developer guide
+  <https://www.jetbrains.com/pycharm/help/debugging.html.>`_
 
 - If you would like to manually restart the apache server,
   open a terminal and run::
