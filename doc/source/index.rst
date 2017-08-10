@@ -41,7 +41,7 @@ User guide
 .. toctree::
    :maxdepth: 2
 
-   admin/dsl_v2
+   user/dsl_v2
 
 **CLI**
 
