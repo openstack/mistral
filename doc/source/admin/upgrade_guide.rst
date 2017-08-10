@@ -7,9 +7,9 @@ Database upgrade
 The migrations in ``alembic_migrations/versions`` contain the changes needed to
 migrate between Mistral database revisions. A migration occurs by executing a
 script that details the changes needed to upgrade the database. The migration
-scripts are ordered so that multiple scripts can run sequentially. The scripts are
-executed by Mistral's migration wrapper which uses the Alembic library to manage
-the migration. Mistral supports migration from Kilo or later.
+scripts are ordered so that multiple scripts can run sequentially. The scripts
+are executed by Mistral's migration wrapper which uses the Alembic library to
+manage the migration. Mistral supports migration from Kilo or later.
 
 You can upgrade to the latest database version via:
 ::

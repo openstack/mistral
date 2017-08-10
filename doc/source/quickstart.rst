@@ -10,12 +10,14 @@ three prerequisites.
 Install and run Mistral
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Go through the installation manual: :doc:`Mistral Installation Guide <install/index>`
+Go through the installation manual:
+:doc:`Mistral Installation Guide <install/index>`
 
 Install Mistral client
 ~~~~~~~~~~~~~~~~~~~~~~
 
-To install mistralclient, please refer to :doc:`Mistral Client / CLI Guide <cli/index>`
+To install mistralclient, please refer to
+:doc:`Mistral Client / CLI Guide <cli/index>`
 
 Export Keystone credentials
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

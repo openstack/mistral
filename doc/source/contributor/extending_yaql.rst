@@ -6,7 +6,8 @@ How to write a custom YAQL function
 Tutorial
 ********
 
-1. Create a new Python project, an empty folder, containing a basic ``setup.py`` file.
+1. Create a new Python project, an empty folder, containing a basic
+``setup.py`` file.
 
 .. code-block:: bash
 

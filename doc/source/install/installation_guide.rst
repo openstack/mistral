@@ -21,8 +21,8 @@ The list of needed packages is shown below:
 
 In case of Ubuntu, just run::
 
-    $ apt-get install python-dev python-setuptools python-pip libffi-dev libxslt1-dev \
-      libxml2-dev libyaml-dev libssl-dev
+    $ apt-get install python-dev python-setuptools python-pip libffi-dev \
+      libxslt1-dev libxml2-dev libyaml-dev libssl-dev
 
 **NOTE:** **Mistral can be used without authentication at all or it can work
 with OpenStack.** In case of OpenStack, it works **only on Keystone v3**, make
@@ -31,7 +31,8 @@ sure **Keystone v3** is installed.
 Installation
 ------------
 
-**NOTE**: If it is needed to install Mistral using devstack, please refer to :doc:`Mistral Devstack Installation </contributor/devstack>`
+**NOTE**: If it is needed to install Mistral using devstack, please refer to
+:doc:`Mistral Devstack Installation </contributor/devstack>`
 
 First of all, clone the repo and go to the repo directory::
 
@@ -63,20 +64,20 @@ or::
     $ pip install -r requirements.txt
     $ python setup.py install
 
-**NOTE**: Differences *pip install -e* and *setup.py install*. **pip install -e**
-works very similarly to **setup.py install** or the EasyInstall tool, except
-that it doesn’t actually install anything. Instead, it creates a special
-.egg-link file in the deployment directory, that links to your project’s
-source code.
+**NOTE**: Differences *pip install -e* and *setup.py install*.
+**pip install -e** works very similarly to **setup.py install** or the
+EasyInstall tool, except that it doesn’t actually install anything.
+Instead, it creates a special .egg-link file in the deployment directory,
+that links to your project’s source code.
 
 Before the first run
 --------------------
 
-After installation you will see **mistral-server** and **mistral-db-manage** commands
-in your environment, either in system or virtual environment.
+After installation you will see **mistral-server** and **mistral-db-manage**
+commands in your environment, either in system or virtual environment.
 
-**NOTE**: In case of using **virtualenv**, all Mistral related commands available via
-**tox -evenv --**. For example, *mistral-server* is available via
+**NOTE**: In case of using **virtualenv**, all Mistral related commands
+available via **tox -evenv --**. For example, *mistral-server* is available via
 *tox -evenv -- mistral-server*.
 
 **mistral-db-manage** command can be used for migrations.
@@ -91,11 +92,13 @@ workflows which Mistral provides for all Mistral users.::
 
     $ mistral-db-manage --config-file <path-to-mistral.conf> populate
 
-For more detailed information about *mistral-db-manage* script please see :doc:`Mistral Upgrade Guide </admin/upgrade_guide>`.
+For more detailed information about *mistral-db-manage* script please
+see :doc:`Mistral Upgrade Guide </admin/upgrade_guide>`.
 
 **NOTE**: For users who want a dry run with **SQLite** database backend(not
 used in production), *mistral-db-manage* is not recommended for database
-initialization because of `SQLite limitations <http://www.sqlite.org/omitted.html>`_.
+initialization because of
+`SQLite limitations <http://www.sqlite.org/omitted.html>`_.
 Please use sync_db script described below instead for database initialization.
 
 **If you use virtualenv**::
@@ -122,7 +125,8 @@ To run Mistral Engine perform the following command in a shell::
 
 Running Mistral Task Executors
 ------------------------------
-To run Mistral Task Executor instance perform the following command in a shell::
+To run Mistral Task Executor instance perform the following command
+in a shell::
 
     $ mistral-server --server executor --config-file <path-to-mistral.conf>
 
@@ -131,8 +135,8 @@ running so that workflow tasks are processed by Mistral.
 
 Running Multiple Mistral Servers Under the Same Process
 -------------------------------------------------------
-To run more than one server (API, Engine, or Task Executor) on the same process,
-perform the following command in a shell::
+To run more than one server (API, Engine, or Task Executor) on the same
+process, perform the following command in a shell::
 
     $ mistral-server --server api,engine --config-file <path-to-mistral.conf>
 
@@ -146,13 +150,15 @@ because the "fake" transport is using an in process queue.
 
 Mistral And Docker
 ------------------
-Please first refer `installation steps for docker <https://docs.docker.com/installation/>`_.
+Please first refer
+`installation steps for docker <https://docs.docker.com/installation/>`_.
 To build the image from the mistral source, change directory to the root
 directory of the Mistral git repository and run::
 
     $ docker build -t <Name of image> .
 
-In case you want pre-built image, you can download it from `openstack tarballs source <https://tarballs.openstack.org/mistral/images/mistral-docker.tar.gz>`_.
+In case you want pre-built image, you can download it from `openstack tarballs
+source <https://tarballs.openstack.org/mistral/images/mistral-docker.tar.gz>`_.
 
 To load this image to docker registry, please run following command::
 
@@ -163,7 +169,8 @@ directory. For persistence of these data, you may want to keep this directory
 outside of the container. This may be done by the following steps::
 
     $ sudo mkdir '<user-defined-directory>'
-    $ docker run -it -v '<user-defined-directory>':/home/mistral <Name of image>
+    $ docker run -it -v \
+      '<user-defined-directory>':/home/mistral <Name of image>
 
 More about docker: https://www.docker.com/
 
