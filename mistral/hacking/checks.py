@@ -30,9 +30,6 @@ import six
 oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
 oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
 oslo_namespace_imports_from_root = re.compile(r"from[\s]+oslo[\s]+import[\s]+")
-log_string_interpolation = re.compile(r".*LOG\.(?:error|warn|warning|info"
-                                      r"|critical|exception|debug)"
-                                      r"\([^,]*%[^,]*[,)]")
 
 
 def no_assert_equal_true_false(logical_line):
@@ -106,27 +103,6 @@ def check_python3_no_itervalues(logical_line):
 
     if re.search(r".*\.itervalues\(\)", logical_line):
         yield(0, msg)
-
-
-def check_delayed_string_interpolation(logical_line, filename, noqa):
-    """M331: String interpolation should be delayed at logging calls.
-
-    M331: LOG.debug('Example: %s' % 'bad')
-    Okay: LOG.debug('Example: %s', 'good')
-    """
-    msg = ("M331 String interpolation should be delayed to be "
-           "handled by the logging code, rather than being done "
-           "at the point of the logging call. "
-           "Use ',' instead of '%'.")
-
-    if noqa:
-        return
-
-    if 'mistral/tests/' in filename:
-        return
-
-    if log_string_interpolation.match(logical_line):
-        yield(logical_line.index('%'), msg)
 
 
 class BaseASTChecker(ast.NodeVisitor):
@@ -297,4 +273,3 @@ def factory(register):
     register(check_python3_no_iterkeys)
     register(check_python3_no_itervalues)
     register(check_python3_xrange)
-    register(check_delayed_string_interpolation)

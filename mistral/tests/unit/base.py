@@ -142,7 +142,7 @@ class BaseTest(base.BaseTestCase):
         found = len(filtered_items)
 
         if found != count:
-            LOG.info("[failed test ctx] items=%s, expected_props=%s" % (str(
+            LOG.info("[failed test ctx] items=%s, expected_props=%s", (str(
                 items), props))
             self.fail("Wrong number of items found [props=%s, "
                       "expected=%s, found=%s]" % (props, count, found))
