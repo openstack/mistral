@@ -16,6 +16,7 @@
 from mistral.db.v2 import api as db_api
 from mistral.engine import action_queue
 from mistral.engine import base
+from mistral.engine import workflow_handler as wf_handler
 from mistral import expressions
 from mistral.services import scheduler
 from mistral.utils import wf_trace
@@ -420,8 +421,8 @@ class PauseBeforePolicy(base.TaskPolicy):
             (task_ex.name, task_ex.workflow_execution.state, states.PAUSED)
         )
 
-        task_ex.workflow_execution.state = states.PAUSED
         task_ex.state = states.IDLE
+        wf_handler.pause_workflow(task_ex.workflow_execution)
 
 
 class ConcurrencyPolicy(base.TaskPolicy):
