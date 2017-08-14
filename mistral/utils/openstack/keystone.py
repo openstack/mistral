@@ -96,11 +96,17 @@ def get_session_and_auth(context, **kwargs):
 def _admin_client(trust_id=None):
     if CONF.keystone_authtoken.auth_type is None:
         auth_url = CONF.keystone_authtoken.auth_uri
+        project_name = CONF.keystone_authtoken.admin_tenant_name
+
+        # You can't use trust and project together
+
+        if trust_id:
+            project_name = None
 
         cl = ks_client.Client(
             username=CONF.keystone_authtoken.admin_user,
             password=CONF.keystone_authtoken.admin_password,
-            project_name=CONF.keystone_authtoken.admin_tenant_name,
+            project_name=project_name,
             auth_url=auth_url,
             trust_id=trust_id
         )
