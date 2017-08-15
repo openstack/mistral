@@ -164,7 +164,7 @@ class ActionExecutionTestsV2(base.TestCase):
             {
                 'name': 'std.http',
                 'input':
-                    '{"url": "https://www.google.co.il/search?q=testTest"}'
+                    '{"url": "https://httpbin.org/encoding/utf8"}'
             }
         )
 
