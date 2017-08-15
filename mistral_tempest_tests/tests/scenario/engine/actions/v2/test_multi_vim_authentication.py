@@ -12,11 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import base64
-from urlparse import urlparse
 
 from keystoneclient import service_catalog as ks_service_catalog
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
+from six.moves.urllib.parse import urlparse
 from tempest.lib import decorators
 
 from mistral_tempest_tests.tests import base
