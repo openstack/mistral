@@ -393,14 +393,15 @@ class AdHocAction(PythonAction):
         )
 
     def _prepare_input(self, input_dict):
-        for k, v in self.action_spec.get_input().items():
-            if k not in input_dict or input_dict[k] is utils.NotDefined:
-                input_dict[k] = v
-
         base_input_dict = input_dict
 
         for action_def in self.adhoc_action_defs:
             action_spec = spec_parser.get_action_spec(action_def.spec)
+            for k, v in action_spec.get_input().items():
+                if (k not in base_input_dict or
+                        base_input_dict[k] is utils.NotDefined):
+                    base_input_dict[k] = v
+
             base_input_expr = action_spec.get_base_input()
 
             if base_input_expr:
@@ -421,17 +422,19 @@ class AdHocAction(PythonAction):
     def _prepare_output(self, result):
         # In case of error, we don't transform a result.
         if not result.is_error():
-            adhoc_action_spec = spec_parser.get_action_spec(
-                self.adhoc_action_def.spec
-            )
-
-            transformer = adhoc_action_spec.get_output()
-
-            if transformer is not None:
-                result = ml_actions.Result(
-                    data=expr.evaluate_recursively(transformer, result.data),
-                    error=result.error
+            for action_def in reversed(self.adhoc_action_defs):
+                adhoc_action_spec = spec_parser.get_action_spec(
+                    action_def.spec
                 )
+
+                transformer = adhoc_action_spec.get_output()
+
+                if transformer is not None:
+                    result = ml_actions.Result(
+                        data=expr.evaluate_recursively(transformer,
+                                                       result.data),
+                        error=result.error
+                    )
 
         return result
 
