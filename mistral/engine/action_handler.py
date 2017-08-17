@@ -82,7 +82,8 @@ def on_action_update(action_ex, state):
 @profiler.trace('action-handler-build-action', hide_args=True)
 def _build_action(action_ex):
     if isinstance(action_ex, models.WorkflowExecution):
-        return actions.WorkflowAction(None, action_ex=action_ex)
+        return actions.WorkflowAction(wf_name=action_ex.name,
+                                      action_ex=action_ex)
 
     wf_name = None
     wf_spec_name = None

@@ -50,7 +50,12 @@ class TaskSpec(base.BaseSpec):
             "type": types.WORKFLOW_TYPE,
             "action": types.NONEMPTY_STRING,
             "workflow": types.NONEMPTY_STRING,
-            "input": types.NONEMPTY_DICT,
+            "input": {
+                "oneOf": [
+                    types.NONEMPTY_DICT,
+                    types.NONEMPTY_STRING
+                ]
+            },
             "with-items": {
                 "oneOf": [
                     types.NONEMPTY_STRING,

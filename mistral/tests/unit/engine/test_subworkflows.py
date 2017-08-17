@@ -96,6 +96,100 @@ workflows:
             action: std.noop
 """
 
+WB3 = """
+---
+version: '2.0'
+
+name: wb3
+
+workflows:
+  wf1:
+    input:
+      - wf_name
+    output:
+      sub_wf_out: <% $.sub_wf_out %>
+
+    tasks:
+      task1:
+        workflow: <% $.wf_name %>
+        publish:
+          sub_wf_out: <% task(task1).result.sub_wf_out %>
+
+  wf2:
+    output:
+      sub_wf_out: wf2_out
+
+    tasks:
+        task1:
+            action: std.noop
+"""
+
+WB4 = """
+---
+version: '2.0'
+
+name: wb4
+
+workflows:
+  wf1:
+    input:
+      - wf_name
+      - inp
+    output:
+      sub_wf_out: <% $.sub_wf_out %>
+
+    tasks:
+      task1:
+        workflow: <% $.wf_name %>
+        input: <% $.inp %>
+        publish:
+          sub_wf_out: <% task(task1).result.sub_wf_out %>
+
+  wf2:
+    input:
+      - inp
+    output:
+      sub_wf_out: <% $.inp %>
+
+    tasks:
+        task1:
+            action: std.noop
+
+"""
+
+WB5 = """
+---
+version: '2.0'
+
+name: wb5
+
+workflows:
+  wf1:
+    input:
+      - wf_name
+      - inp
+    output:
+      sub_wf_out: '{{ _.sub_wf_out }}'
+
+    tasks:
+      task1:
+        workflow: '{{ _.wf_name }}'
+        input: '{{ _.inp }}'
+        publish:
+          sub_wf_out: '{{ task("task1").result.sub_wf_out }}'
+
+  wf2:
+    input:
+      - inp
+    output:
+      sub_wf_out: '{{ _.inp }}'
+
+    tasks:
+        task1:
+            action: std.noop
+
+"""
+
 
 class SubworkflowsTest(base.EngineTestCase):
     def setUp(self):
@@ -103,6 +197,9 @@ class SubworkflowsTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(WB1)
         wb_service.create_workbook_v2(WB2)
+        wb_service.create_workbook_v2(WB3)
+        wb_service.create_workbook_v2(WB4)
+        wb_service.create_workbook_v2(WB5)
 
     def test_subworkflow_success(self):
         wf2_ex = self.engine.start_workflow('wb1.wf2', '', None)
@@ -261,3 +358,54 @@ class SubworkflowsTest(base.EngineTestCase):
 
         # Wait till workflow 'wf2' is completed.
         self.await_workflow_success(wf2_ex.id)
+
+    def test_dynamic_subworkflow_wf2(self):
+        ex = self.engine.start_workflow(
+            wf_identifier='wb3.wf1',
+            wf_input={'wf_name': 'wf2'}
+        )
+
+        self.await_workflow_success(ex.id)
+
+        with db_api.transaction():
+            ex = db_api.get_workflow_execution(ex.id)
+            self.assertEqual({'sub_wf_out': 'wf2_out'}, ex.output)
+
+    def test_dynamic_subworkflow_call_failure(self):
+        ex = self.engine.start_workflow(
+            wf_identifier='wb3.wf1',
+            wf_input={'wf_name': 'not_existing_wf'}
+        )
+
+        self.await_workflow_error(ex.id)
+
+        with db_api.transaction():
+            ex = db_api.get_workflow_execution(ex.id)
+            self.assertIn('not_existing_wf', ex.state_info)
+
+    def test_dynamic_subworkflow_with_generic_input(self):
+        self._test_dynamic_workflow_with_dict_param('wb4.wf1')
+
+    def test_dynamic_subworkflow_with_jinja(self):
+        self._test_dynamic_workflow_with_dict_param('wb5.wf1')
+
+    def test_string_workflow_input_failure(self):
+        ex = self.engine.start_workflow(
+            wf_identifier='wb4.wf1',
+            wf_input={'wf_name': 'wf2', 'inp': 'invalid_string_input'}
+        )
+        self.await_workflow_error(ex.id)
+
+        with db_api.transaction():
+            ex = db_api.get_workflow_execution(ex.id)
+            self.assertIn('invalid_string_input', ex.state_info)
+
+    def _test_dynamic_workflow_with_dict_param(self, wf_identifier):
+        ex = self.engine.start_workflow(
+            wf_identifier=wf_identifier,
+            wf_input={'wf_name': 'wf2', 'inp': {'inp': 'abc'}}
+        )
+        self.await_workflow_success(ex.id)
+        with db_api.transaction():
+            ex = db_api.get_workflow_execution(ex.id)
+            self.assertEqual({'sub_wf_out': 'abc'}, ex.output)
