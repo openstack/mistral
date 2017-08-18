@@ -8,7 +8,7 @@ fixtures>=3.0.0 # Apache-2.0/BSD
 hacking!=0.13.0,<0.14,>=0.12.0 # Apache-2.0
 keystonemiddleware>=4.12.0 # Apache-2.0
 mistral-lib>=0.2.0 # Apache-2.0
-mock>=2.0 # BSD
+mock>=2.0.0 # BSD
 networkx>=1.10 # BSD
 nose # LGPL
 oslotest>=1.10.0 # Apache-2.0
@@ -19,11 +19,11 @@ osprofiler>=1.4.0 # Apache-2.0
 os-api-ref>=1.0.0 # Apache-2.0
 pecan!=1.0.2,!=1.0.3,!=1.0.4,!=1.2,>=1.0.0 # BSD
 pyflakes==0.8.1 # MIT
-reno!=2.3.1,>=1.8.0 # Apache-2.0
-requests-mock>=1.1 # Apache-2.0
+reno>=2.5.0 # Apache-2.0
+requests-mock>=1.1.0 # Apache-2.0
 sphinx>=1.6.2 # BSD
 sphinxcontrib-httpdomain # BSD
-sphinxcontrib-pecanwsme>=0.8 # Apache-2.0
+sphinxcontrib-pecanwsme>=0.8.0 # Apache-2.0
 openstackdocstheme>=1.16.0 # Apache-2.0
 tooz>=1.47.0 # Apache-2.0
 tempest>=16.1.0 # Apache-2.0
