@@ -121,6 +121,8 @@ UPDATED_WF_EX_ENV_DESC['params'] = {'env': {'k1': 'def'}}
 
 WF_EX_JSON_WITH_DESC = copy.deepcopy(WF_EX_JSON)
 WF_EX_JSON_WITH_DESC['description'] = WF_EX.description
+WF_EX_WITH_PROJECT_ID = WF_EX.get_clone()
+WF_EX_WITH_PROJECT_ID.project_id = '<default-project>'
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 MOCK_SUB_WF_EX = mock.MagicMock(return_value=SUB_WF_EX)
@@ -153,6 +155,13 @@ class TestExecutionsController(base.APITest):
         resp = self.app.get('/v2/executions/123', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
+
+    @mock.patch.object(db_api, 'get_workflow_execution',
+                       return_value=WF_EX_WITH_PROJECT_ID)
+    def test_get_within_project_id(self, mock_get):
+        resp = self.app.get('/v2/executions/123', expect_errors=True)
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
 
     @mock.patch.object(
         db_api,

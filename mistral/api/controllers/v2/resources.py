@@ -33,6 +33,7 @@ class Workbook(resource.Resource):
     tags = [wtypes.text]
     scope = SCOPE_TYPES
     "'private' or 'public'"
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -45,6 +46,7 @@ class Workbook(resource.Resource):
                         'WORKBOOK DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
+                   project_id='a7eb669e9819420ea4bd1453e672c0a7',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000')
 
@@ -167,6 +169,7 @@ class Action(resource.Resource):
     tags = [wtypes.text]
     definition = wtypes.text
     scope = SCOPE_TYPES
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
 
     created_at = wtypes.text
     updated_at = wtypes.text
@@ -179,6 +182,7 @@ class Action(resource.Resource):
             definition='HERE GOES ACTION DEFINITION IN MISTRAL DSL v2',
             tags=['large', 'expensive'],
             scope='private',
+            project_id='a7eb669e9819420ea4bd1453e672c0a7',
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000'
         )
@@ -252,6 +256,8 @@ class Execution(resource.Resource):
     created_at = wtypes.text
     updated_at = wtypes.text
 
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
+
     @classmethod
     def sample(cls):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
@@ -259,6 +265,7 @@ class Execution(resource.Resource):
                    workflow_namespace='some_namespace',
                    workflow_id='123e4567-e89b-12d3-a456-426655441111',
                    description='this is the first execution.',
+                   project_id='40a908dbddfe48ad80a87fb30fa70a03',
                    state='SUCCESS',
                    input={},
                    output={},
@@ -309,6 +316,8 @@ class Task(resource.Resource):
     state_info = wtypes.text
     "an optional state information string"
 
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
+
     runtime_context = types.jsontype
 
     result = wtypes.text
@@ -332,6 +341,7 @@ class Task(resource.Resource):
             workflow_execution_id='123e4567-e89b-12d3-a456-426655440000',
             name='task',
             state=states.SUCCESS,
+            project_id='40a908dbddfe48ad80a87fb30fa70a03',
             runtime_context={
                 'triggered_by': [
                     {
@@ -380,6 +390,7 @@ class ActionExecution(resource.Resource):
     tags = [wtypes.text]
     name = wtypes.text
     description = wtypes.text
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
     accepted = bool
     input = types.jsontype
     output = types.jsontype
@@ -400,6 +411,7 @@ class ActionExecution(resource.Resource):
             tags=['foo', 'fee'],
             name='std.echo',
             description='My running action',
+            project_id='40a908dbddfe48ad80a87fb30fa70a03',
             accepted=True,
             input={'first_name': 'John', 'last_name': 'Doe'},
             output={'some_output': 'Hello, John Doe!'},
@@ -433,6 +445,7 @@ class CronTrigger(resource.Resource):
     workflow_id = wtypes.text
     workflow_input = types.jsontype
     workflow_params = types.jsontype
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
 
     scope = SCOPE_TYPES
 
@@ -453,6 +466,7 @@ class CronTrigger(resource.Resource):
             workflow_id='123e4567-e89b-12d3-a456-426655441111',
             workflow_input={},
             workflow_params={},
+            project_id='40a908dbddfe48ad80a87fb30fa70a03',
             scope='private',
             pattern='* * * * *',
             remaining_executions=42,
@@ -484,6 +498,7 @@ class Environment(resource.Resource):
     description = wtypes.text
     variables = types.jsontype
     scope = SCOPE_TYPES
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
     created_at = wtypes.text
     updated_at = wtypes.text
 
@@ -500,6 +515,7 @@ class Environment(resource.Resource):
                 'verbose': True
             },
             scope='private',
+            project_id='40a908dbddfe48ad80a87fb30fa70a03',
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000'
         )

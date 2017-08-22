@@ -95,6 +95,9 @@ ACTION_DB.update(ACTION)
 SYSTEM_ACTION_DB = models.ActionDefinition()
 SYSTEM_ACTION_DB.update(SYSTEM_ACTION)
 
+PROJECT_ID_ACTION_DB = ACTION_DB.get_clone()
+PROJECT_ID_ACTION_DB.project_id = '<default-project>'
+
 UPDATED_ACTION_DEFINITION = """
 ---
 version: '2.0'
@@ -154,6 +157,14 @@ class TestActionsController(base.APITest):
         resp = self.app.get(url, expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
+
+    @mock.patch.object(
+        db_api, "get_action_definition", return_value=PROJECT_ID_ACTION_DB)
+    def test_get_within_project_id(self, mock_get):
+        url = '/v2/actions/1234'
+        resp = self.app.get(url, expect_errors=True)
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
 
     @mock.patch.object(
         db_api, "get_action_definition", MOCK_ACTION)

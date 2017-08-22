@@ -206,6 +206,9 @@ MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
+ACTION_EX_DB_WITH_PROJECT_ID = AD_HOC_ACTION_EX_DB.get_clone()
+ACTION_EX_DB_WITH_PROJECT_ID.project_id = '<default-project>'
+
 
 @mock.patch.object(rpc_base, '_IMPL_CLIENT', mock.Mock())
 class TestActionExecutionsController(base.APITest):
@@ -235,6 +238,14 @@ class TestActionExecutionsController(base.APITest):
         resp = self.app.get('/v2/action_executions/123', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
+
+    @mock.patch.object(db_api, 'get_action_execution',
+                       return_value=ACTION_EX_DB_WITH_PROJECT_ID)
+    def test_get_within_project_id(self, mock_get):
+        resp = self.app.get('/v2/action_executions/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post(self, f):

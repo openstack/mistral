@@ -55,6 +55,9 @@ WORKBOOK = {
     'updated_at': '1970-01-01 00:00:00'
 }
 
+WORKBOOK_DB_PROJECT_ID = WORKBOOK_DB.get_clone()
+WORKBOOK_DB_PROJECT_ID.project_id = '<default-project>'
+
 UPDATED_WORKBOOK_DB = copy.copy(WORKBOOK_DB)
 UPDATED_WORKBOOK_DB['definition'] = UPDATED_WORKBOOK_DEF
 UPDATED_WORKBOOK = copy.deepcopy(WORKBOOK)
@@ -114,6 +117,14 @@ class TestWorkbooksController(base.APITest):
         resp = self.app.get('/v2/workbooks/123', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
+
+    @mock.patch.object(db_api, "get_workbook",
+                       return_value=WORKBOOK_DB_PROJECT_ID)
+    def test_get_within_project_id(self, mock_get):
+        resp = self.app.get('/v2/workbooks/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
 
     @mock.patch.object(workbooks, "update_workbook_v2", MOCK_UPDATED_WORKBOOK)
     def test_put(self):

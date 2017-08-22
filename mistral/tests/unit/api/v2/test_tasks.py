@@ -143,6 +143,9 @@ MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_ERROR_TASK = mock.MagicMock(return_value=ERROR_TASK_EX)
 MOCK_ERROR_ITEMS_TASK = mock.MagicMock(return_value=ERROR_ITEMS_TASK_EX)
 
+TASK_EX_WITH_PROJECT_ID = TASK_EX.get_clone()
+TASK_EX_WITH_PROJECT_ID.project_id = '<default-project>'
+
 
 @mock.patch.object(
     data_flow,
@@ -170,6 +173,14 @@ class TestTasksController(base.APITest):
 
         self.assertEqual(1, len(resp.json['tasks']))
         self.assertDictEqual(TASK_WITHOUT_RESULT, resp.json['tasks'][0])
+
+    @mock.patch.object(db_api, 'get_task_execution',
+                       return_value=TASK_EX_WITH_PROJECT_ID)
+    def test_get_within_project_id(self, mock_get):
+        resp = self.app.get('/v2/tasks/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_EMPTY)
     def test_get_all_empty(self):
