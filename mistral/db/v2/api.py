@@ -376,13 +376,17 @@ def delete_delayed_calls(**kwargs):
 
 # Cron triggers.
 
-def get_cron_trigger(name):
-    return IMPL.get_cron_trigger(name)
+def get_cron_trigger(identifier):
+    return IMPL.get_cron_trigger(identifier)
 
 
-def load_cron_trigger(name):
+def get_cron_trigger_by_id(id):
+    return IMPL.get_cron_trigger_by_id(id)
+
+
+def load_cron_trigger(identifier):
     """Unlike get_cron_trigger this method is allowed to return None."""
-    return IMPL.load_cron_trigger(name)
+    return IMPL.load_cron_trigger(identifier)
 
 
 def get_cron_triggers(**kwargs):
@@ -415,16 +419,17 @@ def create_cron_trigger(values):
     return IMPL.create_cron_trigger(values)
 
 
-def update_cron_trigger(name, values, query_filter=None):
-    return IMPL.update_cron_trigger(name, values, query_filter=query_filter)
+def update_cron_trigger(identifier, values, query_filter=None):
+    return IMPL.update_cron_trigger(identifier, values,
+                                    query_filter=query_filter)
 
 
-def create_or_update_cron_trigger(name, values):
-    return IMPL.create_or_update_cron_trigger(name, values)
+def create_or_update_cron_trigger(identifier, values):
+    return IMPL.create_or_update_cron_trigger(identifier, values)
 
 
-def delete_cron_trigger(name):
-    return IMPL.delete_cron_trigger(name)
+def delete_cron_trigger(identifier):
+    return IMPL.delete_cron_trigger(identifier)
 
 
 def delete_cron_triggers(**kwargs):

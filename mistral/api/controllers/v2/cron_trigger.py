@@ -32,17 +32,16 @@ LOG = logging.getLogger(__name__)
 class CronTriggersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CronTrigger, wtypes.text)
-    def get(self, name):
+    def get(self, identifier):
         """Returns the named cron_trigger.
 
-        :param name: Name of cron trigger to retrieve
+        :param identifier: Id or name of cron trigger to retrieve
         """
         acl.enforce('cron_triggers:get', context.ctx())
 
-        LOG.info('Fetch cron trigger [name=%s]', name)
+        LOG.info('Fetch cron trigger [identifier=%s]', identifier)
 
-        db_model = db_api.get_cron_trigger(name)
-
+        db_model = db_api.get_cron_trigger(identifier)
         return resources.CronTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception
@@ -77,16 +76,16 @@ class CronTriggersController(rest.RestController):
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, name):
+    def delete(self, identifier):
         """Delete cron trigger.
 
-        :param name: Name of cron trigger to delete
+        :param identifier: Id or name of cron trigger to delete
         """
         acl.enforce('cron_triggers:delete', context.ctx())
 
-        LOG.info("Delete cron trigger [name=%s]", name)
+        LOG.info("Delete cron trigger [identifier=%s]", identifier)
 
-        triggers.delete_cron_trigger(name)
+        triggers.delete_cron_trigger(identifier)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CronTriggers, types.uuid, int,
