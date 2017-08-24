@@ -277,6 +277,19 @@ keycloak_oidc_opts = [
         'auth_url',
         help=_('Keycloak base url (e.g. https://my.keycloak:8443/auth)')
     ),
+    cfg.StrOpt(
+        'certfile',
+        help=_('Required if identity server requires client certificate')
+    ),
+    cfg.StrOpt(
+        'keyfile',
+        help=_('Required if identity server requires client certificate')
+    ),
+    cfg.StrOpt(
+        'cafile',
+        help=_('A PEM encoded Certificate Authority to use when verifying '
+               'HTTPs connections. Defaults to system CAs.')
+    ),
     cfg.BoolOpt(
         'insecure',
         default=False,

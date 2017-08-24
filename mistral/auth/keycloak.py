@@ -12,11 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
+
 import jwt
 from oslo_config import cfg
 from oslo_log import log as logging
 import pprint
 import requests
+from six.moves import urllib
 
 from mistral._i18n import _
 from mistral import auth
@@ -31,6 +34,10 @@ CONF = cfg.CONF
 class KeycloakAuthHandler(auth.AuthHandler):
 
     def authenticate(self, req):
+        certfile = CONF.keycloak_oidc.certfile
+        keyfile = CONF.keycloak_oidc.keyfile
+        cafile = CONF.keycloak_oidc.cafile or self.get_system_ca_file()
+        insecure = CONF.keycloak_oidc.insecure
 
         if 'X-Auth-Token' not in req.headers:
             msg = _("Auth token must be provided in 'X-Auth-Token' header.")
@@ -64,11 +71,18 @@ class KeycloakAuthHandler(auth.AuthHandler):
             (CONF.keycloak_oidc.auth_url, realm_name)
         )
 
+        verify = None
+        if urllib.parse.urlparse(user_info_endpoint).scheme == "https":
+            verify = False if insecure else cafile
+
+        cert = (certfile, keyfile) if certfile and keyfile else None
+
         try:
             resp = requests.get(
                 user_info_endpoint,
                 headers={"Authorization": "Bearer %s" % access_token},
-                verify=not CONF.keycloak_oidc.insecure
+                verify=verify,
+                cert=cert
             )
         except requests.ConnectionError:
             msg = _("Can't connect to keycloak server with address '%s'."
@@ -86,3 +100,21 @@ class KeycloakAuthHandler(auth.AuthHandler):
         req.headers["X-Identity-Status"] = "Confirmed"
         req.headers["X-Project-Id"] = realm_name
         req.headers["X-Roles"] = roles
+
+    @staticmethod
+    def get_system_ca_file():
+        """Return path to system default CA file."""
+        # Standard CA file locations for Debian/Ubuntu, RedHat/Fedora,
+        # Suse, FreeBSD/OpenBSD, MacOSX, and the bundled ca
+        ca_path = ['/etc/ssl/certs/ca-certificates.crt',
+                   '/etc/pki/tls/certs/ca-bundle.crt',
+                   '/etc/ssl/ca-bundle.pem',
+                   '/etc/ssl/cert.pem',
+                   '/System/Library/OpenSSL/certs/cacert.pem',
+                   requests.certs.where()]
+        for ca in ca_path:
+            LOG.debug("Looking for ca file %s", ca)
+            if os.path.exists(ca):
+                LOG.debug("Using ca file %s", ca)
+                return ca
+        LOG.warning("System ca file could not be found.")
