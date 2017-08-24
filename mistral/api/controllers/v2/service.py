@@ -40,7 +40,7 @@ class ServicesController(rest.RestController):
         """Return all services."""
         acl.enforce('services:list', context.ctx())
 
-        LOG.info("Fetch services.")
+        LOG.debug("Fetch services.")
 
         if not cfg.CONF.coordination.backend_url:
             raise exc.CoordinationException("Service API is not supported.")

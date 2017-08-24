@@ -138,7 +138,7 @@ class ActionExecutionsController(rest.RestController):
         """
         acl.enforce('action_executions:get', context.ctx())
 
-        LOG.info("Fetch action_execution [id=%s]", id)
+        LOG.debug("Fetch action_execution [id=%s]", id)
 
         return _get_action_execution(id)
 
@@ -152,7 +152,7 @@ class ActionExecutionsController(rest.RestController):
         """
         acl.enforce('action_executions:create', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Create action_execution [action_execution=%s]",
             action_ex
         )
@@ -190,7 +190,7 @@ class ActionExecutionsController(rest.RestController):
         """
         acl.enforce('action_executions:update', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Update action_execution [id=%s, action_execution=%s]",
             id,
             action_ex
@@ -300,7 +300,7 @@ class ActionExecutionsController(rest.RestController):
             description=description
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch action_executions. marker=%s, limit=%s, "
             "sort_keys=%s, sort_dirs=%s, filters=%s",
             marker,
@@ -329,7 +329,7 @@ class ActionExecutionsController(rest.RestController):
         """
         acl.enforce('action_executions:delete', context.ctx())
 
-        LOG.info("Delete action_execution [id=%s]", id)
+        LOG.debug("Delete action_execution [id=%s]", id)
 
         if not cfg.CONF.api.allow_action_execution_deletion:
             raise exc.NotAllowedException("Action execution deletion is not "
@@ -429,7 +429,7 @@ class TasksActionExecutionController(rest.RestController):
             description=description
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch action_executions. marker=%s, limit=%s, "
             "sort_keys=%s, sort_dirs=%s, filters=%s",
             marker,
@@ -459,6 +459,6 @@ class TasksActionExecutionController(rest.RestController):
         """
         acl.enforce('action_executions:get', context.ctx())
 
-        LOG.info("Fetch action_execution [id=%s]", action_ex_id)
+        LOG.debug("Fetch action_execution [id=%s]", action_ex_id)
 
         return _get_action_execution(action_ex_id)

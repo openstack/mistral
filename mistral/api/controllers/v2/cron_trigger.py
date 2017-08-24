@@ -39,7 +39,7 @@ class CronTriggersController(rest.RestController):
         """
         acl.enforce('cron_triggers:get', context.ctx())
 
-        LOG.info('Fetch cron trigger [identifier=%s]', identifier)
+        LOG.debug('Fetch cron trigger [identifier=%s]', identifier)
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
@@ -60,7 +60,7 @@ class CronTriggersController(rest.RestController):
         """
         acl.enforce('cron_triggers:create', context.ctx())
 
-        LOG.info('Create cron trigger: %s', cron_trigger)
+        LOG.debug('Create cron trigger: %s', cron_trigger)
 
         values = cron_trigger.to_dict()
 
@@ -86,7 +86,7 @@ class CronTriggersController(rest.RestController):
         """
         acl.enforce('cron_triggers:delete', context.ctx())
 
-        LOG.info("Delete cron trigger [identifier=%s]", identifier)
+        LOG.debug("Delete cron trigger [identifier=%s]", identifier)
 
         triggers.delete_cron_trigger(identifier)
 
@@ -167,7 +167,7 @@ class CronTriggersController(rest.RestController):
             project_id=project_id,
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch cron triggers. marker=%s, limit=%s, sort_keys=%s, "
             "sort_dirs=%s, filters=%s, all_projects=%s",
             marker, limit, sort_keys, sort_dirs, filters, all_projects

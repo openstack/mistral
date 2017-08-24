@@ -58,7 +58,7 @@ class MembersController(rest.RestController):
         """Shows resource member details."""
         acl.enforce('members:get', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Fetch resource member [resource_id=%s, resource_type=%s, "
             "member_id=%s].",
             self.resource_id,
@@ -84,7 +84,7 @@ class MembersController(rest.RestController):
         """Return all members with whom the resource has been shared."""
         acl.enforce('members:list', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Fetch resource members [resource_id=%s, resource_type=%s].",
             self.resource_id,
             self.type
@@ -113,7 +113,7 @@ class MembersController(rest.RestController):
         """Shares the resource to a new member."""
         acl.enforce('members:create', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Share resource to a member. [resource_id=%s, "
             "resource_type=%s, member_info=%s].",
             self.resource_id,
@@ -150,7 +150,7 @@ class MembersController(rest.RestController):
         """Sets the status for a resource member."""
         acl.enforce('members:update', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Update resource member status. [resource_id=%s, "
             "member_id=%s, member_info=%s].",
             self.resource_id,
@@ -178,7 +178,7 @@ class MembersController(rest.RestController):
         """Deletes a member from the member list of a resource."""
         acl.enforce('members:delete', context.ctx())
 
-        LOG.info(
+        LOG.debug(
             "Delete resource member. [resource_id=%s, "
             "resource_type=%s, member_id=%s].",
             self.resource_id,

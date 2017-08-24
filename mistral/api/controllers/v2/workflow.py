@@ -51,7 +51,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
     @pecan.expose()
     def _lookup(self, identifier, sub_resource, *remainder):
-        LOG.info(
+        LOG.debug(
             "Lookup subcontrollers of WorkflowsController, "
             "sub_resource: %s, remainder: %s.",
             sub_resource,
@@ -85,7 +85,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workflows:get', context.ctx())
 
-        LOG.info("Fetch workflow [identifier=%s]", identifier)
+        LOG.debug("Fetch workflow [identifier=%s]", identifier)
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
@@ -122,7 +122,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                 "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
-        LOG.info("Update workflow(s) [definition=%s]", definition)
+        LOG.debug("Update workflow(s) [definition=%s]", definition)
 
         db_wfs = workflows.update_workflows(
             definition,
@@ -162,7 +162,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                 "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
-        LOG.info("Create workflow(s) [definition=%s]", definition)
+        LOG.debug("Create workflow(s) [definition=%s]", definition)
 
         db_wfs = workflows.create_workflows(
             definition,
@@ -186,8 +186,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workflows:delete', context.ctx())
 
-        LOG.info("Delete workflow [identifier=%s, namespace=%s]",
-                 identifier, namespace)
+        LOG.debug("Delete workflow [identifier=%s, namespace=%s]",
+                  identifier, namespace)
 
         with db_api.transaction():
             db_api.delete_workflow_definition(identifier, namespace)
@@ -251,10 +251,10 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             namespace=namespace
         )
 
-        LOG.info("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, fields=%s, filters=%s, all_projects=%s",
-                 marker, limit, sort_keys, sort_dirs, fields, filters,
-                 all_projects)
+        LOG.debug("Fetch workflows. marker=%s, limit=%s, sort_keys=%s, "
+                  "sort_dirs=%s, fields=%s, filters=%s, all_projects=%s",
+                  marker, limit, sort_keys, sort_dirs, fields, filters,
+                  all_projects)
 
         return rest_utils.get_all(
             resources.Workflows,

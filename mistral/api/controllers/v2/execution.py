@@ -90,7 +90,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce("executions:get", context.ctx())
 
-        LOG.info("Fetch execution [id=%s]", id)
+        LOG.debug("Fetch execution [id=%s]", id)
 
         wf_ex = _get_workflow_execution(id)
 
@@ -110,7 +110,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:update', context.ctx())
 
-        LOG.info('Update execution [id=%s, execution=%s]', id, wf_ex)
+        LOG.debug('Update execution [id=%s, execution=%s]', id, wf_ex)
 
         with db_api.transaction():
             # ensure that workflow execution exists
@@ -209,7 +209,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:create', context.ctx())
 
-        LOG.info("Create execution [execution=%s]", wf_ex)
+        LOG.debug("Create execution [execution=%s]", wf_ex)
 
         engine = rpc.get_engine_client()
         exec_dict = wf_ex.to_dict()
@@ -240,7 +240,7 @@ class ExecutionsController(rest.RestController):
         """
         acl.enforce('executions:delete', context.ctx())
 
-        LOG.info("Delete execution [id=%s]", id)
+        LOG.debug("Delete execution [id=%s]", id)
 
         return db_api.delete_workflow_execution(id)
 
@@ -322,7 +322,7 @@ class ExecutionsController(rest.RestController):
             root_execution_id=root_execution_id,
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
             "sort_dirs=%s, filters=%s, all_projects=%s", marker, limit,
             sort_keys, sort_dirs, filters, all_projects

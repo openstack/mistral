@@ -25,6 +25,7 @@ from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions
+from mistral.utils import cut
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 
@@ -82,9 +83,9 @@ class EnvironmentController(rest.RestController):
             scope=scope
         )
 
-        LOG.info("Fetch environments. marker=%s, limit=%s, sort_keys=%s, "
-                 "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
-                 sort_dirs, filters)
+        LOG.debug("Fetch environments. marker=%s, limit=%s, sort_keys=%s, "
+                  "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
+                  sort_dirs, filters)
 
         return rest_utils.get_all(
             resources.Environments,
@@ -108,7 +109,7 @@ class EnvironmentController(rest.RestController):
         """
         acl.enforce('environments:get', context.ctx())
 
-        LOG.info("Fetch environment [name=%s]", name)
+        LOG.debug("Fetch environment [name=%s]", name)
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
@@ -129,7 +130,7 @@ class EnvironmentController(rest.RestController):
         """
         acl.enforce('environments:create', context.ctx())
 
-        LOG.info("Create environment [env=%s]", env)
+        LOG.debug("Create environment [env=%s]", cut(env))
 
         self._validate_environment(
             json.loads(wsme_pecan.pecan.request.body.decode()),
@@ -154,7 +155,7 @@ class EnvironmentController(rest.RestController):
                 'Name of the environment is not provided.'
             )
 
-        LOG.info("Update environment [name=%s, env=%s]", env.name, env)
+        LOG.debug("Update environment [name=%s, env=%s]", env.name, cut(env))
 
         definition = json.loads(wsme_pecan.pecan.request.body.decode())
         definition.pop('name')
@@ -177,7 +178,7 @@ class EnvironmentController(rest.RestController):
         """
         acl.enforce('environments:delete', context.ctx())
 
-        LOG.info("Delete environment [name=%s]", name)
+        LOG.debug("Delete environment [name=%s]", name)
 
         db_api.delete_environment(name)
 

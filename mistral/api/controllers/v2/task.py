@@ -112,7 +112,7 @@ class TaskExecutionsController(rest.RestController):
             description=description
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch executions. marker=%s, limit=%s, sort_keys=%s, "
             "sort_dirs=%s, filters=%s", marker, limit, sort_keys, sort_dirs,
             filters
@@ -157,7 +157,7 @@ class TasksController(rest.RestController):
         :param id: UUID of task to retrieve
         """
         acl.enforce('tasks:get', context.ctx())
-        LOG.info("Fetch task [id=%s]", id)
+        LOG.debug("Fetch task [id=%s]", id)
 
         return _get_task_execution(id)
 
@@ -232,7 +232,7 @@ class TasksController(rest.RestController):
             env=env
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch tasks. marker=%s, limit=%s, sort_keys=%s, sort_dirs=%s,"
             " filters=%s", marker, limit, sort_keys, sort_dirs, filters
         )
@@ -260,7 +260,7 @@ class TasksController(rest.RestController):
         """
         acl.enforce('tasks:update', context.ctx())
 
-        LOG.info("Update task execution [id=%s, task=%s]", id, task)
+        LOG.debug("Update task execution [id=%s, task=%s]", id, task)
 
         with db_api.transaction():
             task_ex = db_api.get_task_execution(id)
@@ -382,7 +382,7 @@ class ExecutionTasksController(rest.RestController):
             env=env
         )
 
-        LOG.info(
+        LOG.debug(
             "Fetch tasks. workflow_execution_id=%s, marker=%s, limit=%s, "
             "sort_keys=%s, sort_dirs=%s, filters=%s",
             workflow_execution_id, marker, limit, sort_keys, sort_dirs,
