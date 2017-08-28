@@ -42,6 +42,8 @@ class WSGIService(service.ServiceBase):
     def start(self):
         self.server.start()
 
+        print('API server started.')
+
     def stop(self):
         self.server.stop()
 
