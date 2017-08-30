@@ -46,6 +46,15 @@ actions:
     base-input:
       output: '{{ env().foo }}'
 
+  nested_concat:
+    base: my_wb.concat_twice
+    base-input:
+      s2: '{{ _.n2 }}'
+    input:
+      - n2: 'b'
+    output:
+      nested_concat: '{{ _ }}'
+
 workflows:
   wf1:
     type: direct
@@ -100,6 +109,15 @@ workflows:
         publish:
           printenv_result: '{{ task().result }}'
 
+  wf5:
+    type: direct
+    output:
+      workflow_result: '{{ _.nested_result }}'
+    tasks:
+      nested_test:
+        action: nested_concat
+        publish:
+          nested_result: '{{ task().result }}'
 """
 
 
@@ -169,6 +187,21 @@ class AdhocActionsTest(base.EngineTestCase):
             self.assertDictEqual(
                 {
                     'workflow_result': 'bar'
+                },
+                wf_ex.output
+            )
+
+    def test_run_nested_adhoc_with_output(self):
+        wf_ex = self.engine.start_workflow(
+            'my_wb.wf5', '')
+
+        self.await_workflow_success(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertDictEqual(
+                {
+                    'workflow_result': {'nested_concat': 'a+b and a+b'}
                 },
                 wf_ex.output
             )
