@@ -17,8 +17,8 @@ from oslo_concurrency.fixture import lockutils
 from tempest.lib import decorators
 from tempest.lib import exceptions
 
-from mistral import utils
 from mistral_tempest_tests.tests import base
+from mistral_tempest_tests.tests import utils
 
 
 class WorkflowTestsV2(base.TestCase):

@@ -1,0 +1,18 @@
+---
+version: "2.0"
+
+name: wb_with_nested_wf
+
+workflows:
+
+  wrapping_wf:
+    type: direct
+    tasks:
+      call_inner_wf:
+        workflow: inner_wf
+
+  inner_wf:
+    type: direct
+    tasks:
+      hello:
+        action: std.echo output="Hello from inner workflow"

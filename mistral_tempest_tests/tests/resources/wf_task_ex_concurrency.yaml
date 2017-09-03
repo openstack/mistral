@@ -1,0 +1,11 @@
+---
+version: '2.0'
+
+test_task_ex_concurrency:
+  tasks:
+    task1:
+      action: std.async_noop
+      timeout: 2
+    task2:
+      action: std.async_noop
+      timeout: 2
