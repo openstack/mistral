@@ -78,7 +78,7 @@ class KombuServerTestCase(base.KombuTestCase):
         acquire_mock.drain_events.side_effect = TestException()
         fake_kombu.connection.acquire.return_value = acquire_mock
 
-        self.assertRaises(TestException, self.server.run)
+        self.assertRaises(TestException, self.server._run, 'blocking')
         self.assertTrue(self.server.is_running)
 
     def test_run_launch_successfully_than_stop(self):
@@ -91,7 +91,7 @@ class KombuServerTestCase(base.KombuTestCase):
         acquire_mock.drain_events.side_effect = side_effect
         fake_kombu.connection.acquire.return_value = acquire_mock
 
-        self.server.run()
+        self.server._run('blocking')
         self.assertFalse(self.server.is_running)
         self.assertEqual(self.server._sleep_time, 1)
 
@@ -106,7 +106,7 @@ class KombuServerTestCase(base.KombuTestCase):
         acquire_mock.drain_events.side_effect = side_effect
         fake_kombu.connection.acquire.return_value = acquire_mock
 
-        self.assertRaises(TestException, self.server.run)
+        self.assertRaises(TestException, self.server._run, 'blocking')
         self.assertEqual(self.server._sleep_time, 2)
 
     def test_run_socket_timeout_still_running(self):
@@ -122,7 +122,8 @@ class KombuServerTestCase(base.KombuTestCase):
 
         self.assertRaises(
             TestException,
-            self.server.run
+            self.server._run,
+            'blocking'
         )
         self.assertTrue(self.server.is_running)
 

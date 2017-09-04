@@ -109,7 +109,7 @@ class Base(object):
         :param exchange: Kombu Exchange object (can be created using
                          _make_exchange).
         :param routing_key: Routing key for queue. It behaves differently
-                            depending the exchange type. See Kombu docs for
+                            depending on exchange type. See Kombu docs for
                             further details.
         :param durable: If set to True, messages on this queue would be
                         store on disk - therefore can be retrieve after

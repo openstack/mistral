@@ -104,7 +104,9 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         try:
             return self._listener.get_result(correlation_id, self._timeout)
         except moves.queue.Empty:
-            raise exc.MistralException("RPC Request timeout")
+            raise exc.MistralException(
+                "RPC Request timeout, correlation_id = %s" % correlation_id
+            )
 
     def _call(self, ctx, method, target, async_=False, **kwargs):
         """Performs a remote call for the given method.
@@ -126,7 +128,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
             'async': async_
         }
 
-        LOG.debug("Publish request: {0}".format(body))
+        LOG.debug("Publish request: %s", body)
 
         try:
             if not async_:
@@ -146,6 +148,11 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
             # Start waiting for response.
             if async_:
                 return
+
+            LOG.debug(
+                "Waiting a reply for sync call [reply_to = %s]",
+                self.queue_name
+            )
 
             result = self._wait_for_result(correlation_id)
             res_type = result[kombu_base.TYPE]
