@@ -18,6 +18,7 @@ from oslo_service import service
 from oslo_service import wsgi
 
 from mistral.api import app
+from mistral.rpc import clients as rpc_clients
 
 
 class WSGIService(service.ServiceBase):
@@ -40,7 +41,18 @@ class WSGIService(service.ServiceBase):
         )
 
     def start(self):
+        # NOTE: When oslo.service creates an API worker it forks a new child
+        # system process. The child process is created as precise copy of the
+        # parent process (see how os.fork() works) and within the child process
+        # oslo.service calls service's start() method again to reinitialize
+        # what's needed. So we must clean up all RPC clients so that RPC works
+        # properly (e.g. message routing for synchronous calls may be based on
+        # generated queue names).
+        rpc_clients.cleanup()
+
         self.server.start()
+
+        print('API server started.')
 
     def stop(self):
         self.server.stop()

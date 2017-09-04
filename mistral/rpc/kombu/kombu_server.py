@@ -34,11 +34,13 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 _pool_opts = [
-    cfg.IntOpt('executor_thread_pool_size',
-               default=64,
-               deprecated_name="rpc_thread_pool_size",
-               help='Size of executor thread pool when'
-               ' executor is threading or eventlet.'),
+    cfg.IntOpt(
+        'executor_thread_pool_size',
+        default=64,
+        deprecated_name="rpc_thread_pool_size",
+        help='Size of executor thread pool when'
+        ' executor is threading or eventlet.'
+    ),
 ]
 
 
@@ -59,6 +61,8 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
         self._executor_threads = CONF.executor_thread_pool_size
         self.exchange = CONF.control_exchange
+        # TODO(rakhmerov): We shouldn't rely on any properties related
+        # to oslo.messaging. Only "transport_url" should matter.
         self.virtual_host = CONF.oslo_messaging_rabbit.rabbit_virtual_host
         self.durable_queue = CONF.oslo_messaging_rabbit.amqp_durable_queues
         self.auto_delete = CONF.oslo_messaging_rabbit.amqp_auto_delete
@@ -69,6 +73,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         self._stopped = threading.Event()
         self.endpoints = []
         self._worker = None
+        self._thread = None
 
         # TODO(ddeja): Those 2 options should be gathered from config.
         self._sleep_time = 1
@@ -80,6 +85,12 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         return self._running.is_set()
 
     def run(self, executor='blocking'):
+        if self._thread is None:
+            self._thread = threading.Thread(target=self._run, args=(executor,))
+            self._thread.daemon = True
+            self._thread.start()
+
+    def _run(self, executor):
         """Start the server."""
         self._prepare_worker(executor)
 
@@ -134,20 +145,22 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                         except KeyboardInterrupt:
                             self.stop()
 
-                            LOG.info("Server with id='{0}' stopped.".format(
-                                self.server_id)
+                            LOG.info(
+                                "Server with id='%w' stopped.",
+                                self.server_id
                             )
 
                             return
             except (socket.error, amqp.exceptions.ConnectionForced) as e:
                 LOG.debug("Broker connection failed: %s", e)
+
                 _retry_connection = True
             finally:
                 self._stopped.set()
 
                 if _retry_connection:
                     LOG.debug(
-                        "Sleeping for %s seconds, than retrying "
+                        "Sleeping for %s seconds, then retrying "
                         "connection",
                         self._sleep_time
                     )
@@ -214,7 +227,8 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
             )
             LOG.debug("Exceptions: %s", str(e))
 
-            # Wrap exception into another exception for compability with oslo.
+            # Wrap exception into another exception for compatibility
+            # with oslo.
             self.publish_message(
                 exc.KombuException(e),
                 message.properties['reply_to'],
@@ -248,6 +262,12 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         response = rpc_method(rpc_ctx=rpc_context, **arguments)
 
         if not is_async:
+            LOG.debug(
+                "RPC server sent a reply [reply_to = %s, correlation_id = %s",
+                reply_to,
+                correlation_id
+            )
+
             self.publish_message(
                 response,
                 reply_to,

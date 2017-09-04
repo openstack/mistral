@@ -16,6 +16,7 @@
 
 from oslo_config import cfg
 from osprofiler import profiler
+import threading
 
 from mistral import context as auth_ctx
 from mistral.engine import base as eng
@@ -25,12 +26,22 @@ from mistral.rpc import base
 
 
 _ENGINE_CLIENT = None
+_ENGINE_CLIENT_LOCK = threading.Lock()
+
 _EXECUTOR_CLIENT = None
+_EXECUTOR_CLIENT_LOCK = threading.Lock()
+
 _EVENT_ENGINE_CLIENT = None
+_EVENT_ENGINE_CLIENT_LOCK = threading.Lock()
 
 
 def cleanup():
-    """Intended to be used by tests to recreate all RPC related objects."""
+    """Clean all the RPC clients.
+
+    Intended to be used by tests to recreate all RPC related objects.
+    Another usage is forking a child API process. In this case we must
+    recreate all RPC objects so that they function properly.
+    """
 
     global _ENGINE_CLIENT
     global _EXECUTOR_CLIENT
@@ -43,27 +54,33 @@ def cleanup():
 
 def get_engine_client():
     global _ENGINE_CLIENT
+    global _EVENT_ENGINE_CLIENT_LOCK
 
-    if not _ENGINE_CLIENT:
-        _ENGINE_CLIENT = EngineClient(cfg.CONF.engine)
+    with _ENGINE_CLIENT_LOCK:
+        if not _ENGINE_CLIENT:
+            _ENGINE_CLIENT = EngineClient(cfg.CONF.engine)
 
     return _ENGINE_CLIENT
 
 
 def get_executor_client():
     global _EXECUTOR_CLIENT
+    global _EXECUTOR_CLIENT_LOCK
 
-    if not _EXECUTOR_CLIENT:
-        _EXECUTOR_CLIENT = ExecutorClient(cfg.CONF.executor)
+    with _EXECUTOR_CLIENT_LOCK:
+        if not _EXECUTOR_CLIENT:
+            _EXECUTOR_CLIENT = ExecutorClient(cfg.CONF.executor)
 
     return _EXECUTOR_CLIENT
 
 
 def get_event_engine_client():
     global _EVENT_ENGINE_CLIENT
+    global _EVENT_ENGINE_CLIENT_LOCK
 
-    if not _EVENT_ENGINE_CLIENT:
-        _EVENT_ENGINE_CLIENT = EventEngineClient(cfg.CONF.event_engine)
+    with _EVENT_ENGINE_CLIENT_LOCK:
+        if not _EVENT_ENGINE_CLIENT:
+            _EVENT_ENGINE_CLIENT = EventEngineClient(cfg.CONF.event_engine)
 
     return _EVENT_ENGINE_CLIENT
 
