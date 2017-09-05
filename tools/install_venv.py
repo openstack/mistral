@@ -35,7 +35,7 @@ def print_help(venv, root):
     To activate the Mistral virtualenv for the extent of your current shell
     session you can run:
 
-    $ source %s/bin/activate
+    $ . %s/bin/activate
 
     Or, if you prefer, you can run commands in the virtualenv on a case by case
     basis by running:
