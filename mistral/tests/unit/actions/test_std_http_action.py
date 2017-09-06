@@ -272,3 +272,38 @@ class HTTPActionTest(base.BaseTest):
             proxies=None,
             verify=None
         )
+
+    @mock.patch.object(requests, 'request')
+    def test_http_action_none_encoding_not_empty_resp(self, mocked_method):
+        action = std.HTTPAction(
+            url=URL,
+            method='GET',
+            timeout=20,
+            allow_redirects=True
+        )
+
+        self.assertEqual(URL, action.url)
+
+        mocked_method.return_value = get_fake_response(
+            content='content', code=200, encoding=None
+        )
+        mock_ctx = mock.Mock()
+        result = action.run(mock_ctx)
+
+        self.assertEqual('content', result['content'])
+        self.assertEqual(200, result['status'])
+        self.assertIsNone(result['encoding'])
+
+        mocked_method.assert_called_with(
+            'GET',
+            URL,
+            headers=None,
+            cookies=None,
+            params=None,
+            data=None,
+            timeout=20,
+            auth=None,
+            allow_redirects=True,
+            proxies=None,
+            verify=None
+        )
