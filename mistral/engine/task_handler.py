@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from osprofiler import profiler
 import traceback as tb
 
+from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import action_queue
@@ -402,6 +403,7 @@ def _schedule_refresh_task_state(task_ex, delay=0):
     )
 
 
+@db_utils.retry_on_deadlock
 @action_queue.process
 def _scheduled_on_action_complete(action_ex_id, wf_action):
     with db_api.transaction():
