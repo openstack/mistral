@@ -90,6 +90,7 @@ class KombuRPCListener(ConsumerMixin):
                     else None,
                     kombu_base.RESULT: response
                 }
+
                 queue.put(result)
             else:
                 LOG.debug(
