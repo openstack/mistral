@@ -155,7 +155,7 @@ function install_mistral_pythonclient {
 }
 
 
-# start_mistral - Start running processes, including screen
+# start_mistral - Start running processes
 function start_mistral {
     # If the site is not enabled then we are in a grenade scenario
     local enabled_site_file
@@ -166,7 +166,6 @@ function start_mistral {
         if [ -f ${enabled_site_file} ] && [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
             enable_apache_site mistral-api
             restart_apache_server
-            tail_log mistral-api /var/log/$APACHE_NAME/mistral_api.log
         else
             run_process mistral-api "$MISTRAL_BIN_DIR/mistral-server --server api --config-file $MISTRAL_CONF_DIR/mistral.conf"
         fi
@@ -182,7 +181,6 @@ function start_mistral {
 
 # stop_mistral - Stop running processes
 function stop_mistral {
-    # Kill the Mistral screen windows
     local serv
     for serv in mistral mistral-engine mistral-executor mistral-event-engine; do
         stop_process $serv
