@@ -77,7 +77,7 @@ def retry_on_deadlock(func):
 
 
 def check_db_obj_access(db_obj):
-    """Check accessbility to db object."""
+    """Check accessibility to db object."""
     ctx = context.ctx()
     is_admin = ctx.is_admin
 
