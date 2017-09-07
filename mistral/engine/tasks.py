@@ -216,8 +216,17 @@ class Task(object):
             return
 
         # Update only if state transition is valid.
-        if states.is_valid_transition(self.task_ex.state, state):
-            self.set_state(state, state_info)
+        if not states.is_valid_transition(self.task_ex.state, state):
+            return
+
+        # We can't set the task state to RUNNING if some other
+        # child executions are paused.
+        child_states = [a_ex.state for a_ex in self.task_ex.executions]
+
+        if state == states.RUNNING and states.PAUSED in child_states:
+            return
+
+        self.set_state(state, state_info)
 
     def _before_task_start(self):
         policies_spec = self.task_spec.get_policies()

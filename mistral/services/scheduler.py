@@ -24,6 +24,7 @@ from oslo_service import threadgroup
 from oslo_utils import importutils
 
 from mistral import context
+from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 
@@ -102,37 +103,76 @@ class CallScheduler(periodic_task.PeriodicTasks):
     # TODO(rakhmerov): Think how to make 'spacing' configurable.
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def run_delayed_calls(self, ctx=None):
-        time_filter = datetime.datetime.now() + datetime.timedelta(
-            seconds=1)
+        """Run delayed required calls.
 
-        # Wrap delayed calls processing in transaction to guarantee that calls
-        # will be processed just once. Do delete query to DB first to force
-        # hanging up all parallel transactions.
-        # It should work with transactions which run at least 'READ-COMMITTED'
-        # mode.
-        delayed_calls = []
+        This algorithm should work with transactions having at least
+        'READ-COMMITTED' isolation mode.
+
+        :param ctx: Auth context.
+        """
+
+        # Select and capture calls matching time criteria.
+        db_calls = self._capture_calls()
+
+        # Determine target methods, deserialize arguments etc.
+        prepared_calls = self._prepare_calls(db_calls)
+
+        # Invoke prepared calls.
+        self._invoke_calls(prepared_calls)
+
+        # Delete invoked calls from DB.
+        self.delete_calls(db_calls)
+
+    @staticmethod
+    @db_utils.retry_on_deadlock
+    def _capture_calls():
+        """Captures delayed calls eligible for processing (based on time).
+
+        The intention of this method is to select delayed calls based on time
+        criteria and mark them in DB as being processed so that no other
+        threads could process them in parallel.
+
+        :return: A list of delayed calls captured for further processing.
+        """
+        result = []
+
+        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
 
         with db_api.transaction():
-            candidate_calls = db_api.get_delayed_calls_to_start(
-                time_filter
-            )
-            calls_to_make = []
+            candidates = db_api.get_delayed_calls_to_start(time_filter)
 
-            for call in candidate_calls:
+            for call in candidates:
                 # Mark this delayed call has been processed in order to
                 # prevent calling from parallel transaction.
-                result, number_of_updated = db_api.update_delayed_call(
+                db_call, updated_cnt = db_api.update_delayed_call(
                     id=call.id,
                     values={'processing': True},
                     query_filter={'processing': False}
                 )
 
-                # If number_of_updated != 1 other scheduler already
-                # updated.
-                if number_of_updated == 1:
-                    calls_to_make.append(result)
+                # If updated_cnt != 1 then another scheduler
+                # has already updated it.
+                if updated_cnt == 1:
+                    result.append(db_call)
 
-        for call in calls_to_make:
+        return result
+
+    @staticmethod
+    def _prepare_calls(raw_calls):
+        """Prepares delayed calls for invocation.
+
+        After delayed calls were selected from DB they still need to be
+        prepared for further usage, we need to build final target methods
+        and deserialize arguments, if needed.
+
+        :param raw_calls: Delayed calls fetched from DB (DB models).
+        :return: A list of tuples (target_auth_context, target_method,
+         method_args) where all data is properly deserialized.
+        """
+
+        result = []
+
+        for call in raw_calls:
             LOG.debug(
                 'Processing next delayed call. '
                 '[ID=%s, factory_method_path=%s, target_method_name=%s, '
@@ -143,9 +183,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
             target_auth_context = copy.deepcopy(call.auth_context)
 
             if call.factory_method_path:
-                factory = importutils.import_class(
-                    call.factory_method_path
-                )
+                factory = importutils.import_class(call.factory_method_path)
 
                 target_method = getattr(factory(), call.target_method_name)
             else:
@@ -166,9 +204,17 @@ class CallScheduler(periodic_task.PeriodicTasks):
 
                     method_args[arg_name] = deserialized
 
-            delayed_calls.append(
-                (target_auth_context, target_method, method_args)
-            )
+            result.append((target_auth_context, target_method, method_args))
+
+        return result
+
+    @staticmethod
+    def _invoke_calls(delayed_calls):
+        """Invokes prepared delayed calls.
+
+        :param delayed_calls: Prepared delayed calls represented as tuples
+        (target_auth_context, target_method, method_args).
+        """
 
         ctx_serializer = context.RpcContextSerializer()
 
@@ -177,7 +223,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 # Set the correct context for the method.
                 ctx_serializer.deserialize_context(target_auth_context)
 
-                # Call the method.
+                # Invoke the method.
                 target_method(**method_args)
             except Exception as e:
                 LOG.exception(
@@ -189,14 +235,21 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 # Remove context.
                 context.set_ctx(None)
 
+    @staticmethod
+    @db_utils.retry_on_deadlock
+    def delete_calls(db_calls):
+        """Deletes delayed calls.
+
+        :param db_calls: Delayed calls to delete from DB.
+        """
+
         with db_api.transaction():
-            for call in calls_to_make:
+            for call in db_calls:
                 try:
-                    # Delete calls that were processed.
                     db_api.delete_delayed_call(call.id)
                 except Exception as e:
                     LOG.error(
-                        "failed to delete call [call=%s, "
+                        "Failed to delete delayed call [call=%s, "
                         "exception=%s]", call, e
                     )
 
