@@ -72,6 +72,11 @@ class RunActionEngineTest(base.EngineTestCase):
           input:
             - some_input
 
+        nested_missing_base:
+          base: missing_base
+          input:
+            - some_input
+
         loop_action:
           base: loop_action
           base-input:
@@ -235,9 +240,18 @@ class RunActionEngineTest(base.EngineTestCase):
     def test_run_action_with_missing_base(self):
         # Start action and see the result.
         self.assertRaises(
-            exc.DBEntityNotFoundError,
+            exc.InvalidActionException,
             self.engine.start_action,
             'missing_base',
+            {'some_input': 'Hi'}
+        )
+
+    def test_run_action_with_missing_nested_base(self):
+        # Start action and see the result.
+        self.assertRaises(
+            exc.InvalidActionException,
+            self.engine.start_action,
+            'nested_missing_base',
             {'some_input': 'Hi'}
         )
 

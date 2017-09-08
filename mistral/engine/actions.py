@@ -361,9 +361,16 @@ class AdHocAction(PythonAction):
                  wf_ctx=None):
         self.action_spec = spec_parser.get_action_spec(action_def.spec)
 
-        base_action_def = db_api.get_action_definition(
-            self.action_spec.get_base()
-        )
+        try:
+            base_action_def = db_api.get_action_definition(
+                self.action_spec.get_base()
+            )
+        except exc.DBEntityNotFoundError:
+            raise exc.InvalidActionException(
+                "Failed to find action [action_name=%s]" %
+                self.action_spec.get_base()
+            )
+
         base_action_def = self._gather_base_actions(
             action_def, base_action_def
         )
@@ -477,7 +484,12 @@ class AdHocAction(PythonAction):
             self.adhoc_action_defs.append(base)
 
             base_name = base.spec['base']
-            base = db_api.get_action_definition(base_name)
+            try:
+                base = db_api.get_action_definition(base_name)
+            except exc.DBEntityNotFoundError:
+                raise exc.InvalidActionException(
+                    "Failed to find action [action_name=%s]" % base_name
+                )
 
         # if the action is repeated
         if base.name in action_names:
