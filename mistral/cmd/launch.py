@@ -51,60 +51,65 @@ from mistral import version
 
 
 CONF = cfg.CONF
+SERVER_THREAD_MANAGER = None
+SERVER_PROCESS_MANAGER = None
+
+
+def launch_thread(server, workers=1):
+    try:
+        global SERVER_THREAD_MANAGER
+
+        if not SERVER_THREAD_MANAGER:
+            SERVER_THREAD_MANAGER = service.ServiceLauncher(CONF)
+
+        SERVER_THREAD_MANAGER.launch_service(server, workers=workers)
+    except Exception as e:
+        sys.stderr.write("ERROR: %s\n" % e)
+        sys.exit(1)
+
+
+def launch_process(server, workers=1):
+    try:
+        global SERVER_PROCESS_MANAGER
+
+        if not SERVER_PROCESS_MANAGER:
+            SERVER_PROCESS_MANAGER = service.ProcessLauncher(CONF)
+
+        SERVER_PROCESS_MANAGER.launch_service(server, workers=workers)
+    except Exception as e:
+        sys.stderr.write("ERROR: %s\n" % e)
+        sys.exit(1)
 
 
 def launch_executor():
-    try:
-        launcher = service.ServiceLauncher(CONF)
-
-        launcher.launch_service(executor_server.get_oslo_service())
-
-        launcher.wait()
-    except RuntimeError as e:
-        sys.stderr.write("ERROR: %s\n" % e)
-        sys.exit(1)
+    launch_thread(executor_server.get_oslo_service())
 
 
 def launch_engine():
-    try:
-        launcher = service.ServiceLauncher(CONF)
-
-        launcher.launch_service(engine_server.get_oslo_service())
-
-        launcher.wait()
-    except RuntimeError as e:
-        sys.stderr.write("ERROR: %s\n" % e)
-        sys.exit(1)
+    launch_thread(engine_server.get_oslo_service())
 
 
 def launch_event_engine():
-    try:
-        launcher = service.ServiceLauncher(CONF)
-
-        launcher.launch_service(event_engine_server.get_oslo_service())
-
-        launcher.wait()
-    except RuntimeError as e:
-        sys.stderr.write("ERROR: %s\n" % e)
-        sys.exit(1)
+    launch_thread(event_engine_server.get_oslo_service())
 
 
 def launch_api():
-    launcher = service.ProcessLauncher(cfg.CONF)
-
     server = api_service.WSGIService('mistral_api')
-
-    launcher.launch_service(server, workers=server.workers)
-
-    launcher.wait()
+    launch_process(server, workers=server.workers)
 
 
 def launch_any(options):
-    # Launch the servers on different threads.
-    threads = [eventlet.spawn(LAUNCH_OPTIONS[option])
-               for option in options]
+    for option in options:
+        LAUNCH_OPTIONS[option]()
 
-    [thread.wait() for thread in threads]
+    global SERVER_PROCESS_MANAGER
+    global SERVER_THREAD_MANAGER
+
+    if SERVER_PROCESS_MANAGER:
+        SERVER_PROCESS_MANAGER.wait()
+
+    if SERVER_THREAD_MANAGER:
+        SERVER_THREAD_MANAGER.wait()
 
 
 # Map cli options to appropriate functions. The cli options are
@@ -201,6 +206,26 @@ def main():
     except RuntimeError as excp:
         sys.stderr.write("ERROR: %s\n" % excp)
         sys.exit(1)
+
+
+# Helper method used in unit tests to reset the service launchers.
+def reset_server_managers():
+    global SERVER_THREAD_MANAGER
+    global SERVER_PROCESS_MANAGER
+    SERVER_THREAD_MANAGER = None
+    SERVER_PROCESS_MANAGER = None
+
+
+# Helper method used in unit tests to access the service launcher.
+def get_server_thread_manager():
+    global SERVER_THREAD_MANAGER
+    return SERVER_THREAD_MANAGER
+
+
+# Helper method used in unit tests to access the process launcher.
+def get_server_process_manager():
+    global SERVER_PROCESS_MANAGER
+    return SERVER_PROCESS_MANAGER
 
 
 if __name__ == '__main__':
