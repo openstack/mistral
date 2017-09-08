@@ -16,6 +16,6 @@ Enabling Mistral in Devstack
     To use stable branches, make sure devstack is on that branch, and specify
     the branch name to enable_plugin, for example::
 
-      enable_plugin mistral https://github.com/openstack/mistral stable/newton
+      enable_plugin mistral https://github.com/openstack/mistral stable/pike
 
 3. run ``stack.sh``
