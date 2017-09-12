@@ -29,8 +29,8 @@ LOG = logging.getLogger(__name__)
 
 ANY_JINJA_REGEXP = "{{.*}}|{%.*%}"
 
-JINJA_REGEXP = '({{(.*)}})'
-JINJA_BLOCK_REGEXP = '({%(.*)%})'
+JINJA_REGEXP = '({{(.*?)}})'
+JINJA_BLOCK_REGEXP = '({%(.*?)%})'
 
 _environment = SandboxedEnvironment(
     undefined=jinja2.StrictUndefined,

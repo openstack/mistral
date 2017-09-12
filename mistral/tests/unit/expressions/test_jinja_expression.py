@@ -402,6 +402,13 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
         self.assertEqual(3, self._evaluator.evaluate('{{ _ }}', 3))
         self.assertEqual('33', self._evaluator.evaluate('{{ _ }}{{ _ }}', 3))
 
+    def test_multiple_expressions(self):
+        context = {'dir': '/tmp',
+                   'file': 'a.txt'}
+        expected_result = '/tmp/a.txt'
+        result = self._evaluator.evaluate('{{ _.dir }}/{{ _.file }}', context)
+        self.assertEqual(expected_result, result)
+
     def test_function_string(self):
         self.assertEqual('3', self._evaluator.evaluate('{{ _|string }}', '3'))
         self.assertEqual('3', self._evaluator.evaluate('{{ _|string }}', 3))
