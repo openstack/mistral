@@ -301,7 +301,8 @@ class JinjaEvaluatorTest(base.BaseTest):
             'name': wf_ex.name,
             'spec': wf_ex.spec,
             'input': wf_ex.input,
-            'params': wf_ex.params
+            'params': wf_ex.params,
+            'created_at': wf_ex.created_at.isoformat(' ')
         }, result)
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
@@ -321,7 +322,8 @@ class JinjaEvaluatorTest(base.BaseTest):
             'name': wf_ex.name,
             'spec': wf_ex.spec,
             'input': wf_ex.input,
-            'params': wf_ex.params
+            'params': wf_ex.params,
+            'created_at': wf_ex.created_at.isoformat(' ')
         }, result)
 
 
