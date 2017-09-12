@@ -1319,54 +1319,54 @@ Task publish result (partial to keep the documentation short):
 .. code-block:: json
 
   {
-    "all_tasks_in_error_yaql": [
-      {
-        "id": "3d363d4b-8c19-48fa-a9a0-8721dc5469f2",
-        "name": "fail_task",
-        "type": "ACTION",
-        "workflow_execution_id": "c0a4d2ff-0127-4826-8370-0570ef8cad80",
-        "state": "ERROR",
-        "state_info": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.action_factory.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
-        "result": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.action_factory.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
-        "published": {},
-        "spec": {
-          "action": "std.fail",
-          "version": "2.0",
-          "type": "direct",
-          "name": "fail_task"
-        }
-      }
-    ],
-    "all_tasks_in_this_wf_jinja": [
-      {
-        "id": "83a34bfe-268c-46f5-9e5c-c16900540084",
-        "name": "task",
-        "type": "ACTION",
-        "workflow_execution_id": "899a3318-b5c0-4860-82b4-a5bd147a4643",
-        "state": "SUCCESS",
-        "state_info": null,
-        "result": null,
-        "published": {},
-        "spec": {
-          "action": "std.noop",
-          "version": "2.0",
-          "type": "direct",
-          "name": "task",
-          "publish": {
-            "all_tasks_in_error_yaql": "<% tasks(null, false, ERROR) %>",
-            "all_tasks_in_error_jinja": "{{ tasks(None, false, 'ERROR') }}",
-            "all_tasks_yaql_option2": "<% tasks(null, false, false, false) %>",
-            "all_tasks_yaql_option1": "<% tasks() %>",
-            "all_tasks_jinja_option1": "{{ tasks() }}",
-            "all_tasks_in_error_jinja_with_kw": "{{ tasks(state='ERROR') }}",
-            "all_tasks_jinja_option2": "{{ tasks(None, false, None, false) }}",
-            "all_tasks_in_this_wf_jinja": "{{ tasks(execution().id) }}",
-            "all_tasks_in_this_wf_yaql": "<% tasks(execution().id) %>"
+      "all_tasks_in_error_yaql": [
+          {
+              "id": "3d363d4b-8c19-48fa-a9a0-8721dc5469f2",
+              "name": "fail_task",
+              "type": "ACTION",
+              "workflow_execution_id": "c0a4d2ff-0127-4826-8370-0570ef8cad80",
+              "state": "ERROR",
+              "state_info": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.action_factory.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
+              "result": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.action_factory.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
+              "published": {},
+              "spec": {
+                  "action": "std.fail",
+                  "version": "2.0",
+                  "type": "direct",
+                  "name": "fail_task"
+              }
           }
-        }
-      }
-    ],
-    "_comment": "other fields were dropped to keep docs short"
+      ],
+      "all_tasks_in_this_wf_jinja": [
+          {
+              "id": "83a34bfe-268c-46f5-9e5c-c16900540084",
+              "name": "task",
+              "type": "ACTION",
+              "workflow_execution_id": "899a3318-b5c0-4860-82b4-a5bd147a4643",
+              "state": "SUCCESS",
+              "state_info": null,
+              "result": null,
+              "published": {},
+              "spec": {
+                  "action": "std.noop",
+                  "version": "2.0",
+                  "type": "direct",
+                  "name": "task",
+                  "publish": {
+                      "all_tasks_in_error_yaql": "<% tasks(null, false, ERROR) %>",
+                      "all_tasks_in_error_jinja": "{{ tasks(None, false, 'ERROR') }}",
+                      "all_tasks_yaql_option2": "<% tasks(null, false, false, false) %>",
+                      "all_tasks_yaql_option1": "<% tasks() %>",
+                      "all_tasks_jinja_option1": "{{ tasks() }}",
+                      "all_tasks_in_error_jinja_with_kw": "{{ tasks(state='ERROR') }}",
+                      "all_tasks_jinja_option2": "{{ tasks(None, false, None, false) }}",
+                      "all_tasks_in_this_wf_jinja": "{{ tasks(execution().id) }}",
+                      "all_tasks_in_this_wf_yaql": "<% tasks(execution().id) %>"
+                  }
+              }
+          }
+      ],
+      "_comment": "other fields were dropped to keep docs short"
   }
 
 
