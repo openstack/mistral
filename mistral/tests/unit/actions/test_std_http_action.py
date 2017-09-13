@@ -19,7 +19,7 @@ import requests
 
 from mistral.actions import std_actions as std
 from mistral.tests.unit import base
-from mistral_lib import actions as ml_actions
+from mistral_lib import actions as mistral_lib_actions
 
 
 URL = 'http://some_url'
@@ -34,8 +34,16 @@ DATA = {
 }
 
 
-def get_success_fake_response():
+def get_fake_response(content, code, **kwargs):
     return base.FakeHTTPResponse(
+        content,
+        code,
+        **kwargs
+    )
+
+
+def get_success_fake_response():
+    return get_fake_response(
         json.dumps(DATA),
         200,
         headers={'Content-Type': 'application/json'}
@@ -43,17 +51,9 @@ def get_success_fake_response():
 
 
 def get_error_fake_response():
-    return base.FakeHTTPResponse(
+    return get_fake_response(
         json.dumps(DATA),
         401
-    )
-
-
-def get_fake_response(content, code, **kwargs):
-    return base.FakeHTTPResponse(
-        content,
-        code,
-        **kwargs
     )
 
 
@@ -110,29 +110,10 @@ class HTTPActionTest(base.BaseTest):
             allow_redirects=True
         )
 
-        DATA_STR = json.dumps(DATA)
-
-        self.assertEqual(DATA_STR, action.body)
-        self.assertEqual(URL, action.url)
-
         result = action.run(mock_ctx)
 
-        self.assertIsInstance(result, ml_actions.Result)
+        self.assertIsInstance(result, mistral_lib_actions.Result)
         self.assertEqual(401, result.error['status'])
-
-        mocked_method.assert_called_with(
-            'POST',
-            URL,
-            data=DATA_STR,
-            headers=None,
-            cookies=None,
-            params=None,
-            timeout=20,
-            auth=None,
-            allow_redirects=True,
-            proxies=None,
-            verify=None
-        )
 
     @mock.patch.object(requests, 'request')
     def test_http_action_with_auth(self, mocked_method):
@@ -142,35 +123,13 @@ class HTTPActionTest(base.BaseTest):
         action = std.HTTPAction(
             url=URL,
             method='POST',
-            body=DATA,
             auth='user:password'
         )
 
-        data_str = json.dumps(DATA)
+        action.run(mock_ctx)
 
-        self.assertEqual(data_str, action.body)
-        self.assertEqual(URL, action.url)
-
-        result = action.run(mock_ctx)
-
-        self.assertIsInstance(result, dict)
-        self.assertEqual(DATA, result['content'])
-        self.assertIn('headers', result)
-        self.assertEqual(200, result['status'])
-
-        mocked_method.assert_called_with(
-            'POST',
-            URL,
-            data=data_str,
-            headers=None,
-            cookies=None,
-            params=None,
-            timeout=None,
-            auth=('user', 'password'),
-            allow_redirects=None,
-            proxies=None,
-            verify=None
-        )
+        args, kwargs = mocked_method.call_args
+        self.assertEqual(('user', 'password'), kwargs['auth'])
 
     @mock.patch.object(requests, 'request')
     def test_http_action_with_headers(self, mocked_method):
@@ -186,124 +145,44 @@ class HTTPActionTest(base.BaseTest):
         action = std.HTTPAction(
             url=URL,
             method='POST',
-            body=DATA,
             headers=headers.copy(),
         )
 
-        data_str = json.dumps(DATA)
-
-        self.assertEqual(data_str, action.body)
-        self.assertEqual(URL, action.url)
-
         result = action.run(mock_ctx)
 
-        self.assertIsInstance(result, dict)
-        self.assertEqual(DATA, result['content'])
         self.assertIn('headers', result)
-        self.assertEqual(200, result['status'])
 
-        mocked_method.assert_called_with(
-            'POST',
-            URL,
-            data=data_str,
-            headers=safe_headers,
-            cookies=None,
-            params=None,
-            timeout=None,
-            auth=None,
-            allow_redirects=None,
-            proxies=None,
-            verify=None
-        )
+        args, kwargs = mocked_method.call_args
+        self.assertEqual(safe_headers, kwargs['headers'])
 
     @mock.patch.object(requests, 'request')
     def test_http_action_empty_resp(self, mocked_method):
-        action = std.HTTPAction(
-            url=URL,
-            method='GET',
-            timeout=20,
-            allow_redirects=True
-        )
 
-        self.assertEqual(URL, action.url)
+        def invoke(content):
+            action = std.HTTPAction(
+                url=URL,
+                method='GET',
+            )
+            mocked_method.return_value = get_fake_response(
+                content=content, code=200
+            )
+            result = action.run(mock.Mock())
+            self.assertEqual(content, result['content'])
 
-        mocked_method.return_value = get_fake_response(
-            content=None, code=200, encoding=None
-        )
-        mock_ctx = mock.Mock()
-        result = action.run(mock_ctx)
-
-        self.assertIsNone(result['content'])
-        self.assertEqual(200, result['status'])
-
-        mocked_method.assert_called_with(
-            'GET',
-            URL,
-            headers=None,
-            cookies=None,
-            params=None,
-            data=None,
-            timeout=20,
-            auth=None,
-            allow_redirects=True,
-            proxies=None,
-            verify=None
-        )
-
-        mocked_method.return_value = get_fake_response(
-            content='', code=204, encoding=None
-        )
-        mock_ctx = mock.Mock()
-        result = action.run(mock_ctx)
-
-        self.assertEqual('', result['content'])
-        self.assertEqual(204, result['status'])
-
-        mocked_method.assert_called_with(
-            'GET',
-            URL,
-            headers=None,
-            cookies=None,
-            params=None,
-            data=None,
-            timeout=20,
-            auth=None,
-            allow_redirects=True,
-            proxies=None,
-            verify=None
-        )
+        invoke(None)
+        invoke('')
 
     @mock.patch.object(requests, 'request')
     def test_http_action_none_encoding_not_empty_resp(self, mocked_method):
         action = std.HTTPAction(
             url=URL,
             method='GET',
-            timeout=20,
-            allow_redirects=True
         )
 
-        self.assertEqual(URL, action.url)
-
         mocked_method.return_value = get_fake_response(
-            content='content', code=200, encoding=None
+            content='', code=200, encoding=None
         )
         mock_ctx = mock.Mock()
         result = action.run(mock_ctx)
 
-        self.assertEqual('content', result['content'])
-        self.assertEqual(200, result['status'])
         self.assertIsNone(result['encoding'])
-
-        mocked_method.assert_called_with(
-            'GET',
-            URL,
-            headers=None,
-            cookies=None,
-            params=None,
-            data=None,
-            timeout=20,
-            auth=None,
-            allow_redirects=True,
-            proxies=None,
-            verify=None
-        )
