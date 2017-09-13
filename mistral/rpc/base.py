@@ -47,7 +47,7 @@ def get_transport():
     global _TRANSPORT
 
     if not _TRANSPORT:
-        _TRANSPORT = messaging.get_transport(cfg.CONF)
+        _TRANSPORT = messaging.get_rpc_transport(cfg.CONF)
 
     return _TRANSPORT
 
