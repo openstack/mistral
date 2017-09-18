@@ -138,7 +138,7 @@ class ExpirationPolicyTest(base.DbTestCase):
         self.assertEqual('running_not_expired', exec_child.task_execution_id)
 
         # Call for all expired wfs execs.
-        execs = db_api.get_executions_to_clean(now)
+        execs = db_api.get_expired_executions(now)
 
         # Should be only 5, the RUNNING execution shouldn't return,
         # so the child wf (that has parent task id).
@@ -147,11 +147,11 @@ class ExpirationPolicyTest(base.DbTestCase):
         # Switch context to Admin since expiration policy running as Admin.
         _switch_context(True, True)
 
-        _set_expiration_policy_config(1, 30, None)
+        _set_expiration_policy_config(evaluation_interval=1, older_than=30)
         expiration_policy.run_execution_expiration_policy(self, ctx)
 
         # Only non_expired available (update_at < older_than).
-        execs = db_api.get_executions_to_clean(now)
+        execs = db_api.get_expired_executions(now)
 
         self.assertEqual(2, len(execs))
         self.assertListEqual(
@@ -162,9 +162,9 @@ class ExpirationPolicyTest(base.DbTestCase):
             sorted([ex.id for ex in execs])
         )
 
-        _set_expiration_policy_config(1, 5, None)
+        _set_expiration_policy_config(evaluation_interval=1, older_than=5)
         expiration_policy.run_execution_expiration_policy(self, ctx)
-        execs = db_api.get_executions_to_clean(now)
+        execs = db_api.get_expired_executions(now)
 
         self.assertEqual(0, len(execs))
 
@@ -177,40 +177,21 @@ class ExpirationPolicyTest(base.DbTestCase):
         Expected_result: All expired executions are successfully deleted.
         """
 
-        cfg.CONF.set_default(
-            'batch_size',
-            3,
-            group='execution_expiration_policy'
-        )
-
         _create_workflow_executions()
-
-        _set_expiration_policy_config(1, 30, None)
-
-        # Call for all expired wfs execs.
         now = datetime.datetime.utcnow()
-        execs = db_api.get_executions_to_clean(now)
 
-        # Should be only 5, the RUNNING execution shouldn't return,
-        # so the child wf (that has parent task id).
-        self.assertEqual(5, len(execs))
-
-        older_than = cfg.CONF.execution_expiration_policy.older_than
-        exp_time = (datetime.datetime.utcnow()
-                    - datetime.timedelta(minutes=older_than))
-        batch_size = cfg.CONF.execution_expiration_policy.batch_size
-        mfe = cfg.CONF.execution_expiration_policy.max_finished_executions
-        expiration_policy._delete_executions(
-            batch_size,
-            exp_time,
-            mfe
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=30,
+            batch_size=3
         )
-        execs = db_api.get_executions_to_clean(now)
+        expiration_policy.run_execution_expiration_policy(self, ctx)
+        execs = db_api.get_expired_executions(now)
         self.assertEqual(2, len(execs))
 
-        _set_expiration_policy_config(1, 5, None)
+        _set_expiration_policy_config(evaluation_interval=1, older_than=5)
         expiration_policy.run_execution_expiration_policy(self, ctx)
-        execs = db_api.get_executions_to_clean(now)
+        execs = db_api.get_expired_executions(now)
         self.assertEqual(0, len(execs))
 
     def test_deletion_of_expired_executions_with_batch_size_scenario2(self):
@@ -221,35 +202,16 @@ class ExpirationPolicyTest(base.DbTestCase):
         Expected_result: All expired executions are successfully deleted.
         """
 
-        cfg.CONF.set_default(
-            'batch_size',
-            2,
-            group='execution_expiration_policy'
-        )
-
         _create_workflow_executions()
-
-        _set_expiration_policy_config(1, 5, None)
-
-        # Call for all expired wfs execs.
         now = datetime.datetime.utcnow()
-        execs = db_api.get_executions_to_clean(now)
 
-        # Should be only 5, the RUNNING execution shouldn't return,
-        # so the child wf (that has parent task id).
-        self.assertEqual(5, len(execs))
-
-        older_than = cfg.CONF.execution_expiration_policy.older_than
-        exp_time = (datetime.datetime.utcnow()
-                    - datetime.timedelta(minutes=older_than))
-        batch_size = cfg.CONF.execution_expiration_policy.batch_size
-        mfe = cfg.CONF.execution_expiration_policy.max_finished_executions
-        expiration_policy._delete_executions(
-            batch_size,
-            exp_time,
-            mfe
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=5,
+            batch_size=2
         )
-        execs = db_api.get_executions_to_clean(now)
+        expiration_policy.run_execution_expiration_policy(self, ctx)
+        execs = db_api.get_expired_executions(now)
         self.assertEqual(0, len(execs))
 
     def test_expiration_policy_for_executions_with_max_executions_scen1(self):
@@ -261,17 +223,11 @@ class ExpirationPolicyTest(base.DbTestCase):
         """
 
         _create_workflow_executions()
-
-        now = datetime.datetime.utcnow()
-
-        # Call for all expired wfs execs.
-        execs = db_api.get_executions_to_clean(now)
-
-        # Should be only 5, the RUNNING execution shouldn't return,
-        # so the child wf (that has parent task id).
-        self.assertEqual(5, len(execs))
-
-        _set_expiration_policy_config(1, 30, 1)
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=30,
+            mfe=1
+        )
         expiration_policy.run_execution_expiration_policy(self, ctx)
 
         # Assert the two running executions
@@ -298,17 +254,11 @@ class ExpirationPolicyTest(base.DbTestCase):
         """
 
         _create_workflow_executions()
-
-        now = datetime.datetime.utcnow()
-
-        # Call for all expired wfs execs.
-        execs = db_api.get_executions_to_clean(now)
-
-        # Should be only 5, the RUNNING execution shouldn't return,
-        # so the child wf (that has parent task id).
-        self.assertEqual(5, len(execs))
-
-        _set_expiration_policy_config(1, 30, 100)
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=30,
+            mfe=100
+        )
         expiration_policy.run_execution_expiration_policy(self, ctx)
 
         # Assert the two running executions
@@ -328,27 +278,11 @@ class ExpirationPolicyTest(base.DbTestCase):
             sorted([ex.id for ex in execs])
         )
 
-    def test_negative_wrong_conf_values(self):
-        _set_expiration_policy_config(None, None, None)
-        e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
-
-        self.assertDictEqual({}, e_policy._periodic_spacing)
-        self.assertListEqual([], e_policy._periodic_tasks)
-
-        _set_expiration_policy_config(None, 60, None)
-        e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
-
-        self.assertDictEqual({}, e_policy._periodic_spacing)
-        self.assertListEqual([], e_policy._periodic_tasks)
-
-        _set_expiration_policy_config(60, None, None)
-        e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
-
-        self.assertDictEqual({}, e_policy._periodic_spacing)
-        self.assertListEqual([], e_policy._periodic_tasks)
-
     def test_periodic_task_parameters(self):
-        _set_expiration_policy_config(17, 13, None)
+        _set_expiration_policy_config(
+            evaluation_interval=17,
+            older_than=13
+        )
 
         e_policy = expiration_policy.ExecutionExpirationPolicy(cfg.CONF)
 
@@ -374,11 +308,15 @@ class ExpirationPolicyTest(base.DbTestCase):
                     "Periodic task shouldn't have been created."
                 )
 
-        _assert_scheduling([1, 1, None], True)
-        _assert_scheduling([1, None, 1], True)
-        _assert_scheduling([1, 1, 1], True)
-        _assert_scheduling([1, None, None], False)
-        _assert_scheduling([None, 1, 1], False)
+        _assert_scheduling([1, 1, None, None], True)
+        _assert_scheduling([1, None, 1, None], True)
+        _assert_scheduling([1, 1, 1, None], True)
+        _assert_scheduling([1, None, None, None], False)
+        _assert_scheduling([None, 1, 1, None], False)
+        _assert_scheduling([None, 1, 1, None], False)
+        _assert_scheduling([1, 0, 0, 0], False)
+        _assert_scheduling([0, 1, 1, 0], False)
+        _assert_scheduling([0, 1, 1, 0], False)
 
     def tearDown(self):
         """Restores the size limit config to default."""
@@ -388,10 +326,11 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         ctx.set_ctx(None)
 
-        _set_expiration_policy_config(None, None, None)
+        _set_expiration_policy_config(None, None, None, None)
 
 
-def _set_expiration_policy_config(evaluation_interval, older_than, mfe):
+def _set_expiration_policy_config(evaluation_interval, older_than, mfe=0,
+                                  batch_size=0):
     cfg.CONF.set_default(
         'evaluation_interval',
         evaluation_interval,
@@ -405,5 +344,10 @@ def _set_expiration_policy_config(evaluation_interval, older_than, mfe):
     cfg.CONF.set_default(
         'max_finished_executions',
         mfe,
+        group='execution_expiration_policy'
+    )
+    cfg.CONF.set_default(
+        'batch_size',
+        batch_size,
         group='execution_expiration_policy'
     )
