@@ -35,7 +35,6 @@ from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db import utils as m_dbutils
 from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
-from mistral.db.v2.sqlalchemy.models import WorkflowExecution
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral import utils
@@ -1099,30 +1098,31 @@ def delete_delayed_calls(session=None, **kwargs):
 
 
 @b.session_aware()
-def get_executions_to_clean(expiration_time, limit=None,
-                            max_finished_executions=None, columns=(),
-                            session=None):
-    # Get the ids of the executions that won't be deleted.
-    # These are the not expired executions,
-    # limited by the new max_finished_executions constraint.
-    query = _get_completed_root_executions_query((WorkflowExecution.id,))
-    query = query.filter(
-        models.WorkflowExecution.updated_at >= expiration_time
-    )
-    query = query.order_by(models.WorkflowExecution.updated_at.desc())
-
-    if max_finished_executions:
-        query = query.limit(max_finished_executions)
-
-    # And take the inverse of that set.
-    inverse = _get_completed_root_executions_query(columns)
-    inverse = inverse.filter(~WorkflowExecution.id.in_(query))
-    inverse = inverse.order_by(models.WorkflowExecution.updated_at.asc())
+def get_expired_executions(expiration_time, limit=None, columns=(),
+                           session=None):
+    query = _get_completed_root_executions_query(columns)
+    query = query.filter(models.WorkflowExecution.updated_at < expiration_time)
 
     if limit:
-        inverse.limit(limit)
+        query = query.limit(limit)
 
-    return inverse.all()
+    return query.all()
+
+
+@b.session_aware()
+def get_superfluous_executions(max_finished_executions, limit=None, columns=(),
+                               session=None):
+    if not max_finished_executions:
+        return []
+
+    query = _get_completed_root_executions_query(columns)
+    query = query.order_by(models.WorkflowExecution.updated_at.desc())
+    query = query.offset(max_finished_executions)
+
+    if limit:
+        query = query.limit(limit)
+
+    return query.all()
 
 
 def _get_completed_root_executions_query(columns):

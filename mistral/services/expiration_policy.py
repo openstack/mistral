@@ -61,16 +61,24 @@ class ExecutionExpirationPolicy(periodic_task.PeriodicTasks):
 
 def _delete_executions(batch_size, expiration_time,
                        max_finished_executions):
+    _delete_until_depleted(
+        lambda: db_api.get_expired_executions(
+            expiration_time,
+            batch_size
+        )
+    )
+    _delete_until_depleted(
+        lambda: db_api.get_superfluous_executions(
+            max_finished_executions,
+            batch_size
+        )
+    )
+
+
+def _delete_until_depleted(fetch_func):
     while True:
         with db_api.transaction():
-            # TODO(gpaz): In the future should use generic method with
-            # filters params and not specific method that filter by time.
-            execs = db_api.get_executions_to_clean(
-                expiration_time,
-                limit=batch_size,
-                max_finished_executions=max_finished_executions
-            )
-
+            execs = fetch_func()
             if not execs:
                 break
             _delete(execs)
