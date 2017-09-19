@@ -524,17 +524,17 @@ def get_scheduled_jobs_count(**kwargs):
 
 # Cron triggers.
 
-def get_cron_trigger(identifier):
-    return IMPL.get_cron_trigger(identifier)
+def get_cron_trigger(identifier, fields=()):
+    return IMPL.get_cron_trigger(identifier, fields=fields)
 
 
-def get_cron_trigger_by_id(id):
-    return IMPL.get_cron_trigger_by_id(id)
+def get_cron_trigger_by_id(id, fields=()):
+    return IMPL.get_cron_trigger_by_id(id, fields=fields)
 
 
-def load_cron_trigger(identifier):
+def load_cron_trigger(identifier, fields=()):
     """Unlike get_cron_trigger this method is allowed to return None."""
-    return IMPL.load_cron_trigger(identifier)
+    return IMPL.load_cron_trigger(identifier, fields=fields)
 
 
 def get_cron_triggers(**kwargs):
@@ -593,13 +593,13 @@ def delete_cron_triggers(**kwargs):
 
 # Environments.
 
-def get_environment(name):
-    return IMPL.get_environment(name)
+def get_environment(name, fields=()):
+    return IMPL.get_environment(name, fields=fields)
 
 
-def load_environment(name):
+def load_environment(name, fields=()):
     """Unlike get_environment this method is allowed to return None."""
-    return IMPL.load_environment(name)
+    return IMPL.load_environment(name, fields=fields)
 
 
 def get_environments(limit=None, marker=None, sort_keys=None,
@@ -667,12 +667,12 @@ def delete_resource_members(**kwargs):
 
 # Event triggers.
 
-def get_event_trigger(id, insecure=False):
-    return IMPL.get_event_trigger(id, insecure)
+def get_event_trigger(id, insecure=False, fields=()):
+    return IMPL.get_event_trigger(id, insecure, fields=fields)
 
 
-def load_event_trigger(id, insecure=False):
-    return IMPL.load_event_trigger(id, insecure)
+def load_event_trigger(id, insecure=False, fields=()):
+    return IMPL.load_event_trigger(id, insecure, fields=fields)
 
 
 def get_event_triggers(insecure=False, limit=None, marker=None, sort_keys=None,

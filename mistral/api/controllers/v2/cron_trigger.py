@@ -31,22 +31,30 @@ LOG = logging.getLogger(__name__)
 
 class CronTriggersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.CronTrigger, wtypes.text)
-    def get(self, identifier):
+    @wsme_pecan.wsexpose(resources.CronTrigger,
+                         wtypes.text, types.uniquelist)
+    def get(self, identifier, fields=''):
         """Returns the named cron_trigger.
 
         :param identifier: Id or name of cron trigger to retrieve
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('cron_triggers:get', context.ctx())
 
         LOG.debug('Fetch cron trigger [identifier=%s]', identifier)
 
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
+
         # Use retries to prevent possible failures.
         db_model = rest_utils.rest_retry_on_db_error(
             db_api.get_cron_trigger
-        )(identifier)
-
-        return resources.CronTrigger.from_db_model(db_model)
+        )(identifier, fields=fields)
+        if fields:
+            return resources.CronTrigger.from_tuples(zip(fields, db_model))
+        return resources.CronTrigger.from_db_model(db_model, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
@@ -124,7 +132,7 @@ class CronTriggersController(rest.RestController):
                           or less than that of sort_keys.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param workflow_name: Optional. Keep only resources with a specific

@@ -307,6 +307,11 @@ def _get_db_object_by_name(model, name, columns=()):
 
 
 def _get_db_object_by_id(model, id, insecure=False, columns=()):
+    columns = (
+        tuple([getattr(model, f) for f in columns if hasattr(model, f)])
+        if columns and isinstance(columns, list) else columns
+    )
+
     query = (
         b.model_query(model, columns=columns)
         if insecure
@@ -319,6 +324,10 @@ def _get_db_object_by_id(model, id, insecure=False, columns=()):
 def _get_db_object_by_name_and_namespace_or_id(model, identifier,
                                                namespace=None, insecure=False,
                                                columns=()):
+    columns = (
+        tuple([getattr(model, f) for f in columns if hasattr(model, f)])
+        if columns and isinstance(columns, list) else columns
+    )
     query = (
         b.model_query(model, columns=columns)
         if insecure
@@ -1599,13 +1608,14 @@ def _get_completed_root_executions_query(columns):
 
 
 @b.session_aware()
-def get_cron_trigger(identifier, session=None):
+def get_cron_trigger(identifier, session=None, fields=()):
     ctx = context.ctx()
 
     cron_trigger = _get_db_object_by_name_and_namespace_or_id(
         models.CronTrigger,
         identifier,
-        insecure=ctx.is_admin
+        insecure=ctx.is_admin,
+        columns=fields,
     )
 
     if not cron_trigger:
@@ -1617,10 +1627,11 @@ def get_cron_trigger(identifier, session=None):
 
 
 @b.session_aware()
-def get_cron_trigger_by_id(id, session=None):
+def get_cron_trigger_by_id(id, session=None, fields=()):
     ctx = context.ctx()
     cron_trigger = _get_db_object_by_id(models.CronTrigger, id,
-                                        insecure=ctx.is_admin)
+                                        insecure=ctx.is_admin,
+                                        columns=fields)
     if not cron_trigger:
         raise exc.DBEntityNotFoundError(
             "Cron trigger not found [id=%s]" % id
@@ -1630,10 +1641,11 @@ def get_cron_trigger_by_id(id, session=None):
 
 
 @b.session_aware()
-def load_cron_trigger(identifier, session=None):
+def load_cron_trigger(identifier, session=None, fields=()):
     return _get_db_object_by_name_and_namespace_or_id(
         models.CronTrigger,
-        identifier
+        identifier,
+        columns=fields,
     )
 
 
@@ -1744,8 +1756,8 @@ def delete_cron_triggers(session=None, **kwargs):
 # Environments.
 
 @b.session_aware()
-def get_environment(name, session=None):
-    env = _get_db_object_by_name(models.Environment, name)
+def get_environment(name, session=None, fields=()):
+    env = _get_db_object_by_name(models.Environment, name, columns=fields)
 
     if not env:
         raise exc.DBEntityNotFoundError(
@@ -1756,8 +1768,8 @@ def get_environment(name, session=None):
 
 
 @b.session_aware()
-def load_environment(name, session=None):
-    return _get_db_object_by_name(models.Environment, name)
+def load_environment(name, session=None, fields=()):
+    return _get_db_object_by_name(models.Environment, name, columns=fields)
 
 
 @b.session_aware()
@@ -1982,8 +1994,9 @@ def _get_accepted_resources(res_type):
 # Event triggers.
 
 @b.session_aware()
-def get_event_trigger(id, insecure=False, session=None):
-    event_trigger = _get_db_object_by_id(models.EventTrigger, id, insecure)
+def get_event_trigger(id, insecure=False, session=None, fields=()):
+    event_trigger = _get_db_object_by_id(models.EventTrigger, id, insecure,
+                                         columns=fields)
 
     if not event_trigger:
         raise exc.DBEntityNotFoundError(
@@ -1994,8 +2007,9 @@ def get_event_trigger(id, insecure=False, session=None):
 
 
 @b.session_aware()
-def load_event_trigger(id, insecure=False, session=None):
-    return _get_db_object_by_id(models.EventTrigger, id, insecure)
+def load_event_trigger(id, insecure=False, session=None, fields=()):
+    return _get_db_object_by_id(models.EventTrigger, id, insecure,
+                                columns=fields)
 
 
 @b.session_aware()

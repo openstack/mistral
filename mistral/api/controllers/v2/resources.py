@@ -159,8 +159,8 @@ class Workflow(resource.Resource, ScopedResource):
         return obj
 
     @classmethod
-    def from_db_model(cls, db_model):
-        obj = super(Workflow, cls).from_db_model(db_model)
+    def from_db_model(cls, db_model, fields=()):
+        obj = super(Workflow, cls).from_db_model(db_model, fields=fields)
 
         obj.set_attributes_from_spec(db_model.get('spec'))
 

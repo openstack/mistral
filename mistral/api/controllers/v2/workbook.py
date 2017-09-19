@@ -44,16 +44,23 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workbook, wtypes.text, wtypes.text)
-    def get(self, name, namespace=''):
+    @wsme_pecan.wsexpose(resources.Workbook, wtypes.text, wtypes.text,
+                         types.uniquelist)
+    def get(self, name, namespace='', fields=''):
         """Return the named workbook.
 
         :param name: Name of workbook to retrieve.
         :param namespace: Optional. Namespace of workbook to retrieve.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('workbooks:get', context.ctx())
 
         LOG.debug("Fetch workbook [name=%s, namespace=%s]", name, namespace)
+
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
@@ -61,10 +68,12 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         db_model = r.call(
             db_api.get_workbook,
             name,
-            namespace=namespace
+            namespace=namespace,
+            fields=fields
         )
-
-        return resources.Workbook.from_db_model(db_model)
+        if fields:
+            return resources.Workbook.from_tuples(zip(fields, db_model))
+        return resources.Workbook.from_db_model(db_model, fields=fields)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -171,7 +180,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
                           Default: asc.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param definition: Optional. Keep only resources with a specific

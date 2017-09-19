@@ -77,6 +77,21 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TRIGGER, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_event_trigger')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (TRIGGER['id'], TRIGGER['name'],)
+        resp = self.app.get(
+            '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
+            '?fields=name'
+        )
+        expected = {
+            'id': TRIGGER['id'],
+            'name': TRIGGER['name'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, 'get_event_trigger')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

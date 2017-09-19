@@ -34,18 +34,22 @@ CREATE_MANDATORY = set(['exchange', 'topic', 'event', 'workflow_id'])
 
 class EventTriggersController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.EventTrigger, types.uuid)
-    def get(self, id):
+    @wsme_pecan.wsexpose(resources.EventTrigger, types.uuid, types.uniquelist)
+    def get(self, id, fields=''):
         """Returns the specified event_trigger."""
         acl.enforce('event_triggers:get', auth_ctx.ctx())
 
         LOG.debug('Fetch event trigger [id=%s]', id)
 
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
+
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
-        db_model = r.call(db_api.get_event_trigger, id)
-
-        return resources.EventTrigger.from_db_model(db_model)
+        db_model = r.call(db_api.get_event_trigger, id, fields=fields)
+        if fields:
+            return resources.EventTrigger.from_tuples(zip(fields, db_model))
+        return resources.EventTrigger.from_db_model(db_model, fields=fields)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.EventTrigger, body=resources.EventTrigger,

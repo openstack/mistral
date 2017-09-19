@@ -169,6 +169,20 @@ class TestExecutionsController(base.APITest):
 
         self.assertDictEqual(expected, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_workflow_execution')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = (
+            WF_EX_JSON_WITH_DESC['id'], WF_EX_JSON_WITH_DESC['description'],
+        )
+        resp = self.app.get('/v2/executions/123?fields=description')
+        expected = {
+            'id': WF_EX_JSON_WITH_DESC['id'],
+            'description': WF_EX_JSON_WITH_DESC['description'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, 'get_workflow_execution')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [
@@ -564,7 +578,8 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertDictEqual(expected_json, resp.json)
 
-        load_wf_ex_func.assert_called_once_with(expected_json['id'])
+        load_wf_ex_func.assert_called_once_with(expected_json['id'],
+                                                fields=())
 
         kwargs = json.loads(expected_json['params'])
         kwargs['description'] = expected_json['description']
@@ -600,7 +615,8 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertDictEqual(expected_json, resp.json)
 
-        load_wf_ex_func.assert_called_once_with(expected_json['id'])
+        load_wf_ex_func.assert_called_once_with(expected_json['id'],
+                                                fields=())
 
         # Note that "start_workflow" method on engine API should not be called
         # in this case because we passed execution ID to the endpoint and the

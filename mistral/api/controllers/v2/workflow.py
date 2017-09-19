@@ -77,26 +77,36 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         )
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Workflow, wtypes.text, wtypes.text)
-    def get(self, identifier, namespace=''):
+    @wsme_pecan.wsexpose(resources.Workflow, wtypes.text, wtypes.text,
+                         types.uniquelist)
+    def get(self, identifier, namespace='', fields=''):
         """Return the named workflow.
 
         :param identifier: Name or UUID of the workflow to retrieve.
         :param namespace: Optional. Namespace of the workflow to retrieve.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
         acl.enforce('workflows:get', context.ctx())
 
         LOG.debug("Fetch workflow [identifier=%s]", identifier)
+
+        if fields and 'id' not in fields:
+            fields.insert(0, 'id')
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
         db_model = r.call(
             db_api.get_workflow_definition,
             identifier,
-            namespace=namespace
+            namespace=namespace,
+            fields=fields,
         )
 
-        return resources.Workflow.from_db_model(db_model)
+        if fields:
+            return resources.Workflow.from_tuples(zip(fields, db_model))
+        return resources.Workflow.from_db_model(db_model, fields=fields)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -240,7 +250,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
                           Default: asc.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param namespace: Optional. Keep only resources with a specific

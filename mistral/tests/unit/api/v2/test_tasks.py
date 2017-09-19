@@ -171,6 +171,18 @@ class TestTasksController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
 
+    @mock.patch('mistral.db.v2.api.get_task_execution')
+    def test_get_with_fields_filter(self, mocked_get):
+        mocked_get.return_value = TASK_EX
+        resp = self.app.get('/v2/tasks/123?fields=name')
+        expected = {
+            'id': TASK['id'],
+            'name': TASK['name'],
+        }
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(expected, resp.json)
+
     @mock.patch.object(db_api, 'get_task_execution')
     def test_get_operational_error(self, mocked_get):
         mocked_get.side_effect = [

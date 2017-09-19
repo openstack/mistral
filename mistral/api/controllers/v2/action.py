@@ -79,6 +79,9 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         :param identifier: ID or name of the Action to get.
         :param namespace: The namespace of the action.
+        :param fields: Optional. A specified list of fields of the resource to
+                       be returned. 'id' will be included automatically in
+                       fields if it's not provided.
         """
 
         acl.enforce('actions:get', context.ctx())
@@ -251,7 +254,7 @@ class ActionsController(rest.RestController, hooks.HookController):
                           Default: asc.
         :param fields: Optional. A specified list of fields of the resource to
                        be returned. 'id' will be included automatically in
-                       fields if it's provided, since it will be used when
+                       fields if it's not provided, since it will be used when
                        constructing 'next' link.
         :param name: Optional. Keep only resources with a specific name.
         :param scope: Optional. Keep only resources with a specific scope.

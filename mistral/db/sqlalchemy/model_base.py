@@ -87,15 +87,18 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
             if col.name not in unloaded and hasattr(self, col.name):
                 yield col.name
 
-    def iter_columns(self):
+    def iter_columns(self, fields=()):
         """Returns an iterator for loaded columns.
 
+        :param fields: names of fields to return
+        :type fields: tuple, list or set
         :return: A generator function that generates
             tuples (column name, column value).
         """
 
         for col_name in self.iter_column_names():
-            yield col_name, getattr(self, col_name)
+            if not fields or col_name in fields:
+                yield col_name, getattr(self, col_name)
 
     def get_clone(self):
         """Clones current object, loads all fields and returns the result."""
