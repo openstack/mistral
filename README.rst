@@ -2,8 +2,8 @@
 Team and repository tags
 ========================
 
-.. image:: https://governance.openstack.org/badges/mistral.svg
-    :target: https://governance.openstack.org/reference/tags/index.html
+.. image:: https://governance.openstack.org/tc/badges/mistral.svg
+    :target: https://governance.openstack.org/tc/reference/tags/index.html
 
 Mistral
 =======
@@ -68,16 +68,16 @@ an OpenStack environment.
 
    * Create the database and grant privileges::
 
-     $ mysql -u root -p
-       mysql> CREATE DATABASE mistral;
-       mysql> USE mistral;
-       mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'localhost' IDENTIFIED BY 'MISTRAL_DBPASS';
-       mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'%' IDENTIFIED BY 'MISTRAL_DBPASS';
+      $ mysql -u root -p
+      mysql> CREATE DATABASE mistral;
+      mysql> USE mistral
+      mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'localhost' \
+             IDENTIFIED BY 'MISTRAL_DBPASS';
+      mysql> GRANT ALL PRIVILEGES ON mistral.* TO 'mistral'@'%' IDENTIFIED BY 'MISTRAL_DBPASS';
 
 #. Generate ``mistral.conf`` file::
 
-    $ oslo-config-generator \
-      --config-file tools/config/config-generator.mistral.conf \
+    $ oslo-config-generator --config-file tools/config/config-generator.mistral.conf \
       --output-file etc/mistral.conf.sample
 
 #. Copy service configuration files::
@@ -157,24 +157,21 @@ Running Mistral API server
 
 To run Mistral API server::
 
-  $ tox -evenv -- python mistral/cmd/launch.py \
-    --server api --config-file <path_to_config>
+  $ tox -evenv -- python mistral/cmd/launch.py --server api --config-file <path_to_config>
 
 Running Mistral Engines
 -----------------------
 
 To run Mistral Engine::
 
-  $ tox -evenv -- python mistral/cmd/launch.py \
-    --server engine --config-file <path_to_config>
+  $ tox -evenv -- python mistral/cmd/launch.py --server engine --config-file <path_to_config>
 
 Running Mistral Task Executors
 ------------------------------
 
 To run Mistral Task Executor instance::
 
-  $ tox -evenv -- python mistral/cmd/launch.py \
-    --server executor --config-file <path_to_config>
+  $ tox -evenv -- python mistral/cmd/launch.py --server executor --config-file <path_to_config>
 
 Note that at least one Engine instance and one Executor instance should be
 running in order for workflow tasks to be processed by Mistral.
@@ -201,8 +198,7 @@ Running Multiple Mistral Servers Under the Same Process
 To run more than one server (API, Engine, or Task Executor) on the same
 process::
 
-  $ tox -evenv -- python mistral/cmd/launch.py \
-    --server api,engine --config-file <path_to_config>
+  $ tox -evenv -- python mistral/cmd/launch.py --server api,engine --config-file <path_to_config>
 
 The value for the ``--server`` option can be a comma-delimited list. The valid
 options are ``all`` (which is the default if not specified) or any combination
