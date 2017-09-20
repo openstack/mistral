@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import inspect
-
 from oslo_log import log as logging
 from stevedore import extension
 
@@ -145,57 +143,3 @@ def get_action_class(action_full_name):
             action_db.action_class,
             action_db.attributes
         )
-
-
-def get_action_context(task_ex, action_ex_id, save=True):
-    if task_ex:
-        return {
-            _ACTION_CTX_PARAM: {
-                'workflow_name': task_ex.workflow_name,
-                'workflow_execution_id': task_ex.workflow_execution_id,
-                'task_id': task_ex.id,
-                'task_name': task_ex.name,
-                'task_tags': task_ex.tags,
-                'action_execution_id': action_ex_id,
-                'callback_url': '/v2/action_executions/%s' % action_ex_id
-            }
-        }
-    elif save:
-        return {
-            _ACTION_CTX_PARAM: {
-                'workflow_name': None,
-                'workflow_execution_id': None,
-                'task_id': None,
-                'task_name': None,
-                'task_tags': None,
-                'action_execution_id': action_ex_id,
-                'callback_url': '/v2/action_executions/%s' % action_ex_id
-            }
-        }
-
-    return {
-        _ACTION_CTX_PARAM: {
-            'workflow_name': None,
-            'workflow_execution_id': None,
-            'task_id': None,
-            'task_name': None,
-            'task_tags': None,
-            'action_execution_id': None,
-            'callback_url': None
-        }
-    }
-
-
-def get_empty_action_context():
-    return {_ACTION_CTX_PARAM: {}}
-
-
-def _has_argument(action, attributes, argument_name):
-    action_cls = action_factory.construct_action_class(action, attributes)
-    arg_spec = inspect.getargspec(action_cls.__init__)
-
-    return argument_name in arg_spec.args
-
-
-def has_action_context(action, attributes):
-    return _has_argument(action, attributes, _ACTION_CTX_PARAM)

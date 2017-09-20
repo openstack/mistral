@@ -237,44 +237,19 @@ class HTTPAction(actions.Action):
 
 class MistralHTTPAction(HTTPAction):
 
-    def __init__(self,
-                 action_context,
-                 url,
-                 method="GET",
-                 params=None,
-                 body=None,
-                 headers=None,
-                 cookies=None,
-                 auth=None,
-                 timeout=None,
-                 allow_redirects=None,
-                 proxies=None,
-                 verify=None):
+    def run(self, context):
+        self.headers = self.headers or {}
 
-        actx = action_context
-
-        headers = headers or {}
-        headers.update({
-            'Mistral-Workflow-Name': actx.get('workflow_name'),
-            'Mistral-Workflow-Execution-Id': actx.get('workflow_execution_id'),
-            'Mistral-Task-Id': actx.get('task_id'),
-            'Mistral-Action-Execution-Id': actx.get('action_execution_id'),
-            'Mistral-Callback-URL': actx.get('callback_url'),
+        exec_ctx = context.execution
+        self.headers.update({
+            'Mistral-Workflow-Name': exec_ctx.workflow_name,
+            'Mistral-Workflow-Execution-Id': exec_ctx.workflow_execution_id,
+            'Mistral-Task-Id': exec_ctx.task_id,
+            'Mistral-Action-Execution-Id': exec_ctx.action_execution_id,
+            'Mistral-Callback-URL': exec_ctx.callback_url,
         })
 
-        super(MistralHTTPAction, self).__init__(
-            url,
-            method,
-            params,
-            body,
-            headers,
-            cookies,
-            auth,
-            timeout,
-            allow_redirects,
-            proxies,
-            verify,
-        )
+        super(MistralHTTPAction, self).run(context)
 
     def is_sync(self):
         return False
