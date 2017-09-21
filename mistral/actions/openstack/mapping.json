@@ -1062,6 +1062,7 @@
         "node_vif_attach": "node.vif_attach",
         "node_vif_detach": "node.vif_detach",
         "node_vif_list": "node.vif_list",
+        "node_wait_for_provision_state": "node.wait_for_provision_state",
         "port_create": "port.create",
         "port_delete": "port.delete",
         "port_get": "port.get",
