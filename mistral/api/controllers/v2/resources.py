@@ -249,6 +249,11 @@ class Execution(resource.Resource):
     root_execution_id = wtypes.text
     "reference to the root execution"
 
+    source_execution_id = wtypes.text
+    """reference to a workflow execution id which will signal the api to
+    perform a lookup of a current workflow_execution and create a replica
+    based on that workflow inputs and parameters"""
+
     state = wtypes.text
     "state can be one of: IDLE, RUNNING, SUCCESS, ERROR, PAUSED"
 

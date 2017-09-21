@@ -32,6 +32,7 @@ from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
 from mistral.services import workflows as wf_service
 from mistral.utils import filter_utils
+from mistral.utils import merge_dicts
 from mistral.utils import rest_utils
 from mistral.workflow import states
 
@@ -220,6 +221,10 @@ class ExecutionsController(rest.RestController):
 
         exec_id = exec_dict.get('id')
 
+        source_execution_id = exec_dict.get('source_execution_id')
+
+        source_exec_dict = None
+
         if exec_id:
             # If ID is present we need to check if such execution exists.
             # If yes, the method just returns the object. If not, the ID
@@ -229,8 +234,17 @@ class ExecutionsController(rest.RestController):
             if wf_ex:
                 return resources.Execution.from_db_model(wf_ex)
 
-        if not (exec_dict.get('workflow_id')
-                or exec_dict.get('workflow_name')):
+        if source_execution_id:
+            # If source execution is present we will perform a lookup for
+            # previous workflow execution model and the information to start
+            # a new workflow based on that information.
+            source_exec_dict = db_api.get_workflow_execution(
+                source_execution_id).to_dict()
+
+        result_exec_dict = merge_dicts(source_exec_dict, exec_dict)
+
+        if not (result_exec_dict.get('workflow_id') or
+                result_exec_dict.get('workflow_name')):
             raise exc.WorkflowException(
                 "Workflow ID or workflow name must be provided. Workflow ID is"
                 " recommended."
@@ -239,12 +253,13 @@ class ExecutionsController(rest.RestController):
         engine = rpc.get_engine_client()
 
         result = engine.start_workflow(
-            exec_dict.get('workflow_id', exec_dict.get('workflow_name')),
-            exec_dict.get('workflow_namespace', ''),
+            result_exec_dict.get('workflow_id',
+                                 result_exec_dict.get('workflow_name')),
+            result_exec_dict.get('workflow_namespace', ''),
             exec_id,
-            exec_dict.get('input'),
-            exec_dict.get('description', ''),
-            **exec_dict.get('params') or {}
+            result_exec_dict.get('input'),
+            result_exec_dict.get('description', ''),
+            **result_exec_dict.get('params') or {}
         )
 
         return resources.Execution.from_dict(result)
