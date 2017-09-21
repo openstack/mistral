@@ -49,7 +49,7 @@ class Executor(object):
 
     @abc.abstractmethod
     def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, redelivered=False,
+                   params, safe_rerun, execution_context, redelivered=False,
                    target=None, async_=True):
         """Runs action.
 
@@ -59,6 +59,8 @@ class Executor(object):
             will be set to.
         :param params: Action parameters.
         :param safe_rerun: Tells if given action can be safely rerun.
+        :param execution_context: A dict of values providing information about
+            the current execution.
         :param redelivered: Tells if given action was run before on another
             executor.
         :param target: Target (group of action executors).

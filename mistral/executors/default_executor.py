@@ -13,10 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral_lib import actions as mistral_lib
 from oslo_log import log as logging
 from osprofiler import profiler
-
-from mistral_lib import actions as mistral_lib
 
 from mistral.actions import action_factory as a_f
 from mistral import context
@@ -35,7 +34,7 @@ class DefaultExecutor(base.Executor):
 
     @profiler.trace('default-executor-run-action', hide_args=True)
     def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, redelivered=False,
+                   params, safe_rerun, execution_context, redelivered=False,
                    target=None, async_=True):
         """Runs action.
 
@@ -45,6 +44,8 @@ class DefaultExecutor(base.Executor):
             will be set to.
         :param params: Action parameters.
         :param safe_rerun: Tells if given action can be safely rerun.
+        :param execution_context: A dict of values providing information about
+            the current execution.
         :param redelivered: Tells if given action was run before on another
             executor.
         :param target: Target (group of action executors).
@@ -103,10 +104,10 @@ class DefaultExecutor(base.Executor):
         try:
 
             # NOTE(d0ugal): If the action is a subclass of mistral-lib we know
-            # that it expects to be passed the context. We should deprecate
-            # the builtin action class in Mistral.
+            # that it expects to be passed the context.
             if isinstance(action, mistral_lib.Action):
-                result = action.run(context.ctx())
+                action_ctx = context.create_action_context(execution_context)
+                result = action.run(action_ctx)
             else:
                 result = action.run()
 
