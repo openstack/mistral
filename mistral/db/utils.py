@@ -16,7 +16,7 @@ import functools
 
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-from oslo_service import loopingcall
+import tenacity
 
 from mistral import context
 from mistral import exceptions as exc
@@ -26,15 +26,18 @@ from mistral.services import security
 LOG = logging.getLogger(__name__)
 
 
-@loopingcall.RetryDecorator(max_retry_count=100, inc_sleep_time=0,
-                            exceptions=db_exc.DBDeadlock)
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(db_exc.DBDeadlock),
+    stop=tenacity.stop_after_attempt(50),
+    wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2)
+)
 def _with_auth_context(auth_ctx, func, *args, **kw):
     """Runs the given function with the specified auth context.
 
     :param auth_ctx: Authentication context.
     :param func: Function to run with the specified auth context.
     :param args: Function positional arguments.
-    :param kw: Function keywork arguments.
+    :param kw: Function keyword arguments.
     :return: Function result.
     """
     old_auth_ctx = context.ctx() if context.has_ctx() else None
@@ -61,14 +64,12 @@ def retry_on_deadlock(func):
     """
     @functools.wraps(func)
     def decorate(*args, **kw):
-        # We can't use RetryDecorator from oslo_service directly because
-        # it runs a decorated function in a different thread and hence
-        # the function doesn't have access to authentication context
-        # set as a thread local variable.
-        # The solution is to reuse RetryDecorator but explicitly set
-        # auth context in the new thread that RetryDecorator spawns.
-        # In order to do that we need an additional helper function.
-
+        # Retrying library decorator might potentially run a decorated
+        # function within a new thread so it's safer not to apply the
+        # decorator directly to a target method/function because we can
+        # lose an authentication context.
+        # The solution is to create one more function and explicitly set
+        # auth context before calling it (potentially in a new thread).
         auth_ctx = context.ctx() if context.has_ctx() else None
 
         return _with_auth_context(auth_ctx, func, *args, **kw)
