@@ -57,6 +57,8 @@ trigger_values['workflow_params'] = json.loads(
 
 TRIGGER_DB = models.CronTrigger()
 TRIGGER_DB.update(trigger_values)
+TRIGGER_DB_WITH_PROJECT_ID = TRIGGER_DB.get_clone()
+TRIGGER_DB_WITH_PROJECT_ID.project_id = '<default-project>'
 
 MOCK_WF = mock.MagicMock(return_value=WF)
 MOCK_TRIGGER = mock.MagicMock(return_value=TRIGGER_DB)
@@ -74,6 +76,14 @@ class TestCronTriggerController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TRIGGER, resp.json)
+
+    @mock.patch.object(db_api, "get_cron_trigger",
+                       return_value=TRIGGER_DB_WITH_PROJECT_ID)
+    def test_get_within_project_id(self, mock_get):
+        resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
 
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_NOT_FOUND)
     def test_get_not_found(self):

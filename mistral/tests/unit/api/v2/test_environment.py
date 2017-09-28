@@ -66,6 +66,7 @@ ENVIRONMENT = {
     'description': 'my test settings',
     'variables': VARIABLES,
     'scope': 'private',
+    'project_id': '<default-project>',
     'created_at': str(datetime.datetime.utcnow()),
     'updated_at': str(datetime.datetime.utcnow())
 }
@@ -85,11 +86,15 @@ ENVIRONMENT_DB = db.Environment(
     description=ENVIRONMENT['description'],
     variables=copy.deepcopy(VARIABLES),
     scope=ENVIRONMENT['scope'],
+    project_id=ENVIRONMENT['project_id'],
     created_at=datetime.datetime.strptime(ENVIRONMENT['created_at'],
                                           DATETIME_FORMAT),
     updated_at=datetime.datetime.strptime(ENVIRONMENT['updated_at'],
                                           DATETIME_FORMAT)
 )
+
+ENVIRONMENT_DB_WITH_PROJECT_ID = ENVIRONMENT_DB.get_clone()
+ENVIRONMENT_DB_WITH_PROJECT_ID.project_id = '<default-project>'
 
 ENVIRONMENT_DB_DICT = {k: v for k, v in ENVIRONMENT_DB.items()}
 
@@ -167,6 +172,14 @@ class TestEnvironmentController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self._assert_dict_equal(ENVIRONMENT, resp.json)
+
+    @mock.patch.object(db_api, 'get_environment',
+                       return_value=ENVIRONMENT_DB_WITH_PROJECT_ID)
+    def test_get_within_project_id(self, mock_get):
+        resp = self.app.get('/v2/environments/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual('<default-project>', resp.json['project_id'])
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_get_not_found(self):

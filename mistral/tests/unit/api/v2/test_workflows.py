@@ -111,6 +111,9 @@ WF_WITH_DEFAULT_INPUT = {
     'input': 'param1, param2=2'
 }
 
+WF_DB_PROJECT_ID = WF_DB.get_clone()
+WF_DB_PROJECT_ID.project_id = '<default-project>'
+
 UPDATED_WF_DEFINITION = """
 ---
 version: '2.0'
@@ -666,3 +669,11 @@ class TestWorkflowsController(base.APITest):
             namespace='abc'
         )
         self.assertDictEqual(WF_WITH_NAMESPACE, resp.json)
+
+    @mock.patch.object(db_api, "get_workflow_definition")
+    def test_workflow_within_project_id(self, mock_get):
+        mock_get.return_value = WF_DB_PROJECT_ID
+        resp = self.app.get(
+            '/v2/workflows/123e4567-e89b-12d3-a456-426655440000')
+        self.assertEqual(200, resp.status_int)
+        self.assertTrue('project_id' in resp.json)
