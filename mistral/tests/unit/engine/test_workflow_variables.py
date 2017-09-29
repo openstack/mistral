@@ -73,3 +73,84 @@ class WorkflowVariablesTest(base.EngineTestCase):
             },
             wf_output
         )
+
+    def test_dynamic_action_names(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf2:
+          input:
+            - wf_action
+            - param1
+
+          tasks:
+            task1:
+              action: <% $.wf_action %> output=<% $.param1 %>
+              publish:
+                var1: <% task(task1).result %>
+
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf2',
+            "",
+            {"wf_action": "std.echo", "param1": "Hello"}
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual("Hello", wf_output['var1'])
+
+    def test_dynamic_action_names_and_input(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf3:
+          input:
+            - wf_action
+            - wf_input
+
+          tasks:
+            task1:
+              action: <% $.wf_action %>
+              input: <% $.wf_input %>
+              publish:
+                var1: <% task(task1).result %>
+
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf3',
+            "",
+            {"wf_action": "std.echo", "wf_input": {"output": "Hello"}}
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(tasks, name='task1')
+
+        self.assertEqual(states.SUCCESS, task1.state)
+        self.assertEqual("Hello", wf_output['var1'])

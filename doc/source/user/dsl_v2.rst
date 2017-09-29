@@ -188,7 +188,8 @@ attributes:
 
 -  **description** - Arbitrary text containing task description.
    *Optional*.
--  **action** - Name of the action associated with the task.
+-  **action** - Name of the action associated with the task.Can be static
+   value or an expression (for example,  "{{ _.action_name }}").
    *Mutually exclusive with* **workflow**. If neither action nor workflow are
    provided then the action 'std.noop' will be used.
 -  **workflow** - Name of the workflow associated with the task. Can be static

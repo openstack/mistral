@@ -457,11 +457,16 @@ class RegularTask(Task):
         action_name = self.task_spec.get_action_name()
         wf_name = self.task_spec.get_workflow_name()
 
+        # For dynamic workflow evaluation we regenerate the action.
         if wf_name:
             return actions.WorkflowAction(
                 wf_name=self._evaluate_expression(wf_name),
                 task_ex=self.task_ex
             )
+
+        # For dynamic action evaluation we just regenerate the name.
+        if action_name:
+            action_name = self._evaluate_expression(action_name)
 
         if not action_name:
             action_name = 'std.noop'

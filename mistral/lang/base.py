@@ -26,13 +26,13 @@ from mistral.expressions.yaql_expression import INLINE_YAQL_REGEXP
 from mistral.lang import types
 from mistral import utils
 
-ACTION_PATTRENS = {
+ACTION_PATTERNS = {
     "command": "[\w\.]+[^=\(\s\"]*",
     "yaql_expression": INLINE_YAQL_REGEXP,
     "jinja_expression": ANY_JINJA_REGEXP,
 }
 CMD_PTRN = re.compile(
-    "^({})".format("|".join(six.itervalues(ACTION_PATTRENS)))
+    "^({})".format("|".join(six.itervalues(ACTION_PATTERNS)))
 )
 
 EXPRESSION = '|'.join([expr.patterns[name] for name in expr.patterns])
