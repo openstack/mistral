@@ -107,7 +107,7 @@ class KombuServerTestCase(base.KombuTestCase):
         fake_kombu.connection.acquire.return_value = acquire_mock
 
         self.assertRaises(TestException, self.server._run, 'blocking')
-        self.assertEqual(self.server._sleep_time, 2)
+        self.assertEqual(self.server._sleep_time, 1)
 
     def test_run_socket_timeout_still_running(self):
 
