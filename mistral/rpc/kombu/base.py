@@ -68,7 +68,8 @@ class Base(object):
             userid=amqp_user,
             password=amqp_password,
             virtual_host=amqp_vhost,
-            port=amqp_port
+            port=amqp_port,
+            transport_options={'confirm_publish': True}
         )
 
     @staticmethod
