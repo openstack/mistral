@@ -1,0 +1,178 @@
+- job:
+    name: mistral-devstack-dsvm
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/mistral-devstack-dsvm/run
+    post-run: playbooks/legacy/mistral-devstack-dsvm/post
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/heat
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+
+- job:
+    name: mistral-devstack-dsvm-kombu
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/mistral-devstack-dsvm-kombu/run
+    post-run: playbooks/legacy/mistral-devstack-dsvm-kombu/post
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/heat
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+
+- job:
+    name: mistral-devstack-dsvm-non-apache
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/mistral-devstack-dsvm-non-apache/run
+    post-run: playbooks/legacy/mistral-devstack-dsvm-non-apache/post
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/heat
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+
+- job:
+    name: mistral-docker-buildimage
+    parent: legacy-publish-openstack-artifacts
+    run: playbooks/legacy/mistral-docker-buildimage/run
+    post-run: playbooks/legacy/mistral-docker-buildimage/post
+    timeout: 1800
+    required-projects:
+      - openstack/mistral
+
+- job:
+    name: mistral-ha
+    parent: legacy-base
+    run: playbooks/legacy/mistral-ha/run
+    timeout: 4200
+
+- job:
+    name: mistral-tox-unit-mysql
+    parent: legacy-base
+    run: playbooks/legacy/mistral-tox-unit-mysql/run
+    post-run: playbooks/legacy/mistral-tox-unit-mysql/post
+    timeout: 2400
+    required-projects:
+      - openstack/requirements
+
+- job:
+    name: mistral-tox-unit-postgresql
+    parent: legacy-base
+    run: playbooks/legacy/mistral-tox-unit-postgresql/run
+    post-run: playbooks/legacy/mistral-tox-unit-postgresql/post
+    timeout: 2400
+    required-projects:
+      - openstack/requirements
+
+- job:
+    name: rally-dsvm-mistral-task
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/rally-dsvm-mistral-task/run
+    post-run: playbooks/legacy/rally-dsvm-mistral-task/post
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+      - openstack/rally
+
+- project:
+    name: openstack/mistral
+    templates:
+      - merge-check
+      - openstack-python-jobs
+      - openstack-python35-jobs
+      - publish-openstack-sphinx-docs
+      - experimental-tripleo-jobs
+      - check-requirements
+      - release-notes-jobs
+    check:
+      jobs:
+        - openstack-tox-cover:
+            voting: false
+        - rally-dsvm-mistral-task:
+            voting: false
+        - mistral-devstack-dsvm:
+            voting: false
+        - mistral-devstack-dsvm-non-apache:
+            voting: false
+            branches: ^(?!stable/(newton|ocata)).*$
+        - mistral-tox-unit-mysql:
+            voting: false
+        - mistral-tox-unit-postgresql:
+            voting: false
+        - legacy-tripleo-ci-centos-7-scenario003-multinode-oooq-puppet:
+            branches: ^(?!stable/newton).*$
+            irrelevant-files:
+              - ^.*\.md$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^etc/.*$
+              - ^metadata.json$
+              - ^releasenotes/.*$
+              - ^test-requirements.txt$
+        - mistral-devstack-dsvm-kombu:
+            voting: false
+            branches: ^(?!stable/newton).*$
+    gate:
+      jobs:
+        - legacy-tripleo-ci-centos-7-scenario003-multinode-oooq-puppet:
+            branches: ^(?!stable/newton).*$
+            irrelevant-files:
+              - ^.*\.md$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^etc/.*$
+              - ^metadata.json$
+              - ^releasenotes/.*$
+              - ^test-requirements.txt$
+    post:
+      jobs:
+        - mistral-docker-buildimage:
+            branches: master
+    experimental:
+      jobs:
+        - mistral-docker-buildimage:
+            branches: master
+        - mistral-ha:
+            voting: false
+    pre-release:
+      jobs:
+        - publish-openstack-python-tarball:
+            dependencies:
+              - publish-openstack-python-tarball
+        - legacy-announce-release:
+            dependencies:
+              - legacy-pypi-both-upload
+        - legacy-propose-update-constraints:
+            dependencies:
+              - legacy-pypi-both-upload
+        - legacy-pypi-both-upload:
+            dependencies:
+              - publish-openstack-python-tarball
+        - publish-openstack-python-tarball
+    release:
+      jobs:
+        - publish-openstack-python-tarball:
+            dependencies:
+              - publish-openstack-python-tarball
+        - legacy-announce-release:
+            dependencies:
+              - legacy-pypi-both-upload
+        - legacy-propose-update-constraints:
+            dependencies:
+              - legacy-pypi-both-upload
+        - legacy-pypi-both-upload:
+            dependencies:
+              - publish-openstack-python-tarball
+        - publish-openstack-python-tarball

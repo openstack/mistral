@@ -1,0 +1,71 @@
+- hosts: all
+  name: Autoconverted job legacy-rally-dsvm-mistral-task from old job gate-rally-dsvm-mistral-task-ubuntu-xenial-nv
+  tasks:
+
+    - name: Ensure legacy workspace directory
+      file:
+        path: '{{ ansible_user_dir }}/workspace'
+        state: directory
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          cat > clonemap.yaml << EOF
+          clonemap:
+            - name: openstack-infra/devstack-gate
+              dest: devstack-gate
+          EOF
+          /usr/zuul-env/bin/zuul-cloner -m clonemap.yaml --cache-dir /opt/git \
+              git://git.openstack.org \
+              openstack-infra/devstack-gate
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+          cat << 'EOF' >>"/tmp/dg-local.conf"
+          [[local|localrc]]
+          enable_plugin rally git://git.openstack.org/openstack/rally
+          enable_plugin mistral https://git.openstack.org/openstack/mistral
+
+          EOF
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
+
+          if [ $ZUUL_PROJECT == "openstack/rally" ] && [ $ZUUL_BRANCH != "master" ]; then
+              export DEVSTACK_GATE_FEATURE_MATRIX="/opt/stack/new/rally/devstack/features.yaml"
+          fi
+
+          export PROJECTS="openstack/rally $PROJECTS"
+          export PROJECTS="openstack/mistral $PROJECTS"
+          export PROJECTS="openstack/mistral-dashboard $PROJECTS"
+          export PROJECTS="openstack/python-mistralclient $PROJECTS"
+
+          export DEVSTACK_GATE_TEMPEST_LARGE_OPS=0
+          export DEVSTACK_GATE_EXERCISES=0
+          export RALLY_SCENARIO=$ZUUL_SHORT_PROJECT_NAME-mistral
+
+          export IDENTITY_API_VERSION=3
+
+          export ENABLED_SERVICES=h-api,h-api-cfn,h-api-cw,h-eng,heat,
+
+          function post_test_hook {
+              $BASE/new/rally/tests/ci/rally-gate.sh
+          }
+          export -f post_test_hook
+
+          cp devstack-gate/devstack-vm-gate-wrap.sh ./safe-devstack-vm-gate-wrap.sh
+          ./safe-devstack-vm-gate-wrap.sh
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
