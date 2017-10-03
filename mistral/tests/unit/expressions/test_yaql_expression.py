@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 from mistral import exceptions as exc
 from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
@@ -143,6 +144,7 @@ class YaqlEvaluatorTest(base.BaseTest):
                                                  task_executions):
 
         task_execution_result.return_value = 'task_execution_result'
+        time_now = utils.utc_now_sec()
         task = type("obj", (object,), {
             'id': 'id',
             'name': 'name',
@@ -152,7 +154,9 @@ class YaqlEvaluatorTest(base.BaseTest):
             'state': 'state',
             'state_info': 'state_info',
             'type': 'type',
-            'workflow_execution_id': 'workflow_execution_id'
+            'workflow_execution_id': 'workflow_execution_id',
+            'created_at': time_now,
+            'updated_at': time_now + datetime.timedelta(seconds=1),
         })()
 
         task_executions.return_value = [task]
@@ -176,7 +180,9 @@ class YaqlEvaluatorTest(base.BaseTest):
             'state': task.state,
             'state_info': task.state_info,
             'type': task.type,
-            'workflow_execution_id': task.workflow_execution_id
+            'workflow_execution_id': task.workflow_execution_id,
+            'created_at': task.created_at.isoformat(' '),
+            'updated_at': task.updated_at.isoformat(' ')
         }, result[0])
 
     def test_function_env(self):
