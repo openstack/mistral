@@ -21,12 +21,11 @@ import six
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
+from mistral.engine import action_queue
 from mistral.engine import dispatcher
 from mistral.engine import utils as engine_utils
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
-from mistral.rpc import clients as rpc
-from mistral.services import scheduler
 from mistral.services import triggers
 from mistral.services import workflows as wf_service
 from mistral import utils
@@ -41,10 +40,6 @@ from mistral_lib import actions as ml_actions
 
 
 LOG = logging.getLogger(__name__)
-
-_SEND_RESULT_TO_PARENT_WORKFLOW_PATH = (
-    'mistral.engine.workflows._send_result_to_parent_workflow'
-)
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -118,12 +113,11 @@ class Workflow(object):
         assert self.wf_ex
 
         if state == states.SUCCESS:
-            return self._succeed_workflow(self._get_final_context(), msg)
+            self._succeed_workflow(self._get_final_context(), msg)
         elif state == states.ERROR:
-            return self._fail_workflow(self._get_final_context(), msg)
+            self._fail_workflow(self._get_final_context(), msg)
         elif state == states.CANCELLED:
-
-            return self._cancel_workflow(msg)
+            self._cancel_workflow(msg)
 
     def pause(self, msg=None):
         """Pause workflow.
@@ -378,6 +372,7 @@ class Workflow(object):
         else:
             msg = _build_fail_info_message(wf_ctrl, self.wf_ex)
             final_context = wf_ctrl.evaluate_workflow_final_context()
+
             self._fail_workflow(final_context, msg)
 
         return 0
@@ -393,13 +388,14 @@ class Workflow(object):
         self.set_state(states.SUCCESS, msg)
 
         if self.wf_ex.task_execution_id:
-            self._schedule_send_result_to_parent_workflow()
+            self._send_result_to_parent_workflow()
 
     def _fail_workflow(self, final_context, msg):
         if states.is_paused_or_completed(self.wf_ex.state):
             return
 
         output_on_error = {}
+
         try:
             output_on_error = data_flow.evaluate_workflow_output(
                 self.wf_ex,
@@ -426,7 +422,7 @@ class Workflow(object):
         self.wf_ex.output = merge_dicts({'result': msg}, output_on_error)
 
         if self.wf_ex.task_execution_id:
-            self._schedule_send_result_to_parent_workflow()
+            self._send_result_to_parent_workflow()
 
     def _cancel_workflow(self, msg):
         if states.is_completed(self.wf_ex.state):
@@ -444,14 +440,35 @@ class Workflow(object):
         self.wf_ex.output = {'result': msg}
 
         if self.wf_ex.task_execution_id:
-            self._schedule_send_result_to_parent_workflow()
+            self._send_result_to_parent_workflow()
 
-    def _schedule_send_result_to_parent_workflow(self):
-        scheduler.schedule_call(
-            None,
-            _SEND_RESULT_TO_PARENT_WORKFLOW_PATH,
-            0,
-            wf_ex_id=self.wf_ex.id
+    def _send_result_to_parent_workflow(self):
+        if self.wf_ex.state == states.SUCCESS:
+            result = ml_actions.Result(data=self.wf_ex.output)
+        elif self.wf_ex.state == states.ERROR:
+            err_msg = (
+                self.wf_ex.state_info or
+                'Failed subworkflow [execution_id=%s]' % self.wf_ex.id
+            )
+
+            result = ml_actions.Result(error=err_msg)
+        elif self.wf_ex.state == states.CANCELLED:
+            err_msg = (
+                self.wf_ex.state_info or
+                'Cancelled subworkflow [execution_id=%s]' % self.wf_ex.id
+            )
+
+            result = ml_actions.Result(error=err_msg, cancel=True)
+        else:
+            raise RuntimeError(
+                "Method _send_result_to_parent_workflow() must never be called"
+                " if a workflow is not in SUCCESS, ERROR or CANCELLED state."
+            )
+
+        action_queue.schedule_on_action_complete(
+            self.wf_ex.id,
+            result,
+            wf_action=True
         )
 
 
@@ -474,41 +491,6 @@ def _get_environment(params):
     raise exc.InputException(
         'Unexpected value type for environment [env=%s, type=%s]'
         % (env, type(env))
-    )
-
-
-def _send_result_to_parent_workflow(wf_ex_id):
-    with db_api.transaction():
-        wf_ex = db_api.get_workflow_execution(wf_ex_id)
-
-        wf_output = wf_ex.output
-
-    if wf_ex.state == states.SUCCESS:
-        result = ml_actions.Result(data=wf_output)
-    elif wf_ex.state == states.ERROR:
-        err_msg = (
-            wf_ex.state_info or
-            'Failed subworkflow [execution_id=%s]' % wf_ex.id
-        )
-
-        result = ml_actions.Result(error=err_msg)
-    elif wf_ex.state == states.CANCELLED:
-        err_msg = (
-            wf_ex.state_info or
-            'Cancelled subworkflow [execution_id=%s]' % wf_ex.id
-        )
-
-        result = ml_actions.Result(error=err_msg, cancel=True)
-    else:
-        raise RuntimeError(
-            "Method _send_result_to_parent_workflow() must never be called"
-            " if a workflow is not in SUCCESS, ERROR or CANCELLED state."
-        )
-
-    rpc.get_engine_client().on_action_complete(
-        wf_ex.id,
-        result,
-        wf_action=True
     )
 
 

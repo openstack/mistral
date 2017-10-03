@@ -60,7 +60,7 @@ class EngineServer(service_base.MistralService):
         self._rpc_server.register_endpoint(self)
 
         # Note(ddeja): Engine needs to be run in default (blocking) mode
-        # since using another mode may leads to deadlock.
+        # since using another mode may lead to a deadlock.
         # See https://review.openstack.org/#/c/356343 for more info.
         self._rpc_server.run(executor='blocking')
 

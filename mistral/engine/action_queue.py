@@ -13,15 +13,22 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import eventlet
 import functools
 
 from oslo_config import cfg
 
+from mistral import context
 from mistral.executors import base as exe
+from mistral.rpc import clients as rpc
 from mistral import utils
 
 
 _THREAD_LOCAL_NAME = "__action_queue_thread_local"
+
+# Action queue operations.
+_RUN_ACTION = "run_action"
+_ON_ACTION_COMPLETE = "on_action_complete"
 
 
 def _prepare():
@@ -45,18 +52,29 @@ def _get_queue():
     return queue
 
 
-def _run_actions():
+def _process_queue(queue):
     executor = exe.get_executor(cfg.CONF.executor.type)
 
-    for action_ex, action_def, target in _get_queue():
-        executor.run_action(
-            action_ex.id,
-            action_def.action_class,
-            action_def.attributes or {},
-            action_ex.input,
-            action_ex.runtime_context.get('safe_rerun', False),
-            target=target
-        )
+    for operation, args in queue:
+        if operation == _RUN_ACTION:
+            action_ex, action_def, target = args
+
+            executor.run_action(
+                action_ex.id,
+                action_def.action_class,
+                action_def.attributes or {},
+                action_ex.input,
+                action_ex.runtime_context.get('safe_rerun', False),
+                target=target
+            )
+        elif operation == _ON_ACTION_COMPLETE:
+            action_ex_id, result, wf_action = args
+
+            rpc.get_engine_client().on_action_complete(
+                action_ex_id,
+                result,
+                wf_action
+            )
 
 
 def process(func):
@@ -73,7 +91,26 @@ def process(func):
         try:
             res = func(*args, **kw)
 
-            _run_actions()
+            queue = _get_queue()
+            auth_ctx = context.ctx() if context.has_ctx() else None
+
+            # NOTE(rakhmerov): Since we make RPC calls to the engine itself
+            # we need to process the action queue asynchronously in a new
+            # thread. Otherwise, if we have one engine process the engine
+            # will may send a request to itself while already processing
+            # another one. In conjunction with blocking RPC it will lead
+            # to a deadlock (and RPC timeout).
+            def _within_new_thread():
+                old_auth_ctx = context.ctx() if context.has_ctx() else None
+
+                context.set_ctx(auth_ctx)
+
+                try:
+                    _process_queue(queue)
+                finally:
+                    context.set_ctx(old_auth_ctx)
+
+            eventlet.spawn(_within_new_thread)
         finally:
             _clear()
 
@@ -82,5 +119,11 @@ def process(func):
     return decorate
 
 
-def schedule(action_ex, action_def, target):
-    _get_queue().append((action_ex, action_def, target))
+def schedule_run_action(action_ex, action_def, target):
+    _get_queue().append((_RUN_ACTION, (action_ex, action_def, target)))
+
+
+def schedule_on_action_complete(action_ex_id, result, wf_action=False):
+    _get_queue().append(
+        (_ON_ACTION_COMPLETE, (action_ex_id, result, wf_action))
+    )
