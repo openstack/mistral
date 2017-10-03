@@ -15,7 +15,6 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from mistral.rpc import base as rpc_base
 from mistral.rpc import clients as rpc_clients
 
 
@@ -26,5 +25,4 @@ class RemoteExecutor(rpc_clients.ExecutorClient):
     """Executor that passes execution request to a remote executor."""
 
     def __init__(self):
-        self.topic = cfg.CONF.executor.topic
-        self._client = rpc_base.get_rpc_client_driver()(cfg.CONF.executor)
+        super(RemoteExecutor, self).__init__(cfg.CONF.executor)

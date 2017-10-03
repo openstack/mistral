@@ -18,11 +18,11 @@ from osprofiler import profiler
 import traceback as tb
 
 from mistral.db.v2 import api as db_api
+from mistral.engine import action_queue
 from mistral.engine import workflows
 from mistral import exceptions as exc
 from mistral.services import scheduler
 from mistral.workflow import states
-
 
 LOG = logging.getLogger(__name__)
 
@@ -82,6 +82,7 @@ def cancel_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.CANCELLED, msg)
 
 
+@action_queue.process
 @profiler.trace('workflow-handler-check-and-complete', hide_args=True)
 def _check_and_complete(wf_ex_id):
     # Note: This method can only be called via scheduler.

@@ -404,6 +404,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
         with db_api.transaction():
             ex = db_api.get_workflow_execution(ex.id)
+
             self.assertIn('not_existing_wf', ex.state_info)
 
     def test_dynamic_subworkflow_with_generic_input(self):
@@ -417,10 +418,12 @@ class SubworkflowsTest(base.EngineTestCase):
             wf_identifier='wb4.wf1',
             wf_input={'wf_name': 'wf2', 'inp': 'invalid_string_input'}
         )
+
         self.await_workflow_error(ex.id)
 
         with db_api.transaction():
             ex = db_api.get_workflow_execution(ex.id)
+
             self.assertIn('invalid_string_input', ex.state_info)
 
     def _test_dynamic_workflow_with_dict_param(self, wf_identifier):
@@ -428,17 +431,21 @@ class SubworkflowsTest(base.EngineTestCase):
             wf_identifier=wf_identifier,
             wf_input={'wf_name': 'wf2', 'inp': {'inp': 'abc'}}
         )
+
         self.await_workflow_success(ex.id)
+
         with db_api.transaction():
             ex = db_api.get_workflow_execution(ex.id)
+
             self.assertEqual({'sub_wf_out': 'abc'}, ex.output)
 
     def test_subworkflow_root_execution_id(self):
-        wf1_ex = self.engine.start_workflow('wb6.wf1', '', None)
+        self.engine.start_workflow('wb6.wf1', '', None)
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 3, 0.5, 5)
 
         wf_execs = db_api.get_workflow_executions()
+
         wf1_ex = self._assert_single_item(wf_execs, name='wb6.wf1')
         wf2_ex = self._assert_single_item(wf_execs, name='wb6.wf2')
         wf3_ex = self._assert_single_item(wf_execs, name='wb6.wf3')

@@ -248,7 +248,11 @@ class PythonAction(Action):
             action_ex_id=action_ex_id
         )
 
-        action_queue.schedule(self.action_ex, self.action_def, target)
+        action_queue.schedule_run_action(
+            self.action_ex,
+            self.action_def,
+            target
+        )
 
     @profiler.trace('action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,

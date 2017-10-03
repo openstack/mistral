@@ -67,16 +67,22 @@ class EngineTestCase(base.DbTestCase):
         # Start remote executor.
         if cfg.CONF.executor.type == 'remote':
             LOG.info("Starting remote executor threads...")
+
             self.executor_client = rpc_clients.get_executor_client()
+
             exe_svc = executor_server.get_oslo_service(setup_profiler=False)
+
             self.executor = exe_svc.executor
             self.threads.append(eventlet.spawn(launch_service, exe_svc))
             self.addCleanup(exe_svc.stop, True)
 
         # Start engine.
         LOG.info("Starting engine threads...")
+
         self.engine_client = rpc_clients.get_engine_client()
+
         eng_svc = engine_server.get_oslo_service(setup_profiler=False)
+
         self.engine = eng_svc.engine
         self.threads.append(eventlet.spawn(launch_service, eng_svc))
         self.addCleanup(eng_svc.stop, True)

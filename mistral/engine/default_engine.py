@@ -133,6 +133,7 @@ class DefaultEngine(base.Engine):
 
             return action_ex.get_clone()
 
+    @action_queue.process
     def pause_workflow(self, wf_ex_id):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)
@@ -161,6 +162,7 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
+    @action_queue.process
     def stop_workflow(self, wf_ex_id, state, message=None):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex_id)

@@ -87,7 +87,9 @@ class LocalExecutorTestCase(base.ExecutorTestCase):
         """
 
         wb_svc.create_workbook_v2(wb_def)
+
         wf_ex = self.engine.start_workflow('wb1.wf1', '', {})
+
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
@@ -144,7 +146,9 @@ class LocalExecutorTestCase(base.ExecutorTestCase):
         """
 
         wb_svc.create_workbook_v2(wb_def)
+
         wf_ex = self.engine.start_workflow('wb1.wf1', '', {})
+
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
