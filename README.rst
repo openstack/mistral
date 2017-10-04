@@ -113,11 +113,13 @@ an OpenStack environment.
 
     [keystone_authtoken]
     auth_uri = http://keystone-host:port/v3
-    identity_uri = http://keystone-host:port
-    auth_version = v3
-    admin_user = <user>
-    admin_password = <password>
-    admin_tenant_name = <tenant>
+    auth_url = http://keystone-host:port
+    auth_type = password
+    username = <user>
+    password = <password>
+    user_domain_name = <usually 'Default'>
+    project_name = <project name>
+    project_domain_name = <usually 'Default'>
 
 #. Register Mistral service and Mistral endpoints on Keystone::
 
