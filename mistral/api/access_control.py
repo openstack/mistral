@@ -19,6 +19,7 @@ from oslo_config import cfg
 from oslo_policy import policy
 
 from mistral import exceptions as exc
+from mistral import policies
 
 
 _ENFORCER = None
@@ -93,6 +94,7 @@ def _ensure_enforcer_initialization():
     global _ENFORCER
     if not _ENFORCER:
         _ENFORCER = policy.Enforcer(cfg.CONF)
+        _ENFORCER.register_defaults(policies.list_rules())
         _ENFORCER.load_rules()
 
 

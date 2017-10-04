@@ -26,9 +26,6 @@ class PolicyTestCase(base.BaseTest):
         self.policy = self.useFixture(policy_fixtures.PolicyFixture())
 
         rules = {
-            "admin_only": "is_admin:True",
-            "admin_or_owner": "is_admin:True or project_id:%(project_id)s",
-
             "example:admin": "rule:admin_only",
             "example:admin_or_owner": "rule:admin_or_owner"
         }

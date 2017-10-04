@@ -13,8 +13,6 @@
 # under the License.
 
 policy_data = """{
-    "admin_only": "is_admin:True",
-    "admin_or_owner": "is_admin:True or project_id:%(project_id)s",
     "default": "rule:admin_or_owner",
 
     "action_executions:delete": "rule:admin_or_owner",
