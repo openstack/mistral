@@ -89,13 +89,7 @@
 - project:
     name: openstack/mistral
     templates:
-      - merge-check
-      - openstack-python-jobs
-      - openstack-python35-jobs
-      - publish-openstack-sphinx-docs
       - experimental-tripleo-jobs
-      - check-requirements
-      - release-notes-jobs
     check:
       jobs:
         - openstack-tox-cover:
@@ -146,33 +140,3 @@
             branches: master
         - mistral-ha:
             voting: false
-    pre-release:
-      jobs:
-        - publish-openstack-python-tarball:
-            dependencies:
-              - publish-openstack-python-tarball
-        - legacy-announce-release:
-            dependencies:
-              - legacy-pypi-both-upload
-        - legacy-propose-update-constraints:
-            dependencies:
-              - legacy-pypi-both-upload
-        - legacy-pypi-both-upload:
-            dependencies:
-              - publish-openstack-python-tarball
-        - publish-openstack-python-tarball
-    release:
-      jobs:
-        - publish-openstack-python-tarball:
-            dependencies:
-              - publish-openstack-python-tarball
-        - legacy-announce-release:
-            dependencies:
-              - legacy-pypi-both-upload
-        - legacy-propose-update-constraints:
-            dependencies:
-              - legacy-pypi-both-upload
-        - legacy-pypi-both-upload:
-            dependencies:
-              - publish-openstack-python-tarball
-        - publish-openstack-python-tarball
