@@ -2190,6 +2190,7 @@ class TaskExecutionTest(SQLAlchemyTest):
 
 CRON_TRIGGERS = [
     {
+        'id': '11111111-1111-1111-1111-111111111111',
         'name': 'trigger1',
         'pattern': '* * * * *',
         'workflow_name': 'my_wf',
@@ -2202,6 +2203,7 @@ CRON_TRIGGERS = [
         'project_id': '<default-project>'
     },
     {
+        'id': '22222222-2222-2222-2222-2222222c2222',
         'name': 'trigger2',
         'pattern': '* * * * *',
         'workflow_name': 'my_wf',
@@ -2286,6 +2288,19 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertEqual(updated, updated)
         self.assertEqual(0, updated_count)
 
+    def test_update_cron_trigger_by_id(self):
+        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        self.assertIsNone(created.updated_at)
+
+        updated, updated_count = db_api.update_cron_trigger(
+            created.id,
+            {'pattern': '*/1 * * * *'}
+        )
+
+        self.assertEqual('*/1 * * * *', updated.pattern)
+        self.assertEqual(1, updated_count)
+
     def test_create_or_update_cron_trigger(self):
         name = 'not-existing-id'
 
@@ -2317,6 +2332,46 @@ class CronTriggerTest(SQLAlchemyTest):
         self.assertEqual(created0, fetched[0])
         self.assertEqual(created1, fetched[1])
 
+    def test_get_cron_trigger(self):
+        cron_trigger = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        # Get by id is ok
+        fetched = db_api.get_cron_trigger(cron_trigger.id)
+        self.assertEqual(cron_trigger, fetched)
+
+        # Get by name is ok
+        fetched = db_api.get_cron_trigger(cron_trigger.name)
+        self.assertEqual(cron_trigger, fetched)
+
+    def test_get_cron_trigger_not_found(self):
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_cron_trigger,
+            'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        )
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_cron_trigger,
+            'not-exists-cron-trigger',
+        )
+
+    def test_get_cron_trigger_by_id(self):
+        cron_trigger_1 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+        cron_trigger_2 = db_api.create_cron_trigger(CRON_TRIGGERS[1])
+
+        fetched = db_api.get_cron_trigger_by_id(cron_trigger_1.id)
+        self.assertEqual(cron_trigger_1, fetched)
+
+        fetched = db_api.get_cron_trigger_by_id(cron_trigger_2.id)
+        self.assertEqual(cron_trigger_2, fetched)
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_cron_trigger_by_id,
+            'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        )
+
     def test_get_cron_triggers_other_tenant(self):
         created0 = db_api.create_cron_trigger(CRON_TRIGGERS[0])
 
@@ -2346,6 +2401,22 @@ class CronTriggerTest(SQLAlchemyTest):
             exc.DBEntityNotFoundError,
             db_api.get_cron_trigger,
             created.name
+        )
+
+    def test_delete_cron_trigger_by_id(self):
+        created = db_api.create_cron_trigger(CRON_TRIGGERS[0])
+
+        fetched = db_api.get_cron_trigger(created.name)
+
+        self.assertEqual(created, fetched)
+
+        rowcount = db_api.delete_cron_trigger(created.id)
+
+        self.assertEqual(1, rowcount)
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_cron_trigger,
+            created.id
         )
 
     def test_cron_trigger_repr(self):

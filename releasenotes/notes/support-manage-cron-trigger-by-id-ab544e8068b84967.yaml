@@ -1,0 +1,3 @@
+---
+features:
+  - Support to manage a cron-trigger instance by id.

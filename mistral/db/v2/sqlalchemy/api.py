@@ -1141,20 +1141,35 @@ def _get_completed_root_executions_query(columns):
 
 
 @b.session_aware()
-def get_cron_trigger(name, session=None):
-    cron_trigger = _get_db_object_by_name(models.CronTrigger, name)
+def get_cron_trigger(identifier, session=None):
+    cron_trigger = _get_db_object_by_name_or_id(
+        models.CronTrigger,
+        identifier)
 
     if not cron_trigger:
         raise exc.DBEntityNotFoundError(
-            "Cron trigger not found [name=%s]" % name
+            "Cron trigger not found [identifier=%s]" % identifier
         )
 
     return cron_trigger
 
 
 @b.session_aware()
-def load_cron_trigger(name, session=None):
-    return _get_db_object_by_name(models.CronTrigger, name)
+def get_cron_trigger_by_id(id, session=None):
+    ctx = context.ctx()
+    cron_trigger = _get_db_object_by_id(models.CronTrigger, id,
+                                        insecure=ctx.is_admin)
+    if not cron_trigger:
+        raise exc.DBEntityNotFoundError(
+            "Cron trigger not found [id=%s]" % id
+        )
+
+    return cron_trigger
+
+
+@b.session_aware()
+def load_cron_trigger(identifier, session=None):
+    return _get_db_object_by_name_or_id(models.CronTrigger, identifier)
 
 
 @b.session_aware()
@@ -1200,8 +1215,8 @@ def create_cron_trigger(values, session=None):
 
 
 @b.session_aware()
-def update_cron_trigger(name, values, session=None, query_filter=None):
-    cron_trigger = get_cron_trigger(name)
+def update_cron_trigger(identifier, values, session=None, query_filter=None):
+    cron_trigger = get_cron_trigger(identifier)
 
     if query_filter:
         try:
@@ -1233,19 +1248,19 @@ def update_cron_trigger(name, values, session=None, query_filter=None):
 
 
 @b.session_aware()
-def create_or_update_cron_trigger(name, values, session=None):
-    cron_trigger = _get_db_object_by_name(models.CronTrigger, name)
+def create_or_update_cron_trigger(identifier, values, session=None):
+    cron_trigger = _get_db_object_by_name_or_id(models.CronTrigger, identifier)
 
     if not cron_trigger:
         return create_cron_trigger(values)
     else:
-        updated, _ = update_cron_trigger(name, values)
+        updated, _ = update_cron_trigger(identifier, values)
         return updated
 
 
 @b.session_aware()
-def delete_cron_trigger(name, session=None):
-    cron_trigger = get_cron_trigger(name)
+def delete_cron_trigger(identifier, session=None):
+    cron_trigger = get_cron_trigger(identifier)
 
     # Delete the cron trigger by ID and get the affected row count.
     table = models.CronTrigger.__table__

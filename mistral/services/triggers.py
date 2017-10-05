@@ -136,12 +136,12 @@ def create_cron_trigger(name, workflow_name, workflow_input,
     return trig
 
 
-def delete_cron_trigger(name, trust_id=None, delete_trust=True):
+def delete_cron_trigger(identifier, trust_id=None, delete_trust=True):
     if not trust_id:
-        trigger = db_api.get_cron_trigger(name)
+        trigger = db_api.get_cron_trigger(identifier)
         trust_id = trigger.trust_id
 
-    modified_count = db_api.delete_cron_trigger(name)
+    modified_count = db_api.delete_cron_trigger(identifier)
 
     if modified_count and delete_trust:
         # Delete trust only together with deleting trigger.
