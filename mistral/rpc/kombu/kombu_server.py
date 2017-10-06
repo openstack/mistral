@@ -77,7 +77,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
         # TODO(ddeja): Those 2 options should be gathered from config.
         self._sleep_time = 1
-        self._max_sleep_time = 512
+        self._max_sleep_time = 10
 
     @property
     def is_running(self):
@@ -136,6 +136,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
                         host.hostname,
                         host.port
                     )
+                    self._sleep_time = 1
 
                     while self.is_running:
                         try:

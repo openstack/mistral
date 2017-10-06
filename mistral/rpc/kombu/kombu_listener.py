@@ -34,9 +34,7 @@ class KombuRPCListener(ConsumerMixin):
         self._thread = None
         self.connection = six.next(self._connections)
 
-        # TODO(ddeja): Those 2 options should be gathered from config.
-        self._sleep_time = 1
-        self._max_sleep_time = 512
+        self.ready = threading.Event()
 
     def add_listener(self, correlation_id):
         self._results[correlation_id] = six.moves.queue.Queue()
@@ -46,11 +44,14 @@ class KombuRPCListener(ConsumerMixin):
             del self._results[correlation_id]
 
     def get_consumers(self, Consumer, channel):
-        return [Consumer(
+        consumers = [Consumer(
             self._callback_queue,
             callbacks=[self.on_message],
             accept=['pickle', 'json']
         )]
+        self.ready.set()
+
+        return consumers
 
     def start(self):
         if self._thread is None:
@@ -102,6 +103,8 @@ class KombuRPCListener(ConsumerMixin):
         return self._results[correlation_id].get(block=True, timeout=timeout)
 
     def on_connection_error(self, exc, interval):
+        self.ready.clear()
+
         self.connection = six.next(self._connections)
 
         LOG.debug("Broker connection failed: %s", exc)
@@ -109,3 +112,16 @@ class KombuRPCListener(ConsumerMixin):
             "Sleeping for %s seconds, then retrying connection",
             interval
         )
+
+    def wait_ready(self, timeout=10.0):
+        """Waits for the listener to successfully declare the consumer
+
+        :param timeout: timeout for waiting in seconds
+        :return: same as :func:`~threading.Event.wait`
+        :rtype: bool
+
+        """
+        if self.ready.wait(timeout=timeout):
+            return self.connection
+        else:
+            return False
