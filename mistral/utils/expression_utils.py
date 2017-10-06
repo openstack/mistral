@@ -109,7 +109,8 @@ def execution_(context):
         'spec': wf_ex.spec,
         'input': wf_ex.input,
         'params': wf_ex.params,
-        'created_at': wf_ex.created_at.isoformat(' ')
+        'created_at': wf_ex.created_at.isoformat(' '),
+        'updated_at': wf_ex.updated_at.isoformat(' ')
     }
 
 
@@ -256,7 +257,9 @@ def _convert_to_user_model(task_ex):
         'result': data_flow.get_task_execution_result(task_ex),
         'published': task_ex.published,
         'type': task_ex.type,
-        'workflow_execution_id': task_ex.workflow_execution_id
+        'workflow_execution_id': task_ex.workflow_execution_id,
+        'created_at': task_ex.created_at.isoformat(' '),
+        'updated_at': task_ex.updated_at.isoformat(' ')
     }
 
 
