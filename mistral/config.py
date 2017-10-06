@@ -194,6 +194,31 @@ executor_opts = [
     )
 ]
 
+scheduler_opts = [
+    cfg.FloatOpt(
+        'fixed_delay',
+        default=1,
+        min=0.1,
+        help=(
+            'Fixed part of the delay between scheduler iterations, '
+            'in seconds. '
+            'Full delay is defined as a sum of "fixed_delay" and a random '
+            'delay limited by "random_delay".'
+        )
+    ),
+    cfg.FloatOpt(
+        'random_delay',
+        default=0,
+        min=0,
+        help=(
+            'Max value of the random part of the delay between scheduler '
+            'iterations, in seconds. '
+            'Full delay is defined as a sum of "fixed_delay" and a random '
+            'delay limited by this property.'
+        )
+    ),
+]
+
 event_engine_opts = [
     cfg.HostAddressOpt(
         'host',
@@ -336,6 +361,7 @@ CONF = cfg.CONF
 API_GROUP = 'api'
 ENGINE_GROUP = 'engine'
 EXECUTOR_GROUP = 'executor'
+SCHEDULER_GROUP = 'scheduler'
 EVENT_ENGINE_GROUP = 'event_engine'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
@@ -354,6 +380,7 @@ CONF.register_opt(expiration_token_duration)
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
 CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
+CONF.register_opts(scheduler_opts, group=SCHEDULER_GROUP)
 CONF.register_opts(
     execution_expiration_policy_opts,
     group=EXECUTION_EXPIRATION_POLICY_GROUP

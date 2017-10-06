@@ -16,11 +16,12 @@
 
 import copy
 import datetime
+import eventlet
+import random
+import threading
 
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_service import periodic_task
-from oslo_service import threadgroup
 from oslo_utils import importutils
 
 from mistral import context
@@ -33,8 +34,8 @@ LOG = logging.getLogger(__name__)
 
 CONF = cfg.CONF
 
-# {scheduler_instance: thread_group}
-_schedulers = {}
+# All schedulers.
+_schedulers = set()
 
 
 def schedule_call(factory_method_path, target_method_name,
@@ -99,10 +100,41 @@ def schedule_call(factory_method_path, target_method_name,
     db_api.create_delayed_call(values)
 
 
-class CallScheduler(periodic_task.PeriodicTasks):
-    # TODO(rakhmerov): Think how to make 'spacing' configurable.
-    @periodic_task.periodic_task(spacing=1, run_immediately=True)
-    def run_delayed_calls(self, ctx=None):
+class Scheduler(object):
+    def __init__(self):
+        self._stopped = False
+        self._thread = threading.Thread(target=self._loop)
+        self._thread.daemon = True
+        self._fixed_delay = CONF.scheduler.fixed_delay
+        self._random_delay = CONF.scheduler.random_delay
+
+    def start(self):
+        self._thread.start()
+
+    def stop(self, graceful=False):
+        self._stopped = True
+
+        if graceful:
+            self._thread.join()
+
+    def _loop(self):
+        while not self._stopped:
+            LOG.debug("Starting Scheduler loop [scheduler=%s]...", self)
+
+            try:
+                self._process_delayed_calls()
+            except Exception:
+                LOG.exception(
+                    "Scheduler failed to process delayed calls"
+                    " due to unexpected exception."
+                )
+
+            eventlet.sleep(
+                self._fixed_delay +
+                random.Random().randint(0, self._random_delay * 1000) * 0.001
+            )
+
+    def _process_delayed_calls(self, ctx=None):
         """Run delayed required calls.
 
         This algorithm should work with transactions having at least
@@ -155,6 +187,8 @@ class CallScheduler(periodic_task.PeriodicTasks):
                 if updated_cnt == 1:
                     result.append(db_call)
 
+        LOG.debug("Scheduler captured %s delayed calls.", len(result))
+
         return result
 
     @staticmethod
@@ -174,7 +208,7 @@ class CallScheduler(periodic_task.PeriodicTasks):
 
         for call in raw_calls:
             LOG.debug(
-                'Processing next delayed call. '
+                'Preparing next delayed call. '
                 '[ID=%s, factory_method_path=%s, target_method_name=%s, '
                 'method_arguments=%s]', call.id, call.factory_method_path,
                 call.target_method_name, call.method_arguments
@@ -253,37 +287,30 @@ class CallScheduler(periodic_task.PeriodicTasks):
                         "exception=%s]", call, e
                     )
 
+        LOG.debug("Scheduler deleted %s delayed calls.", len(db_calls))
+
 
 def start():
-    tg = threadgroup.ThreadGroup()
+    sched = Scheduler()
 
-    sched = CallScheduler(CONF)
+    _schedulers.add(sched)
 
-    tg.add_dynamic_timer(
-        sched.run_periodic_tasks,
-        initial_delay=None,
-        periodic_interval_max=1,
-        context=None
-    )
-
-    _schedulers[sched] = tg
+    sched.start()
 
     return sched
 
 
 def stop_scheduler(sched, graceful=False):
-    if sched:
-        tg = _schedulers[sched]
+    if not sched:
+        return
 
-        tg.stop()
+    sched.stop(graceful)
 
-        del _schedulers[sched]
-
-        if graceful:
-            tg.wait()
+    _schedulers.remove(sched)
 
 
 def stop_all_schedulers():
-    for scheduler, tg in _schedulers.items():
-        tg.stop()
-        del _schedulers[scheduler]
+    for sched in _schedulers:
+        sched.stop(graceful=True)
+
+    _schedulers.clear()
