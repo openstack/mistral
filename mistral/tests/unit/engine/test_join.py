@@ -1231,3 +1231,41 @@ class JoinEngineTest(base.EngineTestCase):
         # task we can't track it in "triggered_by" because we need
         # to know its ID so we leave it blank.
         self.assertFalse(join_task.runtime_context.get(key))
+
+    def test_join_saving_task_context_with_all(self):
+        workflow = """---
+        version: '2.0'
+
+        test_workflow:
+          type: direct
+
+          tasks:
+            task1:
+              action: std.echo output='task1'
+              on-success:
+                - task2
+              publish:
+                result: <% task().result %>
+
+            task2:
+              action: std.echo output='task2'
+              join: all
+              publish:
+                result: <% task().result %>
+        """
+
+        wf_service.create_workflows(workflow)
+
+        wf_ex = self.engine.start_workflow('test_workflow', '', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            tasks = wf_ex.task_executions
+
+            for task in tasks:
+                task_result = task.published["result"]
+
+                self.assertEqual(task.name, task_result,
+                                 "The result of task must equal own name")
