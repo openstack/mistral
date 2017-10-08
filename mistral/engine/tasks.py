@@ -360,13 +360,16 @@ class RegularTask(Task):
         self._schedule_actions()
 
     def _update_inbound_context(self):
-        assert self.task_ex
+        task_ex = self.task_ex
+        assert task_ex
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec)
+        data_flow.add_current_task_to_context(self.ctx, task_ex.id,
+                                              task_ex.name)
 
-        utils.update_dict(self.task_ex.in_context, self.ctx)
+        utils.update_dict(task_ex.in_context, self.ctx)
 
     def _update_triggered_by(self):
         assert self.task_ex
