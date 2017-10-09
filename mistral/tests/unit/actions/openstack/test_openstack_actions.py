@@ -15,7 +15,10 @@
 import mock
 
 from mistral.actions.openstack import actions
+from oslo_config import cfg
 from oslotest import base
+
+CONF = cfg.CONF
 
 
 class FakeEndpoint(object):
@@ -24,6 +27,10 @@ class FakeEndpoint(object):
 
 
 class OpenStackActionTest(base.BaseTestCase):
+    def tearDown(self):
+        super(OpenStackActionTest, self).tearDown()
+        cfg.CONF.set_default('auth_enable', False, group='pecan')
+
     @mock.patch.object(actions.NovaAction, '_get_client')
     def test_nova_action(self, mocked):
         mock_ctx = mock.Mock()
@@ -166,6 +173,30 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().workflows.get.called)
         mocked().workflows.get.assert_called_once_with(name="1234-abcd")
+
+    @mock.patch.object(actions.MistralAction, 'get_session_and_auth')
+    def test_integrated_mistral_action(self, mocked):
+        CONF.set_default('auth_enable', True, group='pecan')
+        mock_endpoint = mock.Mock()
+        mock_endpoint.endpoint = 'http://testendpoint.com:8989/v2'
+        mocked.return_value = {'auth': mock_endpoint, 'session': None}
+        mock_ctx = mock.Mock()
+        action_class = actions.MistralAction
+        params = {'identifier': '1234-abcd'}
+        action = action_class(**params)
+        client = action._get_client(mock_ctx)
+        self.assertEqual(client.workbooks.http_client.base_url,
+                         mock_endpoint.endpoint)
+
+    def test_standalone_mistral_action(self):
+        CONF.set_default('auth_enable', False, group='pecan')
+        mock_ctx = mock.Mock()
+        action_class = actions.MistralAction
+        params = {'identifier': '1234-abcd'}
+        action = action_class(**params)
+        client = action._get_client(mock_ctx)
+        base_url = 'http://{}:{}/v2'.format(CONF.api.host, CONF.api.port)
+        self.assertEqual(client.workbooks.http_client.base_url, base_url)
 
     @mock.patch.object(actions.SwiftAction, '_get_client')
     def test_swift_action(self, mocked):
