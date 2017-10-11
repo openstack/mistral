@@ -227,6 +227,13 @@ event_engine_opts = [
                'identifier. It is not necessarily a hostname, '
                'FQDN, or IP address.')
     ),
+    cfg.HostAddressOpt(
+        'listener_pool_name',
+        default='events',
+        help=_('Name of the event engine\'s listener pool. This can be an'
+               ' opaque identifier. It is used for identifying the group'
+               ' of event engine listeners in oslo.messaging.')
+    ),
     cfg.StrOpt(
         'topic',
         default='mistral_event_engine',

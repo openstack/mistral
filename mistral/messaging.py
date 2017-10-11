@@ -18,8 +18,8 @@ AMQP messages based on olso.messaging framework.
 """
 
 import abc
-import socket
 
+from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_messaging.notify import dispatcher
@@ -30,6 +30,7 @@ from oslo_utils import timeutils
 import six
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 
 def handle_event(self, ctxt, publisher_id, event_type, payload, metadata):
@@ -91,7 +92,8 @@ def get_pool_name(exchange):
 
     :param exchange: exchange name
     """
-    pool_name = 'mistral-%s-%s' % (exchange, socket.gethostname())
+    pool_host = CONF.event_engine.listener_pool_name
+    pool_name = 'mistral-%s-%s' % (exchange, pool_host)
 
     LOG.debug("Listener pool name is %s", pool_name)
 
