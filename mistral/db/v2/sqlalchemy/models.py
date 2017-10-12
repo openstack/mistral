@@ -337,6 +337,11 @@ sa.Index(
     TaskExecution.workflow_execution_id
 )
 
+sa.Index(
+    '%s_workflow_execution_id_name' % TaskExecution.__tablename__,
+    TaskExecution.workflow_execution_id, TaskExecution.name
+)
+
 
 # Other objects.
 
