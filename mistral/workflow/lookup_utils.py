@@ -67,7 +67,8 @@ def find_task_executions_by_name(wf_ex_id, task_name):
 
     t_execs = db_api.get_task_executions(
         workflow_execution_id=wf_ex_id,
-        name=task_name
+        name=task_name,
+        sort_keys=[]  # disable sorting
     )
 
     # We can cache only finished tasks because they won't change.
