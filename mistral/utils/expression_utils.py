@@ -17,6 +17,7 @@ from functools import partial
 
 from oslo_serialization import jsonutils
 from stevedore import extension
+import yaml
 import yaql
 
 from mistral.db.v2 import api as db_api
@@ -271,3 +272,11 @@ def global_(context, var_name):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
     return wf_ex.context.get(var_name)
+
+
+def json_parse_(context, data):
+    return jsonutils.loads(data)
+
+
+def yaml_parse_(context, data):
+    return yaml.safe_load(data)

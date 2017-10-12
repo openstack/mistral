@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add yaml_parse and json_parse expression functions. Each accepts a string
+    and will parse as either json or yaml, and return an object.
