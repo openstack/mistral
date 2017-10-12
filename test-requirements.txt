@@ -8,7 +8,7 @@ eventlet!=0.18.3,!=0.20.1,<0.21.0,>=0.18.2 # MIT
 fixtures>=3.0.0 # Apache-2.0/BSD
 hacking!=0.13.0,<0.14,>=0.12.0 # Apache-2.0
 keystonemiddleware>=4.17.0 # Apache-2.0
-mistral-lib>=0.2.0 # Apache-2.0
+mistral-lib>=0.3.0 # Apache-2.0
 mock>=2.0.0 # BSD
 networkx<2.0,>=1.10 # BSD
 nose>=1.3.7 # LGPL
