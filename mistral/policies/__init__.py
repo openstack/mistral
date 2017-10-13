@@ -23,6 +23,7 @@ from mistral.policies import execution
 from mistral.policies import member
 from mistral.policies import service
 from mistral.policies import task
+from mistral.policies import workbook
 
 
 def list_rules():
@@ -35,5 +36,6 @@ def list_rules():
         execution.list_rules(),
         member.list_rules(),
         service.list_rules(),
-        task.list_rules()
+        task.list_rules(),
+        workbook.list_rules()
     )
