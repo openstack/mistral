@@ -1,11 +1,1 @@
-{
-    "default": "rule:admin_or_owner",
-
-    "event_triggers:create": "rule:admin_or_owner",
-    "event_triggers:create:public": "rule:admin_only",
-    "event_triggers:delete": "rule:admin_or_owner",
-    "event_triggers:get": "rule:admin_or_owner",
-    "event_triggers:list": "rule:admin_or_owner",
-    "event_triggers:list:all_projects": "rule:admin_only",
-    "event_triggers:update": "rule:admin_or_owner"
-}
+{}

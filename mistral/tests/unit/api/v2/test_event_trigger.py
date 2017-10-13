@@ -133,6 +133,8 @@ class TestEventTriggerController(base.APITest):
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
     @mock.patch.object(triggers, "create_event_trigger")
     def test_post_public(self, create_trigger):
+        self.ctx = unit_base.get_context(default=False, admin=True)
+        self.mock_ctx.return_value = self.ctx
         trigger = copy.deepcopy(TRIGGER)
         trigger['scope'] = 'public'
         trigger.pop('id')
