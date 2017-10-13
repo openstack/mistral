@@ -15,13 +15,6 @@
 policy_data = """{
     "default": "rule:admin_or_owner",
 
-    "executions:create": "rule:admin_or_owner",
-    "executions:delete": "rule:admin_or_owner",
-    "executions:get": "rule:admin_or_owner",
-    "executions:list": "rule:admin_or_owner",
-    "executions:list:all_projects": "rule:admin_only",
-    "executions:update": "rule:admin_or_owner",
-
     "members:create": "rule:admin_or_owner",
     "members:delete": "rule:admin_or_owner",
     "members:get": "rule:admin_or_owner",
