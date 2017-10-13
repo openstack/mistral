@@ -32,6 +32,8 @@ extensions = [
     'sphinxcontrib.httpdomain',
     'wsmeext.sphinxext',
     'openstackdocstheme',
+    'oslo_policy.sphinxext',
+    'oslo_policy.sphinxpolicygen',
 ]
 
 wsme_protocols = ['restjson']
@@ -54,6 +56,10 @@ master_doc = 'index'
 # General information about the project.
 project = u'Mistral'
 copyright = u'2014, Mistral Contributors'
+
+policy_generator_config_file = \
+    '../../tools/config/policy-generator.mistral.conf'
+sample_policy_basename = '_static/mistral'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
