@@ -23,8 +23,7 @@ eventlet.monkey_patch(
     select=True,
     socket=True,
     thread=False if '--use-debugger' in sys.argv else True,
-    time=True,
-    MySQLdb=True)
+    time=True)
 
 
 import os
