@@ -46,8 +46,8 @@ class ServiceLauncherTest(base.DbTestCase):
         api_server = api_service.WSGIService('mistral_api')
         api_workers = api_server.workers
 
-        self.assertEqual(len(svr_proc_mgr.children.keys()), api_workers)
-        self.assertEqual(len(svr_thrd_mgr.services.services), 3)
+        self._await(lambda: len(svr_proc_mgr.children.keys()) == api_workers)
+        self._await(lambda: len(svr_thrd_mgr.services.services) == 3)
 
     def test_launch_process(self):
         eventlet.spawn(launch.launch_any, ['api'])
@@ -68,7 +68,7 @@ class ServiceLauncherTest(base.DbTestCase):
         api_server = api_service.WSGIService('mistral_api')
         api_workers = api_server.workers
 
-        self.assertEqual(len(svr_proc_mgr.children.keys()), api_workers)
+        self._await(lambda: len(svr_proc_mgr.children.keys()) == api_workers)
 
     def test_launch_thread(self):
         eventlet.spawn(launch.launch_any, ['engine'])
@@ -86,4 +86,4 @@ class ServiceLauncherTest(base.DbTestCase):
         self.assertIsNone(svr_proc_mgr)
         self.assertIsNotNone(svr_thrd_mgr)
 
-        self.assertEqual(len(svr_thrd_mgr.services.services), 1)
+        self._await(lambda: len(svr_thrd_mgr.services.services) == 1)
