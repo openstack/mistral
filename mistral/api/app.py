@@ -53,7 +53,9 @@ def setup_app(config=None):
 
     db_api_v2.setup_db()
 
-    if not app_conf.pop('disable_cron_trigger_thread', False):
+    # TODO(rakhmerov): Why do we run cron triggers in the API layer?
+    # Should we move it to engine?s
+    if cfg.CONF.cron_trigger.enabled:
         periodic.setup()
 
     coordination.Service('api_group').register_membership()

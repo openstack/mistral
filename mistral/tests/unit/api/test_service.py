@@ -15,95 +15,66 @@
 import mock
 from oslo_concurrency import processutils
 from oslo_config import cfg
-import pecan
 
 from mistral.api import service
 from mistral.tests.unit import base
 
 
 class TestWSGIService(base.BaseTest):
-    @mock.patch('mistral.api.app.setup_app')
+    def setUp(self):
+        super(TestWSGIService, self).setUp()
+
+        self.override_config('enabled', False, group='cron_trigger')
+
     @mock.patch.object(service.wsgi, 'Server')
-    def test_workers_set_default(self, wsgi_server, mock_app):
+    def test_workers_set_default(self, wsgi_server):
         service_name = "mistral_api"
-        mock_app.return_value = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
-        test_service = service.WSGIService(service_name)
 
-        wsgi_server.assert_called_once_with(
-            cfg.CONF,
-            service_name,
-            test_service.app,
-            host='0.0.0.0',
-            port=8989,
-            use_ssl=False
-        )
+        with mock.patch('mistral.api.app.setup_app'):
+            test_service = service.WSGIService(service_name)
 
-    @mock.patch('mistral.api.app.setup_app')
-    @mock.patch.object(service.wsgi, 'Server')
-    def test_workers_set_correct_setting(self, wsgi_server, mock_app):
+            wsgi_server.assert_called_once_with(
+                cfg.CONF,
+                service_name,
+                test_service.app,
+                host='0.0.0.0',
+                port=8989,
+                use_ssl=False
+            )
+
+    def test_workers_set_correct_setting(self):
         self.override_config('api_workers', 8, group='api')
 
-        mock_app.return_value = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
-        test_service = service.WSGIService("mistral_api")
+        with mock.patch('mistral.api.app.setup_app'):
+            test_service = service.WSGIService("mistral_api")
 
-        self.assertEqual(8, test_service.workers)
+            self.assertEqual(8, test_service.workers)
 
-    @mock.patch('mistral.api.app.setup_app')
-    @mock.patch.object(service.wsgi, 'Server')
-    def test_workers_set_zero_setting(self, wsgi_server, mock_app):
+    def test_workers_set_zero_setting(self):
         self.override_config('api_workers', 0, group='api')
 
-        mock_app.return_value = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
-        test_service = service.WSGIService("mistral_api")
+        with mock.patch('mistral.api.app.setup_app'):
+            test_service = service.WSGIService("mistral_api")
 
-        self.assertEqual(processutils.get_worker_count(), test_service.workers)
+            self.assertEqual(
+                processutils.get_worker_count(),
+                test_service.workers
+            )
 
-    @mock.patch('mistral.api.app.setup_app')
     @mock.patch.object(service.wsgi, 'Server')
-    def test_wsgi_service_with_ssl_enabled(self, wsgi_server, mock_app):
+    def test_wsgi_service_with_ssl_enabled(self, wsgi_server):
         self.override_config('enable_ssl_api', True, group='api')
 
-        mock_app.return_value = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
         service_name = 'mistral_api'
-        srv = service.WSGIService(service_name)
 
-        wsgi_server.assert_called_once_with(
-            cfg.CONF,
-            service_name,
-            srv.app,
-            host='0.0.0.0',
-            port=8989,
-            use_ssl=True
-        )
+        with mock.patch('mistral.api.app.setup_app'):
+            srv = service.WSGIService(service_name)
+
+            wsgi_server.assert_called_once_with(
+                cfg.CONF,
+                service_name,
+                srv.app,
+                host='0.0.0.0',
+                port=8989,
+                use_ssl=True
+            )

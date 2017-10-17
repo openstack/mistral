@@ -14,13 +14,13 @@
 
 import datetime
 import mock
-from oslo_config import cfg
 import pecan
 import pecan.testing
 import requests
 import requests_mock
 import webob
 
+from mistral.api import app as pecan_app
 from mistral.auth import keycloak
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -87,13 +87,17 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
     def setUp(self):
         super(TestKeyCloakOIDCAuth, self).setUp()
-        cfg.CONF.set_default('auth_url', AUTH_URL, group='keycloak_oidc')
+
+        self.override_config('auth_url', AUTH_URL, group='keycloak_oidc')
+
         self.auth_handler = keycloak.KeycloakAuthHandler()
 
     def _build_request(self, token):
         req = webob.Request.blank("/")
+
         req.headers["x-auth-token"] = token
         req.get_response = lambda app: None
+
         return req
 
     @requests_mock.Mocker()
@@ -104,12 +108,15 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
                 "roles": ["role1", "role2"]
             }
         }
+
         # Imitate successful response from KeyCloak with user claims.
         req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
 
         req = self._build_request(token)
+
         with mock.patch("jwt.decode", return_value=token):
             self.auth_handler.authenticate(req)
+
         self.assertEqual("Confirmed", req.headers["X-Identity-Status"])
         self.assertEqual("my_realm", req.headers["X-Project-Id"])
         self.assertEqual("role1,role2", req.headers["X-Roles"])
@@ -117,6 +124,7 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
     def test_no_auth_token(self):
         req = webob.Request.blank("/")
+
         self.assertRaises(
             exc.UnauthorizedException,
             self.auth_handler.authenticate,
@@ -125,21 +133,23 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
     @requests_mock.Mocker()
     def test_no_realm_roles(self, req_mock):
-        token = {
-            "iss": "http://localhost:8080/auth/realms/my_realm",
-        }
+        token = {"iss": "http://localhost:8080/auth/realms/my_realm"}
+
         # Imitate successful response from KeyCloak with user claims.
         req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
 
         req = self._build_request(token)
+
         with mock.patch("jwt.decode", return_value=token):
             self.auth_handler.authenticate(req)
+
         self.assertEqual("Confirmed", req.headers["X-Identity-Status"])
         self.assertEqual("my_realm", req.headers["X-Project-Id"])
         self.assertEqual("", req.headers["X-Roles"])
 
     def test_wrong_token_format(self):
         req = self._build_request(token="WRONG_FORMAT_TOKEN")
+
         self.assertRaises(
             exc.UnauthorizedException,
             self.auth_handler.authenticate,
@@ -151,6 +161,7 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
         token = {
             "iss": "http://localhost:8080/auth/realms/my_realm",
         }
+
         # Imitate failure response from KeyCloak.
         req_mock.get(
             USER_INFO_ENDPOINT,
@@ -159,6 +170,7 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
         )
 
         req = self._build_request(token)
+
         with mock.patch("jwt.decode", return_value=token):
             try:
                 self.auth_handler.authenticate(req)
@@ -172,12 +184,12 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
     @requests_mock.Mocker()
     def test_connection_error(self, req_mock):
-        token = {
-            "iss": "http://localhost:8080/auth/realms/my_realm",
-        }
+        token = {"iss": "http://localhost:8080/auth/realms/my_realm"}
+
         req_mock.get(USER_INFO_ENDPOINT, exc=requests.ConnectionError)
 
         req = self._build_request(token)
+
         with mock.patch("jwt.decode", return_value=token):
             self.assertRaises(
                 exc.MistralException,
@@ -190,30 +202,14 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
     def setUp(self):
         super(TestKeyCloakOIDCAuthScenarios, self).setUp()
 
-        cfg.CONF.set_default('auth_enable', True, group='pecan')
-        cfg.CONF.set_default('auth_type', 'keycloak-oidc')
-        cfg.CONF.set_default('auth_url', AUTH_URL, group='keycloak_oidc')
+        self.override_config('enabled', False, group='cron_trigger')
+        self.override_config('auth_enable', True, group='pecan')
+        self.override_config('auth_type', 'keycloak-oidc')
+        self.override_config('auth_url', AUTH_URL, group='keycloak_oidc')
 
-        pecan_opts = cfg.CONF.pecan
-
-        self.app = pecan.testing.load_test_app({
-            'app': {
-                'root': pecan_opts.root,
-                'modules': pecan_opts.modules,
-                'debug': pecan_opts.debug,
-                'auth_enable': True,
-                'disable_cron_trigger_thread': True
-            }
-        })
-
-        self.addCleanup(pecan.set_config, {}, overwrite=True)
-        self.addCleanup(
-            cfg.CONF.set_default,
-            'auth_enable',
-            False,
-            group='pecan'
+        self.app = pecan.testing.load_test_app(
+            dict(pecan_app.get_pecan_config())
         )
-        self.addCleanup(cfg.CONF.set_default, 'auth_type', 'keystone')
 
         # Adding cron trigger thread clean up explicitly in case if
         # new tests will provide an alternative configuration for pecan
@@ -226,6 +222,7 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
         )
         self.mock_ctx = self.patch_ctx.start()
         self.mock_ctx.return_value = self.ctx
+
         self.addCleanup(self.patch_ctx.stop)
 
         self.policy = self.useFixture(policy_fixtures.PolicyFixture())
@@ -243,9 +240,7 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
             }
         }
 
-        headers = {
-            'X-Auth-Token': str(token)
-        }
+        headers = {'X-Auth-Token': str(token)}
 
         with mock.patch("jwt.decode", return_value=token):
             resp = self.app.get('/v2/workflows/123', headers=headers)
@@ -266,9 +261,7 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
             }
         }
 
-        headers = {
-            'X-Auth-Token': str(token)
-        }
+        headers = {'X-Auth-Token': str(token)}
 
         resp = self.app.get(
             '/v2/workflows/123',
@@ -301,9 +294,7 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
             }
         }
 
-        headers = {
-            'X-Auth-Token': str(token)
-        }
+        headers = {'X-Auth-Token': str(token)}
 
         with mock.patch("jwt.decode", return_value=token):
             resp = self.app.get(
@@ -324,30 +315,14 @@ class TestKeyCloakOIDCAuthApp(base.DbTestCase):
     def setUp(self):
         super(TestKeyCloakOIDCAuthApp, self).setUp()
 
-        cfg.CONF.set_default('auth_enable', True, group='pecan')
-        cfg.CONF.set_default('auth_type', 'keycloak-oidc')
-        cfg.CONF.set_default('auth_url', AUTH_URL, group='keycloak_oidc')
+        self.override_config('enabled', False, group='cron_trigger')
+        self.override_config('auth_enable', True, group='pecan')
+        self.override_config('auth_type', 'keycloak-oidc')
+        self.override_config('auth_url', AUTH_URL, group='keycloak_oidc')
 
-        pecan_opts = cfg.CONF.pecan
-
-        self.app = pecan.testing.load_test_app({
-            'app': {
-                'root': pecan_opts.root,
-                'modules': pecan_opts.modules,
-                'debug': pecan_opts.debug,
-                'auth_enable': True,
-                'disable_cron_trigger_thread': True
-            }
-        })
-
-        self.addCleanup(pecan.set_config, {}, overwrite=True)
-        self.addCleanup(
-            cfg.CONF.set_default,
-            'auth_enable',
-            False,
-            group='pecan'
+        self.app = pecan.testing.load_test_app(
+            dict(pecan_app.get_pecan_config())
         )
-        self.addCleanup(cfg.CONF.set_default, 'auth_type', 'keystone')
 
         # Adding cron trigger thread clean up explicitly in case if
         # new tests will provide an alternative configuration for pecan

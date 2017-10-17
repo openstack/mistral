@@ -219,6 +219,18 @@ scheduler_opts = [
     ),
 ]
 
+cron_trigger_opts = [
+    cfg.BoolOpt(
+        'enabled',
+        default=True,
+        help=(
+            'If this value is set to False then the subsystem of cron triggers'
+            ' is disabled. Disabling cron triggers increases system'
+            ' performance.'
+        )
+    ),
+]
+
 event_engine_opts = [
     cfg.HostAddressOpt(
         'host',
@@ -369,6 +381,7 @@ API_GROUP = 'api'
 ENGINE_GROUP = 'engine'
 EXECUTOR_GROUP = 'executor'
 SCHEDULER_GROUP = 'scheduler'
+CRON_TRIGGER_GROUP = 'cron_trigger'
 EVENT_ENGINE_GROUP = 'event_engine'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
@@ -376,6 +389,7 @@ EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 OPENSTACK_ACTIONS_GROUP = 'openstack_actions'
+
 
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(auth_type_opt)
@@ -388,6 +402,7 @@ CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
 CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)
 CONF.register_opts(scheduler_opts, group=SCHEDULER_GROUP)
+CONF.register_opts(cron_trigger_opts, group=CRON_TRIGGER_GROUP)
 CONF.register_opts(
     execution_expiration_policy_opts,
     group=EXECUTION_EXPIRATION_POLICY_GROUP
@@ -406,8 +421,14 @@ CLI_OPTS = [
 
 default_group_opts = itertools.chain(
     CLI_OPTS,
-    [wf_trace_log_name_opt, auth_type_opt, js_impl_opt, rpc_impl_opt,
-     rpc_response_timeout_opt, expiration_token_duration]
+    [
+        wf_trace_log_name_opt,
+        auth_type_opt,
+        js_impl_opt,
+        rpc_impl_opt,
+        rpc_response_timeout_opt,
+        expiration_token_duration
+    ]
 )
 
 CONF.register_cli_opts(CLI_OPTS)

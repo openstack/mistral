@@ -50,6 +50,8 @@ class TestMembersController(base.APITest):
     def setUp(self):
         super(TestMembersController, self).setUp()
 
+        self.override_config('auth_enable', True, group='pecan')
+
         wf = db_api.create_workflow_definition(WF_DEFINITION)
 
         global MEMBER_URL, WORKFLOW_MEMBER_ACCEPTED
@@ -64,7 +66,7 @@ class TestMembersController(base.APITest):
         cfg.CONF.set_default('auth_enable', True, group='pecan')
 
     def test_membership_api_without_auth(self):
-        cfg.CONF.set_default('auth_enable', False, group='pecan')
+        self.override_config('auth_enable', False, group='pecan')
 
         resp = self.app.get(MEMBER_URL, expect_errors=True)
 
