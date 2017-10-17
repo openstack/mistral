@@ -101,6 +101,7 @@ class FakeHTTPResponse(object):
 class BaseTest(base.BaseTestCase):
     def setUp(self):
         super(BaseTest, self).setUp()
+
         self.addCleanup(spec_parser.clear_caches)
 
     def register_action_class(self, name, cls, attributes=None, desc=None):
@@ -209,6 +210,7 @@ class BaseTest(base.BaseTestCase):
     def override_config(self, name, override, group=None):
         """Cleanly override CONF variables."""
         cfg.CONF.set_override(name, override, group)
+
         self.addCleanup(cfg.CONF.clear_override, name, group)
 
 

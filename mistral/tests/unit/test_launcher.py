@@ -13,10 +13,6 @@
 #    limitations under the License.
 
 import eventlet
-import mock
-import pecan.testing
-
-from oslo_config import cfg
 
 from mistral.api import service as api_service
 from mistral.cmd import launch
@@ -27,21 +23,12 @@ class ServiceLauncherTest(base.DbTestCase):
 
     def setUp(self):
         super(ServiceLauncherTest, self).setUp()
+
+        self.override_config('enabled', False, group='cron_trigger')
+
         launch.reset_server_managers()
 
-    @mock.patch('mistral.api.app.setup_app')
-    @mock.patch.object(api_service.wsgi, 'Server')
-    def test_launch_all(self, wsgi_server, mock_app):
-        mock_app.return_value = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
-
+    def test_launch_all(self):
         eventlet.spawn(launch.launch_any, launch.LAUNCH_OPTIONS.keys())
 
         for i in range(0, 50):
@@ -62,19 +49,7 @@ class ServiceLauncherTest(base.DbTestCase):
         self.assertEqual(len(svr_proc_mgr.children.keys()), api_workers)
         self.assertEqual(len(svr_thrd_mgr.services.services), 3)
 
-    @mock.patch('mistral.api.app.setup_app')
-    @mock.patch.object(api_service.wsgi, 'Server')
-    def test_launch_process(self, wsgi_server, mock_app):
-        mock_app.return_value = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
-
+    def test_launch_process(self):
         eventlet.spawn(launch.launch_any, ['api'])
 
         for i in range(0, 50):

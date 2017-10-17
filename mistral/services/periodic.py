@@ -37,16 +37,20 @@ _periodic_tasks = {}
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
     @periodic_task.periodic_task(spacing=1, run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
+        LOG.debug("Processing cron triggers...")
+
         for trigger in triggers.get_next_cron_triggers():
             LOG.debug("Processing cron trigger: %s", trigger)
 
             try:
                 # Setup admin context before schedule triggers.
                 ctx = security.create_context(
-                    trigger.trust_id, trigger.project_id
+                    trigger.trust_id,
+                    trigger.project_id
                 )
 
                 auth_ctx.set_ctx(ctx)
+
                 LOG.debug("Cron trigger security context: %s", ctx)
 
                 # Try to advance the cron trigger next_execution_time and
@@ -158,6 +162,7 @@ def setup():
 
 
 def stop_all_periodic_tasks():
-    for pt, tg in _periodic_tasks.items():
+    for tg in _periodic_tasks.values():
         tg.stop()
-        del _periodic_tasks[pt]
+
+    _periodic_tasks.clear()

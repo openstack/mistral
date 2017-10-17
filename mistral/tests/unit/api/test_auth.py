@@ -11,12 +11,12 @@
 #    limitations under the License.
 
 import datetime
-from oslo_config import cfg
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import pecan
 import pecan.testing
 
+from mistral.api import app as pecan_app
 from mistral.tests.unit.api import base
 
 
@@ -65,14 +65,9 @@ class TestKeystoneMiddleware(base.APITest):
     def setUp(self):
         super(TestKeystoneMiddleware, self).setUp()
 
-        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        self.override_config('auth_enable', True, group='pecan')
+        self.override_config('enabled', False, group='cron_trigger')
 
-        self.app = pecan.testing.load_test_app({
-            'app': {
-                'root': cfg.CONF.pecan.root,
-                'modules': cfg.CONF.pecan.modules,
-                'debug': cfg.CONF.pecan.debug,
-                'auth_enable': cfg.CONF.pecan.auth_enable,
-                'disable_cron_trigger_thread': True
-            }
-        })
+        self.app = pecan.testing.load_test_app(
+            dict(pecan_app.get_pecan_config())
+        )

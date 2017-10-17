@@ -13,17 +13,14 @@
 #    limitations under the License.
 
 import mock
-from oslo_config import cfg
 import pecan
 import pecan.testing
 from webtest import app as webtest_app
 
+from mistral.api import app as pecan_app
 from mistral.services import periodic
 from mistral.tests.unit import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
-
-# Disable authentication for API tests.
-cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class APITest(base.DbTestCase):
@@ -31,23 +28,12 @@ class APITest(base.DbTestCase):
     def setUp(self):
         super(APITest, self).setUp()
 
-        pecan_opts = cfg.CONF.pecan
+        self.override_config('auth_enable', False, group='pecan')
+        self.override_config('enabled', False, group='cron_trigger')
 
-        self.app = pecan.testing.load_test_app({
-            'app': {
-                'root': pecan_opts.root,
-                'modules': pecan_opts.modules,
-                'debug': pecan_opts.debug,
-                'auth_enable': False,
-                'disable_cron_trigger_thread': True
-            }
-        })
-
-        self.addCleanup(pecan.set_config, {}, overwrite=True)
-        self.addCleanup(cfg.CONF.set_default,
-                        'auth_enable',
-                        False,
-                        group='pecan')
+        self.app = pecan.testing.load_test_app(
+            dict(pecan_app.get_pecan_config())
+        )
 
         # Adding cron trigger thread clean up explicitly in case if
         # new tests will provide an alternative configuration for pecan
