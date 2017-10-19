@@ -122,6 +122,10 @@ def json_pp_(context, data=None):
     ).replace("\\n", "\n").replace(" \n", "\n")
 
 
+def yaml_dump_(context, data):
+    return yaml.safe_dump(data, default_flow_style=False)
+
+
 def task_(context, task_name=None):
     # This section may not exist in a context if it's calculated not in
     # task scope.
