@@ -22,6 +22,7 @@ import requests_mock
 import webob
 
 from mistral.auth import keycloak
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
@@ -315,3 +316,74 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
         self.assertEqual('401 Unauthorized', resp.status)
         self.assertIn('Failed to validate access token', resp.text)
         self.assertIn('Access token is invalid', resp.text)
+
+
+class TestKeyCloakOIDCAuthApp(base.DbTestCase):
+    """Test that Keycloak auth params were successfully passed to Context"""
+
+    def setUp(self):
+        super(TestKeyCloakOIDCAuthApp, self).setUp()
+
+        cfg.CONF.set_default('auth_enable', True, group='pecan')
+        cfg.CONF.set_default('auth_type', 'keycloak-oidc')
+        cfg.CONF.set_default('auth_url', AUTH_URL, group='keycloak_oidc')
+
+        pecan_opts = cfg.CONF.pecan
+
+        self.app = pecan.testing.load_test_app({
+            'app': {
+                'root': pecan_opts.root,
+                'modules': pecan_opts.modules,
+                'debug': pecan_opts.debug,
+                'auth_enable': True,
+                'disable_cron_trigger_thread': True
+            }
+        })
+
+        self.addCleanup(pecan.set_config, {}, overwrite=True)
+        self.addCleanup(
+            cfg.CONF.set_default,
+            'auth_enable',
+            False,
+            group='pecan'
+        )
+        self.addCleanup(cfg.CONF.set_default, 'auth_type', 'keystone')
+
+        # Adding cron trigger thread clean up explicitly in case if
+        # new tests will provide an alternative configuration for pecan
+        # application.
+        self.addCleanup(periodic.stop_all_periodic_tasks)
+
+        self.policy = self.useFixture(policy_fixtures.PolicyFixture())
+
+    @requests_mock.Mocker()
+    @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
+    def test_params_transition(self, req_mock):
+        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+
+        token = {
+            "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
+        }
+
+        headers = {
+            'X-Auth-Token': str(token)
+        }
+
+        with mock.patch("jwt.decode", return_value=token):
+            with mock.patch("mistral.context.set_ctx") as mocked_set_cxt:
+                self.app.get('/v2/workflows/123', headers=headers)
+                calls = mocked_set_cxt.call_args_list
+                self.assertEqual(2, len(calls))
+
+                # First positional argument of the first call ('before')
+                ctx = calls[0][0][0]
+
+                self.assertIsInstance(ctx, context.MistralContext)
+                self.assertEqual('my_realm', ctx.project_id)
+                self.assertEqual(["role1", "role2"], ctx.roles)
+
+                # Second call of set_ctx ('after'), where we reset the context
+                self.assertIsNone(calls[1][0][0])
