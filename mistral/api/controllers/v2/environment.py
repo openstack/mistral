@@ -24,7 +24,7 @@ from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
-from mistral import exceptions as exceptions
+from mistral import exceptions
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 
