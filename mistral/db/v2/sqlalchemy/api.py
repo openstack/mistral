@@ -178,7 +178,9 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
 
     sort_keys = sort_keys if sort_keys else []
 
-    if 'id' not in sort_keys:
+    # We should add sorting by id only if we use pagination. Otherwise
+    # we can omit it to increase the performance.
+    if (marker or limit) and 'id' not in sort_keys:
         sort_keys.append('id')
         sort_dirs.append('asc') if sort_dirs else None
 
@@ -222,28 +224,6 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
     )
 
     return query.all()
-
-
-def _get_collection_sorted_by_name(model, insecure=False, fields=None,
-                                   sort_keys=['name'], **kwargs):
-    return _get_collection(
-        model=model,
-        insecure=insecure,
-        sort_keys=sort_keys,
-        fields=fields,
-        **kwargs
-    )
-
-
-def _get_collection_sorted_by_time(model, insecure=False, fields=None,
-                                   sort_keys=['created_at'], **kwargs):
-    return _get_collection(
-        model=model,
-        insecure=insecure,
-        sort_keys=sort_keys,
-        fields=fields,
-        **kwargs
-    )
 
 
 def _get_db_object_by_name(model, name, filter_=None, order_by=None):
@@ -404,7 +384,7 @@ def load_workbook(name, session=None):
 
 @b.session_aware()
 def get_workbooks(session=None, **kwargs):
-    return _get_collection_sorted_by_name(models.Workbook, **kwargs)
+    return _get_collection(models.Workbook, **kwargs)
 
 
 @b.session_aware()
@@ -511,15 +491,13 @@ def load_workflow_definition(name, namespace='', session=None):
 
 
 @b.session_aware()
-def get_workflow_definitions(sort_keys=['created_at'], fields=None,
-                             session=None, **kwargs):
+def get_workflow_definitions(fields=None, session=None, **kwargs):
     if fields and 'input' in fields:
         fields.remove('input')
         fields.append('spec')
 
-    return _get_collection_sorted_by_name(
+    return _get_collection(
         model=models.WorkflowDefinition,
-        sort_keys=sort_keys,
         fields=fields,
         **kwargs
     )
@@ -655,10 +633,7 @@ def load_action_definition(name, session=None):
 
 @b.session_aware()
 def get_action_definitions(session=None, **kwargs):
-    return _get_collection_sorted_by_name(
-        model=models.ActionDefinition,
-        **kwargs
-    )
+    return _get_collection(model=models.ActionDefinition, **kwargs)
 
 
 @b.session_aware()
@@ -781,7 +756,7 @@ def delete_action_executions(session=None, **kwargs):
 
 
 def _get_action_executions(**kwargs):
-    return _get_collection_sorted_by_time(models.ActionExecution, **kwargs)
+    return _get_collection(models.ActionExecution, **kwargs)
 
 
 # Workflow executions.
@@ -816,10 +791,7 @@ def ensure_workflow_execution_exists(id, session=None):
 
 @b.session_aware()
 def get_workflow_executions(session=None, **kwargs):
-    return _get_collection_sorted_by_time(
-        models.WorkflowExecution,
-        **kwargs
-    )
+    return _get_collection(models.WorkflowExecution, **kwargs)
 
 
 @b.session_aware()
@@ -994,7 +966,7 @@ def delete_task_executions(session=None, **kwargs):
 
 
 def _get_task_executions(**kwargs):
-    return _get_collection_sorted_by_time(models.TaskExecution, **kwargs)
+    return _get_collection(models.TaskExecution, **kwargs)
 
 
 # Delayed calls.
@@ -1073,10 +1045,7 @@ def get_delayed_call(id, session=None):
 
 @b.session_aware()
 def get_delayed_calls(session=None, **kwargs):
-    return _get_collection(
-        model=models.DelayedCall,
-        **kwargs
-    )
+    return _get_collection(model=models.DelayedCall, **kwargs)
 
 
 @b.session_aware()
@@ -1160,12 +1129,8 @@ def load_cron_trigger(identifier, session=None):
 
 
 @b.session_aware()
-def get_cron_triggers(insecure=False, session=None, **kwargs):
-    return _get_collection_sorted_by_name(
-        models.CronTrigger,
-        insecure=insecure,
-        **kwargs
-    )
+def get_cron_triggers(session=None, **kwargs):
+    return _get_collection(models.CronTrigger, **kwargs)
 
 
 @b.session_aware()
@@ -1284,7 +1249,7 @@ def load_environment(name, session=None):
 
 @b.session_aware()
 def get_environments(session=None, **kwargs):
-    return _get_collection_sorted_by_name(models.Environment, **kwargs)
+    return _get_collection(models.Environment, **kwargs)
 
 
 @b.session_aware()
@@ -1514,12 +1479,8 @@ def load_event_trigger(id, insecure=False, session=None):
 
 
 @b.session_aware()
-def get_event_triggers(insecure=False, session=None, **kwargs):
-    return _get_collection_sorted_by_time(
-        model=models.EventTrigger,
-        insecure=insecure,
-        **kwargs
-    )
+def get_event_triggers(session=None, **kwargs):
+    return _get_collection(model=models.EventTrigger, **kwargs)
 
 
 @b.session_aware()

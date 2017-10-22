@@ -127,7 +127,7 @@ def filters_to_dict(**kwargs):
 
 def get_all(list_cls, cls, get_all_function, get_function,
             resource_function=None, marker=None, limit=None,
-            sort_keys='created_at', sort_dirs='asc', fields='',
+            sort_keys=None, sort_dirs=None, fields=None,
             all_projects=False, **filters):
     """Return a list of cls.
 
@@ -143,11 +143,11 @@ def get_all(list_cls, cls, get_all_function, get_function,
     :param limit: Optional. Maximum number of resources to return in a
                   single result. Default value is None for backward
                   compatibility.
-    :param sort_keys: Optional. Columns to sort results by.
-                      Default: created_at.
-    :param sort_dirs: Optional. Directions to sort corresponding to
+    :param sort_keys: Optional. List of columns to sort results by.
+                      Default: ['created_at'].
+    :param sort_dirs: Optional. List of directions to sort corresponding to
                       sort_keys, "asc" or "desc" can be chosen.
-                      Default: asc.
+                      Default: ['asc'].
     :param fields: Optional. A specified list of fields of the resource to
                    be returned. 'id' will be included automatically in
                    fields if it's provided, since it will be used when
@@ -155,6 +155,10 @@ def get_all(list_cls, cls, get_all_function, get_function,
     :param filters: Optional. A specified dictionary of filters to match.
     :param all_projects: Optional. Get resources of all projects.
     """
+    sort_keys = ['created_at'] if sort_keys is None else sort_keys
+    sort_dirs = ['asc'] if sort_dirs is None else sort_dirs
+    fields = [] if fields is None else fields
+
     if fields and 'id' not in fields:
         fields.insert(0, 'id')
 
