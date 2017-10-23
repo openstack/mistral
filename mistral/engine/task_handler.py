@@ -321,6 +321,7 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
     )
 
 
+@db_utils.retry_on_deadlock
 @action_queue.process
 @profiler.trace('task-handler-refresh-task-state', hide_args=True)
 def _refresh_task_state(task_ex_id):
@@ -449,6 +450,7 @@ def schedule_on_action_complete(action_ex, delay=0):
     )
 
 
+@db_utils.retry_on_deadlock
 @action_queue.process
 def _scheduled_on_action_update(action_ex_id, wf_action):
     with db_api.transaction():

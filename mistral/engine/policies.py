@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.engine import action_queue
 from mistral.engine import base
@@ -453,6 +454,7 @@ class ConcurrencyPolicy(base.TaskPolicy):
         task_ex.runtime_context = runtime_context
 
 
+@db_utils.retry_on_deadlock
 @action_queue.process
 def _continue_task(task_ex_id):
     from mistral.engine import task_handler
@@ -461,6 +463,7 @@ def _continue_task(task_ex_id):
         task_handler.continue_task(db_api.get_task_execution(task_ex_id))
 
 
+@db_utils.retry_on_deadlock
 @action_queue.process
 def _complete_task(task_ex_id, state, state_info):
     from mistral.engine import task_handler
@@ -473,6 +476,7 @@ def _complete_task(task_ex_id, state, state_info):
         )
 
 
+@db_utils.retry_on_deadlock
 @action_queue.process
 def _fail_task_if_incomplete(task_ex_id, timeout):
     from mistral.engine import task_handler

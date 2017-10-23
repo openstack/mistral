@@ -146,6 +146,9 @@ class Scheduler(object):
         # Select and capture calls matching time criteria.
         db_calls = self._capture_calls()
 
+        if not db_calls:
+            return
+
         # Determine target methods, deserialize arguments etc.
         prepared_calls = self._prepare_calls(db_calls)
 
@@ -286,6 +289,11 @@ class Scheduler(object):
                         "Failed to delete delayed call [call=%s, "
                         "exception=%s]", call, e
                     )
+
+                    # We have to re-raise any exception because the transaction
+                    # would be already invalid anyway. If it's a deadlock then
+                    # it will be handled.
+                    raise e
 
         LOG.debug("Scheduler deleted %s delayed calls.", len(db_calls))
 
