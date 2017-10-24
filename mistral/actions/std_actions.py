@@ -255,7 +255,7 @@ class MistralHTTPAction(HTTPAction):
         self.headers.update({
             'Mistral-Workflow-Name': exec_ctx.workflow_name,
             'Mistral-Workflow-Execution-Id': exec_ctx.workflow_execution_id,
-            'Mistral-Task-Id': exec_ctx.task_id,
+            'Mistral-Task-Id': exec_ctx.task_execution_id,
             'Mistral-Action-Execution-Id': exec_ctx.action_execution_id,
             'Mistral-Callback-URL': exec_ctx.callback_url,
         })

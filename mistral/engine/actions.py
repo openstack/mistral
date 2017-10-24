@@ -329,7 +329,7 @@ class PythonAction(Action):
         if self.task_ex:
             wf_ex = self.task_ex.workflow_execution
             exc_ctx['workflow_execution_id'] = wf_ex.id
-            exc_ctx['task_id'] = self.task_ex.id
+            exc_ctx['task_execution_id'] = self.task_ex.id
             exc_ctx['workflow_name'] = wf_ex.name
 
         if self.action_ex:

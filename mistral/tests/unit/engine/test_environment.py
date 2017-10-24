@@ -184,7 +184,7 @@ class EnvironmentTest(base.EngineTestCase):
                     a_ex.input,
                     False,
                     {
-                        'task_id': t_ex.id,
+                        'task_execution_id': t_ex.id,
                         'callback_url': callback_url,
                         'workflow_execution_id': wf1_ex.id,
                         'workflow_name': wf1_ex.name,
