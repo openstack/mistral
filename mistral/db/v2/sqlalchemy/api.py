@@ -272,11 +272,7 @@ def _get_wf_object_by_name_and_namespace(model, name, namespace=None):
     filter_ = model.name == name
 
     if namespace is not None:
-        in_namespace = sa.or_(
-            model.namespace == namespace,
-            model.namespace == ''
-        )
-        filter_ = sa.and_(filter_, in_namespace)
+        filter_ = sa.and_(filter_, model.namespace.in_([namespace, '']))
 
         # Give priority to objects not in the default namespace.
         query = query.order_by(model.namespace.desc())
@@ -507,10 +503,7 @@ def get_workflow_definition_by_id(id, session=None):
 def load_workflow_definition(name, namespace='', session=None):
     model = models.WorkflowDefinition
 
-    filter_ = sa.or_(
-        model.namespace == namespace,
-        model.namespace == ''
-    )
+    filter_ = model.namespace.in_([namespace, ''])
 
     # Give priority to objects not in the default namespace.
     order_by = model.namespace.desc()
@@ -912,10 +905,10 @@ def _get_completed_task_executions_query(kwargs):
     query = query.filter_by(**kwargs)
 
     query = query.filter(
-        sa.or_(
-            models.TaskExecution.state == states.ERROR,
-            models.TaskExecution.state == states.CANCELLED,
-            models.TaskExecution.state == states.SUCCESS
+        models.TaskExecution.state.in_(
+            [states.ERROR,
+             states.CANCELLED,
+             states.SUCCESS]
         )
     )
 
@@ -935,12 +928,12 @@ def _get_incomplete_task_executions_query(kwargs):
     query = query.filter_by(**kwargs)
 
     query = query.filter(
-        sa.or_(
-            models.TaskExecution.state == states.IDLE,
-            models.TaskExecution.state == states.RUNNING,
-            models.TaskExecution.state == states.WAITING,
-            models.TaskExecution.state == states.RUNNING_DELAYED,
-            models.TaskExecution.state == states.PAUSED
+        models.TaskExecution.state.in_(
+            [states.IDLE,
+             states.RUNNING,
+             states.WAITING,
+             states.RUNNING_DELAYED,
+             states.PAUSED]
         )
     )
 
@@ -1131,10 +1124,10 @@ def _get_completed_root_executions_query(columns):
     query = query.filter(models.WorkflowExecution.
                          task_execution_id == sa.null())
     query = query.filter(
-        sa.or_(
-            models.WorkflowExecution.state == states.SUCCESS,
-            models.WorkflowExecution.state == states.ERROR,
-            models.WorkflowExecution.state == states.CANCELLED
+        models.WorkflowExecution.state.in_(
+            [states.SUCCESS,
+             states.ERROR,
+             states.CANCELLED]
         )
     )
     return query
