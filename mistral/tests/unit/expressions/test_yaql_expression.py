@@ -15,11 +15,15 @@
 #    limitations under the License.
 
 import datetime
+import json
+import warnings
+
+import mock
+
 from mistral import exceptions as exc
 from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
 from mistral import utils
-import mock
 
 DATA = {
     "server": {
@@ -130,6 +134,34 @@ class YaqlEvaluatorTest(base.BaseTest):
             '"Mistral\nis\nawesome"',
             self._evaluator.evaluate(
                 'json_pp($)', '\n'.join(['Mistral', 'is', 'awesome'])
+            )
+        )
+
+    def test_function_json_pp_deprecation(self):
+        with warnings.catch_warnings(record=True) as w:
+            result = self._evaluator.evaluate('json_pp($)', '3')
+            self.assertEqual('"3"', result)
+        self.assertEqual(len(w), 1)
+        self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
+        self.assertTrue(str(w[-1].message).startswith(
+            "json_pp was deprecated in Queens and will be removed in the S "
+        ))
+
+    def test_function_json_dump(self):
+        self.assertEqual('"3"', self._evaluator.evaluate('json_dump($)', '3'))
+        self.assertEqual('3', self._evaluator.evaluate('json_dump($)', 3))
+        self.assertEqual(
+            json.dumps([1, 2], indent=4),
+            self._evaluator.evaluate('json_dump($)', [1, 2])
+        )
+        self.assertEqual(
+            json.dumps({"a": "b"}, indent=4),
+            self._evaluator.evaluate('json_dump($)', {'a': 'b'})
+        )
+        self.assertEqual(
+            json.dumps('\n'.join(["Mistral", "is", "awesome"]), indent=4),
+            self._evaluator.evaluate(
+                'json_dump($)', '\n'.join(['Mistral', 'is', 'awesome'])
             )
         )
 

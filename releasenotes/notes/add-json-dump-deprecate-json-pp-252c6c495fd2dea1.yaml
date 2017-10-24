@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    A new YAQL/jinja2 expression function has been added for outputting JSON.
+    It is json_dump and accepts one argument, which is the object to be
+    serialised to JSON.
+deprecations:
+  - |
+    The YAQL/jinja2 expression function ``json_pp`` has been deprecated and
+    will be removed in the S cycle. ``json_dump`` should be used instead.
