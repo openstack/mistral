@@ -1630,10 +1630,14 @@ def delete_named_lock(lock_id, session=None):
 
 @contextlib.contextmanager
 def named_lock(name):
-    lock_id = None
+    # NOTE(rakhmerov): We can't use the well-known try-finally pattern here
+    # because if lock creation failed then it means that the SQLAlchemy
+    # session is no longer valid and we can't use to try to delete the lock.
+    # All we can do here is to let the exception bubble up so that the
+    # transaction management code could rollback the transaction.
 
-    try:
-        lock_id = create_named_lock(name)
-        yield
-    finally:
-        delete_named_lock(lock_id)
+    lock_id = create_named_lock(name)
+
+    yield
+
+    delete_named_lock(lock_id)
