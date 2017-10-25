@@ -221,13 +221,7 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
         query
     )
 
-    try:
-        return query.all()
-    except Exception as e:
-        raise exc.DBQueryEntryError(
-            "Failed when querying database, error type: %s, "
-            "error message: %s" % (e.__class__.__name__, str(e))
-        )
+    return query.all()
 
 
 def _get_collection_sorted_by_name(model, insecure=False, fields=None,
