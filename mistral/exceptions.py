@@ -98,10 +98,6 @@ class DBDuplicateEntryError(DBError):
     message = "Database object already exists"
 
 
-class DBQueryEntryError(DBError):
-    http_code = 400
-
-
 class DBEntityNotFoundError(DBError):
     http_code = 404
     message = "Object not found"
