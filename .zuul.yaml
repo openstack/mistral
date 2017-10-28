@@ -1,8 +1,8 @@
 - job:
     name: mistral-devstack-dsvm
     parent: legacy-dsvm-base
-    run: playbooks/legacy/mistral-devstack-dsvm/run
-    post-run: playbooks/legacy/mistral-devstack-dsvm/post
+    run: playbooks/legacy/mistral-devstack-dsvm/run.yaml
+    post-run: playbooks/legacy/mistral-devstack-dsvm/post.yaml
     timeout: 4200
     required-projects:
       - openstack-dev/devstack
@@ -15,8 +15,8 @@
 - job:
     name: mistral-devstack-dsvm-kombu
     parent: legacy-dsvm-base
-    run: playbooks/legacy/mistral-devstack-dsvm-kombu/run
-    post-run: playbooks/legacy/mistral-devstack-dsvm-kombu/post
+    run: playbooks/legacy/mistral-devstack-dsvm-kombu/run.yaml
+    post-run: playbooks/legacy/mistral-devstack-dsvm-kombu/post.yaml
     timeout: 4200
     required-projects:
       - openstack-dev/devstack
@@ -29,8 +29,8 @@
 - job:
     name: mistral-devstack-dsvm-non-apache
     parent: legacy-dsvm-base
-    run: playbooks/legacy/mistral-devstack-dsvm-non-apache/run
-    post-run: playbooks/legacy/mistral-devstack-dsvm-non-apache/post
+    run: playbooks/legacy/mistral-devstack-dsvm-non-apache/run.yaml
+    post-run: playbooks/legacy/mistral-devstack-dsvm-non-apache/post.yaml
     timeout: 4200
     required-projects:
       - openstack-dev/devstack
@@ -43,8 +43,8 @@
 - job:
     name: mistral-docker-buildimage
     parent: legacy-publish-openstack-artifacts
-    run: playbooks/legacy/mistral-docker-buildimage/run
-    post-run: playbooks/legacy/mistral-docker-buildimage/post
+    run: playbooks/legacy/mistral-docker-buildimage/run.yaml
+    post-run: playbooks/legacy/mistral-docker-buildimage/post.yaml
     timeout: 1800
     required-projects:
       - openstack/mistral
@@ -52,14 +52,14 @@
 - job:
     name: mistral-ha
     parent: legacy-base
-    run: playbooks/legacy/mistral-ha/run
+    run: playbooks/legacy/mistral-ha/run.yaml
     timeout: 4200
 
 - job:
     name: mistral-tox-unit-mysql
     parent: legacy-base
-    run: playbooks/legacy/mistral-tox-unit-mysql/run
-    post-run: playbooks/legacy/mistral-tox-unit-mysql/post
+    run: playbooks/legacy/mistral-tox-unit-mysql/run.yaml
+    post-run: playbooks/legacy/mistral-tox-unit-mysql/post.yaml
     timeout: 2400
     required-projects:
       - openstack/requirements
@@ -67,8 +67,8 @@
 - job:
     name: mistral-tox-unit-postgresql
     parent: legacy-base
-    run: playbooks/legacy/mistral-tox-unit-postgresql/run
-    post-run: playbooks/legacy/mistral-tox-unit-postgresql/post
+    run: playbooks/legacy/mistral-tox-unit-postgresql/run.yaml
+    post-run: playbooks/legacy/mistral-tox-unit-postgresql/post.yaml
     timeout: 2400
     required-projects:
       - openstack/requirements
@@ -76,8 +76,8 @@
 - job:
     name: rally-dsvm-mistral-task
     parent: legacy-dsvm-base
-    run: playbooks/legacy/rally-dsvm-mistral-task/run
-    post-run: playbooks/legacy/rally-dsvm-mistral-task/post
+    run: playbooks/legacy/rally-dsvm-mistral-task/run.yaml
+    post-run: playbooks/legacy/rally-dsvm-mistral-task/post.yaml
     timeout: 7800
     required-projects:
       - openstack-infra/devstack-gate
