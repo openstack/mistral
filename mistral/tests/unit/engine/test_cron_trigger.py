@@ -16,6 +16,7 @@ import datetime
 import mock
 from oslo_config import cfg
 
+from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import periodic
@@ -161,6 +162,9 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         )
 
         periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+
+        # After process_triggers context is set to None, need to reset it.
+        auth_ctx.set_ctx(self.ctx)
 
         next_time = triggers.get_next_execution_time(
             cron_trigger.pattern,

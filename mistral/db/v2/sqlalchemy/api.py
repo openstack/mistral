@@ -1129,9 +1129,13 @@ def _get_completed_root_executions_query(columns):
 
 @b.session_aware()
 def get_cron_trigger(identifier, session=None):
+    ctx = context.ctx()
+
     cron_trigger = _get_db_object_by_name_or_id(
         models.CronTrigger,
-        identifier)
+        identifier,
+        insecure=ctx.is_admin
+    )
 
     if not cron_trigger:
         raise exc.DBEntityNotFoundError(
@@ -1249,6 +1253,7 @@ def create_or_update_cron_trigger(identifier, values, session=None):
 def delete_cron_trigger(identifier, session=None):
     cron_trigger = get_cron_trigger(identifier)
 
+    m_dbutils.check_db_obj_access(cron_trigger)
     # Delete the cron trigger by ID and get the affected row count.
     table = models.CronTrigger.__table__
     result = session.execute(
