@@ -17,6 +17,7 @@
 import inspect
 import re
 
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import six
 from yaql.language import exceptions as yaql_exc
@@ -49,6 +50,24 @@ class YAQLEvaluator(Evaluator):
                 context=expression_utils.get_yaql_context(data_context)
             )
         except Exception as e:
+            # NOTE(rakhmerov): if we hit a database error then we need to
+            # re-raise the initial exception so that upper layers had a
+            # chance to handle it properly (e.g. in case of DB deadlock
+            # the operations needs to retry. Essentially, such situation
+            # indicates a problem with DB rather than with the expression
+            # syntax or values.
+            if isinstance(e, db_exc.DBError):
+                LOG.error(
+                    "Failed to evaluate YAQL expression due to a database"
+                    " error, re-raising initial exception [expression=%s,"
+                    " error=%s, data=%s]",
+                    expression,
+                    str(e),
+                    data_context
+                )
+
+                raise e
+
             raise exc.YaqlEvaluationException(
                 "Can not evaluate YAQL expression [expression=%s, error=%s"
                 ", data=%s]" % (expression, str(e), data_context)
