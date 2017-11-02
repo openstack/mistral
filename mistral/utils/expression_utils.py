@@ -265,6 +265,7 @@ def _convert_to_user_model(task_ex):
         'workflow_execution_id': task_ex.workflow_execution_id,
         'created_at': task_ex.created_at.isoformat(' '),
         'updated_at': task_ex.updated_at.isoformat(' ')
+        if task_ex.updated_at is not None else None
     }
 
 
