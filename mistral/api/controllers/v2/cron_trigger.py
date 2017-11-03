@@ -93,13 +93,15 @@ class CronTriggersController(rest.RestController):
                          wtypes.text, wtypes.text, types.uuid, types.jsontype,
                          types.jsontype, resources.SCOPE_TYPES, wtypes.text,
                          wtypes.IntegerType(minimum=1), wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text, bool)
+                         wtypes.text, wtypes.text, wtypes.text,
+                         types.uuid, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', name=None, workflow_name=None,
                 workflow_id=None, workflow_input=None, workflow_params=None,
                 scope=None, pattern=None, remaining_executions=None,
                 first_execution_time=None, next_execution_time=None,
-                created_at=None, updated_at=None, all_projects=False):
+                created_at=None, updated_at=None, project_id=None,
+                all_projects=False):
         """Return all cron triggers.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -129,6 +131,8 @@ class CronTriggersController(rest.RestController):
         :param pattern: Optional. Keep only resources with a specific pattern.
         :param remaining_executions: Optional. Keep only resources with a
                                      specific number of remaining executions.
+        :param project_id: Optional. Keep only resources with the specific
+                           project id.
         :param first_execution_time: Optional. Keep only resources with a
                                      specific time and date of first execution.
         :param next_execution_time: Optional. Keep only resources with a
@@ -156,7 +160,8 @@ class CronTriggersController(rest.RestController):
             pattern=pattern,
             remaining_executions=remaining_executions,
             first_execution_time=first_execution_time,
-            next_execution_time=next_execution_time
+            next_execution_time=next_execution_time,
+            project_id=project_id,
         )
 
         LOG.info(

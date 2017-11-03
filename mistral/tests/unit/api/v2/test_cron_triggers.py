@@ -190,6 +190,25 @@ class TestCronTriggerController(base.APITest):
 
         self.assertTrue(mock_get_triggers.call_args[1].get('insecure', False))
 
+    @mock.patch.object(db_api, 'get_cron_triggers')
+    @mock.patch('mistral.context.MistralContext.from_environ')
+    def test_get_all_filter_project(self, mock_context, mock_get_triggers):
+        admin_ctx = unit_base.get_context(admin=True)
+        mock_context.return_value = admin_ctx
+
+        resp = self.app.get(
+            '/v2/cron_triggers?all_projects=true&'
+            'project_id=192796e61c174f718d6147b129f3f2ff'
+        )
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertTrue(mock_get_triggers.call_args[1].get('insecure', False))
+        self.assertEqual(
+            {'eq': '192796e61c174f718d6147b129f3f2ff'},
+            mock_get_triggers.call_args[1].get('project_id')
+        )
+
     @mock.patch.object(db_api, "get_cron_triggers", MOCK_EMPTY)
     def test_get_all_empty(self):
         resp = self.app.get('/v2/cron_triggers')
