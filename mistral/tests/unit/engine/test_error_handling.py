@@ -12,13 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
+from mistral.utils import expression_utils
 from mistral.workflow import states
 from mistral_lib import actions as actions_base
 
@@ -741,3 +744,83 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.assertIn("UnicodeDecodeError: utf", wf_ex.state_info)
         self.assertIn("UnicodeDecodeError: utf", task_ex.state_info)
+
+    @mock.patch(
+        'mistral.utils.expression_utils.get_yaql_context',
+        mock.MagicMock(
+            side_effect=[
+                db_exc.DBDeadlock(),  # Emulating DB deadlock
+                expression_utils.get_yaql_context({})  # Successful run
+            ]
+        )
+    )
+    def test_db_error_in_yaql_expression(self):
+        # This test just checks that the workflow completes successfully
+        # even if a DB deadlock occurs during YAQL expression evaluation.
+        # The engine in this case should should just retry the transactional
+        # method.
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="Hello"
+              publish:
+                my_var: <% 1 + 1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', '', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(1, len(wf_ex.task_executions))
+
+            task_ex = wf_ex.task_executions[0]
+
+            self.assertDictEqual({'my_var': 2}, task_ex.published)
+
+    @mock.patch(
+        'mistral.utils.expression_utils.get_jinja_context',
+        mock.MagicMock(
+            side_effect=[
+                db_exc.DBDeadlock(),  # Emulating DB deadlock
+                expression_utils.get_jinja_context({})  # Successful run
+            ]
+        )
+    )
+    def test_db_error_in_jinja_expression(self):
+        # This test just checks that the workflow completes successfully
+        # even if a DB deadlock occurs during Jinja expression evaluation.
+        # The engine in this case should should just retry the transactional
+        # method.
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="Hello"
+              publish:
+                my_var: "{{ 1 + 1 }}"
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', '', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(1, len(wf_ex.task_executions))
+
+            task_ex = wf_ex.task_executions[0]
+
+            self.assertDictEqual({'my_var': 2}, task_ex.published)

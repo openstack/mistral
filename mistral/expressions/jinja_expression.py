@@ -17,6 +17,7 @@ import re
 import jinja2
 from jinja2 import parser as jinja_parse
 from jinja2.sandbox import SandboxedEnvironment
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import six
 
@@ -77,6 +78,24 @@ class JinjaEvaluator(Evaluator):
             # to access it is to try and cast it to string.
             str(result)
         except Exception as e:
+            # NOTE(rakhmerov): if we hit a database error then we need to
+            # re-raise the initial exception so that upper layers had a
+            # chance to handle it properly (e.g. in case of DB deadlock
+            # the operations needs to retry. Essentially, such situation
+            # indicates a problem with DB rather than with the expression
+            # syntax or values.
+            if isinstance(e, db_exc.DBError):
+                LOG.error(
+                    "Failed to evaluate Jinja expression due to a database"
+                    " error, re-raising initial exception [expression=%s,"
+                    " error=%s, data=%s]",
+                    expression,
+                    str(e),
+                    data_context
+                )
+
+                raise e
+
             raise exc.JinjaEvaluationException(
                 "Can not evaluate Jinja expression [expression=%s, error=%s"
                 ", data=%s]" % (expression, str(e), data_context)
