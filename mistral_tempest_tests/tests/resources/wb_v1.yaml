@@ -1,0 +1,12 @@
+Namespaces:
+  Greetings:
+    actions:
+      hello:
+        class: std.echo
+        base-parameters:
+          output: Hello!
+
+Workflow:
+  tasks:
+    hello:
+      action: Greetings.hello

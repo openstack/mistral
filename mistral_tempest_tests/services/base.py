@@ -30,7 +30,9 @@ def get_resource(path):
     main_package = 'mistral_tempest_tests'
     dir_path = __file__[0:__file__.find(main_package)]
 
-    return open(dir_path + 'mistral/tests/resources/' + path).read()
+    return open(dir_path +
+                'mistral_tempest_tests/tests/resources/' +
+                path).read()
 
 
 def find_items(items, **props):

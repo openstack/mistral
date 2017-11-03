@@ -1,0 +1,53 @@
+---
+version: '2.0'
+name: action_collection
+
+workflows:
+  keystone:
+    type: direct
+    tasks:
+      projects_list:
+        action: keystone.projects_list
+        publish:
+           result: <% task().result %>
+
+  nova:
+    type: direct
+    tasks:
+      flavors_list:
+        action: nova.flavors_list
+        publish:
+           result: <% task().result %>
+
+  glance:
+    type: direct
+    tasks:
+      images_list:
+        action: glance.images_list
+        publish:
+           result: <% task().result %>
+
+  heat:
+    type: direct
+    tasks:
+      stacks_list:
+        action: heat.stacks_list
+        publish:
+           result: <% task().result %>
+
+  neutron:
+    type: direct
+    tasks:
+      list_subnets:
+        action: neutron.list_subnets
+        publish:
+           result: <% task().result %>
+
+  cinder:
+    type: direct
+    tasks:
+      volumes_list:
+        action: cinder.volumes_list
+        publish:
+           result: <% task().result %>
+
