@@ -166,6 +166,39 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             self.engine.stop_workflow(wf_ex.id, states.ERROR).state
         )
 
+    def test_task_not_updated(self):
+        wf_text = """
+        version: 2.0
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo
+              input:
+                output: <% task().result.content %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', '', {})
+
+        self.await_workflow_success(wf_ex.id)
+
+        self.assertEqual(
+            states.SUCCESS,
+            self.engine.resume_workflow(wf_ex.id).state
+        )
+
+        self.assertRaises(
+            exc.WorkflowException,
+            self.engine.pause_workflow, wf_ex.id
+        )
+
+        self.assertEqual(
+            states.SUCCESS,
+            self.engine.stop_workflow(wf_ex.id, states.ERROR).state
+        )
+
     def test_wrong_task_input(self):
         wf_text = """
         version: '2.0'
