@@ -726,11 +726,6 @@ def load_action_execution(id, session=None):
 
 
 @b.session_aware()
-def ensure_action_execution_exists(id, session=None):
-    get_action_execution(id)
-
-
-@b.session_aware()
 def get_action_executions(session=None, **kwargs):
     return _get_action_executions(**kwargs)
 
@@ -807,11 +802,6 @@ def get_workflow_execution(id, session=None):
 @b.session_aware()
 def load_workflow_execution(id, session=None):
     return _get_db_object_by_id(models.WorkflowExecution, id)
-
-
-@b.session_aware()
-def ensure_workflow_execution_exists(id, session=None):
-    get_workflow_execution(id)
 
 
 @b.session_aware()
@@ -1576,11 +1566,6 @@ def _get_event_trigger(id, insecure=False):
         return b.model_query(models.EventTrigger).filter_by(id=id).first()
     else:
         return _get_db_object_by_id(models.EventTrigger, id)
-
-
-@b.session_aware()
-def ensure_event_trigger_exists(id, session=None):
-    get_event_trigger(id)
 
 
 # Locks.

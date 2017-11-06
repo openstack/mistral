@@ -165,7 +165,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     @mock.patch.object(
@@ -189,7 +189,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
@@ -217,7 +217,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
@@ -250,7 +250,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'resume_workflow')
@@ -277,7 +277,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     def test_put_invalid_state(self):
@@ -304,7 +304,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     @mock.patch.object(rpc_clients.EngineClient, 'stop_workflow')
@@ -329,7 +329,7 @@ class TestExecutionsController(base.APITest):
         self.assertDictEqual(expected_exec, resp.json)
         mock_stop_wf.assert_called_once_with('123', 'ERROR', None)
 
-    @mock.patch('mistral.db.v2.api.ensure_workflow_execution_exists')
+    @mock.patch('mistral.db.v2.api.get_workflow_execution')
     @mock.patch(
         'mistral.db.v2.api.update_workflow_execution',
         return_value=WF_EX
@@ -374,7 +374,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     def test_put_empty(self):
@@ -388,7 +388,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     def test_put_state_and_description(self):
@@ -404,11 +404,6 @@ class TestExecutionsController(base.APITest):
             resp.json['faultstring']
         )
 
-    @mock.patch.object(
-        db_api,
-        'ensure_workflow_execution_exists',
-        mock.MagicMock(return_value=None)
-    )
     @mock.patch.object(
         sql_db_api,
         'get_workflow_execution',
@@ -439,7 +434,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(
         db_api,
-        'ensure_workflow_execution_exists',
+        'get_workflow_execution',
         mock.MagicMock(return_value=None)
     )
     def test_put_env_wrong_state(self):
