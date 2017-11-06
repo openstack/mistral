@@ -260,20 +260,6 @@ def _get_db_object_by_name(model, name, filter_=None, order_by=None):
     return query.filter(final_filter).first()
 
 
-def _get_wf_object_by_name_and_namespace(model, name, namespace=None):
-
-    query = _secure_query(model)
-    filter_ = model.name == name
-
-    if namespace is not None:
-        filter_ = sa.and_(filter_, model.namespace.in_([namespace, '']))
-
-        # Give priority to objects not in the default namespace.
-        query = query.order_by(model.namespace.desc())
-
-    return query.filter(filter_).first()
-
-
 def _get_db_object_by_id(model, id, insecure=False):
     query = b.model_query(model) if insecure else _secure_query(model)
 
