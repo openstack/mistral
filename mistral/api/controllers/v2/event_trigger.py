@@ -41,7 +41,9 @@ class EventTriggersController(rest.RestController):
 
         LOG.info('Fetch event trigger [id=%s]', id)
 
-        db_model = db_api.get_event_trigger(id)
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(db_api.get_event_trigger, id)
 
         return resources.EventTrigger.from_db_model(db_model)
 

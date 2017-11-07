@@ -14,7 +14,9 @@
 
 import copy
 import json
+
 import mock
+import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -70,6 +72,19 @@ MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryError())
 class TestCronTriggerController(base.APITest):
     @mock.patch.object(db_api, "get_cron_trigger", MOCK_TRIGGER)
     def test_get(self):
+        resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(TRIGGER, resp.json)
+
+    @mock.patch.object(db_api, 'get_cron_trigger')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            TRIGGER_DB  # Successful run
+        ]
+
         resp = self.app.get('/v2/cron_triggers/my_cron_trigger')
 
         self.assertEqual(200, resp.status_int)
@@ -144,6 +159,21 @@ class TestCronTriggerController(base.APITest):
 
     @mock.patch.object(db_api, "get_cron_triggers", MOCK_TRIGGERS)
     def test_get_all(self):
+        resp = self.app.get('/v2/cron_triggers')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['cron_triggers']))
+        self.assertDictEqual(TRIGGER, resp.json['cron_triggers'][0])
+
+    @mock.patch.object(db_api, 'get_cron_triggers')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [TRIGGER_DB]  # Successful run
+        ]
+
         resp = self.app.get('/v2/cron_triggers')
 
         self.assertEqual(200, resp.status_int)

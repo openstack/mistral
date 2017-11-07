@@ -87,7 +87,10 @@ class WorkflowsController(rest.RestController, hooks.HookController):
 
         LOG.info("Fetch workflow [identifier=%s]", identifier)
 
-        db_model = db_api.get_workflow_definition(
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(
+            db_api.get_workflow_definition,
             identifier,
             namespace=namespace
         )

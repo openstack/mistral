@@ -17,6 +17,8 @@
 
 from oslo_log import log as logging
 from pecan import rest
+import sqlalchemy as sa
+import tenacity
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -55,6 +57,24 @@ def _get_execution_resource(wf_ex):
     return resources.Execution.from_db_model(wf_ex)
 
 
+# Use retries to prevent possible failures.
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(sa.exc.OperationalError),
+    stop=tenacity.stop_after_attempt(10),
+    wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
+)
+def _get_workflow_execution(id):
+    with db_api.transaction():
+        wf_ex = db_api.get_workflow_execution(id)
+
+        # If a single object is requested we need to explicitly load
+        # 'output' attribute. We don't do this for collections to reduce
+        # amount of DB queries and network traffic.
+        hasattr(wf_ex, 'output')
+
+        return wf_ex
+
+
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
 
@@ -72,13 +92,7 @@ class ExecutionsController(rest.RestController):
 
         LOG.info("Fetch execution [id=%s]", id)
 
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(id)
-
-            # If a single object is requested we need to explicitly load
-            # 'output' attribute. We don't do this for collections to reduce
-            # amount of DB queries and network traffic.
-            hasattr(wf_ex, 'output')
+        wf_ex = _get_workflow_execution(id)
 
         return resources.Execution.from_db_model(wf_ex)
 

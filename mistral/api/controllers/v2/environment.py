@@ -110,7 +110,9 @@ class EnvironmentController(rest.RestController):
 
         LOG.info("Fetch environment [name=%s]", name)
 
-        db_model = db_api.get_environment(name)
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(db_api.get_environment, name)
 
         return resources.Environment.from_db_model(db_model)
 

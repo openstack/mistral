@@ -41,7 +41,9 @@ class CronTriggersController(rest.RestController):
 
         LOG.info('Fetch cron trigger [name=%s]', name)
 
-        db_model = db_api.get_cron_trigger(name)
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(db_api.get_cron_trigger, name)
 
         return resources.CronTrigger.from_db_model(db_model)
 

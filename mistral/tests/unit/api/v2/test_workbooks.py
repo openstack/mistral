@@ -15,7 +15,9 @@
 
 import copy
 import datetime
+
 import mock
+import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -109,6 +111,19 @@ class TestWorkbooksController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WORKBOOK, resp.json)
 
+    @mock.patch.object(db_api, 'get_workbook')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            WORKBOOK_DB  # Successful run
+        ]
+
+        resp = self.app.get('/v2/workbooks/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(WORKBOOK, resp.json)
+
     @mock.patch.object(db_api, "get_workbook", MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/workbooks/123', expect_errors=True)
@@ -195,6 +210,21 @@ class TestWorkbooksController(base.APITest):
 
     @mock.patch.object(db_api, "get_workbooks", MOCK_WORKBOOKS)
     def test_get_all(self):
+        resp = self.app.get('/v2/workbooks')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['workbooks']))
+        self.assertDictEqual(WORKBOOK, resp.json['workbooks'][0])
+
+    @mock.patch.object(db_api, 'get_workbooks')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [WORKBOOK_DB]  # Successful run
+        ]
+
         resp = self.app.get('/v2/workbooks')
 
         self.assertEqual(200, resp.status_int)

@@ -57,7 +57,9 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         LOG.info("Fetch action [identifier=%s]", identifier)
 
-        db_model = db_api.get_action_definition(identifier)
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(db_api.get_action_definition, identifier)
 
         return resources.Action.from_db_model(db_model)
 
