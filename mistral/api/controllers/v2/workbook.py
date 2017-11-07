@@ -53,7 +53,9 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         LOG.info("Fetch workbook [name=%s]", name)
 
-        db_model = db_api.get_workbook(name)
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(db_api.get_workbook, name)
 
         return resources.Workbook.from_db_model(db_model)
 

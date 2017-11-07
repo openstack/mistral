@@ -66,7 +66,10 @@ class MembersController(rest.RestController):
             member_id
         )
 
-        member_db = db_api.get_resource_member(
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        member_db = r.call(
+            db_api.get_resource_member,
             self.resource_id,
             self.type,
             member_id

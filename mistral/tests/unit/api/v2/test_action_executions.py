@@ -18,9 +18,9 @@ import datetime
 import json
 
 import mock
-
 from oslo_config import cfg
 import oslo_messaging
+import sqlalchemy as sa
 
 from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
@@ -224,6 +224,19 @@ class TestActionExecutionsController(base.APITest):
 
     @mock.patch.object(db_api, 'get_action_execution', MOCK_ACTION)
     def test_get(self):
+        resp = self.app.get('/v2/action_executions/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(ACTION_EX, resp.json)
+
+    @mock.patch.object(db_api, 'get_action_execution')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            ACTION_EX_DB  # Successful run
+        ]
+
         resp = self.app.get('/v2/action_executions/123')
 
         self.assertEqual(200, resp.status_int)
@@ -495,6 +508,21 @@ class TestActionExecutionsController(base.APITest):
 
     @mock.patch.object(db_api, 'get_action_executions', MOCK_ACTIONS)
     def test_get_all(self):
+        resp = self.app.get('/v2/action_executions')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['action_executions']))
+        self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
+
+    @mock.patch.object(db_api, 'get_action_executions')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [ACTION_EX_DB]  # Successful run
+        ]
+
         resp = self.app.get('/v2/action_executions')
 
         self.assertEqual(200, resp.status_int)

@@ -41,7 +41,10 @@ class CronTriggersController(rest.RestController):
 
         LOG.info('Fetch cron trigger [identifier=%s]', identifier)
 
-        db_model = db_api.get_cron_trigger(identifier)
+        # Use retries to prevent possible failures.
+        r = rest_utils.create_db_retry_object()
+        db_model = r.call(db_api.get_cron_trigger, identifier)
+
         return resources.CronTrigger.from_db_model(db_model)
 
     @rest_utils.wrap_wsme_controller_exception

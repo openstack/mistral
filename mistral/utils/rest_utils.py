@@ -19,7 +19,8 @@ import json
 from oslo_log import log as logging
 import pecan
 import six
-
+import sqlalchemy as sa
+import tenacity
 import webob
 from wsme import exc as wsme_exc
 
@@ -174,28 +175,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     if marker:
         marker_obj = get_function(marker)
 
-    rest_resources = []
-
-    # If only certain fields are requested then we ignore "resource_function"
-    # parameter because it doesn't make sense anymore.
-    if fields:
-        db_list = get_all_function(
-            limit=limit,
-            marker=marker_obj,
-            sort_keys=sort_keys,
-            sort_dirs=sort_dirs,
-            fields=fields,
-            insecure=insecure,
-            **filters
-        )
-
-        for obj_values in db_list:
-            # Note: in case if only certain fields have been requested
-            # "db_list" contains tuples with values of db objects.
-            rest_resources.append(
-                cls.from_tuples(zip(fields, obj_values))
-            )
-    else:
+    def _get_all_function():
         with db_api.transaction():
             db_models = get_all_function(
                 limit=limit,
@@ -214,6 +194,34 @@ def get_all(list_cls, cls, get_all_function, get_function,
 
                 rest_resources.append(rest_resource)
 
+    rest_resources = []
+
+    r = create_db_retry_object()
+
+    # If only certain fields are requested then we ignore "resource_function"
+    # parameter because it doesn't make sense anymore.
+    if fields:
+        # Use retries to prevent possible failures.
+        db_list = r.call(
+            get_all_function,
+            limit=limit,
+            marker=marker_obj,
+            sort_keys=sort_keys,
+            sort_dirs=sort_dirs,
+            fields=fields,
+            insecure=insecure,
+            **filters
+        )
+
+        for obj_values in db_list:
+            # Note: in case if only certain fields have been requested
+            # "db_list" contains tuples with values of db objects.
+            rest_resources.append(
+                cls.from_tuples(zip(fields, obj_values))
+            )
+    else:
+        r.call(_get_all_function)
+
     return list_cls.convert_with_links(
         rest_resources,
         limit,
@@ -222,4 +230,12 @@ def get_all(list_cls, cls, get_all_function, get_function,
         sort_dirs=','.join(sort_dirs),
         fields=','.join(fields) if fields else '',
         **filters
+    )
+
+
+def create_db_retry_object():
+    return tenacity.Retrying(
+        retry=tenacity.retry_if_exception_type(sa.exc.OperationalError),
+        stop=tenacity.stop_after_attempt(10),
+        wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
     )

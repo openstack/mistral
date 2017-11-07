@@ -23,6 +23,7 @@ import mock
 from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import uuidutils
+import sqlalchemy as sa
 from webtest import app as webtest_app
 
 from mistral.api.controllers.v2 import execution
@@ -138,6 +139,19 @@ MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
 class TestExecutionsController(base.APITest):
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     def test_get(self):
+        resp = self.app.get('/v2/executions/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
+
+    @mock.patch.object(db_api, 'get_workflow_execution')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            WF_EX  # Successful run
+        ]
+
         resp = self.app.get('/v2/executions/123')
 
         self.assertEqual(200, resp.status_int)
@@ -522,6 +536,21 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
     def test_get_all(self):
+        resp = self.app.get('/v2/executions')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['executions']))
+        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json['executions'][0])
+
+    @mock.patch.object(db_api, 'get_workflow_executions')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [WF_EX]  # Successful run
+        ]
+
         resp = self.app.get('/v2/executions')
 
         self.assertEqual(200, resp.status_int)

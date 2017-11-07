@@ -13,7 +13,9 @@
 #    limitations under the License.
 
 import copy
+
 import mock
+import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -128,6 +130,19 @@ class TestActionsController(base.APITest):
     @mock.patch.object(
         db_api, "get_action_definition", MOCK_ACTION)
     def test_get(self):
+        resp = self.app.get('/v2/actions/my_action')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(ACTION, resp.json)
+
+    @mock.patch.object(db_api, 'get_action_definition')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            ACTION_DB  # Successful run
+        ]
+
         resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(200, resp.status_int)
@@ -316,6 +331,21 @@ class TestActionsController(base.APITest):
     @mock.patch.object(
         db_api, "get_action_definitions", MOCK_ACTIONS)
     def test_get_all(self):
+        resp = self.app.get('/v2/actions')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['actions']))
+        self.assertDictEqual(ACTION, resp.json['actions'][0])
+
+    @mock.patch.object(db_api, 'get_action_definitions')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [ACTION_DB]  # Successful run
+        ]
+
         resp = self.app.get('/v2/actions')
 
         self.assertEqual(200, resp.status_int)

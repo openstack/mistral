@@ -18,6 +18,7 @@ import json
 
 import mock
 import six
+import sqlalchemy as sa
 
 from mistral.api.controllers.v2 import resources
 from mistral.db.v2 import api as db_api
@@ -160,6 +161,21 @@ class TestEnvironmentController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(1, len(resp.json['environments']))
 
+    @mock.patch.object(db_api, 'get_environments')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [ENVIRONMENT_DB]  # Successful run
+        ]
+
+        resp = self.app.get('/v2/environments')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['environments']))
+        self._assert_dict_equal(ENVIRONMENT, resp.json['environments'][0])
+
     def test_get_all_empty(self):
         resp = self.app.get('/v2/environments')
 
@@ -168,6 +184,19 @@ class TestEnvironmentController(base.APITest):
 
     @mock.patch.object(db_api, 'get_environment', MOCK_ENVIRONMENT)
     def test_get(self):
+        resp = self.app.get('/v2/environments/123')
+
+        self.assertEqual(200, resp.status_int)
+        self._assert_dict_equal(ENVIRONMENT, resp.json)
+
+    @mock.patch.object(db_api, 'get_environment')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            ENVIRONMENT_DB  # Successful run
+        ]
+
         resp = self.app.get('/v2/environments/123')
 
         self.assertEqual(200, resp.status_int)

@@ -16,7 +16,9 @@
 import copy
 import datetime
 import json
+
 import mock
+import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -159,6 +161,19 @@ class TestTasksController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(TASK, resp.json)
 
+    @mock.patch.object(db_api, 'get_task_execution')
+    def test_get_operational_error(self, mocked_get):
+        mocked_get.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            TASK_EX  # Successful run
+        ]
+
+        resp = self.app.get('/v2/tasks/123')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(TASK, resp.json)
+
     @mock.patch.object(db_api, 'get_task_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
         resp = self.app.get('/v2/tasks/123', expect_errors=True)
@@ -167,6 +182,21 @@ class TestTasksController(base.APITest):
 
     @mock.patch.object(db_api, 'get_task_executions', MOCK_TASKS)
     def test_get_all(self):
+        resp = self.app.get('/v2/tasks')
+
+        self.assertEqual(200, resp.status_int)
+
+        self.assertEqual(1, len(resp.json['tasks']))
+        self.assertDictEqual(TASK_WITHOUT_RESULT, resp.json['tasks'][0])
+
+    @mock.patch.object(db_api, 'get_task_executions')
+    def test_get_all_operational_error(self, mocked_get_all):
+        mocked_get_all.side_effect = [
+            # Emulating DB OperationalError
+            sa.exc.OperationalError('Mock', 'mock', 'mock'),
+            [TASK_EX]  # Successful run
+        ]
+
         resp = self.app.get('/v2/tasks')
 
         self.assertEqual(200, resp.status_int)
