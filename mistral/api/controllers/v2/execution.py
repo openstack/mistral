@@ -113,7 +113,8 @@ class ExecutionsController(rest.RestController):
         LOG.info('Update execution [id=%s, execution=%s]', id, wf_ex)
 
         with db_api.transaction():
-            db_api.ensure_workflow_execution_exists(id)
+            # ensure that workflow execution exists
+            db_api.get_workflow_execution(id)
 
             delta = {}
 

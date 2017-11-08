@@ -220,10 +220,6 @@ def get_action_executions(**kwargs):
     return IMPL.get_action_executions(**kwargs)
 
 
-def ensure_action_execution_exists(id):
-    return IMPL.ensure_action_execution_exists(id)
-
-
 def create_action_execution(values):
     return IMPL.create_action_execution(values)
 
@@ -264,10 +260,6 @@ def get_workflow_executions(limit=None, marker=None, sort_keys=['created_at'],
         sort_dirs=sort_dirs,
         **kwargs
     )
-
-
-def ensure_workflow_execution_exists(id):
-    return IMPL.ensure_workflow_execution_exists(id)
 
 
 def create_workflow_execution(values):
@@ -548,10 +540,6 @@ def delete_event_trigger(id):
 
 def delete_event_triggers(**kwargs):
     return IMPL.delete_event_triggers(**kwargs)
-
-
-def ensure_event_trigger_exists(id):
-    return IMPL.ensure_event_trigger_exists(id)
 
 
 # Locks.

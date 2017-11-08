@@ -105,7 +105,8 @@ class EventTriggersController(rest.RestController):
         LOG.info('Update event trigger: [id=%s, values=%s]', id, values)
 
         with db_api.transaction():
-            db_api.ensure_event_trigger_exists(id)
+            # ensure that event trigger exists
+            db_api.get_event_trigger(id)
 
             db_model = triggers.update_event_trigger(id, values)
 

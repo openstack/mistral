@@ -170,7 +170,7 @@ class TestEventTriggerController(base.APITest):
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, 'ensure_event_trigger_exists', MOCK_NONE)
+    @mock.patch.object(db_api, 'get_event_trigger', MOCK_NONE)
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
     @mock.patch('mistral.db.v2.api.update_event_trigger')
     def test_put(self, mock_update, mock_rpc_client):
