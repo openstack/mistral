@@ -845,6 +845,35 @@ def delete_workflow_executions(session=None, **kwargs):
     return _delete_all(models.WorkflowExecution, **kwargs)
 
 
+@b.session_aware()
+def update_workflow_execution_state(id, cur_state, state, session=None):
+
+    wf_ex = None
+
+    # Use WHERE clause to exclude possible conflicts if the state has
+    # already been changed.
+    try:
+        specimen = models.WorkflowExecution(
+            id=id,
+            state=cur_state
+        )
+
+        wf_ex = b.model_query(
+            models.WorkflowExecution).update_on_match(
+            specimen=specimen,
+            surrogate_key='id',
+            values={'state': state}
+        )
+    except oslo_sqlalchemy.update_match.NoRowsMatched:
+        LOG.info(
+            "Can't change workflow execution state from %s to %s, "
+            "because it has already been changed. [execution_id=%s]",
+            cur_state, state, id
+        )
+
+    return wf_ex
+
+
 # Tasks executions.
 
 @b.session_aware()

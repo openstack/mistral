@@ -282,6 +282,10 @@ def delete_workflow_executions(**kwargs):
     IMPL.delete_workflow_executions(**kwargs)
 
 
+def update_workflow_execution_state(**kwargs):
+    return IMPL.update_workflow_execution_state(**kwargs)
+
+
 # Tasks executions.
 
 def get_task_execution(id):

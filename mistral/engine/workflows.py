@@ -296,9 +296,18 @@ class Workflow(object):
         cur_state = self.wf_ex.state
 
         if states.is_valid_transition(cur_state, state):
-            self.wf_ex.state = state
-            self.wf_ex.state_info = state_info
+            wf_ex = db_api.update_workflow_execution_state(
+                id=self.wf_ex.id,
+                cur_state=cur_state,
+                state=state
+            )
 
+            if wf_ex is None:
+                # Do nothing because the state was updated previously.
+                return
+
+            self.wf_ex = wf_ex
+            self.wf_ex.state_info = state_info
             wf_trace.info(
                 self.wf_ex,
                 "Workflow '%s' [%s -> %s, msg=%s]"
