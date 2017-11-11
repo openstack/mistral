@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from functools import partial
+import warnings
 
 from oslo_serialization import jsonutils
 from stevedore import extension
@@ -116,10 +117,19 @@ def execution_(context):
 
 
 def json_pp_(context, data=None):
+    warnings.warn(
+        "json_pp was deprecated in Queens and will be removed in the S cycle. "
+        "The json_dump expression function can be used for outputting JSON",
+        DeprecationWarning
+    )
     return jsonutils.dumps(
         data or context,
         indent=4
     ).replace("\\n", "\n").replace(" \n", "\n")
+
+
+def json_dump_(context, data):
+    return jsonutils.dumps(data, indent=4)
 
 
 def yaml_dump_(context, data):
