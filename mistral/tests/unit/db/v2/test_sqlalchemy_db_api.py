@@ -145,8 +145,8 @@ class WorkbookTest(SQLAlchemyTest):
         fetched = db_api.get_workbooks()
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_workbooks_by_equal_value(self):
         db_api.create_workbook(WORKBOOKS[0])
@@ -203,8 +203,8 @@ class WorkbookTest(SQLAlchemyTest):
         fetched = db_api.get_workbooks(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_workbooks_by_less_than_value(self):
         created0 = db_api.create_workbook(WORKBOOKS[0])
@@ -232,8 +232,8 @@ class WorkbookTest(SQLAlchemyTest):
         fetched = db_api.get_workbooks(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_workbooks_by_values_in_list(self):
         created0 = db_api.create_workbook(WORKBOOKS[0])
@@ -489,8 +489,8 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_workflow_definitions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_workflow_definition_by_less_than_value(self):
         created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
@@ -518,8 +518,8 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_workflow_definitions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_workflow_definition_by_values_in_list(self):
         created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
@@ -782,8 +782,8 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_workflow_definitions()
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_delete_workflow_definition(self):
         created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
@@ -996,8 +996,8 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_action_definitions_by_greater_than_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1028,9 +1028,9 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(3, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
-        self.assertEqual(created2, fetched[2])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
+        self._assert_single_item(fetched, name=created2['name'])
 
     def test_filter_action_definitions_by_less_than_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1045,8 +1045,8 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_action_definitions_by_less_than_equal_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1061,9 +1061,9 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(3, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
-        self.assertEqual(created2, fetched[2])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
+        self._assert_single_item(fetched, name=created2['name'])
 
     def test_filter_action_definitions_by_values_in_list(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1079,8 +1079,8 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_action_definitions_by_values_notin_list(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1095,7 +1095,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(1, len(fetched))
-        self.assertEqual(created2, fetched[0])
+        self._assert_single_item(fetched, name=created2['name'])
 
     def test_filter_action_definitions_by_multiple_columns(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1204,8 +1204,8 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(is_system=True)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_delete_action_definition_with_name(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
@@ -1606,8 +1606,8 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             fetched = db_api.get_workflow_executions(**_filter)
 
             self.assertEqual(2, len(fetched))
-            self.assertEqual(created0, fetched[0])
-            self.assertEqual(created1, fetched[1])
+            self._assert_single_item(fetched, state=created0['state'])
+            self._assert_single_item(fetched, state=created1['state'])
 
     def test_filter_workflow_execution_by_less_than_value(self):
         with db_api.transaction():
@@ -1637,8 +1637,8 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             fetched = db_api.get_workflow_executions(**_filter)
 
             self.assertEqual(2, len(fetched))
-            self.assertEqual(created0, fetched[0])
-            self.assertEqual(created1, fetched[1])
+            self._assert_single_item(fetched, state=created0['state'])
+            self._assert_single_item(fetched, state=created1['state'])
 
     def test_filter_workflow_execution_by_values_in_list(self):
         with db_api.transaction():
@@ -1966,8 +1966,8 @@ class TaskExecutionTest(SQLAlchemyTest):
         )
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_task_execution_by_equal_value(self):
         created, _ = self._create_task_executions()
@@ -2020,8 +2020,8 @@ class TaskExecutionTest(SQLAlchemyTest):
         fetched = db_api.get_task_executions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_task_execution_by_less_than_value(self):
         created0, created1 = self._create_task_executions()
@@ -2047,8 +2047,8 @@ class TaskExecutionTest(SQLAlchemyTest):
         fetched = db_api.get_task_executions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_filter_task_execution_by_values_in_list(self):
         created, _ = self._create_task_executions()
@@ -2329,8 +2329,8 @@ class CronTriggerTest(SQLAlchemyTest):
         fetched = db_api.get_cron_triggers(pattern='* * * * *')
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_get_cron_trigger(self):
         cron_trigger = db_api.create_cron_trigger(CRON_TRIGGERS[0])
@@ -2531,8 +2531,8 @@ class EnvironmentTest(SQLAlchemyTest):
         fetched = db_api.get_environments()
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created0, fetched[0])
-        self.assertEqual(created1, fetched[1])
+        self._assert_single_item(fetched, name=created0['name'])
+        self._assert_single_item(fetched, name=created1['name'])
 
     def test_delete_environment(self):
         created = db_api.create_environment(ENVIRONMENTS[0])

@@ -174,7 +174,7 @@ def load_action_definition(name):
     return IMPL.load_action_definition(name)
 
 
-def get_action_definitions(limit=None, marker=None, sort_keys=['name'],
+def get_action_definitions(limit=None, marker=None, sort_keys=None,
                            sort_dirs=None, **kwargs):
     return IMPL.get_action_definitions(
         limit=limit,
@@ -251,7 +251,7 @@ def load_workflow_execution(name):
     return IMPL.load_workflow_execution(name)
 
 
-def get_workflow_executions(limit=None, marker=None, sort_keys=['created_at'],
+def get_workflow_executions(limit=None, marker=None, sort_keys=None,
                             sort_dirs=None, **kwargs):
     return IMPL.get_workflow_executions(
         limit=limit,
@@ -297,7 +297,7 @@ def load_task_execution(id):
     return IMPL.load_task_execution(id)
 
 
-def get_task_executions(limit=None, marker=None, sort_keys=['created_at'],
+def get_task_executions(limit=None, marker=None, sort_keys=None,
                         sort_dirs=None, **kwargs):
     return IMPL.get_task_executions(
         limit=limit,
@@ -443,7 +443,7 @@ def load_environment(name):
     return IMPL.load_environment(name)
 
 
-def get_environments(limit=None, marker=None, sort_keys=['name'],
+def get_environments(limit=None, marker=None, sort_keys=None,
                      sort_dirs=None, **kwargs):
 
     return IMPL.get_environments(
