@@ -125,29 +125,43 @@ class Task(object):
         :param state: New task state.
         :param state_info: New state information (i.e. error message).
         :param processed: New "processed" flag value.
+        :return True if the state was changed as a result of this call,
+            False otherwise.
         """
 
         assert self.task_ex
 
-        if (self.task_ex.state != state or
-                self.task_ex.state_info != state_info):
+        cur_state = self.task_ex.state
+
+        if cur_state != state or self.task_ex.state_info != state_info:
+            task_ex = db_api.update_task_execution_state(
+                id=self.task_ex.id,
+                cur_state=cur_state,
+                state=state
+            )
+
+            if task_ex is None:
+                # Do nothing because the update query did not change the DB.
+                return False
+
+            self.task_ex = task_ex
+            self.task_ex.state_info = state_info
+            self.state_changed = True
+
+            if processed is not None:
+                self.task_ex.processed = processed
+
             wf_trace.info(
                 self.task_ex.workflow_execution,
                 "Task '%s' (%s) [%s -> %s, msg=%s]" %
                 (self.task_ex.name,
                  self.task_ex.id,
-                 self.task_ex.state,
+                 cur_state,
                  state,
                  state_info)
             )
 
-            self.state_changed = True
-
-        self.task_ex.state = state
-        self.task_ex.state_info = state_info
-
-        if processed is not None:
-            self.task_ex.processed = processed
+        return True
 
     @profiler.trace('task-complete')
     def complete(self, state, state_info=None):
@@ -164,10 +178,15 @@ class Task(object):
         assert self.task_ex
 
         # Ignore if task already completed.
-        if states.is_completed(self.task_ex.state):
+        if self.is_completed():
             return
 
-        self.set_state(state, state_info)
+        # If we were unable to change the task state it means that it was
+        # already changed by a concurrent process. In this case we need to
+        # skip all regular completion logic like scheduling new tasks,
+        # running engine commands and publishing.
+        if not self.set_state(state, state_info):
+            return
 
         data_flow.publish_variables(self.task_ex, self.task_spec)
 

@@ -348,6 +348,10 @@ def delete_task_executions(**kwargs):
     return IMPL.delete_task_executions(**kwargs)
 
 
+def update_task_execution_state(**kwargs):
+    return IMPL.update_task_execution_state(**kwargs)
+
+
 # Delayed calls.
 
 def get_delayed_calls_to_start(time):

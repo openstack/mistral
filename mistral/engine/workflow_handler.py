@@ -13,7 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import timeutils
 from osprofiler import profiler
 import traceback as tb
 
@@ -27,6 +29,7 @@ from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
+CONF = cfg.CONF
 
 _CHECK_AND_COMPLETE_PATH = (
     'mistral.engine.workflow_handler._check_and_complete'
@@ -96,7 +99,11 @@ def _check_and_complete(wf_ex_id):
 
         wf = workflows.Workflow(wf_ex=wf_ex)
 
+        incomplete_tasks_count = 0
+
         try:
+            check_and_fix_integrity(wf_ex)
+
             incomplete_tasks_count = wf.check_and_complete()
         except exc.MistralException as e:
             msg = (
@@ -109,20 +116,76 @@ def _check_and_complete(wf_ex_id):
             force_fail_workflow(wf.wf_ex, msg)
 
             return
+        finally:
+            if states.is_completed(wf_ex.state):
+                return
 
-        if not states.is_completed(wf_ex.state):
             # Let's assume that a task takes 0.01 sec in average to complete
             # and based on this assumption calculate a time of the next check.
             # The estimation is very rough but this delay will be decreasing
             # as tasks will be completing which will give a decent
             # approximation.
             # For example, if a workflow has 100 incomplete tasks then the
-            # next check call will happen in 10 seconds. For 500 tasks it will
-            # be 50 seconds. The larger the workflow is, the more beneficial
+            # next check call will happen in 1 second. For 500 tasks it will
+            # be 5 seconds. The larger the workflow is, the more beneficial
             # this mechanism will be.
-            delay = int(incomplete_tasks_count * 0.01)
+            delay = (
+                int(incomplete_tasks_count * 0.01) if incomplete_tasks_count
+                else 4
+            )
 
             _schedule_check_and_complete(wf_ex, delay)
+
+
+@profiler.trace('workflow-handler-check-and-fix-integrity')
+def check_and_fix_integrity(wf_ex):
+    check_after_seconds = CONF.engine.execution_integrity_check_delay
+
+    if check_after_seconds < 0:
+        # Never check integrity if it's a negative value.
+        return
+
+    # To break cyclic dependency.
+    from mistral.engine import task_handler
+
+    running_task_execs = db_api.get_task_executions(
+        workflow_execution_id=wf_ex.id,
+        state=states.RUNNING
+    )
+
+    for t_ex in running_task_execs:
+        # The idea is that we take the latest known timestamp of the task
+        # execution and consider it eligible for checking and fixing only
+        # if some minimum period of time elapsed since the last update.
+        timestamp = t_ex.updated_at or t_ex.created_at
+
+        delta = timeutils.delta_seconds(timestamp, timeutils.utcnow())
+
+        if delta < check_after_seconds:
+            continue
+
+        child_executions = t_ex.executions
+
+        if not child_executions:
+            continue
+
+        all_finished = all(
+            [states.is_completed(c_ex.state) for c_ex in child_executions]
+        )
+
+        if all_finished:
+            # We found a task execution in RUNNING state for which all
+            # child executions are finished. We need to call
+            # "schedule_on_action_complete" on the task handler for any of
+            # the child executions so that the task state is calculated and
+            # updated properly.
+            LOG.warning(
+                "Found a task execution that is likely stuck in RUNNING state"
+                " because all child executions are finished,"
+                " will try to recover [task_execution=%s]", t_ex.id
+            )
+
+            task_handler.schedule_on_action_complete(child_executions[-1])
 
 
 def pause_workflow(wf_ex, msg=None):

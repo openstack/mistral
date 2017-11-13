@@ -308,6 +308,7 @@ class Workflow(object):
 
             self.wf_ex = wf_ex
             self.wf_ex.state_info = state_info
+
             wf_trace.info(
                 self.wf_ex,
                 "Workflow '%s' [%s -> %s, msg=%s]"
