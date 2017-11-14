@@ -246,14 +246,6 @@ def _get_db_object_by_id(model, id, insecure=False):
     return query.filter_by(id=id).first()
 
 
-def _get_db_object_by_name_or_id(model, identifier, insecure=False):
-    return _get_db_object_by_name_and_namespace_or_id(
-        model,
-        identifier,
-        insecure=insecure
-    )
-
-
 def _get_db_object_by_name_and_namespace_or_id(model, identifier,
                                                namespace=None, insecure=False):
 
@@ -599,7 +591,7 @@ def get_action_definition_by_id(id, session=None):
 
 @b.session_aware()
 def get_action_definition(identifier, session=None):
-    a_def = _get_db_object_by_name_or_id(
+    a_def = _get_db_object_by_name_and_namespace_or_id(
         models.ActionDefinition,
         identifier
     )
@@ -1105,7 +1097,7 @@ def _get_completed_root_executions_query(columns):
 def get_cron_trigger(identifier, session=None):
     ctx = context.ctx()
 
-    cron_trigger = _get_db_object_by_name_or_id(
+    cron_trigger = _get_db_object_by_name_and_namespace_or_id(
         models.CronTrigger,
         identifier,
         insecure=ctx.is_admin
@@ -1134,7 +1126,10 @@ def get_cron_trigger_by_id(id, session=None):
 
 @b.session_aware()
 def load_cron_trigger(identifier, session=None):
-    return _get_db_object_by_name_or_id(models.CronTrigger, identifier)
+    return _get_db_object_by_name_and_namespace_or_id(
+        models.CronTrigger,
+        identifier
+    )
 
 
 @b.session_aware()
@@ -1210,7 +1205,10 @@ def update_cron_trigger(identifier, values, session=None, query_filter=None):
 
 @b.session_aware()
 def create_or_update_cron_trigger(identifier, values, session=None):
-    cron_trigger = _get_db_object_by_name_or_id(models.CronTrigger, identifier)
+    cron_trigger = _get_db_object_by_name_and_namespace_or_id(
+        models.CronTrigger,
+        identifier
+    )
 
     if not cron_trigger:
         return create_cron_trigger(values)
