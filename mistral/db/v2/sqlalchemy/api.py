@@ -874,7 +874,7 @@ def load_task_execution(id, session=None):
 
 @b.session_aware()
 def get_task_executions(session=None, **kwargs):
-    return _get_task_executions(**kwargs)
+    return _get_collection(models.TaskExecution, **kwargs)
 
 
 def _get_completed_task_executions_query(kwargs):
@@ -979,10 +979,6 @@ def delete_task_execution(id, session=None):
 @b.session_aware()
 def delete_task_executions(session=None, **kwargs):
     return _delete_all(models.TaskExecution, **kwargs)
-
-
-def _get_task_executions(**kwargs):
-    return _get_collection(models.TaskExecution, **kwargs)
 
 
 @b.session_aware()
