@@ -16,6 +16,7 @@
 
 import datetime
 import json
+import sys
 import warnings
 
 import mock
@@ -139,6 +140,10 @@ class YaqlEvaluatorTest(base.BaseTest):
 
     def test_function_json_pp_deprecation(self):
         with warnings.catch_warnings(record=True) as w:
+            # ensure warnings aren't suppressed from other tests
+            for name, mod in list(sys.modules.items()):
+                getattr(mod, '__warningregistry__', dict()).clear()
+            warnings.simplefilter('always')
             result = self._evaluator.evaluate('json_pp($)', '3')
             self.assertEqual('"3"', result)
         self.assertEqual(len(w), 1)
