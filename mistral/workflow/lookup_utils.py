@@ -29,11 +29,16 @@ Mostly, they are useful for doing any kind of fast lookups with in order
 to make some decision based on their state.
 """
 
-import cachetools
 import threading
+
+import cachetools
+from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.workflow import states
+
+
+CONF = cfg.CONF
 
 
 def _create_lru_cache_for_workflow_execution(wf_ex_id):
@@ -49,7 +54,33 @@ _TASK_EX_CACHE = cachetools.LRUCache(
     missing=_create_lru_cache_for_workflow_execution
 )
 
-_CACHE_LOCK = threading.RLock()
+_ACTION_DEF_CACHE = cachetools.TTLCache(
+    maxsize=1000,
+    ttl=CONF.engine.action_definition_cache_time  # 60 seconds by default
+)
+
+_TASK_EX_CACHE_LOCK = threading.RLock()
+_ACTION_DEF_CACHE_LOCK = threading.RLock()
+
+
+def find_action_definition_by_name(action_name):
+    """Find action definition name.
+
+    :param action_name: Action name.
+    :return: Action definition (possibly a cached value).
+    """
+    with _ACTION_DEF_CACHE_LOCK:
+        action_definition = _ACTION_DEF_CACHE.get(action_name)
+
+    if action_definition:
+        return action_definition
+
+    action_definition = db_api.load_action_definition(action_name)
+
+    with _ACTION_DEF_CACHE_LOCK:
+        _ACTION_DEF_CACHE[action_name] = action_definition
+
+    return action_definition
 
 
 def find_task_executions_by_name(wf_ex_id, task_name):
@@ -59,7 +90,7 @@ def find_task_executions_by_name(wf_ex_id, task_name):
     :param task_name: Task name.
     :return: Task executions (possibly a cached value).
     """
-    with _CACHE_LOCK:
+    with _TASK_EX_CACHE_LOCK:
         t_execs = _TASK_EX_CACHE[wf_ex_id].get(task_name)
 
     if t_execs:
@@ -78,7 +109,7 @@ def find_task_executions_by_name(wf_ex_id, task_name):
     )
 
     if all_finished:
-        with _CACHE_LOCK:
+        with _TASK_EX_CACHE_LOCK:
             _TASK_EX_CACHE[wf_ex_id][task_name] = t_execs
 
     return t_execs
@@ -124,12 +155,19 @@ def get_task_execution_cache_size():
     return len(_TASK_EX_CACHE)
 
 
+def get_action_definition_cache_size():
+    return len(_ACTION_DEF_CACHE)
+
+
 def invalidate_cached_task_executions(wf_ex_id):
-    with _CACHE_LOCK:
+    with _TASK_EX_CACHE_LOCK:
         if wf_ex_id in _TASK_EX_CACHE:
             del _TASK_EX_CACHE[wf_ex_id]
 
 
 def clear_caches():
-    with _CACHE_LOCK:
+    with _TASK_EX_CACHE_LOCK:
         _TASK_EX_CACHE.clear()
+
+    with _ACTION_DEF_CACHE_LOCK:
+        _ACTION_DEF_CACHE.clear()
