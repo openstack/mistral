@@ -819,7 +819,6 @@ def delete_workflow_executions(session=None, **kwargs):
 
 @b.session_aware()
 def update_workflow_execution_state(id, cur_state, state, session=None):
-
     wf_ex = None
 
     # Use WHERE clause to exclude possible conflicts if the state has
@@ -972,6 +971,34 @@ def delete_task_executions(session=None, **kwargs):
 
 def _get_task_executions(**kwargs):
     return _get_collection(models.TaskExecution, **kwargs)
+
+
+@b.session_aware()
+def update_task_execution_state(id, cur_state, state, session=None):
+    wf_ex = None
+
+    # Use WHERE clause to exclude possible conflicts if the state has
+    # already been changed.
+    try:
+        specimen = models.TaskExecution(
+            id=id,
+            state=cur_state
+        )
+
+        wf_ex = b.model_query(
+            models.TaskExecution).update_on_match(
+            specimen=specimen,
+            surrogate_key='id',
+            values={'state': state}
+        )
+    except oslo_sqlalchemy.update_match.NoRowsMatched:
+        LOG.info(
+            "Can't change task execution state from %s to %s, "
+            "because it has already been changed. [execution_id=%s]",
+            cur_state, state, id
+        )
+
+    return wf_ex
 
 
 # Delayed calls.

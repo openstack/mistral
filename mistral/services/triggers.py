@@ -49,8 +49,10 @@ def validate_cron_trigger_input(pattern, first_time, count):
         raise exc.InvalidModelException(
             'Pattern or first_execution_time must be specified.'
         )
+
     if first_time:
         valid_min_time = datetime.datetime.utcnow() + datetime.timedelta(0, 60)
+
         if valid_min_time > first_time:
             raise exc.InvalidModelException(
                 'first_execution_time must be at least 1 minute in the future.'
@@ -59,6 +61,7 @@ def validate_cron_trigger_input(pattern, first_time, count):
             raise exc.InvalidModelException(
                 'Pattern must be provided if count is superior to 1.'
             )
+
     if pattern:
         try:
             croniter.croniter(pattern)

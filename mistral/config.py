@@ -161,6 +161,17 @@ engine_opts = [
         default=1024,
         help=_('The default maximum size in KB of large text fields '
                'of runtime execution objects. Use -1 for no limit.')
+    ),
+    cfg.IntOpt(
+        'execution_integrity_check_delay',
+        default=20,
+        help=_('A number of seconds since the last update of a task'
+               ' execution in RUNNING state after which Mistral will'
+               ' start checking its integrity, meaning that if all'
+               ' associated actions/workflows are finished its state'
+               ' will be restored automatically. If this property is'
+               ' set to a negative value Mistral will never be doing '
+               ' this check.')
     )
 ]
 
