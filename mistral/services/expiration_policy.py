@@ -99,7 +99,7 @@ def _delete(executions):
             auth_ctx.set_ctx(ctx)
 
             LOG.debug(
-                'DELETE execution id : %s from date : %s '
+                'Delete execution id : %s from date : %s '
                 'according to expiration policy',
                 execution.id,
                 execution.updated_at
