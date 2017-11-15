@@ -39,6 +39,7 @@ def info(obj, msg, *args, **kvargs):
     elif type(obj) is models.WorkflowExecution:
         debug_info = '(execution_id=%s)' % obj.id
 
-    msg = '%s %s' % (msg, debug_info)
+    if debug_info:
+        msg = '%s %s' % (msg, debug_info)
 
     WF_TRACE.info(msg, *args, **kvargs)
