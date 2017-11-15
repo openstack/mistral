@@ -408,9 +408,13 @@ def create_or_update_workbook(name, values, session=None):
 
 @b.session_aware()
 def delete_workbook(name, session=None):
-    wb = get_workbook(name)
+    count = _secure_query(models.Workbook).filter(
+        models.Workbook.name == name).delete()
 
-    session.delete(wb)
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Workbook not found [workbook_name=%s]" % name
+        )
 
 
 @b.session_aware()
@@ -726,9 +730,13 @@ def create_or_update_action_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_action_execution(id, session=None):
-    a_ex = get_action_execution(id)
+    count = _secure_query(models.ActionExecution).filter(
+        models.ActionExecution.id == id).delete()
 
-    session.delete(a_ex)
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "ActionExecution not found [id=%s]" % id
+        )
 
 
 @b.session_aware()
@@ -807,9 +815,17 @@ def create_or_update_workflow_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_workflow_execution(id, session=None):
-    wf_ex = get_workflow_execution(id)
+    model = models.WorkflowExecution
+    insecure = context.ctx().is_admin
+    query = b.model_query(model) if insecure else _secure_query(model)
 
-    session.delete(wf_ex)
+    count = query.filter(
+        models.WorkflowExecution.id == id).delete()
+
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "WorkflowExecution not found [id=%s]" % id
+        )
 
 
 @b.session_aware()
@@ -959,9 +975,13 @@ def create_or_update_task_execution(id, values, session=None):
 
 @b.session_aware()
 def delete_task_execution(id, session=None):
-    task_ex = get_task_execution(id)
+    count = _secure_query(models.TaskExecution).filter(
+        models.TaskExecution.id == id).delete()
 
-    session.delete(task_ex)
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Task execution not found [id=%s]" % id
+        )
 
 
 @b.session_aware()
@@ -1020,9 +1040,15 @@ def create_delayed_call(values, session=None):
 
 @b.session_aware()
 def delete_delayed_call(id, session=None):
-    delayed_call = get_delayed_call(id)
+    # It's safe to use insecure query here because users can't access
+    # delayed calls.
+    count = b.model_query(models.DelayedCall).filter(
+        models.DelayedCall.id == id).delete()
 
-    session.delete(delayed_call)
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Delayed Call not found [id=%s]" % id
+        )
 
 
 @b.session_aware()
@@ -1326,9 +1352,13 @@ def create_or_update_environment(name, values, session=None):
 
 @b.session_aware()
 def delete_environment(name, session=None):
-    env = get_environment(name)
+    count = _secure_query(models.Environment).filter(
+        models.Environment.name == name).delete()
 
-    session.delete(env)
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Environment not found [name=%s]" % name
+        )
 
 
 @b.session_aware()
@@ -1461,22 +1491,20 @@ def update_resource_member(resource_id, res_type, member_id, values,
 
 @b.session_aware()
 def delete_resource_member(resource_id, res_type, member_id, session=None):
-    query = _secure_query(models.ResourceMember).filter_by(
-        resource_type=res_type
-    )
-
-    res_member = query.filter(_get_criterion(resource_id, member_id)).first()
-
-    if not res_member:
-        raise exc.DBEntityNotFoundError(
-            "Resource member not found [resource_id=%s, member_id=%s]" %
-            (resource_id, member_id)
-        )
+    query = _secure_query(models.ResourceMember).\
+        filter_by(resource_type=res_type).\
+        filter(_get_criterion(resource_id, member_id))
 
     # TODO(kong): Check association with cron triggers when deleting a workflow
     # member which is in 'accepted' status.
 
-    session.delete(res_member)
+    count = query.delete()
+
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Resource member not found [resource_id=%s, member_id=%s]" %
+            (resource_id, member_id)
+        )
 
 
 @b.session_aware()
@@ -1554,9 +1582,15 @@ def update_event_trigger(id, values, session=None):
 
 @b.session_aware()
 def delete_event_trigger(id, session=None):
-    event_trigger = get_event_trigger(id)
+    # It's safe to use insecure query here because users can't access
+    # delayed calls.
+    count = b.model_query(models.EventTrigger).filter(
+        models.EventTrigger.id == id).delete()
 
-    session.delete(event_trigger)
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Event trigger not found [id=%s]." % id
+        )
 
 
 @b.session_aware()
