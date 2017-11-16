@@ -1526,7 +1526,7 @@ def _get_accepted_resources(res_type):
 
 @b.session_aware()
 def get_event_trigger(id, insecure=False, session=None):
-    event_trigger = _get_event_trigger(id, insecure)
+    event_trigger = _get_db_object_by_id(models.EventTrigger, id, insecure)
 
     if not event_trigger:
         raise exc.DBEntityNotFoundError(
@@ -1538,7 +1538,7 @@ def get_event_trigger(id, insecure=False, session=None):
 
 @b.session_aware()
 def load_event_trigger(id, insecure=False, session=None):
-    return _get_event_trigger(id, insecure)
+    return _get_db_object_by_id(models.EventTrigger, id, insecure)
 
 
 @b.session_aware()
@@ -1594,13 +1594,6 @@ def delete_event_trigger(id, session=None):
 @b.session_aware()
 def delete_event_triggers(session=None, **kwargs):
     return _delete_all(models.EventTrigger, **kwargs)
-
-
-def _get_event_trigger(id, insecure=False):
-    if insecure:
-        return b.model_query(models.EventTrigger).filter_by(id=id).first()
-    else:
-        return _get_db_object_by_id(models.EventTrigger, id)
 
 
 # Locks.
