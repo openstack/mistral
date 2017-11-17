@@ -18,6 +18,8 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import importutils
 
+from keystoneauth1 import session as ks_session
+from keystoneauth1.token_endpoint import Token
 from keystoneclient.auth import identity
 from keystoneclient import httpclient
 
@@ -400,11 +402,12 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
         inspector_endpoint = keystone_utils.get_endpoint_for_project(
             service_type='baremetal-introspection'
         )
+        auth = Token(endpoint=inspector_endpoint.url,
+                     token=context.auth_token)
 
         return self._get_client_class()(
             api_version=1,
-            inspector_url=inspector_endpoint.url,
-            auth_token=context.auth_token,
+            session=ks_session.Session(auth)
         )
 
 
