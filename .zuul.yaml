@@ -1,0 +1,132 @@
+- job:
+    name: mistral-devstack-dsvm
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/mistral-devstack-dsvm/run.yaml
+    post-run: playbooks/legacy/mistral-devstack-dsvm/post.yaml
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/heat
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+
+- job:
+    name: mistral-devstack-dsvm-kombu
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/mistral-devstack-dsvm-kombu/run.yaml
+    post-run: playbooks/legacy/mistral-devstack-dsvm-kombu/post.yaml
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/heat
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+
+- job:
+    name: mistral-devstack-dsvm-non-apache
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/mistral-devstack-dsvm-non-apache/run.yaml
+    post-run: playbooks/legacy/mistral-devstack-dsvm-non-apache/post.yaml
+    timeout: 4200
+    required-projects:
+      - openstack-dev/devstack
+      - openstack-infra/devstack-gate
+      - openstack/heat
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+
+- job:
+    name: mistral-docker-buildimage
+    parent: legacy-publish-openstack-artifacts
+    run: playbooks/legacy/mistral-docker-buildimage/run.yaml
+    post-run: playbooks/legacy/mistral-docker-buildimage/post.yaml
+    timeout: 1800
+    required-projects:
+      - openstack/mistral
+
+- job:
+    name: mistral-ha
+    parent: legacy-base
+    run: playbooks/legacy/mistral-ha/run.yaml
+    timeout: 4200
+
+- job:
+    name: mistral-tox-unit-mysql
+    parent: legacy-base
+    run: playbooks/legacy/mistral-tox-unit-mysql/run.yaml
+    post-run: playbooks/legacy/mistral-tox-unit-mysql/post.yaml
+    timeout: 2400
+    required-projects:
+      - openstack/requirements
+
+- job:
+    name: mistral-tox-unit-postgresql
+    parent: legacy-base
+    run: playbooks/legacy/mistral-tox-unit-postgresql/run.yaml
+    post-run: playbooks/legacy/mistral-tox-unit-postgresql/post.yaml
+    timeout: 2400
+    required-projects:
+      - openstack/requirements
+
+- job:
+    name: rally-dsvm-mistral-task
+    parent: legacy-dsvm-base
+    run: playbooks/legacy/rally-dsvm-mistral-task/run.yaml
+    post-run: playbooks/legacy/rally-dsvm-mistral-task/post.yaml
+    timeout: 7800
+    required-projects:
+      - openstack-infra/devstack-gate
+      - openstack/mistral
+      - openstack/mistral-dashboard
+      - openstack/python-mistralclient
+      - openstack/rally
+
+- project:
+    name: openstack/mistral
+    check:
+      jobs:
+        - openstack-tox-cover:
+            voting: false
+        - rally-dsvm-mistral-task:
+            voting: false
+        - mistral-devstack-dsvm:
+            voting: false
+        - mistral-devstack-dsvm-non-apache:
+            voting: false
+            branches: ^(?!stable/(newton|ocata)).*$
+        - mistral-tox-unit-mysql:
+            voting: false
+        - mistral-tox-unit-postgresql:
+            voting: false
+        # TripleO jobs that deploy Mistral.
+        # Note we don't use a project-template here, so it's easier
+        # to disable voting on one specific job if things go wrong.
+        # tripleo-ci-centos-7-scenario003-multinode-oooq will only
+        # run on stable/pike while the -container will run in Queens
+        # and beyond.
+        # If you need any support to debug these jobs in case of
+        # failures, please reach us on #tripleo IRC channel.
+        - tripleo-ci-centos-7-scenario003-multinode-oooq
+        - tripleo-ci-centos-7-scenario003-multinode-oooq-container
+        - mistral-devstack-dsvm-kombu:
+            voting: false
+            branches: ^(?!stable/newton).*$
+    gate:
+      jobs:
+        - tripleo-ci-centos-7-scenario003-multinode-oooq
+        - tripleo-ci-centos-7-scenario003-multinode-oooq-container
+    post:
+      jobs:
+        - mistral-docker-buildimage:
+            branches: master
+    experimental:
+      jobs:
+        - mistral-docker-buildimage:
+            branches: master
+        - mistral-ha:
+            voting: false
