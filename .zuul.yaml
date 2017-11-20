@@ -88,8 +88,6 @@
 
 - project:
     name: openstack/mistral
-    templates:
-      - experimental-tripleo-jobs
     check:
       jobs:
         - openstack-tox-cover:
@@ -105,31 +103,23 @@
             voting: false
         - mistral-tox-unit-postgresql:
             voting: false
-        - legacy-tripleo-ci-centos-7-scenario003-multinode-oooq-puppet:
-            branches: ^(?!stable/newton).*$
-            irrelevant-files:
-              - ^.*\.md$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^etc/.*$
-              - ^metadata.json$
-              - ^releasenotes/.*$
-              - ^test-requirements.txt$
+        # TripleO jobs that deploy Mistral.
+        # Note we don't use a project-template here, so it's easier
+        # to disable voting on one specific job if things go wrong.
+        # tripleo-ci-centos-7-scenario003-multinode-oooq will only
+        # run on stable/pike while the -container will run in Queens
+        # and beyond.
+        # If you need any support to debug these jobs in case of
+        # failures, please reach us on #tripleo IRC channel.
+        - tripleo-ci-centos-7-scenario003-multinode-oooq
+        - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-dsvm-kombu:
             voting: false
             branches: ^(?!stable/newton).*$
     gate:
       jobs:
-        - legacy-tripleo-ci-centos-7-scenario003-multinode-oooq-puppet:
-            branches: ^(?!stable/newton).*$
-            irrelevant-files:
-              - ^.*\.md$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^etc/.*$
-              - ^metadata.json$
-              - ^releasenotes/.*$
-              - ^test-requirements.txt$
+        - tripleo-ci-centos-7-scenario003-multinode-oooq
+        - tripleo-ci-centos-7-scenario003-multinode-oooq-container
     post:
       jobs:
         - mistral-docker-buildimage:
