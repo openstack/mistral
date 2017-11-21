@@ -409,6 +409,7 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
 
 
 class SwiftAction(base.OpenStackAction):
+    _service_name = 'swift'
 
     @classmethod
     def _get_client_class(cls):
@@ -418,13 +419,15 @@ class SwiftAction(base.OpenStackAction):
 
         LOG.debug("Swift action security context: %s", context)
 
-        swift_endpoint = keystone_utils.get_endpoint_for_project('swift')
+        swift_endpoint = self.get_service_endpoint()
+
+        session_and_auth = self.get_session_and_auth(context)
 
         kwargs = {
             'preauthurl': swift_endpoint.url % {
                 'tenant_id': context.project_id
             },
-            'preauthtoken': context.auth_token,
+            'session': session_and_auth['session'],
             'insecure': context.insecure
         }
 
@@ -432,6 +435,7 @@ class SwiftAction(base.OpenStackAction):
 
 
 class ZaqarAction(base.OpenStackAction):
+    _service_type = 'messaging'
 
     @classmethod
     def _get_client_class(cls):
@@ -441,18 +445,20 @@ class ZaqarAction(base.OpenStackAction):
 
         LOG.debug("Zaqar action security context: %s", context)
 
-        zaqar_endpoint = keystone_utils.get_endpoint_for_project(
-            service_type='messaging')
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        zaqar_endpoint = self.get_service_endpoint()
+
+        session_and_auth = self.get_session_and_auth(context)
+
+        auth_uri = context.auth_uri or CONF.keystone_authtoken.auth_uri
 
         opts = {
             'os_auth_token': context.auth_token,
-            'os_auth_url': keystone_endpoint.url,
+            'os_auth_url': auth_uri,
             'os_project_id': context.project_id,
             'insecure': context.insecure,
         }
-        auth_opts = {'backend': 'keystone', 'options': opts}
-        conf = {'auth_opts': auth_opts}
+        auth_opts = {'backend': 'keystone', 'options': opts, }
+        conf = {'auth_opts': auth_opts, 'session': session_and_auth['session']}
 
         return self._get_client_class()(zaqar_endpoint.url, conf=conf)
 
