@@ -51,3 +51,25 @@ workflows:
         publish:
            result: <% task().result %>
 
+  swift:
+    type: direct
+    tasks:
+      get_account:
+        action: swift.get_account
+        publish:
+          result: <% task().result %>
+
+  zaqar:
+    type: direct
+    tasks:
+      send_message:
+        action: zaqar.queue_post
+        input:
+          queue_name: test
+          messages:
+            body:
+              type: action_collection.zaqar
+              payload:
+                status: <% $.get(status, 'SUCCESS') %>
+        publish:
+          result: <% task().result %>

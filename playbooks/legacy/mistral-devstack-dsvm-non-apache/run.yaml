@@ -38,11 +38,14 @@
           fi
 
           export ENABLED_SERVICES=heat,h-api,h-api-cfn,h-api-cw,h-eng,tempest
+          export PROJECTS="openstack/zaqar $PROJECTS"
+          export PROJECTS="openstack/python-zaqarclient $PROJECTS"
           export PROJECTS="openstack/heat $PROJECTS"
           export PROJECTS="openstack/mistral $PROJECTS"
           export PROJECTS="openstack/mistral-dashboard $PROJECTS"
           export DEVSTACK_LOCAL_CONFIG="enable_plugin mistral https://git.openstack.org/openstack/mistral"
           export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat git://git.openstack.org/openstack/heat"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin zaqar git://git.openstack.org/openstack/zaqar"
 
           if [ "-non-apache" == "-non-apache" ]; then
             export DEVSTACK_LOCAL_CONFIG+=$'\n'"MISTRAL_USE_MOD_WSGI=False"

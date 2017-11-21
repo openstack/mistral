@@ -90,3 +90,23 @@ class OpenStackActionsTestsV2(base.TestCase):
         executed_task = self.client.get_wf_tasks(wf_name)[-1]
 
         self.assertEqual('SUCCESS', executed_task['state'])
+
+    @decorators.attr(type='openstack')
+    @decorators.idempotent_id('985c1051-cf2e-4fd0-8ceb-a9b8110597a1')
+    def test_swift_actions(self):
+        wf_name = self.wb['name'] + '.swift'
+        _, execution = self.client.create_execution(wf_name)
+        self.client.wait_execution_success(execution)
+        executed_task = self.client.get_wf_tasks(wf_name)[-1]
+
+        self.assertEqual('SUCCESS', executed_task['state'])
+
+    @decorators.attr(type='openstack')
+    @decorators.idempotent_id('6f000ae8-3f41-49bd-b7a7-ad2256d80076')
+    def test_zaqar_actions(self):
+        wf_name = self.wb['name'] + '.zaqar'
+        _, execution = self.client.create_execution(wf_name)
+        self.client.wait_execution_success(execution)
+        executed_task = self.client.get_wf_tasks(wf_name)[-1]
+
+        self.assertEqual('SUCCESS', executed_task['state'])
