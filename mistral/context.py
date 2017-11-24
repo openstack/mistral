@@ -53,16 +53,16 @@ class MistralContext(oslo_context.RequestContext):
         # using the variable provided by oslo_context in future.
         super(MistralContext, self).__init__(overwrite=False, **kwargs)
 
-    def convert_to_dict(self):
-        """Return a dictionary of context attributes.
-
-        Use get_logging_values() instead of to_dict() from parent class to get
-        more information from the context. This method is not named "to_dict"
-        to avoid recursive call.
-        """
-        ctx_dict = self.get_logging_values()
+    def to_dict(self):
+        """Return a dictionary of context attributes."""
+        ctx_dict = super(MistralContext, self).to_dict()
         ctx_dict.update(
             {
+                'user_name': self.user_name,
+                'project_name': self.project_name,
+                'domain_name': self.domain_name,
+                'user_domain_name': self.user_domain_name,
+                'project_domain_name': self.project_domain_name,
                 'auth_uri': self.auth_uri,
                 'auth_cacert': self.auth_cacert,
                 'insecure': self.insecure,
@@ -198,7 +198,7 @@ class RpcContextSerializer(messaging.Serializer):
         return self.entity_serializer.deserialize(entity)
 
     def serialize_context(self, context):
-        ctx = context.convert_to_dict()
+        ctx = context.to_dict()
 
         pfr = profiler.get()
 
