@@ -132,7 +132,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         correlation_id = utils.generate_unicode_uuid()
 
         body = {
-            'rpc_ctx': ctx.convert_to_dict(),
+            'rpc_ctx': ctx.to_dict(),
             'rpc_method': method,
             'arguments': self._serialize_message(kwargs),
             'async': async_

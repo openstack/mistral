@@ -51,7 +51,7 @@ class KombuClientTestCase(base.KombuTestCase):
         self.ctx = type(
             'context',
             (object,),
-            {'convert_to_dict': lambda self: {}}
+            {'to_dict': lambda self: {}}
         )()
 
     def test_sync_call_result_get(self):
