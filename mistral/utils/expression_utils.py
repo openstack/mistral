@@ -104,6 +104,58 @@ def env_(context):
     return context['__env']
 
 
+def executions_(context,
+                id=None,
+                root_execution_id=None,
+                state=None,
+                from_time=None,
+                to_time=None
+                ):
+
+    filter = {}
+    if id is not None:
+        filter = utils.filter_utils.create_or_update_filter(
+            'id',
+            id,
+            "eq",
+            filter
+        )
+    if root_execution_id is not None:
+        filter = utils.filter_utils.create_or_update_filter(
+            'root_execution_id',
+            root_execution_id,
+            "eq",
+            filter
+        )
+
+    if state is not None:
+        filter = utils.filter_utils.create_or_update_filter(
+            'state',
+            state,
+            "eq",
+            filter
+        )
+
+    if from_time is not None:
+        filter = utils.filter_utils.create_or_update_filter(
+            'created_at',
+            from_time,
+            "gte",
+            filter
+        )
+
+    if to_time is not None:
+        filter = utils.filter_utils.create_or_update_filter(
+            'created_at',
+            to_time,
+            "lt",
+            filter
+        )
+
+    wf_executions = db_api.get_workflow_executions(**filter)
+    return wf_executions
+
+
 def execution_(context):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
@@ -251,7 +303,6 @@ def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
 
 def tasks_(context, workflow_execution_id=None, recursive=False, state=None,
            flat=False):
-
     task_execs = _get_tasks_from_db(
         workflow_execution_id,
         recursive,

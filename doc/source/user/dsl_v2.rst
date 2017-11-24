@@ -1394,6 +1394,68 @@ Execution info is available by **execution()**. It contains
 information about execution itself such as **id**, **wf_spec**,
 **input** and **start_params**.
 
+Executions function
+'''''''''''''''''''
+
+Signature:
+  **executions(id=null, root_execution_id=null, state=null,
+  from_time=null, to_time=null)**
+
+Description:
+
+  This function allows users to filter all executions by execution id,
+  root_execution_id ,state and/or created_at time.
+
+Parameters:
+
+  #. **id** - If provided will return a list of executions with that id.
+     Otherwise it will return all executions that match the other
+     parameters. *Optional.*
+  #. **root_execution_id** - Similar to id above, if provided will return
+     a list of executions with that root_execution_id. Otherwise it will
+     return all executions that match the other parameters. *Optional.*
+     False by default.
+  #. **state** - If provided, the executions will be filtered by their
+     current state. If state isn't provided, all executions that match the
+     other parameters will be returned . *Optional.*
+  #. **from_time** - If provided, the executions will be filtered by their
+     created_at time being greater or equal to the from_time parameter.
+     If from_time isn't provided, all executions that match the
+     other parameters will be returned. from_time parameter can be provided
+     in the format *YYYY-MM-DD hh:mm:ss*
+     *Optional.*
+  #. **to_time** - If provided, the executions will be filtered by their
+     created_at time being less than to the from_time parameter (less than but
+     not less than equal as the from_time parameter does)
+     If to_time isn't provided, all executions that match the
+     other parameters will be returned. to_time parameter can be provided
+     in the format *YYYY-MM-DD hh:mm:ss*
+     *Optional.*
+
+Example:
+
+Workflow definition:
+
+.. code-block:: mistral
+
+  ---
+  version: "v2.0"
+  wf:
+    tasks:
+      task:
+        action: std.noop
+        publish:
+          all_executions_yaql: <% executions() %>
+          all_child_executions_of_this_execution: "{{ executions(root_execution_id=execution().id) }}"
+
+          all_executions_in_error_yaql: <% executions(null, null, ERROR) %>
+          all_executions_in_error_jinja: "{{ executions(None, None, 'ERROR') }}"
+          all_executions_in_error_yaql_with_kw: <% executions(state => ERROR) %>
+          all_executions_in_error_jinja_with_kw: "{{ executions(state='ERROR') }}"
+
+          all_executions_filtered_date_jinja: "{{ executions(to_time="2016-12-01 15:01:00") }}"
+
+
 Environment
 ^^^^^^^^^^^
 

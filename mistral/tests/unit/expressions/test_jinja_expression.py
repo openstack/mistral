@@ -12,8 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 import mock
 
+from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.expressions import jinja_expression as expr
 from mistral.tests.unit import base
@@ -35,6 +37,38 @@ SERVERS = {
         {'name': 'fedora'}
     ]
 }
+
+WF_EXECS = [
+    {
+        'spec': {},
+        'id': "one",
+        'start_params': {'task': 'my_task1'},
+        'state': 'IDLE',
+        'state_info': "Running...",
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
+        'updated_at': None,
+        'context': None,
+        'task_id': None,
+        'trust_id': None,
+        'description': None,
+        'output': None
+    },
+    {
+        'spec': {},
+        'id': "two",
+        'root_execution_id': "one",
+        'start_params': {'task': 'my_task1'},
+        'state': 'RUNNING',
+        'state_info': "Running...",
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
+        'updated_at': None,
+        'context': {'image_id': '123123'},
+        'task_id': None,
+        'trust_id': None,
+        'description': None,
+        'output': None
+    }
+]
 
 
 class JinjaEvaluatorTest(base.BaseTest):
@@ -313,6 +347,127 @@ class JinjaEvaluatorTest(base.BaseTest):
             'created_at': wf_ex.created_at.isoformat(' '),
             'updated_at': wf_ex.updated_at.isoformat(' ')
         }, result)
+
+    def test_executions(self):
+        with db_api.transaction():
+            created0 = db_api.create_workflow_execution(WF_EXECS[0])
+            created1 = db_api.create_workflow_execution(WF_EXECS[1])
+
+            ctx = {
+                '__execution': {
+                    'id': 'some'
+                }
+            }
+
+            result = self._evaluator.evaluate('_|executions()', ctx)
+
+            self.assertEqual([created0, created1], result)
+            db_api.rollback_tx()
+
+    def test_executions_id_filter(self):
+        with db_api.transaction():
+            created0 = db_api.create_workflow_execution(WF_EXECS[0])
+            created1 = db_api.create_workflow_execution(WF_EXECS[1])
+
+            ctx = {
+                '__execution': {
+                    'id': 'some'
+                }
+            }
+
+            result = self._evaluator.evaluate('_|executions("one")', ctx)
+
+            self.assertEqual([created0], result)
+
+            result = self._evaluator.evaluate(
+                'executions(root_execution_id="one") ', ctx
+            )
+            self.assertEqual([created1], result)
+            db_api.rollback_tx()
+
+    def test_executions_state_filter(self):
+        with db_api.transaction():
+            db_api.create_workflow_execution(WF_EXECS[0])
+            created1 = db_api.create_workflow_execution(WF_EXECS[1])
+
+            ctx = {
+                '__execution': {
+                    'id': 'some'
+                }
+            }
+
+            result = self._evaluator.evaluate(
+                '_|executions(state="RUNNING")', ctx
+            )
+
+            self.assertEqual([created1], result)
+
+            result = self._evaluator.evaluate(
+                '_|executions(id="one", state="RUNNING")', ctx
+            )
+
+            self.assertEqual([], result)
+            db_api.rollback_tx()
+
+    def test_executions_from_time_filter(self):
+        with db_api.transaction():
+            created0 = db_api.create_workflow_execution(WF_EXECS[0])
+            created1 = db_api.create_workflow_execution(WF_EXECS[1])
+
+            ctx = {
+                '__execution': {
+                    'id': 'some'
+                }
+            }
+
+            result = self._evaluator.evaluate(
+                '_|executions(from_time="2000-01-01")', ctx
+            )
+
+            self.assertEqual([created0, created1], result)
+
+            result = self._evaluator.evaluate(
+                '_|executions(from_time="2016-12-01 15:01:00")', ctx
+            )
+
+            self.assertEqual([created1], result)
+
+            result = self._evaluator.evaluate(
+                '_|executions(id="one", from_time="2016-12-01 15:01:00")', ctx
+            )
+
+            self.assertEqual([], result)
+            db_api.rollback_tx()
+
+    def test_executions_to_time_filter(self):
+        with db_api.transaction():
+            created0 = db_api.create_workflow_execution(WF_EXECS[0])
+            created1 = db_api.create_workflow_execution(WF_EXECS[1])
+
+            ctx = {
+                '__execution': {
+                    'id': 'some'
+                }
+            }
+
+            result = self._evaluator.evaluate(
+                '_|executions(to_time="2020-01-01")', ctx
+            )
+
+            self.assertEqual([created0, created1], result)
+
+            result = self._evaluator.evaluate(
+                '_|executions(to_time="2016-12-01 15:01:00")', ctx
+            )
+
+            self.assertEqual([created0], result)
+
+            result = self._evaluator.evaluate(
+                '_|executions(id="two", to_time="2016-12-01 15:01:00")', ctx
+            )
+
+            self.assertEqual([], result)
+            db_api.rollback_tx()
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
     def test_function_execution(self, workflow_execution):
