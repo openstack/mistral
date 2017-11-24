@@ -100,7 +100,8 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'scope': wb_db.scope,
                 'project_id': wb_db.project_id,
                 'namespace': '',
-                'tags': wf_spec.get_tags()
+                'tags': wf_spec.get_tags(),
+                'is_system': False
             }
 
             db_wfs.append(
@@ -116,7 +117,8 @@ def _get_workbook_values(wb_spec, definition, scope):
         'tags': wb_spec.get_tags(),
         'definition': definition,
         'spec': wb_spec.to_dict(),
-        'scope': scope
+        'scope': scope,
+        'is_system': False
     }
 
     return values
