@@ -178,9 +178,10 @@ def _paginate_query(model, limit=None, marker=None, sort_keys=None,
 
     sort_keys = sort_keys if sort_keys else []
 
-    # We should add sorting by id only if we use pagination. Otherwise
+    # We should add sorting by id only if we use pagination or when
+    # there is no specified ordering criteria. Otherwise
     # we can omit it to increase the performance.
-    if (marker or limit) and 'id' not in sort_keys:
+    if not sort_keys or (marker or limit) and 'id' not in sort_keys:
         sort_keys.append('id')
         sort_dirs.append('asc') if sort_dirs else None
 
