@@ -20,6 +20,7 @@ from oslo_policy import opts as policy_opts
 from oslo_policy import policy as oslo_policy
 
 from mistral.api import access_control as acl
+from mistral import policies
 from mistral.tests.unit import fake_policy
 
 
@@ -47,11 +48,12 @@ class PolicyFixture(fixtures.Fixture):
         )
 
         acl._ENFORCER = oslo_policy.Enforcer(cfg.CONF)
+        acl._ENFORCER.register_defaults(policies.list_rules())
         acl._ENFORCER.load_rules()
 
         self.addCleanup(acl._ENFORCER.clear)
 
-    def set_rules(self, rules):
+    def set_rules(self, rules, overwrite=False):
         policy = acl._ENFORCER
 
-        policy.set_rules(oslo_policy.Rules.from_dict(rules))
+        policy.set_rules(oslo_policy.Rules.from_dict(rules), overwrite)
