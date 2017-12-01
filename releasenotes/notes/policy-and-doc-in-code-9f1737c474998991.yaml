@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    Mistral now support policy in code, which means if users didn't modify
+    any of policy rules, they can leave policy file (in `json` or `yaml`
+    format) empty or just remove it all together. Because from now, Mistral
+    keeps all default policies under `mistral/policies` module. Users can
+    still modify/generate `policy.yaml` file which will override policy
+    rules in code if those rules show in `policy.yaml` file.
+other:
+  - |
+    Default `policy.json` file is now removed as Mistral now generate the
+    default policies in code. Please be aware that when using that file in your
+    environment.
