@@ -15,12 +15,6 @@
 policy_data = """{
     "default": "rule:admin_or_owner",
 
-    "actions:create": "rule:admin_or_owner",
-    "actions:delete": "rule:admin_or_owner",
-    "actions:get": "rule:admin_or_owner",
-    "actions:list": "rule:admin_or_owner",
-    "actions:update": "rule:admin_or_owner",
-
     "cron_triggers:create": "rule:admin_or_owner",
     "cron_triggers:delete": "rule:admin_or_owner",
     "cron_triggers:get": "rule:admin_or_owner",

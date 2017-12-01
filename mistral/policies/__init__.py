@@ -14,12 +14,14 @@
 
 import itertools
 
+from mistral.policies import action
 from mistral.policies import action_executions
 from mistral.policies import base
 
 
 def list_rules():
     return itertools.chain(
+        action.list_rules(),
         action_executions.list_rules(),
         base.list_rules()
     )
