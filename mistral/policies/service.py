@@ -11,29 +11,26 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from oslo_policy import policy
 
-import itertools
-
-from mistral.policies import action
-from mistral.policies import action_executions
 from mistral.policies import base
-from mistral.policies import cron_trigger
-from mistral.policies import environment
-from mistral.policies import execution
-from mistral.policies import member
-from mistral.policies import service
-from mistral.policies import task
+
+SERVICES = 'services:%s'
+
+rules = [
+    policy.DocumentedRuleDefault(
+        name=SERVICES % 'list',
+        check_str=base.RULE_ADMIN_OR_OWNER,
+        description='Return all Mistral services.',
+        operations=[
+            {
+                'path': '/v2/services',
+                'method': 'GET'
+            }
+        ]
+    )
+]
 
 
 def list_rules():
-    return itertools.chain(
-        action.list_rules(),
-        action_executions.list_rules(),
-        base.list_rules(),
-        cron_trigger.list_rules(),
-        environment.list_rules(),
-        execution.list_rules(),
-        member.list_rules(),
-        service.list_rules(),
-        task.list_rules()
-    )
+    return rules

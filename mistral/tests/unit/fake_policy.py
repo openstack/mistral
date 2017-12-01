@@ -15,12 +15,6 @@
 policy_data = """{
     "default": "rule:admin_or_owner",
 
-    "services:list": "rule:admin_or_owner",
-
-    "tasks:get": "rule:admin_or_owner",
-    "tasks:list": "rule:admin_or_owner",
-    "tasks:update": "rule:admin_or_owner",
-
     "workbooks:create": "rule:admin_or_owner",
     "workbooks:delete": "rule:admin_or_owner",
     "workbooks:get": "rule:admin_or_owner",
