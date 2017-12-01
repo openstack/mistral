@@ -15,12 +15,6 @@
 policy_data = """{
     "default": "rule:admin_or_owner",
 
-    "workbooks:create": "rule:admin_or_owner",
-    "workbooks:delete": "rule:admin_or_owner",
-    "workbooks:get": "rule:admin_or_owner",
-    "workbooks:list": "rule:admin_or_owner",
-    "workbooks:update": "rule:admin_or_owner",
-
     "workflows:create": "rule:admin_or_owner",
     "workflows:delete": "rule:admin_or_owner",
     "workflows:get": "rule:admin_or_owner",
