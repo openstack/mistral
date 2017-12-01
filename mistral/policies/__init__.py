@@ -18,6 +18,7 @@ from mistral.policies import action
 from mistral.policies import action_executions
 from mistral.policies import base
 from mistral.policies import cron_trigger
+from mistral.policies import environment
 
 
 def list_rules():
@@ -25,5 +26,6 @@ def list_rules():
         action.list_rules(),
         action_executions.list_rules(),
         base.list_rules(),
-        cron_trigger.list_rules()
+        cron_trigger.list_rules(),
+        environment.list_rules()
     )

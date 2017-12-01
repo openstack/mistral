@@ -15,12 +15,6 @@
 policy_data = """{
     "default": "rule:admin_or_owner",
 
-    "environments:create": "rule:admin_or_owner",
-    "environments:delete": "rule:admin_or_owner",
-    "environments:get": "rule:admin_or_owner",
-    "environments:list": "rule:admin_or_owner",
-    "environments:update": "rule:admin_or_owner",
-
     "executions:create": "rule:admin_or_owner",
     "executions:delete": "rule:admin_or_owner",
     "executions:get": "rule:admin_or_owner",
