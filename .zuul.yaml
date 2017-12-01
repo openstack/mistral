@@ -11,6 +11,8 @@
       - openstack/mistral
       - openstack/mistral-dashboard
       - openstack/python-mistralclient
+      - openstack/zaqar
+      - openstack/python-zaqarclient
 
 - job:
     name: mistral-devstack-dsvm-kombu
@@ -25,6 +27,8 @@
       - openstack/mistral
       - openstack/mistral-dashboard
       - openstack/python-mistralclient
+      - openstack/zaqar
+      - openstack/python-zaqarclient
 
 - job:
     name: mistral-devstack-dsvm-non-apache
@@ -39,6 +43,8 @@
       - openstack/mistral
       - openstack/mistral-dashboard
       - openstack/python-mistralclient
+      - openstack/zaqar
+      - openstack/python-zaqarclient
 
 - job:
     name: mistral-docker-buildimage
