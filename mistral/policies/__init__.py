@@ -24,6 +24,7 @@ from mistral.policies import member
 from mistral.policies import service
 from mistral.policies import task
 from mistral.policies import workbook
+from mistral.policies import workflow
 
 
 def list_rules():
@@ -37,5 +38,6 @@ def list_rules():
         member.list_rules(),
         service.list_rules(),
         task.list_rules(),
-        workbook.list_rules()
+        workbook.list_rules(),
+        workflow.list_rules()
     )
