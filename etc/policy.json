@@ -1,12 +1,6 @@
 {
     "default": "rule:admin_or_owner",
 
-    "action_executions:delete": "rule:admin_or_owner",
-    "action_execution:create": "rule:admin_or_owner",
-    "action_executions:get": "rule:admin_or_owner",
-    "action_executions:list": "rule:admin_or_owner",
-    "action_executions:update": "rule:admin_or_owner",
-
     "actions:create": "rule:admin_or_owner",
     "actions:delete": "rule:admin_or_owner",
     "actions:get": "rule:admin_or_owner",
