@@ -52,12 +52,12 @@ def _try_import(module_name):
 aodhclient = _try_import('aodhclient.v2.client')
 barbicanclient = _try_import('barbicanclient.client')
 ceilometerclient = _try_import('ceilometerclient.v2.client')
-cinderclient = _try_import('cinderclient.v2.client')
+cinderclient = _try_import('cinderclient.client')
 designateclient = _try_import('designateclient.v1')
-glanceclient = _try_import('glanceclient.v2.client')
+glanceclient = _try_import('glanceclient')
 glareclient = _try_import('glareclient.v1.client')
 gnocchiclient = _try_import('gnocchiclient.v1.client')
-heatclient = _try_import('heatclient.v1.client')
+heatclient = _try_import('heatclient.client')
 ironic_inspector_client = _try_import('ironic_inspector_client.v1')
 ironicclient = _try_import('ironicclient.v1.client')
 keystoneclient = _try_import('keystoneclient.v3.client')
@@ -70,7 +70,7 @@ senlinclient = _try_import('senlinclient.v1.client')
 swift_client = _try_import('swiftclient.client')
 tackerclient = _try_import('tackerclient.v1_0.client')
 troveclient = _try_import('troveclient.v1.client')
-zaqarclient = _try_import('zaqarclient.queues.v2.client')
+zaqarclient = _try_import('zaqarclient.queues.client')
 
 
 class NovaAction(base.OpenStackAction):
@@ -83,7 +83,15 @@ class NovaAction(base.OpenStackAction):
     def _create_client(self, context):
         LOG.debug("Nova action security context: %s", context)
 
-        return novaclient.Client(2, **self.get_session_and_auth(context))
+        nova_endpoint = self.get_service_endpoint()
+
+        session_and_auth = self.get_session_and_auth(context)
+
+        return novaclient.Client(
+            2,
+            endpoint_override=nova_endpoint.url,
+            session=session_and_auth['session']
+        )
 
     @classmethod
     def _get_fake_client(cls):
@@ -103,15 +111,17 @@ class GlanceAction(base.OpenStackAction):
 
         glance_endpoint = self.get_service_endpoint()
 
+        session_and_auth = self.get_session_and_auth(context)
+
         return self._get_client_class()(
-            glance_endpoint.url,
-            region_name=glance_endpoint.region,
-            **self.get_session_and_auth(context)
+            '2',
+            endpoint=glance_endpoint.url,
+            session=session_and_auth['session']
         )
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()("fake_endpoint")
+        return cls._get_client_class()(endpoint="http://127.0.0.1:9292/v2")
 
 
 class KeystoneAction(base.OpenStackAction):
@@ -126,16 +136,14 @@ class KeystoneAction(base.OpenStackAction):
 
         LOG.debug("Keystone action security context: %s", context)
 
-        kwargs = self.get_session_and_auth(context)
+        keystone_endpoint = self.get_service_endpoint()
 
-        # NOTE(akovi): the endpoint in the token messes up
-        # keystone. The auth parameter should not be provided for
-        # these operations.
-        kwargs.pop('auth')
+        session_and_auth = self.get_session_and_auth(context)
 
-        client = self._get_client_class()(**kwargs)
-
-        return client
+        return self._get_client_class()(
+            endpoint=keystone_endpoint.url,
+            session=session_and_auth['session']
+        )
 
     @classmethod
     def _get_fake_client(cls):
@@ -195,23 +203,20 @@ class HeatAction(base.OpenStackAction):
 
         heat_endpoint = self.get_service_endpoint()
 
-        endpoint_url = keystone_utils.format_url(
-            heat_endpoint.url,
-            {
-                'tenant_id': context.project_id,
-                'project_id': context.project_id
-            }
-        )
+        session_and_auth = self.get_session_and_auth(context)
 
         return self._get_client_class()(
-            endpoint_url,
-            region_name=heat_endpoint.region,
-            **self.get_session_and_auth(context)
+            '1',
+            endpoint_override=heat_endpoint.url,
+            session=session_and_auth['session']
         )
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()("")
+        return cls._get_client_class()(
+            '1',
+            endpoint="http://127.0.0.1:8004/v1/fake"
+        )
 
 
 class NeutronAction(base.OpenStackAction):
@@ -227,13 +232,16 @@ class NeutronAction(base.OpenStackAction):
 
         neutron_endpoint = self.get_service_endpoint()
 
+        session_and_auth = self.get_session_and_auth(context)
+
         return self._get_client_class()(
-            endpoint_url=neutron_endpoint.url,
-            region_name=neutron_endpoint.region,
-            token=context.auth_token,
-            auth_url=context.auth_uri,
-            insecure=context.insecure
+            endpoint_override=neutron_endpoint.url,
+            session=session_and_auth['session']
         )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()(endpoint="http://127.0.0.1")
 
 
 class CinderAction(base.OpenStackAction):
@@ -249,31 +257,19 @@ class CinderAction(base.OpenStackAction):
 
         cinder_endpoint = self.get_service_endpoint()
 
-        cinder_url = keystone_utils.format_url(
-            cinder_endpoint.url,
-            {
-                'tenant_id': context.project_id,
-                'project_id': context.project_id
-            }
-        )
+        session_and_auth = self.get_session_and_auth(context)
 
         client = self._get_client_class()(
-            context.user_name,
-            context.auth_token,
-            project_id=context.project_id,
-            auth_url=cinder_url,
-            region_name=cinder_endpoint.region,
-            insecure=context.insecure
+            '2',
+            endpoint_override=cinder_endpoint.url,
+            session=session_and_auth['session']
         )
-
-        client.client.auth_token = context.auth_token
-        client.client.management_url = cinder_url
 
         return client
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()()
+        return cls._get_client_class()('2')
 
 
 class MistralAction(base.OpenStackAction):
@@ -422,19 +418,9 @@ class SwiftAction(base.OpenStackAction):
 
         LOG.debug("Swift action security context: %s", context)
 
-        swift_endpoint = self.get_service_endpoint()
-
         session_and_auth = self.get_session_and_auth(context)
 
-        kwargs = {
-            'preauthurl': swift_endpoint.url % {
-                'tenant_id': context.project_id
-            },
-            'session': session_and_auth['session'],
-            'insecure': context.insecure
-        }
-
-        return self._get_client_class()(**kwargs)
+        return self._get_client_class()(session=session_and_auth['session'])
 
 
 class ZaqarAction(base.OpenStackAction):
@@ -452,22 +438,15 @@ class ZaqarAction(base.OpenStackAction):
 
         session_and_auth = self.get_session_and_auth(context)
 
-        auth_uri = context.auth_uri or CONF.keystone_authtoken.auth_uri
-
-        opts = {
-            'os_auth_token': context.auth_token,
-            'os_auth_url': auth_uri,
-            'os_project_id': context.project_id,
-            'insecure': context.insecure,
-        }
-        auth_opts = {'backend': 'keystone', 'options': opts, }
-        conf = {'auth_opts': auth_opts, 'session': session_and_auth['session']}
-
-        return self._get_client_class()(zaqar_endpoint.url, conf=conf)
+        return self._get_client_class()(
+            version=2,
+            url=zaqar_endpoint.url,
+            session=session_and_auth['session']
+        )
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()("")
+        return cls._get_client_class()(version=2)
 
     @classmethod
     def _get_client_method(cls, client):
