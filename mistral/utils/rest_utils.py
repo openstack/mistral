@@ -16,6 +16,7 @@
 import functools
 import json
 
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import pecan
 import six
@@ -24,9 +25,11 @@ import tenacity
 import webob
 from wsme import exc as wsme_exc
 
+
 from mistral import context as auth_ctx
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
+
 
 LOG = logging.getLogger(__name__)
 
@@ -237,9 +240,19 @@ def get_all(list_cls, cls, get_all_function, get_function,
     )
 
 
+class MistralRetrying(tenacity.Retrying):
+    def call(self, fn, *args, **kwargs):
+        try:
+            return super(MistralRetrying, self).call(fn, *args, **kwargs)
+        except tenacity.RetryError:
+            raise exc.MistralError("The service is temporarily unavailable")
+
+
 def create_db_retry_object():
-    return tenacity.Retrying(
-        retry=tenacity.retry_if_exception_type(sa.exc.OperationalError),
+    return MistralRetrying(
+        retry=tenacity.retry_if_exception_type(
+            (sa.exc.OperationalError, db_exc.DBConnectionError)
+        ),
         stop=tenacity.stop_after_attempt(10),
-        wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
+        wait=tenacity.wait_incrementing(increment=0.2)  # 0.2 seconds
     )

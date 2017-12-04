@@ -86,7 +86,7 @@ def cancel_workflow(wf_ex, msg=None):
     stop_workflow(wf_ex, states.CANCELLED, msg)
 
 
-@db_utils.retry_on_deadlock
+@db_utils.retry_on_db_error
 @action_queue.process
 @profiler.trace('workflow-handler-check-and-complete', hide_args=True)
 def _check_and_complete(wf_ex_id):

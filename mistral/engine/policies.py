@@ -491,7 +491,7 @@ class ConcurrencyPolicy(base.TaskPolicy):
         task_ex.runtime_context = runtime_context
 
 
-@db_utils.retry_on_deadlock
+@db_utils.retry_on_db_error
 @action_queue.process
 def _continue_task(task_ex_id):
     from mistral.engine import task_handler
@@ -500,7 +500,7 @@ def _continue_task(task_ex_id):
         task_handler.continue_task(db_api.get_task_execution(task_ex_id))
 
 
-@db_utils.retry_on_deadlock
+@db_utils.retry_on_db_error
 @action_queue.process
 def _complete_task(task_ex_id, state, state_info):
     from mistral.engine import task_handler
@@ -513,7 +513,7 @@ def _complete_task(task_ex_id, state, state_info):
         )
 
 
-@db_utils.retry_on_deadlock
+@db_utils.retry_on_db_error
 @action_queue.process
 def _fail_task_if_incomplete(task_ex_id, timeout):
     from mistral.engine import task_handler
