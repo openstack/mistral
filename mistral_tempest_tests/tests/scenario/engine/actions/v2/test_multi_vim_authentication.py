@@ -59,6 +59,7 @@ class MultiVimActionsTests(base.TestCase):
 
     @decorators.attr(type='openstack')
     @decorators.idempotent_id('bc0e9b99-62b0-4d96-95c9-016a3f69b02a')
+    @decorators.skip_because(bug="1736685")
     def test_multi_vim_support_target_headers_and_service_catalog(self):
         client_1 = self.alt_client
         client_2 = self.client
