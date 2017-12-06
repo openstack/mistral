@@ -241,6 +241,9 @@ class Execution(resource.Resource):
     task_execution_id = wtypes.text
     "reference to the parent task execution"
 
+    root_execution_id = wtypes.text
+    "reference to the root execution"
+
     state = wtypes.text
     "state can be one of: IDLE, RUNNING, SUCCESS, ERROR, PAUSED"
 

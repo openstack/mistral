@@ -248,15 +248,16 @@ class ExecutionsController(rest.RestController):
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
                          wtypes.text, types.uuid, wtypes.text, types.jsontype,
-                         types.uuid, STATE_TYPES, wtypes.text, types.jsontype,
-                         types.jsontype, wtypes.text, wtypes.text, bool,
-                         types.uuid, bool)
+                         types.uuid, types.uuid, STATE_TYPES, wtypes.text,
+                         types.jsontype, types.jsontype, wtypes.text,
+                         wtypes.text, bool, types.uuid, bool)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', workflow_name=None,
                 workflow_id=None, description=None, params=None,
-                task_execution_id=None, state=None, state_info=None,
-                input=None, output=None, created_at=None, updated_at=None,
-                include_output=None, project_id=None, all_projects=False):
+                task_execution_id=None, root_execution_id=None, state=None,
+                state_info=None, input=None, output=None, created_at=None,
+                updated_at=None, include_output=None, project_id=None,
+                all_projects=False):
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -282,6 +283,8 @@ class ExecutionsController(rest.RestController):
         :param params: Optional. Keep only resources with specific parameters.
         :param task_execution_id: Optional. Keep only resources with a
                                   specific task execution ID.
+        :param root_execution_id: Optional. Keep only resources with a
+                                  specific root execution ID.
         :param state: Optional. Keep only resources with a specific state.
         :param state_info: Optional. Keep only resources with specific
                            state information.
@@ -315,7 +318,8 @@ class ExecutionsController(rest.RestController):
             output=output,
             updated_at=updated_at,
             description=description,
-            project_id=project_id
+            project_id=project_id,
+            root_execution_id=root_execution_id,
         )
 
         LOG.info(

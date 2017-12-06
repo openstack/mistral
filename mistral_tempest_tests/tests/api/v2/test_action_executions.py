@@ -232,13 +232,14 @@ class ActionExecutionTestsV2(base.TestCase):
     def test_action_execution_of_workflow_within_namespace(self):
 
         resp, body = self.client.create_workflow('wf_v2.yaml', namespace='abc')
-        wf_name = body['workflows'][0]['name']
+        wf_name = "wf"
         wf_namespace = body['workflows'][0]['namespace']
         self.assertEqual(201, resp.status)
-        resp, body = self.client.create_execution(
+        resp, execution = self.client.create_execution(
             wf_name,
             wf_namespace=wf_namespace
         )
+        self.client.wait_execution_success(execution)
         self.assertEqual(201, resp.status)
         resp, body = self.client.get_list_obj('tasks')
         self.assertEqual(200, resp.status)

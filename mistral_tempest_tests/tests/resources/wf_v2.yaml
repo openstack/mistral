@@ -32,3 +32,24 @@ wf2:
   tasks:
     hello:
       action: std.echo output="Doe"
+
+subwf1:
+  type: direct
+
+  tasks:
+    task1:
+      workflow: subwf2
+
+subwf2:
+  type: direct
+
+  tasks:
+    task1:
+      workflow: subwf3
+
+subwf3:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.noop
