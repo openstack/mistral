@@ -418,9 +418,19 @@ class SwiftAction(base.OpenStackAction):
 
         LOG.debug("Swift action security context: %s", context)
 
+        swift_endpoint = self.get_service_endpoint()
+
+        swift_url = keystone_utils.format_url(
+            swift_endpoint.url,
+            {'tenant_id': context.project_id}
+        )
+
         session_and_auth = self.get_session_and_auth(context)
 
-        return self._get_client_class()(session=session_and_auth['session'])
+        return self._get_client_class()(
+            session=session_and_auth['session'],
+            preauthurl=swift_url
+        )
 
 
 class ZaqarAction(base.OpenStackAction):
