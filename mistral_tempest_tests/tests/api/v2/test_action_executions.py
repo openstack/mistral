@@ -212,6 +212,7 @@ class ActionExecutionTestsV2(base.TestCase):
 
     @decorators.attr(type='sanity')
     @decorators.idempotent_id('2dbd74ba-4950-4c52-8bd3-070d634dcd05')
+    @decorators.skip_because(bug="1736685")
     def test_create_action_execution_sync(self):
         token = self.client.auth_provider.get_token()
         resp, body = self.client.create_action_execution(
