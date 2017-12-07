@@ -174,18 +174,29 @@ def check_and_fix_integrity(wf_ex):
         )
 
         if all_finished:
-            # We found a task execution in RUNNING state for which all
-            # child executions are finished. We need to call
-            # "schedule_on_action_complete" on the task handler for any of
-            # the child executions so that the task state is calculated and
-            # updated properly.
-            LOG.warning(
-                "Found a task execution that is likely stuck in RUNNING state"
-                " because all child executions are finished,"
-                " will try to recover [task_execution=%s]", t_ex.id
+            # Find the timestamp of the most recently finished child.
+            most_recent_child_timestamp = max(
+                [c_ex.updated_at or c_ex.created_at for c_ex in
+                 child_executions]
+            )
+            interval = timeutils.delta_seconds(
+                most_recent_child_timestamp,
+                timeutils.utcnow()
             )
 
-            task_handler.schedule_on_action_complete(child_executions[-1])
+            if interval > check_after_seconds:
+                # We found a task execution in RUNNING state for which all
+                # child executions are finished. We need to call
+                # "schedule_on_action_complete" on the task handler for any of
+                # the child executions so that the task state is calculated and
+                # updated properly.
+                LOG.warning(
+                    "Found a task execution that is likely stuck in RUNNING"
+                    " state because all child executions are finished,"
+                    " will try to recover [task_execution=%s]", t_ex.id
+                )
+
+                task_handler.schedule_on_action_complete(child_executions[-1])
 
 
 def pause_workflow(wf_ex, msg=None):
