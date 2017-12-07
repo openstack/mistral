@@ -16,6 +16,7 @@
 from functools import partial
 import warnings
 
+from oslo_log import log as logging
 from oslo_serialization import jsonutils
 from stevedore import extension
 import yaml
@@ -25,6 +26,7 @@ from mistral.db.v2 import api as db_api
 from mistral import utils
 
 
+LOG = logging.getLogger(__name__)
 ROOT_YAQL_CONTEXT = None
 
 
@@ -160,6 +162,10 @@ def task_(context, task_name=None):
         task_ex = task_execs[-1] if len(task_execs) > 0 else None
 
     if not task_ex:
+        LOG.warning(
+            "Task '%s' not found by the task() expression function",
+            task_name
+        )
         return None
 
     # We don't use to_dict() db model method because not all fields
