@@ -129,11 +129,14 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         self.assertEqual(2, len(wf1_t1_action_exs))
         # Check there is exactly 1 action in Running and 1 in Cancelled state.
         # Order doesn't matter.
-        self._assert_single_item(wf1_t1_action_exs, state=states.RUNNING)
+        wf1_t1_aex_running = self._assert_single_item(
+            wf1_t1_action_exs,
+            state=states.RUNNING
+        )
         self._assert_single_item(wf1_t1_action_exs, state=states.CANCELLED)
 
         self.engine.on_action_complete(
-            wf1_t1_action_exs[1].id,
+            wf1_t1_aex_running.id,
             ml_actions.Result(data={'foo': 'bar'})
         )
 
@@ -266,12 +269,13 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
             )
 
             self.assertEqual(1, len(sub_wf_exs))
-            self.assertEqual(states.RUNNING, sub_wf_exs[0].state)
-
-            wf2_ex = sub_wf_exs[0]
+            wf2_ex_running = self._assert_single_item(
+                sub_wf_exs,
+                state=states.RUNNING
+            )
 
             wf2_t1_ex = self._assert_single_item(
-                wf2_ex.task_executions,
+                wf2_ex_running.task_executions,
                 name='wf2_t1'
             )
 
@@ -285,9 +289,9 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf2_t1_action_exs[0].state)
 
         # Cancel subworkflow.
-        self.engine.stop_workflow(wf2_ex.id, states.CANCELLED)
+        self.engine.stop_workflow(wf2_ex_running.id, states.CANCELLED)
 
-        self.await_workflow_cancelled(wf2_ex.id)
+        self.await_workflow_cancelled(wf2_ex_running.id)
         self.await_workflow_cancelled(wf1_ex.id)
 
         # Resume workflow and re-run failed subworkflow task.
@@ -312,13 +316,14 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
             self.assertEqual(2, len(sub_wf_exs))
             # Check there is exactly 1 sub-wf in Running and 1 in Cancelled
             # state. Order doesn't matter.
-            self._assert_single_item(sub_wf_exs, state=states.RUNNING)
             self._assert_single_item(sub_wf_exs, state=states.CANCELLED)
-
-            wf2_ex = sub_wf_exs[1]
+            wf2_ex_running = self._assert_single_item(
+                sub_wf_exs,
+                state=states.RUNNING
+            )
 
             wf2_t1_ex = self._assert_single_item(
-                wf2_ex.task_executions, name='wf2_t1'
+                wf2_ex_running.task_executions, name='wf2_t1'
             )
 
         self.await_task_state(wf2_t1_ex.id, states.RUNNING)
@@ -338,7 +343,7 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
 
         # Wait for the workflows to succeed.
         self.await_workflow_success(wf1_ex.id)
-        self.await_workflow_success(wf2_ex.id)
+        self.await_workflow_success(wf2_ex_running.id)
 
         sub_wf_exs = db_api.get_workflow_executions(
             task_execution_id=wf1_t2_ex.id
@@ -501,12 +506,15 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         self.assertEqual(2, len(wf2_t1_action_exs))
         # Check there is exactly 1 action in Running and 1 in Cancelled state.
         # Order doesn't matter.
-        self._assert_single_item(wf2_t1_action_exs, state=states.RUNNING)
         self._assert_single_item(wf2_t1_action_exs, state=states.CANCELLED)
+        wf2_t1_aex_running = self._assert_single_item(
+            wf2_t1_action_exs,
+            state=states.RUNNING
+        )
 
         # Mark async action execution complete.
         self.engine.on_action_complete(
-            wf2_t1_action_exs[1].id,
+            wf2_t1_aex_running.id,
             ml_actions.Result(data={'foo': 'bar'})
         )
 
@@ -579,11 +587,9 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         )
 
         self.assertEqual(3, len(wf1_t1_action_exs))
-        self.assertEqual(states.RUNNING, wf1_t1_action_exs[0].state)
-        self.assertEqual(states.RUNNING, wf1_t1_action_exs[1].state)
-        self.assertEqual(states.RUNNING, wf1_t1_action_exs[2].state)
+        self._assert_multiple_items(wf1_t1_action_exs, 3, state=states.RUNNING)
 
-        # Cancel action execution for task.
+        # Cancel action execution for tasks.
         for wf1_t1_action_ex in wf1_t1_action_exs:
             self.engine.on_action_complete(
                 wf1_t1_action_ex.id,
@@ -597,9 +603,11 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         )
 
         self.assertEqual(3, len(wf1_t1_action_exs))
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[0].state)
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[1].state)
-        self.assertEqual(states.CANCELLED, wf1_t1_action_exs[2].state)
+        self._assert_multiple_items(
+            wf1_t1_action_exs,
+            3,
+            state=states.CANCELLED
+        )
 
         # Resume workflow and re-run failed with items task.
         self.engine.rerun_workflow(wf1_t1_ex.id, reset=False)
@@ -622,17 +630,21 @@ class DirectWorkflowRerunCancelledTest(base.EngineTestCase):
         self.assertEqual(6, len(wf1_t1_action_exs))
         # Check there is exactly 3 action in Running and 3 in Cancelled state.
         # Order doesn't matter.
-        self._assert_multiple_items(wf1_t1_action_exs, 3, state=states.RUNNING)
         self._assert_multiple_items(
             wf1_t1_action_exs,
             3,
             state=states.CANCELLED
         )
+        wf1_t1_aexs_running = self._assert_multiple_items(
+            wf1_t1_action_exs,
+            3,
+            state=states.RUNNING
+        )
 
         # Mark async action execution complete.
-        for i in range(3, 6):
+        for action_ex in wf1_t1_aexs_running:
             self.engine.on_action_complete(
-                wf1_t1_action_exs[i].id,
+                action_ex.id,
                 ml_actions.Result(data={'foo': 'bar'})
             )
 

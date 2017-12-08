@@ -1012,8 +1012,8 @@ class ActionDefinitionTest(SQLAlchemyTest):
         fetched = db_api.get_action_definitions(**_filter)
 
         self.assertEqual(2, len(fetched))
-        self.assertEqual(created1, fetched[0])
-        self.assertEqual(created2, fetched[1])
+        self.assertIn(created1, fetched)
+        self.assertIn(created2, fetched)
 
     def test_filter_action_definitions_by_greater_than_equal_value(self):
         created0 = db_api.create_action_definition(ACTION_DEFINITIONS[0])

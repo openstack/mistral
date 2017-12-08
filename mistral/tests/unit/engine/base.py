@@ -252,7 +252,8 @@ class EngineTestCase(base.DbTestCase):
         self._await(
             lambda: self.is_workflow_in_state(ex_id, state),
             delay,
-            timeout
+            timeout,
+            "Execution {} to reach {} state".format(ex_id, state)
         )
 
     def await_workflow_running(self, ex_id, delay=DEFAULT_DELAY,
