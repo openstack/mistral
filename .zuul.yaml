@@ -100,15 +100,11 @@
             voting: false
         - rally-dsvm-mistral-task:
             voting: false
-        - mistral-devstack-dsvm:
-            voting: false
+        - mistral-devstack-dsvm
         - mistral-devstack-dsvm-non-apache:
-            voting: false
             branches: ^(?!stable/(newton|ocata)).*$
-        - mistral-tox-unit-mysql:
-            voting: false
-        - mistral-tox-unit-postgresql:
-            voting: false
+        - mistral-tox-unit-mysql
+        - mistral-tox-unit-postgresql
         # TripleO jobs that deploy Mistral.
         # Note we don't use a project-template here, so it's easier
         # to disable voting on one specific job if things go wrong.
@@ -120,12 +116,16 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-dsvm-kombu:
-            voting: false
             branches: ^(?!stable/newton).*$
     gate:
       jobs:
+        - mistral-devstack-dsvm
+        - mistral-devstack-dsvm-non-apache
+        - mistral-tox-unit-mysql
+        - mistral-tox-unit-postgresql
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
+        - mistral-devstack-dsvm-kombu
     post:
       jobs:
         - mistral-docker-buildimage:
