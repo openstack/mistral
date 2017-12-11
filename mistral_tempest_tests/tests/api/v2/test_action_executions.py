@@ -212,21 +212,17 @@ class ActionExecutionTestsV2(base.TestCase):
 
     @decorators.attr(type='sanity')
     @decorators.idempotent_id('2dbd74ba-4950-4c52-8bd3-070d634dcd05')
-    @decorators.skip_because(bug="1736685")
     def test_create_action_execution_sync(self):
-        token = self.client.auth_provider.get_token()
         resp, body = self.client.create_action_execution(
             {
-                'name': 'std.http',
-                'input': ('{{"url": "http://localhost:8989/v2/workflows",'
-                          '"headers": {{"X-Auth-Token": "{}"}}}}'
-                          ).format(token)
+                'name': 'std.echo',
+                'input': '{"output": "Hello Tempest"}'
             }
         )
 
         self.assertEqual(201, resp.status)
         output = json.loads(body['output'])
-        self.assertEqual(200, output['result']['status'])
+        self.assertEqual("Hello Tempest", output['result'])
 
     @decorators.idempotent_id('9438e195-031c-4502-b216-6d72941ec281')
     @decorators.attr(type='sanity')
