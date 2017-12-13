@@ -248,10 +248,13 @@ class PythonAction(Action):
             action_ex_id=action_ex_id
         )
 
+        execution_context = self._prepare_execution_context()
+
         action_queue.schedule_run_action(
             self.action_ex,
             self.action_def,
-            target
+            target,
+            execution_context,
         )
 
     @profiler.trace('action-run', hide_args=True)
@@ -280,12 +283,15 @@ class PythonAction(Action):
 
         executor = exe.get_executor(cfg.CONF.executor.type)
 
+        execution_context = self._prepare_execution_context()
+
         result = executor.run_action(
             self.action_ex.id if self.action_ex else None,
             self.action_def.action_class,
             self.action_def.attributes or {},
             input_dict,
-            safe_rerun=safe_rerun,
+            safe_rerun,
+            execution_context,
             target=target,
             async_=False
         )
@@ -316,6 +322,23 @@ class PythonAction(Action):
             self.action_def.name,
             self.action_def.action_class
         )
+
+    def _prepare_execution_context(self):
+
+        exc_ctx = {}
+
+        if self.task_ex:
+            wf_ex = self.task_ex.workflow_execution
+            exc_ctx['workflow_execution_id'] = wf_ex.id
+            exc_ctx['task_id'] = self.task_ex.id
+            exc_ctx['workflow_name'] = wf_ex.name
+
+        if self.action_ex:
+            exc_ctx['action_execution_id'] = self.action_ex.id
+            callback_url = '/v2/action_executions/%s' % self.action_ex.id
+            exc_ctx['callback_url'] = callback_url
+
+        return exc_ctx
 
     def _prepare_input(self, input_dict):
         """Template method to do manipulations with input parameters.

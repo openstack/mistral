@@ -83,7 +83,7 @@ class DefaultEngine(base.Engine):
 
             if not save:
                 # Action execution is not created but we need to return similar
-                # object to a client anyway.
+                # object to the client anyway.
                 return db_models.ActionExecution(
                     name=action_name,
                     description=description,

@@ -15,6 +15,7 @@
 
 import base64
 
+from mistral_lib.actions import context as lib_ctx
 from oslo_config import cfg
 from oslo_context import context as oslo_context
 import oslo_messaging as messaging
@@ -254,3 +255,27 @@ class ContextHook(hooks.PecanHook):
 
     def after(self, state):
         set_ctx(None)
+
+
+def create_action_context(execution_ctx):
+
+    context = ctx()
+
+    security_ctx = lib_ctx.SecurityContext(
+        auth_cacert=context.auth_cacert,
+        auth_token=context.auth_token,
+        auth_uri=context.auth_uri,
+        expires_at=context.expires_at,
+        insecure=context.insecure,
+        is_target=context.is_target,
+        is_trust_scoped=context.is_trust_scoped,
+        project_id=context.project_id,
+        redelivered=context.redelivered,
+        region_name=context.region_name,
+        service_catalog=context.service_catalog,
+        trust_id=context.trust_id,
+    )
+
+    ex_ctx = lib_ctx.ExecutionContext(**execution_ctx)
+
+    return lib_ctx.ActionContext(security_ctx, ex_ctx)

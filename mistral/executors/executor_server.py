@@ -60,7 +60,7 @@ class ExecutorServer(service_base.MistralService):
             self._rpc_server.stop(graceful)
 
     def run_action(self, rpc_ctx, action_ex_id, action_cls_str,
-                   action_cls_attrs, params, safe_rerun):
+                   action_cls_attrs, params, safe_rerun, execution_context):
         """Receives calls over RPC to run action on executor.
 
         :param rpc_ctx: RPC request context dictionary.
@@ -89,6 +89,7 @@ class ExecutorServer(service_base.MistralService):
             action_cls_attrs,
             params,
             safe_rerun,
+            execution_context,
             redelivered
         )
 

@@ -25,7 +25,8 @@ from mistral.workflow import states
 
 
 def _run_at_target(action_ex_id, action_class_str, attributes,
-                   action_params, safe_rerun, target=None, async_=True):
+                   action_params, safe_rerun, execution_context, target=None,
+                   async_=True):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
@@ -35,6 +36,7 @@ def _run_at_target(action_ex_id, action_class_str, attributes,
         attributes,
         action_params,
         safe_rerun,
+        execution_context,
         redelivered=True
     )
 

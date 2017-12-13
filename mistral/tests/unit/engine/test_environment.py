@@ -79,7 +79,8 @@ workflows:
 
 
 def _run_at_target(action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, target=None, async_=True):
+                   params, safe_rerun, execution_context, target=None,
+                   async_=True):
 
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
@@ -89,7 +90,8 @@ def _run_at_target(action_ex_id, action_cls_str, action_cls_attrs,
         action_cls_str,
         action_cls_attrs,
         params,
-        safe_rerun
+        safe_rerun,
+        execution_context=execution_context
     )
 
 
@@ -171,12 +173,21 @@ class EnvironmentTest(base.EngineTestCase):
             for t_ex in wf1_task_execs:
                 a_ex = t_ex.action_executions[0]
 
+                callback_url = '/v2/action_executions/%s' % a_ex.id
+
                 r_exe.RemoteExecutor.run_action.assert_any_call(
                     a_ex.id,
                     'mistral.actions.std_actions.EchoAction',
                     {},
                     a_ex.input,
                     False,
+                    {
+                        'task_id': t_ex.id,
+                        'callback_url': callback_url,
+                        'workflow_execution_id': wf1_ex.id,
+                        'workflow_name': wf1_ex.name,
+                        'action_execution_id': a_ex.id,
+                    },
                     target=TARGET
                 )
 
