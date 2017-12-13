@@ -177,11 +177,6 @@ class Action(object):
             # state within the current session.
             self.task_ex.action_executions.append(self.action_ex)
 
-    def _inject_action_ctx_for_validating(self, input_dict):
-        if a_m.has_action_context(
-                self.action_def.action_class, self.action_def.attributes):
-            input_dict.update(a_m.get_empty_action_context())
-
     @profiler.trace('action-log-result', hide_args=True)
     def _log_result(self, prev_state, result):
         state = self.action_ex.state
@@ -239,8 +234,6 @@ class PythonAction(Action):
         # DB object is created.
         action_ex_id = utils.generate_unicode_uuid()
 
-        self._insert_action_context(action_ex_id, input_dict)
-
         self._create_action_execution(
             self._prepare_input(input_dict),
             self._prepare_runtime_context(index, safe_rerun),
@@ -270,8 +263,6 @@ class PythonAction(Action):
         # to be updated with the action execution ID after the action execution
         # DB object is created.
         action_ex_id = utils.generate_unicode_uuid()
-
-        self._insert_action_context(action_ex_id, input_dict, save=save)
 
         if save:
             self._create_action_execution(
@@ -306,8 +297,6 @@ class PythonAction(Action):
         return a.is_sync()
 
     def validate_input(self, input_dict):
-        if self.action_def.action_class:
-            self._inject_action_ctx_for_validating(input_dict)
 
         # NOTE(kong): Don't validate action input if action initialization
         # method contains ** argument.
@@ -361,24 +350,6 @@ class PythonAction(Action):
         given action is safe_rerun.
         """
         return {'index': index, 'safe_rerun': safe_rerun}
-
-    def _insert_action_context(self, action_ex_id, input_dict, save=True):
-        """Template method to prepare action context.
-
-        It inserts the action context in the input if required
-        runtime context.
-        """
-        # we need to push action context to all actions. It's related to
-        # https://blueprints.launchpad.net/mistral/+spec/mistral-custom-actions-api
-        has_action_context = a_m.has_action_context(
-            self.action_def.action_class,
-            self.action_def.attributes or {}
-        )
-
-        if has_action_context:
-            input_dict.update(
-                a_m.get_action_context(self.task_ex, action_ex_id, save=save)
-            )
 
 
 class AdHocAction(PythonAction):

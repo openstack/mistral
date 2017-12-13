@@ -214,9 +214,14 @@ class AdhocActionsTest(base.EngineTestCase):
 
     def test_run_adhoc_action_with_env(self):
         wf_ex = self.engine.start_workflow(
-            'my_wb.wf4', '', {'str1': 'a'}, env={'foo': 'bar'})
+            'my_wb.wf4',
+            '',
+            {'str1': 'a'},
+            env={'foo': 'bar'}
+        )
 
         self.await_workflow_success(wf_ex.id)
+
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -228,10 +233,10 @@ class AdhocActionsTest(base.EngineTestCase):
             )
 
     def test_run_nested_adhoc_with_output(self):
-        wf_ex = self.engine.start_workflow(
-            'my_wb.wf5', '')
+        wf_ex = self.engine.start_workflow('my_wb.wf5', '')
 
         self.await_workflow_success(wf_ex.id)
+
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
@@ -243,9 +248,10 @@ class AdhocActionsTest(base.EngineTestCase):
             )
 
     def test_missing_adhoc_action_definition(self):
-        wf_ex = self.engine.start_workflow(
-            'my_wb.wf6', '')
+        wf_ex = self.engine.start_workflow('my_wb.wf6', '')
+
         self.await_workflow_error(wf_ex.id)
+
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -257,16 +263,48 @@ class AdhocActionsTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task1.state)
 
     def test_nested_missing_adhoc_action_definition(self):
-        wf_ex = self.engine.start_workflow(
-            'my_wb.wf7', '')
+        wf_ex = self.engine.start_workflow('my_wb.wf7', '')
+
         self.await_workflow_error(wf_ex.id)
+
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             tasks = wf_ex.task_executions
 
-            task1 = self._assert_single_item(tasks,
-                                             name='nested_missing_action')
+            task1 = self._assert_single_item(
+                tasks,
+                name='nested_missing_action'
+            )
 
         self.assertEqual(states.ERROR, task1.state)
+
+    def test_adhoc_async_action(self):
+        wb_text = """---
+        version: '2.0'
+
+        name: my_wb1
+
+        actions:
+          my_action:
+            input:
+              - my_param
+
+            base: std.mistral_http
+            base-input:
+              url: http://google.com/<% $.my_param %>
+              method: GET
+
+        workflows:
+          my_wf:
+            tasks:
+              task1:
+                action: my_action my_param="asdfasdf"
+        """
+
+        wb_service.create_workbook_v2(wb_text)
+
+        wf_ex = self.engine.start_workflow('my_wb1.my_wf')
+
+        self.await_workflow_running(wf_ex.id)
