@@ -103,7 +103,7 @@ LANG=en_US.UTF-8
 LANGUAGE=en_US:en
 LC_ALL=C
 
-ZUUL_PROJECT=${ZUUL_PROJECT:-""}
+CI_PROJECT=${CI_PROJECT:-""}
 
 process_options $@
 # Make our paths available to other scripts we call
@@ -126,9 +126,9 @@ function setup_db {
         postgresql )
             echo "Setting up Mistral DB in PostgreSQL"
 
-            # If ZUUL_PROJECT is specified it means that this script is executing on
+            # If CI_PROJECT is specified it means that this script is executing on
             # Jenkins gate, so we should use already created postgresql db
-            if ! [ -n "$ZUUL_PROJECT"]
+            if [ -n "$CI_PROJECT"]
             then
               echo "PostgreSQL is initialized. 'openstack_citest' db will be used."
               dbname="openstack_citest"

@@ -1,0 +1,6 @@
+- hosts: all
+  tasks:
+    - shell:
+        cmd: |
+          ./docker_image_build.sh
+        chdir: '{{ ansible_user_dir }}/src/{{ zuul.project.canonical_name }}'
