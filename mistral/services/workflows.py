@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 
 def register_standard_workflows(run_in_tx=True):
-    LOG.debug("registering standard workflows")
+    LOG.debug("Registering standard workflows")
     workflow_paths = utils.get_file_list(STD_WF_PATH)
 
     for wf_path in workflow_paths:
@@ -54,7 +54,7 @@ def sync_db():
 
 def create_workflows(definition, scope='private', is_system=False,
                      run_in_tx=True, namespace=''):
-    LOG.debug("creating workflows")
+    LOG.debug("Creating workflows")
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     db_wfs = []
 
@@ -97,7 +97,7 @@ def _append_all_workflows(definition, is_system, scope, namespace,
 
 def update_workflows(definition, scope='private', identifier=None,
                      namespace=''):
-    LOG.debug("updating workflows")
+    LOG.debug("Updating workflows")
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     wfs = wf_list_spec.get_workflows()
 

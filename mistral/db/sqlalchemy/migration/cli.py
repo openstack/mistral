@@ -71,7 +71,7 @@ def do_stamp(config, cmd):
 
 
 def do_populate(config, cmd):
-    LOG.info("populating db")
+    LOG.info("Populating db")
     action_manager.sync_db()
     workflows.sync_db()
 
