@@ -23,3 +23,15 @@ class FailActionTest(base.BaseTest):
         action = std.FailAction()
 
         self.assertRaises(exc.ActionException, action.run, mock.Mock)
+
+    def test_fail_with_data(self):
+        data = {
+            "x": 1,
+            "y": 2,
+        }
+        action = std.FailAction(error_data=data)
+
+        action_result = action.run(context={})
+
+        self.assertTrue(action_result.is_error())
+        self.assertDictEqual(data, action_result.to_dict()['result'])

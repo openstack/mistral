@@ -80,20 +80,31 @@ class AsyncNoOpAction(NoOpAction):
 class FailAction(actions.Action):
     """'Always fail' action.
 
-    This action just always throws an instance of ActionException.
+    If you pass the `error_data` parameter, this action will be failed and
+    return this data as error data. Otherwise, the action just throws an
+    instance of ActionException.
+
     This behavior is useful in a number of cases, especially if we need to
     test a scenario where some of workflow tasks fail.
+
+    :param error_data: Action will be failed with this data
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, error_data=None):
+        self.error_data = error_data
 
     def run(self, context):
         LOG.info('Running fail action.')
 
+        if self.error_data:
+            return actions.Result(error=self.error_data)
+
         raise exc.ActionException('Fail action expected exception.')
 
     def test(self, context):
+        if self.error_data:
+            return actions.Result(error=self.error_data)
+
         raise exc.ActionException('Fail action expected exception.')
 
 

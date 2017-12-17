@@ -36,10 +36,10 @@ workflow context variables and thereby implements passing data between workflow
 tasks. It's also referred to as Data Flow mechanism. YAQL is a simple but
 powerful query language that allows to extract needed information from JSON
 structured data. Although Jinja2 is primarily a templating technology, Mistral
-also uses it for evaluating expression so user have a choice between YAQL and
+also uses it for evaluating expressions so users have a choice between YAQL and
 Jinja2. It's also possible to combine both expression languages within one
 workflow definition. The only limitation is that it's impossible to use both
-types of expression within one line. As long as there are YAQL and Jinja2
+types of expressions within one line. As long as there are YAQL and Jinja2
 expressions on different lines of the workflow definition text, it is valid.
 It is allowed to use YAQL/Jinja2 in the following sections of
 Mistral Workflow Language:
@@ -941,16 +941,25 @@ a special plugin mechanism. Currently, built-in system actions are:
 std.fail
 ''''''''
 
-Fail the current workflow. This action can be used to manually set the workflow
-state to error.
-
-Example:
+This action always fails. It can be used to manually fail a workflow task..
 
 .. code-block:: mistral
 
-    manual_fail:
-      action: std.fail
+  wf:
+    tasks:
+      manual_fail:
+        action: std.fail
 
+The action can be passed the `error_data` parameter. This data will be used as
+the action return value.
+
+.. code-block:: mistral
+
+  wf:
+    tasks:
+      manual_fail:
+        action: std.fail
+        input: error_data={x:1,y:2}
 
 std.http
 ''''''''
