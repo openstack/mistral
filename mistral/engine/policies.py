@@ -293,7 +293,7 @@ class RetryPolicy(base.TaskPolicy):
     def __init__(self, count, delay, break_on, continue_on):
         self.count = count
         self.delay = delay
-        self.break_on = break_on
+        self._break_on_clause = break_on
         self._continue_on_clause = continue_on
 
     def after_task_complete(self, task_ex, task_spec):
@@ -345,6 +345,11 @@ class RetryPolicy(base.TaskPolicy):
             ctx_view
         )
 
+        break_on_evaluation = expressions.evaluate(
+            self._break_on_clause,
+            ctx_view
+        )
+
         task_ex.runtime_context = runtime_context
 
         state = task_ex.state
@@ -374,7 +379,7 @@ class RetryPolicy(base.TaskPolicy):
 
         break_triggered = (
             task_ex.state == states.ERROR and
-            self.break_on
+            break_on_evaluation
         )
 
         if not retries_remain or break_triggered or stop_continue_flag:
