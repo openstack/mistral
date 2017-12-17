@@ -1046,12 +1046,13 @@ def delete_delayed_call(id, session=None):
 
 
 @b.session_aware()
-def get_delayed_calls_to_start(time, session=None):
+def get_delayed_calls_to_start(time, batch_size=None, session=None):
     query = b.model_query(models.DelayedCall)
 
     query = query.filter(models.DelayedCall.execution_time < time)
     query = query.filter_by(processing=False)
     query = query.order_by(models.DelayedCall.execution_time)
+    query = query.limit(batch_size)
 
     return query.all()
 

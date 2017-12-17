@@ -346,8 +346,8 @@ def update_task_execution_state(**kwargs):
 
 # Delayed calls.
 
-def get_delayed_calls_to_start(time):
-    return IMPL.get_delayed_calls_to_start(time)
+def get_delayed_calls_to_start(time, batch_size=None):
+    return IMPL.get_delayed_calls_to_start(time, batch_size)
 
 
 def create_delayed_call(values):

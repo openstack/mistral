@@ -228,6 +228,17 @@ scheduler_opts = [
             'delay limited by this property.'
         )
     ),
+    cfg.IntOpt(
+        'batch_size',
+        default=None,
+        min=1,
+        help=(
+            'The max number of delayed calls will be selected during '
+            'a scheduler iteration. '
+            'If this property equals None then there is no '
+            'restriction on selection.'
+        )
+    )
 ]
 
 cron_trigger_opts = [
