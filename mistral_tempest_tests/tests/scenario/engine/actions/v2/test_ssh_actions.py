@@ -268,6 +268,7 @@ class SSHActionsTestsV2(base.TestCaseAdvanced):
 
     @decorators.attr(type='sanity')
     @decorators.idempotent_id('6c09fb04-70b4-43a6-b5f8-a53ca92e66e0')
+    @decorators.skip_because(bug="1736685")
     def test_run_ssh_proxied_action(self):
         guest_vm_ip = self.guest_vm['addresses'].popitem()[1][0]['addr']
 
