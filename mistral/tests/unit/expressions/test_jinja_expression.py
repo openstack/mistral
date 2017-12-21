@@ -349,7 +349,7 @@ class JinjaEvaluatorTest(base.BaseTest):
         }, result)
 
     def test_executions(self):
-        with db_api.transaction():
+        with db_api.transaction(read_only=True):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
@@ -362,10 +362,9 @@ class JinjaEvaluatorTest(base.BaseTest):
             result = self._evaluator.evaluate('_|executions()', ctx)
 
             self.assertEqual([created0, created1], result)
-            db_api.rollback_tx()
 
     def test_executions_id_filter(self):
-        with db_api.transaction():
+        with db_api.transaction(read_only=True):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
@@ -383,10 +382,9 @@ class JinjaEvaluatorTest(base.BaseTest):
                 'executions(root_execution_id="one") ', ctx
             )
             self.assertEqual([created1], result)
-            db_api.rollback_tx()
 
     def test_executions_state_filter(self):
-        with db_api.transaction():
+        with db_api.transaction(read_only=True):
             db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
@@ -407,10 +405,9 @@ class JinjaEvaluatorTest(base.BaseTest):
             )
 
             self.assertEqual([], result)
-            db_api.rollback_tx()
 
     def test_executions_from_time_filter(self):
-        with db_api.transaction():
+        with db_api.transaction(read_only=True):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
@@ -437,10 +434,9 @@ class JinjaEvaluatorTest(base.BaseTest):
             )
 
             self.assertEqual([], result)
-            db_api.rollback_tx()
 
     def test_executions_to_time_filter(self):
-        with db_api.transaction():
+        with db_api.transaction(read_only=True):
             created0 = db_api.create_workflow_execution(WF_EXECS[0])
             created1 = db_api.create_workflow_execution(WF_EXECS[1])
 
@@ -467,7 +463,6 @@ class JinjaEvaluatorTest(base.BaseTest):
             )
 
             self.assertEqual([], result)
-            db_api.rollback_tx()
 
     @mock.patch('mistral.db.v2.api.get_workflow_execution')
     def test_function_execution(self, workflow_execution):

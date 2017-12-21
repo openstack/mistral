@@ -53,8 +53,8 @@ def end_tx():
 
 
 @contextlib.contextmanager
-def transaction():
-    with IMPL.transaction():
+def transaction(read_only=False):
+    with IMPL.transaction(read_only):
         yield
 
 
