@@ -51,7 +51,7 @@ class WorkflowVariablesTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {'param2': 'Renat'})
+        wf_ex = self.engine.start_workflow('wf', wf_input={'param2': 'Renat'})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -96,8 +96,7 @@ class WorkflowVariablesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf2',
-            "",
-            {"wf_action": "std.echo", "param1": "Hello"}
+            wf_input={'wf_action': 'std.echo', 'param1': 'Hello'}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -137,8 +136,7 @@ class WorkflowVariablesTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf3',
-            "",
-            {"wf_action": "std.echo", "wf_input": {"output": "Hello"}}
+            wf_input={'wf_action': 'std.echo', 'wf_input': {'output': 'Hello'}}
         )
 
         self.await_workflow_success(wf_ex.id)

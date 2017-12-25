@@ -91,7 +91,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNotNone(db_api.get_workflow_execution(wf_ex.id))
@@ -122,7 +122,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -152,7 +152,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -210,7 +210,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -261,7 +261,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -313,7 +313,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -361,7 +361,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -402,7 +402,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -430,7 +430,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -457,7 +457,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -485,7 +485,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -514,7 +514,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -549,7 +549,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -588,7 +588,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(wb_text)
 
-        wf_ex = self.engine.start_workflow('wb.wf', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -624,7 +624,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -660,7 +660,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -691,7 +691,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -731,7 +731,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -772,7 +772,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -812,7 +812,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 

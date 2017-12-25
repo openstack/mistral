@@ -40,7 +40,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.engine.stop_workflow(
             wf_ex.id,
@@ -85,7 +85,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wf = wf_service.create_workflows(workflow)[0]
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         with db_api.transaction():
             db_api.delete_workflow_definition(wf.id)
@@ -117,7 +117,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.engine.pause_workflow(wf_ex.id)
 
@@ -168,7 +168,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -218,7 +218,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(workbook)
 
-        wf_ex = self.engine.start_workflow('wb.wf', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf')
 
         self.engine.stop_workflow(
             wf_ex.id,
@@ -284,7 +284,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(workbook)
 
-        self.engine.start_workflow('wb.wf', '', {})
+        self.engine.start_workflow('wb.wf')
 
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
@@ -351,7 +351,7 @@ class WorkflowCancelTest(base.EngineTestCase):
         """
         wb_service.create_workbook_v2(workbook)
 
-        wf_ex = self.engine.start_workflow('wb.wf', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf')
 
         self.engine.stop_workflow(
             wf_ex.id,
@@ -421,7 +421,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(workbook)
 
-        self.engine.start_workflow('wb.wf', '', {})
+        self.engine.start_workflow('wb.wf')
 
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
@@ -500,7 +500,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(workbook)
 
-        self.engine.start_workflow('wb.wf', '', {})
+        self.engine.start_workflow('wb.wf')
 
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()
@@ -585,7 +585,7 @@ class WorkflowCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(workbook)
 
-        self.engine.start_workflow('wb.wf', '', {})
+        self.engine.start_workflow('wb.wf')
 
         with db_api.transaction():
             wf_execs = db_api.get_workflow_executions()

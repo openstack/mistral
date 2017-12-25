@@ -32,7 +32,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
     def _run_workflow(self, wf_text, expected_state=states.ERROR):
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_state(wf_ex.id, expected_state)
 
@@ -113,7 +113,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         """
 
         wf_service.create_workflows(wf_text)
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -147,7 +147,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -180,7 +180,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -278,7 +278,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', None)
+        wf_ex = self.engine.start_workflow('wf')
 
         self.assertIn(
             "Failed to find action [action_name=wrong.task]",
@@ -441,7 +441,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', None)
+        wf_ex = self.engine.start_workflow('wf')
 
         self.assertIn(
             "Can not evaluate YAQL expression [expression=wrong(yaql)",
@@ -464,7 +464,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {'var': 2})
+        wf_ex = self.engine.start_workflow('wf', wf_input={'var': 2})
 
         self.assertIn("Can not evaluate YAQL expression", wf_ex.state_info)
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -495,7 +495,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -647,7 +647,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         calls = db_api.get_delayed_calls()
 
@@ -674,7 +674,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         calls = db_api.get_delayed_calls()
 
@@ -705,7 +705,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -740,7 +740,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 

@@ -58,7 +58,7 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK1)
 
     def test_fail(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 1})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 1})
 
         self.await_workflow_error(wf_ex.id)
 
@@ -75,7 +75,7 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
         )
 
     def test_succeed(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 2})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 2})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -92,7 +92,7 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
         )
 
     def test_pause(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 3})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 3})
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -144,7 +144,7 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK2)
 
     def test_fail(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 1})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 1})
 
         self.await_workflow_error(wf_ex.id)
 
@@ -161,7 +161,7 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
         )
 
     def test_succeed(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 2})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 2})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -178,7 +178,7 @@ class SimpleEngineWorkflowLevelCommandsTest(base.EngineTestCase):
         )
 
     def test_pause(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 3})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 3})
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -263,7 +263,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK3)
 
     def test_fail_first(self):
-        wf_ex = self.engine.start_workflow('my_wb.fail_first_wf', '', None)
+        wf_ex = self.engine.start_workflow('my_wb.fail_first_wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -280,7 +280,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
         )
 
     def test_fail_second(self):
-        wf_ex = self.engine.start_workflow('my_wb.fail_second_wf', '', None)
+        wf_ex = self.engine.start_workflow('my_wb.fail_second_wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -301,7 +301,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
         self.await_workflow_error(wf_ex.id)
 
     def test_succeed_first(self):
-        wf_ex = self.engine.start_workflow('my_wb.succeed_first_wf', '', None)
+        wf_ex = self.engine.start_workflow('my_wb.succeed_first_wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -318,7 +318,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
         )
 
     def test_succeed_second(self):
-        wf_ex = self.engine.start_workflow('my_wb.succeed_second_wf', '', None)
+        wf_ex = self.engine.start_workflow('my_wb.succeed_second_wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -371,7 +371,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK4)
 
     def test_fail(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 1})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 1})
 
         self.await_workflow_error(wf_ex.id)
 
@@ -390,7 +390,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
         self.assertEqual('my_var value is 1', wf_ex.state_info)
 
     def test_succeed(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 2})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 2})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -409,7 +409,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
         self.assertEqual("my_var value is 2", wf_ex.state_info)
 
     def test_pause(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 3})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 3})
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -462,7 +462,7 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK5)
 
     def test_fail(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 1})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 1})
 
         self.await_workflow_error(wf_ex.id)
 
@@ -481,7 +481,7 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
         self.assertEqual("my_var value is 1", wf_ex.state_info)
 
     def test_succeed(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 2})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 2})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -500,7 +500,7 @@ class SimpleEngineWorkflowLevelCmdsWithMsgTest(base.EngineTestCase):
         self.assertEqual("my_var value is 2", wf_ex.state_info)
 
     def test_pause(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf', '', {'my_var': 3})
+        wf_ex = self.engine.start_workflow('my_wb.wf', wf_input={'my_var': 3})
 
         self.await_workflow_paused(wf_ex.id)
 

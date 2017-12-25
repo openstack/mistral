@@ -49,10 +49,17 @@ STATE_TYPES = wtypes.Enum(
 )
 
 
-def _get_execution_resource(wf_ex):
-    # We need to refer to this lazy-load field explicitly in
-    # order to make sure that it is correctly loaded.
-    hasattr(wf_ex, 'output')
+def _load_deferred_output_field(ex):
+    if ex:
+        # We need to refer to this lazy-load field explicitly in
+        # order to make sure that it is correctly loaded.
+        hasattr(ex, 'output')
+
+    return ex
+
+
+def _get_workflow_execution_resource(wf_ex):
+    _load_deferred_output_field(wf_ex)
 
     return resources.Execution.from_db_model(wf_ex)
 
@@ -63,16 +70,14 @@ def _get_execution_resource(wf_ex):
     stop=tenacity.stop_after_attempt(10),
     wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
 )
-def _get_workflow_execution(id):
+def _get_workflow_execution(id, must_exist=True):
     with db_api.transaction():
-        wf_ex = db_api.get_workflow_execution(id)
+        if must_exist:
+            wf_ex = db_api.get_workflow_execution(id)
+        else:
+            wf_ex = db_api.load_workflow_execution(id)
 
-        # If a single object is requested we need to explicitly load
-        # 'output' attribute. We don't do this for collections to reduce
-        # amount of DB queries and network traffic.
-        hasattr(wf_ex, 'output')
-
-        return wf_ex
+        return _load_deferred_output_field(wf_ex)
 
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
@@ -211,8 +216,18 @@ class ExecutionsController(rest.RestController):
 
         LOG.debug("Create execution [execution=%s]", wf_ex)
 
-        engine = rpc.get_engine_client()
         exec_dict = wf_ex.to_dict()
+
+        exec_id = exec_dict.get('id')
+
+        if exec_id:
+            # If ID is present we need to check if such execution exists.
+            # If yes, the method just returns the object. If not, the ID
+            # will be used to create a new execution.
+            wf_ex = _get_workflow_execution(exec_id, must_exist=False)
+
+            if wf_ex:
+                return resources.Execution.from_db_model(wf_ex)
 
         if not (exec_dict.get('workflow_id')
                 or exec_dict.get('workflow_name')):
@@ -221,9 +236,12 @@ class ExecutionsController(rest.RestController):
                 " recommended."
             )
 
+        engine = rpc.get_engine_client()
+
         result = engine.start_workflow(
             exec_dict.get('workflow_id', exec_dict.get('workflow_name')),
             exec_dict.get('workflow_namespace', ''),
+            exec_id,
             exec_dict.get('input'),
             exec_dict.get('description', ''),
             **exec_dict.get('params') or {}
@@ -329,7 +347,7 @@ class ExecutionsController(rest.RestController):
         )
 
         if include_output:
-            resource_function = _get_execution_resource
+            resource_function = _get_workflow_execution_resource
         else:
             resource_function = None
 

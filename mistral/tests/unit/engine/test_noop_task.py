@@ -78,7 +78,10 @@ class NoopTaskEngineTest(base.EngineTestCase):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {'num1': 1, 'num2': 1})
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={'num1': 1, 'num2': 1}
+        )
 
         self.await_workflow_success(wf_ex.id)
 
@@ -107,7 +110,10 @@ class NoopTaskEngineTest(base.EngineTestCase):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {'num1': 1, 'num2': 2})
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={'num1': 1, 'num2': 2}
+        )
 
         self.await_workflow_success(wf_ex.id)
 

@@ -39,7 +39,7 @@ class WorkflowStopTest(base.EngineTestCase):
         """
         wf_service.create_workflows(WORKFLOW)
 
-        self.exec_id = self.engine.start_workflow('wf', '', {}).id
+        self.exec_id = self.engine.start_workflow('wf').id
 
     def test_stop_failed(self):
         self.engine.stop_workflow(self.exec_id, states.SUCCESS, "Force stop")

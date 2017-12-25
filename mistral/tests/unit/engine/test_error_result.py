@@ -83,8 +83,7 @@ class ErrorResultTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf',
-            '',
-            {
+            wf_input={
                 'success_result': None,
                 'error_result': 2
             }
@@ -117,8 +116,7 @@ class ErrorResultTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf',
-            '',
-            {
+            wf_input={
                 'success_result': None,
                 'error_result': 3
             }
@@ -151,8 +149,7 @@ class ErrorResultTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'wf',
-            '',
-            {
+            wf_input={
                 'success_result': 'success',
                 'error_result': None
             }

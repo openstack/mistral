@@ -69,7 +69,10 @@ class JavaScriptEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('test_js.js_test', '', {'num': 50})
+        wf_ex = self.engine.start_workflow(
+            'test_js.js_test',
+            wf_input={'num': 50}
+        )
 
         self.await_workflow_success(wf_ex.id)
 
@@ -88,7 +91,10 @@ class JavaScriptEngineTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('test_js.js_test', '', {'num': 50})
+        wf_ex = self.engine.start_workflow(
+            'test_js.js_test',
+            wf_input={'num': 50}
+        )
 
         self.await_workflow_success(wf_ex.id)
 

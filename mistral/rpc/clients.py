@@ -96,18 +96,27 @@ class EngineClient(eng.Engine):
         self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     @base.wrap_messaging_exception
-    def start_workflow(self, wf_identifier, wf_namespace, wf_input=None,
-                       description='', **params):
+    def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
+                       wf_input=None, description='', **params):
         """Starts workflow sending a request to engine over RPC.
 
+        :param wf_identifier: Workflow identifier.
+        :param wf_namespace Workflow namespace.
+        :param wf_namespace: Workflow namespace.
+        :param wf_input: Workflow input data as a dictionary.
+        :param wf_ex_id: Workflow execution id. If passed, it will be set
+            in the new execution object.
+        :param description: Execution description.
+        :param params: Additional workflow type specific parameters.
         :return: Workflow execution.
         """
         return self._client.sync_call(
             auth_ctx.ctx(),
             'start_workflow',
-            workflow_identifier=wf_identifier,
-            workflow_namespace=wf_namespace,
-            workflow_input=wf_input or {},
+            wf_identifier=wf_identifier,
+            wf_namespace=wf_namespace,
+            wf_ex_id=wf_ex_id,
+            wf_input=wf_input or {},
             description=description,
             params=params
         )
@@ -117,6 +126,10 @@ class EngineClient(eng.Engine):
                      description=None, **params):
         """Starts action sending a request to engine over RPC.
 
+        :param action_name: Action name.
+        :param action_input: Action input data as a dictionary.
+        :param description: Execution description.
+        :param params: Additional options for action running.
         :return: Action execution.
         """
         return self._client.sync_call(
@@ -149,7 +162,7 @@ class EngineClient(eng.Engine):
             a workflow execution rather than action execution. It happens
             when a nested workflow execution sends its result to a parent
             workflow.
-        :param async: If True, run action in asynchronous mode (w/o waiting
+        :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
         :return: Action(or workflow if wf_action=True) execution object.
         """
@@ -183,7 +196,7 @@ class EngineClient(eng.Engine):
             a workflow execution rather than action execution. It happens
             when a nested workflow execution sends its result to a parent
             workflow.
-        :param async: If True, run action in asynchronous mode (w/o waiting
+        :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
         :return: Action(or workflow if wf_action=True) execution object.
         """
@@ -209,7 +222,7 @@ class EngineClient(eng.Engine):
         return self._client.sync_call(
             auth_ctx.ctx(),
             'pause_workflow',
-            execution_id=wf_ex_id
+            wf_ex_id=wf_ex_id
         )
 
     @base.wrap_messaging_exception
@@ -267,7 +280,7 @@ class EngineClient(eng.Engine):
         return self._client.sync_call(
             auth_ctx.ctx(),
             'stop_workflow',
-            execution_id=wf_ex_id,
+            wf_ex_id=wf_ex_id,
             state=state,
             message=message
         )
@@ -284,7 +297,7 @@ class EngineClient(eng.Engine):
         return self._client.sync_call(
             auth_ctx.ctx(),
             'rollback_workflow',
-            execution_id=wf_ex_id
+            wf_ex_id=wf_ex_id
         )
 
 

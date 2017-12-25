@@ -62,13 +62,16 @@ class Workflow(object):
             self.wf_spec = None
 
     @profiler.trace('workflow-start')
-    def start(self, wf_def, input_dict, desc='', params=None):
+    def start(self, wf_def, wf_ex_id, input_dict, desc='', params=None):
         """Start workflow.
 
         :param wf_def: Workflow definition.
+        :param wf_ex_id: Workflow execution id.
         :param input_dict: Workflow input.
         :param desc: Workflow execution description.
         :param params: Workflow type specific parameters.
+
+        :raises
         """
 
         assert not self.wf_ex
@@ -89,6 +92,7 @@ class Workflow(object):
 
         self._create_execution(
             wf_def,
+            wf_ex_id,
             self.prepare_input(input_dict),
             desc,
             params
@@ -253,8 +257,9 @@ class Workflow(object):
 
         return final_context
 
-    def _create_execution(self, wf_def, input_dict, desc, params):
+    def _create_execution(self, wf_def, wf_ex_id, input_dict, desc, params):
         self.wf_ex = db_api.create_workflow_execution({
+            'id': wf_ex_id,
             'name': wf_def.name,
             'description': desc,
             'workflow_name': wf_def.name,

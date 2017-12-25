@@ -47,7 +47,7 @@ class ActionContextTest(base.EngineTestCase):
         wf_service.create_workflows(WF)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 

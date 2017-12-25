@@ -106,7 +106,7 @@ class EnvironmentTest(base.EngineTestCase):
 
     @mock.patch.object(r_exe.RemoteExecutor, 'run_action', MOCK_RUN_AT_TARGET)
     def _test_subworkflow(self, env):
-        wf2_ex = self.engine.start_workflow('my_wb.wf2', '', {}, env=env)
+        wf2_ex = self.engine.start_workflow('my_wb.wf2', env=env)
 
         # Execution of 'wf2'.
         self.assertIsNotNone(wf2_ex)
@@ -236,8 +236,6 @@ class EnvironmentTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf',
-            '',
-            {},
             env=env,
             evaluate_env=True
         )
@@ -261,8 +259,6 @@ class EnvironmentTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf',
-            '',
-            {},
             env=env,
             evaluate_env=False
         )
@@ -310,8 +306,6 @@ class EnvironmentTest(base.EngineTestCase):
 
         parent_wf_ex = self.engine.start_workflow(
             'parent_wf',
-            '',
-            {},
             env=env,
             evaluate_env=False
         )
@@ -343,8 +337,6 @@ class EnvironmentTest(base.EngineTestCase):
 
         parent_wf_ex = self.engine.start_workflow(
             'parent_wf',
-            '',
-            {},
             env=env,
             evaluate_env=True
         )

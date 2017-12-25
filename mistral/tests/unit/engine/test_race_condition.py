@@ -141,7 +141,7 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
 
         self.block_action()
 
-        wf_ex = self.engine.start_workflow('wf', '', None)
+        wf_ex = self.engine.start_workflow('wf')
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -183,7 +183,7 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
 
         self.block_action()
 
-        wf_ex = self.engine.start_workflow('wf', '', None)
+        wf_ex = self.engine.start_workflow('wf')
 
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 

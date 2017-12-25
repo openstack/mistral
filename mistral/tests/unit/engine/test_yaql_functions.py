@@ -62,7 +62,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -130,7 +130,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -165,7 +165,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -198,7 +198,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -243,7 +243,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -275,7 +275,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -300,7 +300,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -337,8 +337,7 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf',
-            '',
-            {'k1': 'v1'},
+            wf_input={'k1': 'v1'},
             param1='blablabla'
         )
 

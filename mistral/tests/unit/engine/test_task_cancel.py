@@ -52,7 +52,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_state(wf_ex.id, states.RUNNING)
 
@@ -143,7 +143,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(workbook)
 
-        wf_ex = self.engine.start_workflow('wb.wf', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf')
 
         self.await_workflow_state(wf_ex.id, states.RUNNING)
 
@@ -219,7 +219,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_state(wf_ex.id, states.RUNNING)
 
@@ -308,7 +308,7 @@ class TaskCancelTest(base.EngineTestCase):
 
         wb_service.create_workbook_v2(wb_def)
 
-        wf1_ex = self.engine.start_workflow('wb1.wf1', '', {})
+        wf1_ex = self.engine.start_workflow('wb1.wf1')
 
         self.await_workflow_state(wf1_ex.id, states.RUNNING)
 

@@ -474,23 +474,101 @@ class TestExecutionsController(base.APITest):
         self.assertIn(expected_fault, resp.json['faultstring'])
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
-    def test_post(self, f):
-        f.return_value = WF_EX.to_dict()
+    @mock.patch.object(db_api, 'load_workflow_execution')
+    def test_post_auto_id(self, load_wf_ex_func, start_wf_func):
+        # NOTE: In fact, we use "white box" testing here to understand
+        # if the REST controller calls other APIs as expected. This is
+        # the only way of testing available with the current testing
+        # infrastructure.
+        start_wf_func.return_value = WF_EX.to_dict()
 
-        resp = self.app.post_json('/v2/executions', WF_EX_JSON_WITH_DESC)
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+
+        # We don't want to pass execution ID in this case.
+        del json_body['id']
+
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body)
 
         self.assertEqual(201, resp.status_int)
-        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
+        self.assertDictEqual(expected_json, resp.json)
 
-        exec_dict = WF_EX_JSON_WITH_DESC
+        load_wf_ex_func.assert_not_called()
 
-        f.assert_called_once_with(
-            exec_dict['workflow_id'],
+        start_wf_func.assert_called_once_with(
+            expected_json['workflow_id'],
             '',
-            json.loads(exec_dict['input']),
-            exec_dict['description'],
-            **json.loads(exec_dict['params'])
+            None,
+            json.loads(expected_json['input']),
+            expected_json['description'],
+            **json.loads(expected_json['params'])
         )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    @mock.patch.object(db_api, 'load_workflow_execution')
+    def test_post_with_exec_id_exec_doesnt_exist(self, load_wf_ex_func,
+                                                 start_wf_func):
+        # NOTE: In fact, we use "white box" testing here to understand
+        # if the REST controller calls other APIs as expected. This is
+        # the only way of testing available with the current testing
+        # infrastructure.
+
+        # Imitate that the execution doesn't exist in DB.
+        load_wf_ex_func.return_value = None
+        start_wf_func.return_value = WF_EX.to_dict()
+
+        # We want to pass execution ID in this case so we don't delete 'id'
+        # from the dict.
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
+        load_wf_ex_func.assert_called_once_with(expected_json['id'])
+
+        start_wf_func.assert_called_once_with(
+            expected_json['workflow_id'],
+            '',
+            expected_json['id'],
+            json.loads(expected_json['input']),
+            expected_json['description'],
+            **json.loads(expected_json['params'])
+        )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    @mock.patch.object(db_api, 'load_workflow_execution')
+    def test_post_with_exec_id_exec_exists(self, load_wf_ex_func,
+                                           start_wf_func):
+        # NOTE: In fact, we use "white box" testing here to understand
+        # if the REST controller calls other APIs as expected. This is
+        # the only way of testing available with the current testing
+        # infrastructure.
+
+        # Imitate that the execution exists in DB.
+        load_wf_ex_func.return_value = WF_EX
+
+        # We want to pass execution ID in this case so we don't delete 'id'
+        # from the dict.
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
+        load_wf_ex_func.assert_called_once_with(expected_json['id'])
+
+        # Note that "start_workflow" method on engine API should not be called
+        # in this case because we passed execution ID to the endpoint and the
+        # corresponding object exists.
+        start_wf_func.assert_not_called()
 
     @mock.patch.object(
         rpc_clients.EngineClient,
@@ -657,7 +735,10 @@ class TestExecutionsController(base.APITest):
         args, kwargs = mock_get_all.call_args
         resource_function = kwargs['resource_function']
 
-        self.assertEqual(execution._get_execution_resource, resource_function)
+        self.assertEqual(
+            execution._get_workflow_execution_resource,
+            resource_function
+        )
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
     @mock.patch.object(rest_utils, 'get_all')

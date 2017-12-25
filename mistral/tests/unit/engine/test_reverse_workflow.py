@@ -72,8 +72,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
-            '',
-            wf_input,
+            wf_input=wf_input,
             task_name='task1'
         )
 
@@ -109,8 +108,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
-            '',
-            wf_input,
+            wf_input=wf_input,
             task_name='task2'
         )
 
@@ -154,8 +152,7 @@ class ReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
-            '',
-            wf_input,
+            wf_input=wf_input,
             task_name='task4'
         )
 

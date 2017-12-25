@@ -88,7 +88,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         wb_service.create_workbook_v2(SIMPLE_WORKBOOK)
 
         # Run workflow and fail task.
-        wf_ex = self.engine.start_workflow('wb1.wf1', '', {}, task_name='t3')
+        wf_ex = self.engine.start_workflow('wb1.wf1', task_name='t3')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -200,8 +200,6 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         # Run workflow and fail task.
         wf_ex = self.engine.start_workflow(
             'wb1.wf1',
-            '',
-            {},
             task_name='t3',
             env=env
         )
@@ -341,7 +339,7 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         wb_service.create_workbook_v2(SIMPLE_WORKBOOK)
 
         # Run workflow and fail task.
-        wf_ex = self.engine.start_workflow('wb1.wf1', '', {}, task_name='t3')
+        wf_ex = self.engine.start_workflow('wb1.wf1', task_name='t3')
 
         self.await_workflow_error(wf_ex.id)
 

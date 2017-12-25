@@ -784,7 +784,9 @@ def create_workflow_execution(values, session=None):
         wf_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for WorkflowExecution: %s" % e.columns
+            "Duplicate entry for WorkflowExecution with ID {value} ".format(
+                value=e.value
+            )
         )
 
     return wf_ex

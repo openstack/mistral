@@ -47,7 +47,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -95,7 +95,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -148,7 +148,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -209,7 +209,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         def _num_of_tasks():
             return len(
@@ -290,7 +290,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -372,7 +372,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -449,7 +449,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -531,7 +531,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wfs_tasks_join_complex)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('main', '', {})
+        wf_ex = self.engine.start_workflow('main')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -596,7 +596,7 @@ class JoinEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('main', '', {})
+        wf_ex = self.engine.start_workflow('main')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -655,7 +655,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('main', '', {})
+        wf_ex = self.engine.start_workflow('main')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -709,7 +709,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('test-join', '', {})
+        wf_ex = self.engine.start_workflow('test-join')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -741,7 +741,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -785,7 +785,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -818,7 +818,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -851,7 +851,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
 
@@ -909,7 +909,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         tasks = db_api.get_task_executions(workflow_execution_id=wf_ex.id)
 
@@ -975,7 +975,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -1037,7 +1037,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -1061,7 +1061,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -1119,7 +1119,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -1195,7 +1195,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -1256,7 +1256,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('test_workflow', '', {})
+        wf_ex = self.engine.start_workflow('test_workflow')
 
         self.await_workflow_success(wf_ex.id)
 

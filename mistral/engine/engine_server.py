@@ -78,14 +78,16 @@ class EngineServer(service_base.MistralService):
         if self._rpc_server:
             self._rpc_server.stop(graceful)
 
-    def start_workflow(self, rpc_ctx, workflow_identifier, workflow_namespace,
-                       workflow_input, description, params):
+    def start_workflow(self, rpc_ctx, wf_identifier, wf_namespace,
+                       wf_ex_id, wf_input, description, params):
         """Receives calls over RPC to start workflows on engine.
 
         :param rpc_ctx: RPC request context.
-        :param workflow_identifier: Workflow definition identifier.
-        :param workflow_namespace: Workflow definition identifier.
-        :param workflow_input: Workflow input.
+        :param wf_identifier: Workflow definition identifier.
+        :param wf_namespace: Workflow definition identifier.
+        :param wf_input: Workflow input.
+        :param wf_ex_id: Workflow execution id. If passed, it will be set
+            in the new execution object.
         :param description: Workflow execution description.
         :param params: Additional workflow type specific parameters.
         :return: Workflow execution.
@@ -94,16 +96,17 @@ class EngineServer(service_base.MistralService):
         LOG.info(
             "Received RPC request 'start_workflow'[workflow_identifier=%s, "
             "workflow_input=%s, description=%s, params=%s]",
-            workflow_identifier,
-            utils.cut(workflow_input),
+            wf_identifier,
+            utils.cut(wf_input),
             description,
             params
         )
 
         return self.engine.start_workflow(
-            workflow_identifier,
-            workflow_namespace,
-            workflow_input,
+            wf_identifier,
+            wf_namespace,
+            wf_ex_id,
+            wf_input,
             description,
             **params
         )
@@ -171,19 +174,19 @@ class EngineServer(service_base.MistralService):
 
         return self.engine.on_action_update(action_ex_id, state, wf_action)
 
-    def pause_workflow(self, rpc_ctx, execution_id):
+    def pause_workflow(self, rpc_ctx, wf_ex_id):
         """Receives calls over RPC to pause workflows on engine.
 
         :param rpc_ctx: Request context.
-        :param execution_id: Workflow execution id.
+        :param wf_ex_id: Workflow execution id.
         :return: Workflow execution.
         """
         LOG.info(
             "Received RPC request 'pause_workflow'[execution_id=%s]",
-            execution_id
+            wf_ex_id
         )
 
-        return self.engine.pause_workflow(execution_id)
+        return self.engine.pause_workflow(wf_ex_id)
 
     def rerun_workflow(self, rpc_ctx, task_ex_id, reset=True, env=None):
         """Receives calls over RPC to rerun workflows on engine.
@@ -216,7 +219,7 @@ class EngineServer(service_base.MistralService):
 
         return self.engine.resume_workflow(wf_ex_id, env)
 
-    def stop_workflow(self, rpc_ctx, execution_id, state, message=None):
+    def stop_workflow(self, rpc_ctx, wf_ex_id, state, message=None):
         """Receives calls over RPC to stop workflows on engine.
 
         Sets execution state to SUCCESS or ERROR. No more tasks will be
@@ -224,7 +227,7 @@ class EngineServer(service_base.MistralService):
         will be ignored.
 
         :param rpc_ctx: RPC request context.
-        :param execution_id: Workflow execution id.
+        :param wf_ex_id: Workflow execution id.
         :param state: State assigned to the workflow. Permitted states are
             SUCCESS or ERROR.
         :param message: Optional information string.
@@ -234,25 +237,26 @@ class EngineServer(service_base.MistralService):
         LOG.info(
             "Received RPC request 'stop_workflow'[execution_id=%s,"
             " state=%s, message=%s]",
-            execution_id,
+            wf_ex_id,
             state,
             message
         )
 
-        return self.engine.stop_workflow(execution_id, state, message)
+        return self.engine.stop_workflow(wf_ex_id, state, message)
 
-    def rollback_workflow(self, rpc_ctx, execution_id):
+    def rollback_workflow(self, rpc_ctx, wf_ex_id):
         """Receives calls over RPC to rollback workflows on engine.
 
         :param rpc_ctx: RPC request context.
+        :param wf_ex_id Workflow execution id.
         :return: Workflow execution.
         """
         LOG.info(
             "Received RPC request 'rollback_workflow'[execution_id=%s]",
-            execution_id
+            wf_ex_id
         )
 
-        return self.engine.rollback_workflow(execution_id)
+        return self.engine.rollback_workflow(wf_ex_id)
 
 
 def get_oslo_service(setup_profiler=True):

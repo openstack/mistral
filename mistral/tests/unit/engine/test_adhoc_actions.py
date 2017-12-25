@@ -166,8 +166,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_workflow_with_adhoc_action(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf1',
-            '',
-            {'str1': 'a', 'str2': 'b'}
+            wf_input={'str1': 'a', 'str2': 'b'}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -186,8 +185,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_adhoc_action_without_input_value(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf2',
-            '',
-            {'str1': 'a', 'str2': 'b'}
+            wf_input={'str1': 'a', 'str2': 'b'}
         )
 
         self.await_workflow_success(wf_ex.id)
@@ -205,8 +203,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_adhoc_action_without_sufficient_input_value(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf3',
-            '',
-            {'str1': 'a', 'str2': 'b'}
+            wf_input={'str1': 'a', 'str2': 'b'}
         )
 
         self.assertIn("Invalid input", wf_ex.state_info)
@@ -215,8 +212,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def test_run_adhoc_action_with_env(self):
         wf_ex = self.engine.start_workflow(
             'my_wb.wf4',
-            '',
-            {'str1': 'a'},
+            wf_input={'str1': 'a'},
             env={'foo': 'bar'}
         )
 
@@ -233,7 +229,7 @@ class AdhocActionsTest(base.EngineTestCase):
             )
 
     def test_run_nested_adhoc_with_output(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf5', '')
+        wf_ex = self.engine.start_workflow('my_wb.wf5')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -248,7 +244,7 @@ class AdhocActionsTest(base.EngineTestCase):
             )
 
     def test_missing_adhoc_action_definition(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf6', '')
+        wf_ex = self.engine.start_workflow('my_wb.wf6')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -263,7 +259,7 @@ class AdhocActionsTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task1.state)
 
     def test_nested_missing_adhoc_action_definition(self):
-        wf_ex = self.engine.start_workflow('my_wb.wf7', '')
+        wf_ex = self.engine.start_workflow('my_wb.wf7')
 
         self.await_workflow_error(wf_ex.id)
 

@@ -215,27 +215,32 @@ class Execution(resource.Resource):
     """Execution resource."""
 
     id = wtypes.text
-    "id is immutable and auto assigned."
+    "execution ID. It is immutable and auto assigned or determined by the API "
+    "client on execution creation. "
+    "If it's passed to POST method from a client it'll be assigned to the "
+    "newly created execution object, but only if an execution with such ID "
+    "doesn't exist. If it exists, then the endpoint will just return "
+    "execution properties in JSON."
+
+    workflow_id = wtypes.text
+    "workflow ID"
 
     workflow_name = wtypes.text
-    "reference to workflow definition"
+    "workflow name"
 
     workflow_namespace = wtypes.text
-    """reference to workflow namespace. The workflow namespace is also saved
+    """Workflow namespace. The workflow namespace is also saved
      under params and passed to all sub-workflow executions. When looking for
      the next sub-workflow to run, The correct workflow will be found by
      name and namespace, where the namespace can be the workflow namespace or
      the default namespace. Workflows in the same namespace as the top workflow
      will be given a higher priority."""
 
-    workflow_id = wtypes.text
-    "reference to workflow ID"
-
     description = wtypes.text
-    "description of workflow execution."
+    "description of workflow execution"
 
     params = types.jsontype
-    """params define workflow type specific parameters. For example, reverse
+    """'params' define workflow type specific parameters. For example, reverse
      workflow takes one parameter 'task_name' that defines a target task."""
 
     task_execution_id = wtypes.text
@@ -251,10 +256,10 @@ class Execution(resource.Resource):
     "an optional state information string"
 
     input = types.jsontype
-    "input is a JSON structure containing workflow input values."
+    "input is a JSON structure containing workflow input values"
 
     output = types.jsontype
-    "output is a workflow output."
+    "output is a workflow output"
 
     created_at = wtypes.text
     updated_at = wtypes.text

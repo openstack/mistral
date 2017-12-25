@@ -225,7 +225,7 @@ class SubworkflowsTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WB6)
 
     def test_subworkflow_success(self):
-        wf2_ex = self.engine.start_workflow('wb1.wf2', '', None)
+        wf2_ex = self.engine.start_workflow('wb1.wf2')
 
         project_id = auth_context.ctx().project_id
 
@@ -307,7 +307,7 @@ class SubworkflowsTest(base.EngineTestCase):
     @mock.patch.object(std_actions.EchoAction, 'run',
                        mock.MagicMock(side_effect=exc.ActionException))
     def test_subworkflow_error(self):
-        self.engine.start_workflow('wb1.wf2', '', None)
+        self.engine.start_workflow('wb1.wf2')
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
@@ -325,7 +325,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.await_workflow_error(wf2_ex.id)
 
     def test_subworkflow_yaql_error(self):
-        wf_ex = self.engine.start_workflow('wb2.wf1', '', None)
+        wf_ex = self.engine.start_workflow('wb2.wf1')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -347,7 +347,7 @@ class SubworkflowsTest(base.EngineTestCase):
     def test_subworkflow_environment_inheritance(self):
         env = {'key1': 'abc'}
 
-        wf2_ex = self.engine.start_workflow('wb1.wf2', '', None, env=env)
+        wf2_ex = self.engine.start_workflow('wb1.wf2', env=env)
 
         # Execution of 'wf2'.
         self.assertIsNotNone(wf2_ex)
@@ -383,10 +383,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.await_workflow_success(wf2_ex.id)
 
     def test_dynamic_subworkflow_wf2(self):
-        ex = self.engine.start_workflow(
-            wf_identifier='wb3.wf1',
-            wf_input={'wf_name': 'wf2'}
-        )
+        ex = self.engine.start_workflow('wb3.wf1', wf_input={'wf_name': 'wf2'})
 
         self.await_workflow_success(ex.id)
 
@@ -396,7 +393,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
     def test_dynamic_subworkflow_call_failure(self):
         ex = self.engine.start_workflow(
-            wf_identifier='wb3.wf1',
+            'wb3.wf1',
             wf_input={'wf_name': 'not_existing_wf'}
         )
 
@@ -415,7 +412,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
     def test_string_workflow_input_failure(self):
         ex = self.engine.start_workflow(
-            wf_identifier='wb4.wf1',
+            'wb4.wf1',
             wf_input={'wf_name': 'wf2', 'inp': 'invalid_string_input'}
         )
 
@@ -428,7 +425,7 @@ class SubworkflowsTest(base.EngineTestCase):
 
     def _test_dynamic_workflow_with_dict_param(self, wf_identifier):
         ex = self.engine.start_workflow(
-            wf_identifier=wf_identifier,
+            wf_identifier,
             wf_input={'wf_name': 'wf2', 'inp': {'inp': 'abc'}}
         )
 
@@ -440,7 +437,7 @@ class SubworkflowsTest(base.EngineTestCase):
             self.assertEqual({'sub_wf_out': 'abc'}, ex.output)
 
     def test_subworkflow_root_execution_id(self):
-        self.engine.start_workflow('wb6.wf1', '', None)
+        self.engine.start_workflow('wb6.wf1')
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 3, 0.5, 5)
 

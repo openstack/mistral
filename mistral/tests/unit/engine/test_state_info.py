@@ -46,7 +46,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         wf_service.create_workflows(workflow)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('test_wf', '', {})
+        wf_ex = self.engine.start_workflow('test_wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -70,7 +70,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         wf_service.create_workflows(workflow)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('test_wf', '', {})
+        wf_ex = self.engine.start_workflow('test_wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -96,7 +96,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
         wf_service.create_workflows(workflow)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('test_wf', '', {})
+        wf_ex = self.engine.start_workflow('test_wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -131,7 +131,7 @@ class ExecutionStateInfoTest(base.EngineTestCase):
 
         wf_service.create_workflows(workflow)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 

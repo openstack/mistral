@@ -64,7 +64,7 @@ class EngineProfilerTest(base.EngineTestCase):
 
         self.ctx_serializer.deserialize_context(ctx)
 
-        wf_ex = self.engine_client.start_workflow('wf', '', {})
+        wf_ex = self.engine_client.start_workflow('wf')
 
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex['state'])
@@ -87,7 +87,7 @@ class EngineProfilerTest(base.EngineTestCase):
 
         self.ctx_serializer.deserialize_context({})
 
-        wf_ex = self.engine_client.start_workflow('wf', '', {})
+        wf_ex = self.engine_client.start_workflow('wf')
 
         self.assertIsNotNone(wf_ex)
         self.assertEqual(states.RUNNING, wf_ex['state'])

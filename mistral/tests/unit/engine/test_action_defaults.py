@@ -167,8 +167,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf1_with_items',
-            '',
-            wf_input,
+            wf_input=wf_input,
             env=ENV
         )
 
@@ -207,8 +206,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow(
             'wf2_with_items',
-            '',
-            wf_input,
+            wf_input=wf_input,
             env=ENV
         )
 

@@ -37,21 +37,32 @@ class DefaultEngine(base.Engine):
     @db_utils.retry_on_db_error
     @action_queue.process
     @profiler.trace('engine-start-workflow', hide_args=True)
-    def start_workflow(self, wf_identifier, wf_namespace='', wf_input=None,
-                       description='', **params):
+    def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
+                       wf_input=None, description='', **params):
         if wf_namespace:
             params['namespace'] = wf_namespace
 
-        with db_api.transaction():
-            wf_ex = wf_handler.start_workflow(
-                wf_identifier,
-                wf_namespace,
-                wf_input or {},
-                description,
-                params
-            )
+        try:
+            with db_api.transaction():
+                wf_ex = wf_handler.start_workflow(
+                    wf_identifier,
+                    wf_namespace,
+                    wf_ex_id,
+                    wf_input or {},
+                    description,
+                    params
+                )
 
-            return wf_ex.get_clone()
+                return wf_ex.get_clone()
+
+        except exceptions.DBDuplicateEntryError:
+            # NOTE(akovi): the workflow execution with a provided
+            # wf_ex_id may already exist. In this case, simply
+            # return the existing entity.
+            with db_api.transaction():
+                wf_ex = db_api.get_workflow_execution(wf_ex_id)
+
+                return wf_ex.get_clone()
 
     @db_utils.retry_on_db_error
     @action_queue.process

@@ -556,6 +556,7 @@ class WorkflowAction(Action):
         wf_handler.start_workflow(
             wf_def.id,
             wf_def.namespace,
+            None,
             input_dict,
             "sub-workflow execution",
             wf_params

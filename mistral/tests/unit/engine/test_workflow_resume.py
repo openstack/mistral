@@ -195,7 +195,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         wb_service.create_workbook_v2(RESUME_WORKBOOK)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -230,8 +230,6 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start workflow.
         wf_ex = self.engine.start_workflow(
             'resume_reverse.wf',
-            '',
-            {},
             task_name='task2'
         )
 
@@ -266,7 +264,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK_TWO_BRANCHES)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -296,7 +294,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK_TWO_START_TASKS)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -333,7 +331,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -382,7 +380,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         # Start and pause workflow.
         wb_service.create_workbook_v2(WORKBOOK_DIFFERENT_TASK_STATES)
 
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_paused(wf_ex.id)
 
@@ -414,7 +412,7 @@ class WorkflowResumeTest(base.EngineTestCase):
         }
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {}, env=env)
+        wf_ex = self.engine.start_workflow('wb.wf1', env=env)
 
         self.await_workflow_paused(wf_ex.id)
 

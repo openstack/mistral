@@ -63,7 +63,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(linear_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {}, env={'from': 'Neo'})
+        wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -133,7 +133,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(linear_with_branches_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {}, env={'from': 'Neo'})
+        wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -208,7 +208,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(parallel_tasks_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf',)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -286,7 +286,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(parallel_tasks_complex_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -365,12 +365,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(var_overwrite_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wf',
-            '',
-            {},
-            env={'from': 'Neo'}
-        )
+        wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -424,12 +419,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(var_overwrite_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'wf',
-            '',
-            {},
-            env={'from': 'Neo'}
-        )
+        wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
 
         self.await_workflow_success(wf_ex.id)
 
@@ -484,7 +474,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(linear_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -519,7 +509,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(linear_wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -559,7 +549,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(wf)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf1_with_items', '', {})
+        wf_ex = self.engine.start_workflow('wf1_with_items')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -597,7 +587,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(wf_def)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -657,7 +647,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wb_service.create_workbook_v2(wb_def)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf1', '', {})
+        wf_ex = self.engine.start_workflow('wb.wf1')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -703,7 +693,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         }
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', wf_input)
+        wf_ex = self.engine.start_workflow('wf', wf_input=wf_input)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -736,7 +726,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -775,7 +765,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -819,7 +809,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -860,7 +850,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -907,7 +897,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 

@@ -63,7 +63,7 @@ class TaskDefaultsDirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {})
+        wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -106,7 +106,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {}, task_name='task2')
+        wf_ex = self.engine.start_workflow('wf', task_name='task2')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -150,7 +150,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {}, task_name='task2')
+        wf_ex = self.engine.start_workflow('wf', task_name='task2')
 
         self.await_workflow_error(wf_ex.id)
 
@@ -188,7 +188,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         time_before = dt.datetime.now()
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {}, task_name='task1')
+        wf_ex = self.engine.start_workflow('wf', task_name='task1')
 
         self.await_workflow_success(wf_ex.id)
 
@@ -233,7 +233,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf', '', {}, task_name='task2')
+        wf_ex = self.engine.start_workflow('wf', task_name='task2')
 
         self.await_workflow_success(wf_ex.id)
 

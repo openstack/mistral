@@ -69,7 +69,6 @@ def _get_action_execution_resource(action_ex):
 
 
 def _get_action_execution_resource_for_list(action_ex):
-
     # TODO(nmakhotkin): Get rid of using dicts for constructing resources.
     # TODO(nmakhotkin): Use db_model for this instead.
     res = resources.ActionExecution.from_db_model(action_ex)
