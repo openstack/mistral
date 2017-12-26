@@ -27,6 +27,18 @@
         cmd: |
           set -e
           set -x
+          cat << 'EOF' >>"/tmp/dg-local.conf"
+          [[local|localrc]]
+          TEMPEST_PLUGINS='/opt/stack/new/mistral-tempest-plugin'
+          EOF
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/workspace'
+      environment: '{{ zuul | zuul_legacy_vars }}'
+
+    - shell:
+        cmd: |
+          set -e
+          set -x
           export PYTHONUNBUFFERED=true
           export DEVSTACK_GATE_NEUTRON=1
 
@@ -38,11 +50,13 @@
           fi
 
           export ENABLED_SERVICES=heat,h-api,h-api-cfn,h-api-cw,h-eng,tempest
+          export DEVSTACK_GATE_TEMPEST=1
           export PROJECTS="openstack/zaqar $PROJECTS"
           export PROJECTS="openstack/python-zaqarclient $PROJECTS"
           export PROJECTS="openstack/heat $PROJECTS"
           export PROJECTS="openstack/mistral $PROJECTS"
           export PROJECTS="openstack/mistral-dashboard $PROJECTS"
+          export PROJECTS="openstack/mistral-tempest-plugin $PROJECTS"
           export DEVSTACK_LOCAL_CONFIG="enable_plugin mistral https://git.openstack.org/openstack/mistral"
           export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat git://git.openstack.org/openstack/heat"
           export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin zaqar git://git.openstack.org/openstack/zaqar"

@@ -30,5 +30,4 @@ sudo cp $BASE/new/tempest/etc/logging.conf.sample $BASE/new/tempest/etc/logging.
 (cd $BASE/new/mistral/; sudo python setup.py install)
 
 export TOX_TESTENV_PASSENV=ZUUL_PROJECT
-(cd $BASE/new/tempest/; sudo -E testr init)
-(cd $BASE/new/tempest/; sudo -E tox -eall-plugin mistral)
+(cd $BASE/new/tempest/; sudo -E tox -evenv-tempest -- tempest run -r mistral)
