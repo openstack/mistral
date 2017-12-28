@@ -113,6 +113,7 @@ def executions_(context,
                 ):
 
     filter = {}
+
     if id is not None:
         filter = utils.filter_utils.create_or_update_filter(
             'id',
@@ -120,6 +121,7 @@ def executions_(context,
             "eq",
             filter
         )
+
     if root_execution_id is not None:
         filter = utils.filter_utils.create_or_update_filter(
             'root_execution_id',
@@ -152,8 +154,7 @@ def executions_(context,
             filter
         )
 
-    wf_executions = db_api.get_workflow_executions(**filter)
-    return wf_executions
+    return db_api.get_workflow_executions(**filter)
 
 
 def execution_(context):
