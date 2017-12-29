@@ -722,6 +722,11 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertNotIn("retry_task_policy", task_ex.runtime_context)
 
+    @mock.patch.object(
+        requests,
+        'request',
+        mock.MagicMock(side_effect=Exception())
+    )
     def test_retry_policy_negative_numbers(self):
         # Negative delay is not accepted.
         self.assertRaises(
@@ -776,6 +781,11 @@ class PoliciesTest(base.EngineTestCase):
             task_ex.runtime_context["retry_task_policy"]["retry_no"]
         )
 
+    @mock.patch.object(
+        requests,
+        'request',
+        mock.MagicMock(side_effect=Exception())
+    )
     def test_retry_policy_from_var_zero_iterations(self):
         wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
 
@@ -809,6 +819,11 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertNotIn("retry_task_policy", task_ex.runtime_context)
 
+    @mock.patch.object(
+        requests,
+        'request',
+        mock.MagicMock(side_effect=Exception())
+    )
     def test_retry_policy_from_var_negative_numbers(self):
         wb_service.create_workbook_v2(RETRY_WB_FROM_VAR)
 
