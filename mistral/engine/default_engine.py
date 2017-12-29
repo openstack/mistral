@@ -34,7 +34,7 @@ from mistral.workflow import states
 
 
 class DefaultEngine(base.Engine):
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     @profiler.trace('engine-start-workflow', hide_args=True)
     def start_workflow(self, wf_identifier, wf_namespace='', wf_input=None,
@@ -53,7 +53,7 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     def start_action(self, action_name, action_input,
                      description=None, **params):
@@ -105,7 +105,7 @@ class DefaultEngine(base.Engine):
 
             return db_api.create_action_execution(values)
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     @profiler.trace('engine-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex_id, result, wf_action=False,
@@ -120,7 +120,7 @@ class DefaultEngine(base.Engine):
 
             return action_ex.get_clone()
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     @profiler.trace('engine-on-action-update', hide_args=True)
     def on_action_update(self, action_ex_id, state, wf_action=False,
@@ -135,7 +135,7 @@ class DefaultEngine(base.Engine):
 
             return action_ex.get_clone()
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     def pause_workflow(self, wf_ex_id):
         with db_api.transaction():
@@ -145,7 +145,7 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     def rerun_workflow(self, task_ex_id, reset=True, env=None):
         with db_api.transaction():
@@ -157,7 +157,7 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     def resume_workflow(self, wf_ex_id, env=None):
         with db_api.transaction():
@@ -167,7 +167,7 @@ class DefaultEngine(base.Engine):
 
             return wf_ex.get_clone()
 
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     @action_queue.process
     def stop_workflow(self, wf_ex_id, state, message=None):
         with db_api.transaction():

@@ -166,7 +166,7 @@ class Scheduler(object):
         self.delete_calls(db_calls)
 
     @staticmethod
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     def _capture_calls():
         """Captures delayed calls eligible for processing (based on time).
 
@@ -280,7 +280,7 @@ class Scheduler(object):
                 context.set_ctx(None)
 
     @staticmethod
-    @db_utils.retry_on_deadlock
+    @db_utils.retry_on_db_error
     def delete_calls(db_calls):
         """Deletes delayed calls.
 

@@ -25,9 +25,11 @@ from mistral.services import security
 
 LOG = logging.getLogger(__name__)
 
+_RETRY_ERRORS = (db_exc.DBDeadlock, db_exc.DBConnectionError)
+
 
 @tenacity.retry(
-    retry=tenacity.retry_if_exception_type(db_exc.DBDeadlock),
+    retry=tenacity.retry_if_exception_type(_RETRY_ERRORS),
     stop=tenacity.stop_after_attempt(50),
     wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2)
 )
@@ -46,18 +48,22 @@ def _with_auth_context(auth_ctx, func, *args, **kw):
 
     try:
         return func(*args, **kw)
-    except db_exc.DBDeadlock as e:
+    except _RETRY_ERRORS:
         LOG.exception(
-            "DB deadlock detected, operation will be retried: %s", func
+            "DB error detected, operation will be retried: %s", func
         )
 
-        raise e
+        raise
     finally:
         context.set_ctx(old_auth_ctx)
 
 
-def retry_on_deadlock(func):
-    """Decorates the given function so that it retries on a DB deadlock.
+def retry_on_db_error(func):
+    """Decorates the given function so that it retries on DB errors.
+
+    Note that the decorator retries the function/method only on some
+    of the DB errors that are considered to be worth retrying, like
+    deadlocks and disconnections.
 
     :param func: Function to decorate.
     :return: Decorated function.
