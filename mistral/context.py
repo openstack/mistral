@@ -270,6 +270,8 @@ def create_action_context(execution_ctx):
         is_target=context.is_target,
         is_trust_scoped=context.is_trust_scoped,
         project_id=context.project_id,
+        project_name=context.project_name,
+        user_name=context.user_name,
         redelivered=context.redelivered,
         region_name=context.region_name,
         service_catalog=context.service_catalog,
