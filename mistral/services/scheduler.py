@@ -134,7 +134,8 @@ class Scheduler(object):
                 # the exception is not cleared from the context automatically.
                 # This results in subsequent log.warning calls to show invalid
                 # info.
-                sys.exc_clear()
+                if sys.version_info < (3,):
+                    sys.exc_clear()
 
             eventlet.sleep(
                 self._fixed_delay +
