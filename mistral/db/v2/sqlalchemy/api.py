@@ -373,61 +373,6 @@ def append_string(insert, compiler, **kw):
     return s
 
 
-@b.session_aware()
-def insert_or_ignore(model_cls, values, session=None):
-    """Insert a new object into DB or ignore if it already exists.
-
-    This method is based on ability of MySQL, PostgreSQL and SQLite
-    to check unique constraint violations and allow user to take a
-    conflict mitigation action. Hence, uniqueness of the object that's
-    being inserted should be considered only from this perspective.
-
-    Note: This method hasn't been tested on databases other than MySQL,
-    PostgreSQL 9.5 or later, and SQLite. Therefore there's no guarantee
-    that it will work with them.
-
-    :param model_cls: Model class.
-    :param values: Values of the new object.
-    """
-
-    model = model_cls()
-
-    model.update(values)
-
-    append = None
-    replace = None
-
-    dialect = b.get_dialect_name()
-
-    if dialect == 'sqlite':
-        replace = ('INSERT INTO', 'INSERT OR IGNORE INTO')
-    elif dialect == 'mysql':
-        append = 'ON DUPLICATE KEY UPDATE id=id'
-    elif dialect == 'postgres':
-        append = 'ON CONFLICT DO NOTHING'
-    else:
-        raise RuntimeError(
-            '"Insert or ignore" is supported only for dialects: sqlite,'
-            ' mysql and postgres. Actual dialect: %s' % dialect
-        )
-
-    insert = model.__table__.insert(
-        append_string=append,
-        replace_string=replace
-    )
-
-    # NOTE(rakhmerov): As it turned out the result proxy object
-    # returned by insert expression does not provide a valid
-    # count of updated rows in for all supported databases.
-    # For this reason we shouldn't return anything from this
-    # method. In order to check whether a new object was really
-    # inserted users should rely on different approaches. The
-    # simplest is just to insert an object with an explicitly
-    # set id and then check if object with such id exists in DB.
-    # Generated id must be unique to make it work.
-    session.execute(insert, model.to_dict())
-
-
 # Workbook definitions.
 
 @b.session_aware()

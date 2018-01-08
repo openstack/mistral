@@ -879,7 +879,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNone(task_3_ex.state_info)
 
         task_3_action_exs = db_api.get_action_executions(
-            task_execution_id=task_execs[2].id
+            task_execution_id=task_3_ex.id
         )
 
         self.assertEqual(2, len(task_3_action_exs))
@@ -1026,7 +1026,7 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task_3_ex.state)
 
         task_3_action_exs = db_api.get_action_executions(
-            task_execution_id=task_execs[2].id
+            task_execution_id=task_3_ex.id
         )
 
         self.assertEqual(1, len(task_3_action_exs))
