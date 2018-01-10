@@ -22,7 +22,6 @@ from aodhclient.v2 import base as aodh_base
 from aodhclient.v2 import client as aodhclient
 from barbicanclient import base as barbican_base
 from barbicanclient import client as barbicanclient
-from ceilometerclient.v2 import client as ceilometerclient
 from cinderclient.apiclient import base as cinder_base
 from cinderclient.v2 import client as cinderclient
 from designateclient import client as designateclient
@@ -139,11 +138,6 @@ GLANCE_NAMESPACE_LIST = [
     'metadefs_tag', 'metadefs_namespace', 'versions'
 ]
 
-CEILOMETER_NAMESPACE_LIST = [
-    'alarms', 'capabilities', 'event_types', 'events', 'meters',
-    'new_samples', 'query_alarm_history', 'query_alarms', 'query_samples',
-    'resources', 'samples', 'statistics', 'trait_descriptions', 'traits'
-]
 
 DESIGNATE_NAMESPACE_LIST = [
     'diagnostics', 'domains', 'quotas', 'records', 'reports', 'servers',
@@ -168,10 +162,6 @@ def get_glance_client(**kwargs):
 
 def get_heat_client(**kwargs):
     return heatclient.Client('')
-
-
-def get_ceilometer_client(**kwargs):
-    return ceilometerclient.Client('')
 
 
 def get_cinder_client(**kwargs):
@@ -224,7 +214,6 @@ def get_glare_client(**kwargs):
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
-    'ceilometer': get_ceilometer_client,
     'cinder': get_cinder_client,
     'keystone': get_keystone_client,
     'glance': get_glance_client,
@@ -246,7 +235,6 @@ CLIENTS = {
 BASE_MANAGERS = {
     'nova': BASE_NOVA_MANAGER,
     'heat': BASE_HEAT_MANAGER,
-    'ceilometer': None,
     'cinder': BASE_CINDER_MANAGER,
     'keystone': BASE_KEYSTONE_MANAGER,
     'glance': None,
@@ -267,7 +255,6 @@ BASE_MANAGERS = {
 }
 NAMESPACES = {
     'glance': GLANCE_NAMESPACE_LIST,
-    'ceilometer': CEILOMETER_NAMESPACE_LIST,
     'designate': DESIGNATE_NAMESPACE_LIST,
     'glare': GLARE_NAMESPACE_LIST
 }

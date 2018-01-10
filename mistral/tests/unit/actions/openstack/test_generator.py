@@ -38,7 +38,6 @@ MODULE_MAPPING = {
     'heat': ['heat.stacks_list', actions.HeatAction],
     'neutron': ['neutron.show_network', actions.NeutronAction],
     'cinder': ['cinder.volumes_list', actions.CinderAction],
-    'ceilometer': ['ceilometer.alarms_list', actions.CeilometerAction],
     'trove': ['trove.instances_list', actions.TroveAction],
     'ironic': ['ironic.node_list', actions.IronicAction],
     'baremetal_introspection': ['baremetal_introspection.introspect',
