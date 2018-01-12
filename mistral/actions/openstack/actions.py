@@ -51,7 +51,6 @@ def _try_import(module_name):
 
 aodhclient = _try_import('aodhclient.v2.client')
 barbicanclient = _try_import('barbicanclient.client')
-ceilometerclient = _try_import('ceilometerclient.v2.client')
 cinderclient = _try_import('cinderclient.client')
 designateclient = _try_import('designateclient.v1')
 glanceclient = _try_import('glanceclient')
@@ -157,37 +156,6 @@ class KeystoneAction(base.OpenStackAction):
         httpclient.HTTPClient.authenticate = authenticate
 
         return fake_client
-
-
-class CeilometerAction(base.OpenStackAction):
-    _service_type = 'metering'
-
-    @classmethod
-    def _get_client_class(cls):
-        return ceilometerclient.Client
-
-    def _create_client(self, context):
-
-        LOG.debug("Ceilometer action security context: %s", context)
-
-        ceilometer_endpoint = self.get_service_endpoint()
-
-        endpoint_url = keystone_utils.format_url(
-            ceilometer_endpoint.url,
-            {'tenant_id': context.project_id}
-        )
-
-        return self._get_client_class()(
-            endpoint_url,
-            region_name=ceilometer_endpoint.region,
-            token=context.auth_token,
-            username=context.user_name,
-            insecure=context.insecure
-        )
-
-    @classmethod
-    def _get_fake_client(cls):
-        return cls._get_client_class()("")
 
 
 class HeatAction(base.OpenStackAction):

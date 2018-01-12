@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Remove ceilometerclient requirement. This library is not maintained
+    and the ceilometer api is dead. So lets drop this integration.
