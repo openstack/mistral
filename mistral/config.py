@@ -461,6 +461,8 @@ def list_opts():
         (ENGINE_GROUP, engine_opts),
         (EXECUTOR_GROUP, executor_opts),
         (EVENT_ENGINE_GROUP, event_engine_opts),
+        (SCHEDULER_GROUP, scheduler_opts),
+        (CRON_TRIGGER_GROUP, cron_trigger_opts),
         (PECAN_GROUP, pecan_opts),
         (COORDINATION_GROUP, coordination_opts),
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
