@@ -308,7 +308,7 @@ class WithItemsEngineTest(base.EngineTestCase):
             type: direct
 
             tasks:
-              fail:
+              fail-task:
                 action: std.fail
         """
 

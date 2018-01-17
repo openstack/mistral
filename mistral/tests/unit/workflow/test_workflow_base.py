@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
 from mistral.lang import parser as spec_parser
 from mistral.tests.unit import base
 from mistral.workflow import base as wf_base

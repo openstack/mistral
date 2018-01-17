@@ -20,6 +20,7 @@ from oslo_config import cfg
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
+import mistral.lang.v2.tasks as tasks
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral import utils
@@ -80,17 +81,18 @@ wf1:
         result: "{$}"
 """
 
-WORKFLOW = """
+WORKFLOW_WITH_VAR_TASK_NAME = """
 ---
 version: '2.0'
 
 list_servers:
 
   tasks:
-    list_servers:
+    {task_name}:
       action: nova.servers_list
-
 """
+
+WORKFLOW = WORKFLOW_WITH_VAR_TASK_NAME.format(task_name='task1')
 
 INVALID_WORKFLOW = """
 ---
@@ -124,6 +126,16 @@ class WorkflowServiceTest(base.DbTestCase):
 
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
+
+    def test_invalid_task_name(self):
+        for name in tasks.RESERVED_TASK_NAMES:
+            wf = WORKFLOW_WITH_VAR_TASK_NAME.format(task_name=name)
+
+            self.assertRaises(
+                exc.InvalidModelException,
+                wf_service.create_workflows,
+                wf
+            )
 
     def test_update_workflows(self):
         db_wfs = wf_service.create_workflows(WORKFLOW_LIST)

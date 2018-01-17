@@ -129,6 +129,8 @@ class TaskSpec(base.BaseSpec):
         action = self._data.get('action')
         workflow = self._data.get('workflow')
 
+        self._validate_name()
+
         # Validate YAQL expressions.
         if action or workflow:
             inline_params = self._parse_cmd_and_input(action or workflow)[1]
@@ -139,6 +141,15 @@ class TaskSpec(base.BaseSpec):
         self.validate_expr(self._data.get('publish-on-error', {}))
         self.validate_expr(self._data.get('keep-result', {}))
         self.validate_expr(self._data.get('safe-rerun', {}))
+
+    def _validate_name(self):
+        task_name = self._data.get('name')
+
+        if task_name in RESERVED_TASK_NAMES:
+            raise exc.InvalidModelException(
+                "Reserved keyword '%s' not allowed as task name." %
+                task_name
+            )
 
     def _transform_with_items(self):
         raw = self._data.get('with-items', [])
