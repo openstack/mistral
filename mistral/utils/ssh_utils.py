@@ -43,7 +43,10 @@ def _to_paramiko_private_key(private_key_filename, password=None):
             "Actual: %s" % private_key_filename
         )
 
-    private_key_path = KEY_PATH + private_key_filename
+    if private_key_filename.startswith('/'):
+        private_key_path = private_key_filename
+    else:
+        private_key_path = KEY_PATH + private_key_filename
 
     return paramiko.RSAKey(
         filename=private_key_path,
