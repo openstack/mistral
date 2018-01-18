@@ -207,8 +207,8 @@ detailed instruction.
 
 There are three service groups according to Mistral architecture currently,
 namely api_group, engine_group and executor_group. The service identifier
-contains name of the host the service is running on and the process identifier
-of the service on that host.
+contains name of the host that the service is running on and the process
+identifier of the service on that host.
 
 .. autotype:: mistral.api.controllers.v2.resources.Service
    :members:
