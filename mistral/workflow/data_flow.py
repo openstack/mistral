@@ -285,9 +285,7 @@ def add_openstack_data_to_context(wf_ex):
 def add_execution_to_context(wf_ex):
     wf_ex.context = wf_ex.context or {}
 
-    wf_ex.context['__execution'] = {
-        'id': wf_ex.id
-    }
+    wf_ex.context['__execution'] = {'id': wf_ex.id}
 
 
 def add_environment_to_context(wf_ex):
