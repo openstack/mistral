@@ -129,6 +129,7 @@ MISTRAL_TITLE = """
 ||  \\/  ||     \\\    ||    ||     ||    \\\    ||
 ||      || ||   \\\   ||    ||     ||    /\\\   ||
 ||      || || __//   ||_// ||      \\\__// \\\_ ||
+
 Mistral Workflow Service, version %s
 """ % version.version_string()
 
