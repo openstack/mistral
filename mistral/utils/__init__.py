@@ -18,7 +18,6 @@ import contextlib
 import datetime
 import functools
 import json
-import logging
 import os
 from os import path
 import shutil
@@ -30,6 +29,7 @@ import threading
 import eventlet
 from eventlet import corolocal
 from oslo_concurrency import processutils
+from oslo_log import log as logging
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import pkg_resources as pkg
