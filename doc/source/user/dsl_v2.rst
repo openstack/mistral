@@ -875,6 +875,9 @@ Input parameters:
    redirect following is allowed. *Optional*.
 -  **proxies** - Dictionary mapping protocol to the URL of the proxy.
    *Optional*.
+-  **verify** - Either a boolean, in which case it controls whether we verify
+   the server's TLS certificate, or a string, in which case it must be a path
+   to a CA bundle to use. *Optional*. Default is 'True'.
 
 Example:
 
