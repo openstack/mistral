@@ -15,18 +15,18 @@
 
 from email import header
 from email.mime import text
-
 import json
-import requests
-import six
 import smtplib
 import time
+
+from oslo_log import log as logging
+import requests
+import six
 
 from mistral import exceptions as exc
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
 from mistral_lib import actions
-from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
