@@ -19,7 +19,7 @@ from oslo_config import cfg
 
 def parse_args():
     # Look for .mistral.conf in the project directory by default.
-    project_dir = '%s/../..' % os.path.dirname(__file__)
+    project_dir = '%s/../../..' % os.path.dirname(__file__)
     config_file = '%s/.mistral.conf' % os.path.realpath(project_dir)
     config_files = [config_file] if os.path.isfile(config_file) else None
     cfg.CONF(args=[], default_config_files=config_files)

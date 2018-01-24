@@ -140,13 +140,25 @@ function setup_db {
               dbname="mistral"
               username="mistral"
               password="m1stral"
-              sudo -u postgres psql -c "DROP DATABASE IF EXISTS $dbname;"
-              sudo -u postgres psql -c "DROP USER IF EXISTS $username;"
-              sudo -u postgres psql -c "CREATE USER $username WITH ENCRYPTED PASSWORD '$password';"
-              sudo -u postgres psql -c "CREATE DATABASE $dbname OWNER $username;"
+
+              pg_command "SELECT pg_terminate_backend(pg_stat_activity.pid)
+                          FROM pg_stat_activity
+                          WHERE pg_stat_activity.datname = '$dbname'
+                          AND pid <> pg_backend_pid();"
+              pg_command "DROP DATABASE IF EXISTS $dbname;"
+              pg_command "DROP USER IF EXISTS $username;"
+              pg_command "CREATE USER $username
+                          WITH ENCRYPTED PASSWORD '$password';"
+              pg_command "CREATE DATABASE $dbname OWNER $username;"
             fi
             ;;
     esac
+}
+
+function pg_command {
+    command=$1
+
+    sudo -u postgres psql -h localhost -c "${command}"
 }
 
 function setup_db_pylib {

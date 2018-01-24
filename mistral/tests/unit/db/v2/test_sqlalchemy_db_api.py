@@ -1130,7 +1130,7 @@ class ActionDefinitionTest(SQLAlchemyTest):
         self.assertEqual(1, len(fetched))
         self.assertEqual(created3, fetched[0])
 
-        f = filter_utils.create_or_update_filter('name', "Action", 'has')
+        f = filter_utils.create_or_update_filter('name', "action", 'has')
 
         fetched = db_api.get_action_definitions(**f)
 
