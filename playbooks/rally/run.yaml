@@ -1,0 +1,12 @@
+- hosts: all
+  tasks:
+    - name: Run Devstack
+      include_role:
+        name: run-devstack
+
+    - name: Run rally
+      shell:
+        cmd: |
+              ./tests/ci/rally-gate.sh
+        executable: /bin/bash
+        chdir: '{{ ansible_user_dir }}/src/{{ zuul.project.canonical_name }}/../rally'

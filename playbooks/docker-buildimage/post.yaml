@@ -7,9 +7,9 @@
         state: directory
       delegate_to: localhost
 
-    - name: Copy files from {{ ansible_user_dir }}/workspace/ on node
+    - name: Copy files from {{ ansible_user_dir }}/src/{{ zuul.project.canonical_name }} on node
       synchronize:
-        src: '{{ ansible_user_dir }}/workspace/'
+        src: '{{ ansible_user_dir }}/src/{{ zuul.project.canonical_name }}/'
         dest: '{{ zuul.executor.work_root }}/artifacts/images'
         mode: pull
         copy_links: true

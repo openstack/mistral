@@ -1,111 +1,85 @@
 - job:
-    name: mistral-devstack-dsvm
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/mistral-devstack-dsvm/run.yaml
-    post-run: playbooks/legacy/mistral-devstack-dsvm/post.yaml
-    timeout: 4200
+    name: mistral-devstack-base
+    parent: devstack
+    timeout: 7800
+    vars:
+      devstack_plugins:
+        mistral: https://git.openstack.org/openstack/mistral
+        heat: https://git.openstack.org/openstack/heat
+      devstack_services:
+        heat: True
+        h-api: True
+        h-api-cfn: True
+        h-api-cw: True
+        h-eng: True
+      tox_environment:
+        IDENTITY_API_VERSION: 3
+        PYTHONUNBUFFERED: 'true'
+        MISTRAL_USE_MOD_WSGI: True
+        MISTRAL_RPC_IMPLEMENTATION: oslo
+        MYSQL_ROOT_PW: secretdatabase
     required-projects:
       - openstack-dev/devstack
       - openstack-infra/devstack-gate
       - openstack/heat
       - openstack/mistral
-      - openstack/mistral-dashboard
       - openstack/python-mistralclient
-      - openstack/zaqar
-      - openstack/python-zaqarclient
       - openstack/mistral-tempest-plugin
 
 - job:
-    name: mistral-devstack-dsvm-kombu
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/mistral-devstack-dsvm-kombu/run.yaml
-    post-run: playbooks/legacy/mistral-devstack-dsvm-kombu/post.yaml
-    timeout: 4200
+    name: mistral-rally-task
+    parent: mistral-devstack-base
+    run: playbooks/rally/run.yaml
+    vars:
+      devstack_plugins:
+        rally: https://git.openstack.org/openstack/rally
+      tox_environment:
+        DEVSTACK_GATE_TEMPEST_LARGE_OPS: 0
+        DEVSTACK_GATE_EXERCISES: 0
+        RALLY_SCENARIO: task-{{ zuul.project.canonical_name }}
+        DEVSTACK_GATE_NEUTRON: 1
     required-projects:
-      - openstack-dev/devstack
-      - openstack-infra/devstack-gate
-      - openstack/heat
-      - openstack/mistral
-      - openstack/mistral-dashboard
-      - openstack/python-mistralclient
-      - openstack/zaqar
-      - openstack/python-zaqarclient
-      - openstack/mistral-tempest-plugin
-
-- job:
-    name: mistral-devstack-dsvm-non-apache
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/mistral-devstack-dsvm-non-apache/run.yaml
-    post-run: playbooks/legacy/mistral-devstack-dsvm-non-apache/post.yaml
-    timeout: 4200
-    required-projects:
-      - openstack-dev/devstack
-      - openstack-infra/devstack-gate
-      - openstack/heat
-      - openstack/mistral
-      - openstack/mistral-dashboard
-      - openstack/python-mistralclient
-      - openstack/zaqar
-      - openstack/python-zaqarclient
-      - openstack/mistral-tempest-plugin
+      - openstack/rally
 
 - job:
     name: mistral-docker-buildimage
-    parent: legacy-publish-openstack-artifacts
-    run: playbooks/legacy/mistral-docker-buildimage/run.yaml
-    post-run: playbooks/legacy/mistral-docker-buildimage/post.yaml
+    parent: publish-openstack-artifacts
+    run: playbooks/docker-buildimage/run.yaml
+    post-run: playbooks/docker-buildimage/post.yaml
     timeout: 1800
     required-projects:
       - openstack/mistral
 
-- job:
-    name: mistral-ha
-    parent: legacy-base
-    run: playbooks/legacy/mistral-ha/run.yaml
-    timeout: 4200
+# This job does not work. We can come back to it later.
+# - job:
+#     name: mistral-ha
+#     parent: legacy-base
+#     run: playbooks/legacy/mistral-ha/run
+#     timeout: 4200
 
 - job:
     name: mistral-tox-unit-mysql
-    parent: legacy-base
-    run: playbooks/legacy/mistral-tox-unit-mysql/run.yaml
-    post-run: playbooks/legacy/mistral-tox-unit-mysql/post.yaml
-    timeout: 2400
-    required-projects:
-      - openstack/requirements
+    parent: openstack-tox
+    vars:
+      tox_envlist: unit-mysql
 
 - job:
     name: mistral-tox-unit-postgresql
-    parent: legacy-base
-    run: playbooks/legacy/mistral-tox-unit-postgresql/run.yaml
-    post-run: playbooks/legacy/mistral-tox-unit-postgresql/post.yaml
-    timeout: 2400
-    required-projects:
-      - openstack/requirements
-
-- job:
-    name: rally-dsvm-mistral-task
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/rally-dsvm-mistral-task/run.yaml
-    post-run: playbooks/legacy/rally-dsvm-mistral-task/post.yaml
-    timeout: 7800
-    required-projects:
-      - openstack-infra/devstack-gate
-      - openstack/mistral
-      - openstack/mistral-dashboard
-      - openstack/python-mistralclient
-      - openstack/rally
+    parent: openstack-tox
+    vars:
+      tox_envlist: unit-postgresql
+      tox_environment: { CI_PROJECT: "{{ zuul['project']['name'] }}" }
 
 - project:
-    name: openstack/mistral
     check:
       jobs:
         - openstack-tox-cover:
             voting: false
-        - rally-dsvm-mistral-task:
-            voting: false
-        - mistral-devstack-dsvm
-        - mistral-devstack-dsvm-non-apache:
+        - mistral-devstack
+        - mistral-devstack-non-apache:
             branches: ^(?!stable/(newton|ocata)).*$
+        - mistral-devstack-kombu:
+            branches: ^(?!stable/newton).*$
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
         # TripleO jobs that deploy Mistral.
@@ -118,17 +92,18 @@
         # failures, please reach us on #tripleo IRC channel.
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
-        - mistral-devstack-dsvm-kombu:
-            branches: ^(?!stable/newton).*$
+        # Disable the rally job until it actually works
+        # - mistral-rally-task:
+        #     voting: false
     gate:
       jobs:
-        - mistral-devstack-dsvm
-        - mistral-devstack-dsvm-non-apache
+        - mistral-devstack
+        - mistral-devstack-non-apache
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
-        - mistral-devstack-dsvm-kombu
+        - mistral-devstack-kombu
     post:
       jobs:
         - mistral-docker-buildimage:
@@ -137,5 +112,6 @@
       jobs:
         - mistral-docker-buildimage:
             branches: master
-        - mistral-ha:
-            voting: false
+        # This job doesn't work yet.
+        # - mistral-ha:
+        #     voting: false

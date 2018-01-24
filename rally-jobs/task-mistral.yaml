@@ -1,3 +1,4 @@
+{% set extra_dir = extra_dir or env["RALLY_EXTRA_DIR"] %}
 ---
   MistralWorkbooks.list_workbooks:
     -
@@ -16,7 +17,7 @@
   MistralWorkbooks.create_workbook:
     -
       args:
-        definition: "/home/jenkins/.rally/extra/mistral_wb.yaml"
+        definition: "{{ extra_dir }}/mistral_wb.yaml"
       runner:
         type: "constant"
         times: 50
@@ -31,7 +32,7 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/mistral_wb.yaml"
+        definition: "{{ extra_dir }}/mistral_wb.yaml"
         do_delete: true
       runner:
         type: "constant"
@@ -62,7 +63,7 @@
   MistralExecutions.create_execution_from_workbook:
     -
       args:
-        definition: "/home/jenkins/.rally/extra/mistral_wb.yaml"
+        definition: "{{ extra_dir }}/mistral_wb.yaml"
         do_delete: true
       runner:
         type: "constant"
@@ -78,7 +79,7 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/nested_wb.yaml"
+        definition: "{{ extra_dir }}/nested_wb.yaml"
         workflow_name: "wrapping_wf"
         do_delete: true
       runner:
@@ -95,10 +96,10 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/scenarios/complex_wf/complex_wf_wb.yaml"
+        definition: "{{ extra_dir }}/scenarios/complex_wf/complex_wf_wb.yaml"
         workflow_name: "top_level_workflow"
         params:
-          "/home/jenkins/.rally/extra/scenarios/complex_wf/complex_wf_params.json"
+          "{{ extra_dir }}/scenarios/complex_wf/complex_wf_params.json"
         do_delete: true
       runner:
         type: "constant"
@@ -114,9 +115,9 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/scenarios/with_items/wb.yaml"
+        definition: "{{ extra_dir }}/scenarios/with_items/wb.yaml"
         params:
-          "/home/jenkins/.rally/extra/scenarios/with_items/count_100_concurrency_10.json"
+          "{{ extra_dir }}/scenarios/with_items/count_100_concurrency_10.json"
         do_delete: true
       runner:
         type: "constant"
@@ -132,7 +133,7 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/scenarios/join/join_100_wb.yaml"
+        definition: "{{ extra_dir }}/scenarios/join/join_100_wb.yaml"
         do_delete: true
       runner:
         type: "constant"
@@ -148,7 +149,7 @@
 
     -
       args:
-        definition: "/home/jenkins/.rally/extra/scenarios/join/join_500_wb.yaml"
+        definition: "{{ extra_dir }}/scenarios/join/join_500_wb.yaml"
         do_delete: true
       runner:
         type: "constant"
