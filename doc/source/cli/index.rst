@@ -7,7 +7,7 @@ The Mistral CLI can be used with ``mistral`` command or via `OpenStackClient
 Mistral Client
 --------------
 
-The best way to learn about all the commands and arguements that are expected
+The best way to learn about all the commands and arguments that are expected
 is to use the ``mistral help`` command.
 
 .. code-block:: bash
