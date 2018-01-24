@@ -26,6 +26,7 @@ from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
+from mistral_lib.actions import types
 
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -352,7 +353,7 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertIsInstance(p, policies.RetryPolicy)
         self.assertEqual(5, p.count)
-        self.assertEqual('<% $.my_val = 10 %>', p.break_on)
+        self.assertEqual('<% $.my_val = 10 %>', p._break_on_clause)
 
         p = self._assert_single_item(arr, delay=7)
 
@@ -1679,3 +1680,41 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             self.assertEqual(2, len(wf_ex.task_executions))
+
+    @mock.patch('mistral.actions.std_actions.EchoAction.run')
+    def test_retry_policy_break_on_with_dict(self, run_method):
+        run_method.return_value = types.Result(error={'key-1': 15})
+
+        wf_retry_break_on_with_dictionary = """---
+        version: '2.0'
+
+        name: wb
+        workflows:
+          wf1:
+            tasks:
+              fail_task:
+                action: std.echo output='mock'
+                retry:
+                  count: 3
+                  delay: 1
+                  break-on: <% task().result['key-1'] = 15 %>
+        """
+
+        wb_service.create_workbook_v2(wf_retry_break_on_with_dictionary)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            fail_task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.ERROR, fail_task_ex.state)
+
+        self.assertEqual(
+            {},
+            fail_task_ex.runtime_context["retry_task_policy"]
+        )
