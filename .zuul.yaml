@@ -87,7 +87,6 @@
       - openstack/rally
 
 - project:
-    name: openstack/mistral
     check:
       jobs:
         - openstack-tox-cover:
