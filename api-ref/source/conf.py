@@ -32,7 +32,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.autohttp.flask',
     'sphinxcontrib.pecanwsme.rest',
-    'wsmeext.sphinxext',
 ]
 
 if not on_rtd:
