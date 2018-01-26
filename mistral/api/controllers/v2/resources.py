@@ -240,8 +240,19 @@ class Execution(resource.Resource):
     "description of workflow execution"
 
     params = types.jsontype
-    """'params' define workflow type specific parameters. For example, reverse
-     workflow takes one parameter 'task_name' that defines a target task."""
+    """'params' define workflow type specific parameters. Specific parameters
+     are:
+     'task_name' - the name of the target task. Only for reverse workflows.
+     'env' - A string value containing the name of the stored environment
+     object or a dictionary with the environment variables used during
+     workflow execution and accessible as 'env()' from within expressions
+     (YAQL or Jinja) defined in the workflow text.
+     'evaluate_env' - If present, controls whether or not Mistral should
+     recursively find and evaluate all expressions (YAQL or Jinja) within
+     the specified environment (via 'env' parameter). 'True' - evaluate
+     all expressions recursively in the environment structure. 'False' -
+     don't evaluate expressions. 'True' by default.
+    """
 
     task_execution_id = wtypes.text
     "reference to the parent task execution"
