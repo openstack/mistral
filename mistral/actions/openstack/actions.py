@@ -501,6 +501,41 @@ class ZaqarAction(base.OpenStackAction):
 
         return queue.pop(count)
 
+    @staticmethod
+    def claim_messages(client, queue_name, **params):
+        """Claim messages from the queue
+
+        :param client: the Zaqar client
+        :type client: zaqarclient.queues.client
+
+        :param queue_name: Name of the target queue.
+        :type queue_name: `six.string_type`
+
+        :returns: List of claims
+        :rtype: `list`
+        """
+        queue = client.queue(queue_name)
+        return queue.claim(**params)
+
+    @staticmethod
+    def delete_messages(client, queue_name, messages):
+        """Delete messages from the queue
+
+        :param client: the Zaqar client
+        :type client: zaqarclient.queues.client
+
+        :param queue_name: Name of the target queue.
+        :type queue_name: `six.string_type`
+
+        :param messages: List of messages' ids to delete.
+        :type messages: *args of `six.string_type`
+
+        :returns: List of messages' ids that have been deleted
+        :rtype: `list`
+        """
+        queue = client.queue(queue_name)
+        return queue.delete_messages(*messages)
+
 
 class BarbicanAction(base.OpenStackAction):
 
