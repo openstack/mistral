@@ -30,12 +30,18 @@ Prerequisites
 -------------
 
 Mistral Workflow Language supports
-`YAQL <https://pypi.python.org/pypi/yaql/1.0.0>`__ and
+`YAQL <https://pypi.python.org/pypi/yaql>`__ and
 `Jinja2 <http://jinja.pocoo.org/docs/dev/>`__ expression languages to reference
 workflow context variables and thereby implements passing data between workflow
 tasks. It's also referred to as Data Flow mechanism. YAQL is a simple but
 powerful query language that allows to extract needed information from JSON
-structured data. It is allowed to use YAQL in the following sections of
+structured data. Although Jinja2 is primarily a templating technology, Mistral
+also uses it for evaluating expression so user have a choice between YAQL and
+Jinja2. It's also possible to combine both expression languages within one
+workflow definition. The only limitation is that it's impossible to use both
+types of expression within one line. As long as there are YAQL and Jinja2
+expressions on different lines of the workflow definition text, it is valid.
+It is allowed to use YAQL/Jinja2 in the following sections of
 Mistral Workflow Language:
 
 -  Workflow `'output' attribute <#common-workflow-attributes>`__
@@ -126,9 +132,9 @@ Common workflow attributes
 -  **description** - Arbitrary text containing workflow description. *Optional*.
 -  **input** - List defining required input parameter names and
    optionally their default values in a form "my_param: 123". *Optional*.
--  **output** - Any data structure arbitrarily containing
+-  **output** - Any data structure arbitrarily containing YAQL/Jinja2
    expressions that defines workflow output. May be nested. *Optional*.
--  **output-on-error** - Any data structure arbitrarily containing YAQL
+-  **output-on-error** - Any data structure arbitrarily containing YAQL/Jinja2
    expressions that defines output of a workflow to be returned if it goes into
    error state. May be nested. *Optional*.
 -  **task-defaults** - Default settings for some of task attributes
@@ -183,21 +189,21 @@ it's also easy to plug new actions into Mistral.
 Common task attributes
 ''''''''''''''''''''''
 
-All Mistral tasks regardless of workflow type have the following common
+All Mistral tasks, regardless of workflow type, have the following common
 attributes:
 
 -  **description** - Arbitrary text containing task description.
    *Optional*.
--  **action** - Name of the action associated with the task.Can be static
+-  **action** - Name of the action associated with the task. Can be a static
    value or an expression (for example,  "{{ _.action_name }}").
    *Mutually exclusive with* **workflow**. If neither action nor workflow are
-   provided then the action 'std.noop' will be used.
--  **workflow** - Name of the workflow associated with the task. Can be static
+   provided then the action 'std.noop' will be used that does nothing.
+-  **workflow** - Name of the workflow associated with the task. Can be a static
    value or an expression (for example,  "{{ _.subworkflow_name }}").
    *Mutually exclusive with* **action**.
--  **input** - Actual input parameter values of the task. *Optional*.
-   Value of each parameter is a JSON-compliant type such as number,
-   string etc, dictionary or list. It can also be an expression to
+-  **input** - Actual input parameter values of the task's action or workflow.
+   *Optional*. Value of each parameter is a JSON-compliant type such as number,
+   string etc, dictionary or list. It can also be a YAQL/Jinja2 expression to
    retrieve value from task context or any of the mentioned types
    containing inline expressions (for example, string "<%
    $.movie_name %> is a cool movie!") Can be an expression that evaluates to
@@ -229,62 +235,65 @@ attributes:
    during action execution. If set to 'true' task may be run twice.
    *Optional*. By default set to 'false'.
 
-Workflow
+workflow
 ''''''''
-Synchronously starts a sub-workflow with the given name.
+If a task has the attribute 'workflow' it synchronously starts a sub-workflow
+with the given name.
 
-Example static workflow call:
+Example of a static sub-workflow name:
 
 .. code-block:: mistral
 
     my_task:
       workflow: name_of_my_workflow
 
-Example dynamic workflow selection:
+Example of a dynamic sub-workflow name:
 
 .. code-block:: mistral
 
   ---
   version: '2.0'
 
-  name: weather_data_processing
+  framework:
+    input:
+      - magic_workflow_name: show_weather
 
-  workflows:
-    framework:
-      input:
-        - magic_workflow_name: show_weather
+    tasks:
+      weather_data:
+        action: std.echo
+        input:
+          output:
+            location: wherever
+            temperature: "22C"
+        publish:
+          weather_data: <% task().result %>
+        on-success:
+          - do_magic
 
-      tasks:
-        weather_data:
-          action: std.echo
-          input:
-            output:
-              location: wherever
-              temperature: "22C"
-          publish:
-            weather_data: <% task(weather_data).result %>
-          on-success:
-            - do_magic
+      do_magic:
+        # Reference workflow by parameter.
+        workflow: <% $.magic_workflow_name %>
+        # Expand dictionary to input parameters.
+        input: <% $.weather_data %>
 
-        do_magic:
-          # reference workflow by parameter
-          workflow: <% $.magic_workflow_name %>
-          # expand dictionary to input parameters
-          input: <% $.weather_data %>
+  show_weather:
+    input:
+      - location
+      - temperature
 
-    show_weather:
-      input:
-        - location
-        - temperature
+    tasks:
+      write_data:
+        action: std.echo
+        input:
+          output: "<% $.location %>: <% $.temperature %>"
 
-      tasks:
-        write_data:
-          action: std.echo
-          input:
-            output: "<% $.location %>: <% $.temperature %>"
+In this example, we defined two workflows in one YAML snippet and the workflow
+'framework' may call the workflow 'show_weather' if 'framework' receives the
+corresponding workflow name through the input parameter 'magic_workflow_name'.
+In this case it is set by default so a user doesn't need to pass anything
+explicitly.
 
-
-Note: Typical use for the dynamic workflow selection is when parts of a
+Note: Typical use for the dynamic sub-workflow selection is when parts of a
 workflow can be customized. E.g. collect some weather data and then execute
 some custom workflow on it.
 
@@ -333,7 +342,7 @@ has completed before starting next tasks defined in *on-success*,
 **timeout**
 
 Defines a period of time in seconds after which a task will be failed
-automatically by engine if hasn't completed.
+automatically by engine if it hasn't completed.
 
 
 **concurrency**
@@ -368,7 +377,7 @@ Retry policy can also be configured on a single line as:
       action: my_action
       retry: count=10 delay=5 break-on=<% $.foo = 'bar' %>
 
-All parameter values for any policy can be defined as expressions.
+All parameter values for any policy can be defined as YAQL/Jinja2 expressions.
 
 Input syntax
 ''''''''''''
@@ -512,6 +521,12 @@ Direct workflow task attributes
 -  **on-complete** - List of tasks which will run after the task has
    completed regardless of whether it is successful or not. *Optional*.
 
+Note: All of the above clauses cannot contain task names evaluated as
+YAQL/Jinja expressions. They have to be static values. However, task
+transitions can be conditional, based on expressions. See
+`Transitions with expressions <#transitions-with-expressions>`__ for more
+details.
+
 It is important to understand the semantics of **on-success**, **on-error**
 and **on-complete** around handling action errors.
 
@@ -524,6 +539,26 @@ as an exception handler for possible errors expected by design. Whereas
 stop the exception from bubbling up to an upper layer. So **on-complete**
 should only be understood as a language construction that allows to
 define some clean up actions.
+
+Transitions with expressions
+''''''''''''''''''''''''''''
+
+Task transitions can be determined by success/error/completeness of the
+previous tasks and also by additional guard expressions that can access any
+data produced by upstream tasks and as workflow input. So in the example above
+task 'create_vm' could also have a YAQL expression on transition to task
+'send_success_email' as follows:
+
+.. code-block:: mistral
+
+    create_vm:
+     ...
+     on-success:
+       - send_success_email: <% $.vm_id != null %>
+
+And this would tell Mistral to run 'send_success_email' task only if 'vm_id'
+variable published by task 'create_vm' is not empty. Expressions can also be
+applied to 'on-error' and 'on-complete'.
 
 Engine Commands
 '''''''''''''''
@@ -554,7 +589,7 @@ YAML example
         create_server:
           action: nova.servers_create name=<% $.vm_name %>
           publish:
-            vm_id: <% task(create_server).result.id %>
+            vm_id: <% task().result.id %>
           on-complete:
             - fail: <% not $.vm_id %>
 
@@ -577,26 +612,6 @@ executed in order until the workflow reaches a terminal state. So in this case
 never be called. ``taskB`` would not be called if ``succeed`` was used in this
 example either, but if ``pause`` was used ``taskB`` would be called after the
 workflow is resumed.
-
-Transitions with YAQL expressions
-'''''''''''''''''''''''''''''''''
-
-Task transitions can be determined by success/error/completeness of the
-previous tasks and also by additional guard expressions that can access any
-data produced by upstream tasks. So in the example above task 'create_vm' could
-also have a YAQL expression on transition to task 'send_success_email' as
-follows:
-
-.. code-block:: mistral
-
-    create_vm:
-     ...
-     on-success:
-       - send_success_email: <% $.vm_id != null %>
-
-And this would tell Mistral to run 'send_success_email' task only if 'vm_id'
-variable published by task 'create_vm' is not empty. Expressions can also be
-applied to 'on-error' and 'on-complete'.
 
 Fork
 ''''
@@ -792,18 +807,19 @@ provide in "vm_names" input parameter. E.g., if we specify
 vm_names=["vm1", "vm2"] then it'll create servers with these names based on
 same image and flavor. It is possible because of using "with-items" keyword
 that makes an action or a workflow associated with a task run multiple times.
-Value of "with-items" task property contains an expression in the form: in
-<% YAQL_expression %>.
+Value of "with-items" task property contains an expression in the form: 'my_var' in
+<% YAQL_expression %>. Similar for Jinja2 expression: 'my_var' in
+{{ Jinja2_expression }}.
 
 The most common form is:
 
 .. code-block:: mistral
 
     with-items:
-      - var1 in <% YAQL_expression_1 %>
-      - var2 in <% YAQL_expression_2 %>
+      - var1 in <% YAQL_expression_1 %> # or: var1 in <% Jinja2_expression_1 %>
+      - var2 in <% YAQL_expression_2 %> # or: var2 in <% Jinja2_expression_2 %>
       ...
-      - varN in <% YAQL_expression_N %>
+      - varN in <% YAQL_expression_N %> # or: varN in <% Jinja2_expression_N %>
 
 where collections expressed as YAQL_expression_1, YAQL_expression_2,
 YAQL_expression_N must have equal sizes. When a task gets started Mistral will
@@ -1120,7 +1136,7 @@ Attributes
 -  **input** - List of declared action parameters which should be specified as
    corresponding task input. This attribute is optional and used only for
    documenting purposes. Mistral now does not enforce actual input parameters to
-   exactly correspond to this list. Based parameters will be calculated based on
+   exactly correspond to this list. Base parameters will be calculated based on
    provided actual parameters with using expressions so what's used in
    expressions implicitly define real input parameters. Dictionary of actual
    input parameters (expression context) is referenced as '$.' in YAQL and as
@@ -1387,8 +1403,12 @@ returns the following fields of task executions:
 * **spec** - task execution spec dict (loaded from Mistral Workflow Language).
 * **state** - task execution state.
 * **state_info** - task execution state info.
-* **result** - task execution result.
+* **result** - task execution result. In case of a non 'with-items' task it's
+  simply a result of the task's action/sub-workflow execution. For a
+  'with-items' task it will be a list of results of corresponding
+  action/sub-workflow execution.
 * **published** - task execution published variables.
+
 
 Execution info
 ^^^^^^^^^^^^^^
@@ -1462,5 +1482,5 @@ Workflow definition:
 Environment
 ^^^^^^^^^^^
 
-Environment info is available by **env()**. It is passed when user submit
+Environment info is available by **env()**. It is passed when user submits
 workflow execution. It contains variables specified by user.

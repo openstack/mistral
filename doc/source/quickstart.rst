@@ -64,7 +64,7 @@ This simple workflow iterates through a list of names in ``task1`` (using
 then stores the word "Done" as a result of the second task (`task2`).
 
 To learn more about the Mistral Workflows and what you can do, read the
-:doc:`Mistral Workflow Language specification <user/dsl_v2>`
+:doc:`Mistral Workflow Language specification <user/wf_lang_v2>`
 
 Upload the workflow
 -------------------
