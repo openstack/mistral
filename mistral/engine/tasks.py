@@ -290,10 +290,6 @@ class Task(object):
 
         self.task_ex = db_api.create_task_execution(values)
 
-        # Add to collection explicitly so that it's in a proper
-        # state within the current session.
-        self.wf_ex.task_executions.append(self.task_ex)
-
         self.created = True
 
     def _get_action_defaults(self):
