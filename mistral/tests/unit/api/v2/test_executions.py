@@ -570,6 +570,29 @@ class TestExecutionsController(base.APITest):
         # corresponding object exists.
         start_wf_func.assert_not_called()
 
+    @mock.patch.object(db_api,
+                       'get_workflow_execution',
+                       mock.MagicMock(return_value=WF_EX_JSON))
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_with_source_execution_id(self, wf_exec_mock):
+        wf_exec_mock.return_value = WF_EX.to_dict()
+
+        resp = self.app.post_json('/v2/executions/', WF_EX_JSON_WITH_DESC)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
+
+        exec_dict = WF_EX_JSON_WITH_DESC
+
+        wf_exec_mock.assert_called_once_with(
+            exec_dict['workflow_id'],
+            '',
+            exec_dict['id'],
+            json.loads(exec_dict['input']),
+            exec_dict['description'],
+            **json.loads(exec_dict['params'])
+        )
+
     @mock.patch.object(
         rpc_clients.EngineClient,
         'start_workflow',
