@@ -125,7 +125,7 @@ class Task(object):
         :param state: New task state.
         :param state_info: New state information (i.e. error message).
         :param processed: New "processed" flag value.
-        :return True if the state was changed as a result of this call,
+        :return: True if the state was changed as a result of this call,
             False otherwise.
         """
 
