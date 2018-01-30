@@ -80,8 +80,7 @@ workflows:
 
 def _run_at_target(action_ex_id, action_cls_str, action_cls_attrs,
                    params, safe_rerun, execution_context, target=None,
-                   async_=True):
-
+                   async_=True, timeout=None):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
@@ -91,7 +90,10 @@ def _run_at_target(action_ex_id, action_cls_str, action_cls_attrs,
         action_cls_attrs,
         params,
         safe_rerun,
-        execution_context=execution_context
+        execution_context=execution_context,
+        target=target,
+        async_=async_,
+        timeout=timeout
     )
 
 
@@ -188,7 +190,8 @@ class EnvironmentTest(base.EngineTestCase):
                         'workflow_name': wf1_ex.name,
                         'action_execution_id': a_ex.id,
                     },
-                    target=TARGET
+                    target=TARGET,
+                    timeout=None
                 )
 
     def test_subworkflow_env_task_input(self):

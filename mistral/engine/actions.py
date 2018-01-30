@@ -91,7 +91,8 @@ class Action(object):
         self.action_ex.state = state
 
     @abc.abstractmethod
-    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False):
+    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
+                 timeout=None):
         """Schedule action run.
 
         This method is needed to schedule action run so its result can
@@ -100,6 +101,8 @@ class Action(object):
         executor asynchrony when executor doesn't immediately send a
         result).
 
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
         :param input_dict: Action input.
         :param target: Target (group of action executors).
         :param index: Action execution index. Makes sense for some types.
@@ -111,13 +114,15 @@ class Action(object):
 
     @abc.abstractmethod
     def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=False):
+            safe_rerun=False, timeout=None):
         """Immediately run action.
 
         This method runs method w/o scheduling its run for a later time.
         From engine perspective action will be processed in synchronous
         mode.
 
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
         :param input_dict: Action input.
         :param target: Target (group of action executors).
         :param index: Action execution index. Makes sense for some types.
@@ -225,7 +230,8 @@ class PythonAction(Action):
         self._log_result(prev_state, result)
 
     @profiler.trace('action-schedule', hide_args=True)
-    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False):
+    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
+                 timeout=None):
         assert not self.action_ex
 
         # Assign the action execution ID here to minimize database calls.
@@ -248,11 +254,12 @@ class PythonAction(Action):
             self.action_def,
             target,
             execution_context,
+            timeout=timeout
         )
 
     @profiler.trace('action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=False):
+            safe_rerun=False, timeout=None):
         assert not self.action_ex
 
         input_dict = self._prepare_input(input_dict)
@@ -284,7 +291,8 @@ class PythonAction(Action):
             safe_rerun,
             execution_context,
             target=target,
-            async_=False
+            async_=False,
+            timeout=timeout
         )
 
         return self._prepare_output(result)
@@ -512,7 +520,8 @@ class WorkflowAction(Action):
         pass
 
     @profiler.trace('workflkow-action-schedule', hide_args=True)
-    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False):
+    def schedule(self, input_dict, target, index=0, desc='', safe_rerun=False,
+                 timeout=None):
         assert not self.action_ex
 
         parent_wf_ex = self.task_ex.workflow_execution
@@ -564,7 +573,7 @@ class WorkflowAction(Action):
 
     @profiler.trace('workflow-action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
-            safe_rerun=True):
+            safe_rerun=True, timeout=None):
         raise NotImplementedError('Does not apply to this WorkflowAction.')
 
     def is_sync(self, input_dict):

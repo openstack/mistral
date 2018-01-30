@@ -313,7 +313,7 @@ class ExecutorClient(exe.Executor):
     @profiler.trace('executor-client-run-action')
     def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
                    params, safe_rerun, execution_context, redelivered=False,
-                   target=None, async_=True):
+                   target=None, async_=True, timeout=None):
         """Sends a request to run action to executor.
 
         :param action_ex_id: Action execution id.
@@ -322,11 +322,15 @@ class ExecutorClient(exe.Executor):
         :param params: Action input parameters.
         :param safe_rerun: If true, action would be re-run if executor dies
             during execution.
+        :param execution_context: A dict of values providing information about
+            the current execution.
         :param redelivered: Tells if given action was run before on another
             executor.
         :param target: Target (group of action executors).
         :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
         :return: Action result.
         """
 
@@ -337,6 +341,7 @@ class ExecutorClient(exe.Executor):
             'params': params,
             'safe_rerun': safe_rerun,
             'execution_context': execution_context,
+            'timeout': timeout
         }
 
         rpc_client_method = (self._client.async_call

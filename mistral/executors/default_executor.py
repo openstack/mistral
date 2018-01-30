@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from eventlet import timeout as ev_timeout
 from mistral_lib import actions as mistral_lib
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -35,7 +36,7 @@ class DefaultExecutor(base.Executor):
     @profiler.trace('default-executor-run-action', hide_args=True)
     def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
                    params, safe_rerun, execution_context, redelivered=False,
-                   target=None, async_=True):
+                   target=None, async_=True, timeout=None):
         """Runs action.
 
         :param action_ex_id: Action execution id.
@@ -51,6 +52,8 @@ class DefaultExecutor(base.Executor):
         :param target: Target (group of action executors).
         :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
         :return: Action result.
         """
 
@@ -102,14 +105,15 @@ class DefaultExecutor(base.Executor):
 
         # Run action.
         try:
-
-            # NOTE(d0ugal): If the action is a subclass of mistral-lib we know
-            # that it expects to be passed the context.
-            if isinstance(action, mistral_lib.Action):
-                action_ctx = context.create_action_context(execution_context)
-                result = action.run(action_ctx)
-            else:
-                result = action.run()
+            with ev_timeout.Timeout(seconds=timeout):
+                # NOTE(d0ugal): If the action is a subclass of mistral-lib we
+                # know that it expects to be passed the context.
+                if isinstance(action, mistral_lib.Action):
+                    action_ctx = context.create_action_context(
+                        execution_context)
+                    result = action.run(action_ctx)
+                else:
+                    result = action.run()
 
             # Note: it's made for backwards compatibility with already
             # existing Mistral actions which don't return result as
@@ -117,7 +121,7 @@ class DefaultExecutor(base.Executor):
             if not isinstance(result, mistral_lib.Result):
                 result = mistral_lib.Result(data=result)
 
-        except Exception as e:
+        except BaseException as e:
             msg = (
                 "Failed to run action [action_ex_id=%s, action_cls='%s', "
                 "attributes='%s', params='%s']\n %s" % (

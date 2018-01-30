@@ -76,6 +76,7 @@ class DefaultEngine(base.Engine):
             sync = params.get('run_sync')
             save = params.get('save_result')
             target = params.get('target')
+            timeout = params.get('timeout')
 
             is_action_sync = action.is_sync(action_input)
 
@@ -84,11 +85,12 @@ class DefaultEngine(base.Engine):
                     "Action does not support synchronous execution.")
 
             if not sync and (save or not is_action_sync):
-                action.schedule(action_input, target)
+                action.schedule(action_input, target, timeout=timeout)
 
                 return action.action_ex.get_clone()
 
-            output = action.run(action_input, target, save=False)
+            output = action.run(action_input, target, save=False,
+                                timeout=timeout)
 
             state = states.SUCCESS if output.is_success() else states.ERROR
 

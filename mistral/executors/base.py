@@ -50,9 +50,11 @@ class Executor(object):
     @abc.abstractmethod
     def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
                    params, safe_rerun, execution_context, redelivered=False,
-                   target=None, async_=True):
+                   target=None, async_=True, timeout=None):
         """Runs action.
 
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
         :param action_ex_id: Corresponding action execution id.
         :param action_cls_str: Path to action class in dot notation.
         :param action_cls_attrs: Attributes of action class which
