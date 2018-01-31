@@ -979,6 +979,8 @@
     },
     "zaqar": {
         "_comment": "It uses zaqarclient.v2.",
+        "claim_messages": "claim_messages",
+        "delete_messages": "delete_messages",
         "queue_messages": "queue_messages",
         "queue_post": "queue_post",
         "queue_pop": "queue_pop"
