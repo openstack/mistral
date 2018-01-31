@@ -129,7 +129,7 @@ directory.
 
    Default policy.json file is in ``mistral/etc/``.
    For more details see `policy.json file
-   <https://docs.openstack.org/ocata/config-reference/policy-json-file.html>`_.
+   <https://docs.openstack.org/oslo.policy/latest/admin/policy-json-file.html>`_.
 
 #. After that try to run mistral engine and see it is running without
    any error::
