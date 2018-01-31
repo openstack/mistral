@@ -15,14 +15,14 @@
 
 import hashlib
 import json
-import sqlalchemy as sa
-from sqlalchemy import event
-from sqlalchemy.orm import backref
-from sqlalchemy.orm import relationship
 import sys
 
 from oslo_config import cfg
 from oslo_log import log as logging
+import sqlalchemy as sa
+from sqlalchemy import event
+from sqlalchemy.orm import backref
+from sqlalchemy.orm import relationship
 
 from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
