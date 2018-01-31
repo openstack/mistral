@@ -15,7 +15,7 @@
 """Tests cors middleware."""
 
 from mistral.tests.unit.api import base
-from oslo_config import cfg as cfg
+from oslo_config import cfg
 from oslo_middleware import cors as cors_middleware
 
 
