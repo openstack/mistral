@@ -7,7 +7,7 @@ The Mistral CLI can be used with ``mistral`` command or via `OpenStackClient
 Mistral Client
 --------------
 
-The best way to learn about all the commands and arguements that are expected
+The best way to learn about all the commands and arguments that are expected
 is to use the ``mistral help`` command.
 
 .. code-block:: bash
@@ -47,7 +47,7 @@ the detailed usage.
 
 The full list of Mistral commands that are registered with OpenStack client
 can be listed with ``openstack command list``. By default it will list all
-commands grouped togehter, but we can specify only the Mistral command group.
+commands grouped together, but we can specify only the Mistral command group.
 
 .. code-block:: bash
 
