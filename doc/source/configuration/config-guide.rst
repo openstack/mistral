@@ -88,7 +88,7 @@ directory.
 
     CREATE DATABASE mistral;
     USE mistral
-    GRANT ALL ON mistral.* TO 'root':<password>@<database-host>;
+    GRANT ALL ON mistral.* TO 'root'@<database-host> IDENTIFIED BY <password>;
 
    Configure connection in Mistral config::
 
