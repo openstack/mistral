@@ -125,8 +125,17 @@ WF_EX_JSON_WITH_DESC['description'] = WF_EX.description
 WF_EX_WITH_PROJECT_ID = WF_EX.get_clone()
 WF_EX_WITH_PROJECT_ID.project_id = '<default-project>'
 
+SOURCE_WF_EX = copy.deepcopy(WF_EX)
+SOURCE_WF_EX['source_execution_id'] = WF_EX.id
+SOURCE_WF_EX['id'] = uuidutils.generate_uuid()
+SOURCE_WF_EX_JSON_WITH_DESC = copy.deepcopy(WF_EX_JSON_WITH_DESC)
+SOURCE_WF_EX_JSON_WITH_DESC['id'] = SOURCE_WF_EX.id
+SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id'] = \
+    SOURCE_WF_EX.source_execution_id
+
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
 MOCK_SUB_WF_EX = mock.MagicMock(return_value=SUB_WF_EX)
+MOCK_SOURCE_WF_EX = mock.MagicMock(return_value=SOURCE_WF_EX)
 MOCK_WF_EXECUTIONS = mock.MagicMock(return_value=[WF_EX])
 MOCK_UPDATED_WF_EX = mock.MagicMock(return_value=UPDATED_WF_EX)
 MOCK_DELETE = mock.MagicMock(return_value=None)
@@ -570,19 +579,80 @@ class TestExecutionsController(base.APITest):
         # corresponding object exists.
         start_wf_func.assert_not_called()
 
-    @mock.patch.object(db_api,
-                       'get_workflow_execution',
-                       mock.MagicMock(return_value=WF_EX_JSON))
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_post_with_source_execution_id(self, wf_exec_mock):
-        wf_exec_mock.return_value = WF_EX.to_dict()
+        wf_exec_mock.return_value = SOURCE_WF_EX.to_dict()
 
-        resp = self.app.post_json('/v2/executions/', WF_EX_JSON_WITH_DESC)
+        resp = self.app.post_json('/v2/executions/',
+                                  SOURCE_WF_EX_JSON_WITH_DESC)
+
+        source_wf_ex_json = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
+        del source_wf_ex_json['source_execution_id']
 
         self.assertEqual(201, resp.status_int)
-        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
+        self.assertDictEqual(source_wf_ex_json, resp.json)
 
-        exec_dict = WF_EX_JSON_WITH_DESC
+        exec_dict = source_wf_ex_json
+
+        wf_exec_mock.assert_called_once_with(
+            exec_dict['workflow_id'],
+            '',
+            exec_dict['id'],
+            json.loads(exec_dict['input']),
+            exec_dict['description'],
+            **json.loads(exec_dict['params'])
+        )
+
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_WF_EX)
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_with_src_exec_id_without_exec_id(self, wf_exec_mock):
+        source_wf_ex = copy.copy(SOURCE_WF_EX)
+        source_wf_ex.id = ""
+
+        source_wf_ex_json = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
+        source_wf_ex_json['id'] = ''
+
+        wf_exec_mock.return_value = source_wf_ex.to_dict()
+
+        resp = self.app.post_json('/v2/executions/', source_wf_ex_json)
+
+        del source_wf_ex_json['source_execution_id']
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(source_wf_ex_json, resp.json)
+
+        exec_dict = source_wf_ex_json
+
+        wf_exec_mock.assert_called_once_with(
+            exec_dict['workflow_id'],
+            '',
+            '',
+            json.loads(exec_dict['input']),
+            exec_dict['description'],
+            **json.loads(exec_dict['params'])
+        )
+
+    @mock.patch.object(db_api, 'get_workflow_execution', MOCK_EMPTY)
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_without_source_execution_id(self, wf_exec_mock):
+        wf_exec_mock.return_value = SOURCE_WF_EX.to_dict()
+
+        source_wf_ex_json = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
+        source_wf_ex_json['source_execution_id'] = ""
+        # here we want to pass an empty value into the api for the
+        # source execution id to make sure that the correct actions are
+        # taken.
+
+        resp = self.app.post_json('/v2/executions/', source_wf_ex_json)
+        self.assertEqual(201, resp.status_int)
+
+        del source_wf_ex_json['source_execution_id']
+        # here we have to remove the source execution key as the
+        # id is only used to perform a lookup.
+
+        self.assertDictEqual(source_wf_ex_json, resp.json)
+        exec_dict = source_wf_ex_json
 
         wf_exec_mock.assert_called_once_with(
             exec_dict['workflow_id'],
