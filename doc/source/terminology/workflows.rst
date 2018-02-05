@@ -137,4 +137,4 @@ YAML example
           requires: [create_vm, associate_ip]
 
 For more details about Mistral Workflow Language itself, please see
-:doc:`Mistral Workflow Language specification </user/dsl_v2>`
+:doc:`Mistral Workflow Language specification </user/wf_lang_v2>`
