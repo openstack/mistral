@@ -24,7 +24,7 @@ class ContentTypeHook(hooks.PecanHook):
         'hack' but it seems impossible using pecan/WSME to set different
         content types on request and response.
 
-        :param content_type: Content-Type that response should has.
+        :param content_type: Content-Type of the response.
         :type content_type: str
         :param methods: HTTP methods that should have response
         with given content_type.
