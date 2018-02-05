@@ -211,7 +211,7 @@ defined in the configuration file should only be used if ``all`` Mistral
 servers are launched on the same process. Otherwise, messages do not get
 delivered because the ``fake`` transport is using an in-process queue.
 
-Project Goals 2017
+Project Goals 2018
 ------------------
 
 #. **Complete Mistral documentation**.
@@ -225,19 +225,6 @@ Project Goals 2017
    the same style and structure principles. The obvious sub-goal of this goal
    is to establish these principles.
 
-#. **Complete Mistral Custom Actions API**.
-
-   There has been the initiative in Mistral team since April of 2016 to
-   refactor Mistral actions subsystem in order to make the process of
-   developing Mistral actions easier and clearer. In 2017 we need to complete
-   this effort and make sure that all APIs are stable and it’s well-documented.
-
-   *Definition of done*:
-   All API interfaces are stable, existing actions are rewritten using this new
-   API, OpenStack actions are also rewritten based on the new API and moved to
-   mistral-extra repo. Everything is well documented and the doc has enough
-   examples.
-
 #. **Finish Mistral multi-node mode**.
 
    Mistral needs to be proven to work reliably in multi-node mode. In order
@@ -247,10 +234,6 @@ Project Goals 2017
    *Definition of done*:
    CI gate supports MySQL, all critically important functionality (join,
    with-items, parallel workflows, sequential workflows) is covered by tests.
-
-#. **Reduce workflow execution time**.
-
-   *Definition of done*: Average workflow execution time reduced by 30%.
 
 Project Resources
 -----------------
