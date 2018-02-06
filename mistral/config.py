@@ -494,7 +494,7 @@ def parse_args(args=None, usage=None, default_config_files=None):
     CONF(
         args=args,
         project='mistral',
-        version=version,
+        version=version.version_string,
         usage=usage,
         default_config_files=default_config_files
     )
