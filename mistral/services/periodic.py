@@ -80,6 +80,7 @@ class MistralPeriodicTasks(periodic_task.PeriodicTasks):
                     rpc.get_engine_client().start_workflow(
                         trigger.workflow.name,
                         trigger.workflow.namespace,
+                        None,
                         trigger.workflow_input,
                         description=json.dumps(description),
                         **trigger.workflow_params
