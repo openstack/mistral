@@ -45,8 +45,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
                        'create_trust',
                        type('trust', (object,), {'id': 'my_trust_id'}))
     @mock.patch('mistral.rpc.clients.get_engine_client')
-    def test_start_workflow(self, rpc_mock):
-
+    def test_start_workflow(self, get_engine_client_mock):
         cfg.CONF.set_default('auth_enable', True, group='pecan')
 
         wf = workflows.create_workflows(WORKFLOW_LIST)[0]
@@ -71,11 +70,18 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
 
-        start_workflow_mock = rpc_mock.return_value.start_workflow
-        start_workflow_mock.assert_called_once()
+        start_wf_mock = get_engine_client_mock.return_value.start_workflow
+
+        start_wf_mock.assert_called_once()
+
+        # Check actual parameters of the call.
+        self.assertEqual(
+            ('my_wf', '', None, {}),
+            start_wf_mock.mock_calls[0][1]
+        )
         self.assertIn(
             t.id,
-            start_workflow_mock.mock_calls[0][2]['description']
+            start_wf_mock.mock_calls[0][2]['description']
         )
 
         next_triggers = triggers.get_next_cron_triggers()
@@ -181,9 +187,13 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
     def test_validate_cron_trigger_input_first_time(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
+
         first_time = datetime.datetime.utcnow() + datetime.timedelta(0, 1)
-        self.assertRaises(exc.InvalidModelException,
-                          triggers.validate_cron_trigger_input,
-                          None,
-                          first_time,
-                          None)
+
+        self.assertRaises(
+            exc.InvalidModelException,
+            triggers.validate_cron_trigger_input,
+            None,
+            first_time,
+            None
+        )
