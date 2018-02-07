@@ -35,7 +35,8 @@ _periodic_tasks = {}
 
 
 class MistralPeriodicTasks(periodic_task.PeriodicTasks):
-    @periodic_task.periodic_task(spacing=1, run_immediately=True)
+    @periodic_task.periodic_task(spacing=CONF.cron_trigger.execution_interval,
+                                 run_immediately=True)
     def process_cron_triggers_v2(self, ctx):
         LOG.debug("Processing cron triggers...")
 
