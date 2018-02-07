@@ -38,7 +38,8 @@ class WorkflowSpec(base.BaseSpec):
             "input": types.UNIQUE_STRING_OR_ONE_KEY_DICT_LIST,
             "output": types.NONEMPTY_DICT,
             "output-on-error": types.NONEMPTY_DICT,
-            "vars": types.NONEMPTY_DICT
+            "vars": types.NONEMPTY_DICT,
+            "tags": types.UNIQUE_STRING_LIST
         },
         "required": ["tasks"],
         "additionalProperties": False

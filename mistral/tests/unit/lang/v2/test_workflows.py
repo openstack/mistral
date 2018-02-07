@@ -425,3 +425,22 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             "Workflow name cannot be in the format of UUID",
             str(exception)
         )
+
+    def test_tags(self):
+        tests = [
+            ({'tags': ''}, True),
+            ({'tags': []}, True),
+            ({'tags': ['']}, True),
+            ({'tags': ['tag']}, False),
+            ({'tags': ['tag', 'tag']}, True),
+            ({'tags': None}, True)
+        ]
+
+        for wf_tags, expect_error in tests:
+            overlay = {'test': wf_tags}
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )
