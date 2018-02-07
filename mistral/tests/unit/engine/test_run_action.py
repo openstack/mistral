@@ -334,5 +334,6 @@ class RunActionEngineTest(base.EngineTestCase):
         run_mock.assert_called_once_with(
             {'input': 'Hello'},
             None,
-            save=False
+            save=False,
+            timeout=None
         )

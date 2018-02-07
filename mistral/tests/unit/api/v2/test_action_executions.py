@@ -289,6 +289,33 @@ class TestActionExecutionsController(base.APITest):
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
+    def test_post_with_timeout(self, f):
+        f.return_value = ACTION_EX_DB.to_dict()
+
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {
+                'name': 'std.echo',
+                'input': "{}",
+                'params': '{"timeout": 2}'
+            }
+        )
+
+        self.assertEqual(201, resp.status_int)
+
+        action_exec = copy.deepcopy(ACTION_EX)
+        del action_exec['task_name']
+
+        self.assertDictEqual(action_exec, resp.json)
+
+        f.assert_called_once_with(
+            action_exec['name'],
+            json.loads(action_exec['input']),
+            description=None,
+            timeout=2
+        )
+
+    @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post_json(self, f):
         f.return_value = ACTION_EX_DB.to_dict()
 

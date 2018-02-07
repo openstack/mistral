@@ -424,7 +424,8 @@ class RegularTask(Task):
         action.schedule(
             input_dict,
             target,
-            safe_rerun=self.task_spec.get_safe_rerun()
+            safe_rerun=self.task_spec.get_safe_rerun(),
+            timeout=self._get_timeout()
         )
 
     @profiler.trace('regular-task-get-target', hide_args=True)
@@ -501,6 +502,22 @@ class RegularTask(Task):
                                        wf_ctx=self.wf_ex.context)
 
         return actions.PythonAction(action_def, task_ex=self.task_ex)
+
+    def _get_timeout(self):
+        timeout = self.task_spec.get_policies().get_timeout()
+
+        if not isinstance(timeout, (int, float)):
+            wf_ex = self.task_ex.workflow_execution
+
+            ctx_view = data_flow.ContextView(
+                self.task_ex.in_context,
+                wf_ex.context,
+                wf_ex.input
+            )
+
+            timeout = expr.evaluate_recursively(data=timeout, context=ctx_view)
+
+        return timeout if timeout > 0 else None
 
 
 class WithItemsTask(RegularTask):
@@ -588,7 +605,8 @@ class WithItemsTask(RegularTask):
                 input_dict,
                 target,
                 index=i,
-                safe_rerun=self.task_spec.get_safe_rerun()
+                safe_rerun=self.task_spec.get_safe_rerun(),
+                timeout=self._get_timeout()
             )
 
             self._decrease_capacity(1)

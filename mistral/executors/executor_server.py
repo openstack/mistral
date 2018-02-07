@@ -60,9 +60,14 @@ class ExecutorServer(service_base.MistralService):
             self._rpc_server.stop(graceful)
 
     def run_action(self, rpc_ctx, action_ex_id, action_cls_str,
-                   action_cls_attrs, params, safe_rerun, execution_context):
+                   action_cls_attrs, params, safe_rerun, execution_context,
+                   timeout):
         """Receives calls over RPC to run action on executor.
 
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
+        :param execution_context: A dict of values providing information about
+            the current execution.
         :param rpc_ctx: RPC request context dictionary.
         :param action_ex_id: Action execution id.
         :param action_cls_str: Action class name.
@@ -74,11 +79,13 @@ class ExecutorServer(service_base.MistralService):
 
         LOG.info(
             "Received RPC request 'run_action'[action_ex_id=%s, "
-            "action_cls_str=%s, action_cls_attrs=%s, params=%s]",
+            "action_cls_str=%s, action_cls_attrs=%s, params=%s, "
+            "timeout=%s]",
             action_ex_id,
             action_cls_str,
             action_cls_attrs,
-            utils.cut(params)
+            utils.cut(params),
+            timeout
         )
 
         redelivered = rpc_ctx.redelivered or False
@@ -90,7 +97,8 @@ class ExecutorServer(service_base.MistralService):
             params,
             safe_rerun,
             execution_context,
-            redelivered
+            redelivered,
+            timeout=timeout
         )
 
 

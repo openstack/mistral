@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from eventlet import timeout
 import mock
 from oslo_config import cfg
 import requests
@@ -1434,6 +1435,29 @@ class PoliciesTest(base.EngineTestCase):
         self.assertEqual(states.ERROR, task_ex.state)
 
         self.await_workflow_error(wf_ex.id)
+
+    def test_action_timeout(self):
+        wb = """---
+        version: '2.0'
+        wf1:
+          tasks:
+            task1:
+              action: std.sleep seconds=10
+              timeout: 2
+        """
+
+        wf_service.create_workflows(wb)
+        wf_ex = self.engine.start_workflow('wf1')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+            action_ex = task_ex.action_executions[0]
+
+        with timeout.Timeout(8):
+            self.await_workflow_error(wf_ex.id)
+            self.await_task_error(task_ex.id)
+            self.await_action_error(action_ex.id)
 
     def test_pause_before_policy(self):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
