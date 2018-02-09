@@ -21,7 +21,6 @@ from oslo_policy import policy
 from mistral import exceptions as exc
 from mistral import policies
 
-
 _ENFORCER = None
 
 
@@ -62,11 +61,6 @@ def enforce(action, context, target=None, do_raise=True,
              do_raise is False.
     """
 
-    if cfg.CONF.auth_type != 'keystone':
-        # Policy enforcement is supported now only with Keystone
-        # authentication.
-        return
-
     target_obj = {
         'project_id': context.project_id,
         'user_id': context.user_id,
@@ -81,7 +75,7 @@ def enforce(action, context, target=None, do_raise=True,
 
     _ensure_enforcer_initialization()
 
-    return _ENFORCER.enforce(
+    return _ENFORCER.authorize(
         action,
         target_obj,
         policy_context,
