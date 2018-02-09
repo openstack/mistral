@@ -68,7 +68,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         next_trigger = triggers.get_next_cron_triggers()[0]
         next_execution_time_before = next_trigger.next_execution_time
 
-        periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+        periodic.process_cron_triggers_v2(None, None)
 
         start_wf_mock = get_engine_client_mock.return_value.start_workflow
 
@@ -121,7 +121,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         next_trigger = next_triggers[0]
         next_execution_time_before = next_trigger.next_execution_time
 
-        periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+        periodic.process_cron_triggers_v2(None, None)
 
         next_triggers = triggers.get_next_cron_triggers()
 
@@ -167,7 +167,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             cron_trigger.next_execution_time
         )
 
-        periodic.MistralPeriodicTasks(cfg.CONF).process_cron_triggers_v2(None)
+        periodic.process_cron_triggers_v2(None, None)
 
         # After process_triggers context is set to None, need to reset it.
         auth_ctx.set_ctx(self.ctx)
