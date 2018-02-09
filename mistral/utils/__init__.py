@@ -311,9 +311,11 @@ def cut_by_kb(data, kilobytes):
     if kilobytes <= 0:
         return cut(data)
 
-    bytes_per_char = sys.getsizeof('s') - sys.getsizeof('')
-    length = int(kilobytes * 1024 / bytes_per_char)
+    length = get_number_of_chars_from_kilobytes(kilobytes)
+    return cut(data, length)
 
+
+def cut_by_char(data, length):
     return cut(data, length)
 
 
@@ -363,6 +365,12 @@ class NotDefined(object):
     """
 
     pass
+
+
+def get_number_of_chars_from_kilobytes(kilobytes):
+    bytes_per_char = sys.getsizeof('s') - sys.getsizeof('')
+    total_number_of_chars = int(kilobytes * 1024 / bytes_per_char)
+    return total_number_of_chars
 
 
 def get_dict_from_string(string, delimiter=','):

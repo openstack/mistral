@@ -430,10 +430,21 @@ class Workflow(object):
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
-        msg = utils.cut_by_kb(
-            msg,
-            cfg.CONF.engine.execution_field_size_limit_kb
-        )
+
+        length_output_on_error = len(str(output_on_error).encode("utf-8"))
+        total_output_length = utils.get_number_of_chars_from_kilobytes(
+            cfg.CONF.engine.execution_field_size_limit_kb)
+
+        if length_output_on_error < total_output_length:
+            msg = utils.cut_by_char(
+                msg,
+                total_output_length - length_output_on_error
+            )
+        else:
+            msg = utils.cut_by_kb(
+                msg,
+                cfg.CONF.engine.execution_field_size_limit_kb
+            )
 
         self.wf_ex.output = merge_dicts({'result': msg}, output_on_error)
 
