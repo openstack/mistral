@@ -1437,7 +1437,7 @@ class PoliciesTest(base.EngineTestCase):
         self.await_workflow_error(wf_ex.id)
 
     def test_action_timeout(self):
-        wb = """---
+        wf_text = """---
         version: '2.0'
         wf1:
           tasks:
@@ -1446,7 +1446,7 @@ class PoliciesTest(base.EngineTestCase):
               timeout: 2
         """
 
-        wf_service.create_workflows(wb)
+        wf_service.create_workflows(wf_text)
         wf_ex = self.engine.start_workflow('wf1')
 
         with db_api.transaction():

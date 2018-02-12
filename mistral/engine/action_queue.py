@@ -57,8 +57,7 @@ def _process_queue(queue):
 
     for operation, args in queue:
         if operation == _RUN_ACTION:
-            action_ex, action_def, target, execution_context, \
-                timeout = args
+            action_ex, action_def, target, execution_context, timeout = args
 
             executor.run_action(
                 action_ex.id,
