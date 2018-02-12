@@ -28,8 +28,9 @@ import six
 
 _CONTINUE_TASK_PATH = 'mistral.engine.policies._continue_task'
 _COMPLETE_TASK_PATH = 'mistral.engine.policies._complete_task'
-_FAIL_IF_INCOMPLETE_TASK_PATH = \
+_FAIL_IF_INCOMPLETE_TASK_PATH = (
     'mistral.engine.policies._fail_task_if_incomplete'
+)
 
 
 def _log_task_delay(task_ex, delay_sec):
