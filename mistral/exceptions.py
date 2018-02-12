@@ -178,7 +178,7 @@ class CoordinationException(MistralException):
 
 class NotAllowedException(MistralException):
     http_code = 403
-    message = "Operation not allowed"
+    message = "Operation forbidden (insufficient permissions)"
 
 
 class UnauthorizedException(MistralException):
