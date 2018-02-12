@@ -168,10 +168,13 @@ Tasks
 ^^^^^
 
 Task is what a workflow consists of. It defines a specific computational
-step in the workflow. Each task can optionally take input data and
-produce output. In Mistral Workflow Language v2, task can be associated with an
-action or a workflow. In the example below there are two tasks of different
-types:
+step in the workflow. When the workflow engine processes entities described
+in the workflow text written in YAML it schedules tasks for execution.
+Scheduling a task means that it's now eligible for execution and will be run
+some time later. When exactly it will run depends on the system load and
+configuration. Each task can optionally take input data and produce output.
+In Mistral Workflow Language v2, task can be associated with an action or a
+workflow. In the example below there are two tasks of different types:
 
 .. code-block:: mistral
 
@@ -540,6 +543,33 @@ stop the exception from bubbling up to an upper layer. So **on-complete**
 should only be understood as a language construction that allows to
 define some clean up actions.
 
+Having that said, it's important to know the order in which these clauses
+are processed by Mistral.
+
+.. code-block:: mistral
+
+    taskA:
+     action: my_action
+     on-success:
+       - taskB
+       - taskC
+     on-complete:
+       - taskD
+       - taskE
+
+In this example, if the task action ('my_action') completes successfully then
+Mistral will first process the 'on-success' clause and schedule tasks 'taskB'
+and 'taskC' and then process the 'on-complete' clause and schedule 'taskC' and
+'taskE'. In most cases, this processing order is not so important but there are
+situations when it matters, especially when both 'on-success' and 'on-complete'
+lists have `engine commands <#engine-commands>`__ that are explained later in
+this document.
+
+If 'on-success' and 'on-error' are both defined in the task definition, they
+never clash because they are mutually exclusive which means that only one of
+them can be processed depending on whether the task action failed or succeeded.
+
+
 Transitions with expressions
 ''''''''''''''''''''''''''''
 
@@ -564,14 +594,14 @@ Engine Commands
 '''''''''''''''
 
 Mistral has a number of engine commands that can be called within direct
-workflows. These commands are used to change the Workflow state.
+workflows. These commands are used to change the workflow state.
 
--  **succeed** - will end the current workflow with the state SUCCESS.
--  **pause** - will end the current workflow with the state PAUSED.
--  **fail** - will end the current workflow with the state ERROR.
+-  **succeed** - will end the current workflow and set its state to SUCCESS.
+-  **pause** - will end the current workflow and set its state to PAUSED.
+-  **fail** - will end the current workflow and set its state to ERROR.
 
 Each of the engine commands accepts a ``msg`` input. This is optional, but if
-provided will be stored in the state info on the workflow execution.
+provided, it will be stored in the state info on the workflow execution.
 
 Workflows that have been ended with ``succeed`` or ``fail`` may not be resumed
 later, but workflows that have been ended with ``pause`` may be.
@@ -608,10 +638,66 @@ When the engine commands are used with task names in a single list, they are
 processed one at a time until the workflow reaches a terminal state. In the
 above example, the ``on-complete`` has three steps to complete - these are
 executed in order until the workflow reaches a terminal state. So in this case
-``taskA`` is called first, then the ``fail`` engine command and ``taskB`` would
-never be called. ``taskB`` would not be called if ``succeed`` was used in this
-example either, but if ``pause`` was used ``taskB`` would be called after the
-workflow is resumed.
+``taskA`` is scheduled first, then the ``fail`` engine command sets the
+workflow state to ERROR and ``taskB`` is never scheduled. ``taskB`` would not be
+scheduled if ``succeed`` was used in this example either.
+
+The ``pause`` command pauses the workflow. This means that the workflow can
+continue when its state is set to RUNNING by using the update Rest API call.
+
+YAML example:
+
+.. code-block:: mistral
+
+    on-complete:
+      - taskA
+      - pause
+      - taskB
+
+In this case when Mistral processes the 'on-complete' clause it will schedule
+``taskA`` and then set the workflow state to PAUSED, and stop scheduling new
+tasks. However, if the workflow is later resumed manually then Mistral will
+schedule ``taskB`` because in the 'on-complete' list it goes right after the
+``pause`` command.
+
+Given the order in which Mistral processes 'on-success' (or 'on-error') and
+'on-complete' clauses it's important to understand what will happen if both
+clauses have engine commands listed in them.
+
+.. code-block:: mistral
+
+    taskA:
+     action: my_action
+     on-error:
+       - taskB
+       - fail
+       - taskC
+     on-complete:
+       - taskD
+       - pause
+       - taskE
+
+As was explained above, 'on-complete' is always processed after 'on-success'
+(or 'on-error') because it plays the similar role as 'finally' in most general
+purpose programming languages. Let's consider two scenarios that can happen
+in the example above when 'taskA' runs, i.e. its action 'my_action' runs.
+
+-  If 'my_action' fails then Mistral will schedule 'taskB' because it's
+   listed in the 'on-error' clause which is processed before the
+   'on-complete' and then will set the state of the workflow to ERROR.
+   This will prevent from scheduling other new tasks so neither 'taskC' nor
+   'taskD' and 'taskE' will be ever be scheduled. In other words, the whole
+   'on-complete' clause will never be processed because the 'fail' command in
+   the 'on-success' sets the workflow state to ERROR.
+-  If 'my_action' succeeds then the 'on-error' clause will be ignored and since
+   'on-success' is not defined then Mistral will process the 'on-complete'
+   clause. And while doing that, it will schedule 'taskD' first and then pause
+   the workflow because of the 'pause' command. 'taskE' will be scheduled if
+   this workflow is resumed manually at some later time through the API.
+
+This illustrates that, while designing a workflow, it's important to know
+precisely how Mistral processes 'on-success', 'on-error' and 'on-complete'
+and engine commands.
 
 Fork
 ''''
