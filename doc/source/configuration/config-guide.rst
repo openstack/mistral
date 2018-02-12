@@ -93,7 +93,7 @@ directory.
    Configure connection in Mistral config::
 
     [database]
-    connection = mysql://<user>:<password>@<database-host>:3306/mistral
+    connection = mysql+pymysql://<user>:<password>@<database-host>:3306/mistral
 
    **NOTE**: If PostgreSQL is used, configure connection item as below::
 
