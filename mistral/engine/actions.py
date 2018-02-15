@@ -32,6 +32,7 @@ from mistral.services import security
 from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
+from mistral.workflow import lookup_utils
 from mistral.workflow import states
 from mistral_lib import actions as ml_actions
 
@@ -367,11 +368,11 @@ class AdHocAction(PythonAction):
                  wf_ctx=None):
         self.action_spec = spec_parser.get_action_spec(action_def.spec)
 
-        try:
-            base_action_def = db_api.get_action_definition(
-                self.action_spec.get_base()
-            )
-        except exc.DBEntityNotFoundError:
+        base_action_def = lookup_utils.find_action_definition_by_name(
+            self.action_spec.get_base()
+        )
+
+        if not base_action_def:
             raise exc.InvalidActionException(
                 "Failed to find action [action_name=%s]" %
                 self.action_spec.get_base()
@@ -607,10 +608,14 @@ def resolve_action_definition(action_spec_name, wf_name=None,
 
         action_full_name = "%s.%s" % (wb_name, action_spec_name)
 
-        action_db = db_api.load_action_definition(action_full_name)
+        action_db = lookup_utils.find_action_definition_by_name(
+            action_full_name
+        )
 
     if not action_db:
-        action_db = db_api.load_action_definition(action_spec_name)
+        action_db = lookup_utils.find_action_definition_by_name(
+            action_spec_name
+        )
 
     if not action_db:
         raise exc.InvalidActionException(

@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Enable caching of action definitions in local memory. Now, instead of
+    downloading the definitions from the database every time, mistral engine
+    will store them in a local cache. This should reduce the number of
+    database requests and improve the whole performance of the the system.
+    Cache ttl can be configured with ``action_definition_cache_time`` option
+    from [engine] group. The default value is 60 seconds.

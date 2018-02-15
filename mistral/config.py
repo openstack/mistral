@@ -172,6 +172,12 @@ engine_opts = [
                ' will be restored automatically. If this property is'
                ' set to a negative value Mistral will never be doing '
                ' this check.')
+    ),
+    cfg.IntOpt(
+        'action_definition_cache_time',
+        default=60,
+        help=_('A number of seconds that indicates how long action '
+               'definitions should be stored in the local cache.')
     )
 ]
 

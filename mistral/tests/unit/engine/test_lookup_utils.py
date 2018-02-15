@@ -12,9 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import time
+
+import cachetools
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.services import actions as action_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import lookup_utils
@@ -80,3 +84,81 @@ class LookupUtilsTest(base.EngineTestCase):
         # Expecting that the cache size is 0 because the workflow has
         # finished and invalidated corresponding cache entry.
         self.assertEqual(0, lookup_utils.get_task_execution_cache_size())
+
+    def test_action_definition_cache_ttl(self):
+        action = """---
+        version: '2.0'
+
+        action1:
+          base: std.echo output='Hi'
+          output:
+            result: $
+        """
+
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: action1
+              on-success: join_task
+
+            task2:
+              action: action1
+              on-success: join_task
+
+            join_task:
+              join: all
+              on-success: task4
+
+            task4:
+              action: action1
+              pause-before: true
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Create an action.
+        db_actions = action_service.create_actions(action)
+
+        self.assertEqual(1, len(db_actions))
+        self._assert_single_item(db_actions, name='action1')
+
+        # Explicitly mark the action to be deleted after the test execution.
+        self.addCleanup(db_api.delete_action_definitions, name='action1')
+
+        # Reinitialise the cache with reduced action_definition_cache_time
+        # to make the test faster.
+        # Save the existing cache into a temporary variable and restore
+        # the value when the test passed.
+        old_cache = lookup_utils._ACTION_DEF_CACHE
+        lookup_utils._ACTION_DEF_CACHE = cachetools.TTLCache(
+            maxsize=1000,
+            ttl=5  # 5 seconds
+        )
+        self.addCleanup(setattr, lookup_utils, '_ACTION_DEF_CACHE', old_cache)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_paused(wf_ex.id)
+
+        # Check that 'action1' 'echo' and 'noop' are cached.
+        self.assertEqual(3, lookup_utils.get_action_definition_cache_size())
+        self.assertIn('action1', lookup_utils._ACTION_DEF_CACHE)
+        self.assertIn('std.noop', lookup_utils._ACTION_DEF_CACHE)
+        self.assertIn('std.echo', lookup_utils._ACTION_DEF_CACHE)
+
+        # Wait some time until cache expires
+        time.sleep(7)
+        self.assertEqual(0, lookup_utils.get_action_definition_cache_size())
+
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+
+        # Check all actions are cached again.
+        self.assertEqual(2, lookup_utils.get_action_definition_cache_size())
+        self.assertIn('action1', lookup_utils._ACTION_DEF_CACHE)
+        self.assertIn('std.echo', lookup_utils._ACTION_DEF_CACHE)
