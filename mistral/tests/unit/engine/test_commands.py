@@ -108,6 +108,28 @@ class SimpleEngineCommandsTest(base.EngineTestCase):
             state=states.SUCCESS
         )
 
+        # Let's resume the workflow and wait till it succeeds.
+        self.engine.resume_workflow(wf_ex.id)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        self.assertEqual(2, len(task_execs))
+        self._assert_single_item(
+            task_execs,
+            name='task1',
+            state=states.SUCCESS
+        )
+        self._assert_single_item(
+            task_execs,
+            name='task2',
+            state=states.SUCCESS
+        )
+
 
 WORKBOOK2 = """
 ---

@@ -34,12 +34,26 @@ class WorkflowCommand(object):
         self.ctx = ctx or {}
         self.triggered_by = triggered_by
 
+    def to_dict(self):
+        return {
+            'task_name': self.task_spec.get_name(),
+            'ctx': self.ctx,
+            'triggered_by': self.triggered_by
+        }
+
 
 class Noop(WorkflowCommand):
     """No-operation command."""
 
     def __repr__(self):
         return "NOOP [workflow=%s]" % self.wf_ex.name
+
+    def to_dict(self):
+        d = super(Noop, self).to_dict()
+
+        d['cmd_name'] = 'noop'
+
+        return d
 
 
 class RunTask(WorkflowCommand):
@@ -74,9 +88,18 @@ class RunTask(WorkflowCommand):
             )
         )
 
+    def to_dict(self):
+        d = super(RunTask, self).to_dict()
+
+        d['cmd_name'] = self.task_spec.get_name()
+        d['wait'] = self.wait
+        d['unique_key'] = self.unique_key
+
+        return d
+
 
 class RunExistingTask(WorkflowCommand):
-    """Command for running already existent task."""
+    """Command to run an existing workflow task."""
 
     def __init__(self, wf_ex, wf_spec, task_ex, reset=True, triggered_by=None):
         super(RunExistingTask, self).__init__(
@@ -90,6 +113,16 @@ class RunExistingTask(WorkflowCommand):
         self.task_ex = task_ex
         self.reset = reset
         self.unique_key = task_ex.unique_key
+
+    def to_dict(self):
+        d = super(RunExistingTask, self).to_dict()
+
+        d['cmd_name'] = 'run_existing_task'
+        d['task_ex_id'] = self.task_ex.id
+        d['reset'] = self.reset
+        d['unique_key'] = self.unique_key
+
+        return d
 
 
 class SetWorkflowState(WorkflowCommand):
@@ -107,6 +140,14 @@ class SetWorkflowState(WorkflowCommand):
 
         self.new_state = new_state
         self.msg = msg
+
+    def to_dict(self):
+        d = super(SetWorkflowState, self).to_dict()
+
+        d['new_state'] = self.new_state
+        d['msg'] = self.msg
+
+        return d
 
 
 class FailWorkflow(SetWorkflowState):
@@ -127,6 +168,13 @@ class FailWorkflow(SetWorkflowState):
     def __repr__(self):
         return "Fail [workflow=%s]" % self.wf_ex.name
 
+    def to_dict(self):
+        d = super(FailWorkflow, self).to_dict()
+
+        d['cmd_name'] = 'fail'
+
+        return d
+
 
 class SucceedWorkflow(SetWorkflowState):
     """Instruction to succeed a workflow."""
@@ -145,6 +193,13 @@ class SucceedWorkflow(SetWorkflowState):
 
     def __repr__(self):
         return "Succeed [workflow=%s]" % self.wf_ex.name
+
+    def to_dict(self):
+        d = super(SucceedWorkflow, self).to_dict()
+
+        d['cmd_name'] = 'succeed'
+
+        return d
 
 
 class PauseWorkflow(SetWorkflowState):
@@ -165,6 +220,13 @@ class PauseWorkflow(SetWorkflowState):
     def __repr__(self):
         return "Pause [workflow=%s]" % self.wf_ex.name
 
+    def to_dict(self):
+        d = super(PauseWorkflow, self).to_dict()
+
+        d['cmd_name'] = 'pause'
+
+        return d
+
 
 RESERVED_CMDS = dict(zip(
     tasks.RESERVED_TASK_NAMES, [
@@ -180,6 +242,13 @@ def get_command_class(cmd_name):
     return RESERVED_CMDS[cmd_name] if cmd_name in RESERVED_CMDS else None
 
 
+# TODO(rakhmerov): IMO the way how we instantiate commands is weird.
+# If we look at how we implement the logic of saving commands to
+# dicts (to_dict) and restoring back from dicts then we'll see
+# the lack of symmetry and unified way to do that depending on a
+# command. Also RunExistingTask turns to be a special case that
+# is not processed with this method at all. Might be a 'bad smell'.
+# This all makes me think that we need to do some refactoring here.
 def create_command(cmd_name, wf_ex, wf_spec, task_spec, ctx,
                    params=None, triggered_by=None):
     cmd_cls = get_command_class(cmd_name) or RunTask
@@ -201,3 +270,23 @@ def create_command(cmd_name, wf_ex, wf_spec, task_spec, ctx,
             ctx,
             triggered_by=triggered_by
         )
+
+
+def restore_command_from_dict(wf_ex, cmd_dict):
+    cmd_name = cmd_dict['cmd_name']
+
+    wf_spec = spec_parser.get_workflow_spec_by_execution_id(wf_ex.id)
+    task_spec = wf_spec.get_tasks()[cmd_dict['task_name']]
+    ctx = cmd_dict['ctx']
+    params = {'msg': cmd_dict.get('msg')} if 'msg' in cmd_dict else None
+    triggered_by = cmd_dict.get('triggered_by')
+
+    return create_command(
+        cmd_name,
+        wf_ex,
+        wf_spec,
+        task_spec,
+        ctx,
+        params,
+        triggered_by
+    )

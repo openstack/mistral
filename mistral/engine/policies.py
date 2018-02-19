@@ -260,9 +260,9 @@ class WaitAfterPolicy(base.TaskPolicy):
         end_state = task_ex.state
         end_state_info = task_ex.state_info
 
-        # TODO(rakhmerov): Policies probably needs to have tasks.Task
-        # interface in order to change manage task state safely.
-        # Set task state to 'DELAYED'.
+        # TODO(rakhmerov): Policies probably need to have tasks.Task
+        # interface in order to manage task state safely.
+        # Set task state to 'RUNNING_DELAYED'.
         task_ex.state = states.RUNNING_DELAYED
         task_ex.state_info = (
             'Suspended by wait-after policy for %s seconds' % self.delay
@@ -391,6 +391,7 @@ class RetryPolicy(base.TaskPolicy):
         _log_task_delay(task_ex, self.delay)
 
         data_flow.invalidate_task_execution_result(task_ex)
+
         task_ex.state = states.RUNNING_DELAYED
 
         policy_context['retry_no'] = retry_no + 1
