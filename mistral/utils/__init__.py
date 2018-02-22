@@ -36,7 +36,6 @@ import pkg_resources as pkg
 import random
 
 from mistral import exceptions as exc
-from mistral import version
 
 
 # Thread local storage.
@@ -176,10 +175,7 @@ def update_dict(left, right):
 
 
 def get_file_list(directory):
-    base_path = pkg.resource_filename(
-        version.version_info.package,
-        directory
-    )
+    base_path = pkg.resource_filename("mistral", directory)
 
     return [path.join(base_path, f) for f in os.listdir(base_path)
             if path.isfile(path.join(base_path, f))]
