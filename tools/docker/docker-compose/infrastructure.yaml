@@ -1,0 +1,53 @@
+version: '3'
+services:
+#  postgresql:
+#    image: postgres:10.1-alpine
+#    restart: always
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgresql:/var/lib/postgresql/data
+#    networks:
+#      - database
+#    environment:
+#      - POSTGRES_PASSWORD=mistral
+#      - POSTGRES_USER=mistral
+#      - POSTGRES_DB=mistral
+
+  rabbitmq:
+    image: rabbitmq:3.7.2-management-alpine
+    restart: always
+    ports:
+      - "15672:15672"
+    networks:
+      - message-broker
+    hostname: rabbitmq
+    environment:
+      - RABBITMQ_VM_MEMORY_HIGH_WATERMARK=0.81
+      - RABBITMQ_DEFAULT_USER=mistral
+      - RABBITMQ_DEFAULT_PASS=mistral
+      - RABBITMQ_DEFAULT_VHOST=mistral
+
+  mysql:
+    image: mysql:8.0.3
+    restart: always
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - database
+    environment:
+      - MYSQL_ROOT_PASSWORD=mistral
+      - MYSQL_DATABASE=mistral
+      - MYSQL_USER=mistral
+      - MYSQL_PASSWORD=mistral
+
+volumes:
+  postgresql:
+  rabbitmq:
+  mysql:
+
+networks:
+  database:
+  message-broker:
