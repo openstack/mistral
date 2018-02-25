@@ -39,6 +39,10 @@ First of all, clone the repo and go to the repo directory::
     $ git clone https://github.com/openstack/mistral.git
     $ cd mistral
 
+Install tox::
+
+    $ pip install tox
+
 Generate config::
 
     $ tox -egenconfig
