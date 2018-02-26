@@ -206,5 +206,5 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
     def sync_call(self, ctx, method, target=None, **kwargs):
         return self._call(ctx, method, async_=False, target=target, **kwargs)
 
-    def async_call(self, ctx, method, target=None, **kwargs):
+    def async_call(self, ctx, method, target=None, fanout=False, **kwargs):
         return self._call(ctx, method, async_=True, target=target, **kwargs)

@@ -137,7 +137,7 @@ class RPCClient(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def async_call(self, ctx, method, target=None, **kwargs):
+    def async_call(self, ctx, method, target=None, fanout=False, **kwargs):
         """Asynchronous call of RPC method.
 
         Does not block the thread, just send invoking data to
