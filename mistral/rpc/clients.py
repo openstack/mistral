@@ -392,26 +392,29 @@ class EventEngineClient(evt_eng.EventEngine):
         self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     def create_event_trigger(self, trigger, events):
-        return self._client.sync_call(
+        return self._client.async_call(
             auth_ctx.ctx(),
             'create_event_trigger',
             trigger=trigger,
-            events=events
+            events=events,
+            fanout=True,
         )
 
     def delete_event_trigger(self, trigger, events):
-        return self._client.sync_call(
+        return self._client.async_call(
             auth_ctx.ctx(),
             'delete_event_trigger',
             trigger=trigger,
-            events=events
+            events=events,
+            fanout=True,
         )
 
     def update_event_trigger(self, trigger):
-        return self._client.sync_call(
+        return self._client.async_call(
             auth_ctx.ctx(),
             'update_event_trigger',
             trigger=trigger,
+            fanout=True,
         )
 
 

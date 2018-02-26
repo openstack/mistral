@@ -405,6 +405,4 @@ class DefaultEventEngine(base.EventEngine):
 
             return
 
-        security.delete_trust(trigger['trust_id'])
-
         self._add_event_listener(trigger['exchange'], trigger['topic'], events)
