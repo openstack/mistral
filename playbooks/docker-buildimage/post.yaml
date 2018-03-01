@@ -1,4 +1,4 @@
-- hosts: primary
+- hosts: all
   tasks:
 
     - name: Ensure artifacts directory exists
