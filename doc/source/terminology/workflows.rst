@@ -36,7 +36,7 @@ YAML example
             count: 15
 
 Workflow types
---------------
+^^^^^^^^^^^^^^
 
 Mistral Workflow Language v2 introduces different workflow types and the
 structure of each workflow type varies according to its semantics. Currently,
@@ -48,7 +48,7 @@ Mistral provides two workflow types:
 See corresponding sections for details.
 
 Direct workflow
----------------
+^^^^^^^^^^^^^^^
 
 Direct workflow consists of tasks combined in a graph where every next
 task starts after another one depending on produced result. So direct
@@ -58,8 +58,8 @@ jump to next tasks.
 
 .. image:: /img/Mistral_direct_workflow.png
 
-YAML example
-^^^^^^^^^^^^
+YAML example of direct workflow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
     ---
@@ -89,7 +89,7 @@ YAML example
           action: send_email to='admin@mysite.org' body='Vm is successfully created and its id is <% $.vm_id %>'
 
 Reverse workflow
-----------------
+^^^^^^^^^^^^^^^^
 
 In reverse workflow all relationships in workflow task graph are
 dependencies. In order to run this type of workflow we need to specify a
@@ -106,8 +106,8 @@ specified order (starting from tasks that have no dependencies). Tasks
 **T3** and **T4** won't be a part of this workflow because there's no
 route in the directed graph from **T1** to **T3** or **T4**.
 
-YAML example
-^^^^^^^^^^^^
+YAML example of reverse workflow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ::
 
     ---
