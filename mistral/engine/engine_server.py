@@ -84,7 +84,7 @@ class EngineServer(service_base.MistralService):
 
         :param rpc_ctx: RPC request context.
         :param wf_identifier: Workflow definition identifier.
-        :param wf_namespace: Workflow definition identifier.
+        :param wf_namespace: Workflow namespace.
         :param wf_input: Workflow input.
         :param wf_ex_id: Workflow execution id. If passed, it will be set
             in the new execution object.

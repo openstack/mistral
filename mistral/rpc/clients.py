@@ -122,7 +122,6 @@ class EngineClient(eng.Engine):
         """Starts workflow sending a request to engine over RPC.
 
         :param wf_identifier: Workflow identifier.
-        :param wf_namespace Workflow namespace.
         :param wf_namespace: Workflow namespace.
         :param wf_input: Workflow input data as a dictionary.
         :param wf_ex_id: Workflow execution id. If passed, it will be set
