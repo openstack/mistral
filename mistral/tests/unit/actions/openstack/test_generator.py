@@ -58,7 +58,7 @@ MODULE_MAPPING = {
     'vitrage': ['vitrage.alarm_get', actions.VitrageAction]
 }
 
-EXTRA_MODULES = ['neutron', 'swift', 'zaqar', 'tacker']
+EXTRA_MODULES = ['neutron', 'swift', 'zaqar', 'tacker', 'senlin']
 
 
 CONF = cfg.CONF
