@@ -85,25 +85,31 @@ def _wrap_exception_and_reraise(exception):
 
 
 def wrap_messaging_exception(method):
-    """This decorator unwrap remote error in one of MistralException.
+    """The decorator unwraps a remote error into one of the mistral exceptions.
 
-    oslo.messaging has different behavior on raising exceptions
-    when fake or rabbit transports are used. In case of rabbit
-    transport it raises wrapped RemoteError which forwards directly
-    to API. Wrapped RemoteError contains one of MistralException raised
-    remotely on Engine and for correct exception interpretation we
-    need to unwrap and raise given exception and manually send it to
-    API layer.
+    oslo.messaging has different behavior on raising exceptions depending on
+    whether we use 'fake' or 'rabbit' transports. In case of 'rabbit' transport
+    it raises an instance of RemoteError which forwards directly to the API.
+    The RemoteError instance contains one of the MistralException instances
+    raised remotely on the RPC server side and for correct exception handling
+    we need to unwrap and raise the original wrapped exception.
     """
     def decorator(*args, **kwargs):
         try:
             return method(*args, **kwargs)
-
         except exc.MistralException:
             raise
         except (client.RemoteError, exc.KombuException, Exception) as e:
+            # Since we're going to transform the original exception
+            # we need to log it as is.
+            LOG.exception(
+                "Caught a messaging remote error."
+                " See details of the original exception."
+            )
+
             if hasattr(e, 'exc_type') and hasattr(exc, e.exc_type):
                 exc_cls = getattr(exc, e.exc_type)
+
                 raise exc_cls(e.value)
 
             _wrap_exception_and_reraise(e)
