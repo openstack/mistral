@@ -251,8 +251,12 @@ class MistralRetrying(tenacity.Retrying):
 def create_db_retry_object():
     return MistralRetrying(
         retry=tenacity.retry_if_exception_type(
-            (sa.exc.OperationalError, db_exc.DBConnectionError)
+            (
+                sa.exc.OperationalError,
+                db_exc.DBDeadlock,
+                db_exc.DBConnectionError
+            )
         ),
         stop=tenacity.stop_after_attempt(10),
-        wait=tenacity.wait_incrementing(increment=0.2)  # 0.2 seconds
+        wait=tenacity.wait_incrementing(increment=0.5)  # 0.5 seconds
     )
