@@ -33,6 +33,9 @@ def id_column():
 class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
     """Base class for all Mistral SQLAlchemy DB Models."""
 
+    created_at = sa.Column(sa.DateTime, default=lambda: utils.utc_now_sec())
+    updated_at = sa.Column(sa.DateTime, onupdate=lambda: utils.utc_now_sec())
+
     __table__ = None
 
     __hash__ = object.__hash__
@@ -134,8 +137,6 @@ class MistralSecureModelBase(MistralModelBase):
 
     scope = sa.Column(sa.String(80), default='private')
     project_id = sa.Column(sa.String(80), default=security.get_project_id)
-    created_at = sa.Column(sa.DateTime, default=lambda: utils.utc_now_sec())
-    updated_at = sa.Column(sa.DateTime, onupdate=lambda: utils.utc_now_sec())
 
 
 def _set_project_id(target, value, oldvalue, initiator):
