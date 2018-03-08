@@ -192,6 +192,9 @@ Common task attributes
 All Mistral tasks, regardless of workflow type, have the following common
 attributes:
 
+-  **name** - Task name must not equal *noop*, *fail*, *succeed* or *pause*
+   . The max length is 255 symbols. For tasks with *join* control flow this
+   restriction is 208 symbols.
 -  **description** - Arbitrary text containing task description.
    *Optional*.
 -  **action** - Name of the action associated with the task. Can be a static

@@ -22,6 +22,7 @@ import os
 from os import path
 import shutil
 import socket
+import string
 import sys
 import tempfile
 import threading
@@ -527,3 +528,15 @@ def datetime_to_str_in_dict(d, key, sep=' '):
 
     if val is not None:
         d[key] = datetime_to_str(d[key], sep=sep)
+
+
+def generate_string(length):
+    """Returns random string.
+
+    :param length: the length of returned string
+    """
+
+    return ''.join(random.choice(
+        string.ascii_uppercase + string.digits)
+        for _ in range(length)
+    )
