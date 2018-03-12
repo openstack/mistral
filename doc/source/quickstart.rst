@@ -13,10 +13,10 @@ Install and run Mistral
 Go through the installation manual:
 :doc:`Mistral Installation Guide <install/index>`
 
-Install Mistral client
-~~~~~~~~~~~~~~~~~~~~~~
+Mistral Client Command Guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To install mistralclient, please refer to
+To use mistralclient, please refer to
 :doc:`Mistral Client / CLI Guide <cli/index>`
 
 Export Keystone credentials
