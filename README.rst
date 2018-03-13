@@ -93,10 +93,9 @@ an OpenStack environment.
 #. Edit file ``/etc/mistral/mistral.conf`` according to your setup. Pay attention
    to the following sections and options::
 
-    [oslo_messaging_rabbit]
-    rabbit_host = <RABBIT_HOST>
-    rabbit_userid = <RABBIT_USERID>
-    rabbit_password = <RABBIT_PASSWORD>
+    [DEFAULT]
+    # driver://[user:pass@]host:port[,[userN:passN@]hostN:portN]/virtual_host?query
+    transport_url = rabbit://guest:guest@localhost:5672//
 
     [database]
     # Use the following line if *PostgreSQL* is used
