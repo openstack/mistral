@@ -38,6 +38,15 @@ RESERVED_TASK_NAMES = [
     'succeed',
     'pause'
 ]
+MAX_LENGTH_TASK_NAME = 255
+# Length of a join task name must be less than or equal to maximum
+# of task_executions unique_key and named_locks name. Their
+# maximum equals 255.
+# https://dev.mysql.com/doc/refman/5.6/en/innodb-restrictions.html
+# For example: "join-task-" + "workflow execution id" + "-" +
+# "task join name" = 255
+# "task join name" = 255 - 36 - 1 - 10 = MAX_LENGTH_TASK_NAME - 47
+MAX_LENGTH_JOIN_TASK_NAME = MAX_LENGTH_TASK_NAME - 47
 
 
 class TaskSpec(base.BaseSpec):
@@ -126,10 +135,10 @@ class TaskSpec(base.BaseSpec):
     def validate_schema(self):
         super(TaskSpec, self).validate_schema()
 
+        self._validate_name()
+
         action = self._data.get('action')
         workflow = self._data.get('workflow')
-
-        self._validate_name()
 
         # Validate YAQL expressions.
         if action or workflow:
@@ -150,6 +159,11 @@ class TaskSpec(base.BaseSpec):
                 "Reserved keyword '%s' not allowed as task name." %
                 task_name
             )
+
+        if len(task_name) > MAX_LENGTH_TASK_NAME:
+            raise exc.InvalidModelException(
+                "The length of a '{0}' task name must not exceed {1}"
+                " symbols".format(task_name, MAX_LENGTH_TASK_NAME))
 
     def _transform_with_items(self):
         raw = self._data.get('with-items', [])
@@ -292,6 +306,14 @@ class DirectWorkflowTaskSpec(TaskSpec):
         self._validate_transitions(self._on_complete)
         self._validate_transitions(self._on_success)
         self._validate_transitions(self._on_error)
+
+        if self._join:
+            join_task_name = self.get_name()
+            if len(join_task_name) > MAX_LENGTH_JOIN_TASK_NAME:
+                raise exc.InvalidModelException(
+                    "The length of a '{0}' join task name must not exceed {1} "
+                    "symbols".format(join_task_name, MAX_LENGTH_JOIN_TASK_NAME)
+                )
 
     def _validate_transitions(self, on_clause_spec):
         val = on_clause_spec.get_next() if on_clause_spec else []

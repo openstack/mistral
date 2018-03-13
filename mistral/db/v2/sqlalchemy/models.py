@@ -237,7 +237,7 @@ class TaskExecution(Execution):
 
     # Main properties.
     action_spec = sa.Column(st.JsonLongDictType())
-    unique_key = sa.Column(sa.String(250), nullable=True)
+    unique_key = sa.Column(sa.String(255), nullable=True)
     type = sa.Column(sa.String(10))
 
     # Whether the task is fully processed (publishing and calculating commands
@@ -550,7 +550,7 @@ class NamedLock(mb.MistralModelBase):
     sa.UniqueConstraint('name')
 
     id = mb.id_column()
-    name = sa.Column(sa.String(250))
+    name = sa.Column(sa.String(255))
 
 
 sa.UniqueConstraint(NamedLock.name)
