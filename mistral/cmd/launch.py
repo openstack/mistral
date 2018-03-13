@@ -144,8 +144,8 @@ Mistral Workflow Service, version %s
 def print_server_info():
     print(MISTRAL_TITLE)
 
-    comp_str = ("[%s]" % ','.join(LAUNCH_OPTIONS)
-                if cfg.CONF.server == ['all'] else cfg.CONF.server)
+    comp_str = ("[%s]" % ','.join(LAUNCH_OPTIONS
+                if cfg.CONF.server == ['all'] else cfg.CONF.server))
 
     print('Launching server components %s...' % comp_str)
 
