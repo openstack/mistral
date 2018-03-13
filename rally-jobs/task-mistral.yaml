@@ -1,4 +1,4 @@
-{% set extra_dir = extra_dir or env["RALLY_EXTRA_DIR"] %}
+{% set extra_dir = "~/.rally/extra" %}
 ---
   MistralWorkbooks.list_workbooks:
     -

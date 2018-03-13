@@ -28,18 +28,13 @@
 
 - job:
     name: mistral-rally-task
-    parent: mistral-devstack-base
-    run: playbooks/rally/run.yaml
+    parent: rally-task-mistral
     vars:
       devstack_plugins:
-        rally: https://git.openstack.org/openstack/rally
-      tox_environment:
-        DEVSTACK_GATE_TEMPEST_LARGE_OPS: 0
-        DEVSTACK_GATE_EXERCISES: 0
-        RALLY_SCENARIO: task-{{ zuul.project.canonical_name }}
-        DEVSTACK_GATE_NEUTRON: 1
+        rally-openstack: https://git.openstack.org/openstack/rally-openstack
+      rally_task: rally-jobs/task-mistral.yaml
     required-projects:
-      - openstack/rally
+      - openstack/rally-openstack
 
 - job:
     name: mistral-docker-buildimage
@@ -92,9 +87,7 @@
         # failures, please reach us on #tripleo IRC channel.
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
-        # Disable the rally job until it actually works
-        # - mistral-rally-task:
-        #     voting: false
+        - mistral-rally-task
     gate:
       jobs:
         - mistral-devstack
@@ -104,6 +97,7 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-kombu
+        - mistral-rally-task
     post:
       jobs:
         - mistral-docker-buildimage:
