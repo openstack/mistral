@@ -215,7 +215,8 @@ class PythonAction(Action):
         assert self.action_ex
 
         if states.is_completed(self.action_ex.state):
-            return
+            raise ValueError(
+                "Action {} is already completed".format(self.action_ex.id))
 
         prev_state = self.action_ex.state
 

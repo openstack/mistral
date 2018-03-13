@@ -23,10 +23,12 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
+from mistral.rpc import clients as rpc
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
+from mistral_lib import actions as ml_actions
 from mistral_lib.actions import types
 
 
@@ -1271,6 +1273,65 @@ class PoliciesTest(base.EngineTestCase):
         )
 
         self.assertDictEqual({'result': 'value'}, wf_output)
+
+    @mock.patch.object(
+        std_actions.MistralHTTPAction,
+        'run',
+        mock.MagicMock(return_value='mock')
+    )
+    def test_retry_async_action(self):
+        retry_wf = """---
+          version: '2.0'
+          repeated_retry:
+            tasks:
+              async_http:
+                retry:
+                  delay: 0
+                  count: 100
+                action: std.mistral_http url='https://google.com'
+            """
+
+        wf_service.create_workflows(retry_wf)
+        wf_ex = self.engine.start_workflow('repeated_retry')
+
+        self.await_workflow_running(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = wf_ex.task_executions[0]
+            self.await_task_running(task_ex.id)
+
+            first_action_ex = task_ex.executions[0]
+            self.await_action_state(first_action_ex.id, states.RUNNING)
+
+        complete_action_params = (
+            first_action_ex.id,
+            ml_actions.Result(error="mock")
+        )
+        rpc.get_engine_client().on_action_complete(*complete_action_params)
+
+        for _ in range(2):
+            self.assertRaises(
+                exc.MistralException,
+                rpc.get_engine_client().on_action_complete,
+                *complete_action_params
+            )
+
+        self.await_task_running(task_ex.id)
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex.id)
+            action_exs = task_ex.executions
+
+            self.assertEqual(2, len(action_exs))
+
+            for action_ex in action_exs:
+                if action_ex.id == first_action_ex.id:
+                    expected_state = states.ERROR
+                else:
+                    expected_state = states.RUNNING
+
+                self.assertEqual(expected_state, action_ex.state)
 
     def test_timeout_policy(self):
         wb_service.create_workbook_v2(TIMEOUT_WB % 2)
