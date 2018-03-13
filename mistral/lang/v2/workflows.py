@@ -15,7 +15,6 @@
 
 from oslo_utils import uuidutils
 import six
-import threading
 
 from mistral import exceptions as exc
 from mistral.lang import types
@@ -160,9 +159,7 @@ class DirectWorkflowSpec(WorkflowSpec):
         # outbound task specifications. In fact, we don't need
         # any special cache implementations here because these
         # structures can't grow indefinitely.
-        self.inbound_tasks_cache_lock = threading.RLock()
         self.inbound_tasks_cache = {}
-        self.outbound_tasks_cache_lock = threading.RLock()
         self.outbound_tasks_cache = {}
 
     def validate_semantics(self):
@@ -228,8 +225,7 @@ class DirectWorkflowSpec(WorkflowSpec):
     def find_inbound_task_specs(self, task_spec):
         task_name = task_spec.get_name()
 
-        with self.inbound_tasks_cache_lock:
-            specs = self.inbound_tasks_cache.get(task_name)
+        specs = self.inbound_tasks_cache.get(task_name)
 
         if specs is not None:
             return specs
@@ -239,16 +235,14 @@ class DirectWorkflowSpec(WorkflowSpec):
             if self.transition_exists(t_s.get_name(), task_name)
         ]
 
-        with self.inbound_tasks_cache_lock:
-            self.inbound_tasks_cache[task_name] = specs
+        self.inbound_tasks_cache[task_name] = specs
 
         return specs
 
     def find_outbound_task_specs(self, task_spec):
         task_name = task_spec.get_name()
 
-        with self.outbound_tasks_cache_lock:
-            specs = self.outbound_tasks_cache.get(task_name)
+        specs = self.outbound_tasks_cache.get(task_name)
 
         if specs is not None:
             return specs
@@ -258,8 +252,7 @@ class DirectWorkflowSpec(WorkflowSpec):
             if self.transition_exists(task_name, t_s.get_name())
         ]
 
-        with self.outbound_tasks_cache_lock:
-            self.outbound_tasks_cache[task_name] = specs
+        self.outbound_tasks_cache[task_name] = specs
 
         return specs
 
