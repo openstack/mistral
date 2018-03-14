@@ -65,17 +65,19 @@ def validate_long_type_length(cls, field_name, value):
         size_kb = int(sys.getsizeof(str(value)) / 1024)
 
         if size_kb > size_limit_kb:
-            LOG.error(
-                "Size limit %dKB exceed for class [%s], "
-                "field %s of size %dKB.",
-                size_limit_kb, str(cls), field_name, size_kb
-            )
-
-            raise exc.SizeLimitExceededException(
+            msg = (
+                "Field size limit exceeded"
+                " [class={}, field={}, size={}KB, limit={}KB]"
+            ).format(
+                cls.__name__,
                 field_name,
                 size_kb,
                 size_limit_kb
             )
+
+            LOG.error(msg)
+
+            raise exc.SizeLimitExceededException(msg)
 
 
 def register_length_validator(attr_name):

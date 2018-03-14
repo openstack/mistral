@@ -140,7 +140,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         )
 
         self.assertEqual(
-            "Size of 'input' is 1KB which exceeds the limit of 0KB",
+            'Field size limit exceeded'
+            ' [class=TaskExecution, field=input, size=1KB, limit=0KB]',
             str(e)
         )
 
@@ -156,7 +157,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         )
 
         self.assertEqual(
-            "Size of 'input' is 1KB which exceeds the limit of 0KB",
+            'Field size limit exceeded'
+            ' [class=TaskExecution, field=input, size=1KB, limit=0KB]',
             str(e)
         )
 
@@ -170,7 +172,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
 
         self.assertEqual(states.ERROR, wf_ex.state)
         self.assertIn(
-            "Size of 'input' is 1KB which exceeds the limit of 0KB",
+            "Field size limit exceeded"
+            " [class=TaskExecution, field=input, size=1KB, limit=0KB]",
             wf_ex.state_info
         )
 
@@ -189,7 +192,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
         self.assertIn(
-            "Size of 'output' is 1KB which exceeds the limit of 0KB",
+            'Field size limit exceeded'
+            ' [class=TaskExecution, field=output, size=1KB, limit=0KB]',
             wf_ex.state_info
         )
         self.assertEqual(states.ERROR, wf_ex.state)
@@ -211,7 +215,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
         self.assertIn(
-            'Failed to handle action completion [error=Size of',
+            'Failed to handle action completion [error=Field size',
             wf_ex.state_info
         )
         self.assertIn('wf=wf, task=task1', wf_ex.state_info)
@@ -219,7 +223,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         task_ex = self._assert_single_item(task_execs, name='task1')
 
         self.assertIn(
-            "Size of 'published' is 1KB which exceeds the limit of 0KB",
+            'Field size limit exceeded'
+            ' [class=TaskExecution, field=published, size=1KB, limit=0KB]',
             task_ex.state_info
         )
 
@@ -237,7 +242,8 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
         )
 
         self.assertIn(
-            "Size of 'params' is 1KB which exceeds the limit of 0KB",
+            'Field size limit exceeded'
+            ' [class=TaskExecution, field=params, size=1KB, limit=0KB]',
             str(e)
         )
 
