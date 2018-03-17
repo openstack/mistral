@@ -54,26 +54,23 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         self.topic = conf.topic
         self.server_id = conf.host
 
-        self._hosts = kombu_hosts.KombuHosts(CONF)
+        hosts = kombu_hosts.KombuHosts(CONF)
 
         self.exchange = CONF.control_exchange
-        self.virtual_host = CONF.oslo_messaging_rabbit.rabbit_virtual_host
         self.durable_queue = CONF.oslo_messaging_rabbit.amqp_durable_queues
         self.auto_delete = CONF.oslo_messaging_rabbit.amqp_auto_delete
         self._timeout = CONF.rpc_response_timeout
         self.routing_key = self.topic
 
-        hosts = self._hosts.get_hosts()
-
         connections = []
 
-        for host in hosts:
+        for host in hosts.hosts:
             conn = self._make_connection(
                 host.hostname,
                 host.port,
                 host.username,
                 host.password,
-                self.virtual_host
+                hosts.virtual_host
             )
             connections.append(conn)
 
