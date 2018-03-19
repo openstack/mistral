@@ -138,6 +138,14 @@ There are different types of policies in Mistral.
 
 All parameter values for any policy can be defined as YAQL expressions.
 
+**NOTE:** It would be rare to use both break-on and continue-on in the same
+retry block. *break-on* should be used when one expects the action to be in an
+ERROR state for some amount of tries, but may eventually go to a SUCCESS state,
+thereby stopping the loop. But if *break-on* is *'true'* then the retries will
+stop and the task will be in ERROR. *continue-on* should be used if the action
+will usually return *SUCCESS*, but the action has other results that can be
+used to signal whether to continue the loop or not.
+
 Join
 ----
 
