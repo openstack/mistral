@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Introduce execution events and notification server and plugins for
+    publishing these events for consumers. Event notification is defined per
+    workflow execution and can be configured to notify on all the events or
+    only for specific events.
