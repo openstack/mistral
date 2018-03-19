@@ -22,11 +22,12 @@ from mistral.services import expiration_policy
 from mistral.services.expiration_policy import ExecutionExpirationPolicy
 from mistral.tests.unit import base
 from mistral.tests.unit.base import get_context
+from mistral import utils
 from oslo_config import cfg
 
 
 def _create_workflow_executions():
-    time_now = datetime.datetime.utcnow()
+    time_now = utils.utc_now_sec()
 
     wf_execs = [
         {

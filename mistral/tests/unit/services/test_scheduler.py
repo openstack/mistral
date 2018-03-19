@@ -32,7 +32,7 @@ TARGET_METHOD_PATH = (
 DELAY = 1.5
 
 
-def get_time_delay(delay=DELAY):
+def get_time_delay(delay=DELAY * 2):
     return datetime.datetime.now() + datetime.timedelta(seconds=delay)
 
 

@@ -123,42 +123,12 @@ function setup_db {
         sqlite )
             rm -f tests.sqlite
             ;;
-        postgresql )
-            echo "Setting up Mistral DB in PostgreSQL"
-
-            # If CI_PROJECT is specified it means that this script is executing on
-            # Jenkins gate, so we should use already created postgresql db
-            if [ -n "$CI_PROJECT"]
-            then
-              echo "PostgreSQL is initialized. 'openstack_citest' db will be used."
-              dbname="openstack_citest"
-              username="openstack_citest"
-              password="openstack_citest"
-            else
-              # Create the user and database.
-              # Assume trust is setup on localhost in the postgresql config file.
-              dbname="mistral"
-              username="mistral"
-              password="m1stral"
-
-              pg_command "SELECT pg_terminate_backend(pg_stat_activity.pid)
-                          FROM pg_stat_activity
-                          WHERE pg_stat_activity.datname = '$dbname'
-                          AND pid <> pg_backend_pid();"
-              pg_command "DROP DATABASE IF EXISTS $dbname;"
-              pg_command "DROP USER IF EXISTS $username;"
-              pg_command "CREATE USER $username
-                          WITH ENCRYPTED PASSWORD '$password';"
-              pg_command "CREATE DATABASE $dbname OWNER $username;"
-            fi
+        "postgresql" | "mysql" )
+            dbname="openstack_citest"
+            username="openstack_citest"
+            password="openstack_citest"
             ;;
     esac
-}
-
-function pg_command {
-    command=$1
-
-    sudo -u postgres psql -h localhost -c "${command}"
 }
 
 function setup_db_pylib {
@@ -166,6 +136,10 @@ function setup_db_pylib {
         postgresql )
             echo "Installing python library for PostgreSQL."
             ${wrapper} pip install psycopg2
+            ;;
+        mysql )
+            echo "Installing python library for MySQL"
+            ${wrapper} pip install mysql-python
             ;;
     esac
 }
@@ -175,9 +149,11 @@ function setup_db_cfg {
         sqlite )
             rm -f .mistral.conf
             ;;
-        postgresql )
-            oslo-config-generator --config-file ./tools/config/config-generator.mistral.conf --output-file .mistral.conf
-            sed -i "s/#connection = <None>/connection = postgresql:\/\/$username:$password@localhost\/$dbname/g" .mistral.conf
+        "postgresql" | "mysql" )
+            oslo-config-generator --config-file \
+                ./tools/config/config-generator.mistral.conf \
+                --output-file .mistral.conf
+            sed -i "s/#connection = <None>/connection = $db_type:\/\/$username:$password@localhost\/$dbname/g" .mistral.conf
             ;;
     esac
 }

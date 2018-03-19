@@ -26,6 +26,7 @@ from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests.unit import base as test_base
+from mistral import utils
 from mistral.utils import filter_utils
 
 
@@ -397,7 +398,7 @@ CRON_TRIGGER = {
     'workflow_id': None,
     'workflow_input': {},
     'next_execution_time':
-    datetime.datetime.now() + datetime.timedelta(days=1),
+        datetime.datetime.now() + datetime.timedelta(days=1),
     'remaining_executions': 42,
     'scope': 'private',
     'project_id': '<default-project>'
@@ -2197,7 +2198,8 @@ CRON_TRIGGERS = [
         'workflow_id': None,
         'workflow_input': {},
         'next_execution_time':
-        datetime.datetime.now() + datetime.timedelta(days=1),
+            utils.drop_microseconds(
+                datetime.datetime.now() + datetime.timedelta(days=1)),
         'remaining_executions': 42,
         'scope': 'private',
         'project_id': '<default-project>'
@@ -2210,7 +2212,8 @@ CRON_TRIGGERS = [
         'workflow_id': None,
         'workflow_input': {'param': 'val'},
         'next_execution_time':
-        datetime.datetime.now() + datetime.timedelta(days=1),
+            utils.drop_microseconds(
+                datetime.datetime.now() + datetime.timedelta(days=1)),
         'remaining_executions': 42,
         'scope': 'private',
         'project_id': '<default-project>'

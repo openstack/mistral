@@ -494,7 +494,12 @@ def generate_key_pair(key_length=2048):
 def utc_now_sec():
     """Returns current time and drops microseconds."""
 
-    return timeutils.utcnow().replace(microsecond=0)
+    return drop_microseconds(timeutils.utcnow())
+
+
+def drop_microseconds(date):
+    """Drops microseconds and returns date."""
+    return date.replace(microsecond=0)
 
 
 def datetime_to_str(val, sep=' '):
