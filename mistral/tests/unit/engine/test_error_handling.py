@@ -32,9 +32,6 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class InvalidUnicodeAction(actions_base.Action):
-    def __init__(self):
-        pass
-
     def run(self, context):
         return b'\xf8'
 
