@@ -1,53 +1,70 @@
 FROM krallin/ubuntu-tini:16.04
 
-MAINTAINER Andras Kovi <akovi@nokia.com>
+LABEL name="Mistral" \
+      description="Workflow Service for OpenStack" \
+      maintainers="Andras Kovi <akovi@nokia.com> \
+                   Vitalii Solodilov <mcdkr@yandex.ru>"
 
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get -qq update && \
+RUN apt-get -qq update && \
     apt-get install -y  \
-      curl \
-      git \
       libffi-dev \
       libssl-dev \
       libxml2-dev \
       libxslt1-dev \
       libyaml-dev \
-      mc \
+      libmysqlclient-dev \
+      python \
       python-dev \
-      python-pip \
-      python-setuptools \
-      swig \
-      cmake \
       crudini \
+      curl \
+      git \
+      cmake \
       libuv1 \
-      libuv1-dev
+      swig \
+      mc \
+      libuv1-dev && \
+      curl -f -o /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
+      python /tmp/get-pip.py && rm /tmp/get-pip.py
 
-RUN pip install -v v8eval && python -c 'import v8eval'
+RUN pip install pymysql psycopg2
 
-RUN apt-get install -y libmysqlclient-dev && \
-    pip install mysql-python
+ARG BUILD_V8EVAL="true"
+RUN if ${BUILD_V8EVAL} ; then \
+        pip install -v v8eval && python -c 'import v8eval' ; \
+    fi
 
-RUN pip install -U tox python-mistralclient pip
+ENV MISTRAL_DIR="/opt/stack/mistral" \
+    TMP_CONSTRAINTS="/tmp/upper-constraints.txt" \
+    CONFIG_FILE="/etc/mistral/mistral.conf" \
+    INI_SET="crudini --set /etc/mistral/mistral.conf" \
+    MESSAGE_BROKER_URL="rabbit://guest:guest@rabbitmq:5672/" \
+    DATABASE_URL="sqlite://mistral.db" \
+    UPGRADE_DB="false" \
+    RUN_TESTS="false" \
+    DEBIAN_FRONTEND="noninteractive" \
+    MISTRAL_SERVER="all" \
+    LOG_DEBUG="false"
 
-COPY . /opt/stack/mistral
+# We install dependencies separatly for a caching purpose
+COPY requirements.txt "${MISTRAL_DIR}/"
+RUN curl -o "${TMP_CONSTRAINTS}" \
+    http://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt && \
+    sed -i "/^mistral.*/d" "${TMP_CONSTRAINTS}" && \
+    pip install -r "${MISTRAL_DIR}/requirements.txt"
 
-RUN curl -o /tmp/upper-constraints.txt http://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt && \
-    sed -i '/^mistral.*/d' /tmp/upper-constraints.txt &&\
-    pip install -e /opt/stack/mistral
+ARG BUILD_TEST_DEPENDENCIES="false"
+COPY test-requirements.txt "${MISTRAL_DIR}/"
+RUN if ${BUILD_TEST_DEPENDENCIES} ; then \
+        pip install -r "${MISTRAL_DIR}/test-requirements.txt" ; \
+    fi
 
-RUN mkdir -p /etc/mistral
+COPY . ${MISTRAL_DIR}
 
-RUN oslo-config-generator \
-      --config-file /opt/stack/mistral/tools/config/config-generator.mistral.conf \
-      --output-file /etc/mistral/mistral.conf
+RUN pip install -e "${MISTRAL_DIR}" && \
+    mkdir /etc/mistral && \
+    rm -rf /var/lib/apt/lists/* && \
+    find ${MISTRAL_DIR} -name "*.sh" -exec chmod +x {} \;
 
-RUN INI_SET="crudini --set /etc/mistral/mistral.conf" && \
-    $INI_SET DEFAULT js_implementation v8eval && \
-    $INI_SET DEFAULT transport_url rabbit://guest:guest@rabbitmq:5672/ && \
-    $INI_SET database connection mysql://root:strangehat@mysql:3306/mistral && \
-    $INI_SET oslo_policy policy_file /opt/stack/mistral/etc/policy.json && \
-    $INI_SET pecan auth_enable false
-
+WORKDIR "${MISTRAL_DIR}"
 EXPOSE 8989
-
-CMD mistral-server --server all
+CMD "${MISTRAL_DIR}/tools/docker/start.sh"

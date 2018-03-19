@@ -1,0 +1,71 @@
+api-ref/
+devstack/
+doc/
+functionaltests/
+mistral.egg-info/
+playbooks/
+rally-jobs/
+releasenotes/
+envs/
+
+
+*.py[cod]
+*.sqlite
+
+# C extensions
+*.so
+
+# Packages
+*.egg*
+dist
+build
+.venv
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+cover/*
+.testrepository/
+subunit.log
+.mistral.conf
+AUTHORS
+ChangeLog
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+.idea
+.DS_Store
+etc/*.conf
+etc/mistral.conf.sample
+
+#Linux swap files range from .saa to .swp
+*.s[a-w][a-p]
+
+# Files created by releasenotes build
+releasenotes/build
+
+# Files created by doc build
+doc/build/
+doc/source/api
+doc/source/_static/
+
+# Files created by API build
+api-ref/build/

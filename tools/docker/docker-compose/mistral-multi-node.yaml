@@ -1,0 +1,111 @@
+version: '3'
+services:
+  mistral-api:
+    build:
+      context: ../../..
+      dockerfile: tools/docker/Dockerfile
+      args:
+        BUILD_V8EVAL: "false"
+        BUILD_TEST_DEPENDENCIES: "false"
+    restart: always
+    ports:
+      - "8989:8989"
+    networks:
+      - database
+      - message-broker
+      - mistral
+    env_file:
+     - mistral.env
+#    volumes:
+#      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
+    environment:
+      - MISTRAL_SERVER=api
+      - UPGRADE_DB=true
+
+  mistral-engine:
+    build:
+      context: ../../..
+      dockerfile: tools/docker/Dockerfile
+      args:
+        BUILD_V8EVAL: "false"
+        BUILD_TEST_DEPENDENCIES: "false"
+    restart: always
+    networks:
+      - database
+      - message-broker
+    env_file:
+     - mistral.env
+#    volumes:
+#      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
+    environment:
+      - MISTRAL_SERVER=engine
+
+  mistral-executor:
+    build:
+      context: ../../..
+      dockerfile: tools/docker/Dockerfile
+      args:
+        BUILD_V8EVAL: "false"
+        BUILD_TEST_DEPENDENCIES: "false"
+    restart: always
+    networks:
+      - message-broker
+    env_file:
+     - mistral.env
+#    volumes:
+#      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
+    environment:
+      - MISTRAL_SERVER=executor
+
+  mistral-event-engine:
+    build:
+      context: ../../..
+      dockerfile: tools/docker/Dockerfile
+      args:
+        BUILD_V8EVAL: "false"
+        BUILD_TEST_DEPENDENCIES: "false"
+    restart: always
+    networks:
+      - database
+      - message-broker
+    env_file:
+     - mistral.env
+#    volumes:
+#      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
+    environment:
+      - MISTRAL_SERVER=event-engine
+
+  mistral-notifier:
+    build:
+      context: ../../..
+      dockerfile: tools/docker/Dockerfile
+      args:
+        BUILD_V8EVAL: "false"
+        BUILD_TEST_DEPENDENCIES: "false"
+    restart: always
+    networks:
+      - database
+      - message-broker
+    env_file:
+     - mistral.env
+#    volumes:
+#      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
+    environment:
+      - MISTRAL_SERVER=notifier
+
+  cloud-flow:
+    image: mcdoker18/cloud-flow:0.5.0
+    restart: always
+    networks:
+      - mistral
+    ports:
+      - "8000:8000"
+    networks:
+      - mistral
+    environment:
+      - CF_MISTRAL_URL=http://mistral-api:8989
+
+networks:
+  database:
+  message-broker:
+  mistral:
