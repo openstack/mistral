@@ -359,3 +359,18 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().alarm.get.called)
         mocked().alarm.get.assert_called_once_with(vitrage_id="1234-abcd")
+
+    @mock.patch.object(actions.ZunAction, '_get_client')
+    def test_zun_action(self, mocked):
+        mock_ctx = mock.Mock()
+        method_name = "containers.get"
+        action_class = actions.ZunAction
+        action_class.client_method_name = method_name
+        params = {'container_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run(mock_ctx)
+
+        self.assertTrue(mocked().containers.get.called)
+        mocked().containers.get.assert_called_once_with(
+            container_id="1234-abcd"
+        )
