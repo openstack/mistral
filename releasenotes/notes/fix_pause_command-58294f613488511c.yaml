@@ -1,0 +1,9 @@
+---
+fixes:
+  - Fixed the logic of the 'pause' command. Before the fix Mistral wouldn't
+    run any commands specified in 'on-success', 'on-error' and 'on-complete'
+    clauses following after the 'pause' command when a workflow was resumed
+    after it. Now it works as expected. If Mistral encounters 'pause' in the
+    list of commands it saves all commands following after it to the special
+    backlog storage and when/if the workflow is later resumed it checks that
+    storage and runs commands from it first.
