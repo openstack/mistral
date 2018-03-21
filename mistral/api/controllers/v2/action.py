@@ -82,12 +82,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         LOG.debug("Update action(s) [definition=%s]", definition)
 
         scope = pecan.request.GET.get('scope', 'private')
-
-        if scope not in resources.SCOPE_TYPES.values:
-            raise exc.InvalidModelException(
-                "Scope must be one of the following: %s; actual: "
-                "%s" % (resources.SCOPE_TYPES.values, scope)
-            )
+        resources.Action.validate_scope(scope)
 
         @rest_utils.rest_retry_on_db_error
         def _update_actions():
@@ -120,11 +115,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
 
-        if scope not in resources.SCOPE_TYPES.values:
-            raise exc.InvalidModelException(
-                "Scope must be one of the following: %s; actual: "
-                "%s" % (resources.SCOPE_TYPES.values, scope)
-            )
+        resources.Action.validate_scope(scope)
 
         LOG.debug("Create action(s) [definition=%s]", definition)
 

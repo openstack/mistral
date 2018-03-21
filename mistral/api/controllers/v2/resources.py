@@ -18,13 +18,25 @@ from wsme import types as wtypes
 
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
+from mistral import exceptions as exc
 from mistral import utils
 from mistral.workflow import states
 
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 
 
-class Workbook(resource.Resource):
+class ScopedResource(object):
+    """Utilities for scoped resources"""
+    @classmethod
+    def validate_scope(cls, scope):
+        if scope not in SCOPE_TYPES.values:
+            raise exc.InvalidModelException(
+                "Scope must be one of the following: %s; actual: "
+                "%s" % (SCOPE_TYPES.values, scope)
+            )
+
+
+class Workbook(resource.Resource, ScopedResource):
     """Workbook resource."""
 
     id = wtypes.text
@@ -68,7 +80,7 @@ class Workbooks(resource.ResourceList):
         return cls(workbooks=[Workbook.sample()])
 
 
-class Workflow(resource.Resource):
+class Workflow(resource.Resource, ScopedResource):
     """Workflow resource."""
 
     id = wtypes.text
@@ -169,7 +181,7 @@ class Workflows(resource.ResourceList):
         return workflows_sample
 
 
-class Action(resource.Resource):
+class Action(resource.Resource, ScopedResource):
     """Action resource.
 
     NOTE: *name* is immutable. Note that name and description get inferred
