@@ -1,6 +1,20 @@
 - hosts: all
+  vars:
+    work_dir: '{{ ansible_user_dir }}/src/{{ zuul.project.canonical_name }}'
   tasks:
-    - shell:
-        cmd: |
-          ./docker_image_build.sh
-        chdir: '{{ ansible_user_dir }}/src/{{ zuul.project.canonical_name }}'
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com/ | sh
+      args:
+        chdir: '{{ work_dir }}'
+
+    - name: Restart Docker service
+      service:
+        name: docker
+        state: restarted
+
+    - name: Build and archive a Mistral image
+      docker_image:
+        name: mistral
+        path: '{{ work_dir }}'
+        dockerfile: '{{ work_dir }}/tools/docker/Dockerfile'
+        archive_path: '{{ work_dir}}}/mistral-docker.tar.gz'
