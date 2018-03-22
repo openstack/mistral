@@ -347,7 +347,7 @@ class SSHAction(actions.Action):
         return ssh_utils.execute_command
 
     def __init__(self, cmd, host, username,
-                 password=None, private_key_filename=None):
+                 password="", private_key_filename=None):
         super(SSHAction, self).__init__()
 
         self.cmd = cmd
@@ -396,8 +396,7 @@ class SSHAction(actions.Action):
             return raise_exc(parent_exc=e)
 
     def test(self, context):
-        # TODO(rakhmerov): Implement.
-        return None
+        return json.dumps(self.params)
 
 
 class SSHProxiedAction(SSHAction):
