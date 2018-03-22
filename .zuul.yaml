@@ -88,6 +88,7 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-rally-task
+        - openstack-tox-lower-constraints
     gate:
       jobs:
         - mistral-devstack
@@ -98,6 +99,7 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-kombu
         - mistral-rally-task
+        - openstack-tox-lower-constraints
     post:
       jobs:
         - mistral-docker-buildimage:
