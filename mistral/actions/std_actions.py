@@ -42,6 +42,8 @@ class EchoAction(actions.Action):
     """
 
     def __init__(self, output):
+        super(EchoAction, self).__init__()
+
         self.output = output
 
     def run(self, context):
@@ -59,9 +61,6 @@ class NoOpAction(actions.Action):
     This action does nothing. It can be mostly useful for testing and
     debugging purposes.
     """
-    def __init__(self):
-        pass
-
     def run(self, context):
         LOG.info('Running no-op action')
 
@@ -91,6 +90,8 @@ class FailAction(actions.Action):
     """
 
     def __init__(self, error_data=None):
+        super(FailAction, self).__init__()
+
         self.error_data = error_data
 
     def run(self, context):
@@ -146,6 +147,7 @@ class HTTPAction(actions.Action):
                  allow_redirects=None,
                  proxies=None,
                  verify=None):
+        super(HTTPAction, self).__init__()
 
         if auth and len(auth.split(':')) == 2:
             self.auth = (auth.split(':')[0], auth.split(':')[1])
@@ -272,6 +274,7 @@ class MistralHTTPAction(HTTPAction):
 class SendEmailAction(actions.Action):
     def __init__(self, from_addr, to_addrs, smtp_server,
                  smtp_password=None, subject=None, body=None):
+        super(SendEmailAction, self).__init__()
         # TODO(dzimine): validate parameters
 
         # Task invocation parameters.
@@ -345,6 +348,8 @@ class SSHAction(actions.Action):
 
     def __init__(self, cmd, host, username,
                  password=None, private_key_filename=None):
+        super(SSHAction, self).__init__()
+
         self.cmd = cmd
         self.host = host
         self.username = username
@@ -433,6 +438,7 @@ class JavaScriptAction(actions.Action):
 
         Not the usual mistral context. That is passed during the run method
         """
+        super(JavaScriptAction, self).__init__()
 
         self.script = script
         self.js_context = context
@@ -459,6 +465,8 @@ class SleepAction(actions.Action):
     for testing and debugging purposes.
     """
     def __init__(self, seconds=1):
+        super(SleepAction, self).__init__()
+
         try:
             self._seconds = int(seconds)
             self._seconds = 0 if self._seconds < 0 else self._seconds
@@ -482,6 +490,8 @@ class TestDictAction(actions.Action):
     """Generates test dict."""
 
     def __init__(self, size=0, key_prefix='', val=''):
+        super(TestDictAction, self).__init__()
+
         self.size = size
         self.key_prefix = key_prefix
         self.val = val
