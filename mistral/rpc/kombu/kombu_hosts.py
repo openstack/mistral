@@ -22,38 +22,32 @@ import oslo_messaging as messaging
 
 class KombuHosts(object):
     def __init__(self, conf):
-        self._conf = conf
-
-        transport_url = messaging.TransportURL.parse(
-            self._conf,
-            self._conf.transport_url
-        )
+        transport_url = messaging.TransportURL.parse(conf, conf.transport_url)
 
         if transport_url.hosts:
-            self._hosts = transport_url.hosts
+            self.virtual_host = transport_url.virtual_host
+            self.hosts = transport_url.hosts
         else:
-            username = self._conf.oslo_messaging_rabbit.rabbit_userid
-            password = self._conf.oslo_messaging_rabbit.rabbit_password
+            self.virtual_host = conf.oslo_messaging_rabbit.rabbit_virtual_host
+            self.hosts = []
 
-            self._hosts = []
+            username = conf.oslo_messaging_rabbit.rabbit_userid
+            password = conf.oslo_messaging_rabbit.rabbit_password
 
-            for host in self._conf.oslo_messaging_rabbit.rabbit_hosts:
+            for host in conf.oslo_messaging_rabbit.rabbit_hosts:
                 hostname, port = host.split(':')
 
-                self._hosts.append(messaging.TransportHost(
+                self.hosts.append(messaging.TransportHost(
                     hostname,
-                    port,
+                    int(port),
                     username,
                     password
                 ))
 
-        if len(self._hosts) > 1:
-            random.shuffle(self._hosts)
+        if len(self.hosts) > 1:
+            random.shuffle(self.hosts)
 
-        self._hosts_cycle = itertools.cycle(self._hosts)
+        self._hosts_cycle = itertools.cycle(self.hosts)
 
     def get_host(self):
         return six.next(self._hosts_cycle)
-
-    def get_hosts(self):
-        return self._hosts
