@@ -69,7 +69,9 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         LOG.debug("Update workbook [definition=%s]", definition)
 
-        wb_db = workbooks.update_workbook_v2(definition)
+        wb_db = rest_utils.rest_retry_on_db_error(
+            workbooks.update_workbook_v2
+        )(definition)
 
         return resources.Workbook.from_db_model(wb_db).to_json()
 
@@ -83,7 +85,9 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         LOG.debug("Create workbook [definition=%s]", definition)
 
-        wb_db = workbooks.create_workbook_v2(definition)
+        wb_db = rest_utils.rest_retry_on_db_error(
+            workbooks.create_workbook_v2
+        )(definition)
 
         pecan.response.status = 201
 
@@ -100,7 +104,7 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         LOG.debug("Delete workbook [name=%s]", name)
 
-        db_api.delete_workbook(name)
+        rest_utils.rest_retry_on_db_error(db_api.delete_workbook)(name)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Workbooks, types.uuid, int,

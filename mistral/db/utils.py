@@ -28,11 +28,6 @@ LOG = logging.getLogger(__name__)
 _RETRY_ERRORS = (db_exc.DBDeadlock, db_exc.DBConnectionError)
 
 
-@tenacity.retry(
-    retry=tenacity.retry_if_exception_type(_RETRY_ERRORS),
-    stop=tenacity.stop_after_attempt(50),
-    wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2)
-)
 def _with_auth_context(auth_ctx, func, *args, **kw):
     """Runs the given function with the specified auth context.
 
@@ -58,7 +53,7 @@ def _with_auth_context(auth_ctx, func, *args, **kw):
         context.set_ctx(old_auth_ctx)
 
 
-def retry_on_db_error(func):
+def retry_on_db_error(func, retry=None):
     """Decorates the given function so that it retries on DB errors.
 
     Note that the decorator retries the function/method only on some
@@ -66,9 +61,21 @@ def retry_on_db_error(func):
     deadlocks and disconnections.
 
     :param func: Function to decorate.
+    :param retry: a Retrying object
     :return: Decorated function.
     """
-    @functools.wraps(func)
+    if not retry:
+        retry = tenacity.Retrying(
+            retry=tenacity.retry_if_exception_type(_RETRY_ERRORS),
+            stop=tenacity.stop_after_attempt(50),
+            wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2)
+        )
+
+    # The `assigned` arg should be empty as some of the default values are not
+    # supported by simply initialized MagicMocks. The consequence may
+    # be that the representation will contain the wrapper and not the
+    # wrapped function.
+    @functools.wraps(func, assigned=[])
     def decorate(*args, **kw):
         # Retrying library decorator might potentially run a decorated
         # function within a new thread so it's safer not to apply the
@@ -78,7 +85,7 @@ def retry_on_db_error(func):
         # auth context before calling it (potentially in a new thread).
         auth_ctx = context.ctx() if context.has_ctx() else None
 
-        return _with_auth_context(auth_ctx, func, *args, **kw)
+        return retry.call(_with_auth_context, auth_ctx, func, *args, **kw)
 
     return decorate
 

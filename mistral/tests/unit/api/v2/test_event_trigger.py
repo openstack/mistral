@@ -144,7 +144,7 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(201, resp.status_int)
 
         self.assertTrue(create_trigger.called)
-        self.assertEqual('public', create_trigger.call_args[0][5])
+        self.assertEqual('public', create_trigger.call_args[1]["scope"])
 
     def test_post_no_workflow_id(self):
         CREATE_TRIGGER = copy.deepcopy(TRIGGER)

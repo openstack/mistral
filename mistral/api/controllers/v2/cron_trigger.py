@@ -42,8 +42,9 @@ class CronTriggersController(rest.RestController):
         LOG.debug('Fetch cron trigger [identifier=%s]', identifier)
 
         # Use retries to prevent possible failures.
-        r = rest_utils.create_db_retry_object()
-        db_model = r.call(db_api.get_cron_trigger, identifier)
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.get_cron_trigger
+        )(identifier)
 
         return resources.CronTrigger.from_db_model(db_model)
 
@@ -64,14 +65,16 @@ class CronTriggersController(rest.RestController):
 
         values = cron_trigger.to_dict()
 
-        db_model = triggers.create_cron_trigger(
-            values['name'],
-            values.get('workflow_name'),
-            values.get('workflow_input'),
-            values.get('workflow_params'),
-            values.get('pattern'),
-            values.get('first_execution_time'),
-            values.get('remaining_executions'),
+        db_model = rest_utils.rest_retry_on_db_error(
+            triggers.create_cron_trigger
+        )(
+            name=values['name'],
+            workflow_name=values.get('workflow_name'),
+            workflow_input=values.get('workflow_input'),
+            workflow_params=values.get('workflow_params'),
+            pattern=values.get('pattern'),
+            first_time=values.get('first_execution_time'),
+            count=values.get('remaining_executions'),
             workflow_id=values.get('workflow_id')
         )
 
@@ -88,7 +91,9 @@ class CronTriggersController(rest.RestController):
 
         LOG.debug("Delete cron trigger [identifier=%s]", identifier)
 
-        triggers.delete_cron_trigger(identifier)
+        rest_utils.rest_retry_on_db_error(
+            triggers.delete_cron_trigger
+        )(identifier)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CronTriggers, types.uuid, int,

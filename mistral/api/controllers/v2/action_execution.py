@@ -16,8 +16,6 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 from pecan import rest
-import sqlalchemy as sa
-import tenacity
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -52,11 +50,7 @@ def _load_deferred_output_field(action_ex):
 
 
 # Use retries to prevent possible failures.
-@tenacity.retry(
-    retry=tenacity.retry_if_exception_type(sa.exc.OperationalError),
-    stop=tenacity.stop_after_attempt(10),
-    wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
-)
+@rest_utils.rest_retry_on_db_error
 def _get_action_execution(id):
     with db_api.transaction():
         return _get_action_execution_resource(db_api.get_action_execution(id))

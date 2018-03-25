@@ -124,22 +124,26 @@ class MembersController(rest.RestController):
         if not member_info.member_id:
             raise exc.WorkflowException("Member id must be provided.")
 
-        with db_api.transaction():
-            wf_db = db_api.get_workflow_definition(self.resource_id)
+        @rest_utils.rest_retry_on_db_error
+        def _create_resource_member():
+            with db_api.transaction():
+                wf_db = db_api.get_workflow_definition(self.resource_id)
 
-            if wf_db.scope != 'private':
-                raise exc.WorkflowException(
-                    "Only private resource could be shared."
-                )
+                if wf_db.scope != 'private':
+                    raise exc.WorkflowException(
+                        "Only private resource could be shared."
+                    )
 
-            resource_member = {
-                'resource_id': self.resource_id,
-                'resource_type': self.type,
-                'member_id': member_info.member_id,
-                'status': 'pending'
-            }
+                resource_member = {
+                    'resource_id': self.resource_id,
+                    'resource_type': self.type,
+                    'member_id': member_info.member_id,
+                    'status': 'pending'
+                }
 
-            db_member = db_api.create_resource_member(resource_member)
+                return db_api.create_resource_member(resource_member)
+
+        db_member = _create_resource_member()
 
         return resources.Member.from_db_model(db_member)
 
@@ -162,7 +166,9 @@ class MembersController(rest.RestController):
             msg = "Status must be provided."
             raise exc.WorkflowException(msg)
 
-        db_member = db_api.update_resource_member(
+        db_member = rest_utils.rest_retry_on_db_error(
+            db_api.update_resource_member
+        )(
             self.resource_id,
             self.type,
             member_id,
@@ -186,7 +192,7 @@ class MembersController(rest.RestController):
             member_id
         )
 
-        db_api.delete_resource_member(
+        rest_utils.rest_retry_on_db_error(db_api.delete_resource_member)(
             self.resource_id,
             self.type,
             member_id
