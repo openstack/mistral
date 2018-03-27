@@ -29,7 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 class DirectWorkflowController(base.WorkflowController):
-    """'Direct workflow' handler.
+    """'Direct workflow' controller.
 
     This handler implements the workflow pattern which is based on
     direct transitions between tasks, i.e. after each task completion

@@ -15,6 +15,7 @@
 
 """Valid task and workflow states."""
 
+# TODO(rakhmerov): need docs explaining what each state means.
 IDLE = 'IDLE'
 WAITING = 'WAITING'
 RUNNING = 'RUNNING'

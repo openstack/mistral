@@ -20,6 +20,8 @@ from mistral import exceptions as exc
 from mistral.workflow import commands
 from mistral.workflow import states
 
+BACKLOG_KEY = 'backlog_commands'
+
 
 def _compare_task_commands(a, b):
     if not isinstance(a, commands.RunTask) or not a.is_waiting():
@@ -67,7 +69,8 @@ def _rearrange_commands(cmds):
         cmds.sort(key=functools.cmp_to_key(_compare_task_commands))
 
         return cmds
-    elif state_cmd_idx == 0:
+    elif (state_cmd_idx == 0 and
+            not isinstance(state_cmd, commands.PauseWorkflow)):
         return cmds[0:1]
 
     res = cmds[0:state_cmd_idx]
@@ -76,26 +79,66 @@ def _rearrange_commands(cmds):
 
     res.append(state_cmd)
 
+    # If the previously found state changing command is 'pause' then we need
+    # to also add a tail of the initial command list to the result so that
+    # we can save them to the command backlog.
+    if isinstance(state_cmd, commands.PauseWorkflow):
+        res.extend(cmds[state_cmd_idx + 1:])
+
     return res
+
+
+def _save_command_to_backlog(wf_ex, cmd):
+    backlog_cmds = wf_ex.runtime_context.get(BACKLOG_KEY, [])
+
+    if not backlog_cmds:
+        wf_ex.runtime_context[BACKLOG_KEY] = backlog_cmds
+
+    backlog_cmds.append(cmd.to_dict())
+
+
+def _poll_commands_from_backlog(wf_ex):
+    backlog_cmds = wf_ex.runtime_context.pop(BACKLOG_KEY, [])
+
+    if not backlog_cmds:
+        return []
+
+    return [
+        commands.restore_command_from_dict(wf_ex, cmd_dict)
+        for cmd_dict in backlog_cmds
+    ]
 
 
 @profiler.trace('dispatcher-dispatch-commands', hide_args=True)
 def dispatch_workflow_commands(wf_ex, wf_cmds):
-    # TODO(rakhmerov): I don't like these imports but otherwise we have
-    # import cycles.
+    # Run commands from the backlog.
+    _process_commands(wf_ex, _poll_commands_from_backlog(wf_ex))
+
+    # Run new commands.
+    _process_commands(wf_ex, wf_cmds)
+
+
+def _process_commands(wf_ex, cmds):
+    if not cmds:
+        return
+
     from mistral.engine import task_handler
     from mistral.engine import workflow_handler as wf_handler
 
-    if not wf_cmds:
-        return
+    for cmd in _rearrange_commands(cmds):
+        if states.is_completed(wf_ex.state):
+            break
 
-    for cmd in _rearrange_commands(wf_cmds):
+        if wf_ex.state == states.PAUSED:
+            # Save all commands after 'pause' to the backlog so that
+            # they can be processed after the workflow is resumed.
+            _save_command_to_backlog(wf_ex, cmd)
+
+            continue
+
         if isinstance(cmd, (commands.RunTask, commands.RunExistingTask)):
             task_handler.run_task(cmd)
         elif isinstance(cmd, commands.SetWorkflowState):
             wf_handler.set_workflow_state(wf_ex, cmd.new_state, cmd.msg)
         else:
             raise exc.MistralError('Unsupported workflow command: %s' % cmd)
-
-        if wf_ex.state != states.RUNNING:
-            break

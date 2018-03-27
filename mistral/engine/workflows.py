@@ -195,6 +195,7 @@ class Workflow(object):
         if self.wf_ex.task_execution_id:
             # Import the task_handler module here to avoid circular reference.
             from mistral.engine import task_handler
+
             task_handler.schedule_on_action_update(self.wf_ex)
 
     def prepare_input(self, input_dict):
@@ -239,6 +240,9 @@ class Workflow(object):
 
         self._continue_workflow(cmds)
 
+    def _get_backlog(self):
+        return self.wf_ex.runtime_context.get(dispatcher.BACKLOG_KEY)
+
     def _continue_workflow(self, cmds):
         # When resuming a workflow we need to ignore all 'pause'
         # commands because workflow controller takes tasks that
@@ -255,7 +259,7 @@ class Workflow(object):
             if states.is_completed(t_ex.state) and not t_ex.processed:
                 t_ex.processed = True
 
-        if cmds:
+        if cmds or self._get_backlog():
             dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
         else:
             self.check_and_complete()

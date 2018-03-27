@@ -356,7 +356,7 @@ class RegularTask(Task):
     @profiler.trace('regular-task-on-action-complete', hide_args=True)
     def on_action_complete(self, action_ex):
         state = action_ex.state
-        # TODO(rakhmerov): Here we can define more informative messages
+        # TODO(rakhmerov): Here we can define more informative messages for
         # cases when action is successful and when it's not. For example,
         # in state_info we can specify the cause action.
         state_info = (None if state == states.SUCCESS
