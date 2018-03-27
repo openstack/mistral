@@ -58,8 +58,9 @@ class ActionsController(rest.RestController, hooks.HookController):
         LOG.debug("Fetch action [identifier=%s]", identifier)
 
         # Use retries to prevent possible failures.
-        r = rest_utils.create_db_retry_object()
-        db_model = r.call(db_api.get_action_definition, identifier)
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.get_action_definition
+        )(identifier)
 
         return resources.Action.from_db_model(db_model)
 
@@ -88,12 +89,16 @@ class ActionsController(rest.RestController, hooks.HookController):
                 "%s" % (resources.SCOPE_TYPES.values, scope)
             )
 
-        with db_api.transaction():
-            db_acts = actions.update_actions(
-                definition,
-                scope=scope,
-                identifier=identifier
-            )
+        @rest_utils.rest_retry_on_db_error
+        def _update_actions():
+            with db_api.transaction():
+                return actions.update_actions(
+                    definition,
+                    scope=scope,
+                    identifier=identifier
+                )
+
+        db_acts = _update_actions()
 
         action_list = [
             resources.Action.from_db_model(db_act) for db_act in db_acts
@@ -123,8 +128,12 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         LOG.debug("Create action(s) [definition=%s]", definition)
 
-        with db_api.transaction():
-            db_acts = actions.create_actions(definition, scope=scope)
+        @rest_utils.rest_retry_on_db_error
+        def _create_action_definitions():
+            with db_api.transaction():
+                return actions.create_actions(definition, scope=scope)
+
+        db_acts = _create_action_definitions()
 
         action_list = [
             resources.Action.from_db_model(db_act) for db_act in db_acts
@@ -143,14 +152,18 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         LOG.debug("Delete action [identifier=%s]", identifier)
 
-        with db_api.transaction():
-            db_model = db_api.get_action_definition(identifier)
+        @rest_utils.rest_retry_on_db_error
+        def _delete_action_definition():
+            with db_api.transaction():
+                db_model = db_api.get_action_definition(identifier)
 
-            if db_model.is_system:
-                msg = "Attempt to delete a system action: %s" % identifier
-                raise exc.DataAccessException(msg)
+                if db_model.is_system:
+                    msg = "Attempt to delete a system action: %s" % identifier
+                    raise exc.DataAccessException(msg)
 
-            db_api.delete_action_definition(identifier)
+                db_api.delete_action_definition(identifier)
+
+        _delete_action_definition()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Actions, types.uuid, int, types.uniquelist,

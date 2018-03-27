@@ -68,13 +68,15 @@ class EventTriggersController(rest.RestController):
 
         LOG.debug('Create event trigger: %s', values)
 
-        db_model = triggers.create_event_trigger(
-            values.get('name', ''),
-            values.get('exchange'),
-            values.get('topic'),
-            values.get('event'),
-            values.get('workflow_id'),
-            values.get('scope'),
+        db_model = rest_utils.rest_retry_on_db_error(
+            triggers.create_event_trigger
+        )(
+            name=values.get('name', ''),
+            exchange=values.get('exchange'),
+            topic=values.get('topic'),
+            event=values.get('event'),
+            workflow_id=values.get('workflow_id'),
+            scope=values.get('scope'),
             workflow_input=values.get('workflow_input'),
             workflow_params=values.get('workflow_params'),
         )
@@ -104,11 +106,15 @@ class EventTriggersController(rest.RestController):
 
         LOG.debug('Update event trigger: [id=%s, values=%s]', id, values)
 
-        with db_api.transaction():
-            # ensure that event trigger exists
-            db_api.get_event_trigger(id)
+        @rest_utils.rest_retry_on_db_error
+        def _update_event_trigger():
+            with db_api.transaction():
+                # ensure that event trigger exists
+                db_api.get_event_trigger(id)
 
-            db_model = triggers.update_event_trigger(id, values)
+                return triggers.update_event_trigger(id, values)
+
+        db_model = _update_event_trigger()
 
         return resources.EventTrigger.from_db_model(db_model)
 
@@ -120,10 +126,14 @@ class EventTriggersController(rest.RestController):
 
         LOG.debug("Delete event trigger [id=%s]", id)
 
-        with db_api.transaction():
-            event_trigger = db_api.get_event_trigger(id)
+        @rest_utils.rest_retry_on_db_error
+        def _delete_event_trigger():
+            with db_api.transaction():
+                event_trigger = db_api.get_event_trigger(id)
 
-            triggers.delete_event_trigger(event_trigger.to_dict())
+                triggers.delete_event_trigger(event_trigger.to_dict())
+
+        _delete_event_trigger()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.EventTriggers, types.uuid, int,

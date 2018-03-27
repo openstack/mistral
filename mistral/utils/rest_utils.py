@@ -27,6 +27,7 @@ from wsme import exc as wsme_exc
 
 
 from mistral import context as auth_ctx
+from mistral.db import utils as db_utils
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 
@@ -260,3 +261,7 @@ def create_db_retry_object():
         stop=tenacity.stop_after_attempt(10),
         wait=tenacity.wait_incrementing(increment=0.5)  # 0.5 seconds
     )
+
+
+def rest_retry_on_db_error(func):
+    return db_utils.retry_on_db_error(func, create_db_retry_object())

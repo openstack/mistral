@@ -17,8 +17,6 @@ import json
 
 from oslo_log import log as logging
 from pecan import rest
-import sqlalchemy as sa
-import tenacity
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -133,11 +131,7 @@ class TaskExecutionsController(rest.RestController):
 
 
 # Use retries to prevent possible failures.
-@tenacity.retry(
-    retry=tenacity.retry_if_exception_type(sa.exc.OperationalError),
-    stop=tenacity.stop_after_attempt(10),
-    wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
-)
+@rest_utils.rest_retry_on_db_error
 def _get_task_execution(id):
     with db_api.transaction():
         task_ex = db_api.get_task_execution(id)
@@ -262,19 +256,25 @@ class TasksController(rest.RestController):
 
         LOG.debug("Update task execution [id=%s, task=%s]", id, task)
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(id)
-            task_spec = spec_parser.get_task_spec(task_ex.spec)
-            task_name = task.name or None
-            reset = task.reset
-            env = task.env or None
+        @rest_utils.rest_retry_on_db_error
+        def _read_task_params(id, task):
+            with db_api.transaction():
+                task_ex = db_api.get_task_execution(id)
+                task_spec = spec_parser.get_task_spec(task_ex.spec)
+                task_name = task.name or None
+                reset = task.reset
+                env = task.env or None
 
-            if task_name and task_name != task_ex.name:
-                raise exc.WorkflowException('Task name does not match.')
+                if task_name and task_name != task_ex.name:
+                    raise exc.WorkflowException('Task name does not match.')
 
-            wf_ex = db_api.get_workflow_execution(
-                task_ex.workflow_execution_id
-            )
+                wf_ex = db_api.get_workflow_execution(
+                    task_ex.workflow_execution_id
+                )
+
+                return env, reset, task_ex, task_spec, wf_ex
+
+        env, reset, task_ex, task_spec, wf_ex = _read_task_params(id, task)
 
         wf_name = task.workflow_name or None
 
@@ -304,10 +304,14 @@ class TasksController(rest.RestController):
             env=env
         )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(id)
+        @rest_utils.rest_retry_on_db_error
+        def _retrieve_task():
+            with db_api.transaction():
+                task_ex = db_api.get_task_execution(id)
 
-            return _get_task_resource_with_result(task_ex)
+                return _get_task_resource_with_result(task_ex)
+
+        return _retrieve_task()
 
 
 class ExecutionTasksController(rest.RestController):

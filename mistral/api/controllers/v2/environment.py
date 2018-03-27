@@ -137,7 +137,9 @@ class EnvironmentController(rest.RestController):
             ['name', 'description', 'variables']
         )
 
-        db_model = db_api.create_environment(env.to_dict())
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.create_environment
+        )(env.to_dict())
 
         return resources.Environment.from_db_model(db_model)
 
@@ -165,7 +167,9 @@ class EnvironmentController(rest.RestController):
             ['description', 'variables', 'scope']
         )
 
-        db_model = db_api.update_environment(env.name, env.to_dict())
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.update_environment
+        )(env.name, env.to_dict())
 
         return resources.Environment.from_db_model(db_model)
 
@@ -180,7 +184,7 @@ class EnvironmentController(rest.RestController):
 
         LOG.debug("Delete environment [name=%s]", name)
 
-        db_api.delete_environment(name)
+        rest_utils.rest_retry_on_db_error(db_api.delete_environment)(name)
 
     @staticmethod
     def _validate_environment(env_dict, legal_keys):

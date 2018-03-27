@@ -18,8 +18,6 @@
 
 from oslo_log import log as logging
 from pecan import rest
-import sqlalchemy as sa
-import tenacity
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
@@ -67,11 +65,7 @@ def _get_workflow_execution_resource(wf_ex):
 
 
 # Use retries to prevent possible failures.
-@tenacity.retry(
-    retry=tenacity.retry_if_exception_type(sa.exc.OperationalError),
-    stop=tenacity.stop_after_attempt(10),
-    wait=tenacity.wait_incrementing(increment=100)  # 0.1 seconds
-)
+@rest_utils.rest_retry_on_db_error
 def _get_workflow_execution(id, must_exist=True):
     with db_api.transaction():
         if must_exist:
@@ -119,55 +113,63 @@ class ExecutionsController(rest.RestController):
 
         LOG.debug('Update execution [id=%s, execution=%s]', id, wf_ex)
 
-        with db_api.transaction():
-            # ensure that workflow execution exists
-            db_api.get_workflow_execution(id)
+        @rest_utils.rest_retry_on_db_error
+        def _compute_delta(wf_ex):
+            with db_api.transaction():
+                # ensure that workflow execution exists
+                db_api.get_workflow_execution(id)
 
-            delta = {}
+                delta = {}
 
-            if wf_ex.state:
-                delta['state'] = wf_ex.state
+                if wf_ex.state:
+                    delta['state'] = wf_ex.state
 
-            if wf_ex.description:
-                delta['description'] = wf_ex.description
+                if wf_ex.description:
+                    delta['description'] = wf_ex.description
 
-            if wf_ex.params and wf_ex.params.get('env'):
-                delta['env'] = wf_ex.params.get('env')
+                if wf_ex.params and wf_ex.params.get('env'):
+                    delta['env'] = wf_ex.params.get('env')
 
-            # Currently we can change only state, description, or env.
-            if len(delta.values()) <= 0:
-                raise exc.InputException(
-                    'The property state, description, or env '
-                    'is not provided for update.'
-                )
+                # Currently we can change only state, description, or env.
+                if len(delta.values()) <= 0:
+                    raise exc.InputException(
+                        'The property state, description, or env '
+                        'is not provided for update.'
+                    )
 
-            # Description cannot be updated together with state.
-            if delta.get('description') and delta.get('state'):
-                raise exc.InputException(
-                    'The property description must be updated '
-                    'separately from state.'
-                )
+                # Description cannot be updated together with state.
+                if delta.get('description') and delta.get('state'):
+                    raise exc.InputException(
+                        'The property description must be updated '
+                        'separately from state.'
+                    )
 
-            # If state change, environment cannot be updated if not RUNNING.
-            if (delta.get('env') and
-                    delta.get('state') and delta['state'] != states.RUNNING):
-                raise exc.InputException(
-                    'The property env can only be updated when workflow '
-                    'execution is not running or on resume from pause.'
-                )
+                # If state change, environment cannot be updated
+                # if not RUNNING.
+                if (delta.get('env') and
+                        delta.get('state') and
+                        delta['state'] != states.RUNNING):
+                    raise exc.InputException(
+                        'The property env can only be updated when workflow '
+                        'execution is not running or on resume from pause.'
+                    )
 
-            if delta.get('description'):
-                wf_ex = db_api.update_workflow_execution(
-                    id,
-                    {'description': delta['description']}
-                )
+                if delta.get('description'):
+                    wf_ex = db_api.update_workflow_execution(
+                        id,
+                        {'description': delta['description']}
+                    )
 
-            if not delta.get('state') and delta.get('env'):
-                wf_ex = db_api.get_workflow_execution(id)
-                wf_ex = wf_service.update_workflow_execution_env(
-                    wf_ex,
-                    delta.get('env')
-                )
+                if not delta.get('state') and delta.get('env'):
+                    wf_ex = db_api.get_workflow_execution(id)
+                    wf_ex = wf_service.update_workflow_execution_env(
+                        wf_ex,
+                        delta.get('env')
+                    )
+
+                return delta, wf_ex
+
+        delta, wf_ex = _compute_delta(wf_ex)
 
         if delta.get('state'):
             if states.is_paused(delta.get('state')):
@@ -276,7 +278,9 @@ class ExecutionsController(rest.RestController):
 
         LOG.debug("Delete execution [id=%s]", id)
 
-        return db_api.delete_workflow_execution(id)
+        return rest_utils.rest_retry_on_db_error(
+            db_api.delete_workflow_execution
+        )(id)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, int,
