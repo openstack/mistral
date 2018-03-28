@@ -20,6 +20,7 @@ import time
 import kombu
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import eventletutils
 from stevedore import driver
 
 from mistral import context as auth_ctx
@@ -68,8 +69,8 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
         self.routing_key = self.topic
         self.channel = None
         self.conn = None
-        self._running = threading.Event()
-        self._stopped = threading.Event()
+        self._running = eventletutils.Event()
+        self._stopped = eventletutils.Event()
         self.endpoints = []
         self._worker = None
         self._thread = None
