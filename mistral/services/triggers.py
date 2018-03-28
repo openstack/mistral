@@ -236,6 +236,9 @@ def on_workflow_complete(wf_ex):
     if wf_ex.task_execution_id:
         return
 
+    if not wf_ex.description:
+        return
+
     try:
         description = json.loads(wf_ex.description)
     except ValueError as e:
