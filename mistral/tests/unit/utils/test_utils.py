@@ -157,15 +157,15 @@ class UtilsTest(base.BaseTest):
     def test_cut_dict_with_strings(self):
         d = {'key1': 'value1', 'key2': 'value2'}
 
-        s = utils.cut_dict(d, 9)
+        s = utils.cut_dict(d, 13)
 
         self.assertIn(s, ["{'key1': '...", "{'key2': '..."])
 
-        s = utils.cut_dict(d, 13)
+        s = utils.cut_dict(d, 15)
 
         self.assertIn(s, ["{'key1': 'va...", "{'key2': 'va..."])
 
-        s = utils.cut_dict(d, 19)
+        s = utils.cut_dict(d, 22)
 
         self.assertIn(
             s,
@@ -183,14 +183,42 @@ class UtilsTest(base.BaseTest):
     def test_cut_dict_with_digits(self):
         d = {1: 2, 3: 4}
 
-        s = utils.cut_dict(d, 6)
+        s = utils.cut_dict(d, 10)
 
         self.assertIn(s, ["{1: 2, ...", "{3: 4, ..."])
 
-        s = utils.cut_dict(d, 8)
+        s = utils.cut_dict(d, 11)
 
         self.assertIn(s, ["{1: 2, 3...", "{3: 4, 1..."])
 
         s = utils.cut_dict(d, 100)
 
         self.assertIn(s, ["{1: 2, 3: 4}", "{3: 4, 1: 2}"])
+
+    def test_cut_dict_with_large_dict_of_str(self):
+        d = {}
+        for i in range(65535):
+            d[str(i)] = str(i)
+        s = utils.cut(d, 65535)
+        assert len(s) <= 65535, len(s)
+
+    def test_cut_dict_with_large_dict_of_int(self):
+        d = {}
+        for i in range(65535):
+            d[i] = i
+        s = utils.cut(d, 65535)
+        assert len(s) <= 65535, len(s)
+
+    def test_cut_dict_with_large_dict_of_dict(self):
+        d = {}
+        for i in range(65535):
+            d[i] = {'value': str(i)}
+        s = utils.cut(d, 65535)
+        assert len(s) <= 65535, len(s)
+
+    def test_cut_dict_for_state_info(self):
+        d = {}
+        for i in range(2000):
+            d[i] = {'value': 'This is a string that exceeds 35 characters'}
+        s = utils.cut(d, 65500)
+        assert len(s) <= 65500, str(len(s)) + ' : ' + s[:-30]

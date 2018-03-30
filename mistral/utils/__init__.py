@@ -219,44 +219,41 @@ def cut_dict(d, length=100):
         v = str(value)
 
         # Processing key.
-        new_len = len(res) + len(k)
+        new_len = len(k)
 
         is_str = isinstance(key, str)
 
         if is_str:
-            new_len += 2
+            new_len += 2    # Account for the quotation marks
 
-        if new_len >= length:
-            res += "'%s..." % k[:length - new_len] if is_str else "%s..." % k
-
+        if new_len + len(res) >= length:
+            res += "'%s" % k if is_str else k
             break
         else:
             res += "'%s'" % k if is_str else k
-            res += ": "
+
+        res += ": "
 
         # Processing value.
-        new_len = len(res) + len(v)
+        new_len = len(v)
 
         is_str = isinstance(value, str)
 
         if is_str:
             new_len += 2
 
-        if new_len >= length:
-            res += "'%s..." % v[:length - new_len] if is_str else "%s..." % v
-
+        if new_len + len(res) >= length:
+            res += "'%s" % v if is_str else v
             break
         else:
             res += "'%s'" % v if is_str else v
-            res += ', ' if idx < len(d) - 1 else '}'
 
-        if len(res) >= length:
-            res += '...'
-
-            break
+        res += ', ' if idx < len(d) - 1 else '}'
 
         idx += 1
 
+    if len(res) >= length and res[length - 1] is not '}':
+        res = res[:length - 3] + '...'
     return res
 
 
