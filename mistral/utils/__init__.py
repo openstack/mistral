@@ -271,13 +271,14 @@ def cut_list(l, length=100):
             new_len += 2
 
         if new_len >= length:
-            res += "'%s..." % s[:length - new_len] if is_str else "%s..." % s
-
+            res += "'%s" % s if is_str else s
             break
         else:
             res += "'%s'" % s if is_str else s
-            res += ', ' if idx < len(l) - 1 else ']'
+        res += ', ' if idx < len(l) - 1 else ']'
 
+    if len(res) >= length and res[length - 1] is not ']':
+        res = res[:length - 3] + '...'
     return res
 
 

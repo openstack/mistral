@@ -16,6 +16,8 @@
 
 import copy
 
+import testtools.matchers as ttm
+
 from mistral import exceptions as exc
 from mistral.tests.unit import base
 from mistral import utils
@@ -139,20 +141,41 @@ class UtilsTest(base.BaseTest):
     def test_cut_list(self):
         l = ['Hello, Mistral!', 'Hello, OpenStack!']
 
-        self.assertEqual("['Hello, M...", utils.cut_list(l, 11))
-        self.assertEqual("['Hello, Mistr...", utils.cut_list(l, 15))
-        self.assertEqual("['Hello, Mistral!', 'He...", utils.cut_list(l, 24))
+        self.assertEqual("['Hello, M...", utils.cut_list(l, 13))
+        self.assertEqual("['Hello, Mistr...", utils.cut_list(l, 17))
+        self.assertEqual("['Hello, Mistral!', 'He...", utils.cut_list(l, 26))
 
         self.assertEqual(
             "['Hello, Mistral!', 'Hello, OpenStack!']",
             utils.cut_list(l, 100)
         )
 
-        self.assertEqual("[1, 2...", utils.cut_list([1, 2, 3, 4, 5], 4))
-        self.assertEqual("[1, 2...", utils.cut_list([1, 2, 3, 4, 5], 5))
-        self.assertEqual("[1, 2, 3...", utils.cut_list([1, 2, 3, 4, 5], 6))
+        self.assertEqual("[1, 2...", utils.cut_list([1, 2, 3, 4, 5], 8))
+        self.assertEqual("[1, 2,...", utils.cut_list([1, 2, 3, 4, 5], 9))
+        self.assertEqual("[1, 2, 3...", utils.cut_list([1, 2, 3, 4, 5], 11))
 
         self.assertRaises(ValueError, utils.cut_list, (1, 2))
+
+    def test_cut_list_with_large_dict_of_str(self):
+        d = [str(i) for i in range(65535)]
+        s = utils.cut(d, 65535)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65535)))
+
+    def test_cut_list_with_large_dict_of_int(self):
+        d = [i for i in range(65535)]
+        s = utils.cut(d, 65535)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65535)))
+
+    def test_cut_list_with_large_dict_of_dict(self):
+        d = [{'value': str(i)} for i in range(65535)]
+        s = utils.cut(d, 65535)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65535)))
+
+    def test_cut_list_for_state_info(self):
+        d = [{'value': 'This is a string that exceeds 35 characters'}
+             for i in range(2000)]
+        s = utils.cut(d, 65500)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65500)))
 
     def test_cut_dict_with_strings(self):
         d = {'key1': 'value1', 'key2': 'value2'}
@@ -180,6 +203,8 @@ class UtilsTest(base.BaseTest):
             ]
         )
 
+        self.assertRaises(ValueError, utils.cut_dict, (1, 2))
+
     def test_cut_dict_with_digits(self):
         d = {1: 2, 3: 4}
 
@@ -200,25 +225,25 @@ class UtilsTest(base.BaseTest):
         for i in range(65535):
             d[str(i)] = str(i)
         s = utils.cut(d, 65535)
-        assert len(s) <= 65535, len(s)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65535)))
 
     def test_cut_dict_with_large_dict_of_int(self):
         d = {}
         for i in range(65535):
             d[i] = i
         s = utils.cut(d, 65535)
-        assert len(s) <= 65535, len(s)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65535)))
 
     def test_cut_dict_with_large_dict_of_dict(self):
         d = {}
         for i in range(65535):
             d[i] = {'value': str(i)}
         s = utils.cut(d, 65535)
-        assert len(s) <= 65535, len(s)
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65535)))
 
     def test_cut_dict_for_state_info(self):
         d = {}
         for i in range(2000):
             d[i] = {'value': 'This is a string that exceeds 35 characters'}
         s = utils.cut(d, 65500)
-        assert len(s) <= 65500, str(len(s)) + ' : ' + s[:-30]
+        self.assertThat(len(s), ttm.Not(ttm.GreaterThan(65500)))
