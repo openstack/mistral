@@ -769,24 +769,24 @@ Partial Join (join: 2)
     register_vm_in_load_balancer:
       ...
       on-success:
-        - wait_for_all_registrations
+        - wait_for_two_registrations
 
     register_vm_in_dns:
       ...
       on-success:
-        - wait_for_all_registrations
+        - wait_for_two_registrations
 
     register_vm_in_zabbix:
       ...
       on-success:
-        - wait_for_all_registrations
+        - wait_for_two_registrations
 
     wait_for_two_registrations:
       join: 2
       action: send_email
 
 When a task has property "join" assigned with a numeric value then the task
-will run once at least this number of upstream tasks are completed and
+will run when at least this number of upstream tasks are completed and
 corresponding conditions have triggered. In the example above task
 "wait_for_two_registrations" will run if two any of
 "register_vm_xxx" tasks complete.
