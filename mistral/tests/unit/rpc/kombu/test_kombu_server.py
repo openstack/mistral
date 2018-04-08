@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import futurist
 from mistral import context
 from mistral import exceptions as exc
 from mistral.tests.unit.rpc.kombu import base
@@ -279,20 +280,24 @@ class KombuServerTestCase(base.KombuTestCase):
             correlation_id
         )
 
-    @mock.patch('stevedore.driver.DriverManager')
-    def test__prepare_worker(self, driver_manager_mock):
-        worker_mock = mock.MagicMock()
-        mgr_mock = mock.MagicMock()
-        mgr_mock.driver.return_value = worker_mock
-
-        def side_effect(*args, **kwargs):
-            return mgr_mock
-
-        driver_manager_mock.side_effect = side_effect
-
+    def test__prepare_worker(self):
         self.server._prepare_worker('blocking')
+        self.assertEqual(
+            futurist.SynchronousExecutor,
+            type(self.server._worker)
+        )
 
-        self.assertEqual(self.server._worker, worker_mock)
+        self.server._prepare_worker('threading')
+        self.assertEqual(
+            futurist.ThreadPoolExecutor,
+            type(self.server._worker)
+        )
+
+        self.server._prepare_worker('eventlet')
+        self.assertEqual(
+            futurist.GreenThreadPoolExecutor,
+            type(self.server._worker)
+        )
 
     @mock.patch('stevedore.driver.DriverManager')
     def test__prepare_worker_no_valid_executor(self, driver_manager_mock):
