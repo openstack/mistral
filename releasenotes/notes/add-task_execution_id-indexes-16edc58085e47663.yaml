@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Added new indexes on the task_execution_id column of the
+    action_executions_v2 and workflow_executions_v2 tables.
