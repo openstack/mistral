@@ -713,3 +713,24 @@ class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
                 changes=overlay,
                 expect_error=expect_error
             )
+
+    def test_safe_rerurn(self):
+        tests = [
+            ({'safe-rerun': True}, False),
+            ({'safe-rerun': False}, False),
+            ({'safe-rerun': '<% false %>'}, False),
+            ({'safe-rerun': '<% true %>'}, False),
+            ({'safe-rerun': '<% * %>'}, True),
+            ({'safe-rerun': None}, True)
+        ]
+
+        for default, expect_error in tests:
+            overlay = {'test': {'task-defaults': {}}}
+
+            utils.merge_dicts(overlay['test']['task-defaults'], default)
+
+            self._parse_dsl_spec(
+                add_tasks=True,
+                changes=overlay,
+                expect_error=expect_error
+            )

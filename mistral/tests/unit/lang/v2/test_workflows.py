@@ -383,7 +383,13 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             ({'concurrency': '{{ * }}'}, True),
             ({'concurrency': -10}, True),
             ({'concurrency': 10.0}, True),
-            ({'concurrency': '10'}, True)
+            ({'concurrency': '10'}, True),
+            ({'safe-rerun': True}, False),
+            ({'safe-rerun': False}, False),
+            ({'safe-rerun': '<% false %>'}, False),
+            ({'safe-rerun': '<% true %>'}, False),
+            ({'safe-rerun': '<% * %>'}, True),
+            ({'safe-rerun': None}, True)
         ]
 
         for default, expect_error in tests:

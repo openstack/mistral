@@ -160,6 +160,7 @@ Common workflow attributes
    -  **timeout** - Configures timeout policy. *Optional*.
    -  **retry** - Configures retry policy. *Optional*.
    -  **concurrency** - Configures concurrency policy. *Optional*.
+   -  **safe-rerun** - Configures safe-rerun policy. *Optional*.
 
 -  **tasks** - Dictionary containing workflow tasks. See below for more
    details. *Required*.
