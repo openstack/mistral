@@ -48,8 +48,9 @@ class KeycloakAuthHandler(auth.AuthHandler):
         try:
             decoded = jwt.decode(access_token, algorithms=['RS256'],
                                  verify=False)
-        except Exception:
-            msg = _("Token can't be decoded because of wrong format.")
+        except Exception as e:
+            msg = _("Token can't be decoded because of wrong format %s")\
+                % str(e)
             LOG.error(msg)
             raise exc.UnauthorizedException(message=msg)
 
@@ -89,6 +90,15 @@ class KeycloakAuthHandler(auth.AuthHandler):
                     ) % CONF.keycloak_oidc.auth_url
             LOG.error(msg)
             raise exc.MistralException(message=msg)
+
+        if resp.status_code == 401:
+            LOG.warning("HTTP response from OIDC provider:"
+                        " [%s] with WWW-Authenticate: [%s]",
+                        pprint.pformat(resp.text),
+                        resp.headers.get("WWW-Authenticate"))
+        else:
+            LOG.debug("HTTP response from OIDC provider: %s",
+                      pprint.pformat(resp.text))
 
         resp.raise_for_status()
 
