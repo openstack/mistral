@@ -53,6 +53,7 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.publishers['noop'].publish.reset_mock()
 
         del EVENT_LOGS[:]
+        cfg.CONF.set_default('type', 'local', group='notifier')
 
     def tearDown(self):
         cfg.CONF.set_default('notify', None, group='notifier')
