@@ -15,6 +15,7 @@
 #    limitations under the License.
 
 import abc
+import json
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -341,12 +342,16 @@ class Workflow(object):
                 return
 
             self.wf_ex = wf_ex
-            self.wf_ex.state_info = state_info
+            self.wf_ex.state_info = json.dumps(state_info) \
+                if isinstance(state_info, dict) else state_info
 
             wf_trace.info(
                 self.wf_ex,
-                "Workflow '%s' [%s -> %s, msg=%s]"
-                % (self.wf_ex.workflow_name, cur_state, state, state_info)
+                "Workflow '%s' [%s -> %s, msg=%s]" %
+                (self.wf_ex.workflow_name,
+                 cur_state,
+                 state,
+                 self.wf_ex.state_info)
             )
         else:
             msg = ("Can't change workflow execution state from %s to %s. "
