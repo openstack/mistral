@@ -43,6 +43,7 @@ MODULE_MAPPING = {
     'baremetal_introspection': ['baremetal_introspection.introspect',
                                 actions.BaremetalIntrospectionAction],
     'swift': ['swift.head_account', actions.SwiftAction],
+    'swiftservice': ['swiftservice.delete', actions.SwiftServiceAction],
     'zaqar': ['zaqar.queue_messages', actions.ZaqarAction],
     'barbican': ['barbican.orders_list', actions.BarbicanAction],
     'mistral': ['mistral.workflows_get', actions.MistralAction],
