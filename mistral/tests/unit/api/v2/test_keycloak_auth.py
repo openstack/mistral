@@ -82,6 +82,8 @@ USER_CLAIMS = {
     "picture": "http://example.com/janedoe/me.jpg"
 }
 
+WWW_AUTHENTICATE_HEADER = {'WWW-Authenticate': 'unauthorized reason is ...'}
+
 
 class TestKeyCloakOIDCAuth(base.BaseTest):
 
@@ -166,7 +168,8 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
         req_mock.get(
             USER_INFO_ENDPOINT,
             status_code=401,
-            reason='Access token is invalid'
+            reason='Access token is invalid',
+            headers=WWW_AUTHENTICATE_HEADER
         )
 
         req = self._build_request(token)
@@ -179,6 +182,11 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
                     "401 Client Error: Access token is invalid for url",
                     str(e)
                 )
+                self.assertEqual(
+                    'unauthorized reason is ...',
+                    e.response.headers.get('WWW-Authenticate')
+                )
+
             else:
                 raise Exception("Test is broken")
 
@@ -273,7 +281,7 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
         self.assertEqual('401 Unauthorized', resp.status)
         self.assertIn('Failed to validate access token', resp.text)
         self.assertIn(
-            "Token can't be decoded because of wrong format.",
+            "Token can't be decoded because of wrong format",
             resp.text
         )
 
