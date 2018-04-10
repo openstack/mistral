@@ -16,6 +16,7 @@
 
 import abc
 import copy
+import json
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -166,7 +167,8 @@ class Task(object):
                 return False
 
             self.task_ex = task_ex
-            self.task_ex.state_info = state_info
+            self.task_ex.state_info = json.dumps(state_info) \
+                if isinstance(state_info, dict) else state_info
             self.state_changed = True
 
             if processed is not None:
@@ -179,7 +181,7 @@ class Task(object):
                  self.task_ex.id,
                  cur_state,
                  state,
-                 state_info)
+                 self.task_ex.state_info)
             )
 
         return True
