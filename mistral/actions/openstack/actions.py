@@ -67,6 +67,7 @@ neutronclient = _try_import('neutronclient.v2_0.client')
 novaclient = _try_import('novaclient.client')
 senlinclient = _try_import('senlinclient.v1.client')
 swift_client = _try_import('swiftclient.client')
+swiftservice = _try_import('swiftclient.service')
 tackerclient = _try_import('tackerclient.v1_0.client')
 troveclient = _try_import('troveclient.v1.client')
 zaqarclient = _try_import('zaqarclient.queues.client')
@@ -399,6 +400,35 @@ class SwiftAction(base.OpenStackAction):
             session=session_and_auth['session'],
             preauthurl=swift_url
         )
+
+
+class SwiftServiceAction(base.OpenStackAction):
+    _service_name = 'swift'
+
+    @classmethod
+    def _get_client_class(cls):
+        return swiftservice.SwiftService
+
+    def _create_client(self, context):
+
+        LOG.debug("Swift action security context: %s", context)
+
+        swift_endpoint = self.get_service_endpoint()
+
+        swift_opts = {
+            'os_storage_url': swift_endpoint.url % {
+                'tenant_id': context.project_id
+            },
+            'os_auth_token': context.auth_token,
+            'os_region_name': swift_endpoint.region,
+            'os_project_id': context.security.project_id,
+        }
+
+        return swiftservice.SwiftService(options=swift_opts)
+
+    @classmethod
+    def _get_client_method(cls, client):
+        return getattr(client, cls.client_method_name)
 
 
 class ZaqarAction(base.OpenStackAction):

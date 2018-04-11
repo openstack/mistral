@@ -199,6 +199,18 @@ class OpenStackActionTest(base.BaseTestCase):
         mocked().get_object.assert_called_once_with(container='foo',
                                                     object='bar')
 
+    @mock.patch.object(actions.SwiftServiceAction, '_get_client')
+    def test_swift_service_action(self, mocked):
+        mock_ctx = mock.Mock()
+        method_name = "list"
+        action_class = actions.SwiftServiceAction
+        action_class.client_method_name = method_name
+        action = action_class()
+        action.run(mock_ctx)
+
+        self.assertTrue(mocked().list.called)
+        mocked().list.assert_called_once_with()
+
     @mock.patch.object(actions.ZaqarAction, '_get_client')
     def test_zaqar_action(self, mocked):
         mock_ctx = mock.Mock()

@@ -955,6 +955,17 @@
         "copy_object": "copy_object",
         "get_capabilities": "get_capabilities"
     },
+    "swiftservice": {
+        "_comment": "It uses swiftclient.service.",
+        "capabilities": "capabilities",
+        "copy": "copy",
+        "delete": "delete",
+        "download": "download",
+        "list": "list",
+        "post": "post",
+        "stat": "stat",
+        "upload": "upload"
+    },
     "zaqar": {
         "_comment": "It uses zaqarclient.v2.",
         "claim_messages": "claim_messages",
