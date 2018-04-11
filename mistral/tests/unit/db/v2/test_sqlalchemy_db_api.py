@@ -3056,6 +3056,12 @@ class EventTriggerTest(SQLAlchemyTest):
 
         self.assertEqual(2, len(fetched))
 
+    def test_get_event_triggers_specific_fields_insecure(self):
+        fetched = db_api.get_event_triggers(fields=['name', 'workflow_id'],
+                                            insecure=True)
+
+        self.assertEqual(0, len(fetched))
+
     def test_update_event_trigger(self):
         created = db_api.create_event_trigger(EVENT_TRIGGERS[0])
 
