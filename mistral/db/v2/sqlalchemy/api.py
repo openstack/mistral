@@ -259,7 +259,7 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
         if fields else ()
     )
 
-    query = (b.model_query(model, *columns) if insecure
+    query = (b.model_query(model, columns=columns) if insecure
              else _secure_query(model, *columns))
     query = db_filters.apply_filters(query, model, **filters)
 
