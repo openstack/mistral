@@ -51,7 +51,7 @@ WORKBOOKS = [
         'description': 'my description',
         'definition': 'empty',
         'spec': {},
-        'tags': ['mc'],
+        'tags': ['mc', 'hammer'],
         'scope': 'private',
         'updated_at': None,
         'project_id': '1233',
@@ -279,6 +279,33 @@ class WorkbookTest(SQLAlchemyTest):
             'my_workbook2',
             'eq',
             _filter
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(1, len(fetched))
+        self.assertEqual(created1, fetched[0])
+
+    def test_filter_workbooks_by_single_tags(self):
+        db_api.create_workbook(WORKBOOKS[0])
+        db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'tags',
+            "mc",
+            'eq'
+        )
+        fetched = db_api.get_workbooks(**_filter)
+
+        self.assertEqual(2, len(fetched))
+
+    def test_filter_workbooks_by_multiple_tags(self):
+        db_api.create_workbook(WORKBOOKS[0])
+        created1 = db_api.create_workbook(WORKBOOKS[1])
+
+        _filter = filter_utils.create_or_update_filter(
+            'tags',
+            "mc,hammer",
+            'eq'
         )
         fetched = db_api.get_workbooks(**_filter)
 

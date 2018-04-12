@@ -21,6 +21,9 @@ def apply_filters(query, model, **filters):
     for key, value in filters.items():
         column_attr = getattr(model, key)
 
+        if key == 'tags':
+            continue
+
         if isinstance(value, dict):
             if 'in' in value:
                 query = query.filter(column_attr.in_(value['in']))
@@ -49,9 +52,15 @@ def apply_filters(query, model, **filters):
     # TODO(hparekh): Need to think how can we get rid of this.
     tags = filters.pop('tags', None)
 
+    if isinstance(tags, dict):
+        tags = tags.get("eq")
+
     # To match the tag list, a resource must contain at least all of the
     # tags present in the filter parameter.
     if tags:
+        if ',' in tags:
+            tags = tags.split(',')
+
         tag_attr = getattr(model, 'tags')
 
         if not isinstance(tags, list):
