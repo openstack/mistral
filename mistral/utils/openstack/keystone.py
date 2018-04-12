@@ -118,8 +118,10 @@ def _admin_client(trust_id=None):
         kwargs = {}
 
         if trust_id:
-            # Remove project_name and project_id, since we need a trust scoped
-            # auth object
+            # Remove domain_id, domain_name, project_name and project_id,
+            # since we need a trust scoped auth object
+            kwargs['domain_id'] = None
+            kwargs['domain_name'] = None
             kwargs['project_name'] = None
             kwargs['project_domain_name'] = None
             kwargs['project_id'] = None
