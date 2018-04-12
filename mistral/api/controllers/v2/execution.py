@@ -268,15 +268,28 @@ class ExecutionsController(rest.RestController):
         return resources.Execution.from_dict(result)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, id):
+    @wsme_pecan.wsexpose(None, wtypes.text, bool, status_code=204)
+    def delete(self, id, force=False):
         """Delete the specified Execution.
 
         :param id: UUID of execution to delete.
+        :param force: Optional. Force the deletion of unfinished executions.
+                      Default: false. While the api is backward compatible
+                      the behaviour is not the same. The new default is the
+                      safer option
         """
         acl.enforce('executions:delete', context.ctx())
 
         LOG.debug("Delete execution [id=%s]", id)
+
+        if not force:
+            wf_ex = db_api.get_workflow_execution(id)
+
+            if not states.is_completed(wf_ex.state):
+                raise exc.NotAllowedException(
+                    "Only completed executions can be deleted."
+                    " Execution {} is in {} state".format(id, wf_ex.state)
+                )
 
         return rest_utils.rest_retry_on_db_error(
             db_api.delete_workflow_execution

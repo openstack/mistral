@@ -1,0 +1,9 @@
+---
+features:
+  - Use of the parameter force to forcefully delete executions. Note using this parameter
+    on unfinished executions might cause a cascade of errors.
+issues:
+  - Deleting unfinished executions might cause a cascade of errors, so the standard behaviour
+    has been changed to delete only safe to delete executions and a new parameter force
+    was added to forceful delete ignoring the state the execution is in.
+

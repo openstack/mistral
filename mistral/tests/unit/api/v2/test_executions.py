@@ -144,6 +144,14 @@ MOCK_EMPTY = mock.MagicMock(return_value=[])
 MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
 MOCK_ACTION_EXC = mock.MagicMock(side_effect=exc.ActionException())
 
+ERROR_WF_EX = copy.deepcopy(WF_EX)
+ERROR_WF_EX['state'] = states.ERROR
+MOCK_ERROR_WF_EX = mock.MagicMock(return_value=ERROR_WF_EX)
+
+SUCCESS_WF_EX = copy.deepcopy(WF_EX)
+SUCCESS_WF_EX['state'] = states.SUCCESS
+MOCK_SUCCESS_WF_EX = mock.MagicMock(return_value=SUCCESS_WF_EX)
+
 
 @mock.patch.object(rpc_base, '_IMPL_CLIENT', mock.Mock())
 class TestExecutionsController(base.APITest):
@@ -693,8 +701,39 @@ class TestExecutionsController(base.APITest):
 
         self.assertIn('Bad response: 400', context.args[0])
 
-    @mock.patch.object(db_api, 'delete_workflow_execution', MOCK_DELETE)
-    def test_delete(self):
+    @mock.patch.object(
+        db_api,
+        'get_workflow_execution',
+        MOCK_WF_EX
+    )
+    def test_delete_unfished_execution(self):
+        resp = self.app.delete('/v2/executions/123', expect_errors=True)
+
+        self.assertEqual(403, resp.status_int)
+        self.assertIn(
+            "Only completed executions can be deleted. "
+            "Execution 123 is in RUNNING state",
+            resp.body.decode()
+        )
+
+    @mock.patch.object(db_api,
+                       'get_workflow_execution',
+                       MOCK_ERROR_WF_EX)
+    @mock.patch.object(db_api,
+                       'delete_workflow_execution',
+                       MOCK_DELETE)
+    def test_delete_error_exec(self):
+        resp = self.app.delete('/v2/executions/123')
+
+        self.assertEqual(204, resp.status_int)
+
+    @mock.patch.object(db_api,
+                       'get_workflow_execution',
+                       MOCK_SUCCESS_WF_EX)
+    @mock.patch.object(db_api,
+                       'delete_workflow_execution',
+                       MOCK_DELETE)
+    def test_delete_success_exec(self):
         resp = self.app.delete('/v2/executions/123')
 
         self.assertEqual(204, resp.status_int)
