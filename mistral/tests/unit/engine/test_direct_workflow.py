@@ -17,6 +17,7 @@ from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
@@ -787,3 +788,174 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             ],
             task4.runtime_context.get(key)
         )
+
+    def test_task_in_context_immutability(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          description: |
+            The idea of this workflow is to have two parallel branches and
+            publish different data in these branches. When the workflow
+            completed we need to check that during internal manipulations
+            with workflow contexts belonging to different branches the inbound
+            contexts of all tasks keep their initial values.
+
+          tasks:
+            # Start task.
+            task0:
+              publish:
+                var0: val0
+              on-success:
+                - task1_1
+                - task2_1
+
+            task1_1:
+              publish:
+                var1: val1
+              on-success: task1_2
+
+            # The last task in the 1st branch.
+            task1_2:
+              action: std.noop
+
+            task2_1:
+              publish:
+                var2: val2
+              on-success: task2_2
+
+            # The last task in the 2nd branch.
+            task2_2:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks_execs = wf_ex.task_executions
+
+        task0_ex = self._assert_single_item(tasks_execs, name='task0')
+        task1_1_ex = self._assert_single_item(tasks_execs, name='task1_1')
+        task1_2_ex = self._assert_single_item(tasks_execs, name='task1_2')
+        task2_1_ex = self._assert_single_item(tasks_execs, name='task2_1')
+        task2_2_ex = self._assert_single_item(tasks_execs, name='task2_2')
+
+        # TODO(rakhmerov): Find out why '__task_execution' is still
+        # in the inbound context
+        del task0_ex.in_context['__task_execution']
+        del task1_1_ex.in_context['__task_execution']
+        del task1_2_ex.in_context['__task_execution']
+        del task2_1_ex.in_context['__task_execution']
+        del task2_2_ex.in_context['__task_execution']
+
+        self.assertDictEqual({}, task0_ex.in_context)
+        self.assertDictEqual({'var0': 'val0'}, task1_1_ex.in_context)
+        self.assertDictEqual(
+            {
+                'var0': 'val0',
+                'var1': 'val1'
+            },
+            task1_2_ex.in_context
+        )
+        self.assertDictEqual({'var0': 'val0'}, task2_1_ex.in_context)
+        self.assertDictEqual(
+            {
+                'var0': 'val0',
+                'var2': 'val2'
+            },
+            task2_2_ex.in_context
+        )
+
+    def test_big_on_closures(self):
+        # The idea of the test is to run a workflow with a big 'on-success'
+        # list of tasks and big task inbound context ('task_ex.in_context)
+        # and observe how it influences memory consumption and performance.
+        # The test doesn't have any assertions related to memory(CPU) usage
+        # because it's quite difficult to do them. Particular metrics may
+        # vary from run to run and also depend on the platform.
+
+        sub_wf_text = """
+        version: '2.0'
+
+        sub_wf:
+          tasks:
+            task1:
+              action: std.noop
+        """
+
+        wf_text = """
+        version: '2.0'
+
+        wf:
+          tasks:
+            task01:
+              action: std.noop
+              on-success: task02
+
+            task02:
+              action: std.test_dict size=1000 key_prefix='key' val='val'
+              publish:
+                continue_flag: true
+                data: <% task().result %>
+              on-success: task0
+
+            task0:
+              workflow: sub_wf
+              on-success: {{{__ON_SUCCESS_LIST__}}}
+
+            {{{__TASK_LIST__}}}
+        """
+
+        # Generate the workflow text.
+        task_cnt = 200
+
+        on_success_list_str = ''
+
+        for i in range(1, task_cnt + 1):
+            on_success_list_str += (
+                '\n                - task{}: '
+                '<% $.continue_flag = true %>'.format(i)
+            )
+
+        wf_text = wf_text.replace(
+            '{{{__ON_SUCCESS_LIST__}}}',
+            on_success_list_str
+        )
+
+        task_list_str = ''
+
+        task_template = """
+            task{}:
+              action: std.noop
+        """
+
+        for i in range(1, task_cnt + 1):
+            task_list_str += task_template.format(i)
+
+        wf_text = wf_text.replace('{{{__TASK_LIST__}}}', task_list_str)
+
+        wf_service.create_workflows(sub_wf_text)
+        wf_service.create_workflows(wf_text)
+
+        # Start the workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id, timeout=60)
+
+        self.assertEqual(2, spec_parser.get_wf_execution_spec_cache_size())
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        self.assertEqual(task_cnt + 3, len(tasks))
+
+        self._assert_single_item(tasks, name='task0')
+        self._assert_single_item(tasks, name='task{}'.format(task_cnt))
