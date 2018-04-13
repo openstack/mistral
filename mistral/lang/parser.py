@@ -162,8 +162,10 @@ def get_action_definition(wb_def, action_name):
 def _parse_def_from_wb(wb_def, section_name, item_name):
     io = six.StringIO(wb_def[wb_def.index(section_name):])
     io.readline()
+
     definition = []
     ident = 0
+
     # Get the indentation of the action/workflow name tag.
     for line in io:
         if item_name == line.strip():
@@ -188,9 +190,8 @@ def _parse_def_from_wb(wb_def, section_name, item_name):
                 break
 
     io.close()
-    definition = ''.join(definition).rstrip() + '\n'
 
-    return definition
+    return ''.join(definition).rstrip() + '\n'
 
 
 # Methods for obtaining specifications in a more efficient way using

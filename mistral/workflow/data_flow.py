@@ -232,8 +232,18 @@ def evaluate_task_outbound_context(task_ex):
     :param task_ex: DB task.
     :return: Outbound task Data Flow context.
     """
+
+    # NOTE(rakhmerov): 'task_ex.in_context' has the SQLAlchemy specific
+    # type MutableDict. So we need to create a shallow copy using dict(...)
+    # initializer and use it. It's enough to be safe in order to manipulate
+    # with entries of the result dictionary, like adding more entries.
+    # However, we must not change values themselves because they are
+    # shared between the original dictionary and the newly created.
+    # It's better to avoid using the method copy.deepcopy() because on
+    # dictionaries with many entries it significantly increases memory
+    # footprint and reduces performance.
     in_context = (
-        copy.deepcopy(dict(task_ex.in_context))
+        dict(task_ex.in_context)
         if task_ex.in_context is not None else {}
     )
 
