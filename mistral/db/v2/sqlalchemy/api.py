@@ -367,9 +367,10 @@ def create_workbook(values, session=None):
 
     try:
         wb.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for WorkbookDefinition: %s" % e.columns
+            "Duplicate entry for WorkbookDefinition ['name', 'project_id']: "
+            "{}, {}".format(wb.name, wb.project_id)
         )
 
     return wb
@@ -487,11 +488,11 @@ def create_workflow_definition(values, session=None):
 
     try:
         wf_def.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for WorkflowDefinition: %s" % e.columns
-        )
-
+            "Duplicate entry for WorkflowDefinition ['name', 'namespace',"
+            " 'project_id']: {}, {}, {}".format(wf_def.name, wf_def.namespace,
+                                                wf_def.project_id))
     return wf_def
 
 
@@ -620,9 +621,10 @@ def create_action_definition(values, session=None):
 
     try:
         a_def.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for action %s: %s" % (a_def.name, e.columns)
+            "Duplicate entry for Action ['name', 'project_id']:"
+            " {}, {}".format(a_def.name, a_def.project_id)
         )
 
     return a_def
@@ -691,7 +693,7 @@ def create_action_execution(values, session=None):
         a_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for ActionExecution: %s" % e.columns
+            "Duplicate entry for ActionExecution ID: {}".format(e.value)
         )
 
     return a_ex
@@ -774,7 +776,7 @@ def create_workflow_execution(values, session=None):
         wf_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for WorkflowExecution with ID {value} ".format(
+            "Duplicate entry for WorkflowExecution with ID: {value} ".format(
                 value=e.value
             )
         )
@@ -916,7 +918,7 @@ def create_task_execution(values, session=None):
         task_ex.save(session=session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for TaskExecution: %s" % e.columns
+            "Duplicate entry for TaskExecution ID: {}".format(e.value)
         )
 
     return task_ex
@@ -972,7 +974,7 @@ def create_delayed_call(values, session=None):
         delayed_call.save(session)
     except db_exc.DBDuplicateEntry as e:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for DelayedCall: %s" % e.columns
+            "Duplicate entry for DelayedCall ID: {}".format(e.value)
         )
 
     return delayed_call
@@ -1157,10 +1159,10 @@ def create_cron_trigger(values, session=None):
 
     try:
         cron_trigger.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for cron trigger %s: %s"
-            % (cron_trigger.name, e.columns)
+            "Duplicate entry for cron trigger ['name', 'project_id']: "
+            "{}, {}".format(cron_trigger.name, cron_trigger.project_id)
         )
     # TODO(nmakhotkin): Remove this 'except' after fixing
     # https://bugs.launchpad.net/oslo.db/+bug/1458583.
@@ -1270,9 +1272,10 @@ def create_environment(values, session=None):
 
     try:
         env.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for Environment: %s" % e.columns
+            "Duplicate entry for Environment ['name', 'project_id']:"
+            " {}, {}".format(env.name, env.project_id)
         )
 
     return env
@@ -1358,9 +1361,13 @@ def create_resource_member(values, session=None):
 
     try:
         res_member.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for ResourceMember: %s" % e.columns
+            "Duplicate entry for ResourceMember ['resource_id',"
+            " 'resource_type', 'member_id']: {}, {}, "
+            "{}".format(res_member.resource_id,
+                        res_member.resource_type,
+                        res_member.member_id)
         )
 
     return res_member
@@ -1503,11 +1510,15 @@ def create_event_trigger(values, session=None):
 
     try:
         event_trigger.save(session=session)
-    except db_exc.DBDuplicateEntry as e:
+    except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for event trigger %s: %s"
-            % (event_trigger.id, e.columns)
-        )
+            "Duplicate entry for EventTrigger ['exchange', 'topic',"
+            " 'event', 'workflow_id', 'project_id']:"
+            " {}, {}, {}, {}, {}".format(event_trigger.exchange,
+                                         event_trigger.topic,
+                                         event_trigger.event,
+                                         event_trigger.workflow_id,
+                                         event_trigger.project_id))
     # TODO(nmakhotkin): Remove this 'except' after fixing
     # https://bugs.launchpad.net/oslo.db/+bug/1458583.
     except db_exc.DBError as e:

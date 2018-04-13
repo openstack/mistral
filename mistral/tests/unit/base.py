@@ -108,6 +108,21 @@ class BaseTest(base.BaseTestCase):
         # Added for convenience (to avoid unnecessary imports).
         register_action_class(name, cls, attributes, desc)
 
+    def assertRaisesWithMessage(self, exception, msg, func, *args, **kwargs):
+        try:
+            func(*args, **kwargs)
+            self.assertFail()
+        except exception as e:
+            self.assertEqual(msg, e.message)
+
+    def assertRaisesWithMessageContaining(self, exception, msg, func, *args,
+                                          **kwargs):
+        try:
+            func(*args, **kwargs)
+            self.assertFail()
+        except exception as e:
+            self.assertIn(msg, e.message)
+
     def assertListEqual(self, l1, l2):
         if tuple(sys.version_info)[0:2] < (2, 7):
             # for python 2.6 compatibility
