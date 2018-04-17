@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    A regression was introduced that caused an error when logging a specific
+    message. The string formatting was broken, which caused the logging to
+    fail.
