@@ -337,6 +337,7 @@ class RetryPolicy(base.TaskPolicy):
         wf_ex = task_ex.workflow_execution
 
         ctx_view = data_flow.ContextView(
+            data_flow.get_current_task_dict(task_ex),
             data_flow.evaluate_task_outbound_context(task_ex),
             wf_ex.context,
             wf_ex.input
