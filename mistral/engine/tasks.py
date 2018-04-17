@@ -311,8 +311,6 @@ class Task(object):
         task_name = self.task_spec.get_name()
         task_type = self.task_spec.get_type()
 
-        data_flow.add_current_task_to_context(self.ctx, task_id, task_name)
-
         values = {
             'id': task_id,
             'name': task_name,
@@ -430,16 +428,13 @@ class RegularTask(Task):
         self._schedule_actions()
 
     def _update_inbound_context(self):
-        task_ex = self.task_ex
-        assert task_ex
+        assert self.task_ex
 
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         self.ctx = wf_ctrl.get_task_inbound_context(self.task_spec)
-        data_flow.add_current_task_to_context(self.ctx, task_ex.id,
-                                              task_ex.name)
 
-        utils.update_dict(task_ex.in_context, self.ctx)
+        utils.update_dict(self.task_ex.in_context, self.ctx)
 
     def _update_triggered_by(self):
         assert self.task_ex
@@ -515,17 +510,17 @@ class RegularTask(Task):
         )
 
     def _evaluate_expression(self, expression, ctx=None):
-        ctx = ctx or self.ctx
         ctx_view = data_flow.ContextView(
-            ctx,
+            data_flow.get_current_task_dict(self.task_ex),
+            ctx or self.ctx,
             self.wf_ex.context,
             self.wf_ex.input
         )
-        input_dict = expr.evaluate_recursively(
+
+        return expr.evaluate_recursively(
             expression,
             ctx_view
         )
-        return input_dict
 
     def _build_action(self):
         action_name = self.task_spec.get_action_name()

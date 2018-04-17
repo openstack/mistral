@@ -125,8 +125,6 @@ class DirectWorkflowController(base.WorkflowController):
             elif not t_s:
                 t_s = self.wf_spec.get_tasks()[task_ex.name]
 
-            data_flow.remove_internal_data_from_context(ctx)
-
             triggered_by = [
                 {
                     'task_id': task_ex.id,
@@ -175,8 +173,6 @@ class DirectWorkflowController(base.WorkflowController):
                 ctx,
                 data_flow.evaluate_task_outbound_context(t_ex)
             )
-
-            data_flow.remove_internal_data_from_context(ctx)
 
         return ctx
 
@@ -248,6 +244,7 @@ class DirectWorkflowController(base.WorkflowController):
         t_name = task_ex.name
 
         ctx_view = data_flow.ContextView(
+            data_flow.get_current_task_dict(task_ex),
             ctx or data_flow.evaluate_task_outbound_context(task_ex),
             self.wf_ex.context,
             self.wf_ex.input

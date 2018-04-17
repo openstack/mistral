@@ -846,14 +846,6 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         task2_1_ex = self._assert_single_item(tasks_execs, name='task2_1')
         task2_2_ex = self._assert_single_item(tasks_execs, name='task2_2')
 
-        # TODO(rakhmerov): Find out why '__task_execution' is still
-        # in the inbound context
-        del task0_ex.in_context['__task_execution']
-        del task1_1_ex.in_context['__task_execution']
-        del task1_2_ex.in_context['__task_execution']
-        del task2_1_ex.in_context['__task_execution']
-        del task2_2_ex.in_context['__task_execution']
-
         self.assertDictEqual({}, task0_ex.in_context)
         self.assertDictEqual({'var0': 'val0'}, task1_1_ex.in_context)
         self.assertDictEqual(
