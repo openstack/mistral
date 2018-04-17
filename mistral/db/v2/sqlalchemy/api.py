@@ -180,7 +180,7 @@ def update_on_match(id, specimen, values, session=None):
     except oslo_sqlalchemy.update_match.NoRowsMatched:
         LOG.info(
             "Can't change state of persistent object "
-            "because it has already been changed. [model_class=%, id=%s, "
+            "because it has already been changed. [model_class=%s, id=%s, "
             "specimen=%s, values=%s]",
             model_class, id, specimen, values
         )
