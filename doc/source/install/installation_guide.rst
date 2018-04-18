@@ -134,6 +134,11 @@ in a shell::
 
     $ mistral-server --server executor --config-file <path-to-mistral.conf>
 
+Running Mistral Notifier
+------------------------
+To run Mistral Notifier perform the following command in a shell::
+    $ mistral-server --server notifier -- config-file <path-to-mistral.conf>
+
 Note that at least one Engine instance and one Executor instance should be
 running so that workflow tasks are processed by Mistral.
 
@@ -146,11 +151,127 @@ process, perform the following command in a shell::
 
 The --server command line option can be a comma delimited list. The valid
 options are "all" (by default if not specified) or any combination of "api",
-"engine", and "executor". It's important to note that the "fake" transport for
+"engine", "notifier" and "executor". It's important to note
+that the "fake" transport for
 the rpc_backend defined in the config file should only be used if "all" the
 Mistral servers are launched on the same process. Otherwise, messages do not
 get delivered if the Mistral servers are launched on different processes
 because the "fake" transport is using an in process queue.
+
+Running Mistral By Systemd
+--------------------------
+#. Create an upstart config, it could be named as
+   ``/etc/systemd/system/mistral-api.service``:
+
+   .. code-block:: bash
+
+      [Unit]
+      Description = Openstack Workflow Service API
+
+      [Service]
+      ExecStart = /usr/bin/mistral-server --server api --config-file /etc/mistral/mistral.conf
+      User = mistral
+
+      [Install]
+      WantedBy = multi-user.target
+
+#. Enable and start mistral-api:
+
+   .. code-block:: console
+
+      # systemctl enable mistral-api
+      # systemctl start mistral-api
+
+#. Verify that mistral-api services are running:
+
+   .. code-block:: console
+
+      # systemctl status mistral-api
+
+#. Create an upstart config, it could be named as
+   ``/etc/systemd/system/mistral-engine.service``:
+
+   .. code-block:: bash
+
+      [Unit]
+      Description = Openstack Workflow Service Engine
+
+      [Service]
+      ExecStart = /usr/bin/mistral-server --server engine --config-file /etc/mistral/mistral.conf
+      User = mistral
+
+      [Install]
+      WantedBy = multi-user.target
+
+#. Enable and start mistral-engine:
+
+   .. code-block:: console
+
+      # systemctl enable mistral-engine
+      # systemctl start mistral-engine
+
+#. Verify that mistral-engine services are running:
+
+   .. code-block:: console
+
+      # systemctl status mistral-engine
+
+#. Create an upstart config, it could be named as
+   ``/etc/systemd/system/mistral-notifier.service``:
+
+   .. code-block:: bash
+
+      [Unit]
+      Description = Openstack Workflow Service Notifier
+
+      [Service]
+      ExecStart = /usr/bin/mistral-server --server notifier --config-file /etc/mistral/mistral.conf
+      User = mistral
+
+      [Install]
+      WantedBy = multi-user.target
+
+#. Enable and start mistral-notifier:
+
+   .. code-block:: console
+
+      # systemctl enable mistral-notifier
+      # systemctl start mistral-notifier
+
+#. Verify that mistral-notifier services are running:
+
+   .. code-block:: console
+
+      # systemctl status mistral-notifier
+
+#. Create an upstart config, it could be named as
+   ``/etc/systemd/system/mistral-executor.service``:
+
+   .. code-block:: bash
+
+      [Unit]
+      Description = Openstack Workflow Service Executor
+
+      [Service]
+      ExecStart = /usr/bin/mistral-server --server executor --config-file /etc/mistral/mistral.conf
+      User = mistral
+
+      [Install]
+      WantedBy = multi-user.target
+
+#. Enable and start mistral-executor:
+
+   .. code-block:: console
+
+      # systemctl enable mistral-executor
+      # systemctl start mistral-executor
+
+#. Verify that mistral-executor services are running:
+
+   .. code-block:: console
+
+      # systemctl status mistral-executor
+
 
 Mistral And Docker
 ------------------
