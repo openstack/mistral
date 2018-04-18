@@ -1,0 +1,10 @@
+---
+
+fixes:
+  - Mistral was storing some internal information in task execution
+    inbound context ('task_executions_v2.in_contex' DB field) to DB.
+    This information was needed only to correctly implement the YAQL
+    function task() without arguments. A fix was made to not store
+    this information in the persistent storage and rather include it
+    into a context view right before evaluating expressions where
+    needed. So it slightly optimizes spaces in DB.
