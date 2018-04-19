@@ -206,10 +206,12 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task1_ex = self._assert_single_item(
-                wf_ex.task_executions, name='task1'
+                wf_ex.task_executions,
+                name='task1'
             )
             task2_ex = self._assert_single_item(
-                wf_ex.task_executions, name='task2'
+                wf_ex.task_executions,
+                name='task2'
             )
 
             self.assertDictEqual(
@@ -228,6 +230,11 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
                 },
                 task2_ex.published
             )
+
+        # The internal data needed for evaluation of the task() function
+        # should not be persisted to DB.
+        self.assertNotIn('__task_execution', task1_ex.in_context)
+        self.assertNotIn('__task_execution', task2_ex.in_context)
 
     def test_task_function_no_name_on_complete_case(self):
         wf_text = """---
