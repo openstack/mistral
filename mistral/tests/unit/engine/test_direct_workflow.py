@@ -945,9 +945,9 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-            tasks = wf_ex.task_executions
+            task_execs = wf_ex.task_executions
 
-        self.assertEqual(task_cnt + 3, len(tasks))
+        self.assertEqual(task_cnt + 3, len(task_execs))
 
-        self._assert_single_item(tasks, name='task0')
-        self._assert_single_item(tasks, name='task{}'.format(task_cnt))
+        self._assert_single_item(task_execs, name='task0')
+        self._assert_single_item(task_execs, name='task{}'.format(task_cnt))
