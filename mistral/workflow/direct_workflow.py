@@ -168,11 +168,15 @@ class DirectWorkflowController(base.WorkflowController):
     def evaluate_workflow_final_context(self):
         ctx = {}
 
-        for t_ex in self._find_end_task_executions():
-            ctx = utils.merge_dicts(
-                ctx,
-                data_flow.evaluate_task_outbound_context(t_ex)
-            )
+        for batch in self._find_end_task_executions_as_batches():
+            if not batch:
+                break
+
+            for t_ex in batch:
+                ctx = utils.merge_dicts(
+                    ctx,
+                    data_flow.evaluate_task_outbound_context(t_ex)
+                )
 
         return ctx
 
@@ -208,7 +212,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         return True
 
-    def _find_end_task_executions(self):
+    def _find_end_task_executions_as_batches(self):
         def is_end_task(t_ex):
             try:
                 return not self._has_outbound_tasks(t_ex)
@@ -219,12 +223,14 @@ class DirectWorkflowController(base.WorkflowController):
                 # of given task also.
                 return True
 
-        return list(
-            filter(
-                is_end_task,
-                lookup_utils.find_completed_task_executions(self.wf_ex.id)
-            )
+        batches = lookup_utils.find_completed_task_executions_as_batches(
+            self.wf_ex.id
         )
+
+        for batch in batches:
+            yield list(
+                filter(is_end_task, batch)
+            )
 
     def _has_outbound_tasks(self, task_ex):
         # In order to determine if there are outbound tasks we just need

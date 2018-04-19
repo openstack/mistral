@@ -876,6 +876,30 @@ def get_completed_task_executions(session=None, **kwargs):
     return query.all()
 
 
+@b.session_aware()
+def get_completed_task_executions_as_batches(session=None, **kwargs):
+    # NOTE: Using batch querying seriously allows to optimize memory
+    # consumption on operations when we need to iterate through
+    # a list of task executions and do some processing like merging
+    # their inbound contexts. If we don't use batches Mistral has to
+    # hold all the collection (that can be large) in memory.
+    # Using a generator that returns batches lets GC to collect a
+    # batch of task executions that has already been processed.
+    query = _get_completed_task_executions_query(kwargs)
+
+    # Batch size 20 may be arguable but still seems reasonable: it's big
+    # enough to keep the total number of DB hops small (say for 100 tasks
+    # we'll need only 5) and small enough not to drastically increase
+    # memory footprint if the number of tasks is big like several hundreds.
+    batch_size = 20
+    idx = 0
+
+    while idx < query.count():
+        yield query.slice(idx, idx + batch_size).all()
+
+        idx += batch_size
+
+
 def _get_incomplete_task_executions_query(kwargs):
     query = b.model_query(models.TaskExecution)
 

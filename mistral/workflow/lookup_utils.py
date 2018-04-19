@@ -151,6 +151,12 @@ def find_completed_task_executions(wf_ex_id):
     return db_api.get_completed_task_executions(workflow_execution_id=wf_ex_id)
 
 
+def find_completed_task_executions_as_batches(wf_ex_id):
+    return db_api.get_completed_task_executions_as_batches(
+        workflow_execution_id=wf_ex_id
+    )
+
+
 def get_task_execution_cache_size():
     return len(_TASK_EX_CACHE)
 
