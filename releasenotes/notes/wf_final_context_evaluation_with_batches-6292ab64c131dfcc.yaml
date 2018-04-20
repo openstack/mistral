@@ -1,0 +1,12 @@
+---
+fixes:
+  - Evaluation of final workflow context was very heavy in cases
+    when the workflow had a lot of parallel tasks with large
+    inbound contexts. Merging of those contexts in order to
+    evaluate the workflow output consumed a lot of memory.
+    Now this algorithm is rewritten with batched DB query and
+    Python generators so that GS has a chance to destroy
+    objects that have already been processed. Previously all
+    task executions had to stay in memory until the end of the
+    processing. The result is that now it consumes 3 times less
+    memory on heavy cases.
