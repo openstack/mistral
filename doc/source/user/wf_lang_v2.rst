@@ -30,7 +30,7 @@ Prerequisites
 -------------
 
 Mistral Workflow Language supports
-`YAQL <https://pypi.python.org/pypi/yaql>`__ and
+`YAQL <https://pypi.org/project/yaql>`__ and
 `Jinja2 <http://jinja.pocoo.org/docs/dev/>`__ expression languages to reference
 workflow context variables and thereby implements passing data between workflow
 tasks. It's also referred to as Data Flow mechanism. YAQL is a simple but
@@ -61,7 +61,7 @@ takes advantage of supported query languages to define expressions in workflow
 and action definitions.
 
 -  Yet Another Markup Language (YAML): http://yaml.org
--  Yet Another Query Language (YAQL): https://pypi.python.org/pypi/yaql/1.0.0
+-  Yet Another Query Language (YAQL): https://pypi.org/project/yaql/1.0.0
 -  Jinja 2: http://jinja.pocoo.org/docs/dev/
 
 Workflows
