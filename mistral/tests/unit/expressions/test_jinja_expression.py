@@ -91,31 +91,6 @@ class JinjaEvaluatorTest(base.BaseTest):
         res = self._evaluator.evaluate("_.server.status == 'ACTIVE'", DATA)
         self.assertTrue(res)
 
-    def test_wrong_expression(self):
-        res = self._evaluator.evaluate("_.status == 'Invalid value'", DATA)
-        self.assertFalse(res)
-
-        # One thing to note about Jinja is that by default it would not raise
-        # an exception on KeyError inside the expression, it will consider
-        # value to be None. Same with NameError, it won't return an original
-        # expression (which by itself seems confusing). Jinja allows us to
-        # change behavior in both cases by switching to StrictUndefined, but
-        # either one or the other will surely suffer.
-
-        self.assertRaises(
-            exc.JinjaEvaluationException,
-            self._evaluator.evaluate,
-            '_.wrong_key',
-            DATA
-        )
-
-        self.assertRaises(
-            exc.JinjaEvaluationException,
-            self._evaluator.evaluate,
-            'invalid_expression_string',
-            DATA
-        )
-
     def test_select_result(self):
         res = self._evaluator.evaluate(
             '_.servers|selectattr("name", "equalto", "ubuntu")',
@@ -597,3 +572,36 @@ class InlineJinjaEvaluatorTest(base.BaseTest):
         self.assertRaises(exc.JinjaEvaluationException,
                           self._evaluator.validate,
                           {'a': 1})
+
+    def test_wrong_expression(self):
+        res = self._evaluator.evaluate("{{ _.status == 'Invalid value' }}",
+                                       DATA)
+        self.assertFalse(res)
+
+        # One thing to note about Jinja is that by default it would not raise
+        # an exception on KeyError inside the expression, it will consider
+        # value to be None. Same with NameError, it won't return an original
+        # expression (which by itself seems confusing). Jinja allows us to
+        # change behavior in both cases by switching to StrictUndefined, but
+        # either one or the other will surely suffer.
+
+        self.assertRaises(
+            exc.JinjaEvaluationException,
+            self._evaluator.evaluate,
+            '{{ _.wrong_key }}',
+            DATA
+        )
+
+        self.assertRaises(
+            exc.JinjaEvaluationException,
+            self._evaluator.evaluate,
+            '{{ invalid_expression_string }}',
+            DATA
+        )
+
+        self.assertRaises(
+            exc.JinjaEvaluationException,
+            self._evaluator.evaluate,
+            '!! {{ _.nonexistent_variable }} !!',
+            DATA
+        )
