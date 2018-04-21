@@ -429,6 +429,107 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             len(db_api.get_action_executions(task_execution_id=task_2_ex.id))
         )
 
+    def test_join_all_task_with_input_jinja_error(self):
+        wf_def = """---
+        version: '2.0'
+        wf:
+          tasks:
+            task_1_1:
+              action: std.sleep seconds=1
+              on-success:
+                - task_2
+            task_1_2:
+              on-success:
+                - task_2
+            task_2:
+              action: std.echo
+              join: all
+              input:
+                output: |
+                  !! {{ _.nonexistent_variable }} !!"""
+
+        wf_service.create_workflows(wf_def)
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            tasks = wf_ex.task_executions
+
+        self.assertEqual(3, len(tasks))
+
+        task_1_1 = self._assert_single_item(
+            tasks, name="task_1_1", state=states.SUCCESS
+        )
+        task_1_2 = self._assert_single_item(
+            tasks, name="task_1_2", state=states.SUCCESS
+        )
+
+        task_2 = self._assert_single_item(
+            tasks, name="task_2", state=states.ERROR
+        )
+
+        with db_api.transaction():
+            task_1_1_action_exs = db_api.get_action_executions(
+                task_execution_id=task_1_1.id)
+            task_1_2_action_exs = db_api.get_action_executions(
+                task_execution_id=task_1_2.id)
+
+            task_2_action_exs = db_api.get_action_executions(
+                task_execution_id=task_2.id)
+
+        self.assertEqual(1, len(task_1_1_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_1_action_exs[0].state)
+
+        self.assertEqual(1, len(task_1_2_action_exs))
+        self.assertEqual(states.SUCCESS, task_1_2_action_exs[0].state)
+
+        self.assertEqual(0, len(task_2_action_exs))
+
+    def test_second_task_with_input_jinja_error(self):
+        wf_def = """---
+        version: '2.0'
+        wf:
+          tasks:
+            first:
+              on-success:
+                - second
+            second:
+              action: std.echo
+              input:
+                output: |
+                  !! {{ _.nonexistent_variable }} !!"""
+
+        wf_service.create_workflows(wf_def)
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            tasks = wf_ex.task_executions
+
+        self.assertEqual(2, len(tasks))
+
+        task_first = self._assert_single_item(
+            tasks, name="first", state=states.SUCCESS
+        )
+        task_second = self._assert_single_item(
+            tasks, name="second", state=states.ERROR
+        )
+
+        with db_api.transaction():
+            first_tasks_action_exs = db_api.get_action_executions(
+                task_execution_id=task_first.id)
+            second_tasks_action_exs = db_api.get_action_executions(
+                task_execution_id=task_second.id)
+
+        self.assertEqual(1, len(first_tasks_action_exs))
+        self.assertEqual(states.SUCCESS, first_tasks_action_exs[0].state)
+
+        self.assertEqual(0, len(second_tasks_action_exs))
+
     def test_messed_yaql_in_first_task(self):
         wf_text = """
         version: '2.0'
