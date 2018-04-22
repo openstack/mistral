@@ -1108,30 +1108,23 @@ Input parameters:
 
 -  **script** - The text of JavaScript snippet that needs to be
    executed. *Required*.
+- **context** - This object will be assigned to the *$* javascript variable.
+  The default value is None.
 
-**To use std.javascript, it is needed to install a number of
-dependencies and JS engine.** Currently Mistral uses only V8 Engine and its
-wrapper - PyV8. For installing it, do the next steps:
+To use std.javascript, it is needed to install the
+`py_mini_racer <https://github.com/sqreen/PyMiniRacer>`__ and set
+*py_mini_racer* to *js_implementation* parameter in *mistral.conf*:
 
-1. Install required libraries - boost, g++, libtool, autoconf, subversion,
-libv8-legacy-dev: On Ubuntu::
+.. code-block:: bash
 
-    $ sudo apt-get install libboost-all-dev g++ libtool autoconf libv8-legacy-dev subversion make
+    pip install py_mini_racer
 
-2. Checkout last version of PyV8::
+Other available implementations:
 
-    $ svn checkout http://pyv8.googlecode.com/svn/trunk/ pyv8
-    $ cd pyv8
+- `pyv8 <https://code.google.com/archive/p/pyv8>`__
+- `v8eval <https://github.com/sony/v8eval>`__
 
-3. Build PyV8 - it will checkout last V8 trunk, build it, and then build PyV8::
-
-    $ sudo python setup.py build
-
-4. Install PyV8::
-
-    $ sudo python setup.py install
-
-Example:
+Example with *context*:
 
 .. code-block:: mistral
 
@@ -1141,8 +1134,6 @@ Example:
     generate_uuid:
       description: Generates a Universal Unique ID
 
-      type: direct
-
       input:
         - radix: 16
 
@@ -1151,7 +1142,7 @@ Example:
 
       tasks:
         generate_uuid_task:
-          action: std.javascript
+          action: std.js
           input:
             context: <% $ %>
             script: |
@@ -1160,7 +1151,7 @@ Example:
                       return v.toString($.radix);
               });
           publish:
-            generated_uuid: <% task(generate_uuid_task).result %>
+            generated_uuid: <% task().result %>
 
 Another example for getting the current date and time:
 
@@ -1172,21 +1163,18 @@ Another example for getting the current date and time:
       get_date_workflow:
         description: Get the current date
 
-        type: direct
-
         output:
           current_date: <% $.current_date %>
 
         tasks:
           get_date_task:
-            action: std.javascript
+            action: std.js
             input:
-              context: <% $ %>
               script: |
                 var date = new Date();
-                return date; # returns "2015-07-12T10:32:12.460000" or use date.toLocaleDateString() for "Sunday, July 12, 2015"
+                return date; // returns "2015-07-12T10:32:12.460000" or use date.toLocaleDateString() for "Sunday, July 12, 2015"
             publish:
-              current_date: <% task(get_date_task).result %>
+              current_date: <% task().result %>
 
 Ad-hoc actions
 ^^^^^^^^^^^^^^

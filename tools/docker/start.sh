@@ -8,7 +8,7 @@ if [ ! -f ${CONFIG_FILE} ]; then
       --config-file "${MISTRAL_DIR}/tools/config/config-generator.mistral.conf" \
       --output-file "${CONFIG_FILE}"
 
-    ${INI_SET} DEFAULT js_implementation v8eval
+    ${INI_SET} DEFAULT js_implementation py_mini_racer
     ${INI_SET} oslo_policy policy_file "${MISTRAL_DIR}/etc/policy.json"
     ${INI_SET} pecan auth_enable false
     ${INI_SET} DEFAULT transport_url "${MESSAGE_BROKER_URL}"

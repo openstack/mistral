@@ -15,20 +15,32 @@
 import abc
 import json
 
-from oslo_utils import importutils
-
 from mistral import config as cfg
 from mistral import exceptions as exc
 
+from oslo_utils import importutils
+from stevedore import driver
+from stevedore import extension
+
 _PYV8 = importutils.try_import('PyV8')
 _V8EVAL = importutils.try_import('v8eval')
+_PY_MINI_RACER = importutils.try_import('py_mini_racer.py_mini_racer')
+_EVALUATOR = None
 
 
 class JSEvaluator(object):
     @classmethod
     @abc.abstractmethod
     def evaluate(cls, script, context):
-        """Executes given JavaScript."""
+        """Executes given JavaScript.
+
+        :param script: The text of JavaScript snippet that needs to be
+        executed.
+               context: This object will be assigned to the $ javascript
+        variable.
+        :return result of evaluated javascript code.
+        :raise MistralException: if corresponding js library is not installed.
+        """
         pass
 
 
@@ -61,9 +73,39 @@ class V8EvalEvaluator(JSEvaluator):
             encoding='UTF-8'))
 
 
-EVALUATOR = (V8EvalEvaluator if cfg.CONF.js_implementation == 'v8eval'
-             else PyV8Evaluator)
+class PyMiniRacerEvaluator(JSEvaluator):
+    @classmethod
+    def evaluate(cls, script, context):
+        if not _PY_MINI_RACER:
+            raise exc.MistralException(
+                "PyMiniRacer module is not available. Please install "
+                "PyMiniRacer."
+            )
+
+        ctx = _PY_MINI_RACER.MiniRacer()
+        return ctx.eval(('$ = {}; {}'.format(json.dumps(context), script)))
+
+
+_mgr = extension.ExtensionManager(
+    namespace='mistral.expression.evaluators',
+    invoke_on_load=False
+)
+
+
+def get_js_evaluator():
+    global _EVALUATOR
+
+    if not _EVALUATOR:
+        mgr = driver.DriverManager(
+            'mistral.js.implementation',
+            cfg.CONF.js_implementation,
+            invoke_on_load=True
+        )
+
+        _EVALUATOR = mgr.driver
+
+    return _EVALUATOR
 
 
 def evaluate(script, context):
-    return EVALUATOR.evaluate(script, context)
+    return get_js_evaluator().evaluate(script, context)
