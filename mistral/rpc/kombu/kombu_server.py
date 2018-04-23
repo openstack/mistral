@@ -285,7 +285,7 @@ class KombuRPCServer(rpc_base.RPCServer, kombu_base.Base):
 
         executor_opts = {}
 
-        if executor == 'threading':
+        if executor != 'blocking':
             executor_opts['max_workers'] = self._executor_threads
 
         self._worker = mgr.driver(**executor_opts)
