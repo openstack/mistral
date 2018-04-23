@@ -241,7 +241,7 @@ class AuthHook(hooks.PecanHook):
             pecan.abort(
                 status_code=401,
                 detail=msg,
-                headers={'Server-Error-Message': msg}
+                headers={'Server-Error-Message': msg, "WWW-Authenticate": msg}
             )
 
 
