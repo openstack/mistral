@@ -127,6 +127,7 @@ python-subunit==1.0.0
 python-swiftclient==3.2.0
 python-tackerclient==0.8.0
 python-troveclient==2.2.0
+python-vitrageclient==2.0.0
 python-zaqarclient==1.0.0
 pytz==2013.6
 PyYAML==3.12

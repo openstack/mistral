@@ -346,3 +346,16 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().artifacts.get.called)
         mocked().artifacts.get.assert_called_once_with(artifact_id="1234-abcd")
+
+    @mock.patch.object(actions.VitrageAction, '_get_client')
+    def test_vitrage_action(self, mocked):
+        mock_ctx = mock.Mock()
+        method_name = "alarm.get"
+        action_class = actions.VitrageAction
+        action_class.client_method_name = method_name
+        params = {'vitrage_id': '1234-abcd'}
+        action = action_class(**params)
+        action.run(mock_ctx)
+
+        self.assertTrue(mocked().alarm.get.called)
+        mocked().alarm.get.assert_called_once_with(vitrage_id="1234-abcd")
