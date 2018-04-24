@@ -97,7 +97,8 @@ def _append_all_workflows(definition, is_system, scope, namespace,
 
 def update_workflows(definition, scope='private', identifier=None,
                      namespace=''):
-    LOG.debug("updating workflows")
+    LOG.debug("Updating workflows")
+
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(definition)
     wfs = wf_list_spec.get_workflows()
 
