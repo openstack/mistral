@@ -1,5 +1,9 @@
 - hosts: all
   name: Autoconverted job legacy-mistral-ha from old job gate-mistral-ha-ubuntu-xenial-nv
+  roles:
+    - role: bindep
+      bindep_dir: "{{ ansible_user_dir }}/workspace"
+
   tasks:
 
     - name: Ensure legacy workspace directory
@@ -33,11 +37,6 @@
           /usr/zuul-env/bin/zuul-cloner -m $CLONEMAP --cache-dir /opt/git \
               git://git.openstack.org $ZUUL_PROJECT
         executable: /bin/bash
-        chdir: '{{ ansible_user_dir }}/workspace'
-      environment: '{{ zuul | zuul_legacy_vars }}'
-
-    - shell:
-        cmd: /usr/local/jenkins/slave_scripts/install-distro-packages.sh
         chdir: '{{ ansible_user_dir }}/workspace'
       environment: '{{ zuul | zuul_legacy_vars }}'
 
