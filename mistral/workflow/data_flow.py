@@ -190,7 +190,12 @@ def publish_variables(task_ex, task_spec):
 
     wf_ex = task_ex.workflow_execution
 
-    expr_ctx = ContextView(task_ex.in_context, wf_ex.context, wf_ex.input)
+    expr_ctx = ContextView(
+        get_current_task_dict(task_ex),
+        task_ex.in_context,
+        wf_ex.context,
+        wf_ex.input
+    )
 
     if task_ex.name in expr_ctx:
         LOG.warning(
@@ -268,18 +273,13 @@ def evaluate_workflow_output(wf_ex, wf_output, ctx):
     return output or ctx
 
 
-def add_current_task_to_context(ctx, task_id, task_name):
-    ctx['__task_execution'] = {
-        'id': task_id,
-        'name': task_name
+def get_current_task_dict(task_ex):
+    return {
+        '__task_execution': {
+            'id': task_ex.id,
+            'name': task_ex.name
+        }
     }
-
-    return ctx
-
-
-def remove_internal_data_from_context(ctx):
-    if '__task_execution' in ctx:
-        del ctx['__task_execution']
 
 
 def add_openstack_data_to_context(wf_ex):
