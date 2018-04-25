@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Added new JavaScript evaluator py_mini_racer. The py_mini_racer package
+    allows us to get a JavaScript evaluator that doesn't require compilation.
+    This is much lighter and easier to get started with.

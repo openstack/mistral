@@ -18,20 +18,13 @@ RUN apt-get -qq update && \
       crudini \
       curl \
       git \
-      cmake \
+      gcc \
       libuv1 \
-      swig \
-      mc \
       libuv1-dev && \
       curl -f -o /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
       python /tmp/get-pip.py && rm /tmp/get-pip.py
 
-RUN pip install pymysql psycopg2
-
-ARG BUILD_V8EVAL="true"
-RUN if ${BUILD_V8EVAL} ; then \
-        pip install -v v8eval && python -c 'import v8eval' ; \
-    fi
+RUN pip install pymysql psycopg2 py_mini_racer
 
 ENV MISTRAL_DIR="/opt/stack/mistral" \
     TMP_CONSTRAINTS="/tmp/upper-constraints.txt" \

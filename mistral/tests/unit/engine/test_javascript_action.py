@@ -14,10 +14,11 @@
 
 import mock
 from oslo_config import cfg
+from oslo_utils import importutils
 import testtools
 
 from mistral.db.v2 import api as db_api
-from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.utils import javascript
 from mistral.workflow import states
@@ -28,83 +29,81 @@ from mistral.workflow import states
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-WORKBOOK = """
----
+JAVASCRIPT_WORKFLOW = """
 version: "2.0"
+wf:
+  input:
+    - length
+  tasks:
+    task1:
+      action: std.javascript
+      input:
+        script: |
+          let numberSequence = Array.from({length: $['length']},
+                                          (x, i) => i);
+          let evenNumbers = numberSequence.filter(x => x % 2 === 0);
 
-name: test_js
-
-workflows:
-  js_test:
-    type: direct
-
-    input:
-      - num
-
-    tasks:
-      task1:
-        description: |
-          This task reads variable from context,
-          increasing its value 10 times, writes result to context and
-          returns 100 (expected result)
-        action: std.javascript
-        input:
-          script: |
-            return $['num'] * 10
-          context: <% $ %>
-
-        publish:
-          result: <% task(task1).result %>
-
+          return evenNumbers.length;
+        context: <% $ %>
+      publish:
+        res: <% task().result %>
 """
 
 
 def fake_evaluate(_, context):
-    return context['num'] * 10
+    return context['length'] / 2
 
 
 class JavaScriptEngineTest(base.EngineTestCase):
-    @testtools.skip('It requires installed JS engine.')
-    def test_javascript_action(self):
-        wb_service.create_workbook_v2(WORKBOOK)
 
-        # Start workflow.
-        wf_ex = self.engine.start_workflow(
-            'test_js.js_test',
-            wf_input={'num': 50}
+    @testtools.skipIf(not importutils.try_import('py_mini_racer'),
+                      'This test requires that py_mini_racer library was '
+                      'installed')
+    def test_py_mini_racer_javascript_action(self):
+        cfg.CONF.set_default(
+            'js_implementation',
+            'py_mini_racer'
         )
+        length = 1000
 
-        self.await_workflow_success(wf_ex.id)
-
-        # Note: We need to reread execution to access related tasks.
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
-        task_ex = wf_ex.task_executions[0]
-
-        self.assertEqual(states.SUCCESS, task_ex.state)
-        self.assertDictEqual({}, task_ex.runtime_context)
-
-        self.assertEqual(500, task_ex.published['num_10_times'])
-        self.assertEqual(100, task_ex.published['result'])
-
-    @mock.patch.object(javascript, 'evaluate', fake_evaluate)
-    def test_fake_javascript_action_data_context(self):
-        wb_service.create_workbook_v2(WORKBOOK)
+        wf_service.create_workflows(JAVASCRIPT_WORKFLOW)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
-            'test_js.js_test',
-            wf_input={'num': 50}
+            'wf',
+            wf_input={'length': length}
         )
 
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
-            # Note: We need to reread execution to access related tasks.
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
-
             task_ex = wf_ex.task_executions[0]
 
         self.assertEqual(states.SUCCESS, task_ex.state)
         self.assertDictEqual({}, task_ex.runtime_context)
 
-        self.assertEqual(500, task_ex.published['result'])
+        self.assertEqual(length / 2, task_ex.published['res'])
+
+    @mock.patch.object(javascript, 'evaluate', fake_evaluate)
+    def test_fake_javascript_action_data_context(self):
+        length = 1000
+
+        wf_service.create_workflows(JAVASCRIPT_WORKFLOW)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={'length': length}
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(states.SUCCESS, task_ex.state)
+        self.assertDictEqual({}, task_ex.runtime_context)
+
+        self.assertEqual(length / 2, task_ex.published['res'])

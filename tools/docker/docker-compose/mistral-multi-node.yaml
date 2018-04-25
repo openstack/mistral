@@ -5,7 +5,6 @@ services:
       context: ../../..
       dockerfile: tools/docker/Dockerfile
       args:
-        BUILD_V8EVAL: "false"
         BUILD_TEST_DEPENDENCIES: "false"
     restart: always
     ports:
@@ -27,7 +26,6 @@ services:
       context: ../../..
       dockerfile: tools/docker/Dockerfile
       args:
-        BUILD_V8EVAL: "false"
         BUILD_TEST_DEPENDENCIES: "false"
     restart: always
     networks:
@@ -45,7 +43,6 @@ services:
       context: ../../..
       dockerfile: tools/docker/Dockerfile
       args:
-        BUILD_V8EVAL: "false"
         BUILD_TEST_DEPENDENCIES: "false"
     restart: always
     networks:
@@ -62,7 +59,6 @@ services:
       context: ../../..
       dockerfile: tools/docker/Dockerfile
       args:
-        BUILD_V8EVAL: "false"
         BUILD_TEST_DEPENDENCIES: "false"
     restart: always
     networks:
@@ -80,7 +76,6 @@ services:
       context: ../../..
       dockerfile: tools/docker/Dockerfile
       args:
-        BUILD_V8EVAL: "false"
         BUILD_TEST_DEPENDENCIES: "false"
     restart: always
     networks:

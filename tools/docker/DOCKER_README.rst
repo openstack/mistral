@@ -24,18 +24,11 @@ On the other hand you could execute the following command::
 
   docker build -t mistral -f tools/docker/Dockerfile .
 
-The Mistral Docker image has set of build parameters. **Pay attention**, the
-compile of 'V8EVAL'  can take a long time.
+The Mistral Docker image has a build parameter.
 
 +-------------------------+-------------+--------------------------------------+
 |Name                     |Default value| Description                          |
 +=========================+=============+======================================+
-|`BUILD_V8EVAL`           |true         |If the `BUILD_V8EVAL` equals `true`,  |
-|                         |             |the `v8eval` library will be build for|
-|                         |             |std.javascript action. `Read more <ht |
-|                         |             |tps://docs.openstack.org/mistral/lates|
-|                         |             |t/user/dsl_v2.html#std-javascript>`_  |
-+-------------------------+-------------+----------------------+---------------+
 |`BUILD_TEST_DEPENDENCIES`|false        |If the `BUILD_TEST_DEPENDENCIES`      |
 |                         |             |equals `true`, the Mistral test       |
 |                         |             |dependencies will be installed inside |

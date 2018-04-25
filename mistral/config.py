@@ -90,7 +90,7 @@ api_opts = [
 js_impl_opt = cfg.StrOpt(
     'js_implementation',
     default='pyv8',
-    choices=['pyv8', 'v8eval'],
+    choices=['pyv8', 'v8eval', 'py_mini_racer'],
     help=_('The JavaScript implementation to be used by the std.javascript '
            'action to evaluate scripts.')
 )
