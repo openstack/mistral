@@ -144,13 +144,16 @@ def _lock_entity(model, id):
 
 
 @b.session_aware()
-def update_on_match(id, specimen, values, session=None):
+def update_on_match(id, specimen, values, attempts, session=None):
     """Updates a model with the given values if it matches the given specimen.
 
     :param id: ID of a persistent model.
     :param specimen: Specimen used to match the
     :param values: Values to set to the model if fields of the object
         match the specimen.
+    :param attempts: The function will then invoke the UPDATE statement and
+        check for "success" one or more times, up to a maximum of that passed
+        as attempts.
     :param session: Session.
     :return: Persistent object attached to the session.
     """
@@ -175,7 +178,8 @@ def update_on_match(id, specimen, values, session=None):
         model = b.model_query(model_class).update_on_match(
             specimen=specimen,
             surrogate_key='id',
-            values=values
+            values=values,
+            attempts=attempts
         )
     except oslo_sqlalchemy.update_match.NoRowsMatched:
         LOG.info(
@@ -826,7 +830,7 @@ def delete_workflow_executions(session=None, **kwargs):
 def update_workflow_execution_state(id, cur_state, state):
     specimen = models.WorkflowExecution(id=id, state=cur_state)
 
-    return update_on_match(id, specimen, {'state': state})
+    return update_on_match(id, specimen, values={'state': state}, attempts=1)
 
 
 # Tasks executions.
@@ -984,7 +988,7 @@ def delete_task_executions(session=None, **kwargs):
 def update_task_execution_state(id, cur_state, state):
     specimen = models.TaskExecution(id=id, state=cur_state)
 
-    return update_on_match(id, specimen, {'state': state})
+    return update_on_match(id, specimen, values={'state': state}, attempts=1)
 
 
 # Delayed calls.
