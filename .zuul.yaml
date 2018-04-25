@@ -45,6 +45,14 @@
     required-projects:
       - openstack/mistral
 
+- job:
+    name: mistral-docker-buildimage-test
+    run: playbooks/docker-buildimage/run.yaml
+    post-run: playbooks/docker-buildimage/post.yaml
+    timeout: 1800
+    required-projects:
+      - openstack/mistral
+
 # This job does not work. We can come back to it later.
 # - job:
 #     name: mistral-ha
@@ -106,7 +114,7 @@
             branches: master
     experimental:
       jobs:
-        - mistral-docker-buildimage:
+        - mistral-docker-buildimage-test:
             branches: master
         # This job doesn't work yet.
         # - mistral-ha:

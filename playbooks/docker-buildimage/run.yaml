@@ -6,15 +6,25 @@
       shell: curl -fsSL https://get.docker.com/ | sh
       args:
         chdir: '{{ work_dir }}'
+      become: yes
 
     - name: Restart Docker service
       service:
         name: docker
         state: restarted
+      become: yes
+
+    - name: Install docker-py
+      pip:
+        name: docker-py
+      become: yes
 
     - name: Build and archive a Mistral image
       docker_image:
         name: mistral
         path: '{{ work_dir }}'
         dockerfile: '{{ work_dir }}/tools/docker/Dockerfile'
-        archive_path: '{{ work_dir}}}/mistral-docker.tar.gz'
+        archive_path: '{{ work_dir}}/mistral-docker.tar.gz'
+        buildargs:
+          BUILD_V8EVAL: false
+      become: yes
