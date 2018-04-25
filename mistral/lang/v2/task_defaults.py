@@ -40,6 +40,7 @@ class TaskDefaultsSpec(base.BaseSpec):
             "on-complete": types.ANY,
             "on-success": types.ANY,
             "on-error": types.ANY,
+            "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]
             }
@@ -70,9 +71,16 @@ class TaskDefaultsSpec(base.BaseSpec):
         self._on_success = self._spec_property('on-success', on_spec_cls)
         self._on_error = self._spec_property('on-error', on_spec_cls)
 
+        self._safe_rerun = data.get('safe-rerun')
+
         # TODO(rakhmerov): 'requires' should reside in a different spec for
         # reverse workflows.
         self._requires = data.get('requires', [])
+
+    def validate_schema(self):
+        super(TaskDefaultsSpec, self).validate_schema()
+
+        self.validate_expr(self._data.get('safe-rerun', {}))
 
     def validate_semantics(self):
         # Validate YAQL expressions.
@@ -100,6 +108,9 @@ class TaskDefaultsSpec(base.BaseSpec):
 
     def get_on_error(self):
         return self._on_error
+
+    def get_safe_rerun(self):
+        return self._safe_rerun
 
     def get_requires(self):
         if isinstance(self._requires, six.string_types):

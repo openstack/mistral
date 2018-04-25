@@ -336,6 +336,22 @@ class Task(object):
 
         self.created = True
 
+    def _get_safe_rerun(self):
+        safe_rerun = self.task_spec.get_safe_rerun()
+
+        if safe_rerun is not None:
+            return safe_rerun
+
+        task_defaults = self.wf_spec.get_task_defaults()
+
+        if task_defaults:
+            default_safe_rerun = task_defaults.get_safe_rerun()
+
+            if default_safe_rerun is not None:
+                return default_safe_rerun
+
+        return False
+
     def _get_action_defaults(self):
         action_name = self.task_spec.get_action_name()
 
@@ -474,7 +490,7 @@ class RegularTask(Task):
         action.schedule(
             input_dict,
             target,
-            safe_rerun=self.task_spec.get_safe_rerun(),
+            safe_rerun=self._get_safe_rerun(),
             timeout=self._get_timeout()
         )
 
@@ -655,7 +671,7 @@ class WithItemsTask(RegularTask):
                 input_dict,
                 target,
                 index=i,
-                safe_rerun=self.task_spec.get_safe_rerun(),
+                safe_rerun=self._get_safe_rerun(),
                 timeout=self._get_timeout()
             )
 

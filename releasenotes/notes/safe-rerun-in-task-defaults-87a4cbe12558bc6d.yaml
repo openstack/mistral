@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Added 'safe-rerun' policy to task-defaults section

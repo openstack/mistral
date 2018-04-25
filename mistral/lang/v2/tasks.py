@@ -128,7 +128,7 @@ class TaskSpec(base.BaseSpec):
         )
         self._target = data.get('target')
         self._keep_result = data.get('keep-result', True)
-        self._safe_rerun = data.get('safe-rerun', False)
+        self._safe_rerun = data.get('safe-rerun')
 
         self._process_action_and_workflow()
 
