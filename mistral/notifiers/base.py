@@ -77,5 +77,5 @@ class NotificationPublisher(object):
     """Notifier plugin interface."""
 
     @abc.abstractmethod
-    def publish(self, ex_id, data, event, timestamp, **kwargs):
+    def publish(self, ctx, ex_id, data, event, timestamp, **kwargs):
         raise NotImplementedError()

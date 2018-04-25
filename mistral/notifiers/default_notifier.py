@@ -16,6 +16,7 @@ import copy
 
 from oslo_log import log as logging
 
+from mistral import context as auth_ctx
 from mistral.notifiers import base
 
 
@@ -26,6 +27,8 @@ class DefaultNotifier(base.Notifier):
     """Local notifier that process notification request."""
 
     def notify(self, ex_id, data, event, timestamp, publishers):
+        ctx = auth_ctx.ctx()
+
         for entry in publishers:
             params = copy.deepcopy(entry)
             publisher_name = params.pop('type', None)
@@ -36,7 +39,7 @@ class DefaultNotifier(base.Notifier):
 
             try:
                 publisher = base.get_notification_publisher(publisher_name)
-                publisher.publish(ex_id, data, event, timestamp, **params)
+                publisher.publish(ctx, ex_id, data, event, timestamp, **params)
             except Exception:
                 LOG.exception(
                     'Unable to process event for publisher "%s".',
