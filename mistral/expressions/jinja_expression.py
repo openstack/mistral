@@ -33,6 +33,8 @@ ANY_JINJA_REGEXP = "{{.*}}|{%.*%}"
 JINJA_REGEXP = '({{(.*?)}})'
 JINJA_BLOCK_REGEXP = '({%(.*?)%})'
 
+JINJA_OPTS = {'undefined_to_none': False}
+
 _environment = SandboxedEnvironment(
     undefined=jinja2.StrictUndefined,
     trim_blocks=True,
@@ -66,40 +68,17 @@ class JinjaEvaluator(Evaluator):
 
     @classmethod
     def evaluate(cls, expression, data_context):
-        opts = {'undefined_to_none': False}
-
         ctx = expression_utils.get_jinja_context(data_context)
 
-        try:
-            result = cls._env.compile_expression(expression, **opts)(**ctx)
+        result = cls._env.compile_expression(
+            expression,
+            **JINJA_OPTS
+        )(**ctx)
 
-            # For StrictUndefined values, UndefinedError only gets raised when
-            # the value is accessed, not when it gets created. The simplest way
-            # to access it is to try and cast it to string.
-            str(result)
-        except Exception as e:
-            # NOTE(rakhmerov): if we hit a database error then we need to
-            # re-raise the initial exception so that upper layers had a
-            # chance to handle it properly (e.g. in case of DB deadlock
-            # the operations needs to retry. Essentially, such situation
-            # indicates a problem with DB rather than with the expression
-            # syntax or values.
-            if isinstance(e, db_exc.DBError):
-                LOG.error(
-                    "Failed to evaluate Jinja expression due to a database"
-                    " error, re-raising initial exception [expression=%s,"
-                    " error=%s, data=%s]",
-                    expression,
-                    str(e),
-                    data_context
-                )
-
-                raise e
-
-            raise exc.JinjaEvaluationException(
-                "Can not evaluate Jinja expression [expression=%s, error=%s"
-                ", data=%s]" % (expression, str(e), data_context)
-            )
+        # For StrictUndefined values, UndefinedError only gets raised when
+        # the value is accessed, not when it gets created. The simplest way
+        # to access it is to try and cast it to string.
+        str(result)
 
         return result
 
@@ -143,11 +122,35 @@ class InlineJinjaEvaluator(Evaluator):
 
         patterns = cls.find_expression_pattern.findall(expression)
 
-        if patterns[0][0] == expression:
-            result = JinjaEvaluator.evaluate(patterns[0][1], data_context)
-        else:
-            ctx = expression_utils.get_jinja_context(data_context)
-            result = cls._env.from_string(expression).render(**ctx)
+        try:
+            if patterns[0][0] == expression:
+                result = JinjaEvaluator.evaluate(patterns[0][1], data_context)
+            else:
+                ctx = expression_utils.get_jinja_context(data_context)
+                result = cls._env.from_string(expression).render(**ctx)
+        except Exception as e:
+            # NOTE(rakhmerov): if we hit a database error then we need to
+            # re-raise the initial exception so that upper layers had a
+            # chance to handle it properly (e.g. in case of DB deadlock
+            # the operations needs to retry. Essentially, such situation
+            # indicates a problem with DB rather than with the expression
+            # syntax or values.
+            if isinstance(e, db_exc.DBError):
+                LOG.error(
+                    "Failed to evaluate Jinja expression due to a database"
+                    " error, re-raising initial exception [expression=%s,"
+                    " error=%s, data=%s]",
+                    expression,
+                    str(e),
+                    data_context
+                )
+
+                raise e
+
+            raise exc.JinjaEvaluationException(
+                "Can not evaluate Jinja expression [expression=%s, error=%s"
+                ", data=%s]" % (expression, str(e), data_context)
+            )
 
         LOG.debug(
             "Finished evaluation. [expression='%s', result: %s]",
