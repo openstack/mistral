@@ -54,7 +54,8 @@ MODULE_MAPPING = {
     'senlin': ['senlin.get_profile', actions.SenlinAction],
     'aodh': ['aodh.alarm_list', actions.AodhAction],
     'gnocchi': ['gnocchi.metric_list', actions.GnocchiAction],
-    'glare': ['glare.artifacts_list', actions.GlareAction]
+    'glare': ['glare.artifacts_list', actions.GlareAction],
+    'vitrage': ['vitrage.alarm_get', actions.VitrageAction]
 }
 
 EXTRA_MODULES = ['neutron', 'swift', 'zaqar', 'tacker']

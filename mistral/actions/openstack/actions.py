@@ -70,6 +70,7 @@ swift_client = _try_import('swiftclient.client')
 swiftservice = _try_import('swiftclient.service')
 tackerclient = _try_import('tackerclient.v1_0.client')
 troveclient = _try_import('troveclient.v1.client')
+vitrageclient = _try_import('vitrageclient.v1.client')
 zaqarclient = _try_import('zaqarclient.queues.client')
 
 
@@ -908,3 +909,33 @@ class GlareAction(base.OpenStackAction):
     @classmethod
     def _get_fake_client(cls):
         return cls._get_client_class()("http://127.0.0.1:9494/")
+
+
+class VitrageAction(base.OpenStackAction):
+    _service_type = 'rca'
+
+    @classmethod
+    def _get_client_class(cls):
+        return vitrageclient.Client
+
+    def _create_client(self, context):
+
+        LOG.debug("Vitrage action security context: %s", context)
+
+        vitrage_endpoint = self.get_service_endpoint()
+
+        endpoint_url = keystone_utils.format_url(
+            vitrage_endpoint.url,
+            {'tenant_id': context.project_id}
+        )
+
+        session_and_auth = self.get_session_and_auth(context)
+
+        return vitrageclient.Client(
+            session=session_and_auth['session'],
+            endpoint_override=endpoint_url
+        )
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()()
