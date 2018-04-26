@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import copy
-
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -193,6 +191,7 @@ def publish_variables(task_ex, task_spec):
     expr_ctx = ContextView(
         get_current_task_dict(task_ex),
         task_ex.in_context,
+        get_workflow_environment_dict(wf_ex),
         wf_ex.context,
         wf_ex.input
     )
@@ -264,7 +263,12 @@ def evaluate_workflow_output(wf_ex, wf_output, ctx):
     """
 
     # Evaluate workflow 'output' clause using the final workflow context.
-    ctx_view = ContextView(ctx, wf_ex.context, wf_ex.input)
+    ctx_view = ContextView(
+        ctx,
+        get_workflow_environment_dict(wf_ex),
+        wf_ex.context,
+        wf_ex.input
+    )
 
     output = expr.evaluate_recursively(wf_output, ctx_view)
 
@@ -298,30 +302,16 @@ def add_execution_to_context(wf_ex):
     wf_ex.context['__execution'] = {'id': wf_ex.id}
 
 
-def add_environment_to_context(wf_ex):
-    # TODO(rakhmerov): This is redundant, we can always get env from WF params
-    wf_ex.context = wf_ex.context or {}
-
-    # If env variables are provided, add an evaluated copy into the context.
-    if 'env' in wf_ex.params:
-        env = copy.deepcopy(wf_ex.params['env'])
-
-        if ('evaluate_env' in wf_ex.params and
-                not wf_ex.params['evaluate_env']):
-            wf_ex.context['__env'] = env
-        else:
-            wf_ex.context['__env'] = expr.evaluate_recursively(
-                env,
-                {'__env': env}
-            )
-
-
 def add_workflow_variables_to_context(wf_ex, wf_spec):
     wf_ex.context = wf_ex.context or {}
 
     # The context for calculating workflow variables is workflow input
     # and other data already stored in workflow initial context.
-    ctx_view = ContextView(wf_ex.context, wf_ex.input)
+    ctx_view = ContextView(
+        get_workflow_environment_dict(wf_ex),
+        wf_ex.context,
+        wf_ex.input
+    )
 
     wf_vars = expr.evaluate_recursively(wf_spec.get_vars(), ctx_view)
 
@@ -335,3 +325,9 @@ def evaluate_object_fields(obj, context):
 
     for k, v in evaluated_fields.items():
         setattr(obj, k, v)
+
+
+def get_workflow_environment_dict(wf_ex):
+    env_dict = wf_ex.params['env'] if wf_ex and 'env' in wf_ex.params else {}
+
+    return {'__env': env_dict}

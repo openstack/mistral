@@ -27,6 +27,7 @@ from mistral.engine import action_queue
 from mistral.engine import dispatcher
 from mistral.engine import utils as engine_utils
 from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
@@ -272,10 +273,12 @@ class Workflow(object):
         return db_api.acquire_lock(db_models.WorkflowExecution, self.wf_ex.id)
 
     def _get_final_context(self):
+        final_ctx = {}
+
         wf_ctrl = wf_base.get_controller(self.wf_ex)
-        final_context = {}
+
         try:
-            final_context = wf_ctrl.evaluate_workflow_final_context()
+            final_ctx = wf_ctrl.evaluate_workflow_final_context()
         except Exception as e:
             LOG.warning(
                 'Failed to get final context for workflow execution. '
@@ -285,7 +288,7 @@ class Workflow(object):
                 str(e)
             )
 
-        return final_context
+        return final_ctx
 
     def _create_execution(self, wf_def, wf_ex_id, input_dict, desc, params):
         self.wf_ex = db_api.create_workflow_execution({
@@ -307,16 +310,12 @@ class Workflow(object):
 
         self.wf_ex.input = input_dict or {}
 
-        env = _get_environment(params)
-
-        if env:
-            params['env'] = env
+        params['env'] = _get_environment(params)
 
         self.wf_ex.params = params
 
         data_flow.add_openstack_data_to_context(self.wf_ex)
         data_flow.add_execution_to_context(self.wf_ex)
-        data_flow.add_environment_to_context(self.wf_ex)
         data_flow.add_workflow_variables_to_context(self.wf_ex, self.wf_spec)
 
         spec_parser.cache_workflow_spec_by_execution_id(
@@ -545,10 +544,12 @@ class Workflow(object):
 def _get_environment(params):
     env = params.get('env', {})
 
-    if isinstance(env, dict):
-        return env
+    if not env:
+        return {}
 
-    if isinstance(env, six.string_types):
+    if isinstance(env, dict):
+        env_dict = env
+    elif isinstance(env, six.string_types):
         env_db = db_api.load_environment(env)
 
         if not env_db:
@@ -556,12 +557,18 @@ def _get_environment(params):
                 'Environment is not found: %s' % env
             )
 
-        return env_db.variables
+        env_dict = env_db.variables
+    else:
+        raise exc.InputException(
+            'Unexpected value type for environment [env=%s, type=%s]'
+            % (env, type(env))
+        )
 
-    raise exc.InputException(
-        'Unexpected value type for environment [env=%s, type=%s]'
-        % (env, type(env))
-    )
+    if ('evaluate_env' in params and
+            not params['evaluate_env']):
+        return env_dict
+    else:
+        return expr.evaluate_recursively(env_dict, {'__env': env_dict})
 
 
 def _build_fail_info_message(wf_ctrl, wf_ex):

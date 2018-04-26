@@ -38,6 +38,7 @@ class DirectWorkflowControllerTest(base.DbTestCase):
             state=states.RUNNING,
             workflow_id=wfs[0].id,
             input={},
+            params={},
             context={}
         )
 

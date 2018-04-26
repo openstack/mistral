@@ -342,7 +342,7 @@ class Task(object):
         if not action_name:
             return {}
 
-        env = self.wf_ex.context.get('__env', {})
+        env = self.wf_ex.params['env']
 
         return env.get('__actions', {}).get(action_name, {})
 
@@ -483,6 +483,7 @@ class RegularTask(Task):
         ctx_view = data_flow.ContextView(
             input_dict,
             self.ctx,
+            data_flow.get_workflow_environment_dict(self.wf_ex),
             self.wf_ex.context,
             self.wf_ex.input
         )
@@ -512,6 +513,7 @@ class RegularTask(Task):
     def _evaluate_expression(self, expression, ctx=None):
         ctx_view = data_flow.ContextView(
             data_flow.get_current_task_dict(self.task_ex),
+            data_flow.get_workflow_environment_dict(self.wf_ex),
             ctx or self.ctx,
             self.wf_ex.context,
             self.wf_ex.input
