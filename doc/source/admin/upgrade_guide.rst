@@ -66,7 +66,7 @@ Revision may be any existing revision. Use this command carefully.
 To verify that the timeline does branch, you can run this command:
 ::
 
-    $ mistral-db-manage --config-file /path/to/mistral.conf check_migration
+    $ mistral-db-manage --config-file /path/to/mistral.conf branches
 
 If the migration path has branch, you can find the branch point via:
 ::
