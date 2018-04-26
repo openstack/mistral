@@ -14,6 +14,7 @@
 
 import mock
 from oslo_config import cfg
+import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.executors import default_executor as d_exe
@@ -109,7 +110,6 @@ class EnvironmentTest(base.EngineTestCase):
         # Execution of 'wf2'.
         self.assertIsNotNone(wf2_ex)
         self.assertDictEqual({}, wf2_ex.input)
-        self.assertDictContainsSubset({'env': env}, wf2_ex.params)
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
@@ -122,19 +122,12 @@ class EnvironmentTest(base.EngineTestCase):
         wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
         wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
 
-        expected_start_params = {
-            'task_name': 'task2',
-            'task_execution_id': wf1_ex.task_execution_id,
-            'env': env
-        }
-
         expected_wf1_input = {
             'param1': 'Bonnie',
             'param2': 'Clyde'
         }
 
         self.assertIsNotNone(wf1_ex.task_execution_id)
-        self.assertDictContainsSubset(expected_start_params, wf1_ex.params)
         self.assertDictEqual(wf1_ex.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.
@@ -358,3 +351,97 @@ class EnvironmentTest(base.EngineTestCase):
                 },
                 sub_wf_ex.output
             )
+
+    def test_env_not_copied_to_context(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output="<% env().param1 %>"
+              publish:
+                result: <% task().result %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        env = {
+            'param1': 'val1',
+            'param2': 'val2',
+            'param3': 'val3'
+        }
+
+        wf_ex = self.engine.start_workflow('wf', env=env)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+
+        self.assertDictEqual({'result': 'val1'}, t.published)
+
+        self.assertNotIn('__env', wf_ex.context)
+
+    @testtools.skip("Not implemented yet")
+    def test_subworkflow_env_no_duplicate(self):
+        wf_text = """---
+        version: '2.0'
+
+        parent_wf:
+          tasks:
+            task1:
+              workflow: sub_wf
+
+        sub_wf:
+          output:
+            result: <% $.result %>
+
+          tasks:
+            task1:
+              action: std.noop
+              publish:
+                result: <% env().param1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        env = {
+            'param1': 'val1',
+            'param2': 'val2',
+            'param3': 'val3'
+        }
+
+        parent_wf_ex = self.engine.start_workflow('parent_wf', env=env)
+
+        self.await_workflow_success(parent_wf_ex.id)
+
+        with db_api.transaction():
+            parent_wf_ex = db_api.get_workflow_execution(parent_wf_ex.id)
+
+            t = self._assert_single_item(
+                parent_wf_ex.task_executions,
+                name='task1'
+            )
+
+            sub_wf_ex = db_api.get_workflow_executions(
+                task_execution_id=t.id
+            )[0]
+
+            self.assertDictEqual(
+                {
+                    "result": "val1"
+                },
+                sub_wf_ex.output
+            )
+
+        # The environment of the subworkflow must be empty.
+        # To evaluate expressions it should be taken from the
+        # parent workflow execution.
+        self.assertIsNone(sub_wf_ex.params['env'])
+        self.assertIsNone(sub_wf_ex.context['__env'])

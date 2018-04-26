@@ -220,7 +220,6 @@ class WorkflowServiceTest(base.DbTestCase):
                 )
 
                 self.assertDictEqual(update_env, updated.params['env'])
-                self.assertDictEqual(update_env, updated.context['__env'])
 
                 fetched = db_api.get_workflow_execution(created.id)
 

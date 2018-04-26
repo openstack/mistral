@@ -42,8 +42,8 @@ EXPECTED_ENV_AUTH = ('librarian', 'password123')
 WORKFLOW1 = """
 ---
 version: "2.0"
+
 wf1:
-  type: direct
   tasks:
     task1:
       action: std.http url="https://api.library.org/books"
@@ -54,8 +54,8 @@ wf1:
 WORKFLOW2 = """
 ---
 version: "2.0"
+
 wf2:
-  type: direct
   tasks:
     task1:
       action: std.http url="https://api.library.org/books" timeout=60
@@ -66,10 +66,11 @@ wf2:
 WORKFLOW1_WITH_ITEMS = """
 ---
 version: "2.0"
+
 wf1_with_items:
-  type: direct
   input:
     - links
+
   tasks:
     task1:
       with-items: link in <% $.links %>
@@ -81,10 +82,11 @@ wf1_with_items:
 WORKFLOW2_WITH_ITEMS = """
 ---
 version: "2.0"
+
 wf2_with_items:
-  type: direct
   input:
     - links
+
   tasks:
     task1:
       with-items: link in <% $.links %>
@@ -95,7 +97,6 @@ wf2_with_items:
 
 
 class ActionDefaultTest(base.EngineTestCase):
-
     @mock.patch.object(
         requests, 'request',
         mock.MagicMock(return_value=test_base.FakeHTTPResponse('', 200, 'OK')))
@@ -116,11 +117,18 @@ class ActionDefaultTest(base.EngineTestCase):
             self._assert_single_item(wf_ex.task_executions, name='task1')
 
         requests.request.assert_called_with(
-            'GET', 'https://api.library.org/books',
-            params=None, data=None, headers=None, cookies=None,
-            allow_redirects=None, proxies=None, verify=None,
+            'GET',
+            'https://api.library.org/books',
+            params=None,
+            data=None,
+            headers=None,
+            cookies=None,
+            allow_redirects=None,
+            proxies=None,
+            verify=None,
             auth=EXPECTED_ENV_AUTH,
-            timeout=ENV['__actions']['std.http']['timeout'])
+            timeout=ENV['__actions']['std.http']['timeout']
+        )
 
     @mock.patch.object(
         requests, 'request',

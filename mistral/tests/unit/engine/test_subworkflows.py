@@ -233,7 +233,7 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(project_id, wf2_ex.project_id)
         self.assertIsNotNone(wf2_ex)
         self.assertDictEqual({}, wf2_ex.input)
-        self.assertDictEqual({'namespace': ''}, wf2_ex.params)
+        self.assertDictEqual({'namespace': '', 'env': {}}, wf2_ex.params)
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 

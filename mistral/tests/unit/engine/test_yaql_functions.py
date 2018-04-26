@@ -378,7 +378,11 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
         )
 
         self.assertDictEqual(
-            {'param1': 'blablabla', 'namespace': ''},
+            {
+                'param1': 'blablabla',
+                'namespace': '',
+                'env': {}
+            },
             execution['params']
         )
 
