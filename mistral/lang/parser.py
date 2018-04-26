@@ -33,9 +33,11 @@ V2_0 = '2.0'
 ALL_VERSIONS = [V2_0]
 
 
+# {workflow execution id => workflow specification}.
 _WF_EX_CACHE = cachetools.LRUCache(maxsize=100)
 _WF_EX_CACHE_LOCK = threading.RLock()
 
+# {(workflow def id, workflow def updated at) => workflow specification}.
 _WF_DEF_CACHE = cachetools.LRUCache(maxsize=100)
 _WF_DEF_CACHE_LOCK = threading.RLock()
 
@@ -203,9 +205,12 @@ def get_workflow_spec_by_execution_id(wf_ex_id):
 
     The idea is that when a workflow execution is running we
     must be getting the same workflow specification even if
+    the workflow definition has already changed. However, note
+    that this is true only if the current engine instance didn't
+    restart during the entire workflow execution run.
 
     :param wf_ex_id: Workflow execution id.
-    :return:  Workflow specification.
+    :return: Workflow specification.
     """
     if not wf_ex_id:
         return None
@@ -230,8 +235,8 @@ def get_workflow_spec_by_definition_id(wf_def_id, wf_def_updated_at):
 
     :param wf_def_id: Workflow definition id.
     :param wf_def_updated_at: Workflow definition 'updated_at' value. It
-     serves only as part of cache key and is not explicitly used in the
-     method.
+        serves only as part of cache key and is not explicitly used in the
+        method.
     :return: Workflow specification.
     """
     if not wf_def_id:
