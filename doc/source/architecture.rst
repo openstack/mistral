@@ -26,6 +26,7 @@ Mistral is composed of the following major components:
 * Engine
 * Task Executors
 * Scheduler
+* Notifier
 * Persistence
 
 The following diagram illustrates the architecture of mistral:
@@ -57,6 +58,19 @@ Scheduler
 The scheduler stores and executes delayed calls. It is the important Mistral
 component since it interacts with engine and executors. It also triggers
 workflows on events (e.g., periodic cron event)
+
+Notifier
+--------
+
+On workflow and task execution, events are emitted at certain checkpoints such
+as when a workflow execution is launched or when it is completed. The notifier
+routes the events to configured publishers. The notifier can either be
+configured to execute locally on the workflow engine or can be run as a server
+much like the remote executor server and listens for events. Running the
+notifier as a remote server ensures the workflow engine quickly unblocks and
+resumes work. The event publishers are custom plugins which can write the
+event to a webhook over HTTP, an entry in a log file, a message to Zaqar, and
+etc.
 
 Persistence
 -----------
