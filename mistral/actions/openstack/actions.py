@@ -819,7 +819,8 @@ class SenlinAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()("http://127.0.0.1:8778")
+        sess = keystone_utils.get_admin_session()
+        return cls._get_client_class()(authenticator=sess.auth)
 
 
 class AodhAction(base.OpenStackAction):
