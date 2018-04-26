@@ -338,7 +338,6 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(wf_ex.state_info)
         self.assertEqual(3, len(task_execs))
         self.assertDictEqual(env, wf_ex.params['env'])
-        self.assertDictEqual(env, wf_ex.context['__env'])
 
         task_10_ex = self._assert_single_item(task_execs, name='t10')
         task_21_ex = self._assert_single_item(task_execs, name='t21')
@@ -362,7 +361,6 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
         self.assertDictEqual(updated_env, wf_ex.params['env'])
-        self.assertDictEqual(updated_env, wf_ex.context['__env'])
 
         # Await t30 success.
         self.await_task_success(task_30_ex.id)

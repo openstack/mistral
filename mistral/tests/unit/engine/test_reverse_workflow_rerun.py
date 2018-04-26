@@ -215,7 +215,6 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertIsNotNone(wf_ex.state_info)
         self.assertEqual(2, len(task_execs))
         self.assertDictEqual(env, wf_ex.params['env'])
-        self.assertDictEqual(env, wf_ex.context['__env'])
 
         task_1_ex = self._assert_single_item(task_execs, name='t1')
         task_2_ex = self._assert_single_item(task_execs, name='t2')
@@ -238,7 +237,6 @@ class ReverseWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertIsNone(wf_ex.state_info)
         self.assertDictEqual(updated_env, wf_ex.params['env'])
-        self.assertDictEqual(updated_env, wf_ex.context['__env'])
 
         # Wait for the workflow to succeed.
         self.await_workflow_success(wf_ex.id)

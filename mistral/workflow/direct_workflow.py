@@ -198,6 +198,7 @@ class DirectWorkflowController(base.WorkflowController):
         for t_ex in lookup_utils.find_error_task_executions(self.wf_ex.id):
             ctx_view = data_flow.ContextView(
                 data_flow.evaluate_task_outbound_context(t_ex),
+                data_flow.get_workflow_environment_dict(self.wf_ex),
                 self.wf_ex.context,
                 self.wf_ex.input
             )
@@ -252,6 +253,7 @@ class DirectWorkflowController(base.WorkflowController):
         ctx_view = data_flow.ContextView(
             data_flow.get_current_task_dict(task_ex),
             ctx or data_flow.evaluate_task_outbound_context(task_ex),
+            data_flow.get_workflow_environment_dict(self.wf_ex),
             self.wf_ex.context,
             self.wf_ex.input
         )

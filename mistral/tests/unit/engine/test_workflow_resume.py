@@ -427,7 +427,6 @@ class WorkflowResumeTest(base.EngineTestCase):
         self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual(2, len(task_execs))
         self.assertDictEqual(env, wf_ex.params['env'])
-        self.assertDictEqual(env, wf_ex.context['__env'])
         self.assertEqual(states.SUCCESS, task_1_ex.state)
         self.assertEqual(states.IDLE, task_2_ex.state)
 
@@ -448,7 +447,6 @@ class WorkflowResumeTest(base.EngineTestCase):
             task_execs = wf_ex.task_executions
 
         self.assertDictEqual(updated_env, wf_ex.params['env'])
-        self.assertDictEqual(updated_env, wf_ex.context['__env'])
         self.assertEqual(3, len(task_execs))
 
         # Check result of task2.
