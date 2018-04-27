@@ -14,7 +14,6 @@
 
 import mock
 from oslo_config import cfg
-import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.executors import default_executor as d_exe
@@ -388,7 +387,6 @@ class EnvironmentTest(base.EngineTestCase):
 
         self.assertNotIn('__env', wf_ex.context)
 
-    @testtools.skip("Not implemented yet")
     def test_subworkflow_env_no_duplicate(self):
         wf_text = """---
         version: '2.0'
@@ -443,5 +441,5 @@ class EnvironmentTest(base.EngineTestCase):
         # The environment of the subworkflow must be empty.
         # To evaluate expressions it should be taken from the
         # parent workflow execution.
-        self.assertIsNone(sub_wf_ex.params['env'])
-        self.assertIsNone(sub_wf_ex.context['__env'])
+        self.assertDictEqual({}, sub_wf_ex.params['env'])
+        self.assertNotIn('__env', sub_wf_ex.context)

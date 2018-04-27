@@ -367,14 +367,8 @@ class SubworkflowsTest(base.EngineTestCase):
         wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
         wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
-        expected_start_params = {
-            'task_name': 'task2',
-            'task_execution_id': wf1_ex.task_execution_id,
-            'env': env
-        }
-
         self.assertIsNotNone(wf1_ex.task_execution_id)
-        self.assertDictContainsSubset(expected_start_params, wf1_ex.params)
+        self.assertDictContainsSubset({}, wf1_ex.params)
 
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf1_ex.id)
