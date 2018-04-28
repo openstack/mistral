@@ -1,0 +1,16 @@
+---
+fixes:
+  - Mistral was storing, in fact, two copies of a workflow environment,
+    one in workflow parameters (the 'params' field) and another one in
+    a context (the 'context' field). Now it's stored only in workflow
+    parameters. It saves space in DB and increases performance in case
+    of big workflow environments.
+  - Mistral was copying a workflow environment into all of their sub
+    workflows. In case of a big workflow environment and a big number
+    of sub workflows it caused serious problems, used additional space
+    in DB and used a lot of RAM (e.g. when the 'on-success' clause has
+    a lot of tasks where each one of them is a subworkflow). Now it is
+    fixed by evaluating a workflow environment through the root execution
+    reference.
+
+
