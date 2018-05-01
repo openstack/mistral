@@ -381,7 +381,8 @@ class AdHocAction(PythonAction):
             )
 
         base_action_def = self._gather_base_actions(
-            action_def, base_action_def
+            action_def,
+            base_action_def
         )
 
         super(AdHocAction, self).__init__(
@@ -421,11 +422,17 @@ class AdHocAction(PythonAction):
             base_input_expr = action_spec.get_base_input()
 
             if base_input_expr:
+                wf_ex = (
+                    self.task_ex.workflow_execution if self.task_ex else None
+                )
+
                 ctx_view = data_flow.ContextView(
                     base_input_dict,
                     self.task_ctx,
+                    data_flow.get_workflow_environment_dict(wf_ex),
                     self.wf_ctx
                 )
+
                 base_input_dict = expr.evaluate_recursively(
                     base_input_expr,
                     ctx_view
@@ -447,8 +454,10 @@ class AdHocAction(PythonAction):
 
                 if transformer is not None:
                     result = ml_actions.Result(
-                        data=expr.evaluate_recursively(transformer,
-                                                       result.data),
+                        data=expr.evaluate_recursively(
+                            transformer,
+                            result.data
+                        ),
                         error=result.error
                     )
 
