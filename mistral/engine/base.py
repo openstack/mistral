@@ -152,6 +152,7 @@ class TaskPolicy(object):
 
         ctx_view = data_flow.ContextView(
             task_ex.in_context,
+            data_flow.get_workflow_environment_dict(wf_ex),
             wf_ex.context,
             wf_ex.input
         )
@@ -170,6 +171,7 @@ class TaskPolicy(object):
 
         ctx_view = data_flow.ContextView(
             task_ex.in_context,
+            data_flow.get_workflow_environment_dict(wf_ex),
             wf_ex.context,
             wf_ex.input
         )

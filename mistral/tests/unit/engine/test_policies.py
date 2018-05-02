@@ -372,7 +372,8 @@ class PoliciesTest(base.EngineTestCase):
         wf_ex = models.WorkflowExecution(
             id='1-2-3-4',
             context={},
-            input={}
+            input={},
+            params={}
         )
 
         task_ex = models.TaskExecution(in_context={'int_var': 5})
