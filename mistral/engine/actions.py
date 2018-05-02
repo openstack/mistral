@@ -565,10 +565,6 @@ class WorkflowAction(Action):
             'namespace': parent_wf_ex.params['namespace']
         }
 
-        if 'env' in parent_wf_ex.params:
-            wf_params['env'] = parent_wf_ex.params['env']
-            wf_params['evaluate_env'] = parent_wf_ex.params.get('evaluate_env')
-
         if 'notify' in parent_wf_ex.params:
             wf_params['notify'] = parent_wf_ex.params['notify']
 
