@@ -223,7 +223,7 @@ def cut_dict(d, length=100):
         if is_str:
             new_len += 2    # Account for the quotation marks
 
-        if new_len + len(res) >= length:
+        if 0 <= length <= new_len + len(res):
             res += "'%s" % k if is_str else k
             break
         else:
@@ -239,7 +239,7 @@ def cut_dict(d, length=100):
         if is_str:
             new_len += 2
 
-        if new_len + len(res) >= length:
+        if 0 <= length <= new_len + len(res):
             res += "'%s" % v if is_str else v
             break
         else:
@@ -249,8 +249,9 @@ def cut_dict(d, length=100):
 
         idx += 1
 
-    if len(res) >= length and res[length - 1] is not '}':
+    if 0 <= length <= len(res) and res[length - 1] is not '}':
         res = res[:length - 3] + '...'
+
     return res
 
 
@@ -270,20 +271,21 @@ def cut_list(l, length=100):
         if is_str:
             new_len += 2
 
-        if new_len >= length:
+        if 0 <= length <= new_len:
             res += "'%s" % s if is_str else s
             break
         else:
             res += "'%s'" % s if is_str else s
         res += ', ' if idx < len(l) - 1 else ']'
 
-    if len(res) >= length and res[length - 1] is not ']':
+    if 0 <= length <= len(res) and res[length - 1] is not ']':
         res = res[:length - 3] + '...'
+
     return res
 
 
 def cut_string(s, length=100):
-    if len(s) > length:
+    if 0 <= length < len(s):
         return "%s..." % s[:length]
 
     return s
@@ -303,9 +305,6 @@ def cut(data, length=100):
 
 
 def cut_by_kb(data, kilobytes):
-    if kilobytes <= 0:
-        return cut(data)
-
     length = get_number_of_chars_from_kilobytes(kilobytes)
     return cut(data, length)
 

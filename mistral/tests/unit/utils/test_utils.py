@@ -137,6 +137,7 @@ class UtilsTest(base.BaseTest):
 
         self.assertEqual('Hello...', utils.cut_string(s, length=5))
         self.assertEqual(s, utils.cut_string(s, length=100))
+        self.assertEqual(s, utils.cut_string(s, length=-1))
 
     def test_cut_list(self):
         l = ['Hello, Mistral!', 'Hello, OpenStack!']
@@ -148,6 +149,11 @@ class UtilsTest(base.BaseTest):
         self.assertEqual(
             "['Hello, Mistral!', 'Hello, OpenStack!']",
             utils.cut_list(l, 100)
+        )
+
+        self.assertEqual(
+            "['Hello, Mistral!', 'Hello, OpenStack!']",
+            utils.cut_list(l, -1)
         )
 
         self.assertEqual("[1, 2...", utils.cut_list([1, 2, 3, 4, 5], 8))
@@ -197,6 +203,14 @@ class UtilsTest(base.BaseTest):
 
         self.assertIn(
             utils.cut_dict(d, 100),
+            [
+                "{'key1': 'value1', 'key2': 'value2'}",
+                "{'key2': 'value2', 'key1': 'value1'}"
+            ]
+        )
+
+        self.assertIn(
+            utils.cut_dict(d, -1),
             [
                 "{'key1': 'value1', 'key2': 'value2'}",
                 "{'key2': 'value2', 'key1': 'value1'}"
