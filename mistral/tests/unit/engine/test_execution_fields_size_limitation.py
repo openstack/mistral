@@ -282,3 +282,29 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             self.assertGreater(len(task_ex.state_info), 65490)
             self.assertLess(len(wf_ex.state_info), 65536)
             self.assertGreater(len(wf_ex.state_info), 65490)
+
+    def test_fail_workflow_no_limit(self):
+        cfg.CONF.set_default(
+            'execution_field_size_limit_kb',
+            -1,
+            group='engine'
+        )
+
+        wf_service.create_workflows(WF)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={
+                'action_output_length': 10000,
+                'action_output_dict': True,
+                'action_error': True
+            }
+        )
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertGreater(len(wf_ex.output['result']), 10000)
