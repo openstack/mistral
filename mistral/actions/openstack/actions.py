@@ -72,6 +72,7 @@ tackerclient = _try_import('tackerclient.v1_0.client')
 troveclient = _try_import('troveclient.v1.client')
 vitrageclient = _try_import('vitrageclient.v1.client')
 zaqarclient = _try_import('zaqarclient.queues.client')
+zunclient = _try_import('zunclient.v1.client')
 
 
 class NovaAction(base.OpenStackAction):
@@ -940,3 +941,36 @@ class VitrageAction(base.OpenStackAction):
     @classmethod
     def _get_fake_client(cls):
         return cls._get_client_class()()
+
+
+class ZunAction(base.OpenStackAction):
+    _service_name = 'appcontainer'
+
+    @classmethod
+    def _get_client_class(cls):
+        return zunclient.Client
+
+    def _create_client(self, context):
+
+        LOG.debug("Zun action security context: %s", context)
+
+        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        zun_endpoint = self.get_service_endpoint()
+        session_and_auth = self.get_session_and_auth(context)
+
+        client = self._get_client_class()(
+            '1',
+            endpoint_override=zun_endpoint.url,
+            auth_url=keystone_endpoint.url,
+            session=session_and_auth['session']
+        )
+
+        return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        session = keystone_utils.get_admin_session()
+        return cls._get_client_class()(
+            endpoint_override="http://127.0.0.1:9517/",
+            session=session
+        )
