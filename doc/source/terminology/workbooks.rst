@@ -44,9 +44,8 @@ YAML example
             on-complete:
               - task2
 
-        task2:
-          action: global_action
-          ...
+          task2:
+            action: global_action
 
       local_workflow2:
         type: reverse
@@ -58,7 +57,6 @@ YAML example
           task2:
             workflow: global_workflow param1='val1' param2='val2'
             requires: [task1]
-            ...
 
     actions:
       local_action:
