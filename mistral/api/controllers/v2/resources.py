@@ -18,6 +18,7 @@ from wsme import types as wtypes
 
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
+from mistral import utils
 from mistral.workflow import states
 
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
@@ -128,6 +129,22 @@ class Workflow(resource.Resource):
         obj = super(Workflow, cls).from_db_model(db_model)
 
         return cls._set_input(obj, db_model.spec)
+
+    @classmethod
+    def from_tuples(cls, tuple_iterator):
+        obj = cls()
+        spec = None
+        for col_name, col_val in tuple_iterator:
+            if hasattr(obj, col_name):
+                # Convert all datetime values to strings.
+                setattr(obj, col_name, utils.datetime_to_str(col_val))
+            if col_name == 'spec':
+                spec = col_val
+
+        if spec:
+            obj = cls._set_input(obj, spec)
+
+        return obj
 
 
 class Workflows(resource.ResourceList):

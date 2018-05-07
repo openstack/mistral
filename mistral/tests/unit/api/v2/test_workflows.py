@@ -582,6 +582,32 @@ class TestWorkflowsController(base.APITest):
 
         self.assertDictEqual(expected_dict, resp.json['workflows'][0])
 
+    @mock.patch('mistral.db.v2.api.get_workflow_definitions')
+    def test_get_all_with_fields_input_filter(self, mock_get_db_wfs):
+        def mock_get_defintions(fields=None, session=None, **kwargs):
+            if fields and 'input' in fields:
+                fields.remove('input')
+                fields.append('spec')
+
+            return [
+                ('65df1f59-938f-4c17-bc2a-562524ef5e40',
+                 {'input': ['param1', {'param2': 2}]})
+            ]
+
+        mock_get_db_wfs.side_effect = mock_get_defintions
+
+        resp = self.app.get('/v2/workflows?fields=input')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(1, len(resp.json['workflows']))
+
+        expected_dict = {
+            'id': '65df1f59-938f-4c17-bc2a-562524ef5e40',
+            'input': 'param1, param2=2'
+        }
+
+        self.assertDictEqual(expected_dict, resp.json['workflows'][0])
+
     def test_get_all_with_invalid_field(self):
         resp = self.app.get(
             '/v2/workflows?fields=name,nonexist',
