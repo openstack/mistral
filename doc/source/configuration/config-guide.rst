@@ -131,6 +131,43 @@ directory.
    For more details see `policy.json file
    <https://docs.openstack.org/oslo.policy/latest/admin/policy-json-file.html>`_.
 
+#. Modify the action execution reporting configuration if needed.
+
+   It is possible that actions stuck in *"RUNNING"* state, for example if the
+   assigned executor dies or the message that signals the completion of the
+   action is lost. This section describes a heartbeat based solution to close
+   these forgotten action executions. The related configuration options are
+   ``max_missed_heartbeats`` and ``check_interval``. Note that if either
+   of these options are *"0"* then the feature won't be enabled.
+
+   The default configuration is the following::
+
+     [action_heartbeat]
+     max_missed_heartbeats = 15
+     check_interval = 20
+     first_heartbeat_timeout = 3600
+
+   *"check_interval = 20"*, so check action executions every
+   20 seconds. When the checker runs it will transit all running action
+   executions to error if the last heartbeat received is older than *"20 \*
+   15"* seconds. Note that *"first_heartbeat_timeout = 3600"*, so the action
+   execution won't be closed for 3600 seconds if no heartbeat was received for
+   it.
+
+   - **max_missed_heartbeats**
+
+    Defines the maximum amount of missed heartbeats to be allowed. If the number
+    of missed heartbeats exceeds this number, then the related action execution
+    will be transited to *"ERROR"* state with cause *"Heartbeat wasn't received."*.
+
+   - **check_interval**
+
+    The interval between checks (in seconds).
+
+   - **first_heartbeat_timeout**
+
+    The grace period for the first heartbeat (in seconds).
+
 #. Finally, try to run mistral engine and verify that it is running without
    any error::
 

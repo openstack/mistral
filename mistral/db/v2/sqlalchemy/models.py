@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 import hashlib
 import json
 import sys
@@ -33,6 +34,7 @@ from mistral import utils
 
 # Definition objects.
 
+CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
@@ -195,6 +197,13 @@ class ActionExecution(Execution):
     accepted = sa.Column(sa.Boolean(), default=False)
     input = sa.Column(st.JsonLongDictType(), nullable=True)
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
+    last_heartbeat = sa.Column(
+        sa.DateTime,
+        default=lambda: utils.utc_now_sec() + datetime.timedelta(
+            seconds=CONF.action_heartbeat.first_heartbeat_timeout
+        )
+    )
+    is_sync = sa.Column(sa.Boolean(), default=None, nullable=True)
 
 
 class WorkflowExecution(Execution):

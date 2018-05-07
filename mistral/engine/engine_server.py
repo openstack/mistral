@@ -19,6 +19,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine
 from mistral.rpc import base as rpc
 from mistral.service import base as service_base
+from mistral.services import action_execution_checker
 from mistral.services import expiration_policy
 from mistral.services import scheduler
 from mistral import utils
@@ -50,6 +51,7 @@ class EngineServer(service_base.MistralService):
 
         self._scheduler = scheduler.start()
         self._expiration_policy_tg = expiration_policy.setup()
+        action_execution_checker.setup()
 
         if self._setup_profiler:
             profiler_utils.setup('mistral-engine', cfg.CONF.engine.host)
@@ -257,6 +259,19 @@ class EngineServer(service_base.MistralService):
         )
 
         return self.engine.rollback_workflow(wf_ex_id)
+
+    def report_running_actions(self, rpc_ctx, action_ex_ids):
+        """Receives calls over RPC to receive action execution heartbeats.
+
+        :param rpc_ctx: RPC request context.
+        :param action_ex_ids: Action execution ids.
+        """
+        LOG.info(
+            "Received RPC request 'report_running_actions'[action_ex_ids=%s]",
+            action_ex_ids
+        )
+
+        return self.engine.report_running_actions(action_ex_ids)
 
 
 def get_oslo_service(setup_profiler=True):

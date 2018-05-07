@@ -16,6 +16,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from osprofiler import profiler
 
 from mistral.db import utils as db_utils
@@ -33,6 +34,8 @@ from mistral.workflow import states
 # Submodules of mistral.engine will throw NoSuchOptError if configuration
 # options required at top level of this  __init__.py are not imported before
 # the submodules are referenced.
+
+LOG = logging.getLogger(__name__)
 
 
 class DefaultEngine(base.Engine):
@@ -122,6 +125,7 @@ class DefaultEngine(base.Engine):
                 'input': action_input,
                 'output': output.to_dict(),
                 'state': state,
+                'is_sync': is_action_sync
             }
 
             return db_api.create_action_execution(values)
@@ -201,3 +205,22 @@ class DefaultEngine(base.Engine):
     def rollback_workflow(self, wf_ex_id):
         # TODO(rakhmerov): Implement.
         raise NotImplementedError
+
+    @db_utils.retry_on_db_error
+    @action_queue.process
+    def report_running_actions(self, action_ex_ids):
+        with db_api.transaction():
+            now = u.utc_now_sec()
+            for exec_id in action_ex_ids:
+                try:
+                    db_api.update_action_execution(
+                        exec_id,
+                        {"last_heartbeat": now},
+                        insecure=True
+                    )
+                except exceptions.DBEntityNotFoundError:
+                    LOG.debug("Action execution heartbeat update failed. {}"
+                              .format(exec_id), exc_info=True)
+                    # Ignore this error and continue with the
+                    # remaining ids.
+                    pass

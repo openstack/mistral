@@ -337,7 +337,7 @@ execution_expiration_policy_opts = [
         'evaluation_interval',
         help=_('How often will the executions be evaluated '
                '(in minutes). For example for value 120 the interval '
-               'will be 2 hours (every 2 hours).'
+               'will be 2 hours (every 2 hours). '
                'Note that only final state executions will be removed: '
                '( SUCCESS / ERROR / CANCELLED ).')
     ),
@@ -351,12 +351,12 @@ execution_expiration_policy_opts = [
     cfg.IntOpt(
         'max_finished_executions',
         default=0,
-        help=_('The maximum number of finished workflow executions'
-               'to be stored. For example when max_finished_executions = 100,'
-               'only the 100 latest finished executions will be preserved.'
-               'This means that even unexpired executions are eligible'
-               'for deletion, to decrease the number of executions in the'
-               'database. The default value is 0. If it is set to 0,'
+        help=_('The maximum number of finished workflow executions '
+               'to be stored. For example when max_finished_executions = 100, '
+               'only the 100 latest finished executions will be preserved. '
+               'This means that even unexpired executions are eligible '
+               'for deletion, to decrease the number of executions in the '
+               'database. The default value is 0. If it is set to 0, '
                'this constraint won\'t be applied.')
     ),
     cfg.IntOpt(
@@ -364,8 +364,41 @@ execution_expiration_policy_opts = [
         default=0,
         help=_('Size of batch of expired executions to be deleted.'
                'The default value is 0. If it is set to 0, '
-               'size of batch is total number of expired executions'
+               'size of batch is total number of expired executions '
                'that is going to be deleted.')
+    )
+]
+
+action_heartbeat_opts = [
+    cfg.IntOpt(
+        'max_missed_heartbeats',
+        min=0,
+        default=15,
+        help=_('The maximum amount of missed heartbeats to be allowed. '
+               'If set to 0 then this feature won\'t be enabled. '
+               'See check_interval for more details.')
+    ),
+    cfg.IntOpt(
+        'check_interval',
+        min=0,
+        default=20,
+        help=_('How often the action executions are checked (in seconds). '
+               'For example when check_interval = 10, check action '
+               'executions every 10 seconds. When the checker runs it will '
+               'transit all running action executions to error if the last '
+               'heartbeat received is older than 10 * max_missed_heartbeats '
+               'seconds. If set to 0 then this feature won\'t be enabled.')
+    ),
+    cfg.IntOpt(
+        'first_heartbeat_timeout',
+        min=0,
+        default=3600,
+        help=_('The first heartbeat is handled differently, to provide a '
+               'grace period in case there is no available executor to handle '
+               'the action execution. For example when '
+               'first_heartbeat_timeout = 3600, wait 3600 seconds before '
+               'closing the action executions that never received a heartbeat.'
+               )
     )
 ]
 
@@ -514,6 +547,7 @@ NOTIFIER_GROUP = 'notifier'
 PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
+ACTION_HEARTBEAT_GROUP = 'action_heartbeat'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 OPENSTACK_ACTIONS_GROUP = 'openstack_actions'
@@ -535,6 +569,10 @@ CONF.register_opts(cron_trigger_opts, group=CRON_TRIGGER_GROUP)
 CONF.register_opts(
     execution_expiration_policy_opts,
     group=EXECUTION_EXPIRATION_POLICY_GROUP
+)
+CONF.register_opts(
+    action_heartbeat_opts,
+    group=ACTION_HEARTBEAT_GROUP
 )
 CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(notifier_opts, group=NOTIFIER_GROUP)
@@ -591,6 +629,7 @@ def list_opts():
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (OPENSTACK_ACTIONS_GROUP, openstack_actions_opts),
         (YAQL_GROUP, yaql_opts),
+        (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (None, default_group_opts)
     ]
 
