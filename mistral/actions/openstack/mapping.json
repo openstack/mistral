@@ -1305,5 +1305,32 @@
         "services_disable": "services.disable",
         "services_enable": "services.enable",
         "services_list": "services.list"
+    },
+    "qinling": {
+        "_comment": "Qinling v1 actions",
+        "runtimes_create": "runtimes.create",
+        "runtimes_list": "runtimes.list",
+        "runtimes_get": "runtimes.get",
+        "runtimes_delete": "runtimes.delete",
+        "functions_create": "functions.create",
+        "functions_list": "functions.list",
+        "functions_get": "functions.get",
+        "functions_update": "functions.update",
+        "functions_delete": "functions.delete",
+        "function_executions_create": "function_executions.create",
+        "function_executions_list": "function_executions.list",
+        "function_executions_get": "function_executions.get",
+        "function_executions_delete": "function_executions.delete",
+        "function_executions_get_log": "function_executions.get_log",
+        "jobs_create": "jobs.create",
+        "jobs_list": "jobs.list",
+        "jobs_get": "jobs.get",
+        "jobs_update": "jobs.update",
+        "jobs_delete": "jobs.delete",
+        "webhooks_create": "webhooks.create",
+        "webhooks_list": "webhooks.list",
+        "webhooks_get": "webhooks.get",
+        "webhooks_update": "webhooks.update",
+        "webhooks_delete": "webhooks.delete"
     }
 }
