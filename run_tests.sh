@@ -158,6 +158,17 @@ function setup_db_cfg {
     esac
 }
 
+function upgrade_db {
+    case ${db_type} in
+        "postgresql" | "mysql" )
+            mistral-db-manage --config-file .mistral.conf upgrade head
+            ;;
+        *)
+            echo "Skip a database upgrade"
+            ;;
+    esac
+}
+
 function cleanup {
     rm -f .mistral.conf
 }
@@ -282,6 +293,7 @@ fi
 
 setup_db_pylib
 setup_db_cfg
+upgrade_db
 run_tests
 
 # NOTE(sirp): we only want to run pep8 when we're running the full-test suite,
