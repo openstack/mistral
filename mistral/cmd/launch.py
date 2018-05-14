@@ -101,6 +101,7 @@ def launch_notifier():
 
 def launch_api():
     server = api_service.WSGIService('mistral_api')
+
     launch_process(server, workers=server.workers)
 
 

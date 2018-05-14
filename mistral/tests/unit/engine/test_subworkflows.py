@@ -21,6 +21,7 @@ from mistral import context as auth_context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -455,3 +456,44 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertIsNone(wf1_ex.root_execution_id, None)
         self.assertEqual(wf2_ex.root_execution_id, wf1_ex.id)
         self.assertEqual(wf3_ex.root_execution_id, wf1_ex.id)
+
+    def test_cascade_delete(self):
+        wf_text = """
+        version: 2.0
+
+        wf:
+          tasks:
+            task1:
+              workflow: sub_wf1
+
+            task2:
+              workflow: sub_wf2
+
+        sub_wf1:
+          tasks:
+            task1:
+              action: std.noop
+
+        sub_wf2:
+          tasks:
+            task1:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        self.assertEqual(3, len(db_api.get_workflow_executions()))
+        self.assertEqual(4, len(db_api.get_task_executions()))
+        self.assertEqual(2, len(db_api.get_action_executions()))
+
+        # Now delete the root workflow execution and make sure that
+        # all dependent objects are deleted as well.
+        db_api.delete_workflow_execution(wf_ex.id)
+
+        self.assertEqual(0, len(db_api.get_workflow_executions()))
+        self.assertEqual(0, len(db_api.get_task_executions()))
+        self.assertEqual(0, len(db_api.get_action_executions()))
