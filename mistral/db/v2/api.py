@@ -401,8 +401,7 @@ def get_next_cron_triggers(time):
     return IMPL.get_next_cron_triggers(time)
 
 
-def get_expired_executions(expiration_time, limit=None, columns=(),
-                           session=None):
+def get_expired_executions(expiration_time, limit=None, columns=()):
     return IMPL.get_expired_executions(
         expiration_time,
         limit,
@@ -410,8 +409,8 @@ def get_expired_executions(expiration_time, limit=None, columns=(),
     )
 
 
-def get_superfluous_executions(max_finished_executions, limit=None, columns=(),
-                               session=None):
+def get_superfluous_executions(max_finished_executions, limit=None,
+                               columns=()):
     return IMPL.get_superfluous_executions(
         max_finished_executions,
         limit,
