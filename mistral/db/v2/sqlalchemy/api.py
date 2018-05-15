@@ -514,8 +514,8 @@ def update_workflow_definition(identifier, values, namespace='', session=None):
             if c_t.project_id != wf_def.project_id:
                 raise exc.NotAllowedException(
                     "Can not update scope of workflow that has cron triggers "
-                    "associated in other tenants. [workflow_identifier=%s]" %
-                    identifier
+                    "associated in other tenants. [workflow_identifier=%s, "
+                    "namespace=%s]" % (identifier, namespace)
                 )
 
         # Check event triggers.
@@ -527,8 +527,8 @@ def update_workflow_definition(identifier, values, namespace='', session=None):
             if e_t.project_id != wf_def.project_id:
                 raise exc.NotAllowedException(
                     "Can not update scope of workflow that has event triggers "
-                    "associated in other tenants. [workflow_identifier=%s]" %
-                    identifier
+                    "associated in other tenants. [workflow_identifier=%s, "
+                    "namespace=%s]" % (identifier, namespace)
                 )
 
     wf_def.update(values.copy())
@@ -554,8 +554,12 @@ def delete_workflow_definition(identifier, namespace='', session=None):
     if cron_triggers:
         raise exc.DBError(
             "Can't delete workflow that has cron triggers associated. "
-            "[workflow_identifier=%s], [cron_trigger_id(s)=%s]" %
-            (identifier, ', '.join([t.id for t in cron_triggers]))
+            "[workflow_identifier=%s, namespace=%s], [cron_trigger_id(s)=%s]"
+            % (
+                identifier,
+                namespace,
+                ', '.join([t.id for t in cron_triggers])
+            )
         )
 
     event_triggers = get_event_triggers(insecure=True, workflow_id=wf_def.id)
