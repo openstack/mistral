@@ -242,8 +242,9 @@ def delete_action_executions(**kwargs):
 
 # Workflow executions.
 
-def get_workflow_execution(id):
-    return IMPL.get_workflow_execution(id)
+# TODO(rakhmerov): Add 'fields' parameter to all 'get' methods.
+def get_workflow_execution(id, fields=()):
+    return IMPL.get_workflow_execution(id, fields=fields)
 
 
 def load_workflow_execution(name):
