@@ -1504,6 +1504,20 @@ class WorkflowExecutionTest(SQLAlchemyTest):
                 db_api.load_workflow_execution("not-existing-id")
             )
 
+    def test_get_workflow_execution_with_columns(self):
+        with db_api.transaction():
+            created = db_api.create_workflow_execution(WF_EXECS[0])
+
+            fetched = db_api.get_workflow_execution(
+                created.id,
+                fields=(db_models.WorkflowExecution.state,)
+            )
+
+            self.assertNotEqual(created, fetched)
+            self.assertIsInstance(fetched, tuple)
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created.state, fetched.state)
+
     def test_update_workflow_execution(self):
         with db_api.transaction():
             created = db_api.create_workflow_execution(WF_EXECS[0])

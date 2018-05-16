@@ -372,7 +372,11 @@ class TestExecutionsController(base.APITest):
         resp = self.app.put_json('/v2/executions/123', update_params)
 
         self.assertEqual(200, resp.status_int)
-        mock_ensure.assert_called_once_with('123')
+
+        mock_ensure.assert_called_once_with(
+            '123',
+            fields=(models.WorkflowExecution.id,)
+        )
         mock_update.assert_called_once_with('123', update_params)
 
     @mock.patch.object(
@@ -704,7 +708,7 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(
         db_api,
         'get_workflow_execution',
-        MOCK_WF_EX
+        mock.MagicMock(return_value=(states.RUNNING,))
     )
     def test_delete_unfished_execution(self):
         resp = self.app.delete('/v2/executions/123', expect_errors=True)
@@ -718,7 +722,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(db_api,
                        'get_workflow_execution',
-                       MOCK_ERROR_WF_EX)
+                       mock.MagicMock(return_value=(states.ERROR,)))
     @mock.patch.object(db_api,
                        'delete_workflow_execution',
                        MOCK_DELETE)
@@ -729,7 +733,7 @@ class TestExecutionsController(base.APITest):
 
     @mock.patch.object(db_api,
                        'get_workflow_execution',
-                       MOCK_SUCCESS_WF_EX)
+                       mock.MagicMock(return_value=(states.SUCCESS,)))
     @mock.patch.object(db_api,
                        'delete_workflow_execution',
                        MOCK_DELETE)

@@ -27,6 +27,7 @@ from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
+from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
 from mistral.services import workflows as wf_service
@@ -117,7 +118,10 @@ class ExecutionsController(rest.RestController):
         def _compute_delta(wf_ex):
             with db_api.transaction():
                 # ensure that workflow execution exists
-                db_api.get_workflow_execution(id)
+                db_api.get_workflow_execution(
+                    id,
+                    fields=(db_models.WorkflowExecution.id,)
+                )
 
                 delta = {}
 
@@ -283,12 +287,15 @@ class ExecutionsController(rest.RestController):
         LOG.debug("Delete execution [id=%s]", id)
 
         if not force:
-            wf_ex = db_api.get_workflow_execution(id)
+            state = db_api.get_workflow_execution(
+                id,
+                fields=(db_models.WorkflowExecution.state,)
+            )[0]
 
-            if not states.is_completed(wf_ex.state):
+            if not states.is_completed(state):
                 raise exc.NotAllowedException(
                     "Only completed executions can be deleted."
-                    " Execution {} is in {} state".format(id, wf_ex.state)
+                    " Execution {} is in {} state".format(id, state)
                 )
 
         return rest_utils.rest_retry_on_db_error(

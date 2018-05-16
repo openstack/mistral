@@ -293,8 +293,12 @@ def _get_db_object_by_name(model, name, filter_=None, order_by=None):
     return query.filter(final_filter).first()
 
 
-def _get_db_object_by_id(model, id, insecure=False):
-    query = b.model_query(model) if insecure else _secure_query(model)
+def _get_db_object_by_id(model, id, insecure=False, columns=()):
+    query = (
+        b.model_query(model, columns=columns)
+        if insecure
+        else _secure_query(model, *columns)
+    )
 
     return query.filter_by(id=id).first()
 
@@ -310,6 +314,7 @@ def _get_db_object_by_name_and_namespace_or_id(model, identifier,
         match_name = sa.and_(match_name, model.namespace == namespace)
 
     match_id = model.id == identifier
+
     query = query.filter(
         sa.or_(
             match_id,
@@ -747,13 +752,14 @@ def _get_action_executions(**kwargs):
 # Workflow executions.
 
 @b.session_aware()
-def get_workflow_execution(id, session=None):
+def get_workflow_execution(id, fields=(), session=None):
     ctx = context.ctx()
 
     wf_ex = _get_db_object_by_id(
         models.WorkflowExecution,
         id,
-        insecure=ctx.is_admin
+        insecure=ctx.is_admin,
+        columns=fields
     )
 
     if not wf_ex:
@@ -1116,9 +1122,12 @@ def get_superfluous_executions(max_finished_executions, limit=None, columns=(),
 
 def _get_completed_root_executions_query(columns):
     query = b.model_query(models.WorkflowExecution, columns=columns)
+
     # Only WorkflowExecution that are not a child of other WorkflowExecution.
-    query = query.filter(models.WorkflowExecution.
-                         task_execution_id == sa.null())
+    query = query.filter(
+        models.WorkflowExecution.task_execution_id == sa.null()
+    )
+
     query = query.filter(
         models.WorkflowExecution.state.in_(
             [states.SUCCESS,
@@ -1126,6 +1135,7 @@ def _get_completed_root_executions_query(columns):
              states.CANCELLED]
         )
     )
+
     return query
 
 
