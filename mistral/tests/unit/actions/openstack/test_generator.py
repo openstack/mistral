@@ -56,7 +56,8 @@ MODULE_MAPPING = {
     'gnocchi': ['gnocchi.metric_list', actions.GnocchiAction],
     'glare': ['glare.artifacts_list', actions.GlareAction],
     'vitrage': ['vitrage.alarm_get', actions.VitrageAction],
-    'zun': ['zun.containers_list', actions.ZunAction]
+    'zun': ['zun.containers_list', actions.ZunAction],
+    'qinling': ['qinling.runtimes_list', actions.QinlingAction]
 }
 
 EXTRA_MODULES = ['neutron', 'swift', 'zaqar', 'tacker', 'senlin']
