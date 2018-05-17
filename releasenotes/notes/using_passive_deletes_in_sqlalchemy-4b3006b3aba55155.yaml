@@ -4,6 +4,6 @@ fixes:
     Used "passive_deletes=True" in the configuration of relationships in
     SQLAlchemy models. This improves deletion of graphs of related objects
     stored in DB because dependent objects don't get loaded prior to
-    deleting them.
+    deletion which also reduces the memory requirement on the system.
     More about using this flag can be found at:
     http://docs.sqlalchemy.org/en/latest/orm/collections.html#using-passive-deletes
