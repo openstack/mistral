@@ -288,7 +288,8 @@ TaskExecution.action_executions = relationship(
     backref=backref('task_execution', remote_side=[TaskExecution.id]),
     cascade='all, delete-orphan',
     foreign_keys=ActionExecution.task_execution_id,
-    lazy='select'
+    lazy='select',
+    passive_deletes=True
 )
 
 sa.Index(
@@ -309,7 +310,8 @@ TaskExecution.workflow_executions = relationship(
     backref=backref('task_execution', remote_side=[TaskExecution.id]),
     cascade='all, delete-orphan',
     foreign_keys=WorkflowExecution.task_execution_id,
-    lazy='select'
+    lazy='select',
+    passive_deletes=True
 )
 
 sa.Index(
@@ -337,7 +339,8 @@ WorkflowExecution.task_executions = relationship(
     backref=backref('workflow_execution', remote_side=[WorkflowExecution.id]),
     cascade='all, delete-orphan',
     foreign_keys=TaskExecution.workflow_execution_id,
-    lazy='select'
+    lazy='select',
+    passive_deletes=True
 )
 
 sa.Index(
