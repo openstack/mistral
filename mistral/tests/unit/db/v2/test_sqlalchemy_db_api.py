@@ -84,6 +84,20 @@ class WorkbookTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_workbook("not-existing-wb"))
 
+    def test_get_workbook_with_fields(self):
+        with db_api.transaction():
+            created = db_api.create_workbook(WORKBOOKS[0])
+
+            fetched = db_api.get_workbook(
+                created['name'],
+                fields=(db_models.Workbook.scope,)
+            )
+
+            self.assertNotEqual(created, fetched)
+            self.assertIsInstance(fetched, tuple)
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created.scope, fetched[0])
+
     def test_create_workbook_duplicate_without_auth(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
         db_api.create_workbook(WORKBOOKS[0])
@@ -458,6 +472,20 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(created, fetched)
 
         self.assertIsNone(db_api.load_workflow_definition("not-existing-wf"))
+
+    def test_get_workflow_definition_with_fields(self):
+        with db_api.transaction():
+            created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
+
+            fetched = db_api.get_workflow_definition(
+                created.name,
+                fields=(db_models.WorkflowDefinition.scope,)
+            )
+
+            self.assertNotEqual(created, fetched)
+            self.assertIsInstance(fetched, tuple)
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created.scope, fetched[0])
 
     def test_get_workflow_definition_with_uuid(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
@@ -1006,6 +1034,20 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_action_definition("not-existing-id"))
 
+    def test_get_action_definition_with_fields(self):
+        with db_api.transaction():
+            created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
+
+            fetched = db_api.get_action_definition(
+                created.name,
+                fields=(db_models.ActionDefinition.scope,)
+            )
+
+            self.assertNotEqual(created, fetched)
+            self.assertIsInstance(fetched, tuple)
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created.scope, fetched[0])
+
     def test_get_action_definition_with_uuid(self):
         created = db_api.create_action_definition(ACTION_DEFINITIONS[0])
         fetched = db_api.get_action_definition(created.id)
@@ -1343,6 +1385,20 @@ class ActionExecutionTest(SQLAlchemyTest):
 
         self.assertIsNone(db_api.load_action_execution("not-existing-id"))
 
+    def test_get_action_execution_with_fields(self):
+        with db_api.transaction():
+            created = db_api.create_action_execution(ACTION_EXECS[0])
+
+            fetched = db_api.get_action_execution(
+                created.id,
+                fields=(db_models.ActionExecution.name,)
+            )
+
+            self.assertNotEqual(created, fetched)
+            self.assertIsInstance(fetched, tuple)
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created.name, fetched[0])
+
     def test_update_action_execution(self):
         with db_api.transaction():
             created = db_api.create_action_execution(ACTION_EXECS[0])
@@ -1504,7 +1560,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
                 db_api.load_workflow_execution("not-existing-id")
             )
 
-    def test_get_workflow_execution_with_columns(self):
+    def test_get_workflow_execution_with_fields(self):
         with db_api.transaction():
             created = db_api.create_workflow_execution(WF_EXECS[0])
 
@@ -1516,7 +1572,7 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             self.assertNotEqual(created, fetched)
             self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
-            self.assertEqual(created.state, fetched.state)
+            self.assertEqual(created.state, fetched[0])
 
     def test_update_workflow_execution(self):
         with db_api.transaction():
@@ -1900,7 +1956,6 @@ TASK_EXECS = [
 
 
 class TaskExecutionTest(SQLAlchemyTest):
-
     def test_create_and_get_and_load_task_execution(self):
         with db_api.transaction():
             wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
@@ -1921,6 +1976,25 @@ class TaskExecutionTest(SQLAlchemyTest):
             self.assertEqual(created, fetched)
 
             self.assertIsNone(db_api.load_task_execution("not-existing-id"))
+
+    def test_get_task_execution_with_fields(self):
+        with db_api.transaction():
+            wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
+
+            values = copy.deepcopy(TASK_EXECS[0])
+            values.update({'workflow_execution_id': wf_ex.id})
+
+            created = db_api.create_task_execution(values)
+
+            fetched = db_api.get_task_execution(
+                created.id,
+                fields=(db_models.TaskExecution.name,)
+            )
+
+            self.assertNotEqual(created, fetched)
+            self.assertIsInstance(fetched, tuple)
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created.name, fetched[0])
 
     def test_action_executions(self):
         # Store one task with two invocations.
