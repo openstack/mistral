@@ -19,6 +19,7 @@ from mistral.lang import types
 from mistral.lang.v2 import base
 from mistral.lang.v2 import on_clause
 from mistral.lang.v2 import policies
+from mistral.lang.v2 import retry_policy
 
 
 # TODO(rakhmerov): This specification should be broken into two separate
@@ -31,15 +32,15 @@ class TaskDefaultsSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "retry": types.ANY,
-            "wait-before": types.ANY,
-            "wait-after": types.ANY,
-            "timeout": types.ANY,
-            "pause-before": types.ANY,
-            "concurrency": types.ANY,
-            "on-complete": types.ANY,
-            "on-success": types.ANY,
-            "on-error": types.ANY,
+            "retry": retry_policy.RetrySpec.get_schema(),
+            "wait-before": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "wait-after": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "pause-before": types.EXPRESSION_OR_BOOLEAN,
+            "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "on-complete": on_clause.OnClauseSpec.get_schema(),
+            "on-success": on_clause.OnClauseSpec.get_schema(),
+            "on-error": on_clause.OnClauseSpec.get_schema(),
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN,
             "requires": {
                 "oneOf": [types.NONEMPTY_STRING, types.UNIQUE_STRING_LIST]

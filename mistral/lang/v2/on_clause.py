@@ -19,25 +19,80 @@ from mistral.lang import types
 from mistral.lang.v2 import base
 from mistral.lang.v2 import publish
 
+NEXT_TASK = {
+    "oneOf": [
+        {
+            "type": "string",
+            "pattern": "^\w+$",
+            "description": "Task name (e.g.: `task1`)"
+        },
+        {
+            "type": "string",
+            "pattern": "^\w+ \w+=(.*)$",
+            "description": "Task name with dict parameter "
+                           "(e.g.: `fail msg=\"test\"`, "
+                           "`fail msg=<% task() %>`)"
+        },
+        {
+            "type": "string",
+            "pattern": "^\w+\\(\w+=(.*)\\)$",
+            "description": "Task name with func parameter "
+                           "(e.g.: `fail(msg=\"test\")`, "
+                           "`fail(msg=<% task() %>)`)"
+        }
+    ]
+}
+
+TASK_WITH_EXPRESSION = {
+    "type": "object",
+    "minProperties": 1,
+    "maxProperties": 1,
+    "patternProperties": {
+        x['pattern']: types.EXPRESSION for x in NEXT_TASK['oneOf']
+    },
+    "description": "All next task variants plus expression (e.g.: "
+                   "`task1: <% $.vm_id != null %>`, "
+                   "`fail(msg=\"test\"): <% $.vm_id != null %>`)."
+}
+
+LIST_OF_TASKS = {
+    "type": "array",
+    "items": {
+        "oneOf": [
+            NEXT_TASK,
+            TASK_WITH_EXPRESSION
+        ]
+    },
+    "uniqueItems": True,
+    "minItems": 1
+}
+
+ADVANCED_PUBLISHING_DICT = {
+    "type": "object",
+    "minProperties": 1,
+    "properties": {
+        "publish": publish.PublishSpec.get_schema(),
+        "next": {
+            "oneOf": [
+                NEXT_TASK,
+                TASK_WITH_EXPRESSION,
+                LIST_OF_TASKS
+            ]
+        }
+    },
+    "additionalProperties": False
+}
+
 
 class OnClauseSpec(base.BaseSpec):
-    _simple_schema = {
+    _schema = {
         "oneOf": [
-            types.NONEMPTY_STRING,
-            types.UNIQUE_STRING_OR_EXPRESSION_CONDITION_LIST
+            NEXT_TASK,
+            TASK_WITH_EXPRESSION,
+            LIST_OF_TASKS,
+            ADVANCED_PUBLISHING_DICT
         ]
     }
-
-    _advanced_schema = {
-        "type": "object",
-        "properties": {
-            "publish": types.NONEMPTY_DICT,
-            "next": _simple_schema,
-        },
-        "additionalProperties": False
-    }
-
-    _schema = {"oneOf": [_simple_schema, _advanced_schema]}
 
     def __init__(self, data):
         super(OnClauseSpec, self).__init__(data)
