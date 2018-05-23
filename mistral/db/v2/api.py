@@ -71,13 +71,13 @@ def acquire_lock(model, id):
 
 # Workbooks.
 
-def get_workbook(name):
-    return IMPL.get_workbook(name)
+def get_workbook(name, fields=()):
+    return IMPL.get_workbook(name, fields=fields)
 
 
-def load_workbook(name):
+def load_workbook(name, fields=()):
     """Unlike get_workbook this method is allowed to return None."""
-    return IMPL.load_workbook(name)
+    return IMPL.load_workbook(name, fields=fields)
 
 
 def get_workbooks(limit=None, marker=None, sort_keys=None,
@@ -114,17 +114,21 @@ def delete_workbooks(**kwargs):
 
 # Workflow definitions.
 
-def get_workflow_definition(identifier, namespace=''):
-    return IMPL.get_workflow_definition(identifier, namespace=namespace)
+def get_workflow_definition(identifier, namespace='', fields=()):
+    return IMPL.get_workflow_definition(
+        identifier,
+        namespace=namespace,
+        fields=fields
+    )
 
 
-def get_workflow_definition_by_id(id):
-    return IMPL.get_workflow_definition_by_id(id)
+def get_workflow_definition_by_id(id, fields=()):
+    return IMPL.get_workflow_definition_by_id(id, fields=fields)
 
 
-def load_workflow_definition(name, namespace=''):
+def load_workflow_definition(name, namespace='', fields=()):
     """Unlike get_workflow_definition this method is allowed to return None."""
-    return IMPL.load_workflow_definition(name, namespace)
+    return IMPL.load_workflow_definition(name, namespace, fields=fields)
 
 
 def get_workflow_definitions(limit=None, marker=None, sort_keys=None,
@@ -161,17 +165,17 @@ def delete_workflow_definitions(**kwargs):
 
 # Action definitions.
 
-def get_action_definition_by_id(id):
-    return IMPL.get_action_definition_by_id(id)
+def get_action_definition_by_id(id, fields=()):
+    return IMPL.get_action_definition_by_id(id, fields=fields)
 
 
-def get_action_definition(name):
-    return IMPL.get_action_definition(name)
+def get_action_definition(name, fields=()):
+    return IMPL.get_action_definition(name, fields=fields)
 
 
-def load_action_definition(name):
+def load_action_definition(name, fields=()):
     """Unlike get_action_definition this method is allowed to return None."""
-    return IMPL.load_action_definition(name)
+    return IMPL.load_action_definition(name, fields=fields)
 
 
 def get_action_definitions(limit=None, marker=None, sort_keys=None,
@@ -207,13 +211,13 @@ def delete_action_definitions(**kwargs):
 
 # Action executions.
 
-def get_action_execution(id):
-    return IMPL.get_action_execution(id)
+def get_action_execution(id, fields=()):
+    return IMPL.get_action_execution(id, fields=fields)
 
 
-def load_action_execution(name):
+def load_action_execution(name, fields=()):
     """Unlike get_action_execution this method is allowed to return None."""
-    return IMPL.load_action_execution(name)
+    return IMPL.load_action_execution(name, fields=fields)
 
 
 def get_action_executions(**kwargs):
@@ -242,14 +246,13 @@ def delete_action_executions(**kwargs):
 
 # Workflow executions.
 
-# TODO(rakhmerov): Add 'fields' parameter to all 'get' methods.
 def get_workflow_execution(id, fields=()):
     return IMPL.get_workflow_execution(id, fields=fields)
 
 
-def load_workflow_execution(name):
+def load_workflow_execution(name, fields=()):
     """Unlike get_workflow_execution this method is allowed to return None."""
-    return IMPL.load_workflow_execution(name)
+    return IMPL.load_workflow_execution(name, fields=fields)
 
 
 def get_workflow_executions(limit=None, marker=None, sort_keys=None,
@@ -289,13 +292,13 @@ def update_workflow_execution_state(**kwargs):
 
 # Tasks executions.
 
-def get_task_execution(id):
-    return IMPL.get_task_execution(id)
+def get_task_execution(id, fields=()):
+    return IMPL.get_task_execution(id, fields=fields)
 
 
-def load_task_execution(id):
+def load_task_execution(id, fields=()):
     """Unlike get_task_execution this method is allowed to return None."""
-    return IMPL.load_task_execution(id)
+    return IMPL.load_task_execution(id, fields=fields)
 
 
 def get_task_executions(limit=None, marker=None, sort_keys=None,
