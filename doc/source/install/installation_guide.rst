@@ -70,9 +70,9 @@ or::
 
 **NOTE**: Differences *pip install -e* and *setup.py install*.
 **pip install -e** works very similarly to **setup.py install** or the
-EasyInstall tool, except that it doesn’t actually install anything.
+EasyInstall tool, except that it doesn't actually install anything.
 Instead, it creates a special .egg-link file in the deployment directory,
-that links to your project’s source code.
+that links to your project's source code.
 
 Before the first run
 --------------------
