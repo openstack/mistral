@@ -204,6 +204,10 @@ class HTTPAction(actions.Action):
                 verify=self.verify
             )
         except Exception as e:
+            LOG.exception(
+                "Failed to send HTTP request for action execution: %s",
+                context.execution.action_execution_id
+            )
             raise exc.ActionException("Failed to send HTTP request: %s" % e)
 
         LOG.info(
