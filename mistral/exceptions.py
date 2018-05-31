@@ -15,27 +15,18 @@
 #    limitations under the License.
 
 
-# TODO(rakhmerov): Can we make one parent for errors and exceptions?
+class MistralFailuresBase(Exception):
+    """Base class for mistral errors and exceptions"""
 
-class MistralError(Exception):
-    """Mistral specific error.
+    message = "An unknow failure occured"
 
-    Reserved for situations that can't be automatically handled. When it occurs
-    it signals that there is a major environmental problem like invalid startup
-    configuration or implementation problem (e.g. some code doesn't take care
-    of certain corner cases). From architectural perspective it's pointless to
-    try to handle this type of problems except doing some finalization work
-    like transaction rollback, deleting temporary files etc.
-    """
-
-    message = "An unknown error occurred"
     http_code = 500
 
     def __init__(self, message=None):
         if message is not None:
             self.message = message
 
-        super(MistralError, self).__init__(
+        super(MistralFailuresBase, self).__init__(
             '%d: %s' % (self.http_code, self.message))
 
     @property
@@ -50,7 +41,21 @@ class MistralError(Exception):
         return self.message
 
 
-class MistralException(Exception):
+class MistralError(MistralFailuresBase):
+    """Mistral specific error.
+
+    Reserved for situations that can't be automatically handled. When it occurs
+    it signals that there is a major environmental problem like invalid startup
+    configuration or implementation problem (e.g. some code doesn't take care
+    of certain corner cases). From architectural perspective it's pointless to
+    try to handle this type of problems except doing some finalization work
+    like transaction rollback, deleting temporary files etc.
+    """
+
+    message = "An unknown error occurred"
+
+
+class MistralException(MistralFailuresBase):
     """Mistral specific exception.
 
     Reserved for situations that are not critical for program continuation.
@@ -66,25 +71,6 @@ class MistralException(Exception):
     'http_code' properties.
     """
     message = "An unknown exception occurred"
-    http_code = 500
-
-    def __init__(self, message=None):
-        if message is not None:
-            self.message = message
-
-        super(MistralException, self).__init__(
-            '%d: %s' % (self.http_code, self.message))
-
-    @property
-    def code(self):
-        """This is here for webob to read.
-
-        https://github.com/Pylons/webob/blob/master/webob/exc.py
-        """
-        return self.http_code
-
-    def __str__(self):
-        return self.message
 
 
 # Database errors.
