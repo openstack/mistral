@@ -16,6 +16,7 @@ import mock
 
 from mistral.actions.openstack import actions
 from oslo_config import cfg
+from oslo_utils import importutils
 from oslotest import base
 
 CONF = cfg.CONF
@@ -387,3 +388,11 @@ class OpenStackActionTest(base.BaseTestCase):
 
         self.assertTrue(mocked().runtimes.get.called)
         mocked().runtimes.get.assert_called_once_with(id="1234-abcd")
+
+
+class TestImport(base.BaseTestCase):
+    @mock.patch.object(importutils, 'try_import')
+    def test_try_import_fails(self, mocked):
+        mocked.side_effect = Exception('Exception when importing module')
+        bad_module = actions._try_import('raiser')
+        self.assertIsNone(bad_module)
