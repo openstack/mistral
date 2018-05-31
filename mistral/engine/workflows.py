@@ -240,6 +240,12 @@ class Workflow(object):
         # Calculate commands to process next.
         cmds = wf_ctrl.rerun_tasks([task_ex], reset=reset)
 
+        if cmds:
+            # Import the task_handler module here to avoid circular reference.
+            from mistral.engine import policies
+
+            policies.RetryPolicy.refresh_runtime_context(task_ex)
+
         self._continue_workflow(cmds)
 
     def _get_backlog(self):

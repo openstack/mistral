@@ -21,6 +21,7 @@ from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
+from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -1430,3 +1431,52 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
 
         self.assertEqual(1, len(task_3_action_exs))
         self.assertEqual(states.SUCCESS, task_3_action_exs[0].state)
+
+    def test_rerun_task_with_retry_policy(self):
+        wf_service.create_workflows("""---
+        version: '2.0'
+        wf_fail:
+          tasks:
+            task1:
+              action: std.fail
+              retry:
+                delay: 0
+                count: 2""")
+
+        wf_ex = self.engine.start_workflow("wf_fail")
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(wf_ex.task_executions,
+                                               name="task1")
+            action_executions = task_ex.executions
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIsNotNone(wf_ex.state_info)
+        self.assertEqual(3, len(action_executions))
+        self.assertTrue(all(a.state == states.ERROR
+                            for a in action_executions))
+
+        self.engine.rerun_workflow(task_ex.id)
+
+        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+        self.assertEqual(states.RUNNING, wf_ex.state)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(wf_ex.task_executions,
+                                               name="task1")
+            action_executions = task_ex.executions
+
+        self.assertEqual(states.ERROR, wf_ex.state)
+        self.assertIsNotNone(wf_ex.state_info)
+        self.assertEqual(6, len(action_executions))
+        self.assertTrue(all(a.state == states.ERROR
+                            for a in action_executions))

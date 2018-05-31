@@ -405,6 +405,15 @@ class RetryPolicy(base.TaskPolicy):
             task_ex_id=task_ex.id,
         )
 
+    @staticmethod
+    def refresh_runtime_context(task_ex):
+        runtime_context = task_ex.runtime_context or {}
+        retry_task_policy = runtime_context.get('retry_task_policy')
+
+        if retry_task_policy:
+            retry_task_policy['retry_no'] = 0
+            task_ex.runtime_context['retry_task_policy'] = retry_task_policy
+
 
 class TimeoutPolicy(base.TaskPolicy):
     _schema = {
