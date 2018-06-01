@@ -149,6 +149,7 @@ To update the database schema to the latest revision, type::
   $ mistral-db-manage --config-file <path_to_config> upgrade head
 
 To populate the database with standard actions and workflows, type::
+
   $ mistral-db-manage --config-file <path_to_config> populate
 
 For more detailed information about ``mistral-db-manage`` script please check
