@@ -71,8 +71,8 @@ function process_options {
         (( i++ ))
         parallel=${!i}
         ;;
-      -*) testropts="$testropts ${!i}";;
-      *) testrargs="$testrargs ${!i}"
+      -*) stestropts="$stestropts ${!i}";;
+      *) stestrargs="$stestrargs ${!i}"
     esac
     (( i++ ))
   done
@@ -89,8 +89,8 @@ never_venv=0
 force=0
 no_site_packages=0
 installvenvopts=
-testrargs=
-testropts=
+stestrargs=
+stestropts=
 wrapper=""
 just_pep8=0
 no_pep8=0
@@ -178,43 +178,43 @@ function run_tests {
   ${wrapper} find . -type f -name "*.pyc" -delete
 
   if [ $debug -eq 1 ]; then
-    if [ "$testropts" = "" ] && [ "$testrargs" = "" ]; then
+    if [ "$stestropts" = "" ] && [ "$stestrargs" = "" ]; then
       # Default to running all tests if specific test is not
       # provided.
-      testrargs="discover ./mistral/tests/unit"
+      stestrargs="discover ./mistral/tests/unit"
     fi
-    ${wrapper} python -m testtools.run $testropts $testrargs
+    ${wrapper} python -m testtools.run $stestropts $stestrargs
 
-    # Short circuit because all of the testr and coverage stuff
+    # Short circuit because all of the stestr and coverage stuff
     # below does not make sense when running testtools.run for
     # debugging purposes.
     return $?
   fi
 
   if [ $coverage -eq 1 ]; then
-    TESTRTESTS="$TESTRTESTS --coverage"
+    STESTRTESTS="$STESTRTESTS --coverage"
   else
-    TESTRTESTS="$TESTRTESTS --slowest"
+    STESTRTESTS="$STESTRTESTS --slowest"
   fi
 
   # Just run the test suites in current environment
   set +e
-  testrargs=$(echo "$testrargs" | sed -e's/^\s*\(.*\)\s*$/\1/')
+  stestrargs=$(echo "$stestrargs" | sed -e's/^\s*\(.*\)\s*$/\1/')
   if [ $parallel = true ]
   then
     runoptions="--subunit"
   else
-    runoptions="--concurrency=1 --subunit"
+    runoptions="--concurrency 1 --subunit"
   fi
-  TESTRTESTS="$TESTRTESTS --testr-args='$runoptions $testropts $testrargs'"
-  OS_TEST_PATH=$(echo $testrargs|grep -o 'mistral\.tests[^[:space:]:]*\+'|tr . /)
+  STESTRTESTS="$STESTRTESTS $runoptions $stestropts $stestrargs"
+  OS_TEST_PATH=$(echo $stestrargs|grep -o 'mistral\.tests[^[:space:]:]*\+'|tr . /)
   if [ -d "$OS_TEST_PATH" ]; then
       wrapper="OS_TEST_PATH=$OS_TEST_PATH $wrapper"
   elif [ -d "$(dirname $OS_TEST_PATH)" ]; then
       wrapper="OS_TEST_PATH=$(dirname $OS_TEST_PATH) $wrapper"
   fi
-  echo "Running ${wrapper} $TESTRTESTS"
-  bash -c "${wrapper} $TESTRTESTS | ${wrapper} subunit2pyunit"
+  echo "Running ${wrapper} $STESTRTESTS"
+  bash -c "${wrapper} $STESTRTESTS | ${wrapper} subunit2pyunit"
   RESULT=$?
   set -e
 
@@ -232,9 +232,7 @@ function run_tests {
 }
 
 function copy_subunit_log {
-  LOGNAME=$(cat .testrepository/next-stream)
-  LOGNAME=$(($LOGNAME - 1))
-  LOGNAME=".testrepository/${LOGNAME}"
+  LOGNAME=".stestr/$(($(cat .stestr/next-stream) - 1))"
   cp $LOGNAME subunit.log
 }
 
@@ -245,7 +243,7 @@ function run_pep8 {
 }
 
 
-TESTRTESTS="python setup.py testr"
+STESTRTESTS="stestr run"
 
 if [ $never_venv -eq 0 ]
 then
@@ -298,9 +296,9 @@ run_tests
 
 # NOTE(sirp): we only want to run pep8 when we're running the full-test suite,
 # not when we're running tests individually. To handle this, we need to
-# distinguish between options (testropts), which begin with a '-', and
-# arguments (testrargs).
-if [ -z "$testrargs" ]; then
+# distinguish between options (stestropts), which begin with a '-', and
+# arguments (stestrargs).
+if [ -z "$stestrargs" ]; then
   if [ $no_pep8 -eq 0 ]; then
     run_pep8
   fi
