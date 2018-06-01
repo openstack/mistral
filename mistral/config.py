@@ -449,6 +449,59 @@ os_actions_mapping_path = cfg.StrOpt(
          'directory or absolute.'
 )
 
+yaql_opts = [
+    cfg.IntOpt(
+        'limit_iterators',
+        default=-1,
+        min=-1,
+        help=_('Limit iterators by the given number of elements. When set, '
+               'each time any function declares its parameter to be iterator, '
+               'that iterator is modified to not produce more than a given '
+               'number of items. If not set (or set to -1) the result data is '
+               'allowed to contain endless iterators that would cause errors '
+               'if the result where to be serialized.')
+    ),
+    cfg.IntOpt(
+        'memory_quota',
+        default=-1,
+        min=-1,
+        help=_('The memory usage quota (in bytes) for all data produced by '
+               'the expression (or any part of it). -1 means no limitation.')
+    ),
+    cfg.BoolOpt(
+        'convert_tuples_to_lists',
+        default=True,
+        help=_('When set to true, yaql converts all tuples in the expression '
+               'result to lists.')
+    ),
+    cfg.BoolOpt(
+        'convert_sets_to_lists',
+        default=False,
+        help=_('When set to true, yaql converts all sets in the expression '
+               'result to lists. Otherwise the produced result may contain '
+               'sets that are not JSON-serializable.')
+    ),
+    cfg.BoolOpt(
+        'iterable_dicts',
+        default=False,
+        help=_('When set to true, dictionaries are considered to be iterable '
+               'and iteration over dictionaries produces their keys (as in '
+               'Python and yaql 0.2).')
+    ),
+    cfg.StrOpt(
+        'keyword_operator',
+        default='=>',
+        help=_('Allows one to configure keyword/mapping symbol. '
+               'Ability to pass named arguments can be disabled altogether '
+               'if empty string is provided.')
+    ),
+    cfg.BoolOpt(
+        'allow_delegates',
+        default=False,
+        help=_('Enables or disables delegate expression parsing.')
+    )
+]
+
 CONF = cfg.CONF
 
 API_GROUP = 'api'
@@ -464,6 +517,7 @@ EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 OPENSTACK_ACTIONS_GROUP = 'openstack_actions'
+YAQL_GROUP = "yaql"
 
 
 CONF.register_opt(wf_trace_log_name_opt)
@@ -489,6 +543,7 @@ CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
 CONF.register_opts(openstack_actions_opts, group=OPENSTACK_ACTIONS_GROUP)
+CONF.register_opts(yaql_opts, group=YAQL_GROUP)
 
 CLI_OPTS = [
     use_debugger_opt,
@@ -535,6 +590,7 @@ def list_opts():
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (OPENSTACK_ACTIONS_GROUP, openstack_actions_opts),
+        (YAQL_GROUP, yaql_opts),
         (None, default_group_opts)
     ]
 
