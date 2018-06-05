@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Added several config options that allow to tweak some aspects of the YAQL
+    engine behavior.
+fixes:
+  - |
+    Fixed how Mistral initializes a child YAQL context before evaluating
+    YAQL expressions. The given data context needs to go through a special
+    filter that prepares the data properly, does conversion into internal
+    types etc. Also, without this change YAQL engine options are not applied
+    properly.
