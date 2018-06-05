@@ -496,18 +496,15 @@ class TestExecutionsController(base.APITest):
         self.assertIn(expected_fault, resp.json['faultstring'])
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
-    @mock.patch.object(db_api, 'load_workflow_execution')
-    def test_post_auto_id(self, load_wf_ex_func, start_wf_func):
+    def test_post_auto_id(self, start_wf_func):
         # NOTE: In fact, we use "white box" testing here to understand
         # if the REST controller calls other APIs as expected. This is
         # the only way of testing available with the current testing
         # infrastructure.
-        start_wf_func.return_value = WF_EX.to_dict()
+        wf_ex_dict = WF_EX.to_dict()
+        start_wf_func.return_value = wf_ex_dict
 
         json_body = WF_EX_JSON_WITH_DESC.copy()
-
-        # We don't want to pass execution ID in this case.
-        del json_body['id']
 
         expected_json = WF_EX_JSON_WITH_DESC
 
@@ -516,15 +513,13 @@ class TestExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertDictEqual(expected_json, resp.json)
 
-        load_wf_ex_func.assert_not_called()
-
         kwargs = json.loads(expected_json['params'])
         kwargs['description'] = expected_json['description']
 
         start_wf_func.assert_called_once_with(
             expected_json['workflow_id'],
             '',
-            None,
+            wf_ex_dict['id'],
             json.loads(expected_json['input']),
             **kwargs
         )
@@ -630,10 +625,8 @@ class TestExecutionsController(base.APITest):
     @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
     def test_post_with_src_exec_id_without_exec_id(self, wf_exec_mock):
         source_wf_ex = copy.copy(SOURCE_WF_EX)
-        source_wf_ex.id = ""
 
         source_wf_ex_json = copy.copy(SOURCE_WF_EX_JSON_WITH_DESC)
-        source_wf_ex_json['id'] = ''
 
         wf_exec_mock.return_value = source_wf_ex.to_dict()
 
@@ -654,7 +647,7 @@ class TestExecutionsController(base.APITest):
         wf_exec_mock.assert_called_once_with(
             exec_dict['workflow_id'],
             '',
-            '',
+            exec_dict['id'],
             json.loads(exec_dict['input']),
             description=expected_description,
             **json.loads(exec_dict['params'])

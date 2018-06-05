@@ -17,6 +17,7 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 from pecan import rest
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
@@ -35,7 +36,6 @@ from mistral.utils import filter_utils
 from mistral.utils import merge_dicts
 from mistral.utils import rest_utils
 from mistral.workflow import states
-
 
 LOG = logging.getLogger(__name__)
 
@@ -228,18 +228,22 @@ class ExecutionsController(rest.RestController):
 
         exec_id = exec_dict.get('id')
 
-        source_execution_id = exec_dict.get('source_execution_id')
-
-        source_exec_dict = None
-
-        if exec_id:
+        if not exec_id:
+            exec_id = uuidutils.generate_uuid()
+            LOG.debug("Generated execution id [exec_id=%s]", exec_id)
+            exec_dict.update({'id': exec_id})
+            wf_ex = None
+        else:
             # If ID is present we need to check if such execution exists.
             # If yes, the method just returns the object. If not, the ID
             # will be used to create a new execution.
             wf_ex = _get_workflow_execution(exec_id, must_exist=False)
-
             if wf_ex:
                 return resources.Execution.from_db_model(wf_ex)
+
+        source_execution_id = exec_dict.get('source_execution_id')
+
+        source_exec_dict = None
 
         if source_execution_id:
             # If source execution is present we will perform a lookup for
@@ -267,7 +271,7 @@ class ExecutionsController(rest.RestController):
             result_exec_dict.get('workflow_id',
                                  result_exec_dict.get('workflow_name')),
             result_exec_dict.get('workflow_namespace', ''),
-            exec_id,
+            result_exec_dict.get('id'),
             result_exec_dict.get('input'),
             description=result_exec_dict.get('description', ''),
             **result_exec_dict.get('params', {})
