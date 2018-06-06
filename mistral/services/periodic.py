@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 import json
 
 from oslo_config import cfg
@@ -121,9 +122,11 @@ def advance_cron_trigger(t):
                 delete_trust=False
             )
         else:  # if remaining execution = None or > 0.
+            # In case the we are lagging or if the api stopped for some time
+            # we use the max of the current time or the next scheduled time.
             next_time = triggers.get_next_execution_time(
                 t.pattern,
-                t.next_execution_time
+                max(datetime.datetime.utcnow(), t.next_execution_time)
             )
 
             # Update the cron trigger with next execution details

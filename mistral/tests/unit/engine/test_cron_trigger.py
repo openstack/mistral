@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import datetime
+import time
 
 import mock
 from oslo_config import cfg
@@ -120,7 +121,9 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         next_trigger = next_triggers[0]
         next_execution_time_before = next_trigger.next_execution_time
+        ts_before = datetime.datetime.utcnow()
 
+        time.sleep(1)  # this is to simulate lagging
         periodic.process_cron_triggers_v2(None, None)
 
         next_triggers = triggers.get_next_cron_triggers()
@@ -129,6 +132,11 @@ class ProcessCronTriggerTest(base.EngineTestCase):
 
         next_trigger = next_triggers[0]
         next_execution_time_after = next_trigger.next_execution_time
+
+        self.assertGreater(
+            next_execution_time_after,
+            ts_before
+        )
 
         self.assertNotEqual(
             next_execution_time_before,
