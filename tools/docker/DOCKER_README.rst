@@ -1,30 +1,28 @@
 Using Mistral with Docker
 =========================
 
-In order to minimize the work needed to run the current Mistral code, or
-be able to spin up independent or networked Mistral instances in seconds,
-Docker containers are a very good option. This guide describes the process
+Docker containers provide an easy way to quickly deploy independent or
+networked Mistral instances in seconds. This guide describes the process
 to launch an all-in-one Mistral container.
 
 
-Docker installation
+Docker Installation
 -------------------
 
-The links help you to install latest Docker software:
+The following links contain instructions to install latest Docker software:
 
 * `Docker Engine <https://docs.docker.com/engine/installation/>`_
 * `Docker Compose <https://docs.docker.com/compose/install/>`_
 
 
-Build the Mistral image manually
+Build the Mistral Image Manually
 --------------------------------
 
-The `build.sh` script takes care of creating the `mistral-all` image locally.
-On the other hand you could execute the following command::
+Execute the following command from the repository top-level directory::
 
   docker build -t mistral -f tools/docker/Dockerfile .
 
-The Mistral Docker image has a build parameter.
+The Mistral Docker image has one build parameter:
 
 +-------------------------+-------------+--------------------------------------+
 |Name                     |Default value| Description                          |
@@ -51,13 +49,15 @@ To launch Mistral in the multi node configuration::
                -f tools/docker/docker-compose/mistral-multi-node.yaml \
                -p mistral up -d
 
-The infrastructure docker-compose file contains a example of RabbitMQ,
-PostgreSQL and MySQL. Fill free to modify docker-compose files.
+The infrastructure docker-compose file contains examples of RabbitMQ,
+PostgreSQL and MySQL configurations. Feel free to modify the docker-compose
+files as needed.
 
-Also the docker-compose contains the Clould-flow container.
-It is available by `link <http://localhost:8000/>`_
+The docker-compose Mistral configurations also include the CloudFlow container.
+It is available at `link <http://localhost:8000/>`_
 
-If you want to rebuild image you should add `--build` option, for example::
+The `--build` option can be used when it is necessary to rebuild the image,
+for example::
 
   docker-compose -f tools/docker/docker-compose/infrastructure.yaml \
                -f tools/docker/docker-compose/mistral-single-node.yaml \
@@ -75,8 +75,8 @@ by default:
 |`MESSAGE_BROKER_URL`|rabbit://guest:gu\|The message broker URL                |
 |                    |est@rabbitmq:5672 |                                      |
 +--------------------+------------------+----------------------+---------------+
-|`DATABASE_URL`      |sqlite://mistral.\|The database URL                      |
-|                    |db                |                                      |
+|`DATABASE_URL`      |sqlite:///mistral\|The database URL                      |
+|                    |.db               |                                      |
 +--------------------+------------------+----------------------+---------------+
 |`UPGRADE_DB`        |false             |If the `UPGRADE_DB` equals `true`,    |
 |                    |                  |a database upgrade will be launched   |
@@ -94,8 +94,9 @@ by default:
 |                    |                  |launched inside container             |
 +--------------------+------------------+----------------------+---------------+
 
-Other way you can mount the your config file to a Mistral Docker container.
-You should uncomment the volume sections in the docker-compose files.
+The `/etc/mistral/mistral.conf` configuration file can be mounted to the Mistral
+Docker container by uncommenting and editing the `volumes` sections in the Mistral
+docker-compose files.
 
 
 Launch tests inside Container
@@ -120,8 +121,7 @@ or PostgreSQL::
 Using Mistral Client
 --------------------
 
-The script also configures the containers so that the Mistral API will be
-accessible from the host machine on the default port 8989. So it is also
-possible to install the `mistral-pythonclient` to the host machine and
-execute commands there.
+The Mistral API will be accessible from the host machine on the default
+port 8989. Install `python-mistralclient` on the host machine to
+execute mistral commands.
 
