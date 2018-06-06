@@ -29,6 +29,8 @@ from mistral import exceptions
 
 CONF = cfg.CONF
 CONF.register_opt(cfg.IntOpt('timeout'), group='keystone_authtoken')
+CONF.register_opt(cfg.BoolOpt('collect_timing'), group='keystone_authtoken')
+CONF.register_opt(cfg.BoolOpt('split_loggers'), group='keystone_authtoken')
 
 
 def client():
