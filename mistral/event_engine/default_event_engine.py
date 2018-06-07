@@ -255,6 +255,7 @@ class DefaultEventEngine(base.EventEngine):
                 self.engine_client.start_workflow(
                     t['workflow_id'],
                     t['workflow_namespace'],
+                    None,
                     t['workflow_input'],
                     description=json.dumps(description),
                     **workflow_params
