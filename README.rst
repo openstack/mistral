@@ -30,3 +30,6 @@ Project Resources
   `Wiki <https://wiki.openstack.org/wiki/Mistral/>`_ page
 
 * Apache License Version 2.0 http://www.apache.org/licenses/LICENSE-2.0
+
+* Release notes for the project can be found at:
+  https://docs.openstack.org/releasenotes/mistral/
