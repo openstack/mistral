@@ -110,7 +110,7 @@ class FailAction(actions.Action):
 
 
 class HTTPAction(actions.Action):
-    """Constructs an HTTP action.
+    """HTTP action.
 
     :param url: URL for the new HTTP request.
     :param method: (optional, 'GET' by default) method for the new HTTP
