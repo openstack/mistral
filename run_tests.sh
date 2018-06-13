@@ -139,7 +139,7 @@ function setup_db_pylib {
             ;;
         mysql )
             echo "Installing python library for MySQL"
-            ${wrapper} pip install mysql-python
+            ${wrapper} pip install PyMySQL
             ;;
     esac
 }
@@ -149,11 +149,17 @@ function setup_db_cfg {
         sqlite )
             rm -f .mistral.conf
             ;;
-        "postgresql" | "mysql" )
+        "postgresql" )
             oslo-config-generator --config-file \
                 ./tools/config/config-generator.mistral.conf \
                 --output-file .mistral.conf
             sed -i "s/#connection = <None>/connection = $db_type:\/\/$username:$password@localhost\/$dbname/g" .mistral.conf
+            ;;
+        "mysql" )
+            oslo-config-generator --config-file \
+                ./tools/config/config-generator.mistral.conf \
+                --output-file .mistral.conf
+            sed -i "s/#connection = <None>/connection = mysql+pymysql:\/\/$username:$password@localhost\/$dbname/g" .mistral.conf
             ;;
     esac
 }
