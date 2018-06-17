@@ -211,8 +211,8 @@ def delete_action_definitions(**kwargs):
 
 # Action executions.
 
-def get_action_execution(id, fields=()):
-    return IMPL.get_action_execution(id, fields=fields)
+def get_action_execution(id, fields=(), insecure=False):
+    return IMPL.get_action_execution(id, fields=fields, insecure=insecure)
 
 
 def load_action_execution(name, fields=()):
@@ -228,8 +228,8 @@ def create_action_execution(values):
     return IMPL.create_action_execution(values)
 
 
-def update_action_execution(id, values):
-    return IMPL.update_action_execution(id, values)
+def update_action_execution(id, values, insecure=False):
+    return IMPL.update_action_execution(id, values, insecure)
 
 
 def create_or_update_action_execution(id, values):
@@ -411,6 +411,10 @@ def get_expired_executions(expiration_time, limit=None, columns=()):
         limit,
         columns
     )
+
+
+def get_running_expired_sync_actions(expiration_time, session=None):
+    return IMPL.get_running_expired_sync_actions(expiration_time)
 
 
 def get_superfluous_executions(max_finished_executions, limit=None,

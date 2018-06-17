@@ -1,0 +1,5 @@
+---
+features:
+  - >
+    [`blueprint action-execution-reporting <https://blueprints.launchpad.net/mistral/+spec/action-execution-reporting>`_]
+    Introduced a mechanism to close action executions that stuck in RUNNING state.

@@ -150,7 +150,7 @@ class Action(object):
         """
         return True
 
-    def _create_action_execution(self, input_dict, runtime_ctx,
+    def _create_action_execution(self, input_dict, runtime_ctx, is_sync,
                                  desc='', action_ex_id=None):
         action_ex_id = action_ex_id or utils.generate_unicode_uuid()
 
@@ -161,7 +161,8 @@ class Action(object):
             'state': states.RUNNING,
             'input': input_dict,
             'runtime_context': runtime_ctx,
-            'description': desc
+            'description': desc,
+            'is_sync': is_sync
         }
 
         if self.task_ex:
@@ -246,6 +247,7 @@ class PythonAction(Action):
         self._create_action_execution(
             self._prepare_input(input_dict),
             self._prepare_runtime_context(index, safe_rerun),
+            self.is_sync(input_dict),
             desc=desc,
             action_ex_id=action_ex_id
         )
@@ -278,6 +280,7 @@ class PythonAction(Action):
             self._create_action_execution(
                 input_dict,
                 runtime_ctx,
+                self.is_sync(input_dict),
                 desc=desc,
                 action_ex_id=action_ex_id
             )

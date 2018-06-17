@@ -320,6 +320,18 @@ class EngineClient(eng.Engine):
             wf_ex_id=wf_ex_id
         )
 
+    @base.wrap_messaging_exception
+    def report_running_actions(self, action_ex_ids):
+        """Receives action execution heartbeats.
+
+        :param action_ex_ids: Action execution ids.
+        """
+        return self._client.async_call(
+            auth_ctx.ctx(),
+            'report_running_actions',
+            action_ex_ids=action_ex_ids
+        )
+
 
 class ExecutorClient(exe.Executor):
     """RPC Executor client."""

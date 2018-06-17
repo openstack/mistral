@@ -17,6 +17,7 @@ import mock
 from oslo_config import cfg
 
 from mistral.actions import std_actions
+from mistral import config
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
@@ -32,7 +33,9 @@ from mistral_lib import actions as actions_base
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
-cfg.CONF.set_default('auth_enable', False, group='pecan')
+cfg.CONF.set_default('auth_enable', False, group=config.PECAN_GROUP)
+cfg.CONF.set_default('max_missed_heartbeats', 0,
+                     group=config.ACTION_HEARTBEAT_GROUP)
 
 WB = """
 ---

@@ -669,8 +669,9 @@ def delete_action_definitions(session=None, **kwargs):
 # Action executions.
 
 @b.session_aware()
-def get_action_execution(id, fields=(), session=None):
-    a_ex = _get_db_object_by_id(models.ActionExecution, id, columns=fields)
+def get_action_execution(id, insecure=False, fields=(), session=None):
+    a_ex = _get_db_object_by_id(models.ActionExecution, id, insecure=insecure,
+                                columns=fields)
 
     if not a_ex:
         raise exc.DBEntityNotFoundError(
@@ -707,8 +708,8 @@ def create_action_execution(values, session=None):
 
 
 @b.session_aware()
-def update_action_execution(id, values, session=None):
-    a_ex = get_action_execution(id)
+def update_action_execution(id, values, insecure=False, session=None):
+    a_ex = get_action_execution(id, insecure)
 
     a_ex.update(values.copy())
 
@@ -1094,6 +1095,18 @@ def get_expired_executions(expiration_time, limit=None, columns=(),
 
     if limit:
         query = query.limit(limit)
+
+    return query.all()
+
+
+@b.session_aware()
+def get_running_expired_sync_actions(expiration_time, session=None):
+    query = b.model_query(models.ActionExecution)
+    query = query.filter(
+        models.ActionExecution.last_heartbeat < expiration_time
+    )
+    query = query.filter_by(is_sync=True)
+    query = query.filter(models.ActionExecution.state == states.RUNNING)
 
     return query.all()
 
