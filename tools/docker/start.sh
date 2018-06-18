@@ -16,12 +16,17 @@ if [ ! -f ${CONFIG_FILE} ]; then
     ${INI_SET} DEFAULT debug "${LOG_DEBUG}"
 fi
 
-if "${UPGRADE_DB}";
+if [ ${DATABASE_URL} == "sqlite:///mistral.db" -a ! -f ./mistral.db ]
 then
-    mistral-db-manage --config-file "${CONFIG_FILE}" upgrade head
+    python ./tools/sync_db.py --config-file "${CONFIG_FILE}"
     mistral-db-manage --config-file "${CONFIG_FILE}" populate
 fi
 
+if "${UPGRADE_DB}";
+then
+    /usr/local/bin/mistral-db-manage --config-file "${CONFIG_FILE}" upgrade head
+    mistral-db-manage --config-file "${CONFIG_FILE}" populate
+fi
 if "${RUN_TESTS}";
 then
     cp "${CONFIG_FILE}" .mistral.conf
