@@ -325,7 +325,7 @@ class DefaultEventEngine(base.EventEngine):
         self.handler_tg.add_thread(self._process_event_queue)
 
     def process_notification_event(self, notification):
-        """Callback funtion by event handler.
+        """Callback function by event handler.
 
         Just put notification into a queue.
         """
