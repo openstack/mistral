@@ -168,7 +168,7 @@ class EngineClient(eng.Engine):
         """Conveys action result to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
-        state of a action execution once action has executed. One of the
+        state of an action execution once action has executed. One of the
         clients of this method is Mistral REST API server that receives
         action result from the outside action handlers.
 
@@ -204,7 +204,7 @@ class EngineClient(eng.Engine):
         """Conveys update of action state to Mistral Engine.
 
         This method should be used by clients of Mistral Engine to update
-        state of a action execution once action has executed.
+        state of an action execution once action has executed.
 
         Note: calling this method serves an event notifying Mistral that it
         may need to change the state of the parent task and workflow. Use
