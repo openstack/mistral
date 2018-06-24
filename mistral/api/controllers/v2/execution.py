@@ -248,6 +248,10 @@ class ExecutionsController(rest.RestController):
             source_exec_dict = db_api.get_workflow_execution(
                 source_execution_id).to_dict()
 
+            exec_dict['description'] = "{} Based on the execution '{}'".format(
+                exec_dict['description'], source_execution_id)
+            exec_dict['description'] = exec_dict['description'].strip()
+
         result_exec_dict = merge_dicts(source_exec_dict, exec_dict)
 
         if not (result_exec_dict.get('workflow_id') or

@@ -612,12 +612,17 @@ class TestExecutionsController(base.APITest):
 
         exec_dict = source_wf_ex_json
 
+        expected_description = "{} Based on the execution '{}'".format(
+            exec_dict['description'],
+            SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id']
+        )
+
         wf_exec_mock.assert_called_once_with(
             exec_dict['workflow_id'],
             '',
             exec_dict['id'],
             json.loads(exec_dict['input']),
-            description=exec_dict['description'],
+            description=expected_description,
             **json.loads(exec_dict['params'])
         )
 
@@ -641,12 +646,17 @@ class TestExecutionsController(base.APITest):
 
         exec_dict = source_wf_ex_json
 
+        expected_description = "{} Based on the execution '{}'".format(
+            exec_dict['description'],
+            SOURCE_WF_EX_JSON_WITH_DESC['source_execution_id']
+        )
+
         wf_exec_mock.assert_called_once_with(
             exec_dict['workflow_id'],
             '',
             '',
             json.loads(exec_dict['input']),
-            description=exec_dict['description'],
+            description=expected_description,
             **json.loads(exec_dict['params'])
         )
 
