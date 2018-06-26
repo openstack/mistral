@@ -70,7 +70,6 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         next_execution_time_before = next_trigger.next_execution_time
 
         periodic.process_cron_triggers_v2(None, None)
-
         start_wf_mock = get_engine_client_mock.return_value.start_workflow
 
         start_wf_mock.assert_called_once()
@@ -85,6 +84,7 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             start_wf_mock.mock_calls[0][2]['description']
         )
 
+        time.sleep(1)  # this is to give time for a next execution
         next_triggers = triggers.get_next_cron_triggers()
 
         self.assertEqual(1, len(next_triggers))
