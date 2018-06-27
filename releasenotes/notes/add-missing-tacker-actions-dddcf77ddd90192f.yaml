@@ -1,0 +1,11 @@
+---
+
+features:
+  - |
+    Add missing Tacker actions to Mistral that includes vnf forwarding graph
+    (vnffg), vnffg descriptor, network service (ns) and ns descriptor actions
+    - vnffgd actions: create_vnffgd, delete_vnffgd, list_vnffgds, show_vnffgd
+    - vnffg actions: create_vnffg, update_vnffg, delete_vnffg, list_vnffgs,
+    show_vnffg
+    - nsd actions: create_nsd, delete_nsd, list_nsds, show_nsd
+    - ns actions: create_ns, delete_ns, list_nss, show_ns
