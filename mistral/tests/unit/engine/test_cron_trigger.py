@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import datetime
-import time
 
 import mock
 from oslo_config import cfg
@@ -84,9 +83,12 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             start_wf_mock.mock_calls[0][2]['description']
         )
 
-        time.sleep(1)  # this is to give time for a next execution
-        next_triggers = triggers.get_next_cron_triggers()
+        self._await(
+            lambda: triggers.get_next_cron_triggers(),
+            fail_message="No triggers were found"
+        )
 
+        next_triggers = triggers.get_next_cron_triggers()
         self.assertEqual(1, len(next_triggers))
 
         next_trigger = next_triggers[0]
@@ -123,8 +125,11 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         next_execution_time_before = next_trigger.next_execution_time
         ts_before = datetime.datetime.utcnow()
 
-        time.sleep(1)  # this is to simulate lagging
         periodic.process_cron_triggers_v2(None, None)
+        self._await(
+            lambda: triggers.get_next_cron_triggers(),
+            fail_message="No triggers were found"
+        )
 
         next_triggers = triggers.get_next_cron_triggers()
 
