@@ -720,12 +720,13 @@ class TestExecutionsController(base.APITest):
         'get_workflow_execution',
         mock.MagicMock(return_value=(states.RUNNING,))
     )
-    def test_delete_unfished_execution(self):
+    def test_delete_running_execution(self):
         resp = self.app.delete('/v2/executions/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
         self.assertIn(
             "Only completed executions can be deleted. "
+            "Use --force to override this. "
             "Execution 123 is in RUNNING state",
             resp.body.decode()
         )
