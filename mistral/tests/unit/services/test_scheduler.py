@@ -241,6 +241,9 @@ class SchedulerServiceTest(base.DbTestCase):
         self._assert_single_item(calls, target_method_name=TARGET_METHOD_PATH)
 
         self.queue.get()
+
+        eventlet.sleep(0.1)
+
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_delayed_call,
@@ -335,7 +338,4 @@ class SchedulerServiceTest(base.DbTestCase):
         for _ in range(number_delayed_calls):
             self.queue.get()
 
-        self.assertEqual(
-            [2, 2, 1],
-            processed_calls_at_time
-        )
+        self.assertListEqual([1, 2, 2], sorted(processed_calls_at_time))
