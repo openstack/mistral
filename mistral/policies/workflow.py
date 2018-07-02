@@ -74,6 +74,21 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=WORKFLOWS % 'publicize',
+        check_str=base.RULE_ADMIN_OR_OWNER,
+        description='Make a workflow publicly available',
+        operations=[
+            {
+                'path': '/v2/workflows',
+                'method': 'POST'
+            },
+            {
+                'path': '/v2/workflows',
+                'method': 'PUT'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=WORKFLOWS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update one or more workflows.',

@@ -83,6 +83,8 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         scope = pecan.request.GET.get('scope', 'private')
         resources.Action.validate_scope(scope)
+        if scope == 'public':
+            acl.enforce('actions:publicize', context.ctx())
 
         @rest_utils.rest_retry_on_db_error
         def _update_actions():
@@ -116,6 +118,8 @@ class ActionsController(rest.RestController, hooks.HookController):
         pecan.response.status = 201
 
         resources.Action.validate_scope(scope)
+        if scope == 'public':
+            acl.enforce('actions:publicize', context.ctx())
 
         LOG.debug("Create action(s) [definition=%s]", definition)
 

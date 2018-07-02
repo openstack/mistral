@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Mistral now supports a `publicize` policy on actions and workflows which
+    controls whether the users are allowed to create or update them. The
+    default policy does not change which means that everyone can publish
+    action or workflow unless specified differently in the policy.

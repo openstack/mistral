@@ -117,6 +117,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         scope = pecan.request.GET.get('scope', 'private')
 
         resources.Workflow.validate_scope(scope)
+        if scope == 'public':
+            acl.enforce('workflows:publicize', context.ctx())
 
         LOG.debug("Update workflow(s) [definition=%s]", definition)
 
@@ -153,6 +155,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         pecan.response.status = 201
 
         resources.Workflow.validate_scope(scope)
+        if scope == 'public':
+            acl.enforce('workflows:publicize', context.ctx())
 
         LOG.debug("Create workflow(s) [definition=%s]", definition)
 
