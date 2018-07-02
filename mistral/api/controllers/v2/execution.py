@@ -302,8 +302,9 @@ class ExecutionsController(rest.RestController):
 
             if not states.is_completed(state):
                 raise exc.NotAllowedException(
-                    "Only completed executions can be deleted."
-                    " Execution {} is in {} state".format(id, state)
+                    "Only completed executions can be deleted. "
+                    "Use --force to override this. "
+                    "Execution {} is in {} state".format(id, state)
                 )
 
         return rest_utils.rest_retry_on_db_error(
