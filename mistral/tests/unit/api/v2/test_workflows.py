@@ -293,6 +293,17 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual("public", mock_update.call_args[0][1]['scope'])
 
+    def test_put_wrong_scope(self):
+        resp = self.app.put(
+            '/v2/workflows?scope=unique',
+            UPDATED_WF_DEFINITION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn("Scope must be one of the following", resp.body.decode())
+
     @mock.patch.object(
         db_api, "update_workflow_definition", MOCK_WF_WITH_INPUT
     )
@@ -381,10 +392,7 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual("public", mock_mtd.call_args[0][0]['scope'])
 
-    @mock.patch.object(db_api, "create_action_definition")
-    def test_post_wrong_scope(self, mock_mtd):
-        mock_mtd.return_value = WF_DB
-
+    def test_post_wrong_scope(self):
         resp = self.app.post(
             '/v2/workflows?scope=unique',
             WF_DEFINITION,

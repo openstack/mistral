@@ -66,12 +66,15 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         acl.enforce('workbooks:update', context.ctx())
 
         definition = pecan.request.text
+        scope = pecan.request.GET.get('scope', 'private')
+
+        resources.Workbook.validate_scope(scope)
 
         LOG.debug("Update workbook [definition=%s]", definition)
 
         wb_db = rest_utils.rest_retry_on_db_error(
             workbooks.update_workbook_v2
-        )(definition)
+        )(definition, scope=scope)
 
         return resources.Workbook.from_db_model(wb_db).to_json()
 
@@ -82,12 +85,15 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         acl.enforce('workbooks:create', context.ctx())
 
         definition = pecan.request.text
+        scope = pecan.request.GET.get('scope', 'private')
+
+        resources.Workbook.validate_scope(scope)
 
         LOG.debug("Create workbook [definition=%s]", definition)
 
         wb_db = rest_utils.rest_retry_on_db_error(
             workbooks.create_workbook_v2
-        )(definition)
+        )(definition, scope=scope)
 
         pecan.response.status = 201
 

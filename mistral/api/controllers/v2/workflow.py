@@ -116,11 +116,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
 
-        if scope not in resources.SCOPE_TYPES.values:
-            raise exc.InvalidModelException(
-                "Scope must be one of the following: %s; actual: "
-                "%s" % (resources.SCOPE_TYPES.values, scope)
-            )
+        resources.Workflow.validate_scope(scope)
 
         LOG.debug("Update workflow(s) [definition=%s]", definition)
 
@@ -156,11 +152,7 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         scope = pecan.request.GET.get('scope', 'private')
         pecan.response.status = 201
 
-        if scope not in resources.SCOPE_TYPES.values:
-            raise exc.InvalidModelException(
-                "Scope must be one of the following: %s; actual: "
-                "%s" % (resources.SCOPE_TYPES.values, scope)
-            )
+        resources.Workflow.validate_scope(scope)
 
         LOG.debug("Create workflow(s) [definition=%s]", definition)
 

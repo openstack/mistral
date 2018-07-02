@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 import copy
-import datetime
 
 import mock
 import sqlalchemy as sa
@@ -27,35 +26,77 @@ from mistral.tests.unit.api import base
 
 WORKBOOK_DEF = """
 ---
-version: 2.0
+version: '2.0'
 name: 'test'
+
+workflows:
+  flow:
+    type: direct
+    tasks:
+      task1:
+        action: step param="Hello !"
+
+actions:
+  step:
+    input:
+      - param
+    base: std.echo output="<% $.param %>""
 """
 
 UPDATED_WORKBOOK_DEF = """
 ---
-version: 2.0
+version: '2.0'
 name: 'book'
-"""
 
-WORKBOOK_DB = models.Workbook(
-    id='123',
-    name='book',
-    definition=WORKBOOK_DEF,
-    tags=['deployment', 'demo'],
-    scope="public",
-    created_at=datetime.datetime(1970, 1, 1),
-    updated_at=datetime.datetime(1970, 1, 1)
-)
+workflows:
+  flow:
+    type: direct
+    tasks:
+      task1:
+        action: step arg="Hello !"
+
+actions:
+  step:
+    input:
+      - param
+    base: std.echo output="<% $.param %>""
+"""
 
 WORKBOOK = {
     'id': '123',
-    'name': 'book',
+    'name': 'test',
     'definition': WORKBOOK_DEF,
     'tags': ['deployment', 'demo'],
     'scope': 'public',
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00'
 }
+
+ACTION = {
+    'id': '123e4567-e89b-12d3-a456-426655440000',
+    'name': 'step',
+    'is_system': False,
+    'description': 'My super cool action.',
+    'tags': ['test', 'v2'],
+    'definition': ''
+}
+
+WF = {
+    'id': '123e4567-e89b-12d3-a456-426655440000',
+    'name': 'flow',
+    'definition': '',
+    'created_at': '1970-01-01 00:00:00',
+    'updated_at': '1970-01-01 00:00:00',
+}
+
+ACTION_DB = models.ActionDefinition()
+ACTION_DB.update(ACTION)
+
+WORKBOOK_DB = models.Workbook()
+WORKBOOK_DB.update(WORKBOOK)
+
+WF_DB = models.WorkflowDefinition()
+WF_DB.update(WF)
 
 WORKBOOK_DB_PROJECT_ID = WORKBOOK_DB.get_clone()
 WORKBOOK_DB_PROJECT_ID.project_id = '<default-project>'
@@ -174,6 +215,38 @@ class TestWorkbooksController(base.APITest):
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
 
+    @mock.patch.object(db_api, "update_workbook")
+    @mock.patch.object(db_api, "create_or_update_workflow_definition")
+    @mock.patch.object(db_api, "create_or_update_action_definition")
+    def test_put_public(self, mock_action, mock_wf, mock_wb):
+        mock_wb.return_value = UPDATED_WORKBOOK_DB
+        mock_wf.return_value = WF_DB
+        mock_action.return_value = ACTION_DB
+
+        resp = self.app.put(
+            '/v2/workbooks?scope=public',
+            UPDATED_WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(UPDATED_WORKBOOK, resp.json)
+
+        self.assertEqual("public", mock_wb.call_args[0][1]['scope'])
+        self.assertEqual("public", mock_wf.call_args[0][1]['scope'])
+        self.assertEqual("public", mock_action.call_args[0][1]['scope'])
+
+    def test_put_wrong_scope(self):
+        resp = self.app.put(
+            '/v2/workbooks?scope=unique',
+            UPDATED_WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn("Scope must be one of the following", resp.body.decode())
+
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_WORKBOOK)
     def test_post(self):
         resp = self.app.post(
@@ -206,6 +279,38 @@ class TestWorkbooksController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
+
+    @mock.patch.object(db_api, "create_workbook")
+    @mock.patch.object(db_api, "create_or_update_workflow_definition")
+    @mock.patch.object(db_api, "create_or_update_action_definition")
+    def test_post_public(self, mock_action, mock_wf, mock_wb):
+        mock_wb.return_value = WORKBOOK_DB
+        mock_wf.return_value = WF_DB
+        mock_action.return_value = ACTION_DB
+
+        resp = self.app.post(
+            '/v2/workbooks?scope=public',
+            WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(201, resp.status_int)
+        self.assertEqual(WORKBOOK, resp.json)
+
+        self.assertEqual("public", mock_wb.call_args[0][0]['scope'])
+        self.assertEqual("public", mock_wf.call_args[0][1]['scope'])
+        self.assertEqual("public", mock_action.call_args[0][1]['scope'])
+
+    def test_post_wrong_scope(self):
+        resp = self.app.post(
+            '/v2/workbooks?scope=unique',
+            WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(400, resp.status_int)
+        self.assertIn("Scope must be one of the following", resp.body.decode())
 
     @mock.patch.object(db_api, "delete_workbook", MOCK_DELETE)
     def test_delete(self):
