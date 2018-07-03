@@ -5,6 +5,11 @@ Mistral is the OpenStack workflow service. This project aims to provide
 a mechanism to define tasks and workflows without writing code, manage
 and execute them in the cloud environment.
 
+A workflow visualization tool is available via
+`CloudFlow <https://github.com/nokia/CloudFlow>`_ and will help you debug
+workflow executions, identify execution paths, explore task run times,
+easily access input/output values and so many more...
+
 Overview
 --------
 

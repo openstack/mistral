@@ -26,6 +26,8 @@ Project Resources
 * Project status, bugs, and blueprints are tracked on
   `Launchpad <https://launchpad.net/mistral/>`_
 
+* CloudFlow: visualization tool for workflow executions on https://github.com/nokia/CloudFlow
+
 * Additional resources are linked from the project
   `Wiki <https://wiki.openstack.org/wiki/Mistral/>`_ page
 
