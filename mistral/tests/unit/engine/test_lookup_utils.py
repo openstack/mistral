@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import time
-
 import cachetools
 from oslo_config import cfg
 
@@ -151,7 +149,11 @@ class LookupUtilsTest(base.EngineTestCase):
         self.assertIn('std.echo', lookup_utils._ACTION_DEF_CACHE)
 
         # Wait some time until cache expires
-        time.sleep(7)
+        self._await(
+            lambda: lookup_utils.get_action_definition_cache_size() == 0,
+            fail_message="No triggers were found"
+        )
+
         self.assertEqual(0, lookup_utils.get_action_definition_cache_size())
 
         self.engine.resume_workflow(wf_ex.id)
