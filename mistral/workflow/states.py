@@ -15,15 +15,34 @@
 
 """Valid task and workflow states."""
 
-# TODO(rakhmerov): need docs explaining what each state means.
 IDLE = 'IDLE'
+"""Task is not started yet."""
+
 WAITING = 'WAITING'
+"""
+Task execution object has been created, but it is not ready to start because
+some preconditions are not met.
+NOTE:
+The task may never run just because some of the preconditions may never be met.
+"""
+
 RUNNING = 'RUNNING'
+"""Task, action or workflow is currently being executed."""
+
 RUNNING_DELAYED = 'DELAYED'
+"""Task is in the running state but temporarily delayed."""
+
 PAUSED = 'PAUSED'
+"""Task, action or workflow has been paused."""
+
 SUCCESS = 'SUCCESS'
+"""Task, action or workflow has finished successfully."""
+
 CANCELLED = 'CANCELLED'
+"""Task, action or workflow has been cancelled."""
+
 ERROR = 'ERROR'
+"""Task, action or workflow has finished with an error."""
 
 _ALL = [
     IDLE,
