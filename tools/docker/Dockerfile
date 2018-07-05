@@ -21,7 +21,7 @@ RUN apt-get -qq update && \
       gcc \
       libuv1 \
       libuv1-dev && \
-      curl -f -o /tmp/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
+      curl -f -o /tmp/get-pip.py https://bootstrap.pypa.io/3.2/get-pip.py && \
       python /tmp/get-pip.py && rm /tmp/get-pip.py
 
 RUN pip install pymysql psycopg2 py_mini_racer
