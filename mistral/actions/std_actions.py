@@ -190,6 +190,12 @@ class HTTPAction(actions.Action):
         )
 
         try:
+            url_data = six.moves.urllib.parse.urlsplit(self.url)
+            if 'https' == url_data.scheme:
+                action_verify = self.verify
+            else:
+                action_verify = None
+
             resp = requests.request(
                 self.method,
                 self.url,
@@ -201,7 +207,7 @@ class HTTPAction(actions.Action):
                 timeout=self.timeout,
                 allow_redirects=self.allow_redirects,
                 proxies=self.proxies,
-                verify=self.verify
+                verify=action_verify
             )
         except Exception as e:
             LOG.exception(
