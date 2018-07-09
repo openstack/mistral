@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    The action std.mistral_http will now retrun an error if the HTTP request
+    fails. Previously the task would still go into the RUNNING state and wait
+    to be completed by the external resource.
