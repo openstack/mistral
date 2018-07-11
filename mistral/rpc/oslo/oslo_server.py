@@ -35,7 +35,7 @@ class OsloRPCServer(rpc.RPCServer):
     def register_endpoint(self, endpoint):
         self.endpoints.append(endpoint)
 
-    def run(self, executor='blocking'):
+    def run(self, executor='eventlet'):
         target = messaging.Target(
             topic=self.topic,
             server=self.server_id
