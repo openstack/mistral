@@ -170,10 +170,13 @@ ACTION_DEFINITION = """concat:
 
 class WorkbookServiceTest(base.DbTestCase):
     def test_create_workbook(self):
-        wb_db = wb_service.create_workbook_v2(WORKBOOK)
+        namespace = 'test_workbook_service_0123_namespace'
+
+        wb_db = wb_service.create_workbook_v2(WORKBOOK, namespace=namespace)
 
         self.assertIsNotNone(wb_db)
         self.assertEqual('my_wb', wb_db.name)
+        self.assertEqual(namespace, wb_db.namespace)
         self.assertEqual(WORKBOOK, wb_db.definition)
         self.assertIsNotNone(wb_db.spec)
         self.assertListEqual(['test'], wb_db.tags)
@@ -205,6 +208,7 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertEqual('reverse', wf1_spec.get_type())
         self.assertListEqual(['wf_test'], wf1_spec.get_tags())
         self.assertListEqual(['wf_test'], wf1_db.tags)
+        self.assertEqual(namespace, wf1_db.namespace)
         self.assertEqual(WORKBOOK_WF1_DEFINITION, wf1_db.definition)
 
         # Workflow 2.
@@ -213,20 +217,36 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
+        self.assertEqual(namespace, wf2_db.namespace)
         self.assertEqual(WORKBOOK_WF2_DEFINITION, wf2_db.definition)
 
-    def test_update_workbook(self):
-        # Create workbook.
+    def test_create_workbook_with_default_namespace(self):
         wb_db = wb_service.create_workbook_v2(WORKBOOK)
+
+        self.assertIsNotNone(wb_db)
+        self.assertEqual('my_wb', wb_db.name)
+        self.assertEqual('', wb_db.namespace)
+
+        db_api.delete_workbook('my_wb')
+
+    def test_update_workbook(self):
+        namespace = 'test_workbook_service_0123_namespace'
+
+        # Create workbook.
+        wb_db = wb_service.create_workbook_v2(WORKBOOK, namespace=namespace)
 
         self.assertIsNotNone(wb_db)
         self.assertEqual(2, len(db_api.get_workflow_definitions()))
 
         # Update workbook.
-        wb_db = wb_service.update_workbook_v2(UPDATED_WORKBOOK)
+        wb_db = wb_service.update_workbook_v2(
+            UPDATED_WORKBOOK,
+            namespace=namespace
+        )
 
         self.assertIsNotNone(wb_db)
         self.assertEqual('my_wb', wb_db.name)
+        self.assertEqual(namespace, wb_db.namespace)
         self.assertEqual(UPDATED_WORKBOOK, wb_db.definition)
         self.assertListEqual(['test'], wb_db.tags)
 
@@ -240,6 +260,7 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf1', wf1_spec.get_name())
         self.assertEqual('direct', wf1_spec.get_type())
+        self.assertEqual(namespace, wf1_db.namespace)
         self.assertEqual(UPDATED_WORKBOOK_WF1_DEFINITION, wf1_db.definition)
 
         # Workflow 2.
@@ -248,4 +269,26 @@ class WorkbookServiceTest(base.DbTestCase):
 
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('reverse', wf2_spec.get_type())
+        self.assertEqual(namespace, wf2_db.namespace)
         self.assertEqual(UPDATED_WORKBOOK_WF2_DEFINITION, wf2_db.definition)
+
+    def test_delete_workbook(self):
+        namespace = 'pqr'
+
+        # Create workbook.
+        wb_service.create_workbook_v2(WORKBOOK, namespace=namespace)
+
+        db_wfs = db_api.get_workflow_definitions()
+        db_actions = db_api.get_action_definitions(name='my_wb.concat')
+
+        self.assertEqual(2, len(db_wfs))
+        self.assertEqual(1, len(db_actions))
+
+        db_api.delete_workbook('my_wb', namespace=namespace)
+
+        db_wfs = db_api.get_workflow_definitions()
+        db_actions = db_api.get_action_definitions(name='my_wb.concat')
+
+        # Deleting workbook shouldn't delete workflows and actions
+        self.assertEqual(2, len(db_wfs))
+        self.assertEqual(1, len(db_actions))

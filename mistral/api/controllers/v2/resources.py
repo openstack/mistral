@@ -41,6 +41,7 @@ class Workbook(resource.Resource, ScopedResource):
 
     id = wtypes.text
     name = wtypes.text
+    namespace = wtypes.text
 
     definition = wtypes.text
     "workbook definition in Mistral v2 DSL"
@@ -62,7 +63,8 @@ class Workbook(resource.Resource, ScopedResource):
                    scope='private',
                    project_id='a7eb669e9819420ea4bd1453e672c0a7',
                    created_at='1970-01-01T00:00:00.000000',
-                   updated_at='1970-01-01T00:00:00.000000')
+                   updated_at='1970-01-01T00:00:00.000000',
+                   namespace='')
 
 
 class Workbooks(resource.ResourceList):

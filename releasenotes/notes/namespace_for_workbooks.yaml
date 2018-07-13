@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    Add support for creating workbooks in a namespace. Creating workbooks
+    with same name is now possible inside the same project now. This feature
+    is backward compatible.
+
+    All existing workbooks are assumed to be in the default namespace,
+    represented by an empty string. Also, if a workbook is created without a
+    namespace specified, it is assumed to be in the default namespace.
+
+    When a workbook is created, its namespace is inherited by the
+    workflows contained within it. All operations on a particular workbook
+    require combination of name and namespace to uniquely identify a workbook
+    inside a project.

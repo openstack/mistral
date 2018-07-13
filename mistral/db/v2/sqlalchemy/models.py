@@ -113,9 +113,14 @@ class Workbook(Definition):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks_v2'
+    namespace = sa.Column(sa.String(255), nullable=True)
 
     __table_args__ = (
-        sa.UniqueConstraint('name', 'project_id'),
+        sa.UniqueConstraint(
+            'name',
+            'namespace',
+            'project_id'
+        ),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
     )
