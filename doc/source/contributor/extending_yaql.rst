@@ -121,7 +121,7 @@ For more information about YAQL, read the `official YAQL documentation <http://y
 
 .. code-block:: bash
 
-    $ curl https://bootstrap.pypa.io/get-pip.py | python
+    $ curl https://bootstrap.pypa.io/3.2/get-pip.py | python
     $ pip install --upgrade setuptools
     $ cd -
 
