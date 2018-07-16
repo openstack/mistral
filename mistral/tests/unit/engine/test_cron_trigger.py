@@ -175,10 +175,9 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             None
         )
 
-        self.assertEqual(
-            first_time,
-            cron_trigger.next_execution_time
-        )
+        interval = (cron_trigger.next_execution_time - first_time)
+
+        self.assertLessEqual(interval.total_seconds(), 3.0)
 
         periodic.process_cron_triggers_v2(None, None)
 

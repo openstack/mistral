@@ -13,8 +13,10 @@
 #    limitations under the License.
 
 from mistral.lang import parser as spec_parser
+from mistral.lang.v2 import workflows
 from mistral.tests.unit import base
 from mistral.workflow import base as wf_base
+from mistral.workflow import commands
 from mistral.workflow import direct_workflow as direct_wf
 from mistral.workflow import reverse_workflow as reverse_wf
 
@@ -64,3 +66,7 @@ class WorkflowControllerTest(base.BaseTest):
             wf_base.get_controller(wf_ex, wf_spec),
             reverse_wf.ReverseWorkflowController
         )
+
+    def test_all_engine_commands_have_implementation(self):
+        for command in workflows.ENGINE_COMMANDS:
+            self.assertIsNotNone(commands.get_command_class(command))

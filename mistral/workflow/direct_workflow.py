@@ -120,7 +120,7 @@ class DirectWorkflowController(base.WorkflowController):
         for t_n, params, event_name in self._find_next_tasks(task_ex, ctx=ctx):
             t_s = self.wf_spec.get_tasks()[t_n]
 
-            if not (t_s or t_n in commands.RESERVED_CMDS):
+            if not (t_s or t_n in commands.ENGINE_CMD_CLS):
                 raise exc.WorkflowException("Task '%s' not found." % t_n)
             elif not t_s:
                 t_s = self.wf_spec.get_tasks()[task_ex.name]

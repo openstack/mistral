@@ -197,7 +197,8 @@ class BaseTest(base.BaseTestCase):
 
         self.fail(self._formatMessage(msg, standardMsg))
 
-    def _await(self, predicate, delay=1, timeout=60, fail_message="no detail"):
+    def _await(self, predicate, delay=1, timeout=60, fail_message="no detail",
+               fail_message_formatter=lambda x: x):
         """Awaits for predicate function to evaluate to True.
 
         If within a configured timeout predicate function hasn't evaluated
@@ -207,6 +208,7 @@ class BaseTest(base.BaseTestCase):
         :param timeout: Maximum amount of time to wait for predication
             function to evaluate to True.
         :param fail_message: explains what was expected
+        :param fail_message_formatter: lambda that formats the fail_message
         :return:
         """
         end_time = time.time() + timeout
@@ -217,7 +219,8 @@ class BaseTest(base.BaseTestCase):
 
             if time.time() + delay > end_time:
                 raise AssertionError(
-                    "Failed to wait for expected result: " + fail_message
+                    "Failed to wait for expected result: " +
+                    fail_message_formatter(fail_message)
                 )
 
             time.sleep(delay)

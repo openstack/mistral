@@ -270,7 +270,13 @@ class EngineTestCase(base.DbTestCase):
             lambda: self.is_workflow_in_state(ex_id, state),
             delay,
             timeout,
-            "Execution {} to reach {} state".format(ex_id, state)
+            fail_message="Execution {ex_id} to reach {state} "
+                         "state but is in {current}",
+            fail_message_formatter=lambda m: m.format(
+                ex_id=ex_id,
+                state=state,
+                current=db_api.get_workflow_execution(ex_id).state
+            )
         )
 
     def await_workflow_running(self, ex_id, delay=DEFAULT_DELAY,

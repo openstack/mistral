@@ -23,6 +23,17 @@ from mistral.lang.v2 import task_defaults
 from mistral.lang.v2 import tasks
 from mistral import utils
 
+NOOP_COMMAND = 'noop'
+FAIL_COMMAND = 'fail'
+SUCCEED_COMMAND = 'succeed'
+PAUSE_COMMAND = 'pause'
+ENGINE_COMMANDS = [
+    NOOP_COMMAND,
+    FAIL_COMMAND,
+    SUCCEED_COMMAND,
+    PAUSE_COMMAND
+]
+
 
 class WorkflowSpec(base.BaseSpec):
     # See http://json-schema.org
@@ -93,7 +104,7 @@ class WorkflowSpec(base.BaseSpec):
         valid_task = self._task_exists(task_name)
 
         if allow_engine_cmds:
-            valid_task |= task_name in tasks.RESERVED_TASK_NAMES
+            valid_task |= task_name in ENGINE_COMMANDS
 
         if not valid_task:
             raise exc.InvalidModelException(
