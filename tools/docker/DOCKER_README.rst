@@ -118,10 +118,49 @@ or PostgreSQL::
     -e RUN_TESTS=true mistral
 
 
+Keycloak integration
+--------------------
+
+If you set AUTH_ENABLE to True value in the mistral.env file then Mistral will
+enable Keycloak integration by default. Keycloak will be deployed with
+mistral/mistral credentials. You should uncomment the volume line in the
+`infrastructure.yaml` for the CloudFlow.
+
+Next step you login in the administrative console using the
+http://localhost:8080/auth/admin URL. Create a oauth client, you can
+specify only a name, for example mistral.
+
+Specify valid redirect URL: http://localhost:8000/* and turn on the
+"Implicit Flow Enabled" in the your client page. Save your changes.
+
+Add the following line to your /etc/hosts file::
+
+  127.0.0.1   keycloak
+
+Export the following environments variable for mistral cli::
+
+  export MISTRAL_AUTH_TYPE=keycloak-oidc
+  export OS_AUTH_URL=http://keycloak:8080/auth
+  export OS_TENANT_NAME=master
+  export OS_USERNAME=mistral
+  export OS_PASSWORD=mistral
+  export OS_MISTRAL_URL=http://localhost:8989/v2
+  export OPENID_CLIENT_ID=mistral
+  export OPENID_CLIENT_SECRET=
+  export MISTRALCLIENT_INSECURE=True
+
+Check your configuration::
+
+  mistral workflow-list
+
+Or open a cloud flow page in a browser::
+
+  http://localhost:8000
+
+
 Using Mistral Client
 --------------------
 
 The Mistral API will be accessible from the host machine on the default
 port 8989. Install `python-mistralclient` on the host machine to
 execute mistral commands.
-

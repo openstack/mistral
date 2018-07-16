@@ -12,28 +12,11 @@ services:
     networks:
       - database
       - message-broker
-      - mistral
+      - identity-provider
+      - cloud-flow
     env_file:
      - mistral.env
 #    volumes:
 #      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
     environment:
       - UPGRADE_DB=true
-
-  cloud-flow:
-    image: mcdoker18/cloud-flow:0.5.0
-    restart: always
-    networks:
-      - mistral
-    ports:
-      - "8000:8000"
-    networks:
-      - mistral
-    environment:
-      - CF_MISTRAL_URL=http://mistral:8989
-
-
-networks:
-  database:
-  message-broker:
-  mistral:
