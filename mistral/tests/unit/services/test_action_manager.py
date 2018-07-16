@@ -41,7 +41,7 @@ class ActionManagerTest(base.DbTestCase):
         std_http = db_api.get_action_definition("std.http")
         std_echo = db_api.get_action_definition("std.echo")
 
-        self.assertIn("Constructs an HTTP action", std_http.description)
+        self.assertIn("HTTP action", std_http.description)
         self.assertIn("param body: (optional) Dictionary, bytes",
                       std_http.description)
 
