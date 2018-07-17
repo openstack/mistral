@@ -25,6 +25,7 @@
       - openstack/mistral
       - openstack/python-mistralclient
       - openstack/mistral-tempest-plugin
+      - openstack/mistral-lib
 
 - job:
     name: mistral-rally-task
@@ -65,6 +66,9 @@
     parent: openstack-tox
     vars:
       tox_envlist: unit-mysql
+    timeout: 3600
+    required-projects:
+      - openstack/mistral-lib
 
 - job:
     name: mistral-tox-unit-postgresql
@@ -72,12 +76,25 @@
     vars:
       tox_envlist: unit-postgresql
       tox_environment: { CI_PROJECT: "{{ zuul['project']['name'] }}" }
+    timeout: 3600
+    required-projects:
+      - openstack/mistral-lib
 
 - project:
     check:
       jobs:
         - openstack-tox-cover:
             voting: false
+            irrelevant-files:
+              - ^.zuul.yaml$
+            required-projects:
+              - openstack/mistral-lib
+        - openstack-tox-py35:
+            required-projects:
+              - openstack/mistral-lib
+        - openstack-tox-py27:
+            required-projects:
+              - openstack/mistral-lib
         - mistral-devstack
         - mistral-devstack-non-apache:
             branches: ^(?!stable/(newton|ocata)).*$
@@ -96,7 +113,9 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-rally-task
-        - openstack-tox-lower-constraints
+        - openstack-tox-lower-constraints:
+            required-projects:
+              - openstack/mistral-lib
     gate:
       jobs:
         - mistral-devstack
