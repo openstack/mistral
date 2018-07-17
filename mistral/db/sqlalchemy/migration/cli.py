@@ -81,7 +81,8 @@ def do_revision(config, cmd):
         config, cmd,
         message=CONF.command.message,
         autogenerate=CONF.command.autogenerate,
-        sql=CONF.command.sql
+        sql=CONF.command.sql,
+        rev_id=CONF.command.rev_id
     )
 
 
@@ -106,6 +107,7 @@ def add_command_parsers(subparsers):
 
     parser = subparsers.add_parser('revision')
     parser.add_argument('-m', '--message')
+    parser.add_argument('--rev-id', dest='rev_id')
     parser.add_argument('--autogenerate', action='store_true')
     parser.add_argument('--sql', action='store_true')
     parser.set_defaults(func=do_revision)
