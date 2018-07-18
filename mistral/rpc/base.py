@@ -168,7 +168,7 @@ class RPCServer(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def run(self, executor='blocking'):
+    def run(self, executor='eventlet'):
         """Runs the RPC server.
 
         :param executor: Executor used to process incoming requests. Different

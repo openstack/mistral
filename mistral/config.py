@@ -111,6 +111,14 @@ rpc_response_timeout_opt = cfg.IntOpt(
     help=_('Seconds to wait for a response from a call.')
 )
 
+oslo_rpc_executor = cfg.StrOpt(
+    'oslo_rpc_executor',
+    default='eventlet',
+    choices=['eventlet', 'blocking', 'threading'],
+    help=_('Executor type used by Oslo Messaging framework. Defines how '
+           'Oslo Messaging based RPC subsystem processes incoming calls.')
+)
+
 expiration_token_duration = cfg.IntOpt(
     'expiration_token_duration',
     default=30,
@@ -559,6 +567,7 @@ CONF.register_opt(auth_type_opt)
 CONF.register_opt(js_impl_opt)
 CONF.register_opt(rpc_impl_opt)
 CONF.register_opt(rpc_response_timeout_opt)
+CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
 
 CONF.register_opts(api_opts, group=API_GROUP)
@@ -596,6 +605,7 @@ default_group_opts = itertools.chain(
         js_impl_opt,
         rpc_impl_opt,
         rpc_response_timeout_opt,
+        oslo_rpc_executor,
         expiration_token_duration
     ]
 )

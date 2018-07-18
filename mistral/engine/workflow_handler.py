@@ -112,7 +112,7 @@ def _check_and_complete(wf_ex_id):
                     else 4
                 )
 
-                # Rescheduling this check may not happen if erros are
+                # Rescheduling this check may not happen if errors are
                 # raised in the business logic. If the error is DB related
                 # and not considered fatal (e.g. disconnect, deadlock), the
                 # retry annotation around the method will ensure that the
