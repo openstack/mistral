@@ -41,6 +41,10 @@ from mistral import exceptions as exc
 
 # Thread local storage.
 _th_loc_storage = threading.local()
+
+# TODO(rakhmerov): these two constants are misplaced. Utility methods
+# should not be Mistral specific. They should be generic enough so to
+# be moved to any other project w/o changes.
 ACTION_TASK_TYPE = 'ACTION'
 WORKFLOW_TASK_TYPE = 'WORKFLOW'
 

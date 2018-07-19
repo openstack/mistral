@@ -51,6 +51,7 @@ class EngineServer(service_base.MistralService):
 
         self._scheduler = scheduler.start()
         self._expiration_policy_tg = expiration_policy.setup()
+
         action_execution_checker.setup()
 
         if self._setup_profiler:

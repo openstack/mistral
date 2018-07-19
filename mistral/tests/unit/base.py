@@ -203,7 +203,7 @@ class BaseTest(base.BaseTestCase):
 
         If within a configured timeout predicate function hasn't evaluated
         to True then an exception is raised.
-        :param predicate: Predication function.
+        :param predicate: Predicate function.
         :param delay: Delay in seconds between predicate function calls.
         :param timeout: Maximum amount of time to wait for predication
             function to evaluate to True.
@@ -302,6 +302,7 @@ class DbTestCase(BaseTest):
                     db_api.delete_environments()
                     db_api.delete_resource_members()
                     db_api.delete_delayed_calls()
+                    db_api.delete_scheduled_jobs()
 
         sqlite_lock.cleanup()
 

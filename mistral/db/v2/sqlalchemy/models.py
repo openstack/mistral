@@ -395,6 +395,39 @@ sa.Index(
 )
 
 
+class ScheduledJob(mb.MistralModelBase):
+    """Contains info about scheduled jobs."""
+
+    __tablename__ = 'scheduled_jobs_v2'
+
+    id = mb.id_column()
+
+    run_after = sa.Column(sa.Integer)
+
+    # The full name of the factory function that returns/builds a Python
+    # (target) object whose method should be called. Optional.
+    target_factory_func_name = sa.Column(sa.String(200), nullable=True)
+
+    # May take two different forms:
+    # 1. Full path of a target function that should be called. For example,
+    #  "mistral.utils.random_sleep".
+    # 2. Name of a method to call on a target object, if
+    #  "target_factory_func_name" is specified.
+    func_name = sa.Column(sa.String(80), nullable=False)
+
+    func_args = sa.Column(st.JsonDictType())
+    func_arg_serializers = sa.Column(st.JsonDictType())
+    auth_ctx = sa.Column(st.JsonDictType())
+    execute_at = sa.Column(sa.DateTime, nullable=False)
+    captured_at = sa.Column(sa.DateTime, nullable=True)
+
+
+sa.Index(
+    '%s_execution_time' % ScheduledJob.__tablename__,
+    ScheduledJob.execute_at
+)
+
+
 class Environment(mb.MistralSecureModelBase):
     """Contains environment variables for workflow execution."""
 
