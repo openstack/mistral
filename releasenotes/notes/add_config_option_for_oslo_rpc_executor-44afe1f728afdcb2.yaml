@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    Added the config option "oslo_rpc_executor" sets an executor type used by
+    Oslo Messaging framework. Defines how Oslo Messaging based RPC subsystem
+    processes incoming calls. Allowed values: "eventlet", "threading" and
+    "blocking". However, "blocking" is deprecated by the Oslo Messaging team
+    and may be removed in the next versions.
+    The reason of adding this option was in the issues occuring when using
+    MySQLDb database driver and "eventlet" RPC executor. Once in a while,
+    the system would hang on a deadlock caused by the fact that the DB
+    driver wasn't eventlet-friendly and dispatching of green threads didn't
+    work properly. That's why "blocking" was used. Now it's been proven that
+    a combination of "eventlet" executor and PyMysql driver works well. The
+    configuration option for the RPC executor though allows to rollback to
+    "blocking" in case if regression is found, or also experiment with
+    "threading".
