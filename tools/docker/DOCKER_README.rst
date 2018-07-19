@@ -63,6 +63,14 @@ for example::
                -f tools/docker/docker-compose/mistral-single-node.yaml \
                -p mistral up -d --build
 
+Running the Mistral client from the Docker Compose container
+------------------------------------------------------------
+
+To run the mistral client against the server in the container using the client
+present in the container::
+
+  docker run -it mistral_mistral mistral workflow-list
+
 Configuring Mistral
 -------------------
 
