@@ -20,7 +20,7 @@ directory.
 
     [keystone_authtoken]
     auth_uri = http://<keystone-host>:5000/v3
-    identity_uri = http://<keystone-host:35357
+    identity_uri = http://<keystone-host:5000
     auth_version = v3
     admin_user = <user>
     admin_password = <password>
