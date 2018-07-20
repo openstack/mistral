@@ -23,7 +23,7 @@ class PoliciesSpec(base.BaseSpec):
     _schema = {
         "type": "object",
         "properties": {
-            "retry": types.ANY,
+            "retry": retry_policy.RetrySpec.get_schema(),
             "wait-before": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "wait-after": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,

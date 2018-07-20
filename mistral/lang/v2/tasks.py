@@ -25,6 +25,7 @@ from mistral.lang.v2 import base
 from mistral.lang.v2 import on_clause
 from mistral.lang.v2 import policies
 from mistral.lang.v2 import publish
+from mistral.lang.v2 import retry_policy
 from mistral import utils
 from mistral.workflow import states
 
@@ -73,12 +74,12 @@ class TaskSpec(base.BaseSpec):
             },
             "publish": types.NONEMPTY_DICT,
             "publish-on-error": types.NONEMPTY_DICT,
-            "retry": types.ANY,
-            "wait-before": types.ANY,
-            "wait-after": types.ANY,
-            "timeout": types.ANY,
-            "pause-before": types.ANY,
-            "concurrency": types.ANY,
+            "retry": retry_policy.RetrySpec.get_schema(),
+            "wait-before": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "wait-after": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "pause-before": types.EXPRESSION_OR_BOOLEAN,
+            "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "target": types.NONEMPTY_STRING,
             "keep-result": types.EXPRESSION_OR_BOOLEAN,
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN
@@ -279,9 +280,9 @@ class DirectWorkflowTaskSpec(TaskSpec):
                     types.POSITIVE_INTEGER
                 ]
             },
-            "on-complete": types.ANY,
-            "on-success": types.ANY,
-            "on-error": types.ANY
+            "on-complete": on_clause.OnClauseSpec.get_schema(),
+            "on-success": on_clause.OnClauseSpec.get_schema(),
+            "on-error": on_clause.OnClauseSpec.get_schema()
         }
     }
 
