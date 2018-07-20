@@ -16,6 +16,7 @@
 import base64
 
 from mistral_lib.actions import context as lib_ctx
+from mistral_lib import serialization
 from oslo_config import cfg
 from oslo_context import context as oslo_context
 import oslo_messaging as messaging
@@ -26,7 +27,6 @@ from pecan import hooks
 
 from mistral import auth
 from mistral import exceptions as exc
-from mistral import serialization
 from mistral import utils
 
 CONF = cfg.CONF

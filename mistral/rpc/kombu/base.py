@@ -14,11 +14,11 @@
 
 import kombu
 
+from mistral_lib import serialization as mistral_serialization
 import oslo_messaging as messaging
 
 from mistral import config as cfg
 from mistral import exceptions as exc
-from mistral import serialization as mistral_serialization
 from mistral.utils import rpc_utils
 
 IS_RECEIVED = 'kombu_rpc_is_received'

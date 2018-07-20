@@ -15,12 +15,9 @@
 import abc
 import six
 
-from mistral import serialization
-from mistral_lib.actions import types
 from stevedore import driver
 
 _EXECUTORS = {}
-serialization.register_serializer(types.Result, types.ResultSerializer())
 
 
 def cleanup():
