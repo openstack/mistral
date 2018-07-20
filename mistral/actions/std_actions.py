@@ -272,7 +272,7 @@ class MistralHTTPAction(HTTPAction):
             'Mistral-Callback-URL': exec_ctx.callback_url,
         })
 
-        super(MistralHTTPAction, self).run(context)
+        return super(MistralHTTPAction, self).run(context)
 
     def is_sync(self):
         return False

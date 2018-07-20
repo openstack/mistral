@@ -38,7 +38,7 @@ wf:
 
   tasks:
     task1:
-      action: my_action
+      action: {action_name}
       input:
         success_result: <% $.success_result %>
         error_result: <% $.error_result %>
@@ -71,14 +71,21 @@ class MyAction(actions_base.Action):
         raise NotImplementedError
 
 
+class MyAsyncAction(MyAction):
+
+    def is_sync(self):
+        return False
+
+
 class ErrorResultTest(base.EngineTestCase):
     def setUp(self):
         super(ErrorResultTest, self).setUp()
 
         test_base.register_action_class('my_action', MyAction)
+        test_base.register_action_class('my_async_action', MyAsyncAction)
 
     def test_error_result1(self):
-        wf_service.create_workflows(WF)
+        wf_service.create_workflows(WF.format(action_name="my_action"))
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
@@ -111,7 +118,7 @@ class ErrorResultTest(base.EngineTestCase):
             self.assertEqual(2, data_flow.get_task_execution_result(task1))
 
     def test_error_result2(self):
-        wf_service.create_workflows(WF)
+        wf_service.create_workflows(WF.format(action_name="my_action"))
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
@@ -144,7 +151,7 @@ class ErrorResultTest(base.EngineTestCase):
             self.assertEqual(3, data_flow.get_task_execution_result(task1))
 
     def test_success_result(self):
-        wf_service.create_workflows(WF)
+        wf_service.create_workflows(WF.format(action_name="my_action"))
 
         # Start workflow.
         wf_ex = self.engine.start_workflow(
@@ -176,3 +183,45 @@ class ErrorResultTest(base.EngineTestCase):
                 'success',
                 data_flow.get_task_execution_result(task1)
             )
+
+    def test_async_error_result(self):
+        wf_service.create_workflows(WF.format(action_name="my_async_action"))
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={
+                'success_result': None,
+                'error_result': 2
+            }
+        )
+
+        # If the action errors, we expect the workflow to continue. The
+        # on-error means the workflow ends in success.
+        self.await_workflow_success(wf_ex.id)
+
+    def test_async_success_result(self):
+        wf_service.create_workflows(WF.format(action_name="my_async_action"))
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={
+                'success_result': 'success',
+                'error_result': None
+            }
+        )
+
+        # When the action is successful, the workflow will wait in the RUNNING
+        # state for it to complete.
+        self.await_workflow_running(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+            self.assertEqual(1, len(tasks))
+
+            task1 = self._assert_single_item(tasks, name='task1')
+            self.assertEqual(states.RUNNING, task1.state)
