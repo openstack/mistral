@@ -148,6 +148,12 @@ function install_mistral_pythonclient {
     fi
 }
 
+function install_mistral_lib {
+    if use_library_from_git "mistral-lib"; then
+        git_clone $MISTRAL_LIB_REPO $MISTRAL_LIB_DIR $MISTRAL_LIB_BRANCH
+        setup_develop $MISTRAL_LIB_DIR
+    fi
+}
 
 # start_mistral - Start running processes
 function start_mistral {
@@ -237,6 +243,7 @@ if is_service_enabled mistral; then
     if [[ "$1" == "stack" && "$2" == "install" ]]; then
         echo_summary "Installing mistral"
         install_mistral
+        install_mistral_lib
         install_mistral_pythonclient
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring mistral"
