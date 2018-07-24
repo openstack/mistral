@@ -6,9 +6,9 @@ How to write a Custom Action
 
  .. code-block:: python
 
-    from mistral.actions import base
+    from mistral_lib import actions
 
-    class RunnerAction(base.Action):
+    class RunnerAction(actions.Action):
         def __init__(self, param):
             # store the incoming params
             self.param = param
@@ -27,15 +27,10 @@ How to write a Custom Action
    mistral.actions =
        example.runner = my.mistral_plugins.somefile:RunnerAction
 
-3. Reinstall Mistral if it was installed in system (not in virtualenv).
+3. Install the Python package containing the action. If this was added to
+   Mistral itself it will need to be reinstalled.
 
-4. Run db-sync tool via either
-
- .. code-block:: console
-
-    $ tools/sync_db.sh --config-file <path-to-config>
-
- or
+4. Run the following command so Mistral discovers the new action
 
  .. code-block:: console
 
