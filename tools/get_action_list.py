@@ -37,6 +37,8 @@ from keystoneclient import base as keystone_base
 from keystoneclient.v3 import client as keystoneclient
 from magnumclient.common import base as magnum_base
 from magnumclient.v1 import client as magnumclient
+from manilaclient import base as manila_base
+from manilaclient.v2 import client as manilaclient
 from mistralclient.api import base as mistral_base
 from mistralclient.api.v2 import client as mistralclient
 from muranoclient.common import base as murano_base
@@ -88,6 +90,7 @@ BASE_MISTRAL_MANAGER = mistral_base.ResourceManager
 BASE_TROVE_MANAGER = trove_base.Manager
 BASE_IRONIC_MANAGER = ironic_base.Manager
 BASE_BARBICAN_MANAGER = barbican_base.BaseEntityManager
+BASE_MANILA_MANAGER = manila_base.Manager
 BASE_MAGNUM_MANAGER = magnum_base.Manager
 BASE_MURANO_MANAGER = murano_base.Manager
 BASE_AODH_MANAGER = aodh_base.Manager
@@ -211,6 +214,13 @@ def get_glare_client(**kwargs):
     return glareclient.Client('')
 
 
+def get_manila_client(**kwargs):
+    return manilaclient.Client(
+        input_auth_token='token',
+        service_catalog_url='http://127.0.0.1:8786'
+    )
+
+
 CLIENTS = {
     'nova': get_nova_client,
     'heat': get_heat_client,
@@ -227,6 +237,7 @@ CLIENTS = {
     'aodh': get_aodh_client,
     'gnocchi': get_gnocchi_client,
     'glare': get_glare_client,
+    'manila': get_manila_client,
     # 'neutron': get_nova_client
     # 'baremetal_introspection': ...
     # 'swift': ...
@@ -248,6 +259,7 @@ BASE_MANAGERS = {
     'aodh': BASE_AODH_MANAGER,
     'gnocchi': BASE_GNOCCHI_MANAGER,
     'glare': None,
+    'manila': BASE_MANILA_MANAGER,
     # 'neutron': BASE_NOVA_MANAGER
     # 'baremetal_introspection': ...
     # 'swift': ...
