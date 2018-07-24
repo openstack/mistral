@@ -248,11 +248,11 @@ def obtain_service_catalog(ctx):
     return service_catalog
 
 
-def get_keystone_endpoint_v2():
+def get_keystone_endpoint():
     return get_endpoint_for_project('keystone', service_type='identity')
 
 
-def get_keystone_url_v2():
+def get_keystone_url():
     return get_endpoint_for_project('keystone', service_type='identity').url
 
 
