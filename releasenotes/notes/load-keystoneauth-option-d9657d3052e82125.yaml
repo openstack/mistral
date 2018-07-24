@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    A new config option section `[keystone]` is added. The options in the
+    section is from keystoneauth by default. Please use them to talk with
+    keystone session. If the option value is not set, to keep backward
+    compatibility, Mistral will read the value from the same option in
+    `[keystone_authtoken]`.
+
+    The override behvaior will be removed in Stein. Please update the options
+    into `[keystone]` if you still want to use them.

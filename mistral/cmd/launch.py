@@ -56,6 +56,8 @@ CONF = cfg.CONF
 SERVER_THREAD_MANAGER = None
 SERVER_PROCESS_MANAGER = None
 
+LOG = logging.getLogger(__name__)
+
 
 def launch_thread(server, workers=1):
     try:
@@ -176,12 +178,28 @@ def get_properly_ordered_parameters():
     return args
 
 
+def override_keystone_options():
+    # TODO(wxy): This function is used for keeping backward compatibility.
+    # Remove it in Stein.
+    auth_opts = CONF['keystone_authtoken']
+    for opt, value in auth_opts.items():
+        if opt in CONF['keystone']:
+            default_value = auth_opts._group._opts[opt]['opt'].default
+            if default_value != value != CONF['keystone'][opt]:
+                LOG.warning("The config option '%s' in section "
+                            "[keystone_authtoken] has the same copy in "
+                            "[keystone]. Please add the same option to the "
+                            "[keystone] section to keep using it.", opt)
+                CONF.set_override(opt, value, group='keystone')
+
+
 def main():
     try:
         config.parse_args(get_properly_ordered_parameters())
         print_server_info()
 
         logging.setup(CONF, 'Mistral')
+        override_keystone_options()
 
         # Please refer to the oslo.messaging documentation for transport
         # configuration. The default transport for oslo.messaging is
