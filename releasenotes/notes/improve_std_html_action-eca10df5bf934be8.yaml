@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Improves std.email action with cc, bcc and html formatting.

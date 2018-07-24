@@ -1056,8 +1056,11 @@ std.email
 Sends an email message via SMTP protocol.
 
 -  **to_addrs** - Comma separated list of recipients. *Required*.
+-  **cc_addrs** - Comma separated list of CC recipients. *Optional*.
+-  **bcc_addrs** - Comma separated list of BCC recipients. *Optional*.
 -  **subject** - Subject of the message. *Optional*.
 -  **body** - Text containing message body. *Optional*.
+-  **html_body** - Text containing the message in HTML format. *Optional*.
 -  **from_addr** - Sender email address. *Required*.
 -  **smtp_server** - SMTP server host name. *Required*.
 -  **smtp_password** - SMTP server password. *Required*.

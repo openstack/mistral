@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from email import header
+from email.mime import multipart
 from email.mime import text
 import json
 import smtplib
@@ -277,15 +278,19 @@ class MistralHTTPAction(HTTPAction):
 
 
 class SendEmailAction(actions.Action):
-    def __init__(self, from_addr, to_addrs, smtp_server,
-                 smtp_password=None, subject=None, body=None):
+    def __init__(self, from_addr, to_addrs, smtp_server, cc_addrs=None,
+                 bcc_addrs=None, smtp_password=None, subject=None, body=None,
+                 html_body=None):
         super(SendEmailAction, self).__init__()
         # TODO(dzimine): validate parameters
 
         # Task invocation parameters.
         self.to = to_addrs
+        self.cc = cc_addrs or []
+        self.bcc = bcc_addrs or []
         self.subject = subject or "<No subject>"
         self.body = body or "<No body>"
+        self.html_body = html_body
 
         # Action provider settings.
         self.smtp_server = smtp_server
@@ -295,18 +300,34 @@ class SendEmailAction(actions.Action):
     def run(self, context):
         LOG.info(
             "Sending email message "
-            "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]",
+            "[from=%s, to=%s, cc=%s, bcc=%s, subject=%s, using smtp=%s, "
+            "body=%s...]",
             self.sender,
             self.to,
+            self.cc,
+            self.bcc,
             self.subject,
             self.smtp_server,
             self.body[:128]
         )
-
-        message = text.MIMEText(self.body, _charset='utf-8')
+        if not self.html_body:
+            message = text.MIMEText(self.body, _charset='utf-8')
+        else:
+            message = multipart.MIMEMultipart('alternative')
+            message.attach(text.MIMEText(self.body,
+                                         'plain',
+                                         _charset='utf-8'))
+            message.attach(text.MIMEText(self.html_body,
+                                         'html',
+                                         _charset='utf-8'))
         message['Subject'] = header.Header(self.subject, 'utf-8')
         message['From'] = self.sender
         message['To'] = ', '.join(self.to)
+
+        if self.cc:
+            message['cc'] = ', '.join(self.cc)
+
+        rcpt = self.cc + self.bcc + self.to
 
         try:
             s = smtplib.SMTP(self.smtp_server)
@@ -319,7 +340,7 @@ class SendEmailAction(actions.Action):
                 s.login(self.sender, self.password)
 
             s.sendmail(from_addr=self.sender,
-                       to_addrs=self.to,
+                       to_addrs=rcpt,
                        msg=message.as_string())
         except (smtplib.SMTPException, IOError) as e:
             raise exc.ActionException("Failed to send an email message: %s"
@@ -330,9 +351,12 @@ class SendEmailAction(actions.Action):
         # to return a result.
         LOG.info(
             "Sending email message "
-            "[from=%s, to=%s, subject=%s, using smtp=%s, body=%s...]",
+            "[from=%s, to=%s, cc=%s, bcc=%s, subject=%s, using smtp=%s, "
+            "body=%s...]",
             self.sender,
             self.to,
+            self.cc,
+            self.bcc,
             self.subject,
             self.smtp_server,
             self.body[:128]
