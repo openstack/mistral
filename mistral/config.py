@@ -19,6 +19,7 @@ Configuration options registration and useful routines.
 """
 
 import itertools
+import json
 import os
 
 from keystoneauth1 import loading
@@ -335,7 +336,7 @@ notifier_opts = [
     ),
     cfg.ListOpt(
         'notify',
-        item_type=eval,
+        item_type=json.loads,
         bounds=True,
         help=_('List of publishers to publish notification.')
     )
