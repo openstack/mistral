@@ -64,7 +64,8 @@ def launch_thread(server, workers=1):
         global SERVER_THREAD_MANAGER
 
         if not SERVER_THREAD_MANAGER:
-            SERVER_THREAD_MANAGER = service.ServiceLauncher(CONF)
+            SERVER_THREAD_MANAGER = service.ServiceLauncher(
+                CONF, restart_method='mutate')
 
         SERVER_THREAD_MANAGER.launch_service(server, workers=workers)
     except Exception as e:
@@ -77,7 +78,8 @@ def launch_process(server, workers=1):
         global SERVER_PROCESS_MANAGER
 
         if not SERVER_PROCESS_MANAGER:
-            SERVER_PROCESS_MANAGER = service.ProcessLauncher(CONF)
+            SERVER_PROCESS_MANAGER = service.ProcessLauncher(
+                CONF, restart_method='mutate')
 
         SERVER_PROCESS_MANAGER.launch_service(server, workers=workers)
     except Exception as e:
