@@ -319,23 +319,55 @@ def _get_db_object_by_name_and_namespace_or_id(model, identifier,
     return query.first()
 
 
+def _get_db_object_by_name_and_namespace(model, name,
+                                         namespace, insecure=False,
+                                         columns=()):
+    query = (
+        b.model_query(model, columns=columns)
+        if insecure
+        else _secure_query(model, *columns)
+    )
+
+    if namespace is None:
+        namespace = ''
+
+    query = query.filter(
+        sa.and_(
+            model.name == name,
+            model.namespace == namespace
+        )
+    )
+
+    return query.first()
+
+
 # Workbook definitions.
 
 @b.session_aware()
-def get_workbook(name, fields=(), session=None):
-    wb = _get_db_object_by_name(models.Workbook, name, columns=fields)
+def get_workbook(name, namespace=None, fields=(), session=None):
+    wb = _get_db_object_by_name_and_namespace(
+        models.Workbook,
+        name,
+        namespace,
+        columns=fields
+    )
 
     if not wb:
         raise exc.DBEntityNotFoundError(
-            "Workbook not found [workbook_name=%s]" % name
+            "Workbook not found [name=%s, namespace=%s]" % (name, namespace)
         )
 
     return wb
 
 
 @b.session_aware()
-def load_workbook(name, fields=(), session=None):
-    return _get_db_object_by_name(models.Workbook, name, columns=fields)
+def load_workbook(name, namespace=None, fields=(), session=None):
+    return _get_db_object_by_name_and_namespace(
+        models.Workbook,
+        name,
+        namespace,
+        columns=fields
+    )
 
 
 @b.session_aware()
@@ -353,8 +385,9 @@ def create_workbook(values, session=None):
         wb.save(session=session)
     except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for WorkbookDefinition ['name', 'project_id']: "
-            "{}, {}".format(wb.name, wb.project_id)
+            "Duplicate entry for WorkbookDefinition "
+            "['name', 'namespace', 'project_id']: {}, {}, {}".format(
+                wb.name, wb.namespace, wb.project_id)
         )
 
     return wb
@@ -362,7 +395,8 @@ def create_workbook(values, session=None):
 
 @b.session_aware()
 def update_workbook(name, values, session=None):
-    wb = get_workbook(name)
+    namespace = values.get('namespace')
+    wb = get_workbook(name, namespace=namespace)
 
     wb.update(values.copy())
 
@@ -378,13 +412,20 @@ def create_or_update_workbook(name, values, session=None):
 
 
 @b.session_aware()
-def delete_workbook(name, session=None):
+def delete_workbook(name, namespace=None, session=None):
+    namespace = namespace or ''
+
     count = _secure_query(models.Workbook).filter(
-        models.Workbook.name == name).delete()
+        sa.and_(
+            models.Workbook.name == name,
+            models.Workbook.namespace == namespace
+        )
+    ).delete()
 
     if count == 0:
         raise exc.DBEntityNotFoundError(
-            "Workbook not found [workbook_name=%s]" % name
+            "Workbook not found [workbook_name=%s, namespace=%s]"
+            % (name, namespace)
         )
 
 
@@ -490,7 +531,8 @@ def create_workflow_definition(values, session=None):
 
 
 @b.session_aware()
-def update_workflow_definition(identifier, values, namespace='', session=None):
+def update_workflow_definition(identifier, values, session=None):
+    namespace = values.get('namespace')
     wf_def = get_workflow_definition(identifier, namespace=namespace)
 
     m_dbutils.check_db_obj_access(wf_def)
@@ -528,10 +570,13 @@ def update_workflow_definition(identifier, values, namespace='', session=None):
 
 @b.session_aware()
 def create_or_update_workflow_definition(name, values, session=None):
-    if not _get_db_object_by_name(models.WorkflowDefinition, name):
-        return create_workflow_definition(values)
-    else:
+    namespace = values.get('namespace')
+    if _get_db_object_by_name_and_namespace_or_id(
+            models.WorkflowDefinition,
+            name,
+            namespace=namespace):
         return update_workflow_definition(name, values)
+    return create_workflow_definition(values)
 
 
 @b.session_aware()

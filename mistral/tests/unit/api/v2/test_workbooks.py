@@ -72,6 +72,17 @@ WORKBOOK = {
     'updated_at': '1970-01-01 00:00:00'
 }
 
+WB_WITH_NAMESPACE = {
+    'id': '123',
+    'name': 'test',
+    'namespace': 'xyz',
+    'definition': WORKBOOK_DEF,
+    'tags': ['deployment', 'demo'],
+    'scope': 'public',
+    'created_at': '1970-01-01 00:00:00',
+    'updated_at': '1970-01-01 00:00:00'
+}
+
 ACTION = {
     'id': '123e4567-e89b-12d3-a456-426655440000',
     'name': 'step',
@@ -94,6 +105,8 @@ ACTION_DB.update(ACTION)
 
 WORKBOOK_DB = models.Workbook()
 WORKBOOK_DB.update(WORKBOOK)
+
+WB_DB_WITH_NAMESPACE = models.Workbook(**WB_WITH_NAMESPACE)
 
 WF_DB = models.WorkflowDefinition()
 WF_DB.update(WF)
@@ -139,6 +152,7 @@ workflows:
 """
 
 MOCK_WORKBOOK = mock.MagicMock(return_value=WORKBOOK_DB)
+MOCK_WB_WITH_NAMESPACE = mock.MagicMock(return_value=WB_DB_WITH_NAMESPACE)
 MOCK_WORKBOOKS = mock.MagicMock(return_value=[WORKBOOK_DB])
 MOCK_UPDATED_WORKBOOK = mock.MagicMock(return_value=UPDATED_WORKBOOK_DB)
 MOCK_DELETE = mock.MagicMock(return_value=None)
@@ -154,6 +168,13 @@ class TestWorkbooksController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self.assertDictEqual(WORKBOOK, resp.json)
+
+    @mock.patch.object(db_api, "get_workbook", MOCK_WB_WITH_NAMESPACE)
+    def test_get_with_namespace(self):
+        resp = self.app.get('/v2/workbooks/123?namespace=xyz')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertDictEqual(WB_WITH_NAMESPACE, resp.json)
 
     @mock.patch.object(db_api, 'get_workbook')
     def test_get_operational_error(self, mocked_get):
@@ -257,6 +278,19 @@ class TestWorkbooksController(base.APITest):
 
         self.assertEqual(201, resp.status_int)
         self.assertEqual(WORKBOOK, resp.json)
+
+    @mock.patch.object(workbooks, "create_workbook_v2", MOCK_WB_WITH_NAMESPACE)
+    def test_post_namespace(self):
+
+        namespace = 'xyz'
+        resp = self.app.post(
+            '/v2/workbooks?namespace=%s' % namespace,
+            WORKBOOK_DEF,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(201, resp.status_int)
+        self.assertEqual(WB_WITH_NAMESPACE, resp.json)
 
     @mock.patch.object(workbooks, "create_workbook_v2", MOCK_DUPLICATE)
     def test_post_dup(self):

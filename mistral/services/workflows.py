@@ -165,6 +165,5 @@ def _update_workflow(wf_spec, definition, scope, identifier=None,
 
     return db_api.update_workflow_definition(
         identifier if identifier else values['name'],
-        values,
-        namespace=namespace
+        values
     )

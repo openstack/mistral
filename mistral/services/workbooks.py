@@ -17,39 +17,43 @@ from mistral.lang import parser as spec_parser
 from mistral.services import actions
 
 
-def create_workbook_v2(definition, scope='private'):
+def create_workbook_v2(definition, namespace='', scope='private'):
     wb_spec = spec_parser.get_workbook_spec_from_yaml(definition)
 
     wb_values = _get_workbook_values(
         wb_spec,
         definition,
-        scope
+        scope,
+        namespace
     )
 
     with db_api_v2.transaction():
         wb_db = db_api_v2.create_workbook(wb_values)
 
-        _on_workbook_update(wb_db, wb_spec)
+        _on_workbook_update(wb_db, wb_spec, namespace)
 
     return wb_db
 
 
-def update_workbook_v2(definition, scope='private'):
+def update_workbook_v2(definition, namespace='', scope='private'):
     wb_spec = spec_parser.get_workbook_spec_from_yaml(definition)
 
-    values = _get_workbook_values(wb_spec, definition, scope)
+    values = _get_workbook_values(wb_spec, definition, scope, namespace)
 
     with db_api_v2.transaction():
         wb_db = db_api_v2.update_workbook(values['name'], values)
 
-        _, db_wfs = _on_workbook_update(wb_db, wb_spec)
+        _, db_wfs = _on_workbook_update(wb_db, wb_spec, namespace)
 
     return wb_db
 
 
-def _on_workbook_update(wb_db, wb_spec):
+def _on_workbook_update(wb_db, wb_spec, namespace):
+    # TODO(hardikj) Handle actions for namespace
     db_actions = _create_or_update_actions(wb_db, wb_spec.get_actions())
-    db_wfs = _create_or_update_workflows(wb_db, wb_spec.get_workflows())
+    db_wfs = _create_or_update_workflows(wb_db,
+                                         wb_spec.get_workflows(),
+                                         namespace)
 
     return db_actions, db_wfs
 
@@ -86,7 +90,7 @@ def _create_or_update_actions(wb_db, actions_spec):
     return db_actions
 
 
-def _create_or_update_workflows(wb_db, workflows_spec):
+def _create_or_update_workflows(wb_db, workflows_spec, namespace):
     db_wfs = []
 
     if workflows_spec:
@@ -99,7 +103,7 @@ def _create_or_update_workflows(wb_db, workflows_spec):
                 'spec': wf_spec.to_dict(),
                 'scope': wb_db.scope,
                 'project_id': wb_db.project_id,
-                'namespace': '',
+                'namespace': namespace,
                 'tags': wf_spec.get_tags(),
                 'is_system': False
             }
@@ -111,13 +115,14 @@ def _create_or_update_workflows(wb_db, workflows_spec):
     return db_wfs
 
 
-def _get_workbook_values(wb_spec, definition, scope):
+def _get_workbook_values(wb_spec, definition, scope, namespace=None):
     values = {
         'name': wb_spec.get_name(),
         'tags': wb_spec.get_tags(),
         'definition': definition,
         'spec': wb_spec.to_dict(),
         'scope': scope,
+        'namespace': namespace,
         'is_system': False
     }
 

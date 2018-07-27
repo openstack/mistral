@@ -37,6 +37,7 @@ ADM_CTX = test_base.get_context(default=False, admin=True)
 WORKBOOKS = [
     {
         'name': 'my_workbook1',
+        'namespace': 'test',
         'definition': 'empty',
         'spec': {},
         'tags': ['mc'],
@@ -48,6 +49,7 @@ WORKBOOKS = [
     },
     {
         'name': 'my_workbook2',
+        'namespace': 'test',
         'description': 'my description',
         'definition': 'empty',
         'spec': {},
@@ -58,6 +60,19 @@ WORKBOOKS = [
         'trust_id': '12345',
         'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
     },
+    {
+        'name': 'my_workbook3',
+        'namespace': '',
+        'description': 'my description',
+        'definition': 'empty',
+        'spec': {},
+        'tags': ['nonamespace'],
+        'scope': 'private',
+        'updated_at': None,
+        'project_id': '1233',
+        'trust_id': '12345',
+        'created_at': datetime.datetime(2018, 7, 1, 15, 1, 0)
+    }
 ]
 
 
@@ -74,6 +89,19 @@ class WorkbookTest(SQLAlchemyTest):
     def test_create_and_get_and_load_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
+        fetched = db_api.get_workbook(created['name'], created['namespace'])
+
+        self.assertEqual(created, fetched)
+
+        fetched = db_api.load_workbook(created.name, created.namespace)
+
+        self.assertEqual(created, fetched)
+
+        self.assertIsNone(db_api.load_workbook("not-existing-wb"))
+
+    def test_create_and_get_and_load_workbook_with_default_namespace(self):
+        created = db_api.create_workbook(WORKBOOKS[2])
+
         fetched = db_api.get_workbook(created['name'])
 
         self.assertEqual(created, fetched)
@@ -82,14 +110,13 @@ class WorkbookTest(SQLAlchemyTest):
 
         self.assertEqual(created, fetched)
 
-        self.assertIsNone(db_api.load_workbook("not-existing-wb"))
-
     def test_get_workbook_with_fields(self):
         with db_api.transaction():
             created = db_api.create_workbook(WORKBOOKS[0])
 
             fetched = db_api.get_workbook(
                 created['name'],
+                namespace=created['namespace'],
                 fields=(db_models.Workbook.scope,)
             )
 
@@ -104,8 +131,9 @@ class WorkbookTest(SQLAlchemyTest):
 
         self.assertRaisesWithMessage(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for WorkbookDefinition ['name', 'project_id']:"
-            " my_workbook1, <default-project>",
+            "Duplicate entry for WorkbookDefinition "
+            "['name', 'namespace', 'project_id']:"
+            " my_workbook1, test, <default-project>",
             db_api.create_workbook,
             WORKBOOKS[0]
         )
@@ -117,20 +145,27 @@ class WorkbookTest(SQLAlchemyTest):
 
         updated = db_api.update_workbook(
             created.name,
-            {'definition': 'my new definition'}
+            {
+                'definition': 'my new definition',
+                'namespace': 'test'
+            }
         )
 
         self.assertEqual('my new definition', updated.definition)
 
-        fetched = db_api.get_workbook(created['name'])
+        fetched = db_api.get_workbook(
+            created['name'],
+            namespace=created['namespace']
+        )
 
         self.assertEqual(updated, fetched)
         self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_workbook(self):
         name = WORKBOOKS[0]['name']
+        namespace = WORKBOOKS[0]['namespace']
 
-        self.assertIsNone(db_api.load_workbook(name))
+        self.assertIsNone(db_api.load_workbook(name, namespace=namespace))
 
         created = db_api.create_or_update_workbook(
             name,
@@ -142,16 +177,19 @@ class WorkbookTest(SQLAlchemyTest):
 
         updated = db_api.create_or_update_workbook(
             created.name,
-            {'definition': 'my new definition'}
+            {
+                'definition': 'my new definition',
+                'namespace': 'test'
+            }
         )
 
         self.assertEqual('my new definition', updated.definition)
         self.assertEqual(
             'my new definition',
-            db_api.load_workbook(updated.name).definition
+            db_api.load_workbook(updated.name, updated.namespace).definition
         )
 
-        fetched = db_api.get_workbook(created.name)
+        fetched = db_api.get_workbook(created.name, created.namespace)
 
         self.assertEqual(updated, fetched)
 
@@ -331,16 +369,17 @@ class WorkbookTest(SQLAlchemyTest):
     def test_delete_workbook(self):
         created = db_api.create_workbook(WORKBOOKS[0])
 
-        fetched = db_api.get_workbook(created.name)
+        fetched = db_api.get_workbook(created.name, created.namespace)
 
         self.assertEqual(created, fetched)
 
-        db_api.delete_workbook(created.name)
+        db_api.delete_workbook(created.name, created.namespace)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
             db_api.get_workbook,
-            created.name
+            created.name,
+            created.namespace
         )
 
     def test_workbooks_in_two_projects(self):
@@ -2714,7 +2753,7 @@ class TXTest(SQLAlchemyTest):
 
         try:
             created = db_api.create_workbook(WORKBOOKS[0])
-            fetched = db_api.get_workbook(created.name)
+            fetched = db_api.get_workbook(created.name, namespace='test')
 
             self.assertEqual(created, fetched)
             self.assertTrue(self.is_db_session_open())
@@ -2736,7 +2775,7 @@ class TXTest(SQLAlchemyTest):
 
         try:
             created = db_api.create_workbook(WORKBOOKS[0])
-            fetched = db_api.get_workbook(created.name)
+            fetched = db_api.get_workbook(created.name, namespace='test')
 
             self.assertEqual(created, fetched)
             self.assertTrue(self.is_db_session_open())
@@ -2747,7 +2786,7 @@ class TXTest(SQLAlchemyTest):
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.get_workbook(created.name)
+        fetched = db_api.get_workbook(created.name, namespace='test')
 
         self.assertEqual(created, fetched)
         self.assertFalse(self.is_db_session_open())
@@ -2755,14 +2794,14 @@ class TXTest(SQLAlchemyTest):
     def test_commit_transaction(self):
         with db_api.transaction():
             created = db_api.create_workbook(WORKBOOKS[0])
-            fetched = db_api.get_workbook(created.name)
+            fetched = db_api.get_workbook(created.name, namespace='test')
 
             self.assertEqual(created, fetched)
             self.assertTrue(self.is_db_session_open())
 
         self.assertFalse(self.is_db_session_open())
 
-        fetched = db_api.get_workbook(created.name)
+        fetched = db_api.get_workbook(created.name, namespace='test')
 
         self.assertEqual(created, fetched)
         self.assertFalse(self.is_db_session_open())
@@ -2777,7 +2816,10 @@ class TXTest(SQLAlchemyTest):
             self.assertEqual(created, fetched)
 
             created_wb = db_api.create_workbook(WORKBOOKS[0])
-            fetched_wb = db_api.get_workbook(created_wb.name)
+            fetched_wb = db_api.get_workbook(
+                created_wb.name,
+                namespace=created_wb.namespace
+            )
 
             self.assertEqual(created_wb, fetched_wb)
             self.assertTrue(self.is_db_session_open())
@@ -2804,7 +2846,10 @@ class TXTest(SQLAlchemyTest):
         try:
             with db_api.transaction():
                 created = db_api.create_workbook(WORKBOOKS[0])
-                fetched = db_api.get_workbook(created.name)
+                fetched = db_api.get_workbook(
+                    created.name,
+                    namespace=created.namespace
+                )
 
                 self.assertEqual(created, fetched)
                 self.assertTrue(self.is_db_session_open())
@@ -2831,7 +2876,10 @@ class TXTest(SQLAlchemyTest):
             self.assertEqual(created, fetched)
 
             created_wb = db_api.create_workbook(WORKBOOKS[0])
-            fetched_wb = db_api.get_workbook(created_wb.name)
+            fetched_wb = db_api.get_workbook(
+                created_wb.name,
+                namespace=created_wb.namespace
+            )
 
             self.assertEqual(created_wb, fetched_wb)
             self.assertTrue(self.is_db_session_open())
@@ -2847,7 +2895,10 @@ class TXTest(SQLAlchemyTest):
 
             self.assertEqual(created, fetched)
 
-            fetched_wb = db_api.get_workbook(created_wb.name)
+            fetched_wb = db_api.get_workbook(
+                created_wb.name,
+                namespace=created_wb.namespace
+            )
 
             self.assertEqual(created_wb, fetched_wb)
 
