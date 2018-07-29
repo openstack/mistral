@@ -52,7 +52,7 @@ ALL = (
 PARAMS_PTRN = re.compile("([-_\w]+)=(%s)" % "|".join(ALL))
 
 
-def instantiate_spec(spec_cls, data):
+def instantiate_spec(spec_cls, data, validate=False):
     """Instantiates specification accounting for specification hierarchies.
 
     :param spec_cls: Specification concrete or base class. In case if base
@@ -60,17 +60,22 @@ def instantiate_spec(spec_cls, data):
         _polymorphic_key and _polymorphic_value in order to find a concrete
         class that needs to be instantiated.
     :param data: Raw specification data as a dictionary.
+    :type data: dict
+    :param validate: If it equals False then semantics and schema validation
+        will be skipped
+    :type validate: bool
     """
 
     if issubclass(spec_cls, BaseSpecList):
         # Ignore polymorphic search for specification lists because
         # it doesn't make sense for them.
-        return spec_cls(data)
+        return spec_cls(data, validate)
 
     if not hasattr(spec_cls, '_polymorphic_key'):
-        spec = spec_cls(data)
+        spec = spec_cls(data, validate)
 
-        spec.validate_semantics()
+        if validate:
+            spec.validate_semantics()
 
         return spec
 
@@ -101,9 +106,10 @@ def instantiate_spec(spec_cls, data):
             )
 
         if cls._polymorphic_value == data.get(key_name, key_default):
-            spec = cls(data)
+            spec = cls(data, validate)
 
-            spec.validate_semantics()
+            if validate:
+                spec.validate_semantics()
 
             return spec
 
@@ -176,10 +182,12 @@ class BaseSpec(object):
 
         return schema
 
-    def __init__(self, data):
+    def __init__(self, data, validate):
         self._data = data
+        self._validate = validate
 
-        self.validate_schema()
+        if validate:
+            self.validate_schema()
 
     def validate_schema(self):
         """Validates DSL entity schema that this specification represents.
@@ -227,10 +235,10 @@ class BaseSpec(object):
     def _spec_property(self, prop_name, spec_cls):
         prop_val = self._data.get(prop_name)
 
-        return (
-            instantiate_spec(spec_cls, prop_val) if prop_val is not None
-            else None
-        )
+        if prop_val is not None:
+            return instantiate_spec(spec_cls, prop_val, self._validate)
+        else:
+            return None
 
     def _group_spec(self, spec_cls, *prop_names):
         if not prop_names:
@@ -244,7 +252,7 @@ class BaseSpec(object):
             if prop_val:
                 data[prop_name] = prop_val
 
-        return instantiate_spec(spec_cls, data)
+        return instantiate_spec(spec_cls, data, self._validate)
 
     def _inject_version(self, prop_names):
         for prop_name in prop_names:
@@ -322,8 +330,8 @@ class BaseListSpec(BaseSpec):
         "required": ["version"],
     }
 
-    def __init__(self, data):
-        super(BaseListSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(BaseListSpec, self).__init__(data, validate)
 
         self.items = []
 
@@ -331,7 +339,10 @@ class BaseListSpec(BaseSpec):
             if k != 'version':
                 v['name'] = k
                 self._inject_version([k])
-                self.items.append(instantiate_spec(self.item_class, v))
+
+                self.items.append(
+                    instantiate_spec(self.item_class, v, validate)
+                )
 
     def validate_schema(self):
         super(BaseListSpec, self).validate_schema()
@@ -357,7 +368,7 @@ class BaseSpecList(object):
 
     _version = '2.0'
 
-    def __init__(self, data):
+    def __init__(self, data, validate):
         self.items = {}
 
         for k, v in data.items():
@@ -369,7 +380,7 @@ class BaseSpecList(object):
                     v['name'] = k
                     v['version'] = self._version
 
-                self.items[k] = instantiate_spec(self.item_class, v)
+                self.items[k] = instantiate_spec(self.item_class, v, validate)
 
     def item_keys(self):
         return self.items.keys()

@@ -32,7 +32,7 @@ class SpecValidationController(rest.RestController):
         definition = pecan.request.text
 
         try:
-            self._parse_func(definition)
+            self._parse_func(definition, validate=True)
         except exc.DSLParsingException as e:
             return {'valid': False, 'error': str(e)}
 

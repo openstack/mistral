@@ -94,8 +94,8 @@ class OnClauseSpec(base.BaseSpec):
         ]
     }
 
-    def __init__(self, data):
-        super(OnClauseSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(OnClauseSpec, self).__init__(data, validate)
 
         if not isinstance(data, dict):
             # Old simple schema.

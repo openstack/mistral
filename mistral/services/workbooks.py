@@ -18,7 +18,9 @@ from mistral.services import actions
 
 
 def create_workbook_v2(definition, namespace='', scope='private'):
-    wb_spec = spec_parser.get_workbook_spec_from_yaml(definition)
+    wb_spec = spec_parser.get_workbook_spec_from_yaml(
+        definition, validate=True
+    )
 
     wb_values = _get_workbook_values(
         wb_spec,
@@ -36,7 +38,9 @@ def create_workbook_v2(definition, namespace='', scope='private'):
 
 
 def update_workbook_v2(definition, namespace='', scope='private'):
-    wb_spec = spec_parser.get_workbook_spec_from_yaml(definition)
+    wb_spec = spec_parser.get_workbook_spec_from_yaml(
+        definition, validate=True
+    )
 
     values = _get_workbook_values(wb_spec, definition, scope, namespace)
 

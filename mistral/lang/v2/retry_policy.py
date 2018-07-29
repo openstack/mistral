@@ -54,10 +54,10 @@ class RetrySpec(base.BaseSpec):
     def get_schema(cls, includes=['definitions']):
         return super(RetrySpec, cls).get_schema(includes)
 
-    def __init__(self, data):
+    def __init__(self, data, validate):
         data = self._transform_retry_one_line(data)
 
-        super(RetrySpec, self).__init__(data)
+        super(RetrySpec, self).__init__(data, validate)
 
         self._break_on = data.get('break-on')
         self._count = data.get('count')

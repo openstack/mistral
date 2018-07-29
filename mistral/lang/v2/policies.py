@@ -37,8 +37,8 @@ class PoliciesSpec(base.BaseSpec):
     def get_schema(cls, includes=['definitions']):
         return super(PoliciesSpec, cls).get_schema(includes)
 
-    def __init__(self, data):
-        super(PoliciesSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(PoliciesSpec, self).__init__(data, validate)
 
         self._retry = self._spec_property('retry', retry_policy.RetrySpec)
         self._wait_before = data.get('wait-before', 0)

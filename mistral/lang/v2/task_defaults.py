@@ -53,8 +53,8 @@ class TaskDefaultsSpec(base.BaseSpec):
     def get_schema(cls, includes=['definitions']):
         return super(TaskDefaultsSpec, cls).get_schema(includes)
 
-    def __init__(self, data):
-        super(TaskDefaultsSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(TaskDefaultsSpec, self).__init__(data, validate)
 
         self._policies = self._group_spec(
             policies.PoliciesSpec,

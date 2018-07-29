@@ -80,15 +80,17 @@ def _get_spec_version(spec_dict):
 # Factory methods to get specifications either from raw YAML formatted text or
 # from dictionaries parsed from YAML formatted text.
 
-def get_workbook_spec(spec_dict):
+def get_workbook_spec(spec_dict, validate):
     if _get_spec_version(spec_dict) == V2_0:
-        return base.instantiate_spec(wb_v2.WorkbookSpec, spec_dict)
+        return base.instantiate_spec(
+            wb_v2.WorkbookSpec, spec_dict, validate
+        )
 
     return None
 
 
-def get_workbook_spec_from_yaml(text):
-    return get_workbook_spec(parse_yaml(text))
+def get_workbook_spec_from_yaml(text, validate=True):
+    return get_workbook_spec(parse_yaml(text), validate)
 
 
 def get_action_spec(spec_dict):
@@ -106,12 +108,14 @@ def get_action_spec_from_yaml(text, action_name):
     return get_action_spec(spec_dict)
 
 
-def get_action_list_spec(spec_dict):
-    return base.instantiate_spec(actions_v2.ActionListSpec, spec_dict)
+def get_action_list_spec(spec_dict, validate):
+    return base.instantiate_spec(
+        actions_v2.ActionListSpec, spec_dict, validate
+    )
 
 
-def get_action_list_spec_from_yaml(text):
-    return get_action_list_spec(parse_yaml(text))
+def get_action_list_spec_from_yaml(text, validate=True):
+    return get_action_list_spec(parse_yaml(text), validate=validate)
 
 
 def get_workflow_spec(spec_dict):
@@ -130,16 +134,18 @@ def get_workflow_spec(spec_dict):
     return None
 
 
-def get_workflow_list_spec(spec_dict):
-    return base.instantiate_spec(wf_v2.WorkflowListSpec, spec_dict)
+def get_workflow_list_spec(spec_dict, validate):
+    return base.instantiate_spec(
+        wf_v2.WorkflowListSpec, spec_dict, validate
+    )
 
 
 def get_workflow_spec_from_yaml(text):
     return get_workflow_spec(parse_yaml(text))
 
 
-def get_workflow_list_spec_from_yaml(text):
-    return get_workflow_list_spec(parse_yaml(text))
+def get_workflow_list_spec_from_yaml(text, validate=True):
+    return get_workflow_list_spec(parse_yaml(text), validate)
 
 
 def get_task_spec(spec_dict):
