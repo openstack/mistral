@@ -222,11 +222,6 @@ class HTTPAction(actions.Action):
             resp.content
         )
 
-        # TODO(akuznetsova): Need to refactor Mistral serialiser and
-        # deserializer to have an ability to pass needed encoding and work
-        # with it. Now it can process only default 'utf-8' encoding.
-        # Appropriate bug #1676411 was created.
-
         # Represent important resp data as a dictionary.
         try:
             content = resp.json(encoding=resp.encoding)
