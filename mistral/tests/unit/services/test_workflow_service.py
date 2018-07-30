@@ -21,6 +21,7 @@ from mistral.db.v2.sqlalchemy import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.lang.v2 import tasks
+from mistral.lang.v2 import workflows
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral import utils
@@ -85,7 +86,7 @@ WORKFLOW_WITH_VAR_TASK_NAME = """
 ---
 version: '2.0'
 
-list_servers:
+engine_command_{task_name}:
 
   tasks:
     {task_name}:
@@ -155,15 +156,10 @@ class WorkflowServiceTest(base.DbTestCase):
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
 
-    def test_invalid_task_name(self):
-        for name in tasks.RESERVED_TASK_NAMES:
+    def test_engine_commands_are_valid_task_names(self):
+        for name in workflows.ENGINE_COMMANDS:
             wf = WORKFLOW_WITH_VAR_TASK_NAME.format(task_name=name)
-
-            self.assertRaises(
-                exc.InvalidModelException,
-                wf_service.create_workflows,
-                wf
-            )
+            wf_service.create_workflows(wf)
 
     def test_update_workflows(self):
         db_wfs = wf_service.create_workflows(WORKFLOW_LIST)

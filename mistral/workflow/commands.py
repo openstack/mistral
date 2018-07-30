@@ -14,7 +14,7 @@
 #    limitations under the License.
 
 from mistral.lang import parser as spec_parser
-from mistral.lang.v2 import tasks
+from mistral.lang.v2 import workflows
 from mistral.workflow import states
 
 
@@ -228,18 +228,16 @@ class PauseWorkflow(SetWorkflowState):
         return d
 
 
-RESERVED_CMDS = dict(zip(
-    tasks.RESERVED_TASK_NAMES, [
-        Noop,
-        FailWorkflow,
-        SucceedWorkflow,
-        PauseWorkflow
-    ]
-))
+ENGINE_CMD_CLS = {
+    workflows.NOOP_COMMAND: Noop,
+    workflows.FAIL_COMMAND: FailWorkflow,
+    workflows.SUCCEED_COMMAND: SucceedWorkflow,
+    workflows.PAUSE_COMMAND: PauseWorkflow
+}
 
 
 def get_command_class(cmd_name):
-    return RESERVED_CMDS[cmd_name] if cmd_name in RESERVED_CMDS else None
+    return ENGINE_CMD_CLS[cmd_name] if cmd_name in ENGINE_CMD_CLS else None
 
 
 # TODO(rakhmerov): IMO the way how we instantiate commands is weird.

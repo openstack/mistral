@@ -362,7 +362,7 @@ class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
             'version': '2.0',
             'wf1': {
                 'tasks': {
-                    'noop-task': {
+                    'noop': {
                         'action': 'std.noop'
                     }
                 }

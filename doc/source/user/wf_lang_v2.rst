@@ -711,6 +711,24 @@ This illustrates that, while designing a workflow, it's important to know
 precisely how Mistral processes 'on-success', 'on-error' and 'on-complete'
 and engine commands.
 
+Engine commands and tasks
+'''''''''''''''''''''''''
+
+The **on-*** clauses in direct workflows can refer both to tasks and engine
+commands, as demonstrated earlier. It is possible to use the engine commands
+as names for tasks. For example, one can create a task named `noop` or `fail`.
+These tasks will override the engine commands, that is, the action defined
+in these tasks will be executed instead of the engine commands. This is a
+method to succinctly extend the default behavior of the Mistral engine or
+provide side-effect free workflow examples.
+
+The order in which task names are resolved is the following:
+
+1. the task with the given name is searched
+2. the engine command with the given name is selected
+
+The first option that matches is executed.
+
 Fork
 ''''
 
