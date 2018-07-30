@@ -175,10 +175,9 @@ class ProcessCronTriggerTest(base.EngineTestCase):
             None
         )
 
-        self.assertEqual(
-            first_time,
-            cron_trigger.next_execution_time
-        )
+        interval = (cron_trigger.next_execution_time - first_time)
+
+        self.assertLessEqual(interval.total_seconds(), 3.0)
 
         periodic.process_cron_triggers_v2(None, None)
 
@@ -193,10 +192,10 @@ class ProcessCronTriggerTest(base.EngineTestCase):
         cron_trigger_db = db_api.get_cron_trigger(trigger_name)
 
         self.assertIsNotNone(cron_trigger_db)
-        self.assertEqual(
-            next_time,
-            cron_trigger_db.next_execution_time
-        )
+
+        interval = (cron_trigger_db.next_execution_time - next_time)
+
+        self.assertLessEqual(interval.total_seconds(), 3.0)
 
     def test_validate_cron_trigger_input_first_time(self):
         cfg.CONF.set_default('auth_enable', False, group='pecan')
