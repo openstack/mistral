@@ -389,6 +389,19 @@ class OpenStackActionTest(base.BaseTestCase):
         self.assertTrue(mocked().runtimes.get.called)
         mocked().runtimes.get.assert_called_once_with(id="1234-abcd")
 
+    @mock.patch.object(actions.ManilaAction, '_get_client')
+    def test_manila_action(self, mocked):
+        mock_ctx = mock.Mock()
+        method_name = "shares.get"
+        action_class = actions.ManilaAction
+        action_class.client_method_name = method_name
+        params = {'share': '1234-abcd'}
+        action = action_class(**params)
+        action.run(mock_ctx)
+
+        self.assertTrue(mocked().shares.get.called)
+        mocked().shares.get.assert_called_once_with(share="1234-abcd")
+
 
 class TestImport(base.BaseTestCase):
     @mock.patch.object(importutils, 'try_import')

@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Add Mistral actions for Openstack Manila, the fileshare management service.

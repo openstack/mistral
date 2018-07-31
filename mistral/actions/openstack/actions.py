@@ -60,6 +60,9 @@ heatclient = _try_import('heatclient.client')
 ironic_inspector_client = _try_import('ironic_inspector_client.v1')
 ironicclient = _try_import('ironicclient.v1.client')
 keystoneclient = _try_import('keystoneclient.v3.client')
+manila = _try_import('manilaclient')
+manilaclient = _try_import('manilaclient.client')
+manila_api_versions = _try_import('manilaclient.api_versions')
 magnumclient = _try_import('magnumclient.v1.client')
 mistralclient = _try_import('mistralclient.api.v2.client')
 muranoclient = _try_import('muranoclient.v1.client')
@@ -998,3 +1001,45 @@ class QinlingAction(base.OpenStackAction):
             endpoint_override="http://127.0.0.1:7070/",
             session=session
         )
+
+
+class ManilaAction(base.OpenStackAction):
+    _service_type = 'sharev2'
+
+    @classmethod
+    def _get_client_class(cls):
+        return manilaclient.Client
+
+    def _create_client(self, context):
+
+        LOG.debug("Manila action security context: %s", context)
+
+        manila_endpoint = self.get_service_endpoint()
+
+        session_and_auth = self.get_session_and_auth(context)
+
+        temp_client = self._get_client_class()(
+            manila.API_MAX_VERSION,
+            service_catalog_url=manila_endpoint.url,
+            session=session_and_auth['auth']
+        )
+
+        discovered_version = manila_api_versions.discover_version(
+            temp_client,
+            manila.API_MAX_VERSION
+        )
+
+        client = self._get_client_class()(
+            discovered_version,
+            service_catalog_url=manila_endpoint.url,
+            session=session_and_auth['session']
+        )
+
+        return client
+
+    @classmethod
+    def _get_fake_client(cls):
+        return cls._get_client_class()(
+            manila.API_MAX_VERSION,
+            input_auth_token='token',
+            service_catalog_url='http://127.0.0.1:8786')
