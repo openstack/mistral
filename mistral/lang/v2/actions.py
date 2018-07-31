@@ -34,8 +34,8 @@ class ActionSpec(base.BaseSpec):
         "additionalProperties": False
     }
 
-    def __init__(self, data):
-        super(ActionSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(ActionSpec, self).__init__(data, validate)
 
         self._name = data['name']
         self._description = data.get('description')

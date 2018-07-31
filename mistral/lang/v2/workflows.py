@@ -55,8 +55,8 @@ class WorkflowSpec(base.BaseSpec):
         "additionalProperties": False
     }
 
-    def __init__(self, data):
-        super(WorkflowSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(WorkflowSpec, self).__init__(data, validate)
 
         self._name = data['name']
         self._description = data.get('description')
@@ -163,8 +163,8 @@ class DirectWorkflowSpec(WorkflowSpec):
         }
     }
 
-    def __init__(self, data):
-        super(DirectWorkflowSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(DirectWorkflowSpec, self).__init__(data, validate)
 
         # Init simple dictionary based caches for inbound and
         # outbound task specifications. In fact, we don't need

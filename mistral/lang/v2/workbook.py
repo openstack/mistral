@@ -51,8 +51,8 @@ class WorkbookSpec(base.BaseSpec):
         "additionalProperties": False
     }
 
-    def __init__(self, data):
-        super(WorkbookSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(WorkbookSpec, self).__init__(data, validate)
 
         self._inject_version(['actions', 'workflows'])
 

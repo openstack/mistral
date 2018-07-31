@@ -29,8 +29,8 @@ class PublishSpec(base.BaseSpec):
         "additionalProperties": False
     }
 
-    def __init__(self, data):
-        super(PublishSpec, self).__init__(data)
+    def __init__(self, data, validate):
+        super(PublishSpec, self).__init__(data, validate)
 
         self._branch = self._data.get('branch')
         self._global = self._data.get('global')
