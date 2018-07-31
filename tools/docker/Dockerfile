@@ -36,7 +36,10 @@ ENV MISTRAL_DIR="/opt/stack/mistral" \
     RUN_TESTS="false" \
     DEBIAN_FRONTEND="noninteractive" \
     MISTRAL_SERVER="all" \
-    LOG_DEBUG="false"
+    LOG_DEBUG="false" \
+    AUTH_URL="http://keycloak:8080/auth" \
+    AUTH_ENABLE="false" \
+    AUTH_TYPE="keycloak-oidc"
 
 # We install dependencies separatly for a caching purpose
 COPY requirements.txt "${MISTRAL_DIR}/"

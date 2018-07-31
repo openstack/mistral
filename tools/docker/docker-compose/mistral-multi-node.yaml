@@ -10,9 +10,12 @@ services:
     ports:
       - "8989:8989"
     networks:
-      - database
-      - message-broker
-      - mistral
+      database:
+      message-broker:
+      identity-provider:
+      cloud-flow:
+        aliases:
+         - mistral
     env_file:
      - mistral.env
 #    volumes:
@@ -30,6 +33,7 @@ services:
     restart: always
     networks:
       - database
+      - identity-provider
       - message-broker
     env_file:
      - mistral.env
@@ -47,6 +51,7 @@ services:
     restart: always
     networks:
       - message-broker
+      - identity-provider
     env_file:
      - mistral.env
 #    volumes:
@@ -64,6 +69,7 @@ services:
     networks:
       - database
       - message-broker
+      - identity-provider
     env_file:
      - mistral.env
 #    volumes:
@@ -81,26 +87,10 @@ services:
     networks:
       - database
       - message-broker
+      - identity-provider
     env_file:
      - mistral.env
 #    volumes:
 #      - "/path/to/mistral.conf:/etc/mistral/mistral.conf"
     environment:
       - MISTRAL_SERVER=notifier
-
-  cloud-flow:
-    image: mcdoker18/cloud-flow:0.5.0
-    restart: always
-    networks:
-      - mistral
-    ports:
-      - "8000:8000"
-    networks:
-      - mistral
-    environment:
-      - CF_MISTRAL_URL=http://mistral-api:8989
-
-networks:
-  database:
-  message-broker:
-  mistral:

@@ -10,7 +10,12 @@ if [ ! -f ${CONFIG_FILE} ]; then
 
     ${INI_SET} DEFAULT js_implementation py_mini_racer
     ${INI_SET} oslo_policy policy_file "${MISTRAL_DIR}/etc/policy.json"
-    ${INI_SET} pecan auth_enable false
+
+    ${INI_SET} DEFAULT auth_type ${AUTH_TYPE}
+    ${INI_SET} pecan auth_enable ${AUTH_ENABLE}
+    ${INI_SET} keycloak_oidc auth_url ${AUTH_URL}
+    ${INI_SET} keycloak_oidc insecure true
+
     ${INI_SET} DEFAULT transport_url "${MESSAGE_BROKER_URL}"
     ${INI_SET} database connection "${DATABASE_URL}"
     ${INI_SET} DEFAULT debug "${LOG_DEBUG}"

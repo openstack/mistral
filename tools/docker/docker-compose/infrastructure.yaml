@@ -43,6 +43,30 @@ services:
       - MYSQL_USER=mistral
       - MYSQL_PASSWORD=mistral
 
+  keycloak:
+    image: jboss/keycloak:4.1.0.Final
+    ports:
+      - "8080:8080"
+    networks:
+      - identity-provider
+    environment:
+      DB_VENDOR: h2
+      KEYCLOAK_USER: mistral
+      KEYCLOAK_PASSWORD: mistral
+
+  cloud-flow:
+    image: mcdoker18/cloud-flow:0.5.0
+    restart: always
+    networks:
+      - cloud-flow
+    ports:
+      - "8000:8000"
+    # TODO: make a Keycloak environment variables for CloudFlow
+    # volumes:
+    #   - "./auth.json:/opt/CloudFlow/dist/assets/auth.json"
+    environment:
+      - CF_MISTRAL_URL=http://mistral:8989
+
 volumes:
   postgresql:
   rabbitmq:
@@ -51,3 +75,5 @@ volumes:
 networks:
   database:
   message-broker:
+  identity-provider:
+  cloud-flow:
