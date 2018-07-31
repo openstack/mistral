@@ -31,8 +31,9 @@ class ActionManagerTest(base.DbTestCase):
         self.assertEqual(http_action_input, std_http.input)
 
         std_email_input = (
-            "from_addr, to_addrs, smtp_server, "
-            "smtp_password=null, subject=null, body=null"
+            "from_addr, to_addrs, smtp_server, cc_addrs=null, "
+            "bcc_addrs=null, smtp_password=null, subject=null, body=null, "
+            "html_body=null"
         )
 
         self.assertEqual(std_email_input, std_email.input)
