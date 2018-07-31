@@ -63,6 +63,21 @@ rules = [
         ]
     ),
     policy.DocumentedRuleDefault(
+        name=ACTIONS % 'publicize',
+        check_str=base.RULE_ADMIN_OR_OWNER,
+        description='Make an action publicly available',
+        operations=[
+            {
+                'path': '/v2/actions',
+                'method': 'POST'
+            },
+            {
+                'path': '/v2/actions',
+                'method': 'PUT'
+            }
+        ]
+    ),
+    policy.DocumentedRuleDefault(
         name=ACTIONS % 'update',
         check_str=base.RULE_ADMIN_OR_OWNER,
         description='Update one or more actions.',
