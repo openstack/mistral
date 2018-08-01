@@ -47,12 +47,12 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     def get(self, name, namespace=''):
         """Return the named workbook.
 
-        :param name: Name of workbook to retrieve
-        :param namespace: Namespace of workbook to retrieve
+        :param name: Name of workbook to retrieve.
+        :param namespace: Optional. Namespace of workbook to retrieve.
         """
         acl.enforce('workbooks:get', context.ctx())
 
-        LOG.debug("Fetch workbook [name=%s]", name)
+        LOG.debug("Fetch workbook [name=%s, namespace=%s]", name, namespace)
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
@@ -65,7 +65,11 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
     def put(self, namespace=''):
-        """Update a workbook."""
+        """Update a workbook.
+
+        :param namespace: Optional. Namespace of workbook to update.
+        """
+
         acl.enforce('workbooks:update', context.ctx())
 
         definition = pecan.request.text
@@ -118,11 +122,12 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     def delete(self, name, namespace=''):
         """Delete the named workbook.
 
-        :param name: Name of workbook to delete
+        :param name: Name of workbook to delete.
+        :param namespace: Optional. Namespace of workbook to delete.
         """
         acl.enforce('workbooks:delete', context.ctx())
 
-        LOG.debug("Delete workbook [name=%s]", name)
+        LOG.debug("Delete workbook [name=%s, namespace=%s]", name, namespace)
 
         rest_utils.rest_retry_on_db_error(db_api.delete_workbook)(
             name,
@@ -163,6 +168,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param namespace: Optional. Keep only resources with specific
+                          namespace.
         """
         acl.enforce('workbooks:list', context.ctx())
 
