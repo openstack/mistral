@@ -455,7 +455,12 @@ keycloak_oidc_opts = [
         'insecure',
         default=False,
         help=_('If True, SSL/TLS certificate verification is disabled')
-    )
+    ),
+    cfg.StrOpt(
+        'user_info_endpoint_url',
+        default='/realms/%s/protocol/openid-connect/userinfo',
+        help='Endpoint against which authorization will be performed'
+    ),
 ]
 
 openstack_actions_opts = [

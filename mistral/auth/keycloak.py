@@ -68,7 +68,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
         # to use user info endpoint which also takes exactly one parameter
         # (access token) and replies with error if token is invalid.
         user_info_endpoint = (
-            "%s/realms/%s/protocol/openid-connect/userinfo" %
+            ("%s" + CONF.keycloak_oidc.user_info_endpoint_url) %
             (CONF.keycloak_oidc.auth_url, realm_name)
         )
 
