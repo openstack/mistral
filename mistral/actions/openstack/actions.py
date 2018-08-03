@@ -584,13 +584,13 @@ class BarbicanAction(base.OpenStackAction):
         LOG.debug("Barbican action security context: %s", context)
 
         barbican_endpoint = keystone_utils.get_endpoint_for_project('barbican')
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
 
-        auth = identity.v2.Token(
+        auth = identity.v3.Token(
             auth_url=keystone_endpoint.url,
-            tenant_name=context.user_name,
+            project_name=context.user_name,
             token=context.auth_token,
-            tenant_id=context.project_id
+            project_id=context.project_id
         )
 
         return self._get_client_class()(
@@ -725,7 +725,7 @@ class MagnumAction(base.OpenStackAction):
 
         LOG.debug("Magnum action security context: %s", context)
 
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
         auth_url = keystone_endpoint.url
         magnum_url = keystone_utils.get_endpoint_for_project('magnum').url
 
@@ -754,7 +754,7 @@ class MuranoAction(base.OpenStackAction):
 
         LOG.debug("Murano action security context: %s", context)
 
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
         murano_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
@@ -782,7 +782,7 @@ class TackerAction(base.OpenStackAction):
 
         LOG.debug("Tacker action security context: %s", context)
 
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
         tacker_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
@@ -810,7 +810,7 @@ class SenlinAction(base.OpenStackAction):
 
         LOG.debug("Senlin action security context: %s", context)
 
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
         senlin_endpoint = self.get_service_endpoint()
 
         return self._get_client_class()(
@@ -958,7 +958,7 @@ class ZunAction(base.OpenStackAction):
 
         LOG.debug("Zun action security context: %s", context)
 
-        keystone_endpoint = keystone_utils.get_keystone_endpoint_v2()
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
         zun_endpoint = self.get_service_endpoint()
         session_and_auth = self.get_session_and_auth(context)
 
