@@ -123,8 +123,8 @@ class DefaultExecutor(base.Executor):
 
         except BaseException as e:
             msg = (
-                "Failed to run action [action_ex_id=%s, action_cls='%s', "
-                "attributes='%s', params='%s']\n %s" % (
+                "The action raised an exception [action_ex_id=%s, "
+                "action_cls='%s', attributes='%s', params='%s']\n %s" % (
                     action_ex_id,
                     action_cls,
                     action_cls_attrs,
@@ -133,7 +133,7 @@ class DefaultExecutor(base.Executor):
                 )
             )
 
-            LOG.exception(msg)
+            LOG.warning(msg, exc_info=True)
 
             return send_error_back(msg)
 
