@@ -384,7 +384,7 @@ class DelayedCall(mb.MistralModelBase):
     method_arguments = sa.Column(st.JsonDictType())
     serializers = sa.Column(st.JsonDictType())
     key = sa.Column(sa.String(250), nullable=True)
-    auth_context = sa.Column(st.JsonDictType())
+    auth_context = sa.Column(st.JsonMediumDictType())
     execution_time = sa.Column(sa.DateTime, nullable=False)
     processing = sa.Column(sa.Boolean, default=False, nullable=False)
 
