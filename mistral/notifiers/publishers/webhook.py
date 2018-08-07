@@ -32,5 +32,7 @@ class WebhookPublisher(base.NotificationPublisher):
 
         resp = requests.post(url, data=json.dumps(data), headers=headers)
 
+        LOG.info("Webook request url=%s code=%s", url, resp.status_code)
+
         if resp.status_code not in [http_client.OK, http_client.CREATED]:
             raise Exception(resp.text)
