@@ -733,7 +733,6 @@ class MagnumAction(base.OpenStackAction):
             magnum_url=magnum_url,
             auth_token=context.auth_token,
             project_id=context.project_id,
-            user_id=context.user_id,
             auth_url=auth_url,
             insecure=context.insecure
         )
