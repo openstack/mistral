@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    The header X-Target-Insecure previously accepted any string and used it
+    for comparisons. This meant unless it was empty (or not provided) it would
+    always evaluate as True. This change makes the validation stricter, only
+    accepting "True" and "False" and converting these to boolean values. Any
+    other value will return an error.
