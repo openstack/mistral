@@ -116,10 +116,8 @@
         # and beyond.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-        - tripleo-ci-centos-7-scenario003-multinode-oooq:
-            voting: false
-        - tripleo-ci-centos-7-scenario003-multinode-oooq-container:
-            voting: false
+        - tripleo-ci-centos-7-scenario003-multinode-oooq
+        - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-rally-task
         - openstack-tox-lower-constraints:
             required-projects:
@@ -131,6 +129,8 @@
         - mistral-devstack-non-apache
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
+        - tripleo-ci-centos-7-scenario003-multinode-oooq
+        - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-kombu
         - mistral-rally-task
         - openstack-tox-lower-constraints
