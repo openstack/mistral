@@ -87,6 +87,12 @@
       - openstack/rally
 
 - project:
+    templates:
+      - openstack-python-jobs
+      - openstack-python35-jobs
+      - publish-openstack-sphinx-docs
+      - check-requirements
+      - release-notes-jobs
     check:
       jobs:
         - openstack-tox-cover:
@@ -116,6 +122,7 @@
             voting: false
             branches: ^(?!stable/newton).*$
     gate:
+      queue: mistral
       jobs:
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
