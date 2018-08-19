@@ -112,6 +112,7 @@
         # failures, please reach us on #tripleo IRC channel.
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
+        - tripleo-ci-centos-7-undercloud-containers
         - mistral-rally-task
         - openstack-tox-lower-constraints:
             required-projects:
@@ -127,6 +128,7 @@
         - mistral-devstack-kombu
         - mistral-rally-task
         - openstack-tox-lower-constraints
+        - tripleo-ci-centos-7-undercloud-containers
     post:
       jobs:
         - mistral-docker-buildimage:
