@@ -219,6 +219,7 @@ class RpcContextSerializer(messaging.Serializer):
             profiler.init(**trace_info)
 
         ctx = MistralContext.from_dict(context)
+
         set_ctx(ctx)
 
         return ctx

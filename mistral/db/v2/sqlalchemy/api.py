@@ -15,8 +15,10 @@
 #    limitations under the License.
 
 import contextlib
+import datetime
 import sys
 import threading
+
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -1131,6 +1133,123 @@ def get_delayed_calls(session=None, **kwargs):
 def delete_delayed_calls(session=None, **kwargs):
     return _delete_all(models.DelayedCall, **kwargs)
 
+
+@b.session_aware()
+def create_scheduled_job(values, session=None):
+    job = models.ScheduledJob()
+
+    job.update(values.copy())
+
+    try:
+        job.save(session)
+    except db_exc.DBDuplicateEntry as e:
+        raise exc.DBDuplicateEntryError(
+            "Duplicate entry for ScheduledJob ID: {}".format(e.value)
+        )
+
+    return job
+
+
+@b.session_aware()
+def get_scheduled_jobs_to_start(time, batch_size=None, session=None):
+    query = b.model_query(models.ScheduledJob)
+
+    execute_at_col = models.ScheduledJob.execute_at
+    captured_at_col = models.ScheduledJob.captured_at
+
+    # Filter by execution time accounting for a configured job pickup interval.
+    query = query.filter(
+        execute_at_col <
+        time - datetime.timedelta(seconds=CONF.scheduler.pickup_job_after)
+    )
+
+    # Filter by captured time accounting for a configured captured job timeout.
+    min_captured_at = (
+        datetime.datetime.now() -
+        datetime.timedelta(seconds=CONF.scheduler.captured_job_timeout)
+    )
+
+    query = query.filter(
+        sa.or_(
+            captured_at_col == sa.null(),
+            captured_at_col <= min_captured_at
+        )
+    )
+
+    query = query.order_by(execute_at_col)
+    query = query.limit(batch_size)
+
+    return query.all()
+
+
+@b.session_aware()
+def update_scheduled_job(id, values, query_filter=None, session=None):
+    if query_filter:
+        try:
+            specimen = models.ScheduledJob(id=id, **query_filter)
+
+            job = b.model_query(
+                models.ScheduledJob
+            ).update_on_match(
+                specimen=specimen,
+                surrogate_key='id',
+                values=values
+            )
+
+            return job, 1
+
+        except oslo_sqlalchemy.update_match.NoRowsMatched as e:
+            LOG.debug(
+                "No rows matched for update scheduled job [id=%s, values=%s, "
+                "query_filter=%s,"
+                "exception=%s]", id, values, query_filter, e
+            )
+
+            return None, 0
+
+    else:
+        job = get_scheduled_job(id=id, session=session)
+
+        job.update(values)
+
+        return job, len(session.dirty)
+
+
+@b.session_aware()
+def get_scheduled_job(id, session=None):
+    job = _get_db_object_by_id(models.ScheduledJob, id)
+
+    if not job:
+        raise exc.DBEntityNotFoundError(
+            "Scheduled job not found [id=%s]" % id
+        )
+
+    return job
+
+
+@b.session_aware()
+def delete_scheduled_job(id, session=None):
+    # It's safe to use insecure query here because users can't access
+    # scheduled job.
+    count = b.model_query(models.ScheduledJob).filter(
+        models.ScheduledJob.id == id).delete()
+
+    if count == 0:
+        raise exc.DBEntityNotFoundError(
+            "Scheduled job not found [id=%s]" % id
+        )
+
+
+def get_scheduled_jobs(**kwargs):
+    return _get_collection(model=models.ScheduledJob, **kwargs)
+
+
+@b.session_aware()
+def delete_scheduled_jobs(session=None, **kwargs):
+    return _delete_all(models.ScheduledJob, **kwargs)
+
+
+# Other functions.
 
 @b.session_aware()
 def get_expired_executions(expiration_time, limit=None, columns=(),

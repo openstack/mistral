@@ -382,6 +382,36 @@ def delete_delayed_calls(**kwargs):
     return IMPL.delete_delayed_calls(**kwargs)
 
 
+# Scheduled jobs.
+
+def get_scheduled_jobs_to_start(time, batch_size=None):
+    return IMPL.get_scheduled_jobs_to_start(time, batch_size)
+
+
+def create_scheduled_job(values):
+    return IMPL.create_scheduled_job(values)
+
+
+def delete_scheduled_job(id):
+    return IMPL.delete_scheduled_job(id)
+
+
+def update_scheduled_job(id, values, query_filter=None):
+    return IMPL.update_scheduled_job(id, values, query_filter)
+
+
+def get_scheduled_job(id):
+    return IMPL.get_scheduled_job(id)
+
+
+def get_scheduled_jobs(**kwargs):
+    return IMPL.get_scheduled_jobs(**kwargs)
+
+
+def delete_scheduled_jobs(**kwargs):
+    return IMPL.delete_scheduled_jobs(**kwargs)
+
+
 # Cron triggers.
 
 def get_cron_trigger(identifier):

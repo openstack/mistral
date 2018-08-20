@@ -255,6 +255,34 @@ scheduler_opts = [
             'If this property equals None then there is no '
             'restriction on selection.'
         )
+    ),
+    cfg.FloatOpt(
+        'captured_job_timeout',
+        default=30,
+        min=1,
+        help=(
+            'Defines how soon (in seconds) a scheduled job captured for '
+            'processing becomes eligible for capturing by other schedulers '
+            'again. This option is needed to prevent situations when a '
+            'scheduler instance captured a job and failed while processing '
+            'and so this job can never be processed again because it is '
+            'marked as captured.'
+        )
+    ),
+    cfg.FloatOpt(
+        'pickup_job_after',
+        default=60,
+        min=1,
+        help='Time period given to a scheduler to process a scheduled job '
+             'locally before it becomes eligible for processing by other '
+             'scheduler instances.'
+             'For example, a job needs to run at 12:00:00. When a scheduler '
+             'starts processing it it has 60 seconds (or other configured '
+             'value) to complete the job. If the scheduler did not complete '
+             'the job within this period it most likely means that the '
+             'scheduler process crashed. In this case another scheduler '
+             'instance will pick it up from the Job Store, but not earlier '
+             'than 12:01:00 and try to process it.'
     )
 ]
 
