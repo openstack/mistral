@@ -91,8 +91,8 @@ For updating the database to the latest revision type::
     $ mistral-db-manage --config-file <path-to-mistral.conf> upgrade head
 
 Before starting Mistral server, run *mistral-db-manage populate* command.
-It prepares the DB, creates in it with all standard actions and standard
-workflows which Mistral provides for all Mistral users.::
+It prepares the database with standard actions and workflows which Mistral
+will provide for all users.::
 
     $ mistral-db-manage --config-file <path-to-mistral.conf> populate
 
@@ -137,6 +137,7 @@ in a shell::
 Running Mistral Notifier
 ------------------------
 To run Mistral Notifier perform the following command in a shell::
+
     $ mistral-server --server notifier -- config-file <path-to-mistral.conf>
 
 Note that at least one Engine instance and one Executor instance should be
