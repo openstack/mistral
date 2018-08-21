@@ -32,7 +32,7 @@ CONF = cfg.CONF
 
 def client():
     ctx = context.ctx()
-    auth_url = ctx.auth_uri or CONF.keystone_authtoken.auth_uri
+    auth_url = ctx.auth_uri or CONF.keystone_authtoken.www_authenticate_uri
 
     cl = ks_client.Client(
         user_id=ctx.user_id,
@@ -76,7 +76,7 @@ def get_session_and_auth(context, **kwargs):
 
     auth = Token(endpoint=endpoint, token=context.auth_token)
 
-    auth_uri = context.auth_uri or CONF.keystone_authtoken.auth_uri
+    auth_uri = context.auth_uri or CONF.keystone_authtoken.www_authenticate_uri
     ks_auth = Token(
         endpoint=auth_uri,
         token=context.auth_token
@@ -94,7 +94,7 @@ def get_session_and_auth(context, **kwargs):
 
 def _admin_client(trust_id=None):
     if CONF.keystone_authtoken.auth_type is None:
-        auth_url = CONF.keystone_authtoken.auth_uri
+        auth_url = CONF.keystone_authtoken.www_authenticate_uri
         project_name = CONF.keystone_authtoken.admin_tenant_name
 
         # You can't use trust and project together
@@ -271,7 +271,7 @@ def get_admin_session():
     """Returns a keystone session from Mistral's service credentials."""
     if CONF.keystone_authtoken.auth_type is None:
         auth = auth_plugins.Password(
-            CONF.keystone_authtoken.auth_uri,
+            CONF.keystone_authtoken.www_authenticate_uri,
             username=CONF.keystone_authtoken.admin_user,
             password=CONF.keystone_authtoken.admin_password,
             project_name=CONF.keystone_authtoken.admin_tenant_name,

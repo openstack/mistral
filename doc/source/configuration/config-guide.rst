@@ -19,7 +19,7 @@ directory.
    auth properties::
 
     [keystone_authtoken]
-    auth_uri = http://<keystone-host>:5000/v3
+    www_authenticate_uri = http://keystone1.example.com:5000/v3
     identity_uri = http://<keystone-host:5000
     auth_version = v3
     admin_user = <user>

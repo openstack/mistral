@@ -78,7 +78,7 @@ function configure_mistral {
 
     # Setup keystone_authtoken section
     configure_auth_token_middleware $MISTRAL_CONF_FILE mistral $MISTRAL_AUTH_CACHE_DIR
-    iniset $MISTRAL_CONF_FILE keystone_authtoken auth_uri $KEYSTONE_AUTH_URI_V3
+    iniset $MISTRAL_CONF_FILE keystone_authtoken www_authenticate_uri $KEYSTONE_AUTH_URI_V3
 
     # Setup RabbitMQ credentials
     iniset_rpc_backend mistral $MISTRAL_CONF_FILE
