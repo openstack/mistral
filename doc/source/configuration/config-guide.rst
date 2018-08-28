@@ -84,7 +84,7 @@ directory.
 
    Create the database and grant privileges::
 
-    $ mysql -u root -p
+    # mysql
 
     CREATE DATABASE mistral;
     USE mistral
