@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
 import cachetools
 from oslo_config import cfg
 
@@ -128,14 +130,14 @@ class LookupUtilsTest(base.EngineTestCase):
 
         # Reinitialise the cache with reduced action_definition_cache_time
         # to make the test faster.
-        # Save the existing cache into a temporary variable and restore
-        # the value when the test passed.
-        old_cache = lookup_utils._ACTION_DEF_CACHE
-        lookup_utils._ACTION_DEF_CACHE = cachetools.TTLCache(
+        new_cache = cachetools.TTLCache(
             maxsize=1000,
             ttl=5  # 5 seconds
         )
-        self.addCleanup(setattr, lookup_utils, '_ACTION_DEF_CACHE', old_cache)
+        cache_patch = mock.patch.object(
+            lookup_utils, '_ACTION_DEF_CACHE', new_cache)
+        cache_patch.start()
+        self.addCleanup(cache_patch.stop)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
