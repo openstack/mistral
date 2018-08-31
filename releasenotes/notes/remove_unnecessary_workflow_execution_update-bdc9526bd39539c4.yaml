@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Eliminated an unnecessary update of the workflow execution object
+    when processing "on_action_complete" operation. W/o this fix all
+    such transactions would have to compete for the workflow executions
+    table that causes lots of DB deadlocks (on MySQL) and transaction
+    retries. In some cases the number of retries even exceeds the limit
+    (currently hardcoded 50) and such tasks can be fixed only with the
+    integrity checker over time.
