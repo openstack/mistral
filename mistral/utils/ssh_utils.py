@@ -27,13 +27,14 @@ LOG = logging.getLogger(__name__)
 
 
 def _read_paramimko_stream(recv_func):
-    result = ''
+    result = b''
     buf = recv_func(1024)
-    while buf != '':
+
+    while buf != b'':
         result += buf
         buf = recv_func(1024)
 
-    return result
+    return result.decode('utf-8')
 
 
 def _to_paramiko_private_key(private_key_filename, password=None):

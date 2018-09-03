@@ -13,9 +13,12 @@
 #    under the License.
 
 import json
+import mock
 
 from mistral.actions import std_actions as std
+from mistral import exceptions as exc
 from mistral.tests.unit import base
+import mistral.utils.ssh_utils
 
 
 class SSHActionTest(base.BaseTest):
@@ -34,3 +37,43 @@ class SSHActionTest(base.BaseTest):
         self.assertIsNone(
             params['private_key_filename'],
             "private_key_filename is not None.")
+
+    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
+    def test_ssh_action(self, mocked_method):
+        mocked_method.return_value = (0, 'ok')
+        cmd = "echo -n ok"
+        host = "localhost"
+        username = "mistral"
+        action = std.SSHAction(cmd, host, username)
+
+        mock_ctx = None
+
+        stdout = action.run(mock_ctx)
+
+        self.assertEqual('ok', stdout,
+                         'stdout from SSH command differs from expected')
+
+        mocked_method.assert_called_with(
+            cmd=cmd,
+            host=host,
+            username=username,
+            password='',
+            private_key_filename=None
+        )
+
+    @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
+    def test_ssh_action_with_stderr(self, mocked_method):
+        mocked_method.return_value = (1, 'Error expected')
+        cmd = "echo -n ok"
+        host = "localhost"
+        username = "mistral"
+        action = std.SSHAction(cmd, host, username)
+
+        mock_ctx = None
+
+        self.assertRaisesWithMessageContaining(
+            exc.ActionException,
+            "Failed to execute ssh cmd 'echo -n ok' on ['localhost']",
+            action.run,
+            mock_ctx
+        )
