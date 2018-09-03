@@ -1081,3 +1081,167 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
         self.assertListEqual(expected_order, EVENT_LOGS)
+
+    @mock.patch('mistral.actions.std_actions.NoOpAction.run', mock.MagicMock(
+        side_effect=[Exception(), None, None]))
+    def test_notify_rerun_task(self):
+        wf_def = """
+        version: '2.0'
+        wf:
+          tasks:
+            t1:
+              action: std.noop
+              on-success:
+                - t2
+            t2:
+              action: std.noop
+        """
+
+        wf_svc.create_workflows(wf_def)
+
+        notify_options = [{'type': 'webhook'}]
+        params = {'notify': notify_options}
+
+        wf_ex = self.engine.start_workflow('wf', '', **params)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+
+        t1_ex = self._assert_single_item(task_exs, name='t1')
+
+        self.assertEqual(states.ERROR, t1_ex.state)
+        self.assertEqual(1, len(task_exs))
+
+        self.engine.rerun_workflow(t1_ex.id)
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+
+        t1_ex = self._assert_single_item(task_exs, name='t1')
+        t2_ex = self._assert_single_item(task_exs, name='t2')
+
+        self.assertEqual(states.SUCCESS, t1_ex.state)
+        self.assertEqual(states.SUCCESS, t2_ex.state)
+        self.assertEqual(2, len(task_exs))
+
+        expected_order = [
+            (wf_ex.id, events.WORKFLOW_LAUNCHED),
+            (t1_ex.id, events.TASK_LAUNCHED),
+            (t1_ex.id, events.TASK_FAILED),
+            (wf_ex.id, events.WORKFLOW_FAILED),
+            # rerun
+            (wf_ex.id, events.WORKFLOW_RERUN),
+            (t1_ex.id, events.TASK_RERUN),
+            (t1_ex.id, events.TASK_SUCCEEDED),
+            (t2_ex.id, events.TASK_LAUNCHED),
+            (t2_ex.id, events.TASK_SUCCEEDED),
+            (wf_ex.id, events.WORKFLOW_SUCCEEDED),
+        ]
+
+        self.assertTrue(self.publishers['wbhk'].publish.called)
+        self.assertListEqual(expected_order, EVENT_LOGS)
+
+    @mock.patch('mistral.actions.std_actions.NoOpAction.run', mock.MagicMock(
+        side_effect=[Exception(), None, None, None]))
+    def test_notify_rerun_nested_workflow(self):
+        wf_def = """
+        wf_1:
+          tasks:
+            wf_1_t1:
+              workflow: wf_2
+              on-success:
+                - wf_1_t2
+            wf_1_t2:
+              action: std.noop
+        version: '2.0'
+        wf_2:
+          tasks:
+            wf_2_t1:
+              action: std.noop
+              on-success:
+                - wf_2_t2
+            wf_2_t2:
+              action: std.noop
+        """
+
+        wf_svc.create_workflows(wf_def)
+
+        notify_options = [{'type': 'webhook'}]
+        params = {'notify': notify_options}
+
+        wf_1_ex = self.engine.start_workflow('wf_1', '', **params)
+
+        self.await_workflow_error(wf_1_ex.id)
+
+        with db_api.transaction():
+            wf_exs = db_api.get_workflow_executions()
+            self._assert_single_item(wf_exs, name='wf_1',
+                                     state=states.ERROR)
+            self._assert_single_item(wf_exs, name='wf_2',
+                                     state=states.ERROR)
+
+            task_exs = db_api.get_task_executions()
+            self._assert_single_item(task_exs, name='wf_1_t1',
+                                     state=states.ERROR)
+            wf_2_t1 = self._assert_single_item(task_exs, name='wf_2_t1',
+                                               state=states.ERROR)
+
+        self.assertEqual(2, len(task_exs))
+        self.assertEqual(2, len(wf_exs))
+
+        self.engine.rerun_workflow(wf_2_t1.id)
+
+        self.await_workflow_success(wf_1_ex.id)
+
+        with db_api.transaction():
+            wf_exs = db_api.get_workflow_executions()
+            wf_1_ex = self._assert_single_item(wf_exs, name='wf_1',
+                                               state=states.SUCCESS)
+            wf_2_ex = self._assert_single_item(wf_exs, name='wf_2',
+                                               state=states.SUCCESS)
+
+            task_wf_1_exs = wf_1_ex.task_executions
+            wf_1_t1 = self._assert_single_item(task_wf_1_exs, name='wf_1_t1',
+                                               state=states.SUCCESS)
+            wf_1_t2 = self._assert_single_item(task_wf_1_exs, name='wf_1_t2',
+                                               state=states.SUCCESS)
+            task_wf_2_exs = wf_2_ex.task_executions
+            wf_2_t1 = self._assert_single_item(task_wf_2_exs, name='wf_2_t1',
+                                               state=states.SUCCESS)
+            wf_2_t2 = self._assert_single_item(task_wf_2_exs, name='wf_2_t2',
+                                               state=states.SUCCESS)
+
+            self.assertEqual(2, len(task_wf_1_exs))
+            self.assertEqual(2, len(task_wf_2_exs))
+            self.assertEqual(2, len(wf_exs))
+
+            expected_order = [
+                (wf_1_ex.id, events.WORKFLOW_LAUNCHED),
+                (wf_1_t1.id, events.TASK_LAUNCHED),
+                (wf_2_ex.id, events.WORKFLOW_LAUNCHED),
+                (wf_2_t1.id, events.TASK_LAUNCHED),
+                (wf_2_t1.id, events.TASK_FAILED),
+                (wf_2_ex.id, events.WORKFLOW_FAILED),
+                (wf_1_t1.id, events.TASK_FAILED),
+                (wf_1_ex.id, events.WORKFLOW_FAILED),
+                # rerun
+                (wf_2_ex.id, events.WORKFLOW_RERUN),
+                (wf_1_ex.id, events.WORKFLOW_RERUN),
+                (wf_1_t1.id, events.TASK_RERUN),
+                (wf_2_t1.id, events.TASK_RERUN),
+                (wf_2_t1.id, events.TASK_SUCCEEDED),
+                (wf_2_t2.id, events.TASK_LAUNCHED),
+                (wf_2_t2.id, events.TASK_SUCCEEDED),
+                (wf_2_ex.id, events.WORKFLOW_SUCCEEDED),
+                (wf_1_t1.id, events.TASK_SUCCEEDED),
+                (wf_1_t2.id, events.TASK_LAUNCHED),
+                (wf_1_t2.id, events.TASK_SUCCEEDED),
+                (wf_1_ex.id, events.WORKFLOW_SUCCEEDED),
+            ]
+            self.assertTrue(self.publishers['wbhk'].publish.called)
+            self.assertListEqual(expected_order, EVENT_LOGS)
