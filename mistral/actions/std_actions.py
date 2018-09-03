@@ -397,8 +397,11 @@ class SSHAction(actions.Action):
         def raise_exc(parent_exc=None):
             message = ("Failed to execute ssh cmd "
                        "'%s' on %s" % (self.cmd, self.host))
+            # We suppress the actual parent error messages in favor of
+            # more generic ones as we might be leaking information to the CLI
             if parent_exc:
-                message += "\nException: %s" % str(parent_exc)
+                # The full error message needs to be logged regardless
+                LOG.exception(message + " Exception: %s", str(parent_exc))
             raise exc.ActionException(message)
 
         try:
