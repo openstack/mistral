@@ -34,25 +34,32 @@ SCHEDULER_KEY = 'handle_expired_actions_key'
 def handle_expired_actions():
     LOG.debug("Running heartbeat checker...")
 
-    try:
-        interval = CONF.action_heartbeat.check_interval
-        max_missed = CONF.action_heartbeat.max_missed_heartbeats
-        exp_date = utils.utc_now_sec() - datetime.timedelta(
-            seconds=max_missed * interval
-        )
+    interval = CONF.action_heartbeat.check_interval
+    max_missed = CONF.action_heartbeat.max_missed_heartbeats
 
+    exp_date = utils.utc_now_sec() - datetime.timedelta(
+        seconds=max_missed * interval
+    )
+
+    try:
         with db_api.transaction():
             action_exs = db_api.get_running_expired_sync_actions(exp_date)
+
             LOG.debug("Found {} running and expired actions.".format(
                 len(action_exs))
             )
+
             if action_exs:
-                LOG.info("Actions executions to transit to error, because "
-                         "heartbeat wasn't received: {}".format(action_exs))
+                LOG.info(
+                    "Actions executions to transit to error, because "
+                    "heartbeat wasn't received: {}".format(action_exs)
+                )
+
                 for action_ex in action_exs:
                     result = mistral_lib.Result(
                         error="Heartbeat wasn't received."
                     )
+
                     action_handler.on_action_complete(action_ex, result)
     finally:
         schedule(interval)
@@ -62,14 +69,19 @@ def setup():
     interval = CONF.action_heartbeat.check_interval
     max_missed = CONF.action_heartbeat.max_missed_heartbeats
     enabled = interval and max_missed
+
     if not enabled:
         LOG.info("Action heartbeat reporting disabled.")
+
         return
 
     wait_time = interval * max_missed
-    LOG.debug("First run of action execution checker, wait before "
-              "checking to make sure executors have time to send "
-              "heartbeats. ({} seconds)".format(wait_time))
+
+    LOG.debug(
+        "First run of action execution checker, wait before "
+        "checking to make sure executors have time to send "
+        "heartbeats. ({} seconds)".format(wait_time)
+    )
 
     schedule(wait_time)
 
