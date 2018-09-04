@@ -1147,6 +1147,7 @@ def get_expired_executions(expiration_time, limit=None, columns=(),
 @b.session_aware()
 def get_running_expired_sync_actions(expiration_time, session=None):
     query = b.model_query(models.ActionExecution)
+
     query = query.filter(
         models.ActionExecution.last_heartbeat < expiration_time
     )

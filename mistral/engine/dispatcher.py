@@ -98,10 +98,19 @@ def _save_command_to_backlog(wf_ex, cmd):
 
 
 def _poll_commands_from_backlog(wf_ex):
-    backlog_cmds = wf_ex.runtime_context.pop(BACKLOG_KEY, [])
-
-    if not backlog_cmds:
+    # NOTE: We need to always use a guard condition that checks
+    # if a persistent structure is empty and, as in this case,
+    # return immediately w/o doing any further manipulations.
+    # Otherwise, if we do pop() operation with a default value
+    # then the ORM framework will consider it a modification of
+    # the persistent object and generate a corresponding SQL
+    # UPDATE operation. In this particular case it will increase
+    # contention for workflow executions table drastically and
+    # decrease performance.
+    if not wf_ex.runtime_context.get(BACKLOG_KEY):
         return []
+
+    backlog_cmds = wf_ex.runtime_context.pop(BACKLOG_KEY)
 
     return [
         commands.restore_command_from_dict(wf_ex, cmd_dict)
