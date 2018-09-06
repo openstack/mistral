@@ -1,0 +1,12 @@
+---
+upgrade:
+  - |
+    Run ``mistral-db-manage --config-file <mistral-conf-file> upgrade head``
+    to ensure the database schema is up-to-date.
+fixes:
+  - |
+    [`bug 1785654 <https://bugs.launchpad.net/mistral/+bug/1785654>`_]
+
+    Fixed a bug that prevents any action to run if the OpenStack catalog
+    returned by Keystone is larger than 64kB if the backend is MySQL/MariaDB.
+    The limit is now increased to 16MB.
