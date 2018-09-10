@@ -24,8 +24,9 @@ class NoopPublisher(base.NotificationPublisher):
 
     def publish(self, ex_id, data, event, timestamp, **kwargs):
         LOG.info(
-            'The event %s for %s is published by the '
+            'The event %s for [name=%s, id=%s] is published by the '
             'noop notification publisher.',
             event,
+            data.get('name'),
             ex_id
         )
