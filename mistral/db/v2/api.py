@@ -62,6 +62,10 @@ def refresh(model):
     IMPL.refresh(model)
 
 
+def expire_all():
+    IMPL.expire_all()
+
+
 # Locking.
 
 
