@@ -816,6 +816,44 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
             self.assertDictEqual({}, wf_ex.output)
 
+    def test_output_expression(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          output:
+            continue_flag: <% $.continue_flag %>
+
+          task-defaults:
+            on-error:
+              - task2
+
+          tasks:
+            task1:
+              action: std.fail
+              on-success: task3
+
+            task2:
+              action: std.noop
+              publish:
+                continue_flag: false
+
+            task3:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(2, len(wf_ex.task_executions))
+            self.assertDictEqual({'continue_flag': False}, wf_ex.output)
+
     def test_triggered_by(self):
         wf_text = """---
         version: '2.0'

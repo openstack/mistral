@@ -1,0 +1,13 @@
+---
+
+fixes:
+  - |
+    Workflow output sometimes was not calculated correctly due to
+    the race condition between different transactions: the one that
+    checks workflow completion (i.e. calls "check_and_complete") and
+    the one that processes action execution completion (i.e. calls
+    "on_action_complete"). Calculating output sometimes was based on
+    stale data cached by the SQLAlchemy session. To fix this, we just
+    need to expire all objects in the session so that they are
+    refreshed automatically if we read their state in order to make
+    required calculations. The corresponding change was made.
