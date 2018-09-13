@@ -414,6 +414,16 @@ class Workflow(object):
         if incomplete_tasks_count > 0:
             return incomplete_tasks_count
 
+        LOG.debug("Workflow completed [id=%s]", self.wf_ex.id)
+
+        # NOTE(rakhmerov): Once we know that the workflow has completed,
+        # we need to expire all the objects in the DB session to make sure
+        # to read the most relevant data from the DB (that's already been
+        # committed in parallel transactions). Otherwise, some data like
+        # workflow context may be stale and decisions made upon it will be
+        # wrong.
+        db_api.expire_all()
+
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         if wf_ctrl.any_cancels():
