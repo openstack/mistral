@@ -1480,3 +1480,74 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
         self.assertEqual(6, len(action_executions))
         self.assertTrue(all(a.state == states.ERROR
                             for a in action_executions))
+
+    @mock.patch.object(
+        std_actions.NoOpAction,
+        'run',
+        mock.MagicMock(
+            side_effect=[
+                exc.ActionException(),
+                'Success'
+            ]
+        )
+    )
+    def test_rerun_sub_workflow(self):
+        wf_service.create_workflows("""---
+        version: '2.0'
+        wf1:
+          tasks:
+            task1:
+              workflow: wf2
+        wf2:
+          tasks:
+            task2:
+              workflow: wf3
+        wf3:
+          tasks:
+            task3:
+              action: std.noop""")
+
+        # Run workflow and fail task.
+        wf1_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_error(wf1_ex.id)
+
+        with db_api.transaction():
+            wf_exs = db_api.get_workflow_executions()
+            task_exs = db_api.get_task_executions()
+
+            self.assertEqual(3, len(wf_exs),
+                             'The number of workflow executions')
+            self.assertEqual(3, len(task_exs),
+                             'The number of task executions')
+
+            for wf_ex in wf_exs:
+                self.assertEqual(states.ERROR, wf_ex.state,
+                                 'The executions must fail the first time')
+            for task_ex in task_exs:
+                self.assertEqual(states.ERROR, task_ex.state,
+                                 'The tasks must fail the first time')
+
+            wf3_ex = self._assert_single_item(wf_exs, name='wf3')
+            task3_ex = self._assert_single_item(wf3_ex.task_executions,
+                                                name="task3")
+
+        self.engine.rerun_workflow(task3_ex.id)
+
+        self.await_workflow_success(wf1_ex.id)
+
+        with db_api.transaction():
+            wf_exs = db_api.get_workflow_executions()
+            task_exs = db_api.get_task_executions()
+
+            self.assertEqual(3, len(wf_exs),
+                             'The number of workflow executions')
+            self.assertEqual(3, len(task_exs),
+                             'The number of task executions')
+
+            for wf_ex in wf_exs:
+                self.assertEqual(states.SUCCESS, wf_ex.state,
+                                 'The executions must success the second time')
+            for task_ex in task_exs:
+                self.assertEqual(states.SUCCESS, task_ex.state,
+                                 'The tasks must success the second time')

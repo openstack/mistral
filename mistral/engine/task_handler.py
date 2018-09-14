@@ -82,6 +82,14 @@ def run_task(wf_cmd):
         _schedule_refresh_task_state(task.task_ex, 1)
 
 
+def rerun_task(task_ex, wf_spec):
+    task = _build_task_from_execution(wf_spec, task_ex)
+
+    old_task_state = task_ex.state
+    task.set_state(states.RUNNING, None, False)
+    task.notify(old_task_state, states.RUNNING)
+
+
 @profiler.trace('task-handler-on-action-complete', hide_args=True)
 def _on_action_complete(action_ex):
     """Handles action completion event.
