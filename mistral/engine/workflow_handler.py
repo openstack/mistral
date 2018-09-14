@@ -216,17 +216,6 @@ def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
 
     wf.rerun(task_ex, reset=reset, env=env)
 
-    _schedule_check_and_fix_integrity(
-        wf_ex,
-        delay=CONF.engine.execution_integrity_check_delay
-    )
-
-    if wf_ex.task_execution_id:
-        _schedule_check_and_fix_integrity(
-            wf_ex.task_execution.workflow_execution,
-            delay=CONF.engine.execution_integrity_check_delay
-        )
-
 
 def resume_workflow(wf_ex, env=None):
     if not states.is_paused_or_idle(wf_ex.state):

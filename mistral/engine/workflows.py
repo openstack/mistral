@@ -233,7 +233,7 @@ class Workflow(object):
 
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
-        self.set_state(states.RUNNING, recursive=True)
+        self._recursive_rerun()
 
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
@@ -360,7 +360,7 @@ class Workflow(object):
         )
 
     @profiler.trace('workflow-set-state')
-    def set_state(self, state, state_info=None, recursive=False):
+    def set_state(self, state, state_info=None):
         assert self.wf_ex
 
         cur_state = self.wf_ex.state
@@ -405,22 +405,6 @@ class Workflow(object):
             lookup_utils.invalidate_cached_task_executions(self.wf_ex.id)
 
             triggers.on_workflow_complete(self.wf_ex)
-
-        if recursive and self.wf_ex.task_execution_id:
-            parent_task_ex = db_api.get_task_execution(
-                self.wf_ex.task_execution_id
-            )
-
-            parent_wf = Workflow(wf_ex=parent_task_ex.workflow_execution)
-
-            parent_wf.lock()
-
-            parent_wf.set_state(state, recursive=recursive)
-
-            # TODO(rakhmerov): It'd be better to use instance of Task here.
-            parent_task_ex.state = state
-            parent_task_ex.state_info = None
-            parent_task_ex.processed = False
 
     @profiler.trace('workflow-check-and-complete')
     def check_and_complete(self):
