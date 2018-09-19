@@ -21,6 +21,9 @@ from oslo_policy import policy
 from mistral import exceptions as exc
 from mistral import policies
 
+
+CONF = cfg.CONF
+
 _ENFORCER = None
 
 
@@ -82,6 +85,26 @@ def enforce(action, context, target=None, do_raise=True,
         do_raise=do_raise,
         exc=exc
     )
+
+
+def get_enforcer():
+    """Entrypoint that must return the raw oslo.policy enforcer obj.
+
+    This is utilized by the command-line policy tools.
+
+    :returns: :class:`oslo_policy.policy.Enforcer`
+    """
+    # Here we pass an empty list of arguments because there aren't any
+    # arguments that oslo.config or oslo.policy shouldn't already understand
+    # from the CONF object. This makes things easier here because we don't have
+    # to parse arguments passed in from the command line and remove unexpected
+    # arguments before building a Config object.
+    CONF([], project='mistral')
+    enforcer = policy.Enforcer(CONF)
+    enforcer.register_defaults(policies.list_rules())
+    enforcer.load_rules()
+
+    return enforcer
 
 
 def _ensure_enforcer_initialization():
