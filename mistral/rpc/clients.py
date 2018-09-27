@@ -51,6 +51,8 @@ def cleanup():
     _EXECUTOR_CLIENT = None
     _EVENT_ENGINE_CLIENT = None
 
+    base.cleanup()
+
 
 def get_engine_client():
     global _ENGINE_CLIENT
