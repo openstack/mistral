@@ -61,6 +61,8 @@ def cleanup():
     _EVENT_ENGINE_CLIENT = None
     _NOTIFIER_CLIENT = None
 
+    base.cleanup()
+
 
 def get_engine_client():
     global _ENGINE_CLIENT
