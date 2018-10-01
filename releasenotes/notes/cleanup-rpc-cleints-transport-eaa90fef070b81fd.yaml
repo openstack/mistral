@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Cleanup transports along RPC clients. Fixed a bad weird condition in the
+    API server related to cron-triggers and SIGHUP. The parent API server
+    creates a RPC connection when creating workflows from cron triggers. If a
+    SIGUP signal happens after, the child inherits the connection, but it's
+    non-functional.
