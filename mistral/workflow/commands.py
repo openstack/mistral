@@ -101,7 +101,8 @@ class RunTask(WorkflowCommand):
 class RunExistingTask(WorkflowCommand):
     """Command to run an existing workflow task."""
 
-    def __init__(self, wf_ex, wf_spec, task_ex, reset=True, triggered_by=None):
+    def __init__(self, wf_ex, wf_spec, task_ex, reset=True, triggered_by=None,
+                 rerun=False):
         super(RunExistingTask, self).__init__(
             wf_ex,
             wf_spec,
@@ -113,6 +114,7 @@ class RunExistingTask(WorkflowCommand):
         self.task_ex = task_ex
         self.reset = reset
         self.unique_key = task_ex.unique_key
+        self.rerun = rerun
 
     def to_dict(self):
         d = super(RunExistingTask, self).to_dict()

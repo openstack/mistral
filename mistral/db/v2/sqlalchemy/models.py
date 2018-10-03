@@ -255,6 +255,8 @@ class TaskExecution(Execution):
     action_spec = sa.Column(st.JsonLongDictType())
     unique_key = sa.Column(sa.String(255), nullable=True)
     type = sa.Column(sa.String(10))
+    started_at = sa.Column(sa.DateTime, nullable=True)
+    finished_at = sa.Column(sa.DateTime, nullable=True)
 
     # Whether the task is fully processed (publishing and calculating commands
     # after it). It allows to simplify workflow controller implementations
@@ -272,6 +274,14 @@ class TaskExecution(Execution):
             if not self.spec.get('workflow')
             else self.workflow_executions
         )
+
+    def to_dict(self):
+        d = super(TaskExecution, self).to_dict()
+
+        utils.datetime_to_str_in_dict(d, 'started_at')
+        utils.datetime_to_str_in_dict(d, 'finished_at')
+
+        return d
 
 
 for cls in utils.iter_subclasses(Execution):

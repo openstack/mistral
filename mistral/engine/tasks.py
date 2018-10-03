@@ -51,7 +51,8 @@ class Task(object):
     """
 
     def __init__(self, wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None, waiting=False, triggered_by=None):
+                 unique_key=None, waiting=False, triggered_by=None,
+                 rerun=False):
         self.wf_ex = wf_ex
         self.task_spec = task_spec
         self.ctx = ctx
@@ -60,6 +61,7 @@ class Task(object):
         self.unique_key = unique_key
         self.waiting = waiting
         self.triggered_by = triggered_by
+        self.rerun = rerun
         self.reset_flag = False
         self.created = False
         self.state_changed = False
@@ -174,6 +176,12 @@ class Task(object):
 
         cur_state = self.task_ex.state
 
+        # Set initial started_at in case of waiting => running.
+        # We can't set this just in run_existing, because task retries
+        # will update started_at, which is incorrect.
+        if cur_state == states.WAITING and state == states.RUNNING:
+            self.save_started_time()
+
         if cur_state != state or self.task_ex.state_info != state_info:
             task_ex = db_api.update_task_execution_state(
                 id=self.task_ex.id,
@@ -269,6 +277,8 @@ class Task(object):
         self.task_ex.processed = True
 
         self.register_workflow_completion_check()
+
+        self.save_finished_time()
 
         # Publish task event.
         self.notify(old_task_state, self.task_ex.state)
@@ -398,6 +408,18 @@ class Task(object):
 
         return env.get('__actions', {}).get(action_name, {})
 
+    def save_started_time(self, value='default'):
+        if not self.task_ex:
+            return
+        time = value if value is not 'default' else utils.utc_now_sec()
+        self.task_ex.started_at = time
+
+    def save_finished_time(self, value='default'):
+        if not self.task_ex:
+            return
+        time = value if value is not 'default' else utils.utc_now_sec()
+        self.task_ex.finished_at = time
+
 
 class RegularTask(Task):
     """Regular task.
@@ -440,6 +462,7 @@ class RegularTask(Task):
             return
 
         self._create_task_execution()
+        self.save_started_time()
 
         # Publish event.
         self.notify(None, self.task_ex.state)
@@ -480,6 +503,15 @@ class RegularTask(Task):
 
         # Publish event.
         self.notify(old_task_state, self.task_ex.state)
+
+        if self.rerun:
+            self.save_started_time()
+            self.save_finished_time(value=None)
+            self._before_task_start()
+
+            # Policies could possibly change task state.
+            if self.task_ex.state != states.RUNNING:
+                return
 
         self._update_inbound_context()
         self._update_triggered_by()
