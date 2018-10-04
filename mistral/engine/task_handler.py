@@ -418,6 +418,10 @@ def _refresh_task_state(task_ex_id):
                     (task_ex_id, task_ex.name, state)
                 )
 
+    if states.is_completed(task_ex.state):
+        with db_api.transaction():
+            wf_handler.check_and_complete(wf_ex.id)
+
 
 def _schedule_refresh_task_state(task_ex, delay=0):
     """Schedules task preconditions check.
@@ -460,6 +464,15 @@ def _scheduled_on_action_complete(action_ex_id, wf_action):
             action_ex = db_api.get_action_execution(action_ex_id)
 
         _on_action_complete(action_ex)
+
+        wf_ex_id = None
+
+        if states.is_completed(action_ex.task_execution.state):
+            wf_ex_id = action_ex.task_execution.workflow_execution_id
+
+    if wf_ex_id:
+        with db_api.transaction():
+            wf_handler.check_and_complete(wf_ex_id)
 
 
 def schedule_on_action_complete(action_ex, delay=0):
@@ -506,6 +519,15 @@ def _scheduled_on_action_update(action_ex_id, wf_action):
             action_ex = db_api.get_action_execution(action_ex_id)
 
         _on_action_update(action_ex)
+
+        wf_ex_id = None
+
+        if states.is_completed(action_ex.task_execution.state):
+            wf_ex_id = action_ex.task_execution.workflow_execution_id
+
+    if wf_ex_id:
+        with db_api.transaction():
+            wf_handler.check_and_complete(wf_ex_id)
 
 
 def schedule_on_action_update(action_ex, delay=0):

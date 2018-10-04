@@ -753,7 +753,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         calls = db_api.get_delayed_calls()
 
-        mtd_name = 'mistral.engine.workflow_handler._check_and_complete'
+        mtd_name = 'mistral.engine.workflow_handler._check_and_fix_integrity'
 
         self._assert_single_item(calls, target_method_name=mtd_name)
 
@@ -780,7 +780,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         calls = db_api.get_delayed_calls()
 
-        mtd_name = 'mistral.engine.workflow_handler._check_and_complete'
+        mtd_name = 'mistral.engine.workflow_handler._check_and_fix_integrity'
 
         self._assert_single_item(calls, target_method_name=mtd_name)
 

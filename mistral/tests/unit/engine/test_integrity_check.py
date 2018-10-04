@@ -30,6 +30,8 @@ class IntegrityCheckTest(base.EngineTestCase):
         )
 
     def test_task_execution_integrity(self):
+        self.override_config('execution_integrity_check_delay', 1, 'engine')
+
         # The idea of the test is that we use the no-op asynchronous action
         # so that action and task execution state is not automatically set
         # to SUCCESS after we start the workflow. We'll update the action

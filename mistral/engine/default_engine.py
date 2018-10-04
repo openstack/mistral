@@ -64,6 +64,9 @@ class DefaultEngine(base.Engine):
                     params
                 )
 
+                # Checking a case when all tasks are completed immediately.
+                wf_handler.check_and_complete(wf_ex.id)
+
                 return wf_ex.get_clone()
 
         except exceptions.DBDuplicateEntryError:
@@ -143,7 +146,23 @@ class DefaultEngine(base.Engine):
 
             action_handler.on_action_complete(action_ex, result)
 
-            return action_ex.get_clone()
+            result = action_ex.get_clone()
+
+            # Need to see if checking workflow completion makes sense.
+            wf_ex_id = None
+
+            if (action_ex.task_execution_id
+                    and states.is_completed(action_ex.task_execution.state)):
+                wf_ex_id = action_ex.task_execution.workflow_execution_id
+
+        # Note: We must do this check in a new transaction to make sure
+        # that at least one of the parallel transactions will do a consistent
+        # read from the DB.
+        if wf_ex_id:
+            with db_api.transaction():
+                wf_handler.check_and_complete(wf_ex_id)
+
+        return result
 
     @db_utils.retry_on_db_error
     @action_queue.process
@@ -158,7 +177,22 @@ class DefaultEngine(base.Engine):
 
             action_handler.on_action_update(action_ex, state)
 
-            return action_ex.get_clone()
+            result = action_ex.get_clone()
+
+            wf_ex_id = None
+
+            if (action_ex.task_execution_id
+                    and states.is_completed(action_ex.task_execution.state)):
+                wf_ex_id = action_ex.task_execution.workflow_execution_id
+
+        # Note: We must do this check in a new transaction to make sure
+        # that at least one of the parallel transactions will do a consistent
+        # read from the DB.
+        if wf_ex_id:
+            with db_api.transaction():
+                wf_handler.check_and_complete(wf_ex_id)
+
+        return result
 
     @db_utils.retry_on_db_error
     @action_queue.process

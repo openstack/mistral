@@ -539,10 +539,7 @@ class DefaultEngineTest(base.DbTestCase):
 
             task_execs = wf_ex.task_executions
 
-        # Workflow completion check is done separate with scheduler
-        # but scheduler doesn't start in this test (in fact, it's just
-        # a DB test)so the workflow is expected to be in running state.
-        self.assertEqual(states.RUNNING, wf_ex.state)
+        self.assertEqual(states.SUCCESS, wf_ex.state)
 
         self.assertIsInstance(task2_action_ex, models.ActionExecution)
         self.assertEqual('std.echo', task2_action_ex.name)

@@ -257,7 +257,12 @@ class Workflow(object):
         from mistral.engine import workflow_handler
 
         self.set_state(states.RUNNING)
-        workflow_handler._schedule_check_and_complete(self.wf_ex)
+
+        # TODO(rakhmerov): We call a internal method of a module here.
+        # The simplest way is to make it public, however, I believe
+        # it's another "bad smell" that tells that some refactoring
+        # of the architecture should be made.
+        workflow_handler._schedule_check_and_fix_integrity(self.wf_ex)
 
         if self.wf_ex.task_execution_id:
             parent_task_ex = db_api.get_task_execution(

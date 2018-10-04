@@ -525,11 +525,14 @@ def _complete_task(task_ex_id, state, state_info):
     from mistral.engine import task_handler
 
     with db_api.transaction():
-        task_handler.complete_task(
-            db_api.get_task_execution(task_ex_id),
-            state,
-            state_info
-        )
+        task_ex = db_api.get_task_execution(task_ex_id)
+
+        wf_ex_id = task_ex.workflow_execution_id
+
+        task_handler.complete_task(task_ex, state, state_info)
+
+    with db_api.transaction():
+        wf_handler.check_and_complete(wf_ex_id)
 
 
 @db_utils.retry_on_db_error
@@ -540,11 +543,15 @@ def _fail_task_if_incomplete(task_ex_id, timeout):
     with db_api.transaction():
         task_ex = db_api.get_task_execution(task_ex_id)
 
+        wf_ex_id = None
+
         if not states.is_completed(task_ex.state):
             msg = 'Task timed out [timeout(s)=%s].' % timeout
 
-            task_handler.complete_task(
-                db_api.get_task_execution(task_ex_id),
-                states.ERROR,
-                msg
-            )
+            wf_ex_id = task_ex.workflow_execution_id
+
+            task_handler.complete_task(task_ex, states.ERROR, msg)
+
+    if wf_ex_id:
+        with db_api.transaction():
+            wf_handler.check_and_complete(wf_ex_id)

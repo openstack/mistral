@@ -235,7 +235,6 @@ class JoinEngineTest(base.EngineTestCase):
         # uncertainty of its running in parallel with task3.
         self.await_task_success(task4.id)
 
-        self.assertEqual(states.RUNNING, wf_ex.state)
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
 
