@@ -323,17 +323,22 @@ class IronicAction(base.OpenStackAction):
 
         ironic_endpoint = self.get_service_endpoint()
 
-        return self._get_client_class()(
-            ironic_endpoint.url,
-            token=context.auth_token,
-            region_name=ironic_endpoint.region,
+        session_and_auth = self.get_session_and_auth(context)
+
+        client = self._get_client_class()(
             os_ironic_api_version=IRONIC_API_VERSION,
-            insecure=context.insecure
+            endpoint_override=ironic_endpoint.url,
+            session=session_and_auth['session']
         )
+
+        return client
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()("http://127.0.0.1:6385/")
+        return cls._get_client_class()(
+            endpoint_override="http://127.0.0.1:6385/",
+            session={"fake": "session"}
+        )
 
 
 class BaremetalIntrospectionAction(base.OpenStackAction):
