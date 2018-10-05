@@ -12,10 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from __future__ import absolute_import
+
 import functools
+
+from sqlalchemy import exc as sqla_exc
 
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+
 import tenacity
 
 from mistral import context
@@ -25,7 +30,11 @@ from mistral.services import security
 
 LOG = logging.getLogger(__name__)
 
-_RETRY_ERRORS = (db_exc.DBDeadlock, db_exc.DBConnectionError)
+_RETRY_ERRORS = (
+    db_exc.DBDeadlock,
+    db_exc.DBConnectionError,
+    sqla_exc.OperationalError
+)
 
 
 def _with_auth_context(auth_ctx, func, *args, **kw):
