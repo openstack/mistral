@@ -143,7 +143,7 @@ MISTRAL_TITLE = """
 ||      || || __//   ||_// ||      \\\__// \\\_ ||
 
 Mistral Workflow Service, version %s
-""" % version.version_string()
+""" % version.version_string
 
 
 def print_server_info():
