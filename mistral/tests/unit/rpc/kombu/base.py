@@ -25,4 +25,4 @@ class KombuTestCase(base.BaseTest):
 
         kombu_base.set_transport_options(check_backend=False)
 
-        cfg.CONF.set_default('rpc_backend', 'kombu')
+        cfg.CONF.set_default('transport_url', 'rabbit://localhost:567')

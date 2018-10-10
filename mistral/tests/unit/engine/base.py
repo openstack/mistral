@@ -57,7 +57,7 @@ class EngineTestCase(base.DbTestCase):
         messaging.get_transport(cfg.CONF)
 
         # Set the transport to 'fake' for Engine tests.
-        cfg.CONF.set_default('rpc_backend', 'fake')
+        cfg.CONF.set_default('transport_url', 'fake:/')
 
         # Drop all RPC objects (transport, clients).
         rpc_base.cleanup()
