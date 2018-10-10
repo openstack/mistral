@@ -118,6 +118,9 @@ class ReverseWorkflowController(base.WorkflowController):
         # TODO(rakhmerov): Implement.
         return base.TaskLogicalState(task_ex.state, task_ex.state_info)
 
+    def find_indirectly_affected_task_executions(self, task_name):
+        return set()
+
     def is_error_handled_for(self, task_ex):
         return task_ex.state != states.ERROR
 

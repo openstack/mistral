@@ -140,13 +140,14 @@ class EngineTestCase(base.DbTestCase):
                 for t in w.task_executions:
                     print(
                         "\t%s [id=%s, state=%s, state_info=%s, processed=%s,"
-                        " published=%s]" %
+                        " published=%s, runtime_context=%s]" %
                         (t.name,
                          t.id,
                          t.state,
                          t.state_info,
                          t.processed,
-                         t.published)
+                         t.published,
+                         t.runtime_context)
                     )
 
                     child_execs = t.executions

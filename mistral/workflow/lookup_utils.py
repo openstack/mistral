@@ -88,7 +88,8 @@ def find_task_executions_by_name(wf_ex_id, task_name):
 
     :param wf_ex_id: Workflow execution id.
     :param task_name: Task name.
-    :return: Task executions (possibly a cached value).
+    :return: Task executions (possibly a cached value). The returned list
+        may contain task execution clones not bound to the DB session.
     """
     with _TASK_EX_CACHE_LOCK:
         t_execs = _TASK_EX_CACHE[wf_ex_id].get(task_name)
@@ -101,6 +102,8 @@ def find_task_executions_by_name(wf_ex_id, task_name):
         name=task_name,
         sort_keys=[]  # disable sorting
     )
+
+    t_execs = [t_ex.get_clone() for t_ex in t_execs]
 
     # We can cache only finished tasks because they won't change.
     all_finished = (

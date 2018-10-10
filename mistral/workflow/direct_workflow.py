@@ -191,6 +191,9 @@ class DirectWorkflowController(base.WorkflowController):
 
         return self._get_join_logical_state(task_spec)
 
+    def find_indirectly_affected_task_executions(self, task_name):
+        return self._find_indirectly_affected_created_joins(task_name)
+
     def is_error_handled_for(self, task_ex):
         return bool(self.wf_spec.get_on_error_clause(task_ex.name))
 
@@ -307,6 +310,54 @@ class DirectWorkflowController(base.WorkflowController):
             for t_name, condition, params in clause
             if not condition or expr.evaluate(condition, ctx)
         ]
+
+    @profiler.trace('direct-wf-controller-find-downstream-joins')
+    def _find_indirectly_affected_created_joins(self, task_name, result=None,
+                                                visited_task_names=None):
+        visited_task_names = visited_task_names or set()
+
+        if task_name in visited_task_names:
+            return
+
+        visited_task_names.add(task_name)
+
+        result = result or set()
+
+        def _process_clause(clause):
+            for t_name, condition, params in clause:
+                t_spec = self.wf_spec.get_tasks()[t_name]
+
+                # Encountered an engine command.
+                if not t_spec:
+                    continue
+
+                if t_spec.get_join():
+                    # TODO(rakhmerov): This is a fundamental limitation
+                    # that prevents us having cycles within workflows
+                    # that contain joins because we assume that there
+                    # can be only one "join" task with a given name.
+                    t_ex = self._find_task_execution_by_name(t_name)
+
+                    if t_ex:
+                        result.add(t_ex)
+
+                        # If we found a "join" we don't need to go further
+                        # because completion of the found join will handle
+                        # other deeper joins.
+                        continue
+
+                # Recursion.
+                self._find_indirectly_affected_created_joins(
+                    t_name,
+                    result=result,
+                    visited_task_names=visited_task_names
+                )
+
+        _process_clause(self.wf_spec.get_on_success_clause(task_name))
+        _process_clause(self.wf_spec.get_on_error_clause(task_name))
+        _process_clause(self.wf_spec.get_on_complete_clause(task_name))
+
+        return result
 
     @profiler.trace('direct-wf-controller-get-join-logical-state')
     def _get_join_logical_state(self, task_spec):
