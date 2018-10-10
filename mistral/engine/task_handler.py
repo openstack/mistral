@@ -78,8 +78,7 @@ def run_task(wf_cmd):
 
         return
 
-    if task.is_waiting() and (task.is_created() or task.is_state_changed()):
-        _schedule_refresh_task_state(task.task_ex, 1)
+    _check_affected_tasks(task)
 
 
 @profiler.trace('task-handler-on-action-complete', hide_args=True)
@@ -120,6 +119,10 @@ def _on_action_complete(action_ex):
         task.set_state(states.ERROR, msg)
 
         wf_handler.force_fail_workflow(wf_ex, msg)
+
+        return
+
+    _check_affected_tasks(task)
 
 
 @profiler.trace('task-handler-on-action-update', hide_args=True)
@@ -178,6 +181,8 @@ def _on_action_update(action_ex):
 
         return
 
+    _check_affected_tasks(task)
+
 
 def force_fail_task(task_ex, msg):
     """Forces the given task to fail.
@@ -230,6 +235,8 @@ def continue_task(task_ex):
 
         return
 
+    _check_affected_tasks(task)
+
 
 def complete_task(task_ex, state, state_info):
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
@@ -255,6 +262,33 @@ def complete_task(task_ex, state, state_info):
         wf_handler.force_fail_workflow(wf_ex, msg)
 
         return
+
+    _check_affected_tasks(task)
+
+
+def _check_affected_tasks(task):
+    if not task.is_completed():
+        return
+
+    task_ex = task.task_ex
+
+    wf_ex = task_ex.workflow_execution
+
+    if states.is_completed(wf_ex.state):
+        return
+
+    wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+        task_ex.workflow_execution_id
+    )
+
+    wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
+
+    affected_task_execs = wf_ctrl.find_indirectly_affected_task_executions(
+        task_ex.name
+    )
+
+    for t_ex in affected_task_execs:
+        _schedule_refresh_task_state(t_ex)
 
 
 def _build_task_from_execution(wf_spec, task_ex):
@@ -342,39 +376,39 @@ def _refresh_task_state(task_ex_id):
 
         wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
-        log_state = wf_ctrl.get_logical_task_state(
-            task_ex
-        )
+        with db_api.named_lock(task_ex.id):
+            db_api.refresh(task_ex)
 
-        state = log_state.state
-        state_info = log_state.state_info
+            if (states.is_completed(task_ex.state)
+                    or task_ex.state == states.RUNNING):
+                return
 
-        # Update 'triggered_by' because it could have changed.
-        task_ex.runtime_context['triggered_by'] = log_state.triggered_by
+            log_state = wf_ctrl.get_logical_task_state(task_ex)
 
-        if state == states.RUNNING:
-            continue_task(task_ex)
-        elif state == states.ERROR:
-            complete_task(task_ex, state, state_info)
-        elif state == states.WAITING:
-            # Let's assume that a task takes 0.01 sec in average to complete
-            # and based on this assumption calculate a time of the next check.
-            # The estimation is very rough, of course, but this delay will be
-            # decreasing as task preconditions will be completing which will
-            # give a decent asymptotic approximation.
-            # For example, if a 'join' task has 100 inbound incomplete tasks
-            # then the next 'refresh_task_state' call will happen in 10
-            # seconds. For 500 tasks it will be 50 seconds. The larger the
-            # workflow is, the more beneficial this mechanism will be.
-            delay = int(log_state.cardinality * 0.01)
+            state = log_state.state
+            state_info = log_state.state_info
 
-            _schedule_refresh_task_state(task_ex, max(1, delay))
-        else:
-            # Must never get here.
-            raise RuntimeError(
-                'Unexpected logical task state [task_ex_id=%s, task_name=%s, '
-                'state=%s]' % (task_ex_id, task_ex.name, state)
-            )
+            # Update 'triggered_by' because it could have changed.
+            task_ex.runtime_context['triggered_by'] = log_state.triggered_by
+
+            if state == states.RUNNING:
+                continue_task(task_ex)
+            elif state == states.ERROR:
+                complete_task(task_ex, state, state_info)
+            elif state == states.WAITING:
+                LOG.info(
+                    "Task execution is still in WAITING state"
+                    " [task_ex_id=%s, task_name=%s]",
+                    task_ex_id,
+                    task_ex.name
+                )
+            else:
+                # Must never get here.
+                raise RuntimeError(
+                    'Unexpected logical task state [task_ex_id=%s, '
+                    'task_name=%s, state=%s]' %
+                    (task_ex_id, task_ex.name, state)
+                )
 
 
 def _schedule_refresh_task_state(task_ex, delay=0):
@@ -393,7 +427,7 @@ def _schedule_refresh_task_state(task_ex, delay=0):
     :param task_ex: Task execution.
     :param delay: Delay.
     """
-    key = 'th_c_t_s_a-%s' % task_ex.id
+    key = _get_refresh_state_job_key(task_ex.id)
 
     scheduler.schedule_call(
         None,
@@ -402,6 +436,10 @@ def _schedule_refresh_task_state(task_ex, delay=0):
         key=key,
         task_ex_id=task_ex.id
     )
+
+
+def _get_refresh_state_job_key(task_ex_id):
+    return 'th_r_t_s-%s' % task_ex_id
 
 
 @db_utils.retry_on_db_error
@@ -484,7 +522,7 @@ def schedule_on_action_update(action_ex, delay=0):
 
         return
 
-    key = 'th_on_a_c-%s' % action_ex.task_execution_id
+    key = 'th_on_a_u-%s' % action_ex.task_execution_id
 
     scheduler.schedule_call(
         None,
