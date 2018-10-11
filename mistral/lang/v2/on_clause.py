@@ -23,7 +23,7 @@ NEXT_TASK = {
     "oneOf": [
         {
             "type": "string",
-            "pattern": "^\w+$",
+            "pattern": "^\S+$",
             "description": "Task name (e.g.: `task1`)"
         },
         {
