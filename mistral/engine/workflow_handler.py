@@ -222,11 +222,6 @@ def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
 
     wf.rerun(task_ex, reset=reset, env=env)
 
-    _schedule_check_and_complete(wf_ex)
-
-    if wf_ex.task_execution_id:
-        _schedule_check_and_complete(wf_ex.task_execution.workflow_execution)
-
 
 def resume_workflow(wf_ex, env=None):
     if not states.is_paused_or_idle(wf_ex.state):

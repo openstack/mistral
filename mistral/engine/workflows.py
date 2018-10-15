@@ -233,7 +233,7 @@ class Workflow(object):
 
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
-        self.set_state(states.RUNNING, recursive=True)
+        self._recursive_rerun()
 
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
@@ -247,6 +247,31 @@ class Workflow(object):
             policies.RetryPolicy.refresh_runtime_context(task_ex)
 
         self._continue_workflow(cmds)
+
+    def _recursive_rerun(self):
+        """Rerun all parent workflow executions recursively.
+
+        If there is a parent execution that it reruns as well.
+        """
+
+        from mistral.engine import workflow_handler
+
+        self.set_state(states.RUNNING)
+        workflow_handler._schedule_check_and_complete(self.wf_ex)
+
+        if self.wf_ex.task_execution_id:
+            parent_task_ex = db_api.get_task_execution(
+                self.wf_ex.task_execution_id
+            )
+
+            parent_wf = Workflow(wf_ex=parent_task_ex.workflow_execution)
+
+            parent_wf.lock()
+
+            parent_wf._recursive_rerun()
+
+            from mistral.engine import task_handler
+            task_handler.rerun_task(parent_task_ex, parent_wf.wf_spec)
 
     def _get_backlog(self):
         return self.wf_ex.runtime_context.get(dispatcher.BACKLOG_KEY)
@@ -330,7 +355,7 @@ class Workflow(object):
         )
 
     @profiler.trace('workflow-set-state')
-    def set_state(self, state, state_info=None, recursive=False):
+    def set_state(self, state, state_info=None):
         assert self.wf_ex
 
         cur_state = self.wf_ex.state
@@ -375,22 +400,6 @@ class Workflow(object):
             lookup_utils.invalidate_cached_task_executions(self.wf_ex.id)
 
             triggers.on_workflow_complete(self.wf_ex)
-
-        if recursive and self.wf_ex.task_execution_id:
-            parent_task_ex = db_api.get_task_execution(
-                self.wf_ex.task_execution_id
-            )
-
-            parent_wf = Workflow(wf_ex=parent_task_ex.workflow_execution)
-
-            parent_wf.lock()
-
-            parent_wf.set_state(state, recursive=recursive)
-
-            # TODO(rakhmerov): It'd be better to use instance of Task here.
-            parent_task_ex.state = state
-            parent_task_ex.state_info = None
-            parent_task_ex.processed = False
 
     @profiler.trace('workflow-check-and-complete')
     def check_and_complete(self):
