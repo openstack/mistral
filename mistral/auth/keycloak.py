@@ -67,10 +67,14 @@ class KeycloakAuthHandler(auth.AuthHandler):
         # available in KeyCloak starting only with version 1.8.Final so we have
         # to use user info endpoint which also takes exactly one parameter
         # (access token) and replies with error if token is invalid.
-        user_info_endpoint = (
-            ("%s" + CONF.keycloak_oidc.user_info_endpoint_url) %
-            (CONF.keycloak_oidc.auth_url, realm_name)
-        )
+        user_info_endpoint_url = CONF.keycloak_oidc.user_info_endpoint_url
+
+        if user_info_endpoint_url.startswith(('http://', 'https://')):
+            user_info_endpoint = user_info_endpoint_url
+        else:
+            user_info_endpoint = (
+                ("%s" + user_info_endpoint_url) %
+                (CONF.keycloak_oidc.auth_url, realm_name))
 
         verify = None
         if urllib.parse.urlparse(user_info_endpoint).scheme == "https":
