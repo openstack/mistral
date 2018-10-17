@@ -133,12 +133,12 @@
 
     -
       args:
-        definition: "{{ extra_dir }}/scenarios/join/join_100_wb.yaml"
+        definition: "{{ extra_dir }}/scenarios/join/join_500_wb.yaml"
         do_delete: true
       runner:
         type: "constant"
-        times: 20
-        concurrency: 5
+        times: 10
+        concurrency: 2
       context:
         users:
           tenants: 1
