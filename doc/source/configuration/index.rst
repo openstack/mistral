@@ -1,9 +1,9 @@
 Mistral Configuration and Policy Guide
---------------------------------------
+======================================
 
 .. toctree::
-    :maxdepth: 2
+   :maxdepth: 2
 
-    config-guide.rst
-    policy-guide.rst
-    samples/index.rst
+   ../configuration/config-guide.rst
+   ../configuration/policy-guide.rst
+   ../configuration/samples/index.rst
