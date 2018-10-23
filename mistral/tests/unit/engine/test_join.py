@@ -873,17 +873,10 @@ class JoinEngineTest(base.EngineTestCase):
             state=states.WAITING
         )
 
-        calls = db_api.get_delayed_calls()
-
-        mtd_name = 'mistral.engine.task_handler._refresh_task_state'
-
-        cnt = sum([1 for c in calls if c.target_method_name == mtd_name])
-
-        # There can be 2 calls with different value of 'processing' flag.
-        self.assertTrue(cnt == 1 or cnt == 2)
-
         # Stop the workflow.
         self.engine.stop_workflow(wf_ex.id, state=states.CANCELLED)
+
+        mtd_name = 'mistral.engine.task_handler._refresh_task_state'
 
         self._await(
             lambda:
@@ -931,17 +924,10 @@ class JoinEngineTest(base.EngineTestCase):
             state=states.WAITING
         )
 
-        calls = db_api.get_delayed_calls()
-
-        mtd_name = 'mistral.engine.task_handler._refresh_task_state'
-
-        cnt = sum([1 for c in calls if c.target_method_name == mtd_name])
-
-        # There can be 2 calls with different value of 'processing' flag.
-        self.assertTrue(cnt == 1 or cnt == 2)
-
         # Stop the workflow.
         db_api.delete_workflow_execution(wf_ex.id)
+
+        mtd_name = 'mistral.engine.task_handler._refresh_task_state'
 
         self._await(
             lambda:

@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Removed DB polling from the logic that checks readiness of a "join" task
+    which leads to situations when CPU was mostly occupied by scheduler that
+    runs corresponding periodic jobs and that doesn't let the workflow move
+    forward with a proper speed. That happens in case if a workflow has lots
+    of "join" tasks with many dependencies. It's fixed now.
+
