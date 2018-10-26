@@ -21,7 +21,7 @@ from osprofiler import profiler
 import six
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import action_queue
+from mistral.engine import post_tx_queue
 from mistral.engine import utils as engine_utils
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
@@ -254,13 +254,23 @@ class PythonAction(Action):
 
         execution_context = self._prepare_execution_context()
 
-        action_queue.schedule_run_action(
-            self.action_ex,
-            self.action_def,
-            target,
-            execution_context,
-            timeout=timeout
-        )
+        # Register an asynchronous command to send the action to
+        # run on an executor outside of the main DB transaction.
+        def _run_action():
+            executor = exe.get_executor(cfg.CONF.executor.type)
+
+            executor.run_action(
+                self.action_ex.id,
+                self.action_def.action_class,
+                self.action_def.attributes or {},
+                self.action_ex.input,
+                self.action_ex.runtime_context.get('safe_rerun', False),
+                execution_context,
+                target=target,
+                timeout=timeout
+            )
+
+        post_tx_queue.register_operation(_run_action)
 
     @profiler.trace('action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,
