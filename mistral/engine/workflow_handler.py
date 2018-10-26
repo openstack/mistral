@@ -20,6 +20,7 @@ from osprofiler import profiler
 import traceback as tb
 
 from mistral.db.v2 import api as db_api
+from mistral.engine import post_tx_queue
 from mistral.engine import workflows
 from mistral import exceptions as exc
 from mistral.services import scheduler
@@ -108,6 +109,7 @@ def check_and_complete(wf_ex_id):
         force_fail_workflow(wf.wf_ex, msg)
 
 
+@post_tx_queue.run
 @profiler.trace('workflow-handler-check-and-fix-integrity')
 def _check_and_fix_integrity(wf_ex_id):
     check_after_seconds = CONF.engine.execution_integrity_check_delay
@@ -125,14 +127,12 @@ def _check_and_fix_integrity(wf_ex_id):
         if states.is_completed(wf_ex.state):
             return
 
-        _schedule_check_and_fix_integrity(wf_ex, delay=60)
+        _schedule_check_and_fix_integrity(wf_ex, delay=120)
 
         running_task_execs = db_api.get_task_executions(
             workflow_execution_id=wf_ex.id,
             state=states.RUNNING
         )
-
-        any_completed = False
 
         for t_ex in running_task_execs:
             # The idea is that we take the latest known timestamp of the task
@@ -181,13 +181,6 @@ def _check_and_fix_integrity(wf_ex_id):
                     task_handler.schedule_on_action_complete(
                         child_executions[-1]
                     )
-
-                    if states.is_completed(t_ex.state):
-                        any_completed = True
-
-    if any_completed:
-        with db_api.transaction():
-            check_and_complete(wf_ex_id)
 
 
 def pause_workflow(wf_ex, msg=None):
@@ -272,6 +265,11 @@ def _schedule_check_and_fix_integrity(wf_ex, delay=0):
     :param wf_ex: Workflow execution.
     :param delay: Minimum amount of time before the check should be made.
     """
+
+    if CONF.engine.execution_integrity_check_delay < 0:
+        # Never check integrity if it's a negative value.
+        return
+
     key = _get_integrity_check_key(wf_ex)
 
     scheduler.schedule_call(

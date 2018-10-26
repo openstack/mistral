@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Workflow and join completion check logic is now simplified with using
+    post transactional queue of operations which is a more generic version of
+    action_queue module previously serving for scheduling action runs outside
+    of the main DB transaction. Workflow completion check is now registered
+    only once when a task completes which reduces clutter and it's registered
+    only if the task may potentially lead to workflow completion.
+

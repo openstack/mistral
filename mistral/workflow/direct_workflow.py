@@ -236,6 +236,13 @@ class DirectWorkflowController(base.WorkflowController):
                 filter(is_end_task, batch)
             )
 
+    def may_complete_workflow(self, task_ex):
+        res = super(DirectWorkflowController, self).may_complete_workflow(
+            task_ex
+        )
+
+        return res and not self._has_outbound_tasks(task_ex)
+
     def _has_outbound_tasks(self, task_ex):
         # In order to determine if there are outbound tasks we just need
         # to calculate next task names (based on task outbound context)

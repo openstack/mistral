@@ -26,6 +26,8 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import actions
 from mistral.engine import dispatcher
 from mistral.engine import policies
+from mistral.engine import post_tx_queue
+from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.notifiers import base as notif
@@ -118,6 +120,23 @@ class Task(object):
 
         This method puts task to a waiting state.
         """
+
+        # NOTE(rakhmerov): using named locks may cause problems under load
+        # with MySQL that raises a lot of deadlocks in case of high
+        # parallelism so it makes sense to do a fast check if the object
+        # already exists in DB outside of the lock.
+        if not self.task_ex:
+            t_execs = db_api.get_task_executions(
+                workflow_execution_id=self.wf_ex.id,
+                unique_key=self.unique_key,
+                state=states.WAITING
+            )
+
+            self.task_ex = t_execs[0] if t_execs else None
+
+        if self.task_ex:
+            return
+
         with db_api.named_lock(self.unique_key):
             if not self.task_ex:
                 t_execs = db_api.get_task_executions(
@@ -249,10 +268,24 @@ class Task(object):
         # upon its completion.
         self.task_ex.processed = True
 
+        self.register_workflow_completion_check()
+
         # Publish task event.
         self.notify(old_task_state, self.task_ex.state)
 
         dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
+
+    def register_workflow_completion_check(self):
+        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
+
+        # Register an asynchronous command to check workflow completion
+        # in a separate transaction if the task may potentially lead to
+        # workflow completion.
+        def _check():
+            wf_handler.check_and_complete(self.wf_ex.id)
+
+        if wf_ctrl.may_complete_workflow(self.task_ex):
+            post_tx_queue.register_operation(_check, in_tx=True)
 
     @profiler.trace('task-update')
     def update(self, state, state_info=None):
@@ -289,6 +322,9 @@ class Task(object):
             return
 
         self.set_state(state, state_info)
+
+        if states.is_completed(self.task_ex.state):
+            self.register_workflow_completion_check()
 
         # Publish event.
         self.notify(old_task_state, self.task_ex.state)

@@ -23,14 +23,15 @@ import six
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
-from mistral.engine import action_queue
 from mistral.engine import dispatcher
+from mistral.engine import post_tx_queue
 from mistral.engine import utils as engine_utils
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
+from mistral.rpc import clients as rpc
 from mistral.services import triggers
 from mistral.services import workflows as wf_service
 from mistral import utils
@@ -374,7 +375,7 @@ class Workflow(object):
 
             if wf_ex is None:
                 # Do nothing because the state was updated previously.
-                return
+                return False
 
             self.wf_ex = wf_ex
             self.wf_ex.state_info = json.dumps(state_info) \
@@ -405,6 +406,8 @@ class Workflow(object):
             lookup_utils.invalidate_cached_task_executions(self.wf_ex.id)
 
             triggers.on_workflow_complete(self.wf_ex)
+
+        return True
 
     @profiler.trace('workflow-check-and-complete')
     def check_and_complete(self):
@@ -457,14 +460,17 @@ class Workflow(object):
         return 0
 
     def _succeed_workflow(self, final_context, msg=None):
-        self.wf_ex.output = data_flow.evaluate_workflow_output(
+        output = data_flow.evaluate_workflow_output(
             self.wf_ex,
             self.wf_spec.get_output(),
             final_context
         )
 
-        # Set workflow execution to success until after output is evaluated.
-        self.set_state(states.SUCCESS, msg)
+        # Set workflow execution to success after output is evaluated.
+        if not self.set_state(states.SUCCESS, msg):
+            return
+
+        self.wf_ex.output = output
 
         # Publish event.
         self.notify(events.WORKFLOW_SUCCEEDED)
@@ -492,7 +498,8 @@ class Workflow(object):
             )
             LOG.error(msg)
 
-        self.set_state(states.ERROR, state_info=msg)
+        if not self.set_state(states.ERROR, state_info=msg):
+            return
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
@@ -524,7 +531,8 @@ class Workflow(object):
         if states.is_completed(self.wf_ex.state):
             return
 
-        self.set_state(states.CANCELLED, state_info=msg)
+        if not self.set_state(states.CANCELLED, state_info=msg):
+            return
 
         # When we set an ERROR state we should safely set output value getting
         # w/o exceptions due to field size limitations.
@@ -564,11 +572,16 @@ class Workflow(object):
                 " if a workflow is not in SUCCESS, ERROR or CANCELLED state."
             )
 
-        action_queue.schedule_on_action_complete(
-            self.wf_ex.id,
-            result,
-            wf_action=True
-        )
+        # Register a command executed in a separate thread to send the result
+        # to the parent workflow outside of the main DB transaction.
+        def _send_result():
+            rpc.get_engine_client().on_action_complete(
+                self.wf_ex.id,
+                result,
+                wf_action=True
+            )
+
+        post_tx_queue.register_operation(_send_result)
 
 
 def _get_environment(params):

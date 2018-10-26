@@ -22,7 +22,7 @@ import traceback as tb
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral.engine import action_queue
+from mistral.engine import post_tx_queue
 from mistral.engine import tasks
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
@@ -274,6 +274,7 @@ def complete_task(task_ex, state, state_info):
     _check_affected_tasks(task)
 
 
+@profiler.trace('task-handler-check-affected-tasks', hide_args=True)
 def _check_affected_tasks(task):
     if not task.is_completed():
         return
@@ -295,8 +296,28 @@ def _check_affected_tasks(task):
         task_ex.name
     )
 
+    def _schedule_if_needed(t_ex_id):
+        # NOTE(rakhmerov): we need to minimize the number of delayed calls
+        # that refresh state of "join" tasks. We'll check if corresponding
+        # calls are already scheduled. Note that we must ignore delayed calls
+        # that are currently being processed because of a possible race with
+        # the transaction that deletes delayed calls, i.e. the call may still
+        # exist in DB (the deleting transaction didn't commit yet) but it has
+        # already been processed and the task state hasn't changed.
+        cnt = db_api.get_delayed_calls_count(
+            key=_get_refresh_state_job_key(t_ex_id),
+            processing=False
+        )
+
+        if cnt == 0:
+            _schedule_refresh_task_state(t_ex_id)
+
     for t_ex in affected_task_execs:
-        _schedule_refresh_task_state(t_ex)
+        post_tx_queue.register_operation(
+            _schedule_if_needed,
+            args=[t_ex.id],
+            in_tx=True
+        )
 
 
 def _build_task_from_execution(wf_spec, task_ex):
@@ -364,13 +385,17 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
 
 
 @db_utils.retry_on_db_error
-@action_queue.process
+@post_tx_queue.run
 @profiler.trace('task-handler-refresh-task-state', hide_args=True)
 def _refresh_task_state(task_ex_id):
     with db_api.transaction():
         task_ex = db_api.load_task_execution(task_ex_id)
 
         if not task_ex:
+            return
+
+        if (states.is_completed(task_ex.state)
+                or task_ex.state == states.RUNNING):
             return
 
         wf_ex = task_ex.workflow_execution
@@ -384,46 +409,35 @@ def _refresh_task_state(task_ex_id):
 
         wf_ctrl = wf_base.get_controller(wf_ex, wf_spec)
 
-        with db_api.named_lock(task_ex.id):
-            db_api.refresh(task_ex)
+        log_state = wf_ctrl.get_logical_task_state(task_ex)
 
-            if (states.is_completed(task_ex.state)
-                    or task_ex.state == states.RUNNING):
-                return
+        state = log_state.state
+        state_info = log_state.state_info
 
-            log_state = wf_ctrl.get_logical_task_state(task_ex)
+        # Update 'triggered_by' because it could have changed.
+        task_ex.runtime_context['triggered_by'] = log_state.triggered_by
 
-            state = log_state.state
-            state_info = log_state.state_info
-
-            # Update 'triggered_by' because it could have changed.
-            task_ex.runtime_context['triggered_by'] = log_state.triggered_by
-
-            if state == states.RUNNING:
-                continue_task(task_ex)
-            elif state == states.ERROR:
-                complete_task(task_ex, state, state_info)
-            elif state == states.WAITING:
-                LOG.info(
-                    "Task execution is still in WAITING state"
-                    " [task_ex_id=%s, task_name=%s]",
-                    task_ex_id,
-                    task_ex.name
-                )
-            else:
-                # Must never get here.
-                raise RuntimeError(
-                    'Unexpected logical task state [task_ex_id=%s, '
-                    'task_name=%s, state=%s]' %
-                    (task_ex_id, task_ex.name, state)
-                )
-
-    if states.is_completed(task_ex.state):
-        with db_api.transaction():
-            wf_handler.check_and_complete(wf_ex.id)
+        if state == states.RUNNING:
+            continue_task(task_ex)
+        elif state == states.ERROR:
+            complete_task(task_ex, state, state_info)
+        elif state == states.WAITING:
+            LOG.info(
+                "Task execution is still in WAITING state"
+                " [task_ex_id=%s, task_name=%s]",
+                task_ex_id,
+                task_ex.name
+            )
+        else:
+            # Must never get here.
+            raise RuntimeError(
+                'Unexpected logical task state [task_ex_id=%s, '
+                'task_name=%s, state=%s]' %
+                (task_ex_id, task_ex.name, state)
+            )
 
 
-def _schedule_refresh_task_state(task_ex, delay=0):
+def _schedule_refresh_task_state(task_ex_id, delay=0):
     """Schedules task preconditions check.
 
     This method provides transactional decoupling of task preconditions
@@ -436,17 +450,17 @@ def _schedule_refresh_task_state(task_ex, delay=0):
     we'll have in this case (time between transactions) whereas scheduler
     is a special component that is designed to be resistant to failures.
 
-    :param task_ex: Task execution.
+    :param task_ex_id: Task execution ID.
     :param delay: Delay.
     """
-    key = _get_refresh_state_job_key(task_ex.id)
+    key = _get_refresh_state_job_key(task_ex_id)
 
     scheduler.schedule_call(
         None,
         _REFRESH_TASK_STATE_PATH,
         delay,
         key=key,
-        task_ex_id=task_ex.id
+        task_ex_id=task_ex_id
     )
 
 
@@ -455,7 +469,7 @@ def _get_refresh_state_job_key(task_ex_id):
 
 
 @db_utils.retry_on_db_error
-@action_queue.process
+@post_tx_queue.run
 def _scheduled_on_action_complete(action_ex_id, wf_action):
     with db_api.transaction():
         if wf_action:
@@ -464,15 +478,6 @@ def _scheduled_on_action_complete(action_ex_id, wf_action):
             action_ex = db_api.get_action_execution(action_ex_id)
 
         _on_action_complete(action_ex)
-
-        wf_ex_id = None
-
-        if states.is_completed(action_ex.task_execution.state):
-            wf_ex_id = action_ex.task_execution.workflow_execution_id
-
-    if wf_ex_id:
-        with db_api.transaction():
-            wf_handler.check_and_complete(wf_ex_id)
 
 
 def schedule_on_action_complete(action_ex, delay=0):
@@ -510,7 +515,7 @@ def schedule_on_action_complete(action_ex, delay=0):
 
 
 @db_utils.retry_on_db_error
-@action_queue.process
+@post_tx_queue.run
 def _scheduled_on_action_update(action_ex_id, wf_action):
     with db_api.transaction():
         if wf_action:
@@ -519,15 +524,6 @@ def _scheduled_on_action_update(action_ex_id, wf_action):
             action_ex = db_api.get_action_execution(action_ex_id)
 
         _on_action_update(action_ex)
-
-        wf_ex_id = None
-
-        if states.is_completed(action_ex.task_execution.state):
-            wf_ex_id = action_ex.task_execution.workflow_execution_id
-
-    if wf_ex_id:
-        with db_api.transaction():
-            wf_handler.check_and_complete(wf_ex_id)
 
 
 def schedule_on_action_update(action_ex, delay=0):

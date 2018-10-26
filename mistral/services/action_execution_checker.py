@@ -17,7 +17,7 @@ import datetime
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.engine import action_handler
-from mistral.engine import action_queue
+from mistral.engine import post_tx_queue
 from mistral.services import scheduler
 from mistral import utils
 from mistral_lib import actions as mistral_lib
@@ -30,7 +30,7 @@ SCHEDULER_KEY = 'handle_expired_actions_key'
 
 
 @db_utils.retry_on_db_error
-@action_queue.process
+@post_tx_queue.run
 def handle_expired_actions():
     LOG.debug("Running heartbeat checker...")
 
