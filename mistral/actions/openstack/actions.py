@@ -823,8 +823,9 @@ class SenlinAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        sess = keystone_utils.get_admin_session()
-        return cls._get_client_class()(authenticator=sess.auth)
+        # Senlin client changed interface a bit, let's skip __init__ altogether
+        class_ = cls._get_client_class()
+        return class_.__new__(class_)
 
 
 class AodhAction(base.OpenStackAction):
