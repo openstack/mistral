@@ -1001,7 +1001,8 @@
         "secrets_get": "secrets.get",
         "secrets_list": "secrets.list",
         "secrets_total": "secrets.total",
-        "secrets_retrieve": "secrets_retrieve"
+        "secrets_retrieve": "secrets_retrieve",
+        "secrets_store": "secrets_store"
     },
     "mistral": {
         "_comment": "It uses mistralclient.v2.",
