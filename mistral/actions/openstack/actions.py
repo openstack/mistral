@@ -20,7 +20,6 @@ from oslo_utils import importutils
 
 from keystoneauth1 import session as ks_session
 from keystoneauth1.token_endpoint import Token
-from keystoneclient.auth import identity
 from keystoneclient import httpclient
 
 from mistral.actions.openstack import base
@@ -574,6 +573,7 @@ class ZaqarAction(base.OpenStackAction):
 
 
 class BarbicanAction(base.OpenStackAction):
+    _service_type = 'key-manager'
 
     @classmethod
     def _get_client_class(cls):
@@ -583,21 +583,12 @@ class BarbicanAction(base.OpenStackAction):
 
         LOG.debug("Barbican action security context: %s", context)
 
-        barbican_endpoint = keystone_utils.get_endpoint_for_project('barbican')
-        keystone_endpoint = keystone_utils.get_keystone_endpoint()
-
-        auth = identity.v3.Token(
-            auth_url=keystone_endpoint.url,
-            project_name=context.user_name,
-            token=context.auth_token,
-            project_id=context.project_id
-        )
+        barbican_endpoint = self.get_service_endpoint()
+        session_and_auth = self.get_session_and_auth(context)
 
         return self._get_client_class()(
-            project_id=context.project_id,
             endpoint=barbican_endpoint.url,
-            auth=auth,
-            insecure=context.insecure
+            session=session_and_auth['session']
         )
 
     @classmethod
