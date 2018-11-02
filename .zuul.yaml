@@ -123,7 +123,8 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - tripleo-ci-centos-7-undercloud-containers
-        - mistral-rally-task
+        - mistral-rally-task:
+             voting: false
         - openstack-tox-lower-constraints:
             required-projects:
               - openstack/mistral-lib
@@ -137,7 +138,6 @@
         - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-kombu
-        - mistral-rally-task
         - openstack-tox-lower-constraints
         - tripleo-ci-centos-7-undercloud-containers
     post:

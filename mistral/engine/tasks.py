@@ -404,10 +404,12 @@ class RegularTask(Task):
         self.notify(None, self.task_ex.state)
 
         LOG.debug(
-            'Starting task [workflow=%s, task=%s, init_state=%s]',
-            self.wf_ex.name,
+            'Starting task [name=%s, init_state=%s, workflow_name=%s,'
+            ' execution_id=%s]',
             self.task_spec.get_name(),
-            self.task_ex.state
+            self.task_ex.state,
+            self.wf_ex.name,
+            self.wf_ex.id
         )
 
         self._before_task_start()

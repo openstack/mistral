@@ -99,7 +99,7 @@ def process(func):
             # NOTE(rakhmerov): Since we make RPC calls to the engine itself
             # we need to process the action queue asynchronously in a new
             # thread. Otherwise, if we have one engine process the engine
-            # will may send a request to itself while already processing
+            # may send a request to itself while already processing
             # another one. In conjunction with blocking RPC it will lead
             # to a deadlock (and RPC timeout).
             def _within_new_thread():

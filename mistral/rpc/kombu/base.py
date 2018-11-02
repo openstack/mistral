@@ -19,7 +19,6 @@ import oslo_messaging as messaging
 
 from mistral import config as cfg
 from mistral import exceptions as exc
-from mistral.utils import rpc_utils
 
 IS_RECEIVED = 'kombu_rpc_is_received'
 RESULT = 'kombu_rpc_result'
@@ -36,9 +35,7 @@ def set_transport_options(check_backend=True):
     # this is the method that registers them.
     messaging.get_transport(CONF)
 
-    backend = rpc_utils.get_rpc_backend(
-        messaging.TransportURL.parse(CONF, CONF.transport_url)
-    )
+    backend = messaging.TransportURL.parse(CONF, CONF.transport_url).transport
 
     if check_backend and backend not in ['rabbit', 'kombu']:
         raise exc.MistralException("Unsupported backend: %s" % backend)

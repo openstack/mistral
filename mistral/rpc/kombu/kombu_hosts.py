@@ -24,25 +24,8 @@ class KombuHosts(object):
     def __init__(self, conf):
         transport_url = messaging.TransportURL.parse(conf, conf.transport_url)
 
-        if transport_url.hosts:
-            self.virtual_host = transport_url.virtual_host
-            self.hosts = transport_url.hosts
-        else:
-            self.virtual_host = conf.oslo_messaging_rabbit.rabbit_virtual_host
-            self.hosts = []
-
-            username = conf.oslo_messaging_rabbit.rabbit_userid
-            password = conf.oslo_messaging_rabbit.rabbit_password
-
-            for host in conf.oslo_messaging_rabbit.rabbit_hosts:
-                hostname, port = host.split(':')
-
-                self.hosts.append(messaging.TransportHost(
-                    hostname,
-                    int(port),
-                    username,
-                    password
-                ))
+        self.virtual_host = transport_url.virtual_host
+        self.hosts = transport_url.hosts
 
         if len(self.hosts) > 1:
             random.shuffle(self.hosts)

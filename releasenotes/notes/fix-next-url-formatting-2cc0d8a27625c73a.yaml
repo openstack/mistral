@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fix issue where next link in some list APIs,
+    when invoked with pagination and filter(s),
+    contained JSON string. This made next link
+    an invalid URL. This issue impacted all REST
+    APIs where filters can be used.
+

@@ -15,4 +15,4 @@
 from pbr import version
 
 version_info = version.VersionInfo('mistral')
-version_string = version_info.version_string
+version_string = version_info.version_string()

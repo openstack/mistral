@@ -432,6 +432,32 @@ class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
             str(exception)
         )
 
+    def test_task_name(self):
+        wf = {
+            'version': '2.0',
+            'workflowname': {
+                'type': 'direct',
+                'tasks': {'task1': {'action': 'std.noop',
+                                    'on-success': ['t2-task']},
+                          't2-task': {'action': 'std.noop',
+                                      'on-success': ['t3.task']},
+                          't3.task': {'action': 'std.noop',
+                                      'on-success': ['t4,task']},
+                          't4,task': {'action': 'std.noop',
+                                      'on-success': ['t5+task']},
+                          't5+task': {'action': 'std.noop',
+                                      'on-success': ['t6$task']},
+                          't6$task': {'action': 'std.noop',
+                                      'on-success': ['t7%task']},
+                          't7%task': {'action': 'std.noop',
+                                      'on-success': ['t8^task']},
+                          't8^task': {'action': 'std.noop',
+                                      }}}}
+
+        dsl_yaml = yaml.safe_dump(wf, default_flow_style=False)
+
+        self._spec_parser(dsl_yaml)
+
     def test_tags(self):
         tests = [
             ({'tags': ''}, True),

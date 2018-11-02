@@ -68,9 +68,13 @@ class KombuHostsTestCase(base.BaseTest):
             'transport_url',
             'rabbit://{user_1}:{password_1}@{host_1}:{port_1},'
             '{user_2}:{password_2}@{host_2}:{port_2}/{virtual_host}'.format(
-                user_1=USER_1, password_1=PASSWORD_1, port_1=PORT_1,
+                user_1=USER_1,
+                password_1=PASSWORD_1,
+                port_1=PORT_1,
                 host_1=HOST_1,
-                user_2=USER_2, password_2=PASSWORD_2, host_2=HOST_2,
+                user_2=USER_2,
+                password_2=PASSWORD_2,
+                host_2=HOST_2,
                 port_2=PORT_2,
                 virtual_host=VIRTUAL_HOST_1
             ))
@@ -78,90 +82,20 @@ class KombuHostsTestCase(base.BaseTest):
         hosts = kombu_hosts.KombuHosts(cfg.CONF)
 
         self.assertEqual(VIRTUAL_HOST_1, hosts.virtual_host)
-        self.assert_transports_host([
-            oslo_messaging.TransportHost(
-                hostname=HOST_1,
-                port=PORT_1,
-                username=USER_1,
-                password=PASSWORD_1,
-            ), oslo_messaging.TransportHost(
-                hostname=HOST_2,
-                port=PORT_2,
-                username=USER_2,
-                password=PASSWORD_2,
-            )], hosts.hosts)
-
-    def test_oslo_messaging_rabbit(self):
-        self.override_config('rabbit_userid', USER_1, 'oslo_messaging_rabbit')
-        self.override_config('rabbit_password', PASSWORD_1,
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_virtual_host', VIRTUAL_HOST_1,
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_host', HOST_1, 'oslo_messaging_rabbit')
-        self.override_config('rabbit_port', PORT_1, 'oslo_messaging_rabbit')
-
-        hosts = kombu_hosts.KombuHosts(cfg.CONF)
-
-        self.assertEqual(VIRTUAL_HOST_1, hosts.virtual_host)
-        self.assert_transports_host([oslo_messaging.TransportHost(
-            hostname=HOST_1,
-            port=PORT_1,
-            username=USER_1,
-            password=PASSWORD_1,
-        )], hosts.hosts)
-
-    def test_oslo_messaging_rabbit_multiple_hosts(self):
-        self.override_config('rabbit_userid', USER_1, 'oslo_messaging_rabbit')
-        self.override_config('rabbit_password', PASSWORD_1,
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_virtual_host', VIRTUAL_HOST_1,
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_hosts',
-                             '{host_1}:{port_1},{host_2}:{port_2}'.format(
-                                 host_1=HOST_1, port_1=PORT_1, host_2=HOST_2,
-                                 port_2=PORT_2),
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_port', PORT_1, 'oslo_messaging_rabbit')
-
-        hosts = kombu_hosts.KombuHosts(cfg.CONF)
-
-        self.assertEqual(VIRTUAL_HOST_1, hosts.virtual_host)
-        self.assert_transports_host([
-            oslo_messaging.TransportHost(
-                hostname=HOST_1,
-                port=PORT_1,
-                username=USER_1,
-                password=PASSWORD_1,
-            ), oslo_messaging.TransportHost(
-                hostname=HOST_2,
-                port=PORT_2,
-                username=USER_1,
-                password=PASSWORD_1,
-            )], hosts.hosts)
-
-    def test_prefer_transport_url(self):
-        self.override_config('rabbit_userid', USER_1, 'oslo_messaging_rabbit')
-        self.override_config('rabbit_password', PASSWORD_1,
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_virtual_host', VIRTUAL_HOST_1,
-                             'oslo_messaging_rabbit')
-        self.override_config('rabbit_host', HOST_1, 'oslo_messaging_rabbit')
-        self.override_config('rabbit_port', PORT_1, 'oslo_messaging_rabbit')
-
-        self.override_config(
-            'transport_url',
-            'rabbit://{user}:{password}@{host}:{port}/{virtual_host}'.format(
-                user=USER_2, port=PORT_2, host=HOST_2,
-                password=PASSWORD_2,
-                virtual_host=VIRTUAL_HOST_2
-            ))
-
-        hosts = kombu_hosts.KombuHosts(cfg.CONF)
-
-        self.assertEqual(VIRTUAL_HOST_2, hosts.virtual_host)
-        self.assert_transports_host([oslo_messaging.TransportHost(
-            hostname=HOST_2,
-            port=PORT_2,
-            username=USER_2,
-            password=PASSWORD_2,
-        )], hosts.hosts)
+        self.assert_transports_host(
+            [
+                oslo_messaging.TransportHost(
+                    hostname=HOST_1,
+                    port=PORT_1,
+                    username=USER_1,
+                    password=PASSWORD_1
+                ),
+                oslo_messaging.TransportHost(
+                    hostname=HOST_2,
+                    port=PORT_2,
+                    username=USER_2,
+                    password=PASSWORD_2
+                )
+            ],
+            hosts.hosts
+        )

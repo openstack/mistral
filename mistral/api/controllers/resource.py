@@ -115,9 +115,14 @@ class ResourceList(Resource):
         if not self.has_next(limit):
             return wtypes.Unset
 
-        q_args = ''.join(
-            ['%s=%s&' % (key, value) for key, value in kwargs.items()]
-        )
+        q_args = ''
+
+        for key, value in kwargs.items():
+            if isinstance(value, dict):
+                q_args += '%s=%s:%s&' % \
+                          (key, list(value.keys())[0], list(value.values())[0])
+            else:
+                q_args += '%s=%s&' % (key, value)
 
         resource_args = (
             '?%(args)slimit=%(limit)d&marker=%(marker)s' %

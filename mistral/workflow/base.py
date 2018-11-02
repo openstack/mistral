@@ -168,6 +168,16 @@ class WorkflowController(object):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def find_indirectly_affected_task_executions(self, task_name):
+        """Get a set of task executions indirectly affected by the given.
+
+        :param task_name: Task name.
+        :return: Task executions that can be indirectly affected by a task
+            identified by the given name.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def is_error_handled_for(self, task_ex):
         """Determines if error is handled for specific task.
 
