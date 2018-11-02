@@ -29,8 +29,14 @@ class WebhookPublisher(base.NotificationPublisher):
     def publish(self, ex_id, data, event, timestamp, **kwargs):
         url = kwargs.get('url')
         headers = kwargs.get('headers', {})
+        
+        if kwargs.get('verify') is None:
+                verify = False
+        else:
+                verify = kwargs.get('verify')
 
-        resp = requests.post(url, data=json.dumps(data), headers=headers)
+
+        resp = requests.post(url, data=json.dumps(data), headers=headers, verify=verify)
 
         LOG.info("Webook request url=%s code=%s", url, resp.status_code)
 
