@@ -1044,7 +1044,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         """
 
         # Generate the workflow text.
-        task_cnt = 200
+        task_cnt = 50
 
         on_success_list_str = ''
 

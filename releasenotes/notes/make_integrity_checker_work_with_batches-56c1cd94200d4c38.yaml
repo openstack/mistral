@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Workflow execution integrity checker mechanism was too agressive in case
+    of big workflows that have many task executions in RUNNING state at the
+    same time. The mechanism was selecting them all in one query and calling
+    "on_action_complete" for each of them within a single DB transaction.
+    That could lead to situations when this mechanism would totally block
+    all normal workflow processing whereas it should only be a "last chance"
+    aid in case of real infrastructure failures (e.g. MQ outage).
+    This issue has been fixed by adding a configurable batch size, so that
+    the checker can't select more than this number of task executions in
+    RUNNING state at once.
