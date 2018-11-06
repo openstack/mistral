@@ -185,6 +185,14 @@ engine_opts = [
                ' this check.')
     ),
     cfg.IntOpt(
+        'execution_integrity_check_batch_size',
+        default=5,
+        min=1,
+        help=_('A number of task executions in RUNNING state that the'
+               ' execution integrity checker can process in a single'
+               ' iteration.')
+    ),
+    cfg.IntOpt(
         'action_definition_cache_time',
         default=60,
         help=_('A number of seconds that indicates how long action '

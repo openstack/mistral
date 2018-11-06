@@ -271,8 +271,8 @@ class EngineTestCase(base.DbTestCase):
             lambda: self.is_workflow_in_state(ex_id, state),
             delay,
             timeout,
-            fail_message="Execution {ex_id} to reach {state} "
-                         "state but is in {current}",
+            fail_message="Execution {ex_id} must have reached state {state} "
+                         "state but it is in {current}",
             fail_message_formatter=lambda m: m.format(
                 ex_id=ex_id,
                 state=state,
