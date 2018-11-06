@@ -41,18 +41,17 @@ from mistral.workflow import states
 CONF = cfg.CONF
 
 
-def _create_lru_cache_for_workflow_execution(wf_ex_id):
+def _create_workflow_execution_cache():
     return cachetools.LRUCache(maxsize=500)
+
 
 # This is a two-level caching structure.
 # First level: [<workflow execution id> -> <task execution cache>]
 # Second level (task execution cache): [<task_name> -> <task executions>]
 # The first level (by workflow execution id) allows to invalidate
 # needed cache entry when the workflow gets completed.
-_TASK_EX_CACHE = cachetools.LRUCache(
-    maxsize=100,
-    missing=_create_lru_cache_for_workflow_execution
-)
+_TASK_EX_CACHE = cachetools.LRUCache(maxsize=100)
+
 
 _ACTION_DEF_CACHE = cachetools.TTLCache(
     maxsize=1000,
@@ -92,7 +91,14 @@ def find_task_executions_by_name(wf_ex_id, task_name):
         may contain task execution clones not bound to the DB session.
     """
     with _TASK_EX_CACHE_LOCK:
-        t_execs = _TASK_EX_CACHE[wf_ex_id].get(task_name)
+        if wf_ex_id in _TASK_EX_CACHE:
+            wf_ex_cache = _TASK_EX_CACHE[wf_ex_id]
+        else:
+            wf_ex_cache = _create_workflow_execution_cache()
+
+            _TASK_EX_CACHE[wf_ex_id] = wf_ex_cache
+
+        t_execs = wf_ex_cache.get(task_name)
 
     if t_execs:
         return t_execs
@@ -113,7 +119,7 @@ def find_task_executions_by_name(wf_ex_id, task_name):
 
     if all_finished:
         with _TASK_EX_CACHE_LOCK:
-            _TASK_EX_CACHE[wf_ex_id][task_name] = t_execs
+            wf_ex_cache[task_name] = t_execs
 
     return t_execs
 
