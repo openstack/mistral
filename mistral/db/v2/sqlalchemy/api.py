@@ -1282,7 +1282,8 @@ def get_expired_executions(expiration_time, limit=None, columns=(),
 
 
 @b.session_aware()
-def get_running_expired_sync_actions(expiration_time, session=None):
+def get_running_expired_sync_action_executions(expiration_time,
+                                               limit, session=None):
     query = b.model_query(models.ActionExecution)
 
     query = query.filter(
@@ -1290,6 +1291,9 @@ def get_running_expired_sync_actions(expiration_time, session=None):
     )
     query = query.filter_by(is_sync=True)
     query = query.filter(models.ActionExecution.state == states.RUNNING)
+
+    if limit:
+        query.limit(limit)
 
     return query.all()
 
