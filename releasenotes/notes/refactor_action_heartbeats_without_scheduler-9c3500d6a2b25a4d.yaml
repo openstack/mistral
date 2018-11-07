@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    Action heartbeat checker was using scheduler to process expired action
+    executions periodically. The side effect was that upon system reboot
+    there may have been duplicating delayed calls in the database. So over
+    time, the number of such calls could be significant and those jobs could
+    even affect performance. This has now been fixed with regular threads
+    without using scheduler at all. Additionally, the new configuration
+    property "batch_size" has been added under the group "action_heartbeat"
+    to control the maximum number of action executions processed during one
+    iteration of the action execution heartbeat checker.
