@@ -274,7 +274,7 @@ class ExecutionsController(rest.RestController):
             result_exec_dict.get('id'),
             result_exec_dict.get('input'),
             description=result_exec_dict.get('description', ''),
-            **result_exec_dict.get('params', {})
+            **result_exec_dict.get('params') or {}
         )
 
         return resources.Execution.from_dict(result)
