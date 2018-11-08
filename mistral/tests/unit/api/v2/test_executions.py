@@ -683,6 +683,23 @@ class TestExecutionsController(base.APITest):
             **json.loads(exec_dict['params'])
         )
 
+    @mock.patch.object(rpc_clients.EngineClient, 'start_workflow')
+    def test_post_with_params_none(self, start_wf_func):
+        wf_ex_dict = WF_EX.to_dict()
+
+        start_wf_func.return_value = wf_ex_dict
+
+        json_body = WF_EX_JSON_WITH_DESC.copy()
+
+        json_body['params'] = None
+
+        expected_json = WF_EX_JSON_WITH_DESC
+
+        resp = self.app.post_json('/v2/executions', json_body)
+
+        self.assertEqual(201, resp.status_int)
+        self.assertDictEqual(expected_json, resp.json)
+
     @mock.patch.object(
         rpc_clients.EngineClient,
         'start_workflow',
