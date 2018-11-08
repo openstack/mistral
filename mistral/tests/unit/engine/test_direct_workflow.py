@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import six
+
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
@@ -1090,3 +1092,42 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self._assert_single_item(task_execs, name='task0')
         self._assert_single_item(task_execs, name='task{}'.format(task_cnt))
+
+    def test_action_error_with_array_result(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.fail
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_ex = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1',
+                state=states.ERROR
+            )
+
+            self._assert_single_item(
+                task_ex.action_executions,
+                name='std.fail'
+            )
+
+            # NOTE(rakhmerov): This was previously failing but only Python 2.7
+            # probably because SQLAlchemy works differently on different
+            # versions of Python. On Python 3 this field's value was always
+            # converted into a string no matter what we tried to assign. But
+            # that didn't happen on Python 2.7 which caused an SQL exception.
+            self.assertIsInstance(task_ex.state_info, six.string_types)

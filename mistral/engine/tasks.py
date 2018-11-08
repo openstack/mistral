@@ -313,8 +313,13 @@ class RegularTask(Task):
         # TODO(rakhmerov): Here we can define more informative messages
         # cases when action is successful and when it's not. For example,
         # in state_info we can specify the cause action.
-        state_info = (None if state == states.SUCCESS
-                      else action_ex.output.get('result'))
+
+        if state == states.SUCCESS:
+            state_info = None
+        else:
+            action_result = action_ex.output.get('result')
+
+            state_info = str(action_result) if action_result else None
 
         self.complete(state, state_info)
 
