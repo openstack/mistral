@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    If an action execution fails but returns a result as a list (error=[])
+    the result of this action is assigned to the task execution 'state_info'
+    field which is a string according to the DB model. On Python 3 it this
+    list magically converts to a string. On Python 2.7 it doesn't. The reason
+    is probably in how SQLAlchemy works on different versions of Python. This
+    has now been fixed with an explicit type coercion.
