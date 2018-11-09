@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixed a backward compatibility issue: there was a change made in Rocky
+    that disallowed the 'params' property of a workflow execution to be None
+    when one wants to start a workflow.
