@@ -131,7 +131,8 @@ def _check_and_fix_integrity(wf_ex_id):
 
         running_task_execs = db_api.get_task_executions(
             workflow_execution_id=wf_ex.id,
-            state=states.RUNNING
+            state=states.RUNNING,
+            limit=CONF.engine.execution_integrity_check_batch_size
         )
 
         for t_ex in running_task_execs:
