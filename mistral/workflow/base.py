@@ -229,6 +229,11 @@ class WorkflowController(object):
         """
         raise NotImplementedError
 
+    def may_complete_workflow(self, task_ex):
+        """Determines if the task execution may lead to workflow completion."""
+
+        return states.is_completed(task_ex.state)
+
     @abc.abstractmethod
     def _find_next_commands(self, task_ex):
         """Finds commands that should run next.

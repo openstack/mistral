@@ -532,6 +532,11 @@ class DefaultEngineTest(base.DbTestCase):
             ml_actions.Result(data='Hi')
         )
 
+        self._await(
+            lambda:
+                db_api.get_workflow_execution(wf_ex.id).state == states.SUCCESS
+        )
+
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 

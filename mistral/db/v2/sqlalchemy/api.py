@@ -284,6 +284,14 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
     return query.all()
 
 
+def _get_count(model, insecure=False, **filters):
+    query = b.model_query(model) if insecure else _secure_query(model)
+
+    query = db_filters.apply_filters(query, model, **filters)
+
+    return query.count()
+
+
 def _get_db_object_by_name(model, name, columns=()):
     query = _secure_query(model, *columns)
 
@@ -1132,6 +1140,11 @@ def get_delayed_call(id, session=None):
 @b.session_aware()
 def get_delayed_calls(session=None, **kwargs):
     return _get_collection(model=models.DelayedCall, **kwargs)
+
+
+@b.session_aware()
+def get_delayed_calls_count(session=None, **kwargs):
+    return _get_count(model=models.DelayedCall, **kwargs)
 
 
 @b.session_aware()

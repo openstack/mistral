@@ -382,6 +382,10 @@ def get_delayed_calls(**kwargs):
     return IMPL.get_delayed_calls(**kwargs)
 
 
+def get_delayed_calls_count(**kwargs):
+    return IMPL.get_delayed_calls_count(**kwargs)
+
+
 def delete_delayed_calls(**kwargs):
     return IMPL.delete_delayed_calls(**kwargs)
 
