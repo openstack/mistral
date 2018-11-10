@@ -451,8 +451,12 @@ def get_expired_executions(expiration_time, limit=None, columns=()):
     )
 
 
-def get_running_expired_sync_actions(expiration_time, session=None):
-    return IMPL.get_running_expired_sync_actions(expiration_time)
+def get_running_expired_sync_action_executions(expiration_time,
+                                               limit, session=None):
+    return IMPL.get_running_expired_sync_action_executions(
+        expiration_time,
+        limit
+    )
 
 
 def get_superfluous_executions(max_finished_executions, limit=None,

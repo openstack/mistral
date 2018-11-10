@@ -52,7 +52,7 @@ class EngineServer(service_base.MistralService):
         self._scheduler = scheduler.start()
         self._expiration_policy_tg = expiration_policy.setup()
 
-        action_execution_checker.setup()
+        action_execution_checker.start()
 
         if self._setup_profiler:
             profiler_utils.setup('mistral-engine', cfg.CONF.engine.host)
@@ -68,6 +68,8 @@ class EngineServer(service_base.MistralService):
 
     def stop(self, graceful=False):
         super(EngineServer, self).stop(graceful)
+
+        action_execution_checker.stop(graceful)
 
         if self._scheduler:
             scheduler.stop_scheduler(self._scheduler, graceful)
