@@ -18,6 +18,7 @@ import datetime
 
 import mock
 import sqlalchemy as sa
+import yaml
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -178,6 +179,60 @@ wf2:
     task1:
       action: std.echo output="Mistral"
 """
+
+WFS_YAML = yaml.load(WFS_DEFINITION)
+FIRST_WF_DEF = yaml.dump({
+    'version': '2.0',
+    'wf1': WFS_YAML['wf1']
+})
+SECOND_WF_DEF = yaml.dump({
+    'version': '2.0',
+    'wf2': WFS_YAML['wf2']
+})
+
+FIRST_WF_DICT = {
+    'name': 'wf1',
+    'tasks': {
+        'task1': {
+            'action': 'std.echo output="Hello"',
+            'name': 'task1',
+            'type': 'direct',
+            'version': '2.0'
+        }
+    },
+    'version': '2.0'
+}
+FIRST_WF = {
+    'name': 'wf1',
+    'tags': [],
+    'definition': FIRST_WF_DEF,
+    'spec': FIRST_WF_DICT,
+    'scope': 'private',
+    'namespace': '',
+    'is_system': False
+}
+
+SECOND_WF_DICT = {
+    'name': 'wf2',
+    'tasks': {
+        'task1': {
+            'action': 'std.echo output="Mistral"',
+            'name': 'task1',
+            'type': 'direct',
+            'version': '2.0'
+        }
+    },
+    'version': '2.0'
+}
+SECOND_WF = {
+    'name': 'wf2',
+    'tags': [],
+    'definition': SECOND_WF_DEF,
+    'spec': SECOND_WF_DICT,
+    'scope': 'private',
+    'namespace': '',
+    'is_system': False
+}
 
 MOCK_WF = mock.MagicMock(return_value=WF_DB)
 MOCK_WF_SYSTEM = mock.MagicMock(return_value=WF_DB_SYSTEM)
@@ -343,6 +398,18 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
 
+    @mock.patch.object(db_api, "update_workflow_definition")
+    def test_put_multiple(self, mock_mtd):
+        self.app.put(
+            '/v2/workflows',
+            WFS_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(2, mock_mtd.call_count)
+        mock_mtd.assert_any_call('wf1', FIRST_WF)
+        mock_mtd.assert_any_call('wf2', SECOND_WF)
+
     def test_put_more_workflows_with_uuid(self):
         resp = self.app.put(
             '/v2/workflows/123e4567-e89b-12d3-a456-426655440000',
@@ -413,6 +480,18 @@ class TestWorkflowsController(base.APITest):
         )
 
         self.assertEqual(409, resp.status_int)
+
+    @mock.patch.object(db_api, "create_workflow_definition")
+    def test_post_multiple(self, mock_mtd):
+        self.app.post(
+            '/v2/workflows',
+            WFS_DEFINITION,
+            headers={'Content-Type': 'text/plain'}
+        )
+
+        self.assertEqual(2, mock_mtd.call_count)
+        mock_mtd.assert_any_call(FIRST_WF)
+        mock_mtd.assert_any_call(SECOND_WF)
 
     def test_post_invalid(self):
         resp = self.app.post(

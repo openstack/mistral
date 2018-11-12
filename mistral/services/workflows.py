@@ -11,6 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import yaml
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -89,11 +90,16 @@ def create_workflows(definition, scope='private', is_system=False,
 
 def _append_all_workflows(definition, is_system, scope, namespace,
                           wf_list_spec, db_wfs):
-    for wf_spec in wf_list_spec.get_workflows():
+    wfs = wf_list_spec.get_workflows()
+    wfs_yaml = yaml.load(definition)
+    for wf_spec in wfs:
         db_wfs.append(
             _create_workflow(
                 wf_spec,
-                definition,
+                _cut_wf_definition_from_all(
+                    wfs_yaml,
+                    wf_spec.get_name()
+                ),
                 scope,
                 namespace,
                 is_system
@@ -120,10 +126,14 @@ def update_workflows(definition, scope='private', identifier=None,
     db_wfs = []
 
     with db_api.transaction():
-        for wf_spec in wf_list_spec.get_workflows():
+        wfs_yaml = yaml.load(definition)
+        for wf_spec in wfs:
             db_wfs.append(_update_workflow(
                 wf_spec,
-                definition,
+                _cut_wf_definition_from_all(
+                    wfs_yaml,
+                    wf_spec.get_name()
+                ),
                 scope,
                 namespace=namespace,
                 identifier=identifier
@@ -176,3 +186,10 @@ def _update_workflow(wf_spec, definition, scope, identifier=None,
         identifier if identifier else values['name'],
         values
     )
+
+
+def _cut_wf_definition_from_all(wfs_yaml, wf_name):
+    return yaml.dump({
+        'version': wfs_yaml['version'],
+        wf_name: wfs_yaml[wf_name]
+    })
