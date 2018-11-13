@@ -1097,7 +1097,7 @@ Input parameters:
 -  **host** - Host name that the command needs to be executed on.
    *Required*.
 -  **username** - User name to authenticate on the host. *Required*.
--  **password** - User password to to authenticate on the host. *Optional*.
+-  **password** - User password to authenticate on the host. *Optional*.
 -  **private_key_filename** - Private key file name which will be used for
    authentication on remote host. All private keys should be on the executor
    host in **<home-user-directory>/.ssh** directory or absolute path of
