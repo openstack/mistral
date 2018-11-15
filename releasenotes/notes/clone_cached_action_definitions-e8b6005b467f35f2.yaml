@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Sometimes Mistral was raising DetachedInstanceError for action defintions
+    coming from cache. It's now fixed by cloning objects before caching them.

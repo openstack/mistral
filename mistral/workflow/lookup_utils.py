@@ -69,17 +69,19 @@ def find_action_definition_by_name(action_name):
     :return: Action definition (possibly a cached value).
     """
     with _ACTION_DEF_CACHE_LOCK:
-        action_definition = _ACTION_DEF_CACHE.get(action_name)
+        action_def = _ACTION_DEF_CACHE.get(action_name)
 
-    if action_definition:
-        return action_definition
+    if action_def:
+        return action_def
 
-    action_definition = db_api.load_action_definition(action_name)
+    action_def = db_api.load_action_definition(action_name)
 
     with _ACTION_DEF_CACHE_LOCK:
-        _ACTION_DEF_CACHE[action_name] = action_definition
+        _ACTION_DEF_CACHE[action_name] = (
+            action_def.get_clone() if action_def else None
+        )
 
-    return action_definition
+    return action_def
 
 
 def find_task_executions_by_name(wf_ex_id, task_name):
