@@ -1293,3 +1293,58 @@ class JoinEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1.state)
         self.assertEqual(states.SUCCESS, task2.state)
         self.assertEqual(states.SUCCESS, task3.state)
+
+    def test_join_last_inbound_indirect_error(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success:
+                - join_task
+
+            task2:
+              action: std.fail
+              wait-before: 2
+              on-success:
+                - task3
+
+            task3:
+              action: std.noop
+              on-success:
+                - join_task
+
+            join_task:
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+            self.assertEqual(3, len(task_execs))
+
+            self._assert_single_item(
+                task_execs,
+                name='task1',
+                state=states.SUCCESS
+            )
+            self._assert_single_item(
+                task_execs,
+                name='task2',
+                state=states.ERROR
+            )
+            self._assert_single_item(
+                task_execs,
+                name='join_task',
+                state=states.ERROR
+            )

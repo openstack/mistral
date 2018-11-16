@@ -321,14 +321,16 @@ class DirectWorkflowController(base.WorkflowController):
     @profiler.trace('direct-wf-controller-find-downstream-joins')
     def _find_indirectly_affected_created_joins(self, task_name, result=None,
                                                 visited_task_names=None):
-        visited_task_names = visited_task_names or set()
+        visited_task_names = (
+            set() if visited_task_names is None else visited_task_names
+        )
 
         if task_name in visited_task_names:
             return
 
         visited_task_names.add(task_name)
 
-        result = result or set()
+        result = set() if result is None else result
 
         def _process_clause(clause):
             for t_name, condition, params in clause:
