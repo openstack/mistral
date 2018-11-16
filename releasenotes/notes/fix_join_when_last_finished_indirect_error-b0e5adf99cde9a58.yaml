@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fixed the issue when "join" task remained in WAITING state forever if
+    the last inbound task failed and it was not a direct predecessor.
