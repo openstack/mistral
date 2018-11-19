@@ -73,6 +73,8 @@ TASK_EX = models.TaskExecution(
     workflow_execution_id=WF_EX.id,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
+    started_at=datetime.datetime(1970, 1, 1),
+    finished_at=datetime.datetime(1970, 1, 1),
     published=PUBLISHED,
     processed=True
 )
@@ -96,6 +98,8 @@ WITH_ITEMS_TASK_EX = models.TaskExecution(
     workflow_execution_id=WF_EX.id,
     created_at=datetime.datetime(1970, 1, 1),
     updated_at=datetime.datetime(1970, 1, 1),
+    started_at=datetime.datetime(1970, 1, 1),
+    finished_at=datetime.datetime(1970, 1, 1),
     published=PUBLISHED,
     processed=True
 )
@@ -109,6 +113,8 @@ TASK = {
     'workflow_execution_id': WF_EX.id,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
+    'started_at': '1970-01-01 00:00:00',
+    'finished_at': '1970-01-01 00:00:00',
     'result': json.dumps(RESULT),
     'published': json.dumps(PUBLISHED),
     'runtime_context': json.dumps(RUNTIME_CONTEXT),

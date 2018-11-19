@@ -404,6 +404,9 @@ class Task(resource.Resource):
     created_at = wtypes.text
     updated_at = wtypes.text
 
+    started_at = wtypes.text
+    finished_at = wtypes.text
+
     # Add this param to make Mistral API work with WSME 0.8.0 or higher version
     reset = wsme.wsattr(bool, mandatory=True)
 

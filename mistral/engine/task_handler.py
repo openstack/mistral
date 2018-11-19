@@ -73,6 +73,7 @@ def run_task(wf_cmd):
         LOG.error(msg)
 
         task.set_state(states.ERROR, msg)
+        task.save_finished_time()
 
         wf_handler.force_fail_workflow(wf_ex, msg)
 
@@ -125,6 +126,7 @@ def _on_action_complete(action_ex):
         LOG.error(msg)
 
         task.set_state(states.ERROR, msg)
+        task.save_finished_time()
 
         wf_handler.force_fail_workflow(wf_ex, msg)
 
@@ -184,6 +186,7 @@ def _on_action_update(action_ex):
         LOG.error(msg)
 
         task.set_state(states.ERROR, msg)
+        task.save_finished_time()
 
         wf_handler.force_fail_workflow(wf_ex, msg)
 
@@ -212,6 +215,7 @@ def force_fail_task(task_ex, msg):
     task = _build_task_from_execution(wf_spec, task_ex)
 
     task.set_state(states.ERROR, msg)
+    task.save_finished_time()
 
     wf_handler.force_fail_workflow(task_ex.workflow_execution, msg)
 
@@ -238,6 +242,7 @@ def continue_task(task_ex):
         LOG.error(msg)
 
         task.set_state(states.ERROR, msg)
+        task.save_finished_time()
 
         wf_handler.force_fail_workflow(wf_ex, msg)
 
@@ -266,6 +271,7 @@ def complete_task(task_ex, state, state_info):
         LOG.error(msg)
 
         task.set_state(states.ERROR, msg)
+        task.save_finished_time()
 
         wf_handler.force_fail_workflow(wf_ex, msg)
 
@@ -341,7 +347,8 @@ def _build_task_from_command(cmd):
             task_ex=cmd.task_ex,
             unique_key=cmd.task_ex.unique_key,
             waiting=cmd.task_ex.state == states.WAITING,
-            triggered_by=cmd.triggered_by
+            triggered_by=cmd.triggered_by,
+            rerun=cmd.rerun
         )
 
         if cmd.reset:
@@ -366,7 +373,8 @@ def _build_task_from_command(cmd):
 
 
 def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
-                 unique_key=None, waiting=False, triggered_by=None):
+                 unique_key=None, waiting=False, triggered_by=None,
+                 rerun=False):
     if task_spec.get_with_items():
         cls = tasks.WithItemsTask
     else:
@@ -380,7 +388,8 @@ def _create_task(wf_ex, wf_spec, task_spec, ctx, task_ex=None,
         task_ex=task_ex,
         unique_key=unique_key,
         waiting=waiting,
-        triggered_by=triggered_by
+        triggered_by=triggered_by,
+        rerun=rerun
     )
 
 

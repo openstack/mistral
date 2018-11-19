@@ -144,7 +144,8 @@ class WorkflowController(object):
             return []
 
         cmds = [
-            commands.RunExistingTask(self.wf_ex, self.wf_spec, t_e, reset)
+            commands.RunExistingTask(self.wf_ex, self.wf_spec, t_e, reset,
+                                     rerun=True)
             for t_e in task_execs
         ]
 
