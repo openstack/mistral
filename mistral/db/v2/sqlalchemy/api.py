@@ -1183,7 +1183,7 @@ def get_scheduled_jobs_to_start(time, batch_size=None, session=None):
 
     # Filter by captured time accounting for a configured captured job timeout.
     min_captured_at = (
-        datetime.datetime.now() -
+        utils.utc_now_sec() -
         datetime.timedelta(seconds=CONF.scheduler.captured_job_timeout)
     )
 

@@ -491,7 +491,7 @@ CRON_TRIGGER = {
     'workflow_id': None,
     'workflow_input': {},
     'next_execution_time':
-        datetime.datetime.now() + datetime.timedelta(days=1),
+        utils.utc_now_sec() + datetime.timedelta(days=1),
     'remaining_executions': 42,
     'scope': 'private',
     'project_id': '<default-project>'
@@ -2381,8 +2381,7 @@ CRON_TRIGGERS = [
         'workflow_id': None,
         'workflow_input': {},
         'next_execution_time':
-            utils.drop_microseconds(
-                datetime.datetime.now() + datetime.timedelta(days=1)),
+            utils.utc_now_sec() + datetime.timedelta(days=1),
         'remaining_executions': 42,
         'scope': 'private',
         'project_id': '<default-project>'
@@ -2395,8 +2394,7 @@ CRON_TRIGGERS = [
         'workflow_id': None,
         'workflow_input': {'param': 'val'},
         'next_execution_time':
-            utils.drop_microseconds(
-                datetime.datetime.now() + datetime.timedelta(days=1)),
+            utils.utc_now_sec() + datetime.timedelta(days=1),
         'remaining_executions': 42,
         'scope': 'private',
         'project_id': '<default-project>'

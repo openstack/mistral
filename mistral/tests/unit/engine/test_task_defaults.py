@@ -185,7 +185,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_text)
 
-        time_before = dt.datetime.now()
+        time_before = dt.datetime.utcnow()
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', task_name='task1')
@@ -194,7 +194,7 @@ class TaskDefaultsReverseWorkflowEngineTest(base.EngineTestCase):
 
         # Workflow must work at least 2 seconds (1+1).
         self.assertGreater(
-            (dt.datetime.now() - time_before).total_seconds(),
+            (dt.datetime.utcnow() - time_before).total_seconds(),
             2
         )
 

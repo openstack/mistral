@@ -28,6 +28,7 @@ from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.scheduler import base
+from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ class DefaultScheduler(base.Scheduler):
         # Select and capture eligible jobs.
         with db_api.transaction():
             candidate_jobs = db_api.get_scheduled_jobs_to_start(
-                datetime.datetime.now(),
+                utils.utc_now_sec(),
                 self._batch_size
             )
 
@@ -124,7 +125,7 @@ class DefaultScheduler(base.Scheduler):
             if context.has_ctx() else {}
         )
 
-        execute_at = (datetime.datetime.now() +
+        execute_at = (utils.utc_now_sec() +
                       datetime.timedelta(seconds=job.run_after))
 
         args = job.func_args
@@ -201,7 +202,7 @@ class DefaultScheduler(base.Scheduler):
         """
 
         # Mark this job as captured in order to prevent calling from
-        # parallel a transaction. We don't use query filter
+        # a parallel transaction. We don't use query filter
         # {'captured_at': None}  to account for a case when the job needs
         # to be recaptured after a maximum capture time has elapsed. If this
         # method was called for job that has non-empty "captured_at" then
@@ -209,7 +210,7 @@ class DefaultScheduler(base.Scheduler):
         # Job Store selected it.
         _, updated_cnt = db_api.update_scheduled_job(
             id=scheduled_job.id,
-            values={'captured_at': datetime.datetime.now()},
+            values={'captured_at': utils.utc_now_sec()},
             query_filter={'captured_at': scheduled_job.captured_at}
         )
 
