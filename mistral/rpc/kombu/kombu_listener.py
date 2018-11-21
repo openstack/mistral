@@ -95,7 +95,7 @@ class KombuRPCListener(ConsumerMixin):
                 queue.put(result)
             else:
                 LOG.debug(
-                    "Got a response, but seems like no process is waiting for"
+                    "Got a response, but seems like no process is waiting for "
                     "it [correlation_id={0}]".format(correlation_id)
                 )
 
