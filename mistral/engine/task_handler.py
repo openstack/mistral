@@ -70,12 +70,7 @@ def run_task(wf_cmd):
             (e, wf_ex.name, task_spec.get_name(), tb.format_exc())
         )
 
-        LOG.error(msg)
-
-        task.set_state(states.ERROR, msg)
-        task.save_finished_time()
-
-        wf_handler.force_fail_workflow(wf_ex, msg)
+        force_fail_task(task.task_ex, msg, task=task)
 
         return
 
@@ -123,12 +118,7 @@ def _on_action_complete(action_ex):
                " action=%s]:\n%s" %
                (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
 
-        LOG.error(msg)
-
-        task.set_state(states.ERROR, msg)
-        task.save_finished_time()
-
-        wf_handler.force_fail_workflow(wf_ex, msg)
+        force_fail_task(task_ex, msg, task=task)
 
         return
 
@@ -183,19 +173,14 @@ def _on_action_update(action_ex):
                " action=%s]:\n%s" %
                (e, wf_ex.name, task_ex.name, action_ex.name, tb.format_exc()))
 
-        LOG.error(msg)
-
-        task.set_state(states.ERROR, msg)
-        task.save_finished_time()
-
-        wf_handler.force_fail_workflow(wf_ex, msg)
+        force_fail_task(task_ex, msg, task=task)
 
         return
 
     _check_affected_tasks(task)
 
 
-def force_fail_task(task_ex, msg):
+def force_fail_task(task_ex, msg, task=None):
     """Forces the given task to fail.
 
     This method implements the 'forced' task fail without giving a chance
@@ -207,14 +192,22 @@ def force_fail_task(task_ex, msg):
 
     :param task_ex: Task execution.
     :param msg: Error message.
+    :param task: Task object. Optional.
     """
-    wf_spec = spec_parser.get_workflow_spec_by_execution_id(
-        task_ex.workflow_execution_id
-    )
 
-    task = _build_task_from_execution(wf_spec, task_ex)
+    LOG.error(msg)
 
+    if not task:
+        wf_spec = spec_parser.get_workflow_spec_by_execution_id(
+            task_ex.workflow_execution_id
+        )
+
+        task = _build_task_from_execution(wf_spec, task_ex)
+
+    old_task_state = task_ex.state
     task.set_state(states.ERROR, msg)
+    task.notify(old_task_state, states.ERROR)
+
     task.save_finished_time()
 
     wf_handler.force_fail_workflow(task_ex.workflow_execution, msg)
@@ -239,12 +232,7 @@ def continue_task(task_ex):
             (e, wf_ex.name, task_ex.name, tb.format_exc())
         )
 
-        LOG.error(msg)
-
-        task.set_state(states.ERROR, msg)
-        task.save_finished_time()
-
-        wf_handler.force_fail_workflow(wf_ex, msg)
+        force_fail_task(task_ex, msg, task=task)
 
         return
 
@@ -268,12 +256,7 @@ def complete_task(task_ex, state, state_info):
             (e, wf_ex.name, task_ex.name, tb.format_exc())
         )
 
-        LOG.error(msg)
-
-        task.set_state(states.ERROR, msg)
-        task.save_finished_time()
-
-        wf_handler.force_fail_workflow(wf_ex, msg)
+        force_fail_task(task_ex, msg, task=task)
 
         return
 

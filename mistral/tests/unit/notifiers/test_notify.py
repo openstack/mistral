@@ -1035,3 +1035,45 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
         self.assertListEqual(expected_order, EVENT_LOGS)
+
+    def test_notify_task_input_error(self):
+        wf_def = """---
+        version: '2.0'
+        wf:
+          tasks:
+            task1:
+              input:
+                url: <% $.ItWillBeError %>
+              action: std.http
+              on-error: task2
+            task2:
+              action: std.noop
+        """
+
+        wf_svc.create_workflows(wf_def)
+
+        notify_options = [{'type': 'webhook'}]
+        params = {'notify': notify_options}
+
+        wf_ex = self.engine.start_workflow('wf', '', **params)
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+
+        self.assertEqual(1, len(task_exs))
+
+        t1_ex = self._assert_single_item(task_exs, name='task1')
+        self.assertEqual(states.ERROR, t1_ex.state)
+
+        expected_order = [
+            (wf_ex.id, events.WORKFLOW_LAUNCHED),
+            (t1_ex.id, events.TASK_LAUNCHED),
+            (t1_ex.id, events.TASK_FAILED),
+            (wf_ex.id, events.WORKFLOW_FAILED)
+        ]
+
+        self.assertTrue(self.publishers['wbhk'].publish.called)
+        self.assertListEqual(expected_order, EVENT_LOGS)
