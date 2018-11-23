@@ -111,12 +111,10 @@
         # TripleO jobs that deploy Mistral.
         # Note we don't use a project-template here, so it's easier
         # to disable voting on one specific job if things go wrong.
-        # tripleo-ci-centos-7-scenario003-multinode-oooq will only
-        # run on stable/pike while the -container will run in Queens
-        # and beyond.
+        # tripleo-ci-centos-7-scenario003-multinode-oooq-container will
+        # run in Pike and beyond.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-        - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-rally-task:
             voting: false
@@ -130,7 +128,6 @@
         - mistral-devstack-non-apache
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
-        - tripleo-ci-centos-7-scenario003-multinode-oooq
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
         - mistral-devstack-kombu
         - openstack-tox-lower-constraints
