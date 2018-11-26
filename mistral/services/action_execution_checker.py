@@ -16,6 +16,7 @@ import datetime
 import eventlet
 import sys
 
+from mistral import context as auth_ctx
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.engine import action_handler
@@ -70,6 +71,17 @@ def handle_expired_actions():
 
 def _loop():
     global _stopped
+
+    # This is an administrative thread so we need to set an admin
+    # security context.
+    auth_ctx.set_ctx(
+        auth_ctx.MistralContext(
+            user=None,
+            tenant=None,
+            auth_token=None,
+            is_admin=True
+        )
+    )
 
     while not _stopped:
         try:

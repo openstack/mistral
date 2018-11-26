@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Action execution checker didn't set a security context before failing
+    expired action executions. It caused ApplicationContextNotFoundException
+    in case if corresponding workflow specification was not in the cache and
+    Mistral had to load a DB object. The DB operation in turn was trying
+    to access a security context which wasn't set. It's now fixed by setting
+    an admin context in the action execution checker thread.

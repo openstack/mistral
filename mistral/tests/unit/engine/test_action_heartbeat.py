@@ -10,6 +10,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import cachetools
 import mock
 
 from oslo_config import cfg
@@ -42,6 +43,54 @@ class ActionHeartbeatTest(base.EngineTestCase):
         mock.MagicMock()
     )
     def test_fail_action_with_missing_heartbeats(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        # The workflow should fail because the action of "task1" should be
+        # failed automatically by the action execution heartbeat checker.
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t_execs = wf_ex.task_executions
+
+            t_ex = self._assert_single_item(
+                t_execs,
+                name='task1',
+                state=states.ERROR
+            )
+
+            a_execs = db_api.get_action_executions(task_execution_id=t_ex.id)
+
+            self._assert_single_item(
+                a_execs,
+                name='std.noop',
+                state=states.ERROR
+            )
+
+    # Make sure actions are not sent to an executor.
+    @mock.patch.object(
+        rpc_clients.ExecutorClient,
+        'run_action',
+        mock.MagicMock()
+    )
+    @mock.patch.object(
+        cachetools.LRUCache,
+        '__getitem__',
+        mock.MagicMock(side_effect=KeyError)
+    )
+    def test_fail_action_with_missing_heartbeats_wf_spec_not_cached(self):
         wf_text = """---
         version: '2.0'
 
