@@ -78,7 +78,7 @@ api_opts = [
     cfg.BoolOpt(
         'enable_ssl_api',
         default=False,
-        help=_('Enable the integrated stand-alone API to service requests'
+        help=_('Enable the integrated stand-alone API to service requests '
                'via HTTPS instead of HTTP.')
     ),
     cfg.IntOpt(
