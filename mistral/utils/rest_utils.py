@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2018 - Nokia, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -115,7 +116,8 @@ def validate_fields(fields, object_fields):
 
     if invalid_fields:
         raise wsme_exc.ClientSideError(
-            'Field(s) %s are invalid.' % ', '.join(invalid_fields)
+            'Some fields do not exist  [%s], please choose from [%s]' %
+            (', '.join(invalid_fields), ', '.join(object_fields))
         )
 
 

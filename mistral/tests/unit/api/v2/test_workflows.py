@@ -703,10 +703,9 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
 
-        self.assertIn(
-            "nonexist are invalid",
-            resp.body.decode()
-        )
+        response_msg = resp.body.decode()
+        self.assertIn("nonexist", response_msg)
+        self.assertIn("do not exist", response_msg)
 
     def test_validate(self):
         resp = self.app.post(
