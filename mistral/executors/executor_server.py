@@ -87,7 +87,7 @@ class ExecutorServer(service_base.MistralService):
         :return: Action result.
         """
 
-        LOG.info(
+        LOG.debug(
             "Received RPC request 'run_action'[action_ex_id=%s, "
             "action_cls_str=%s, action_cls_attrs=%s, params=%s, "
             "timeout=%s]",
@@ -103,7 +103,7 @@ class ExecutorServer(service_base.MistralService):
         try:
             self._aer.add_action_ex_id(action_ex_id)
 
-            return self.executor.run_action(
+            res = self.executor.run_action(
                 action_ex_id,
                 action_cls_str,
                 action_cls_attrs,
@@ -113,6 +113,15 @@ class ExecutorServer(service_base.MistralService):
                 redelivered,
                 timeout=timeout
             )
+
+            LOG.debug(
+                "Sending action result to engine"
+                " [action_ex_id=%s, action_cls=%s]",
+                action_ex_id,
+                action_cls_str
+            )
+
+            return res
         finally:
             self._aer.remove_action_ex_id(action_ex_id)
 

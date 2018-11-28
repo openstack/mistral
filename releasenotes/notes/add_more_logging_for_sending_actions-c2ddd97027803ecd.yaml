@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Mistral doesn't log enough info about sending actions to executor and
+    receiving them on the executor side. It makes it hard to debug
+    situations when an action got stuck in RUNNING state. It has now been
+    fixed by adding additional log statements.
