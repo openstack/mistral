@@ -381,6 +381,11 @@ class ExecutorClient(exe.Executor):
         rpc_client_method = (self._client.async_call
                              if async_ else self._client.sync_call)
 
+        LOG.debug(
+            "Sending an action to executor [action_ex_id=%s, action_cls=%s]",
+            action_ex_id, action_cls_str
+        )
+
         return rpc_client_method(auth_ctx.ctx(), 'run_action', **rpc_kwargs)
 
 
