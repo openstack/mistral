@@ -29,6 +29,7 @@ from mistral import context
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ def schedule_call(factory_method_path, target_method_name,
         if context.has_ctx() else {}
     )
 
-    execution_time = (datetime.datetime.now() +
+    execution_time = (utils.utc_now_sec() +
                       datetime.timedelta(seconds=run_after))
 
     if serializers:
@@ -180,7 +181,7 @@ class Scheduler(object):
         """
         result = []
 
-        time_filter = datetime.datetime.now() + datetime.timedelta(seconds=1)
+        time_filter = utils.utc_now_sec() + datetime.timedelta(seconds=1)
 
         with db_api.transaction():
             candidates = db_api.get_delayed_calls_to_start(
