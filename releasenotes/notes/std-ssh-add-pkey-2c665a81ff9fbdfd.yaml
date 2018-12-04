@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Adds the parameter private_key in the standard ssh actions. This allows a
+    user to specify the key to use instead of using the ones available in the
+    filesystem of the executors.

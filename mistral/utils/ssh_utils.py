@@ -37,12 +37,19 @@ def _read_paramimko_stream(recv_func):
     return result.decode('utf-8')
 
 
-def _to_paramiko_private_key(private_key_filename, password=None):
+def _to_paramiko_private_key(private_key_filename,
+                             private_key=None,
+                             password=None):
     if '../' in private_key_filename or '..\\' in private_key_filename:
         raise exc.DataAccessException(
             "Private key filename must not contain '..'. "
             "Actual: %s" % private_key_filename
         )
+
+    if private_key:
+        return paramiko.RSAKey.from_private_key(
+            file_obj=six.StringIO(private_key),
+            password=password)
 
     if private_key_filename.startswith('/'):
         private_key_path = private_key_filename
@@ -56,9 +63,6 @@ def _to_paramiko_private_key(private_key_filename, password=None):
 
 
 def _connect(host, username, password=None, pkey=None, proxy=None):
-    if isinstance(pkey, six.string_types):
-        pkey = _to_paramiko_private_key(pkey, password)
-
     LOG.debug('Creating SSH connection to %s', host)
 
     ssh_client = paramiko.SSHClient()
@@ -104,10 +108,13 @@ def _execute_command(ssh_client, cmd, get_stderr=False,
 
 def execute_command_via_gateway(cmd, host, username, private_key_filename,
                                 gateway_host, gateway_username=None,
-                                proxy_command=None, password=None):
+                                proxy_command=None, password=None,
+                                private_key=None):
     LOG.debug('Creating SSH connection')
 
-    private_key = _to_paramiko_private_key(private_key_filename, password)
+    private_key = _to_paramiko_private_key(private_key_filename,
+                                           private_key,
+                                           password)
 
     proxy = None
 
@@ -153,9 +160,16 @@ def execute_command_via_gateway(cmd, host, username, private_key_filename,
 
 
 def execute_command(cmd, host, username, password=None,
-                    private_key_filename=None, get_stderr=False,
+                    private_key_filename=None,
+                    private_key=None, get_stderr=False,
                     raise_when_error=True):
-    ssh_client = _connect(host, username, password, private_key_filename)
+    LOG.debug('Creating SSH connection')
+
+    private_key = _to_paramiko_private_key(private_key_filename,
+                                           private_key,
+                                           password)
+
+    ssh_client = _connect(host, username, password, private_key)
 
     LOG.debug("Executing command %s", cmd)
 
