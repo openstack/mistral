@@ -221,6 +221,8 @@ def delete_event_trigger(event_trigger):
         list(events)
     )
 
+    security.delete_trust(event_trigger['trust_id'])
+
 
 def update_event_trigger(id, values):
     trig = db_api.update_event_trigger(id, values)

@@ -21,6 +21,7 @@ import sqlalchemy as sa
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
+from mistral.services import security
 from mistral.services import triggers
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
@@ -207,13 +208,21 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(400, resp.status_int)
 
     @mock.patch('mistral.rpc.clients.get_event_engine_client')
-    @mock.patch.object(db_api, "get_event_trigger", MOCK_TRIGGER)
+    @mock.patch('mistral.db.v2.api.get_event_trigger')
     @mock.patch.object(db_api, "get_event_triggers",
                        mock.MagicMock(return_value=[]))
     @mock.patch.object(db_api, "delete_event_trigger", MOCK_NONE)
-    def test_delete(self, mock_rpc_client):
+    @mock.patch.object(security, "delete_trust", MOCK_NONE)
+    def test_delete(self, mock_delete, mock_rpc_client):
         client = mock.Mock()
         mock_rpc_client.return_value = client
+
+        DELETE_TRIGGER = models.EventTrigger()
+        DELETE_TRIGGER.update(trigger_values)
+        DELETE_TRIGGER.update(
+            {'trust_id': 'c30e50e8-ee7d-4f8a-9515-f0530d9dc54b'}
+        )
+        mock_delete.return_value = DELETE_TRIGGER
 
         resp = self.app.delete(
             '/v2/event_triggers/09cc56a9-d15e-4494-a6e2-c4ec8bdaacae'
@@ -223,7 +232,7 @@ class TestEventTriggerController(base.APITest):
         self.assertEqual(1, client.delete_event_trigger.call_count)
 
         self.assertDictEqual(
-            TRIGGER_DB.to_dict(),
+            DELETE_TRIGGER.to_dict(),
             client.delete_event_trigger.call_args[0][0]
         )
         self.assertListEqual(

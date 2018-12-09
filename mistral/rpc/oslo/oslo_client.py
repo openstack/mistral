@@ -38,9 +38,7 @@ class OsloRPCClient(rpc.RPCClient):
             **kwargs
         )
 
-    def async_call(self, ctx, method, target=None, **kwargs):
-        return self._client.prepare(topic=self.topic, server=target).cast(
-            ctx,
-            method,
-            **kwargs
-        )
+    def async_call(self, ctx, method, target=None, fanout=False, **kwargs):
+        return self._client.prepare(topic=self.topic,
+                                    server=target,
+                                    fanout=fanout).cast(ctx, method, **kwargs)
