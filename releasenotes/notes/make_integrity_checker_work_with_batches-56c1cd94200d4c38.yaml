@@ -1,7 +1,7 @@
 ---
 fixes:
   - |
-    Workflow execution integrity checker mechanism was too agressive in case
+    Workflow execution integrity checker mechanism was too aggressive in case
     of big workflows that have many task executions in RUNNING state at the
     same time. The mechanism was selecting them all in one query and calling
     "on_action_complete" for each of them within a single DB transaction.
