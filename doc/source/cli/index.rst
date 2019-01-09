@@ -56,7 +56,7 @@ commands grouped together, but we can specify only the Mistral command group.
     | Command Group                | Commands                          |
     +------------------------------+-----------------------------------+
     | openstack.workflow_engine.v2 | action definition create          |
-    |                              | action definition definition show |
+    |                              | action definition show |
     |                              | action definition delete          |
     |                              | action definition list            |
     |                              | action definition show            |
