@@ -7,7 +7,7 @@ features:
 
     All existing workflows are assumed to be in the default namespace,
     represented by an empty string. Also if a workflow is created without a
-    namespace spcified, it is assumed to be in the defualt namespace.
+    namespace spcified, it is assumed to be in the default namespace.
 
     When a workflow is being executed, the namespace is saved under params and
     passed to all its sub workflow executions. When looking for the next
