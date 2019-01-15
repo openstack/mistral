@@ -169,8 +169,6 @@ class DirectWorkflowController(base.WorkflowController):
         ctx = {}
 
         for batch in self._find_end_task_executions_as_batches():
-            if not batch:
-                break
 
             for t_ex in batch:
                 ctx = utils.merge_dicts(
