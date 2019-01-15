@@ -721,3 +721,158 @@ class EventTriggers(resource.ResourceList):
                                 "marker=123e4567-e89b-12d3-a456-426655440000")
 
         return triggers_sample
+
+
+class BaseExecutionReportEntry(resource.Resource):
+    """Execution report entry resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+    created_at = wtypes.text
+    updated_at = wtypes.text
+    state = wtypes.text
+    state_info = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        # TODO(rakhmerov): complete
+
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655441414',
+            created_at='2019-01-30T00:00:00.000000',
+            updated_at='2019-01-30T00:00:00.000000',
+            state=states.SUCCESS
+        )
+
+
+class ActionExecutionReportEntry(BaseExecutionReportEntry):
+    """Action execution report entry resource."""
+
+    accepted = bool
+    last_heartbeat = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        sample = super(ActionExecutionReportEntry, cls).sample()
+
+        sample.accepted = True
+        sample.last_heartbeat = '2019-01-30T00:00:00.000000'
+
+        return sample
+
+
+class WorkflowExecutionReportEntry(BaseExecutionReportEntry):
+    """Workflow execution report entry resource."""
+
+    # NOTE(rakhmerov): task_executions has to be declared below
+    # after we declare a class for task execution entry resource.
+
+    @classmethod
+    def sample(cls):
+        sample = super(WorkflowExecutionReportEntry, cls).sample()
+
+        # We can't define a non-empty list task executions here because
+        # the needed class is not defined yet. Since this is just a sample
+        # we can sacrifice it.
+        sample.task_executions = []
+
+        return sample
+
+
+class TaskExecutionReportEntry(BaseExecutionReportEntry):
+    """Task execution report entity resource."""
+
+    action_executions = [ActionExecutionReportEntry]
+    workflow_executions = [WorkflowExecutionReportEntry]
+
+    @classmethod
+    def sample(cls):
+        sample = super(TaskExecutionReportEntry, cls).sample()
+
+        sample.action_executions = [ActionExecutionReportEntry.sample()]
+        sample.workflow_executions = []
+
+        return sample
+
+
+# We have to declare this field later because of the dynamic binding.
+# It can't be within WorkflowExecutionReportEntry before
+# TaskExecutionReportEntry is declared.
+WorkflowExecutionReportEntry.task_executions = [TaskExecutionReportEntry]
+wtypes.registry.reregister(WorkflowExecutionReportEntry)
+
+
+class ExecutionReportStatistics(resource.Resource):
+    """Execution report statistics.
+
+    TODO(rakhmerov): There's much more we can add here. For example,
+    information about action, average (and also min and max) task execution
+    run time etc.
+    """
+
+    total_tasks_count = wtypes.IntegerType(minimum=0)
+    running_tasks_count = wtypes.IntegerType(minimum=0)
+    success_tasks_count = wtypes.IntegerType(minimum=0)
+    error_tasks_count = wtypes.IntegerType(minimum=0)
+    idle_tasks_count = wtypes.IntegerType(minimum=0)
+    paused_tasks_count = wtypes.IntegerType(minimum=0)
+
+    def __init__(self, **kw):
+        self.total_tasks_count = 0
+        self.running_tasks_count = 0
+        self.success_tasks_count = 0
+        self.error_tasks_count = 0
+        self.idle_tasks_count = 0
+        self.paused_tasks_count = 0
+
+        super(ExecutionReportStatistics, self).__init__(**kw)
+
+    def increment_running(self):
+        self.running_tasks_count += 1
+        self.total_tasks_count += 1
+
+    def increment_success(self):
+        self.success_tasks_count += 1
+        self.total_tasks_count += 1
+
+    def increment_error(self):
+        self.error_tasks_count += 1
+        self.total_tasks_count += 1
+
+    def increment_idle(self):
+        self.idle_tasks_count += 1
+        self.total_tasks_count += 1
+
+    def increment_paused(self):
+        self.paused_tasks_count += 1
+        self.total_tasks_count += 1
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            total_tasks_count=10,
+            running_tasks_count=3,
+            success_tasks_count=5,
+            error_tasks_count=2,
+            idle_tasks_count=0,
+            paused_tasks_count=0
+        )
+
+
+class ExecutionReport(resource.Resource):
+    """Execution report resource."""
+
+    statistics = ExecutionReportStatistics
+    """General statistics about the workflow execution hierarchy."""
+
+    root_workflow_execution = WorkflowExecutionReportEntry
+    """Root entry of the report associated with a workflow execution."""
+
+    @classmethod
+    def sample(cls):
+        sample = cls()
+
+        sample.statistics = ExecutionReportStatistics.sample()
+        sample.root_workflow_execution = WorkflowExecutionReportEntry.sample()
+
+        return sample
