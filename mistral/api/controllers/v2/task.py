@@ -36,8 +36,15 @@ from mistral.workflow import states
 
 
 LOG = logging.getLogger(__name__)
-STATE_TYPES = wtypes.Enum(str, states.IDLE, states.RUNNING, states.SUCCESS,
-                          states.ERROR, states.RUNNING_DELAYED)
+
+STATE_TYPES = wtypes.Enum(
+    str,
+    states.IDLE,
+    states.RUNNING,
+    states.SUCCESS,
+    states.ERROR,
+    states.RUNNING_DELAYED
+)
 
 
 def _get_task_resource_with_result(task_ex):
