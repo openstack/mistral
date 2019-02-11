@@ -208,4 +208,4 @@ def _cut_wf_definition_from_all(wfs_yaml, wf_name):
     return safe_yaml.dump({
         'version': wfs_yaml['version'],
         wf_name: wfs_yaml[wf_name]
-    })
+    }, sort_keys=False)
