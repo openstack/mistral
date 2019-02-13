@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+import six
 
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
@@ -431,3 +432,42 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
         self.assertIsNotNone(json_str)
         self.assertIn('"key1": "foo"', json_str)
         self.assertIn('"key2": "bar"', json_str)
+
+    def test_built_in_str_function(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          input:
+            - my_list
+
+          tasks:
+            task1:
+              publish:
+                val: <% str($.my_list) %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            wf_input={
+                'my_list': [
+                    {
+                        'k1': 'v1',
+                        'k2': 'v2'
+                    }
+                ]
+            }
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction(read_only=True):
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            val = wf_ex.task_executions[0].published['val']
+
+            self.assertIsInstance(val, six.string_types)
+            self.assertIn('[', val)
+            self.assertIn(']', val)
