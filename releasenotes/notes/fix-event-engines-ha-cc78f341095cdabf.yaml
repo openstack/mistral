@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    [`bug 1715848 <https://bugs.launchpad.net/mistral/+bug/1715848>`_]
+    Fixed a bug that prevents event-engines to work correctly in HA.
