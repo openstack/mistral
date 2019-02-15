@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 from functools import partial
-import six
 import warnings
 
 from oslo_log import log as logging
@@ -40,27 +39,6 @@ LOG = logging.getLogger(__name__)
 ROOT_YAQL_CONTEXT = None
 
 
-def _convert_yaql_input_data(obj, rec=None):
-    # NOTE(rakhmerov): We have to define our own wrapper function
-    # around the function 'convert_input_data' from 'yaql_utils'
-    # because the latter always converts all sequences (except strings)
-    # into tuples, and it in turn breaks a number of things. For example,
-    # if we use the built-in 'str' YAQL function with an argument of the
-    # type 'list' then the result will be '(item1, item2 ..., itemN,)'
-    # instead of '[item1, item2 ..., itemN]'.
-    # So we override this behavior for sequences that are not strings and
-    # tuples.
-    if rec is None:
-        rec = _convert_yaql_input_data
-
-    if (isinstance(obj, yaql_utils.SequenceType) and
-            not isinstance(obj, six.string_types) and
-            not isinstance(obj, tuple)):
-        return list(rec(t, rec) for t in obj)
-    else:
-        return yaql_utils.convert_input_data(obj, rec)
-
-
 def get_yaql_context(data_context):
     global ROOT_YAQL_CONTEXT
 
@@ -70,7 +48,7 @@ def get_yaql_context(data_context):
         _register_yaql_functions(ROOT_YAQL_CONTEXT)
 
     new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
-    new_ctx['$'] = _convert_yaql_input_data(data_context)
+    new_ctx['$'] = yaql_utils.convert_input_data(data_context)
 
     if isinstance(data_context, dict):
         new_ctx['__env'] = data_context.get('__env')
