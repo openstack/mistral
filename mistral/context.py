@@ -167,7 +167,7 @@ def _extract_mistral_auth_params(headers):
         )
     else:
         params = {
-            'auth_uri': CONF.keystone_authtoken.auth_uri,
+            'auth_uri': CONF.keystone_authtoken.www_authenticate_uri,
             'auth_cacert': CONF.keystone_authtoken.cafile,
             'insecure': False,
             'region_name': headers.get('X-Region-Name'),

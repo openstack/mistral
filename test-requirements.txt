@@ -7,7 +7,7 @@ coverage!=4.4,>=4.0 # Apache-2.0
 croniter>=0.3.4 # MIT License
 doc8>=0.6.0 # Apache-2.0
 fixtures>=3.0.0 # Apache-2.0/BSD
-keystonemiddleware>=4.17.0 # Apache-2.0
+keystonemiddleware>=4.18.0 # Apache-2.0
 mistral-lib>=0.4.0 # Apache-2.0
 mock>=2.0.0 # BSD
 networkx>=1.10 # BSD

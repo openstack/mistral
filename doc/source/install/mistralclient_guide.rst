@@ -93,7 +93,7 @@ workflow on the `http://keystone2.example.com` cloud.
 The mistral.conf will look like::
 
     [keystone_authtoken]
-    auth_uri = http://keystone1.example.com:5000/v3
+    www_authenticate_uri = http://keystone1.example.com:5000/v3
     ...
 
 The client side parameters will be::
