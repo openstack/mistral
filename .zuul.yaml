@@ -118,7 +118,7 @@
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
         - tripleo-ci-centos-7-scenario003-standalone
-        - tripleo-ci-centos-7-undercloud-containers
+        - tripleo-ci-centos-7-containers-multinode
         - mistral-rally-task:
              voting: false
         - openstack-tox-lower-constraints:
