@@ -85,6 +85,7 @@
       - openstack-python-jobs
       - openstack-python35-jobs
       - openstack-python36-jobs
+      - openstack-python37-jobs
       - publish-openstack-docs-pti
       - check-requirements
       - release-notes-jobs-python3
@@ -100,6 +101,9 @@
             required-projects:
               - openstack/mistral-lib
         - openstack-tox-py36:
+            required-projects:
+              - openstack/mistral-lib
+        - openstack-tox-py37:
             required-projects:
               - openstack/mistral-lib
         - openstack-tox-py27:
