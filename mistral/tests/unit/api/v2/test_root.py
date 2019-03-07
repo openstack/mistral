@@ -15,6 +15,7 @@ from oslo_serialization import jsonutils
 
 from mistral.tests.unit.api import base
 from mistral.tests.unit.api import test_auth
+from mistral.tests.unit.api import test_oslo_middleware
 
 
 class TestRootController(base.APITest):
@@ -69,5 +70,71 @@ class TestRootControllerWithAuth(test_auth.TestKeystoneMiddleware):
 
         self.assertEqual(
             'http://localhost/v2',
+            data['uri']
+        )
+
+
+class TestRootControllerWithHTTPProxyToWSGI(test_oslo_middleware.
+                                            TestHTTPProxyToWSGIMiddleware):
+    def test_index(self):
+        resp = self.app.get('/', headers={'Accept': 'application/json',
+                                          'Host': 'localhost'})
+
+        self.assertEqual(200, resp.status_int)
+
+        data = jsonutils.loads(resp.body.decode())
+        data = data['versions']
+        self.assertEqual('v2.0', data[0]['id'])
+        self.assertEqual('CURRENT', data[0]['status'])
+        self.assertEqual(
+            [{'href': 'http://localhost/v2', 'rel': 'self', 'target': 'v2'}],
+            data[0]['links']
+        )
+
+    def test_v2_root(self):
+        resp = self.app.get('/v2/', headers={'Accept': 'application/json',
+                                             'Host': 'localhost'})
+
+        self.assertEqual(200, resp.status_int)
+
+        data = jsonutils.loads(resp.body.decode())
+
+        self.assertEqual(
+            'http://localhost/v2',
+            data['uri']
+        )
+
+    def test_index_with_prefix(self):
+        resp = self.app.get('/',
+                            headers={'Accept': 'application/json',
+                                     'Host': 'openstack',
+                                     'X-Forwarded-Proto': 'https',
+                                     'X-Forwarded-Prefix': '/workflowv2'})
+
+        self.assertEqual(200, resp.status_int)
+
+        data = jsonutils.loads(resp.body.decode())
+        data = data['versions']
+        self.assertEqual('v2.0', data[0]['id'])
+        self.assertEqual('CURRENT', data[0]['status'])
+        self.assertEqual(
+            [{'href': 'https://openstack/workflowv2/v2', 'rel': 'self',
+              'target': 'v2'}],
+            data[0]['links']
+        )
+
+    def test_v2_root_with_prefix(self):
+        resp = self.app.get('/v2/',
+                            headers={'Accept': 'application/json',
+                                     'Host': 'openstack',
+                                     'X-Forwarded-Proto': 'https',
+                                     'X-Forwarded-Prefix': '/workflowv2'})
+
+        self.assertEqual(200, resp.status_int)
+
+        data = jsonutils.loads(resp.body.decode())
+
+        self.assertEqual(
+            'https://openstack/workflowv2/v2',
             data['uri']
         )
