@@ -67,7 +67,7 @@ class RootController(object):
     def index(self):
         LOG.debug("Fetching API versions.")
 
-        host_url_v2 = '%s/%s' % (pecan.request.host_url, 'v2')
+        host_url_v2 = '%s/%s' % (pecan.request.application_url, 'v2')
         api_v2 = APIVersion(
             id='v2.0',
             status='CURRENT',
