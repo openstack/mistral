@@ -233,7 +233,7 @@ def get_all(list_cls, cls, get_all_function, get_function,
     return list_cls.convert_with_links(
         rest_resources,
         limit,
-        pecan.request.host_url,
+        pecan.request.application_url,
         sort_keys=','.join(sort_keys),
         sort_dirs=','.join(sort_dirs),
         fields=','.join(fields) if fields else '',
