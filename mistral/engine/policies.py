@@ -160,6 +160,15 @@ def _ensure_context_has_key(runtime_context, key):
     return runtime_context
 
 
+def _has_incomplete_inbound_tasks(task_ex):
+    if "triggered_by" not in task_ex.runtime_context:
+        return False
+    for trigger in task_ex.runtime_context["triggered_by"]:
+        if trigger["event"] == "not triggered":
+            return True
+    return False
+
+
 class WaitBeforePolicy(base.TaskPolicy):
     _schema = {
         "properties": {
@@ -379,6 +388,11 @@ class RetryPolicy(base.TaskPolicy):
         stop_continue_flag = (
             stop_continue_flag or
             (self._continue_on_clause and not continue_on_evaluation)
+        )
+
+        stop_continue_flag = (
+            stop_continue_flag or
+            _has_incomplete_inbound_tasks(task_ex)
         )
 
         break_triggered = (

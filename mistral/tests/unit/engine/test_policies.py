@@ -1227,6 +1227,49 @@ class PoliciesTest(base.EngineTestCase):
 
         self.assertDictEqual({'result': 'mocked result'}, wf_output)
 
+    def test_retry_failed_join_task(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            task-defaults:
+              retry:
+                count: 1
+                delay: 0
+            tasks:
+              task1:
+                action: std.noop
+                on-success: join_task
+              task2:
+                action: std.fail
+                on-success: join_task
+              join_task:
+                action: std.noop
+                join: all
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        self._assert_single_item(
+            tasks, name="task2", state=states.ERROR
+        )
+        self._assert_single_item(
+            tasks, name="join_task", state=states.ERROR
+        )
+
     @mock.patch.object(
         std_actions.EchoAction,
         'run',
