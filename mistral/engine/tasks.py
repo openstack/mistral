@@ -537,6 +537,9 @@ class RegularTask(Task):
 
     @profiler.trace('regular-task-get-target', hide_args=True)
     def _get_target(self, input_dict):
+        if not self.task_spec.get_target():
+            return None
+
         ctx_view = data_flow.ContextView(
             input_dict,
             self.ctx,
@@ -552,7 +555,11 @@ class RegularTask(Task):
 
     @profiler.trace('regular-task-get-action-input', hide_args=True)
     def _get_action_input(self, ctx=None):
-        input_dict = self._evaluate_expression(self.task_spec.get_input(), ctx)
+        input_spec = self.task_spec.get_input()
+
+        input_dict = (
+            self._evaluate_expression(input_spec, ctx) if input_spec else {}
+        )
 
         if not isinstance(input_dict, dict):
             raise exc.InputException(
@@ -576,10 +583,7 @@ class RegularTask(Task):
             self.wf_ex.input
         )
 
-        return expr.evaluate_recursively(
-            expression,
-            ctx_view
-        )
+        return expr.evaluate_recursively(expression, ctx_view)
 
     def _build_action(self):
         action_name = self.task_spec.get_action_name()
