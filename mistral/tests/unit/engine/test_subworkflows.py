@@ -453,9 +453,11 @@ class SubworkflowsTest(base.EngineTestCase):
             wf2_ex = db_api.get_workflow_execution(wf2_ex.id)
             wf3_ex = db_api.get_workflow_execution(wf3_ex.id)
 
-        self.assertIsNone(wf1_ex.root_execution_id, None)
-        self.assertEqual(wf2_ex.root_execution_id, wf1_ex.id)
-        self.assertEqual(wf3_ex.root_execution_id, wf1_ex.id)
+            self.assertIsNone(wf1_ex.root_execution_id, None)
+            self.assertEqual(wf2_ex.root_execution_id, wf1_ex.id)
+            self.assertEqual(wf2_ex.root_execution, wf1_ex)
+            self.assertEqual(wf3_ex.root_execution_id, wf1_ex.id)
+            self.assertEqual(wf3_ex.root_execution, wf1_ex)
 
     def test_cascade_delete(self):
         wf_text = """

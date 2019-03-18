@@ -343,6 +343,13 @@ WorkflowExecution.root_execution_id = sa.Column(
     nullable=True
 )
 
+WorkflowExecution.root_execution = relationship(
+    WorkflowExecution,
+    remote_side=WorkflowExecution.id,
+    lazy='select'
+)
+
+
 # Many-to-one for 'TaskExecution' and 'WorkflowExecution'.
 
 TaskExecution.workflow_execution_id = sa.Column(
