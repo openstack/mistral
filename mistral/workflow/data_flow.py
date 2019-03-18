@@ -17,7 +17,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from mistral import context as auth_ctx
-from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral import expressions as expr
@@ -333,9 +332,7 @@ def get_workflow_environment_dict(wf_ex):
         return {}
 
     if wf_ex.root_execution_id:
-        return get_workflow_environment_dict(
-            db_api.get_workflow_execution(wf_ex.root_execution_id)
-        )
+        return get_workflow_environment_dict(wf_ex.root_execution)
 
     env_dict = wf_ex.params['env'] if 'env' in wf_ex.params else {}
 
