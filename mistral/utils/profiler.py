@@ -21,6 +21,8 @@ from oslo_log import log as logging
 import osprofiler.profiler
 import osprofiler.web
 
+from mistral import utils
+
 
 PROFILER_LOG = logging.getLogger(cfg.CONF.profiler.profiler_log_name)
 
@@ -33,6 +35,30 @@ def log_to_file(info, context=None):
         info['trace_id'],
         info['name']
     ]
+
+    th_local_name = '_profiler_trace_%s_start_time_' % info['trace_id']
+
+    if info['name'].endswith('-start'):
+        utils.set_thread_local(
+            th_local_name,
+            datetime.datetime.utcnow()
+        )
+
+        # Insert a blank sequence for a trace start.
+        attrs.insert(1, ' ' * 8)
+
+    if info['name'].endswith('-stop'):
+        delta = (
+            datetime.datetime.utcnow() - utils.get_thread_local(th_local_name)
+        ).total_seconds()
+
+        utils.set_thread_local(th_local_name, None)
+
+        # Insert a blank sequence for a trace start.
+        attrs.insert(1, str(delta))
+
+        if delta > 0.5:
+            attrs.append(' <- !!!')
 
     if 'info' in info and 'db' in info['info']:
         db_info = copy.deepcopy(info['info']['db'])
