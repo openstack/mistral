@@ -15,6 +15,7 @@
 
 from oslo_config import cfg
 import oslo_middleware.cors as cors_middleware
+import oslo_middleware.http_proxy_to_wsgi as http_proxy_to_wsgi_middleware
 import osprofiler.web
 import pecan
 
@@ -81,6 +82,9 @@ def setup_app(config=None):
             hmac_keys=cfg.CONF.profiler.hmac_keys,
             enabled=cfg.CONF.profiler.enabled
         )
+
+    # Create HTTPProxyToWSGI wrapper
+    app = http_proxy_to_wsgi_middleware.HTTPProxyToWSGI(app, cfg.CONF)
 
     # Create a CORS wrapper, and attach mistral-specific defaults that must be
     # included in all CORS responses.
