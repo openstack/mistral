@@ -121,8 +121,10 @@
         # to disable voting on one specific job if things go wrong.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-        - tripleo-ci-centos-7-scenario003-standalone
-        - tripleo-ci-centos-7-containers-multinode
+        - tripleo-ci-centos-7-scenario003-standalone:
+            voting: false
+        - tripleo-ci-centos-7-containers-multinode:
+            voting: false
         - mistral-rally-task:
              voting: false
         - openstack-tox-lower-constraints:
@@ -135,10 +137,10 @@
         - mistral-devstack-non-apache
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
-        - tripleo-ci-centos-7-scenario003-standalone
+        # - tripleo-ci-centos-7-scenario003-standalone
         - mistral-devstack-kombu
         - openstack-tox-lower-constraints
-        - tripleo-ci-centos-7-undercloud-containers
+        # - tripleo-ci-centos-7-undercloud-containers
     post:
       jobs:
         - mistral-docker-buildimage:
