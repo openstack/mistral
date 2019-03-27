@@ -103,8 +103,12 @@ class DefaultEngine(base.Engine):
 
                 return action.action_ex.get_clone()
 
-            output = action.run(action_input, target, save=False,
-                                timeout=timeout)
+            output = action.run(
+                action_input,
+                target,
+                save=False,
+                timeout=timeout
+            )
 
             state = states.SUCCESS if output.is_success() else states.ERROR
 
