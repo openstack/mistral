@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    WorkflowExecution database model had only "root_execution_id" to reference
+    a root workflow execution, i.e. the most parent workflow execution in the
+    execution tree. So if we needed to get an entity itself we'd always make
+    a direct query to the database, in fact, w/o using an entity cache in the
+    SQLAlchemy session. It's now been fixed by adding a normal mapped entity
+    for root workflow execution. In other words, WorkflowExecution class now
+    has the property "root_execution". It slightly improves performance in
+    case this property is accessed more than once per the database session.
