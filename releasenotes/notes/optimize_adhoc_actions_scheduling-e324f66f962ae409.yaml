@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    For an ad-hoc action, preparing input for its base action was done more
+    than once. It happened during the validation phase and the scheduling
+    phase. However, input preparation may be expensive in case of heavy
+    expressions and data contexts. This has now been fixed by caching a
+    prepared input within an AdHocAction instance.
