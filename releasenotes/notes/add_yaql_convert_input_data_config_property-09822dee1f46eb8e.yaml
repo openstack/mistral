@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Added the "convert_input_data" config property under the "yaql" group.
+    By default it's set to True which preserves the current behavior so
+    there's no risk with compatibility. If set to False, it disables the
+    additional data conversion that was initially added to support some
+    tricky cases like working with sets of dicts (although dict is not a
+    hashable type and can't be put into a set). Disabling it give a
+    significant performance boost in cases when data contexts are very
+    large.

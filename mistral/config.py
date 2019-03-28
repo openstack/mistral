@@ -533,6 +533,23 @@ yaql_opts = [
                'the expression (or any part of it). -1 means no limitation.')
     ),
     cfg.BoolOpt(
+        'convert_input_data',
+        default=True,
+        help=_('Enables input data conversion for YAQL expressions. If set '
+               'to True then YAQL will convert mutable data structures '
+               '(lists, dicts, sets) into their immutable versions. That '
+               'will allow them to work with some constructs that require '
+               'hashable types even if elements are not hashable. For '
+               'example, it will be possible to put dicts into a set. '
+               'Although it conflicts with the base principles of such '
+               'collections (e.g. we cannot put a non-hashable type into '
+               'a set just because otherwise it will not work correctly) the '
+               'YAQL library itself allows this. '
+               'Disabling input data conversion may give significant '
+               'performance boost if the input data for an expression is '
+               'large.')
+    ),
+    cfg.BoolOpt(
         'convert_tuples_to_lists',
         default=True,
         help=_('When set to true, yaql converts all tuples in the expression '

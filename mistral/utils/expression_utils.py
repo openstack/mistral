@@ -25,6 +25,7 @@ import yaql
 
 from yaql.language import utils as yaql_utils
 
+from mistral.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral import utils
 
@@ -48,7 +49,11 @@ def get_yaql_context(data_context):
         _register_yaql_functions(ROOT_YAQL_CONTEXT)
 
     new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
-    new_ctx['$'] = yaql_utils.convert_input_data(data_context)
+
+    new_ctx['$'] = (
+        data_context if not cfg.CONF.yaql.convert_input_data
+        else yaql_utils.convert_input_data(data_context)
+    )
 
     if isinstance(data_context, dict):
         new_ctx['__env'] = data_context.get('__env')
