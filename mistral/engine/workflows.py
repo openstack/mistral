@@ -551,7 +551,9 @@ class Workflow(object):
 
     def _send_result_to_parent_workflow(self):
         if self.wf_ex.state == states.SUCCESS:
-            result = ml_actions.Result(data=self.wf_ex.output)
+            # The result of the sub workflow is already saved
+            # so there's no need to send it over RPC.
+            result = None
         elif self.wf_ex.state == states.ERROR:
             err_msg = (
                 self.wf_ex.state_info or

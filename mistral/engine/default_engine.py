@@ -19,6 +19,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral_lib import actions as ml_actions
+
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
@@ -145,6 +147,12 @@ class DefaultEngine(base.Engine):
         with db_api.transaction():
             if wf_action:
                 action_ex = db_api.get_workflow_execution(action_ex_id)
+
+                # If result is None it means that it's a normal subworkflow
+                # output and we just need to fetch it from the model.
+                # This is just an optimization to not send data over RPC
+                if result is None:
+                    result = ml_actions.Result(data=action_ex.output)
             else:
                 action_ex = db_api.get_action_execution(action_ex_id)
 
