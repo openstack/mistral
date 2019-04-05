@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Added HTTPProxyToWSGI middleware in front of the Mistral API.
+    The purpose of this middleware is to set up the request URL correctly in
+    the case there is a proxy (for instance, a loadbalancer such as HAProxy)
+    in front of the Mistral API.
+    The HTTPProxyToWSGI is off by default and needs to be enabled via a
+    configuration value.
+    Fixes [`bug 1590608 <https://bugs.launchpad.net/mistral/+bug/1590608>`_]
+    Fixes [`bug 1816364 <https://bugs.launchpad.net/mistral/+bug/1816364>`_]
