@@ -259,7 +259,10 @@ def _get_integrity_check_key(wf_ex):
     return 'wfh_c_a_f_i-%s' % wf_ex.id
 
 
-@profiler.trace('workflow-handler-schedule-check-and-complete', hide_args=True)
+@profiler.trace(
+    'workflow-handler-schedule-check-and-fix-integrity',
+    hide_args=True
+)
 def _schedule_check_and_fix_integrity(wf_ex, delay=0):
     """Schedules workflow integrity check.
 
