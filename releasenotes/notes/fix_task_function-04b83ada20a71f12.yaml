@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    "__task_execution" wasn't always included into the expression data
+    context so the function task() didn't work properly.
+    Fixes [`bug 1823875 <https://bugs.launchpad.net/mistral/+bug/1823875>`_]
