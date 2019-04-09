@@ -198,6 +198,7 @@ class DirectWorkflowController(base.WorkflowController):
     def all_errors_handled(self):
         for t_ex in lookup_utils.find_error_task_executions(self.wf_ex.id):
             ctx_view = data_flow.ContextView(
+                data_flow.get_current_task_dict(t_ex),
                 data_flow.evaluate_task_outbound_context(t_ex),
                 data_flow.get_workflow_environment_dict(self.wf_ex),
                 self.wf_ex.context,
@@ -230,9 +231,7 @@ class DirectWorkflowController(base.WorkflowController):
         )
 
         for batch in batches:
-            yield list(
-                filter(is_end_task, batch)
-            )
+            yield list(filter(is_end_task, batch))
 
     def may_complete_workflow(self, task_ex):
         res = super(DirectWorkflowController, self).may_complete_workflow(
