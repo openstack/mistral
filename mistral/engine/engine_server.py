@@ -153,7 +153,7 @@ class EngineServer(service_base.MistralService):
             "Received RPC request 'on_action_complete'[action_ex_id=%s, "
             "result=%s]",
             action_ex_id,
-            result.cut_repr()
+            result.cut_repr() if result else '<unknown>'
         )
 
         return self.engine.on_action_complete(action_ex_id, result, wf_action)
