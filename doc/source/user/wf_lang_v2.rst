@@ -1058,6 +1058,7 @@ Sends an email message via SMTP protocol.
 -  **to_addrs** - Comma separated list of recipients. *Required*.
 -  **cc_addrs** - Comma separated list of CC recipients. *Optional*.
 -  **bcc_addrs** - Comma separated list of BCC recipients. *Optional*.
+-  **reply_to** - Comma separated list of email address. *Optional*.
 -  **subject** - Subject of the message. *Optional*.
 -  **body** - Text containing message body. *Optional*.
 -  **html_body** - Text containing the message in HTML format. *Optional*.
