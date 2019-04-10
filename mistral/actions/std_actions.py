@@ -278,9 +278,9 @@ class MistralHTTPAction(HTTPAction):
 
 
 class SendEmailAction(actions.Action):
-    def __init__(self, from_addr, to_addrs, smtp_server, cc_addrs=None,
-                 bcc_addrs=None, smtp_password=None, subject=None, body=None,
-                 html_body=None):
+    def __init__(self, from_addr, to_addrs, smtp_server, reply_to=None,
+                 cc_addrs=None, bcc_addrs=None, smtp_password=None,
+                 subject=None, body=None, html_body=None):
         super(SendEmailAction, self).__init__()
         # TODO(dzimine): validate parameters
 
@@ -288,6 +288,7 @@ class SendEmailAction(actions.Action):
         self.to = to_addrs
         self.cc = cc_addrs or []
         self.bcc = bcc_addrs or []
+        self.reply_to = reply_to or []
         self.subject = subject or "<No subject>"
         self.body = body or "<No body>"
         self.html_body = html_body
@@ -300,10 +301,11 @@ class SendEmailAction(actions.Action):
     def run(self, context):
         LOG.info(
             "Sending email message "
-            "[from=%s, to=%s, cc=%s, bcc=%s, subject=%s, using smtp=%s, "
-            "body=%s...]",
+            "[from=%s, to=%s, reply_to=%s, cc=%s, bcc=%s, subject=%s, "
+            "using smtp=%s, body=%s...]",
             self.sender,
             self.to,
+            self.reply_to,
             self.cc,
             self.bcc,
             self.subject,
@@ -322,6 +324,7 @@ class SendEmailAction(actions.Action):
                                          _charset='utf-8'))
         message['Subject'] = header.Header(self.subject, 'utf-8')
         message['From'] = self.sender
+        message['Reply-To'] = header.Header(', '.join(self.reply_to))
         message['To'] = ', '.join(self.to)
 
         if self.cc:
@@ -351,10 +354,11 @@ class SendEmailAction(actions.Action):
         # to return a result.
         LOG.info(
             "Sending email message "
-            "[from=%s, to=%s, cc=%s, bcc=%s, subject=%s, using smtp=%s, "
-            "body=%s...]",
+            "[from=%s, to=%s, reply_to=%s, cc=%s, bcc=%s, subject=%s, "
+            " using smtp=%s, body=%s...]",
             self.sender,
             self.to,
+            self.reply_to,
             self.cc,
             self.bcc,
             self.subject,
