@@ -1118,6 +1118,8 @@ Input parameters:
 
 -  **output** - Value of any type that needs to be returned as a result
    of the action. *Required*.
+-  **delay** - Float value that defines with what delay (in seconds)
+   the result should be returned. *Optional*.
 
 std.javascript
 ''''''''''''''

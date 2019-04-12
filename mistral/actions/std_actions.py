@@ -42,13 +42,24 @@ class EchoAction(actions.Action):
     stub.
     """
 
-    def __init__(self, output):
+    def __init__(self, output, delay=0):
         super(EchoAction, self).__init__()
 
         self.output = output
+        try:
+            self._delay = float(delay)
+            self._delay = 0 if self._delay < 0 else self._delay
+        except ValueError:
+            self._delay = 0
 
     def run(self, context):
-        LOG.info('Running echo action [output=%s]', self.output)
+        LOG.info(
+            'Running echo action [output=%s, delay=%s]',
+            self.output,
+            self._delay
+        )
+
+        time.sleep(self._delay)
 
         return self.output
 
