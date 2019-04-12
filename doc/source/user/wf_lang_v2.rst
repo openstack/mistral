@@ -1063,7 +1063,7 @@ Sends an email message via SMTP protocol.
 -  **html_body** - Text containing the message in HTML format. *Optional*.
 -  **from_addr** - Sender email address. *Required*.
 -  **smtp_server** - SMTP server host name. *Required*.
--  **smtp_password** - SMTP server password. *Required*.
+-  **smtp_password** - SMTP server password. *Optional*.
 
 Example:
 
