@@ -138,5 +138,6 @@ def main():
     logging.setup(CONF, 'Mistral')
     CONF.command.func(config, CONF.command.name)
 
+
 if __name__ == '__main__':
     sys.exit(main())

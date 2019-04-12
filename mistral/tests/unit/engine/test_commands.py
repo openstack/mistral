@@ -360,6 +360,7 @@ class OrderEngineCommandsTest(base.EngineTestCase):
         self.await_task_error(task2_db.id)
         self.await_workflow_success(wf_ex.id)
 
+
 WORKBOOK4 = """
 ---
 version: '2.0'
@@ -448,6 +449,7 @@ class SimpleEngineCmdsWithMsgTest(base.EngineTestCase):
         )
         self.assertEqual(states.PAUSED, wf_ex.state)
         self.assertEqual("my_var value is 3", wf_ex.state_info)
+
 
 WORKBOOK5 = """
 ---
