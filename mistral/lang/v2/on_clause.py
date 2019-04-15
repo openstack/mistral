@@ -107,7 +107,7 @@ class OnClauseSpec(base.BaseSpec):
             self._next = prepare_next_clause(data.get('next'))
 
     @classmethod
-    def get_schema(cls, includes=['definitions']):
+    def get_schema(cls, includes=('definitions',)):
         return super(OnClauseSpec, cls).get_schema(includes)
 
     def get_publish(self):

@@ -34,7 +34,7 @@ class PoliciesSpec(base.BaseSpec):
     }
 
     @classmethod
-    def get_schema(cls, includes=['definitions']):
+    def get_schema(cls, includes=('definitions',)):
         return super(PoliciesSpec, cls).get_schema(includes)
 
     def __init__(self, data, validate):

@@ -70,7 +70,7 @@ class OpenStackActionGenerator(action_generator.ActionGenerator):
     base_action_class = None
 
     @classmethod
-    def prepare_action_inputs(cls, origin_inputs, added=[]):
+    def prepare_action_inputs(cls, origin_inputs, added=()):
         """Modify action input string.
 
         Sometimes we need to change the default action input definition for

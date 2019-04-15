@@ -37,7 +37,7 @@ class PublishSpec(base.BaseSpec):
         self._atomic = self._data.get('atomic')
 
     @classmethod
-    def get_schema(cls, includes=['definitions']):
+    def get_schema(cls, includes=('definitions',)):
         return super(PublishSpec, cls).get_schema(includes)
 
     def validate_semantics(self):

@@ -16,7 +16,7 @@ from pecan import hooks
 
 
 class ContentTypeHook(hooks.PecanHook):
-    def __init__(self, content_type, methods=['GET']):
+    def __init__(self, content_type, methods=('GET',)):
         """Content type hook.
 
         This hook is needed for changing content type of

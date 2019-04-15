@@ -158,7 +158,7 @@ class BaseSpec(object):
     _version = '2.0'
 
     @classmethod
-    def get_schema(cls, includes=['meta', 'definitions']):
+    def get_schema(cls, includes=('meta', 'definitions')):
         schema = copy.deepcopy(cls._schema)
 
         schema['properties'] = utils.merge_dicts(

@@ -51,7 +51,7 @@ class RetrySpec(base.BaseSpec):
     }
 
     @classmethod
-    def get_schema(cls, includes=['definitions']):
+    def get_schema(cls, includes=('definitions',)):
         return super(RetrySpec, cls).get_schema(includes)
 
     def __init__(self, data, validate):
