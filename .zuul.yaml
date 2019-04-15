@@ -96,9 +96,6 @@
               - ^.zuul.yaml$
             required-projects:
               - openstack/mistral-lib
-        - openstack-tox-py35:
-            required-projects:
-              - openstack/mistral-lib
         - openstack-tox-py36:
             required-projects:
               - openstack/mistral-lib
