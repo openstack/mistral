@@ -35,6 +35,7 @@ from mistral.notifiers import notification_events as events
 from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
+from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
 
@@ -271,6 +272,14 @@ class Task(object):
 
         # Calculate commands to process next.
         cmds = wf_ctrl.continue_workflow(task_ex=self.task_ex)
+
+        # Check whether the task generated any next tasks.
+        if any([not commands.is_engine_command(c)] for c in cmds):
+            self.task_ex.has_next_tasks = True
+
+        # Check whether the error is handled.
+        if self.task_ex.state == states.ERROR:
+            self.task_ex.error_handled = any([c.handles_error for c in cmds])
 
         # Mark task as processed after all decisions have been made
         # upon its completion.

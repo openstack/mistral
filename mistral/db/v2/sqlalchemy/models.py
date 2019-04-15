@@ -263,6 +263,19 @@ class TaskExecution(Execution):
     # significantly.
     processed = sa.Column(sa.BOOLEAN, default=False)
 
+    # Set to True if the completion of the task led to starting new
+    # tasks.
+    # The value of this property should be ignored if the task
+    # is not completed.
+    has_next_tasks = sa.Column(sa.Boolean, default=False)
+
+    # Set to True if the task finished with an error and the error
+    # is handled (e.g. with 'on-error' clause for direct workflows)
+    # so that the error shouldn't bubble up to the workflow level.
+    # The value of this property should be ignored if the task
+    # is not completed.
+    error_handled = sa.Column(sa.Boolean, default=False)
+
     # Data Flow properties.
     in_context = sa.Column(st.JsonLongDictType())
     published = sa.Column(st.JsonLongDictType())

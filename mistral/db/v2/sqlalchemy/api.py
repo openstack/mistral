@@ -922,6 +922,15 @@ def get_task_executions(session=None, **kwargs):
     return _get_collection(models.TaskExecution, **kwargs)
 
 
+@b.session_aware()
+def get_task_executions_count(session=None, **kwargs):
+    query = b.model_query(models.TaskExecution)
+
+    query = query.filter_by(**kwargs)
+
+    return query.count()
+
+
 def _get_completed_task_executions_query(kwargs):
     query = b.model_query(models.TaskExecution)
 
