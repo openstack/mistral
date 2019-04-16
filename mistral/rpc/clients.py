@@ -120,7 +120,7 @@ class EngineClient(eng.Engine):
 
     @base.wrap_messaging_exception
     def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
-                       wf_input=None, description='', **params):
+                       wf_input=None, description='', async_=False, **params):
         """Starts workflow sending a request to engine over RPC.
 
         :param wf_identifier: Workflow identifier.
@@ -129,10 +129,15 @@ class EngineClient(eng.Engine):
         :param wf_ex_id: Workflow execution id. If passed, it will be set
             in the new execution object.
         :param description: Execution description.
+        :param async_: If True, start workflow in asynchronous mode
+            (w/o waiting for completion).
         :param params: Additional workflow type specific parameters.
         :return: Workflow execution.
         """
-        return self._client.sync_call(
+
+        call = self._client.async_call if async_ else self._client.sync_call
+
+        return call(
             auth_ctx.ctx(),
             'start_workflow',
             wf_identifier=wf_identifier,

@@ -197,6 +197,16 @@ engine_opts = [
         default=60,
         help=_('A number of seconds that indicates how long action '
                'definitions should be stored in the local cache.')
+    ),
+    cfg.BoolOpt(
+        'start_subworkflows_via_rpc',
+        default=False,
+        help=(
+            'Enables starting subworkflows via RPC. Use "False" to start '
+            'subworkflow within the same engine instance. Use "True" '
+            'to start subworkflow via RPC to improve load balancing '
+            'in case of several engine instances.'
+        )
     )
 ]
 

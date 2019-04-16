@@ -45,7 +45,7 @@ class DefaultEngine(base.Engine):
     @post_tx_queue.run
     @profiler.trace('engine-start-workflow', hide_args=True)
     def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
-                       wf_input=None, description='', **params):
+                       wf_input=None, description='', async_=False, **params):
         if wf_namespace:
             params['namespace'] = wf_namespace
 

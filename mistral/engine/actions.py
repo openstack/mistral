@@ -28,6 +28,7 @@ from mistral import exceptions as exc
 from mistral.executors import base as exe
 from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
+from mistral.rpc import clients as rpc
 from mistral.services import action_manager as a_m
 from mistral.services import security
 from mistral import utils
@@ -611,14 +612,28 @@ class WorkflowAction(Action):
                 wf_params[k] = v
                 del input_dict[k]
 
-        wf_handler.start_workflow(
-            wf_def.id,
-            wf_def.namespace,
-            None,
-            input_dict,
-            "sub-workflow execution",
-            wf_params
-        )
+        if cfg.CONF.engine.start_subworkflows_via_rpc:
+            def _start_subworkflow():
+                rpc.get_engine_client().start_workflow(
+                    wf_def.id,
+                    wf_def.namespace,
+                    None,
+                    input_dict,
+                    "sub-workflow execution",
+                    async_=True,
+                    **wf_params
+                )
+
+            post_tx_queue.register_operation(_start_subworkflow)
+        else:
+            wf_handler.start_workflow(
+                wf_def.id,
+                wf_def.namespace,
+                None,
+                input_dict,
+                "sub-workflow execution",
+                wf_params
+            )
 
     @profiler.trace('workflow-action-run', hide_args=True)
     def run(self, input_dict, target, index=0, desc='', save=True,

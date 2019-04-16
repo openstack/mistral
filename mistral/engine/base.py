@@ -29,7 +29,7 @@ class Engine(object):
 
     @abc.abstractmethod
     def start_workflow(self, wf_identifier, wf_namespace='', wf_ex_id=None,
-                       wf_input=None, description='', **params):
+                       wf_input=None, description='', async_=False, **params):
         """Starts the specified workflow.
 
         :param wf_identifier: Workflow ID or name. Workflow ID is recommended,
@@ -39,6 +39,8 @@ class Engine(object):
         :param wf_ex_id: Workflow execution id. If passed, it will be set
             in the new execution object.
         :param description: Execution description.
+        :param async_: If True, start workflow in asynchronous mode
+            (w/o waiting for completion).
         :param params: Additional workflow type specific parameters.
         :return: Workflow execution object.
         """
