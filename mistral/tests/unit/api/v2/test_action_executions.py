@@ -557,10 +557,10 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(1, len(resp.json['action_executions']))
         self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
 
-    @mock.patch.object(db_api, 'get_action_executions', MOCK_ACTIONS)
     @mock.patch.object(rest_utils, 'get_all')
-    def test_get_all_with_and_without_output(self, mock_get_all):
+    def test_get_all_without_output(self, mock_get_all):
         resp = self.app.get('/v2/action_executions')
+
         args, kwargs = mock_get_all.call_args
         resource_function = kwargs['resource_function']
 
@@ -570,7 +570,10 @@ class TestActionExecutionsController(base.APITest):
             resource_function
         )
 
+    @mock.patch.object(rest_utils, 'get_all')
+    def test_get_all_with_output(self, mock_get_all):
         resp = self.app.get('/v2/action_executions?include_output=true')
+
         args, kwargs = mock_get_all.call_args
         resource_function = kwargs['resource_function']
 
