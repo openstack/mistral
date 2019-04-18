@@ -14,7 +14,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import threading
+
 import abc
+import cachetools
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
@@ -34,12 +37,42 @@ from mistral.services import security
 from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
-from mistral.workflow import lookup_utils
 from mistral.workflow import states
 from mistral_lib import actions as ml_actions
 
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
+
+
+_ACTION_DEF_CACHE = cachetools.TTLCache(
+    maxsize=1000,
+    ttl=CONF.engine.action_definition_cache_time  # 60 seconds by default
+)
+
+_ACTION_DEF_CACHE_LOCK = threading.RLock()
+
+
+def _find_action_definition_by_name(action_name):
+    """Find action definition name.
+
+    :param action_name: Action name.
+    :return: Action definition (possibly a cached value).
+    """
+    with _ACTION_DEF_CACHE_LOCK:
+        action_def = _ACTION_DEF_CACHE.get(action_name)
+
+    if action_def:
+        return action_def
+
+    action_def = db_api.load_action_definition(action_name)
+
+    with _ACTION_DEF_CACHE_LOCK:
+        _ACTION_DEF_CACHE[action_name] = (
+            action_def.get_clone() if action_def else None
+        )
+
+    return action_def
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -393,7 +426,7 @@ class AdHocAction(PythonAction):
                  wf_ctx=None):
         self.action_spec = spec_parser.get_action_spec(action_def.spec)
 
-        base_action_def = lookup_utils.find_action_definition_by_name(
+        base_action_def = _find_action_definition_by_name(
             self.action_spec.get_base()
         )
 
@@ -671,14 +704,10 @@ def resolve_action_definition(action_spec_name, wf_name=None,
 
         action_full_name = "%s.%s" % (wb_name, action_spec_name)
 
-        action_db = lookup_utils.find_action_definition_by_name(
-            action_full_name
-        )
+        action_db = _find_action_definition_by_name(action_full_name)
 
     if not action_db:
-        action_db = lookup_utils.find_action_definition_by_name(
-            action_spec_name
-        )
+        action_db = _find_action_definition_by_name(action_spec_name)
 
     if not action_db:
         raise exc.InvalidActionException(

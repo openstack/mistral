@@ -22,7 +22,6 @@ from mistral import utils
 from mistral.workflow import base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
-from mistral.workflow import lookup_utils
 from mistral.workflow import states
 
 
@@ -198,7 +197,7 @@ class DirectWorkflowController(base.WorkflowController):
         return bool(self.wf_spec.get_on_error_clause(task_ex.name))
 
     def all_errors_handled(self):
-        cnt = lookup_utils.find_task_executions_count(
+        cnt = db_api.get_task_executions_count(
             workflow_execution_id=self.wf_ex.id,
             state=states.ERROR,
             error_handled=False
@@ -207,7 +206,7 @@ class DirectWorkflowController(base.WorkflowController):
         return cnt == 0
 
     def _find_end_task_executions_as_batches(self):
-        batches = lookup_utils.find_completed_task_executions_as_batches(
+        batches = db_api.get_completed_task_executions_as_batches(
             workflow_execution_id=self.wf_ex.id,
             has_next_tasks=False
         )
@@ -500,7 +499,6 @@ class DirectWorkflowController(base.WorkflowController):
         if self._is_conditional_transition(in_task_ex, in_task_spec) and \
                 not hasattr(in_task_ex, "in_context"):
             in_task_ex = db_api.get_task_execution(in_task_ex.id)
-            t_execs_cache[in_task_ex.name] = in_task_ex
 
         # [(task name, params, event name), ...]
         next_tasks_tuples = self._find_next_tasks(in_task_ex)
@@ -515,11 +513,7 @@ class DirectWorkflowController(base.WorkflowController):
     def _find_task_execution_by_name(self, t_name):
         # Note: in case of 'join' completion check it's better to initialize
         # the entire task_executions collection to avoid too many DB queries.
-
-        t_execs = lookup_utils.find_task_executions_by_name(
-            self.wf_ex.id,
-            t_name
-        )
+        t_execs = self._get_task_executions(name=t_name)
 
         # TODO(rakhmerov): Temporary hack. See the previous comment.
         return t_execs[-1] if t_execs else None
@@ -560,7 +554,6 @@ class DirectWorkflowController(base.WorkflowController):
                 if self._is_conditional_transition(t_ex, task_spec) and \
                         not hasattr(t_ex, "in_context"):
                     t_ex = db_api.get_task_execution(t_ex.id)
-                    t_execs_cache[t_ex.name] = t_ex
 
                 if t_name in self._find_next_task_names(t_ex):
                     return True, depth

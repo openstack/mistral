@@ -26,7 +26,6 @@ from mistral.lang import parser as spec_parser
 from mistral import utils as u
 from mistral.workflow import commands
 from mistral.workflow import data_flow
-from mistral.workflow import lookup_utils
 from mistral.workflow import states
 
 
@@ -203,9 +202,7 @@ class WorkflowController(object):
 
         :return: True if there is one or more tasks in cancelled state.
         """
-        t_execs = lookup_utils.find_cancelled_task_executions(self.wf_ex.id)
-
-        return len(t_execs) > 0
+        return len(self._get_task_executions(state=states.CANCELLED)) > 0
 
     @abc.abstractmethod
     def evaluate_workflow_final_context(self):
@@ -252,14 +249,9 @@ class WorkflowController(object):
             return []
 
         # Add all tasks in IDLE state.
-        idle_tasks = lookup_utils.find_task_executions_with_state(
-            self.wf_ex.id,
-            states.IDLE
-        )
-
         return [
             commands.RunExistingTask(self.wf_ex, self.wf_spec, t)
-            for t in idle_tasks
+            for t in self._get_task_executions(state=states.IDLE)
         ]
 
     def _is_paused_or_completed(self):

@@ -40,7 +40,6 @@ from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
-from mistral.workflow import lookup_utils
 from mistral.workflow import states
 from mistral_lib import actions as ml_actions
 
@@ -227,11 +226,6 @@ class Workflow(object):
 
         assert self.wf_ex
 
-        # Since some lookup utils functions may use cache for completed tasks
-        # we need to clean caches to make sure that stale objects can't be
-        # retrieved.
-        lookup_utils.clear_caches()
-
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
         self._recursive_rerun()
@@ -401,10 +395,6 @@ class Workflow(object):
         self.wf_ex.accepted = states.is_completed(state)
 
         if states.is_completed(state):
-            # No need to keep task executions of this workflow in the
-            # lookup cache anymore.
-            lookup_utils.invalidate_cached_task_executions(self.wf_ex.id)
-
             triggers.on_workflow_complete(self.wf_ex)
 
         return True
@@ -618,13 +608,13 @@ def _get_environment(params):
 
 def _build_fail_info_message(wf_ctrl, wf_ex):
     # Try to find where error is exactly.
-    failed_tasks = sorted(
-        filter(
-            lambda t_ex: not wf_ctrl.is_error_handled_for(t_ex),
-            lookup_utils.find_error_task_executions(wf_ex.id)
-        ),
-        key=lambda t: t.name
-    )
+    failed_tasks = [
+        t_ex for t_ex in db_api.get_task_executions(
+            workflow_execution_id=wf_ex.id,
+            state=states.ERROR,
+            sort_keys=['name']
+        ) if not wf_ctrl.is_error_handled_for(t_ex)
+    ]
 
     msg = ('Failure caused by error in tasks: %s\n' %
            ', '.join([t.name for t in failed_tasks]))
@@ -659,10 +649,13 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
 
 def _build_cancel_info_message(wf_ctrl, wf_ex):
     # Try to find where cancel is exactly.
-    cancelled_tasks = sorted(
-        lookup_utils.find_cancelled_task_executions(wf_ex.id),
-        key=lambda t: t.name
-    )
+    cancelled_tasks = [
+        t_ex for t_ex in db_api.get_task_executions(
+            workflow_execution_id=wf_ex.id,
+            state=states.CANCELLED,
+            sort_keys=['name']
+        )
+    ]
 
     return (
         'Cancelled tasks: %s' % ', '.join([t.name for t in cancelled_tasks])

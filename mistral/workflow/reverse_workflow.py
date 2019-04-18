@@ -19,7 +19,6 @@ from mistral import exceptions as exc
 from mistral.workflow import base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
-from mistral.workflow import lookup_utils
 from mistral.workflow import states
 
 
@@ -89,10 +88,8 @@ class ReverseWorkflowController(base.WorkflowController):
         return [t_ex for t_ex in t_execs if t_ex.state == states.SUCCESS]
 
     def evaluate_workflow_final_context(self):
-        task_execs = lookup_utils.find_task_executions_by_spec(
-            self.wf_ex.id,
-            self._get_target_task_specification()
-        )
+        task_name = self._get_target_task_specification().get_name()
+        task_execs = self._get_task_executions(name=task_name)
 
         # NOTE: For reverse workflow there can't be multiple
         # executions for one task.
@@ -114,9 +111,7 @@ class ReverseWorkflowController(base.WorkflowController):
         return task_ex.state != states.ERROR
 
     def all_errors_handled(self):
-        task_execs = lookup_utils.find_error_task_executions(self.wf_ex.id)
-
-        return len(task_execs) == 0
+        return len(self._get_task_executions(state=states.ERROR)) == 0
 
     def _find_task_specs_with_satisfied_dependencies(self):
         """Given a target task name finds tasks with no dependencies.
@@ -139,8 +134,7 @@ class ReverseWorkflowController(base.WorkflowController):
         ]
 
     def _is_satisfied_task(self, task_spec):
-        if lookup_utils.find_task_executions_by_spec(
-                self.wf_ex.id, task_spec):
+        if self._get_task_executions(name=task_spec.get_name()):
             return False
 
         if not self.wf_spec.get_task_requires(task_spec):
