@@ -4,8 +4,8 @@
     timeout: 7800
     vars:
       devstack_plugins:
-        mistral: https://git.openstack.org/openstack/mistral
-        heat: https://git.openstack.org/openstack/heat
+        mistral: https://opendev.org/openstack/mistral
+        heat: https://opendev.org/openstack/heat
       devstack_services:
         heat: true
         h-api: true
@@ -19,8 +19,8 @@
         MISTRAL_RPC_IMPLEMENTATION: oslo
         MYSQL_ROOT_PW: secretdatabase
     required-projects:
-      - openstack-dev/devstack
-      - openstack-infra/devstack-gate
+      - openstack/devstack
+      - openstack/devstack-gate
       - openstack/heat
       - openstack/mistral
       - openstack/python-mistralclient
@@ -32,7 +32,7 @@
     parent: rally-task-mistral
     vars:
       devstack_plugins:
-        rally-openstack: https://git.openstack.org/openstack/rally-openstack
+        rally-openstack: https://opendev.org/openstack/rally-openstack
       rally_task: rally-jobs/task-mistral.yaml
     required-projects:
       - openstack/rally-openstack
