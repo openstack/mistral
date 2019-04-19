@@ -35,7 +35,7 @@
               dest: .
           EOF
           /usr/zuul-env/bin/zuul-cloner -m $CLONEMAP --cache-dir /opt/git \
-              https://git.openstack.org $ZUUL_PROJECT
+              https://opendev.org $ZUUL_PROJECT
         executable: /bin/bash
         chdir: '{{ ansible_user_dir }}/workspace'
       environment: '{{ zuul | zuul_legacy_vars }}'

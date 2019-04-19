@@ -5,8 +5,8 @@
     post-run: playbooks/legacy/mistral-devstack-dsvm/post.yaml
     timeout: 4200
     required-projects:
-      - openstack-dev/devstack
-      - openstack-infra/devstack-gate
+      - openstack/devstack
+      - openstack/devstack-gate
       - openstack/heat
       - openstack/mistral
       - openstack/mistral-dashboard
@@ -19,8 +19,8 @@
     post-run: playbooks/legacy/mistral-devstack-dsvm-kombu/post.yaml
     timeout: 4200
     required-projects:
-      - openstack-dev/devstack
-      - openstack-infra/devstack-gate
+      - openstack/devstack
+      - openstack/devstack-gate
       - openstack/heat
       - openstack/mistral
       - openstack/mistral-dashboard
@@ -33,8 +33,8 @@
     post-run: playbooks/legacy/mistral-devstack-dsvm-non-apache/post.yaml
     timeout: 4200
     required-projects:
-      - openstack-dev/devstack
-      - openstack-infra/devstack-gate
+      - openstack/devstack
+      - openstack/devstack-gate
       - openstack/heat
       - openstack/mistral
       - openstack/mistral-dashboard
@@ -80,7 +80,7 @@
     post-run: playbooks/legacy/rally-dsvm-mistral-task/post.yaml
     timeout: 7800
     required-projects:
-      - openstack-infra/devstack-gate
+      - openstack/devstack-gate
       - openstack/mistral
       - openstack/mistral-dashboard
       - openstack/python-mistralclient

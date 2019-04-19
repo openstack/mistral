@@ -13,12 +13,12 @@
           set -x
           cat > clonemap.yaml << EOF
           clonemap:
-            - name: openstack-infra/devstack-gate
+            - name: openstack/devstack-gate
               dest: devstack-gate
           EOF
           /usr/zuul-env/bin/zuul-cloner -m clonemap.yaml --cache-dir /opt/git \
-              https://git.openstack.org \
-              openstack-infra/devstack-gate
+              https://opendev.org \
+              openstack/devstack-gate
         executable: /bin/bash
         chdir: '{{ ansible_user_dir }}/workspace'
       environment: '{{ zuul | zuul_legacy_vars }}'
@@ -41,8 +41,8 @@
           export PROJECTS="openstack/heat $PROJECTS"
           export PROJECTS="openstack/mistral $PROJECTS"
           export PROJECTS="openstack/mistral-dashboard $PROJECTS"
-          export DEVSTACK_LOCAL_CONFIG="enable_plugin mistral https://git.openstack.org/openstack/mistral"
-          export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat https://git.openstack.org/openstack/heat"
+          export DEVSTACK_LOCAL_CONFIG="enable_plugin mistral https://opendev.org/openstack/mistral"
+          export DEVSTACK_LOCAL_CONFIG+=$'\n'"enable_plugin heat https://opendev.org/openstack/heat"
 
           if [ "" == "-non-apache" ]; then
             export DEVSTACK_LOCAL_CONFIG+=$'\n'"MISTRAL_USE_MOD_WSGI=False"
