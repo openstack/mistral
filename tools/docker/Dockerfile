@@ -46,7 +46,7 @@ ENV MISTRAL_DIR="/opt/stack/mistral" \
 # We install dependencies separatly for a caching purpose
 COPY requirements.txt "${MISTRAL_DIR}/"
 RUN curl -o "${TMP_CONSTRAINTS}" \
-    http://git.openstack.org/cgit/openstack/requirements/plain/upper-constraints.txt && \
+    http://opendev.org/openstack/requirements/raw/branch/master/upper-constraints.txt && \
     sed -i "/^mistral.*/d" "${TMP_CONSTRAINTS}" && \
     pip install -r "${MISTRAL_DIR}/requirements.txt"
 

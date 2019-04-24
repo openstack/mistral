@@ -32,7 +32,7 @@ Clone the repo and go to the repo directory:
 
 .. code-block:: console
 
-    $ git clone https://git.openstack.org/openstack/mistral
+    $ git clone https://opendev.org/openstack/mistral
     $ cd mistral
 
 Generate the configuration file:

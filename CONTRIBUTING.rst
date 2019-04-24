@@ -48,17 +48,17 @@ Project Hosting Details
     * https://github.com/openstack/mistral-specs
 
 * Code Review
-    * https://review.openstack.org/#/q/mistral
+    * https://review.opendev.org/#/q/mistral
 
-    * https://review.openstack.org/#/q/python-mistralclient
+    * https://review.opendev.org/#/q/python-mistralclient
 
-    * https://review.openstack.org/#/q/mistral-dashboard
+    * https://review.opendev.org/#/q/mistral-dashboard
 
-    * https://review.openstack.org/#/q/mistral-lib
+    * https://review.opendev.org/#/q/mistral-lib
 
-    * https://review.openstack.org/#/q/mistral-extra
+    * https://review.opendev.org/#/q/mistral-extra
 
-    * https://review.openstack.org/#/q/mistral-specs
+    * https://review.opendev.org/#/q/mistral-specs
 
     * https://docs.openstack.org/infra/manual/developers.html#development-workflow
 
