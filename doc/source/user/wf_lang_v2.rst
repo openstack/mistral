@@ -700,7 +700,7 @@ in the example above when 'taskA' runs, i.e. its action 'my_action' runs.
    This will prevent from scheduling other new tasks so neither 'taskC' nor
    'taskD' and 'taskE' will be ever be scheduled. In other words, the whole
    'on-complete' clause will never be processed because the 'fail' command in
-   the 'on-success' sets the workflow state to ERROR.
+   the 'on-error' sets the workflow state to ERROR.
 -  If 'my_action' succeeds then the 'on-error' clause will be ignored and since
    'on-success' is not defined then Mistral will process the 'on-complete'
    clause. And while doing that, it will schedule 'taskD' first and then pause
