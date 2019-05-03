@@ -609,7 +609,8 @@ class BarbicanAction(base.OpenStackAction):
 
     @classmethod
     def _get_client_method(cls, client):
-        if cls.client_method_name != "secrets_store":
+        if cls.client_method_name not in ["secrets_store",
+                                          "secrets_retrieve"]:
             return super(BarbicanAction, cls)._get_client_method(client)
 
         method = getattr(cls, cls.client_method_name)
@@ -635,8 +636,8 @@ class BarbicanAction(base.OpenStackAction):
                       mode=None, expiration=None):
         """Create and Store a secret in Barbican.
 
-        :param client: the Zaqar client
-        :type client: zaqarclient.queues.client
+        :param client: the Barbican client
+        :type client: barbicanclient.client
 
         :param name: A friendly name for the Secret
         :type name: string
@@ -676,6 +677,19 @@ class BarbicanAction(base.OpenStackAction):
         entity.store()
 
         return entity._get_formatted_entity()
+
+    @staticmethod
+    def secrets_retrieve(client, secret_ref):
+        """Retrieve the payload from a secret in Barbican.
+
+        :param client: the Barbican client
+        :type client: barbicanclient.client
+
+        :param secret_ref: Full HATEOAS reference to a Secret
+        :type name: string
+        """
+
+        return client.secrets.get(secret_ref).payload
 
 
 class DesignateAction(base.OpenStackAction):
