@@ -28,6 +28,7 @@ from yaql.language import utils as yaql_utils
 from mistral.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral import utils
+from mistral.utils import filter_utils
 
 # TODO(rakhmerov): it's work around the bug in YAQL.
 # YAQL shouldn't expose internal types to custom functions.
@@ -129,7 +130,7 @@ def executions_(context,
     filter = {}
 
     if id is not None:
-        filter = utils.filter_utils.create_or_update_filter(
+        filter = filter_utils.create_or_update_filter(
             'id',
             id,
             "eq",
@@ -137,7 +138,7 @@ def executions_(context,
         )
 
     if root_execution_id is not None:
-        filter = utils.filter_utils.create_or_update_filter(
+        filter = filter_utils.create_or_update_filter(
             'root_execution_id',
             root_execution_id,
             "eq",
@@ -145,7 +146,7 @@ def executions_(context,
         )
 
     if state is not None:
-        filter = utils.filter_utils.create_or_update_filter(
+        filter = filter_utils.create_or_update_filter(
             'state',
             state,
             "eq",
@@ -153,7 +154,7 @@ def executions_(context,
         )
 
     if from_time is not None:
-        filter = utils.filter_utils.create_or_update_filter(
+        filter = filter_utils.create_or_update_filter(
             'created_at',
             from_time,
             "gte",
@@ -161,7 +162,7 @@ def executions_(context,
         )
 
     if to_time is not None:
-        filter = utils.filter_utils.create_or_update_filter(
+        filter = filter_utils.create_or_update_filter(
             'created_at',
             to_time,
             "lt",
