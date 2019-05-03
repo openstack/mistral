@@ -73,38 +73,43 @@ a various number of ways and that can do some job interesting to the end user.
 Each workflow consists of tasks (at least one) describing what exact steps
 should be made during workflow execution.
 
+You should use '<% $.x %>' in YAQL or '{{ _.x }}' in Jinja expressions to get
+access to the x variable in a data context of workflow execution.
+
 YAML example
 ^^^^^^^^^^^^
 
 .. code-block:: mistral
 
     ---
-    version: '2.0'
+    version: '2.0'
 
     create_vm:
-      description: Simple workflow example
-      type: direct
+      description: Simple workflow example
 
       input:
-        - vm_name
-        - image_ref
-        - flavor_ref
-      output:
-        vm_id: <% $.vm_id %>
+        - vm_name
+        - image_ref
+        - flavor_ref
+      output:
+        vm_id: "{{ _.vm_id }}"
+        vm_status: <% $.vm_status %>
 
       tasks:
-        create_server:
-          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
-          publish:
-            vm_id: <% task(create_server).result.id %>
-          on-success:
-            - wait_for_instance
+        create_server:
+          action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
+          publish:
+            vm_id: <% task().result.id %>
+          on-success:
+            - wait_for_instance
 
-        wait_for_instance:
-          action: nova.servers_find id=<% $.vm_id %> status='ACTIVE'
-          retry:
-            delay: 5
-            count: 15
+        wait_for_instance:
+          action: nova.servers_find id={{ _.vm_id }} status='ACTIVE'
+          retry:
+            delay: 5
+            count: 15
+          publish:
+            vm_status: "{{ task().result.status }}"
 
 This example workflow simply sends a command to OpenStack Compute
 service Nova to start creating a virtual machine and wait till it's
@@ -219,7 +224,34 @@ attributes:
    context. Any JSON-compatible data structure optionally containing
    expression to select precisely what needs to be published.
    Published variables will be accessible for downstream tasks via using
-   expressions. *Optional*.
+   expressions. **NOTE!** Mistral saves variables into a storage (context)
+   which is associated only with a branch. For example, the expression
+   “$.my_var” in the declaration of A1 will always evaluate to 1, for B1
+   it will always evaluate to 2. This does’t depend on the order in which
+   A and B will run. This is because we have two branches (A -> A1 and B
+   -> B1) for which the variable “my_var” has its own different version.
+   *Optional*.
+
+.. code-block:: mistral
+
+    version: '2.0'
+    wf:
+      tasks:
+        A:
+          action: std.noop
+          publish:
+            my_var: 1
+          on-success: A1
+        A1:
+          action: my_action param1=<% $.my_var %>
+        B:
+          action: std.noop
+          publish:
+            my_var: 2
+          on-success: B1
+        B1:
+          action: my_action param1=<% $.my_var %>
+
 -  **publish-on-error** - Same as **publish** but evaluated in case of
    task execution failures. *Optional*
 -  **with-items** - If configured, it allows to run action or workflow
@@ -394,6 +426,10 @@ stop and the task will be in ERROR. *continue-on* should be used if the action
 will usually return *SUCCESS*, but the action has other results that can be
 used to signal whether to continue the loop or not.
 
+**NOTE**: Retry task policy doesn't work after the timeout policy is
+triggered. You should use the *on-error* in case of direct workflow or task
+rerun to re-execute a task.
+
 Input syntax
 ''''''''''''
 
@@ -529,12 +565,100 @@ YAML example
 Direct workflow task attributes
 '''''''''''''''''''''''''''''''
 
+Mistral supports the following task transitions:
+
 -  **on-success** - List of tasks which will run after the task has
    completed successfully. *Optional*.
 -  **on-error** - List of tasks which will run after the task has
    completed with an error. *Optional*.
 -  **on-complete** - List of tasks which will run after the task has
    completed regardless of whether it is successful or not. *Optional*.
+
+You can define the task transitions in two ways:
+
+The first is just a list of tasks. You can find the example of workflow
+above. The second way is:
+
+.. code-block:: mistral
+
+    *transition*:
+      publish:
+        global:
+            some_global_variable: some_value
+        branch:
+            some_branch_variable: some_value
+        next:
+          - *next_task*
+
+The publish defined under *transitions* can optionally define scopes to be
+able to publish into different scopes: ‘branch’ and ‘global’.
+Specifying variables under ‘branch’ will make Mistral publish into a branch
+workflow context just like ‘publish’ and ‘publish-on-error’. Specifying
+variables under ‘global’ will make Mistral publish into a global workflow
+context. You can use “$.” in YAQL and “_.” in Jinja to access to a global
+variable but branch variables can shadow them if they are
+published in the current branch. To prevent it, you may use the YAQL/Jinja
+function “global()” to explicitly access variables in workflow global context.
+
+If ‘publish’ is defined in ‘on-complete’ and also in ‘on-success’ and/or
+‘on-error’ then the result of publishing will be a merge of what
+‘on-complete’ publishes with what ‘on-success’ or ‘on-error’ publishes
+depending on the task status. If ‘on-complete’ publishes variables that
+are also published by ‘on-success’ or ‘on-error’ then latter take precedence.
+In other words, ‘on-complete’ in this case is considered a default which can
+be overridden by more specific ‘on-XXX’ clause.
+
+The keyword ‘next’ defined under *transitions* optionally contains list of
+tasks which will run after the current task finished.
+
+Example of writing and reading global variables
+'''''''''''''''''''''''''''''''''''''''''''''''
+
+.. code-block:: mistral
+
+    ---
+    version: '2.0'
+
+    wf:
+      tasks:
+        A:
+          action: std.noop
+          on-success:
+            publish:
+              branch:
+                my_var: "branch value"
+              global:
+                my_var: "global value"
+            next: A1
+
+    A1:
+      # $.my_var will always evaluate to "branch value" because A1 belongs
+      # to the same branch as A and runs after A. When using "$" to access
+      # context variables branch values have higher priority.
+      # In order to access global context reliably we need to use YAQL/Jinja
+      # function 'global'. So global(my_var) will always evaluate to
+      # 'global value'.
+      action: my_action1 param1=<% $.my_var %> param2=<% global(my_var) %>
+
+    B:
+      # $.my_var will evaluate to "global value" if task A completes
+      # before task B and "null", if not. It's because A and B are
+      # parallel and 'publish' in A doesn't apply to B, only
+      # 'publish-global' does. In this example global(my_var) has the same
+      # meaning as $.my_var because there's no ambiguity from what context
+      # we should take variable 'my_var'.
+      action: my_action2 param1=<% $.my_var %> param2=<% global(my_var) %>
+
+**NOTE!** It’s important to note that this is an unprotected way of modifying
+data because race conditions are possible when writing different values for
+same variables in the global context from parallel branches. In other words,
+if we have branches A and B and there are tasks in these branches that first
+read global variable X, then increment it and write the new value Mistral
+won’t provide any guarantee that the result value after finishing tasks A
+and B will be X + 2. In some cases it can be X + 1 because the following may
+happen: task A read X, Task B read X, Task B incremented X, Task B wrote
+X + 1, Task A incremented X (the old one, not incremented by B), Task A
+wrote X + 1.
 
 Note: All of the above clauses cannot contain task names evaluated as
 YAQL/Jinja expressions. They have to be static values. However, task
@@ -1602,3 +1726,10 @@ Environment
 
 Environment info is available by **env()**. It is passed when user submits
 workflow execution. It contains variables specified by user.
+
+
+Global
+^^^^^^
+
+Global variables are available by **global(variable_name)**. If the
+variable doesn't exist than None will be returned.
