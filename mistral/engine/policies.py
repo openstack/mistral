@@ -33,11 +33,11 @@ _FAIL_IF_INCOMPLETE_TASK_PATH = (
 )
 
 
-def _log_task_delay(task_ex, delay_sec):
+def _log_task_delay(task_ex, delay_sec, state=states.RUNNING_DELAYED):
     wf_trace.info(
         task_ex,
         "Task '%s' [%s -> %s, delay = %s sec]" %
-        (task_ex.name, task_ex.state, states.RUNNING_DELAYED, delay_sec)
+        (task_ex.name, task_ex.state, state, delay_sec)
     )
 
 
@@ -158,15 +158,6 @@ def _ensure_context_has_key(runtime_context, key):
         runtime_context.update({key: {}})
 
     return runtime_context
-
-
-def _has_incomplete_inbound_tasks(task_ex):
-    if "triggered_by" not in task_ex.runtime_context:
-        return False
-    for trigger in task_ex.runtime_context["triggered_by"]:
-        if trigger["event"] == "not triggered":
-            return True
-    return False
 
 
 class WaitBeforePolicy(base.TaskPolicy):
@@ -390,11 +381,6 @@ class RetryPolicy(base.TaskPolicy):
             (self._continue_on_clause and not continue_on_evaluation)
         )
 
-        stop_continue_flag = (
-            stop_continue_flag or
-            _has_incomplete_inbound_tasks(task_ex)
-        )
-
         break_triggered = (
             task_ex.state == states.ERROR and
             break_on_evaluation
@@ -403,14 +389,23 @@ class RetryPolicy(base.TaskPolicy):
         if not retries_remain or break_triggered or stop_continue_flag:
             return
 
-        _log_task_delay(task_ex, self.delay)
-
         data_flow.invalidate_task_execution_result(task_ex)
-
-        task_ex.state = states.RUNNING_DELAYED
 
         policy_context['retry_no'] = retry_no + 1
         runtime_context[context_key] = policy_context
+
+        # NOTE(vgvoleg): join tasks in direct workflows can't be
+        # retried as is, because this tasks can't start without
+        # the correct logical state.
+        if hasattr(task_spec, "get_join") and task_spec.get_join():
+            from mistral.engine import task_handler as t_h
+            _log_task_delay(task_ex, self.delay, states.WAITING)
+            task_ex.state = states.WAITING
+            t_h._schedule_refresh_task_state(task_ex.id, self.delay)
+            return
+
+        _log_task_delay(task_ex, self.delay)
+        task_ex.state = states.RUNNING_DELAYED
 
         scheduler.schedule_call(
             None,
