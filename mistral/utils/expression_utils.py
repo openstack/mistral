@@ -181,7 +181,8 @@ def execution_(context):
         'input': wf_ex.input,
         'params': wf_ex.params,
         'created_at': wf_ex.created_at.isoformat(' '),
-        'updated_at': wf_ex.updated_at.isoformat(' ')
+        'updated_at': wf_ex.updated_at.isoformat(' '),
+        'root_execution_id': wf_ex.root_execution_id
     }
 
 
