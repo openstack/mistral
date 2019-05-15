@@ -15,6 +15,8 @@
 import inspect
 import json
 
+import six
+
 
 def get_public_fields(obj):
     """Returns only public fields from object or class."""
@@ -42,7 +44,7 @@ def get_docstring(obj):
 
 
 def get_arg_list(func):
-    argspec = inspect.getargspec(func)
+    argspec = get_args_spec(func)
 
     args = argspec.args
 
@@ -57,7 +59,7 @@ def get_arg_list_as_str(func):
     if args:
         return args
 
-    argspec = inspect.getargspec(func)
+    argspec = get_args_spec(func)
     defs = list(argspec.defaults or [])
 
     args = get_arg_list(func)
@@ -79,7 +81,14 @@ def get_arg_list_as_str(func):
         else:
             arg_str_list.append("%s" % args[index])
 
-    if argspec.keywords:
-        arg_str_list.append("**%s" % argspec.keywords)
+    keywords = argspec.keywords if six.PY2 else argspec.varkw
+    if keywords:
+        arg_str_list.append("**%s" % keywords)
 
     return ", ".join(arg_str_list)
+
+
+def get_args_spec(func):
+    if six.PY2:
+        return inspect.getargspec(func)
+    return inspect.getfullargspec(func)
