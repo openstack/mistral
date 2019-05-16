@@ -58,7 +58,8 @@ class SSHActionTest(base.BaseTest):
             host=host,
             username=username,
             password='',
-            private_key_filename=None
+            private_key_filename=None,
+            private_key=None
         )
 
     @mock.patch.object(mistral.utils.ssh_utils, 'execute_command')
