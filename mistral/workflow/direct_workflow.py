@@ -139,7 +139,8 @@ class DirectWorkflowController(base.WorkflowController):
                 t_s,
                 ctx,
                 params=params,
-                triggered_by=triggered_by
+                triggered_by=triggered_by,
+                handles_error=(event_name == 'on-error')
             )
 
             self._configure_if_join(cmd)
@@ -169,7 +170,6 @@ class DirectWorkflowController(base.WorkflowController):
         ctx = {}
 
         for batch in self._find_end_task_executions_as_batches():
-
             for t_ex in batch:
                 ctx = utils.merge_dicts(
                     ctx,
@@ -193,62 +193,35 @@ class DirectWorkflowController(base.WorkflowController):
         return self._find_indirectly_affected_created_joins(task_name)
 
     def is_error_handled_for(self, task_ex):
+        # TODO(rakhmerov): The method works in a different way than
+        # all_errors_handled(). It doesn't evaluate expressions under
+        # "on-error" clause.
         return bool(self.wf_spec.get_on_error_clause(task_ex.name))
 
     def all_errors_handled(self):
-        for t_ex in lookup_utils.find_error_task_executions(self.wf_ex.id):
-            ctx_view = data_flow.ContextView(
-                data_flow.get_current_task_dict(t_ex),
-                data_flow.evaluate_task_outbound_context(t_ex),
-                data_flow.get_workflow_environment_dict(self.wf_ex),
-                self.wf_ex.context,
-                self.wf_ex.input
-            )
+        cnt = lookup_utils.find_task_executions_count(
+            workflow_execution_id=self.wf_ex.id,
+            state=states.ERROR,
+            error_handled=False
+        )
 
-            tasks_on_error = self._find_next_tasks_for_clause(
-                self.wf_spec.get_on_error_clause(t_ex.name),
-                ctx_view
-            )
-
-            if not tasks_on_error:
-                return False
-
-        return True
+        return cnt == 0
 
     def _find_end_task_executions_as_batches(self):
-        def is_end_task(t_ex):
-            try:
-                return not self._has_outbound_tasks(t_ex)
-            except exc.MistralException:
-                # If some error happened during the evaluation of outbound
-                # tasks we consider that the given task is an end task.
-                # Due to this output-on-error could reach the outbound context
-                # of given task also.
-                return True
-
         batches = lookup_utils.find_completed_task_executions_as_batches(
-            self.wf_ex.id
+            workflow_execution_id=self.wf_ex.id,
+            has_next_tasks=False
         )
 
         for batch in batches:
-            yield list(filter(is_end_task, batch))
+            yield batch
 
     def may_complete_workflow(self, task_ex):
         res = super(DirectWorkflowController, self).may_complete_workflow(
             task_ex
         )
 
-        return res and not self._has_outbound_tasks(task_ex)
-
-    def _has_outbound_tasks(self, task_ex):
-        # In order to determine if there are outbound tasks we just need
-        # to calculate next task names (based on task outbound context)
-        # and remove all engine commands. To do the latter it's enough to
-        # check if there's a corresponding task specification for a task name.
-        return bool([
-            t_name for t_name in self._find_next_task_names(task_ex)
-            if self.wf_spec.get_tasks()[t_name]
-        ])
+        return res and not task_ex.has_next_tasks
 
     def _find_next_task_names(self, task_ex):
         return [t[0] for t in self._find_next_tasks(task_ex)]
@@ -297,7 +270,7 @@ class DirectWorkflowController(base.WorkflowController):
     def _find_next_tasks_for_clause(clause, ctx):
         """Finds next tasks names.
 
-         This method finds next task(command) base on given {name: condition}
+         This method finds next tasks(commands) base on given {name: condition}
          dictionary.
 
         :param clause: Tuple (task_name, condition, parameters) taken from

@@ -316,6 +316,10 @@ def get_task_executions(limit=None, marker=None, sort_keys=None,
     )
 
 
+def get_task_executions_count(**kwargs):
+    return IMPL.get_task_executions_count(**kwargs)
+
+
 def get_completed_task_executions(**kwargs):
     return IMPL.get_completed_task_executions(**kwargs)
 

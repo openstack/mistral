@@ -620,7 +620,7 @@ def _build_fail_info_message(wf_ctrl, wf_ex):
     # Try to find where error is exactly.
     failed_tasks = sorted(
         filter(
-            lambda t: not wf_ctrl.is_error_handled_for(t),
+            lambda t_ex: not wf_ctrl.is_error_handled_for(t_ex),
             lookup_utils.find_error_task_executions(wf_ex.id)
         ),
         key=lambda t: t.name

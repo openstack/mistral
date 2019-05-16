@@ -48,7 +48,8 @@ class InspectUtilsTest(base.BaseTest):
         parameters_str = i_u.get_arg_list_as_str(clazz.__init__)
 
         self.assertEqual(
-            'wf_ex, wf_spec, task_spec, ctx, triggered_by=null',
+            'wf_ex, wf_spec, task_spec, ctx, triggered_by=null,'
+            ' handles_error=false',
             parameters_str
         )
 

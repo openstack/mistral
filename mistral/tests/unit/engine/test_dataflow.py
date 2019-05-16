@@ -36,7 +36,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 class DataFlowEngineTest(engine_test_base.EngineTestCase):
     def test_linear_dataflow(self):
-        linear_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -62,7 +62,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 result: "<% $.hi %>, <% $.to %>! Your <% env().from %>."
         """
 
-        wf_service.create_workflows(linear_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
@@ -94,7 +94,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertNotIn('__execution', task1.in_context)
 
     def test_linear_with_branches_dataflow(self):
-        linear_with_branches_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -132,7 +132,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 progress: <% task(notify).result %>
         """
 
-        wf_service.create_workflows(linear_with_branches_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
@@ -189,7 +189,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         )
 
     def test_parallel_tasks(self):
-        parallel_tasks_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -207,7 +207,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 var2: <% task(task2).result %>
         """
 
-        wf_service.create_workflows(parallel_tasks_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf',)
@@ -238,7 +238,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertEqual(2, wf_output['var2'])
 
     def test_parallel_tasks_complex(self):
-        parallel_tasks_complex_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -285,7 +285,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 var21: 21
         """
 
-        wf_service.create_workflows(parallel_tasks_complex_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
@@ -331,7 +331,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertEqual(21, wf_output['var21'])
 
     def test_sequential_tasks_publishing_same_var(self):
-        var_overwrite_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -364,7 +364,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 result: "<% $.greeting %>, <% $.to %>! <% env().from %>."
         """
 
-        wf_service.create_workflows(var_overwrite_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
@@ -394,7 +394,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         )
 
     def test_sequential_tasks_publishing_same_structured(self):
-        var_overwrite_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -418,7 +418,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 result: <% $.greeting %>
         """
 
-        wf_service.create_workflows(var_overwrite_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf', env={'from': 'Neo'})
@@ -443,7 +443,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertDictEqual({'result': {}}, task3.published)
 
     def test_linear_dataflow_implicit_publish(self):
-        linear_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -473,7 +473,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                   <% task(task1).result %>, <% task(task21).result %>!
                   Your <% task(task22).result %>.
         """
-        wf_service.create_workflows(linear_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
@@ -494,7 +494,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         )
 
     def test_destroy_result(self):
-        linear_wf = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -508,7 +508,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
               keep-result: false
 
         """
-        wf_service.create_workflows(linear_wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
@@ -535,7 +535,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertIsNone(result)
 
     def test_empty_with_items(self):
-        wf = """---
+        wf_text = """---
         version: "2.0"
 
         wf1_with_items:
@@ -548,7 +548,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                publish:
                  result: <% task(task1).result %>
         """
-        wf_service.create_workflows(wf)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf1_with_items')
@@ -569,7 +569,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         self.assertListEqual([], result)
 
     def test_publish_on_error(self):
-        wf_def = """---
+        wf_text = """---
         version: '2.0'
 
         wf:
@@ -586,7 +586,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                 err: <% task(task1).result %>
         """
 
-        wf_service.create_workflows(wf_def)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')
@@ -617,7 +617,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
         )
 
     def test_output_on_error_wb_yaql_failed(self):
-        wb_def = """---
+        wb_text = """---
             version: '2.0'
 
             name: wb
@@ -646,7 +646,7 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
                             message: <% task(task1).result %>
         """
 
-        wb_service.create_workbook_v2(wb_def)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
