@@ -26,7 +26,7 @@ LOG = logging.getLogger(__name__)
 
 class WebhookPublisher(base.NotificationPublisher):
 
-    def publish(self, ex_id, data, event, timestamp, **kwargs):
+    def publish(self, ctx, ex_id, data, event, timestamp, **kwargs):
         url = kwargs.get('url')
         headers = kwargs.get('headers', {})
 

@@ -17,6 +17,7 @@ import mock
 
 from oslo_config import cfg
 
+from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
@@ -33,7 +34,10 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 EVENT_LOGS = []
 
 
-def log_event(ex_id, data, event, timestamp, **kwargs):
+def log_event(ctx, ex_id, data, event, timestamp, **kwargs):
+    if not isinstance(ctx, context.MistralContext):
+        raise TypeError('ctx is not type of MistralContext.')
+
     EVENT_LOGS.append((ex_id, event))
 
 
