@@ -236,7 +236,6 @@ def evaluate_task_outbound_context(task_ex):
     :param task_ex: DB task.
     :return: Outbound task Data Flow context.
     """
-
     # NOTE(rakhmerov): 'task_ex.in_context' has the SQLAlchemy specific
     # type MutableDict. So we need to create a shallow copy using dict(...)
     # initializer and use it. It's enough to be safe in order to manipulate
@@ -248,10 +247,10 @@ def evaluate_task_outbound_context(task_ex):
     # footprint and reduces performance.
     in_context = (
         dict(task_ex.in_context)
-        if task_ex.in_context is not None else {}
+        if getattr(task_ex, 'in_context', None) is not None else {}
     )
 
-    return utils.update_dict(in_context, task_ex.published)
+    return utils.update_dict(in_context, getattr(task_ex, 'published', {}))
 
 
 def evaluate_workflow_output(wf_ex, wf_output, ctx):
