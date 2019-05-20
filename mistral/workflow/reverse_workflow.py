@@ -83,21 +83,10 @@ class ReverseWorkflowController(base.WorkflowController):
         return task_spec
 
     def _get_upstream_task_executions(self, task_spec):
-        t_specs = [
-            self.wf_spec.get_tasks()[t_name]
-            for t_name in self.wf_spec.get_task_requires(task_spec)
-            or []
-        ]
+        t_specs_names = self.wf_spec.get_task_requires(task_spec) or []
+        t_execs = self._get_task_executions(name={'in': t_specs_names})
 
-        return list(
-            filter(
-                lambda t_e: t_e.state == states.SUCCESS,
-                lookup_utils.find_task_executions_by_specs(
-                    self.wf_ex.id,
-                    t_specs
-                )
-            )
-        )
+        return [t_ex for t_ex in t_execs if t_ex.state == states.SUCCESS]
 
     def evaluate_workflow_final_context(self):
         task_execs = lookup_utils.find_task_executions_by_spec(

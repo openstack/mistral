@@ -20,6 +20,7 @@ import abc
 from oslo_log import log as logging
 from osprofiler import profiler
 
+from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral import utils as u
@@ -263,3 +264,10 @@ class WorkflowController(object):
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)
+
+    def _get_task_executions(self, **kwargs):
+        return db_api.get_task_executions(
+            workflow_execution_id=self.wf_ex.id,
+            sort_keys=[],  # disable sorting
+            **kwargs
+        )
