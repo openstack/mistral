@@ -1133,3 +1133,22 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             # converted into a string no matter what we tried to assign. But
             # that didn't happen on Python 2.7 which caused an SQL exception.
             self.assertIsInstance(task_ex.state_info, six.string_types)
+
+    def test_single_fail_with_next_noop(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.fail
+              on-error:
+                - noop
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)

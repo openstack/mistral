@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    There was a weird typo in the list generator expression made in
+    https://review.opendev.org/#/c/652575 that led to calculating
+    a field value in the wrong way. Fixed. The added test was
+    previously failing.

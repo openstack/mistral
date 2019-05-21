@@ -274,7 +274,7 @@ class Task(object):
         cmds = wf_ctrl.continue_workflow(task_ex=self.task_ex)
 
         # Check whether the task generated any next tasks.
-        if any([not commands.is_engine_command(c)] for c in cmds):
+        if any([not commands.is_engine_command(c) for c in cmds]):
             self.task_ex.has_next_tasks = True
 
         # Check whether the error is handled.
