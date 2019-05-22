@@ -45,15 +45,12 @@ class DirectWorkflowController(base.WorkflowController):
     __workflow_type__ = "direct"
 
     def _get_upstream_task_executions(self, task_spec):
-        return list(
-            filter(
-                lambda t_e: self._is_upstream_task_execution(task_spec, t_e),
-                lookup_utils.find_task_executions_by_specs(
-                    self.wf_ex.id,
-                    self.wf_spec.find_inbound_task_specs(task_spec)
-                )
-            )
-        )
+        t_specs_names = [t_spec.get_name() for t_spec in
+                         self.wf_spec.find_inbound_task_specs(task_spec)]
+        t_execs = self._get_task_executions(name={'in': t_specs_names})
+
+        return [t_ex for t_ex in t_execs
+                if self._is_upstream_task_execution(task_spec, t_ex)]
 
     def _is_upstream_task_execution(self, t_spec, t_ex_candidate):
         if not states.is_completed(t_ex_candidate.state):
@@ -366,10 +363,8 @@ class DirectWorkflowController(base.WorkflowController):
         names = self._find_all_parent_task_names(task_spec)
 
         t_execs_cache = {
-            t_ex.name: t_ex for t_ex in db_api.get_task_executions(
+            t_ex.name: t_ex for t_ex in self._get_task_executions(
                 fields=('id', 'name', 'state'),
-                sort_keys=[],
-                workflow_execution_id=self.wf_ex.id,
                 name={'in': names}
             )
         } if names else {}  # don't perform a db request if 'names' are empty
