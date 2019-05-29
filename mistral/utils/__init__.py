@@ -217,7 +217,7 @@ def cut_dict(d, length=100):
 
     for key, value in d.items():
         k = str(key)
-        v = str(value)
+        v = str(value.encode('utf-8')) if isinstance(value, unicode) else str(value)
 
         # Processing key.
         new_len = len(k)
