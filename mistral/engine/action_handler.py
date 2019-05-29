@@ -21,7 +21,6 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine import actions
 from mistral.engine import task_handler
 from mistral import exceptions as exc
-from mistral.lang import parser as spec_parser
 
 
 LOG = logging.getLogger(__name__)
@@ -85,32 +84,14 @@ def _build_action(action_ex):
         return actions.WorkflowAction(wf_name=action_ex.name,
                                       action_ex=action_ex)
 
-    wf_name = None
-    wf_spec_name = None
-
-    if action_ex.workflow_name:
-        wf_name = action_ex.workflow_name
-        wf_spec = spec_parser.get_workflow_spec_by_execution_id(
-            action_ex.task_execution.workflow_execution_id
-        )
-        wf_spec_name = wf_spec.get_name()
-
     adhoc_action_name = action_ex.runtime_context.get('adhoc_action_name')
 
     if adhoc_action_name:
-        action_def = actions.resolve_action_definition(
-            adhoc_action_name,
-            wf_name,
-            wf_spec_name
-        )
+        action_def = actions.resolve_action_definition(adhoc_action_name)
 
         return actions.AdHocAction(action_def, action_ex=action_ex)
 
-    action_def = actions.resolve_action_definition(
-        action_ex.name,
-        wf_name,
-        wf_spec_name
-    )
+    action_def = actions.resolve_action_definition(action_ex.name)
 
     return actions.PythonAction(action_def, action_ex=action_ex)
 
