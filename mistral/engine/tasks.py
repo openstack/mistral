@@ -76,13 +76,15 @@ class Task(object):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
         event = events.identify_task_event(old_task_state, new_task_state)
 
-        notifier.notify(
-            self.task_ex.id,
-            self.task_ex.to_dict(),
-            event,
-            self.task_ex.updated_at,
-            publishers
-        )
+        def _send_notification():
+            notifier.notify(
+                self.task_ex.id,
+                self.task_ex.to_dict(),
+                event,
+                self.task_ex.updated_at,
+                publishers
+            )
+        post_tx_queue.register_operation(_send_notification)
 
     def is_completed(self):
         return self.task_ex and states.is_completed(self.task_ex.state)

@@ -74,13 +74,15 @@ class Workflow(object):
 
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
 
-        notifier.notify(
-            self.wf_ex.id,
-            self.wf_ex.to_dict(),
-            event,
-            self.wf_ex.updated_at,
-            publishers
-        )
+        def _send_notification():
+            notifier.notify(
+                self.wf_ex.id,
+                self.wf_ex.to_dict(),
+                event,
+                self.wf_ex.updated_at,
+                publishers
+            )
+        post_tx_queue.register_operation(_send_notification)
 
     @profiler.trace('workflow-start')
     def start(self, wf_def, wf_ex_id, input_dict, desc='', params=None):
