@@ -196,13 +196,6 @@ class DirectWorkflowController(base.WorkflowController):
 
         return self._get_join_logical_state(task_spec)
 
-    def _get_next_clauses(self, task_name):
-        res = self.wf_spec.get_on_success_clause(task_name)[:]
-        res += self.wf_spec.get_on_error_clause(task_name)
-        res += self.wf_spec.get_on_complete_clause(task_name)
-
-        return res
-
     def find_indirectly_affected_task_executions(self, t_name):
         all_joins = {task_spec.get_name()
                      for task_spec in self.wf_spec.get_tasks()
@@ -216,12 +209,13 @@ class DirectWorkflowController(base.WorkflowController):
         } if all_joins else {}
 
         visited_task_names = set()
-        clauses = self._get_next_clauses(t_name)
+        clauses = self.wf_spec.find_outbound_task_names(t_name)
+
         res = set()
 
         while clauses:
             visited_task_names.add(t_name)
-            t_name, _, _ = clauses.pop()
+            t_name = clauses.pop()
 
             # Handle cycles.
             if t_name in visited_task_names:
@@ -236,7 +230,7 @@ class DirectWorkflowController(base.WorkflowController):
                     res.add(t_execs_cache[t_name])
                 continue
 
-            clauses += self._get_next_clauses(t_name)
+            clauses.update(self.wf_spec.find_outbound_task_names(t_name))
 
         return res
 
