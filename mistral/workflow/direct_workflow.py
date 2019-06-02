@@ -58,11 +58,20 @@ class DirectWorkflowController(base.WorkflowController):
         if not t_spec.get_join():
             return t_ex_candidate.processed
 
+        names = self._find_all_parent_task_names(t_spec)
+
+        t_execs_cache = {
+            t_ex.name: t_ex for t_ex in self._get_task_executions(
+                fields=('id', 'name', 'state'),
+                name={'in': names}
+            )
+        } if names else {}  # don't perform a db request if 'names' are empty
+
         induced_state, _, _ = self._get_induced_join_state(
             self.wf_spec.get_tasks()[t_ex_candidate.name],
             t_ex_candidate,
             t_spec,
-            {}
+            t_execs_cache
         )
 
         return induced_state == states.RUNNING
