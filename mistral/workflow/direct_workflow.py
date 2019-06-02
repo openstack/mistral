@@ -60,7 +60,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         induced_state, _, _ = self._get_induced_join_state(
             self.wf_spec.get_tasks()[t_ex_candidate.name],
-            self._find_task_execution_by_name(t_ex_candidate.name),
+            t_ex_candidate,
             t_spec,
             {}
         )
@@ -500,14 +500,6 @@ class DirectWorkflowController(base.WorkflowController):
             return states.ERROR, 1, "not triggered"
 
         return states.RUNNING, 1, next_tasks_dict[join_task_name]
-
-    def _find_task_execution_by_name(self, t_name):
-        # Note: in case of 'join' completion check it's better to initialize
-        # the entire task_executions collection to avoid too many DB queries.
-        t_execs = self._get_task_executions(name=t_name)
-
-        # TODO(rakhmerov): Temporary hack. See the previous comment.
-        return t_execs[-1] if t_execs else None
 
     def _possible_route(self, task_spec, t_execs_cache, depth=1):
         in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
