@@ -18,7 +18,6 @@ import cachetools
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
-from mistral.engine import actions
 from mistral.services import actions as action_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
@@ -80,7 +79,7 @@ class LookupUtilsTest(base.EngineTestCase):
             ttl=5  # 5 seconds
         )
         cache_patch = mock.patch.object(
-            actions, '_ACTION_DEF_CACHE', new_cache)
+            db_api, '_ACTION_DEF_CACHE', new_cache)
         cache_patch.start()
         self.addCleanup(cache_patch.stop)
 
@@ -90,24 +89,24 @@ class LookupUtilsTest(base.EngineTestCase):
         self.await_workflow_paused(wf_ex.id)
 
         # Check that 'action1' 'echo' and 'noop' are cached.
-        self.assertEqual(3, len(actions._ACTION_DEF_CACHE))
-        self.assertIn('action1', actions._ACTION_DEF_CACHE)
-        self.assertIn('std.noop', actions._ACTION_DEF_CACHE)
-        self.assertIn('std.echo', actions._ACTION_DEF_CACHE)
+        self.assertEqual(3, len(db_api._ACTION_DEF_CACHE))
+        self.assertIn('action1', db_api._ACTION_DEF_CACHE)
+        self.assertIn('std.noop', db_api._ACTION_DEF_CACHE)
+        self.assertIn('std.echo', db_api._ACTION_DEF_CACHE)
 
         # Wait some time until cache expires
         self._await(
-            lambda: len(actions._ACTION_DEF_CACHE) == 0,
+            lambda: len(db_api._ACTION_DEF_CACHE) == 0,
             fail_message="No triggers were found"
         )
 
-        self.assertEqual(0, len(actions._ACTION_DEF_CACHE))
+        self.assertEqual(0, len(db_api._ACTION_DEF_CACHE))
 
         self.engine.resume_workflow(wf_ex.id)
 
         self.await_workflow_success(wf_ex.id)
 
         # Check all actions are cached again.
-        self.assertEqual(2, len(actions._ACTION_DEF_CACHE))
-        self.assertIn('action1', actions._ACTION_DEF_CACHE)
-        self.assertIn('std.echo', actions._ACTION_DEF_CACHE)
+        self.assertEqual(2, len(db_api._ACTION_DEF_CACHE))
+        self.assertIn('action1', db_api._ACTION_DEF_CACHE)
+        self.assertIn('std.echo', db_api._ACTION_DEF_CACHE)
