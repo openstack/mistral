@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    This makes getting a root_execution_id available to the jinja execution object. Before this
+    it was only possible to get that through filtering and querying the executions search.
