@@ -1501,7 +1501,7 @@ Execution info
 
 Execution info is available by **execution()**. It contains
 information about execution itself such as **id**, **wf_spec**,
-**input** and **start_params**.
+**input**, **start_params**, and **root_execution_id** .
 
 Executions function
 '''''''''''''''''''
