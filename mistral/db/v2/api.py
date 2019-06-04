@@ -13,8 +13,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import cachetools
 import contextlib
+import threading
 
+from oslo_config import cfg
 from oslo_db import api as db_api
 
 
@@ -23,6 +26,15 @@ _BACKEND_MAPPING = {
 }
 
 IMPL = db_api.DBAPI('sqlalchemy', backend_mapping=_BACKEND_MAPPING)
+
+CONF = cfg.CONF
+
+_ACTION_DEF_CACHE = cachetools.TTLCache(
+    maxsize=1000,
+    ttl=CONF.engine.action_definition_cache_time  # 60 seconds by default
+)
+
+_ACTION_DEF_CACHE_LOCK = threading.RLock()
 
 
 def setup_db():
@@ -179,7 +191,20 @@ def get_action_definition(name, fields=()):
 
 def load_action_definition(name, fields=()):
     """Unlike get_action_definition this method is allowed to return None."""
-    return IMPL.load_action_definition(name, fields=fields)
+    with _ACTION_DEF_CACHE_LOCK:
+        action_def = _ACTION_DEF_CACHE.get(name)
+
+    if action_def:
+        return action_def
+
+    action_def = IMPL.load_action_definition(name, fields=fields)
+
+    with _ACTION_DEF_CACHE_LOCK:
+        _ACTION_DEF_CACHE[name] = (
+            action_def.get_clone() if action_def else None
+        )
+
+    return action_def
 
 
 def get_action_definitions(limit=None, marker=None, sort_keys=None,

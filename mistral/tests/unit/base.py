@@ -30,7 +30,6 @@ from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2 import api as db_api
-from mistral.engine import actions
 from mistral.lang import parser as spec_parser
 from mistral.services import action_manager
 from mistral.services import security
@@ -279,7 +278,7 @@ class DbTestCase(BaseTest):
         action_manager.sync_db()
 
     def _clean_db(self):
-        actions._ACTION_DEF_CACHE.clear()
+        db_api._ACTION_DEF_CACHE.clear()
 
         contexts = [
             get_context(default=False),
