@@ -275,6 +275,29 @@ class Task(object):
         if self.task_ex.state == states.RUNNING_DELAYED:
             return
 
+        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
+
+        # Calculate commands to process next.
+        cmds = wf_ctrl.continue_workflow(task_ex=self.task_ex)
+
+        # Save next task names in DB to avoid evaluating them again
+        # in the future.
+        self.task_ex.next_tasks = []
+
+        for c in cmds:
+            if commands.is_engine_command(c):
+                continue
+
+            event = c.triggered_by[0]['event'] if c.triggered_by else None
+
+            self.task_ex.next_tasks.append((c.task_spec.get_name(), event))
+
+        self.task_ex.has_next_tasks = bool(self.task_ex.next_tasks)
+
+        # Check whether the error is handled.
+        if self.task_ex.state == states.ERROR:
+            self.task_ex.error_handled = any([c.handles_error for c in cmds])
+
         # If workflow is paused we shouldn't schedule new commands
         # and mark task as processed.
         if states.is_paused(self.wf_ex.state):
@@ -282,19 +305,6 @@ class Task(object):
             self.notify(old_task_state, self.task_ex.state)
 
             return
-
-        wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
-
-        # Calculate commands to process next.
-        cmds = wf_ctrl.continue_workflow(task_ex=self.task_ex)
-
-        # Check whether the task generated any next tasks.
-        if any([not commands.is_engine_command(c) for c in cmds]):
-            self.task_ex.has_next_tasks = True
-
-        # Check whether the error is handled.
-        if self.task_ex.state == states.ERROR:
-            self.task_ex.error_handled = any([c.handles_error for c in cmds])
 
         # Mark task as processed after all decisions have been made
         # upon its completion.
