@@ -271,20 +271,33 @@ class DirectWorkflowController(base.WorkflowController):
 
         return res and not task_ex.has_next_tasks
 
-    def _find_next_task_names(self, task_ex):
-        return [t[0] for t in self._find_next_tasks(task_ex)]
-
     def _find_next_tasks(self, task_ex, ctx=None):
         t_state = task_ex.state
         t_name = task_ex.name
+        ctx_view = {}
 
-        ctx_view = data_flow.ContextView(
-            data_flow.get_current_task_dict(task_ex),
-            ctx or data_flow.evaluate_task_outbound_context(task_ex),
-            data_flow.get_workflow_environment_dict(self.wf_ex),
-            self.wf_ex.context,
-            self.wf_ex.input
-        )
+        # Evaluate context only for conditional transitions or if it's
+        # explicitly provided.
+        if self._is_conditional_transition(task_ex) or ctx is not None:
+            # By default we don't download task context from the database,
+            # but just basic fields: 'id', 'name' and 'state'. It's a good
+            # optimization, because contexts can be too heavy and we don't
+            # need them most of the time.
+            # But sometimes we need it for conditional transitions (when
+            # the decision where to go is based on the current context),
+            # and if this is the case, we download full task execution
+            # and then evaluate its context to find the route.
+            # TODO(mfedosin): Think of a way to avoid this.
+            if not hasattr(task_ex, "in_context"):
+                task_ex = db_api.get_task_execution(task_ex.id)
+
+            ctx_view = data_flow.ContextView(
+                data_flow.get_current_task_dict(task_ex),
+                ctx or data_flow.evaluate_task_outbound_context(task_ex),
+                data_flow.get_workflow_environment_dict(self.wf_ex),
+                self.wf_ex.context,
+                self.wf_ex.input
+            )
 
         # [(task_name, params, 'on-success'|'on-error'|'on-complete'), ...]
         result = []
@@ -329,6 +342,9 @@ class DirectWorkflowController(base.WorkflowController):
         """
         if not clause:
             return []
+
+        if not ctx:
+            return [(t_name, params) for t_name, _, params in clause]
 
         return [
             (t_name, expr.evaluate_recursively(params, ctx))
@@ -496,10 +512,6 @@ class DirectWorkflowController(base.WorkflowController):
         if not states.is_completed(in_task_ex.state):
             return states.WAITING, 1, None
 
-        if self._is_conditional_transition(in_task_ex, in_task_spec) and \
-                not hasattr(in_task_ex, "in_context"):
-            in_task_ex = db_api.get_task_execution(in_task_ex.id)
-
         # [(task name, params, event name), ...]
         next_tasks_tuples = self._find_next_tasks(in_task_ex)
 
@@ -534,20 +546,7 @@ class DirectWorkflowController(base.WorkflowController):
                 if not states.is_completed(t_ex.state):
                     return True, depth
 
-                # By default we don't download task context from the database,
-                # but just basic fields: 'id', 'name' and 'state'. It's a good
-                # optimization, because contexts can be too heavy and we don't
-                # need them most of the time.
-                # But sometimes we need it for conditional transitions (when
-                # the decision where to go is based on the current context),
-                # and if this is the case, we download full task execution
-                # and then evaluate its context to find the route.
-                # TODO(mfedosin): Think of a way to avoid this.
-                if self._is_conditional_transition(t_ex, task_spec) and \
-                        not hasattr(t_ex, "in_context"):
-                    t_ex = db_api.get_task_execution(t_ex.id)
-
-                if t_name in self._find_next_task_names(t_ex):
+                if t_name in [t[0] for t in self._find_next_tasks(t_ex)]:
                     return True, depth
 
         return False, depth
@@ -564,11 +563,19 @@ class DirectWorkflowController(base.WorkflowController):
 
         return all_parent_names
 
-    @staticmethod
-    def _is_conditional_transition(t_ex, t_spec):
+    def _is_conditional_transition(self, t_ex):
+        if t_ex.state == states.ERROR:
+            for _, cond, _ in self.wf_spec.get_on_error_clause(t_ex.name):
+                if cond:
+                    return True
+
         if t_ex.state == states.SUCCESS:
-            return t_spec.is_conditional_transition('on-success')
-        elif t_ex.state == states.ERROR:
-            return t_spec.is_conditional_transition('on-error')
+            for _, cond, _ in self.wf_spec.get_on_success_clause(t_ex.name):
+                if cond:
+                    return True
+
+        for _, cond, _ in self.wf_spec.get_on_complete_clause(t_ex.name):
+            if cond:
+                return True
 
         return False

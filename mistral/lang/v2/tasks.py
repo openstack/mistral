@@ -350,18 +350,6 @@ class DirectWorkflowTaskSpec(TaskSpec):
     def get_on_error(self):
         return self._on_error
 
-    def is_conditional_transition(self, state):
-        data = self._data.get(state) or self._data.get('on-complete')
-
-        if not data:
-            return False
-
-        for item in data:
-            if type(item) is dict:
-                return True
-
-        return False
-
 
 class ReverseWorkflowTaskSpec(TaskSpec):
     _polymorphic_value = 'reverse'
