@@ -265,6 +265,10 @@ def create_or_update_action_execution(id, values):
     return IMPL.create_or_update_action_execution(id, values)
 
 
+def update_action_execution_heartbeat(id):
+    return IMPL.update_action_execution_heartbeat(id)
+
+
 def delete_action_execution(id):
     return IMPL.delete_action_execution(id)
 

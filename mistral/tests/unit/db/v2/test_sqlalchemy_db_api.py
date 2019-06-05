@@ -17,6 +17,7 @@
 
 import copy
 import datetime
+import time
 
 from oslo_config import cfg
 
@@ -1485,6 +1486,27 @@ class ActionExecutionTest(SQLAlchemyTest):
             fetched = db_api.get_action_execution(created.id)
 
             self.assertEqual(updated, fetched)
+
+    def test_update_action_execution_heartbeat(self):
+        with db_api.transaction():
+            created = db_api.create_action_execution(ACTION_EXECS[0])
+            created_last_heartbeat = created.last_heartbeat
+
+            fetched = db_api.get_action_execution(created.id)
+            fetched_last_heartbeat = fetched.last_heartbeat
+
+            time.sleep(1)
+
+            self.assertEqual(created_last_heartbeat, fetched_last_heartbeat)
+
+            time.sleep(1)
+
+            db_api.update_action_execution_heartbeat(created.id)
+
+            fetched = db_api.get_action_execution(created.id)
+            fetched_last_heartbeat = fetched.last_heartbeat
+
+            self.assertIsNot(created_last_heartbeat, fetched_last_heartbeat)
 
     def test_get_action_executions(self):
         with db_api.transaction():

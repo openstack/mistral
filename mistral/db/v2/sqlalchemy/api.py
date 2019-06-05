@@ -785,6 +785,17 @@ def create_or_update_action_execution(id, values, session=None):
 
 
 @b.session_aware()
+def update_action_execution_heartbeat(id, session=None):
+    if not id:
+        raise exc.DBEntityNotFoundError
+
+    now = utils.utc_now_sec()
+    session.query(models.ActionExecution).\
+        filter(models.ActionExecution.id == id).\
+        update({'last_heartbeat': now})
+
+
+@b.session_aware()
 def delete_action_execution(id, session=None):
     count = _secure_query(models.ActionExecution).filter(
         models.ActionExecution.id == id).delete()
