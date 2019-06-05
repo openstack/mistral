@@ -216,7 +216,7 @@ class JinjaEvaluatorTest(base.BaseTest):
             'type': task.type,
             'workflow_execution_id': task.workflow_execution_id,
             'created_at': task.created_at.isoformat(' '),
-            'updated_at': task.updated_at.isoformat(' ')
+            'updated_at': task.updated_at.isoformat(' '),
         }, result)
 
     @mock.patch('mistral.db.v2.api.get_task_executions')
@@ -320,7 +320,8 @@ class JinjaEvaluatorTest(base.BaseTest):
             'input': wf_ex.input,
             'params': wf_ex.params,
             'created_at': wf_ex.created_at.isoformat(' '),
-            'updated_at': wf_ex.updated_at.isoformat(' ')
+            'updated_at': wf_ex.updated_at.isoformat(' '),
+            'root_execution_id': wf_ex.root_execution_id
         }, result)
 
     def test_executions(self):
@@ -458,7 +459,8 @@ class JinjaEvaluatorTest(base.BaseTest):
             'input': wf_ex.input,
             'params': wf_ex.params,
             'created_at': wf_ex.created_at.isoformat(' '),
-            'updated_at': wf_ex.updated_at.isoformat(' ')
+            'updated_at': wf_ex.updated_at.isoformat(' '),
+            'root_execution_id': wf_ex.root_execution_id
         }, result)
 
 
