@@ -323,11 +323,16 @@ class PythonAction(Action):
         return self._prepare_output(result)
 
     def is_sync(self, input_dict):
-        prepared_input_dict = self._prepare_input(input_dict)
+        try:
+            prepared_input_dict = self._prepare_input(input_dict)
 
-        a = a_m.get_action_class(self.action_def.name)(**prepared_input_dict)
+            a = a_m.get_action_class(self.action_def.name)(
+                **prepared_input_dict
+            )
 
-        return a.is_sync()
+            return a.is_sync()
+        except BaseException as e:
+            raise exc.InputException(str(e))
 
     def validate_input(self, input_dict):
         # NOTE(kong): Don't validate action input if action initialization
