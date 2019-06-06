@@ -525,7 +525,9 @@ def _continue_task(task_ex_id):
     from mistral.engine import task_handler
 
     with db_api.transaction():
-        task_handler.continue_task(db_api.get_task_execution(task_ex_id))
+        task_ex = db_api.load_task_execution(task_ex_id)
+
+        task_handler.continue_task(task_ex)
 
 
 @db_utils.retry_on_db_error
@@ -534,7 +536,7 @@ def _complete_task(task_ex_id, state, state_info):
     from mistral.engine import task_handler
 
     with db_api.transaction():
-        task_ex = db_api.get_task_execution(task_ex_id)
+        task_ex = db_api.load_task_execution(task_ex_id)
 
         task_handler.complete_task(task_ex, state, state_info)
 
@@ -545,7 +547,7 @@ def _fail_task_if_incomplete(task_ex_id, timeout):
     from mistral.engine import task_handler
 
     with db_api.transaction():
-        task_ex = db_api.get_task_execution(task_ex_id)
+        task_ex = db_api.load_task_execution(task_ex_id)
 
         if not states.is_completed(task_ex.state):
             msg = 'Task timed out [timeout(s)=%s].' % timeout
