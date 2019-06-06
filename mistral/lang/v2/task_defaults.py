@@ -38,6 +38,7 @@ class TaskDefaultsSpec(base.BaseSpec):
             "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "pause-before": types.EXPRESSION_OR_BOOLEAN,
             "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "fail-on": types.EXPRESSION_OR_BOOLEAN,
             "on-complete": on_clause.OnClauseSpec.get_schema(),
             "on-success": on_clause.OnClauseSpec.get_schema(),
             "on-error": on_clause.OnClauseSpec.get_schema(),
@@ -63,7 +64,8 @@ class TaskDefaultsSpec(base.BaseSpec):
             'wait-after',
             'timeout',
             'pause-before',
-            'concurrency'
+            'concurrency',
+            'fail-on'
         )
 
         on_spec_cls = on_clause.OnClauseSpec

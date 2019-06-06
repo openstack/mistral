@@ -56,6 +56,7 @@ def get_policy_factories():
         build_pause_before_policy,
         build_wait_before_policy,
         build_wait_after_policy,
+        build_fail_on_policy,
         build_retry_policy,
         build_timeout_policy,
         build_concurrency_policy
@@ -148,6 +149,16 @@ def build_concurrency_policy(policies_spec):
 
     return (ConcurrencyPolicy(concurrency_policy)
             if concurrency_policy else None)
+
+
+def build_fail_on_policy(policies_spec):
+    if not policies_spec:
+        return None
+
+    fail_on_policy = policies_spec.get_fail_on()
+
+    return (FailOnPolicy(fail_on_policy)
+            if fail_on_policy else None)
 
 
 def _ensure_context_has_key(runtime_context, key):
@@ -540,6 +551,30 @@ class ConcurrencyPolicy(base.TaskPolicy):
 
         runtime_context[context_key] = self.concurrency
         task_ex.runtime_context = runtime_context
+
+
+class FailOnPolicy(base.TaskPolicy):
+    _schema = {
+        "properties": {
+            "fail-on": {"type": "boolean"},
+        }
+    }
+
+    def __init__(self, fail_on):
+        self.fail_on = fail_on
+
+    def before_task_start(self, task_ex, task_spec):
+        pass
+
+    def after_task_complete(self, task_ex, task_spec):
+        if task_ex.state != states.SUCCESS:
+            return
+
+        super(FailOnPolicy, self).after_task_complete(task_ex, task_spec)
+
+        if self.fail_on:
+            task_ex.state = states.ERROR
+            task_ex.state_info = 'Failed by fail-on policy'
 
 
 @db_utils.retry_on_db_error

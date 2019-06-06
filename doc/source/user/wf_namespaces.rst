@@ -131,7 +131,7 @@ definitions:
 
 So the call chain looks like this:
 
-  .. code-block::
+  .. code-block:: console
 
    wf1 -> wf2 -> wf3
 
@@ -154,7 +154,7 @@ these namespaces:
 
 And we create a workflow execution like this via API:
 
-  .. code-block::
+  .. code-block:: console
 
     POST /v2/executions
 
@@ -175,7 +175,7 @@ In this case, Mistral will:
 
 However, if we launch a workflow like this:
 
-  .. code-block::
+  .. code-block:: console
 
     POST /v2/executions
 
@@ -186,7 +186,7 @@ However, if we launch a workflow like this:
 
 We'll get the call chain
 
-  .. code-block::
+  .. code-block:: console
 
    wf2 -> wf3
 

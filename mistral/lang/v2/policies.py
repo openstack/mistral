@@ -29,6 +29,7 @@ class PoliciesSpec(base.BaseSpec):
             "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "pause-before": types.EXPRESSION_OR_BOOLEAN,
             "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "fail-on": types.EXPRESSION_OR_BOOLEAN
         },
         "additionalProperties": False
     }
@@ -46,6 +47,7 @@ class PoliciesSpec(base.BaseSpec):
         self._timeout = data.get('timeout', 0)
         self._pause_before = data.get('pause-before', False)
         self._concurrency = data.get('concurrency', 0)
+        self._fail_on = data.get('fail-on', False)
 
     def validate_schema(self):
         super(PoliciesSpec, self).validate_schema()
@@ -56,6 +58,7 @@ class PoliciesSpec(base.BaseSpec):
         self.validate_expr(self._data.get('timeout', 0))
         self.validate_expr(self._data.get('pause-before', False))
         self.validate_expr(self._data.get('concurrency', 0))
+        self.validate_expr(self._data.get('fail-on', False))
 
     def get_retry(self):
         return self._retry
@@ -74,3 +77,6 @@ class PoliciesSpec(base.BaseSpec):
 
     def get_concurrency(self):
         return self._concurrency
+
+    def get_fail_on(self):
+        return self._fail_on

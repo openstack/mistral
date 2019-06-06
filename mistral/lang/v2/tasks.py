@@ -75,6 +75,7 @@ class TaskSpec(base.BaseSpec):
             "timeout": types.EXPRESSION_OR_POSITIVE_INTEGER,
             "pause-before": types.EXPRESSION_OR_BOOLEAN,
             "concurrency": types.EXPRESSION_OR_POSITIVE_INTEGER,
+            "fail-on": types.EXPRESSION_OR_BOOLEAN,
             "target": types.NONEMPTY_STRING,
             "keep-result": types.EXPRESSION_OR_BOOLEAN,
             "safe-rerun": types.EXPRESSION_OR_BOOLEAN
@@ -120,7 +121,8 @@ class TaskSpec(base.BaseSpec):
             'wait-after',
             'timeout',
             'pause-before',
-            'concurrency'
+            'concurrency',
+            'fail-on'
         )
         self._target = data.get('target')
         self._keep_result = data.get('keep-result', True)

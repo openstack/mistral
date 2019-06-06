@@ -162,6 +162,7 @@ Common workflow attributes
    -  **pause-before** - Configures pause-before policy. *Optional*.
    -  **wait-before** - Configures wait-before policy. *Optional*.
    -  **wait-after** - Configures wait-after policy. *Optional*.
+   -  **fail-on** - Configures fail-on policy. *Optional*.
    -  **timeout** - Configures timeout policy. *Optional*.
    -  **retry** - Configures retry policy. *Optional*.
    -  **concurrency** - Configures concurrency policy. *Optional*.
@@ -270,6 +271,7 @@ attributes:
 -  **pause-before** - Configures pause-before policy. *Optional*.
 -  **wait-before** - Configures wait-before policy. *Optional*.
 -  **wait-after** - Configures wait-after policy. *Optional*.
+-  **fail-on** - Configures fail-on policy. *Optional*.
 -  **timeout** - Configures timeout policy. *Optional*.
 -  **retry** - Configures retry policy. *Optional*.
 -  **concurrency** - Configures concurrency policy. *Optional*.
@@ -355,6 +357,7 @@ YAML example
       pause-before: true
       wait-before: 2
       wait-after: 4
+      fail-on: <% $.some_value < 4 %>
       timeout: 30
       retry:
         count: 10
@@ -379,6 +382,12 @@ starting a task.
 Defines a delay in seconds that Mistral Engine should wait after a task
 has completed before starting next tasks defined in *on-success*,
 *on-error* or *on-complete*.
+
+
+**fail-on**
+
+Defines a condition under which the task will fail, even if
+the action was completed successfully.
 
 
 **timeout**

@@ -86,6 +86,7 @@ YAML example
       pause-before: true
       wait-before: 2
       wait-after: 4
+      fail-on: <% $.some_value < 4 %>
       timeout: 30
       retry:
         count: 10
@@ -109,6 +110,11 @@ There are different types of policies in Mistral.
  Specifies a delay in seconds that Mistral Engine should wait after a task
  has completed before starting the tasks specified in *'on-success'*,
  *'on-error'* or *'on-complete'*.
+
+4. **fail-on**
+
+ Specifies a condition under which the task will fail, even if
+ the action was completed successfully.
 
 4. **timeout**
 

@@ -1874,3 +1874,154 @@ class PoliciesTest(base.EngineTestCase):
             {},
             fail_task_ex.runtime_context["retry_task_policy"]
         )
+
+    def test_fail_on_true_condition(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                action: std.echo output=4
+                fail-on: <% task(task1).result <= 4 %>
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.ERROR, "Check task state")
+
+    def test_fail_on_false_condition(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                action: std.echo output=4
+                fail-on: <% task(task1).result != 4 %>
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
+
+    def test_fail_on_true_condition_task_defaults(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            task-defaults:
+              fail-on: <% task().result <= 4 %>
+            tasks:
+              task1:
+                action: std.echo output=4
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.ERROR, "Check task state")
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=[1, 2, 3, 4])
+    )
+    def test_fail_on_with_retry(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                action: std.echo output="mocked"
+                fail-on: <% task(task1).result <= 2 %>
+                retry:
+                  count: 3
+                  delay: 0
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
+        self.assertEqual(
+            2,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
+
+    @mock.patch.object(
+        std_actions.EchoAction,
+        'run',
+        mock.Mock(side_effect=[1, 2, 3, 4])
+    )
+    def test_fail_on_with_retry_and_with_items(self):
+        retry_wb = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          wf1:
+            tasks:
+              task1:
+                with-items: x in [1, 2]
+                action: std.echo output="mocked"
+                fail-on: <% not task(task1).result.contains(4) %>
+                retry:
+                  count: 3
+                  delay: 0
+        """
+        wb_service.create_workbook_v2(retry_wb)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wb.wf1')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_ex = wf_ex.task_executions[0]
+
+        self.assertEqual(task_ex.state, states.SUCCESS, "Check task state")
+        self.assertEqual(
+            1,
+            task_ex.runtime_context['retry_task_policy']['retry_no']
+        )
