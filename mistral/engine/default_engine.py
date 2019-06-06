@@ -225,15 +225,9 @@ class DefaultEngine(base.Engine):
     @post_tx_queue.run
     def report_running_actions(self, action_ex_ids):
         with db_api.transaction():
-            now = u.utc_now_sec()
-
             for exec_id in action_ex_ids:
                 try:
-                    db_api.update_action_execution(
-                        exec_id,
-                        {"last_heartbeat": now},
-                        insecure=True
-                    )
+                    db_api.update_action_execution_heartbeat(exec_id)
                 except exceptions.DBEntityNotFoundError:
                     LOG.debug("Action execution heartbeat update failed. {}"
                               .format(exec_id), exc_info=True)
