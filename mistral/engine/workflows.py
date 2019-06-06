@@ -74,10 +74,22 @@ class Workflow(object):
 
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
 
+        def _convert_to_notification_data():
+            return {
+                "id": self.wf_ex.id,
+                "name": self.wf_ex.name,
+                "workflow_name": self.wf_ex.workflow_name,
+                "workflow_namespace": self.wf_ex.workflow_namespace,
+                "workflow_id": self.wf_ex.workflow_id,
+                "state": self.wf_ex.state,
+                "state_info": self.wf_ex.state_info,
+                "project_id": self.wf_ex.project_id
+            }
+
         def _send_notification():
             notifier.notify(
                 self.wf_ex.id,
-                self.wf_ex.to_dict(),
+                _convert_to_notification_data(),
                 event,
                 self.wf_ex.updated_at,
                 publishers
