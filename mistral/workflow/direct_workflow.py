@@ -27,6 +27,8 @@ from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
+MAX_SEARCH_DEPTH = 5
+
 
 class DirectWorkflowController(base.WorkflowController):
     """'Direct workflow' controller.
@@ -58,14 +60,7 @@ class DirectWorkflowController(base.WorkflowController):
         if not t_spec.get_join():
             return t_ex_candidate.processed
 
-        names = self._find_all_parent_task_names(t_spec)
-
-        t_execs_cache = {
-            t_ex.name: t_ex for t_ex in self._get_task_executions(
-                fields=('id', 'name', 'state'),
-                name={'in': names}
-            )
-        } if names else {}  # don't perform a db request if 'names' are empty
+        t_execs_cache = self._prepare_task_executions_cache(t_spec)
 
         induced_state, _, _ = self._get_induced_join_state(
             self.wf_spec.get_tasks()[t_ex_candidate.name],
@@ -369,20 +364,13 @@ class DirectWorkflowController(base.WorkflowController):
         if not in_task_specs:
             return base.TaskLogicalState(states.RUNNING)
 
-        names = self._find_all_parent_task_names(task_spec)
-
-        t_execs_cache = {
-            t_ex.name: t_ex for t_ex in self._get_task_executions(
-                fields=('id', 'name', 'state'),
-                name={'in': names}
-            )
-        } if names else {}  # don't perform a db request if 'names' are empty
+        t_execs_cache = self._prepare_task_executions_cache(task_spec)
 
         # List of tuples (task_name, task_ex, state, depth, event_name).
         induced_states = []
 
         for t_s in in_task_specs:
-            t_ex = t_execs_cache.get(t_s.get_name())
+            t_ex = t_execs_cache[t_s.get_name()]
 
             tup = self._get_induced_join_state(
                 t_s,
@@ -523,6 +511,11 @@ class DirectWorkflowController(base.WorkflowController):
             return True, depth
 
         for t_s in in_task_specs:
+            if t_s.get_name() not in t_execs_cache:
+                t_execs_cache.update(
+                    self._prepare_task_executions_cache(task_spec)
+                )
+
             t_ex = t_execs_cache.get(t_s.get_name())
 
             if not t_ex:
@@ -545,17 +538,39 @@ class DirectWorkflowController(base.WorkflowController):
 
         return False, depth
 
-    def _find_all_parent_task_names(self, task_spec):
+    def _find_all_parent_task_names(self, task_spec, depth=1):
+        if depth == MAX_SEARCH_DEPTH:
+            return {task_spec.get_name()}
 
-        all_parent_names = set()
+        in_task_specs = self.wf_spec.find_inbound_task_specs(task_spec)
 
-        inbound_specs = self.wf_spec.find_inbound_task_specs(task_spec)[:]
-        while inbound_specs:
-            spec = inbound_specs.pop()
-            all_parent_names.add(spec.get_name())
-            inbound_specs += self.wf_spec.find_inbound_task_specs(spec)
+        if not in_task_specs:
+            return {task_spec.get_name()}
 
-        return all_parent_names
+        names = set()
+        for t_s in in_task_specs:
+            names.update(self._find_all_parent_task_names(t_s, depth + 1))
+
+        if depth > 1:
+            names.add(task_spec.get_name())
+
+        return names
+
+    def _prepare_task_executions_cache(self, task_spec):
+        names = self._find_all_parent_task_names(task_spec)
+
+        t_execs_cache = {
+            t_ex.name: t_ex for t_ex in self._get_task_executions(
+                fields=('id', 'name', 'state'),
+                name={'in': names}
+            )
+        } if names else {}  # don't perform a db request if 'names' are empty
+
+        for name in names:
+            if name not in t_execs_cache:
+                t_execs_cache[name] = None
+
+        return t_execs_cache
 
     def _is_conditional_transition(self, t_ex):
         if t_ex.state == states.ERROR:
