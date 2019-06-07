@@ -501,3 +501,38 @@ class SubworkflowsTest(base.EngineTestCase):
         self.assertEqual(0, len(db_api.get_workflow_executions()))
         self.assertEqual(0, len(db_api.get_task_executions()))
         self.assertEqual(0, len(db_api.get_action_executions()))
+
+    def test_cascade_delete_deep(self):
+        wf_text = """
+        version: 2.0
+
+        wf:
+          input:
+            - level
+          tasks:
+            initial:
+              action: std.noop
+              on-success:
+                - recurse: <% $.level > 0 %>
+
+            recurse:
+              workflow: wf
+              input:
+                level: <% $.level - 1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf', wf_input={"level": 7})
+
+        self.await_workflow_success(wf_ex.id)
+
+        self.assertEqual(8, len(db_api.get_workflow_executions()))
+
+        # Now delete the root workflow execution and make sure that
+        # all dependent objects are deleted as well.
+        db_api.delete_workflow_execution(wf_ex.id)
+
+        self.assertEqual(0, len(db_api.get_workflow_executions()))
+        self.assertEqual(0, len(db_api.get_task_executions()))
+        self.assertEqual(0, len(db_api.get_action_executions()))

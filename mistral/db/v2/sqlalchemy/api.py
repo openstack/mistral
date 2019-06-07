@@ -16,6 +16,7 @@
 
 import contextlib
 import datetime
+import re
 import sys
 import threading
 
@@ -889,13 +890,59 @@ def delete_workflow_execution(id, session=None):
     insecure = context.ctx().is_admin
     query = b.model_query(model) if insecure else _secure_query(model)
 
-    count = query.filter(
-        models.WorkflowExecution.id == id).delete()
+    try:
+        count = query.filter(
+            models.WorkflowExecution.id == id
+        ).delete()
 
-    if count == 0:
-        raise exc.DBEntityNotFoundError(
-            "WorkflowExecution not found [id=%s]" % id
-        )
+        if count == 0:
+            raise exc.DBEntityNotFoundError(
+                "WorkflowExecution not found [id=%s]" % id
+            )
+    except db_exc.DBError as e:
+        if is_mysql_max_depth_error(e) or is_mariadb_max_depth_error(e):
+            # https://bugs.launchpad.net/mistral/+bug/1832300
+            # mysql cascade delete error
+            delete_workflow_execution_recurse(id)
+        else:
+            raise
+
+
+def is_mysql_max_depth_error(e):
+    pattern = ".*3008.*Foreign key cascade delete" \
+              "/update exceeds max depth of 15.*"
+    return re.match(pattern, str(e))
+
+
+def is_mariadb_max_depth_error(e):
+    pattern = ".*Got error 193.*ON DELETE CASCADE.*"
+    return re.match(pattern, str(e))
+
+
+def delete_workflow_execution_recurse(wf_ex_id):
+    sub_wf_ex_ids = _get_all_direct_subworkflows(wf_ex_id)
+
+    for sub_wf_ex_id in sub_wf_ex_ids:
+        delete_workflow_execution(sub_wf_ex_id)
+
+    delete_workflow_execution(wf_ex_id)
+
+
+def _get_all_direct_subworkflows(wf_ex_id):
+    model = models.WorkflowExecution
+    insecure = context.ctx().is_admin
+    if insecure:
+        query = b.model_query(model, columns=['id'])
+    else:
+        query = _secure_query(model, model.id)
+    query = query.join(
+        models.TaskExecution,
+        models.WorkflowExecution.task_execution_id == models.TaskExecution.id
+    ).filter(
+        models.TaskExecution.workflow_execution_id == wf_ex_id
+    )
+
+    return [i[0] for i in query.all()]
 
 
 @b.session_aware()

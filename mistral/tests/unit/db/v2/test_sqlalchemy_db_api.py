@@ -3376,3 +3376,35 @@ class LockTest(SQLAlchemyTest):
 
         # Make sure that outside 'with' section the lock record does not exist.
         self.assertEqual(0, len(db_api.get_named_locks()))
+
+    def test_internal_get_direct_subworkflows(self):
+        def wex(wex_id, tex_id=None):
+            db_api.create_workflow_execution(
+                {'id': wex_id, 'name': wex_id, 'task_execution_id': tex_id}
+            )
+
+        def tex(tex_id, wex_id):
+            db_api.create_task_execution(
+                {'id': tex_id, 'name': tex_id, 'workflow_execution_id': wex_id}
+            )
+
+        def assert_subworkflows(expected):
+            self.assertEqual(
+                set(expected), set(db_api._get_all_direct_subworkflows('root'))
+            )
+
+        wex('root')
+        tex('t1', 'root')
+        wex('sub1', 't1')
+
+        assert_subworkflows(['sub1'])
+
+        tex('t2', 'root')
+        wex('sub2', 't1')
+
+        assert_subworkflows(['sub1', 'sub2'])
+
+        tex('sub1t1', 'sub1')
+        wex('sub1sub1', 'sub1t1')
+
+        assert_subworkflows(['sub1', 'sub2'])
