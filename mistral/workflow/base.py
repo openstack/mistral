@@ -202,7 +202,10 @@ class WorkflowController(object):
 
         :return: True if there is one or more tasks in cancelled state.
         """
-        return len(self._get_task_executions(state=states.CANCELLED)) > 0
+        return db_api.get_task_executions_count(
+            workflow_execution_id=self.wf_ex.id,
+            state=states.CANCELLED
+        ) > 0
 
     @abc.abstractmethod
     def evaluate_workflow_final_context(self):
