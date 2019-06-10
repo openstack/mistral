@@ -91,15 +91,20 @@ def create_workflows(definition, scope='private', is_system=False,
 def _append_all_workflows(definition, is_system, scope, namespace,
                           wf_list_spec, db_wfs):
     wfs = wf_list_spec.get_workflows()
-    wfs_yaml = yaml.load(definition)
+
+    wfs_yaml = yaml.load(definition) if len(wfs) != 1 else None
+
     for wf_spec in wfs:
+        if len(wfs) != 1:
+            definition = _cut_wf_definition_from_all(
+                wfs_yaml,
+                wf_spec.get_name()
+            )
+
         db_wfs.append(
             _create_workflow(
                 wf_spec,
-                _cut_wf_definition_from_all(
-                    wfs_yaml,
-                    wf_spec.get_name()
-                ),
+                definition,
                 scope,
                 namespace,
                 is_system
@@ -125,19 +130,25 @@ def update_workflows(definition, scope='private', identifier=None,
 
     db_wfs = []
 
+    wfs_yaml = yaml.load(definition) if len(wfs) != 1 else None
+
     with db_api.transaction():
-        wfs_yaml = yaml.load(definition)
         for wf_spec in wfs:
-            db_wfs.append(_update_workflow(
-                wf_spec,
-                _cut_wf_definition_from_all(
+            if len(wfs) != 1:
+                definition = _cut_wf_definition_from_all(
                     wfs_yaml,
                     wf_spec.get_name()
-                ),
-                scope,
-                namespace=namespace,
-                identifier=identifier
-            ))
+                )
+
+            db_wfs.append(
+                _update_workflow(
+                    wf_spec,
+                    definition,
+                    scope,
+                    namespace=namespace,
+                    identifier=identifier
+                )
+            )
 
     return db_wfs
 
