@@ -214,6 +214,9 @@ def force_fail_task(task_ex, msg, task=None):
 
 
 def continue_task(task_ex):
+    if not task_ex:
+        return
+
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
         task_ex.workflow_execution_id
     )
@@ -240,6 +243,9 @@ def continue_task(task_ex):
 
 
 def complete_task(task_ex, state, state_info):
+    if not task_ex:
+        return
+
     wf_spec = spec_parser.get_workflow_spec_by_execution_id(
         task_ex.workflow_execution_id
     )
@@ -476,11 +482,12 @@ def _get_refresh_state_job_key(task_ex_id):
 def _scheduled_on_action_complete(action_ex_id, wf_action):
     with db_api.transaction():
         if wf_action:
-            action_ex = db_api.get_workflow_execution(action_ex_id)
+            action_ex = db_api.load_workflow_execution(action_ex_id)
         else:
-            action_ex = db_api.get_action_execution(action_ex_id)
+            action_ex = db_api.load_action_execution(action_ex_id)
 
-        _on_action_complete(action_ex)
+        if action_ex:
+            _on_action_complete(action_ex)
 
 
 def schedule_on_action_complete(action_ex, delay=0):
@@ -522,11 +529,12 @@ def schedule_on_action_complete(action_ex, delay=0):
 def _scheduled_on_action_update(action_ex_id, wf_action):
     with db_api.transaction():
         if wf_action:
-            action_ex = db_api.get_workflow_execution(action_ex_id)
+            action_ex = db_api.load_workflow_execution(action_ex_id)
         else:
-            action_ex = db_api.get_action_execution(action_ex_id)
+            action_ex = db_api.load_action_execution(action_ex_id)
 
-        _on_action_update(action_ex)
+        if action_ex:
+            _on_action_update(action_ex)
 
 
 def schedule_on_action_update(action_ex, delay=0):
