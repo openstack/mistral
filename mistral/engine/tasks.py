@@ -76,10 +76,23 @@ class Task(object):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
         event = events.identify_task_event(old_task_state, new_task_state)
 
+        def _convert_to_notification_data():
+            return {
+                "id": self.task_ex.id,
+                "name": self.task_ex.name,
+                "workflow_name": self.task_ex.workflow_name,
+                "workflow_namespace": self.task_ex.workflow_namespace,
+                "workflow_id": self.task_ex.workflow_id,
+                "state": self.task_ex.state,
+                "state_info": self.task_ex.state_info,
+                "type": self.task_ex.type,
+                "project_id": self.task_ex.project_id
+            }
+
         def _send_notification():
             notifier.notify(
                 self.task_ex.id,
-                self.task_ex.to_dict(),
+                _convert_to_notification_data(),
                 event,
                 self.task_ex.updated_at,
                 publishers
