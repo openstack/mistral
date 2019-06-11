@@ -45,8 +45,6 @@ name: wb
 
 workflows:
   wf:
-    type: direct
-
     input:
      - names_info
 
@@ -67,8 +65,6 @@ name: wb
 
 workflows:
   wf:
-    type: direct
-
     input:
      - names_info
      - greeting
@@ -90,8 +86,6 @@ name: wb
 
 workflows:
   wf:
-    type: direct
-
     input:
      - arrayI
      - arrayJ
@@ -116,17 +110,13 @@ name: wb
 
 workflows:
   wf:
-    type: direct
-
     input:
-      - links
+      - items
 
     tasks:
       task1:
-        with-items: link in <% $.links %>
-        action: std.http url=<% $.link %>
-        publish:
-          result: <% task(task1) %>
+        with-items: item in <% $.items %>
+        action: std.async_noop
 """
 
 
@@ -138,14 +128,6 @@ WF_INPUT = {
     ]
 }
 
-
-WF_INPUT_URLS = {
-    'links': [
-        'http://google.com',
-        'http://openstack.org',
-        'http://google.com'
-    ]
-}
 
 WF_INPUT_ONE_ITEM = {
     'names_info': [
@@ -389,10 +371,16 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, task1_ex.state)
 
     def test_with_items_action_context(self):
+        # TODO(rakhmerov): Seems like the name of the test is not valid
+        # anymore since there's nothing related to action context in it.
+        # We need to revisit and refactor the entire module.
         wb_service.create_workbook_v2(WB_ACTION_CONTEXT)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wb.wf', wf_input=WF_INPUT_URLS)
+        wf_ex = self.engine.start_workflow(
+            'wb.wf',
+            wf_input={'items': [1, 2, 3]}
+        )
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
