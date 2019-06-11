@@ -128,7 +128,7 @@ class WorkflowController(object):
             mistral.workflow.commands.WorkflowCommand).
         """
 
-        if self._is_paused_or_completed():
+        if self._is_completed():
             return []
 
         return self._find_next_commands(task_ex)
@@ -256,6 +256,9 @@ class WorkflowController(object):
             commands.RunExistingTask(self.wf_ex, self.wf_spec, t)
             for t in self._get_task_executions(state=states.IDLE)
         ]
+
+    def _is_completed(self):
+        return states.is_completed(self.wf_ex.state)
 
     def _is_paused_or_completed(self):
         return states.is_paused_or_completed(self.wf_ex.state)

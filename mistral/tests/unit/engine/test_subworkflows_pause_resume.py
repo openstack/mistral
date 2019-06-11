@@ -21,44 +21,46 @@ from mistral_lib import actions as ml_actions
 
 
 class SubworkflowPauseResumeTest(base.EngineTestCase):
-
     def test_pause_resume_cascade_down_to_subworkflow(self):
-        workbook = """
+        wb_text = """
         version: '2.0'
+
         name: wb
+
         workflows:
           wf1:
             tasks:
               task1:
                 workflow: wf2
-                on-success:
-                  - task3
+                on-success: task3
+
               task2:
                 workflow: wf3
-                on-success:
-                  - task3
+                on-success: task3
+
               task3:
                 join: all
-                action: std.noop
+
           wf2:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
+
           wf3:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
         """
 
-        wb_service.create_workbook_v2(workbook)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow execution.
         wf_1_ex = self.engine.start_workflow('wb.wf1')
@@ -148,8 +150,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -167,8 +167,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
-            wf_2_task_execs = wf_2_ex.task_executions
-
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task1'
@@ -179,8 +177,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -216,8 +212,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -235,8 +229,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
-            wf_2_task_execs = wf_2_ex.task_executions
-
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task1'
@@ -247,8 +239,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -323,10 +313,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-            wf_2_task_1_action_exs = db_api.get_action_executions(
-                task_execution_id=wf_2_task_1_ex.id
-            )
-
             wf_2_task_2_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task2'
@@ -339,10 +325,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
                 name='task1'
-            )
-
-            wf_3_task_1_action_exs = db_api.get_action_executions(
-                task_execution_id=wf_3_task_1_ex.id
             )
 
             wf_3_task_2_ex = self._assert_single_item(
@@ -367,42 +349,45 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_3_task_2_ex.state)
 
     def test_pause_resume_cascade_up_from_subworkflow(self):
-        workbook = """
+        wb_text = """
         version: '2.0'
+
         name: wb
+
         workflows:
           wf1:
             tasks:
               task1:
                 workflow: wf2
-                on-success:
-                  - task3
+                on-success: task3
+
               task2:
                 workflow: wf3
-                on-success:
-                  - task3
+                on-success: task3
+
               task3:
                 join: all
-                action: std.noop
+
           wf2:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
+
           wf3:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
         """
 
-        wb_service.create_workbook_v2(workbook)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow execution.
         wf_1_ex = self.engine.start_workflow('wb.wf1')
@@ -490,8 +475,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -509,8 +492,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
-            wf_2_task_execs = wf_2_ex.task_executions
-
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task1'
@@ -521,8 +502,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -556,8 +535,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -575,8 +552,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
-            wf_2_task_execs = wf_2_ex.task_executions
-
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task1'
@@ -587,8 +562,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -626,8 +599,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -645,8 +616,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
-            wf_2_task_execs = wf_2_ex.task_executions
-
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task1'
@@ -657,8 +626,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -692,8 +659,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -711,8 +676,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
 
-            wf_2_task_execs = wf_2_ex.task_executions
-
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task1'
@@ -723,8 +686,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -793,10 +754,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 name='task1'
             )
 
-            wf_2_task_1_action_exs = db_api.get_action_executions(
-                task_execution_id=wf_2_task_1_ex.id
-            )
-
             wf_2_task_2_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
                 name='task2'
@@ -809,10 +766,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
                 name='task1'
-            )
-
-            wf_3_task_1_action_exs = db_api.get_action_executions(
-                task_execution_id=wf_3_task_1_ex.id
             )
 
             wf_3_task_2_ex = self._assert_single_item(
@@ -837,43 +790,46 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_3_task_2_ex.state)
 
     def test_pause_resume_cascade_down_to_with_items_subworkflows(self):
-        workbook = """
+        wb_text = """
         version: '2.0'
+
         name: wb
+
         workflows:
           wf1:
             tasks:
               task1:
                 with-items: i in <% range(3) %>
                 workflow: wf2
-                on-success:
-                  - task3
+                on-success: task3
+
               task2:
                 workflow: wf3
-                on-success:
-                  - task3
+                on-success: task3
+
               task3:
                 join: all
-                action: std.noop
+
           wf2:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
+
           wf3:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
         """
 
-        wb_service.create_workbook_v2(workbook)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow execution.
         wf_1_ex = self.engine.start_workflow('wb.wf1')
@@ -1371,43 +1327,46 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_3_task_1_action_exs[0].state)
 
     def test_pause_resume_cascade_up_from_with_items_subworkflow(self):
-        workbook = """
+        wb_text = """
         version: '2.0'
+
         name: wb
+
         workflows:
           wf1:
             tasks:
               task1:
                 with-items: i in <% range(3) %>
                 workflow: wf2
-                on-success:
-                  - task3
+                on-success: task3
+
               task2:
                 workflow: wf3
-                on-success:
-                  - task3
+                on-success: task3
+
               task3:
                 join: all
-                action: std.noop
+
           wf2:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
+
           wf3:
             tasks:
               task1:
                 action: std.async_noop
-                on-success:
-                  - task2
+                on-success: task2
+
               task2:
                 action: std.noop
         """
 
-        wb_service.create_workbook_v2(workbook)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow execution.
         wf_1_ex = self.engine.start_workflow('wb.wf1')
@@ -1752,8 +1711,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 wf_1_task_1_action_exs[2].id
             )
 
-            wf_2_ex_3_task_execs = wf_2_ex_3.task_executions
-
             wf_2_ex_3_task_1_ex = self._assert_single_item(
                 wf_2_ex_3.task_executions,
                 name='task1'
@@ -1765,8 +1722,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # Get objects for the wf3 subworkflow execution.
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -1847,8 +1802,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -1871,8 +1824,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 wf_1_task_1_action_exs[0].id
             )
 
-            wf_2_ex_1_task_execs = wf_2_ex_1.task_executions
-
             wf_2_ex_1_task_1_ex = self._assert_single_item(
                 wf_2_ex_1.task_executions,
                 name='task1'
@@ -1885,8 +1836,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             wf_2_ex_2 = db_api.get_workflow_execution(
                 wf_1_task_1_action_exs[1].id
             )
-
-            wf_2_ex_2_task_execs = wf_2_ex_2.task_executions
 
             wf_2_ex_2_task_1_ex = self._assert_single_item(
                 wf_2_ex_2.task_executions,
@@ -1901,8 +1850,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
                 wf_1_task_1_action_exs[2].id
             )
 
-            wf_2_ex_3_task_execs = wf_2_ex_3.task_executions
-
             wf_2_ex_3_task_1_ex = self._assert_single_item(
                 wf_2_ex_3.task_executions,
                 name='task1'
@@ -1914,8 +1861,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # Get objects for the wf3 subworkflow execution.
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -1956,43 +1901,46 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, wf_3_task_1_action_exs[0].state)
 
     def test_pause_resume_cascade_up_from_subworkflow_pause_before(self):
-        workbook = """
+        wb_text = """
         version: '2.0'
+
         name: wb
+
         workflows:
-            wf1:
-                tasks:
-                    task1:
-                        workflow: wf2
-                        on-success:
-                            - task3
-                    task2:
-                        workflow: wf3
-                        on-success:
-                            - task3
-                    task3:
-                        join: all
-                        action: std.noop
-            wf2:
-                tasks:
-                    task1:
-                        action: std.noop
-                        on-success:
-                            - task2
-                    task2:
-                        pause-before: true
-                        action: std.async_noop
-            wf3:
-                tasks:
-                    task1:
-                        action: std.async_noop
-                        on-success:
-                            - task2
-                    task2:
-                        action: std.noop
+          wf1:
+            tasks:
+              task1:
+                workflow: wf2
+                on-success: task3
+
+              task2:
+                workflow: wf3
+                on-success: task3
+
+              task3:
+                join: all
+
+          wf2:
+            tasks:
+              task1:
+                action: std.noop
+                on-success: task2
+
+              task2:
+                pause-before: true
+                action: std.async_noop
+
+          wf3:
+            tasks:
+              task1:
+                action: std.async_noop
+                on-success: task2
+
+              task2:
+                action: std.noop
         """
 
-        wb_service.create_workbook_v2(workbook)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow execution.
         wf_1_ex = self.engine.start_workflow('wb.wf1')
@@ -2004,8 +1952,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
-
-            wf_1_task_execs = wf_1_ex.task_executions
 
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
@@ -2023,8 +1969,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
-
-            wf_2_task_execs = wf_2_ex.task_executions
 
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
@@ -2045,8 +1989,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,
@@ -2084,8 +2026,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             # Get objects for the parent workflow execution.
             wf_1_ex = self._assert_single_item(wf_execs, name='wb.wf1')
 
-            wf_1_task_execs = wf_1_ex.task_executions
-
             wf_1_task_1_ex = self._assert_single_item(
                 wf_1_ex.task_executions,
                 name='task1'
@@ -2102,8 +2042,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
 
             # Get objects for the subworkflow executions.
             wf_2_ex = self._assert_single_item(wf_execs, name='wb.wf2')
-
-            wf_2_task_execs = wf_2_ex.task_executions
 
             wf_2_task_1_ex = self._assert_single_item(
                 wf_2_ex.task_executions,
@@ -2124,8 +2062,6 @@ class SubworkflowPauseResumeTest(base.EngineTestCase):
             )
 
             wf_3_ex = self._assert_single_item(wf_execs, name='wb.wf3')
-
-            wf_3_task_execs = wf_3_ex.task_executions
 
             wf_3_task_1_ex = self._assert_single_item(
                 wf_3_ex.task_executions,

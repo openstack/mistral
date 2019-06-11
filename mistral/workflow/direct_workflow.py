@@ -341,7 +341,10 @@ class DirectWorkflowController(base.WorkflowController):
             if not condition or expr.evaluate(condition, ctx)
         ]
 
-    @profiler.trace('direct-wf-controller-get-join-logical-state')
+    @profiler.trace(
+        'direct-wf-controller-get-join-logical-state',
+        hide_args=True
+    )
     def _get_join_logical_state(self, task_spec):
         """Evaluates logical state of 'join' task.
 
@@ -476,6 +479,10 @@ class DirectWorkflowController(base.WorkflowController):
     # TODO(rakhmerov): Method signature is incorrect given that
     # we may have multiple task executions for a task. It should
     # accept inbound task execution rather than a spec.
+    @profiler.trace(
+        'direct-wf-controller-get-induced-join-state',
+        hide_args=True
+    )
     def _get_induced_join_state(self, in_task_spec, in_task_ex,
                                 join_task_spec, t_execs_cache):
         join_task_name = join_task_spec.get_name()
@@ -494,10 +501,10 @@ class DirectWorkflowController(base.WorkflowController):
         if not states.is_completed(in_task_ex.state):
             return states.WAITING, 1, None
 
-        # [(task name, params, event name), ...]
-        next_tasks_tuples = self._find_next_tasks(in_task_ex)
+        # [(task name, event name), ...]
+        next_tasks_tuples = in_task_ex.next_tasks or []
 
-        next_tasks_dict = {tup[0]: tup[2] for tup in next_tasks_tuples}
+        next_tasks_dict = {tup[0]: tup[1] for tup in next_tasks_tuples}
 
         if join_task_name not in next_tasks_dict:
             return states.ERROR, 1, "not triggered"
@@ -533,7 +540,7 @@ class DirectWorkflowController(base.WorkflowController):
                 if not states.is_completed(t_ex.state):
                     return True, depth
 
-                if t_name in [t[0] for t in self._find_next_tasks(t_ex)]:
+                if t_name in [t[0] for t in t_ex.next_tasks]:
                     return True, depth
 
         return False, depth
@@ -561,7 +568,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         t_execs_cache = {
             t_ex.name: t_ex for t_ex in self._get_task_executions(
-                fields=('id', 'name', 'state'),
+                fields=('id', 'name', 'state', 'next_tasks'),
                 name={'in': names}
             )
         } if names else {}  # don't perform a db request if 'names' are empty

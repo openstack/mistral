@@ -269,6 +269,10 @@ class TaskExecution(Execution):
     # is not completed.
     has_next_tasks = sa.Column(sa.Boolean, default=False)
 
+    # The names of the next tasks.
+    # [(task_name, event)]
+    next_tasks = sa.Column(st.JsonListType())
+
     # Set to True if the task finished with an error and the error
     # is handled (e.g. with 'on-error' clause for direct workflows)
     # so that the error shouldn't bubble up to the workflow level.
