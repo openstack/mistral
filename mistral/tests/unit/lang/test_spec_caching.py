@@ -185,19 +185,19 @@ class SpecificationCachingTest(base.DbTestCase):
         self.assertEqual(0, spec_parser.get_wf_execution_spec_cache_size())
         self.assertEqual(1, spec_parser.get_wf_definition_spec_cache_size())
 
-        wf_ex = db_api.create_workflow_execution({
-            'id': '1-2-3-4',
-            'name': 'wf',
-            'workflow_id': wf_def.id,
-            'spec': wf_spec.to_dict(),
-            'state': states.RUNNING
-        })
+        with db_api.transaction():
+            wf_ex = db_api.create_workflow_execution({
+                'id': '1-2-3-4',
+                'name': 'wf',
+                'workflow_id': wf_def.id,
+                'spec': wf_spec.to_dict(),
+                'state': states.RUNNING
+            })
 
-        # Check that we can get a valid spec by execution id.
-
-        wf_spec_by_exec_id = spec_parser.get_workflow_spec_by_execution_id(
-            wf_ex.id
-        )
+            # Check that we can get a valid spec by execution id.
+            wf_spec_by_exec_id = spec_parser.get_workflow_spec_by_execution_id(
+                wf_ex.id
+            )
 
         self.assertEqual(1, len(wf_spec_by_exec_id.get_tasks()))
 

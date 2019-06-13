@@ -2112,17 +2112,18 @@ class TaskExecutionTest(SQLAlchemyTest):
 
         self.assertIsNone(created.updated_at)
 
-        updated = db_api.update_task_execution(
-            created.id,
-            {'workflow_name': 'new_wf'}
-        )
+        with db_api.transaction():
+            updated = db_api.update_task_execution(
+                created.id,
+                {'workflow_name': 'new_wf'}
+            )
 
-        self.assertEqual('new_wf', updated.workflow_name)
+            self.assertEqual('new_wf', updated.workflow_name)
 
-        fetched = db_api.get_task_execution(created.id)
+            fetched = db_api.get_task_execution(created.id)
 
-        self.assertEqual(updated, fetched)
-        self.assertIsNotNone(fetched.updated_at)
+            self.assertEqual(updated, fetched)
+            self.assertIsNotNone(fetched.updated_at)
 
     def test_create_or_update_task_execution(self):
         id = 'not-existing-id'
@@ -2139,20 +2140,21 @@ class TaskExecutionTest(SQLAlchemyTest):
         self.assertIsNotNone(created)
         self.assertIsNotNone(created.id)
 
-        updated = db_api.create_or_update_task_execution(
-            created.id,
-            {'state': 'RUNNING'}
-        )
+        with db_api.transaction():
+            updated = db_api.create_or_update_task_execution(
+                created.id,
+                {'state': 'RUNNING'}
+            )
 
-        self.assertEqual('RUNNING', updated.state)
-        self.assertEqual(
-            'RUNNING',
-            db_api.load_task_execution(updated.id).state
-        )
+            self.assertEqual('RUNNING', updated.state)
+            self.assertEqual(
+                'RUNNING',
+                db_api.load_task_execution(updated.id).state
+            )
 
-        fetched = db_api.get_task_execution(created.id)
+            fetched = db_api.get_task_execution(created.id)
 
-        self.assertEqual(updated, fetched)
+            self.assertEqual(updated, fetched)
 
     def test_get_task_executions(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
@@ -2183,10 +2185,12 @@ class TaskExecutionTest(SQLAlchemyTest):
             created.name,
             'eq'
         )
-        fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created, fetched[0])
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
+
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created, fetched[0])
 
     def test_filter_task_execution_by_not_equal_value(self):
         created0, created1 = self._create_task_executions()
@@ -2197,10 +2201,11 @@ class TaskExecutionTest(SQLAlchemyTest):
             'neq'
         )
 
-        fetched = db_api.get_task_executions(**_filter)
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created1, fetched[0])
 
     def test_filter_task_execution_by_greater_than_value(self):
         created0, created1 = self._create_task_executions()
@@ -2210,10 +2215,12 @@ class TaskExecutionTest(SQLAlchemyTest):
             created0['created_at'],
             'gt'
         )
-        fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
+
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created1, fetched[0])
 
     def test_filter_task_execution_by_greater_than_equal_value(self):
         created0, created1 = self._create_task_executions()
@@ -2223,6 +2230,7 @@ class TaskExecutionTest(SQLAlchemyTest):
             created0['created_at'],
             'gte'
         )
+
         fetched = db_api.get_task_executions(**_filter)
 
         self.assertEqual(2, len(fetched))
@@ -2237,10 +2245,12 @@ class TaskExecutionTest(SQLAlchemyTest):
             created1['created_at'],
             'lt'
         )
-        fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created0, fetched[0])
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
+
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created0, fetched[0])
 
     def test_filter_task_execution_by_less_than_equal_value(self):
         created0, created1 = self._create_task_executions()
@@ -2250,6 +2260,7 @@ class TaskExecutionTest(SQLAlchemyTest):
             created1['created_at'],
             'lte'
         )
+
         fetched = db_api.get_task_executions(**_filter)
 
         self.assertEqual(2, len(fetched))
@@ -2264,12 +2275,14 @@ class TaskExecutionTest(SQLAlchemyTest):
             [created['created_at']],
             'in'
         )
-        fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created, fetched[0])
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
 
-    def test_filter_task_execution_by_values_notin_list(self):
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created, fetched[0])
+
+    def test_filter_task_execution_by_values_not_in_list(self):
         created0, created1 = self._create_task_executions()
 
         _filter = filter_utils.create_or_update_filter(
@@ -2277,10 +2290,12 @@ class TaskExecutionTest(SQLAlchemyTest):
             [created0['created_at']],
             'nin'
         )
-        fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
+
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created1, fetched[0])
 
     def test_filter_task_execution_by_multiple_columns(self):
         created0, created1 = self._create_task_executions()
@@ -2296,10 +2311,12 @@ class TaskExecutionTest(SQLAlchemyTest):
             'eq',
             _filter
         )
-        fetched = db_api.get_task_executions(**_filter)
 
-        self.assertEqual(1, len(fetched))
-        self.assertEqual(created1, fetched[0])
+        with db_api.transaction():
+            fetched = db_api.get_task_executions(**_filter)
+
+            self.assertEqual(1, len(fetched))
+            self.assertEqual(created1, fetched[0])
 
     def test_delete_task_execution(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])
@@ -2307,13 +2324,14 @@ class TaskExecutionTest(SQLAlchemyTest):
         values = copy.deepcopy(TASK_EXECS[0])
         values.update({'workflow_execution_id': wf_ex.id})
 
-        created = db_api.create_task_execution(values)
+        with db_api.transaction():
+            created = db_api.create_task_execution(values)
 
-        fetched = db_api.get_task_execution(created.id)
+            fetched = db_api.get_task_execution(created.id)
 
-        self.assertEqual(created, fetched)
+            self.assertEqual(created, fetched)
 
-        db_api.delete_task_execution(created.id)
+            db_api.delete_task_execution(created.id)
 
         self.assertRaises(
             exc.DBEntityNotFoundError,
@@ -2328,43 +2346,44 @@ class TaskExecutionTest(SQLAlchemyTest):
         values.update({'workflow_execution_id': wf_ex.id})
         values['state'] = 'RUNNING'
 
-        task_ex1 = db_api.create_task_execution(values)
+        with db_api.transaction():
+            task_ex1 = db_api.create_task_execution(values)
 
-        task_execs = db_api.get_incomplete_task_executions(
-            workflow_execution_id=wf_ex.id
-        )
-
-        self.assertEqual(1, len(task_execs))
-        self.assertEqual(task_ex1, task_execs[0])
-        self.assertEqual(
-            1,
-            db_api.get_incomplete_task_executions_count(
+            task_execs = db_api.get_incomplete_task_executions(
                 workflow_execution_id=wf_ex.id
             )
-        )
 
-        # Add one more task.
+            self.assertEqual(1, len(task_execs))
+            self.assertEqual(task_ex1, task_execs[0])
+            self.assertEqual(
+                1,
+                db_api.get_incomplete_task_executions_count(
+                    workflow_execution_id=wf_ex.id
+                )
+            )
 
-        values = copy.deepcopy(TASK_EXECS[1])
-        values.update({'workflow_execution_id': wf_ex.id})
-        values['state'] = 'SUCCESS'
+            # Add one more task.
 
-        db_api.create_task_execution(values)
+            values = copy.deepcopy(TASK_EXECS[1])
+            values.update({'workflow_execution_id': wf_ex.id})
+            values['state'] = 'SUCCESS'
 
-        # It should be still one incompleted task.
+            db_api.create_task_execution(values)
 
-        task_execs = db_api.get_incomplete_task_executions(
-            workflow_execution_id=wf_ex.id
-        )
+            # It should be still one incompleted task.
 
-        self.assertEqual(1, len(task_execs))
-        self.assertEqual(task_ex1, task_execs[0])
-        self.assertEqual(
-            1,
-            db_api.get_incomplete_task_executions_count(
+            task_execs = db_api.get_incomplete_task_executions(
                 workflow_execution_id=wf_ex.id
             )
-        )
+
+            self.assertEqual(1, len(task_execs))
+            self.assertEqual(task_ex1, task_execs[0])
+            self.assertEqual(
+                1,
+                db_api.get_incomplete_task_executions_count(
+                    workflow_execution_id=wf_ex.id
+                )
+            )
 
     def test_task_execution_repr(self):
         wf_ex = db_api.create_workflow_execution(WF_EXECS[0])

@@ -127,15 +127,15 @@ class DefaultEngineTest(base.DbTestCase):
 
             task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = task_execs[0]
+            task_ex = task_execs[0]
 
-        self.assertEqual('wb.wf', task_ex.workflow_name)
-        self.assertEqual('task1', task_ex.name)
-        self.assertEqual(states.RUNNING, task_ex.state)
-        self.assertIsNotNone(task_ex.spec)
-        self.assertDictEqual({}, task_ex.runtime_context)
+            self.assertEqual('wb.wf', task_ex.workflow_name)
+            self.assertEqual('task1', task_ex.name)
+            self.assertEqual(states.RUNNING, task_ex.state)
+            self.assertIsNotNone(task_ex.spec)
+            self.assertDictEqual({}, task_ex.runtime_context)
 
         # Data Flow properties.
         action_execs = db_api.get_action_executions(
@@ -196,15 +196,15 @@ class DefaultEngineTest(base.DbTestCase):
 
             task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task_ex = task_execs[0]
+            task_ex = task_execs[0]
 
-        self.assertEqual('wb.wf', task_ex.workflow_name)
-        self.assertEqual('task1', task_ex.name)
-        self.assertEqual(states.RUNNING, task_ex.state)
-        self.assertIsNotNone(task_ex.spec)
-        self.assertDictEqual({}, task_ex.runtime_context)
+            self.assertEqual('wb.wf', task_ex.workflow_name)
+            self.assertEqual('task1', task_ex.name)
+            self.assertEqual(states.RUNNING, task_ex.state)
+            self.assertIsNotNone(task_ex.spec)
+            self.assertDictEqual({}, task_ex.runtime_context)
 
         # Data Flow properties.
         action_execs = db_api.get_action_executions(
@@ -234,9 +234,10 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(wf_ex)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(wf_ex.params.get('env', {}), env)
+            self.assertDictEqual(wf_ex.params.get('env', {}), env)
 
     @mock.patch.object(db_api, "load_environment", MOCK_ENVIRONMENT)
     def test_start_workflow_with_saved_env(self):
@@ -256,9 +257,10 @@ class DefaultEngineTest(base.DbTestCase):
 
         self.assertIsNotNone(wf_ex)
 
-        wf_ex = db_api.get_workflow_execution(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-        self.assertDictEqual(wf_ex.params.get('env', {}), env)
+            self.assertDictEqual(wf_ex.params.get('env', {}), env)
 
     @mock.patch.object(db_api, "get_environment", MOCK_NOT_FOUND)
     def test_start_workflow_env_not_found(self):
@@ -463,15 +465,15 @@ class DefaultEngineTest(base.DbTestCase):
 
             task_execs = wf_ex.task_executions
 
-        self.assertEqual(1, len(task_execs))
+            self.assertEqual(1, len(task_execs))
 
-        task1_ex = task_execs[0]
+            task1_ex = task_execs[0]
 
-        self.assertEqual('task1', task1_ex.name)
-        self.assertEqual(states.RUNNING, task1_ex.state)
-        self.assertIsNotNone(task1_ex.spec)
-        self.assertDictEqual({}, task1_ex.runtime_context)
-        self.assertNotIn('__execution', task1_ex.in_context)
+            self.assertEqual('task1', task1_ex.name)
+            self.assertEqual(states.RUNNING, task1_ex.state)
+            self.assertIsNotNone(task1_ex.spec)
+            self.assertDictEqual({}, task1_ex.runtime_context)
+            self.assertNotIn('__execution', task1_ex.in_context)
 
         action_execs = db_api.get_action_executions(
             task_execution_id=task1_ex.id

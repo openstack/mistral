@@ -898,7 +898,7 @@ class TestExecutionsController(base.APITest):
         resource_function = kwargs['resource_function']
 
         self.assertEqual(
-            execution._get_workflow_execution_resource,
+            execution._get_workflow_execution_resource_with_output,
             resource_function
         )
 
@@ -912,7 +912,10 @@ class TestExecutionsController(base.APITest):
         args, kwargs = mock_get_all.call_args
         resource_function = kwargs['resource_function']
 
-        self.assertIsNone(resource_function)
+        self.assertEqual(
+            execution._get_workflow_execution_resource,
+            resource_function
+        )
 
     @mock.patch('mistral.db.v2.api.get_workflow_executions')
     @mock.patch('mistral.context.MistralContext.from_environ')

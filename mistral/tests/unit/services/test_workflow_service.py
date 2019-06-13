@@ -303,17 +303,17 @@ class WorkflowServiceTest(base.DbTestCase):
                     update_env
                 )
 
-            fetched = db_api.get_workflow_execution(created.id)
+                fetched = db_api.get_workflow_execution(created.id)
 
-            self.assertDictEqual(
-                wf_exec['params']['env'],
-                fetched.params['env']
-            )
+                self.assertDictEqual(
+                    wf_exec['params']['env'],
+                    fetched.params['env']
+                )
 
-            self.assertDictEqual(
-                wf_exec['context']['__env'],
-                fetched.context['__env']
-            )
+                self.assertDictEqual(
+                    wf_exec['context']['__env'],
+                    fetched.context['__env']
+                )
 
     def test_with_long_task_name(self):
         long_task_name = utils.generate_string(tasks.MAX_LENGTH_TASK_NAME + 1)
