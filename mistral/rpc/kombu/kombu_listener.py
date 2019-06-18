@@ -19,6 +19,7 @@ import six
 import threading
 
 from oslo_log import log as logging
+from oslo_utils import eventletutils
 
 from mistral.rpc.kombu import base as kombu_base
 
@@ -34,7 +35,7 @@ class KombuRPCListener(ConsumerMixin):
         self._thread = None
         self.connection = six.next(self._connections)
 
-        self.ready = threading.Event()
+        self.ready = eventletutils.Event()
 
     def add_listener(self, correlation_id):
         self._results[correlation_id] = six.moves.queue.Queue()
