@@ -395,8 +395,8 @@ class RetryPolicy(base.TaskPolicy):
         runtime_context[context_key] = policy_context
 
         # NOTE(vgvoleg): join tasks in direct workflows can't be
-        # retried as is, because this tasks can't start without
-        # the correct logical state.
+        # retried as-is, because these tasks can't start without
+        # a correct logical state.
         if hasattr(task_spec, "get_join") and task_spec.get_join():
             from mistral.engine import task_handler as t_h
             _log_task_delay(task_ex, self.delay, states.WAITING)
