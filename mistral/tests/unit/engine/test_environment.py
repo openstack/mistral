@@ -116,22 +116,23 @@ class EnvironmentTest(base.EngineTestCase):
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
-        wf_execs = db_api.get_workflow_executions()
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
 
-        self.assertEqual(2, len(wf_execs))
+            self.assertEqual(2, len(wf_execs))
 
-        # Execution of 'wf1'.
+            # Execution of 'wf1'.
 
-        wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
-        wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
+            wf2_ex = self._assert_single_item(wf_execs, name='my_wb.wf2')
+            wf1_ex = self._assert_single_item(wf_execs, name='my_wb.wf1')
 
-        expected_wf1_input = {
-            'param1': 'Bonnie',
-            'param2': 'Clyde'
-        }
+            expected_wf1_input = {
+                'param1': 'Bonnie',
+                'param2': 'Clyde'
+            }
 
-        self.assertIsNotNone(wf1_ex.task_execution_id)
-        self.assertDictEqual(wf1_ex.input, expected_wf1_input)
+            self.assertIsNotNone(wf1_ex.task_execution_id)
+            self.assertDictEqual(wf1_ex.input, expected_wf1_input)
 
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf1_ex.id)
@@ -389,9 +390,9 @@ class EnvironmentTest(base.EngineTestCase):
                 name='task1'
             )
 
-        self.assertDictEqual({'result': 'val1'}, t.published)
+            self.assertDictEqual({'result': 'val1'}, t.published)
 
-        self.assertNotIn('__env', wf_ex.context)
+            self.assertNotIn('__env', wf_ex.context)
 
     def test_subworkflow_env_no_duplicate(self):
         wf_text = """---
@@ -444,8 +445,8 @@ class EnvironmentTest(base.EngineTestCase):
                 sub_wf_ex.output
             )
 
-        # The environment of the subworkflow must be empty.
-        # To evaluate expressions it should be taken from the
-        # parent workflow execution.
-        self.assertDictEqual({}, sub_wf_ex.params['env'])
-        self.assertNotIn('__env', sub_wf_ex.context)
+            # The environment of the subworkflow must be empty.
+            # To evaluate expressions it should be taken from the
+            # parent workflow execution.
+            self.assertDictEqual({}, sub_wf_ex.params['env'])
+            self.assertNotIn('__env', sub_wf_ex.context)

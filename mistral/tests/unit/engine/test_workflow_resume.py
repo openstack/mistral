@@ -421,14 +421,14 @@ class WorkflowResumeTest(base.EngineTestCase):
 
             task_execs = wf_ex.task_executions
 
-        task_1_ex = self._assert_single_item(task_execs, name='task1')
-        task_2_ex = self._assert_single_item(task_execs, name='task2')
+            task_1_ex = self._assert_single_item(task_execs, name='task1')
+            task_2_ex = self._assert_single_item(task_execs, name='task2')
 
-        self.assertEqual(states.PAUSED, wf_ex.state)
-        self.assertEqual(2, len(task_execs))
-        self.assertDictEqual(env, wf_ex.params['env'])
-        self.assertEqual(states.SUCCESS, task_1_ex.state)
-        self.assertEqual(states.IDLE, task_2_ex.state)
+            self.assertEqual(states.PAUSED, wf_ex.state)
+            self.assertEqual(2, len(task_execs))
+            self.assertDictEqual(env, wf_ex.params['env'])
+            self.assertEqual(states.SUCCESS, task_1_ex.state)
+            self.assertEqual(states.IDLE, task_2_ex.state)
 
         # Update env in workflow execution with the following.
         updated_env = {
@@ -446,13 +446,13 @@ class WorkflowResumeTest(base.EngineTestCase):
 
             task_execs = wf_ex.task_executions
 
-        self.assertDictEqual(updated_env, wf_ex.params['env'])
-        self.assertEqual(3, len(task_execs))
+            self.assertDictEqual(updated_env, wf_ex.params['env'])
+            self.assertEqual(3, len(task_execs))
 
-        # Check result of task2.
-        task_2_ex = self._assert_single_item(task_execs, name='task2')
+            # Check result of task2.
+            task_2_ex = self._assert_single_item(task_execs, name='task2')
 
-        self.assertEqual(states.SUCCESS, task_2_ex.state)
+            self.assertEqual(states.SUCCESS, task_2_ex.state)
 
         # Re-read task execution, otherwise lazy loading of action executions
         # may not work.
@@ -461,15 +461,15 @@ class WorkflowResumeTest(base.EngineTestCase):
 
             task_2_result = data_flow.get_task_execution_result(task_2_ex)
 
-        self.assertEqual(updated_env['var1'], task_2_result)
+            self.assertEqual(updated_env['var1'], task_2_result)
 
-        # Check result of task3.
-        task_3_ex = self._assert_single_item(
-            task_execs,
-            name='task3'
-        )
+            # Check result of task3.
+            task_3_ex = self._assert_single_item(
+                task_execs,
+                name='task3'
+            )
 
-        self.assertEqual(states.SUCCESS, task_3_ex.state)
+            self.assertEqual(states.SUCCESS, task_3_ex.state)
 
         # Re-read task execution, otherwise lazy loading of action executions
         # may not work.
@@ -478,4 +478,4 @@ class WorkflowResumeTest(base.EngineTestCase):
 
             task_3_result = data_flow.get_task_execution_result(task_3_ex)
 
-        self.assertEqual(updated_env['var2'], task_3_result)
+            self.assertEqual(updated_env['var2'], task_3_result)

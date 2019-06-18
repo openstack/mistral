@@ -335,10 +335,10 @@ class DirectWorkflowRerunTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
             task_execs = wf_ex.task_executions
 
-        self.assertEqual(states.ERROR, wf_ex.state)
-        self.assertIsNotNone(wf_ex.state_info)
-        self.assertEqual(3, len(task_execs))
-        self.assertDictEqual(env, wf_ex.params['env'])
+            self.assertEqual(states.ERROR, wf_ex.state)
+            self.assertIsNotNone(wf_ex.state_info)
+            self.assertEqual(3, len(task_execs))
+            self.assertDictEqual(env, wf_ex.params['env'])
 
         task_10_ex = self._assert_single_item(task_execs, name='t10')
         task_21_ex = self._assert_single_item(task_execs, name='t21')

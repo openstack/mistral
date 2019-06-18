@@ -238,30 +238,31 @@ class SubworkflowsTest(base.EngineTestCase):
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
-        wf_execs = db_api.get_workflow_executions()
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
 
-        self.assertEqual(2, len(wf_execs))
+            self.assertEqual(2, len(wf_execs))
 
-        # Execution of 'wf2'.
-        wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
-        wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
+            # Execution of 'wf2'.
+            wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
+            wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
-        self.assertEqual(project_id, wf1_ex.project_id)
-        self.assertIsNotNone(wf1_ex.task_execution_id)
-        self.assertDictContainsSubset(
-            {
-                'task_name': 'task2',
-                'task_execution_id': wf1_ex.task_execution_id
-            },
-            wf1_ex.params
-        )
-        self.assertDictEqual(
-            {
-                'param1': 'Bonnie',
-                'param2': 'Clyde'
-            },
-            wf1_ex.input
-        )
+            self.assertEqual(project_id, wf1_ex.project_id)
+            self.assertIsNotNone(wf1_ex.task_execution_id)
+            self.assertDictContainsSubset(
+                {
+                    'task_name': 'task2',
+                    'task_execution_id': wf1_ex.task_execution_id
+                },
+                wf1_ex.params
+            )
+            self.assertDictEqual(
+                {
+                    'param1': 'Bonnie',
+                    'param2': 'Clyde'
+                },
+                wf1_ex.input
+            )
 
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf1_ex.id)
@@ -360,16 +361,17 @@ class SubworkflowsTest(base.EngineTestCase):
 
         self._await(lambda: len(db_api.get_workflow_executions()) == 2, 0.5, 5)
 
-        wf_execs = db_api.get_workflow_executions()
+        with db_api.transaction():
+            wf_execs = db_api.get_workflow_executions()
 
-        self.assertEqual(2, len(wf_execs))
+            self.assertEqual(2, len(wf_execs))
 
-        # Execution of 'wf1'.
-        wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
-        wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
+            # Execution of 'wf1'.
+            wf1_ex = self._assert_single_item(wf_execs, name='wb1.wf1')
+            wf2_ex = self._assert_single_item(wf_execs, name='wb1.wf2')
 
-        self.assertIsNotNone(wf1_ex.task_execution_id)
-        self.assertDictContainsSubset({}, wf1_ex.params)
+            self.assertIsNotNone(wf1_ex.task_execution_id)
+            self.assertDictContainsSubset({}, wf1_ex.params)
 
         # Wait till workflow 'wf1' is completed.
         self.await_workflow_success(wf1_ex.id)

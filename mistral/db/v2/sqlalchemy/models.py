@@ -177,7 +177,6 @@ class Execution(mb.MistralSecureModelBase):
     workflow_name = sa.Column(sa.String(255))
     workflow_namespace = sa.Column(sa.String(255))
     workflow_id = sa.Column(sa.String(80))
-    spec = sa.Column(st.JsonMediumDictType())
     state = sa.Column(sa.String(20))
     state_info = sa.Column(sa.Text(), nullable=True)
     tags = sa.Column(st.JsonListType())
@@ -199,6 +198,7 @@ class ActionExecution(Execution):
     )
 
     # Main properties.
+    spec = sa.Column(st.JsonMediumDictType())
     accepted = sa.Column(sa.Boolean(), default=False)
     input = sa.Column(st.JsonLongDictType(), nullable=True)
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
@@ -224,10 +224,11 @@ class WorkflowExecution(Execution):
     )
 
     # Main properties.
+    spec = sa.orm.deferred(sa.Column(st.JsonMediumDictType()))
     accepted = sa.Column(sa.Boolean(), default=False)
-    input = sa.Column(st.JsonLongDictType(), nullable=True)
+    input = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
     output = sa.orm.deferred(sa.Column(st.JsonLongDictType(), nullable=True))
-    params = sa.Column(st.JsonLongDictType())
+    params = sa.orm.deferred(sa.Column(st.JsonLongDictType()))
 
     # Initial workflow context containing workflow variables, environment,
     # openstack security context etc.
@@ -235,7 +236,7 @@ class WorkflowExecution(Execution):
     #   * Data stored in this structure should not be copied into inbound
     #     contexts of tasks. No need to duplicate it.
     #   * This structure does not contain workflow input.
-    context = sa.Column(st.JsonLongDictType())
+    context = sa.orm.deferred(sa.Column(st.JsonLongDictType()))
 
 
 class TaskExecution(Execution):
@@ -252,6 +253,7 @@ class TaskExecution(Execution):
     )
 
     # Main properties.
+    spec = sa.orm.deferred(sa.Column(st.JsonMediumDictType()))
     action_spec = sa.Column(st.JsonLongDictType())
     unique_key = sa.Column(sa.String(255), nullable=True)
     type = sa.Column(sa.String(10))

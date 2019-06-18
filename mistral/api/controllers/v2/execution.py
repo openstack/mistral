@@ -51,17 +51,26 @@ STATE_TYPES = wtypes.Enum(
 )
 
 
-def _load_deferred_output_field(ex):
-    if ex:
-        # We need to refer to this lazy-load field explicitly in
-        # order to make sure that it is correctly loaded.
-        hasattr(ex, 'output')
+def _load_deferred_fields(ex, fields):
+    if not ex:
+        return ex
+
+    # We need to refer lazy-loaded fields explicitly in
+    # order to make sure that they are correctly loaded.
+    for f in fields:
+        hasattr(ex, f)
 
     return ex
 
 
+def _get_workflow_execution_resource_with_output(wf_ex):
+    _load_deferred_fields(wf_ex, ['params', 'output'])
+
+    return resources.Execution.from_db_model(wf_ex)
+
+
 def _get_workflow_execution_resource(wf_ex):
-    _load_deferred_output_field(wf_ex)
+    _load_deferred_fields(wf_ex, ['params'])
 
     return resources.Execution.from_db_model(wf_ex)
 
@@ -75,7 +84,7 @@ def _get_workflow_execution(id, must_exist=True):
         else:
             wf_ex = db_api.load_workflow_execution(id)
 
-        return _load_deferred_output_field(wf_ex)
+        return _load_deferred_fields(wf_ex, ['params', 'output'])
 
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
@@ -398,9 +407,9 @@ class ExecutionsController(rest.RestController):
         )
 
         if include_output:
-            resource_function = _get_workflow_execution_resource
+            resource_function = _get_workflow_execution_resource_with_output
         else:
-            resource_function = None
+            resource_function = _get_workflow_execution_resource
 
         return rest_utils.get_all(
             resources.Executions,
