@@ -19,14 +19,19 @@ from eventlet import timeout
 import datetime
 import mock
 
+from oslo_config import cfg
+
 from mistral.db.v2 import api as db_api
 from mistral.scheduler import base as scheduler_base
 from mistral.scheduler import default_scheduler
 from mistral.tests.unit import base
 
 
+CONF = cfg.CONF
+
+
 TARGET_METHOD_PATH = (
-    'mistral.tests.unit.scheduler.test_scheduler.target_method'
+    'mistral.tests.unit.scheduler.test_default_scheduler.target_method'
 )
 
 
@@ -34,9 +39,9 @@ def target_method():
     pass
 
 
-class SchedulerTest(base.DbTestCase):
+class DefaultSchedulerTest(base.DbTestCase):
     def setUp(self):
-        super(SchedulerTest, self).setUp()
+        super(DefaultSchedulerTest, self).setUp()
 
         # This Timeout object is needed to raise an exception if the test took
         # longer than a configured number of seconds.
@@ -49,7 +54,11 @@ class SchedulerTest(base.DbTestCase):
         self.target_mtd_finished = event.Event()
         self.target_mtd_lock = semaphore.Semaphore(0)
 
-        self.scheduler = default_scheduler.DefaultScheduler(1, 1, 100)
+        self.override_config('fixed_delay', 1, 'scheduler')
+        self.override_config('random_delay', 1, 'scheduler')
+        self.override_config('batch_size', 100, 'scheduler')
+
+        self.scheduler = default_scheduler.DefaultScheduler(CONF.scheduler)
         self.scheduler.start()
 
         self.addCleanup(self.scheduler.stop, True)
@@ -75,6 +84,7 @@ class SchedulerTest(base.DbTestCase):
 
     @mock.patch(TARGET_METHOD_PATH)
     def test_schedule_called_once(self, method):
+        # Delegate from the module function to the method of the test class.
         method.side_effect = self.target_method
 
         job = scheduler_base.SchedulerJob(
@@ -110,6 +120,7 @@ class SchedulerTest(base.DbTestCase):
 
     @mock.patch(TARGET_METHOD_PATH)
     def test_pickup_from_job_store(self, method):
+        # Delegate from the module function to the method of the test class.
         method.side_effect = self.target_method
 
         self.override_config('pickup_job_after', 1, 'scheduler')
@@ -126,7 +137,7 @@ class SchedulerTest(base.DbTestCase):
             'auth_ctx': {}
         })
 
-        self.assertTrue(len(db_api.get_scheduled_jobs()) > 0)
+        self.assertEqual(1, len(db_api.get_scheduled_jobs()))
 
         self._unlock_target_method()
         self._wait_target_method_end()
@@ -138,6 +149,7 @@ class SchedulerTest(base.DbTestCase):
 
     @mock.patch(TARGET_METHOD_PATH)
     def test_recapture_job(self, method):
+        # Delegate from the module function to the method of the test class.
         method.side_effect = self.target_method
 
         self.override_config('pickup_job_after', 1, 'scheduler')
@@ -161,7 +173,7 @@ class SchedulerTest(base.DbTestCase):
             'auth_ctx': {}
         })
 
-        self.assertTrue(len(db_api.get_scheduled_jobs()) > 0)
+        self.assertEqual(1, len(db_api.get_scheduled_jobs()))
 
         self._unlock_target_method()
         self._wait_target_method_end()

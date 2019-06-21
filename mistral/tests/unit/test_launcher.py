@@ -17,17 +17,18 @@ import eventlet
 
 from mistral.api import service as api_service
 from mistral.cmd import launch
+from mistral.scheduler import base as sched_base
 from mistral.tests.unit import base
 
 
 class ServiceLauncherTest(base.DbTestCase):
-
     def setUp(self):
         super(ServiceLauncherTest, self).setUp()
 
         self.override_config('enabled', False, group='cron_trigger')
 
         launch.reset_server_managers()
+        sched_base.destroy_system_scheduler()
 
     def test_launch_all(self):
         eventlet.spawn(launch.launch_any, launch.LAUNCH_OPTIONS.keys())

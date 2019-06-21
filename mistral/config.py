@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2019 - Nokia Networks
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -239,6 +240,13 @@ executor_opts = [
         help=_('The version of the executor.')
     )
 ]
+
+scheduler_type_opt = cfg.StrOpt(
+    'scheduler_type',
+    default='legacy',
+    choices=['legacy', 'default'],
+    help=_('The name of the scheduler implementation used in the system.')
+)
 
 scheduler_opts = [
     cfg.FloatOpt(
@@ -643,6 +651,7 @@ KEYSTONE_GROUP = "keystone"
 
 CONF.register_opt(wf_trace_log_name_opt)
 CONF.register_opt(auth_type_opt)
+CONF.register_opt(scheduler_type_opt)
 CONF.register_opt(js_impl_opt)
 CONF.register_opt(rpc_impl_opt)
 CONF.register_opt(rpc_response_timeout_opt)
@@ -682,6 +691,7 @@ default_group_opts = itertools.chain(
     [
         wf_trace_log_name_opt,
         auth_type_opt,
+        scheduler_type_opt,
         js_impl_opt,
         rpc_impl_opt,
         rpc_response_timeout_opt,

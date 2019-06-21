@@ -20,6 +20,7 @@ from oslo_config import cfg
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
+from mistral.scheduler import base as sched_base
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
@@ -739,7 +740,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.assertIn("Task 'task3' not found", str(exception))
 
-    def test_delete_workflow_completion_check_on_stop(self):
+    def test_delete_workflow_integrity_check_on_stop(self):
         wf_text = """---
         version: '2.0'
 
@@ -752,21 +753,14 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf')
-
-        calls = db_api.get_delayed_calls()
-
-        mtd_name = 'mistral.engine.workflow_handler._check_and_fix_integrity'
-
-        self._assert_single_item(calls, target_method_name=mtd_name)
 
         self.engine.stop_workflow(wf_ex.id, state=states.CANCELLED)
 
-        self._await(
-            lambda:
-            len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
-        )
+        sched = sched_base.get_system_scheduler()
 
-    def test_delete_workflow_completion_on_execution_delete(self):
+        self._await(lambda: sched.get_scheduled_jobs_count() == 0)
+
+    def test_delete_workflow_integrity_check_on_execution_delete(self):
         wf_text = """---
         version: '2.0'
 
@@ -780,18 +774,11 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf')
 
-        calls = db_api.get_delayed_calls()
-
-        mtd_name = 'mistral.engine.workflow_handler._check_and_fix_integrity'
-
-        self._assert_single_item(calls, target_method_name=mtd_name)
-
         db_api.delete_workflow_execution(wf_ex.id)
 
-        self._await(
-            lambda:
-            len(db_api.get_delayed_calls(target_method_name=mtd_name)) == 0
-        )
+        sched = sched_base.get_system_scheduler()
+
+        self._await(lambda: sched.get_scheduled_jobs_count() == 0)
 
     def test_output(self):
         wf_text = """---

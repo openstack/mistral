@@ -18,10 +18,10 @@ from mistral import config as cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine
 from mistral.rpc import base as rpc
+from mistral.scheduler import base as sched_base
 from mistral.service import base as service_base
 from mistral.services import action_execution_checker
 from mistral.services import expiration_policy
-from mistral.services import scheduler
 from mistral import utils
 from mistral.utils import profiler as profiler_utils
 
@@ -49,7 +49,9 @@ class EngineServer(service_base.MistralService):
 
         db_api.setup_db()
 
-        self._scheduler = scheduler.start()
+        self._scheduler = sched_base.get_system_scheduler()
+        self._scheduler.start()
+
         self._expiration_policy_tg = expiration_policy.setup()
 
         action_execution_checker.start()
@@ -72,7 +74,9 @@ class EngineServer(service_base.MistralService):
         action_execution_checker.stop(graceful)
 
         if self._scheduler:
-            scheduler.stop_scheduler(self._scheduler, graceful)
+            self._scheduler.stop(graceful)
+
+            sched_base.destroy_system_scheduler()
 
         if self._expiration_policy_tg:
             self._expiration_policy_tg.stop(graceful)

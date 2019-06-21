@@ -453,6 +453,10 @@ def delete_scheduled_jobs(**kwargs):
     return IMPL.delete_scheduled_jobs(**kwargs)
 
 
+def get_scheduled_jobs_count(**kwargs):
+    return IMPL.get_scheduled_jobs_count(**kwargs)
+
+
 # Cron triggers.
 
 def get_cron_trigger(identifier):

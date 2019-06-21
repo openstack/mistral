@@ -150,21 +150,28 @@ class RandomSleepEchoAction(actions_base.Action):
 
 
 class WithItemsEngineTest(base.EngineTestCase):
-    def _assert_capacity(self, capacity, task_ex):
-        self.assertEqual(
-            capacity,
-            task_ex.runtime_context['with_items']['capacity']
-        )
+    @staticmethod
+    def _get_incomplete_action(task_ex_id):
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            return [e for e in task_ex.executions if not e.accepted][0]
 
     @staticmethod
-    def _get_incomplete_action(task_ex):
-        return [e for e in task_ex.executions if not e.accepted][0]
+    def _get_running_actions_count(task_ex_id):
+        with db_api.transaction():
+            task_ex = db_api.get_task_execution(task_ex_id)
+
+            return len(
+                [e for e in task_ex.executions if e.state == states.RUNNING]
+            )
 
     @staticmethod
-    def _get_running_actions_count(task_ex):
-        return len(
-            [e for e in task_ex.executions if e.state == states.RUNNING]
-        )
+    def _action_result_equals(action_ex_id, output):
+        with db_api.transaction():
+            a_ex = db_api.get_action_execution(action_ex_id)
+
+            return a_ex.output == output
 
     def test_with_items_simple(self):
         wb_service.create_workbook_v2(WB)
@@ -626,50 +633,53 @@ class WithItemsEngineTest(base.EngineTestCase):
             # Also initialize lazy collections.
             task_ex = wf_ex.task_executions[0]
 
-            self._assert_capacity(0, task_ex)
-            self.assertEqual(1, self._get_running_actions_count(task_ex))
+        self.assertEqual(1, self._get_running_actions_count(task_ex.id))
 
         # 1st iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("John")
         )
 
         # Wait till the delayed on_action_complete is processed.
-        # 1 is always there to periodically check WF completion.
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'John'})
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            self._assert_capacity(0, task_ex)
-            self.assertEqual(1, self._get_running_actions_count(task_ex))
+        self._await(lambda: self._get_running_actions_count(task_ex.id) == 1)
 
         # 2nd iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("Ivan")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'Ivan'})
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            self._assert_capacity(0, task_ex)
-            self.assertEqual(1, self._get_running_actions_count(task_ex))
+        self._await(lambda: self._get_running_actions_count(task_ex.id) == 1)
 
         # 3rd iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("Mistral")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) in (0, 1))
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'Mistral'})
+        )
 
         task_ex = db_api.get_task_execution(task_ex.id)
-
-        self._assert_capacity(1, task_ex)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -788,59 +798,53 @@ class WithItemsEngineTest(base.EngineTestCase):
 
             task_ex = wf_ex.task_executions[0]
 
-            running_cnt = self._get_running_actions_count(task_ex)
-
-        self._assert_capacity(0, task_ex)
-        self.assertEqual(2, running_cnt)
+        self.assertEqual(2, self._get_running_actions_count(task_ex.id))
 
         # 1st iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("John")
         )
 
         # Wait till the delayed on_action_complete is processed.
-        # 1 is always there to periodically check WF completion.
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'John'})
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            running_cnt = self._get_running_actions_count(task_ex)
-
-        self._assert_capacity(0, task_ex)
-        self.assertEqual(2, running_cnt)
+        self._await(lambda: self._get_running_actions_count(task_ex.id) == 2)
 
         # 2nd iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("Ivan")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'Ivan'})
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            running_cnt = self._get_running_actions_count(task_ex)
-
-        self._assert_capacity(0, task_ex)
-        self.assertEqual(2, running_cnt)
+        self._await(lambda: self._get_running_actions_count(task_ex.id) == 2)
 
         # 3rd iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("Mistral")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'Mistral'})
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            self._assert_capacity(1, task_ex)
-
-            incomplete_action = self._get_incomplete_action(task_ex)
+        incomplete_action = self._get_incomplete_action(task_ex.id)
 
         # 4th iteration complete.
         self.engine.on_action_complete(
@@ -848,11 +852,14 @@ class WithItemsEngineTest(base.EngineTestCase):
             actions_base.Result("Hello")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) in (0, 1))
+        self._await(
+            lambda: self._action_result_equals(
+                incomplete_action.id,
+                {'result': 'Hello'}
+            )
+        )
 
         task_ex = db_api.get_task_execution(task_ex.id)
-
-        self._assert_capacity(2, task_ex)
 
         self.await_workflow_success(wf_ex.id)
 
@@ -940,27 +947,24 @@ class WithItemsEngineTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = wf_ex.task_executions[0]
-            running_cnt = self._get_running_actions_count(task_ex)
 
-        self._assert_capacity(0, task_ex)
-        self.assertEqual(3, running_cnt)
+        self.assertEqual(3, self._get_running_actions_count(task_ex.id))
 
         # 1st iteration complete.
+        action_ex_id = self._get_incomplete_action(task_ex.id).id
+
         self.engine.on_action_complete(
-            self._get_incomplete_action(task_ex).id,
+            action_ex_id,
             actions_base.Result("John")
         )
 
         # Wait till the delayed on_action_complete is processed.
-        # 1 is always there to periodically check WF completion.
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(action_ex_id, {'result': 'John'})
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            self._assert_capacity(1, task_ex)
-
-            incomplete_action = self._get_incomplete_action(task_ex)
+        incomplete_action = self._get_incomplete_action(task_ex.id)
 
         # 2nd iteration complete.
         self.engine.on_action_complete(
@@ -968,14 +972,15 @@ class WithItemsEngineTest(base.EngineTestCase):
             actions_base.Result("Ivan")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) == 1)
+        self._await(
+            lambda:
+            self._action_result_equals(
+                incomplete_action.id,
+                {'result': 'Ivan'}
+            )
+        )
 
-        with db_api.transaction():
-            task_ex = db_api.get_task_execution(task_ex.id)
-
-            self._assert_capacity(2, task_ex)
-
-            incomplete_action = self._get_incomplete_action(task_ex)
+        incomplete_action = self._get_incomplete_action(task_ex.id)
 
         # 3rd iteration complete.
         self.engine.on_action_complete(
@@ -983,11 +988,15 @@ class WithItemsEngineTest(base.EngineTestCase):
             actions_base.Result("Mistral")
         )
 
-        self._await(lambda: len(db_api.get_delayed_calls()) in (0, 1))
+        self._await(
+            lambda:
+            self._action_result_equals(
+                incomplete_action.id,
+                {'result': 'Mistral'}
+            )
+        )
 
         task_ex = db_api.get_task_execution(task_ex.id)
-
-        self._assert_capacity(3, task_ex)
 
         self.await_workflow_success(wf_ex.id)
 

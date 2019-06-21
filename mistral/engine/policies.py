@@ -19,7 +19,7 @@ from mistral.engine import base
 from mistral.engine import post_tx_queue
 from mistral.engine import workflow_handler as wf_handler
 from mistral import expressions
-from mistral.services import scheduler
+from mistral.scheduler import base as sched_base
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -210,12 +210,17 @@ class WaitBeforePolicy(base.TaskPolicy):
 
             task_ex.state = states.RUNNING_DELAYED
 
-            scheduler.schedule_call(
-                None,
-                _CONTINUE_TASK_PATH,
-                self.delay,
-                task_ex_id=task_ex.id,
+            sched = sched_base.get_system_scheduler()
+
+            job = sched_base.SchedulerJob(
+                run_after=self.delay,
+                func_name=_CONTINUE_TASK_PATH,
+                func_args={
+                    'task_ex_id': task_ex.id
+                }
             )
+
+            sched.schedule(job)
 
 
 class WaitAfterPolicy(base.TaskPolicy):
@@ -269,14 +274,19 @@ class WaitAfterPolicy(base.TaskPolicy):
         )
 
         # Schedule to change task state to RUNNING again.
-        scheduler.schedule_call(
-            None,
-            _COMPLETE_TASK_PATH,
-            self.delay,
-            task_ex_id=task_ex.id,
-            state=end_state,
-            state_info=end_state_info
+        sched = sched_base.get_system_scheduler()
+
+        job = sched_base.SchedulerJob(
+            run_after=self.delay,
+            func_name=_COMPLETE_TASK_PATH,
+            func_args={
+                'task_ex_id': task_ex.id,
+                'state': end_state,
+                'state_info': end_state_info
+            }
         )
+
+        sched.schedule(job)
 
 
 class RetryPolicy(base.TaskPolicy):
@@ -399,20 +409,28 @@ class RetryPolicy(base.TaskPolicy):
         # the correct logical state.
         if hasattr(task_spec, "get_join") and task_spec.get_join():
             from mistral.engine import task_handler as t_h
+
             _log_task_delay(task_ex, self.delay, states.WAITING)
+
             task_ex.state = states.WAITING
+
             t_h._schedule_refresh_task_state(task_ex.id, self.delay)
+
             return
 
         _log_task_delay(task_ex, self.delay)
+
         task_ex.state = states.RUNNING_DELAYED
 
-        scheduler.schedule_call(
-            None,
-            _CONTINUE_TASK_PATH,
-            self.delay,
-            task_ex_id=task_ex.id,
+        sched = sched_base.get_system_scheduler()
+
+        job = sched_base.SchedulerJob(
+            run_after=self.delay,
+            func_name=_CONTINUE_TASK_PATH,
+            func_args={'task_ex_id': task_ex.id}
         )
+
+        sched.schedule(job)
 
     @staticmethod
     def refresh_runtime_context(task_ex):
@@ -444,13 +462,18 @@ class TimeoutPolicy(base.TaskPolicy):
         if self.delay == 0:
             return
 
-        scheduler.schedule_call(
-            None,
-            _FAIL_IF_INCOMPLETE_TASK_PATH,
-            self.delay,
-            task_ex_id=task_ex.id,
-            timeout=self.delay
+        sched = sched_base.get_system_scheduler()
+
+        job = sched_base.SchedulerJob(
+            run_after=self.delay,
+            func_name=_FAIL_IF_INCOMPLETE_TASK_PATH,
+            func_args={
+                'task_ex_id': task_ex.id,
+                'timeout': self.delay
+            }
         )
+
+        sched.schedule(job)
 
         wf_trace.info(
             task_ex,
