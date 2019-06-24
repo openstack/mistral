@@ -64,13 +64,13 @@ def _load_deferred_fields(ex, fields):
 
 
 def _get_workflow_execution_resource_with_output(wf_ex):
-    _load_deferred_fields(wf_ex, ['params', 'output'])
+    _load_deferred_fields(wf_ex, ['params', 'input', 'output'])
 
     return resources.Execution.from_db_model(wf_ex)
 
 
 def _get_workflow_execution_resource(wf_ex):
-    _load_deferred_fields(wf_ex, ['params'])
+    _load_deferred_fields(wf_ex, ['params', 'input'])
 
     return resources.Execution.from_db_model(wf_ex)
 
@@ -84,7 +84,7 @@ def _get_workflow_execution(id, must_exist=True):
         else:
             wf_ex = db_api.load_workflow_execution(id)
 
-        return _load_deferred_fields(wf_ex, ['params', 'output'])
+        return _load_deferred_fields(wf_ex, ['params', 'input', 'output'])
 
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
