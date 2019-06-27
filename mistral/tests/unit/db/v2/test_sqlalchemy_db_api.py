@@ -2975,7 +2975,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             'workflow',
         )
 
-        self.assertTrue(2, len(fetched))
+        self.assertEqual(2, len(fetched))
 
     def test_get_resource_members_not_owner(self):
         created = db_api.create_resource_member(RESOURCE_MEMBERS[0])
@@ -2989,7 +2989,7 @@ class ResourceMemberTest(SQLAlchemyTest):
             'workflow',
         )
 
-        self.assertTrue(1, len(fetched))
+        self.assertEqual(1, len(fetched))
         self.assertEqual(created, fetched[0])
 
     def test_update_resource_member_by_member(self):

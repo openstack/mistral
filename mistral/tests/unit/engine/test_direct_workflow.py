@@ -90,7 +90,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         self.await_task_success(task1.id)
         self.await_task_success(task2.id)
 
-        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertEqual(wf_ex.state, states.SUCCESS)
 
     def test_condition_transition_not_triggering(self):
         wf_text = """---
@@ -131,7 +131,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         self.await_task_error(task1.id)
 
-        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertEqual(wf_ex.state, states.ERROR)
 
     def test_change_state_after_success(self):
         wf_text = """
@@ -223,7 +223,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self._run_workflow(wf_text)
 
         self.assertIn('Invalid input', wf_ex.state_info)
-        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertEqual(wf_ex.state, states.ERROR)
 
     def test_wrong_first_task_input(self):
         wf_text = """
@@ -264,7 +264,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         # TODO(dzimine): Catch tasks caused error, and set them to ERROR:
         # TODO(dzimine): self.assertTrue(task_ex.state, states.ERROR)
 
-        self.assertTrue(wf_ex.state, states.ERROR)
+        self.assertEqual(wf_ex.state, states.ERROR)
         self.assertIn("Failed to find action", wf_ex.state_info)
 
     def test_wrong_action_first_task(self):
