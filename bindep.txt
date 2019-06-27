@@ -1,0 +1,8 @@
+# This is a cross-platform list tracking distribution packages needed by tests;
+# see http://docs.openstack.org/infra/bindep/ for additional information.
+
+mysql-client [platform:dpkg]
+mysql-server [platform:dpkg]
+postgresql
+postgresql-client [platform:dpkg]
+postgresql-server [platform:rpm]
