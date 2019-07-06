@@ -460,16 +460,6 @@ class ScheduledJob(mb.MistralModelBase):
     key = sa.Column(sa.String(250), nullable=True)
 
 
-sa.Index(
-    '%s_execute_at' % ScheduledJob.__tablename__,
-    ScheduledJob.execute_at
-)
-sa.Index(
-    '%s_captured_at' % ScheduledJob.__tablename__,
-    ScheduledJob.captured_at
-)
-
-
 class Environment(mb.MistralSecureModelBase):
     """Contains environment variables for workflow execution."""
 
