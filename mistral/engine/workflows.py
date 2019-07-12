@@ -74,6 +74,19 @@ class Workflow(object):
 
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
 
+        filtered_publishers = []
+        for publisher in publishers:
+            if not isinstance(publisher, dict):
+                continue
+
+            target_events = publisher.get('event_types', [])
+
+            if not target_events or event in target_events:
+                filtered_publishers.append(publisher)
+
+        if not filtered_publishers:
+            return
+
         def _convert_to_notification_data():
             return {
                 "id": self.wf_ex.id,
@@ -92,7 +105,7 @@ class Workflow(object):
                 _convert_to_notification_data(),
                 event,
                 self.wf_ex.updated_at,
-                publishers
+                filtered_publishers
             )
         post_tx_queue.register_operation(_send_notification)
 
