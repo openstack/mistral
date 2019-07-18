@@ -266,6 +266,7 @@ class Workflow(object):
         from mistral.engine import workflow_handler
 
         self.set_state(states.RUNNING)
+        self.notify(events.WORKFLOW_RERUN)
 
         # TODO(rakhmerov): We call a internal method of a module here.
         # The simplest way is to make it public, however, I believe
