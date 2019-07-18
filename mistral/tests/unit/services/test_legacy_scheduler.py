@@ -19,15 +19,21 @@ import mock
 
 from eventlet import queue
 from eventlet import timeout
+from oslo_config import cfg
+
 from mistral import context as auth_context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral.services import scheduler
+from mistral.scheduler import base as sched_base
+from mistral.services import legacy_scheduler
 from mistral.tests.unit import base
 from mistral_lib import actions as ml_actions
 
+
+CONF = cfg.CONF
+
 TARGET_METHOD_PATH = (
-    'mistral.tests.unit.services.test_scheduler.target_method'
+    'mistral.tests.unit.services.test_legacy_scheduler.target_method'
 )
 DELAY = 1.5
 
@@ -40,15 +46,18 @@ def target_method():
     pass
 
 
-class SchedulerServiceTest(base.DbTestCase):
-
+class LegacySchedulerTest(base.DbTestCase):
     def setUp(self):
-        super(SchedulerServiceTest, self).setUp()
+        super(LegacySchedulerTest, self).setUp()
 
         self.timeout = timeout.Timeout(seconds=10)
         self.queue = queue.Queue()
 
-        self.scheduler = scheduler.Scheduler(0, 1, None)
+        self.override_config('fixed_delay', 1, 'scheduler')
+        self.override_config('random_delay', 0, 'scheduler')
+        self.override_config('batch_size', 100, 'scheduler')
+
+        self.scheduler = legacy_scheduler.LegacyScheduler(CONF.scheduler)
         self.scheduler.start()
 
         self.addCleanup(self.scheduler.stop, True)
@@ -64,6 +73,7 @@ class SchedulerServiceTest(base.DbTestCase):
     @mock.patch(TARGET_METHOD_PATH)
     def test_scheduler_with_factory(self, factory):
         target_method_name = 'run_something'
+
         factory.return_value = type(
             'something',
             (object,),
@@ -73,12 +83,14 @@ class SchedulerServiceTest(base.DbTestCase):
             }
         )
 
-        scheduler.schedule_call(
-            TARGET_METHOD_PATH,
-            target_method_name,
-            DELAY,
-            **{'name': 'task', 'id': '123'}
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            target_factory_func_name=TARGET_METHOD_PATH,
+            func_name=target_method_name,
+            func_args={'name': 'task', 'id': '123'}
         )
+
+        self.scheduler.schedule(job)
 
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
         call = self._assert_single_item(
@@ -97,12 +109,13 @@ class SchedulerServiceTest(base.DbTestCase):
     def test_scheduler_without_factory(self, method):
         method.side_effect = self.target_method
 
-        scheduler.schedule_call(
-            None,
-            TARGET_METHOD_PATH,
-            DELAY,
-            **{'name': 'task', 'id': '321'}
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'name': 'task', 'id': '321'}
         )
+
+        self.scheduler.schedule(job)
 
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
         call = self._assert_single_item(
@@ -123,29 +136,29 @@ class SchedulerServiceTest(base.DbTestCase):
 
         default_context = base.get_context(default=True)
         auth_context.set_ctx(default_context)
-        default_project_id = (
-            default_context.project_id
+
+        default_project_id = default_context.project_id
+
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'expected_project_id': default_project_id}
         )
 
-        scheduler.schedule_call(
-            None,
-            TARGET_METHOD_PATH,
-            DELAY,
-            **{'expected_project_id': default_project_id}
-        )
+        self.scheduler.schedule(job)
 
         second_context = base.get_context(default=False)
         auth_context.set_ctx(second_context)
-        second_project_id = (
-            second_context.project_id
+
+        second_project_id = second_context.project_id
+
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'expected_project_id': second_project_id}
         )
 
-        scheduler.schedule_call(
-            None,
-            TARGET_METHOD_PATH,
-            DELAY,
-            **{'expected_project_id': second_project_id}
-        )
+        self.scheduler.schedule(job)
 
         self.assertNotEqual(default_project_id, second_project_id)
 
@@ -155,6 +168,7 @@ class SchedulerServiceTest(base.DbTestCase):
     @mock.patch(TARGET_METHOD_PATH)
     def test_scheduler_with_serializer(self, factory):
         target_method_name = 'run_something'
+
         factory.return_value = type(
             'something',
             (object,),
@@ -176,13 +190,15 @@ class SchedulerServiceTest(base.DbTestCase):
             'result': 'mistral.workflow.utils.ResultSerializer'
         }
 
-        scheduler.schedule_call(
-            TARGET_METHOD_PATH,
-            target_method_name,
-            DELAY,
-            serializers=serializers,
-            **method_args
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            target_factory_func_name=TARGET_METHOD_PATH,
+            func_name=target_method_name,
+            func_args=method_args,
+            func_arg_serializers=serializers
         )
+
+        self.scheduler.schedule(job)
 
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
         call = self._assert_single_item(
@@ -206,16 +222,18 @@ class SchedulerServiceTest(base.DbTestCase):
     def test_scheduler_multi_instance(self, method):
         method.side_effect = self.target_method
 
-        second_scheduler = scheduler.Scheduler(1, 1, None)
+        second_scheduler = legacy_scheduler.LegacyScheduler(CONF.scheduler)
         second_scheduler.start()
+
         self.addCleanup(second_scheduler.stop, True)
 
-        scheduler.schedule_call(
-            None,
-            TARGET_METHOD_PATH,
-            DELAY,
-            **{'name': 'task', 'id': '321'}
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'name': 'task', 'id': '321'},
         )
+
+        second_scheduler.schedule(job)
 
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
         self._assert_single_item(calls, target_method_name=TARGET_METHOD_PATH)
@@ -230,12 +248,13 @@ class SchedulerServiceTest(base.DbTestCase):
     def test_scheduler_delete_calls(self, method):
         method.side_effect = self.target_method
 
-        scheduler.schedule_call(
-            None,
-            TARGET_METHOD_PATH,
-            DELAY,
-            **{'name': 'task', 'id': '321'}
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'name': 'task', 'id': '321'},
         )
+
+        self.scheduler.schedule(job)
 
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
         self._assert_single_item(calls, target_method_name=TARGET_METHOD_PATH)
@@ -278,20 +297,23 @@ class SchedulerServiceTest(base.DbTestCase):
             update_delayed_call):
         def update_call_failed(id, values, query_filter):
             self.queue.put("item")
+
             return None, 0
 
         update_delayed_call.side_effect = update_call_failed
 
-        scheduler.schedule_call(
-            None,
-            TARGET_METHOD_PATH,
-            DELAY,
-            **{'name': 'task', 'id': '321'}
+        job = sched_base.SchedulerJob(
+            run_after=DELAY,
+            func_name=TARGET_METHOD_PATH,
+            func_args={'name': 'task', 'id': '321'},
         )
+
+        self.scheduler.schedule(job)
 
         calls = db_api.get_delayed_calls_to_start(get_time_delay())
 
         self.queue.get()
+
         eventlet.sleep(1)
 
         update_delayed_call.assert_called_with(
@@ -299,6 +321,7 @@ class SchedulerServiceTest(base.DbTestCase):
             values=mock.ANY,
             query_filter=mock.ANY
         )
+
         # If the scheduler does handel calls that failed on update
         # DBEntityNotFoundException will raise.
         db_api.get_delayed_call(calls[0].id)
@@ -309,7 +332,8 @@ class SchedulerServiceTest(base.DbTestCase):
 
         number_delayed_calls = 5
         processed_calls_at_time = []
-        real_delete_calls_method = scheduler.Scheduler.delete_calls
+        real_delete_calls_method = \
+            legacy_scheduler.LegacyScheduler.delete_calls
 
         @staticmethod
         def delete_calls_counter(delayed_calls):
@@ -317,21 +341,25 @@ class SchedulerServiceTest(base.DbTestCase):
 
             for _ in range(len(delayed_calls)):
                 self.queue.put("item")
+
             processed_calls_at_time.append(len(delayed_calls))
 
-        scheduler.Scheduler.delete_calls = delete_calls_counter
+        legacy_scheduler.LegacyScheduler.delete_calls = delete_calls_counter
 
-        # Create 5 delayed calls
+        # Create 5 delayed calls.
         for i in range(number_delayed_calls):
-            scheduler.schedule_call(
-                None,
-                TARGET_METHOD_PATH,
-                0,
-                **{'name': 'task', 'id': i}
+            job = sched_base.SchedulerJob(
+                run_after=DELAY,
+                func_name=TARGET_METHOD_PATH,
+                func_args={'name': 'task', 'id': i},
             )
 
-        # Start scheduler which process 2 calls at a time
-        self.scheduler = scheduler.Scheduler(0, 1, 2)
+            self.scheduler.schedule(job)
+
+        # Start scheduler which process 2 calls at a time.
+        self.override_config('batch_size', 2, 'scheduler')
+
+        self.scheduler = legacy_scheduler.LegacyScheduler(CONF.scheduler)
         self.scheduler.start()
 
         # Wait when all of calls will be processed

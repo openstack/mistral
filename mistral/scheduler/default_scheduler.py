@@ -37,14 +37,27 @@ CONF = cfg.CONF
 
 
 class DefaultScheduler(base.Scheduler):
-    def __init__(self, fixed_delay, random_delay, batch_size):
-        self._fixed_delay = fixed_delay
-        self._random_delay = random_delay
-        self._batch_size = batch_size
+    def __init__(self, conf):
+        """Initializes a scheduler instance.
+
+        # TODO(rakhmerov): Fix docstring
+        :param fixed_delay: A fixed part of the delay (in seconds) that
+            defines how often this scheduler checks the persistent job
+            store for the new jobs to run.
+        :param random_delay: A random part of the delay (in seconds) that
+            defines how often this scheduler checks the persistent job
+            store for the new jobs to run.
+        :param batch_size: Defines how many jobs this scheduler can pick
+            up from the job store at once.
+        """
+
+        self._fixed_delay = conf.fixed_delay
+        self._random_delay = conf.random_delay
+        self._batch_size = conf.batch_size
 
         # Dictionary containing {GreenThread: ScheduledJob} pairs that
         # represent in-memory jobs.
-        self.memory_jobs = {}
+        self.in_memory_jobs = {}
 
         self._job_store_checker_thread = threading.Thread(
             target=self._job_store_checker
@@ -116,6 +129,14 @@ class DefaultScheduler(base.Scheduler):
 
         self._schedule_in_memory(job.run_after, scheduled_job)
 
+    def get_scheduled_jobs_count(self, **filters):
+        if filters and 'processing' in filters:
+            processing = filters.pop('processing')
+
+            filters['captured_at'] = {'neq' if processing else 'eq': None}
+
+        return db_api.get_scheduled_jobs_count(**filters)
+
     @classmethod
     def _persist_job(cls, job):
         ctx_serializer = context.RpcContextSerializer()
@@ -155,7 +176,8 @@ class DefaultScheduler(base.Scheduler):
             'func_arg_serializers': arg_serializers,
             'auth_ctx': ctx,
             'execute_at': execute_at,
-            'captured_at': None
+            'captured_at': None,
+            'key': job.key
         }
 
         return db_api.create_scheduled_job(values)
@@ -167,7 +189,7 @@ class DefaultScheduler(base.Scheduler):
             scheduled_job
         )
 
-        self.memory_jobs[green_thread] = scheduled_job
+        self.in_memory_jobs[green_thread] = scheduled_job
 
     def _process_memory_job(self, scheduled_job):
         # 1. Capture the job in Job Store.
@@ -191,7 +213,7 @@ class DefaultScheduler(base.Scheduler):
         # 3.1 What do we do if invocation wasn't successful?
 
         # Delete from a local collection of in-memory jobs.
-        del self.memory_jobs[eventlet.getcurrent()]
+        del self.in_memory_jobs[eventlet.getcurrent()]
 
     @staticmethod
     def _capture_scheduled_job(scheduled_job):

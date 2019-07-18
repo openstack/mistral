@@ -21,7 +21,6 @@ import random
 import sys
 import threading
 
-from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
 
@@ -29,19 +28,15 @@ from mistral import context
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral.scheduler import base as sched_base
 from mistral import utils
 
 
 LOG = logging.getLogger(__name__)
 
-CONF = cfg.CONF
 
-# All schedulers.
-_schedulers = set()
-
-
-def schedule_call(factory_method_path, target_method_name,
-                  run_after, serializers=None, key=None, **method_args):
+def _schedule_call(factory_method_path, target_method_name,
+                   run_after, serializers=None, key=None, **method_args):
     """Schedules call and lately invokes target_method.
 
     Add this call specification to DB, and then after run_after
@@ -102,14 +97,27 @@ def schedule_call(factory_method_path, target_method_name,
     db_api.create_delayed_call(values)
 
 
-class Scheduler(object):
-    def __init__(self, fixed_delay, random_delay, batch_size):
+class LegacyScheduler(sched_base.Scheduler):
+    def __init__(self, conf):
         self._stopped = False
         self._thread = threading.Thread(target=self._loop)
         self._thread.daemon = True
-        self._fixed_delay = fixed_delay
-        self._random_delay = random_delay
-        self._batch_size = batch_size
+        self._fixed_delay = conf.fixed_delay
+        self._random_delay = conf.random_delay
+        self._batch_size = conf.batch_size
+
+    def schedule(self, job, allow_redistribute=False):
+        _schedule_call(
+            job.target_factory_func_name,
+            job.func_name,
+            job.run_after,
+            serializers=job.func_arg_serializers,
+            key=None,
+            **job.func_args
+        )
+
+    def get_scheduled_jobs_count(self, **filters):
+        return db_api.get_delayed_calls_count(**filters)
 
     def start(self):
         self._thread.start()
@@ -309,33 +317,3 @@ class Scheduler(object):
                     raise e
 
         LOG.debug("Scheduler deleted %s delayed calls.", len(db_calls))
-
-
-def start():
-    sched = Scheduler(
-        CONF.scheduler.fixed_delay,
-        CONF.scheduler.random_delay,
-        CONF.scheduler.batch_size
-    )
-
-    _schedulers.add(sched)
-
-    sched.start()
-
-    return sched
-
-
-def stop_scheduler(sched, graceful=False):
-    if not sched:
-        return
-
-    sched.stop(graceful)
-
-    _schedulers.remove(sched)
-
-
-def stop_all_schedulers():
-    for sched in _schedulers:
-        sched.stop(graceful=True)
-
-    _schedulers.clear()

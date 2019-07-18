@@ -15,6 +15,16 @@
 import abc
 import six
 
+from oslo_config import cfg
+from stevedore import driver
+
+
+CONF = cfg.CONF
+
+
+_SCHEDULER_IMPL = None
+_SCHEDULER = None
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Scheduler(object):
@@ -34,6 +44,28 @@ class Scheduler(object):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def get_scheduled_jobs_count(self, **filters):
+        """Returns the number of scheduled jobs.
+
+        :param filters: Filters that define what kind of jobs
+            need to be counted. Permitted values:
+            * key=<string> - a key set for a job when it was scheduled.
+            * processing=<boolean> - if True, return only jobs that are
+                currently being processed.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def start(self):
+        """Starts this scheduler."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def stop(self, graceful=False):
+        """Stops this scheduler."""
+        raise NotImplementedError
+
 
 class SchedulerJob(object):
     """Scheduler job.
@@ -43,7 +75,7 @@ class SchedulerJob(object):
     """
     def __init__(self, run_after=0, target_factory_func_name=None,
                  func_name=None, func_args=None,
-                 func_arg_serializers=None):
+                 func_arg_serializers=None, key=None):
         """Initializes a Scheduler Job.
 
         :param run_after: Amount of seconds after which to invoke
@@ -65,7 +97,7 @@ class SchedulerJob(object):
             Optional. Serializers must be specified only for those arguments
             whose values can't be saved into a persistent storage as is and
             they need to be converted first into a value of a primitive type.
-
+        :param key: A value that can be used to find the job.
         """
 
         if not func_name:
@@ -76,3 +108,33 @@ class SchedulerJob(object):
         self.func_name = func_name
         self.func_args = func_args or {}
         self.func_arg_serializers = func_arg_serializers
+        self.key = key
+
+
+def get_system_scheduler():
+    global _SCHEDULER
+
+    if not _SCHEDULER:
+        impl = _get_scheduler_implementation()
+
+        _SCHEDULER = impl(CONF.scheduler)
+
+    return _SCHEDULER
+
+
+def destroy_system_scheduler():
+    global _SCHEDULER
+
+    _SCHEDULER = None
+
+
+def _get_scheduler_implementation():
+    global _SCHEDULER_IMPL
+
+    if not _SCHEDULER_IMPL:
+        _SCHEDULER_IMPL = driver.DriverManager(
+            'mistral.schedulers',
+            CONF.scheduler_type
+        ).driver
+
+    return _SCHEDULER_IMPL

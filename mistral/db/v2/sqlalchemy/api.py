@@ -1243,6 +1243,7 @@ def get_scheduled_jobs_to_start(time, batch_size=None, session=None):
     captured_at_col = models.ScheduledJob.captured_at
 
     # Filter by execution time accounting for a configured job pickup interval.
+    # TODO(rakhmerov): Configuration options should not be accessed here.
     query = query.filter(
         execute_at_col <
         time - datetime.timedelta(seconds=CONF.scheduler.pickup_job_after)
@@ -1332,6 +1333,10 @@ def get_scheduled_jobs(**kwargs):
 @b.session_aware()
 def delete_scheduled_jobs(session=None, **kwargs):
     return _delete_all(models.ScheduledJob, **kwargs)
+
+
+def get_scheduled_jobs_count(**kwargs):
+    return _get_count(model=models.ScheduledJob, **kwargs)
 
 
 # Other functions.

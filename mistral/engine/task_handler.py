@@ -27,7 +27,7 @@ from mistral.engine import tasks
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
-from mistral.services import scheduler
+from mistral.scheduler import base as sched_base
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands as wf_cmds
 from mistral.workflow import states
@@ -292,14 +292,16 @@ def _check_affected_tasks(task):
     )
 
     def _schedule_if_needed(t_ex_id):
-        # NOTE(rakhmerov): we need to minimize the number of delayed calls
+        # NOTE(rakhmerov): we need to minimize the number of scheduled jobs
         # that refresh state of "join" tasks. We'll check if corresponding
-        # calls are already scheduled. Note that we must ignore delayed calls
+        # jobs are already scheduled. Note that we must ignore scheduled jobs
         # that are currently being processed because of a possible race with
-        # the transaction that deletes delayed calls, i.e. the call may still
+        # the transaction that deletes scheduled jobs, i.e. the job may still
         # exist in DB (the deleting transaction didn't commit yet) but it has
         # already been processed and the task state hasn't changed.
-        cnt = db_api.get_delayed_calls_count(
+        sched = sched_base.get_system_scheduler()
+
+        cnt = sched.get_scheduled_jobs_count(
             key=_get_refresh_state_job_key(t_ex_id),
             processing=False
         )
@@ -462,15 +464,17 @@ def _schedule_refresh_task_state(task_ex_id, delay=0):
     :param task_ex_id: Task execution ID.
     :param delay: Delay.
     """
-    key = _get_refresh_state_job_key(task_ex_id)
 
-    scheduler.schedule_call(
-        None,
-        _REFRESH_TASK_STATE_PATH,
-        delay,
-        key=key,
-        task_ex_id=task_ex_id
+    sched = sched_base.get_system_scheduler()
+
+    job = sched_base.SchedulerJob(
+        run_after=delay,
+        func_name=_REFRESH_TASK_STATE_PATH,
+        func_args={'task_ex_id': task_ex_id},
+        key=_get_refresh_state_job_key(task_ex_id)
     )
+
+    sched.schedule(job)
 
 
 def _get_refresh_state_job_key(task_ex_id):
@@ -512,16 +516,19 @@ def schedule_on_action_complete(action_ex, delay=0):
 
         return
 
-    key = 'th_on_a_c-%s' % action_ex.task_execution_id
+    sched = sched_base.get_system_scheduler()
 
-    scheduler.schedule_call(
-        None,
-        _SCHEDULED_ON_ACTION_COMPLETE_PATH,
-        delay,
-        key=key,
-        action_ex_id=action_ex.id,
-        wf_action=isinstance(action_ex, models.WorkflowExecution)
+    job = sched_base.SchedulerJob(
+        run_after=delay,
+        func_name=_SCHEDULED_ON_ACTION_COMPLETE_PATH,
+        func_args={
+            'action_ex_id': action_ex.id,
+            'wf_action': isinstance(action_ex, models.WorkflowExecution)
+        },
+        key='th_on_a_c-%s' % action_ex.task_execution_id
     )
+
+    sched.schedule(job)
 
 
 @db_utils.retry_on_db_error
@@ -559,13 +566,16 @@ def schedule_on_action_update(action_ex, delay=0):
 
         return
 
-    key = 'th_on_a_u-%s' % action_ex.task_execution_id
+    sched = sched_base.get_system_scheduler()
 
-    scheduler.schedule_call(
-        None,
-        _SCHEDULED_ON_ACTION_UPDATE_PATH,
-        delay,
-        key=key,
-        action_ex_id=action_ex.id,
-        wf_action=isinstance(action_ex, models.WorkflowExecution)
+    job = sched_base.SchedulerJob(
+        run_after=delay,
+        func_name=_SCHEDULED_ON_ACTION_UPDATE_PATH,
+        func_args={
+            'action_ex_id': action_ex.id,
+            'wf_action': isinstance(action_ex, models.WorkflowExecution)
+        },
+        key='th_on_a_u-%s' % action_ex.task_execution_id
     )
+
+    sched.schedule(job)

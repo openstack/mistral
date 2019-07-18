@@ -457,10 +457,16 @@ class ScheduledJob(mb.MistralModelBase):
     execute_at = sa.Column(sa.DateTime, nullable=False)
     captured_at = sa.Column(sa.DateTime, nullable=True)
 
+    key = sa.Column(sa.String(250), nullable=True)
+
 
 sa.Index(
-    '%s_execution_time' % ScheduledJob.__tablename__,
+    '%s_execute_at' % ScheduledJob.__tablename__,
     ScheduledJob.execute_at
+)
+sa.Index(
+    '%s_captured_at' % ScheduledJob.__tablename__,
+    ScheduledJob.captured_at
 )
 
 

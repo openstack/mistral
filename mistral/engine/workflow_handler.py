@@ -23,7 +23,7 @@ from mistral.db.v2 import api as db_api
 from mistral.engine import post_tx_queue
 from mistral.engine import workflows
 from mistral import exceptions as exc
-from mistral.services import scheduler
+from mistral.scheduler import base as sched_base
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
@@ -274,12 +274,13 @@ def _schedule_check_and_fix_integrity(wf_ex, delay=0):
         # Never check integrity if it's a negative value.
         return
 
-    key = _get_integrity_check_key(wf_ex)
+    sched = sched_base.get_system_scheduler()
 
-    scheduler.schedule_call(
-        None,
-        _CHECK_AND_FIX_INTEGRITY_PATH,
-        delay,
-        key=key,
-        wf_ex_id=wf_ex.id
+    job = sched_base.SchedulerJob(
+        run_after=delay,
+        func_name=_CHECK_AND_FIX_INTEGRITY_PATH,
+        func_args={'wf_ex_id': wf_ex.id},
+        key=_get_integrity_check_key(wf_ex)
     )
+
+    sched.schedule(job)
