@@ -80,6 +80,7 @@ class Task(object):
             return {
                 "id": self.task_ex.id,
                 "name": self.task_ex.name,
+                "workflow_execution_id": self.task_ex.workflow_execution_id,
                 "workflow_name": self.task_ex.workflow_name,
                 "workflow_namespace": self.task_ex.workflow_namespace,
                 "workflow_id": self.task_ex.workflow_id,
