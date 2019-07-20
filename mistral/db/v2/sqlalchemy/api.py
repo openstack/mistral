@@ -932,7 +932,7 @@ def _get_all_direct_subworkflows(wf_ex_id):
     model = models.WorkflowExecution
     insecure = context.ctx().is_admin
     if insecure:
-        query = b.model_query(model, columns=['id'])
+        query = b.model_query(model, [model.id])
     else:
         query = _secure_query(model, model.id)
     query = query.join(
