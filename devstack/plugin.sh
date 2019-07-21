@@ -139,12 +139,9 @@ function _install_mistraldashboard {
 
 function install_mistral_pythonclient {
     if use_library_from_git "python-mistralclient"; then
-        git_clone $MISTRAL_PYTHONCLIENT_REPO $MISTRAL_PYTHONCLIENT_DIR $MISTRAL_PYTHONCLIENT_BRANCH
-        local tags=`git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -l | grep 2015`
-        if [ ! "$tags" = "" ]; then
-            git --git-dir=$MISTRAL_PYTHONCLIENT_DIR/.git tag -d $tags
-        fi
-        setup_develop $MISTRAL_PYTHONCLIENT_DIR
+        git_clone_by_name "python-mistralclient"
+        setup_dev_lib "python-mistralclient"
+        sudo install -D -m 0644 -o $STACK_USER {${GITDIR["python-mistralclient"]}/tools/,/etc/bash_completion.d/}mistral.bash_completion
     fi
 }
 
