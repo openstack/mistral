@@ -2778,6 +2778,26 @@ class EnvironmentTest(SQLAlchemyTest):
             created.name
         )
 
+    def test_delete_environments(self):
+        created0 = db_api.create_environment(ENVIRONMENTS[0])
+        created1 = db_api.create_environment(ENVIRONMENTS[1])
+
+        db_api.delete_environments(
+            name={'in': [created0.name, created1.name]}
+        )
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_environment,
+            created0.id
+        )
+
+        self.assertRaises(
+            exc.DBEntityNotFoundError,
+            db_api.get_environment,
+            created1.id
+        )
+
     def test_environment_repr(self):
         s = db_api.create_environment(ENVIRONMENTS[0]).__repr__()
 
