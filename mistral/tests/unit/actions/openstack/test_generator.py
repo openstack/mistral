@@ -85,6 +85,36 @@ class GeneratorTest(base.BaseTest):
         self.baremetal_patch.start()
         self.addCleanup(self.baremetal_patch.stop)
 
+        # When {{ service }}_default_microversion is set, keystoneauth1
+        # will attempt to do version discovery by looking up the services
+        # in the Keystone service catalog and making sure the desire version
+        # is available. Prior to this patch
+        # https://review.opendev.org/#/c/587437/, clustering service does
+        # not set the default microversion. Therefore, there was no
+        # version discovery attempted during these tests. Now that the patch
+        # is included in the latest openstacksdk release, we need to
+        # disable version discovery by nullifying the CURRENT_API_VERSION
+        # in senlinclient in order the tests to pass. These are unit tests
+        # and does not need to talk to a real Keystone server.
+        self._senlin_api_version = None
+
+        def _reset_senlin_api_version():
+            if (actions.senlinclient and
+                    hasattr(actions.senlinclient, 'plugin') and
+                    hasattr(actions.senlinclient.plugin,
+                            'CURRENT_API_VERSION')):
+                actions.senlinclient.CURRENT_API_VERSION = (
+                    self._senlin_api_version)
+
+        if (actions.senlinclient and
+                hasattr(actions.senlinclient, 'plugin') and
+                hasattr(actions.senlinclient.plugin,
+                        'CURRENT_API_VERSION')):
+            self._senlin_api_version = (
+                actions.senlinclient.plugin.CURRENT_API_VERSION)
+            actions.senlinclient.plugin.CURRENT_API_VERSION = None
+            self.addCleanup(_reset_senlin_api_version)
+
     def test_generator(self):
         for generator_cls in generator_factory.all_generators():
             action_classes = generator_cls.create_actions()

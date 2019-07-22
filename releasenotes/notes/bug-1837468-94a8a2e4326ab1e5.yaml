@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    [`bug 1837468 <https://bugs.launchpad.net/keystone/+bug/1837468>`_]
+    Fixed unit.actions.openstack.test_generator.GeneratorTest.test_generator
+    failure by avoid triggering version discovery as it needs to talk to
+    Keystone server. Talking to a live Keystone server is not needed for
+    this particular unit test.
