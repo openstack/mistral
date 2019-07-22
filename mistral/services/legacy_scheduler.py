@@ -300,20 +300,16 @@ class LegacyScheduler(sched_base.Scheduler):
 
         :param db_calls: Delayed calls to delete from DB.
         """
+        try:
+            db_api.delete_delayed_calls(id={'in': [c.id for c in db_calls]})
+        except Exception as e:
+            LOG.error(
+                "Failed to delete all delayed calls [exception=%s]", e
+            )
 
-        with db_api.transaction():
-            for call in db_calls:
-                try:
-                    db_api.delete_delayed_call(call.id)
-                except Exception as e:
-                    LOG.error(
-                        "Failed to delete delayed call [call=%s, "
-                        "exception=%s]", call, e
-                    )
-
-                    # We have to re-raise any exception because the transaction
-                    # would be already invalid anyway. If it's a deadlock then
-                    # it will be handled.
-                    raise e
+            # We have to re-raise any exception because the transaction
+            # would be already invalid anyway. If it's a deadlock then
+            # it will be handled.
+            raise e
 
         LOG.debug("Scheduler deleted %s delayed calls.", len(db_calls))
