@@ -52,10 +52,14 @@ def _with_auth_context(auth_ctx, func, *args, **kw):
 
     try:
         return func(*args, **kw)
-    except _RETRY_ERRORS:
-        LOG.exception(
-            "DB error detected, operation will be retried: %s", func
-        )
+    except Exception as e:
+        # Note (rakhmerov): In case of "Too many connections" error from the
+        # database it doesn't get wrapped with a SQLAlchemy exception for some
+        # reason so we have to check the exception message explicitly.
+        if isinstance(e, _RETRY_ERRORS) or 'Too many connections' in str(e):
+            LOG.exception(
+                "DB error detected, operation will be retried: %s", func
+            )
 
         raise
     finally:
@@ -75,7 +79,12 @@ def retry_on_db_error(func, retry=None):
     """
     if not retry:
         retry = tenacity.Retrying(
-            retry=tenacity.retry_if_exception_type(_RETRY_ERRORS),
+            retry=(
+                tenacity.retry_if_exception_type(_RETRY_ERRORS) |
+                tenacity.retry_if_exception_message(
+                    match='Too many connections'
+                )
+            ),
             stop=tenacity.stop_after_attempt(50),
             wait=tenacity.wait_incrementing(start=0, increment=0.1, max=2)
         )
