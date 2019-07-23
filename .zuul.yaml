@@ -103,12 +103,21 @@
               - openstack/mistral-lib
         - mistral-devstack:
             voting: false
+            vars:
+              devstack_localrc:
+                USE_PYTHON3: true
         - mistral-devstack-non-apache:
             voting: false
             branches: ^(?!stable/(newton|ocata)).*$
+            vars:
+              devstack_localrc:
+                USE_PYTHON3: true
         - mistral-devstack-kombu:
             voting: false
             branches: ^(?!stable/newton).*$
+            vars:
+              devstack_localrc:
+                USE_PYTHON3: true
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
         # TripleO jobs that deploy Mistral.
