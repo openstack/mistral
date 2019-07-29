@@ -259,7 +259,9 @@ def _delete_all(model, **kwargs):
     # NOTE(kong): Because we use 'in_' operator in _secure_query(), delete()
     # method will raise error with default parameter. Please refer to
     # http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete
-    _secure_query(model).filter_by(**kwargs).delete(synchronize_session=False)
+    query = _secure_query(model)
+    query = db_filters.apply_filters(query, model, **kwargs)
+    query.delete(synchronize_session=False)
 
 
 def _get_collection(model, insecure=False, limit=None, marker=None,
