@@ -20,14 +20,15 @@ import json
 import mock
 from oslo_config import cfg
 import oslo_messaging
+from oslo_messaging import exceptions as oslo_exc
 import sqlalchemy as sa
 
 from mistral.api.controllers.v2 import action_execution
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
-from mistral.rpc import base as rpc_base
 from mistral.rpc import clients as rpc_clients
+from mistral.rpc.oslo import oslo_client
 from mistral.tests.unit.api import base
 from mistral.utils import rest_utils
 from mistral.workflow import states
@@ -210,7 +211,6 @@ ACTION_EX_DB_WITH_PROJECT_ID = AD_HOC_ACTION_EX_DB.get_clone()
 ACTION_EX_DB_WITH_PROJECT_ID.project_id = '<default-project>'
 
 
-@mock.patch.object(rpc_base, '_IMPL_CLIENT', mock.Mock())
 class TestActionExecutionsController(base.APITest):
     def setUp(self):
         super(TestActionExecutionsController, self).setUp()
@@ -259,6 +259,25 @@ class TestActionExecutionsController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
         self.assertTrue('project_id' in resp.json)
+
+    @mock.patch.object(oslo_client.OsloRPCClient, 'sync_call',
+                       mock.MagicMock(side_effect=oslo_exc.MessagingTimeout))
+    def test_post_timeout(self):
+        self.override_config('rpc_response_timeout', 100)
+
+        resp = self.app.post_json(
+            '/v2/action_executions',
+            {
+                'name': 'std.sleep',
+                'input': {'seconds': 120}
+            },
+            expect_errors=True
+        )
+
+        error_msg = resp.json['faultstring']
+        self.assertEqual(error_msg,
+                         'This rpc call "start_action" took longer than '
+                         'configured 100 seconds.')
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
     def test_post(self, f):

@@ -14,10 +14,12 @@
 #    limitations under the License.
 
 import abc
+from functools import wraps
 
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging as messaging
+from oslo_messaging.exceptions import MessagingTimeout
 from oslo_messaging.rpc import client
 from stevedore import driver
 
@@ -94,11 +96,18 @@ def wrap_messaging_exception(method):
     raised remotely on the RPC server side and for correct exception handling
     we need to unwrap and raise the original wrapped exception.
     """
+
+    @wraps(method)
     def decorator(*args, **kwargs):
         try:
             return method(*args, **kwargs)
         except exc.MistralException:
             raise
+        except MessagingTimeout:
+            timeout = cfg.CONF.rpc_response_timeout
+            raise exc.MistralException('This rpc call "%s" took longer than '
+                                       'configured %s seconds.' %
+                                       (method.__name__, timeout))
         except (client.RemoteError, exc.KombuException, Exception) as e:
             # Since we're going to transform the original exception
             # we need to log it as is.
