@@ -25,11 +25,11 @@ from mistral.tests.unit.executors import base
 LOG = logging.getLogger(__name__)
 
 
-class PluginTestCase(base.ExecutorTestCase):
+class PluginTest(base.ExecutorTestCase):
 
     def tearDown(self):
         exe.cleanup()
-        super(PluginTestCase, self).tearDown()
+        super(PluginTest, self).tearDown()
 
     def test_get_local_executor(self):
         executor = exe.get_executor('local')

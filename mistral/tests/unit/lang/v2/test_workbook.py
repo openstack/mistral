@@ -23,7 +23,7 @@ from mistral.lang.v2 import workbook
 from mistral.tests.unit.lang.v2 import base
 
 
-class WorkbookSpecValidation(base.WorkbookSpecValidationTestCase):
+class WorkbookSpecValidationTest(base.WorkbookSpecValidationTestCase):
 
     def test_build_valid_workbook_spec(self):
         wb_spec = self._parse_dsl_spec(dsl_file='my_workbook.yaml')

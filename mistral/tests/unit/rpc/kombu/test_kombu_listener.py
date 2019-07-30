@@ -30,10 +30,10 @@ class TestException(exc.MistralException):
     pass
 
 
-class KombuListenerTestCase(base.KombuTestCase):
+class KombuListenerTest(base.KombuTestCase):
 
     def setUp(self):
-        super(KombuListenerTestCase, self).setUp()
+        super(KombuListenerTest, self).setUp()
 
         self.listener = kombu_listener.KombuRPCListener(
             [mock.MagicMock()],

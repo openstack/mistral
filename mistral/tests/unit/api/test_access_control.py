@@ -18,10 +18,10 @@ from mistral.tests.unit import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
 
-class PolicyTestCase(base.BaseTest):
+class PolicyTest(base.BaseTest):
     """Tests whether the configuration of the policy engine is correct."""
     def setUp(self):
-        super(PolicyTestCase, self).setUp()
+        super(PolicyTest, self).setUp()
 
         self.policy = self.useFixture(policy_fixtures.PolicyFixture())
 

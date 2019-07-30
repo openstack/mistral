@@ -31,10 +31,10 @@ class TestException(exc.MistralError):
     pass
 
 
-class KombuServerTestCase(base.KombuTestCase):
+class KombuServerTest(base.KombuTestCase):
 
     def setUp(self):
-        super(KombuServerTestCase, self).setUp()
+        super(KombuServerTest, self).setUp()
 
         self.conf = mock.MagicMock()
         self.server = kombu_server.KombuRPCServer(self.conf)

@@ -45,11 +45,11 @@ def notifier_process(ex_id, data, event, timestamp, publishers):
     EVENT_LOGS.append((ex_id, event))
 
 
-class ServerPluginTestCase(base.NotifierTestCase):
+class ServerPluginTest(base.NotifierTestCase):
 
     def tearDown(self):
         notif.cleanup()
-        super(ServerPluginTestCase, self).tearDown()
+        super(ServerPluginTest, self).tearDown()
 
     def test_get_bad_notifier(self):
         self.assertRaises(sd_exc.NoMatches, notif.get_notifier, 'foobar')
@@ -60,20 +60,20 @@ class ServerPluginTestCase(base.NotifierTestCase):
     'notify',
     mock.MagicMock(return_value=None)
 )
-class LocalNotifServerTestCase(base.NotifierTestCase):
+class LocalNotifServerTest(base.NotifierTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(LocalNotifServerTestCase, cls).setUpClass()
+        super(LocalNotifServerTest, cls).setUpClass()
         cfg.CONF.set_default('type', 'local', group='notifier')
 
     @classmethod
     def tearDownClass(cls):
         cfg.CONF.set_default('type', 'remote', group='notifier')
-        super(LocalNotifServerTestCase, cls).tearDownClass()
+        super(LocalNotifServerTest, cls).tearDownClass()
 
     def setUp(self):
-        super(LocalNotifServerTestCase, self).setUp()
+        super(LocalNotifServerTest, self).setUp()
         self.publisher = notif.get_notification_publisher('webhook')
         self.publisher.publish = mock.MagicMock(side_effect=publisher_process)
         self.publisher.publish.reset_mock()
@@ -81,7 +81,7 @@ class LocalNotifServerTestCase(base.NotifierTestCase):
 
     def tearDown(self):
         notif.cleanup()
-        super(LocalNotifServerTestCase, self).tearDown()
+        super(LocalNotifServerTest, self).tearDown()
 
     def test_get_notifier(self):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
@@ -149,20 +149,20 @@ class LocalNotifServerTestCase(base.NotifierTestCase):
     'notify',
     mock.MagicMock(side_effect=notifier_process)
 )
-class RemoteNotifServerTestCase(base.NotifierTestCase):
+class RemoteNotifServerTest(base.NotifierTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(RemoteNotifServerTestCase, cls).setUpClass()
+        super(RemoteNotifServerTest, cls).setUpClass()
         cfg.CONF.set_default('type', 'remote', group='notifier')
 
     def setUp(self):
-        super(RemoteNotifServerTestCase, self).setUp()
+        super(RemoteNotifServerTest, self).setUp()
         del EVENT_LOGS[:]
 
     def tearDown(self):
         notif.cleanup()
-        super(RemoteNotifServerTestCase, self).tearDown()
+        super(RemoteNotifServerTest, self).tearDown()
 
     def test_get_notifier(self):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)

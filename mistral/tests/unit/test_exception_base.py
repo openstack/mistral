@@ -19,7 +19,7 @@ from mistral.tests.unit import base
 from mistral.utils import inspect_utils
 
 
-class ExceptionTestCase(base.BaseTest):
+class ExceptionTest(base.BaseTest):
     """Test cases for exception code."""
 
     def test_nf_with_message(self):

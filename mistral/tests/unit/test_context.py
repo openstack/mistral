@@ -15,7 +15,7 @@ from mistral import exceptions
 from mistral.tests.unit.engine import base
 
 
-class ContextTestCase(base.EngineTestCase):
+class ContextTest(base.EngineTestCase):
 
     def test_target_insecure(self):
         # Defaults to False if X-Target-Auth-Uri isn't passed.

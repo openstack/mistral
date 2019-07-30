@@ -19,7 +19,7 @@ from mistral.tests.unit.lang.v2 import base as v2_base
 from mistral import utils
 
 
-class TaskSpecValidation(v2_base.WorkflowSpecValidationTestCase):
+class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):
     def test_type_injection(self):
         tests = [
             ({'type': 'direct'}, False),

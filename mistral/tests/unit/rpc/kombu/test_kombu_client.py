@@ -29,12 +29,12 @@ class TestException(exc.MistralException):
     pass
 
 
-class KombuClientTestCase(base.KombuTestCase):
+class KombuClientTest(base.KombuTestCase):
 
     _RESPONSE = "response"
 
     def setUp(self):
-        super(KombuClientTestCase, self).setUp()
+        super(KombuClientTest, self).setUp()
 
         conf = mock.MagicMock()
 

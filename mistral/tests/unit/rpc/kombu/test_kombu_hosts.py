@@ -31,10 +31,10 @@ VIRTUAL_HOST_1 = 'vhost_1'
 VIRTUAL_HOST_2 = 'vhost_2'
 
 
-class KombuHostsTestCase(base.BaseTest):
+class KombuHostsTest(base.BaseTest):
 
     def setUp(self):
-        super(KombuHostsTestCase, self).setUp()
+        super(KombuHostsTest, self).setUp()
 
         # Oslo messaging set a default config option
         oslo_messaging.get_transport(cfg.CONF)

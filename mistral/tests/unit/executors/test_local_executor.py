@@ -39,18 +39,18 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
     'run_action',
     mock.MagicMock(return_value=None)
 )
-class LocalExecutorTestCase(base.ExecutorTestCase):
+class LocalExecutorTest(base.ExecutorTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(LocalExecutorTestCase, cls).setUpClass()
+        super(LocalExecutorTest, cls).setUpClass()
         cfg.CONF.set_default('type', 'local', group='executor')
 
     @classmethod
     def tearDownClass(cls):
         exe.cleanup()
         cfg.CONF.set_default('type', 'remote', group='executor')
-        super(LocalExecutorTestCase, cls).tearDownClass()
+        super(LocalExecutorTest, cls).tearDownClass()
 
     @mock.patch.object(
         std_actions.EchoAction,

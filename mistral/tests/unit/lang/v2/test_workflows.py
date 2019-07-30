@@ -22,7 +22,7 @@ from mistral.tests.unit.lang.v2 import base
 from mistral import utils
 
 
-class WorkflowSpecValidation(base.WorkflowSpecValidationTestCase):
+class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):
     def test_workflow_types(self):
         tests = [
             ({'type': 'direct'}, False),
