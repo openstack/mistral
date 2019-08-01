@@ -631,23 +631,23 @@ Example of writing and reading global variables
                 my_var: "global value"
             next: A1
 
-    A1:
-      # $.my_var will always evaluate to "branch value" because A1 belongs
-      # to the same branch as A and runs after A. When using "$" to access
-      # context variables branch values have higher priority.
-      # In order to access global context reliably we need to use YAQL/Jinja
-      # function 'global'. So global(my_var) will always evaluate to
-      # 'global value'.
-      action: my_action1 param1=<% $.my_var %> param2=<% global(my_var) %>
+        A1:
+          # $.my_var will always evaluate to "branch value" because A1 belongs
+          # to the same branch as A and runs after A. When using "$" to access
+          # context variables branch values have higher priority.
+          # In order to access global context reliably we need to use YAQL/Jinja
+          # function 'global'. So global(my_var) will always evaluate to
+          # 'global value'.
+          action: my_action1 param1=<% $.my_var %> param2=<% global(my_var) %>
 
-    B:
-      # $.my_var will evaluate to "global value" if task A completes
-      # before task B and "null", if not. It's because A and B are
-      # parallel and 'publish' in A doesn't apply to B, only
-      # 'publish-global' does. In this example global(my_var) has the same
-      # meaning as $.my_var because there's no ambiguity from what context
-      # we should take variable 'my_var'.
-      action: my_action2 param1=<% $.my_var %> param2=<% global(my_var) %>
+        B:
+          # $.my_var will evaluate to "global value" if task A completes
+          # before task B and "null", if not. It's because A and B are
+          # parallel and 'publish' in A doesn't apply to B, only
+          # 'publish-global' does. In this example global(my_var) has the same
+          # meaning as $.my_var because there's no ambiguity from what context
+          # we should take variable 'my_var'.
+          action: my_action2 param1=<% $.my_var %> param2=<% global(my_var) %>
 
 **NOTE!** It’s important to note that this is an unprotected way of modifying
 data because race conditions are possible when writing different values for
