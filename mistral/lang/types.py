@@ -48,7 +48,7 @@ EXPRESSION_CONDITION = {
     "type": "object",
     "minProperties": 1,
     "patternProperties": {
-        "^\w+$": EXPRESSION
+        r"^\w+$": EXPRESSION
     }
 }
 
@@ -79,7 +79,7 @@ NONEMPTY_DICT = {
     "type": "object",
     "minProperties": 1,
     "patternProperties": {
-        "^\w+$": ANY_NULLABLE
+        r"^\w+$": ANY_NULLABLE
     }
 }
 
@@ -88,7 +88,7 @@ ONE_KEY_DICT = {
     "minProperties": 1,
     "maxProperties": 1,
     "patternProperties": {
-        "^\w+$": ANY_NULLABLE
+        r"^\w+$": ANY_NULLABLE
     }
 }
 

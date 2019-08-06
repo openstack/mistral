@@ -19,7 +19,7 @@ from mistral.lang.v2 import base
 from mistral.lang.v2 import workflows as wf
 
 # We want to match any single word that isn't exactly "version"
-NON_VERSION_WORD_REGEX = "^(?!version$)[\w-]+$"
+NON_VERSION_WORD_REGEX = r"^(?!version$)[\w-]+$"
 
 
 class WorkbookSpec(base.BaseSpec):

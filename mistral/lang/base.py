@@ -27,7 +27,7 @@ from mistral.lang import types
 from mistral import utils
 
 ACTION_PATTERNS = {
-    "command": "[\w\.]+[^=\(\s\"]*",
+    "command": r"[\w\.]+[^=\(\s\"]*",
     "yaql_expression": INLINE_YAQL_REGEXP,
     "jinja_expression": ANY_JINJA_REGEXP,
 }
@@ -36,10 +36,10 @@ CMD_PTRN = re.compile(
 )
 
 EXPRESSION = '|'.join([expr.patterns[name] for name in expr.patterns])
-_ALL_IN_BRACKETS = "\[.*\]\s*"
-_ALL_IN_QUOTES = "\"[^\"]*\"\s*"
-_ALL_IN_APOSTROPHES = "'[^']*'\s*"
-_DIGITS = "\d+"
+_ALL_IN_BRACKETS = r"\[.*\]\s*"
+_ALL_IN_QUOTES = r"\"[^\"]*\"\s*"
+_ALL_IN_APOSTROPHES = r"'[^']*'\s*"
+_DIGITS = r"\d+"
 _TRUE = "true"
 _FALSE = "false"
 _NULL = "null"
@@ -49,7 +49,7 @@ ALL = (
     _ALL_IN_BRACKETS, _TRUE, _FALSE, _NULL, _DIGITS
 )
 
-PARAMS_PTRN = re.compile("([-_\w]+)=(%s)" % "|".join(ALL))
+PARAMS_PTRN = re.compile(r"([-_\w]+)=(%s)" % "|".join(ALL))
 
 
 def instantiate_spec(spec_cls, data, validate=False):

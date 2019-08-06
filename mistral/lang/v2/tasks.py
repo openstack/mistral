@@ -31,7 +31,7 @@ from mistral.workflow import states
 
 _expr_ptrns = [expressions.patterns[name] for name in expressions.patterns]
 WITH_ITEMS_PTRN = re.compile(
-    "\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % '|'.join(_expr_ptrns)
+    r"\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % '|'.join(_expr_ptrns)
 )
 
 MAX_LENGTH_TASK_NAME = 255
