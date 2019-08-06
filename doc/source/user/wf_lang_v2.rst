@@ -261,9 +261,12 @@ attributes:
 -  **keep-result** - Boolean value allowing to not store action results
    after task completion (e.g. if they are large and not needed
    afterwards). *Optional*. By default is 'true'.
--  **target** - String parameter. It defines an executor to which task
-   action should be sent to. Target here physically means a name of
-   executors group but task will be run only on one of them. *Optional*.
+-  **target** - String parameter. It defines an executor to which a task
+   action should be sent to. Target here physically means the name of the
+   executor. The name of the executor can be defined with the "host"
+   property in the Mistral configuration file. If more than executors have
+   the same name then the task action will be sent only to one of them.
+   *Optional*.
 -  **pause-before** - Configures pause-before policy. *Optional*.
 -  **wait-before** - Configures wait-before policy. *Optional*.
 -  **wait-after** - Configures wait-after policy. *Optional*.

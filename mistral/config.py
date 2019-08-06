@@ -225,9 +225,13 @@ executor_opts = [
     cfg.HostAddressOpt(
         'host',
         default='0.0.0.0',
-        help=_('Name of the executor node. This can be an opaque '
-               'identifier. It is not necessarily a hostname, '
-               'FQDN, or IP address.')
+        help=_('Name of the executor node. This can be an any string '
+               'name/identifier. It is not necessarily a hostname, '
+               'FQDN, or IP address. It is also related to the "target" '
+               'attribute of tasks defined in a workflow text. If "target" '
+               'is defined for a task then the action of the task will be '
+               'sent to one of the executors that have the same value in the '
+               '"host" property.')
     ),
     cfg.StrOpt(
         'topic',
