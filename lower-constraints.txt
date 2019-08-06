@@ -26,12 +26,12 @@ eventlet==0.20.0
 extras==1.0.0
 fasteners==0.7.0
 fixtures==3.0.0
-flake8==2.5.5
+flake8==2.6.2
 future==0.16.0
 futurist==1.2.0
 gnocchiclient==3.3.1
 greenlet==0.4.13
-hacking==0.12.0
+hacking==1.1.0
 httplib2==0.9.1
 idna==2.6
 imagesize==0.7.1
@@ -97,6 +97,7 @@ positional==1.2.1
 prettytable==0.7.2
 pyasn1==0.1.8
 pycadf==1.1.0
+pycodestyle==2.3.1
 pycparser==2.18
 pyflakes==0.8.1
 Pygments==2.2.0

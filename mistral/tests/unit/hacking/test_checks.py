@@ -13,7 +13,7 @@
 import textwrap
 
 import mock
-import pep8
+import pycodestyle
 
 from mistral.hacking import checks
 from mistral.tests.unit import base
@@ -36,13 +36,13 @@ class BaseLoggingCheckTest(base.BaseTest):
 
     # We are patching pep8 so that only the check under test is actually
     # installed.
-    @mock.patch('pep8._checks',
+    @mock.patch('pycodestyle._checks',
                 {'physical_line': {}, 'logical_line': {}, 'tree': {}})
     def run_check(self, code, checker, filename=None):
-        pep8.register_check(checker)
+        pycodestyle.register_check(checker)
         lines = textwrap.dedent(code).strip().splitlines(True)
-        checker = pep8.Checker(filename=filename, lines=lines)
-        with mock.patch('pep8.StandardReport.get_file_results'):
+        checker = pycodestyle.Checker(filename=filename, lines=lines)
+        with mock.patch('pycodestyle.StandardReport.get_file_results'):
             checker.check_all()
         checker.report._deferred_print.sort()
 
