@@ -157,7 +157,7 @@ class DirectWorkflowSpec(WorkflowSpec):
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
-                    "^\w+$": types.NONEMPTY_DICT
+                    r"^\w+$": types.NONEMPTY_DICT
                 }
             },
         }
@@ -363,7 +363,7 @@ class ReverseWorkflowSpec(WorkflowSpec):
                 "type": "object",
                 "minProperties": 1,
                 "patternProperties": {
-                    "^\w+$": types.NONEMPTY_DICT
+                    r"^\w+$": types.NONEMPTY_DICT
                 }
             },
         }

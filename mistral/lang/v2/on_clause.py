@@ -23,19 +23,19 @@ NEXT_TASK = {
     "oneOf": [
         {
             "type": "string",
-            "pattern": "^\S+$",
+            "pattern": r"^\S+$",
             "description": "Task name (e.g.: `task1`)"
         },
         {
             "type": "string",
-            "pattern": "^\w+ \w+=(.*)$",
+            "pattern": r"^\w+ \w+=(.*)$",
             "description": "Task name with dict parameter "
                            "(e.g.: `fail msg=\"test\"`, "
                            "`fail msg=<% task() %>`)"
         },
         {
             "type": "string",
-            "pattern": "^\w+\\(\w+=(.*)\\)$",
+            "pattern": r"^\w+\(\w+=(.*)\)$",
             "description": "Task name with func parameter "
                            "(e.g.: `fail(msg=\"test\")`, "
                            "`fail(msg=<% task() %>)`)"
