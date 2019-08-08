@@ -81,7 +81,7 @@ class NotifyEventsTest(base.NotifierTestCase):
         notify_options = [
             {
                 'type': 'webhook',
-                'events': events.EVENTS
+                'event_types': events.EVENTS
             }
         ]
 
@@ -215,6 +215,58 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         self.assertTrue(self.publishers['wbhk'].publish.called)
         self.assertListEqual(expected_order, EVENT_LOGS)
+
+    def test_notify_with_event_filter(self):
+        wf_def = """
+        version: '2.0'
+        wf:
+          tasks:
+            t1:
+              action: std.noop
+              on-success:
+                - t2
+            t2:
+              action: std.noop
+        """
+
+        wf_svc.create_workflows(wf_def)
+
+        notify_options = [
+            {
+                'type': 'webhook',
+                'event_types': [
+                    events.WORKFLOW_LAUNCHED,
+                    events.WORKFLOW_SUCCEEDED
+                ]
+            }
+        ]
+
+        params = {'notify': notify_options}
+
+        wf_ex = self.engine.start_workflow('wf', '', **params)
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            task_exs = wf_ex.task_executions
+
+        self.assertEqual(states.SUCCESS, wf_ex.state)
+        self.assertIsNone(wf_ex.state_info)
+        self.assertEqual(2, len(task_exs))
+
+        t1_ex = self._assert_single_item(task_exs, name='t1')
+        t2_ex = self._assert_single_item(task_exs, name='t2')
+
+        self.assertEqual(states.SUCCESS, t1_ex.state)
+        self.assertIsNone(t1_ex.state_info)
+        self.assertEqual(states.SUCCESS, t2_ex.state)
+        self.assertIsNone(t2_ex.state_info)
+
+        self.assertTrue(self.publishers['wbhk'].publish.called)
+        self.assertEqual(2, len(EVENT_LOGS))
+        self.assertIn((wf_ex.id, events.WORKFLOW_LAUNCHED), EVENT_LOGS)
+        self.assertIn((wf_ex.id, events.WORKFLOW_SUCCEEDED), EVENT_LOGS)
 
     def test_notify_multiple(self):
         self.assertFalse(self.publishers['wbhk'].publish.called)
