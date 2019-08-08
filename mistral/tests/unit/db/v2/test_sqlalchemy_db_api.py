@@ -482,6 +482,28 @@ WF_DEFINITIONS = [
         'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
         'namespace': 'mynamespace'
     },
+    {
+        'name': 'my_wf1_with_namespace',
+        'definition': 'empty',
+        'spec': {},
+        'tags': ['mc'],
+        'scope': 'public',
+        'project_id': '1233',
+        'trust_id': '1234',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
+        'namespace': 'abc'
+    },
+    {
+        'name': 'my_wf1_with_namespace',
+        'definition': 'empty',
+        'spec': {},
+        'tags': ['mc'],
+        'scope': 'public',
+        'project_id': '1233',
+        'trust_id': '1234',
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
+        'namespace': 'def'
+    },
 ]
 
 
@@ -702,6 +724,38 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             db_api.create_workflow_definition,
             WF_DEFINITIONS[2]
         )
+
+    def test_create_same_workflow_definition_in_different_namespace(self):
+        name = WF_DEFINITIONS[3]['name']
+        namespace1 = WF_DEFINITIONS[3]['namespace']
+        namespace2 = WF_DEFINITIONS[4]['namespace']
+
+        self.assertIsNone(db_api.load_workflow_definition(name, namespace1))
+        self.assertIsNone(db_api.load_workflow_definition(name, namespace2))
+
+        created1 = db_api.create_workflow_definition(
+            WF_DEFINITIONS[3]
+        )
+
+        created2 = db_api.create_workflow_definition(
+            WF_DEFINITIONS[4]
+        )
+
+        self.assertIsNotNone(created1)
+        self.assertIsNotNone(created2)
+        self.assertIsNotNone(created1.name)
+        self.assertIsNotNone(created2.name)
+        self.assertIsNotNone(created1.namespace)
+        self.assertIsNotNone(created2.namespace)
+
+        fetched1 = db_api.get_workflow_definition(created1.name,
+                                                  created1.namespace)
+
+        fetched2 = db_api.get_workflow_definition(created2.name,
+                                                  created2.namespace)
+
+        self.assertEqual(created1, fetched1)
+        self.assertEqual(created2, fetched2)
 
     def test_update_workflow_definition(self):
         created = db_api.create_workflow_definition(WF_DEFINITIONS[0])
