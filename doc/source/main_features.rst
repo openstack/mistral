@@ -333,3 +333,13 @@ or ``evaluation_interval`` options.
 
  Defines the maximum number of finished executions.
  It must be greater or equal to ``1``.
+
+
+Workflow namespaces
+-------------------
+
+Mistral allows creating workflows within a namespace. So it is possible to
+create many workflows with the same name as long as they are in different
+namespaces.
+
+See more at :doc:`Workflow namespaces <user/wf_namespaces>`

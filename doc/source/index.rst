@@ -34,6 +34,13 @@ User guide
    install/index
    configuration/index
 
+**Mistral features**
+
+.. toctree::
+   :maxdepth: 1
+
+   user/wf_namespaces
+
 **API**
 
 .. toctree::
