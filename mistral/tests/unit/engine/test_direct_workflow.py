@@ -758,7 +758,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         sched = sched_base.get_system_scheduler()
 
-        self._await(lambda: sched.get_scheduled_jobs_count() == 0)
+        self._await(lambda: not sched.has_scheduled_jobs())
 
     def test_delete_workflow_integrity_check_on_execution_delete(self):
         wf_text = """---
@@ -778,7 +778,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
 
         sched = sched_base.get_system_scheduler()
 
-        self._await(lambda: sched.get_scheduled_jobs_count() == 0)
+        self._await(lambda: not sched.has_scheduled_jobs())
 
     def test_output(self):
         wf_text = """---

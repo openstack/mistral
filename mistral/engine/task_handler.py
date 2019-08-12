@@ -301,12 +301,12 @@ def _check_affected_tasks(task):
         # already been processed and the task state hasn't changed.
         sched = sched_base.get_system_scheduler()
 
-        cnt = sched.get_scheduled_jobs_count(
+        jobs_exist = sched.has_scheduled_jobs(
             key=_get_refresh_state_job_key(t_ex_id),
             processing=False
         )
 
-        if cnt == 0:
+        if not jobs_exist:
             _schedule_refresh_task_state(t_ex_id)
 
     for t_ex in affected_task_execs:
