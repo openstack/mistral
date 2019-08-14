@@ -17,7 +17,7 @@ import six
 
 from mistral.lang import types
 from mistral.lang.v2 import base
-from mistral import utils
+from mistral_lib import utils
 
 
 class ActionSpec(base.BaseSpec):

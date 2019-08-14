@@ -19,8 +19,8 @@ from mistral.executors import default_executor as exe
 from mistral.rpc import base as rpc
 from mistral.service import base as service_base
 from mistral.services import action_execution_reporter
-from mistral import utils
 from mistral.utils import profiler as profiler_utils
+from mistral_lib import utils
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)

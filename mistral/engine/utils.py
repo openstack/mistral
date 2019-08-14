@@ -17,7 +17,7 @@ import copy
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
-from mistral import utils
+from mistral_lib import utils
 
 
 def _compare_parameters(expected_input, actual_input):

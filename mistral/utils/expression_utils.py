@@ -27,8 +27,8 @@ from yaql.language import utils as yaql_utils
 
 from mistral.config import cfg
 from mistral.db.v2 import api as db_api
-from mistral import utils
 from mistral.utils import filter_utils
+from mistral_lib import utils
 
 # TODO(rakhmerov): it's work around the bug in YAQL.
 # YAQL shouldn't expose internal types to custom functions.

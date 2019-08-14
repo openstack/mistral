@@ -34,14 +34,13 @@ from mistral.notifiers import notification_events as events
 from mistral.rpc import clients as rpc
 from mistral.services import triggers
 from mistral.services import workflows as wf_service
-from mistral import utils
-from mistral.utils import merge_dicts
 from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral_lib import actions as ml_actions
+from mistral_lib import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -538,7 +537,7 @@ class Workflow(object):
                 cfg.CONF.engine.execution_field_size_limit_kb
             )
 
-        self.wf_ex.output = merge_dicts({'result': msg}, output_on_error)
+        self.wf_ex.output = utils.merge_dicts({'result': msg}, output_on_error)
 
         # Publish event.
         self.notify(events.WORKFLOW_FAILED)

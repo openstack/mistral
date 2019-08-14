@@ -16,8 +16,8 @@ import yaml
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
-from mistral import utils
 from mistral.workflow import states
+from mistral_lib import utils
 from oslo_log import log as logging
 
 

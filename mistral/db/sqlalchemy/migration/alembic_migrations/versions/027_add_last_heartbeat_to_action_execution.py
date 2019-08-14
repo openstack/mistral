@@ -27,7 +27,7 @@ down_revision = '026'
 
 from alembic import op
 import datetime
-from mistral import utils
+from mistral_lib import utils
 from oslo_config import cfg
 from sqlalchemy import Column, DateTime, Boolean
 

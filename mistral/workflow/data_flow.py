@@ -21,9 +21,9 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
-from mistral import utils
 from mistral.utils import inspect_utils
 from mistral.workflow import states
+from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF

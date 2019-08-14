@@ -28,7 +28,7 @@ from mistral.rpc import base as rpc_base
 from mistral.rpc.kombu import base as kombu_base
 from mistral.rpc.kombu import kombu_hosts
 from mistral.rpc.kombu import kombu_listener
-from mistral import utils
+from mistral_lib import utils
 
 #: When connection to the RabbitMQ server breaks, the
 #: client will receive EPIPE socket errors. These indicate

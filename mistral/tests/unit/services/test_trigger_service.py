@@ -25,7 +25,7 @@ from mistral.services import security
 from mistral.services import triggers as t_s
 from mistral.services import workflows
 from mistral.tests.unit import base
-from mistral import utils
+from mistral_lib import utils
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.

@@ -23,10 +23,10 @@ from osprofiler import profiler
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
-from mistral import utils as u
 from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral_lib import utils as u
 
 
 LOG = logging.getLogger(__name__)

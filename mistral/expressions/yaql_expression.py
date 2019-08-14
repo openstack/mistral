@@ -26,8 +26,8 @@ from yaql.language import factory
 from mistral.config import cfg
 from mistral import exceptions as exc
 from mistral.expressions.base_expression import Evaluator
-from mistral import utils
 from mistral.utils import expression_utils
+from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
 

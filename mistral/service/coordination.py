@@ -21,7 +21,7 @@ from oslo_service import threadgroup
 import tenacity
 import tooz.coordination
 
-from mistral import utils
+from mistral_lib import utils
 
 
 LOG = log.getLogger(__name__)

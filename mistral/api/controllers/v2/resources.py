@@ -19,8 +19,8 @@ from wsme import types as wtypes
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import types
 from mistral import exceptions as exc
-from mistral import utils
 from mistral.workflow import states
+from mistral_lib import utils
 
 SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 

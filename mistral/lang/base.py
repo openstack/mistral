@@ -24,7 +24,7 @@ from mistral import expressions as expr
 from mistral.expressions.jinja_expression import ANY_JINJA_REGEXP
 from mistral.expressions.yaql_expression import INLINE_YAQL_REGEXP
 from mistral.lang import types
-from mistral import utils
+from mistral_lib import utils
 
 ACTION_PATTERNS = {
     "command": r"[\w\.]+[^=\(\s\"]*",

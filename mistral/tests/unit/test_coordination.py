@@ -125,7 +125,8 @@ class ServiceTest(base.BaseTest):
         # new coordination configuration.
         coordination.cleanup_service_coordinator()
 
-    @mock.patch('mistral.utils.get_process_identifier', return_value='fake_id')
+    @mock.patch('mistral_lib.utils.get_process_identifier',
+                return_value='fake_id')
     def test_register_membership(self, mock_get_identifier):
         cfg.CONF.set_default('backend_url', 'zake://', 'coordination')
 

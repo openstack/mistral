@@ -16,7 +16,7 @@
 from mistral import exceptions as exc
 from mistral.tests.unit.rpc.kombu import base
 from mistral.tests.unit.rpc.kombu import fake_kombu
-from mistral import utils
+from mistral_lib import utils
 
 import mock
 from six import moves

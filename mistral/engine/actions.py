@@ -31,11 +31,11 @@ from mistral.lang import parser as spec_parser
 from mistral.rpc import clients as rpc
 from mistral.services import action_manager as a_m
 from mistral.services import security
-from mistral import utils
 from mistral.utils import wf_trace
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral_lib import actions as ml_actions
+from mistral_lib import utils
 
 
 LOG = logging.getLogger(__name__)

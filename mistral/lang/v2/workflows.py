@@ -21,7 +21,7 @@ from mistral.lang import types
 from mistral.lang.v2 import base
 from mistral.lang.v2 import task_defaults
 from mistral.lang.v2 import tasks
-from mistral import utils
+from mistral_lib import utils
 
 NOOP_COMMAND = 'noop'
 FAIL_COMMAND = 'fail'

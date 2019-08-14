@@ -21,7 +21,7 @@ from oslo_log import log as logging
 import osprofiler.profiler
 import osprofiler.web
 
-from mistral import utils
+from mistral_lib import utils
 
 
 PROFILER_LOG = logging.getLogger(cfg.CONF.profiler.profiler_log_name)

@@ -27,8 +27,8 @@ from mistral.db.v2.sqlalchemy import models as db_models
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral.tests.unit import base as test_base
-from mistral import utils
 from mistral.utils import filter_utils
+from mistral_lib import utils
 
 
 DEFAULT_CTX = test_base.get_context()

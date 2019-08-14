@@ -18,8 +18,8 @@ from mistral import config as cfg
 from mistral.notifiers import default_notifier as notif
 from mistral.rpc import base as rpc
 from mistral.service import base as service_base
-from mistral import utils
 from mistral.utils import profiler as profiler_utils
+from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
 

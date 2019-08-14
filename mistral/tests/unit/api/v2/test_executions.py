@@ -36,9 +36,9 @@ from mistral.rpc import base as rpc_base
 from mistral.rpc import clients as rpc_clients
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
-from mistral import utils
 from mistral.utils import rest_utils
 from mistral.workflow import states
+from mistral_lib import utils
 
 # This line is needed for correct initialization of messaging config.
 oslo_messaging.get_rpc_transport(cfg.CONF)

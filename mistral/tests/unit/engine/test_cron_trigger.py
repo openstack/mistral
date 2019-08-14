@@ -24,7 +24,7 @@ from mistral.services import security
 from mistral.services import triggers
 from mistral.services import workflows
 from mistral.tests.unit.engine import base
-from mistral import utils
+from mistral_lib import utils
 
 
 WORKFLOW_LIST = """

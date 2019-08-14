@@ -21,8 +21,8 @@ from mistral.actions import generator_factory
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import actions
-from mistral import utils
 from mistral.utils import inspect_utils as i_utils
+from mistral_lib import utils
 
 
 # TODO(rakhmerov): Make methods more consistent and granular.

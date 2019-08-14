@@ -17,7 +17,7 @@ import datetime
 
 from mistral.db.v2.sqlalchemy import api as db_api
 from mistral.tests.unit import base as test_base
-from mistral import utils
+from mistral_lib import utils
 
 WF_EXEC = {
     'id': 'c0f3be41-88b9-4c86-a669-83e77cd0a1b8',
