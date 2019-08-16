@@ -404,3 +404,48 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(0, stat['running_tasks_count'])
         self.assertEqual(1, stat['success_tasks_count'])
         self.assertEqual(2, stat['total_tasks_count'])
+
+    def test_retry_count(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.noop
+              on-success: task2
+
+            task2:
+              action: std.fail
+              retry: delay=0.1 count=3
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        resp = self.app.get('/v2/executions/%s/report' % wf_ex.id)
+
+        self.assertEqual(200, resp.status_int)
+
+        # Now let's verify the response structure
+
+        root_wf_ex = resp.json['root_workflow_execution']
+
+        tasks = root_wf_ex['task_executions']
+
+        self.assertEqual(2, len(tasks))
+
+        # Verify task1 presence.
+        self._assert_single_item(tasks, name='task1', state=states.SUCCESS)
+
+        # Verify task2 info.
+        task2 = self._assert_single_item(
+            tasks,
+            name='task2',
+            state=states.ERROR
+        )
+
+        self.assertEqual(3, task2['retry_count'])

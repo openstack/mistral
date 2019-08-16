@@ -65,6 +65,11 @@ def analyse_task_execution(task_ex_id, stat, filters, cur_depth):
 
         child_executions = task_ex.executions
 
+    if 'retry_task_policy' in task_ex.runtime_context:
+        retry_ctx = task_ex.runtime_context['retry_task_policy']
+
+        entry.retry_count = retry_ctx['retry_no']
+
     entry.action_executions = []
     entry.workflow_executions = []
 
