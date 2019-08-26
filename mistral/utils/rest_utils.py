@@ -267,3 +267,15 @@ def create_db_retry_object():
 
 def rest_retry_on_db_error(func):
     return db_utils.retry_on_db_error(func, create_db_retry_object())
+
+
+def load_deferred_fields(ex, fields):
+    if not ex:
+        return ex
+
+    # We need to refer lazy-loaded fields explicitly in
+    # order to make sure that they are correctly loaded.
+    for f in fields:
+        hasattr(ex, f)
+
+    return ex

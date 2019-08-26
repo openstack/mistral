@@ -51,26 +51,14 @@ STATE_TYPES = wtypes.Enum(
 )
 
 
-def _load_deferred_fields(ex, fields):
-    if not ex:
-        return ex
-
-    # We need to refer lazy-loaded fields explicitly in
-    # order to make sure that they are correctly loaded.
-    for f in fields:
-        hasattr(ex, f)
-
-    return ex
-
-
 def _get_workflow_execution_resource_with_output(wf_ex):
-    _load_deferred_fields(wf_ex, ['params', 'input', 'output'])
+    rest_utils.load_deferred_fields(wf_ex, ['params', 'input', 'output'])
 
     return resources.Execution.from_db_model(wf_ex)
 
 
 def _get_workflow_execution_resource(wf_ex):
-    _load_deferred_fields(wf_ex, ['params', 'input'])
+    rest_utils.load_deferred_fields(wf_ex, ['params', 'input'])
 
     return resources.Execution.from_db_model(wf_ex)
 
@@ -84,8 +72,34 @@ def _get_workflow_execution(id, must_exist=True):
         else:
             wf_ex = db_api.load_workflow_execution(id)
 
-        return _load_deferred_fields(wf_ex, ['params', 'input', 'output'])
+        return rest_utils.load_deferred_fields(wf_ex, ['params', 'input',
+                                                       'output', 'context'])
 
+
+# Use retries to prevent possible failures.
+@rest_utils.rest_retry_on_db_error
+def _get_task_executions(wf_id):
+    with db_api.transaction():
+        task_execs = db_api.get_task_executions(workflow_execution_id=wf_id)
+        for task_ex in task_execs:
+            rest_utils.load_deferred_fields(task_ex, ['spec'])
+        return task_execs
+
+
+def _get_published_global_from_tasks(task_execs, wf_ex):
+    wf_published_global_vars = {}
+    for task_ex in task_execs:
+        published_global_vars = task.get_published_global(task_ex, wf_ex)
+        if published_global_vars:
+            merge_dicts(wf_published_global_vars, published_global_vars)
+    return wf_published_global_vars
+
+
+def _execution_with_publish_global(wf_ex, wf_published_global_vars):
+    wf_execution = resources.Execution.from_db_model(wf_ex)
+    if wf_published_global_vars:
+        wf_execution.published_global = wf_published_global_vars
+    return wf_execution
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
@@ -107,7 +121,12 @@ class ExecutionsController(rest.RestController):
 
         wf_ex = _get_workflow_execution(id)
 
-        return resources.Execution.from_db_model(wf_ex)
+        task_execs = _get_task_executions(wf_ex.id)
+
+        wf_published_global_vars = _get_published_global_from_tasks(task_execs,
+                                                                    wf_ex)
+
+        return _execution_with_publish_global(wf_ex, wf_published_global_vars)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
