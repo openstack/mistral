@@ -45,13 +45,13 @@ class Scheduler(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_scheduled_jobs_count(self, **filters):
-        """Returns the number of scheduled jobs.
+    def has_scheduled_jobs(self, **filters):
+        """Returns True if there are scheduled jobs matching the given filter.
 
         :param filters: Filters that define what kind of jobs
             need to be counted. Permitted values:
             * key=<string> - a key set for a job when it was scheduled.
-            * processing=<boolean> - if True, return only jobs that are
+            * processing=<boolean> - if True, count only jobs that are
                 currently being processed.
         """
         raise NotImplementedError

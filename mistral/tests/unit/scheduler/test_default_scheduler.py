@@ -102,6 +102,24 @@ class DefaultSchedulerTest(base.DbTestCase):
 
         self.assertEqual(1, len(scheduled_jobs))
 
+        self.assertTrue(self.scheduler.has_scheduled_jobs())
+
+        self.assertTrue(self.scheduler.has_scheduled_jobs(processing=True))
+        self.assertFalse(self.scheduler.has_scheduled_jobs(processing=False))
+        self.assertTrue(
+            self.scheduler.has_scheduled_jobs(key=None, processing=True)
+        )
+        self.assertFalse(
+            self.scheduler.has_scheduled_jobs(key=None, processing=False)
+        )
+        self.assertFalse(self.scheduler.has_scheduled_jobs(key='foobar'))
+        self.assertFalse(
+            self.scheduler.has_scheduled_jobs(key='foobar', processing=True)
+        )
+        self.assertFalse(
+            self.scheduler.has_scheduled_jobs(key='foobar', processing=False)
+        )
+
         captured_at = scheduled_jobs[0].captured_at
 
         self.assertIsNotNone(captured_at)

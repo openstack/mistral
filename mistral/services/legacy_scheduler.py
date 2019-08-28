@@ -116,8 +116,8 @@ class LegacyScheduler(sched_base.Scheduler):
             **job.func_args
         )
 
-    def get_scheduled_jobs_count(self, **filters):
-        return db_api.get_delayed_calls_count(**filters)
+    def has_scheduled_jobs(self, **filters):
+        return db_api.get_delayed_calls_count(**filters) > 0
 
     def start(self):
         self._thread.start()
