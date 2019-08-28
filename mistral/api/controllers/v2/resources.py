@@ -784,6 +784,7 @@ class TaskExecutionReportEntry(BaseExecutionReportEntry):
 
     action_executions = [ActionExecutionReportEntry]
     workflow_executions = [WorkflowExecutionReportEntry]
+    retry_count = wtypes.IntegerType(minimum=0)
 
     @classmethod
     def sample(cls):
@@ -791,6 +792,7 @@ class TaskExecutionReportEntry(BaseExecutionReportEntry):
 
         sample.action_executions = [ActionExecutionReportEntry.sample()]
         sample.workflow_executions = []
+        sample.retry_count = 0
 
         return sample
 
