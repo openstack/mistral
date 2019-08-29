@@ -1186,6 +1186,41 @@ class WithItemsEngineTest(base.EngineTestCase):
 
         self.assertEqual(states.SUCCESS, task1.state)
 
+    def test_with_items_env_in_with_items_expression(self):
+        wf_text = """---
+        version: "2.0"
+
+        wf:
+          tasks:
+            task1:
+              with-items: env_param in <% env().input_array %>
+              action: std.echo output=<% $.env_param %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow(
+            'wf',
+            env={'input_array': ['1', '2', '33']}
+        )
+
+        self.await_workflow_success(wf_ex.id, timeout=10)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task1 = self._assert_single_item(
+                wf_ex.task_executions,
+                name='task1'
+            )
+
+            result = data_flow.get_task_execution_result(task1)
+
+        self.assertListEqual(['1', '2', '33'], result)
+        self.assertEqual(states.SUCCESS, task1.state)
+
     def test_with_items_two_tasks_second_starts_on_success(self):
         wb_text = """---
         version: "2.0"
