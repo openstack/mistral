@@ -132,7 +132,7 @@ python-tackerclient==0.8.0
 python-troveclient==2.2.0
 python-vitrageclient==2.0.0
 python-zaqarclient==1.0.0
-python-zunclient==1.0.0
+python-zunclient==3.4.0
 python-qinlingclient==1.0.0
 pytz==2013.6
 PyYAML==3.12
