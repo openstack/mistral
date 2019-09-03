@@ -76,6 +76,11 @@ def do_populate(config, cmd):
     workflows.sync_db()
 
 
+def do_populate_actions(config, cmd):
+    LOG.info("Populating actions db")
+    action_manager.sync_db()
+
+
 def do_revision(config, cmd):
     do_alembic_command(
         config, cmd,
@@ -99,6 +104,9 @@ def add_command_parsers(subparsers):
 
     parser = subparsers.add_parser('populate')
     parser.set_defaults(func=do_populate)
+
+    parser = subparsers.add_parser('populate_actions')
+    parser.set_defaults(func=do_populate_actions)
 
     parser = subparsers.add_parser('stamp')
     parser.add_argument('--sql', action='store_true')

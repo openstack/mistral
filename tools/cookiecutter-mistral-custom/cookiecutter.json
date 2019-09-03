@@ -1,0 +1,8 @@
+{
+    "author": "mistral mistraly",
+    "email": "mistral@mistral.com",
+    "project_name": "example-action",
+    "pkg_name": "{{ cookiecutter.project_name.lower().replace(' ', '_').replace('-', '_') }}",
+    "summary": "A mistral custom action example",
+    "version": "0.1.0"
+}

@@ -28,7 +28,7 @@ Tutorial
         packages=find_packages(),
         install_requires=["mistral", "yaql"],
         entry_points={
-            "mistral.yaql_functions": [
+            "mistral.expression.functions": [
                 "random_uuid = my_package.sub_package.yaql:random_uuid_"
             ]
         }
@@ -36,7 +36,7 @@ Tutorial
 
 
 Publish the ``random_uuid_`` function in the ``entry_points`` section, in the
-``mistral.yaql_functions`` namespace in ``setup.py``. This function will be
+``mistral.expression.functions`` namespace in ``setup.py``. This function will be
 defined later.
 
 Note that the package name will be used in Pip and must not overlap with
@@ -161,8 +161,8 @@ Development
 While developing, it is sufficient to add the root source folder (the parent
 folder of ``my_package``) to the ``PYTHONPATH`` environment variable and the
 line ``random_uuid = my_package.sub_package.yaql:random_uuid_`` in the Mistral
-entry points in the ``mistral.yaql_functions`` namespace. If the path to the
-parent folder of ``my_package`` is ``/path/to/my_project``.
+entry points in the ``mistral.expression.functions`` namespace.
+If the path to the parent folder of ``my_package`` is ``/path/to/my_project``.
 
 .. code-block:: bash
 
@@ -172,5 +172,5 @@ parent folder of ``my_package`` is ``/path/to/my_project``.
 .. code-block:: ini
 
     [entry_points]
-    mistral.yaql_functions =
+    mistral.expression.functions =
         random_uuid = my_package.sub_package.yaql:random_uuid_
