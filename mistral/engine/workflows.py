@@ -96,7 +96,8 @@ class Workflow(object):
                 "workflow_id": self.wf_ex.workflow_id,
                 "state": self.wf_ex.state,
                 "state_info": self.wf_ex.state_info,
-                "project_id": self.wf_ex.project_id
+                "project_id": self.wf_ex.project_id,
+                "task_execution_id": self.wf_ex.task_execution_id
             }
 
         def _send_notification():
