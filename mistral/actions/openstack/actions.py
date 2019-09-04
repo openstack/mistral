@@ -51,6 +51,7 @@ def _try_import(module_name):
 aodhclient = _try_import('aodhclient.v2.client')
 barbicanclient = _try_import('barbicanclient.client')
 cinderclient = _try_import('cinderclient.client')
+cinder_api_versions = _try_import('cinderclient.api_versions')
 designateclient = _try_import('designateclient.v1')
 glanceclient = _try_import('glanceclient')
 glareclient = _try_import('glareclient.v1.client')
@@ -66,7 +67,9 @@ magnumclient = _try_import('magnumclient.v1.client')
 mistralclient = _try_import('mistralclient.api.v2.client')
 muranoclient = _try_import('muranoclient.v1.client')
 neutronclient = _try_import('neutronclient.v2_0.client')
+nova = _try_import('novaclient')
 novaclient = _try_import('novaclient.client')
+nova_api_versions = _try_import('novaclient.api_versions')
 qinlingclient = _try_import('qinlingclient.v1.client')
 senlinclient = _try_import('senlinclient.v1.client')
 swift_client = _try_import('swiftclient.client')
@@ -76,6 +79,7 @@ troveclient = _try_import('troveclient.v1.client')
 vitrageclient = _try_import('vitrageclient.v1.client')
 zaqarclient = _try_import('zaqarclient.queues.client')
 zunclient = _try_import('zunclient.v1.client')
+zun_api_versions = _try_import('zunclient.api_versions')
 
 
 class NovaAction(base.OpenStackAction):
@@ -92,8 +96,19 @@ class NovaAction(base.OpenStackAction):
 
         session_and_auth = self.get_session_and_auth(context)
 
-        return novaclient.Client(
-            2,
+        temp_client = self._get_client_class()(
+            nova.API_MAX_VERSION,
+            endpoint_override=nova_endpoint.url,
+            session=session_and_auth['session']
+        )
+
+        discovered_version = nova_api_versions.discover_version(
+            temp_client,
+            nova.API_MAX_VERSION
+        )
+
+        return self._get_client_class()(
+            discovered_version,
             endpoint_override=nova_endpoint.url,
             session=session_and_auth['session']
         )
@@ -233,13 +248,22 @@ class CinderAction(base.OpenStackAction):
 
         session_and_auth = self.get_session_and_auth(context)
 
-        client = self._get_client_class()(
-            '2',
+        temp_client = self._get_client_class()(
+            cinder_api_versions.MAX_VERSION,
             endpoint_override=cinder_endpoint.url,
             session=session_and_auth['session']
         )
 
-        return client
+        discovered_version = cinder_api_versions.discover_version(
+            temp_client,
+            cinder_api_versions.APIVersion(cinder_api_versions.MAX_VERSION),
+        )
+
+        return self._get_client_class()(
+            discovered_version,
+            endpoint_override=cinder_endpoint.url,
+            session=session_and_auth['session']
+        )
 
     @classmethod
     def _get_fake_client(cls):
@@ -972,14 +996,24 @@ class ZunAction(base.OpenStackAction):
         zun_endpoint = self.get_service_endpoint()
         session_and_auth = self.get_session_and_auth(context)
 
-        client = self._get_client_class()(
-            '1',
+        temp_client = self._get_client_class()(
+            zun_api_versions.MAX_API_VERSION,
+            endpoint_override=zun_endpoint.url,
+            auth_url=keystone_endpoint.url,
+            session=session_and_auth['auth']
+        )
+
+        discovered_version = zun_api_versions.discover_version(
+            temp_client,
+            zun_api_versions.APIVersion(zun_api_versions.MAX_API_VERSION)
+        )
+
+        return self._get_client_class()(
+            discovered_version,
             endpoint_override=zun_endpoint.url,
             auth_url=keystone_endpoint.url,
             session=session_and_auth['session']
         )
-
-        return client
 
     @classmethod
     def _get_fake_client(cls):
