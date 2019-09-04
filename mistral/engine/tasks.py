@@ -825,16 +825,8 @@ class WithItemsTask(RegularTask):
 
         :return: Evaluated 'with-items' expression values.
         """
-        ctx_view = data_flow.ContextView(
-            self.ctx,
-            self.wf_ex.context,
-            self.wf_ex.input
-        )
 
-        return expr.evaluate_recursively(
-            self.task_spec.get_with_items(),
-            ctx_view
-        )
+        return self._evaluate_expression(self.task_spec.get_with_items())
 
     def _validate_values(self, with_items_values):
         # Take only mapped values and check them.
