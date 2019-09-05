@@ -122,7 +122,10 @@ def _check_and_fix_integrity(wf_ex_id):
     from mistral.engine import task_handler
 
     with db_api.transaction():
-        wf_ex = db_api.get_workflow_execution(wf_ex_id)
+        wf_ex = db_api.load_workflow_execution(wf_ex_id)
+
+        if not wf_ex:
+            return
 
         if states.is_completed(wf_ex.state):
             return
