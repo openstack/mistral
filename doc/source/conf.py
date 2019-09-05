@@ -134,3 +134,19 @@ man_show_urls = True
 repository_name = 'openstack/mistral'
 bug_project = 'mistral'
 bug_tag = ''
+
+latex_use_xindy = False
+
+# -- Options for LaTeX output ------------------------------------------------
+
+latex_documents = [
+    ('index', 'doc-mistral.tex',
+     u'Mistral Documentation',
+     u'OpenStack','manual', True),
+]
+
+latex_elements = {
+    'makeindex': '',
+    'printindex': '',
+    'preamble': r'\setcounter{tocdepth}{3}',
+}

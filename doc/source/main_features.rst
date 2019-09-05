@@ -18,7 +18,7 @@ referred to as Data Flow.
 Below is a simple example of how Mistral Data Flow looks like from the Mistral
 Workflow Language perspective:
 
-.. code-block:: mistral
+::
 
  version: '2.0'
 
