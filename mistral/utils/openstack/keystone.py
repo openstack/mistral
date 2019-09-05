@@ -107,7 +107,7 @@ def _admin_client(trust_id=None):
             password=CONF.keystone_authtoken.admin_password,
             project_name=project_name,
             auth_url=auth_url,
-            trust_id=trust_id
+            trusts=trust_id
         )
 
         cl.management_url = auth_url
