@@ -27,13 +27,16 @@ from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
 from mistral.rpc import clients as rpc
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workflow import data_flow
+from mistral.workflow.data_flow import ContextView
+from mistral.workflow.data_flow import get_current_task_dict
+from mistral.workflow.data_flow import get_workflow_environment_dict
 from mistral.workflow import states
-
 
 LOG = logging.getLogger(__name__)
 
@@ -52,6 +55,49 @@ def _get_task_resource_with_result(task_ex):
 
     task.result = json.dumps(data_flow.get_task_execution_result(task_ex))
 
+    return task
+
+
+# Use retries to prevent possible failures.
+@rest_utils.rest_retry_on_db_error
+def _get_task_execution(id):
+    with db_api.transaction():
+        task_ex = db_api.get_task_execution(id)
+        rest_utils.load_deferred_fields(task_ex, ['workflow_execution'])
+        rest_utils.load_deferred_fields(task_ex.workflow_execution,
+                                        ['context', 'input',
+                                         'params', 'root_execution'])
+        return _get_task_resource_with_result(task_ex), task_ex
+
+
+def get_published_global(task_ex, wf_ex=None):
+    if task_ex.state not in [states.SUCCESS, states.ERROR]:
+        return
+
+    if wf_ex is None:
+        wf_ex = task_ex.workflow_execution
+
+    expr_ctx = ContextView(
+        get_current_task_dict(task_ex),
+        task_ex.in_context,
+        get_workflow_environment_dict(wf_ex),
+        wf_ex.context,
+        wf_ex.input
+    )
+
+    task_spec = spec_parser.get_task_spec(task_ex.spec)
+    publish_spec = task_spec.get_publish(task_ex.state)
+
+    if not publish_spec:
+        return
+    global_vars = publish_spec.get_global()
+    return expr.evaluate_recursively(global_vars, expr_ctx)
+
+
+def _task_with_published_global(task, task_ex):
+    published_global_vars = get_published_global(task_ex)
+    if published_global_vars:
+        task.published_global = published_global_vars
     return task
 
 
@@ -137,15 +183,6 @@ class TaskExecutionsController(rest.RestController):
         )
 
 
-# Use retries to prevent possible failures.
-@rest_utils.rest_retry_on_db_error
-def _get_task_execution(id):
-    with db_api.transaction():
-        task_ex = db_api.get_task_execution(id)
-
-        return _get_task_resource_with_result(task_ex)
-
-
 class TasksController(rest.RestController):
     action_executions = action_execution.TasksActionExecutionController()
     workflow_executions = TaskExecutionsController()
@@ -160,7 +197,8 @@ class TasksController(rest.RestController):
         acl.enforce('tasks:get', context.ctx())
         LOG.debug("Fetch task [id=%s]", id)
 
-        return _get_task_execution(id)
+        task, task_ex = _get_task_execution(id)
+        return _task_with_published_global(task, task_ex)
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, int, types.uniquelist,

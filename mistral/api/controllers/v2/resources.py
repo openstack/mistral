@@ -314,6 +314,8 @@ class Execution(resource.Resource):
 
     project_id = wsme.wsattr(wtypes.text, readonly=True)
 
+    published_global = types.jsontype
+
     @classmethod
     def sample(cls):
         return cls(
@@ -326,6 +328,7 @@ class Execution(resource.Resource):
             state='SUCCESS',
             input={},
             output={},
+            published_global={'key': 'value'},
             params={
                 'env': {'k1': 'abc', 'k2': 123},
                 'notify': [
@@ -399,6 +402,7 @@ class Task(resource.Resource):
 
     result = wtypes.text
     published = types.jsontype
+    published_global = types.jsontype
     processed = bool
 
     created_at = wtypes.text
@@ -432,6 +436,7 @@ class Task(resource.Resource):
             },
             result='task result',
             published={'key': 'value'},
+            published_global={'key': 'value'},
             processed=True,
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
