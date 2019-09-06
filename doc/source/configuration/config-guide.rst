@@ -177,10 +177,7 @@ directory.
    key value pairs to be passed as kwargs into the publisher::
 
     [notifier]
-    notify = [
-        {'type': 'webhook', 'url': 'http://example.com', 'headers': {'X-Auth-Token': 'XXXX'}},
-        {'type': 'custom_publisher'}
-    ]
+    notify = [ {"type": "webhook", "url": "http://example.com", "headers": {"X-Auth-Token": "XXXX"}}, {"type": "custom_publisher"} ]
 
 #. Finally, try to run mistral engine and verify that it is running without
    any error::

@@ -29,6 +29,8 @@ class DefaultNotifier(base.Notifier):
     def notify(self, ex_id, data, event, timestamp, publishers):
         ctx = auth_ctx.ctx()
 
+        data['event'] = event
+
         for entry in publishers:
             params = copy.deepcopy(entry)
             publisher_name = params.pop('type', None)
