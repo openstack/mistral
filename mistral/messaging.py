@@ -14,7 +14,7 @@
 #    limitations under the License.
 """
 This module contains common structures and functions that help to handle
-AMQP messages based on olso.messaging framework.
+AMQP messages based on oslo.messaging framework.
 """
 
 import abc
