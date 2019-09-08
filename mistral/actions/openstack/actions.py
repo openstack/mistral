@@ -18,6 +18,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import importutils
 
+from keystoneauth1.identity import v3 as ks_identity_v3
 from keystoneauth1 import session as ks_session
 from keystoneauth1.token_endpoint import Token
 from keystoneclient import httpclient
@@ -846,9 +847,30 @@ class SenlinAction(base.OpenStackAction):
         keystone_endpoint = keystone_utils.get_keystone_endpoint()
         senlin_endpoint = self.get_service_endpoint()
 
+        if context.is_trust_scoped and keystone_utils.is_token_trust_scoped(
+                context.auth_token):
+            if context.trust_id is None:
+                raise Exception(
+                    "'trust_id' must be provided in the admin context."
+                )
+
+            auth = ks_identity_v3.Password(
+                auth_url=keystone_endpoint.url,
+                trust_id=context.trust_id,
+                username=CONF.keystone_authtoken.username,
+                password=CONF.keystone_authtoken.password,
+                user_domain_name=CONF.keystone_authtoken.user_domain_name
+            )
+        else:
+            auth = ks_identity_v3.Token(
+                auth_url=keystone_endpoint.url,
+                token=context.auth_token,
+                project_id=context.project_id
+            )
+
         return self._get_client_class()(
             endpoint_url=senlin_endpoint.url,
-            token=context.auth_token,
+            session=ks_session.Session(auth=auth),
             tenant_id=context.project_id,
             region_name=senlin_endpoint.region,
             auth_url=keystone_endpoint.url,
