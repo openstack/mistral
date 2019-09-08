@@ -223,8 +223,12 @@ def obtain_service_catalog(ctx):
                 "'trust_id' must be provided in the admin context."
             )
 
-        trust_client = client_for_trusts(ctx.trust_id)
-        token_data = trust_client.tokens.get_token_data(
+        # trust_client = client_for_trusts(ctx.trust_id)
+        # Using trust client, it can't validate token
+        # when cron trigger running because keystone policy
+        # don't allow do this. So we need use admin client to
+        # get token data
+        token_data = _admin_client().tokens.get_token_data(
             token,
             include_catalog=True
         )
