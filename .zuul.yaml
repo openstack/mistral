@@ -66,6 +66,10 @@
     parent: openstack-tox
     vars:
       tox_envlist: unit-mysql
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
     timeout: 3600
     required-projects:
       - openstack/mistral-lib
@@ -76,6 +80,10 @@
     vars:
       tox_envlist: unit-postgresql
       tox_environment: {CI_PROJECT: "{{ zuul['project']['name'] }}"}
+    irrelevant-files:
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^releasenotes/.*$
     timeout: 3600
     required-projects:
       - openstack/mistral-lib
@@ -93,6 +101,9 @@
             voting: false
             irrelevant-files:
               - ^.zuul.yaml$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^releasenotes/.*$
             required-projects:
               - openstack/mistral-lib
         - openstack-tox-py36:
