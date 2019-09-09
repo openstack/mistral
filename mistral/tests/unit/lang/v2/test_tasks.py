@@ -231,7 +231,7 @@ class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):
             ({'wait-before': '{{ 1 }}'}, False),
             ({'wait-before': '{{ * }}'}, True),
             ({'wait-before': -1}, True),
-            ({'wait-before': 1.0}, True),
+            ({'wait-before': 1.1}, True),
             ({'wait-before': '1'}, True),
             ({'wait-after': 1}, False),
             ({'wait-after': '<% 1 %>'}, False),
@@ -239,7 +239,7 @@ class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):
             ({'wait-after': '{{ 1 }}'}, False),
             ({'wait-after': '{{ * }}'}, True),
             ({'wait-after': -1}, True),
-            ({'wait-after': 1.0}, True),
+            ({'wait-after': 1.1}, True),
             ({'wait-after': '1'}, True),
             ({'timeout': 300}, False),
             ({'timeout': '<% 300 %>'}, False),
@@ -247,7 +247,7 @@ class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):
             ({'timeout': '{{ 300 }}'}, False),
             ({'timeout': '{{ * }}'}, True),
             ({'timeout': -300}, True),
-            ({'timeout': 300.0}, True),
+            ({'timeout': 300.1}, True),
             ({'timeout': '300'}, True),
             ({'pause-before': False}, False),
             ({'pause-before': '<% False %>'}, False),
@@ -261,7 +261,7 @@ class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):
             ({'concurrency': '{{ 10 }}'}, False),
             ({'concurrency': '{{ * }}'}, True),
             ({'concurrency': -10}, True),
-            ({'concurrency': 10.0}, True),
+            ({'concurrency': 10.1}, True),
             ({'concurrency': '10'}, True)
         ]
 
