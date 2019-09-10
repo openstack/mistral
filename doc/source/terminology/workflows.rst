@@ -128,7 +128,7 @@ YAML example of reverse workflow
         search_for_ip:
           action: nova.floating_ips_findall instance_id=null
           publish:
-            vm_ip: <% task().result.ip %>
+            vm_ip: <% task().result[0].ip %>
         associate_ip:
           action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
           requires: [search_for_ip]
