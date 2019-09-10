@@ -253,7 +253,7 @@ YAML example
           action: nova.servers_create name=<% $.vm_name %> \
                   image=<% $.image_ref %> flavor=<% $.flavor_ref %>
           publish:
-            vm_ids: <% $.create_servers.id %>
+            vm_ids: <% task().result.id %>
           on-success:
             - wait_for_servers
 

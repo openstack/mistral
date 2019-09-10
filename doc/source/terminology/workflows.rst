@@ -26,7 +26,7 @@ YAML example
         create_server:
           action: nova.servers_create name=<% $.vm_name %> image=<% $.image_ref %> flavor=<% $.flavor_ref %>
           publish:
-            vm_id: <% $.id %>
+            vm_id: <% task().result.id %>
           on-success:
             - wait_for_instance
         wait_for_instance:
@@ -76,7 +76,7 @@ YAML example of direct workflow
         create_vm:
           action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
           publish:
-            vm_id: <% $.id %>
+            vm_id: <% task().result.id %>
           on-error:
             - send_error_email
           on-success:
@@ -124,11 +124,11 @@ YAML example of reverse workflow
         create_vm:
           action: nova.servers_create name=<% $.vm_name %> image=<% $.image_id %> flavor=<% $.flavor_id %>
           publish:
-            vm_id: <% $.id %>
+            vm_id: <% task().result.id %>
         search_for_ip:
           action: nova.floating_ips_findall instance_id=null
           publish:
-            vm_ip: <% $[0].ip %>
+            vm_ip: <% task().result.ip %>
         associate_ip:
           action: nova.servers_add_floating_ip server=<% $.vm_id %> address=<% $.vm_ip %>
           requires: [search_for_ip]
