@@ -1221,6 +1221,8 @@ def delete_delayed_calls(session=None, **kwargs):
     return _delete_all(models.DelayedCall, **kwargs)
 
 
+# Scheduled jobs.
+
 @b.session_aware()
 def create_scheduled_job(values, session=None):
     job = models.ScheduledJob()
