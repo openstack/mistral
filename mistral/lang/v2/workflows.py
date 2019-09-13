@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_utils import uuidutils
+from osprofiler import profiler
 import six
 
 from mistral import exceptions as exc
@@ -173,6 +174,7 @@ class DirectWorkflowSpec(WorkflowSpec):
         self.inbound_tasks_cache = {}
         self.outbound_tasks_cache = {}
 
+    @profiler.trace('direct-wf-spec-validate-semantics', hide_args=True)
     def validate_semantics(self):
         super(DirectWorkflowSpec, self).validate_semantics()
 
@@ -187,6 +189,7 @@ class DirectWorkflowSpec(WorkflowSpec):
         self._check_workflow_integrity()
         self._check_join_tasks()
 
+    @profiler.trace('direct-wf-spec-check-workflow-integrity', hide_args=True)
     def _check_workflow_integrity(self):
         for t_s in self.get_tasks():
             out_task_names = self.find_outbound_task_names(t_s.get_name())

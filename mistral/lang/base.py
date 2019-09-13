@@ -16,6 +16,7 @@
 import copy
 import json
 import jsonschema
+from osprofiler import profiler
 import re
 import six
 
@@ -51,7 +52,11 @@ ALL = (
 
 PARAMS_PTRN = re.compile(r"([-_\w]+)=(%s)" % "|".join(ALL))
 
+# {(base_spec_cls, polymorphic_value): spec_cls}
+_POLYMORPHIC_CACHE = {}
 
+
+@profiler.trace('lang-base-instantiate-spec', hide_args=True)
 def instantiate_spec(spec_cls, data, validate=False):
     """Instantiates specification accounting for specification hierarchies.
 
@@ -97,26 +102,41 @@ def instantiate_spec(spec_cls, data, validate=False):
         key_name = key[0]
         key_default = key[1]
 
-    for cls in utils.iter_subclasses(spec_cls):
-        if not hasattr(cls, '_polymorphic_value'):
-            raise exc.DSLParsingException(
-                "Class '%s' is expected to have attribute '_polymorphic_value'"
-                " because it's a part of specification hierarchy inherited "
-                "from class '%s'." % (cls, spec_cls)
-            )
+    polymorphic_val = data.get(key_name, key_default)
 
-        if cls._polymorphic_value == data.get(key_name, key_default):
-            spec = cls(data, validate)
+    global _POLYMORPHIC_CACHE
 
-            if validate:
-                spec.validate_semantics()
+    cache_key = (spec_cls, polymorphic_val)
 
-            return spec
+    concrete_spec_cls = _POLYMORPHIC_CACHE.get(cache_key)
 
-    raise exc.DSLParsingException(
-        'Failed to find a specification class to instantiate '
-        '[spec_cls=%s, data=%s]' % (spec_cls, data)
-    )
+    if concrete_spec_cls is None:
+        for cls in utils.iter_subclasses(spec_cls):
+            if not hasattr(cls, '_polymorphic_value'):
+                raise exc.DSLParsingException(
+                    "Class '%s' is expected to have attribute"
+                    " '_polymorphic_value' because it's a part of"
+                    " specification hierarchy inherited "
+                    "from class '%s'." % (cls, spec_cls)
+                )
+
+            if cls._polymorphic_value == polymorphic_val:
+                concrete_spec_cls = cls
+
+                _POLYMORPHIC_CACHE[cache_key] = concrete_spec_cls
+
+    if concrete_spec_cls is None:
+        raise exc.DSLParsingException(
+            'Failed to find a specification class to instantiate '
+            '[spec_cls=%s, data=%s]' % (spec_cls, data)
+        )
+
+    spec = concrete_spec_cls(data, validate)
+
+    if validate:
+        spec.validate_semantics()
+
+    return spec
 
 
 class BaseSpec(object):
@@ -145,13 +165,11 @@ class BaseSpec(object):
     """
 
     # See http://json-schema.org
-    _schema = {
-        'type': 'object'
-    }
+    _schema = {'type': 'object'}
 
-    _meta_schema = {
-        'type': 'object'
-    }
+    _meta_schema = {'type': 'object'}
+
+    _full_schema = None
 
     _definitions = {}
 
@@ -159,6 +177,9 @@ class BaseSpec(object):
 
     @classmethod
     def get_schema(cls, includes=('meta', 'definitions')):
+        if cls._full_schema is not None:
+            return cls._full_schema
+
         schema = copy.deepcopy(cls._schema)
 
         schema['properties'] = utils.merge_dicts(
@@ -180,6 +201,8 @@ class BaseSpec(object):
                 overwrite=False
             )
 
+        cls._full_schema = schema
+
         return schema
 
     def __init__(self, data, validate):
@@ -189,6 +212,7 @@ class BaseSpec(object):
         if validate:
             self.validate_schema()
 
+    @profiler.trace('lang-base-spec-validate-schema', hide_args=True)
     def validate_schema(self):
         """Validates DSL entity schema that this specification represents.
 
@@ -235,10 +259,10 @@ class BaseSpec(object):
     def _spec_property(self, prop_name, spec_cls):
         prop_val = self._data.get(prop_name)
 
-        if prop_val is not None:
-            return instantiate_spec(spec_cls, prop_val, self._validate)
-        else:
+        if prop_val is None:
             return None
+
+        return instantiate_spec(spec_cls, prop_val, self._validate)
 
     def _group_spec(self, spec_cls, *prop_names):
         if not prop_names:
@@ -280,12 +304,17 @@ class BaseSpec(object):
             return {prop_val: ''}
 
     @staticmethod
+    @profiler.trace('lang-base-parse-cmd-and-input', hide_args=True)
     def _parse_cmd_and_input(cmd_str):
+        if ' ' not in cmd_str:
+            return cmd_str, {}
+
         # TODO(rakhmerov): Try to find a way with one expression.
         cmd_matcher = CMD_PTRN.search(cmd_str)
 
         if not cmd_matcher:
             msg = "Invalid action/workflow task property: %s" % cmd_str
+
             raise exc.InvalidModelException(msg)
 
         cmd = cmd_matcher.group()
