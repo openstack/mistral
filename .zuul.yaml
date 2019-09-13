@@ -116,10 +116,8 @@
             required-projects:
               - openstack/mistral-lib
         - mistral-devstack
-        - mistral-devstack-non-apache:
-            branches: ^(?!stable/(newton|ocata)).*$
-        - mistral-devstack-kombu:
-            branches: ^(?!stable/newton).*$
+        - mistral-devstack-non-apache
+        - mistral-devstack-kombu
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
         # TripleO jobs that deploy Mistral.
