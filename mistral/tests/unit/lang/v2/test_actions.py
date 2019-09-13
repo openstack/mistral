@@ -16,7 +16,7 @@
 import copy
 
 from mistral.tests.unit.lang.v2 import base
-from mistral import utils
+from mistral_lib import utils
 
 
 class ActionSpecValidationTest(base.WorkbookSpecValidationTestCase):

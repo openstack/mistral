@@ -18,11 +18,11 @@ from osprofiler import profiler
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral import expressions as expr
-from mistral import utils
 from mistral.workflow import base
 from mistral.workflow import commands
 from mistral.workflow import data_flow
 from mistral.workflow import states
+from mistral_lib import utils
 
 
 LOG = logging.getLogger(__name__)

@@ -19,7 +19,7 @@ import yaml
 
 from mistral import exceptions as exc
 from mistral.tests.unit.lang.v2 import base
-from mistral import utils
+from mistral_lib import utils
 
 
 class WorkflowSpecValidationTest(base.WorkflowSpecValidationTestCase):

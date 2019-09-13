@@ -22,8 +22,8 @@ from mistral.scheduler import base as sched_base
 from mistral.service import base as service_base
 from mistral.services import action_execution_checker
 from mistral.services import expiration_policy
-from mistral import utils
 from mistral.utils import profiler as profiler_utils
+from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
 

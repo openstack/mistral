@@ -27,7 +27,7 @@ from pecan import hooks
 
 from mistral import auth
 from mistral import exceptions as exc
-from mistral import utils
+from mistral_lib import utils
 
 CONF = cfg.CONF
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"

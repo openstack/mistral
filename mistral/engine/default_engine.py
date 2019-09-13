@@ -29,8 +29,8 @@ from mistral.engine import base
 from mistral.engine import post_tx_queue
 from mistral.engine import workflow_handler as wf_handler
 from mistral import exceptions
-from mistral import utils as u
 from mistral.workflow import states
+from mistral_lib import utils as u
 
 
 # Submodules of mistral.engine will throw NoSuchOptError if configuration

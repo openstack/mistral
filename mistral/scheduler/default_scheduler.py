@@ -28,7 +28,7 @@ from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.scheduler import base
-from mistral import utils
+from mistral_lib import utils
 
 
 LOG = logging.getLogger(__name__)

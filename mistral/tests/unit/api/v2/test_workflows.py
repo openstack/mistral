@@ -25,7 +25,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
-from mistral import utils
+from mistral_lib import utils
 
 WF_DEFINITION = """
 ---

@@ -29,7 +29,7 @@ from mistral.db.sqlalchemy import model_base as mb
 from mistral.db.sqlalchemy import types as st
 from mistral import exceptions as exc
 from mistral.services import security
-from mistral import utils
+from mistral_lib import utils
 
 
 # Definition objects.

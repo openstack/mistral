@@ -22,7 +22,7 @@ from mistral.services import expiration_policy
 from mistral.services.expiration_policy import ExecutionExpirationPolicy
 from mistral.tests.unit import base
 from mistral.tests.unit.base import get_context
-from mistral import utils
+from mistral_lib import utils
 from oslo_config import cfg
 
 

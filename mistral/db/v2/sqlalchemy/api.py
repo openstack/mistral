@@ -38,8 +38,8 @@ from mistral.db.v2.sqlalchemy import filters as db_filters
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.services import security
-from mistral import utils
 from mistral.workflow import states
+from mistral_lib import utils
 
 
 CONF = cfg.CONF

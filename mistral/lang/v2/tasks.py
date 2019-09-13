@@ -26,8 +26,8 @@ from mistral.lang.v2 import on_clause
 from mistral.lang.v2 import policies
 from mistral.lang.v2 import publish
 from mistral.lang.v2 import retry_policy
-from mistral import utils
 from mistral.workflow import states
+from mistral_lib import utils
 
 _expr_ptrns = [expressions.patterns[name] for name in expressions.patterns]
 WITH_ITEMS_PTRN = re.compile(

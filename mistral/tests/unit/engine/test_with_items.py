@@ -24,10 +24,10 @@ from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
-from mistral import utils
 from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral_lib import actions as actions_base
+from mistral_lib import utils
 
 # TODO(nmakhotkin) Need to write more tests.
 

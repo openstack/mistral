@@ -19,7 +19,7 @@ from sqlalchemy.ext import declarative
 from sqlalchemy.orm import attributes
 
 from mistral.services import security
-from mistral import utils
+from mistral_lib import utils
 
 
 def id_column():

@@ -16,7 +16,7 @@ import json
 
 from wsme import types as wtypes
 
-from mistral import utils
+from mistral_lib import utils
 
 
 class Resource(wtypes.Base):

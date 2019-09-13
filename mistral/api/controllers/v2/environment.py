@@ -25,9 +25,9 @@ from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions
-from mistral.utils import cut
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
+from mistral_lib.utils import cut
 
 
 LOG = logging.getLogger(__name__)

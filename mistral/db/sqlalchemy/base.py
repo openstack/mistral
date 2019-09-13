@@ -22,7 +22,7 @@ import sqlalchemy as sa
 
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
-from mistral import utils
+from mistral_lib import utils
 
 
 # Note(dzimine): sqlite only works for basic testing.

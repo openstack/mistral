@@ -25,7 +25,7 @@ from mistral.config import cfg
 from mistral import exceptions as exc
 from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
-from mistral import utils
+from mistral_lib import utils
 
 CONF = cfg.CONF
 

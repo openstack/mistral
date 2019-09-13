@@ -20,9 +20,9 @@ from mistral.lang.v2 import tasks as tasks_lang
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
-from mistral import utils
 from mistral.workflow import states
 from mistral_lib import actions as actions_base
+from mistral_lib import utils
 
 
 # Use the set_default method to set value otherwise in certain test cases

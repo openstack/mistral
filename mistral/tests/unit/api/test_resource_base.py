@@ -18,7 +18,7 @@ import datetime
 from mistral.api.controllers.v2 import resources
 from mistral.db.v2 import api as db_api
 from mistral.tests.unit import base
-from mistral import utils
+from mistral_lib import utils
 
 
 WF_EXEC = {

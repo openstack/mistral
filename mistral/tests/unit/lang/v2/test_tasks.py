@@ -16,7 +16,7 @@
 
 from mistral.lang.v2 import workflows
 from mistral.tests.unit.lang.v2 import base as v2_base
-from mistral import utils
+from mistral_lib import utils
 
 
 class TaskSpecValidationTest(v2_base.WorkflowSpecValidationTestCase):

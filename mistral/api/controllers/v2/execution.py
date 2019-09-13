@@ -34,9 +34,9 @@ from mistral import exceptions as exc
 from mistral.rpc import clients as rpc
 from mistral.services import workflows as wf_service
 from mistral.utils import filter_utils
-from mistral.utils import merge_dicts
 from mistral.utils import rest_utils
 from mistral.workflow import states
+from mistral_lib.utils import merge_dicts
 
 LOG = logging.getLogger(__name__)
 

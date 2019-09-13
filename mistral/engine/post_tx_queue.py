@@ -20,7 +20,7 @@ from oslo_log import log as logging
 from mistral import context
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
-from mistral import utils
+from mistral_lib import utils
 
 
 """
