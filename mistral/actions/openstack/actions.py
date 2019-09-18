@@ -53,7 +53,7 @@ aodhclient = _try_import('aodhclient.v2.client')
 barbicanclient = _try_import('barbicanclient.client')
 cinderclient = _try_import('cinderclient.client')
 cinder_api_versions = _try_import('cinderclient.api_versions')
-designateclient = _try_import('designateclient.v1')
+designateclient = _try_import('designateclient.v2.client')
 glanceclient = _try_import('glanceclient')
 glareclient = _try_import('glareclient.v1.client')
 gnocchiclient = _try_import('gnocchiclient.v1.client')
@@ -395,7 +395,6 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
             return cls._get_client_class()()
 
     def _create_client(self, context):
-
         LOG.debug(
             "Baremetal introspection action security context: %s", context)
 
@@ -474,7 +473,6 @@ class ZaqarAction(base.OpenStackAction):
         return zaqarclient.Client
 
     def _create_client(self, context):
-
         LOG.debug("Zaqar action security context: %s", context)
 
         zaqar_endpoint = self.get_service_endpoint()
@@ -610,7 +608,6 @@ class BarbicanAction(base.OpenStackAction):
         return barbicanclient.Client
 
     def _create_client(self, context):
-
         LOG.debug("Barbican action security context: %s", context)
 
         barbican_endpoint = self.get_service_endpoint()
@@ -721,27 +718,13 @@ class DesignateAction(base.OpenStackAction):
         return designateclient.Client
 
     def _create_client(self, context):
-
         LOG.debug("Designate action security context: %s", context)
 
-        designate_endpoint = self.get_service_endpoint()
-
-        designate_url = keystone_utils.format_url(
-            designate_endpoint.url,
-            {'tenant_id': context.project_id}
-        )
+        session_and_auth = self.get_session_and_auth(context)
 
         client = self._get_client_class()(
-            endpoint=designate_url,
-            tenant_id=context.project_id,
-            auth_url=context.auth_uri,
-            region_name=designate_endpoint.region,
-            service_type='dns',
-            insecure=context.insecure
+            session=session_and_auth['session']
         )
-
-        client.client.auth_token = context.auth_token
-        client.client.management_url = designate_url
 
         return client
 

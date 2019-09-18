@@ -85,6 +85,15 @@ class GeneratorTest(base.BaseTest):
         self.baremetal_patch.start()
         self.addCleanup(self.baremetal_patch.stop)
 
+        # Do the same for the Designate client.
+        self.designate_patch = mock.patch.object(
+            actions.DesignateAction,
+            "get_fake_client_method",
+            return_value=lambda x: None)
+
+        self.designate_patch.start()
+        self.addCleanup(self.designate_patch.stop)
+
     def test_generator(self):
         for generator_cls in generator_factory.all_generators():
             action_classes = generator_cls.create_actions()

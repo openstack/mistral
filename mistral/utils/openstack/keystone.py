@@ -55,35 +55,35 @@ def _determine_verify(ctx):
         return True
 
 
-def get_session_and_auth(context, **kwargs):
-    """Get session and auth parameters
+def get_session_and_auth(ctx, **kwargs):
+    """Get session and auth parameters.
 
-    :param context: action context
-    :return: dict to be used as kwargs for client serviceinitialization
+    :param ctx: action context
+    :return: dict to be used as kwargs for client service initialization
     """
 
-    if not context:
+    if not ctx:
         raise AssertionError('context is mandatory')
 
     project_endpoint = get_endpoint_for_project(**kwargs)
     endpoint = format_url(
         project_endpoint.url,
         {
-            'tenant_id': context.project_id,
-            'project_id': context.project_id
+            'tenant_id': ctx.project_id,
+            'project_id': ctx.project_id
         }
     )
 
-    auth = Token(endpoint=endpoint, token=context.auth_token)
+    auth = Token(endpoint=endpoint, token=ctx.auth_token)
 
-    auth_uri = context.auth_uri or CONF.keystone_authtoken.www_authenticate_uri
+    auth_uri = ctx.auth_uri or CONF.keystone_authtoken.www_authenticate_uri
     ks_auth = Token(
         endpoint=auth_uri,
-        token=context.auth_token
+        token=ctx.auth_token
     )
     session = ks_session.Session(
         auth=ks_auth,
-        verify=_determine_verify(context)
+        verify=_determine_verify(ctx)
     )
 
     return {

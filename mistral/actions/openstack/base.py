@@ -94,7 +94,7 @@ class OpenStackAction(actions.Action):
             service_name=self._service_name,
             service_type=self._service_type,
             region_name=self.action_region,
-            context=context)
+            ctx=context)
 
     def get_service_endpoint(self):
         """Get OpenStack service endpoint.
