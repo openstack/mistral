@@ -14,12 +14,15 @@
 
 from mistral.db.v2 import api as db_api_v2
 from mistral.lang import parser as spec_parser
+from mistral import services
 from mistral.services import actions
 
 
-def create_workbook_v2(definition, namespace='', scope='private'):
+def create_workbook_v2(definition, namespace='', scope='private',
+                       validate=True):
     wb_spec = spec_parser.get_workbook_spec_from_yaml(
-        definition, validate=True
+        definition,
+        validate=services.is_validation_enabled(validate)
     )
 
     wb_values = _get_workbook_values(
@@ -37,9 +40,11 @@ def create_workbook_v2(definition, namespace='', scope='private'):
     return wb_db
 
 
-def update_workbook_v2(definition, namespace='', scope='private'):
+def update_workbook_v2(definition, namespace='', scope='private',
+                       validate=True):
     wb_spec = spec_parser.get_workbook_spec_from_yaml(
-        definition, validate=True
+        definition,
+        validate=services.is_validation_enabled(validate)
     )
 
     values = _get_workbook_values(wb_spec, definition, scope, namespace)
@@ -55,9 +60,11 @@ def update_workbook_v2(definition, namespace='', scope='private'):
 def _on_workbook_update(wb_db, wb_spec, namespace):
     # TODO(hardikj) Handle actions for namespace
     db_actions = _create_or_update_actions(wb_db, wb_spec.get_actions())
-    db_wfs = _create_or_update_workflows(wb_db,
-                                         wb_spec.get_workflows(),
-                                         namespace)
+    db_wfs = _create_or_update_workflows(
+        wb_db,
+        wb_spec.get_workflows(),
+        namespace
+    )
 
     return db_actions, db_wfs
 

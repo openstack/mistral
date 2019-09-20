@@ -1,0 +1,18 @@
+---
+features:
+  - |
+    The new configuration option "validation_mode" was added. It can take one
+    of the values: "enabled", "mandatory", "disabled". If it is set to
+    "enabled" then Mistral will be validating the workflow language syntax
+    for all API operations that create or update workflows (either via
+    /v2/workflows or /v2/workbooks) unless it's explicitly disabled with the
+    API parameter "skip_validation" that has now been added to the
+    corresponding API endpoints. The "skip_validation" parameter doesn't have
+    to have any value since it's a boolean flag. If the configuration option
+    "validation_mode" is set to "mandatory" then Mistral will be always
+    validating the syntax of all workflows for the mentioned operations.
+    If set to "disabled" then validation will always be skipped. Note that
+    if validation is disabled (one way or another) then there's a risk of
+    breaking a workflow unexpectedly while it's running or getting another an
+    unexpected error when uploading it possible w/o a user-friendly description
+    of the error.

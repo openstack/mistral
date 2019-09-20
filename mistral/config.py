@@ -87,6 +87,17 @@ api_opts = [
         help=_('Number of workers for Mistral API service '
                'default is equal to the number of CPUs available if that can '
                'be determined, else a default worker count of 1 is returned.')
+    ),
+    cfg.StrOpt(
+        'validation_mode',
+        default='mandatory',
+        choices=['enabled', 'mandatory', 'disabled'],
+        help=_("Defines in what cases Mistral will be validating the syntax "
+               "of workflow YAML definitions. If 'enabled' is set the service "
+               "will be validating the syntax but only if it's not explicitly "
+               "turned off in the API request. 'disabled' disables validation "
+               "for all API requests. 'mandatory' enables validation for all "
+               "API requests.")
     )
 ]
 

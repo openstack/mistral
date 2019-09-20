@@ -68,12 +68,19 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         """Update a workbook.
 
         :param namespace: Optional. Namespace of workbook to update.
+        :param validate: Optional. If set to False, disables validation of
+            the workflow YAML definition syntax, but only if allowed in the
+            service configuration. By default, validation is enabled.
         """
 
         acl.enforce('workbooks:update', context.ctx())
 
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
+
+        # If "skip_validation" is present in the query string parameters
+        # then workflow language validation will be disabled.
+        skip_validation = 'skip_validation' in pecan.request.GET
 
         resources.Workbook.validate_scope(scope)
 
@@ -83,7 +90,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
             workbooks.update_workbook_v2)(
             definition,
             namespace=namespace,
-            scope=scope
+            scope=scope,
+            validate=not skip_validation
         )
 
         return resources.Workbook.from_db_model(wb_db).to_json()
@@ -102,6 +110,10 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
 
+        # If "skip_validation" is present in the query string parameters
+        # then workflow language validation will be disabled.
+        skip_validation = 'skip_validation' in pecan.request.GET
+
         resources.Workbook.validate_scope(scope)
 
         LOG.debug("Create workbook [definition=%s]", definition)
@@ -110,7 +122,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
             workbooks.create_workbook_v2)(
             definition,
             namespace=namespace,
-            scope=scope
+            scope=scope,
+            validate=not skip_validation
         )
 
         pecan.response.status = 201

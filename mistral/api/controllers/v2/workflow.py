@@ -113,10 +113,20 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workflows:update', context.ctx())
 
+        # NOTE(rakhmerov): We can't use normal method arguments to access
+        # request data because it will break dynamic sub controller lookup
+        # functionality (see _lookup() above) so we have to get the data
+        # directly from the request object.
+
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
 
+        # If "skip_validation" is present in the query string parameters
+        # then workflow language validation will be disabled.
+        skip_validation = 'skip_validation' in pecan.request.GET
+
         resources.Workflow.validate_scope(scope)
+
         if scope == 'public':
             acl.enforce('workflows:publicize', context.ctx())
 
@@ -126,7 +136,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
             definition,
             scope=scope,
             identifier=identifier,
-            namespace=namespace
+            namespace=namespace,
+            validate=not skip_validation
         )
 
         workflow_list = [
@@ -150,8 +161,18 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         """
         acl.enforce('workflows:create', context.ctx())
 
+        # NOTE(rakhmerov): We can't use normal method arguments to access
+        # request data because it will break dynamic sub controller lookup
+        # functionality (see _lookup() above) so we have to get the data
+        # directly from the request object.
+
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
+
+        # If "skip_validation" is present in the query string parameters
+        # then workflow language validation will be disabled.
+        skip_validation = 'skip_validation' in pecan.request.GET
+
         pecan.response.status = 201
 
         resources.Workflow.validate_scope(scope)
@@ -164,7 +185,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
         db_wfs = rest_utils.rest_retry_on_db_error(workflows.create_workflows)(
             definition,
             scope=scope,
-            namespace=namespace
+            namespace=namespace,
+            validate=not skip_validation
         )
 
         workflow_list = [

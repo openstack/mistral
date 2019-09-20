@@ -136,7 +136,9 @@ def get_workflow_spec(spec_dict):
 
 def get_workflow_list_spec(spec_dict, validate):
     return base.instantiate_spec(
-        wf_v2.WorkflowListSpec, spec_dict, validate
+        wf_v2.WorkflowListSpec,
+        spec_dict,
+        validate
     )
 
 
