@@ -362,7 +362,7 @@ class IronicAction(base.OpenStackAction):
     def _get_fake_client(cls):
         return cls._get_client_class()(
             endpoint_override="http://127.0.0.1:6385/",
-            session={"fake": "session"}
+            session=ks_session.Session(),
         )
 
 
