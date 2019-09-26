@@ -52,7 +52,6 @@ def _find_task(task_name, tasks):
 
 
 class TestGlobalPublish(base.APITest, engine_base.EngineTestCase):
-
     def setUp(self):
         super(TestGlobalPublish, self).setUp()
 
@@ -63,8 +62,10 @@ class TestGlobalPublish(base.APITest, engine_base.EngineTestCase):
 
     def test_global_publish_in_task_exec(self):
         resp = self.app.get('/v2/tasks/')
+
         tasks = resp.json['tasks']
         task = _find_task('task1', tasks)
+
         self.assertIsNotNone(task, 'task1 not found')
 
         resp = self.app.get('/v2/tasks/%s/' % task['id'])
@@ -78,5 +79,7 @@ class TestGlobalPublish(base.APITest, engine_base.EngineTestCase):
 
     def assert_for_published_global(self, resp):
         self.assertEqual(200, resp.status_int)
-        self.assertEqual(resp.json['published_global'],
-                         '{"my_var": "Global value"}')
+        self.assertEqual(
+            resp.json['published_global'],
+            '{"my_var": "Global value"}'
+        )

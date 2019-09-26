@@ -336,3 +336,21 @@ def get_workflow_environment_dict(wf_ex):
     env_dict = wf_ex.params['env'] if 'env' in wf_ex.params else {}
 
     return {'__env': env_dict}
+
+
+def get_workflow_execution_published_global(wf_ex):
+    res = {}
+
+    # Variables that get published globally are stored in the
+    # workflow execution "context" field. So we just need to
+    # copy its content excluding all internally used keys and
+    # workflow variables defined under "vars" section in the
+    # workflow text.
+    exclude = {'__execution', 'openstack'}
+    exclude = exclude.union(wf_ex.spec.get('vars', {}))
+
+    for k, v in wf_ex.context.items():
+        if k not in exclude:
+            res[k] = v
+
+    return res

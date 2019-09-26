@@ -969,6 +969,47 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             task2.published
         )
 
+    def test_get_published_global(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          vars:
+            var1: 1
+            var2: 2
+
+          tasks:
+            task1:
+              action: std.noop
+              on-success:
+                publish:
+                  global:
+                    global_var1: Global value 1
+                    global_var2: Global value 2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            published_global = (
+                data_flow.get_workflow_execution_published_global(wf_ex)
+            )
+
+        self.assertDictEqual(
+            {
+                'global_var1': 'Global value 1',
+                'global_var2': 'Global value 2'
+            },
+            published_global
+        )
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):
