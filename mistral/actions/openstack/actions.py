@@ -235,7 +235,7 @@ class NeutronAction(base.OpenStackAction):
 
 
 class CinderAction(base.OpenStackAction):
-    _service_type = 'volumev2'
+    _service_type = 'volumev3'
 
     @classmethod
     def _get_client_class(cls):
@@ -268,7 +268,7 @@ class CinderAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()('2')
+        return cls._get_client_class()('3')
 
 
 class MistralAction(base.OpenStackAction):
