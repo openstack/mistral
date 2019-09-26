@@ -33,9 +33,6 @@ from mistral.rpc import clients as rpc
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 from mistral.workflow import data_flow
-from mistral.workflow.data_flow import ContextView
-from mistral.workflow.data_flow import get_current_task_dict
-from mistral.workflow.data_flow import get_workflow_environment_dict
 from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
@@ -63,10 +60,13 @@ def _get_task_resource_with_result(task_ex):
 def _get_task_execution(id):
     with db_api.transaction():
         task_ex = db_api.get_task_execution(id)
+
         rest_utils.load_deferred_fields(task_ex, ['workflow_execution'])
-        rest_utils.load_deferred_fields(task_ex.workflow_execution,
-                                        ['context', 'input',
-                                         'params', 'root_execution'])
+        rest_utils.load_deferred_fields(
+            task_ex.workflow_execution,
+            ['context', 'input', 'params', 'root_execution']
+        )
+
         return _get_task_resource_with_result(task_ex), task_ex
 
 
@@ -77,10 +77,10 @@ def get_published_global(task_ex, wf_ex=None):
     if wf_ex is None:
         wf_ex = task_ex.workflow_execution
 
-    expr_ctx = ContextView(
-        get_current_task_dict(task_ex),
+    expr_ctx = data_flow.ContextView(
+        data_flow.get_current_task_dict(task_ex),
         task_ex.in_context,
-        get_workflow_environment_dict(wf_ex),
+        data_flow.get_workflow_environment_dict(wf_ex),
         wf_ex.context,
         wf_ex.input
     )
@@ -90,14 +90,18 @@ def get_published_global(task_ex, wf_ex=None):
 
     if not publish_spec:
         return
+
     global_vars = publish_spec.get_global()
+
     return expr.evaluate_recursively(global_vars, expr_ctx)
 
 
 def _task_with_published_global(task, task_ex):
     published_global_vars = get_published_global(task_ex)
+
     if published_global_vars:
         task.published_global = published_global_vars
+
     return task
 
 
@@ -198,6 +202,7 @@ class TasksController(rest.RestController):
         LOG.debug("Fetch task [id=%s]", id)
 
         task, task_ex = _get_task_execution(id)
+
         return _task_with_published_global(task, task_ex)
 
     @rest_utils.wrap_wsme_controller_exception

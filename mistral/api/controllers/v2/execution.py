@@ -35,6 +35,7 @@ from mistral.rpc import clients as rpc
 from mistral.services import workflows as wf_service
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
+from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral_lib.utils import merge_dicts
 
@@ -72,34 +73,11 @@ def _get_workflow_execution(id, must_exist=True):
         else:
             wf_ex = db_api.load_workflow_execution(id)
 
-        return rest_utils.load_deferred_fields(wf_ex, ['params', 'input',
-                                                       'output', 'context'])
+        return rest_utils.load_deferred_fields(
+            wf_ex,
+            ['params', 'input', 'output', 'context', 'spec']
+        )
 
-
-# Use retries to prevent possible failures.
-@rest_utils.rest_retry_on_db_error
-def _get_task_executions(wf_id):
-    with db_api.transaction():
-        task_execs = db_api.get_task_executions(workflow_execution_id=wf_id)
-        for task_ex in task_execs:
-            rest_utils.load_deferred_fields(task_ex, ['spec'])
-        return task_execs
-
-
-def _get_published_global_from_tasks(task_execs, wf_ex):
-    wf_published_global_vars = {}
-    for task_ex in task_execs:
-        published_global_vars = task.get_published_global(task_ex, wf_ex)
-        if published_global_vars:
-            merge_dicts(wf_published_global_vars, published_global_vars)
-    return wf_published_global_vars
-
-
-def _execution_with_publish_global(wf_ex, wf_published_global_vars):
-    wf_execution = resources.Execution.from_db_model(wf_ex)
-    if wf_published_global_vars:
-        wf_execution.published_global = wf_published_global_vars
-    return wf_execution
 
 # TODO(rakhmerov): Make sure to make all needed renaming on public API.
 
@@ -121,12 +99,13 @@ class ExecutionsController(rest.RestController):
 
         wf_ex = _get_workflow_execution(id)
 
-        task_execs = _get_task_executions(wf_ex.id)
+        resource = resources.Execution.from_db_model(wf_ex)
 
-        wf_published_global_vars = _get_published_global_from_tasks(task_execs,
-                                                                    wf_ex)
+        resource.published_global = (
+            data_flow.get_workflow_execution_published_global(wf_ex)
+        )
 
-        return _execution_with_publish_global(wf_ex, wf_published_global_vars)
+        return resource
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(
@@ -260,14 +239,18 @@ class ExecutionsController(rest.RestController):
 
         if not exec_id:
             exec_id = uuidutils.generate_uuid()
+
             LOG.debug("Generated execution id [exec_id=%s]", exec_id)
+
             exec_dict.update({'id': exec_id})
+
             wf_ex = None
         else:
             # If ID is present we need to check if such execution exists.
             # If yes, the method just returns the object. If not, the ID
             # will be used to create a new execution.
             wf_ex = _get_workflow_execution(exec_id, must_exist=False)
+
             if wf_ex:
                 return resources.Execution.from_db_model(wf_ex)
 
@@ -283,7 +266,9 @@ class ExecutionsController(rest.RestController):
                 source_execution_id).to_dict()
 
             exec_dict['description'] = "{} Based on the execution '{}'".format(
-                exec_dict['description'], source_execution_id)
+                exec_dict['description'],
+                source_execution_id
+            )
             exec_dict['description'] = exec_dict['description'].strip()
 
         result_exec_dict = merge_dicts(source_exec_dict, exec_dict)
@@ -298,8 +283,10 @@ class ExecutionsController(rest.RestController):
         engine = rpc.get_engine_client()
 
         result = engine.start_workflow(
-            result_exec_dict.get('workflow_id',
-                                 result_exec_dict.get('workflow_name')),
+            result_exec_dict.get(
+                'workflow_id',
+                result_exec_dict.get('workflow_name')
+            ),
             result_exec_dict.get('workflow_namespace', ''),
             result_exec_dict.get('id'),
             result_exec_dict.get('input'),

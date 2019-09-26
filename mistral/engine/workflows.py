@@ -74,6 +74,7 @@ class Workflow(object):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
 
         filtered_publishers = []
+
         for publisher in publishers:
             if not isinstance(publisher, dict):
                 continue
@@ -107,6 +108,7 @@ class Workflow(object):
                 self.wf_ex.updated_at,
                 filtered_publishers
             )
+
         post_tx_queue.register_operation(_send_notification)
 
     @profiler.trace('workflow-start')

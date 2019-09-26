@@ -52,6 +52,7 @@ WF_EX = models.WorkflowExecution(
     spec={'name': 'some'},
     state=states.RUNNING,
     state_info=None,
+    context={},
     input={'foo': 'bar'},
     output={},
     params={'env': {'k1': 'abc'}},
@@ -80,6 +81,7 @@ SUB_WF_EX = models.WorkflowExecution(
     spec={'name': 'some'},
     state=states.RUNNING,
     state_info=None,
+    context={},
     input={'foo': 'bar'},
     output={},
     params={'env': {'k1': 'abc'}},
@@ -160,7 +162,11 @@ class TestExecutionsController(base.APITest):
         resp = self.app.get('/v2/executions/123')
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
+
+        expected = WF_EX_JSON_WITH_DESC.copy()
+        expected['published_global'] = '{}'
+
+        self.assertDictEqual(expected, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution')
     def test_get_operational_error(self, mocked_get):
@@ -173,14 +179,22 @@ class TestExecutionsController(base.APITest):
         resp = self.app.get('/v2/executions/123')
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(WF_EX_JSON_WITH_DESC, resp.json)
+
+        expected = WF_EX_JSON_WITH_DESC.copy()
+        expected['published_global'] = '{}'
+
+        self.assertDictEqual(expected, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_SUB_WF_EX)
     def test_get_sub_wf_ex(self):
         resp = self.app.get('/v2/executions/123')
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(SUB_WF_EX_JSON_WITH_DESC, resp.json)
+
+        expected = SUB_WF_EX_JSON_WITH_DESC.copy()
+        expected['published_global'] = '{}'
+
+        self.assertDictEqual(expected, resp.json)
 
     @mock.patch.object(db_api, 'get_workflow_execution', MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -192,6 +206,7 @@ class TestExecutionsController(base.APITest):
                        return_value=WF_EX_WITH_PROJECT_ID)
     def test_get_within_project_id(self, mock_get):
         resp = self.app.get('/v2/executions/123', expect_errors=True)
+
         self.assertEqual(200, resp.status_int)
         self.assertTrue('project_id' in resp.json)
 
