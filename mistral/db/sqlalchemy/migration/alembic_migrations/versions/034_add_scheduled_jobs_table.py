@@ -22,6 +22,7 @@ Create Date: 2019-07-01 17:38:41.153354
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.engine import reflection
 
 from mistral.db.sqlalchemy import types as st
 
@@ -31,6 +32,19 @@ down_revision = '033'
 
 
 def upgrade():
+    # NOTE(rakhmerov): We have to check if the table already
+    # exists and drop it, if needed. This is because the DB
+    # model for scheduled jobs was released w/o a migration
+    # in the first place, so for some users the table was
+    # created automatically at Mistral run based on the model.
+    # But the structure of the table is old so we need to
+    # recreate it anyway in this migration. It's safe to drop
+    # this table because it contains temporary data.
+    inspect = reflection.Inspector.from_engine(op.get_bind())
+
+    if 'scheduled_jobs_v2' in inspect.get_table_names():
+        op.drop_table('scheduled_jobs_v2')
+
     op.create_table(
         'scheduled_jobs_v2',
         sa.Column('created_at', sa.DateTime(), nullable=True),
