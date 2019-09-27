@@ -632,7 +632,7 @@
         "update_vpnservice": "update_vpnservice"
     },
     "cinder": {
-        "_comment": "It uses cinderclient.v2.",
+        "_comment": "It uses cinderclient.v3.",
         "availability_zones_find": "availability_zones.find",
         "availability_zones_findall": "availability_zones.findall",
         "availability_zones_list": "availability_zones.list",
@@ -746,8 +746,6 @@
         "volumes_manage": "volumes.manage",
         "volumes_migrate_volume": "volumes.migrate_volume",
         "volumes_migrate_volume_completion": "volumes.migrate_volume_completion",
-        "volumes_promote": "volumes.promote",
-        "volumes_reenable": "volumes.reenable",
         "volumes_reserve": "volumes.reserve",
         "volumes_reset_state": "volumes.reset_state",
         "volumes_retype": "volumes.retype",
