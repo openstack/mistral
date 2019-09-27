@@ -11,11 +11,13 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+
 import yaml
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
+from mistral import services
 from mistral.workflow import states
 from mistral_lib import utils
 from oslo_log import log as logging
@@ -56,13 +58,14 @@ def sync_db():
 
 
 def create_workflows(definition, scope='private', is_system=False,
-                     run_in_tx=True, namespace=''):
+                     run_in_tx=True, namespace='', validate=True):
     LOG.debug("Creating workflows...")
 
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(
         definition,
-        validate=True
+        validate=services.is_validation_enabled(validate)
     )
+
     db_wfs = []
 
     if run_in_tx:
@@ -113,12 +116,14 @@ def _append_all_workflows(definition, is_system, scope, namespace,
 
 
 def update_workflows(definition, scope='private', identifier=None,
-                     namespace=''):
-    LOG.debug("Updating workflows")
+                     namespace='', validate=True):
+    LOG.debug("Updating workflows...")
 
     wf_list_spec = spec_parser.get_workflow_list_spec_from_yaml(
-        definition, validate=True
+        definition,
+        validate=services.is_validation_enabled(validate)
     )
+
     wfs = wf_list_spec.get_workflows()
 
     if identifier and len(wfs) > 1:

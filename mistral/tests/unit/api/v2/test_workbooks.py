@@ -236,6 +236,19 @@ class TestWorkbooksController(base.APITest):
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
 
+    @mock.patch.object(workbooks, "update_workbook_v2", MOCK_UPDATED_WORKBOOK)
+    def test_put_invalid_skip_validation(self):
+        self.override_config('validation_mode', 'enabled', 'api')
+
+        resp = self.app.put(
+            '/v2/workbooks?skip_validation',
+            WB_DEF_INVALID_MODEL_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(200, resp.status_int)
+
     @mock.patch.object(db_api, "update_workbook")
     @mock.patch.object(db_api, "create_or_update_workflow_definition")
     @mock.patch.object(db_api, "create_or_update_action_definition")
@@ -313,6 +326,18 @@ class TestWorkbooksController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
+
+    def test_post_invalid_skip_validation(self):
+        self.override_config('validation_mode', 'enabled', 'api')
+
+        resp = self.app.post(
+            '/v2/workbooks?skip_validation',
+            WB_DEF_INVALID_MODEL_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(201, resp.status_int)
 
     @mock.patch.object(db_api, "create_workbook")
     @mock.patch.object(db_api, "create_or_update_workflow_definition")

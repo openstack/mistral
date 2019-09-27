@@ -66,8 +66,8 @@ def instantiate_spec(spec_cls, data, validate=False):
         class that needs to be instantiated.
     :param data: Raw specification data as a dictionary.
     :type data: dict
-    :param validate: If it equals False then semantics and schema validation
-        will be skipped
+    :param validate: If it's False then semantics and schema validation
+        will be skipped.
     :type validate: bool
     """
 

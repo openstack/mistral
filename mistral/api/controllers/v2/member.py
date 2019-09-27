@@ -39,6 +39,7 @@ def auth_enable_check(func):
             msg = ("Resource sharing feature can only be supported with "
                    "authentication enabled.")
             raise exc.WorkflowException(msg)
+
         return func(*args, **kwargs)
 
     return wrapped
@@ -68,6 +69,7 @@ class MembersController(rest.RestController):
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
+
         member_db = r.call(
             db_api.get_resource_member,
             self.resource_id,

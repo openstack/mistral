@@ -87,7 +87,6 @@ WORKFLOW_WITH_VAR_TASK_NAME = """
 version: '2.0'
 
 engine_command_{task_name}:
-
   tasks:
     {task_name}:
       action: nova.servers_list
@@ -100,10 +99,23 @@ INVALID_WORKFLOW = """
 verstion: '2.0'
 
 wf:
-  type: direct
   tasks:
     task1:
       action: std.echo output="Task 1"
+"""
+
+INVALID_WORKFLOW_1 = """
+---
+version: '2.0'
+
+wf:
+  tasks:
+    task1:
+      action: std.noop
+      on-success: task2 # The task "task2" doesn't exist.
+
+    task3:
+      action: std.noop
 """
 
 WORKFLOW_WITH_LONG_TASK_NAME = """
@@ -111,7 +123,6 @@ WORKFLOW_WITH_LONG_TASK_NAME = """
 version: '2.0'
 
 test_workflow:
-
   tasks:
     {long_task_name}:
       action: std.noop
@@ -123,7 +134,6 @@ WORKFLOW_WITH_LONG_JOIN_TASK_NAME = """
 version: '2.0'
 
 test_workflow:
-
   tasks:
     task1:
       on-success:
@@ -158,8 +168,12 @@ class WorkflowServiceTest(base.DbTestCase):
 
     def test_engine_commands_are_valid_task_names(self):
         for name in workflows.ENGINE_COMMANDS:
-            wf = WORKFLOW_WITH_VAR_TASK_NAME.format(task_name=name)
-            wf_service.create_workflows(wf)
+            wf_text = WORKFLOW_WITH_VAR_TASK_NAME.format(task_name=name)
+
+            wf_defs = wf_service.create_workflows(wf_text)
+
+            self.assertIsNotNone(wf_defs)
+            self.assertEqual(1, len(wf_defs))
 
     def test_update_workflows(self):
         db_wfs = wf_service.create_workflows(WORKFLOW_LIST)
@@ -317,8 +331,10 @@ class WorkflowServiceTest(base.DbTestCase):
 
     def test_with_long_task_name(self):
         long_task_name = utils.generate_string(tasks.MAX_LENGTH_TASK_NAME + 1)
+
         workflow = WORKFLOW_WITH_LONG_TASK_NAME.format(
-            long_task_name=long_task_name)
+            long_task_name=long_task_name
+        )
 
         self.assertRaises(
             exc.InvalidModelException,
@@ -328,27 +344,85 @@ class WorkflowServiceTest(base.DbTestCase):
 
     def test_upper_bound_length_task_name(self):
         long_task_name = utils.generate_string(tasks.MAX_LENGTH_TASK_NAME)
-        workflow = WORKFLOW_WITH_LONG_TASK_NAME.format(
-            long_task_name=long_task_name)
 
-        wf_service.create_workflows(workflow)
+        wf_text = WORKFLOW_WITH_LONG_TASK_NAME.format(
+            long_task_name=long_task_name
+        )
+
+        wf_defs = wf_service.create_workflows(wf_text)
+
+        self.assertIsNotNone(wf_defs)
+        self.assertEqual(1, len(wf_defs))
 
     def test_with_long_join_task_name(self):
         long_task_name = utils.generate_string(
             tasks.MAX_LENGTH_JOIN_TASK_NAME + 1
         )
-        workflow = WORKFLOW_WITH_LONG_JOIN_TASK_NAME.format(
-            long_task_name=long_task_name)
+
+        wf_text = WORKFLOW_WITH_LONG_JOIN_TASK_NAME.format(
+            long_task_name=long_task_name
+        )
 
         self.assertRaises(
             exc.InvalidModelException,
             wf_service.create_workflows,
-            workflow
+            wf_text
         )
 
     def test_upper_bound_length_join_task_name(self):
         long_task_name = utils.generate_string(tasks.MAX_LENGTH_JOIN_TASK_NAME)
-        workflow = WORKFLOW_WITH_LONG_JOIN_TASK_NAME.format(
-            long_task_name=long_task_name)
 
-        wf_service.create_workflows(workflow)
+        wf_text = WORKFLOW_WITH_LONG_JOIN_TASK_NAME.format(
+            long_task_name=long_task_name
+        )
+
+        wf_defs = wf_service.create_workflows(wf_text)
+
+        self.assertIsNotNone(wf_defs)
+        self.assertEqual(1, len(wf_defs))
+
+    def test_validation_mode_enabled_by_default(self):
+        self.override_config('validation_mode', 'enabled', 'api')
+
+        self.assertRaises(
+            exc.InvalidModelException,
+            wf_service.create_workflows,
+            INVALID_WORKFLOW_1
+        )
+
+        wf_defs = wf_service.create_workflows(
+            INVALID_WORKFLOW_1,
+            validate=False
+        )
+
+        # The workflow is created but it will never succeed since it's broken.
+        self.assertIsNotNone(wf_defs)
+        self.assertEqual(1, len(wf_defs))
+
+    def test_validation_mode_always_enabled(self):
+        self.override_config('validation_mode', 'mandatory', 'api')
+
+        self.assertRaises(
+            exc.InvalidModelException,
+            wf_service.create_workflows,
+            INVALID_WORKFLOW_1
+        )
+
+        self.assertRaises(
+            exc.InvalidModelException,
+            wf_service.create_workflows,
+            INVALID_WORKFLOW_1,
+            validate=False
+        )
+
+    def test_validation_mode_always_disabled(self):
+        self.override_config('validation_mode', 'disabled', 'api')
+
+        wf_defs = wf_service.create_workflows(INVALID_WORKFLOW_1)
+
+        self.assertIsNotNone(wf_defs)
+        self.assertEqual(1, len(wf_defs))
+
+        db_api.delete_workflow_definition(wf_defs[0].id)
+
+        wf_service.create_workflows(INVALID_WORKFLOW_1, validate=True)

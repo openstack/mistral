@@ -311,7 +311,8 @@ class TestWorkflowsController(base.APITest):
             UPDATED_WF_DEFINITION,
             scope='private',
             identifier='123e4567-e89b-12d3-a456-426655440000',
-            namespace=''
+            namespace='',
+            validate=True
         )
         self.assertDictEqual(UPDATED_WF, resp.json)
 
@@ -397,6 +398,21 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
+
+    @mock.patch.object(
+        db_api, "update_workflow_definition", MOCK_UPDATED_WF
+    )
+    def test_put_invalid_skip_validation(self):
+        self.override_config('validation_mode', 'enabled', 'api')
+
+        resp = self.app.put(
+            '/v2/workflows?skip_validation',
+            WF_DEF_INVALID_MODEL_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(200, resp.status_int)
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_put_multiple(self, mock_mtd):
@@ -503,6 +519,18 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(400, resp.status_int)
         self.assertIn("Invalid DSL", resp.body.decode())
+
+    def test_post_invalid_skip_validation(self):
+        self.override_config('validation_mode', 'enabled', 'api')
+
+        resp = self.app.post(
+            '/v2/workflows?skip_validation',
+            WF_DEF_INVALID_MODEL_EXCEPTION,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(201, resp.status_int)
 
     @mock.patch.object(db_api, "delete_workflow_definition", MOCK_DELETE)
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF)
@@ -804,7 +832,8 @@ class TestWorkflowsController(base.APITest):
             WF_DEFINITION,
             scope='private',
             identifier=id_,
-            namespace='abc'
+            namespace='abc',
+            validate=True
         )
         self.assertDictEqual(WF_WITH_NAMESPACE, resp.json)
 
