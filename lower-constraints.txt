@@ -44,7 +44,7 @@ jsonschema==2.6.0
 kazoo==2.2
 keystoneauth1==3.4.0
 keystonemiddleware==4.18.0
-kombu==4.0.0
+kombu==4.6.1
 linecache2==1.0.0
 logutils==0.3.5
 Mako==0.4.0
