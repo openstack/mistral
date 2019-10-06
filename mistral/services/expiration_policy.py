@@ -22,6 +22,7 @@ from oslo_service import threadgroup
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
+from mistral.workflow import states
 
 LOG = logging.getLogger(__name__)
 
@@ -129,9 +130,21 @@ def run_execution_expiration_policy(self, ctx):
     _delete_executions(batch_size, exp_time, max_executions)
 
 
+def _check_ignored_states_config():
+    ignored_states = CONF.execution_expiration_policy.ignored_states
+
+    for state in ignored_states:
+        if state not in states.TERMINAL_STATES:
+            raise ValueError(
+                '{} is not a terminal state. The valid states are [{}]'
+                .format(state, states.TERMINAL_STATES))
+
+
 def setup():
     tg = threadgroup.ThreadGroup()
     pt = ExecutionExpirationPolicy(CONF)
+
+    _check_ignored_states_config()
 
     ctx = auth_ctx.MistralContext(
         user=None,

@@ -32,6 +32,7 @@ from osprofiler import opts as profiler
 from mistral import version
 
 from mistral._i18n import _
+from mistral.workflow import states
 
 # Options under default group.
 launch_opt = cfg.ListOpt(
@@ -445,6 +446,13 @@ execution_expiration_policy_opts = [
                'The default value is 0. If it is set to 0, '
                'size of batch is total number of expired executions '
                'that is going to be deleted.')
+    ),
+    cfg.ListOpt(
+        'ignored_states',
+        default=[],
+        help='The states that the expiration policy will filter '
+             'out and will not delete.'
+             'Valid values are, [{}]'.format(states.TERMINAL_STATES)
     )
 ]
 
