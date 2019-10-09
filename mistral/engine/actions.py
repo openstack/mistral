@@ -332,6 +332,7 @@ class PythonAction(Action):
 
             return a.is_sync()
         except BaseException as e:
+            LOG.exception(e)
             raise exc.InputException(str(e))
 
     def validate_input(self, input_dict):
