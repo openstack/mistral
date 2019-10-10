@@ -67,6 +67,11 @@ def _get_task_execution(id):
             ['context', 'input', 'params', 'root_execution']
         )
 
+        rest_utils.load_deferred_fields(
+            task_ex.workflow_execution.root_execution,
+            ['params']
+        )
+
         return _get_task_resource_with_result(task_ex), task_ex
 
 

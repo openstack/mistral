@@ -144,6 +144,7 @@ RERUN_TASK = {
 }
 
 MOCK_WF_EX = mock.MagicMock(return_value=WF_EX)
+TASK_EX.workflow_execution = WF_EX
 MOCK_TASK = mock.MagicMock(return_value=TASK_EX)
 MOCK_TASKS = mock.MagicMock(return_value=[TASK_EX])
 MOCK_EMPTY = mock.MagicMock(return_value=[])
@@ -153,6 +154,7 @@ MOCK_ERROR_ITEMS_TASK = mock.MagicMock(return_value=ERROR_ITEMS_TASK_EX)
 
 TASK_EX_WITH_PROJECT_ID = TASK_EX.get_clone()
 TASK_EX_WITH_PROJECT_ID.project_id = '<default-project>'
+TASK_EX_WITH_PROJECT_ID.workflow_execution = WF_EX
 
 
 @mock.patch.object(
