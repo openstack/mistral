@@ -821,3 +821,35 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
             self.assertDictEqual({'my_var': 2}, task_ex.published)
+
+    def test_action_error_message_format(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.fail
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            self.assertEqual(1, len(wf_ex.task_executions))
+
+            task_ex = wf_ex.task_executions[0]
+
+            expected = (
+                "The action raised an exception [action_ex_id=%s, "
+                "msg='Fail action expected exception.'"
+            ) % task_ex.action_executions[0].id
+
+            # Making sure that the actual error message goes before
+            # other debugging information.
+            self.assertTrue(task_ex.state_info.startswith(expected))

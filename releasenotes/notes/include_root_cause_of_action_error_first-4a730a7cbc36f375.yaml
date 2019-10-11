@@ -1,0 +1,13 @@
+---
+
+fixes:
+  - |
+    Some users rely on the presence of the root error related to
+    running an action and it's not convenient that it is now in
+    the end of the string, e.g. if we look at the corresponding
+    task execution "state_info" field. Now a cause error message
+    is included in the beginning of the resulting error string
+    returned by the action executor so that it's clearly visible.
+    This message can be also truncated in some cases (depending on
+    the config option) so we need to make sure we keep the cause
+    error message.
