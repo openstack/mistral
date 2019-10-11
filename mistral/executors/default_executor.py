@@ -123,13 +123,13 @@ class DefaultExecutor(base.Executor):
 
         except BaseException as e:
             msg = (
-                "The action raised an exception [action_ex_id=%s, "
-                "action_cls='%s', attributes='%s', params='%s']\n %s" % (
+                "The action raised an exception [action_ex_id=%s, msg='%s', "
+                "action_cls='%s', attributes='%s', params='%s']" % (
                     action_ex_id,
+                    e,
                     action_cls,
                     action_cls_attrs,
-                    params,
-                    e
+                    params
                 )
             )
 
