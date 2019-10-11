@@ -28,6 +28,8 @@ from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
 
+CONF = cfg.CONF
+
 
 class EngineServer(service_base.MistralService):
     """Engine server.
@@ -64,27 +66,50 @@ class EngineServer(service_base.MistralService):
         # in the middle of executing an action then one of the remaining
         # engine instances will expire the action in a configured period
         # of time.
-        if cfg.CONF.executor.type == 'local':
+        if CONF.executor.type == 'local':
             action_heartbeat_sender.start()
 
         if self._setup_profiler:
-            profiler_utils.setup('mistral-engine', cfg.CONF.engine.host)
+            profiler_utils.setup('mistral-engine', CONF.engine.host)
 
         # Initialize and start RPC server.
 
-        self._rpc_server = rpc.get_rpc_server_driver()(cfg.CONF.engine)
+        self._rpc_server = rpc.get_rpc_server_driver()(CONF.engine)
         self._rpc_server.register_endpoint(self)
 
-        self._rpc_server.run(executor=cfg.CONF.oslo_rpc_executor)
+        self._rpc_server.run(executor=CONF.oslo_rpc_executor)
 
         self._notify_started('Engine server started.')
 
     def stop(self, graceful=False):
+        # NOTE(rakhmerov): Unfortunately, oslo.service doesn't pass the
+        # 'graceful' parameter with a correct value. It's simply ignored
+        # in the corresponding call chain leading to a concrete service.
+        # The only workaround for now is to check 'graceful_shutdown_timeout'
+        # configuration option. If it's not empty (not None or 0) then we
+        # should treat it a graceful shutdown.
+        graceful = bool(CONF.graceful_shutdown_timeout)
+
+        LOG.info(
+            'Stopping an engine server [graceful=%s, timeout=%s]',
+            graceful,
+            CONF.graceful_shutdown_timeout
+        )
+
         super(EngineServer, self).stop(graceful)
+
+        # The rpc server needs to be stopped first so that the engine
+        # server stops receiving new RPC calls. Under load, this operation
+        # may take much time in case of graceful shutdown because there
+        # still may be RPC messages already polled from the queue and
+        # waiting for processing. So an underlying RPC server has to wait
+        # until they are processed.
+        if self._rpc_server:
+            self._rpc_server.stop(graceful)
 
         action_heartbeat_checker.stop(graceful)
 
-        if cfg.CONF.executor.type == 'local':
+        if CONF.executor.type == 'local':
             action_heartbeat_sender.stop(graceful)
 
         if self._scheduler:
@@ -95,8 +120,8 @@ class EngineServer(service_base.MistralService):
         if self._expiration_policy_tg:
             self._expiration_policy_tg.stop(graceful)
 
-        if self._rpc_server:
-            self._rpc_server.stop(graceful)
+    def wait(self):
+        LOG.info("Waiting for an engine server to exit...")
 
     def start_workflow(self, rpc_ctx, wf_identifier, wf_namespace,
                        wf_ex_id, wf_input, description, params):

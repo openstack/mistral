@@ -44,6 +44,7 @@ class OsloRPCServer(rpc.RPCServer):
         # TODO(rakhmerov): rpc.get_transport() should be in oslo.messaging
         # related module.
         access_policy = dispatcher.DefaultRPCAccessPolicy
+
         self.oslo_server = messaging.get_rpc_server(
             rpc.get_transport(),
             target,

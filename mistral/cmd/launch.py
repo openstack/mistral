@@ -65,7 +65,9 @@ def launch_thread(server, workers=1):
 
         if not SERVER_THREAD_MANAGER:
             SERVER_THREAD_MANAGER = service.ServiceLauncher(
-                CONF, restart_method='mutate')
+                CONF,
+                restart_method='mutate'
+            )
 
         SERVER_THREAD_MANAGER.launch_service(server, workers=workers)
     except Exception as e:
@@ -79,7 +81,9 @@ def launch_process(server, workers=1):
 
         if not SERVER_PROCESS_MANAGER:
             SERVER_PROCESS_MANAGER = service.ProcessLauncher(
-                CONF, restart_method='mutate')
+                CONF,
+                restart_method='mutate'
+            )
 
         SERVER_PROCESS_MANAGER.launch_service(server, workers=workers)
     except Exception as e:
@@ -116,11 +120,11 @@ def launch_any(options):
     global SERVER_PROCESS_MANAGER
     global SERVER_THREAD_MANAGER
 
-    if SERVER_PROCESS_MANAGER:
-        SERVER_PROCESS_MANAGER.wait()
-
     if SERVER_THREAD_MANAGER:
         SERVER_THREAD_MANAGER.wait()
+
+    if SERVER_PROCESS_MANAGER:
+        SERVER_PROCESS_MANAGER.wait()
 
 
 # Map cli options to appropriate functions. The cli options are
