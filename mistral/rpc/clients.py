@@ -218,7 +218,7 @@ class EngineClient(eng.Engine):
         on_action_complete if the action execution reached completion state.
 
         :param action_ex_id: Action execution id.
-        :param action_ex_id: Updated state.
+        :param state: Updated state.
         :param wf_action: If True it means that the given id points to
             a workflow execution rather than action execution. It happens
             when a nested workflow execution sends its result to a parent
