@@ -36,7 +36,7 @@ class JSEvaluator(object):
 
         :param script: The text of JavaScript snippet that needs to be
         executed.
-               context: This object will be assigned to the $ javascript
+        :param context: This object will be assigned to the $ javascript
         variable.
         :return result of evaluated javascript code.
         :raise MistralException: if corresponding js library is not installed.
