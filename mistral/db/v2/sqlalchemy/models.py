@@ -82,6 +82,19 @@ def validate_long_type_length(cls, field_name, value):
             raise exc.SizeLimitExceededException(msg)
 
 
+def validate_name_has_no_spaces(name):
+    """Makes sure name does not contain spaces."""
+    if name:
+        if " " in name:
+            msg = (
+                "Name '{}' must not contain spaces"
+            ).format(name)
+
+            LOG.error(msg)
+
+            raise exc.InvalidModelException(msg)
+
+
 def register_length_validator(attr_name):
     """Register an event listener on the attribute.
 
@@ -95,6 +108,20 @@ def register_length_validator(attr_name):
                 'set',
                 lambda t, v, o, i: validate_long_type_length(cls, attr_name, v)
             )
+
+
+def register_name_validator():
+    """Register an event listener on the attribute.
+
+    This event listener will validate that name of object does not
+    contains spaces every time a 'set' occurs.
+    """
+    for cls in utils.iter_subclasses(Definition):
+        event.listen(
+            getattr(cls, "name"),
+            'set',
+            lambda t, v, o, i: validate_name_has_no_spaces(v)
+        )
 
 
 class Definition(mb.MistralSecureModelBase):
@@ -549,6 +576,8 @@ mb.register_secure_model_hooks()
 # affected by the user do not exceed the limit configuration.
 for attr_name in ['input', 'output', 'params', 'published']:
     register_length_validator(attr_name)
+
+register_name_validator()
 
 
 class ResourceMember(mb.MistralModelBase):
