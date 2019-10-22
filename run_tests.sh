@@ -135,7 +135,7 @@ function setup_db_pylib {
     case ${db_type} in
         postgresql )
             echo "Installing python library for PostgreSQL."
-            ${wrapper} pip install psycopg2
+            ${wrapper} pip install psycopg2==2.8.3
             ;;
         mysql )
             echo "Installing python library for MySQL"
