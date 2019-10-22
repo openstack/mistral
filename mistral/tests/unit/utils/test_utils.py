@@ -48,3 +48,8 @@ class UtilsTest(base.BaseTest):
             ssh_utils._to_paramiko_private_key,
             "..\\dir"
         )
+
+        self.assertIsNone(
+            ssh_utils._to_paramiko_private_key(private_key_filename=None,
+                                               password='pass')
+        )

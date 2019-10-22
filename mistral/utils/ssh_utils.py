@@ -40,26 +40,28 @@ def _read_paramimko_stream(recv_func):
 def _to_paramiko_private_key(private_key_filename,
                              private_key=None,
                              password=None):
-    if '../' in private_key_filename or '..\\' in private_key_filename:
-        raise exc.DataAccessException(
-            "Private key filename must not contain '..'. "
-            "Actual: %s" % private_key_filename
-        )
-
     if private_key:
         return paramiko.RSAKey.from_private_key(
             file_obj=six.StringIO(private_key),
             password=password)
 
-    if private_key_filename.startswith('/'):
-        private_key_path = private_key_filename
-    else:
-        private_key_path = KEY_PATH + private_key_filename
+    if private_key_filename:
+        if '../' in private_key_filename or '..\\' in private_key_filename:
+            raise exc.DataAccessException(
+                "Private key filename must not contain '..'. "
+                "Actual: %s" % private_key_filename
+            )
 
-    return paramiko.RSAKey(
-        filename=private_key_path,
-        password=password
-    )
+        if private_key_filename.startswith('/'):
+            private_key_path = private_key_filename
+        else:
+            private_key_path = KEY_PATH + private_key_filename
+
+        return paramiko.RSAKey(
+            filename=private_key_path,
+            password=password)
+
+    return None
 
 
 def _connect(host, username, password=None, pkey=None, proxy=None):
