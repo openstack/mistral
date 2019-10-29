@@ -1568,6 +1568,45 @@ class PoliciesTest(base.EngineTestCase):
 
         self.await_workflow_error(wf_ex.id)
 
+    def test_retry_with_input(self):
+        wf_text = """---
+        version: '2.0'
+        wf1:
+          tasks:
+            task1:
+              action: std.noop
+              on-success:
+                - task2
+              publish:
+                success: task4
+            task2:
+              action: std.noop
+              on-success:
+               - task4: <% $.success = 'task4' %>
+               - task5: <% $.success = 'task5' %>
+            task4:
+              on-complete:
+                - task5
+              publish:
+                param: data
+            task5:
+              action: std.echo
+              input:
+                output: {
+                    "status": 200,
+                    "param": <% $.param %>
+                  }
+              publish:
+                res: <% task(task5).result %>
+              retry:
+                continue-on: <% $.res.status < 300 %>
+                count: 1
+                delay: 1
+        """
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf1')
+        self.await_workflow_success(wf_ex.id)
+
     def test_action_timeout(self):
         wf_text = """---
         version: '2.0'

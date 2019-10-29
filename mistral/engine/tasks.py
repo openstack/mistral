@@ -662,7 +662,8 @@ class RegularTask(Task):
             data_flow.get_workflow_environment_dict(self.wf_ex),
             ctx or self.ctx,
             self.wf_ex.context,
-            self.wf_ex.input
+            self.wf_ex.input,
+            self.task_ex.in_context,
         )
 
         return expr.evaluate_recursively(expression, ctx_view)
