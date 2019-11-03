@@ -73,10 +73,10 @@ class LookupUtilsTest(base.EngineTestCase):
         self.addCleanup(db_api.delete_action_definitions, name='action1')
 
         # Reinitialise the cache with reduced action_definition_cache_time
-        # to make the test faster.
+        # to make sure the test environment is under control.
         new_cache = cachetools.TTLCache(
             maxsize=1000,
-            ttl=5  # 5 seconds
+            ttl=50  # 50 seconds
         )
         cache_patch = mock.patch.object(
             db_api, '_ACTION_DEF_CACHE', new_cache)
@@ -93,6 +93,9 @@ class LookupUtilsTest(base.EngineTestCase):
         self.assertIn('action1', db_api._ACTION_DEF_CACHE)
         self.assertIn('std.noop', db_api._ACTION_DEF_CACHE)
         self.assertIn('std.echo', db_api._ACTION_DEF_CACHE)
+
+        # Simulate cache expiry
+        new_cache.clear()
 
         # Wait some time until cache expires
         self._await(
