@@ -148,7 +148,7 @@ simplegeneric==0.8.1
 simplejson==3.5.1
 six==1.10.0
 snowballstemmer==1.2.1
-Sphinx==1.6.2
+Sphinx==1.8.0
 sphinxcontrib-httpdomain==1.3.0
 sphinxcontrib-pecanwsme==0.10.0
 sphinxcontrib-websupport==1.0.1
