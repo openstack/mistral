@@ -35,3 +35,6 @@ Project Resources
 
 * Release notes for the project can be found at:
   https://docs.openstack.org/releasenotes/mistral/
+
+* Source for the project can be found at:
+  https://opendev.org/openstack/mistral
