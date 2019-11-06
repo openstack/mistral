@@ -704,7 +704,7 @@ class BarbicanAction(base.OpenStackAction):
         :type client: barbicanclient.client
 
         :param secret_ref: Full HATEOAS reference to a Secret
-        :type name: string
+        :type secret_ref: string
         """
 
         return client.secrets.get(secret_ref).payload
