@@ -1010,6 +1010,62 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             published_global
         )
 
+    def test_linear_data_with_input_expressions(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo
+              input:
+                output:
+                  key1: value1
+                  key2: value2
+              publish:
+                res1: <% task(task1).result %>
+              on-success:
+                - task2
+
+            task2:
+              action: std.echo output=<% $.res1.key2 %>
+              publish:
+                res2: <% task().result %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            tasks = wf_ex.task_executions
+
+        task1 = self._assert_single_item(
+            tasks,
+            name='task1',
+            state=states.SUCCESS
+        )
+        task2 = self._assert_single_item(
+            tasks,
+            name='task2',
+            state=states.SUCCESS
+        )
+
+        self.assertDictEqual(
+            {
+                'key1': 'value1',
+                'key2': 'value2'
+            },
+            task1.published['res1']
+        )
+        self.assertEqual('value2', task2.published['res2'])
+
 
 class DataFlowTest(test_base.BaseTest):
     def test_get_task_execution_result(self):

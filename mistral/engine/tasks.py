@@ -660,10 +660,10 @@ class RegularTask(Task):
         ctx_view = data_flow.ContextView(
             data_flow.get_current_task_dict(self.task_ex),
             data_flow.get_workflow_environment_dict(self.wf_ex),
-            ctx or self.ctx,
+            ctx or {},
+            self.task_ex.in_context,
             self.wf_ex.context,
             self.wf_ex.input,
-            self.task_ex.in_context,
         )
 
         return expr.evaluate_recursively(expression, ctx_view)
