@@ -968,3 +968,26 @@ class TestExecutionsController(base.APITest):
         self.assertTrue(
             mock_get_execs.call_args[1].get('project_id', fake_project_id)
         )
+
+    def test_get_all_with_nulls_not_valid(self):
+        resp = self.app.get(
+            '/v2/executions?limit=10&sort_keys=id&sort_dirs=asc&nulls=invalid',
+            expect_errors=True
+        )
+
+        self.assertEqual(500, resp.status_int)
+        self.assertIn(
+            "'invalid' is not a valid field name.",
+            resp.body.decode()
+        )
+
+        resp = self.app.get(
+            '/v2/executions?limit=10&sort_keys=id&sort_dirs=asc&nulls=id',
+            expect_errors=True
+        )
+
+        self.assertEqual(500, resp.status_int)
+        self.assertIn(
+            "The field 'id' can't hold None value.",
+            resp.body.decode()
+        )

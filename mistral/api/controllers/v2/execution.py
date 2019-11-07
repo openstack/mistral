@@ -334,14 +334,15 @@ class ExecutionsController(rest.RestController):
                          wtypes.text, types.uuid, wtypes.text, types.jsontype,
                          types.uuid, types.uuid, STATE_TYPES, wtypes.text,
                          types.jsontype, types.jsontype, wtypes.text,
-                         wtypes.text, bool, types.uuid, bool)
+                         wtypes.text, bool, types.uuid, bool, types.list)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
                 sort_dirs='asc', fields='', workflow_name=None,
                 workflow_id=None, description=None, params=None,
                 task_execution_id=None, root_execution_id=None, state=None,
                 state_info=None, input=None, output=None, created_at=None,
                 updated_at=None, include_output=None, project_id=None,
-                all_projects=False):
+                all_projects=False, nulls=''):
+
         """Return all Executions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -384,13 +385,18 @@ class ExecutionsController(rest.RestController):
             Admin required.
         :param all_projects: Optional. Get resources of all projects. Admin
             required.
+        :param nulls: Optional. The names of the columns with null value in
+                        the query.
         """
         acl.enforce('executions:list', context.ctx())
+
+        db_models.WorkflowExecution.check_allowed_none_values(nulls)
 
         if all_projects or project_id:
             acl.enforce('executions:list:all_projects', context.ctx())
 
         filters = filter_utils.create_filters_from_request_params(
+            none_values=nulls,
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
