@@ -12,10 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import eventlet
+import sys
+
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_service import periodic_task
-from oslo_service import threadgroup
 
 from mistral import context as auth_ctx
 from mistral.rpc import clients as rpc
@@ -25,69 +26,92 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-class ActionExecutionReporter(periodic_task.PeriodicTasks):
-    """The reporter that reports the running action executions."""
+_enabled = False
+_stopped = True
 
-    def __init__(self, conf):
-        super(ActionExecutionReporter, self).__init__(conf)
-        self._engine_client = rpc.get_engine_client()
-        self._running_actions = set()
-
-        self.interval = CONF.action_heartbeat.check_interval
-        self.max_missed = CONF.action_heartbeat.max_missed_heartbeats
-        self.enabled = self.interval and self.max_missed
-
-        _periodic_task = periodic_task.periodic_task(
-            spacing=self.interval,
-            run_immediately=True
-        )
-        self.add_periodic_task(
-            _periodic_task(report)
-        )
-
-    def add_action_ex_id(self, action_ex_id):
-        # With run-action there is no actions_ex_id assigned
-        if action_ex_id and self.enabled:
-            self._engine_client.report_running_actions([action_ex_id])
-            self._running_actions.add(action_ex_id)
-
-    def remove_action_ex_id(self, action_ex_id):
-        if action_ex_id and self.enabled:
-            self._running_actions.discard(action_ex_id)
+_running_actions = set()
 
 
-def report(reporter, ctx):
+def add_action_ex_id(action_ex_id):
+    global _enabled
+
+    # With run-action there is no actions_ex_id assigned.
+    if action_ex_id and _enabled:
+        rpc.get_engine_client().report_running_actions([action_ex_id])
+
+        _running_actions.add(action_ex_id)
+
+
+def remove_action_ex_id(action_ex_id):
+    global _enabled
+
+    if action_ex_id and _enabled:
+        _running_actions.discard(action_ex_id)
+
+
+def report_running_actions():
     LOG.debug("Running heartbeat reporter...")
 
-    if not reporter._running_actions:
+    global _running_actions
+
+    if not _running_actions:
         return
 
-    auth_ctx.set_ctx(ctx)
-    reporter._engine_client.report_running_actions(reporter._running_actions)
+    rpc.get_engine_client().report_running_actions(_running_actions)
 
 
-def setup(action_execution_reporter):
+def _loop():
+    global _stopped
+
+    # This is an administrative thread so we need to set an admin
+    # security context.
+    auth_ctx.set_ctx(
+        auth_ctx.MistralContext(
+            user=None,
+            tenant=None,
+            auth_token=None,
+            is_admin=True
+        )
+    )
+
+    while not _stopped:
+        try:
+            report_running_actions()
+        except Exception:
+            LOG.exception(
+                'Action execution reporter iteration failed'
+                ' due to an unexpected exception.'
+            )
+
+            # For some mysterious reason (probably eventlet related)
+            # the exception is not cleared from the context automatically.
+            # This results in subsequent log.warning calls to show invalid
+            # info.
+            if sys.version_info < (3,):
+                sys.exc_clear()
+
+        eventlet.sleep(CONF.action_heartbeat.check_interval)
+
+
+def start():
+    global _stopped, _enabled
+
     interval = CONF.action_heartbeat.check_interval
     max_missed = CONF.action_heartbeat.max_missed_heartbeats
-    enabled = interval and max_missed
-    if not enabled:
-        LOG.info("Action heartbeat reporting disabled.")
-        return None
 
-    tg = threadgroup.ThreadGroup()
+    _enabled = interval and max_missed
 
-    ctx = auth_ctx.MistralContext(
-        user=None,
-        tenant=None,
-        auth_token=None,
-        is_admin=True
-    )
+    if not _enabled:
+        LOG.info("Action heartbeat reporting is disabled.")
 
-    tg.add_dynamic_timer(
-        action_execution_reporter.run_periodic_tasks,
-        initial_delay=None,
-        periodic_interval_max=1,
-        context=ctx
-    )
+        return
 
-    return tg
+    _stopped = False
+
+    eventlet.spawn(_loop)
+
+
+def stop(graceful=False):
+    global _stopped
+
+    _stopped = True

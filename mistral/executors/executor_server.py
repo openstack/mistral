@@ -39,14 +39,11 @@ class ExecutorServer(service_base.MistralService):
 
         self.executor = executor
         self._rpc_server = None
-        self._reporter = None
-        self._aer = None
 
     def start(self):
         super(ExecutorServer, self).start()
 
-        self._aer = action_execution_reporter.ActionExecutionReporter(CONF)
-        self._reporter = action_execution_reporter.setup(self._aer)
+        action_execution_reporter.start()
 
         if self._setup_profiler:
             profiler_utils.setup('mistral-executor', cfg.CONF.executor.host)
@@ -63,8 +60,7 @@ class ExecutorServer(service_base.MistralService):
     def stop(self, graceful=False):
         super(ExecutorServer, self).stop(graceful)
 
-        if self._reporter:
-            self._reporter.stop(graceful)
+        action_execution_reporter.stop()
 
         if self._rpc_server:
             self._rpc_server.stop(graceful)
@@ -101,7 +97,7 @@ class ExecutorServer(service_base.MistralService):
         redelivered = rpc_ctx.redelivered or False
 
         try:
-            self._aer.add_action_ex_id(action_ex_id)
+            action_execution_reporter.add_action_ex_id(action_ex_id)
 
             res = self.executor.run_action(
                 action_ex_id,
@@ -123,7 +119,7 @@ class ExecutorServer(service_base.MistralService):
 
             return res
         finally:
-            self._aer.remove_action_ex_id(action_ex_id)
+            action_execution_reporter.remove_action_ex_id(action_ex_id)
 
 
 def get_oslo_service(setup_profiler=True):
