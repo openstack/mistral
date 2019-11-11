@@ -60,6 +60,11 @@ def run_task(wf_cmd):
     task = _build_task_from_command(wf_cmd)
 
     try:
+        if task.waiting and task.rerun:
+            task.set_state(states.WAITING, 'Task is waiting.')
+
+            _schedule_refresh_task_state(task.task_ex.id)
+
         task.run()
     except exc.MistralException as e:
         wf_ex = wf_cmd.wf_ex
@@ -77,11 +82,13 @@ def run_task(wf_cmd):
     _check_affected_tasks(task)
 
 
-def rerun_task(task_ex, wf_spec):
+def mark_task_running(task_ex, wf_spec):
     task = _build_task_from_execution(wf_spec, task_ex)
 
     old_task_state = task_ex.state
+
     task.set_state(states.RUNNING, None, False)
+
     task.notify(old_task_state, states.RUNNING)
 
 
