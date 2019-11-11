@@ -39,7 +39,6 @@ from mistral.workflow import data_flow
 from mistral.workflow import states
 from mistral_lib import utils
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -534,6 +533,16 @@ class RegularTask(Task):
 
     @profiler.trace('task-run-existing')
     def _run_existing(self):
+        # NOTE(vgvoleg): join tasks in direct workflows can't be
+        # rerun as-is, because these tasks can't start without
+        # a correct logical state.
+        if self.rerun and hasattr(self.task_spec, "get_join") \
+                and self.task_spec.get_join():
+            from mistral.engine import task_handler as t_h
+            self.set_state(states.WAITING, 'Task is waiting.')
+            t_h._schedule_refresh_task_state(self.task_ex.id)
+            return
+
         if self.waiting:
             return
 
