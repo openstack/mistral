@@ -190,12 +190,6 @@ class Action(object):
     def _log_result(self, prev_state, result):
         state = self.action_ex.state
 
-        def _result_msg():
-            if state == states.ERROR:
-                return "error = %s" % utils.cut(result.error)
-
-            return "result = %s" % utils.cut(result.data)
-
         if prev_state != state:
             wf_trace.info(
                 None,
@@ -205,7 +199,7 @@ class Action(object):
                  self.task_ex.name if self.task_ex else None,
                  prev_state,
                  state,
-                 _result_msg())
+                 result.cut_repr())
             )
 
 
