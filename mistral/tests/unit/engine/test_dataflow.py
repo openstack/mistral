@@ -616,6 +616,212 @@ class DataFlowEngineTest(engine_test_base.EngineTestCase):
             wf_output['result']
         )
 
+    def test_publish_with_all(self):
+        wf_text = """---
+        version: '2.0'
+        wf:
+            tasks:
+              main-task:
+                publish:
+                  res_x1: 111
+                on-complete:
+                  next: complete-task
+                  publish:
+                    branch:
+                      res_x3: 222
+                on-success:
+                  next: success-task
+                  publish:
+                    branch:
+                      res_x2: 222
+
+              success-task:
+                action: std.noop
+                publish:
+                  success_x2: <% $.res_x2 %>
+                  success_x1: <% $.res_x1 %>
+
+              complete-task:
+                action: std.noop
+                publish:
+                  complete_x2: <% $.res_x3 %>
+                  complete_x1: <% $.res_x1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+        self.await_workflow_success(wf_ex.id)
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
+
+            main_task = self._assert_single_item(tasks, name='main-task')
+            main_task_published_vars = main_task.get("published")
+            expected_main_variables = {'res_x3', 'res_x2', 'res_x1'}
+            self.assertEqual(set(main_task_published_vars.keys()),
+                             expected_main_variables)
+
+            complete_task = self._assert_single_item(tasks,
+                                                     name='complete-task')
+
+            complete_task_published_vars = complete_task.get("published")
+            expected_complete_variables = {'complete_x2', 'complete_x1'}
+            self.assertEqual(set(complete_task_published_vars.keys()),
+                             expected_complete_variables)
+
+            success_task = self._assert_single_item(tasks, name='success-task')
+            success_task_published_vars = success_task.get("published")
+            expected_success_variables = {'success_x2', 'success_x1'}
+            self.assertEqual(set(success_task_published_vars.keys()),
+                             expected_success_variables)
+
+            all_expected_published_variables = expected_main_variables.union(
+                expected_success_variables,
+                expected_complete_variables
+            )
+            self.assertEqual(set(wf_output), all_expected_published_variables)
+
+    def test_publish_no_success(self):
+        wf_text = """---
+        version: '2.0'
+        wf:
+            tasks:
+              main-task:
+                publish:
+                  res_x1: 111
+                on-complete:
+                  next: complete-task
+                  publish:
+                    branch:
+                      res_x3: 222
+
+              complete-task:
+                action: std.noop
+                publish:
+                  complete_x2: <% $.res_x3 %>
+                  complete_x1: <% $.res_x1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            wf_output = wf_ex.output
+            tasks = wf_ex.task_executions
+
+            main_task = self._assert_single_item(tasks, name='main-task')
+            main_task_published_vars = main_task.get("published")
+            expected_main_variables = {'res_x3', 'res_x1'}
+            self.assertEqual(set(main_task_published_vars.keys()),
+                             expected_main_variables)
+
+            complete_task = self._assert_single_item(tasks,
+                                                     name='complete-task')
+            complete_task_published_vars = complete_task.get("published")
+            expected_complete_variables = {'complete_x2', 'complete_x1'}
+            self.assertEqual(set(complete_task_published_vars.keys()),
+                             expected_complete_variables)
+
+            all_expected_published_variables = expected_main_variables.union(
+                expected_complete_variables)
+            self.assertEqual(set(wf_output), all_expected_published_variables)
+
+    def test_publish_no_complete(self):
+        wf_text = """---
+        version: '2.0'
+        wf:
+            tasks:
+              main-task:
+                publish:
+                  res_x1: 111
+                on-success:
+                  next: success-task
+                  publish:
+                    branch:
+                      res_x2: 222
+
+              success-task:
+                action: std.noop
+                publish:
+                  success_x2: <% $.res_x2 %>
+                  success_x1: <% $.res_x1 %>
+        """
+
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            tasks = wf_ex.task_executions
+            wf_output = wf_ex.output
+
+            main_task = self._assert_single_item(tasks, name='main-task')
+
+            main_task_published_vars = main_task.get("published")
+            expected_main_variables = {'res_x2', 'res_x1'}
+            self.assertEqual(set(main_task_published_vars.keys()),
+                             expected_main_variables)
+
+            success_task = self._assert_single_item(tasks, name='success-task')
+            success_task_published_vars = success_task.get("published")
+            expected_success_variables = {'success_x2', 'success_x1'}
+            self.assertEqual(set(success_task_published_vars.keys()),
+                             expected_success_variables)
+
+            all_expected_published_variables = expected_main_variables.union(
+                expected_success_variables)
+            self.assertEqual(set(wf_output), all_expected_published_variables)
+
+    def test_publish_no_regular_publish(self):
+        wf_text = """---
+        version: '2.0'
+        wf2:
+            tasks:
+              main-task:
+                on-success:
+                  next: success-task
+                  publish:
+                    branch:
+                      res_x2: 222
+
+              success-task:
+                action: std.noop
+                publish:
+                  success_x2: <% $.res_x2 %>
+        """
+        wf_service.create_workflows(wf_text)
+        wf_ex = self.engine.start_workflow('wf2')
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            # Note: We need to reread execution to access related tasks.
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            tasks = wf_ex.task_executions
+            wf_output = wf_ex.output
+            main_task = self._assert_single_item(tasks, name='main-task')
+            main_task_published_vars = main_task.get("published")
+            expected_main_variables = {'res_x2'}
+            self.assertEqual(set(main_task_published_vars.keys()),
+                             expected_main_variables)
+
+            success_task = self._assert_single_item(tasks, name='success-task')
+            success_task_published_vars = success_task.get("published")
+            expected_success_variables = {'success_x2'}
+            self.assertEqual(set(success_task_published_vars.keys()),
+                             expected_success_variables)
+
+            all_expected_published_variables = expected_main_variables.union(
+                expected_success_variables)
+            self.assertEqual(set(wf_output), all_expected_published_variables)
+
     def test_output_on_error_wb_yaql_failed(self):
         wb_text = """---
             version: '2.0'

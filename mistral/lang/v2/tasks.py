@@ -248,7 +248,6 @@ class TaskSpec(base.BaseSpec):
                 {'branch': self._publish_on_error},
                 validate=self._validate
             )
-
         return spec
 
     def get_keep_result(self):
@@ -323,22 +322,23 @@ class DirectWorkflowTaskSpec(TaskSpec):
     def get_publish(self, state):
         spec = super(DirectWorkflowTaskSpec, self).get_publish(state)
 
-        # TODO(rakhmerov): How do we need to resolve a possible conflict
-        # between 'on-complete' and 'on-success/on-error' and
-        # 'publish/publish-on-error'? For now we assume that 'on-error'
-        # and 'on-success' take precedence over on-complete.
-
-        on_clause = self._on_complete
+        if self._on_complete and self._on_complete.get_publish():
+            if spec:
+                spec.merge(self._on_complete.get_publish())
+            else:
+                spec = self._on_complete.get_publish()
 
         if state == states.SUCCESS:
             on_clause = self._on_success
         elif state == states.ERROR:
             on_clause = self._on_error
 
-        if not on_clause:
-            return spec
+        if on_clause and on_clause.get_publish():
+            if spec:
+                on_clause.get_publish().merge(spec)
+            return on_clause.get_publish()
 
-        return on_clause.get_publish() or spec
+        return spec
 
     def get_join(self):
         return self._join

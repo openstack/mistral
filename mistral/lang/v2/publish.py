@@ -16,6 +16,7 @@
 from mistral import exceptions as exc
 from mistral.lang import types
 from mistral.lang.v2 import base
+from mistral_lib import utils
 
 
 class PublishSpec(base.BaseSpec):
@@ -59,3 +60,12 @@ class PublishSpec(base.BaseSpec):
 
     def get_atomic(self):
         return self._atomic
+
+    def merge(self, spec_to_merge):
+        if spec_to_merge:
+            if spec_to_merge.get_branch():
+                utils.merge_dicts(self._branch, spec_to_merge.get_branch())
+            if spec_to_merge.get_global():
+                utils.merge_dicts(self._global, spec_to_merge.get_global())
+            if spec_to_merge.get_atomic():
+                utils.merge_dicts(self._atomic, spec_to_merge.get_atomic())
