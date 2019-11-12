@@ -275,7 +275,7 @@ class Workflow(object):
     def _recursive_rerun(self):
         """Rerun all parent workflow executions recursively.
 
-        If there is a parent execution that it reruns as well.
+        If there is a parent execution then it reruns as well.
         """
 
         from mistral.engine import workflow_handler
@@ -283,10 +283,10 @@ class Workflow(object):
         self.set_state(states.RUNNING)
         self.notify(events.WORKFLOW_RERUN)
 
-        # TODO(rakhmerov): We call a internal method of a module here.
+        # TODO(rakhmerov): We call an internal method of a module here.
         # The simplest way is to make it public, however, I believe
         # it's another "bad smell" that tells that some refactoring
-        # of the architecture should be made.
+        # of the architecture is needed.
         workflow_handler._schedule_check_and_fix_integrity(self.wf_ex)
 
         if self.wf_ex.task_execution_id:
@@ -301,7 +301,7 @@ class Workflow(object):
             parent_wf._recursive_rerun()
 
             from mistral.engine import task_handler
-            task_handler.rerun_task(parent_task_ex, parent_wf.wf_spec)
+            task_handler.mark_task_running(parent_task_ex, parent_wf.wf_spec)
 
     def _get_backlog(self):
         return self.wf_ex.runtime_context.get(dispatcher.BACKLOG_KEY)

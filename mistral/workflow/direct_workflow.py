@@ -154,7 +154,7 @@ class DirectWorkflowController(base.WorkflowController):
         return cmds
 
     def _configure_if_join(self, cmd):
-        if not isinstance(cmd, commands.RunTask):
+        if not isinstance(cmd, (commands.RunTask, commands.RunExistingTask)):
             return
 
         if not cmd.task_spec.get_join():
@@ -165,6 +165,17 @@ class DirectWorkflowController(base.WorkflowController):
 
     def _get_join_unique_key(self, cmd):
         return 'join-task-%s-%s' % (self.wf_ex.id, cmd.task_spec.get_name())
+
+    def rerun_tasks(self, task_execs, reset=True):
+        cmds = super(DirectWorkflowController, self).rerun_tasks(
+            task_execs,
+            reset
+        )
+
+        for cmd in cmds:
+            self._configure_if_join(cmd)
+
+        return cmds
 
     # TODO(rakhmerov): Need to refactor this method to be able to pass tasks
     # whose contexts need to be merged.
