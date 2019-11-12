@@ -169,6 +169,42 @@ class ExpirationPolicyTest(base.DbTestCase):
 
         self.assertEqual(0, len(execs))
 
+    def test_expiration_policy_for_executions_with_ignored_states(self):
+        _create_workflow_executions()
+        now = datetime.datetime.utcnow()
+
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=30,
+            ignored_states=['SUCCESS']
+        )
+
+        expiration_policy.run_execution_expiration_policy(self, ctx)
+
+        execs = db_api.get_expired_executions(now)
+        self.assertEqual(1, len(execs))
+        self.assertEqual('cancelled_not_expired', execs[0].get('id'))
+
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=30,
+            ignored_states=['SUCCESS', 'CANCELLED']
+        )
+
+        expiration_policy.run_execution_expiration_policy(self, ctx)
+
+        execs = db_api.get_expired_executions(now)
+        self.assertEqual(0, len(execs))
+
+    def test_expiration_policy_invalid_ignored_states(self):
+        _set_expiration_policy_config(
+            evaluation_interval=1,
+            older_than=30,
+            ignored_states=['RUNNING']
+        )
+
+        self.assertRaises(ValueError, expiration_policy.setup)
+
     def test_deletion_of_expired_executions_with_batch_size_scenario1(self):
         """scenario1
 
@@ -331,7 +367,7 @@ class ExpirationPolicyTest(base.DbTestCase):
 
 
 def _set_expiration_policy_config(evaluation_interval, older_than, mfe=0,
-                                  batch_size=0):
+                                  batch_size=0, ignored_states=[]):
     cfg.CONF.set_default(
         'evaluation_interval',
         evaluation_interval,
@@ -350,5 +386,10 @@ def _set_expiration_policy_config(evaluation_interval, older_than, mfe=0,
     cfg.CONF.set_default(
         'batch_size',
         batch_size,
+        group='execution_expiration_policy'
+    )
+    cfg.CONF.set_default(
+        'ignored_states',
+        ignored_states,
         group='execution_expiration_policy'
     )

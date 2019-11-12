@@ -66,6 +66,8 @@ _VALID_TRANSITIONS = {
     ERROR: [RUNNING]
 }
 
+TERMINAL_STATES = {SUCCESS, ERROR, CANCELLED}
+
 
 def is_valid(state):
     return state in _ALL

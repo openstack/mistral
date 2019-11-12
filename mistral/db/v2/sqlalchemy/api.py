@@ -1393,17 +1393,18 @@ def get_superfluous_executions(max_finished_executions, limit=None, columns=(),
 def _get_completed_root_executions_query(columns):
     query = b.model_query(models.WorkflowExecution, columns=columns)
 
-    # Only WorkflowExecution that are not a child of other WorkflowExecution.
+    # This is an empty list by default.
+    ignored_states = CONF.execution_expiration_policy.ignored_states
+    desired_states = states.TERMINAL_STATES - set(ignored_states)
+
+    # Only workflow executions that are not a child of
+    # other workflow executions.
     query = query.filter(
         models.WorkflowExecution.task_execution_id == sa.null()
     )
 
     query = query.filter(
-        models.WorkflowExecution.state.in_(
-            [states.SUCCESS,
-             states.ERROR,
-             states.CANCELLED]
-        )
+        models.WorkflowExecution.state.in_(desired_states)
     )
 
     return query
