@@ -20,7 +20,8 @@ from mistral.engine import default_engine
 from mistral.rpc import base as rpc
 from mistral.scheduler import base as sched_base
 from mistral.service import base as service_base
-from mistral.services import action_execution_checker
+from mistral.services import action_heartbeat_checker
+from mistral.services import action_heartbeat_sender
 from mistral.services import expiration_policy
 from mistral.utils import profiler as profiler_utils
 from mistral_lib import utils
@@ -54,7 +55,17 @@ class EngineServer(service_base.MistralService):
 
         self._expiration_policy_tg = expiration_policy.setup()
 
-        action_execution_checker.start()
+        action_heartbeat_checker.start()
+
+        # If the current engine instance uses a local action executor
+        # then we also need to initialize a heartbeat reporter for it.
+        # Heartbeats will be sent to the engine tier in the same way as
+        # with a remote executor. So if the current cluster node crashes
+        # in the middle of executing an action then one of the remaining
+        # engine instances will expire the action in a configured period
+        # of time.
+        if cfg.CONF.executor.type == 'local':
+            action_heartbeat_sender.start()
 
         if self._setup_profiler:
             profiler_utils.setup('mistral-engine', cfg.CONF.engine.host)
@@ -71,7 +82,10 @@ class EngineServer(service_base.MistralService):
     def stop(self, graceful=False):
         super(EngineServer, self).stop(graceful)
 
-        action_execution_checker.stop(graceful)
+        action_heartbeat_checker.stop(graceful)
+
+        if cfg.CONF.executor.type == 'local':
+            action_heartbeat_sender.stop(graceful)
 
         if self._scheduler:
             self._scheduler.stop(graceful)
@@ -275,7 +289,7 @@ class EngineServer(service_base.MistralService):
             action_ex_ids
         )
 
-        return self.engine.report_running_actions(action_ex_ids)
+        return self.engine.process_action_heartbeats(action_ex_ids)
 
 
 def get_oslo_service(setup_profiler=True):

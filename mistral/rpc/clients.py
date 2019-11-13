@@ -328,7 +328,7 @@ class EngineClient(eng.Engine):
         )
 
     @base.wrap_messaging_exception
-    def report_running_actions(self, action_ex_ids):
+    def process_action_heartbeats(self, action_ex_ids):
         """Receives action execution heartbeats.
 
         :param action_ex_ids: Action execution ids.
