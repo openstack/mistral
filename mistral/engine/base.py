@@ -134,7 +134,7 @@ class Engine(object):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def report_running_actions(self, action_ex_ids):
+    def process_action_heartbeats(self, action_ex_ids):
         """Receives the heartbeat about the running actions.
 
         :param action_ex_ids: The action execution ids.

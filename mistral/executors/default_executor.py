@@ -23,8 +23,8 @@ from mistral import context
 from mistral import exceptions as exc
 from mistral.executors import base
 from mistral.rpc import clients as rpc
+from mistral.services import action_heartbeat_sender
 from mistral.utils import inspect_utils as i_u
-
 
 LOG = logging.getLogger(__name__)
 
@@ -57,6 +57,25 @@ class DefaultExecutor(base.Executor):
         :return: Action result.
         """
 
+        try:
+            action_heartbeat_sender.add_action(action_ex_id)
+
+            return self._do_run_action(
+                action_cls_attrs,
+                action_cls_str,
+                action_ex_id,
+                execution_context,
+                params,
+                redelivered,
+                safe_rerun,
+                timeout
+            )
+        finally:
+            action_heartbeat_sender.remove_action(action_ex_id)
+
+    def _do_run_action(self, action_cls_attrs, action_cls_str, action_ex_id,
+                       execution_context, params, redelivered, safe_rerun,
+                       timeout):
         def send_error_back(error_msg):
             error_result = mistral_lib.Result(error=error_msg)
 

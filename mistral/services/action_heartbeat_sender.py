@@ -32,32 +32,32 @@ _stopped = True
 _running_actions = set()
 
 
-def add_action_ex_id(action_ex_id):
+def add_action(action_ex_id):
     global _enabled
 
     # With run-action there is no actions_ex_id assigned.
     if action_ex_id and _enabled:
-        rpc.get_engine_client().report_running_actions([action_ex_id])
+        rpc.get_engine_client().process_action_heartbeats([action_ex_id])
 
         _running_actions.add(action_ex_id)
 
 
-def remove_action_ex_id(action_ex_id):
+def remove_action(action_ex_id):
     global _enabled
 
     if action_ex_id and _enabled:
         _running_actions.discard(action_ex_id)
 
 
-def report_running_actions():
-    LOG.debug("Running heartbeat reporter...")
+def send_action_heartbeats():
+    LOG.debug('Running heartbeat reporter...')
 
     global _running_actions
 
     if not _running_actions:
         return
 
-    rpc.get_engine_client().report_running_actions(_running_actions)
+    rpc.get_engine_client().process_action_heartbeats(_running_actions)
 
 
 def _loop():
@@ -76,10 +76,10 @@ def _loop():
 
     while not _stopped:
         try:
-            report_running_actions()
+            send_action_heartbeats()
         except Exception:
             LOG.exception(
-                'Action execution reporter iteration failed'
+                'Action heartbeat sender iteration failed'
                 ' due to an unexpected exception.'
             )
 

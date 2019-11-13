@@ -223,14 +223,17 @@ class DefaultEngine(base.Engine):
 
     @db_utils.retry_on_db_error
     @post_tx_queue.run
-    def report_running_actions(self, action_ex_ids):
+    def process_action_heartbeats(self, action_ex_ids):
         with db_api.transaction():
             for exec_id in action_ex_ids:
                 try:
                     db_api.update_action_execution_heartbeat(exec_id)
                 except exceptions.DBEntityNotFoundError:
-                    LOG.debug("Action execution heartbeat update failed. {}"
-                              .format(exec_id), exc_info=True)
+                    LOG.debug(
+                        "Action execution heartbeat update failed. {}"
+                        .format(exec_id),
+                        exc_info=True
+                    )
                     # Ignore this error and continue with the
                     # remaining ids.
                     pass

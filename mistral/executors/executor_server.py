@@ -18,7 +18,7 @@ from mistral import config as cfg
 from mistral.executors import default_executor as exe
 from mistral.rpc import base as rpc
 from mistral.service import base as service_base
-from mistral.services import action_execution_reporter
+from mistral.services import action_heartbeat_sender
 from mistral.utils import profiler as profiler_utils
 from mistral_lib import utils
 
@@ -43,7 +43,7 @@ class ExecutorServer(service_base.MistralService):
     def start(self):
         super(ExecutorServer, self).start()
 
-        action_execution_reporter.start()
+        action_heartbeat_sender.start()
 
         if self._setup_profiler:
             profiler_utils.setup('mistral-executor', cfg.CONF.executor.host)
@@ -60,7 +60,7 @@ class ExecutorServer(service_base.MistralService):
     def stop(self, graceful=False):
         super(ExecutorServer, self).stop(graceful)
 
-        action_execution_reporter.stop()
+        action_heartbeat_sender.stop()
 
         if self._rpc_server:
             self._rpc_server.stop(graceful)
@@ -96,30 +96,25 @@ class ExecutorServer(service_base.MistralService):
 
         redelivered = rpc_ctx.redelivered or False
 
-        try:
-            action_execution_reporter.add_action_ex_id(action_ex_id)
+        res = self.executor.run_action(
+            action_ex_id,
+            action_cls_str,
+            action_cls_attrs,
+            params,
+            safe_rerun,
+            execution_context,
+            redelivered,
+            timeout=timeout
+        )
 
-            res = self.executor.run_action(
-                action_ex_id,
-                action_cls_str,
-                action_cls_attrs,
-                params,
-                safe_rerun,
-                execution_context,
-                redelivered,
-                timeout=timeout
-            )
+        LOG.debug(
+            "Sending action result to engine"
+            " [action_ex_id=%s, action_cls=%s]",
+            action_ex_id,
+            action_cls_str
+        )
 
-            LOG.debug(
-                "Sending action result to engine"
-                " [action_ex_id=%s, action_cls=%s]",
-                action_ex_id,
-                action_cls_str
-            )
-
-            return res
-        finally:
-            action_execution_reporter.remove_action_ex_id(action_ex_id)
+        return res
 
 
 def get_oslo_service(setup_profiler=True):
