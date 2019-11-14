@@ -39,7 +39,7 @@ Write a workflow
 
 For example, we have the following workflow.
 
-.. code-block:: mistral
+::
 
     ---
     version: "2.0"

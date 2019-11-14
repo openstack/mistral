@@ -88,7 +88,7 @@ The rules are the following:
 To illustrate how this all works let's look at the following workflow
 definitions:
 
-  .. code-block:: mistral
+  ::
 
     ---
     version: '2.0'
@@ -99,7 +99,7 @@ definitions:
           workflow: wf2
 
 
-  .. code-block:: mistral
+  ::
 
     ---
     version: '2.0'
@@ -109,7 +109,7 @@ definitions:
         t2:
           workflow: wf3
 
-  .. code-block:: mistral
+  ::
 
     ---
     version: '2.0'
@@ -119,7 +119,7 @@ definitions:
         t3:
           action: std.noop
 
-  .. code-block:: mistral
+  ::
 
     ---
     version: '2.0'

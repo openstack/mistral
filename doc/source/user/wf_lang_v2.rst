@@ -78,8 +78,7 @@ access to the x variable in a data context of workflow execution.
 
 YAML example
 ^^^^^^^^^^^^
-
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -183,7 +182,7 @@ configuration. Each task can optionally take input data and produce output.
 In Mistral Workflow Language v2, task can be associated with an action or a
 workflow. In the example below there are two tasks of different types:
 
-.. code-block:: mistral
+::
 
     action_based_task:
       action: std.http url='openstack.org'
@@ -233,7 +232,7 @@ attributes:
    -> B1) for which the variable “my_var” has its own different version.
    *Optional*.
 
-.. code-block:: mistral
+::
 
     version: '2.0'
     wf:
@@ -286,14 +285,14 @@ with the given name.
 
 Example of a static sub-workflow name:
 
-.. code-block:: mistral
+::
 
     my_task:
       workflow: name_of_my_workflow
 
 Example of a dynamic sub-workflow name:
 
-.. code-block:: mistral
+::
 
   ---
   version: '2.0'
@@ -350,7 +349,7 @@ configured policies.
 
 YAML example
 
-.. code-block:: mistral
+::
 
     my_task:
       action: my_action
@@ -422,7 +421,7 @@ Defines a pattern how task should be repeated in case of an error.
 
 Retry policy can also be configured on a single line as:
 
-.. code-block:: mistral
+::
 
     task1:
       action: my_action
@@ -450,7 +449,7 @@ parameters in two ways:
 
 Full syntax:
 
-.. code-block:: mistral
+::
 
     my_task:
       action: std.http
@@ -460,14 +459,14 @@ Full syntax:
 
 Simplified syntax:
 
-.. code-block:: mistral
+::
 
     my_task:
       action: std.http url="http://mywebsite.org" method="GET"
 
 Syntax with dynamic input parameter map:
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -488,7 +487,7 @@ The same rules apply to tasks associated with workflows.
 
 Full syntax:
 
-.. code-block:: mistral
+::
 
     my_task:
       workflow: some_nested_workflow
@@ -498,14 +497,14 @@ Full syntax:
 
 Simplified syntax:
 
-.. code-block:: mistral
+::
 
     my_task:
       workflow: some_nested_workflow param1='val1' param2='val2'
 
 Syntax with dynamic input parameter map:
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -540,7 +539,7 @@ Figure 1. Mistral Direct Workflow.
 YAML example
 ''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -591,7 +590,7 @@ You can define the task transitions in two ways:
 The first is just a list of tasks. You can find the example of workflow
 above. The second way is:
 
-.. code-block:: mistral
+::
 
     *transition*:
       publish:
@@ -626,7 +625,7 @@ tasks which will run after the current task finished.
 Example of writing and reading global variables
 '''''''''''''''''''''''''''''''''''''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -694,7 +693,7 @@ define some clean up actions.
 Having that said, it's important to know the order in which these clauses
 are processed by Mistral.
 
-.. code-block:: mistral
+::
 
     taskA:
      action: my_action
@@ -727,7 +726,7 @@ data produced by upstream tasks and as workflow input. So in the example above
 task 'create_vm' could also have a YAQL expression on transition to task
 'send_success_email' as follows:
 
-.. code-block:: mistral
+::
 
     create_vm:
      ...
@@ -757,7 +756,7 @@ later, but workflows that have been ended with ``pause`` may be.
 YAML example
 ''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -775,7 +774,7 @@ In this example we have a short workflow with one task that creates a server
 in Nova. The task publishes the ID of the virtual machine, but if this value
 is empty then it will fail the workflow.
 
-.. code-block:: mistral
+::
 
     on-complete:
       - taskA
@@ -795,7 +794,7 @@ continue when its state is set to RUNNING by using the update Rest API call.
 
 YAML example:
 
-.. code-block:: mistral
+::
 
     on-complete:
       - taskA
@@ -812,7 +811,7 @@ Given the order in which Mistral processes 'on-success' (or 'on-error') and
 'on-complete' clauses it's important to understand what will happen if both
 clauses have engine commands listed in them.
 
-.. code-block:: mistral
+::
 
     taskA:
      action: my_action
@@ -871,7 +870,7 @@ Fork
 There are situations when we need to be able to run more than one task after
 some task has completed.
 
-.. code-block:: mistral
+::
 
     create_vm:
       ...
@@ -890,7 +889,7 @@ aggregate their data.
 
 Full Join (join: all)
 
-.. code-block:: mistral
+::
 
     register_vm_in_load_balancer:
       ...
@@ -919,7 +918,7 @@ and "on-complete" clauses regardless of guard expressions.
 
 Partial Join (join: 2)
 
-.. code-block:: mistral
+::
 
     register_vm_in_load_balancer:
       ...
@@ -975,7 +974,7 @@ be a part of this workflow because there's no route in the directed graph from
 YAML example
 ''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -1022,7 +1021,7 @@ Processing collections
 YAML example
 ''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -1059,13 +1058,13 @@ provide in "vm_names" input parameter. E.g., if we specify
 vm_names=["vm1", "vm2"] then it'll create servers with these names based on
 same image and flavor. It is possible because of using "with-items" keyword
 that makes an action or a workflow associated with a task run multiple times.
-Value of "with-items" task property contains an expression in the form: 'my_var' in
-<% YAQL_expression %>. Similar for Jinja2 expression: 'my_var' in
+Value of "with-items" task property contains an expression in the form:
+'my_var' in <% YAQL_expression %>. Similar for Jinja2 expression: 'my_var' in
 {{ Jinja2_expression }}.
 
 The most common form is:
 
-.. code-block:: mistral
+::
 
     with-items:
       - var1 in <% YAQL_expression_1 %> # or: var1 in <% Jinja2_expression_1 %>
@@ -1109,7 +1108,7 @@ std.fail
 
 This action always fails. It can be used to manually fail a workflow task..
 
-.. code-block:: mistral
+::
 
   wf:
     tasks:
@@ -1119,7 +1118,7 @@ This action always fails. It can be used to manually fail a workflow task..
 The action can be passed the `error_data` parameter. This data will be used as
 the action return value.
 
-.. code-block:: mistral
+::
 
   wf:
     tasks:
@@ -1158,7 +1157,7 @@ Input parameters:
 
 Example:
 
-.. code-block:: mistral
+::
 
     http_task:
       action: std.http url='google.com'
@@ -1204,7 +1203,7 @@ Sends an email message via SMTP protocol.
 
 Example:
 
-.. code-block:: mistral
+::
 
     send_email_task:
       action: std.email
@@ -1287,7 +1286,7 @@ Other available implementations:
 
 Example with *context*:
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -1316,7 +1315,7 @@ Example with *context*:
 
 Another example for getting the current date and time:
 
-.. code-block:: mistral
+::
 
       ---
       version: '2.0'
@@ -1348,7 +1347,7 @@ pattern.
 YAML example
 ''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -1372,7 +1371,7 @@ YAML example
 Once this action is uploaded to Mistral any workflow will be able to use it as
 follows:
 
-.. code-block:: mistral
+::
 
     my_workflow:
       tasks:
@@ -1430,7 +1429,7 @@ independent objects but with slightly different names.
 YAML example
 ''''''''''''
 
-.. code-block:: mistral
+::
 
     ---
     version: '2.0'
@@ -1562,7 +1561,7 @@ Example:
 
 Workflow definition:
 
-.. code-block:: mistral
+::
 
   ---
   version: "v2.0"
@@ -1713,7 +1712,7 @@ Example:
 
 Workflow definition:
 
-.. code-block:: mistral
+::
 
   ---
   version: "v2.0"
