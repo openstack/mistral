@@ -656,9 +656,9 @@ class DefaultEngineTest(base.DbTestCase):
 
         task_action_ex = action_execs[0]
 
-        self.engine.report_running_actions([])
-        self.engine.report_running_actions([None, None])
-        self.engine.report_running_actions([None, task_action_ex.id])
+        self.engine.process_action_heartbeats([])
+        self.engine.process_action_heartbeats([None, None])
+        self.engine.process_action_heartbeats([None, task_action_ex.id])
 
         task_action_ex = db_api.get_action_execution(task_action_ex.id)
 
