@@ -89,7 +89,7 @@ def _loop():
         except Exception:
             LOG.exception(
                 'Action execution checker iteration failed'
-                ' due to unexpected exception.'
+                ' due to an unexpected exception.'
             )
 
             # For some mysterious reason (probably eventlet related)
