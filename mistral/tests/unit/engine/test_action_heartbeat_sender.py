@@ -10,7 +10,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import cachetools
 import mock
 
 from oslo_config import cfg
@@ -27,37 +26,77 @@ from mistral.workflow import states
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-class ActionHeartbeatTest(base.EngineTestCase):
+class ActionHeartbeatSenderBaseTest(base.EngineTestCase):
     def setUp(self):
+        # We need to set all required configuration values before starting
+        # an engine and an executor.
+        self.get_configuration()
+
+        super(ActionHeartbeatSenderBaseTest, self).setUp()
+
+    def get_configuration(self):
         # We need to override configuration values before starting engine.
+        # Subclasses can override this method and add/change their own
+        # config options.
         self.override_config('check_interval', 1, 'action_heartbeat')
         self.override_config('max_missed_heartbeats', 1, 'action_heartbeat')
         self.override_config('first_heartbeat_timeout', 0, 'action_heartbeat')
 
-        super(ActionHeartbeatTest, self).setUp()
-
-    # Make sure actions are not sent to an executor.
-    @mock.patch.object(
-        rpc_clients.ExecutorClient,
-        'run_action',
-        mock.MagicMock()
-    )
-    def test_fail_action_with_missing_heartbeats(self):
+    def _do_long_action_success_test(self):
         wf_text = """---
         version: '2.0'
 
         wf:
           tasks:
             task1:
-              action: std.noop
+              action: std.sleep seconds=4
         """
 
         wf_service.create_workflows(wf_text)
 
         wf_ex = self.engine.start_workflow('wf')
 
-        # The workflow should fail because the action of "task1" should be
-        # failed automatically by the action execution heartbeat checker.
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            t_execs = wf_ex.task_executions
+
+            t_ex = self._assert_single_item(
+                t_execs,
+                name='task1',
+                state=states.SUCCESS
+            )
+
+            a_execs = db_api.get_action_executions(task_execution_id=t_ex.id)
+
+            self._assert_single_item(
+                a_execs,
+                name='std.sleep',
+                state=states.SUCCESS
+            )
+
+    # Disable the ability to send action heartbeats.
+    @mock.patch.object(
+        rpc_clients.EngineClient,
+        'process_action_heartbeats',
+        mock.MagicMock()
+    )
+    def _do_long_action_failure_test_with_disabled_sender(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.sleep seconds=4
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf')
+
         self.await_workflow_error(wf_ex.id)
 
         with db_api.transaction():
@@ -75,54 +114,35 @@ class ActionHeartbeatTest(base.EngineTestCase):
 
             self._assert_single_item(
                 a_execs,
-                name='std.noop',
+                name='std.sleep',
                 state=states.ERROR
             )
 
-    # Make sure actions are not sent to an executor.
-    @mock.patch.object(
-        rpc_clients.ExecutorClient,
-        'run_action',
-        mock.MagicMock()
-    )
-    @mock.patch.object(
-        cachetools.LRUCache,
-        '__getitem__',
-        mock.MagicMock(side_effect=KeyError)
-    )
-    def test_fail_action_with_missing_heartbeats_wf_spec_not_cached(self):
-        wf_text = """---
-        version: '2.0'
 
-        wf:
-          tasks:
-            task1:
-              action: std.noop
-        """
+class ActionHeartbeatSenderLocalExecutorTest(ActionHeartbeatSenderBaseTest):
+    def get_configuration(self):
+        super(ActionHeartbeatSenderLocalExecutorTest, self).get_configuration()
 
-        wf_service.create_workflows(wf_text)
+        self.override_config('type', 'local', 'executor')
 
-        wf_ex = self.engine.start_workflow('wf')
+    def test_long_action_success(self):
+        self._do_long_action_success_test()
 
-        # The workflow should fail because the action of "task1" should be
-        # failed automatically by the action execution heartbeat checker.
-        self.await_workflow_error(wf_ex.id)
+    def test_long_action_failure_with_disabled_sender(self):
+        self._do_long_action_failure_test_with_disabled_sender()
 
-        with db_api.transaction():
-            wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
-            t_execs = wf_ex.task_executions
+class ActionHeartbeatSenderRemoteExecutorTest(ActionHeartbeatSenderBaseTest):
+    def get_configuration(self):
+        super(
+            ActionHeartbeatSenderRemoteExecutorTest,
+            self
+        ).get_configuration()
 
-            t_ex = self._assert_single_item(
-                t_execs,
-                name='task1',
-                state=states.ERROR
-            )
+        self.override_config('type', 'remote', 'executor')
 
-            a_execs = db_api.get_action_executions(task_execution_id=t_ex.id)
+    def test_long_action_success(self):
+        self._do_long_action_success_test()
 
-            self._assert_single_item(
-                a_execs,
-                name='std.noop',
-                state=states.ERROR
-            )
+    def test_long_action_failure_with_disabled_sender(self):
+        self._do_long_action_failure_test_with_disabled_sender()
