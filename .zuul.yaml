@@ -3,6 +3,8 @@
     parent: devstack
     timeout: 7800
     vars:
+      devstack_localrc:
+        USE_PYTHON3: true
       devstack_plugins:
         mistral: https://opendev.org/openstack/mistral
         heat: https://opendev.org/openstack/heat
@@ -34,6 +36,8 @@
       devstack_plugins:
         rally-openstack: https://opendev.org/openstack/rally-openstack
       rally_task: rally-jobs/task-mistral.yaml
+      devstack_localrc:
+        USE_PYTHON3: true
     required-projects:
       - openstack/rally-openstack
 
@@ -90,7 +94,6 @@
 
 - project:
     templates:
-      - openstack-python-jobs
       - openstack-python3-ussuri-jobs
       - publish-openstack-docs-pti
       - check-requirements
@@ -110,9 +113,6 @@
             required-projects:
               - openstack/mistral-lib
         - openstack-tox-py37:
-            required-projects:
-              - openstack/mistral-lib
-        - openstack-tox-py27:
             required-projects:
               - openstack/mistral-lib
         - mistral-devstack

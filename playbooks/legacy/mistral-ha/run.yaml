@@ -48,6 +48,7 @@
           # mistral with "check experimental" and trigger the gate). After
           # it's ready it'll be better to create a special builder in this
           # file.
+          export DEVSTACK_GATE_USE_PYTHON3=True
           ha_gate/install.sh
           ha_gate/run_tests.sh
         chdir: '{{ ansible_user_dir }}/workspace'
