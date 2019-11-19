@@ -123,6 +123,28 @@ class _MistralModelBase(oslo_models.ModelBase, oslo_models.TimestampMixin):
     def __repr__(self):
         return '%s %s' % (type(self).__name__, self.to_dict().__repr__())
 
+    @classmethod
+    def _get_nullable_column_names(cls):
+        return [c.name for c in cls.__table__.columns if c.nullable]
+
+    @classmethod
+    def check_allowed_none_values(cls, column_names):
+        """Checks if the given columns can be assigned with None value.
+
+        :param column_names: The names of the columns to check.
+        """
+        all_columns = cls.__table__.columns.keys()
+        nullable_columns = cls._get_nullable_column_names()
+
+        for col in column_names:
+            if col not in all_columns:
+                raise ValueError("'{}' is not a valid field name.".format(col))
+
+            if col not in nullable_columns:
+                raise ValueError(
+                    "The field '{}' can't hold None value.".format(col)
+                )
+
 
 MistralModelBase = declarative.declarative_base(cls=_MistralModelBase)
 

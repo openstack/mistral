@@ -15,16 +15,18 @@
 import six
 
 
-def create_filters_from_request_params(**params):
+def create_filters_from_request_params(none_values=None, **params):
     """Create filters from REST request parameters.
 
+    :param none_values: field names, where the value is required to be None.
     :param req_params: REST request parameters.
     :return: filters dictionary.
     """
+    none_values = none_values or []
     filters = {}
 
     for column, data in params.items():
-        if data is not None:
+        if (data is None and column in none_values) or data is not None:
             if isinstance(data, six.string_types):
                 f_type, value = _extract_filter_type_and_value(data)
 
