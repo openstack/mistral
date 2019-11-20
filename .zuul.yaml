@@ -101,10 +101,13 @@
         - openstack-tox-py27:
             required-projects:
               - openstack/mistral-lib
-        - mistral-devstack
+        - mistral-devstack:
+            voting: false
         - mistral-devstack-non-apache:
+            voting: false
             branches: ^(?!stable/(newton|ocata)).*$
         - mistral-devstack-kombu:
+            voting: false
             branches: ^(?!stable/newton).*$
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
@@ -124,12 +127,9 @@
     gate:
       queue: mistral
       jobs:
-        - mistral-devstack
-        - mistral-devstack-non-apache
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
         - tripleo-ci-centos-7-scenario003-multinode-oooq-container
-        - mistral-devstack-kombu
         - openstack-tox-lower-constraints
     post:
       jobs:
