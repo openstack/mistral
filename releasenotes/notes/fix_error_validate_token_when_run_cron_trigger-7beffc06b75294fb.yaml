@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fix error validate token when run cron trigger. The problem is that a trust
+    client can't do validate token when run cron trigger.
