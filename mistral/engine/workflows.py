@@ -1,6 +1,7 @@
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -356,6 +357,7 @@ class Workflow(object):
             'id': wf_ex_id,
             'name': wf_def.name,
             'description': desc,
+            'tags': wf_def.tags,
             'workflow_name': wf_def.name,
             'workflow_namespace': wf_def.namespace,
             'workflow_id': wf_def.id,

@@ -3,6 +3,7 @@
 # Copyright 2015 Huawei Technologies Co., Ltd.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -331,15 +332,18 @@ class ExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, types.uuid, wtypes.text, types.jsontype,
-                         types.uuid, types.uuid, STATE_TYPES, wtypes.text,
+                         wtypes.text, types.uuid, wtypes.text,
+                         types.uniquelist, types.jsontype, types.uuid,
+                         types.uuid, STATE_TYPES, wtypes.text,
                          types.jsontype, types.jsontype, wtypes.text,
-                         wtypes.text, bool, types.uuid, bool, types.list)
-    def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', workflow_name=None,
-                workflow_id=None, description=None, params=None,
-                task_execution_id=None, root_execution_id=None, state=None,
-                state_info=None, input=None, output=None, created_at=None,
+                         wtypes.text, bool, types.uuid,
+                         bool, types.list)
+    def get_all(self, marker=None, limit=None,
+                sort_keys='created_at', sort_dirs='asc', fields='',
+                workflow_name=None, workflow_id=None, description=None,
+                tags=None, params=None, task_execution_id=None,
+                root_execution_id=None, state=None, state_info=None,
+                input=None, output=None, created_at=None,
                 updated_at=None, include_output=None, project_id=None,
                 all_projects=False, nulls=''):
 
@@ -365,6 +369,7 @@ class ExecutionsController(rest.RestController):
                             workflow ID.
         :param description: Optional. Keep only resources with a specific
                             description.
+        :param tags: Optional. Keep only resources containing specific tags.
         :param params: Optional. Keep only resources with specific parameters.
         :param task_execution_id: Optional. Keep only resources with a
                                   specific task execution ID.
@@ -400,6 +405,7 @@ class ExecutionsController(rest.RestController):
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
+            tags=tags,
             params=params,
             task_execution_id=task_execution_id,
             state=state,

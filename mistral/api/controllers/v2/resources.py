@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -271,6 +272,9 @@ class Execution(resource.Resource):
     description = wtypes.text
     "description of workflow execution"
 
+    tags = [wtypes.text]
+    "tags of workflow execution"
+
     params = types.jsontype
     """'params' define workflow type specific parameters. Specific parameters
      are:
@@ -324,6 +328,7 @@ class Execution(resource.Resource):
             workflow_namespace='some_namespace',
             workflow_id='123e4567-e89b-12d3-a456-426655441111',
             description='this is the first execution.',
+            tags=['simple', 'amazing'],
             project_id='40a908dbddfe48ad80a87fb30fa70a03',
             state='SUCCESS',
             input={},
@@ -389,6 +394,8 @@ class Task(resource.Resource):
     workflow_id = wtypes.text
     workflow_execution_id = wtypes.text
 
+    tags = [wtypes.text]
+
     state = wtypes.text
     """state can take one of the following values:
      IDLE, RUNNING, SUCCESS, ERROR, DELAYED"""
@@ -423,6 +430,7 @@ class Task(resource.Resource):
             workflow_name='flow',
             workflow_id='123e4567-e89b-12d3-a456-426655441111',
             workflow_execution_id='123e4567-e89b-12d3-a456-426655440000',
+            tags=['long', 'security'],
             name='task',
             state=states.SUCCESS,
             project_id='40a908dbddfe48ad80a87fb30fa70a03',
