@@ -50,7 +50,7 @@ def remove_action(action_ex_id):
 
 
 def send_action_heartbeats():
-    LOG.debug('Running heartbeat reporter...')
+    LOG.debug('Running heartbeat sender...')
 
     global _running_actions
 

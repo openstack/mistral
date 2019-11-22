@@ -88,7 +88,7 @@ def _loop():
             handle_expired_actions()
         except Exception:
             LOG.exception(
-                'Action execution checker iteration failed'
+                'Action heartbeat checker iteration failed'
                 ' due to an unexpected exception.'
             )
 
@@ -109,14 +109,14 @@ def start():
     enabled = interval and max_missed
 
     if not enabled:
-        LOG.info("Action heartbeat reporting is disabled.")
+        LOG.info("Action heartbeats are disabled.")
 
         return
 
     wait_time = interval * max_missed
 
     LOG.debug(
-        "First run of action execution checker, wait before "
+        "First run of action heartbeat checker, wait before "
         "checking to make sure executors have time to send "
         "heartbeats. ({} seconds)".format(wait_time)
     )
