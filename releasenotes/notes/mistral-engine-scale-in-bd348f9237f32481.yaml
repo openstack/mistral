@@ -1,0 +1,15 @@
+features:
+  - |
+    Mistral engine now supports graceful scale-in. That is, if a number of
+    engines in a cluster needs to be reduced manually it is now possible to
+    do w/o breaking currently running workflows. In order to shutdown a
+    Mistral engine, SIGTERM signal needs to be sent to the corresponding
+    process. In Unix operatating systems it's a matter of running the command
+    "kill <engine PID>" in any shell. When this signal is caught by the
+    process, it has a certain amount of time configured by the
+    'graceful_shutdown_timeout' property to complete currently running
+    database transactions and process all buffered RPC messages that have
+    already been polled from the queue. After this time elapses, the process
+    will be forced to exit.
+    By default, the value of the 'graceful_shutdown_timeout' property is
+    60 (seconds).
