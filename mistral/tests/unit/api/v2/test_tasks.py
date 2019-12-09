@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -109,6 +110,7 @@ TASK = {
     'name': 'task',
     'workflow_name': 'flow',
     'workflow_id': '123e4567-e89b-12d3-a456-426655441111',
+    'tags': ['a', 'b'],
     'state': 'RUNNING',
     'workflow_execution_id': WF_EX.id,
     'created_at': '1970-01-01 00:00:00',

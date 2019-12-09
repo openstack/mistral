@@ -1,5 +1,6 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -114,14 +115,16 @@ class TaskExecutionsController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Executions, types.uuid, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, types.uuid, wtypes.text, types.jsontype,
-                         STATE_TYPES, wtypes.text, types.jsontype,
-                         types.jsontype, wtypes.text, wtypes.text)
+                         wtypes.text, types.uuid, wtypes.text,
+                         types.uniquelist, types.jsontype, STATE_TYPES,
+                         wtypes.text, types.jsontype, types.jsontype,
+                         wtypes.text, wtypes.text)
     def get_all(self, task_execution_id, marker=None, limit=None,
                 sort_keys='created_at', sort_dirs='asc', fields='',
                 workflow_name=None, workflow_id=None, description=None,
-                params=None, state=None, state_info=None, input=None,
-                output=None, created_at=None, updated_at=None):
+                tags=None, params=None, state=None,
+                state_info=None, input=None, output=None,
+                created_at=None, updated_at=None):
         """Return all executions that belong to the given task execution.
 
         :param task_execution_id: Task task execution ID.
@@ -145,6 +148,7 @@ class TaskExecutionsController(rest.RestController):
                             workflow ID.
         :param description: Optional. Keep only resources with a specific
                             description.
+        :param tags: Optional. Keep only resources containing specific tags.
         :param params: Optional. Keep only resources with specific parameters.
         :param state: Optional. Keep only resources with a specific state.
         :param state_info: Optional. Keep only resources with specific
@@ -163,6 +167,7 @@ class TaskExecutionsController(rest.RestController):
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
+            tags=tags,
             params=params,
             state=state,
             state_info=state_info,
@@ -213,14 +218,18 @@ class TasksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
-                         wtypes.text, types.uuid, types.uuid, STATE_TYPES,
-                         wtypes.text, wtypes.text, types.jsontype, bool,
-                         wtypes.text, wtypes.text, bool, types.jsontype)
+                         wtypes.text, types.uuid,
+                         types.uuid, types.uniquelist, STATE_TYPES,
+                         wtypes.text, wtypes.text, types.jsontype,
+                         bool, wtypes.text, wtypes.text,
+                         bool, types.jsontype)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None, workflow_name=None,
-                workflow_id=None, workflow_execution_id=None, state=None,
-                state_info=None, result=None, published=None, processed=None,
-                created_at=None, updated_at=None, reset=None, env=None):
+                sort_dirs='asc', fields='', name=None,
+                workflow_name=None, workflow_id=None,
+                workflow_execution_id=None, tags=None, state=None,
+                state_info=None, result=None, published=None,
+                processed=None, created_at=None, updated_at=None,
+                reset=None, env=None):
         """Return all tasks.
 
         Where project_id is the same as the requester or
@@ -269,6 +278,7 @@ class TasksController(rest.RestController):
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
+            tags=tags,
             state=state,
             state_info=state_info,
             updated_at=updated_at,
@@ -373,13 +383,15 @@ class ExecutionTasksController(rest.RestController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Tasks, types.uuid, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
-                         wtypes.text, wtypes.text, types.uuid, STATE_TYPES,
-                         wtypes.text, wtypes.text, types.jsontype, bool,
+                         wtypes.text, wtypes.text, types.uuid,
+                         types.uniquelist, STATE_TYPES, wtypes.text,
+                         wtypes.text, types.jsontype, bool,
                          wtypes.text, wtypes.text, bool, types.jsontype)
     def get_all(self, workflow_execution_id, marker=None, limit=None,
-                sort_keys='created_at', sort_dirs='asc', fields='', name=None,
-                workflow_name=None, workflow_id=None, state=None,
-                state_info=None, result=None, published=None, processed=None,
+                sort_keys='created_at', sort_dirs='asc', fields='',
+                name=None, workflow_name=None, workflow_id=None,
+                tags=None, state=None, state_info=None,
+                result=None, published=None, processed=None,
                 created_at=None, updated_at=None, reset=None, env=None):
         """Return all tasks within the execution.
 
@@ -407,6 +419,7 @@ class ExecutionTasksController(rest.RestController):
                             workflow ID.
         :param workflow_execution_id: Optional. Keep only resources with a
                                       specific workflow execution ID.
+        :param tags: Optional. Keep only resources containing specific tags.
         :param state: Optional. Keep only resources with a specific state.
         :param state_info: Optional. Keep only resources with specific
                            state information.
@@ -430,6 +443,7 @@ class ExecutionTasksController(rest.RestController):
             created_at=created_at,
             workflow_name=workflow_name,
             workflow_id=workflow_id,
+            tags=tags,
             state=state,
             state_info=state_info,
             updated_at=updated_at,

@@ -1,6 +1,7 @@
 # Copyright 2016 - Nokia Networks.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -403,6 +404,7 @@ class Task(object):
         task_id = utils.generate_unicode_uuid()
         task_name = self.task_spec.get_name()
         task_type = self.task_spec.get_type()
+        task_tags = self.task_spec.get_tags()
 
         values = {
             'id': task_id,
@@ -411,6 +413,7 @@ class Task(object):
             'workflow_name': self.wf_ex.workflow_name,
             'workflow_namespace': self.wf_ex.workflow_namespace,
             'workflow_id': self.wf_ex.workflow_id,
+            'tags': task_tags,
             'state': state,
             'state_info': state_info,
             'spec': self.task_spec.to_dict(),

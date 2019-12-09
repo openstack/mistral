@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2019 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -110,6 +111,7 @@ class TaskSpec(base.BaseSpec):
         self._description = data.get('description')
         self._action = data.get('action')
         self._workflow = data.get('workflow')
+        self._tags = data.get('tags', [])
         self._input = data.get('input', {})
         self._with_items = self._transform_with_items()
         self._publish = data.get('publish', {})
@@ -222,6 +224,9 @@ class TaskSpec(base.BaseSpec):
 
     def get_workflow_name(self):
         return self._workflow
+
+    def get_tags(self):
+        return self._tags
 
     def get_input(self):
         return self._input
