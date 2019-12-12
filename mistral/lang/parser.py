@@ -15,7 +15,6 @@
 
 import cachetools
 import threading
-import yaml
 from yaml import error
 
 import six
@@ -27,6 +26,7 @@ from mistral.lang.v2 import actions as actions_v2
 from mistral.lang.v2 import tasks as tasks_v2
 from mistral.lang.v2 import workbook as wb_v2
 from mistral.lang.v2 import workflows as wf_v2
+from mistral.utils import safe_yaml
 
 V2_0 = '2.0'
 
@@ -50,7 +50,7 @@ def parse_yaml(text):
     """
 
     try:
-        return yaml.safe_load(text) or {}
+        return safe_yaml.load(text) or {}
     except error.YAMLError as e:
         raise exc.DSLParsingException(
             "Definition could not be parsed: %s\n" % e

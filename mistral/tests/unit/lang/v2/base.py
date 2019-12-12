@@ -14,12 +14,12 @@
 
 import copy
 
-import yaml
 
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.tests.unit import base
 from mistral import utils
+from mistral.utils import safe_yaml
 
 
 class WorkflowSpecValidationTestCase(base.BaseTest):
@@ -75,9 +75,10 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
             dsl_yaml = base.get_resource(self._resource_path + '/' + dsl_file)
 
             if changes:
-                dsl_dict = yaml.safe_load(dsl_yaml)
+                dsl_dict = safe_yaml.safe_load(dsl_yaml)
                 utils.merge_dicts(dsl_dict, changes)
-                dsl_yaml = yaml.safe_dump(dsl_dict, default_flow_style=False)
+                dsl_yaml = safe_yaml.safe_dump(dsl_dict,
+                                               default_flow_style=False)
         else:
             dsl_dict = copy.deepcopy(self._dsl_blank)
 
@@ -87,7 +88,7 @@ class WorkflowSpecValidationTestCase(base.BaseTest):
             if changes:
                 utils.merge_dicts(dsl_dict, changes)
 
-            dsl_yaml = yaml.safe_dump(dsl_dict, default_flow_style=False)
+            dsl_yaml = safe_yaml.safe_dump(dsl_dict, default_flow_style=False)
 
         if not expect_error:
             return self._spec_parser(dsl_yaml)
