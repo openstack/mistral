@@ -16,6 +16,7 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral import utils
+from mistral.utils import safe_yaml
 from mistral.workflow import states
 from oslo_log import log as logging
 
@@ -84,7 +85,17 @@ def create_workflows(definition, scope='private', is_system=False,
 
 def _append_all_workflows(definition, is_system, scope, namespace,
                           wf_list_spec, db_wfs):
-    for wf_spec in wf_list_spec.get_workflows():
+    wfs = wf_list_spec.get_workflows()
+
+    wfs_yaml = safe_yaml.load(definition) if len(wfs) != 1 else None
+
+    for wf_spec in wfs:
+        if len(wfs) != 1:
+            definition = _cut_wf_definition_from_all(
+                wfs_yaml,
+                wf_spec.get_name()
+            )
+
         db_wfs.append(
             _create_workflow(
                 wf_spec,
@@ -114,15 +125,25 @@ def update_workflows(definition, scope='private', identifier=None,
 
     db_wfs = []
 
+    wfs_yaml = safe_yaml.load(definition) if len(wfs) != 1 else None
+
     with db_api.transaction():
-        for wf_spec in wf_list_spec.get_workflows():
-            db_wfs.append(_update_workflow(
-                wf_spec,
-                definition,
-                scope,
-                namespace=namespace,
-                identifier=identifier
-            ))
+        for wf_spec in wfs:
+            if len(wfs) != 1:
+                definition = _cut_wf_definition_from_all(
+                    wfs_yaml,
+                    wf_spec.get_name()
+                )
+
+            db_wfs.append(
+                _update_workflow(
+                    wf_spec,
+                    definition,
+                    scope,
+                    namespace=namespace,
+                    identifier=identifier
+                )
+            )
 
     return db_wfs
 
@@ -171,3 +192,10 @@ def _update_workflow(wf_spec, definition, scope, identifier=None,
         identifier if identifier else values['name'],
         values
     )
+
+
+def _cut_wf_definition_from_all(wfs_yaml, wf_name):
+    return safe_yaml.dump({
+        'version': wfs_yaml['version'],
+        wf_name: wfs_yaml[wf_name]
+    })
