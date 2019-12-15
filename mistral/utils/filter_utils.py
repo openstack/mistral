@@ -1,4 +1,5 @@
 #    Copyright 2016 NEC Corporation.  All rights reserved.
+#    Copyright 2019 Nokia Software.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,6 +15,20 @@
 
 import six
 
+EQUALS = 'eq'
+NOT_EQUAL = 'neq'
+LESS_THAN = 'lt'
+LESS_THAN_EQUALS = 'lte'
+GREATER_THAN = 'gt'
+GREATER_THAN_EQUALS = 'gte'
+IN = 'in'
+NOT_IN = 'nin'
+HAS = 'has'
+
+ALL = (GREATER_THAN_EQUALS, GREATER_THAN,
+       LESS_THAN_EQUALS, HAS, NOT_EQUAL,
+       LESS_THAN, IN, EQUALS, NOT_IN)
+
 
 def create_filters_from_request_params(none_values=None, **params):
     """Create filters from REST request parameters.
@@ -28,7 +43,7 @@ def create_filters_from_request_params(none_values=None, **params):
     for column, data in params.items():
         if (data is None and column in none_values) or data is not None:
             if isinstance(data, six.string_types):
-                f_type, value = _extract_filter_type_and_value(data)
+                f_type, value = extract_filter_type_and_value(data)
 
                 create_or_update_filter(column, value, f_type, filters)
             else:
@@ -58,7 +73,7 @@ def create_or_update_filter(column, value, filter_type='eq', _filter=None):
     return _filter
 
 
-def _extract_filter_type_and_value(data):
+def extract_filter_type_and_value(data):
     """Extract filter type and its value from the data.
 
     :param data: REST parameter value from which filter type and
@@ -66,35 +81,20 @@ def _extract_filter_type_and_value(data):
                  'filter_type:value'.
     :return: filter type and value.
     """
-    if data.startswith("in:"):
-        value = list(six.text_type(data[3:]).split(","))
-        filter_type = 'in'
-    elif data.startswith("nin:"):
-        value = list(six.text_type(data[4:]).split(","))
-        filter_type = 'nin'
-    elif data.startswith("neq:"):
-        value = six.text_type(data[4:])
-        filter_type = 'neq'
-    elif data.startswith("gt:"):
-        value = six.text_type(data[3:])
-        filter_type = 'gt'
-    elif data.startswith("gte:"):
-        value = six.text_type(data[4:])
-        filter_type = 'gte'
-    elif data.startswith("lt:"):
-        value = six.text_type(data[3:])
-        filter_type = 'lt'
-    elif data.startswith("lte:"):
-        value = six.text_type(data[4:])
-        filter_type = 'lte'
-    elif data.startswith("eq:"):
-        value = six.text_type(data[3:])
-        filter_type = 'eq'
-    elif data.startswith("has:"):
-        value = six.text_type(data[4:])
-        filter_type = 'has'
+    if has_filters(data):
+        filter_type, value = data.split(':', 1)
+        value = six.text_type(value)
+        if data.startswith((IN, NOT_IN)):
+            value = list(value.split(","))
     else:
         value = data
-        filter_type = 'eq'
+        filter_type = EQUALS
 
     return filter_type, value
+
+
+def has_filters(value):
+    for filter_type in ALL:
+        if value.startswith(filter_type + ':'):
+            return True
+    return False

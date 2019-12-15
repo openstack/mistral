@@ -13,6 +13,7 @@
 #    limitations under the License.
 import json
 
+from mistral.utils import filter_utils
 from oslo_utils import uuidutils
 import six
 from wsme import types as wtypes
@@ -77,12 +78,13 @@ class UuidType(wtypes.UserType):
 
     @staticmethod
     def validate(value):
-        if not uuidutils.is_uuid_like(value):
+        _, data = filter_utils.extract_filter_type_and_value(value)
+        if not uuidutils.is_uuid_like(data):
             raise exc.InputException(
-                "Expected a uuid but received %s." % value
+                "Expected a uuid but received %s." % data
             )
 
-        return value
+        return data
 
     @staticmethod
     def frombasetype(value):
