@@ -23,7 +23,6 @@ from oslo_log import log as logging
 from oslo_service import threadgroup
 from oslo_utils import fnmatch
 import six
-import yaml
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
@@ -33,6 +32,7 @@ from mistral import expressions
 from mistral import messaging as mistral_messaging
 from mistral.rpc import clients as rpc
 from mistral.services import security
+from mistral.utils import safe_yaml
 
 
 LOG = logging.getLogger(__name__)
@@ -83,8 +83,8 @@ class NotificationsConverter(object):
                 config = cf.read()
 
             try:
-                definition_cfg = yaml.safe_load(config)
-            except yaml.YAMLError as err:
+                definition_cfg = safe_yaml.load(config)
+            except safe_yaml.YAMLError as err:
                 if hasattr(err, 'problem_mark'):
                     mark = err.problem_mark
                     errmsg = (
