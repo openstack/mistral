@@ -91,6 +91,9 @@ function configure_mistral {
     # Configure action execution deletion policy
     iniset $MISTRAL_CONF_FILE api allow_action_execution_deletion True
 
+    # Don't use the default 0.0.0.0 it's good only for ipv4
+    iniset $MISTRAL_CONF_FILE api host $(ipv6_unquote $MISTRAL_SERVICE_HOST)
+
     if [ "$LOG_COLOR" == "True" ] && [ "$SYSLOG" == "False" ]; then
         setup_colorized_logging $MISTRAL_CONF_FILE DEFAULT tenant user
     fi
