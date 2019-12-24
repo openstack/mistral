@@ -17,7 +17,6 @@ import six
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log
-from oslo_service import threadgroup
 import tenacity
 import tooz.coordination
 
@@ -40,7 +39,7 @@ class ServiceCoordinator(object):
 
     def __init__(self, my_id=None):
         self._coordinator = None
-        self._my_id = my_id or utils.get_process_identifier()
+        self._my_id = six.b(my_id or utils.get_process_identifier())
         self._started = False
 
     def start(self):
@@ -53,7 +52,7 @@ class ServiceCoordinator(object):
                     self._my_id
                 )
 
-                self._coordinator.start()
+                self._coordinator.start(start_heart=True)
                 self._started = True
 
                 LOG.info('Coordination backend started successfully.')
@@ -78,30 +77,13 @@ class ServiceCoordinator(object):
     def is_active(self):
         return self._coordinator and self._started
 
-    def heartbeat(self):
-        if not self.is_active():
-            # Re-connect.
-            self.start()
-
-        if not self.is_active():
-            LOG.debug("Coordination backend didn't start.")
-            return
-
-        try:
-            self._coordinator.heartbeat()
-        except tooz.coordination.ToozError as e:
-            LOG.exception('Error sending a heartbeat to coordination '
-                          'backend. %s', six.text_type(e))
-
-            self._started = False
-
     @tenacity.retry(stop=tenacity.stop_after_attempt(5))
     def join_group(self, group_id):
         if not self.is_active() or not group_id:
             return
 
         try:
-            join_req = self._coordinator.join_group(group_id)
+            join_req = self._coordinator.join_group(six.b(group_id))
             join_req.get()
 
             LOG.info(
@@ -114,7 +96,7 @@ class ServiceCoordinator(object):
         except tooz.coordination.MemberAlreadyExist:
             return
         except tooz.coordination.GroupNotCreated as e:
-            create_grp_req = self._coordinator.create_group(group_id)
+            create_grp_req = self._coordinator.create_group(six.b(group_id))
 
             try:
                 create_grp_req.get()
@@ -126,7 +108,7 @@ class ServiceCoordinator(object):
 
     def leave_group(self, group_id):
         if self.is_active():
-            self._coordinator.leave_group(group_id)
+            self._coordinator.leave_group(six.b(group_id))
 
             LOG.info(
                 'Left service group:%s, member:%s',
@@ -143,7 +125,7 @@ class ServiceCoordinator(object):
         if not self.is_active():
             return []
 
-        get_members_req = self._coordinator.get_members(group_id)
+        get_members_req = self._coordinator.get_members(six.b(group_id))
 
         try:
             members = get_members_req.get()
@@ -178,7 +160,6 @@ def get_service_coordinator(my_id=None):
 class Service(object):
     def __init__(self, group_type):
         self.group_type = group_type
-        self._tg = None
 
     @lockutils.synchronized('service_coordinator')
     def register_membership(self):
@@ -194,17 +175,8 @@ class Service(object):
         if service_coordinator.is_active():
             service_coordinator.join_group(self.group_type)
 
-            self._tg = threadgroup.ThreadGroup()
-
-            self._tg.add_timer(
-                cfg.CONF.coordination.heartbeat_interval,
-                service_coordinator.heartbeat
-            )
-
     def stop(self):
         service_coordinator = get_service_coordinator()
 
         if service_coordinator.is_active():
-            self._tg.stop()
-
             service_coordinator.stop()

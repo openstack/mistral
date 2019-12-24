@@ -35,7 +35,7 @@ class EventEngineServer(service_base.MistralService):
     """
 
     def __init__(self, event_engine):
-        super(EventEngineServer, self).__init__('event_engine_group')
+        super(EventEngineServer, self).__init__('event-engine_group')
 
         self._event_engine = event_engine
         self._rpc_server = None

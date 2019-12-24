@@ -105,6 +105,12 @@ function configure_mistral {
     if [ "$MISTRAL_USE_MOD_WSGI" == "True" ]; then
         _config_mistral_apache_wsgi
     fi
+
+    if [[ ! -z "$MISTRAL_COORDINATION_URL" ]]; then
+        iniset $MISTRAL_CONF_FILE coordination backend_url "$MISTRAL_COORDINATION_URL"
+    elif is_service_enabled etcd3; then
+        iniset $MISTRAL_CONF_FILE coordination backend_url "etcd3+http://${SERVICE_HOST}:$ETCD_PORT"
+    fi
 }
 
 

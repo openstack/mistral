@@ -13,6 +13,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import eventlet
+eventlet.monkey_patch()
+
 from oslo_config import cfg
 import oslo_middleware.cors as cors_middleware
 import oslo_middleware.http_proxy_to_wsgi as http_proxy_to_wsgi_middleware
