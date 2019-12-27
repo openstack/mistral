@@ -19,6 +19,7 @@ from mistral_lib.actions import context as lib_ctx
 from mistral_lib import serialization
 from oslo_config import cfg
 from oslo_context import context as oslo_context
+from oslo_log import log as logging
 import oslo_messaging as messaging
 from oslo_serialization import jsonutils
 from osprofiler import profiler
@@ -29,7 +30,11 @@ from mistral import auth
 from mistral import exceptions as exc
 from mistral_lib import utils
 
+
+LOG = logging.getLogger(__name__)
+
 CONF = cfg.CONF
+
 _CTX_THREAD_LOCAL_NAME = "MISTRAL_APP_CTX_THREAD_LOCAL"
 ALLOWED_WITHOUT_AUTH = ['/', '/v2/', '/workflowv2/', '/workflowv2/v2/']
 
@@ -248,6 +253,8 @@ class AuthHook(hooks.PecanHook):
             auth_handler.authenticate(state.request)
         except Exception as e:
             msg = "Failed to validate access token: %s" % str(e)
+
+            LOG.exception(msg)
 
             pecan.abort(
                 status_code=401,

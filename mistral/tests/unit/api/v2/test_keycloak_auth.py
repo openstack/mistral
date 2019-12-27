@@ -30,6 +30,18 @@ from mistral.services import periodic
 from mistral.tests.unit import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
+KEYCLOAK_JSON = {
+    "keys": [
+        {
+            "kid": "FJ86GcF3jTbNLOco4NvZkUCIUmfYCqoqtOQeMfbhNlE",
+            "kty": "RSA",
+            "alg": "RS256",
+            "use": "sig",
+            "n": "q1awrk7QK24Gmcy9Yb4dMbS-ZnO6",
+            "e": "AQAB"
+        }
+    ]
+}
 
 WF_DEFINITION = """
 ---
@@ -86,7 +98,6 @@ WWW_AUTHENTICATE_HEADER = {'WWW-Authenticate': 'unauthorized reason is ...'}
 
 
 class TestKeyCloakOIDCAuth(base.BaseTest):
-
     def setUp(self):
         super(TestKeyCloakOIDCAuth, self).setUp()
 
@@ -102,8 +113,14 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
         return req
 
-    @requests_mock.Mocker()
-    def test_header_parsing(self, req_mock):
+    @mock.patch("requests.get")
+    def test_header_parsing(self, mocked_get):
+        self.override_config(
+            'user_info_endpoint_url',
+            'https://127.0.0.1:9080',
+            'keycloak_oidc'
+        )
+
         token = {
             "iss": "http://localhost:8080/auth/realms/my_realm",
             "realm_access": {
@@ -111,8 +128,11 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
             }
         }
 
-        # Imitate successful response from KeyCloak with user claims.
-        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+        mocked_resp = mock.Mock()
+        mocked_resp.status_code = 200
+        mocked_resp.json.return_value = KEYCLOAK_JSON
+
+        mocked_get.return_value = mocked_resp
 
         req = self._build_request(token)
 
@@ -122,7 +142,7 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
         self.assertEqual("Confirmed", req.headers["X-Identity-Status"])
         self.assertEqual("my_realm", req.headers["X-Project-Id"])
         self.assertEqual("role1,role2", req.headers["X-Roles"])
-        self.assertEqual(1, req_mock.call_count)
+        self.assertEqual(1, mocked_get.call_count)
 
     def test_no_auth_token(self):
         req = webob.Request.blank("/")
@@ -133,12 +153,19 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
             req
         )
 
-    @requests_mock.Mocker()
-    def test_no_realm_roles(self, req_mock):
-        token = {"iss": "http://localhost:8080/auth/realms/my_realm"}
+    @mock.patch("requests.get")
+    def test_no_realm_roles(self, mocked_get):
+        token = {
+            "aud": "openstack",
+            "iss": "http://localhost:8080/auth/realms/my_realm",
+        }
 
-        # Imitate successful response from KeyCloak with user claims.
-        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+        mocked_resp = mock.Mock()
+
+        mocked_resp.status_code = 200
+        mocked_resp.json.return_value = KEYCLOAK_JSON
+
+        mocked_get.return_value = mocked_resp
 
         req = self._build_request(token)
 
@@ -160,13 +187,20 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
 
     @requests_mock.Mocker()
     def test_server_unauthorized(self, req_mock):
+        self.override_config(
+            'user_info_endpoint_url',
+            'https://127.0.0.1:9080',
+            'keycloak_oidc'
+        )
+
         token = {
+            "aud": "openstack",
             "iss": "http://localhost:8080/auth/realms/my_realm",
         }
 
         # Imitate failure response from KeyCloak.
         req_mock.get(
-            USER_INFO_ENDPOINT,
+            'https://127.0.0.1:9080',
             status_code=401,
             reason='Access token is invalid',
             headers=WWW_AUTHENTICATE_HEADER
@@ -186,15 +220,20 @@ class TestKeyCloakOIDCAuth(base.BaseTest):
                     'unauthorized reason is ...',
                     e.response.headers.get('WWW-Authenticate')
                 )
-
             else:
                 raise Exception("Test is broken")
 
-    @requests_mock.Mocker()
-    def test_connection_error(self, req_mock):
-        token = {"iss": "http://localhost:8080/auth/realms/my_realm"}
+    @mock.patch("requests.get")
+    def test_connection_error(self, mocked_get):
+        token = {
+            "aud": "openstack",
+            "iss": "http://localhost:8080/auth/realms/my_realm",
+            "realm_access": {
+                "roles": ["role1", "role2"]
+            }
+        }
 
-        req_mock.get(USER_INFO_ENDPOINT, exc=requests.ConnectionError)
+        mocked_get.side_effect = requests.ConnectionError
 
         req = self._build_request(token)
 
@@ -235,11 +274,15 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
 
         self.policy = self.useFixture(policy_fixtures.PolicyFixture())
 
-    @requests_mock.Mocker()
+    @mock.patch("requests.get")
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
-    def test_get_workflow_success_auth(self, req_mock):
-        # Imitate successful response from KeyCloak with user claims.
-        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+    def test_get_workflow_success_auth(self, mocked_get):
+        mocked_resp = mock.Mock()
+
+        mocked_resp.status_code = 200
+        mocked_resp.json.return_value = KEYCLOAK_JSON
+
+        mocked_get.return_value = mocked_resp
 
         token = {
             "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
@@ -258,18 +301,12 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
 
     @mock.patch("requests.get")
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
-    def test_get_workflow_invalid_token_format(self, req_mock):
-        # Imitate successful response from KeyCloak with user claims.
-        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
-
-        token = {
-            "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
-            "realm_access": {
-                "roles": ["role1", "role2"]
-            }
-        }
+    def test_get_workflow_invalid_token_format(self, mocked_get):
+        token = 'WRONG_FORMAT_TOKEN'
 
         headers = {'X-Auth-Token': str(token)}
+
+        # We don't mock jwt.decode so the test must fail.
 
         resp = self.app.get(
             '/v2/workflows/123',
@@ -285,18 +322,18 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
             resp.text
         )
 
-    @requests_mock.Mocker()
+    @mock.patch("requests.get")
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
-    def test_get_workflow_failed_auth(self, req_mock):
-        # Imitate failure response from KeyCloak.
-        req_mock.get(
-            USER_INFO_ENDPOINT,
-            status_code=401,
-            reason='Access token is invalid'
-        )
+    def test_get_workflow_failed_auth(self, mocked_get):
+        mocked_resp = mock.Mock()
 
+        mocked_resp.status_code = 200
+        mocked_resp.json.return_value = KEYCLOAK_JSON
+
+        mocked_get.return_value = mocked_resp
+
+        # A token without an issuer (iss).
         token = {
-            "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
             "realm_access": {
                 "roles": ["role1", "role2"]
             }
@@ -313,12 +350,11 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
 
         self.assertEqual(401, resp.status_code)
         self.assertEqual('401 Unauthorized', resp.status)
-        self.assertIn('Failed to validate access token', resp.text)
-        self.assertIn('Access token is invalid', resp.text)
+        self.assertIn("Failed to validate access token: 'iss'", resp.text)
 
 
 class TestKeyCloakOIDCAuthApp(base.DbTestCase):
-    """Test that Keycloak auth params were successfully passed to Context"""
+    """Test that Keycloak auth params get passed to the security context."""
 
     def setUp(self):
         super(TestKeyCloakOIDCAuthApp, self).setUp()
@@ -339,10 +375,15 @@ class TestKeyCloakOIDCAuthApp(base.DbTestCase):
 
         self.policy = self.useFixture(policy_fixtures.PolicyFixture())
 
-    @requests_mock.Mocker()
+    @mock.patch("requests.get")
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
-    def test_params_transition(self, req_mock):
-        req_mock.get(USER_INFO_ENDPOINT, json=USER_CLAIMS)
+    def test_params_transition(self, mocked_get):
+        mocked_resp = mock.Mock()
+
+        mocked_resp.status_code = 200
+        mocked_resp.json.return_value = KEYCLOAK_JSON
+
+        mocked_get.return_value = mocked_resp
 
         token = {
             "iss": "http://localhost:8080/auth/realms/%s" % REALM_NAME,
@@ -351,22 +392,22 @@ class TestKeyCloakOIDCAuthApp(base.DbTestCase):
             }
         }
 
-        headers = {
-            'X-Auth-Token': str(token)
-        }
+        headers = {'X-Auth-Token': str(token)}
 
         with mock.patch("jwt.decode", return_value=token):
             with mock.patch("mistral.context.set_ctx") as mocked_set_cxt:
                 self.app.get('/v2/workflows/123', headers=headers)
+
                 calls = mocked_set_cxt.call_args_list
+
                 self.assertEqual(2, len(calls))
 
-                # First positional argument of the first call ('before')
+                # First positional argument of the first call ('before').
                 ctx = calls[0][0][0]
 
                 self.assertIsInstance(ctx, context.MistralContext)
                 self.assertEqual('my_realm', ctx.project_id)
                 self.assertEqual(["role1", "role2"], ctx.roles)
 
-                # Second call of set_ctx ('after'), where we reset the context
+                # Second call of set_ctx ('after'), where we reset the context.
                 self.assertIsNone(calls[1][0][0])
