@@ -116,6 +116,8 @@
             required-projects:
               - openstack/mistral-lib
         - mistral-devstack
+        - mistral-devstack-tempest-ipv6-only
+        - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
         - mistral-devstack-kombu
         - mistral-tox-unit-mysql
@@ -135,6 +137,8 @@
       queue: mistral
       jobs:
         - mistral-devstack
+        - mistral-devstack-tempest-ipv6-only
+        - mistral-devstack-non-apache-tempest-ipv6-only
         - mistral-devstack-non-apache
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
