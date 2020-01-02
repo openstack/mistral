@@ -237,7 +237,7 @@ class HTTPAction(actions.Action):
         # Represent important resp data as a dictionary.
         try:
             content = resp.json(encoding=resp.encoding)
-        except Exception as e:
+        except Exception:
             LOG.debug("HTTP action response is not json.")
             content = resp.content
             if content and resp.encoding not in (None, 'utf-8'):

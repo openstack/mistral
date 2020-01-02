@@ -461,13 +461,13 @@ class Task(object):
     def save_started_time(self, value='default'):
         if not self.task_ex:
             return
-        time = value if value is not 'default' else utils.utc_now_sec()
+        time = value if value != 'default' else utils.utc_now_sec()
         self.task_ex.started_at = time
 
     def save_finished_time(self, value='default'):
         if not self.task_ex:
             return
-        time = value if value is not 'default' else utils.utc_now_sec()
+        time = value if value != 'default' else utils.utc_now_sec()
         self.task_ex.finished_at = time
 
 
