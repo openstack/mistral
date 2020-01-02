@@ -1,6 +1,7 @@
 # Copyright 2013 - Mirantis, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2019 - NetCracker Technology Corp.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -206,6 +207,7 @@ class Action(resource.Resource, ScopedResource):
 
     created_at = wtypes.text
     updated_at = wtypes.text
+    namespace = wtypes.text
 
     @classmethod
     def sample(cls):
@@ -217,7 +219,8 @@ class Action(resource.Resource, ScopedResource):
             scope='private',
             project_id='a7eb669e9819420ea4bd1453e672c0a7',
             created_at='1970-01-01T00:00:00.000000',
-            updated_at='1970-01-01T00:00:00.000000'
+            updated_at='1970-01-01T00:00:00.000000',
+            namespace=''
         )
 
 

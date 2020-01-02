@@ -1,6 +1,7 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,7 +20,6 @@ import datetime
 import re
 import sys
 import threading
-
 
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -41,10 +41,8 @@ from mistral.services import security
 from mistral.workflow import states
 from mistral_lib import utils
 
-
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
-
 
 _SCHEMA_LOCK = threading.RLock()
 _initialized = False
@@ -338,7 +336,7 @@ def _get_db_object_by_name_and_namespace_or_id(model, identifier,
 
 
 def _get_db_object_by_name_and_namespace(model, name,
-                                         namespace, insecure=False,
+                                         namespace='', insecure=False,
                                          columns=()):
     query = (
         b.model_query(model, columns=columns)
@@ -654,26 +652,38 @@ def get_action_definition_by_id(id, fields=(), session=None):
 
 
 @b.session_aware()
-def get_action_definition(identifier, fields=(), session=None):
+def get_action_definition(identifier, fields=(), session=None, namespace=''):
     a_def = _get_db_object_by_name_and_namespace_or_id(
         models.ActionDefinition,
         identifier,
+        namespace=namespace,
         columns=fields
     )
+    #  If the action was not found in the given namespace,
+    #  look in the default namespace
+    if not a_def:
+        a_def = _get_db_object_by_name_and_namespace_or_id(
+            models.ActionDefinition,
+            identifier,
+            namespace='',
+            columns=fields
+        )
 
     if not a_def:
         raise exc.DBEntityNotFoundError(
-            "Action definition not found [action_name=%s]" % identifier
+            "Action definition not found [action_name=%s,namespace=%s]"
+            % (identifier, namespace)
         )
 
     return a_def
 
 
 @b.session_aware()
-def load_action_definition(name, fields=(), session=None):
-    return _get_db_object_by_name(
+def load_action_definition(name, fields=(), session=None, namespace=''):
+    return _get_db_object_by_name_and_namespace(
         models.ActionDefinition,
         name,
+        namespace=namespace,
         columns=fields
     )
 
@@ -693,8 +703,8 @@ def create_action_definition(values, session=None):
         a_def.save(session=session)
     except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for Action ['name', 'project_id']:"
-            " {}, {}".format(a_def.name, a_def.project_id)
+            "Duplicate entry for Action ['name', 'namespace', 'project_id']:"
+            " {}, {}, {}".format(a_def.name, a_def.namespace, a_def.project_id)
         )
 
     return a_def
@@ -702,7 +712,8 @@ def create_action_definition(values, session=None):
 
 @b.session_aware()
 def update_action_definition(identifier, values, session=None):
-    a_def = get_action_definition(identifier)
+    namespace = values.get('namespace', '')
+    a_def = get_action_definition(identifier, namespace=namespace)
 
     a_def.update(values.copy())
 
@@ -711,15 +722,19 @@ def update_action_definition(identifier, values, session=None):
 
 @b.session_aware()
 def create_or_update_action_definition(name, values, session=None):
-    if not _get_db_object_by_name(models.ActionDefinition, name):
+    namespace = values.get('namespace', '')
+    if not _get_db_object_by_name_and_namespace(
+            models.ActionDefinition,
+            name,
+            namespace=namespace):
         return create_action_definition(values)
     else:
         return update_action_definition(name, values)
 
 
 @b.session_aware()
-def delete_action_definition(identifier, session=None):
-    a_def = get_action_definition(identifier)
+def delete_action_definition(identifier, namespace='', session=None):
+    a_def = get_action_definition(identifier, namespace=namespace)
 
     session.delete(a_def)
 
@@ -793,8 +808,8 @@ def update_action_execution_heartbeat(id, session=None):
         raise exc.DBEntityNotFoundError
 
     now = utils.utc_now_sec()
-    session.query(models.ActionExecution).\
-        filter(models.ActionExecution.id == id).\
+    session.query(models.ActionExecution). \
+        filter(models.ActionExecution.id == id). \
         update({'last_heartbeat': now})
 
 
@@ -1758,8 +1773,8 @@ def update_resource_member(resource_id, res_type, member_id, values,
 
 @b.session_aware()
 def delete_resource_member(resource_id, res_type, member_id, session=None):
-    query = _secure_query(models.ResourceMember).\
-        filter_by(resource_type=res_type).\
+    query = _secure_query(models.ResourceMember). \
+        filter_by(resource_type=res_type). \
         filter(_get_criterion(resource_id, member_id))
 
     # TODO(kong): Check association with cron triggers when deleting a workflow

@@ -37,7 +37,6 @@ from mistral.workflow import states
 from mistral_lib import actions as ml_actions
 from mistral_lib import utils
 
-
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
@@ -152,7 +151,8 @@ class Action(object):
         return True
 
     def _create_action_execution(self, input_dict, runtime_ctx, is_sync,
-                                 desc='', action_ex_id=None):
+                                 desc='', action_ex_id=None, namespace=''):
+
         action_ex_id = action_ex_id or utils.generate_unicode_uuid()
 
         values = {
@@ -162,6 +162,7 @@ class Action(object):
             'state': states.RUNNING,
             'input': input_dict,
             'runtime_context': runtime_ctx,
+            'workflow_namespace': namespace,
             'description': desc,
             'is_sync': is_sync
         }
@@ -245,7 +246,6 @@ class PythonAction(Action):
         # to be updated with the action execution ID after the action execution
         # DB object is created.
         action_ex_id = utils.generate_unicode_uuid()
-
         self._create_action_execution(
             self._prepare_input(input_dict),
             self._prepare_runtime_context(index, safe_rerun),
@@ -253,7 +253,6 @@ class PythonAction(Action):
             desc=desc,
             action_ex_id=action_ex_id
         )
-
         execution_context = self._prepare_execution_context()
 
         # Register an asynchronous command to send the action to
@@ -320,7 +319,8 @@ class PythonAction(Action):
         try:
             prepared_input_dict = self._prepare_input(input_dict)
 
-            a = a_m.get_action_class(self.action_def.name)(
+            a = a_m.get_action_class(self.action_def.name,
+                                     self.action_def.namespace)(
                 **prepared_input_dict
             )
 
@@ -356,9 +356,9 @@ class PythonAction(Action):
 
         if self.action_ex:
             exc_ctx['action_execution_id'] = self.action_ex.id
-            exc_ctx['callback_url'] = (
-                '/v2/action_executions/%s' % self.action_ex.id
-            )
+            exc_ctx['callback_url'] = ('/v2/action_executions/%s'
+                                       % self.action_ex.id
+                                       )
 
         return exc_ctx
 
@@ -394,7 +394,8 @@ class AdHocAction(PythonAction):
         self.action_spec = spec_parser.get_action_spec(action_def.spec)
 
         base_action_def = db_api.load_action_definition(
-            self.action_spec.get_base()
+            self.action_spec.get_base(),
+            namespace=action_def.namespace
         )
 
         if not base_action_def:
@@ -539,10 +540,12 @@ class AdHocAction(PythonAction):
 
             base_name = base.spec['base']
             try:
-                base = db_api.get_action_definition(base_name)
+                base = db_api.get_action_definition(base_name,
+                                                    namespace=base.namespace)
             except exc.DBEntityNotFoundError:
                 raise exc.InvalidActionException(
-                    "Failed to find action [action_name=%s]" % base_name
+                    "Failed to find action [action_name=%s namespace=%s] "
+                    % (base_name, base.namespace)
                 )
 
         # if the action is repeated
@@ -553,6 +556,13 @@ class AdHocAction(PythonAction):
             )
 
         return base
+
+    def _create_action_execution(self, input_dict, runtime_ctx, is_sync,
+                                 desc='', action_ex_id=None):
+        super()._create_action_execution(input_dict,
+                                         runtime_ctx, is_sync,
+                                         desc, action_ex_id,
+                                         self.adhoc_action_def.namespace)
 
 
 class WorkflowAction(Action):
@@ -650,12 +660,13 @@ class WorkflowAction(Action):
 
 
 def resolve_action_definition(action_spec_name, wf_name=None,
-                              wf_spec_name=None):
+                              wf_spec_name=None, namespace=''):
     """Resolve action definition accounting for ad-hoc action namespacing.
 
     :param action_spec_name: Action name according to a spec.
     :param wf_name: Workflow name.
     :param wf_spec_name: Workflow name according to a spec.
+    :param namespace: The namespace of the action.
     :return: Action definition (python or ad-hoc).
     """
 
@@ -671,14 +682,17 @@ def resolve_action_definition(action_spec_name, wf_name=None,
 
         action_full_name = "%s.%s" % (wb_name, action_spec_name)
 
-        action_db = db_api.load_action_definition(action_full_name)
+        action_db = db_api.load_action_definition(action_full_name,
+                                                  namespace=namespace)
 
     if not action_db:
-        action_db = db_api.load_action_definition(action_spec_name)
+        action_db = db_api.load_action_definition(action_spec_name,
+                                                  namespace=namespace)
 
     if not action_db:
         raise exc.InvalidActionException(
-            "Failed to find action [action_name=%s]" % action_spec_name
+            "Failed to find action [action_name=%s] in [namespace=%s]" %
+            (action_spec_name, namespace)
         )
 
     return action_db

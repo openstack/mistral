@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -144,16 +145,15 @@ class ActionExecutionsController(rest.RestController):
         :param action_ex: Action to execute
         """
         acl.enforce('action_executions:create', context.ctx())
-
         LOG.debug(
             "Create action_execution [action_execution=%s]",
             action_ex
         )
-
         name = action_ex.name
         description = action_ex.description or None
         action_input = action_ex.input or {}
         params = action_ex.params or {}
+        namespace = action_ex.workflow_namespace or ''
 
         if not name:
             raise exc.InputException(
@@ -164,6 +164,7 @@ class ActionExecutionsController(rest.RestController):
             name,
             action_input,
             description=description,
+            namespace=namespace,
             **params
         )
 

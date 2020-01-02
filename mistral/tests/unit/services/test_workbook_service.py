@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -181,7 +182,10 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertIsNotNone(wb_db.spec)
         self.assertListEqual(['test'], wb_db.tags)
 
-        db_actions = db_api.get_action_definitions(name='my_wb.concat')
+        db_actions = db_api.get_action_definitions(
+            name='my_wb.concat',
+            namespace=namespace
+        )
 
         self.assertEqual(1, len(db_actions))
 
@@ -279,7 +283,8 @@ class WorkbookServiceTest(base.DbTestCase):
         wb_service.create_workbook_v2(WORKBOOK, namespace=namespace)
 
         db_wfs = db_api.get_workflow_definitions()
-        db_actions = db_api.get_action_definitions(name='my_wb.concat')
+        db_actions = db_api.get_action_definitions(name='my_wb.concat',
+                                                   namespace=namespace)
 
         self.assertEqual(2, len(db_wfs))
         self.assertEqual(1, len(db_actions))
@@ -287,8 +292,8 @@ class WorkbookServiceTest(base.DbTestCase):
         db_api.delete_workbook('my_wb', namespace=namespace)
 
         db_wfs = db_api.get_workflow_definitions()
-        db_actions = db_api.get_action_definitions(name='my_wb.concat')
-
+        db_actions = db_api.get_action_definitions(name='my_wb.concat',
+                                                   namespace=namespace)
         # Deleting workbook shouldn't delete workflows and actions
         self.assertEqual(2, len(db_wfs))
         self.assertEqual(1, len(db_actions))

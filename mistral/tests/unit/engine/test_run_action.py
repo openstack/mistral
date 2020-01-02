@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2020 Nokia Software.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +100,81 @@ class RunActionEngineTest(base.EngineTestCase):
 
         self.assertEqual('Hello!', action_ex.output['result'])
         self.assertEqual(states.SUCCESS, action_ex.state)
+
+    def test_run_action_with_namespace(self):
+        namespace = 'test_namespace'
+        action = """---
+        version: '2.0'
+
+        concat_namespace:
+          base: std.echo
+          base-input:
+            output: <% $.left %><% $.right %>
+          input:
+            - left
+            - right
+
+        concat_namespace2:
+          base: concat_namespace
+          base-input:
+            left: <% $.left %><% $.center %>
+            right: <% $.right %>
+          input:
+            - left
+            - center
+            - right
+        """
+        actions.create_actions(action, namespace=namespace)
+
+        self.assertRaises(exc.InvalidActionException,
+                          self.engine.start_action,
+                          'concat_namespace',
+                          {'left': 'Hello, ', 'right': 'John Doe!'},
+                          save_result=True,
+                          namespace='')
+
+        action_ex = self.engine.start_action(
+            'concat_namespace',
+            {'left': 'Hello, ', 'right': 'John Doe!'},
+            save_result=True,
+            namespace=namespace
+        )
+
+        self.assertEqual(namespace, action_ex.workflow_namespace)
+
+        self.await_action_success(action_ex.id)
+
+        with db_api.transaction():
+            action_ex = db_api.get_action_execution(action_ex.id)
+            self.assertEqual(states.SUCCESS, action_ex.state)
+            self.assertEqual({'result': u'Hello, John Doe!'}, action_ex.output)
+
+        action_ex = self.engine.start_action(
+            'concat_namespace2',
+            {'left': 'Hello, ', 'center': 'John', 'right': ' Doe!'},
+            save_result=True,
+            namespace=namespace
+        )
+        self.assertEqual(namespace, action_ex.workflow_namespace)
+        self.await_action_success(action_ex.id)
+
+        with db_api.transaction():
+            action_ex = db_api.get_action_execution(action_ex.id)
+            self.assertEqual(states.SUCCESS, action_ex.state)
+            self.assertEqual('Hello, John Doe!', action_ex.output['result'])
+
+    def test_run_action_with_invalid_namespace(self):
+        # This test checks the case in which, the action with that name is
+        # not found with the given name, if an action was found with the
+        # same name in default namespace, that action will run.
+
+        action_ex = self.engine.start_action(
+            'concat',
+            {'left': 'Hello, ', 'right': 'John Doe!'},
+            save_result=True,
+            namespace='namespace'
+        )
+        self.assertIsNotNone(action_ex)
 
     @mock.patch.object(
         std_actions.EchoAction,
@@ -325,7 +401,7 @@ class RunActionEngineTest(base.EngineTestCase):
         self.engine.start_action('fake_action', {'input': 'Hello'})
 
         self.assertEqual(1, def_mock.call_count)
-        def_mock.assert_called_with('fake_action')
+        def_mock.assert_called_with('fake_action', namespace='')
 
         self.assertEqual(0, validate_mock.call_count)
 

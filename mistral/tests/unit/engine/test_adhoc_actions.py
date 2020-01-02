@@ -1,4 +1,5 @@
 # Copyright 2014 - Mirantis, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
@@ -23,7 +25,6 @@ from mistral.workflow import states
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
-
 
 WORKBOOK = """
 ---
@@ -304,6 +305,78 @@ class AdhocActionsTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('my_wb1.my_wf')
 
         self.await_workflow_running(wf_ex.id)
+
+    def test_adhoc_action_difinition_with_namespace(self):
+        namespace = 'ad-hoc_test'
+        namespace2 = 'ad-hoc_test2'
+        wb_text = """---
+
+        version: '2.0'
+
+        name: my_wb_namespace
+
+        actions:
+          test_env:
+            base: std.echo
+            base-input:
+              output: '{{ env().foo }}'
+
+        workflows:
+          wf_namespace:
+            type: direct
+            input:
+              - str1
+            output:
+                workflow_result: '{{ _.printenv_result }}'
+
+            tasks:
+              printenv:
+                action: test_env
+                publish:
+                  printenv_result: '{{ task().result }}'
+        """
+
+        wb_service.create_workbook_v2(wb_text, namespace=namespace)
+        wb_service.create_workbook_v2(wb_text, namespace=namespace2)
+
+        with db_api.transaction():
+            action_def = db_api.get_action_definitions(
+                name='my_wb_namespace.test_env', )
+
+            self.assertEqual(2, len(action_def))
+
+            action_def = db_api.get_action_definitions(
+                name='my_wb_namespace.test_env',
+                namespace=namespace)
+
+            self.assertEqual(1, len(action_def))
+
+            self.assertRaises(exc.DBEntityNotFoundError,
+                              db_api.get_action_definition,
+                              name='my_wb_namespace.test_env')
+
+    def test_adhoc_action_execution_with_namespace(self):
+        namespace = 'ad-hoc_test'
+
+        wb_service.create_workbook_v2(WORKBOOK, namespace=namespace)
+        wf_ex = self.engine.start_workflow(
+            'my_wb.wf4',
+            wf_input={'str1': 'a'},
+            env={'foo': 'bar'},
+            wf_namespace=namespace
+        )
+
+        self.await_workflow_success(wf_ex.id)
+
+        with db_api.transaction():
+            action_execs = db_api.get_action_executions(
+                name='std.echo',
+                workflow_namespace=namespace)
+            self.assertEqual(1, len(action_execs))
+            context = action_execs[0].runtime_context
+            self.assertEqual('my_wb.test_env',
+                             context.get('adhoc_action_name'))
+            self.assertEqual(namespace, action_execs[0].workflow_namespace)
 
     def test_adhoc_action_runtime_context_name(self):
         wf_ex = self.engine.start_workflow(

@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -19,18 +20,22 @@ from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 
 
-def create_actions(definition, scope='private'):
+def create_actions(definition, scope='private', namespace=''):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
     db_actions = []
 
     for action_spec in action_list_spec.get_actions():
-        db_actions.append(create_action(action_spec, definition, scope))
+        db_actions.append(create_action(
+            action_spec,
+            definition,
+            scope,
+            namespace))
 
     return db_actions
 
 
-def update_actions(definition, scope='private', identifier=None):
+def update_actions(definition, scope='private', identifier=None, namespace=''):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
     actions = action_list_spec.get_actions()
 
@@ -48,32 +53,35 @@ def update_actions(definition, scope='private', identifier=None):
             action_spec,
             definition,
             scope,
-            identifier=identifier
+            identifier=identifier,
+            namespace=namespace
+
         ))
 
     return db_actions
 
 
-def create_or_update_actions(definition, scope='private'):
+def create_or_update_actions(definition, scope='private', namespace=''):
     action_list_spec = spec_parser.get_action_list_spec_from_yaml(definition)
 
     db_actions = []
 
     for action_spec in action_list_spec.get_actions():
         db_actions.append(
-            create_or_update_action(action_spec, definition, scope)
+            create_or_update_action(action_spec, definition, scope, namespace)
         )
 
     return db_actions
 
 
-def create_action(action_spec, definition, scope):
+def create_action(action_spec, definition, scope, namespace):
     return db_api.create_action_definition(
-        _get_action_values(action_spec, definition, scope)
+        _get_action_values(action_spec, definition, scope, namespace)
     )
 
 
-def update_action(action_spec, definition, scope, identifier=None):
+def update_action(action_spec, definition, scope, identifier=None,
+                  namespace=''):
     action = db_api.load_action_definition(action_spec.get_name())
 
     if action and action.is_system:
@@ -82,7 +90,7 @@ def update_action(action_spec, definition, scope, identifier=None):
             action.name
         )
 
-    values = _get_action_values(action_spec, definition, scope)
+    values = _get_action_values(action_spec, definition, scope, namespace)
 
     return db_api.update_action_definition(
         identifier if identifier else values['name'],
@@ -90,7 +98,7 @@ def update_action(action_spec, definition, scope, identifier=None):
     )
 
 
-def create_or_update_action(action_spec, definition, scope):
+def create_or_update_action(action_spec, definition, scope, namespace):
     action = db_api.load_action_definition(action_spec.get_name())
 
     if action and action.is_system:
@@ -99,7 +107,7 @@ def create_or_update_action(action_spec, definition, scope):
             action.name
         )
 
-    values = _get_action_values(action_spec, definition, scope)
+    values = _get_action_values(action_spec, definition, scope, namespace)
 
     return db_api.create_or_update_action_definition(values['name'], values)
 
@@ -117,7 +125,7 @@ def get_input_list(action_input):
     return input_list
 
 
-def _get_action_values(action_spec, definition, scope):
+def _get_action_values(action_spec, definition, scope, namespace=''):
     action_input = action_spec.to_dict().get('input', [])
     input_list = get_input_list(action_input)
 
@@ -129,7 +137,8 @@ def _get_action_values(action_spec, definition, scope):
         'spec': action_spec.to_dict(),
         'is_system': False,
         'input': ", ".join(input_list) if input_list else None,
-        'scope': scope
+        'scope': scope,
+        'namespace': namespace
     }
 
     return values
