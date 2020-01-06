@@ -19,11 +19,9 @@ from mistral.lang import parser as spec_parser
 from mistral.services import workbooks as wb_service
 from mistral.tests.unit import base
 
-
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
-
 
 WORKBOOK = """
 ---
@@ -94,7 +92,6 @@ WORKBOOK_WF2_DEFINITION = """wf2:
         result: "The result of subworkflow is '{$.final_result}'"
 """
 
-
 UPDATED_WORKBOOK = """
 ---
 version: '2.0'
@@ -160,7 +157,6 @@ UPDATED_WORKBOOK_WF2_DEFINITION = """wf2:
         result: "{$}"
 """
 
-
 ACTION_DEFINITION = """concat:
   base: std.echo
   base-input:
@@ -219,6 +215,22 @@ class WorkbookServiceTest(base.DbTestCase):
         self.assertEqual('direct', wf2_spec.get_type())
         self.assertEqual(namespace, wf2_db.namespace)
         self.assertEqual(WORKBOOK_WF2_DEFINITION, wf2_db.definition)
+
+    def test_create_same_workbook_in_different_namespaces(self):
+        first_namespace = 'first_namespace'
+        second_namespace = 'second_namespace'
+
+        first_wb = wb_service.create_workbook_v2(WORKBOOK,
+                                                 namespace=first_namespace)
+        self.assertIsNotNone(first_wb)
+        self.assertEqual('my_wb', first_wb.name)
+        self.assertEqual(first_namespace, first_wb.namespace)
+
+        second_wb = wb_service.create_workbook_v2(WORKBOOK,
+                                                  namespace=second_namespace)
+        self.assertIsNotNone(second_wb)
+        self.assertEqual('my_wb', second_wb.name)
+        self.assertEqual(second_namespace, second_wb.namespace)
 
     def test_create_workbook_with_default_namespace(self):
         wb_db = wb_service.create_workbook_v2(WORKBOOK)
