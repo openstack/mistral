@@ -1058,7 +1058,7 @@
         "workflows_validate": "workflows.validate"
     },
     "designate": {
-        "_comment": "It uses designateclient.v1.",
+        "_comment": "It uses designateclient.v2.",
         "diagnostics_ping": "diagnostics.ping",
         "domains_create  ": "domains.create",
         "domains_delete": "domains.delete",

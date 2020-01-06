@@ -191,7 +191,7 @@ def get_barbican_client(**kwargs):
 
 
 def get_designate_client(**kwargs):
-    return designateclient.Client('1')
+    return designateclient.Client('2')
 
 
 def get_magnum_client(**kwargs):
