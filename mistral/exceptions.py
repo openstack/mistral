@@ -176,6 +176,10 @@ class CoordinationException(MistralException):
     http_code = 500
 
 
+class CoordinationNotSupportedException(MistralException):
+    http_code = 406
+
+
 class NotAllowedException(MistralException):
     http_code = 403
     message = "Operation forbidden (insufficient permissions)"

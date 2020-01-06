@@ -43,7 +43,8 @@ class ServicesController(rest.RestController):
         LOG.debug("Fetch services.")
 
         if not cfg.CONF.coordination.backend_url:
-            raise exc.CoordinationException("Service API is not supported.")
+            raise exc.CoordinationNotSupportedException("Service API "
+                                                        "is not supported.")
 
         service_coordinator = coordination.get_service_coordinator()
 
