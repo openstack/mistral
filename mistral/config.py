@@ -319,7 +319,7 @@ scheduler_opts = [
              'locally before it becomes eligible for processing by other '
              'scheduler instances.'
              'For example, a job needs to run at 12:00:00. When a scheduler '
-             'starts processing it it has 60 seconds (or other configured '
+             'starts processing it has 60 seconds (or other configured '
              'value) to complete the job. If the scheduler did not complete '
              'the job within this period it most likely means that the '
              'scheduler process crashed. In this case another scheduler '

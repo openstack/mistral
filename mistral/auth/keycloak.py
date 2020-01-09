@@ -58,7 +58,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
         # Format is "iss": "http://<host>:<port>/auth/realms/<realm_name>",
         __, __, realm_name = decoded['iss'].strip().rpartition('/realms/')
 
-        # Get roles from from parsed token
+        # Get roles from parsed token
         roles = ','.join(decoded['realm_access']['roles']) \
             if 'realm_access' in decoded else ''
 
