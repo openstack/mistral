@@ -21,9 +21,6 @@ import wsmeext.pecan as wsme_pecan
 
 from mistral.api import access_control as acl
 from mistral.api.controllers.v2 import resources
-# TODO(rakhmerov): invalid dependency, a REST controller must not depend on
-# a launch script.
-from mistral.cmd import launch
 from mistral import context
 from mistral import exceptions as exc
 from mistral.service import coordination
@@ -53,8 +50,14 @@ class ServicesController(rest.RestController):
                 "Failed to connect to coordination backend."
             )
 
+        # Should be the same as LAUNCH_OPTIONS in launch.py
+        # At the moment there is a duplication, need to solve it.
+        # We cannot depend on launch.py since it uses eventlet monkey patch
+        # under wsgi it causes problems
+        mistral_services = {'api', 'engine', 'executor',
+                            'event-engine', 'notifier'}
         services_list = []
-        service_group = ['%s_group' % i for i in launch.LAUNCH_OPTIONS]
+        service_group = ['%s_group' % i for i in mistral_services]
 
         try:
             for group in service_group:
