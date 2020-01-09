@@ -82,6 +82,9 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_workflow_create_allowed(self, mock_obj):
+        spec_mock = mock_obj.return_value.get.return_value
+        spec_mock.get.return_value = {}
+
         self.policy.change_policy_definition(
             {"workflows:create": "role:FAKE or rule:admin_or_owner"}
         )
@@ -111,6 +114,9 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_workflow_create_public_allowed(self, mock_obj):
+        spec_mock = mock_obj.return_value.get.return_value
+        spec_mock.get.return_value = {}
+
         self.policy.change_policy_definition({
             "workflows:create": "role:FAKE or rule:admin_or_owner",
             "workflows:publicize": "role:FAKE or rule:admin_or_owner"
@@ -236,6 +242,9 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_workflow_update_allowed(self, mock_obj):
+        spec_mock = mock_obj.return_value.get.return_value
+        spec_mock.get.return_value = {}
+
         self.policy.change_policy_definition(
             {"workflows:update": "role:FAKE or rule:admin_or_owner"}
         )
@@ -265,6 +274,9 @@ class TestWorkflowPolicy(base.APITest):
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_workflow_update_public_allowed(self, mock_obj):
+        spec_mock = mock_obj.return_value.get.return_value
+        spec_mock.get.return_value = {}
+
         self.policy.change_policy_definition({
             "workflows:update": "role:FAKE or rule:admin_or_owner",
             "workflows:publicize": "role:FAKE or rule:admin_or_owner"

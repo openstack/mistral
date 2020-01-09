@@ -580,7 +580,7 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
         self.assertEqual(1, len(fetched))
         self.assertEqual(created, fetched[0])
 
-    def test_filter_workflow_definition_by_not_equal_valiue(self):
+    def test_filter_workflow_definition_by_not_equal_value(self):
         created0 = db_api.create_workflow_definition(WF_DEFINITIONS[0])
         created1 = db_api.create_workflow_definition(WF_DEFINITIONS[1])
 

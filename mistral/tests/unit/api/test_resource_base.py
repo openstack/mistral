@@ -17,6 +17,7 @@ import datetime
 
 from mistral.api.controllers.v2 import resources
 from mistral.db.v2 import api as db_api
+from mistral.services import workflows as wf_service
 from mistral.tests.unit import base
 from mistral_lib import utils
 
@@ -39,6 +40,37 @@ WF_EXEC = {
     'some_invalid_field': "foobar"
 }
 
+WF = """---
+version: '2.0'
+
+WF:
+  type: direct
+
+  input:
+    - no_default_value_input
+    - string_param: "string"
+    - json_param: {
+        string_param: "string"
+       }
+
+  output:
+    output1: 'output'
+
+  tasks:
+    task1:
+      action: std.noop
+"""
+WF_NO_PARAMS = """---
+version: '2.0'
+
+WF_NO_PARAMS:
+  type: direct
+
+  tasks:
+    task1:
+      action: std.noop
+"""
+
 
 class TestRestResource(base.DbTestCase):
     def test_from_db_model(self):
@@ -56,6 +88,38 @@ class TestRestResource(base.DbTestCase):
         utils.datetime_to_str_in_dict(expected, 'created_at')
 
         self.assertDictEqual(expected, wf_ex.to_dict())
+
+    def test_from_db_model_workflow_resource(self):
+        expected_interface = {
+            'output': ['output1'],
+            'input': [
+                'no_default_value_input',
+                {'string_param': 'string'},
+                {
+                    'json_param': {'string_param': 'string'}
+                }
+            ]
+        }
+
+        workflows_list = wf_service.create_workflows(WF)
+        self.assertEqual(1, len(workflows_list))
+
+        wf_resource = resources.Workflow.from_db_model(workflows_list[0])
+
+        self.assertDictEqual(expected_interface, wf_resource.interface)
+
+    def test_from_db_model_workflow_resource_no_params(self):
+        expected_interface = {
+            'input': [],
+            'output': []
+        }
+
+        workflows_list = wf_service.create_workflows(WF_NO_PARAMS)
+        self.assertEqual(1, len(workflows_list))
+
+        wf_resource = resources.Workflow.from_db_model(workflows_list[0])
+
+        self.assertDictEqual(expected_interface, wf_resource.interface)
 
     def test_from_dict(self):
         wf_ex = db_api.create_workflow_execution(WF_EXEC)
