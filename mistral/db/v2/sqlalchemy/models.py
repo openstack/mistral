@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -30,7 +31,6 @@ from mistral.db.sqlalchemy import types as st
 from mistral import exceptions as exc
 from mistral.services import security
 from mistral_lib import utils
-
 
 # Definition objects.
 
@@ -174,9 +174,12 @@ class ActionDefinition(Definition):
     """Contains info about registered Actions."""
 
     __tablename__ = 'action_definitions_v2'
-
+    namespace = sa.Column(sa.String(255), nullable=True)
     __table_args__ = (
-        sa.UniqueConstraint('name', 'project_id'),
+        sa.UniqueConstraint(
+            'name',
+            'namespace',
+            'project_id'),
         sa.Index('%s_is_system' % __tablename__, 'is_system'),
         sa.Index('%s_action_class' % __tablename__, 'action_class'),
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
@@ -346,7 +349,6 @@ for cls in utils.iter_subclasses(Execution):
         retval=True
     )
 
-
 # Many-to-one for 'ActionExecution' and 'TaskExecution'.
 
 ActionExecution.task_execution_id = sa.Column(
@@ -404,7 +406,6 @@ WorkflowExecution.root_execution = relationship(
     remote_side=WorkflowExecution.id,
     lazy='select'
 )
-
 
 # Many-to-one for 'TaskExecution' and 'WorkflowExecution'.
 

@@ -88,7 +88,6 @@ class DefaultExecutor(base.Executor):
                 return None
 
             return error_result
-
         if redelivered and not safe_rerun:
             msg = (
                 "Request to run action %s was redelivered, but action %s "

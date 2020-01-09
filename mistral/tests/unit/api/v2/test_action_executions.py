@@ -304,7 +304,8 @@ class TestActionExecutionsController(base.APITest):
             json.loads(action_exec['input']),
             description=None,
             save_result=True,
-            run_sync=True
+            run_sync=True,
+            namespace=''
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
@@ -331,7 +332,8 @@ class TestActionExecutionsController(base.APITest):
             action_exec['name'],
             json.loads(action_exec['input']),
             description=None,
-            timeout=2
+            timeout=2,
+            namespace=''
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
@@ -358,7 +360,8 @@ class TestActionExecutionsController(base.APITest):
             action_exec['name'],
             json.loads(action_exec['input']),
             description=None,
-            save_result=True
+            save_result=True,
+            namespace=''
         )
 
     @mock.patch.object(rpc_clients.EngineClient, 'start_action')
@@ -374,7 +377,9 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(201, resp.status_int)
         self.assertEqual('{"result": "123"}', resp.json['output'])
 
-        f.assert_called_once_with('nova.servers_list', {}, description=None)
+        f.assert_called_once_with('nova.servers_list', {},
+                                  description=None,
+                                  namespace='')
 
     def test_post_bad_result(self):
         resp = self.app.post_json(

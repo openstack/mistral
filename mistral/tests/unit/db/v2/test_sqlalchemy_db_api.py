@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -1085,7 +1086,8 @@ ACTION_DEFINITIONS = [
         'action_class': 'mypackage.my_module.Action1',
         'attributes': None,
         'project_id': '<default-project>',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 0, 0),
+        'namespace': ''
     },
     {
         'name': 'action2',
@@ -1094,7 +1096,8 @@ ACTION_DEFINITIONS = [
         'action_class': 'mypackage.my_module.Action2',
         'attributes': None,
         'project_id': '<default-project>',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 1, 0),
+        'namespace': ''
     },
     {
         'name': 'action3',
@@ -1104,7 +1107,8 @@ ACTION_DEFINITIONS = [
         'action_class': 'mypackage.my_module.Action3',
         'attributes': None,
         'project_id': '<default-project>',
-        'created_at': datetime.datetime(2016, 12, 1, 15, 2, 0)
+        'created_at': datetime.datetime(2016, 12, 1, 15, 2, 0),
+        'namespace': ''
     },
 ]
 
@@ -1154,8 +1158,8 @@ class ActionDefinitionTest(SQLAlchemyTest):
 
         self.assertRaisesWithMessage(
             exc.DBDuplicateEntryError,
-            "Duplicate entry for Action ['name', 'project_id']: action1"
-            ", <default-project>",
+            "Duplicate entry for Action ['name', 'namespace', 'project_id']:"
+            " action1, , <default-project>",
             db_api.create_action_definition,
             ACTION_DEFINITIONS[0]
         )

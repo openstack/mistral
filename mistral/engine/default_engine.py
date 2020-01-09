@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -83,9 +84,10 @@ class DefaultEngine(base.Engine):
     @db_utils.retry_on_db_error
     @post_tx_queue.run
     def start_action(self, action_name, action_input,
-                     description=None, **params):
+                     description=None, namespace='', **params):
         with db_api.transaction():
-            action = action_handler.build_action_by_name(action_name)
+            action = action_handler.build_action_by_name(action_name,
+                                                         namespace=namespace)
 
             action.validate_input(action_input)
 
@@ -102,7 +104,6 @@ class DefaultEngine(base.Engine):
 
             if not sync and (save or not is_action_sync):
                 action.schedule(action_input, target, timeout=timeout)
-
                 return action.action_ex.get_clone()
 
             output = action.run(
@@ -111,7 +112,6 @@ class DefaultEngine(base.Engine):
                 save=False,
                 timeout=timeout
             )
-
             state = states.SUCCESS if output.is_success() else states.ERROR
 
             if not save:
@@ -122,9 +122,9 @@ class DefaultEngine(base.Engine):
                     description=description,
                     input=action_input,
                     output=output.to_dict(),
-                    state=state
+                    state=state,
+                    workflow_namespace=namespace
                 )
-
             action_ex_id = u.generate_unicode_uuid()
 
             values = {
@@ -134,7 +134,8 @@ class DefaultEngine(base.Engine):
                 'input': action_input,
                 'output': output.to_dict(),
                 'state': state,
-                'is_sync': is_action_sync
+                'is_sync': is_action_sync,
+                'workflow_namespace': namespace
             }
 
             return db_api.create_action_execution(values)
@@ -147,7 +148,6 @@ class DefaultEngine(base.Engine):
         with db_api.transaction():
             if wf_action:
                 action_ex = db_api.get_workflow_execution(action_ex_id)
-
                 # If result is None it means that it's a normal subworkflow
                 # output and we just need to fetch it from the model.
                 # This is just an optimization to not send data over RPC
@@ -170,7 +170,6 @@ class DefaultEngine(base.Engine):
                 action_ex = db_api.get_workflow_execution(action_ex_id)
             else:
                 action_ex = db_api.get_action_execution(action_ex_id)
-
             action_handler.on_action_update(action_ex, state)
 
             return action_ex.get_clone()

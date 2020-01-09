@@ -157,22 +157,24 @@ class EngineServer(service_base.MistralService):
         )
 
     def start_action(self, rpc_ctx, action_name,
-                     action_input, description, params):
+                     action_input, description, namespace, params):
         """Receives calls over RPC to start actions on engine.
 
         :param rpc_ctx: RPC request context.
         :param action_name: name of the Action.
         :param action_input: input dictionary for Action.
         :param description: description of new Action execution.
+        :param namespace: The namespace of the action.
         :param params: extra parameters to run Action.
         :return: Action execution.
         """
         LOG.info(
             "Received RPC request 'start_action'[name=%s, input=%s, "
-            "description=%s, params=%s]",
+            "description=%s, namespace=%s params=%s]",
             action_name,
             utils.cut(action_input),
             description,
+            namespace,
             params
         )
 
@@ -180,6 +182,7 @@ class EngineServer(service_base.MistralService):
             action_name,
             action_input,
             description,
+            namespace=namespace,
             **params
         )
 
@@ -198,7 +201,6 @@ class EngineServer(service_base.MistralService):
             action_ex_id,
             result.cut_repr() if result else '<unknown>'
         )
-
         return self.engine.on_action_complete(action_ex_id, result, wf_action)
 
     def on_action_update(self, rpc_ctx, action_ex_id, state, wf_action):

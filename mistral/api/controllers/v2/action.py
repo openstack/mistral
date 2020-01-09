@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 Huawei Technologies Co., Ltd.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -46,11 +47,12 @@ class ActionsController(rest.RestController, hooks.HookController):
         spec_parser.get_action_list_spec_from_yaml)
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Action, wtypes.text)
-    def get(self, identifier):
+    @wsme_pecan.wsexpose(resources.Action, wtypes.text, wtypes.text)
+    def get(self, identifier, namespace=''):
         """Return the named action.
 
         :param identifier: ID or name of the Action to get.
+        :param namespace: The namespace of the action.
         """
 
         acl.enforce('actions:get', context.ctx())
@@ -60,17 +62,19 @@ class ActionsController(rest.RestController, hooks.HookController):
         # Use retries to prevent possible failures.
         db_model = rest_utils.rest_retry_on_db_error(
             db_api.get_action_definition
-        )(identifier)
+        )(identifier, namespace=namespace)
 
         return resources.Action.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
-    def put(self, identifier=None):
+    def put(self, identifier=None, namespace=''):
         """Update one or more actions.
 
         :param identifier: Optional. If provided, it's UUID or name of an
             action. Only one action can be updated with identifier param.
+        :param namespace: Optional. If provided, it's the namespace that
+            the action is under.
 
         NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be updated.
@@ -81,6 +85,7 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         LOG.debug("Update action(s) [definition=%s]", definition)
 
+        namespace = namespace or ''
         scope = pecan.request.GET.get('scope', 'private')
         resources.Action.validate_scope(scope)
         if scope == 'public':
@@ -92,7 +97,8 @@ class ActionsController(rest.RestController, hooks.HookController):
                 return actions.update_actions(
                     definition,
                     scope=scope,
-                    identifier=identifier
+                    identifier=identifier,
+                    namespace=namespace
                 )
 
         db_acts = _update_actions()
@@ -105,13 +111,19 @@ class ActionsController(rest.RestController, hooks.HookController):
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
-    def post(self):
+    def post(self, namespace=''):
         """Create a new action.
+
+        :param namespace: Optional. The namespace to create the ad-hoc action
+            in. actions with the same name can be added to a given
+            project if they are in two different namespaces.
+            (default namespace is '')
 
         NOTE: This text is allowed to have definitions
             of multiple actions. In this case they all will be created.
         """
         acl.enforce('actions:create', context.ctx())
+        namespace = namespace or ''
 
         definition = pecan.request.text
         scope = pecan.request.GET.get('scope', 'private')
@@ -126,7 +138,9 @@ class ActionsController(rest.RestController, hooks.HookController):
         @rest_utils.rest_retry_on_db_error
         def _create_action_definitions():
             with db_api.transaction():
-                return actions.create_actions(definition, scope=scope)
+                return actions.create_actions(definition,
+                                              scope=scope,
+                                              namespace=namespace)
 
         db_acts = _create_action_definitions()
 
@@ -137,26 +151,27 @@ class ActionsController(rest.RestController, hooks.HookController):
         return resources.Actions(actions=action_list).to_json()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(None, wtypes.text, status_code=204)
-    def delete(self, identifier):
+    @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
+    def delete(self, identifier, namespace=''):
         """Delete the named action.
 
         :param identifier: Name or UUID of the action to delete.
+        :param namespace: The namespace of which the action is in.
         """
         acl.enforce('actions:delete', context.ctx())
-
         LOG.debug("Delete action [identifier=%s]", identifier)
 
         @rest_utils.rest_retry_on_db_error
         def _delete_action_definition():
             with db_api.transaction():
-                db_model = db_api.get_action_definition(identifier)
+                db_model = db_api.get_action_definition(identifier,
+                                                        namespace=namespace)
 
                 if db_model.is_system:
                     msg = "Attempt to delete a system action: %s" % identifier
                     raise exc.DataAccessException(msg)
-
-                db_api.delete_action_definition(identifier)
+                db_api.delete_action_definition(identifier,
+                                                namespace=namespace)
 
         _delete_action_definition()
 
@@ -164,12 +179,13 @@ class ActionsController(rest.RestController, hooks.HookController):
     @wsme_pecan.wsexpose(resources.Actions, types.uuid, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
                          wtypes.text, resources.SCOPE_TYPES, wtypes.text,
-                         wtypes.text, wtypes.text, wtypes.text, wtypes.text,
-                         wtypes.text)
+                         wtypes.text, wtypes.text, wtypes.text,
+                         wtypes.text, wtypes.text, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='name',
-                sort_dirs='asc', fields='', created_at=None, name=None,
-                scope=None, tags=None, updated_at=None,
-                description=None, definition=None, is_system=None, input=None):
+                sort_dirs='asc', fields='', created_at=None,
+                name=None, scope=None, tags=None,
+                updated_at=None, description=None, definition=None,
+                is_system=None, input=None, namespace=''):
         """Return all actions.
 
         :param marker: Optional. Pagination marker for large data sets.
@@ -199,6 +215,7 @@ class ActionsController(rest.RestController, hooks.HookController):
                            time and date.
         :param updated_at: Optional. Keep only resources with specific latest
                            update time and date.
+        :param namespace: Optional. The namespace of the action.
         """
         acl.enforce('actions:list', context.ctx())
 
@@ -211,7 +228,8 @@ class ActionsController(rest.RestController, hooks.HookController):
             description=description,
             definition=definition,
             is_system=is_system,
-            input=input
+            input=input,
+            namespace=namespace
         )
 
         LOG.debug("Fetch actions. marker=%s, limit=%s, sort_keys=%s, "

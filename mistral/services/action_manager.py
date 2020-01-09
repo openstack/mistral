@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2014 - StackStorm, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -51,7 +52,7 @@ def get_registered_actions(**kwargs):
 
 
 def register_action_class(name, action_class_str, attributes,
-                          description=None, input_str=None):
+                          description=None, input_str=None, namespace=''):
     values = {
         'name': name,
         'action_class': action_class_str,
@@ -59,7 +60,8 @@ def register_action_class(name, action_class_str, attributes,
         'description': description,
         'input': input_str,
         'is_system': True,
-        'scope': 'public'
+        'scope': 'public',
+        'namespace': namespace
     }
 
     try:
@@ -81,7 +83,7 @@ def sync_db():
         register_standard_actions()
 
 
-def _register_dynamic_action_classes():
+def _register_dynamic_action_classes(namespace=''):
     for generator in generator_factory.all_generators():
         actions = generator.create_actions()
 
@@ -98,11 +100,12 @@ def _register_dynamic_action_classes():
                 action_class_str,
                 attrs,
                 action['description'],
-                action['arg_list']
+                action['arg_list'],
+                namespace=namespace
             )
 
 
-def register_action_classes():
+def register_action_classes(namespace=''):
     mgr = extension.ExtensionManager(
         namespace='mistral.actions',
         invoke_on_load=False
@@ -120,23 +123,24 @@ def register_action_classes():
             action_class_str,
             attrs,
             description=description,
-            input_str=input_str
+            input_str=input_str,
+            namespace=namespace
         )
 
-    _register_dynamic_action_classes()
+    _register_dynamic_action_classes(namespace=namespace)
 
 
-def get_action_db(action_name):
-    return db_api.load_action_definition(action_name)
+def get_action_db(action_name, namespace=''):
+    return db_api.load_action_definition(action_name, namespace=namespace)
 
 
-def get_action_class(action_full_name):
+def get_action_class(action_full_name, namespace=''):
     """Finds action class by full action name (i.e. 'namespace.action_name').
 
     :param action_full_name: Full action name (that includes namespace).
     :return: Action class or None if not found.
     """
-    action_db = get_action_db(action_full_name)
+    action_db = get_action_db(action_full_name, namespace)
 
     if action_db:
         return action_factory.construct_action_class(

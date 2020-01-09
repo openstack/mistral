@@ -2,6 +2,7 @@
 # Copyright 2015 - StackStorm, Inc.
 # Copyright 2017 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -150,12 +151,13 @@ class EngineClient(eng.Engine):
 
     @base.wrap_messaging_exception
     def start_action(self, action_name, action_input,
-                     description=None, **params):
+                     description=None, namespace='', **params):
         """Starts action sending a request to engine over RPC.
 
         :param action_name: Action name.
         :param action_input: Action input data as a dictionary.
         :param description: Execution description.
+        :param namespace: The namespace of the action.
         :param params: Additional options for action running.
         :return: Action execution.
         """
@@ -165,6 +167,7 @@ class EngineClient(eng.Engine):
             action_name=action_name,
             action_input=action_input or {},
             description=description,
+            namespace=namespace,
             params=params
         )
 
@@ -372,7 +375,6 @@ class ExecutorClient(exe.Executor):
             action will be interrupted
         :return: Action result.
         """
-
         rpc_kwargs = {
             'action_ex_id': action_ex_id,
             'action_cls_str': action_cls_str,

@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -57,9 +58,9 @@ def update_workbook_v2(definition, namespace='', scope='private',
     return wb_db
 
 
-def _on_workbook_update(wb_db, wb_spec, namespace):
-    # TODO(hardikj) Handle actions for namespace
-    db_actions = _create_or_update_actions(wb_db, wb_spec.get_actions())
+def _on_workbook_update(wb_db, wb_spec, namespace=''):
+    db_actions = _create_or_update_actions(wb_db, wb_spec.get_actions(),
+                                           namespace=namespace)
     db_wfs = _create_or_update_workflows(
         wb_db,
         wb_spec.get_workflows(),
@@ -69,7 +70,7 @@ def _on_workbook_update(wb_db, wb_spec, namespace):
     return db_actions, db_wfs
 
 
-def _create_or_update_actions(wb_db, actions_spec):
+def _create_or_update_actions(wb_db, actions_spec, namespace):
     db_actions = []
 
     if actions_spec:
@@ -88,7 +89,8 @@ def _create_or_update_actions(wb_db, actions_spec):
                 'is_system': False,
                 'input': ', '.join(input_list) if input_list else None,
                 'scope': wb_db.scope,
-                'project_id': wb_db.project_id
+                'project_id': wb_db.project_id,
+                'namespace': namespace
             }
 
             db_actions.append(

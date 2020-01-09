@@ -691,7 +691,8 @@ class RegularTask(Task):
         action_def = actions.resolve_action_definition(
             action_name,
             self.wf_ex.name,
-            self.wf_spec.get_name()
+            self.wf_spec.get_name(),
+            namespace=self.wf_ex.workflow_namespace
         )
 
         if action_def.spec:

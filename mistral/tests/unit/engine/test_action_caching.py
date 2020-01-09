@@ -28,9 +28,7 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
 class LookupUtilsTest(base.EngineTestCase):
-
-    def test_action_definition_cache_ttl(self):
-        action = """---
+    ACTION = """---
         version: '2.0'
 
         action1:
@@ -39,7 +37,7 @@ class LookupUtilsTest(base.EngineTestCase):
             result: $
         """
 
-        wf_text = """---
+    WF_TEXT = """---
         version: '2.0'
 
         wf:
@@ -61,16 +59,23 @@ class LookupUtilsTest(base.EngineTestCase):
               pause-before: true
         """
 
-        wf_service.create_workflows(wf_text)
+    def test_action_definition_cache_ttl(self):
+        namespace = 'test_namespace'
+        wf_service.create_workflows(self.WF_TEXT, namespace=namespace)
 
         # Create an action.
-        db_actions = action_service.create_actions(action)
+        db_actions = action_service.create_actions(self.ACTION,
+                                                   namespace=namespace)
 
         self.assertEqual(1, len(db_actions))
-        self._assert_single_item(db_actions, name='action1')
+        self._assert_single_item(db_actions,
+                                 name='action1',
+                                 namespace=namespace)
 
         # Explicitly mark the action to be deleted after the test execution.
-        self.addCleanup(db_api.delete_action_definitions, name='action1')
+        self.addCleanup(db_api.delete_action_definitions,
+                        name='action1',
+                        namespace=namespace)
 
         # Reinitialise the cache with reduced action_definition_cache_time
         # to make sure the test environment is under control.
@@ -84,13 +89,15 @@ class LookupUtilsTest(base.EngineTestCase):
         self.addCleanup(cache_patch.stop)
 
         # Start workflow.
-        wf_ex = self.engine.start_workflow('wf')
+        wf_ex = self.engine.start_workflow('wf', wf_namespace=namespace)
 
         self.await_workflow_paused(wf_ex.id)
 
         # Check that 'action1' 'echo' and 'noop' are cached.
-        self.assertEqual(3, len(db_api._ACTION_DEF_CACHE))
-        self.assertIn('action1', db_api._ACTION_DEF_CACHE)
+        self.assertEqual(5, len(db_api._ACTION_DEF_CACHE))
+        self.assertIn('action1:test_namespace', db_api._ACTION_DEF_CACHE)
+        self.assertIn('std.noop:test_namespace', db_api._ACTION_DEF_CACHE)
+        self.assertIn('std.echo:test_namespace', db_api._ACTION_DEF_CACHE)
         self.assertIn('std.noop', db_api._ACTION_DEF_CACHE)
         self.assertIn('std.echo', db_api._ACTION_DEF_CACHE)
 
@@ -110,6 +117,7 @@ class LookupUtilsTest(base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
         # Check all actions are cached again.
-        self.assertEqual(2, len(db_api._ACTION_DEF_CACHE))
-        self.assertIn('action1', db_api._ACTION_DEF_CACHE)
+        self.assertEqual(3, len(db_api._ACTION_DEF_CACHE))
+        self.assertIn('action1:test_namespace', db_api._ACTION_DEF_CACHE)
         self.assertIn('std.echo', db_api._ACTION_DEF_CACHE)
+        self.assertIn('std.echo:test_namespace', db_api._ACTION_DEF_CACHE)

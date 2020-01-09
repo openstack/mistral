@@ -1,5 +1,6 @@
 # Copyright 2015 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
+# Copyright 2020 Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,7 +23,6 @@ from mistral.engine import actions
 from mistral.engine import task_handler
 from mistral import exceptions as exc
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -31,7 +31,6 @@ def on_action_complete(action_ex, result):
     task_ex = action_ex.task_execution
 
     action = _build_action(action_ex)
-
     try:
         action.complete(result)
     except exc.MistralException as e:
@@ -87,8 +86,10 @@ def _build_action(action_ex):
     adhoc_action_name = action_ex.runtime_context.get('adhoc_action_name')
 
     if adhoc_action_name:
-        action_def = actions.resolve_action_definition(adhoc_action_name)
-
+        action_def = actions.resolve_action_definition(
+            adhoc_action_name,
+            namespace=action_ex.workflow_namespace
+        )
         return actions.AdHocAction(action_def, action_ex=action_ex)
 
     action_def = actions.resolve_action_definition(action_ex.name)
@@ -96,9 +97,9 @@ def _build_action(action_ex):
     return actions.PythonAction(action_def, action_ex=action_ex)
 
 
-def build_action_by_name(action_name):
-    action_def = actions.resolve_action_definition(action_name)
-
+def build_action_by_name(action_name, namespace=''):
+    action_def = actions.resolve_action_definition(action_name,
+                                                   namespace=namespace)
     action_cls = (actions.PythonAction if not action_def.spec
                   else actions.AdHocAction)
 
