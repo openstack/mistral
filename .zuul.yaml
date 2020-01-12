@@ -1,35 +1,4 @@
 - job:
-    name: mistral-devstack-base
-    parent: devstack
-    timeout: 7800
-    vars:
-      devstack_localrc:
-        USE_PYTHON3: true
-      devstack_plugins:
-        mistral: https://opendev.org/openstack/mistral
-        heat: https://opendev.org/openstack/heat
-      devstack_services:
-        heat: true
-        h-api: true
-        h-api-cfn: true
-        h-api-cw: true
-        h-eng: true
-      tox_environment:
-        IDENTITY_API_VERSION: 3
-        PYTHONUNBUFFERED: 'true'
-        MISTRAL_USE_MOD_WSGI: true
-        MISTRAL_RPC_IMPLEMENTATION: oslo
-        MYSQL_ROOT_PW: secretdatabase
-    required-projects:
-      - openstack/devstack
-      - openstack/devstack-gate
-      - openstack/heat
-      - openstack/mistral
-      - openstack/python-mistralclient
-      - openstack/mistral-tempest-plugin
-      - openstack/mistral-lib
-
-- job:
     name: mistral-rally-task
     parent: rally-task-mistral
     vars:
