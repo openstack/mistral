@@ -121,6 +121,7 @@ class ActionDefaultTest(base.EngineTestCase):
             'https://api.library.org/books',
             params=None,
             data=None,
+            json=None,
             headers=None,
             cookies=None,
             allow_redirects=None,
@@ -151,7 +152,7 @@ class ActionDefaultTest(base.EngineTestCase):
 
         requests.request.assert_called_with(
             'GET', 'https://api.library.org/books',
-            params=None, data=None, headers=None, cookies=None,
+            params=None, data=None, json=None, headers=None, cookies=None,
             allow_redirects=None, proxies=None, verify=None,
             auth=EXPECTED_ENV_AUTH,
             timeout=60
@@ -188,7 +189,7 @@ class ActionDefaultTest(base.EngineTestCase):
             self._assert_single_item(wf_ex.task_executions, name='task1')
 
             calls = [mock.call('GET', url, params=None, data=None,
-                               headers=None, cookies=None,
+                               json=None, headers=None, cookies=None,
                                allow_redirects=None, proxies=None,
                                auth=EXPECTED_ENV_AUTH, verify=None,
                                timeout=ENV['__actions']['std.http']['timeout'])
@@ -227,7 +228,7 @@ class ActionDefaultTest(base.EngineTestCase):
             self._assert_single_item(wf_ex.task_executions, name='task1')
 
         calls = [mock.call('GET', url, params=None, data=None,
-                           headers=None, cookies=None,
+                           json=None, headers=None, cookies=None,
                            allow_redirects=None, proxies=None,
                            auth=EXPECTED_ENV_AUTH, verify=None,
                            timeout=60)

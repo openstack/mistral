@@ -36,7 +36,7 @@ class InspectUtilsTest(base.BaseTest):
 
         http_action_params = (
             'url, method="GET", params=null, body=null, '
-            'headers=null, cookies=null, auth=null, '
+            'json=null, headers=null, cookies=null, auth=null, '
             'timeout=null, allow_redirects=null, '
             'proxies=null, verify=null'
         )
