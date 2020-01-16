@@ -1,6 +1,6 @@
-=================================
-Workflow service overview
-=================================
+=========================
+Workflow Service Overview
+=========================
 
 Mistral is a workflow service that enables setting up and scheduling tasks and
 task relations that have to be executed in a particular order, called workflows.

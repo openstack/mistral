@@ -36,7 +36,7 @@ The guidelines are based on the three main values:
 - **Communication.** When writing code we always try to create it in a way
   that it's easy to read and understand. This is important because most of
   the time developers spend on reading existing code, not writing new.
-- **Simplicity.** It makes sense to write code that use minimal means that
+- **Simplicity.** It makes sense to write code that uses minimal means that
   solves a task at hand.
 - **Flexibility.** In most cases it's better to keep options open because
   in programming there's no such thing as "done". Pretty much all code gets
@@ -164,9 +164,8 @@ Problematic Code
         return result
 
 Is this method easy to understand? Well, if this code is part of a small
-program (e.g. a 200-300 lines script) is small then it may be ok. But when
-it's a system with dozens of thousands lines of code then it has a number of
-issues.
+program (e.g. a 200-300 lines script) then it may be ok. But when it's a
+system with dozens of thousands lines of code then it has a number of issues.
 
 The most important issue is that we don't know the type of the "task" method
 argument. In order to find it we'll have to see where this method is called

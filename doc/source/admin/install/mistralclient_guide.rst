@@ -1,24 +1,31 @@
-Mistral Client Installation Guide
----------------------------------
+===========================
+Mistral Client Installation
+===========================
 
 To install ``python-mistralclient``, it is required to have ``pip``
-(in most cases). Make sure that ``pip`` is installed. Then type::
+(in most cases). Make sure that ``pip`` is installed. Then type:
+
+.. code-block:: console
 
     $ pip install python-mistralclient
 
 Or, if it is needed to install ``python-mistralclient`` from master branch,
-type::
+type:
+
+.. code-block:: console
 
     $ pip install git+https://github.com/openstack/python-mistralclient.git
 
 After ``python-mistralclient`` is installed you will see command ``mistral``
 in your environment.
 
-Configure authentication against Keystone
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure Authentication Against Keystone
+-----------------------------------------
 
 If Keystone is used for authentication in Mistral, then the environment should
-have auth variables::
+have auth variables:
+
+.. code-block:: console
 
     $ export OS_AUTH_URL=http://<Keystone_host>:5000/v2.0
     $ export OS_TENANT_NAME=tenant
@@ -27,27 +34,36 @@ have auth variables::
     $ export OS_MISTRAL_URL=http://<Mistral host>:8989/v2
       ( optional, by default URL=http://localhost:8989/v2)
 
-and in the case when you are authenticating against keystone over https::
+and in the case when you are authenticating against keystone over https:
+
+.. code-block:: console
 
     $ export OS_CACERT=<path_to_ca_cert>
 
-.. note:: In client, we can use both Keystone auth versions - v2.0 and v3.
-          But server supports only v3.
+.. note::
+    In client, we can use both Keystone auth versions - v2.0 and v3.
+    But server supports only v3.
 
-You can see the list of available commands by typing::
+You can see the list of available commands by typing:
+
+.. code-block:: console
 
     $ mistral --help
 
-To make sure Mistral client works, type::
+To make sure Mistral client works, type:
+
+.. code-block:: console
 
     $ mistral workbook-list
 
-Configure authentication against Keycloak
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure Authentication Against Keycloak
+-----------------------------------------
 
 Mistral also supports authentication against Keycloak server via OpenID Connect
 protocol.
-In order to use it on the client side the environment should look as follows::
+In order to use it on the client side the environment should look as follows:
+
+.. code-block:: console
 
     $ export MISTRAL_AUTH_TYPE=keycloak-oidc
     $ export OS_AUTH_URL=https://<Keycloak-server-host>:<Keycloak-server-port>/auth
@@ -69,34 +85,43 @@ In order to use it on the client side the environment should look as follows::
 
 Similar to Keystone OS_CACERT variable can also be added to provide a
 certification for SSL/TLS
-verification::
+verification:
+
+.. code-block:: console
 
     $ export OS_CACERT=<path_to_ca_cert>
 
 In order to disable SSL/TLS certificate verification MISTRALCLIENT_INSECURE
 variable needs to be set
-to True::
+to True:
+
+.. code-block:: console
 
     $ export MISTRALCLIENT_INSECURE=True
 
-Targeting non-preconfigured clouds
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-
+Targeting Non-preconfigured Clouds
+----------------------------------
 
 Mistral is capable of executing workflows on external OpenStack clouds,
 different from the one defined in the `mistral.conf` file in the
-`keystone_authtoken` section. (More detail in the :doc:`/configuration/index`).
+`keystone_authtoken` section. (More detail in the
+:doc:`/admin/configuration/index`).
 
 For example, if the mistral server is configured to authenticate with the
 `http://keystone1.example.com` cloud and the user wants to execute the
 workflow on the `http://keystone2.example.com` cloud.
 
-The mistral.conf will look like::
+The mistral.conf will look like:
+
+.. code-block:: console
 
     [keystone_authtoken]
     www_authenticate_uri = http://keystone1.example.com:5000/v3
     ...
 
-The client side parameters will be::
+The client side parameters will be:
+
+.. code-block:: console
 
     $ export OS_AUTH_URL=http://keystone1.example.com:5000/v3
     $ export OS_USERNAME=mistral_user
@@ -105,16 +130,17 @@ The client side parameters will be::
     $ export OS_TARGET_USERNAME=cloud_user
     ...
 
-.. note:: Every `OS_*` parameter has an `OS_TARGET_*` correspondent. For more
-          detail, check out `mistral --help`
+.. note::
+    Every `OS_*` parameter has an `OS_TARGET_*` correspondent. For more
+    detail, check out `mistral --help`
 
 The `OS_*` parameters are used to authenticate and authorize the user with
 Mistral, that is, to check if the user is allowed to utilize the Mistral
 service. Whereas the `OS_TARGET_*` parameters are used to define the user that
-executes the workflow on the external cloud, keystone2.example.com/.
+executes the workflow on the external cloud, keystone2.example.com.
 
 Use cases
-"""""""""
+^^^^^^^^^
 
 **Authenticate in Mistral and execute OpenStack actions with different users**
 
@@ -126,7 +152,7 @@ cloud.
 As a user of Mistral, I want to execute a workflow on a cloud of my choice.
 
 Special cases
-"""""""""""""
+^^^^^^^^^^^^^
 
 **Using Mistral with zero OpenStack configuration**:
 
@@ -138,7 +164,9 @@ If authentication is turned off in the Mistral server (Pecan's
 OpenStack cloud even when it isn't deployed in an OpenStack environment (i.e.
 no Keystone integration).
 
-With this setup, the following call will return the heat stack list::
+With this setup, the following call will return the heat stack list:
+
+.. code-block:: console
 
     $ mistral \
         --os-target-auth-url=http://keystone2.example.com:5000/v3 \

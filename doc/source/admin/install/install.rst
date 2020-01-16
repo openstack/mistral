@@ -1,7 +1,8 @@
 .. _install:
 
+=====================
 Install and configure
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 This section describes how to install and configure the
 Workflow Service, code-named mistral, on the controller node.
@@ -19,6 +20,6 @@ Note that installation and configuration vary by distribution.
 .. toctree::
    :maxdepth: 2
 
-   install-ubuntu.rst
-   install-rdo.rst
-   install-obs.rst
+   install-ubuntu
+   install-rdo
+   install-obs

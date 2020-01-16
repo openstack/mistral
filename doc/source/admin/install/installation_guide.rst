@@ -1,3 +1,4 @@
+==========================
 Mistral Installation Guide
 ==========================
 
@@ -32,7 +33,7 @@ Installation
 ------------
 
 **NOTE**: If it is needed to install Mistral using devstack, please refer to
-:doc:`Mistral Devstack Installation </contributor/devstack>`
+:doc:`Mistral Devstack Installation </developer/contributor/devstack>`
 
 First of all, clone the repo and go to the repo directory::
 
@@ -50,7 +51,7 @@ Generate config::
 Configure Mistral as needed. The configuration file is located in
 ``etc/mistral.conf.sample``. You will need to modify the configuration options
 and then copy it into ``/etc/mistral/mistral.conf``.
-For details see :doc:`Mistral Configuration Guide </configuration/index>`
+For details see :doc:`Mistral Configuration Guide </admin/configuration/index>`
 
 **Virtualenv installation**::
 
@@ -452,4 +453,4 @@ execute mistral commands.
 Mistral Client Installation
 ---------------------------
 
-Please refer to :doc:`Mistral Client / CLI Guide <../cli/index>`
+Please refer to :doc:`Mistral Client / CLI Guide </user/cli/index>`

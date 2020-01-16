@@ -1,12 +1,11 @@
 .. _install-ubuntu:
 
-Install and configure for Ubuntu
+================================
+Install and Configure for Ubuntu
 ================================
 
 This section describes how to install and configure the Workflow Service
 service for Ubuntu.
-
-
 
 Prerequisites
 -------------
@@ -20,13 +19,11 @@ Prerequisites
       # apt-get install python-setuptools python-pip libffi-dev libxslt1-dev \
         libxml2-dev libyaml-dev libssl-dev python3-dev tox mistral-common
 
-
-
 Installation
 ------------
 
 **NOTE**: For instructions on how to install Mistral using devstack, refer to
-:doc:`Mistral Devstack Installation </contributor/devstack>`
+:doc:`Mistral Devstack Installation </developer/contributor/devstack>`
 
 Clone the repo and go to the repo directory:
 
@@ -86,11 +83,14 @@ or the EasyInstall tool, however, it does not actually install anything.
 Instead, it creates a special .egg-link file in the deployment directory that
 links to your project’s source code.
 
+Configuring Mistral
+-------------------
 
-.. include:: ../configuration/index.rst
+Refer :doc:`../configuration/index` to find general information on how to
+configure Mistral server.
 
 
-Before the first run
+Before The First Run
 --------------------
 
 After the installation, you will see the **mistral-server** and
@@ -196,8 +196,11 @@ get delivered if the Mistral servers are launched on different processes
 because the "fake" transport is using an in-process queue.
 
 
-.. include:: mistralclient_guide.rst
+Mistral Client Installation
+---------------------------
 
+Refer :doc:`/admin/install/mistralclient_guide` to find out how to install
+Mistral Client.
 
 Finalize installation
 ---------------------

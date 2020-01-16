@@ -1,3 +1,4 @@
+=====================
 Mistral Main Features
 =====================
 
@@ -348,4 +349,4 @@ Mistral allows creating workflows within a namespace. So it is possible to
 create many workflows with the same name as long as they are in different
 namespaces.
 
-See more at :doc:`Workflow namespaces <user/wf_namespaces>`
+See more at :doc:`Workflow namespaces </user/wf_namespaces>`
