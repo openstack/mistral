@@ -14,7 +14,11 @@
 
 import os
 
+from cachetools import cached
+from cachetools import LRUCache
+import json
 import jwt
+from jwt import algorithms as jwt_algos
 from oslo_config import cfg
 from oslo_log import log as logging
 import pprint
@@ -32,31 +36,34 @@ CONF = cfg.CONF
 
 
 class KeycloakAuthHandler(auth.AuthHandler):
-
     def authenticate(self, req):
-        certfile = CONF.keycloak_oidc.certfile
-        keyfile = CONF.keycloak_oidc.keyfile
-        cafile = CONF.keycloak_oidc.cafile or self.get_system_ca_file()
-        insecure = CONF.keycloak_oidc.insecure
-
         if 'X-Auth-Token' not in req.headers:
             msg = _("Auth token must be provided in 'X-Auth-Token' header.")
+
             LOG.error(msg)
+
             raise exc.UnauthorizedException(message=msg)
+
         access_token = req.headers.get('X-Auth-Token')
 
         try:
-            decoded = jwt.decode(access_token, algorithms=['RS256'],
-                                 verify=False)
+            decoded = jwt.decode(
+                access_token,
+                algorithms=['RS256'],
+                verify=False
+            )
         except Exception as e:
             msg = _("Token can't be decoded because of wrong format %s")\
                 % str(e)
+
             LOG.error(msg)
+
             raise exc.UnauthorizedException(message=msg)
 
         # Get user realm from parsed token
         # Format is "iss": "http://<host>:<port>/auth/realms/<realm_name>",
         __, __, realm_name = decoded['iss'].strip().rpartition('/realms/')
+        audience = decoded.get('aud')
 
         # Get roles from parsed token
         roles = ','.join(decoded['realm_access']['roles']) \
@@ -70,46 +77,31 @@ class KeycloakAuthHandler(auth.AuthHandler):
         user_info_endpoint_url = CONF.keycloak_oidc.user_info_endpoint_url
 
         if user_info_endpoint_url.startswith(('http://', 'https://')):
-            user_info_endpoint = user_info_endpoint_url
-        else:
-            user_info_endpoint = (
-                ("%s" + user_info_endpoint_url) %
-                (CONF.keycloak_oidc.auth_url, realm_name))
-
-        verify = None
-        if urllib.parse.urlparse(user_info_endpoint).scheme == "https":
-            verify = False if insecure else cafile
-
-        cert = (certfile, keyfile) if certfile and keyfile else None
-
-        try:
-            resp = requests.get(
-                user_info_endpoint,
-                headers={"Authorization": "Bearer %s" % access_token},
-                verify=verify,
-                cert=cert
+            self.send_request_to_auth_server(
+                url=user_info_endpoint_url,
+                access_token=access_token
             )
-        except requests.ConnectionError:
-            msg = _("Can't connect to keycloak server with address '%s'."
-                    ) % CONF.keycloak_oidc.auth_url
-            LOG.error(msg)
-            raise exc.MistralException(message=msg)
-
-        if resp.status_code == 401:
-            LOG.warning("HTTP response from OIDC provider:"
-                        " [%s] with WWW-Authenticate: [%s]",
-                        pprint.pformat(resp.text),
-                        resp.headers.get("WWW-Authenticate"))
         else:
-            LOG.debug("HTTP response from OIDC provider: %s",
-                      pprint.pformat(resp.text))
+            public_key = self.get_public_key(realm_name)
 
-        resp.raise_for_status()
+            keycloak_iss = None
 
-        LOG.debug(
-            "HTTP response from OIDC provider: %s",
-            pprint.pformat(resp.json())
-        )
+            try:
+                if CONF.keycloak_oidc.keycloak_iss:
+                    keycloak_iss = CONF.keycloak_oidc.keycloak_iss % realm_name
+
+                jwt.decode(
+                    access_token,
+                    public_key,
+                    audience=audience,
+                    issuer=keycloak_iss,
+                    algorithms=['RS256'],
+                    verify=True
+                )
+            except Exception:
+                LOG.exception('The request access token is invalid.')
+
+                raise exc.UnauthorizedException()
 
         req.headers["X-Identity-Status"] = "Confirmed"
         req.headers["X-Project-Id"] = realm_name
@@ -119,16 +111,95 @@ class KeycloakAuthHandler(auth.AuthHandler):
     def get_system_ca_file():
         """Return path to system default CA file."""
         # Standard CA file locations for Debian/Ubuntu, RedHat/Fedora,
-        # Suse, FreeBSD/OpenBSD, MacOSX, and the bundled ca
-        ca_path = ['/etc/ssl/certs/ca-certificates.crt',
-                   '/etc/pki/tls/certs/ca-bundle.crt',
-                   '/etc/ssl/ca-bundle.pem',
-                   '/etc/ssl/cert.pem',
-                   '/System/Library/OpenSSL/certs/cacert.pem',
-                   requests.certs.where()]
+        # Suse, FreeBSD/OpenBSD, MacOSX, and the bundled ca.
+        ca_path = [
+            '/etc/ssl/certs/ca-certificates.crt',
+            '/etc/pki/tls/certs/ca-bundle.crt',
+            '/etc/ssl/ca-bundle.pem',
+            '/etc/ssl/cert.pem',
+            '/System/Library/OpenSSL/certs/cacert.pem',
+            requests.certs.where()
+        ]
+
         for ca in ca_path:
             LOG.debug("Looking for ca file %s", ca)
+
             if os.path.exists(ca):
                 LOG.debug("Using ca file %s", ca)
+
                 return ca
+
         LOG.warning("System ca file could not be found.")
+
+    @cached(LRUCache(maxsize=32))
+    def get_public_key(self, realm_name):
+        keycloak_key_url = (
+            CONF.keycloak_oidc.auth_url +
+            CONF.keycloak_oidc.public_cert_url % realm_name
+        )
+
+        response_json = self.send_request_to_auth_server(keycloak_key_url)
+
+        keys = response_json.get('keys')
+
+        if not keys:
+            raise exc.MistralException(
+                'Unexpected response structure from the keycloak server.'
+            )
+
+        public_key = jwt_algos.RSAAlgorithm.from_jwk(
+            json.dumps(keys[0])
+        )
+
+        return public_key
+
+    def send_request_to_auth_server(self, url, access_token=None):
+        certfile = CONF.keycloak_oidc.certfile
+        keyfile = CONF.keycloak_oidc.keyfile
+        cafile = CONF.keycloak_oidc.cafile or self.get_system_ca_file()
+        insecure = CONF.keycloak_oidc.insecure
+
+        verify = None
+
+        if urllib.parse.urlparse(url).scheme == "https":
+            verify = False if insecure else cafile
+
+        cert = (certfile, keyfile) if certfile and keyfile else None
+
+        headers = {}
+
+        if access_token:
+            headers["Authorization"] = "Bearer %s" % access_token
+
+        try:
+            resp = requests.get(
+                url,
+                headers=headers,
+                verify=verify,
+                cert=cert
+            )
+        except requests.ConnectionError:
+            msg = _(
+                "Can't connect to the keycloak server with address '%s'."
+            ) % url
+
+            LOG.exception(msg)
+
+            raise exc.MistralException(message=msg)
+
+        if resp.status_code == 401:
+            LOG.warning(
+                "HTTP response from OIDC provider:"
+                " [%s] with WWW-Authenticate: [%s]",
+                pprint.pformat(resp.text),
+                resp.headers.get("WWW-Authenticate")
+            )
+        else:
+            LOG.debug(
+                "HTTP response from the OIDC provider: %s",
+                pprint.pformat(resp.json())
+            )
+
+        resp.raise_for_status()
+
+        return resp.json()

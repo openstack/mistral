@@ -546,6 +546,16 @@ keycloak_oidc_opts = [
         default='/realms/%s/protocol/openid-connect/userinfo',
         help='Endpoint against which authorization will be performed'
     ),
+    cfg.StrOpt(
+        'public_cert_url',
+        default="/realms/%s/protocol/openid-connect/certs",
+        help="URL to get the public key for a particular realm"
+    ),
+    cfg.StrOpt(
+        'keycloak_iss',
+        help="Keycloak issuer(iss) url. "
+             "Example: https://ip_add:port/auth/realms/%s"
+    )
 ]
 
 openstack_actions_opts = [
