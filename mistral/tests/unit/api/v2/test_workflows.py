@@ -16,6 +16,7 @@
 import copy
 import datetime
 
+import json
 import mock
 import sqlalchemy as sa
 import yaml
@@ -59,7 +60,8 @@ WF = {
     'definition': WF_DEFINITION,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'input': 'param1'
+    'input': 'param1',
+    'interface': {"output": [], "input": ["param1"]}
 }
 
 WF_DB_WITHIN_ABC_NAMESPACE = models.WorkflowDefinition(
@@ -79,7 +81,8 @@ WF_WITH_NAMESPACE = {
     'definition': WF_DEFINITION,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'input': 'param1'
+    'input': 'param1',
+    'interface': {'input': ['param1'], 'output': []}
 }
 
 WF_DEFINITION_WITH_INPUT = """
@@ -110,7 +113,11 @@ WF_WITH_DEFAULT_INPUT = {
     'definition': WF_DEFINITION_WITH_INPUT,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'input': 'param1, param2=2'
+    'input': 'param1, param2=2',
+    'interface': {
+        "input": ["param1", {"param2": 2}],
+        "output": []
+    }
 }
 
 WF_DB_PROJECT_ID = WF_DB.get_clone()
@@ -250,8 +257,11 @@ class TestWorkflowsController(base.APITest):
     def test_get(self):
         resp = self.app.get('/v2/workflows/123')
 
+        resp_json = resp.json
+        resp_json['interface'] = json.loads(resp_json['interface'])
+
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(WF, resp.json)
+        self.assertDictEqual(WF, resp_json)
 
     @mock.patch.object(db_api, 'get_workflow_definition')
     def test_get_operational_error(self, mocked_get):
@@ -263,8 +273,11 @@ class TestWorkflowsController(base.APITest):
 
         resp = self.app.get('/v2/workflows/123')
 
+        resp_json = resp.json
+        resp_json['interface'] = json.loads(resp_json['interface'])
+
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(WF, resp.json)
+        self.assertDictEqual(WF, resp_json)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_WF_WITH_INPUT)
     def test_get_with_input(self):
@@ -272,8 +285,11 @@ class TestWorkflowsController(base.APITest):
 
         self.maxDiff = None
 
+        resp_json = resp.json
+        resp_json['interface'] = json.loads(resp_json['interface'])
+
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(WF_WITH_DEFAULT_INPUT, resp.json)
+        self.assertDictEqual(WF_WITH_DEFAULT_INPUT, resp_json)
 
     @mock.patch.object(db_api, "get_workflow_definition", MOCK_NOT_FOUND)
     def test_get_not_found(self):
@@ -416,6 +432,9 @@ class TestWorkflowsController(base.APITest):
 
     @mock.patch.object(db_api, "update_workflow_definition")
     def test_put_multiple(self, mock_mtd):
+        spec_mock = mock_mtd.return_value.get.return_value
+        spec_mock.get.return_value = {}
+
         self.app.put(
             '/v2/workflows',
             WFS_DEFINITION,
@@ -499,6 +518,9 @@ class TestWorkflowsController(base.APITest):
 
     @mock.patch.object(db_api, "create_workflow_definition")
     def test_post_multiple(self, mock_mtd):
+        spec_mock = mock_mtd.return_value.get.return_value
+        spec_mock.get.return_value = {}
+
         self.app.post(
             '/v2/workflows',
             WFS_DEFINITION,
@@ -564,8 +586,11 @@ class TestWorkflowsController(base.APITest):
 
         self.assertEqual(200, resp.status_int)
 
+        resp_json = resp.json['workflows'][0]
+        resp_json['interface'] = json.loads(resp_json['interface'])
+
         self.assertEqual(1, len(resp.json['workflows']))
-        self.assertDictEqual(WF, resp.json['workflows'][0])
+        self.assertDictEqual(WF, resp_json)
 
     @mock.patch.object(db_api, 'get_workflow_definitions')
     def test_get_all_operational_error(self, mocked_get_all):
@@ -577,10 +602,13 @@ class TestWorkflowsController(base.APITest):
 
         resp = self.app.get('/v2/workflows')
 
-        self.assertEqual(200, resp.status_int)
+        resp_workflow_json = resp.json['workflows'][0]
+        resp_workflow_json['interface'] = \
+            json.loads(resp_workflow_json['interface'])
 
+        self.assertEqual(200, resp.status_int)
         self.assertEqual(1, len(resp.json['workflows']))
-        self.assertDictEqual(WF, resp.json['workflows'][0])
+        self.assertDictEqual(WF, resp_workflow_json)
 
     @mock.patch.object(db_api, "get_workflow_definitions", MOCK_EMPTY)
     def test_get_all_empty(self):
@@ -619,8 +647,12 @@ class TestWorkflowsController(base.APITest):
 
         self.assertIn('next', resp.json)
 
+        resp_workflow_json = resp.json['workflows'][0]
+        resp_workflow_json['interface'] = \
+            json.loads(resp_workflow_json['interface'])
+
         self.assertEqual(1, len(resp.json['workflows']))
-        self.assertDictEqual(WF, resp.json['workflows'][0])
+        self.assertDictEqual(WF, resp_workflow_json)
 
         param_dict = utils.get_dict_from_string(
             resp.json['next'].split('?')[1],
@@ -699,6 +731,17 @@ class TestWorkflowsController(base.APITest):
 
     @mock.patch('mistral.db.v2.api.get_workflow_definitions')
     def test_get_all_with_fields_input_filter(self, mock_get_db_wfs):
+        expected_dict = {
+            'id': '65df1f59-938f-4c17-bc2a-562524ef5e40',
+            'input': 'param1, param2=2',
+            'interface': {
+                "output": [],
+                "input": ["param1",
+                          {"param2": 2}
+                          ]
+            }
+        }
+
         def mock_get_defintions(fields=None, session=None, **kwargs):
             if fields and 'input' in fields:
                 fields.remove('input')
@@ -716,12 +759,11 @@ class TestWorkflowsController(base.APITest):
         self.assertEqual(200, resp.status_int)
         self.assertEqual(1, len(resp.json['workflows']))
 
-        expected_dict = {
-            'id': '65df1f59-938f-4c17-bc2a-562524ef5e40',
-            'input': 'param1, param2=2'
-        }
+        resp_workflow_json = resp.json['workflows'][0]
+        resp_workflow_json['interface'] = \
+            json.loads(resp_workflow_json['interface'])
 
-        self.assertDictEqual(expected_dict, resp.json['workflows'][0])
+        self.assertDictEqual(expected_dict, resp_workflow_json)
 
     def test_get_all_with_invalid_field(self):
         resp = self.app.get(

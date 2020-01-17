@@ -29,6 +29,7 @@ SCOPE_TYPES = wtypes.Enum(str, 'private', 'public')
 
 class ScopedResource(object):
     """Utilities for scoped resources"""
+
     @classmethod
     def validate_scope(cls, scope):
         if scope not in SCOPE_TYPES.values:
@@ -60,7 +61,7 @@ class Workbook(resource.Resource, ScopedResource):
         return cls(id='123e4567-e89b-12d3-a456-426655440000',
                    name='book',
                    definition='HERE GOES'
-                        'WORKBOOK DEFINITION IN MISTRAL DSL v2',
+                              'WORKBOOK DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
                    project_id='a7eb669e9819420ea4bd1453e672c0a7',
@@ -91,9 +92,10 @@ class Workflow(resource.Resource, ScopedResource):
     name = wtypes.text
     namespace = wtypes.text
     input = wtypes.text
-
+    interface = types.jsontype
+    "input and output of the workflow"
     definition = wtypes.text
-    "Workflow definition in Mistral v2 DSL"
+    "workflow text written in Mistral v2 language"
     tags = [wtypes.text]
     scope = SCOPE_TYPES
     "'private' or 'public'"
@@ -108,16 +110,23 @@ class Workflow(resource.Resource, ScopedResource):
                    name='flow',
                    input='param1, param2',
                    definition='HERE GOES'
-                        'WORKFLOW DEFINITION IN MISTRAL DSL v2',
+                              'WORKFLOW DEFINITION IN MISTRAL DSL v2',
                    tags=['large', 'expensive'],
                    scope='private',
                    project_id='a7eb669e9819420ea4bd1453e672c0a7',
                    created_at='1970-01-01T00:00:00.000000',
                    updated_at='1970-01-01T00:00:00.000000',
-                   namespace='')
+                   namespace='',
+                   interface={"input": ["param1", {"param2": 2}],
+                              "output": []}
+                   )
 
-    @classmethod
-    def _set_input(cls, obj, wf_spec):
+    def _set_attributes_from_spec(self, wf_spec):
+        #  Sets input and interface fields for the Workflow resource.
+        self._set_input(wf_spec)
+        self._set_interface(wf_spec)
+
+    def _set_input(self, wf_spec):
         input_list = []
 
         if wf_spec:
@@ -130,35 +139,45 @@ class Workflow(resource.Resource, ScopedResource):
                 else:
                     input_list.append(param)
 
-            setattr(obj, 'input', ", ".join(input_list) if input_list else '')
+            self.input = ", ".join(input_list) if input_list else ''
 
-        return obj
+    def _set_interface(self, wf_spec):
+        self.interface = {}
+
+        if wf_spec:
+            self.interface['input'] = wf_spec.get('input', [])
+            self.interface['output'] = [output for output
+                                        in wf_spec.get('output', {})]
 
     @classmethod
     def from_dict(cls, d):
         obj = super(Workflow, cls).from_dict(d)
+        obj._set_attributes_from_spec(d.get('spec'))
 
-        return cls._set_input(obj, d.get('spec'))
+        return obj
 
     @classmethod
     def from_db_model(cls, db_model):
         obj = super(Workflow, cls).from_db_model(db_model)
+        obj._set_attributes_from_spec(db_model.get('spec'))
 
-        return cls._set_input(obj, db_model.spec)
+        return obj
 
     @classmethod
     def from_tuples(cls, tuple_iterator):
         obj = cls()
         spec = None
+
         for col_name, col_val in tuple_iterator:
             if hasattr(obj, col_name):
                 # Convert all datetime values to strings.
                 setattr(obj, col_name, utils.datetime_to_str(col_val))
+
             if col_name == 'spec':
                 spec = col_val
 
         if spec:
-            obj = cls._set_input(obj, spec)
+            obj._set_attributes_from_spec(spec)
 
         return obj
 

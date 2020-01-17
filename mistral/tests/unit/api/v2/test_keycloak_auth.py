@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import datetime
+import json
 import mock
 import pecan
 import pecan.testing
@@ -70,7 +71,8 @@ WF = {
     'definition': WF_DEFINITION,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'input': 'param1'
+    'input': 'param1',
+    'interface': {"input": ["param1"], "output": []}
 }
 
 
@@ -296,8 +298,11 @@ class TestKeyCloakOIDCAuthScenarios(base.DbTestCase):
         with mock.patch("jwt.decode", return_value=token):
             resp = self.app.get('/v2/workflows/123', headers=headers)
 
+        resp_json = resp.json
+        resp_json['interface'] = json.loads(resp_json['interface'])
+
         self.assertEqual(200, resp.status_code)
-        self.assertDictEqual(WF, resp.json)
+        self.assertDictEqual(WF, resp_json)
 
     @mock.patch("requests.get")
     @mock.patch.object(db_api, 'get_workflow_definition', MOCK_WF)
