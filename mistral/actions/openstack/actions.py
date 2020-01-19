@@ -906,21 +906,25 @@ class GnocchiAction(base.OpenStackAction):
         return gnocchiclient.Client
 
     def _create_client(self, context):
-
         LOG.debug("Gnocchi action security context: %s", context)
 
-        gnocchi_endpoint = self.get_service_endpoint()
+        gnocchi_endpoint = keystone_utils.get_endpoint_for_project(
+            service_type="metric")
+        keystone_endpoint = keystone_utils.get_keystone_endpoint()
 
-        endpoint_url = keystone_utils.format_url(
-            gnocchi_endpoint.url,
-            {'tenant_id': context.project_id}
+        auth = ks_identity_v3.Token(
+            auth_url=keystone_endpoint.url,
+            tenant_name=context.user_name,
+            token=context.auth_token,
+            tenant_id=context.project_id
         )
 
         return self._get_client_class()(
-            endpoint_url,
-            region_name=gnocchi_endpoint.region,
-            token=context.auth_token,
-            username=context.user_name
+            adapter_options={"region_name": gnocchi_endpoint.region,
+                             "project_id": context.project_id,
+                             "endpoint": gnocchi_endpoint.url,
+                             "insecure": context.insecure},
+            session_options={"auth": auth}
         )
 
     @classmethod
