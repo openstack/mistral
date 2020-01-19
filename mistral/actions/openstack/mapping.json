@@ -415,7 +415,7 @@
         "archive_policy_rule_create": "archive_policy_rule.create",
         "archive_policy_rule_delete": "archive_policy_rule.delete",
         "archive_policy_rule_get": "archive_policy_rule.get",
-        "archive_polociy_rule_list": "archive_policy_rule.list",
+        "archive_policy_rule_list": "archive_policy_rule.list",
         "capabilities_list": "capabilities.list",
         "measures_add": "metric.add_measures",
         "metric_batch_metrics_measures": "metric.batch_metrics_measures",
