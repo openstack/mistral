@@ -113,7 +113,7 @@ WF_WITH_DEFAULT_INPUT = {
     'definition': WF_DEFINITION_WITH_INPUT,
     'created_at': '1970-01-01 00:00:00',
     'updated_at': '1970-01-01 00:00:00',
-    'input': 'param1, param2=2',
+    'input': 'param1, param2="2"',
     'interface': {
         "input": ["param1", {"param2": 2}],
         "output": []
@@ -733,7 +733,7 @@ class TestWorkflowsController(base.APITest):
     def test_get_all_with_fields_input_filter(self, mock_get_db_wfs):
         expected_dict = {
             'id': '65df1f59-938f-4c17-bc2a-562524ef5e40',
-            'input': 'param1, param2=2',
+            'input': 'param1, param2="2"',
             'interface': {
                 "output": [],
                 "input": ["param1",
