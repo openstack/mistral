@@ -26,6 +26,7 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api import access_control as acl
 from mistral.api.controllers.v2 import execution_report
 from mistral.api.controllers.v2 import resources
+from mistral.api.controllers.v2 import sub_execution
 from mistral.api.controllers.v2 import task
 from mistral.api.controllers.v2 import types
 from mistral import context
@@ -86,6 +87,7 @@ def _get_workflow_execution(id, must_exist=True):
 class ExecutionsController(rest.RestController):
     tasks = task.ExecutionTasksController()
     report = execution_report.ExecutionReportController()
+    executions = sub_execution.SubExecutionsController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Execution, wtypes.text)

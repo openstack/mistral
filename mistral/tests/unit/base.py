@@ -139,6 +139,9 @@ class BaseTest(base.BaseTestCase):
     def _assert_single_item(self, items, **props):
         return self._assert_multiple_items(items, 1, **props)[0]
 
+    def _assert_no_item(self, items, **props):
+        self._assert_multiple_items(items, 0, **props)
+
     def _assert_multiple_items(self, items, count, **props):
         def _matches(item, **props):
             for prop_name, prop_val in props.items():
