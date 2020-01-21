@@ -21,7 +21,6 @@ Configuration options registration and useful routines.
 
 import itertools
 import json
-import os
 
 from keystoneauth1 import loading
 from oslo_config import cfg
@@ -558,39 +557,6 @@ keycloak_oidc_opts = [
     )
 ]
 
-openstack_actions_opts = [
-    cfg.StrOpt(
-        'os-actions-endpoint-type',
-        default=os.environ.get('OS_ACTIONS_ENDPOINT_TYPE', 'public'),
-        choices=['public', 'admin', 'internal'],
-        deprecated_group='DEFAULT',
-        help=_('Type of endpoint in identity service catalog to use for'
-               ' communication with OpenStack services.')
-    ),
-    cfg.ListOpt(
-        'modules-support-region',
-        default=['nova', 'glance', 'heat', 'neutron', 'cinder',
-                 'trove', 'ironic', 'designate', 'murano', 'tacker', 'senlin',
-                 'aodh', 'gnocchi'],
-        help=_('List of module names that support region in actions.')
-    ),
-    cfg.StrOpt(
-        'default_region',
-        help=_('Default region name for openstack actions supporting region.')
-    ),
-]
-
-# note: this command line option is used only from sync_db and
-# mistral-db-manage
-os_actions_mapping_path = cfg.StrOpt(
-    'openstack_actions_mapping_path',
-    short='m',
-    metavar='MAPPING_PATH',
-    default='actions/openstack/mapping.json',
-    help='Path to openstack action mapping json file.'
-         'It could be relative to mistral package '
-         'directory or absolute.'
-)
 
 yaql_opts = [
     cfg.IntOpt(
@@ -692,7 +658,6 @@ EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 ACTION_HEARTBEAT_GROUP = 'action_heartbeat'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
-OPENSTACK_ACTIONS_GROUP = 'openstack_actions'
 YAQL_GROUP = "yaql"
 KEYSTONE_GROUP = "keystone"
 
@@ -725,7 +690,6 @@ CONF.register_opts(pecan_opts, group=PECAN_GROUP)
 CONF.register_opts(coordination_opts, group=COORDINATION_GROUP)
 CONF.register_opts(profiler_opts, group=PROFILER_GROUP)
 CONF.register_opts(keycloak_oidc_opts, group=KEYCLOAK_OIDC_GROUP)
-CONF.register_opts(openstack_actions_opts, group=OPENSTACK_ACTIONS_GROUP)
 CONF.register_opts(yaql_opts, group=YAQL_GROUP)
 loading.register_session_conf_options(CONF, KEYSTONE_GROUP)
 
@@ -773,7 +737,6 @@ def list_opts():
         (EXECUTION_EXPIRATION_POLICY_GROUP, execution_expiration_policy_opts),
         (PROFILER_GROUP, profiler_opts),
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
-        (OPENSTACK_ACTIONS_GROUP, openstack_actions_opts),
         (YAQL_GROUP, yaql_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
         (None, default_group_opts)

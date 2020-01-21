@@ -161,6 +161,13 @@ function install_mistral_lib {
     fi
 }
 
+function install_mistral_extra {
+    if use_library_from_git "mistral-extra"; then
+        git_clone $MISTRAL_EXTRA_REPO $MISTRAL_EXTRA_DIR $MISTRAL_EXTRA_BRANCH
+        setup_develop $MISTRAL_EXTRA_DIR
+    fi
+}
+
 # start_mistral - Start running processes
 function start_mistral {
     # If the site is not enabled then we are in a grenade scenario
@@ -255,6 +262,7 @@ if is_service_enabled mistral; then
         echo_summary "Installing mistral"
         install_mistral
         install_mistral_lib
+        install_mistral_extra
         install_mistral_pythonclient
     elif [[ "$1" == "stack" && "$2" == "post-config" ]]; then
         echo_summary "Configuring mistral"

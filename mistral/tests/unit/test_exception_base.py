@@ -16,7 +16,7 @@ import six
 
 from mistral import exceptions
 from mistral.tests.unit import base
-from mistral.utils import inspect_utils
+from mistral_lib.utils import inspect_utils
 
 
 class ExceptionTest(base.BaseTest):

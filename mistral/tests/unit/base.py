@@ -25,7 +25,6 @@ from oslo_log import log as logging
 from oslotest import base
 import testtools.matchers as ttm
 
-from mistral import config
 from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.sqlalchemy import sqlite_lock
@@ -34,8 +33,8 @@ from mistral.lang import parser as spec_parser
 from mistral.services import action_manager
 from mistral.services import security
 from mistral.tests.unit import config as test_config
-from mistral.utils import inspect_utils as i_utils
 from mistral import version
+from mistral_lib.utils import inspect_utils as i_utils
 
 RESOURCES_PATH = 'tests/resources/'
 LOG = logging.getLogger(__name__)
@@ -265,14 +264,6 @@ class DbTestCase(BaseTest):
         if cfg.CONF.database.connection.startswith('sqlite'):
             cfg.CONF.set_default('connection', 'sqlite://', group='database')
 
-        # This option is normally registered in sync_db.py so we have to
-        # register it here specifically for tests.
-        cfg.CONF.register_opt(config.os_actions_mapping_path)
-
-        cfg.CONF.set_default(
-            'openstack_actions_mapping_path',
-            'tests/resources/openstack/test_mapping.json'
-        )
         cfg.CONF.set_default('max_overflow', -1, group='database')
         cfg.CONF.set_default('max_pool_size', 1000, group='database')
 
