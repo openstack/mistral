@@ -87,6 +87,7 @@ class HTTPActionTest(base.BaseTest):
             'POST',
             URL,
             data=DATA_STR,
+            json=None,
             headers=None,
             cookies=None,
             params=None,

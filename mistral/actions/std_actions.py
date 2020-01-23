@@ -16,7 +16,7 @@
 from email import header
 from email.mime import multipart
 from email.mime import text
-import json
+import json as json_lib
 import smtplib
 import time
 
@@ -131,6 +131,8 @@ class HTTPAction(actions.Action):
         query string for the HTTP request.
     :param body: (optional) Dictionary, bytes, or file-like object to send
         in the body of the HTTP request.
+    :param json: (optional) A JSON serializable Python object to send
+        in the body of the HTTP request.
     :param headers: (optional) Dictionary of HTTP Headers to send with
         the HTTP request.
     :param cookies: (optional) Dict or CookieJar object to send with
@@ -152,6 +154,7 @@ class HTTPAction(actions.Action):
                  method="GET",
                  params=None,
                  body=None,
+                 json=None,
                  headers=None,
                  cookies=None,
                  auth=None,
@@ -171,10 +174,16 @@ class HTTPAction(actions.Action):
                 if isinstance(val, (six.integer_types, float)):
                     headers[key] = str(val)
 
+        if body and json:
+            raise exc.ActionException(
+                "Only one of the parameters 'json' and 'body' can be passed"
+            )
+
         self.url = url
         self.method = method
         self.params = params
-        self.body = json.dumps(body) if isinstance(body, dict) else body
+        self.body = json_lib.dumps(body) if isinstance(body, dict) else body
+        self.json = json
         self.headers = headers
         self.cookies = cookies
         self.timeout = timeout
@@ -185,13 +194,14 @@ class HTTPAction(actions.Action):
     def run(self, context):
         LOG.info(
             "Running HTTP action "
-            "[url=%s, method=%s, params=%s, body=%s, headers=%s,"
-            " cookies=%s, auth=%s, timeout=%s, allow_redirects=%s,"
-            " proxies=%s, verify=%s]",
+            "[url=%s, method=%s, params=%s, body=%s, json=%s,"
+            " headers=%s, cookies=%s, auth=%s, timeout=%s,"
+            " allow_redirects=%s, proxies=%s, verify=%s]",
             self.url,
             self.method,
             self.params,
             self.body,
+            self.json,
             self.headers,
             self.cookies,
             self.auth,
@@ -213,6 +223,7 @@ class HTTPAction(actions.Action):
                 self.url,
                 params=self.params,
                 data=self.body,
+                json=self.json,
                 headers=self.headers,
                 cookies=self.cookies,
                 auth=self.auth,
@@ -445,7 +456,7 @@ class SSHAction(actions.Action):
             return raise_exc(parent_exc=e)
 
     def test(self, context):
-        return json.dumps(self.params)
+        return json_lib.dumps(self.params)
 
 
 class SSHProxiedAction(SSHAction):

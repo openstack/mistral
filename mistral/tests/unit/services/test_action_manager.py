@@ -23,7 +23,7 @@ class ActionManagerTest(base.DbTestCase):
 
         http_action_input = (
             'url, method="GET", params=null, body=null, '
-            'headers=null, cookies=null, auth=null, '
+            'json=null, headers=null, cookies=null, auth=null, '
             'timeout=null, allow_redirects=null, '
             'proxies=null, verify=null'
         )
