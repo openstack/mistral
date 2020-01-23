@@ -144,6 +144,23 @@ test_workflow:
 
 """
 
+WORKFLOWS_WITH_KEY_ORDER = """
+---
+version: '2.0'
+
+wf1:
+  tasks:
+    task1:
+      publish:
+        we: 1
+        dont_want: 2
+        to_be_sorted: 3
+wf2:
+  tasks:
+    task1:
+      action: std.noop
+"""
+
 
 class WorkflowServiceTest(base.DbTestCase):
     def test_create_workflows(self):
@@ -165,6 +182,23 @@ class WorkflowServiceTest(base.DbTestCase):
 
         self.assertEqual('wf2', wf2_spec.get_name())
         self.assertEqual('direct', wf2_spec.get_type())
+
+    def test_preserve_key_ordering_in_workflow_definition(self):
+        db_wfs = wf_service.create_workflows(WORKFLOWS_WITH_KEY_ORDER)
+
+        self.assertEqual(2, len(db_wfs))
+
+        wf1_db = self._assert_single_item(db_wfs, name='wf1')
+        wf1_def = wf1_db.definition
+        published_values = wf1_def.splitlines()[-3:]
+        wf1_publish = [
+            item.strip()
+            for item in published_values
+        ]
+        self.assertEqual(
+            ['we: 1', 'dont_want: 2', 'to_be_sorted: 3'],
+            wf1_publish
+        )
 
     def test_engine_commands_are_valid_task_names(self):
         for name in workflows.ENGINE_COMMANDS:
