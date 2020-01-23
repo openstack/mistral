@@ -23,4 +23,4 @@ info on concrete features.
     wf_lang_v2
     rest_api_v2
     cli/index
-    cookbooks
+    cookbooks/index
