@@ -24,6 +24,7 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api import access_control as acl
 from mistral.api.controllers.v2 import action_execution
 from mistral.api.controllers.v2 import resources
+from mistral.api.controllers.v2 import sub_execution
 from mistral.api.controllers.v2 import types
 from mistral import context
 from mistral.db.v2 import api as db_api
@@ -200,6 +201,7 @@ class TaskExecutionsController(rest.RestController):
 class TasksController(rest.RestController):
     action_executions = action_execution.TasksActionExecutionController()
     workflow_executions = TaskExecutionsController()
+    executions = sub_execution.SubExecutionsController()
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Task, wtypes.text)
