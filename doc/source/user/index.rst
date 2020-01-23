@@ -16,6 +16,7 @@ info on concrete features.
     :maxdepth: 2
 
     overview
+    faq
     terminology/index
     main_features
     wf_namespaces
