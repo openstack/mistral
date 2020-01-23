@@ -9,11 +9,14 @@ Mistral is a workflow service project. It aims to provide a mechanism
 to define complex graphs of tasks (workflows) in a simple YAML-based
 language and manage and run them in a scalable and reliable manner.
 
-Quick Overview
-==============
+Just to Get Started
+===================
 
 * :doc:`user/overview`: If you've just started with Mistral, this short
   article will help you understand the main Mistral ideas and concepts.
+* :doc:`user/faq`: Some of the typical questions you have may have already
+  been answered here.
+
 
 For End Users
 =============
@@ -37,6 +40,9 @@ For Administrators and Operators
 For Developers
 ==============
 
+* :doc:`developer/contributor/coding_guidelines`: No matter what you're
+  going to develop regarding Mistral, please read the coding guidelines
+  we accept in our project.
 * :doc:`developer/index`: If you want to contribute to the project or
   write Mistral extensions, please start here.
 * :doc:`developer/extensions/index`: Read this section if you want to write
