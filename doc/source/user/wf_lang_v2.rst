@@ -1,5 +1,5 @@
-Mistral Workflow Language v2 specification
-==========================================
+Mistral Workflow Language (v2)
+==============================
 
 Introduction
 ------------

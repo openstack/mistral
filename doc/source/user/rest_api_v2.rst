@@ -1,13 +1,11 @@
-V2 API
-======
+REST API V2
+===========
 
 This API describes the ways of interacting with Mistral service via
 HTTP protocol using Representational State Transfer concept (ReST).
 
-
 Basics
 -------
-
 
 Media types
 ^^^^^^^^^^^

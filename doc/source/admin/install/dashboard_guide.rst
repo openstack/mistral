@@ -61,4 +61,5 @@ The following should get you started:
 
 Debug instructions
 ------------------
-Please refer to :doc:`Mistral Troubleshooting <../contributor/troubleshooting>`
+Please refer to :doc:`Mistral Troubleshooting
+<../../developer/contributor/troubleshooting>`

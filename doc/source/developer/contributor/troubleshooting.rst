@@ -1,13 +1,15 @@
+=============================
 Troubleshooting And Debugging
 =============================
 
 Mistral-Dashboard debug instructions
-------------------------------------
+====================================
 
 **Pycharm**
 
-Debugging OpenStack Mistral-Dashboard is the same
-as debugging OpenStack Horizon.
+Debugging OpenStack Mistral-Dashboard is the same as debugging OpenStack
+Horizon.
+
 The following instructions should get you sorted to debug both on the same run.
 
 Set PyCharm debug settings:
@@ -21,12 +23,12 @@ Enter the following:
   d. Manage script: manage.py (also in your horizon folder)
   e. Click OK
 
-.. image:: ../img/Mistral_dashboard_django_settings.png
+.. image:: img/dashboard_django_settings.png
 
 2. Enter debug configurations menu, using the tiny arrow pointing down,
    left to the "play" icon, or under the run menu
 
-.. image:: ../img/Pycharm_run_config_menu.png
+.. image:: img/Pycharm_run_config_menu.png
 
 3. In the new window, click the green plus icon and then select "Django server"
    to create a new Django Server configuration.
@@ -36,7 +38,7 @@ Enter the following:
   a. Name that configuration Horizon
   b. Enter some port so it won't run on the default (for example - port: 4000)
 
-.. image:: ../img/Mistral_dashboard_debug_config.png
+.. image:: img/dashboard_debug_config.png
 
 5. Click on Environment variables button, then in the new window:
 
@@ -44,7 +46,7 @@ Enter the following:
   b. Create a new pair - DJANGO_SETTINGS_MODULE : openstack_dashboard.settings
   c. When finished click OK.
 
-.. image:: ../img/Mistral_dashboard_environment_variables.png
+.. image:: img/dashboard_environment_variables.png
 
 
 You should now be able to debug and run the project using PyCharm.

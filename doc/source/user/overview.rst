@@ -1,5 +1,5 @@
-Mistral Overview
-================
+Quick Overview
+==============
 
 What is Mistral?
 ----------------

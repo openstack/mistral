@@ -1,85 +1,68 @@
-Welcome to the Mistral documentation!
-=====================================
+========================
+Mistral Workflow Service
+========================
 
-Mistral is the OpenStack workflow service. This project aims to provide
-a mechanism to define tasks and workflows without writing code, manage
-and execute them in the cloud environment.
+What is Mistral?
+================
 
-A workflow visualization tool is available via
-`CloudFlow <https://github.com/nokia/CloudFlow>`_ and will help you debug
-workflow executions, identify execution paths, explore task run times,
-easily access input/output values and so many more...
+Mistral is a workflow service project. It aims to provide a mechanism
+to define complex graphs of tasks (workflows) in a simple YAML-based
+language and manage and run them in a scalable and reliable manner.
 
-Overview
---------
+Quick Overview
+==============
+
+* :doc:`user/overview`: If you've just started with Mistral, this short
+  article will help you understand the main Mistral ideas and concepts.
+
+For End Users
+=============
+
+* :doc:`user/index`: If you're going to use Mistral functionality as an
+  end user, i.e. writing and running workflows, then you need to read
+  the full user documentation that tells about all Mistral features,
+  including the full description of the Mistral Workflow Language and
+  Mistral ReST API.
+* :doc:`user/wf_lang_v2`: If you just want a direct link to the full
+  specification of the Mistral Workflow Language, this is it.
+* :doc:`user/rest_api_v2`: This is where you can find the full specification
+  of the Mistral REST API.
+
+For Administrators and Operators
+================================
+
+* :doc:`admin/index`: If you need to install, configure and maintain a
+  Mistral cluster, this is a place to start.
+
+For Developers
+==============
+
+* :doc:`developer/index`: If you want to contribute to the project or
+  write Mistral extensions, please start here.
+* :doc:`developer/extensions/index`: Read this section if you want to write
+  custom Mistral actions and other extensions.
+
+Workflow Visualization (CloudFlow)
+==================================
+
+* `CloudFlow <https://github.com/nokia/CloudFlow>`_: If you're looking for
+  a nice workflow visualization tool then visit this web page. CloudFlow
+  provides a nice UI for debugging and analysing workflow executions.
+
+Main Chapters
+=============
 
 .. toctree::
     :maxdepth: 1
+    :includehidden:
 
-    overview
-    quickstart
-    architecture
-    terminology/index
-    main_features
-    cookbooks
+    user/index
+    admin/index
+    developer/index
 
-User guide
-----------
+.. only:: html
 
-**Installation**
+Search
+======
 
-.. toctree::
-   :maxdepth: 2
-
-   install/index
-   configuration/index
-
-**Mistral features**
-
-.. toctree::
-   :maxdepth: 1
-
-   user/wf_namespaces
-
-**API**
-
-.. toctree::
-   :maxdepth: 2
-
-   api/index
-
-**Mistral Workflow Language**
-
-.. toctree::
-   :maxdepth: 2
-
-   user/wf_lang_v2
-
-**CLI**
-
-.. toctree::
-   :maxdepth: 1
-
-   cli/index
-
-Developer guide
----------------
-
-.. toctree::
-   :maxdepth: 2
-
-   contributor/index
-
-Admin guide
------------
-
-.. toctree::
-   :maxdepth: 2
-
-   admin/index
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
+* :ref:`Document search <search>`: Search the contents of this document.
