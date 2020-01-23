@@ -6,6 +6,6 @@ Contributor Documentation
    :maxdepth: 3
 
    coding_guidelines
-   debug
+   debugging_and_testing
    troubleshooting
    devstack
