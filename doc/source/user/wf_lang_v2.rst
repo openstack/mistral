@@ -532,7 +532,7 @@ starts after another one depending on produced result. So direct workflow has a
 notion of transition. Direct workflow is considered to be completed if there
 aren't any transitions left that could be used to jump to next tasks.
 
-.. image:: /img/Mistral_direct_workflow.png
+.. image:: /user/terminology/img/direct_workflow.png
 
 Figure 1. Mistral Direct Workflow.
 
@@ -962,7 +962,7 @@ be completed, it can be conventionally called 'target task'. When Mistral
 Engine starts a workflow it recursively identifies all the dependencies that
 need to be completed first.
 
-.. image:: /img/Mistral_reverse_workflow.png
+.. image:: /user/terminology/img/reverse_workflow.png
 
 Figure 2 explains how reverse workflow works. In the example, task **T1** is
 chosen a target task. So when the workflow starts Mistral will run only tasks
@@ -1421,7 +1421,7 @@ name as a prefix for generating final names of workflows, actions and triggers
 included into the workbook. To illustrate this principle let's take a look at
 the figure below.
 
-.. image:: /img/Mistral_workbook_namespacing.png
+.. image:: /user/terminology/img/workbook_namespacing.png
 
 So after a workbook has been uploaded its workflows and actions become
 independent objects but with slightly different names.
@@ -1526,36 +1526,36 @@ Signature:
 
 Description:
 
-  This function allows users to filter all tasks by workflow execution id
-  and/or state. In addition, it is possible to get task executions recursively
-  and flatten the task executions list.
+This function allows users to filter all tasks by workflow execution id
+and/or state. In addition, it is possible to get task executions recursively
+and flatten the task executions list.
 
 Parameters:
 
-  #. **workflow_execution_id** - If provided the tasks function will return
-     task executions for a specific workflow execution (either the current
-     execution or a different one). Otherwise it will return all task
-     executions that match the other parameters. *Optional.*
-  #. **recursive** - This parameter is a boolean value, if it is true then all
-     task executions within nested workflow executions will be returned. This
-     is usually used in combination with a specific workflow_execution_id
-     where you still want to see nested workflow's task executions. *Optional.*
-     False by default.
-  #. **state** - If provided, the task executions will be filtered by their
-     current state. If state isn't provided, all task executions that match the
-     other parameters will be returned . *Optional.*
-  #. **flat** - if true, only list the task executions that match at least one
-     of the next conditions:
+#. **workflow_execution_id** - If provided the tasks function will return
+   task executions for a specific workflow execution (either the current
+   execution or a different one). Otherwise it will return all task
+   executions that match the other parameters. *Optional.*
+#. **recursive** - This parameter is a boolean value, if it is true then all
+   task executions within nested workflow executions will be returned. This
+   is usually used in combination with a specific workflow_execution_id
+   where you still want to see nested workflow's task executions. *Optional.*
+   False by default.
+#. **state** - If provided, the task executions will be filtered by their
+   current state. If state isn't provided, all task executions that match the
+   other parameters will be returned . *Optional.*
+#. **flat** - if true, only list the task executions that match at least one
+   of the next conditions:
 
-       * task executions of type action
-       * task executions of type workflow that have a different state from the
-         workflow execution they triggered. For example, if used with a
-         specific workflow_execution_id and the state ERROR it will return
-         tasks that erred despite the workflow succeeding. This can mean that
-         there was an error in the task itself, like an invalid expression in
-         publish.
+   * task executions of type action
+   * task executions of type workflow that have a different state from the
+     workflow execution they triggered. For example, if used with a
+     specific workflow_execution_id and the state ERROR it will return
+     tasks that erred despite the workflow succeeding. This can mean that
+     there was an error in the task itself, like an invalid expression in
+     publish.
 
-     *Optional.* False by default.
+   *Optional.* False by default.
 
 Example:
 
@@ -1584,10 +1584,6 @@ Workflow definition:
           all_tasks_jinja_option2: "{{ tasks(None, false, None, false) }}"
 
 Task publish result (partial to keep the documentation short):
-
-.. warning::
-  The return value for each task execution hasn't been finalized and isn't
-  considered stable. It may change in a future Mistral release.
 
 .. code-block:: json
 
@@ -1679,34 +1675,34 @@ Signature:
 
 Description:
 
-  This function allows users to filter all executions by execution id,
-  root_execution_id ,state and/or created_at time.
+This function allows users to filter all executions by execution id,
+root_execution_id ,state and/or created_at time.
 
 Parameters:
 
-  #. **id** - If provided will return a list of executions with that id.
-     Otherwise it will return all executions that match the other
-     parameters. *Optional.*
-  #. **root_execution_id** - Similar to id above, if provided will return
-     a list of executions with that root_execution_id. Otherwise it will
-     return all executions that match the other parameters. *Optional.*
-     False by default.
-  #. **state** - If provided, the executions will be filtered by their
-     current state. If state isn't provided, all executions that match the
-     other parameters will be returned . *Optional.*
-  #. **from_time** - If provided, the executions will be filtered by their
-     created_at time being greater or equal to the from_time parameter.
-     If from_time isn't provided, all executions that match the
-     other parameters will be returned. from_time parameter can be provided
-     in the format *YYYY-MM-DD hh:mm:ss*
-     *Optional.*
-  #. **to_time** - If provided, the executions will be filtered by their
-     created_at time being less than to the from_time parameter (less than but
-     not less than equal as the from_time parameter does)
-     If to_time isn't provided, all executions that match the
-     other parameters will be returned. to_time parameter can be provided
-     in the format *YYYY-MM-DD hh:mm:ss*
-     *Optional.*
+#. **id** - If provided will return a list of executions with that id.
+   Otherwise it will return all executions that match the other
+   parameters. *Optional.*
+#. **root_execution_id** - Similar to id above, if provided will return
+   a list of executions with that root_execution_id. Otherwise it will
+   return all executions that match the other parameters. *Optional.*
+   False by default.
+#. **state** - If provided, the executions will be filtered by their
+   current state. If state isn't provided, all executions that match the
+   other parameters will be returned . *Optional.*
+#. **from_time** - If provided, the executions will be filtered by their
+   created_at time being greater or equal to the from_time parameter.
+   If from_time isn't provided, all executions that match the
+   other parameters will be returned. from_time parameter can be provided
+   in the format *YYYY-MM-DD hh:mm:ss*
+   *Optional.*
+#. **to_time** - If provided, the executions will be filtered by their
+   created_at time being less than to the from_time parameter (less than but
+   not less than equal as the from_time parameter does)
+   If to_time isn't provided, all executions that match the
+   other parameters will be returned. to_time parameter can be provided
+   in the format *YYYY-MM-DD hh:mm:ss*
+   *Optional.*
 
 Example:
 

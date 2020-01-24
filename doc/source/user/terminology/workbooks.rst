@@ -18,7 +18,7 @@ name as a prefix for generating final names of workflows and actions included
 into the workbook. To illustrate this principle let's take a look at the
 figure below:
 
-.. image:: /img/Mistral_workbook_namespacing.png
+.. image:: img/workbook_namespacing.png
     :align: center
 
 So after a workbook has been uploaded its workflows and actions become
