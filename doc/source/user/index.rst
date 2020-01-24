@@ -19,6 +19,7 @@ info on concrete features.
     faq
     terminology/index
     main_features
+    use_cases/index
     wf_namespaces
     asynchronous_actions
     wf_lang_v2
