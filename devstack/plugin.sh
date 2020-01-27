@@ -200,6 +200,11 @@ function stop_mistral {
     fi
 }
 
+function configure_tempest_for_mistral {
+    if is_service_enabled tempest; then
+        iniset $TEMPEST_CONFIG mistral_api service_api_supported True
+    fi
+}
 
 function cleanup_mistral {
     if is_service_enabled horizon; then
@@ -259,6 +264,9 @@ if is_service_enabled mistral; then
         echo_summary "Initializing mistral"
         init_mistral
         start_mistral
+    elif [[ "$1" == "stack" && "$2" == "test-config" ]]; then
+        echo_summary "Configuring Tempest for Mistral"
+        configure_tempest_for_mistral
     fi
 
     if [[ "$1" == "unstack" ]]; then
