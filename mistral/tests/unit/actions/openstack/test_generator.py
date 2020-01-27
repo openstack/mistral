@@ -47,7 +47,7 @@ MODULE_MAPPING = {
     'zaqar': ['zaqar.queue_messages', actions.ZaqarAction],
     'barbican': ['barbican.orders_list', actions.BarbicanAction],
     'mistral': ['mistral.workflows_get', actions.MistralAction],
-    'designate': ['designate.domains_list', actions.DesignateAction],
+    'designate': ['designate.quotas_list', actions.DesignateAction],
     'manila': ['manila.shares_list', actions.ManilaAction],
     'magnum': ['magnum.bays_list', actions.MagnumAction],
     'murano': ['murano.deployments_list', actions.MuranoAction],
