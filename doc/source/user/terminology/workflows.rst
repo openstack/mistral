@@ -56,7 +56,7 @@ workflow has a notion of transition. Direct workflow is considered to be
 completed if there aren't any transitions left that could be used to
 jump to next tasks.
 
-.. image:: /img/Mistral_direct_workflow.png
+.. image:: img/direct_workflow.png
 
 YAML example of direct workflow
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,7 +97,7 @@ task that needs to be completed, it can be conventionally called 'target
 task'. When Mistral Engine starts a workflow it recursively identifies
 all the dependencies that need to be completed first.
 
-.. image:: /img/Mistral_reverse_workflow.png
+.. image:: img/reverse_workflow.png
 
 The figure explains how reverse workflow works. In the example, task
 **T1** is chosen a target task. So when the workflow starts Mistral will

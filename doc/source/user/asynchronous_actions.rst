@@ -6,7 +6,7 @@ How to work with asynchronous actions
 Concept
 *******
 
-.. image:: /img/Mistral_actions.png
+.. image:: /user/terminology/img/actions.png
 
 During a workflow execution Mistral eventually runs actions. Action
 is a particular function (or a piece of work) that a workflow task

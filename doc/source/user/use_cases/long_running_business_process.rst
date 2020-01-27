@@ -43,9 +43,10 @@ Mistral is a perfect fit for being this kind of coordinator. In order to
 illustrate everything described so far, let’s consider an imaginary workflow
 of calculating employees’ salaries in an enterprise.
 
-.. image:: img/long_running_business_process.png
-    :alt: Picture 1. Mistral maintains business workflows spanning multiple systems.
+.. figure:: img/long_running_business_process.png
     :align: center
+
+    Figure 1. Mistral maintains business workflows spanning multiple systems.
 
 Given an employee full name (or id) such workflow may include the following
 computation steps:

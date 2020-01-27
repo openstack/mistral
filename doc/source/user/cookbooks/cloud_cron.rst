@@ -64,8 +64,10 @@ script running on a single machine that is responsible for solving this
 task just fails for whatever reason then the whole process of updating
 a hundred servers will not complete and end up in an unknown state.
 
-.. image:: img/cloud_cron_updating_multiple_servers.png
-    :alt: Updating multiple tenant servers
+.. figure:: img/cloud_cron_updating_multiple_servers.png
+    :align: center
+
+    Figure 1. Updating multiple tenant servers
 
 So that shows that we need to take care of at least:
 
@@ -192,8 +194,10 @@ we can actually ssh other VMs. That's why we're using special action called
 "std.ssh_proxied" where "proxied" means that we have a proxy VM to access
 all tenant VMs.
 
-.. image:: img/ssh_proxied.png
-    :alt: Ssh access through a gateway VM
+.. figure:: img/ssh_proxied.png
+    :align: center
+
+    Figure 2. Ssh access through a gateway VM.
 
 Mistral is a distributed highly-available system and it’s designed not only
 to survive infrastructural failures but also keep its workflows running.
