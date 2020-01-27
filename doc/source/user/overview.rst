@@ -48,6 +48,9 @@ task should be started at what time. So that Mistral calls back with "Execute
 action X, here is the data". If an application that executes action X dies
 then another instance takes the responsibility to continue the work.
 
+This use case is described in more details at
+:doc:`use_cases/long_running_business_process`
+
 Big Data analysis & reporting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A data analyst can use Mistral as a tool for data crawling. For example,
