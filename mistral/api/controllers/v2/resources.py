@@ -135,7 +135,7 @@ class Workflow(resource.Resource, ScopedResource):
             for param in input:
                 if isinstance(param, dict):
                     for k, v in param.items():
-                        input_list.append("%s=%s" % (k, v))
+                        input_list.append('%s="%s"' % (k, v))
                 else:
                     input_list.append(param)
 

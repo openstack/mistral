@@ -70,6 +70,31 @@ WF_NO_PARAMS:
     task1:
       action: std.noop
 """
+WF_WITH_INPUT = """---
+version: '2.0'
+
+WF_2_PARAMS:
+  type: direct
+
+  input:
+    - param1
+    - param2: "value, param"
+  tasks:
+    task1:
+      action: std.noop
+
+
+WF_3_PARAMS:
+  type: direct
+
+  input:
+    - param1
+    - param2: "value"
+    - param
+  tasks:
+    task1:
+      action: std.noop
+"""
 
 
 class TestRestResource(base.DbTestCase):
@@ -120,6 +145,32 @@ class TestRestResource(base.DbTestCase):
         wf_resource = resources.Workflow.from_db_model(workflows_list[0])
 
         self.assertDictEqual(expected_interface, wf_resource.interface)
+
+    def test_from_db_model_workflow_with_input(self):
+        expected_input_two_params = "param1, param2=\"value, param\""
+        expected_input_three_params = "param1, param2=\"value\", param"
+
+        workflows_list = wf_service.create_workflows(WF_WITH_INPUT)
+
+        self.assertEqual(2, len(workflows_list))
+
+        wf_two_params = workflows_list[0] \
+            if workflows_list[0].name == 'WF_2_PARAMS' \
+            else workflows_list[1]
+
+        wf_three_params = workflows_list[0] \
+            if workflows_list[0].name == 'WF_3_PARAMS' \
+            else workflows_list[1]
+
+        two_params_wf_resource = resources.Workflow.from_db_model(
+            wf_two_params)
+        three_params_wf_resource = resources.Workflow.from_db_model(
+            wf_three_params)
+
+        self.assertEqual(expected_input_two_params,
+                         two_params_wf_resource.input)
+        self.assertEqual(expected_input_three_params,
+                         three_params_wf_resource.input)
 
     def test_from_dict(self):
         wf_ex = db_api.create_workflow_execution(WF_EXEC)
