@@ -165,7 +165,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
         LOG.debug(
             "Finished evaluation. [expression='%s', result: %s]",
             expression,
-            result
+            utils.cut(result, length=200)
         )
 
         return result

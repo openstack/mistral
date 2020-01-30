@@ -22,6 +22,7 @@ import threading
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from osprofiler import profiler
 
 from mistral import context
 from mistral.db import utils as db_utils
@@ -312,6 +313,12 @@ class DefaultScheduler(base.Scheduler):
 
     @staticmethod
     def _invoke_job(auth_ctx, func, args):
+        # Scheduler runs jobs in an separate thread that's neither related
+        # to an RPC nor a REST request processing thread. So we need to
+        # initialize a profiler specifically for this thread.
+        if cfg.CONF.profiler.enabled:
+            profiler.init(cfg.CONF.profiler.hmac_keys)
+
         ctx_serializer = context.RpcContextSerializer()
 
         try:
