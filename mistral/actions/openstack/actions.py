@@ -374,25 +374,7 @@ class BaremetalIntrospectionAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        try:
-            # ironic-inspector client tries to get and validate it's own
-            # version when created. This might require checking the keystone
-            # catalog if the ironic-inspector server is not listening on the
-            # localhost IP address. Thus, we get a session for this case.
-            sess = keystone_utils.get_admin_session()
-
-            return cls._get_client_class()(session=sess)
-        except Exception as e:
-            LOG.warning("There was an error trying to create the "
-                        "ironic-inspector client using a session: %s", str(e))
-            # If it's not possible to establish a keystone session, attempt to
-            # create a client without it. This should fall back to where the
-            # ironic-inspector client tries to get it's own version on the
-            # default IP address.
-            LOG.debug("Attempting to create the ironic-inspector client "
-                      "without a session.")
-
-            return cls._get_client_class()()
+        return cls._get_client_class()(inspector_url='http://127.0.0.1')
 
     def _create_client(self, context):
         LOG.debug(
@@ -730,7 +712,11 @@ class DesignateAction(base.OpenStackAction):
 
     @classmethod
     def _get_fake_client(cls):
-        return cls._get_client_class()()
+        session = keystone_utils.get_admin_session()
+        return cls._get_client_class()(
+            endpoint_override="http://127.0.0.1:9001/",
+            session=session
+        )
 
 
 class MagnumAction(base.OpenStackAction):
