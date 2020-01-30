@@ -21,8 +21,10 @@ import random
 import sys
 import threading
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import importutils
+from osprofiler import profiler
 
 from mistral import context
 from mistral.db import utils as db_utils
@@ -129,6 +131,12 @@ class LegacyScheduler(sched_base.Scheduler):
             self._thread.join()
 
     def _loop(self):
+        # Scheduler runs jobs in an separate thread that's neither related
+        # to an RPC nor a REST request processing thread. So we need to
+        # initialize a profiler specifically for this thread.
+        if cfg.CONF.profiler.enabled:
+            profiler.init(cfg.CONF.profiler.hmac_keys)
+
         while not self._stopped:
             LOG.debug("Starting Scheduler loop [scheduler=%s]...", self)
 

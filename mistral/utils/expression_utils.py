@@ -193,6 +193,7 @@ def json_pp_(context, data=None):
         "The json_dump expression function can be used for outputting JSON",
         DeprecationWarning
     )
+
     return jsonutils.dumps(
         data or context,
         indent=4
