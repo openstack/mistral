@@ -76,7 +76,7 @@ class DirectWorkflowController(base.WorkflowController):
             task_ex
         )
 
-        # Checking if task_ex is empty here is a serious optimization here
+        # Checking if task_ex is empty is a serious optimization here
         # because 'self.wf_ex.task_executions' leads to initialization of
         # the entire collection which in case of highly-parallel workflows
         # may be very expensive.
@@ -107,6 +107,10 @@ class DirectWorkflowController(base.WorkflowController):
             for t_s in self.wf_spec.find_start_tasks()
         ]
 
+    @profiler.trace(
+        'direct-wf-controller-find-next-commands-for-task',
+        hide_args=True
+    )
     def _find_next_commands_for_task(self, task_ex):
         """Finds next commands based on the state of the given task.
 

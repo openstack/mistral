@@ -114,7 +114,7 @@ class LegacyScheduler(sched_base.Scheduler):
             job.func_name,
             job.run_after,
             serializers=job.func_arg_serializers,
-            key=None,
+            key=job.key,
             **job.func_args
         )
 
