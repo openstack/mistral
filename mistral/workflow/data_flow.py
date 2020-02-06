@@ -15,6 +15,7 @@
 
 from oslo_config import cfg
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral import context as auth_ctx
 from mistral.db.v2.sqlalchemy import models
@@ -228,6 +229,10 @@ def publish_variables(task_ex, task_spec):
     #    {'branch': {vars}, 'global': {vars}, 'atomic': {vars}}
 
 
+@profiler.trace(
+    'data-flow-evaluate-task-outbound-context',
+    hide_args=True
+)
 def evaluate_task_outbound_context(task_ex):
     """Evaluates task outbound Data Flow context.
 

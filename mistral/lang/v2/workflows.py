@@ -298,7 +298,7 @@ class DirectWorkflowSpec(WorkflowSpec):
     def get_on_error_clause(self, t_name):
         result = []
 
-        on_clause = self.get_tasks()[t_name].get_on_error()
+        on_clause = self.get_task(t_name).get_on_error()
 
         if on_clause:
             result = on_clause.get_next()
@@ -317,7 +317,7 @@ class DirectWorkflowSpec(WorkflowSpec):
     def get_on_success_clause(self, t_name):
         result = []
 
-        on_clause = self.get_tasks()[t_name].get_on_success()
+        on_clause = self.get_task(t_name).get_on_success()
 
         if on_clause:
             result = on_clause.get_next()
@@ -336,7 +336,7 @@ class DirectWorkflowSpec(WorkflowSpec):
     def get_on_complete_clause(self, t_name):
         result = []
 
-        on_clause = self.get_tasks()[t_name].get_on_complete()
+        on_clause = self.get_task(t_name).get_on_complete()
 
         if on_clause:
             result = on_clause.get_next()

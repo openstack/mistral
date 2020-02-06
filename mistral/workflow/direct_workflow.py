@@ -129,7 +129,7 @@ class DirectWorkflowController(base.WorkflowController):
             if not (t_s or t_n in commands.ENGINE_CMD_CLS):
                 raise exc.WorkflowException("Task '%s' not found." % t_n)
             elif not t_s:
-                t_s = self.wf_spec.get_tasks()[task_ex.name]
+                t_s = self.wf_spec.get_task(task_ex.name)
 
             triggered_by = [
                 {
@@ -275,6 +275,7 @@ class DirectWorkflowController(base.WorkflowController):
 
         return res and not task_ex.has_next_tasks
 
+    @profiler.trace('direct-wf-controller-find-next-tasks', hide_args=True)
     def _find_next_tasks(self, task_ex, ctx):
         t_n = task_ex.name
         t_s = task_ex.state
@@ -294,18 +295,21 @@ class DirectWorkflowController(base.WorkflowController):
             for name, cond, params in self.wf_spec.get_on_error_clause(t_n):
                 if not cond or expr.evaluate(cond, ctx_view):
                     params = expr.evaluate_recursively(params, ctx_view)
+
                     result.append((name, params, 'on-error'))
 
         if t_s == states.SUCCESS:
             for name, cond, params in self.wf_spec.get_on_success_clause(t_n):
                 if not cond or expr.evaluate(cond, ctx_view):
                     params = expr.evaluate_recursively(params, ctx_view)
+
                     result.append((name, params, 'on-success'))
 
         if states.is_completed(t_s) and not states.is_cancelled(t_s):
             for name, cond, params in self.wf_spec.get_on_complete_clause(t_n):
                 if not cond or expr.evaluate(cond, ctx_view):
                     params = expr.evaluate_recursively(params, ctx_view)
+
                     result.append((name, params, 'on-complete'))
 
         return result

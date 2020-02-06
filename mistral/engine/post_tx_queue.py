@@ -15,7 +15,9 @@
 
 import eventlet
 import functools
+from oslo_config import cfg
 from oslo_log import log as logging
+from osprofiler import profiler
 
 from mistral import context
 from mistral.db import utils as db_utils
@@ -88,6 +90,10 @@ def run(func):
             auth_ctx = context.ctx() if context.has_ctx() else None
 
             def _within_new_thread():
+                # This is a new thread so we need to init a profiler again.
+                if cfg.CONF.profiler.enabled:
+                    profiler.init(cfg.CONF.profiler.hmac_keys)
+
                 old_auth_ctx = context.ctx() if context.has_ctx() else None
 
                 context.set_ctx(auth_ctx)

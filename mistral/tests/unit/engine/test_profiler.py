@@ -15,7 +15,6 @@
 import mock
 
 from oslo_config import cfg
-from oslo_utils import uuidutils
 import osprofiler
 
 from mistral import context
@@ -36,8 +35,9 @@ class EngineProfilerTest(base.EngineTestCase):
     def setUp(self):
         super(EngineProfilerTest, self).setUp()
 
-        # Configure the osprofiler.
+        # Configure the profiler.
         self.mock_profiler_log_func = mock.Mock(return_value=None)
+
         osprofiler.notifier.set(self.mock_profiler_log_func)
 
         self.ctx_serializer = context.RpcContextSerializer()
@@ -54,16 +54,6 @@ class EngineProfilerTest(base.EngineTestCase):
 
         wf_service.create_workflows(wf_def)
 
-        ctx = {
-            'trace_info': {
-                'hmac_key': cfg.CONF.profiler.hmac_keys,
-                'base_id': uuidutils.generate_uuid(),
-                'parent_id': uuidutils.generate_uuid()
-            }
-        }
-
-        self.ctx_serializer.deserialize_context(ctx)
-
         wf_ex = self.engine_client.start_workflow('wf')
 
         self.assertIsNotNone(wf_ex)
@@ -74,6 +64,8 @@ class EngineProfilerTest(base.EngineTestCase):
         self.assertGreater(self.mock_profiler_log_func.call_count, 0)
 
     def test_no_profile_trace(self):
+        self.override_config('enabled', False, 'profiler')
+
         wf_def = """
         version: '2.0'
         wf:
@@ -84,8 +76,6 @@ class EngineProfilerTest(base.EngineTestCase):
         """
 
         wf_service.create_workflows(wf_def)
-
-        self.ctx_serializer.deserialize_context({})
 
         wf_ex = self.engine_client.start_workflow('wf')
 
