@@ -1139,3 +1139,53 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
+
+    def test_unexisting_join_task_does_not_stuck_wf_running(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            branch1:
+              action: std.noop
+              on-success: branch1-23_merge
+            branch2:
+              action: std.async_noop
+              on-success: branch2-3_merge
+            branch3:
+              action: std.fail
+              on-success: branch2-3_merge
+            branch2-3_merge:
+              action: std.noop
+              on-success: branch1-23_merge
+              join: all
+            branch1-23_merge:
+              action: std.noop
+              join: all
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # Start workflow.
+        wf_ex = self.engine.start_workflow('wf')
+
+        with db_api.transaction():
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+            task_execs = wf_ex.task_executions
+
+        t_ex = self._assert_single_item(
+            task_execs,
+            name='branch2'
+        )
+
+        t_action_exs = db_api.get_action_executions(
+            task_execution_id=t_ex.id
+        )
+
+        self.engine.on_action_complete(
+            t_action_exs[0].id,
+            ml_actions.Result(error="Error!")
+        )
+
+        self.await_workflow_error(wf_ex.id)

@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2020 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -224,9 +225,8 @@ class DirectWorkflowController(base.WorkflowController):
             if not self.wf_spec.get_tasks()[t_name]:
                 continue
 
-            if t_name in all_joins:
-                if t_name in t_execs_cache:
-                    res.add(t_execs_cache[t_name])
+            if t_name in all_joins and t_name in t_execs_cache:
+                res.add(t_execs_cache[t_name])
                 continue
 
             clauses.update(self.wf_spec.find_outbound_task_names(t_name))
