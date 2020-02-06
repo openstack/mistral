@@ -101,7 +101,11 @@ class Task(object):
                 "state": self.task_ex.state,
                 "state_info": self.task_ex.state_info,
                 "type": self.task_ex.type,
-                "project_id": self.task_ex.project_id
+                "project_id": self.task_ex.project_id,
+                "created_at": utils.datetime_to_str(self.task_ex.created_at),
+                "updated_at": utils.datetime_to_str(self.task_ex.updated_at),
+                "started_at": utils.datetime_to_str(self.task_ex.started_at),
+                "finished_at": utils.datetime_to_str(self.task_ex.finished_at)
             }
 
         def _send_notification():

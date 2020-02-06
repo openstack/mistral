@@ -98,7 +98,10 @@ class Workflow(object):
                 "state": self.wf_ex.state,
                 "state_info": self.wf_ex.state_info,
                 "project_id": self.wf_ex.project_id,
-                "task_execution_id": self.wf_ex.task_execution_id
+                "task_execution_id": self.wf_ex.task_execution_id,
+                "root_execution_id": self.wf_ex.root_execution_id,
+                "created_at": utils.datetime_to_str(self.wf_ex.created_at),
+                "updated_at": utils.datetime_to_str(self.wf_ex.updated_at)
             }
 
         def _send_notification():
