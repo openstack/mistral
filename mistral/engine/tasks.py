@@ -16,6 +16,7 @@
 #    limitations under the License.
 
 import abc
+import collections
 import copy
 import json
 from oslo_config import cfg
@@ -780,8 +781,6 @@ class WithItemsTask(RegularTask):
         with_items_values = self._get_with_items_values()
 
         if self._is_new():
-            self._validate_values(with_items_values)
-
             action_count = len(six.next(iter(with_items_values.values())))
 
             self._prepare_runtime_context(action_count)
@@ -830,25 +829,36 @@ class WithItemsTask(RegularTask):
         :return: Evaluated 'with-items' expression values.
         """
 
-        return self._evaluate_expression(self.task_spec.get_with_items())
+        exp_res = self._evaluate_expression(self.task_spec.get_with_items())
 
-    def _validate_values(self, with_items_values):
-        # Take only mapped values and check them.
-        values = list(with_items_values.values())
+        # Expression result may contain iterables instead of lists in the
+        # dictionary values. So we need to convert them into lists and
+        # perform all needed checks.
 
-        if not all([isinstance(v, list) for v in values]):
-            raise exc.InputException(
-                "Wrong input format for: %s. List type is"
-                " expected for each value." % with_items_values
-            )
+        result = {}
 
-        required_len = len(values[0])
+        required_len = -1
 
-        if not all(len(v) == required_len for v in values):
-            raise exc.InputException(
-                "Wrong input format for: %s. All arrays must"
-                " have the same length." % with_items_values
-            )
+        for var, items in exp_res.items():
+            if not isinstance(items, collections.Iterable):
+                raise exc.InputException(
+                    "Wrong input format for: %s. Iterable type is"
+                    " expected for each value." % result
+                )
+
+            items_list = list(items)
+
+            result[var] = items_list
+
+            if required_len < 0:
+                required_len = len(items_list)
+            elif len(items_list) != required_len:
+                raise exc.InputException(
+                    "Wrong input format for: %s. All arrays must"
+                    " have the same length." % exp_res
+                )
+
+        return result
 
     def _get_input_dicts(self, with_items_values):
         """Calculate input dictionaries for another portion of actions.

@@ -113,7 +113,7 @@ class TaskSpec(base.BaseSpec):
         self._workflow = data.get('workflow')
         self._tags = data.get('tags', [])
         self._input = data.get('input', {})
-        self._with_items = self._transform_with_items()
+        self._with_items = self._get_with_items_as_dict()
         self._publish = data.get('publish', {})
         self._publish_on_error = data.get('publish-on-error', {})
         self._policies = self._group_spec(
@@ -159,8 +159,9 @@ class TaskSpec(base.BaseSpec):
                 "The length of a '{0}' task name must not exceed {1}"
                 " symbols".format(task_name, MAX_LENGTH_TASK_NAME))
 
-    def _transform_with_items(self):
+    def _get_with_items_as_dict(self):
         raw = self._data.get('with-items', [])
+
         with_items = {}
 
         if isinstance(raw, six.string_types):
@@ -175,10 +176,11 @@ class TaskSpec(base.BaseSpec):
             match = re.match(WITH_ITEMS_PTRN, item)
 
             if not match:
-                msg = ("Wrong format of 'with-items' property. Please use "
-                       "format 'var in {[some, list] | <%% $.array %%> }: "
-                       "%s" % self._data)
-                raise exc.InvalidModelException(msg)
+                raise exc.InvalidModelException(
+                    "Wrong format of 'with-items' property. Please use "
+                    "format 'var in {[some, list] | <%% $.array %%> }: "
+                    "%s" % self._data
+                )
 
             match_groups = match.groups()
             var_name = match_groups[0]

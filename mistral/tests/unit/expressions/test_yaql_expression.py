@@ -327,6 +327,9 @@ class InlineYAQLEvaluatorTest(base.BaseTest):
                           {'a': 1})
 
     def test_set_of_dicts(self):
+        # This test makes sense only if YAQL expression output conversion
+        # is enabled.
+        self.override_config('convert_output_data', True, 'yaql')
         self.override_config('convert_sets_to_lists', True, 'yaql')
 
         def _restore_engine(old_engine):
