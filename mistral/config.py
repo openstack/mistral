@@ -597,7 +597,7 @@ yaql_opts = [
         'convert_input_data',
         default=True,
         help=_('Enables input data conversion for YAQL expressions. If set '
-               'to True then YAQL will convert mutable data structures '
+               'to True, YAQL will convert mutable data structures '
                '(lists, dicts, sets) into their immutable versions. That '
                'will allow them to work with some constructs that require '
                'hashable types even if elements are not hashable. For '
@@ -611,22 +611,37 @@ yaql_opts = [
                'large.')
     ),
     cfg.BoolOpt(
+        'convert_output_data',
+        default=True,
+        help=_('Enables output data conversion for YAQL expressions.'
+               'If set to False, it is possible that YAQL will generate '
+               'an output that will be not JSON-serializable. For example, '
+               'if an expression has ".toSet()" in the end to convert a list '
+               'into a set. It does not mean though that such functions '
+               'cannot be used, they can still be used in expressions but '
+               'user has to keep in mind of what type a result will be, '
+               'whereas if the value of ths property is True YAQL will '
+               'convert the result to a JSON-compatible type.')
+    ),
+    cfg.BoolOpt(
         'convert_tuples_to_lists',
         default=True,
-        help=_('When set to true, yaql converts all tuples in the expression '
-               'result to lists.')
+        help=_('When set to True, yaql converts all tuples in the expression '
+               'result to lists. It works only if "convert_output_data" is '
+               'set to True.')
     ),
     cfg.BoolOpt(
         'convert_sets_to_lists',
         default=False,
-        help=_('When set to true, yaql converts all sets in the expression '
+        help=_('When set to True, yaql converts all sets in the expression '
                'result to lists. Otherwise the produced result may contain '
-               'sets that are not JSON-serializable.')
+               'sets that are not JSON-serializable. It works only if '
+               '"convert_output_data" is set to True.')
     ),
     cfg.BoolOpt(
         'iterable_dicts',
         default=False,
-        help=_('When set to true, dictionaries are considered to be iterable '
+        help=_('When set to True, dictionaries are considered to be iterable '
                'and iteration over dictionaries produces their keys (as in '
                'Python and yaql 0.2).')
     ),

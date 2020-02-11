@@ -17,6 +17,7 @@ from oslo_log import log as logging
 from mistral import config as cfg
 from mistral.db.v2 import api as db_api
 from mistral.engine import default_engine
+from mistral import exceptions as exc
 from mistral.rpc import base as rpc
 from mistral.scheduler import base as sched_base
 from mistral.service import base as service_base
@@ -27,6 +28,16 @@ from mistral.utils import profiler as profiler_utils
 from mistral_lib import utils
 
 LOG = logging.getLogger(__name__)
+
+CONF = cfg.CONF
+
+
+def _validate_config():
+    if not CONF.yaql.convert_output_data and CONF.yaql.convert_input_data:
+        raise exc.MistralError(
+            "The config property 'yaql.convert_output_data' is set to False "
+            "so 'yaql.convert_input_data' must also be set to False."
+        )
 
 
 class EngineServer(service_base.MistralService):
@@ -47,6 +58,8 @@ class EngineServer(service_base.MistralService):
 
     def start(self):
         super(EngineServer, self).start()
+
+        _validate_config()
 
         db_api.setup_db()
 

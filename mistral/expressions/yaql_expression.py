@@ -22,6 +22,7 @@ from oslo_log import log as logging
 import six
 from yaql.language import exceptions as yaql_exc
 from yaql.language import factory
+from yaql.language import utils as yaql_utils
 
 from mistral.config import cfg
 from mistral import exceptions as exc
@@ -41,7 +42,7 @@ def get_yaql_engine_options():
         "yaql.convertTuplesToLists": _YAQL_CONF.convert_tuples_to_lists,
         "yaql.convertSetsToLists": _YAQL_CONF.convert_sets_to_lists,
         "yaql.iterableDicts": _YAQL_CONF.iterable_dicts,
-        "yaql.convertOutputData": True
+        "yaql.convertOutputData": _YAQL_CONF.convert_output_data
     }
 
 
@@ -71,6 +72,19 @@ LOG.info(
 )
 
 INLINE_YAQL_REGEXP = '<%.*?%>'
+
+
+def _sanitize_yaql_result(result):
+    # Expression output conversion can be disabled but we can still
+    # do some basic unboxing if we got an internal YAQL type.
+    # TODO(rakhmerov): FrozenDict doesn't provide any public method
+    # or property to access a regular dict that it wraps so ideally
+    # we need to add it to YAQL. Once it's there we need to make a
+    # fix here.
+    if isinstance(result, yaql_utils.FrozenDict):
+        return result._d
+
+    return result if not inspect.isgenerator(result) else list(result)
 
 
 class YAQLEvaluator(Evaluator):
@@ -113,7 +127,7 @@ class YAQLEvaluator(Evaluator):
                 ", data=%s]" % (expression, str(e), data_context)
             )
 
-        return result if not inspect.isgenerator(result) else list(result)
+        return _sanitize_yaql_result(result)
 
     @classmethod
     def is_expression(cls, s):
