@@ -59,8 +59,11 @@ def update_workbook_v2(definition, namespace='', scope='private',
 
 
 def _on_workbook_update(wb_db, wb_spec, namespace=''):
-    db_actions = _create_or_update_actions(wb_db, wb_spec.get_actions(),
-                                           namespace=namespace)
+    db_actions = _create_or_update_actions(
+        wb_db, wb_spec.get_actions(),
+        namespace=namespace
+    )
+
     db_wfs = _create_or_update_workflows(
         wb_db,
         wb_spec.get_workflows(),
