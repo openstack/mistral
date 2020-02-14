@@ -96,9 +96,10 @@
         # to disable voting on one specific job if things go wrong.
         # If you need any support to debug these jobs in case of
         # failures, please reach us on #tripleo IRC channel.
-        - tripleo-ci-centos-7-containers-multinode
+        - tripleo-ci-centos-7-containers-multinode:
+            voting: false
         - mistral-rally-task:
-             voting: false
+            voting: false
         - openstack-tox-lower-constraints:
             required-projects:
               - openstack/mistral-lib
