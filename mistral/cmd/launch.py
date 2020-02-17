@@ -201,6 +201,7 @@ def override_keystone_options():
 
 def main():
     try:
+        CONF.register_cli_opts(config.CLI_OPTS)
         config.parse_args(get_properly_ordered_parameters())
         print_server_info()
 
