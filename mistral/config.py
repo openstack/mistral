@@ -715,8 +715,6 @@ default_group_opts = itertools.chain(
     ]
 )
 
-CONF.register_cli_opts(CLI_OPTS)
-
 
 _DEFAULT_LOG_LEVELS = [
     'eventlet.wsgi.server=WARN',
