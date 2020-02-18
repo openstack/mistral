@@ -7,5 +7,6 @@ Contributor Documentation
 
    coding_guidelines
    debugging_and_testing
+   profiling
    troubleshooting
    devstack
