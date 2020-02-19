@@ -1,0 +1,14 @@
+---
+
+fixes:
+  - |
+    Added the configuration option "convert_output_data" in the "yaql" group.
+    This option, if set to False, allows to disable YAQL expression result
+    conversion. This fixes performance issues for lots of use cases where
+    a result of an expression is a big data structure. In fact, YAQL created
+    a copy of this data structure every time before giving it to Mistral.
+    This option can't be set to False when the corresponding
+    "convert_input_data" is True. Otherwise, it doesn't work correctly.
+    By default, the value of "convert_output_data" is True which keeps
+    backwards compatibility.
+
