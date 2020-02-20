@@ -102,11 +102,12 @@ class RunActionEngineTest(base.EngineTestCase):
         self.assertEqual(states.SUCCESS, action_ex.state)
 
     def test_run_action_with_namespace(self):
-        namespace = 'test_namespace'
-        action = """---
+        namespace = 'test_ns'
+
+        action_text = """---
         version: '2.0'
 
-        concat_namespace:
+        concat1:
           base: std.echo
           base-input:
             output: <% $.left %><% $.right %>
@@ -114,8 +115,8 @@ class RunActionEngineTest(base.EngineTestCase):
             - left
             - right
 
-        concat_namespace2:
-          base: concat_namespace
+        concat2:
+          base: concat1
           base-input:
             left: <% $.left %><% $.center %>
             right: <% $.right %>
@@ -124,18 +125,27 @@ class RunActionEngineTest(base.EngineTestCase):
             - center
             - right
         """
-        actions.create_actions(action, namespace=namespace)
 
-        self.assertRaises(exc.InvalidActionException,
-                          self.engine.start_action,
-                          'concat_namespace',
-                          {'left': 'Hello, ', 'right': 'John Doe!'},
-                          save_result=True,
-                          namespace='')
+        actions.create_actions(action_text, namespace=namespace)
+
+        self.assertRaises(
+            exc.InvalidActionException,
+            self.engine.start_action,
+            'concat1',
+            {
+                'left': 'Hello, ',
+                'right': 'John Doe!'
+            },
+            save_result=True,
+            namespace=''
+        )
 
         action_ex = self.engine.start_action(
-            'concat_namespace',
-            {'left': 'Hello, ', 'right': 'John Doe!'},
+            'concat1',
+            {
+                'left': 'Hello, ',
+                'right': 'John Doe!'
+            },
             save_result=True,
             namespace=namespace
         )
@@ -146,20 +156,28 @@ class RunActionEngineTest(base.EngineTestCase):
 
         with db_api.transaction():
             action_ex = db_api.get_action_execution(action_ex.id)
+
             self.assertEqual(states.SUCCESS, action_ex.state)
             self.assertEqual({'result': u'Hello, John Doe!'}, action_ex.output)
 
         action_ex = self.engine.start_action(
-            'concat_namespace2',
-            {'left': 'Hello, ', 'center': 'John', 'right': ' Doe!'},
+            'concat2',
+            {
+                'left': 'Hello, ',
+                'center': 'John',
+                'right': ' Doe!'
+            },
             save_result=True,
             namespace=namespace
         )
+
         self.assertEqual(namespace, action_ex.workflow_namespace)
+
         self.await_action_success(action_ex.id)
 
         with db_api.transaction():
             action_ex = db_api.get_action_execution(action_ex.id)
+
             self.assertEqual(states.SUCCESS, action_ex.state)
             self.assertEqual('Hello, John Doe!', action_ex.output['result'])
 

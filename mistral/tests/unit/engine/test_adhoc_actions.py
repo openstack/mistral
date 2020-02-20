@@ -26,7 +26,7 @@ from mistral.workflow import states
 # the change in value is not permanent.
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
-WORKBOOK = """
+WB = """
 ---
 version: '2.0'
 
@@ -162,7 +162,7 @@ class AdhocActionsTest(base.EngineTestCase):
     def setUp(self):
         super(AdhocActionsTest, self).setUp()
 
-        wb_service.create_workbook_v2(WORKBOOK)
+        wb_service.create_workbook_v2(WB)
 
     def test_run_workflow_with_adhoc_action(self):
         wf_ex = self.engine.start_workflow(
@@ -288,10 +288,7 @@ class AdhocActionsTest(base.EngineTestCase):
             input:
               - my_param
 
-            base: std.mistral_http
-            base-input:
-              url: http://google.com/<% $.my_param %>
-              method: GET
+            base: std.async_noop
 
         workflows:
           my_wf:
@@ -306,24 +303,24 @@ class AdhocActionsTest(base.EngineTestCase):
 
         self.await_workflow_running(wf_ex.id)
 
-    def test_adhoc_action_difinition_with_namespace(self):
-        namespace = 'ad-hoc_test'
+    def test_adhoc_action_definition_with_namespace(self):
+        namespace1 = 'ad-hoc_test'
         namespace2 = 'ad-hoc_test2'
+
         wb_text = """---
 
         version: '2.0'
 
-        name: my_wb_namespace
+        name: my_wb1
 
         actions:
           test_env:
             base: std.echo
             base-input:
-              output: '{{ env().foo }}'
+              output: '{{ env().foo }}' # TODO(rakhmerov): It won't work.
 
         workflows:
-          wf_namespace:
-            type: direct
+          wf:
             input:
               - str1
             output:
@@ -336,29 +333,41 @@ class AdhocActionsTest(base.EngineTestCase):
                   printenv_result: '{{ task().result }}'
         """
 
-        wb_service.create_workbook_v2(wb_text, namespace=namespace)
+        wb_service.create_workbook_v2(wb_text, namespace=namespace1)
         wb_service.create_workbook_v2(wb_text, namespace=namespace2)
 
         with db_api.transaction():
-            action_def = db_api.get_action_definitions(
-                name='my_wb_namespace.test_env', )
+            action_defs = db_api.get_action_definitions(
+                name='my_wb1.test_env'
+            )
 
-            self.assertEqual(2, len(action_def))
+            self.assertEqual(2, len(action_defs))
 
-            action_def = db_api.get_action_definitions(
-                name='my_wb_namespace.test_env',
-                namespace=namespace)
+            action_defs = db_api.get_action_definitions(
+                name='my_wb1.test_env',
+                namespace=namespace1
+            )
 
-            self.assertEqual(1, len(action_def))
+            self.assertEqual(1, len(action_defs))
 
-            self.assertRaises(exc.DBEntityNotFoundError,
-                              db_api.get_action_definition,
-                              name='my_wb_namespace.test_env')
+            action_defs = db_api.get_action_definitions(
+                name='my_wb1.test_env',
+                namespace=namespace2
+            )
+
+            self.assertEqual(1, len(action_defs))
+
+            self.assertRaises(
+                exc.DBEntityNotFoundError,
+                db_api.get_action_definition,
+                name='my_wb1.test_env'
+            )
 
     def test_adhoc_action_execution_with_namespace(self):
         namespace = 'ad-hoc_test'
 
-        wb_service.create_workbook_v2(WORKBOOK, namespace=namespace)
+        wb_service.create_workbook_v2(WB, namespace=namespace)
+
         wf_ex = self.engine.start_workflow(
             'my_wb.wf4',
             wf_input={'str1': 'a'},
@@ -371,11 +380,17 @@ class AdhocActionsTest(base.EngineTestCase):
         with db_api.transaction():
             action_execs = db_api.get_action_executions(
                 name='std.echo',
-                workflow_namespace=namespace)
+                workflow_namespace=namespace
+            )
+
             self.assertEqual(1, len(action_execs))
+
             context = action_execs[0].runtime_context
-            self.assertEqual('my_wb.test_env',
-                             context.get('adhoc_action_name'))
+
+            self.assertEqual(
+                'my_wb.test_env',
+                context.get('adhoc_action_name')
+            )
             self.assertEqual(namespace, action_execs[0].workflow_namespace)
 
     def test_adhoc_action_runtime_context_name(self):
@@ -389,6 +404,7 @@ class AdhocActionsTest(base.EngineTestCase):
 
         with db_api.transaction():
             action_execs = db_api.get_action_executions(name='std.echo')
+
             self.assertEqual(1, len(action_execs))
 
             action_name = action_execs[0].runtime_context.get(

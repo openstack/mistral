@@ -52,6 +52,7 @@ class Action(object):
     def __init__(self, action_def, action_ex=None, task_ex=None):
         self.action_def = action_def
         self.action_ex = action_ex
+        self.namespace = action_def.namespace if action_def else None
         self.task_ex = action_ex.task_execution if action_ex else task_ex
 
     @abc.abstractmethod
@@ -151,8 +152,7 @@ class Action(object):
         return True
 
     def _create_action_execution(self, input_dict, runtime_ctx, is_sync,
-                                 desc='', action_ex_id=None, namespace=''):
-
+                                 desc='', action_ex_id=None):
         action_ex_id = action_ex_id or utils.generate_unicode_uuid()
 
         values = {
@@ -162,7 +162,7 @@ class Action(object):
             'state': states.RUNNING,
             'input': input_dict,
             'runtime_context': runtime_ctx,
-            'workflow_namespace': namespace,
+            'workflow_namespace': self.namespace,
             'description': desc,
             'is_sync': is_sync
         }
@@ -246,6 +246,7 @@ class PythonAction(Action):
         # to be updated with the action execution ID after the action execution
         # DB object is created.
         action_ex_id = utils.generate_unicode_uuid()
+
         self._create_action_execution(
             self._prepare_input(input_dict),
             self._prepare_runtime_context(index, safe_rerun),
@@ -253,7 +254,8 @@ class PythonAction(Action):
             desc=desc,
             action_ex_id=action_ex_id
         )
-        execution_context = self._prepare_execution_context()
+
+        action_ex_ctx = self._prepare_execution_context()
 
         # Register an asynchronous command to send the action to
         # run on an executor outside of the main DB transaction.
@@ -266,7 +268,7 @@ class PythonAction(Action):
                 self.action_def.attributes or {},
                 self.action_ex.input,
                 self.action_ex.runtime_context.get('safe_rerun', False),
-                execution_context,
+                action_ex_ctx,
                 target=target,
                 timeout=timeout
             )
@@ -356,9 +358,9 @@ class PythonAction(Action):
 
         if self.action_ex:
             exc_ctx['action_execution_id'] = self.action_ex.id
-            exc_ctx['callback_url'] = ('/v2/action_executions/%s'
-                                       % self.action_ex.id
-                                       )
+            exc_ctx['callback_url'] = (
+                '/v2/action_executions/%s' % self.action_ex.id
+            )
 
         return exc_ctx
 
@@ -416,6 +418,7 @@ class AdHocAction(PythonAction):
         )
 
         self.adhoc_action_def = action_def
+        self.namespace = action_def.namespace
         self.task_ctx = task_ctx or {}
         self.wf_ctx = wf_ctx or {}
 
@@ -556,13 +559,6 @@ class AdHocAction(PythonAction):
             )
 
         return base
-
-    def _create_action_execution(self, input_dict, runtime_ctx, is_sync,
-                                 desc='', action_ex_id=None):
-        super()._create_action_execution(input_dict,
-                                         runtime_ctx, is_sync,
-                                         desc, action_ex_id,
-                                         self.adhoc_action_def.namespace)
 
 
 class WorkflowAction(Action):
