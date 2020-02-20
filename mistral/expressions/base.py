@@ -15,6 +15,8 @@
 
 import abc
 
+from stevedore import extension
+
 
 class Evaluator(object):
     """Expression evaluator interface.
@@ -53,3 +55,22 @@ class Evaluator(object):
         :return: True if string is expression
         """
         pass
+
+
+def get_custom_functions():
+    """Get custom functions.
+
+    Retrieves the list of custom functions used in YAQL/Jinja expressions.
+    """
+    # {name => function object).
+    result = dict()
+
+    mgr = extension.ExtensionManager(
+        namespace='mistral.expression.functions',
+        invoke_on_load=False
+    )
+
+    for name in mgr.names():
+        result[name] = mgr[name].plugin
+
+    return result

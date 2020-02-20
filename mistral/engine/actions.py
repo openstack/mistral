@@ -517,11 +517,13 @@ class AdHocAction(PythonAction):
 
     @profiler.trace('ad-hoc-action-gather-base-actions', hide_args=True)
     def _gather_base_actions(self, action_def, base_action_def):
-        """Find all base ad-hoc actions and store them
+        """Find all base ad-hoc actions and store them.
 
-        An ad-hoc action may be based on another ad-hoc action (and this
-        recursively). Using twice the same base action is not allowed to
-        avoid infinite loops. It stores the list of ad-hoc actions.
+        An ad-hoc action may be based on another ad-hoc action and this
+        works recursively, so that the base action can also be based on an
+        ad-hoc action. Using the same base action more than once in this
+        action hierarchy is not allowed to avoid infinite loops.
+        The method stores the list of ad-hoc actions.
 
         :param action_def: Action definition
         :type action_def: ActionDefinition
@@ -532,6 +534,7 @@ class AdHocAction(PythonAction):
         """
 
         self.adhoc_action_defs = [action_def]
+
         original_base_name = self.action_spec.get_name()
         action_names = set([original_base_name])
 

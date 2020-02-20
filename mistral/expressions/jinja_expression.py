@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from functools import partial
 import re
 
 import jinja2
@@ -22,8 +23,7 @@ from oslo_log import log as logging
 import six
 
 from mistral import exceptions as exc
-from mistral.expressions.base_expression import Evaluator
-from mistral.utils import expression_utils
+from mistral.expressions import base
 
 
 LOG = logging.getLogger(__name__)
@@ -41,13 +41,33 @@ _environment = SandboxedEnvironment(
     lstrip_blocks=True
 )
 
-_filters = expression_utils.get_custom_functions()
+_filters = base.get_custom_functions()
 
 for name in _filters:
     _environment.filters[name] = _filters[name]
 
 
-class JinjaEvaluator(Evaluator):
+def get_jinja_context(data_context):
+    new_ctx = {'_': data_context}
+
+    _register_jinja_functions(new_ctx)
+
+    if isinstance(data_context, dict):
+        new_ctx['__env'] = data_context.get('__env')
+        new_ctx['__execution'] = data_context.get('__execution')
+        new_ctx['__task_execution'] = data_context.get('__task_execution')
+
+    return new_ctx
+
+
+def _register_jinja_functions(jinja_ctx):
+    functions = base.get_custom_functions()
+
+    for name in functions:
+        jinja_ctx[name] = partial(functions[name], jinja_ctx['_'])
+
+
+class JinjaEvaluator(base.Evaluator):
     _env = _environment.overlay()
 
     @classmethod
@@ -62,18 +82,13 @@ class JinjaEvaluator(Evaluator):
 
             parser.parse_expression()
         except jinja2.exceptions.TemplateError as e:
-            raise exc.JinjaGrammarException(
-                "Syntax error '%s'." % str(e)
-            )
+            raise exc.JinjaGrammarException("Syntax error '%s'." % str(e))
 
     @classmethod
     def evaluate(cls, expression, data_context):
-        ctx = expression_utils.get_jinja_context(data_context)
+        ctx = get_jinja_context(data_context)
 
-        result = cls._env.compile_expression(
-            expression,
-            **JINJA_OPTS
-        )(**ctx)
+        result = cls._env.compile_expression(expression, **JINJA_OPTS)(**ctx)
 
         # For StrictUndefined values, UndefinedError only gets raised when
         # the value is accessed, not when it gets created. The simplest way
@@ -90,7 +105,7 @@ class JinjaEvaluator(Evaluator):
         return False
 
 
-class InlineJinjaEvaluator(Evaluator):
+class InlineJinjaEvaluator(base.Evaluator):
     # The regular expression for Jinja variables and blocks
     find_expression_pattern = re.compile(JINJA_REGEXP)
     find_block_pattern = re.compile(JINJA_BLOCK_REGEXP)
@@ -126,7 +141,8 @@ class InlineJinjaEvaluator(Evaluator):
             if patterns[0][0] == expression:
                 result = JinjaEvaluator.evaluate(patterns[0][1], data_context)
             else:
-                ctx = expression_utils.get_jinja_context(data_context)
+                ctx = get_jinja_context(data_context)
+
                 result = cls._env.from_string(expression).render(**ctx)
         except Exception as e:
             # NOTE(rakhmerov): if we hit a database error then we need to

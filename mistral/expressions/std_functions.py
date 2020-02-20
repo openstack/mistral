@@ -1,4 +1,5 @@
-# Copyright 2015 - Mirantis, Inc.
+# Copyright 2013 - Mirantis, Inc.
+# Copyright 2015 - StackStorm, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,163 +14,67 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from functools import partial
 import warnings
 
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from stevedore import extension
 import yaml
-from yaml import representer
-import yaql
 
-from yaql.language import utils as yaql_utils
-
-from mistral.config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.utils import filter_utils
 from mistral_lib import utils
 
-# TODO(rakhmerov): it's work around the bug in YAQL.
-# YAQL shouldn't expose internal types to custom functions.
-representer.SafeRepresenter.add_representer(
-    yaql_utils.FrozenDict,
-    representer.SafeRepresenter.represent_dict
-)
-
-LOG = logging.getLogger(__name__)
-ROOT_YAQL_CONTEXT = None
-
-
-def get_yaql_context(data_context):
-    global ROOT_YAQL_CONTEXT
-
-    if not ROOT_YAQL_CONTEXT:
-        ROOT_YAQL_CONTEXT = yaql.create_context()
-
-        _register_yaql_functions(ROOT_YAQL_CONTEXT)
-
-    new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
-
-    new_ctx['$'] = (
-        data_context if not cfg.CONF.yaql.convert_input_data
-        else yaql_utils.convert_input_data(data_context)
-    )
-
-    if isinstance(data_context, dict):
-        new_ctx['__env'] = data_context.get('__env')
-        new_ctx['__execution'] = data_context.get('__execution')
-        new_ctx['__task_execution'] = data_context.get('__task_execution')
-
-    return new_ctx
-
-
-def get_jinja_context(data_context):
-    new_ctx = {
-        '_': data_context
-    }
-
-    _register_jinja_functions(new_ctx)
-
-    if isinstance(data_context, dict):
-        new_ctx['__env'] = data_context.get('__env')
-        new_ctx['__execution'] = data_context.get('__execution')
-        new_ctx['__task_execution'] = data_context.get('__task_execution')
-
-    return new_ctx
-
-
-def get_custom_functions():
-    """Get custom functions
-
-    Retrieves the list of custom evaluation functions
-    """
-    functions = dict()
-
-    mgr = extension.ExtensionManager(
-        namespace='mistral.expression.functions',
-        invoke_on_load=False
-    )
-
-    for name in mgr.names():
-        functions[name] = mgr[name].plugin
-
-    return functions
-
-
-def _register_yaql_functions(yaql_ctx):
-    functions = get_custom_functions()
-
-    for name in functions:
-        yaql_ctx.register_function(functions[name], name=name)
-
-
-def _register_jinja_functions(jinja_ctx):
-    functions = get_custom_functions()
-
-    for name in functions:
-        jinja_ctx[name] = partial(functions[name], jinja_ctx['_'])
-
-
-# Additional YAQL functions needed by Mistral.
+# Additional YAQL/Jinja functions provided by Mistral out of the box.
 # If a function name ends with underscore then it doesn't need to pass
 # the name of the function when context registers it.
+
+LOG = logging.getLogger(__name__)
+
 
 def env_(context):
     return context['__env']
 
 
-def executions_(context,
-                id=None,
-                root_execution_id=None,
-                state=None,
-                from_time=None,
-                to_time=None
-                ):
-
-    filter = {}
+def executions_(context, id=None, root_execution_id=None, state=None,
+                from_time=None, to_time=None):
+    fltr = {}
 
     if id is not None:
-        filter = filter_utils.create_or_update_filter(
-            'id',
-            id,
-            "eq",
-            filter
-        )
+        fltr = filter_utils.create_or_update_filter('id', id, "eq", fltr)
 
     if root_execution_id is not None:
-        filter = filter_utils.create_or_update_filter(
+        fltr = filter_utils.create_or_update_filter(
             'root_execution_id',
             root_execution_id,
-            "eq",
-            filter
+            'eq',
+            fltr
         )
 
     if state is not None:
-        filter = filter_utils.create_or_update_filter(
+        fltr = filter_utils.create_or_update_filter(
             'state',
             state,
-            "eq",
-            filter
+            'eq',
+            fltr
         )
 
     if from_time is not None:
-        filter = filter_utils.create_or_update_filter(
+        fltr = filter_utils.create_or_update_filter(
             'created_at',
             from_time,
-            "gte",
-            filter
+            'gte',
+            fltr
         )
 
     if to_time is not None:
-        filter = filter_utils.create_or_update_filter(
+        fltr = filter_utils.create_or_update_filter(
             'created_at',
             to_time,
-            "lt",
-            filter
+            'lt',
+            fltr
         )
 
-    return db_api.get_workflow_executions(**filter)
+    return db_api.get_workflow_executions(**fltr)
 
 
 def execution_(context):

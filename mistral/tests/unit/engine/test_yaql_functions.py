@@ -15,10 +15,10 @@
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
+from mistral.expressions import std_functions
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base as engine_test_base
 from mistral.workflow import states
-
 
 # Use the set_default method to set value otherwise in certain test cases
 # the change in value is not permanent.
@@ -459,3 +459,28 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
         self.assertIsNotNone(json_str)
         self.assertIn('"key1": "foo"', json_str)
         self.assertIn('"key2": "bar"', json_str)
+
+    def test_yaml_dump(self):
+        data = [
+            {
+                "this": "is valid",
+            },
+            {
+                "so": "is this",
+                "and": "this too",
+                "might": "as well",
+            },
+            "validaswell"
+        ]
+
+        expected = (
+            "- this: is valid\n"
+            "- and: this too\n"
+            "  might: as well\n"
+            "  so: is this\n"
+            "- validaswell\n"
+        )
+
+        yaml_str = std_functions.yaml_dump_(None, data)
+
+        self.assertEqual(expected, yaml_str)

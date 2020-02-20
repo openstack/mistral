@@ -71,7 +71,7 @@ WF_EXECS = [
 ]
 
 
-class JinjaEvaluatorTest(base.BaseTest):
+class JinjaEvaluatorTest(base.DbTestCase):
     def setUp(self):
         super(JinjaEvaluatorTest, self).setUp()
 
@@ -79,6 +79,7 @@ class JinjaEvaluatorTest(base.BaseTest):
 
     def test_expression_result(self):
         res = self._evaluator.evaluate('_.server', DATA)
+
         self.assertEqual({
             'id': '03ea824a-aa24-4105-9131-66c48ae54acf',
             'name': 'cloud-fedora',
@@ -86,9 +87,11 @@ class JinjaEvaluatorTest(base.BaseTest):
         }, res)
 
         res = self._evaluator.evaluate('_.server.id', DATA)
+
         self.assertEqual('03ea824a-aa24-4105-9131-66c48ae54acf', res)
 
         res = self._evaluator.evaluate("_.server.status == 'ACTIVE'", DATA)
+
         self.assertTrue(res)
 
     def test_select_result(self):
@@ -96,7 +99,9 @@ class JinjaEvaluatorTest(base.BaseTest):
             '_.servers|selectattr("name", "equalto", "ubuntu")',
             SERVERS
         )
+
         item = list(res)[0]
+
         self.assertEqual({'name': 'ubuntu'}, item)
 
     def test_function_string(self):
@@ -104,8 +109,11 @@ class JinjaEvaluatorTest(base.BaseTest):
         self.assertEqual('3', self._evaluator.evaluate('_|string', 3))
 
     def test_function_len(self):
-        self.assertEqual(3,
-                         self._evaluator.evaluate('_|length', 'hey'))
+        self.assertEqual(
+            3,
+            self._evaluator.evaluate('_|length', 'hey')
+        )
+
         data = [{'some': 'thing'}]
 
         self.assertEqual(
@@ -184,10 +192,12 @@ class JinjaEvaluatorTest(base.BaseTest):
 
     def test_function_env(self):
         ctx = {'__env': 'some'}
+
         self.assertEqual(ctx['__env'], self._evaluator.evaluate('env()', ctx))
 
     def test_filter_env(self):
         ctx = {'__env': 'some'}
+
         self.assertEqual(ctx['__env'], self._evaluator.evaluate('_|env', ctx))
 
     @mock.patch('mistral.db.v2.api.get_task_executions')
@@ -196,6 +206,7 @@ class JinjaEvaluatorTest(base.BaseTest):
                                                 task_executions):
         task = mock.MagicMock(return_value={})
         task_executions.return_value = [task]
+
         ctx = {
             '__task_execution': None,
             '__execution': {

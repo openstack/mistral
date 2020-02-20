@@ -20,15 +20,17 @@ import re
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import six
+from yaml import representer
+import yaql
 from yaql.language import exceptions as yaql_exc
 from yaql.language import factory
 from yaql.language import utils as yaql_utils
 
 from mistral.config import cfg
 from mistral import exceptions as exc
-from mistral.expressions.base_expression import Evaluator
-from mistral.utils import expression_utils
+from mistral.expressions import base
 from mistral_lib import utils
+
 
 LOG = logging.getLogger(__name__)
 
@@ -37,6 +39,45 @@ _YAQL_CONF = cfg.CONF.yaql
 INLINE_YAQL_REGEXP = '<%.*?%>'
 
 YAQL_ENGINE = None
+
+ROOT_YAQL_CONTEXT = None
+
+# TODO(rakhmerov): it's work around the bug in YAQL.
+# YAQL shouldn't expose internal types to custom functions.
+representer.SafeRepresenter.add_representer(
+    yaql_utils.FrozenDict,
+    representer.SafeRepresenter.represent_dict
+)
+
+
+def get_yaql_context(data_context):
+    global ROOT_YAQL_CONTEXT
+
+    if not ROOT_YAQL_CONTEXT:
+        ROOT_YAQL_CONTEXT = yaql.create_context()
+
+        _register_yaql_functions(ROOT_YAQL_CONTEXT)
+
+    new_ctx = ROOT_YAQL_CONTEXT.create_child_context()
+
+    new_ctx['$'] = (
+        data_context if not cfg.CONF.yaql.convert_input_data
+        else yaql_utils.convert_input_data(data_context)
+    )
+
+    if isinstance(data_context, dict):
+        new_ctx['__env'] = data_context.get('__env')
+        new_ctx['__execution'] = data_context.get('__execution')
+        new_ctx['__task_execution'] = data_context.get('__task_execution')
+
+    return new_ctx
+
+
+def _register_yaql_functions(yaql_ctx):
+    functions = base.get_custom_functions()
+
+    for name in functions:
+        yaql_ctx.register_function(functions[name], name=name)
 
 
 def get_yaql_engine_options():
@@ -97,7 +138,7 @@ def _sanitize_yaql_result(result):
     return result if not inspect.isgenerator(result) else list(result)
 
 
-class YAQLEvaluator(Evaluator):
+class YAQLEvaluator(base.Evaluator):
     @classmethod
     def validate(cls, expression):
         try:
@@ -111,7 +152,7 @@ class YAQLEvaluator(Evaluator):
 
         try:
             result = get_yaql_engine_class()(expression).evaluate(
-                context=expression_utils.get_yaql_context(data_context)
+                context=get_yaql_context(data_context)
             )
         except Exception as e:
             # NOTE(rakhmerov): if we hit a database error then we need to

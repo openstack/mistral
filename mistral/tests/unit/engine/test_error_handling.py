@@ -18,10 +18,11 @@ from oslo_db import exception as db_exc
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
+from mistral.expressions import jinja_expression
+from mistral.expressions import yaql_expression
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit.engine import base
-from mistral.utils import expression_utils
 from mistral.workflow import states
 from mistral_lib import actions as actions_base
 
@@ -743,11 +744,11 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
         self.assertIn("UnicodeDecodeError: utf", task_ex.state_info)
 
     @mock.patch(
-        'mistral.utils.expression_utils.get_yaql_context',
+        'mistral.expressions.yaql_expression.get_yaql_context',
         mock.MagicMock(
             side_effect=[
                 db_exc.DBDeadlock(),  # Emulating DB deadlock
-                expression_utils.get_yaql_context({})  # Successful run
+                yaql_expression.get_yaql_context({})  # Successful run
             ]
         )
     )
@@ -783,11 +784,11 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             self.assertDictEqual({'my_var': 2}, task_ex.published)
 
     @mock.patch(
-        'mistral.utils.expression_utils.get_jinja_context',
+        'mistral.expressions.jinja_expression.get_jinja_context',
         mock.MagicMock(
             side_effect=[
                 db_exc.DBDeadlock(),  # Emulating DB deadlock
-                expression_utils.get_jinja_context({})  # Successful run
+                jinja_expression.get_jinja_context({})  # Successful run
             ]
         )
     )
