@@ -2,14 +2,6 @@
 Workflow Service Overview
 =========================
 
-Mistral is a workflow service that enables setting up and scheduling tasks and
-task relations that have to be executed in a particular order, called workflows.
-During execution, Mistral handles state management, correct execution order,
-parallelism, synchronization and high availability.
-
-Mistral can be used, for example, for Cloud Cron-style task scheduling,
-Cloud Environment Deployment, handling long-running business processes, managing
-BigData analysis and tasks, and live migration.
 
 The Workflow service consists of the following components:
 
