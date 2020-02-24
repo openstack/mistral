@@ -7,6 +7,11 @@
       rally_task: rally-jobs/task-mistral.yaml
       devstack_localrc:
         USE_PYTHON3: true
+      devstack_local_conf:
+        post-config:
+          $MISTRAL_CONF_FILE:
+            engine:
+              execution_field_size_limit_kb: 8192
     required-projects:
       - openstack/rally-openstack
       - openstack/mistral-lib
