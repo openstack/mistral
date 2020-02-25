@@ -20,6 +20,7 @@ from oslo_log import log as logging
 from oslo_serialization import jsonutils
 import yaml
 
+from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.utils import filter_utils
 from mistral_lib import utils
@@ -35,48 +36,50 @@ def env_(context):
     return context['__env']
 
 
+@db_utils.tx_cached(ignore_args='context')
 def executions_(context, id=None, root_execution_id=None, state=None,
                 from_time=None, to_time=None):
-    fltr = {}
+    filter_ = {}
 
     if id is not None:
-        fltr = filter_utils.create_or_update_filter('id', id, "eq", fltr)
+        filter_ = filter_utils.create_or_update_filter('id', id, "eq", filter_)
 
     if root_execution_id is not None:
-        fltr = filter_utils.create_or_update_filter(
+        filter_ = filter_utils.create_or_update_filter(
             'root_execution_id',
             root_execution_id,
             'eq',
-            fltr
+            filter_
         )
 
     if state is not None:
-        fltr = filter_utils.create_or_update_filter(
+        filter_ = filter_utils.create_or_update_filter(
             'state',
             state,
             'eq',
-            fltr
+            filter_
         )
 
     if from_time is not None:
-        fltr = filter_utils.create_or_update_filter(
+        filter_ = filter_utils.create_or_update_filter(
             'created_at',
             from_time,
             'gte',
-            fltr
+            filter_
         )
 
     if to_time is not None:
-        fltr = filter_utils.create_or_update_filter(
+        filter_ = filter_utils.create_or_update_filter(
             'created_at',
             to_time,
             'lt',
-            fltr
+            filter_
         )
 
-    return db_api.get_workflow_executions(**fltr)
+    return db_api.get_workflow_executions(**filter_)
 
 
+@db_utils.tx_cached(ignore_args='context')
 def execution_(context):
     wf_ex = db_api.get_workflow_execution(context['__execution']['id'])
 
@@ -113,6 +116,7 @@ def yaml_dump_(context, data):
     return yaml.safe_dump(data, default_flow_style=False)
 
 
+@db_utils.tx_cached(ignore_args='context')
 def task_(context, task_name=None):
     # This section may not exist in a context if it's calculated not in
     # task scope.
@@ -224,6 +228,7 @@ def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
     return task_execs
 
 
+@db_utils.tx_cached(ignore_args='context')
 def tasks_(context, workflow_execution_id=None, recursive=False, state=None,
            flat=False):
     task_execs = _get_tasks_from_db(

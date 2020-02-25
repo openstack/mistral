@@ -14,7 +14,11 @@
 
 from __future__ import absolute_import
 
+from cachetools import keys as cachetools_keys
+import decorator
 import functools
+import inspect
+import six
 
 from sqlalchemy import exc as sqla_exc
 
@@ -24,8 +28,10 @@ from oslo_log import log as logging
 import tenacity
 
 from mistral import context
+from mistral.db.sqlalchemy import base as db_base
 from mistral import exceptions as exc
 from mistral.services import security
+from mistral_lib import utils as ml_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -124,3 +130,87 @@ def check_db_obj_access(db_obj):
             "Can not modify a system %s resource, ID: %s" %
             (db_obj.__class__.__name__, db_obj.id)
         )
+
+
+def tx_cached(use_args=None, ignore_args=None):
+    """Decorates any function to cache its result within a DB transaction.
+
+    Since a DB transaction is coupled with the current thread, the scope
+    of the underlying cache doesn't go beyond the thread. The decorator
+    is mainly useful for situations when we know we can safely cache a
+    result of some calculation if we know that it's not going to change
+    till the end of the current transaction.
+
+    :param use_args: A tuple with argument names of the decorated function
+        used to build a cache key.
+    :param ignore_args:  A tuple with argument names of the decorated function
+        that should be ignored when building a cache key.
+    :return: Decorated function.
+    """
+
+    if use_args and ignore_args:
+        raise ValueError(
+            "Only one of 'use_args' and 'ignore_args' can be used."
+        )
+
+    def _build_cache_key(func, *args, **kw):
+        # { arg name => arg value }
+        arg_dict = inspect.getcallargs(func, *args, **kw)
+
+        if ignore_args:
+            if not isinstance(ignore_args, (six.string_types, tuple)):
+                raise ValueError(
+                    "'ignore_args' must be either a tuple or a string,"
+                    " actual type: %s" % type(ignore_args)
+                )
+
+            ignore_args_tup = (
+                ignore_args if isinstance(ignore_args, tuple) else
+                (ignore_args,)
+            )
+
+            for arg_name in ignore_args_tup:
+                arg_dict.pop(arg_name, None)
+
+        if use_args:
+            if not isinstance(use_args, (six.string_types, tuple)):
+                raise ValueError(
+                    "'use_args' must be either a tuple or a string,"
+                    " actual type: %s" % type(use_args)
+                )
+
+            use_args_tup = (
+                use_args if isinstance(use_args, tuple) else (use_args,)
+            )
+
+            for arg_name in arg_dict.keys():
+                if arg_name not in tuple(use_args_tup):
+                    arg_dict.pop(arg_name, None)
+
+        return cachetools_keys.hashkey(**arg_dict)
+
+    @decorator.decorator
+    def _decorator(func, *args, **kw):
+        cache = db_base.get_tx_scoped_cache()
+
+        # A DB transaction may not be necessarily open at the moment.
+        if not cache:
+            return func(*args, **kw)
+
+        cache_key = _build_cache_key(func, *args, **kw)
+
+        result = cache.get(cache_key, default=ml_utils.NotDefined)
+
+        if result is not ml_utils.NotDefined:
+            return result
+
+        # We don't do any exception handling here. In case of an exception
+        # nothing will be put into the cache and the exception will just
+        # bubble up as if there wasn't any wrapper.
+        result = func(*args, **kw)
+
+        cache[cache_key] = result
+
+        return result
+
+    return _decorator
