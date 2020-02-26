@@ -34,6 +34,10 @@ LOG = logging.getLogger(__name__)
 
 _YAQL_CONF = cfg.CONF.yaql
 
+INLINE_YAQL_REGEXP = '<%.*?%>'
+
+YAQL_ENGINE = None
+
 
 def get_yaql_engine_options():
     return {
@@ -54,24 +58,30 @@ def create_yaql_engine_class(keyword_operator, allow_delegates,
     ).create(options=engine_options)
 
 
-YAQL_ENGINE = create_yaql_engine_class(
-    _YAQL_CONF.keyword_operator,
-    _YAQL_CONF.allow_delegates,
-    get_yaql_engine_options()
-)
+def get_yaql_engine_class():
+    global YAQL_ENGINE
 
-LOG.info(
-    "YAQL engine has been initialized with the options: \n%s",
-    utils.merge_dicts(
-        get_yaql_engine_options(),
-        {
-            "keyword_operator": _YAQL_CONF.keyword_operator,
-            "allow_delegates": _YAQL_CONF.allow_delegates
-        }
+    if YAQL_ENGINE is not None:
+        return YAQL_ENGINE
+
+    YAQL_ENGINE = create_yaql_engine_class(
+        _YAQL_CONF.keyword_operator,
+        _YAQL_CONF.allow_delegates,
+        get_yaql_engine_options()
     )
-)
 
-INLINE_YAQL_REGEXP = '<%.*?%>'
+    LOG.info(
+        "YAQL engine has been initialized with the options: \n%s",
+        utils.merge_dicts(
+            get_yaql_engine_options(),
+            {
+                "keyword_operator": _YAQL_CONF.keyword_operator,
+                "allow_delegates": _YAQL_CONF.allow_delegates
+            }
+        )
+    )
+
+    return YAQL_ENGINE
 
 
 def _sanitize_yaql_result(result):
@@ -91,7 +101,7 @@ class YAQLEvaluator(Evaluator):
     @classmethod
     def validate(cls, expression):
         try:
-            YAQL_ENGINE(expression)
+            get_yaql_engine_class()(expression)
         except (yaql_exc.YaqlException, KeyError, ValueError, TypeError) as e:
             raise exc.YaqlGrammarException(getattr(e, 'message', e))
 
@@ -100,7 +110,7 @@ class YAQLEvaluator(Evaluator):
         expression = expression.strip() if expression else expression
 
         try:
-            result = YAQL_ENGINE(expression).evaluate(
+            result = get_yaql_engine_class()(expression).evaluate(
                 context=expression_utils.get_yaql_context(data_context)
             )
         except Exception as e:
