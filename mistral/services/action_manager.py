@@ -30,12 +30,9 @@ from mistral_lib.utils import inspect_utils as i_utils
 LOG = logging.getLogger(__name__)
 
 ACTIONS_PATH = 'resources/actions'
-_ACTION_CTX_PARAM = 'action_context'
 
 
-# TODO(rakhmerov): It's confusing because we have std.xxx actions and actions
-# TODO(rakhmerov): under '../resources/actions' that we also call standard.
-def register_standard_actions():
+def register_preinstalled_actions():
     action_paths = utils.get_file_list(ACTIONS_PATH)
 
     for action_path in action_paths:
@@ -79,7 +76,7 @@ def sync_db():
     with db_api.transaction():
         _clear_system_action_db()
         register_action_classes()
-        register_standard_actions()
+        register_preinstalled_actions()
 
 
 def _register_dynamic_action_classes(namespace=''):

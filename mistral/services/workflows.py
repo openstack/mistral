@@ -21,27 +21,37 @@ from mistral.utils import safe_yaml
 from mistral.workflow import states
 from mistral_lib import utils
 from oslo_log import log as logging
+from stevedore import extension
 
 
 STD_WF_PATH = 'resources/workflows'
 LOG = logging.getLogger(__name__)
 
 
-def register_standard_workflows(run_in_tx=True):
-    LOG.debug("Registering standard workflows...")
+def register_preinstalled_workflows(run_in_tx=True):
 
-    workflow_paths = utils.get_file_list(STD_WF_PATH)
+    extensions = extension.ExtensionManager(
+        namespace='mistral.preinstalled_workflows',
+        invoke_on_load=True
+    )
 
-    for wf_path in workflow_paths:
-        workflow_definition = open(wf_path).read()
+    for ext in extensions:
+        for wf_path in ext.obj:
+            register_workflow(run_in_tx, wf_path)
 
-        create_workflows(
-            workflow_definition,
-            scope='public',
-            is_system=True,
-            run_in_tx=run_in_tx,
-            namespace=''
-        )
+
+def register_workflow(run_in_tx, wf_path):
+    LOG.debug("Registering preinstalled workflow %s", wf_path)
+
+    workflow_definition = open(wf_path).read()
+
+    create_workflows(
+        workflow_definition,
+        scope='public',
+        is_system=True,
+        run_in_tx=run_in_tx,
+        namespace=''
+    )
 
 
 def _clear_system_workflow_db():
@@ -54,7 +64,7 @@ def sync_db():
     with db_api.transaction():
         _clear_system_workflow_db()
 
-        register_standard_workflows(run_in_tx=False)
+        register_preinstalled_workflows(run_in_tx=False)
 
 
 def create_workflows(definition, scope='private', is_system=False,
