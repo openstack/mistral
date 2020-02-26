@@ -32,9 +32,14 @@ import os
 
 # If ../mistral/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
-POSSIBLE_TOPDIR = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
-                                   os.pardir,
-                                   os.pardir))
+POSSIBLE_TOPDIR = os.path.normpath(
+    os.path.join(
+        os.path.abspath(sys.argv[0]),
+        os.pardir,
+        os.pardir
+    )
+)
+
 if os.path.exists(os.path.join(POSSIBLE_TOPDIR, 'mistral', '__init__.py')):
     sys.path.insert(0, POSSIBLE_TOPDIR)
 
@@ -173,7 +178,9 @@ def get_properly_ordered_parameters():
             else:
                 conf_file_value = args[args.index(arg) + 1]
                 args.remove(conf_file_value)
+
             args.remove(arg)
+
             args.insert(0, "--config-file")
             args.insert(1, conf_file_value)
 
@@ -184,9 +191,11 @@ def override_keystone_options():
     # TODO(wxy): This function is used for keeping backward compatibility.
     # Remove it in Stein.
     auth_opts = CONF['keystone_authtoken']
+
     for opt, value in auth_opts.items():
         if opt in CONF['keystone']:
             default_value = auth_opts._group._opts[opt]['opt'].default
+
             if default_value != value != CONF['keystone'][opt]:
                 LOG.warning("The config option '%s' in section "
                             "[keystone_authtoken] has the same copy in "
@@ -198,10 +207,13 @@ def override_keystone_options():
 def main():
     try:
         CONF.register_cli_opts(config.CLI_OPTS)
+
         config.parse_args(get_properly_ordered_parameters())
+
         print_server_info()
 
         logging.setup(CONF, 'Mistral')
+
         override_keystone_options()
 
         # Please refer to the oslo.messaging documentation for transport
@@ -242,6 +254,7 @@ def main():
 def reset_server_managers():
     global SERVER_THREAD_MANAGER
     global SERVER_PROCESS_MANAGER
+
     SERVER_THREAD_MANAGER = None
     SERVER_PROCESS_MANAGER = None
 
@@ -249,12 +262,14 @@ def reset_server_managers():
 # Helper method used in unit tests to access the service launcher.
 def get_server_thread_manager():
     global SERVER_THREAD_MANAGER
+
     return SERVER_THREAD_MANAGER
 
 
 # Helper method used in unit tests to access the process launcher.
 def get_server_process_manager():
     global SERVER_PROCESS_MANAGER
+
     return SERVER_PROCESS_MANAGER
 
 
