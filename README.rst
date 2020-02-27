@@ -8,28 +8,25 @@ Team and repository tags
 Mistral
 =======
 
-Workflow Service for OpenStack cloud. This project aims to provide a mechanism
-to define tasks and workflows without writing code, manage and execute them in
-the cloud environment.
+Workflow Service integrated with OpenStack. This project aims to provide a
+mechanism to define tasks and workflows in a simple YAML-based language, manage
+and execute them in a distributed environment.
 
 Project Resources
 -----------------
 
 * `Mistral Official Documentation <https://docs.openstack.org/mistral/latest/>`_
 
-    * `Installation Guide <https://docs.openstack.org/mistral/latest/install/installation_guide.html#>`_
+    * `User Documentation <https://docs.openstack.org/mistral/latest/user/index.html>`_
 
-    * `Configuration Guide <https://docs.openstack.org/mistral/latest/configuration/config-guide.html>`_
+    * `Administrator Documentation <https://docs.openstack.org/mistral/latest/admin/index.html>`_
 
-    * `Workflow Language Specification <https://docs.openstack.org/mistral/latest/user/wf_lang_v2.html>`_
+    * `Developer Documentation <https://docs.openstack.org/mistral/latest/developer/index.html>`_
 
 * Project status, bugs, and blueprints are tracked on
   `Launchpad <https://launchpad.net/mistral/>`_
 
 * CloudFlow: visualization tool for workflow executions on https://github.com/nokia/CloudFlow
-
-* Additional resources are linked from the project
-  `Wiki <https://wiki.openstack.org/wiki/Mistral/>`_ page
 
 * Apache License Version 2.0 http://www.apache.org/licenses/LICENSE-2.0
 
