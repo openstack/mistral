@@ -5,9 +5,26 @@ Mistral Workflow Service
 What is Mistral?
 ================
 
-Mistral is a workflow service project. It aims to provide a mechanism
-to define complex graphs of tasks (workflows) in a simple YAML-based
-language and manage and run them in a scalable and reliable manner.
+Mistral is a workflow service. Lots of computations in computer systems
+nowadays can be represented as processes that consist of multiple
+interconnected steps that need to run in a particular order. Those steps
+are often interactions with components distributed across different machines:
+real hardware machines, cloud virtual machines or containers. Mistral provides
+capabilities to automate such processes.
+
+Particularly, Mistral can be used, for example, for solving administrator
+tasks related to managing clusters of software, or for any other tasks
+that span multiple components and take long to complete. It can also be used
+as a central component for deploying distributed software in a truly large
+scale. In any case where the ability to track the progress of the activity
+becomes crucial, Mistral is a good fit.
+
+A Mistral user can describe such a process as a set of tasks and transitions
+between them, and upload such a definition to Mistral, which will take care of
+state management, correct execution order, parallelism, synchronization and
+high availability. In Mistral terminology such a set of tasks and
+relations between them is called a **workflow**.
+
 
 Just to Get Started
 ===================

@@ -2,10 +2,6 @@
 Mistral Architecture
 ====================
 
-Mistral is OpenStack workflow service. The main aim of the project is to provide
-capability to define, execute and manage tasks and workflows without writing
-code.
-
 
 Basic concepts
 ~~~~~~~~~~~~~~

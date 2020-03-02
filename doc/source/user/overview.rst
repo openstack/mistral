@@ -1,20 +1,6 @@
 Quick Overview
 ==============
 
-What is Mistral?
-----------------
-
-Mistral is a workflow service. Most business processes consist of multiple
-distinct interconnected steps that need to be executed in a particular order
-in a distributed environment. A user can describe such a process as a set of
-tasks and their transitions. After that, it is possible to upload such a
-description to Mistral, which will take care of state management, correct
-execution order, parallelism, synchronization and high availability. Mistral
-also provides flexible task scheduling so that it can run a process according
-to a specified schedule (for example, every Sunday at 4.00pm) instead of
-running it immediately. In Mistral terminology such a set of tasks and
-relations between them is called a **workflow**.
-
 Main use cases
 --------------
 
