@@ -112,13 +112,6 @@
         - mistral-devstack-kombu
         - mistral-tox-unit-mysql
         - mistral-tox-unit-postgresql
-        # TripleO jobs that deploy Mistral.
-        # Note we don't use a project-template here, so it's easier
-        # to disable voting on one specific job if things go wrong.
-        # If you need any support to debug these jobs in case of
-        # failures, please reach us on #tripleo IRC channel.
-        - tripleo-ci-centos-7-containers-multinode:
-            voting: false
         - mistral-rally-task:
             voting: false
     gate:
