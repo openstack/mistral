@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import cachetools
 
 from oslo_config import cfg
 from oslo_db import options
@@ -28,7 +29,8 @@ from mistral_lib import utils
 # Note(dzimine): sqlite only works for basic testing.
 options.set_defaults(cfg.CONF, connection="sqlite:///mistral.sqlite")
 
-_DB_SESSION_THREAD_LOCAL_NAME = "db_sql_alchemy_session"
+_DB_SESSION_THREAD_LOCAL_NAME = "__db_sql_alchemy_session__"
+_TX_SCOPED_CACHE_THREAD_LOCAL_NAME = "__tx_scoped_cache__"
 
 _facade = None
 _sqlalchemy_create_engine_orig = sa.create_engine
@@ -86,6 +88,10 @@ def _get_thread_local_session():
     return utils.get_thread_local(_DB_SESSION_THREAD_LOCAL_NAME)
 
 
+def get_tx_scoped_cache():
+    return utils.get_thread_local(_TX_SCOPED_CACHE_THREAD_LOCAL_NAME)
+
+
 def _get_or_create_thread_local_session():
     ses = _get_thread_local_session()
 
@@ -100,6 +106,14 @@ def _get_or_create_thread_local_session():
 
 def _set_thread_local_session(session):
     utils.set_thread_local(_DB_SESSION_THREAD_LOCAL_NAME, session)
+
+    if session is not None:
+        utils.set_thread_local(
+            _TX_SCOPED_CACHE_THREAD_LOCAL_NAME,
+            cachetools.LRUCache(maxsize=1000)
+        )
+    else:
+        utils.set_thread_local(_TX_SCOPED_CACHE_THREAD_LOCAL_NAME, None)
 
 
 def session_aware(param_name="session"):
