@@ -12,12 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.expressions import std_functions
 from mistral.services import workflows as wf_service
-from mistral.tests.unit.engine import base as engine_test_base
+from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
 # Use the set_default method to set value otherwise in certain test cases
@@ -25,14 +27,12 @@ from mistral.workflow import states
 cfg.CONF.set_default('auth_enable', False, group='pecan')
 
 
-class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
+class YAQLFunctionsEngineTest(base.EngineTestCase):
     def test_task_function(self):
         wf_text = """---
         version: '2.0'
 
         wf:
-          type: direct
-
           tasks:
             task1:
               description: This is task 1
@@ -108,6 +108,60 @@ class YAQLFunctionsEngineTest(engine_test_base.EngineTestCase):
             },
             task2.published
         )
+
+    def test_task_function_caching(self):
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          tasks:
+            task1:
+              action: std.echo output=1
+              publish:
+                var1: <% task(task1) %>
+                var2: <% task(task1) %>
+                var3: <% task(task1) %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        # The idea of what happens next is to make sure that the method
+        # std_function._convert_to_user_model is called once. It will
+        # prove that the function '_task' is also called once. We can't
+        # check directly if '_task' is called because it's wrapped with
+        # a decorator and it breaks all capabilities that 'mock' provides.
+        # In fact, this is an example of 'white box' testing (when we check
+        # what happens within a certain function/component) and we always
+        # try to avoid it but we have to do it here because of technical
+        # limitations.
+        with mock.patch.object(
+                std_functions,
+                '_convert_to_user_model',
+                wraps=std_functions._convert_to_user_model
+        ) as mocked_mtd:
+            wf_ex = self.engine.start_workflow('wf')
+
+            self.await_workflow_success(wf_ex.id)
+
+            with db_api.transaction():
+                # Reread execution to access related tasks.
+                wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+                tasks = wf_ex.task_executions
+
+            task1_ex = self._assert_single_item(
+                tasks,
+                name='task1',
+                state=states.SUCCESS
+            )
+
+            published = task1_ex.published
+
+            self.assertIsNotNone(published)
+            self.assertDictEqual(published['var1'], published['var2'])
+            self.assertDictEqual(published['var1'], published['var3'])
+
+            mocked_mtd.assert_called_once()
 
     def test_task_function_returns_null(self):
         wf_text = """---

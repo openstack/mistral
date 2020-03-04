@@ -194,7 +194,7 @@ def tx_cached(use_args=None, ignore_args=None):
         cache = db_base.get_tx_scoped_cache()
 
         # A DB transaction may not be necessarily open at the moment.
-        if not cache:
+        if cache is None:
             return func(*args, **kw)
 
         cache_key = _build_cache_key(func, *args, **kw)
