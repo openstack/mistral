@@ -30,24 +30,6 @@ class ActionManagerTest(base.DbTestCase):
         self._assert_single_item(action_list, name="std.ssh")
         self._assert_single_item(action_list, name="std.javascript")
 
-        self._assert_single_item(action_list, name="nova.servers_get")
-        self._assert_single_item(
-            action_list,
-            name="nova.volumes_delete_server_volume"
-        )
-
-        server_find_action = self._assert_single_item(
-            action_list,
-            name="nova.servers_find"
-        )
-        self.assertIn('**', server_find_action.input)
-
-        self._assert_single_item(action_list, name="keystone.users_list")
-        self._assert_single_item(action_list, name="keystone.trusts_create")
-
-        self._assert_single_item(action_list, name="glance.images_list")
-        self._assert_single_item(action_list, name="glance.images_delete")
-
     def test_get_action_class(self):
         self.assertTrue(
             issubclass(a_m.get_action_class("std.echo"), std.EchoAction)

@@ -18,12 +18,11 @@ from oslo_log import log as logging
 from stevedore import extension
 
 from mistral.actions import action_factory
-from mistral.actions import generator_factory
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import actions
-from mistral.utils import inspect_utils as i_utils
 from mistral_lib import utils
+from mistral_lib.utils import inspect_utils as i_utils
 
 
 # TODO(rakhmerov): Make methods more consistent and granular.
@@ -84,25 +83,32 @@ def sync_db():
 
 
 def _register_dynamic_action_classes(namespace=''):
-    for generator in generator_factory.all_generators():
-        actions = generator.create_actions()
+    extensions = extension.ExtensionManager(
+        namespace='mistral.generators',
+        invoke_on_load=True
+    )
 
-        module = generator.base_action_class.__module__
-        class_name = generator.base_action_class.__name__
+    for ext in extensions:
+        for generator in ext.obj:
+            _register_actions(generator, namespace)
 
-        action_class_str = "%s.%s" % (module, class_name)
 
-        for action in actions:
-            attrs = i_utils.get_public_fields(action['class'])
+def _register_actions(generator, namespace):
+    module = generator.base_action_class.__module__
+    class_name = generator.base_action_class.__name__
+    action_class_str = "%s.%s" % (module, class_name)
 
-            register_action_class(
-                action['name'],
-                action_class_str,
-                attrs,
-                action['description'],
-                action['arg_list'],
-                namespace=namespace
-            )
+    for action in generator.create_actions():
+        attrs = i_utils.get_public_fields(action['class'])
+
+        register_action_class(
+            action['name'],
+            action_class_str,
+            attrs,
+            action['description'],
+            action['arg_list'],
+            namespace=namespace
+        )
 
 
 def register_action_classes(namespace=''):

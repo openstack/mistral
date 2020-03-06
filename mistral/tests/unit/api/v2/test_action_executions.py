@@ -24,6 +24,7 @@ from oslo_messaging import exceptions as oslo_exc
 import sqlalchemy as sa
 
 from mistral.api.controllers.v2 import action_execution
+from mistral.api.controllers.v2 import resources
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
@@ -581,7 +582,8 @@ class TestActionExecutionsController(base.APITest):
         self.assertEqual(1, len(resp.json['action_executions']))
         self.assertDictEqual(ACTION_EX, resp.json['action_executions'][0])
 
-    @mock.patch.object(rest_utils, 'get_all')
+    @mock.patch.object(rest_utils, 'get_all',
+                       return_value=resources.ActionExecutions())
     def test_get_all_without_output(self, mock_get_all):
         resp = self.app.get('/v2/action_executions')
 
@@ -594,7 +596,8 @@ class TestActionExecutionsController(base.APITest):
             resource_function
         )
 
-    @mock.patch.object(rest_utils, 'get_all')
+    @mock.patch.object(rest_utils, 'get_all',
+                       return_value=resources.ActionExecutions())
     def test_get_all_with_output(self, mock_get_all):
         resp = self.app.get('/v2/action_executions?include_output=true')
 

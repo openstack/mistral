@@ -24,7 +24,7 @@ from mistral import exceptions as exc
 from mistral.executors import base
 from mistral.rpc import clients as rpc
 from mistral.services import action_heartbeat_sender
-from mistral.utils import inspect_utils as i_u
+from mistral_lib.utils import inspect_utils as i_u
 
 LOG = logging.getLogger(__name__)
 

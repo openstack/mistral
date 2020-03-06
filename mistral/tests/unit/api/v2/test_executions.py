@@ -28,6 +28,7 @@ import sqlalchemy as sa
 from webtest import app as webtest_app
 
 from mistral.api.controllers.v2 import execution
+from mistral.api.controllers.v2 import resources
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import api as sql_db_api
 from mistral.db.v2.sqlalchemy import models
@@ -903,7 +904,8 @@ class TestExecutionsController(base.APITest):
         )
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
-    @mock.patch.object(rest_utils, 'get_all')
+    @mock.patch.object(rest_utils, 'get_all',
+                       return_value=resources.Executions())
     def test_get_all_executions_with_output(self, mock_get_all):
         resp = self.app.get('/v2/executions?include_output=true')
 
@@ -918,7 +920,8 @@ class TestExecutionsController(base.APITest):
         )
 
     @mock.patch.object(db_api, 'get_workflow_executions', MOCK_WF_EXECUTIONS)
-    @mock.patch.object(rest_utils, 'get_all')
+    @mock.patch.object(rest_utils, 'get_all',
+                       return_value=resources.Executions())
     def test_get_all_executions_without_output(self, mock_get_all):
         resp = self.app.get('/v2/executions')
 

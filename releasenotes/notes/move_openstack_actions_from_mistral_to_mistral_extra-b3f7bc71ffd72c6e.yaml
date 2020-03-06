@@ -1,0 +1,3 @@
+---
+features:
+  - Move Mistral actions for OpenStack to mistral-extra library

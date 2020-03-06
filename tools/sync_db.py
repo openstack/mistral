@@ -36,8 +36,6 @@ def main():
     for group, opts in keystonemw_opts.list_auth_token_opts():
         CONF.register_opts(opts, group=group)
 
-    CONF.register_cli_opt(config.os_actions_mapping_path)
-
     logging.register_options(CONF)
 
     config.parse_args()

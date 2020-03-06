@@ -20,8 +20,8 @@ import jsonschema
 import six
 
 from mistral import exceptions as exc
-from mistral.utils import inspect_utils
 from mistral.workflow import data_flow
+from mistral_lib.utils import inspect_utils
 
 
 @six.add_metaclass(abc.ABCMeta)
