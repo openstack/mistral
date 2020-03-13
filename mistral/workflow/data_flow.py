@@ -123,6 +123,11 @@ class ContextView(dict):
     def __delitem__(self, key):
         self._raise_immutable_error()
 
+    def __repr__(self):
+        return ''.join(
+            ['{', ', '.join([str(d)[1:-1] for d in self.dicts]), '}']
+        )
+
 
 def evaluate_upstream_context(upstream_task_execs):
     published_vars = {}

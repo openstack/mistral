@@ -1,4 +1,5 @@
 # Copyright 2015 - Mirantis, Inc.
+# Copyright 2020 - Nokia Software.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -13,11 +14,11 @@
 #    limitations under the License.
 
 import abc
-import json
 
 from mistral import config as cfg
 from mistral import exceptions as exc
 
+from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from stevedore import driver
 from stevedore import extension
@@ -46,44 +47,66 @@ class JSEvaluator(object):
 
 class PyV8Evaluator(JSEvaluator):
     @classmethod
-    def evaluate(cls, script, context):
+    def evaluate(cls, script, ctx):
         if not _PYV8:
             raise exc.MistralException(
                 "PyV8 module is not available. Please install PyV8."
             )
 
-        with _PYV8.JSContext() as ctx:
+        with _PYV8.JSContext() as js_ctx:
             # Prepare data context and way for interaction with it.
-            ctx.eval('$ = %s' % json.dumps(context))
+            # NOTE: it's important to enable conversion of custom types
+            # into JSON to account for classes like ContextView.
+            ctx_str = jsonutils.dumps(
+                jsonutils.to_primitive(ctx, convert_instances=True)
+            )
 
-            result = ctx.eval(script)
+            js_ctx.eval('$ = %s' % ctx_str)
+
+            result = js_ctx.eval(script)
+
             return _PYV8.convert(result)
 
 
 class V8EvalEvaluator(JSEvaluator):
     @classmethod
-    def evaluate(cls, script, context):
+    def evaluate(cls, script, ctx):
         if not _V8EVAL:
             raise exc.MistralException(
                 "v8eval module is not available. Please install v8eval."
             )
 
         v8 = _V8EVAL.V8()
-        return v8.eval(('$ = %s; %s' % (json.dumps(context), script)).encode(
-            encoding='UTF-8'))
+
+        # NOTE: it's important to enable conversion of custom types
+        # into JSON to account for classes like ContextView.
+        ctx_str = jsonutils.dumps(
+            jsonutils.to_primitive(ctx, convert_instances=True)
+        )
+
+        return v8.eval(
+            ('$ = %s; %s' % (ctx_str, script)).encode(encoding='UTF-8')
+        )
 
 
 class PyMiniRacerEvaluator(JSEvaluator):
     @classmethod
-    def evaluate(cls, script, context):
+    def evaluate(cls, script, ctx):
         if not _PY_MINI_RACER:
             raise exc.MistralException(
                 "PyMiniRacer module is not available. Please install "
                 "PyMiniRacer."
             )
 
-        ctx = _PY_MINI_RACER.MiniRacer()
-        return ctx.eval(('$ = {}; {}'.format(json.dumps(context), script)))
+        js_ctx = _PY_MINI_RACER.MiniRacer()
+
+        # NOTE: it's important to enable conversion of custom types
+        # into JSON to account for classes like ContextView.
+        ctx_str = jsonutils.dumps(
+            jsonutils.to_primitive(ctx, convert_instances=True)
+        )
+
+        return js_ctx.eval(('$ = {}; {}'.format(ctx_str, script)))
 
 
 _mgr = extension.ExtensionManager(
@@ -107,5 +130,5 @@ def get_js_evaluator():
     return _EVALUATOR
 
 
-def evaluate(script, context):
-    return get_js_evaluator().evaluate(script, context)
+def evaluate(script, ctx):
+    return get_js_evaluator().evaluate(script, ctx)
