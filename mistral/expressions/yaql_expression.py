@@ -208,10 +208,8 @@ class InlineYAQLEvaluator(YAQLEvaluator):
     @classmethod
     def evaluate(cls, expression, data_context):
         LOG.debug(
-            "Start to evaluate YAQL expression. "
-            "[expression='%s', context=%s]",
-            expression,
-            data_context
+            "Starting to evaluate YAQL expression. "
+            "[expression='%s']", expression
         )
 
         result = expression
@@ -220,18 +218,16 @@ class InlineYAQLEvaluator(YAQLEvaluator):
         if found_expressions:
             for expr in found_expressions:
                 trim_expr = expr.strip("<%>")
-                evaluated = super(InlineYAQLEvaluator,
-                                  cls).evaluate(trim_expr, data_context)
+
+                evaluated = super(InlineYAQLEvaluator, cls).evaluate(
+                    trim_expr,
+                    data_context
+                )
+
                 if len(expression) == len(expr):
                     result = evaluated
                 else:
                     result = result.replace(expr, str(evaluated))
-
-        LOG.debug(
-            "Finished evaluation. [expression='%s', result: %s]",
-            expression,
-            utils.cut(result, length=200)
-        )
 
         return result
 

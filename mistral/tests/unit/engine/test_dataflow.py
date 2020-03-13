@@ -14,6 +14,7 @@
 #    limitations under the License.
 
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -1419,3 +1420,59 @@ class DataFlowTest(test_base.BaseTest):
         self.assertEqual(2, len(res))
         self.assertIn('v1', res)
         self.assertIn('v2', res)
+
+    def test_context_view_repr(self):
+        ctx = data_flow.ContextView(
+            {'k1': 'v1'},
+            {'k2': 'v2'},
+            {3: 3}
+        )
+
+        str_repr = str(ctx)
+
+        self.assertIsNotNone(str_repr)
+        self.assertFalse(str_repr == "{}")
+        self.assertEqual("{'k1': 'v1', 'k2': 'v2', 3: 3}", str_repr)
+
+        ctx = data_flow.ContextView()
+
+        self.assertEqual('{}', str(ctx))
+
+    def test_context_view_as_root_json(self):
+        ctx = data_flow.ContextView(
+            {'k1': 'v1'},
+            {'k2': 'v2'},
+        )
+
+        json_str = jsonutils.dumps(
+            jsonutils.to_primitive(ctx, convert_instances=True)
+        )
+
+        self.assertIsNotNone(json_str)
+        self.assertNotEqual('{}', json_str)
+
+        # We can't use regular dict comparison because key order
+        # is not defined.
+        self.assertIn('"k1": "v1"', json_str)
+        self.assertIn('"k2": "v2"', json_str)
+
+    def test_context_view_as_nested_json(self):
+        ctx = data_flow.ContextView(
+            {'k1': 'v1'},
+            {'k2': 'v2'},
+        )
+
+        d = {'root': ctx}
+
+        json_str = jsonutils.dumps(
+            jsonutils.to_primitive(d, convert_instances=True)
+        )
+
+        self.assertIsNotNone(json_str)
+        self.assertNotEqual('{"root": {}}', json_str)
+
+        # We can't use regular dict comparison because key order
+        # is not defined.
+        self.assertIn('"k1": "v1"', json_str)
+        self.assertIn('"k1": "v1"', json_str)
+        self.assertIn('"root"', json_str)
