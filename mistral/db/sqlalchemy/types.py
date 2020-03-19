@@ -29,12 +29,20 @@ class JsonEncoded(sa.TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         if value is not None:
-            value = jsonutils.dumps(value)
+            # We need to convert the root of the given object graph into
+            # a primitive by hand so that we also enable conversion of
+            # object of custom classes into primitives. Otherwise, they are
+            # ignored by the "json" lib.
+            value = jsonutils.dumps(
+                jsonutils.to_primitive(value, convert_instances=True)
+            )
+
         return value
 
     def process_result_value(self, value, dialect):
         if value is not None:
             value = jsonutils.loads(value)
+
         return value
 
 
