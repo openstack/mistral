@@ -127,6 +127,14 @@ command_opt = cfg.SubCommandOpt('command',
 
 CONF.register_cli_opt(command_opt)
 
+# To Keep backwards compatibility we need to accept mapping path
+# from mistral-extra if present
+try:
+    import mistral_extra.config as extra_conf
+    CONF.register_cli_opt(extra_conf.os_actions_mapping_path)
+except ImportError:
+    LOG.debug("Mistral-extra not installed")
+
 
 def main():
     config = alembic_cfg.Config(
