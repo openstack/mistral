@@ -27,6 +27,7 @@ from mistral.expressions import yaql_expression as expr
 from mistral.tests.unit import base
 from mistral_lib import utils
 
+
 CONF = cfg.CONF
 
 DATA = {
@@ -96,6 +97,7 @@ class YaqlEvaluatorTest(base.BaseTest):
             '$.servers.where($.name = ubuntu)',
             SERVERS
         )
+
         item = list(res)[0]
 
         self.assertEqual({'name': 'ubuntu'}, item)

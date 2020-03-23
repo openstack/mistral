@@ -17,8 +17,8 @@ import abc
 
 from mistral import config as cfg
 from mistral import exceptions as exc
+from mistral import utils
 
-from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from stevedore import driver
 from stevedore import extension
@@ -55,13 +55,7 @@ class PyV8Evaluator(JSEvaluator):
 
         with _PYV8.JSContext() as js_ctx:
             # Prepare data context and way for interaction with it.
-            # NOTE: it's important to enable conversion of custom types
-            # into JSON to account for classes like ContextView.
-            ctx_str = jsonutils.dumps(
-                jsonutils.to_primitive(ctx, convert_instances=True)
-            )
-
-            js_ctx.eval('$ = %s' % ctx_str)
+            js_ctx.eval('$ = %s' % utils.to_json_str(ctx))
 
             result = js_ctx.eval(script)
 
@@ -78,11 +72,7 @@ class V8EvalEvaluator(JSEvaluator):
 
         v8 = _V8EVAL.V8()
 
-        # NOTE: it's important to enable conversion of custom types
-        # into JSON to account for classes like ContextView.
-        ctx_str = jsonutils.dumps(
-            jsonutils.to_primitive(ctx, convert_instances=True)
-        )
+        ctx_str = utils.to_json_str(ctx)
 
         return v8.eval(
             ('$ = %s; %s' % (ctx_str, script)).encode(encoding='UTF-8')
@@ -100,13 +90,9 @@ class PyMiniRacerEvaluator(JSEvaluator):
 
         js_ctx = _PY_MINI_RACER.MiniRacer()
 
-        # NOTE: it's important to enable conversion of custom types
-        # into JSON to account for classes like ContextView.
-        ctx_str = jsonutils.dumps(
-            jsonutils.to_primitive(ctx, convert_instances=True)
+        return js_ctx.eval(
+            '$ = {}; {}'.format(utils.to_json_str(ctx), script)
         )
-
-        return js_ctx.eval(('$ = {}; {}'.format(ctx_str, script)))
 
 
 _mgr = extension.ExtensionManager(

@@ -16,7 +16,6 @@
 from email import header
 from email.mime import multipart
 from email.mime import text
-import json as json_lib
 import smtplib
 import time
 
@@ -25,6 +24,7 @@ import requests
 import six
 
 from mistral import exceptions as exc
+from mistral import utils
 from mistral.utils import javascript
 from mistral.utils import ssh_utils
 from mistral_lib import actions
@@ -182,7 +182,7 @@ class HTTPAction(actions.Action):
         self.url = url
         self.method = method
         self.params = params
-        self.body = json_lib.dumps(body) if isinstance(body, dict) else body
+        self.body = utils.to_json_str(body) if isinstance(body, dict) else body
         self.json = json
         self.headers = headers
         self.cookies = cookies
@@ -456,7 +456,7 @@ class SSHAction(actions.Action):
             return raise_exc(parent_exc=e)
 
     def test(self, context):
-        return json_lib.dumps(self.params)
+        return utils.to_json_str(self.params)
 
 
 class SSHProxiedAction(SSHAction):
