@@ -21,6 +21,7 @@ import tempfile
 import threading
 
 from oslo_concurrency import processutils
+from oslo_serialization import jsonutils
 
 from mistral import exceptions as exc
 
@@ -101,3 +102,35 @@ def generate_key_pair(key_length=2048):
         public_key = open(public_key_path).read()
 
         return private_key, public_key
+
+
+def to_json_str(obj):
+    """Serializes an object into a JSON string.
+
+    :param obj: Object to serialize.
+    :return: JSON string.
+    """
+
+    if obj is None:
+        return None
+
+    # We need to convert the root of the given object graph into
+    # a primitive by hand so that we also enable conversion of
+    # object of custom classes into primitives. Otherwise, they are
+    # ignored by the "json" lib.
+    return jsonutils.dumps(
+        jsonutils.to_primitive(obj, convert_instances=True)
+    )
+
+
+def from_json_str(json_str):
+    """Reconstructs an object from a JSON string.
+
+    :param json_str: A JSON string.
+    :return: Deserialized object.
+    """
+
+    if json_str is None:
+        return None
+
+    return jsonutils.loads(json_str)

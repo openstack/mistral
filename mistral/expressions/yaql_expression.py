@@ -94,7 +94,10 @@ def _sanitize_yaql_result(result):
     if isinstance(result, yaql_utils.FrozenDict):
         return result._d
 
-    return result if not inspect.isgenerator(result) else list(result)
+    if inspect.isgenerator(result):
+        return list(result)
+
+    return result
 
 
 class YAQLEvaluator(Evaluator):

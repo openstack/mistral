@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 from oslo_config import cfg
-from oslo_serialization import jsonutils
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
@@ -24,6 +23,7 @@ from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
 from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base as engine_test_base
+from mistral import utils
 from mistral.workflow import data_flow
 from mistral.workflow import states
 
@@ -1182,9 +1182,7 @@ class DataFlowTest(test_base.BaseTest):
             {'k2': 'v2'},
         )
 
-        json_str = jsonutils.dumps(
-            jsonutils.to_primitive(ctx, convert_instances=True)
-        )
+        json_str = utils.to_json_str(ctx)
 
         self.assertIsNotNone(json_str)
         self.assertNotEqual('{}', json_str)
@@ -1202,9 +1200,7 @@ class DataFlowTest(test_base.BaseTest):
 
         d = {'root': ctx}
 
-        json_str = jsonutils.dumps(
-            jsonutils.to_primitive(d, convert_instances=True)
-        )
+        json_str = utils.to_json_str(d)
 
         self.assertIsNotNone(json_str)
         self.assertNotEqual('{"root": {}}', json_str)
