@@ -27,7 +27,7 @@ oslo.log==3.36.0
 oslo.messaging==5.29.0
 oslo.middleware==3.31.0
 oslo.policy==1.30.0
-oslo.serialization==2.18.0
+oslo.serialization==2.21.1
 oslo.service==1.24.0
 oslo.utils==3.37.0
 oslosphinx==4.7.0
