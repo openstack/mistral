@@ -16,10 +16,11 @@
 #   expressed by json-strings
 #
 
-from oslo_serialization import jsonutils
 import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 from sqlalchemy.ext import mutable
+
+from mistral import utils
 
 
 class JsonEncoded(sa.TypeDecorator):
@@ -28,22 +29,10 @@ class JsonEncoded(sa.TypeDecorator):
     impl = sa.Text
 
     def process_bind_param(self, value, dialect):
-        if value is not None:
-            # We need to convert the root of the given object graph into
-            # a primitive by hand so that we also enable conversion of
-            # object of custom classes into primitives. Otherwise, they are
-            # ignored by the "json" lib.
-            value = jsonutils.dumps(
-                jsonutils.to_primitive(value, convert_instances=True)
-            )
-
-        return value
+        return utils.to_json_str(value)
 
     def process_result_value(self, value, dialect):
-        if value is not None:
-            value = jsonutils.loads(value)
-
-        return value
+        return utils.from_json_str(value)
 
 
 class MutableList(mutable.Mutable, list):
