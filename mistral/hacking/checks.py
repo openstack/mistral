@@ -26,12 +26,14 @@ import ast
 import re
 import six
 
+from hacking import core
 
 oslo_namespace_imports_dot = re.compile(r"import[\s]+oslo[.][^\s]+")
 oslo_namespace_imports_from_dot = re.compile(r"from[\s]+oslo[.]")
 oslo_namespace_imports_from_root = re.compile(r"from[\s]+oslo[\s]+import[\s]+")
 
 
+@core.flake8ext
 def no_assert_equal_true_false(logical_line):
     """Check for assertTrue/assertFalse sentences
 
@@ -47,6 +49,7 @@ def no_assert_equal_true_false(logical_line):
                "Use assertTrue(A) or assertFalse(A) instead")
 
 
+@core.flake8ext
 def no_assert_true_false_is_not(logical_line):
     """Check for assertIs/assertIsNot sentences
 
@@ -60,6 +63,7 @@ def no_assert_true_false_is_not(logical_line):
                "Use assertIs(A, B) or assertIsNot(A, B) instead")
 
 
+@core.flake8ext
 def check_oslo_namespace_imports(logical_line):
     if re.match(oslo_namespace_imports_from_dot, logical_line):
         msg = ("O323: '%s' must be used instead of '%s'.") % (
@@ -78,12 +82,14 @@ def check_oslo_namespace_imports(logical_line):
         yield(0, msg)
 
 
+@core.flake8ext
 def check_python3_xrange(logical_line):
     if re.search(r"\bxrange\s*\(", logical_line):
         yield(0, "M327: Do not use xrange(). 'xrange()' is not compatible "
               "with Python 3. Use range() or six.moves.range() instead.")
 
 
+@core.flake8ext
 def check_python3_no_iteritems(logical_line):
     msg = ("M328: Use six.iteritems() instead of dict.iteritems().")
 
@@ -91,6 +97,7 @@ def check_python3_no_iteritems(logical_line):
         yield(0, msg)
 
 
+@core.flake8ext
 def check_python3_no_iterkeys(logical_line):
     msg = ("M329: Use six.iterkeys() instead of dict.iterkeys().")
 
@@ -98,6 +105,7 @@ def check_python3_no_iterkeys(logical_line):
         yield(0, msg)
 
 
+@core.flake8ext
 def check_python3_no_itervalues(logical_line):
     msg = ("M330: Use six.itervalues() instead of dict.itervalues().")
 
@@ -144,6 +152,9 @@ class BaseASTChecker(ast.NodeVisitor):
 
 
 class CheckForLoggingIssues(BaseASTChecker):
+
+    name = "check_for_logging_issues"
+    version = "1.0"
     CHECK_DESC = ('M001 Using the deprecated Logger.warn')
     LOG_MODULES = ('logging', 'oslo_log.log')
 
@@ -262,14 +273,3 @@ class CheckForLoggingIssues(BaseASTChecker):
                 self.add_error(node.args[0])
 
         return super(CheckForLoggingIssues, self).generic_visit(node)
-
-
-def factory(register):
-    register(no_assert_equal_true_false)
-    register(no_assert_true_false_is_not)
-    register(check_oslo_namespace_imports)
-    register(CheckForLoggingIssues)
-    register(check_python3_no_iteritems)
-    register(check_python3_no_iterkeys)
-    register(check_python3_no_itervalues)
-    register(check_python3_xrange)

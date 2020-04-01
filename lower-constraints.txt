@@ -7,8 +7,6 @@ doc8==0.6.0
 dogpile.cache==0.6.2
 eventlet==0.20.0
 fixtures==3.0.0
-flake8==2.6.2
-hacking==1.1.0
 Jinja2==2.10
 jsonschema==2.6.0
 keystonemiddleware==4.18.0
