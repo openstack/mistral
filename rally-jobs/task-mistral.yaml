@@ -162,3 +162,37 @@
       sla:
         failure_rate:
           max: 0
+
+  MistralExecutions.YaqlExpression:
+    -
+      args:
+        tasks_number: 30
+        params_size_mb: 4
+      runner:
+        type: "constant"
+        times: 50
+        concurrency: 10
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
+
+  MistralExecutions.JinjaExpression:
+    -
+      args:
+        tasks_number: 30
+        params_size_mb: 4
+      runner:
+        type: "constant"
+        times: 50
+        concurrency: 10
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
