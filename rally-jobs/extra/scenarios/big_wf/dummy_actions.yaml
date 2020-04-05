@@ -1,0 +1,46 @@
+---
+version: '2.0'
+
+name: nfvo_actions
+
+actions:
+
+  update_dsl_runtime_model:
+    input:
+      - update_dsl_runtime_model_request
+      - env
+    base: std.echo
+    base-input:
+      output: 'update_dsl_runtime_model'
+
+  create_system_job:
+    input:
+      - parent_job_id: null
+      - job_status: "Not Started"
+      - job_description: ""
+      - target_entity_url: ""
+      - owner_id: MISTRAL_WORKFLOW
+      - env
+    base: std.echo
+    base-input:
+      output: 'create_system_job'
+    output:
+      content:
+        id: "fake_job_id"
+
+  update_system_job:
+    input:
+      - job_id
+      - job_status
+      - job_description: ""
+      - target_entity_url: ""
+      - owner_id: MISTRAL_WORKFLOW
+      - bubble_status: false
+      - env
+
+    base: std.echo
+    base-input:
+      output: 'update_system_job'
+    output:
+      content:
+        id: "fake_job_id"

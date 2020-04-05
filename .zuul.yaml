@@ -10,8 +10,27 @@
       devstack_local_conf:
         post-config:
           $MISTRAL_CONF_FILE:
+            default:
+              oslo_rpc_executor: threading
+              rpc_message_ttl: 3000
+              rpc_response_timeout: 3000
+              default_log_levels: mistral=DEBUG,mistral.expressions=INFO,sqlalchemy=INFO
             engine:
               execution_field_size_limit_kb: 8192
+              execution_integrity_check_delay: -1
+            executor:
+              type: local
+            database:
+              max_pool_size: 100
+            scheduler:
+              fixed_delay: 2
+              random_depaly: 0
+              batch_size: 50
+            yaql:
+              convert_input_data: false
+              convert_output_data: false
+            pecan:
+              auth_enable: false
     required-projects:
       - openstack/rally-openstack
       - openstack/mistral-lib
