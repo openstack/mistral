@@ -13,6 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import mock
+
 from mistral.db.v2 import api as db_api
 from mistral.engine import engine_server
 from mistral import exceptions as exc
@@ -167,3 +169,75 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
             self.assertTrue(len(action_ex.input) > 0)
             self.assertIn('output', action_ex.input)
             self.assertIn('param', action_ex.input['output'])
+
+    def test_iterators_in_yaql_result(self):
+        # Both input and output data conversion in YAQL need to be disabled
+        # so that we're sure that there won't be any surprises from YAQL
+        # like some YAQL internal types included in expression results.
+        self.override_config('convert_input_data', False, 'yaql')
+        self.override_config('convert_output_data', False, 'yaql')
+
+        # Setting YAQL engine to None so it reinitialized again with the
+        # right values upon the next use.
+        yaql_expression.YAQL_ENGINE = None
+
+        wf_text = """---
+        version: '2.0'
+
+        wf:
+          input:
+            - params: null
+
+          tasks:
+            task1:
+              action: std.echo
+              input:
+                output:
+                  param1:
+                    <% switch($.params = null => [],
+                    $.params != null =>
+                    $.params.items().select({k => $[0], v => $[1]})) %>
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_input = {
+            'params': {
+                'k1': 'v1',
+                'k2': 'v2'
+            }
+        }
+
+        with mock.patch.object(self.executor, 'run_action',
+                               wraps=self.executor.run_action) as mocked:
+            # Start workflow.
+            wf_ex = self.engine.start_workflow('wf', wf_input=wf_input)
+
+            self.await_workflow_success(wf_ex.id)
+
+            with db_api.transaction():
+                # Note: We need to reread execution to access related tasks.
+                wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
+                t_ex = self._assert_single_item(
+                    wf_ex.task_executions,
+                    name='task1'
+                )
+
+                action_ex = t_ex.action_executions[0]
+
+                self.assertTrue(len(action_ex.input) > 0)
+
+            mocked.assert_called_once()
+
+            # We need to make sure that the executor got the right action
+            # input regardless of an iterator (that can only be used once)
+            # present in the YAQL expression result. Let's check first 4
+            # actual arguments with the executor was called, including the
+            # action parameters.
+            args = mocked.call_args[0]
+
+            self.assertEqual(action_ex.id, args[0])
+            self.assertEqual('mistral.actions.std_actions.EchoAction', args[1])
+            self.assertDictEqual({}, args[2])
+            self.assertDictEqual(action_ex.input, args[3])

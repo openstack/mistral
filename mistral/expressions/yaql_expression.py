@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import collections
 import inspect
 import re
 
@@ -135,7 +136,7 @@ def _sanitize_yaql_result(result):
     if isinstance(result, yaql_utils.FrozenDict):
         return result._d
 
-    if inspect.isgenerator(result):
+    if inspect.isgenerator(result) or isinstance(result, collections.Iterator):
         return list(result)
 
     return result
