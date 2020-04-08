@@ -34,6 +34,8 @@
       devstack_plugins:
         rally-openstack: https://opendev.org/openstack/rally-openstack
       rally_task: rally-jobs/task-mistral.yaml
+      devstack_localrc:
+        USE_PYTHON3: true
     required-projects:
       - openstack/rally-openstack
 
