@@ -83,6 +83,11 @@ Main Chapters
     admin/index
     developer/index
 
+.. toctree::
+   :hidden:
+
+   contributor/contributing
+
 .. only:: html
 
 Search
