@@ -15,9 +15,9 @@
 from eventlet import event
 from eventlet import semaphore
 from eventlet import timeout
+from unittest import mock
 
 import datetime
-import mock
 
 from oslo_config import cfg
 

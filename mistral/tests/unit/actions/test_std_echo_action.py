@@ -14,7 +14,7 @@
 
 from mistral.actions import std_actions as std
 from mistral.tests.unit import base
-import mock
+from unittest import mock
 
 
 class EchoActionTest(base.BaseTest):

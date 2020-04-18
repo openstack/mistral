@@ -13,8 +13,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mock
 import testtools
+from unittest import mock
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api

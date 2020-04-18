@@ -14,8 +14,8 @@
 #    limitations under the License.
 
 import copy
+from unittest import mock
 
-import mock
 import sqlalchemy as sa
 
 from mistral.db.v2 import api as db_api

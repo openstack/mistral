@@ -15,8 +15,8 @@
 
 
 import datetime
+from unittest import mock
 
-import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models

@@ -18,8 +18,8 @@ import json
 import pkg_resources as pkg
 import sys
 import time
+from unittest import mock
 
-import mock
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslotest import base

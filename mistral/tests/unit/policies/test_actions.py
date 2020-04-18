@@ -13,7 +13,7 @@
 # under the License.
 
 
-import mock
+from unittest import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models

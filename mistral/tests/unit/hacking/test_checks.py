@@ -11,8 +11,8 @@
 # under the License.
 
 import textwrap
+from unittest import mock
 
-import mock
 import pycodestyle
 
 from mistral.hacking import checks

@@ -13,7 +13,7 @@
 #    under the License.
 
 import json
-import mock
+from unittest import mock
 
 from mistral.actions import std_actions as std
 from mistral import exceptions as exc

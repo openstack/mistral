@@ -16,8 +16,8 @@
 import copy
 import datetime
 import json
+from unittest import mock
 
-import mock
 from oslo_config import cfg
 import oslo_messaging
 from oslo_messaging import exceptions as oslo_exc

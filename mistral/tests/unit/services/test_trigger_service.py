@@ -14,7 +14,7 @@
 
 import datetime
 import eventlet
-import mock
+from unittest import mock
 
 from oslo_config import cfg
 

@@ -18,8 +18,8 @@ from mistral import context
 from mistral import exceptions as exc
 from mistral.tests.unit.rpc.kombu import base
 from mistral.tests.unit.rpc.kombu import fake_kombu
+from unittest import mock
 
-import mock
 import socket
 from stevedore import driver
 

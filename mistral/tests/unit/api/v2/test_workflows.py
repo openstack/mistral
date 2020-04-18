@@ -15,9 +15,9 @@
 
 import copy
 import datetime
+from unittest import mock
 
 import json
-import mock
 import sqlalchemy as sa
 import yaml
 

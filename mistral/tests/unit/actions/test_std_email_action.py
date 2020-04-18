@@ -17,7 +17,8 @@
 import base64
 from email.header import decode_header
 from email import parser
-import mock
+from unittest import mock
+
 import six
 import testtools
 

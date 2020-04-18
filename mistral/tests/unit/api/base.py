@@ -12,9 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import mock
 import pecan
 import pecan.testing
+from unittest import mock
 from webtest import app as webtest_app
 
 from mistral.api import app as pecan_app

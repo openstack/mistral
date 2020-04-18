@@ -14,11 +14,12 @@
 
 import datetime
 import json
-import mock
 import pecan
 import pecan.testing
 import requests
 import requests_mock
+from unittest import mock
+
 import webob
 
 from mistral.api import app as pecan_app

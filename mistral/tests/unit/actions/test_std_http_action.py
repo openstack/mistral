@@ -13,8 +13,8 @@
 #    limitations under the License.
 
 import json
+from unittest import mock
 
-import mock
 import requests
 
 from mistral.actions import std_actions as std

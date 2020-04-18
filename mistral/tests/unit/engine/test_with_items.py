@@ -13,7 +13,8 @@
 #    limitations under the License.
 
 import copy
-import mock
+from unittest import mock
+
 from oslo_config import cfg
 
 from mistral.actions import std_actions

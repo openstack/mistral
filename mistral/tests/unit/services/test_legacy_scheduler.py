@@ -15,7 +15,7 @@
 
 import datetime
 import eventlet
-import mock
+from unittest import mock
 
 from eventlet import queue
 from eventlet import timeout

@@ -15,8 +15,8 @@
 
 import copy
 import time
+from unittest import mock
 
-import mock
 from oslo_config import cfg
 
 from mistral import context as auth_context

@@ -16,8 +16,8 @@
 from mistral import exceptions as exc
 from mistral.tests.unit.rpc.kombu import base
 from mistral.tests.unit.rpc.kombu import fake_kombu
+from unittest import mock
 
-import mock
 from six import moves
 
 with mock.patch.dict('sys.modules', kombu=fake_kombu):

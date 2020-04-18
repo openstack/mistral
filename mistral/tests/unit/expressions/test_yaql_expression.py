@@ -17,9 +17,9 @@
 import datetime
 import json
 import sys
+from unittest import mock
 import warnings
 
-import mock
 
 from mistral.config import cfg
 from mistral import exceptions as exc
