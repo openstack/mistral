@@ -13,7 +13,7 @@ How to write a Custom Action
             # store the incoming params
             self.param = param
 
-        def run(self):
+        def run(self, action_ctx=None):
             # return your results here
             return {'status': 0}
 
