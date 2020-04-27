@@ -1,0 +1,2340 @@
+---
+version: '2.0'
+
+infoblox.get_all_static_ips_dualstack:
+  type: direct
+  description: "Get all static IPv4/IPv6 addresses"
+  input:
+    - ipam_ipaddr
+    - ipam_username
+    - ipam_password
+    - ipam_site
+    - ipam_vnf_name
+    - ipam_vnf_number
+
+  output:
+    output_full_resp: <% $.get_response %>
+    output_cpd_map: <% $.output_cpd_map %>
+    output_cpd_map6: <% $.output_cpd_map6 %>
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Querying IPAM for static IP addresses of VNF"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+      on-error:
+        - fail
+      on-success:
+        - get_ip_addresses
+
+    get_ip_addresses:
+      action: std.noop
+      publish:
+        get_response: 'get_response'
+      on-success:
+        - parse_response
+      on-error:
+        - update_system_job_failure
+
+    parse_response:
+      action: std.noop
+      publish:
+        output_cpd_map: {}
+      on-success:
+        - get_ip_addresses6
+      on-error:
+        - update_system_job_failure
+
+    get_ip_addresses6:
+      action: std.noop
+      publish:
+        get_response6: 'get_response6'
+      on-success:
+        - parse_response6
+      on-error:
+        - update_system_job_failure
+
+    parse_response6:
+      action: std.noop
+      publish:
+        output_cpd_map6: {}
+      on-success:
+        - update_system_job_success
+      on-error:
+        - update_system_job_failure
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_id: "<% $.created_job.id %>"
+        job_description: "Done querying IPAM for static IP addresses of VNF"
+        job_status: FINISHED
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_id: "<% $.created_job.id %>"
+        job_description: "Querying IPAM for static IP addresses of VNF  failed"
+        job_status: FAILED
+      on-complete:
+        - fail
+
+infoblox.get_plugin_config:
+  description: "Get Infoblox plugin configuration values"
+  output:
+    ipam_ip: <% $.ipam_ip %>
+    ipam_username: <% $.ipam_username %>
+    ipam_password: <% $.ipam_password %>
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Fetching Infoblox plugin configuration"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+      on-error:
+        - fail
+      on-success:
+        - parse_plugin_config
+
+    parse_plugin_config:
+      publish:
+        ipam_name: 'ipam_name'
+        ipam_ip: 'ipam_ip'
+        ipam_username: 'ipam_username'
+        ipam_password: 'ipam_password'
+      on-error:
+        - update_system_job_failure
+      on-success:
+        - update_system_job_success
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_id: "<% $.created_job.id %>"
+        job_description: "Infoblox plugin configuration successfully retrieved for <% $.ipam_name %>"
+        job_status: FINISHED
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_id: "<% $.created_job.id %>"
+        job_description: "Querying Infoblox plugin configuration failed"
+        job_status: FAILED
+      on-complete:
+        - fail
+
+infoblox.get_subnet:
+  type: direct
+  description: "Get subnet address from IPAM"
+  input:
+    - ipam_ipaddr
+    - ipam_username
+    - ipam_password
+    - site_name
+    - domain_name
+    - subnet_name
+
+  output:
+    output_full_resp: 'output_full_resp'
+    output_ref: 'output_ref'
+    cidr: 'cidr'
+    network: 'network'
+    prefix: 'prefix'
+    netmask: 'netmask'
+    zone: 'zone'
+    gateway: 'gateway'
+    domain_type: 'domain_type'
+    domain_name: 'domain_name'
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Querying IPAM for subnet <% $.site_name %>-<% $.domain_name %>-<% $.subnet_name %>"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+      on-error:
+        - fail
+      on-success:
+        - get_subnet
+
+    get_subnet:
+      action: std.noop
+      publish:
+        get_response: 'get_response'
+      on-success:
+        - parse_response
+      on-error:
+        - update_system_job_failure
+
+    parse_response:
+      action: std.noop
+      publish:
+        output_ref: 'output_ref'
+        output_cidr: 'output_cidr'
+        output_subnet_name: 'output_subnet_name'
+        output_zone: 'output_zone'
+        output_domain_type: 'output_domain_type'
+        output_domain_name: 'output_domain_name'
+      on-success:
+        - update_system_job_success
+      on-error:
+        - update_system_job_failure
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_id: "<% $.created_job.id %>"
+        job_description: "Done IPAM query for subnet <% $.site_name %>-<% $.domain_name %>-<% $.subnet_name %>"
+        job_status: FINISHED
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_id: "<% $.created_job.id %>"
+        job_description: "IPAM query for subnet <% $.site_name %>-<% $.domain_name %>-<% $.subnet_name %> failed"
+        job_status: FAILED
+      on-complete:
+        - fail
+
+my_fixed_workflow:
+  input:
+    - output: "DEFAULT"
+  tasks:
+    t1:
+      action: std.noop
+  output:
+    output: <% $.output %>
+
+nfvo.update_dsl_runtime_model:
+  input:
+    - update_dsl_runtime_model_request
+    - perform_update: true
+
+  tasks:
+    t1:
+      action: std.noop
+
+vno.nsdata:
+  description: Retrieving and exposing NS related information (e.g. NSR ID)
+
+  type: direct
+
+  input:
+    - name: NSDataName
+    - prefix: 'VNO_'
+    - tosca_resource_id
+    - tosca_name
+
+  output:
+    NSRID: <% $.nsrid %>
+    Prefixed_NSRID: <% $.pref_nsrid %>
+
+  tasks:
+    get_nsrid:
+      action: std.echo output=<% env().get('network_service', {}).get('id', {}) %>
+      publish:
+        nsrid: <% task(get_nsrid).result %>
+        pref_nsrid: <% $.prefix %><% task(get_nsrid).result %>
+      on-error:
+        - system_log
+      on-success:
+        - system_log
+
+    system_log:
+      action: "std.echo"
+      input:
+        output: "<% $ %>"
+
+nuage.configure_object:
+  description: "Configure network resources in Nuage."
+  input:
+    - tosca_name
+    - tosca_resource_id
+    - rest_resource_path_fragments
+    - sdn
+    - body: ''
+  output:
+    resource: <% $.nuage_get_api_result %>
+    previous_config: <% $.nuage_current_config %>
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Configuration started for network resource"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - get_nuage_api_key
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    get_nuage_api_key:
+      action: nokia.nuage.ensure_api_key
+      input:
+        nfvo: <% env().nfvo %>
+        sdn_id: <% $.sdn %>
+      publish:
+        api_prefix: <% task(get_nuage_api_key).result.nuage_api_prefix %>
+        api_key: <% task(get_nuage_api_key).result.api_key %>
+        nuage_vsd_url: <% task(get_nuage_api_key).result.nuage_vsd_url %>
+        nuage_org: <% task(get_nuage_api_key).result.nuage_org %>
+        nuage_user: <% task(get_nuage_api_key).result.nuage_user %>
+      on-success:
+        - get_nuage_resource_path
+
+    get_nuage_resource_path:
+      publish:
+        rest_resource_path: <% $.rest_resource_path_fragments.select(str($)).insert(0, $.api_prefix).join('/') %>
+        nuage_update_choice_ok: null
+      on-success:
+        - call_nuage_get_current_api
+
+    call_nuage_get_current_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: GET
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        result: {
+          "status": 200,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ]
+        }
+      publish:
+        nuage_current_config: <% task(call_nuage_get_current_api).result.content.first() %>
+      publish-on-error:
+        nuage_error_result: <% task(call_nuage_get_current_api).result %>
+        error_source: "call_nuage_get_current_api"
+      on-success:
+        - call_nuage_api
+
+    call_nuage_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 300,
+          "content": {
+            "choices": [
+            {
+              "label": "OK",
+              "id": "FAKE_CHOICE_ID"
+            }
+            ]
+          }
+        }
+      publish:
+        nuage_api_result: <% task(call_nuage_api).result.content %>
+      publish-on-error:
+        nuage_error_result: <% task(call_nuage_api).result %>
+        error_source: "call_nuage_api"
+      on-success:
+        - nuage_update_confirmation: <% task(call_nuage_api).result.status = 300 %>
+        - call_nuage_get_api: <% task(call_nuage_api).result.status < 300 %>
+      on-error:
+        - handle_http_404_failure: <%
+            task(call_nuage_api).get(result) != null
+            and task(call_nuage_api).result.get(error) != null
+            and task(call_nuage_api).result.error.httpStatusCode = 404
+            %>
+        - handle_http_other_failure: <%
+            task(call_nuage_api).get(result) = null
+            or task(call_nuage_api).result.get(error) = null
+            or task(call_nuage_api).result.error.httpStatusCode != 404
+            %>
+
+    nuage_update_confirmation:
+      publish:
+        nuage_update_choice_ok: <% $.nuage_api_result.choices.first(label = 'OK').id %>
+      on-success:
+        - call_nuage_api_final
+
+    call_nuage_api_final:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 200,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ]
+        }
+      publish:
+        nuage_api_result: <% task(call_nuage_api_final).result.content %>
+      publish-on-error:
+        nuage_error_result: <% task(call_nuage_api_final).result %>
+        error_source: "call_nuage_api_final"
+      on-success:
+        - call_nuage_get_api: <% task(call_nuage_api_final).result.status < 300 %>
+      on-error:
+        - handle_http_404_failure: <%
+            task(call_nuage_api_final).get(result) != null
+            and task(call_nuage_api_final).result.get(error) != null
+            and task(call_nuage_api_final).result.error.httpStatusCode = 404
+            %>
+        - handle_http_other_failure: <%
+            task(call_nuage_api_final).get(result) = null
+            or task(call_nuage_api_final).result.get(error) = null
+            or task(call_nuage_api_final).result.error.httpStatusCode != 404
+            %>
+
+
+    call_nuage_get_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: GET
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        result: {
+          "status": 200,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ]
+        }
+      publish:
+        nuage_get_api_result: <% task(call_nuage_get_api).result.content.first() %>
+      publish-on-error:
+        nuage_error_result: <% task(call_nuage_get_api).result %>
+        error_source: "call_nuage_get_api"
+      on-success:
+        - update_system_job_success
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Configuration failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: <% env() %>
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Configuration successful for network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    update_system_job_resource_not_found:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Configuration of network resource does not exist"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    handle_http_404_failure:
+      on-success:
+        - update_system_job_resource_not_found
+
+    handle_http_other_failure:
+      on-success:
+        - update_system_job_failure
+
+nuage.configure_restore:
+  description: "Restore network resources in Nuage."
+  input:
+    - tosca_name
+    - tosca_resource_id
+    - rest_resource_path_fragments
+    - sdn
+    - restore_previous_config
+    - body: ''
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Configuration restore started for network resource name: <% $.tosca_name %>, id: <% $.tosca_resource_id %> "
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - check_restore_required
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    check_restore_required:
+      on-success:
+        - update_system_job_success: <% $.restore_previous_config = false %>
+        - get_nuage_api_key: <% $.restore_previous_config = true %>
+
+    get_nuage_api_key:
+      action: nokia.nuage.ensure_api_key
+      input:
+        nfvo: <% env().nfvo %>
+        sdn_id: <% $.sdn %>
+      publish:
+        api_prefix: <% task(get_nuage_api_key).result.nuage_api_prefix %>
+        api_key: <% task(get_nuage_api_key).result.api_key %>
+        nuage_vsd_url: <% task(get_nuage_api_key).result.nuage_vsd_url %>
+        nuage_org: <% task(get_nuage_api_key).result.nuage_org %>
+        nuage_user: <% task(get_nuage_api_key).result.nuage_user %>
+      on-success:
+        - get_nuage_resource_path
+
+    get_nuage_resource_path:
+      publish:
+        rest_resource_path: <% $.rest_resource_path_fragments.select(str($)).insert(0, $.api_prefix).join('/') %>
+        nuage_update_choice_ok: null
+      on-success:
+        - call_nuage_api
+
+    call_nuage_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 300,
+          "content": {
+            "choices": [
+            {
+              "label": "OK",
+              "id": "FAKE_CHOICE_ID"
+            }
+            ]
+          }
+        }
+      publish:
+        nuage_api_result: <% task().result.content %>
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+        error_source: "call_nuage_api"
+      on-success:
+        - nuage_update_confirmation: <% task().result.status = 300 %>
+        - update_system_job_success: <% task().result.status < 300 %>
+      on-error:
+        - handle_http_404_failure: <%
+            task().get(result) != null
+            and task().result.get(error) != null
+            and task().result.error.httpStatusCode = 404
+            %>
+        - handle_http_other_failure: <%
+            task().get(result) = null
+            or task().result.get(error) = null
+            or task().result.error.httpStatusCode != 404
+            %>
+
+    nuage_update_confirmation:
+      publish:
+        nuage_update_choice_ok: <% $.nuage_api_result.choices.first(label = 'OK').id %>
+      on-success:
+        - call_nuage_api_final
+
+    call_nuage_api_final:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 200,
+          "content": {
+          }
+        }
+      publish:
+        nuage_api_result: <% task().result.content %>
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+        error_source: "call_nuage_api_final"
+      on-success:
+        - update_system_job_success: <% task().result.status < 300 %>
+      on-error:
+        - handle_http_404_failure: <%
+            task().get(result) != null
+            and task().result.get(error) != null
+            and task().result.error.httpStatusCode = 404
+            %>
+        - handle_http_other_failure: <%
+            task().get(result) = null
+            or task().result.get(error) = null
+            or task().result.error.httpStatusCode != 404
+            %>
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Configuration failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: <% env() %>
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Configuration successful for network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    update_system_job_resource_not_found:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Configuration of network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    handle_http_404_failure:
+      on-success:
+        - update_system_job_resource_not_found
+
+    handle_http_other_failure:
+      on-success:
+        - update_system_job_failure
+
+nuage.create_group:
+  description: "Creates a group of Nuage network resources."
+
+  input:
+    - item_type
+    - rest_url_fragments
+    - del_url_fragments
+    - item_params
+    - sdn
+    - prev_params
+    - prev_IDs
+    - prev_resources
+
+  output:
+    IDs: <% $.new_IDs %>
+    resources: <% $.new_resources %>
+
+  task-defaults:
+    on-error:
+      - fail
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: <% switch(env().operation_info.partOfUpdate => "Update started for node group.", $ => "Creation started for node group.") %>
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-success:
+        - prepare_items_create: <% env().operation_info.partOfUpdate = false or $.prev_params = null %>
+        - prepare_items_update: <% env().operation_info.partOfUpdate = true and $.prev_params != null %>
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    prepare_items_create:
+      publish:
+        del_list: []
+        del_index: []
+        ins_list: <% $.item_params %>
+        ins_index: <% range($.item_params.len()) %>
+        new_IDs: []
+        new_resources: []
+      on-success:
+        - create_items
+
+    prepare_items_update:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          function is_equal(a, b) {
+            if (a === b) return true;
+
+            if (typeof(a) == 'object' && typeof(a) == typeof(b)) {
+              for (var p in a) {
+                if (!b.hasOwnProperty(p)) return false;
+                if (a[p] === b[p]) continue;
+                if (typeof(a[p]) == 'object' && typeof(a[p]) == typeof(b[p]) && is_equal(a[p], b[p])) continue;
+                return false;
+              }
+              for (var p in b) {
+                if (!a.hasOwnProperty(p)) return false;
+              }
+              return true;
+            }
+
+            return false;
+          }
+
+          function index_of(a, item) {
+            for (var i=0; i<a.length; i++) {
+              if (is_equal(item, a[i])) return i;
+            }
+            return -1;
+          }
+
+          function contains(a, item) {
+            return (index_of(a, item) >= 0);
+          }
+
+          function array_diff(a, b) {
+            var diff = {
+              elements: [],
+              indices: []
+            }
+
+            for (var i=0; i<a.length; i++) {
+              if (!contains(b, a[i])) {
+                diff.elements.push(a[i]);
+                diff.indices.push(i);
+              }
+            }
+
+            return diff;
+          }
+
+          function array_remove(a, indices) {
+            var result = [];
+            for (var i=0; i<a.length; i++) {
+              if (!contains(indices, i)) result.push(a[i]);
+            }
+            return result;
+          }
+
+          function array_select(a, indices) {
+            var result = [];
+            for (var i=0; i<a.length; i++) {
+              if (contains(indices, i)) result.push(a[i]);
+            }
+            return result;
+          }
+
+          function array_copy(a) {
+            var result = [];
+            for (var i=0; i<a.length; i++) result.push(a[i]);
+            return result;
+          }
+
+          function array_inject(a, elements, indices) {
+            var result = array_copy(a);
+            for (var k=0; k<indices.length; k++) {
+              result.splice(indices[k], 0, elements[k]);
+            }
+            return result;
+          }
+
+          function array_rearrange(a, indices) {
+            var result = array_copy(a);
+            for (var i=0; i<indices.length; i++) {
+              result[i] = a[indices[i]];
+            }
+            return result;
+          }
+
+          function index_map(a, b) {
+            var result = [];
+            for (var i=0; i<a.length; i++) {
+              result.push(index_of(b, a[i]));
+            }
+            return result;
+          }
+
+          var to_del = array_diff($.prev_params, $.item_params);
+          var to_ins = array_diff($.item_params, $.prev_params);
+          var new_indices = index_map(array_remove($.prev_params, to_del.indices), array_remove($.item_params, to_ins.indices));
+
+          return {
+            del_list: to_del.elements,
+            del_index: to_del.indices,
+            ins_list: to_ins.elements,
+            ins_index: to_ins.indices,
+            new_IDs: array_rearrange(array_remove($.prev_IDs, to_del.indices), new_indices),
+            new_resources: array_rearrange(array_remove($.prev_resources, to_del.indices), new_indices),
+            del_IDs: array_select($.prev_IDs, to_del.indices),
+          }
+
+      publish:
+        del_list: <% task(prepare_items_update).result.del_list %>
+        del_index: <% task(prepare_items_update).result.del_index %>
+        ins_list: <% task(prepare_items_update).result.ins_list %>
+        ins_index: <% task(prepare_items_update).result.ins_index %>
+        new_IDs: <% task(prepare_items_update).result.new_IDs %>
+        new_resources: <% task(prepare_items_update).result.new_resources %>
+        del_IDs: <% task(prepare_items_update).result.del_IDs %>
+      on-success:
+        - delete_old_items
+
+    delete_old_items:
+      with-items:
+        - item_index in <% $.del_index %>
+        - ID in <% $.del_IDs %>
+        - item_body in <% $.del_list %>
+      workflow: nuage.delete_object
+      input:
+        tosca_resource_id: '<% $.item_index %>'
+        tosca_name: '<% $.item_type %>'
+        rest_resource_path_fragments: <% $.del_url_fragments.append($.ID) %>
+        sdn: <% $.sdn %>
+        tosca_reference_only: <% $.item_body.get('tosca_reference_only', false) %>
+      on-success:
+        - create_items
+
+    create_items:
+      with-items:
+        - item_body in <% $.ins_list %>
+        - item_index in <% $.ins_index %>
+      workflow: nuage.create_object
+      input:
+        tosca_resource_id: '<% $.item_index %>'
+        tosca_name: '<% $.item_type %>'
+        tosca_reference_only: <% $.item_body.get('tosca_reference_only', false) %>
+        tosca_reference_field: <% $.item_body.get('tosca_reference_field', 'name') %>
+        sdn: '<% $.sdn %>'
+        rest_resource_path_fragments: <% $.rest_url_fragments %>
+        body: <% $.item_body %>
+      publish:
+        ins_resources: <% task(create_items).result.select($.resource) %>
+        ins_IDs: <% task(create_items).result.select($.ID) %>
+      on-success:
+        - merge_old_and_new_items
+
+    merge_old_and_new_items:
+      publish:
+        new_IDs: <% let(old=>$.new_IDs, new=>$.ins_IDs, idx=>$.ins_index) -> range($idx.len()).insert(0, $old).aggregate($1.insert($idx[$2], $new[$2])) %>
+        new_resources: <% let(old=>$.new_resources, new=>$.ins_resources, idx=>$.ins_index) -> range($idx.len()).insert(0, $old).aggregate($1.insert($idx[$2], $new[$2])) %>
+      on-success:
+        - update_system_job_success
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: <% switch(env().operation_info.partOfUpdate => "Update successful for node group.", $ => "Creation successful for node group.") %>
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+
+nuage.create_neutron_object_v2:
+  description: create a VSD managed subnet in Neutron
+  type: direct
+  input:
+    - neutron_type
+    - tosca_resource_id
+    - tosca_name
+    - tosca_reference_only
+    - body
+    - placement
+  output:
+    ID: <% $.id %>
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Creation started for Nuage object"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - get_vim_url
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    get_vim_url:
+      action: std.noop
+      on-success:
+        - get_openstack_token
+      publish:
+        vim_url: 'vim_url'
+        admin_tenant_name: 'admin_tenant_name'
+        username: 'username'
+        password: 'password'
+
+    get_openstack_token:
+      action: std.noop
+      on-success:
+        - get_openstack_tenant_id
+      publish:
+        token: 'token'
+        neutron_url: 'neutron_url'
+
+    get_openstack_tenant_id:
+      action: std.noop
+      on-success:
+        - switch_neutron_object
+      publish:
+        tenant_id: tenant_id
+
+    switch_neutron_object:
+      on-success:
+        - switch_neutron_subnet
+        - switch_neutron_vsd_managed_subnet
+        - switch_neutron_network
+
+    switch_neutron_subnet:
+      on-success:
+        - create_neutron_subnet
+        - find_neutron_subnet
+
+    create_neutron_subnet:
+      action: std.noop
+      publish:
+        result: 'result'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    switch_neutron_vsd_managed_subnet:
+      on-success:
+        - create_neutron_vsd_managed_subnet
+        - find_neutron_subnet
+
+    create_neutron_vsd_managed_subnet:
+      action: std.noop
+      publish:
+        result:
+          content: 'create_neutron_vsd_managed_subnet_result_content'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    find_neutron_subnet:
+      action: std.noop
+      publish:
+        result: 'result'
+        subnets: 'subnet'
+      on-success:
+        - get_subnet_id
+
+    get_subnet_id:
+      publish:
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    switch_neutron_network:
+      on-success:
+        - switch_provider_extensions
+        - find_neutron_network
+
+    switch_provider_extensions:
+      on-success:
+        - create_neutron_network
+        - create_neutron_provider_network
+        - create_neutron_flat_network
+
+    create_neutron_network:
+      action: std.noop
+      publish:
+        result: 'result'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    create_neutron_provider_network:
+      action: std.noop
+      publish:
+        result: 'result'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    create_neutron_flat_network:
+      action: std.noop
+      publish:
+        result: 'result'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    find_neutron_network:
+      action: std.noop
+      publish:
+        result: 'result'
+        id: 'id'
+      on-success:
+        - get_network_id
+
+    get_network_id:
+      publish:
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation of Neutron object failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Creation successful for network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+nuage.create_neutron_object:
+  description: create a VSD managed subnet in Neutron
+  type: direct
+  input:
+    - neutron_type
+    - tosca_resource_id
+    - tosca_name
+    - tosca_reference_only
+    - body
+    - placement
+  output:
+    ID: 'id'
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Creation started for Nuage"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - get_vim_url
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    get_vim_url:
+      action: std.noop
+      on-success:
+        - get_openstack_token
+      publish:
+        vim_url: 'vim_url'
+        admin_tenant_name: 'admin_tenant_name'
+        username: 'username'
+        password: 'password'
+
+    get_openstack_token:
+      action: std.noop
+      on-success:
+        - get_openstack_tenant_id
+      publish:
+        token: 'token'
+        neutron_url: 'neutron_url'
+
+    get_openstack_tenant_id:
+      action: std.noop
+      on-success:
+        - switch_neutron_object
+      publish:
+        tenant_id: 'tenant_id'
+
+    switch_neutron_object:
+      on-success:
+        - switch_neutron_vsd_managed_subnet
+        - switch_neutron_network
+
+    switch_neutron_vsd_managed_subnet:
+      on-success:
+        - create_neutron_vsd_managed_subnet: <% $.tosca_reference_only = false %>
+        - find_neutron_vsd_managed_subnet: <% $.tosca_reference_only = true %>
+
+    create_neutron_vsd_managed_subnet:
+      action: std.noop
+      publish:
+        result:
+          content: 'create_neutron_vsd_managed_subnet_result_content'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    find_neutron_vsd_managed_subnet:
+      action: std.noop
+      publish:
+        result: 'result'
+        subnets: 'subnets'
+      on-success:
+        - get_subnet_id
+
+    get_subnet_id:
+      publish:
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    switch_neutron_network:
+      on-success:
+        - create_neutron_network
+        - find_neutron_network
+
+    create_neutron_network:
+      action: std.noop
+      publish:
+        result:
+          content: 'create_neutron_network_result_content'
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    find_neutron_network:
+      action: std.noop
+      publish:
+        result: 'result'
+        networks: 'networks'
+      on-success:
+        - get_network_id
+
+    get_network_id:
+      publish:
+        id: 'id'
+      on-success:
+        - update_system_job_success
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation of Neutron object failed'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Creation successful for network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+nuage.create_object:
+  description: "Create network resources in Nuage."
+  input:
+    - tosca_resource_id
+    - tosca_name
+    - tosca_reference_only
+    - tosca_reference_field
+    - create_condition: True
+    - result_if_not_created: {}
+    - sdn
+    - rest_resource_path_fragments
+    - body: ''
+  output:
+    ID: <% $.nuage_api_result.ID %>
+    resource: <% $.nuage_api_result %>
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    check_create_condition:
+      publish:
+        nuage_api_result: <% $.result_if_not_created %>
+      on-success:
+        - create_system_job: <% $.create_condition = true %>
+      on-error:
+        - system_log_fail
+
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Creation started for Nuage object"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - get_nuage_api_key
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    get_nuage_api_key:
+      action: nokia.nuage.ensure_api_key
+      input:
+        nfvo: <% env().nfvo %>
+        sdn_id: <% $.sdn %>
+      publish:
+        api_key: <% task().result.api_key %>
+        nuage_vsd_url: <% task().result.nuage_vsd_url %>
+        nuage_org: <% task().result.nuage_org %>
+        nuage_user: <% task().result.nuage_user %>
+        nuage_create_choice_ok: null
+        rest_resource_path: <% switch(
+          $.body.keys().contains('entityScope') and $.body.entityScope = "GLOBAL" and $.rest_resource_path_fragments.len() = 3 => $.rest_resource_path_fragments.select(str($)).delete(0, count=>2).insert(0, task().result.nuage_api_prefix).join('/'),
+          $ => $.rest_resource_path_fragments.select(str($)).insert(0, task().result.nuage_api_prefix).join('/')
+          )%>
+      on-success:
+        - call_nuage_create_api: <% $.tosca_reference_only = false %>
+        - call_nuage_get_api: <% $.tosca_reference_only = true %>
+
+    call_nuage_create_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: POST
+        params:
+          'responseChoice': <% $.nuage_create_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 300,
+          "content": {
+            "choices": [
+            {
+              "label": "OK",
+              "id": "FAKE_CHOICE_ID"
+            }
+            ]
+          }
+        }
+      publish:
+        nuage_api_result: <% switch(
+          task(call_nuage_create_api).result.status = 300 => task(call_nuage_create_api).result.content,
+          task(call_nuage_create_api).result.status < 300 => task(call_nuage_create_api).result.content.first()
+          ) %>
+        nuage_api_full_result: <% task(call_nuage_create_api).result %>
+      on-success:
+        - nuage_create_confirmation: <% task(call_nuage_create_api).result.status = 300 %>
+        - update_system_job_success: <% task(call_nuage_create_api).result.status < 300 %>
+
+    nuage_create_confirmation:
+      publish:
+        nuage_create_choice_ok: <% $.nuage_api_result.choices.first(label = 'OK').id %>
+      on-success:
+        - call_nuage_create_api_final
+
+    call_nuage_create_api_final:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: POST
+        params:
+          'responseChoice': <% $.nuage_create_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 201,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ]
+        }
+      publish:
+        nuage_api_result: <% switch(
+          task(call_nuage_create_api_final).result.status < 300 => task(call_nuage_create_api_final).result.content.first()
+          ) %>
+        nuage_api_full_result: <% task(call_nuage_create_api_final).result %>
+      on-success:
+        - update_system_job_success: <% task(call_nuage_create_api_final).result.status < 300 %>
+      on-error:
+        - update_system_job_failure_final
+
+
+    call_nuage_get_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: GET
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+          'X-Nuage-Filter': '<% $.tosca_reference_field %>=="<% $.body.get($.tosca_reference_field) %>"'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% $.body %>
+        result: {
+          "status": 200,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ],
+          "headers": {
+            "X-Nuage-Count": "1",
+            "Content-Type": "application/json"
+          }
+        }
+      publish:
+        nuage_api_result: <% switch(task(call_nuage_get_api).result.get(headers).get("X-Nuage-Count") = "1" => task(call_nuage_get_api).result.content.first()) %>
+        nuage_api_full_result: <% task(call_nuage_get_api).result %>
+      on-success:
+        - update_system_job_success: <% task(call_nuage_get_api).result.get(headers).get('X-Nuage-Count') = "1" %>
+        - update_system_job_not_found_failure: <% task(call_nuage_get_api).result.get(headers).get("X-Nuage-Count") = "0" %>
+        - update_system_job_not_unique_failure: <% task(call_nuage_get_api).result.get(headers).get("X-Nuage-Count") > "1" %>
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_failure_final:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_not_found_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation of Tosca reference_only resource failed'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_not_unique_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation of Tosca reference_only resource failed'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Creation successful for network resource name: <% $.tosca_name %>, id: <% $.tosca_resource_id %> "
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+nuage.delete_group:
+  description: "Deletes a group of Nuage network resources."
+
+  input:
+    - item_type
+    - rest_url_fragments
+    - item_params
+    - IDs
+    - sdn
+
+  task-defaults:
+    on-error:
+      - fail
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: <% switch(env().operation_info.partOfUpdate => "Update started for node group.", $ => "Deletion started for node group.") %>
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-success:
+        - delete_items: <% $.IDs != null and not env().operation_info.partOfUpdate %>
+        - update_system_job_success: <% $.IDs = null or env().operation_info.partOfUpdate %>
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    delete_items:
+      with-items:
+        - item_index in <% range($.IDs.len()) %>
+        - ID in <% $.IDs %>
+        - item_body in <% $.item_params %>
+      workflow: nuage.delete_object
+      input:
+        tosca_resource_id: '<% $.item_index %>'
+        tosca_name: '<% $.item_type %>'
+        rest_resource_path_fragments: <% $.rest_url_fragments.append($.ID) %>
+        sdn: <% $.sdn %>
+        tosca_reference_only: <% $.item_body.get('tosca_reference_only', false) %>
+      on-success:
+        - update_system_job_success
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: <% switch(env().operation_info.partOfUpdate => "Update successful for node group.", $ => "Deletion successful for node group.") %>
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+
+nuage.delete_neutron_object:
+  description: delete a VSD managed subnet in Neutron
+  type: direct
+  input:
+    - neutron_type
+    - tosca_resource_id
+    - tosca_name
+    - tosca_reference_only
+    - id
+    - placement
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Delete started for Nuage object Name: <% $.tosca_name %>, Tosca ID: <% $.tosca_resource_id %> "
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - check_reference_only
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    check_reference_only:
+      on-success:
+        - get_vim_url: <% $.tosca_reference_only = false %>
+        - update_system_job_success: <% $.tosca_reference_only = true %>
+
+    get_vim_url:
+      action: nokia.nuage.dummy_http
+      input:
+        url: 'dummyurl'
+        method: GET
+        allow_redirects: true
+        headers:
+          "Content-Type": "application/json"
+          "Authorization": <% env().nfvo.authTokenType + ' ' + env().nfvo.authToken %>
+        verify: false
+        result:
+          content:
+            parameterGroups: {
+              "Target Details": {
+                "parameters": [
+                {
+                  "identity_endpoint_url": { "value": "identity_endpoint_url_value" },
+                  "admin_tenant_name": { "value": "admin_tenant_name_value" }
+                }
+                ]
+              },
+              "Basic Credentials": {
+                "parameters": [
+                {
+                  "username": { "value": "username_value" },
+                  "password": { "value": "password_value" }
+                }
+                ]
+              }
+            }
+
+      on-success:
+        - get_openstack_token
+      publish:
+        vim_url: <% task(get_vim_url).result.content.parameterGroups["Target Details"].parameters.first().identity_endpoint_url.value %>
+        admin_tenant_name: <% task(get_vim_url).result.content.parameterGroups["Target Details"].parameters.first().admin_tenant_name.value %>
+        username: <% task(get_vim_url).result.content.parameterGroups["Basic Credentials"].parameters.first().username.value %>
+        password: <% task(get_vim_url).result.content.parameterGroups["Basic Credentials"].parameters.first().password.value %>
+
+    get_openstack_token:
+      action: nokia.nuage.dummy_http
+      input:
+        url: <% $.vim_url + '/auth/tokens' %>
+        method: POST
+        allow_redirects: true
+        headers:
+          "Content-Type": "application/json"
+        body: '{"auth": { "identity": { "methods": ["password"], "password": {"user": {"name": "<% $.username %>", "domain": { "name": "default" }, "password": "<% $.password %>" } } }, "scope": { "project": { "name": "<% $.admin_tenant_name %>",  "domain": { "id": "default" }  } } } }'
+        verify: false
+        result:
+          headers: {
+            "X-Subject-Token": "X-Subject-Token-Value"
+          }
+          content:
+            token:
+              catalog: [
+              {
+                "type": "network",
+                "endpoints": [
+                {
+                  "interface": "public",
+                  "url": "public_url_value"
+                }
+                ]
+              }
+              ]
+      on-success:
+        - switch_neutron_object
+      publish:
+        token: <% task(get_openstack_token).result.headers["X-Subject-Token"] %>
+        neutron_url: <% task(get_openstack_token).result.content.token.catalog.where($.type='network').first().endpoints.where($.interface='public').first().url %>
+
+    switch_neutron_object:
+      on-success:
+        - delete_neutron_object: <% ["vsd_managed_subnet", "network"].contains( $.neutron_type) %>
+        - update_system_job_type_not_found_failure: <% not ["vsd_managed_subnet", "network"].contains( $.neutron_type) %>
+
+    delete_neutron_object:
+      action: nokia.nuage.dummy_http
+      input:
+        url: <% $.neutron_url.replace("/v2.0","") + switch($.neutron_type = "vsd_managed_subnet" => '/v2.0/subnets/', $.neutron_type = "network" => '/v2.0/networks/')  + 'id' %>
+        method: DELETE
+        allow_redirects: true
+        headers:
+          "X-Auth-Token": <% $.token %>
+        verify: false
+        result:
+          status: 200
+      publish:
+        result: <% task(delete_neutron_object).result %>
+      on-success:
+        - update_system_job_success
+      on-error:
+        - handle_http_404_failure: <%
+            task(delete_neutron_object).get(result) != null
+            and task(delete_neutron_object).result.status != null
+            and task(delete_neutron_object).result.status = 404
+            %>
+
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_type_not_found_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Delete of Neutron object failed'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Delete failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Delete successful for network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    update_system_job_resource_not_found:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Deletion of network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+
+    handle_http_404_failure:
+      on-success:
+        - update_system_job_resource_not_found
+
+nuage.delete_object:
+  description: "Delete the network resources in Nuage."
+  input:
+    - tosca_name
+    - tosca_resource_id
+    - rest_resource_path_fragments
+    - create_condition: True
+    - sdn
+    - tosca_reference_only
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    check_create_condition:
+      on-success:
+        - create_system_job: <% $.create_condition = true %>
+      on-error:
+        - system_log_fail
+
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Deletion started for network resource"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - check_reference_only
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    check_reference_only:
+      on-success:
+        - get_nuage_api_key: <% $.tosca_reference_only = false %>
+        - update_system_job_success: <% $.tosca_reference_only = true %>
+
+    get_nuage_api_key:
+      action: nokia.nuage.ensure_api_key
+      input:
+        nfvo: <% env().nfvo %>
+        sdn_id: <% $.sdn %>
+      publish:
+        api_prefix: <% task(get_nuage_api_key).result.nuage_api_prefix %>
+        api_key: <% task(get_nuage_api_key).result.api_key %>
+        nuage_vsd_url: <% task(get_nuage_api_key).result.nuage_vsd_url %>
+        nuage_org: <% task(get_nuage_api_key).result.nuage_org %>
+        nuage_user: <% task(get_nuage_api_key).result.nuage_user %>
+      on-success:
+        - get_nuage_resource_path
+
+    get_nuage_resource_path:
+      publish:
+        rest_resource_path: <% $.rest_resource_path_fragments.select(str($)).insert(0, $.api_prefix).join('/') %>
+        nuage_delete_choice_ok: null
+      on-success:
+        - call_nuage_api
+
+    call_nuage_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: DELETE
+        params:
+          'responseChoice': <% $.nuage_delete_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        result: {
+          "status": 300,
+          "content": {
+            "choices": [
+            {
+              "label": "OK",
+              "id": "FAKE_CHOICE_ID"
+            }
+            ]
+          }
+        }
+      publish:
+        nuage_api_result: <% task(call_nuage_api).result.content %>
+      publish-on-error:
+        nuage_error_cause: <% switch(
+          (task().result.get(content) = null and task().result.get(error) = null) => task().result,
+          task().result.get(error) != null => task().result.error.developerMessage,
+          task().result.content.get(error) = null => task().result.content,
+          task().result.content.get(error) != null => task().result.content.error.developerMessage)
+          %>
+      on-success:
+        - nuage_delete_confirmation: <% task(call_nuage_api).result.status = 300 %>
+        - update_system_job_success: <% task(call_nuage_api).result.status < 300 %>
+      on-error:
+        - handle_http_404_failure: <%
+            task(call_nuage_api).get(result) != null
+            and task(call_nuage_api).result.get(error) != null
+            and task(call_nuage_api).result.error.httpStatusCode = 404
+            %>
+        - handle_http_other_failure: <%
+            task(call_nuage_api).get(result) = null
+            or task(call_nuage_api).result.get(error) = null
+            or task(call_nuage_api).result.error.httpStatusCode != 404
+            %>
+
+    nuage_delete_confirmation:
+      publish:
+        nuage_delete_choice_ok: <% $.nuage_api_result.choices.first(label = 'OK').id %>
+      on-success:
+        - call_nuage_api_final
+
+    call_nuage_api_final:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: DELETE
+        params:
+          'responseChoice': <% $.nuage_delete_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        result: {
+          "status": 200,
+          "content": {
+          }
+        }
+      publish:
+        nuage_api_result: <% task(call_nuage_api_final).result.content %>
+      publish-on-error:
+        nuage_error_cause: <% switch(
+          (task().result.get(content) = null and task().result.get(error) = null) => task().result,
+          task().result.get(error) != null => task().result.error.developerMessage,
+          task().result.content.get(error) = null => task().result.content,
+          task().result.content.get(error) != null => task().result.content.error.developerMessage)
+          %>
+      on-success:
+        - update_system_job_success: <% task(call_nuage_api_final).result.status < 300 %>
+      on-error:
+        - handle_http_404_failure: <%
+            task(call_nuage_api_final).get(result) != null
+            and task(call_nuage_api_final).result.get(error) != null
+            and task(call_nuage_api_final).result.error.httpStatusCode = 404
+            %>
+        - handle_http_other_failure: <%
+            task(call_nuage_api_final).get(result) = null
+            or task(call_nuage_api_final).result.get(error) = null
+            or task(call_nuage_api_final).result.error.httpStatusCode != 404
+            %>
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Deletion failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: <% env() %>
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Deletion successful for network resource name: <% $.tosca_name %>, id: <% $.tosca_resource_id %> "
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    update_system_job_resource_not_found:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Deletion of network resource"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+    handle_http_404_failure:
+      on-success:
+        - update_system_job_resource_not_found
+
+    handle_http_other_failure:
+      on-success:
+        - update_system_job_failure
+
+nuage.expression_eval:
+  description: Evaluates an expression at runtime
+  input:
+    - vars
+    - expr
+  output:
+    eval: <% $.eval %>
+  task-defaults:
+    on-error:
+      - fail
+  tasks:
+    evaluate:
+      action: std.javascript
+      input:
+        context:
+          expr: <% $.expr %>
+          vars: <% $.vars %>
+        script: return eval($.expr)
+      publish:
+        eval:
+          result: <% task(evaluate).result %>
+
+nuage.remove_object_membership:
+  description: "Update network resources in Nuage"
+  input:
+    - tosca_resource_id
+    - tosca_name
+    - rest_resource_path_fragments
+    - sdn
+    - body: ''
+    - source_exists: True
+    - target_exists: True
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    check_execute_condition:
+      on-success:
+        - create_system_job: <% $.source_exists = true and $.target_exists = true %>
+      on-error:
+        - system_log_fail
+
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Update started on Nuage object"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - get_nuage_api_key
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    get_nuage_api_key:
+      action: nokia.nuage.ensure_api_key
+      input:
+        nfvo: <% env().nfvo %>
+        sdn_id: <% $.sdn %>
+      publish:
+        api_prefix: <% task(get_nuage_api_key).result.nuage_api_prefix %>
+        api_key: <% task(get_nuage_api_key).result.api_key %>
+        nuage_vsd_url: <% task(get_nuage_api_key).result.nuage_vsd_url %>
+        nuage_org: <% task(get_nuage_api_key).result.nuage_org %>
+        nuage_user: <% task(get_nuage_api_key).result.nuage_user %>
+      on-success:
+        - get_nuage_resource_path
+
+    get_nuage_resource_path:
+      publish:
+        rest_resource_path: <% $.rest_resource_path_fragments.select(str($)).insert(0, $.api_prefix).join('/') %>
+      on-success:
+        - get_nuage_current_members
+
+    get_nuage_current_members:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: GET
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        result: {
+          "status": 200,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ],
+          "headers": {
+            "X-Nuage-Count": "1",
+            "Content-Type": "application/json"
+          }
+        }
+      publish:
+        current_members: <% switch( task().result.get(headers).get("X-Nuage-Count") != "0" => task().result.content.ID.toSet().difference($.body.toSet()).toList(),
+          task().result.get(headers).get("X-Nuage-Count") = "0" => []
+          )  %>
+        nuage_update_choice_ok: null
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+      on-success:
+        - call_nuage_update_api
+
+    call_nuage_update_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% str($.current_members).replace("(","[").replace(",)", "]").replace(")","]").replace("u'", "'") %>
+        result: {
+          "status": 300,
+          "content": {
+            "choices": [
+            {
+              "label": "OK",
+              "id": "FAKE_CHOICE_ID"
+            }
+            ]
+          }
+        }
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+      on-success:
+        - nuage_update_confirmation: <% task().result.status = 300 %>
+        - update_system_job_success: <% task().result.status < 300 %>
+
+    nuage_update_confirmation:
+      publish:
+        nuage_update_choice_ok: <% task(call_nuage_update_api).result.content.choices.first(label = 'OK').id %>
+      on-success:
+        - call_nuage_update_api_final
+
+    call_nuage_update_api_final:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% str($.current_members).replace("(","[").replace(",)", "]").replace(")","]").replace("u'", "'") %>
+        result: {
+          "status": 201,
+          "content": [
+          {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          }
+          ]
+        }
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+      on-success:
+        - update_system_job_success: <% task().result.status < 300 %>
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'De-association failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Update successful for network resource name: <% $.tosca_name %>, id: <% $.tosca_resource_id %> "
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+nuage.update_object_membership:
+  description: "Update network resources in Nuage."
+  input:
+    - tosca_resource_id
+    - tosca_name
+    - rest_resource_path_fragments
+    - sdn
+    - body: ''
+    - source_exists: True
+    - target_exists: True
+
+  task-defaults:
+    on-error:
+      - update_system_job_failure
+
+  tasks:
+    check_execute_condition:
+      on-success:
+        - create_system_job: <% $.source_exists = true and $.target_exists = true %>
+      on-error:
+        - system_log_fail
+
+    create_system_job:
+      action: nfvo_actions.create_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Update started on Nuage object"
+        job_status: RUNNING
+        parent_job_id: '<% env().nfvo.system_job_id %>'
+      on-error:
+        - fail
+      on-success:
+        - get_nuage_api_key
+      publish:
+        created_job: "<% task(create_system_job).result.content %>"
+
+    get_nuage_api_key:
+      action: nokia.nuage.ensure_api_key
+      input:
+        nfvo: <% env().nfvo %>
+        sdn_id: <% $.sdn %>
+      publish:
+        api_prefix: <% task(get_nuage_api_key).result.nuage_api_prefix %>
+        api_key: <% task(get_nuage_api_key).result.api_key %>
+        nuage_vsd_url: <% task(get_nuage_api_key).result.nuage_vsd_url %>
+        nuage_org: <% task(get_nuage_api_key).result.nuage_org %>
+        nuage_user: <% task(get_nuage_api_key).result.nuage_user %>
+      on-success:
+        - get_nuage_resource_path
+
+    get_nuage_resource_path:
+      publish:
+        rest_resource_path: <% $.rest_resource_path_fragments.select(str($)).insert(0, $.api_prefix).join('/') %>
+      on-success:
+        - get_nuage_current_members
+
+    get_nuage_current_members:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: GET
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        result: {
+          "status": 200,
+          "content": {
+            "ID": "5333bc71-729f-4869-8e4a-8e6cf849e4d1",
+          },
+          "headers": {
+            "X-Nuage-Count": "0",
+            "Content-Type": "application/json"
+          }
+        }
+      publish:
+        current_members: <% switch( task().result.get(headers).get("X-Nuage-Count") != "0" => task().result.content.ID + $.body,
+          task().result.get(headers).get("X-Nuage-Count") = "0" =>  $.body
+          )  %>
+        nuage_update_choice_ok: null
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+      on-success:
+        - call_nuage_update_api
+
+    call_nuage_update_api:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% str($.current_members).replace("(","[").replace(",)", "]").replace(")","]").replace("u'", "'") %>
+        result: {
+          "status": 300,
+          "content": {
+            "choices": [
+            {
+              "label": "OK",
+              "id": "FAKE_CHOICE_ID"
+            }
+            ]
+          }
+        }
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+      on-success:
+        - nuage_update_confirmation: <% task().result.status = 300 %>
+        - update_system_job_success: <% task().result.status < 300 %>
+
+    nuage_update_confirmation:
+      publish:
+        nuage_update_choice_ok: <% task(call_nuage_update_api).result.content.choices.first(label = 'OK').id %>
+      on-success:
+        - call_nuage_update_api_final
+
+    call_nuage_update_api_final:
+      action: nokia.nuage.dummy_http
+      input:
+        url: '<% $.nuage_vsd_url + $.rest_resource_path %>'
+        method: PUT
+        params:
+          'responseChoice': <% $.nuage_update_choice_ok %>
+        headers:
+          'X-Nuage-Organization': <% $.nuage_org %>
+          'Content-Type': 'application/json'
+        auth: '<% $.nuage_user %>:<% $.api_key %>'
+        verify: false
+        body: <% str($.current_members).replace("(","[").replace(",)", "]").replace(")","]").replace("u'", "'") %>
+        result: {
+          "status": 200
+        }
+      publish-on-error:
+        nuage_error_result: <% task().result %>
+      on-success:
+        - update_system_job_success: <% task().result.status < 300 %>
+
+    system_log:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+
+    system_log_fail:
+      action: std.echo
+      input:
+        output: "<% $ %>"
+      on-complete:
+        - fail
+
+    update_system_job_failure:
+      action: nfvo_actions.update_system_job
+      input:
+        job_description: 'Creation failed for network resource'
+        job_id: "<% $.created_job.id %>"
+        job_status: FAILED
+        env: "<% env() %>"
+      on-error:
+        - system_log_fail
+      on-success:
+        - system_log_fail
+
+    update_system_job_success:
+      action: nfvo_actions.update_system_job
+      input:
+        env: "<% env() %>"
+        job_description: "Update successful"
+        job_id: "<% $.created_job.id %>"
+        job_status: FINISHED
+      on-error:
+        - system_log
+
+std_noop:
+  type: direct
+  tasks:
+    task1:
+      action: std.noop
