@@ -216,6 +216,107 @@ class TestExecutionReportController(base.APITest, engine_base.EngineTestCase):
         self.assertEqual(2, stat['success_tasks_count'])
         self.assertEqual(4, stat['total_tasks_count'])
 
+    def test_statistics_only(self):
+        wb_text = """---
+        version: '2.0'
+
+        name: wb
+
+        workflows:
+          parent_wf:
+            tasks:
+              task1:
+                action: std.noop
+                on-success: task2
+
+              task2:
+                workflow: sub_wf
+                on-success: task3
+
+              task3:
+                action: std.fail
+
+          sub_wf:
+            tasks:
+              task1:
+                action: std.noop
+                on-success: task2
+
+              task2:
+                action: std.fail
+        """
+
+        wb_service.create_workbook_v2(wb_text)
+
+        wf_ex = self.engine.start_workflow('wb.parent_wf')
+
+        self.await_workflow_error(wf_ex.id)
+
+        resp = self.app.get(
+            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id
+        )
+
+        self.assertEqual(200, resp.status_int)
+
+        stat = resp.json['statistics']
+
+        self.assertEqual(2, stat['error_tasks_count'])
+        self.assertEqual(0, stat['idle_tasks_count'])
+        self.assertEqual(0, stat['paused_tasks_count'])
+        self.assertEqual(0, stat['running_tasks_count'])
+        self.assertEqual(2, stat['success_tasks_count'])
+        self.assertEqual(4, stat['total_tasks_count'])
+
+        self.assertNotIn('root_workflow_execution', resp.json)
+
+    def test_estimated_time(self):
+        wf_text = """---
+        version: '2.0'
+        wf1:
+          tasks:
+            task1:
+              action: std.sleep seconds=2
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        for i in range(3):
+            wf_ex = self.engine.start_workflow('wf1')
+
+        self.await_workflow_success(wf_ex.id)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        resp = self.app.get(
+            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id)
+
+        self.assertEqual(200, resp.status_int)
+
+        stat = resp.json['statistics']
+        self.assertTrue(stat['estimated_time'] > 0)
+
+    def test_estimated_time_no_previous_executions(self):
+        wf_text = """---
+        version: '2.0'
+        wf1:
+          tasks:
+            task1:
+              action: std.sleep seconds=5
+        """
+
+        wf_service.create_workflows(wf_text)
+
+        wf_ex = self.engine.start_workflow('wf1')
+
+        resp = self.app.get(
+            '/v2/executions/%s/report?statistics_only=True' % wf_ex.id)
+
+        self.assertEqual(200, resp.status_int)
+
+        stat = resp.json['statistics']
+
+        self.assertTrue(stat['estimated_time'] == -1)
+
     def test_nested_wf_errors_only(self):
         wb_text = """---
         version: '2.0'

@@ -853,6 +853,7 @@ class ExecutionReportStatistics(resource.Resource):
     error_tasks_count = wtypes.IntegerType(minimum=0)
     idle_tasks_count = wtypes.IntegerType(minimum=0)
     paused_tasks_count = wtypes.IntegerType(minimum=0)
+    estimated_time = wtypes.IntegerType(minimum=-1)
 
     def __init__(self, **kw):
         self.total_tasks_count = 0
@@ -861,6 +862,7 @@ class ExecutionReportStatistics(resource.Resource):
         self.error_tasks_count = 0
         self.idle_tasks_count = 0
         self.paused_tasks_count = 0
+        self.estimated_time = 0
 
         super(ExecutionReportStatistics, self).__init__(**kw)
 
@@ -892,7 +894,8 @@ class ExecutionReportStatistics(resource.Resource):
             success_tasks_count=5,
             error_tasks_count=2,
             idle_tasks_count=0,
-            paused_tasks_count=0
+            paused_tasks_count=0,
+            estimated_time=40
         )
 
 
