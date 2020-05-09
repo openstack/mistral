@@ -15,6 +15,21 @@
         failure_rate:
           max: 0
 
+  MistralExecutions.TerminateScenario:
+    -
+      runner:
+        type: "constant"
+        times: 1
+        concurrency: 1
+        timeout: 17000
+      context:
+        users:
+          tenants: 1
+          users_per_tenant: 1
+      sla:
+        failure_rate:
+          max: 0
+
   MistralWorkbooks.list_workbooks:
     -
       runner:

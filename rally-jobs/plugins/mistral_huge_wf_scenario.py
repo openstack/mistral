@@ -15,8 +15,6 @@
 
 import json
 from pathlib import Path
-import random
-import string
 
 from rally.common import cfg
 from rally.task import validation
@@ -39,9 +37,11 @@ class MistralHugeWorkflowScenario(utils.MistralScenario):
     main_wf_file_name = ''
     params_filename = ''
     wf_name = ''
+    created_wfs = []
+    created_wbs = []
 
     def run(self):
-        namespace = ''.join(random.choices(string.ascii_lowercase))
+        namespace = ''
         CONF.openstack.mistral_execution_timeout = SCENARIO_TIMEOUT_SEC
 
         self.create_common_workflows()
@@ -50,18 +50,31 @@ class MistralHugeWorkflowScenario(utils.MistralScenario):
         params = self._read_params_from_file()
 
         self.run_workflow(params, namespace=namespace)
+        self.clean_after_scenario(namespace=namespace)
+
+    def clean_after_scenario(self, namespace=''):
+        for wf in self.created_wfs:
+            self._delete_workflow(wf, namespace=namespace)
+
+        for wb in self.created_wbs:
+            self._delete_workbook(wb, namespace=namespace)
 
     def create_common_workflows(self):
         for file in common_workflow_files:
             with open(wf_dir + file, 'r+') as f:
                 definition = f.read()
-                self._create_workflow(definition)
+                wfs = self._create_workflow(definition)
+
+                for wf in wfs:
+                    self.created_wfs.append(wf.name)
 
     def create_actions(self):
         for file in action_files:
             with open(wf_dir + file, 'r+') as f:
                 definition = f.read()
-                self._create_workbook(definition)
+                wb = self._create_workbook(definition)
+
+                self.created_wbs.append(wb.name)
 
     def _create_workbook(self, definition, namespace=''):
         return self.clients("mistral").workbooks.create(
@@ -89,7 +102,10 @@ class MistralHugeWorkflowScenario(utils.MistralScenario):
     def create_main_workflow(self, namespace=''):
         with open(wf_dir + self.main_wf_file_name, 'r+') as f:
             definition = f.read()
-            self._create_workflow(definition, namespace=namespace)
+            wfs = self._create_workflow(definition, namespace=namespace)
+
+            for wf in wfs:
+                self.created_wfs.append(wf.name)
 
 
 @validation.add("required_platform", platform="openstack", users=True)
