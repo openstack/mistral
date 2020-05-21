@@ -12,7 +12,6 @@
 # limitations under the License.
 
 import os
-import subprocess
 import sys
 
 
@@ -56,13 +55,6 @@ master_doc = 'index'
 project = u'Workflow Service API Reference'
 copyright = u'2017, Mistral Contributors'
 
-# The version info for the project you're documenting, acts as replacement for
-# |version| and |release|, also used in various other places throughout the
-# built documents.
-from mistral.version import version_info
-release = version_info.release_string()
-version = version_info.version_string()
-
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
 show_authors = False
@@ -75,7 +67,7 @@ add_function_parentheses = True
 add_module_names = True
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -92,14 +84,6 @@ htmlhelp_basename = '%sdoc' % project
 
 # A list of ignored prefixes for module index sorting.
 modindex_common_prefix = ['mistral.']
-
-# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
-# using the given strftime format.
-# html_last_updated_fmt = '%b %d, %Y'
-git_cmd = ["git", "log", "--pretty=format:'%ad, commit %h'", "--date=local",
-           "-n1"]
-html_last_updated_fmt = subprocess.check_output(
-    git_cmd).decode('utf-8')
 
 # The name for this set of Sphinx documents. If None, it defaults to
 # "<project> v<release> documentation".

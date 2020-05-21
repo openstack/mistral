@@ -74,7 +74,7 @@ add_function_parentheses = True
 add_module_names = True
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'native'
 
 # -- Options for HTML output --------------------------------------------------
 
@@ -105,9 +105,11 @@ man_show_urls = True
 
 # -- Options for openstackdocstheme -------------------------------------------
 
-repository_name = 'openstack/mistral'
-bug_project = 'mistral'
-bug_tag = 'doc'
+openstackdocs_repo_name = 'openstack/mistral'
+openstackdocs_pdf_link = True
+openstackdocs_auto_name = False
+openstackdocs_bug_project = 'mistral'
+openstackdocs_bug_tag = 'doc'
 
 latex_use_xindy = False
 
