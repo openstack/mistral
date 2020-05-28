@@ -609,7 +609,7 @@ class WithItemsEngineTest(base.EngineTestCase):
         self.assertIn(task1_ex.published['result'], ['Guy'])
 
     def test_with_items_concurrency_1(self):
-        wf_with_concurrency_1 = """---
+        wf_text = """---
         version: "2.0"
 
         wf:
@@ -623,7 +623,7 @@ class WithItemsEngineTest(base.EngineTestCase):
               concurrency: 1
         """
 
-        wf_service.create_workflows(wf_with_concurrency_1)
+        wf_service.create_workflows(wf_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wf')

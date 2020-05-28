@@ -20,7 +20,8 @@ import jsonschema
 import six
 
 from mistral import exceptions as exc
-from mistral.workflow import data_flow
+from mistral import utils
+
 from mistral_lib.utils import inspect_utils
 
 
@@ -154,43 +155,21 @@ class TaskPolicy(object):
     """
     _schema = {}
 
-    def before_task_start(self, task_ex, task_spec):
+    def before_task_start(self, task):
         """Called right before task start.
 
-        :param task_ex: DB model for task that is about to start.
-        :param task_spec: Task specification.
+        :param task: Engine task. Instance of engine.tasks.Task.
         """
-        wf_ex = task_ex.workflow_execution
-
-        ctx_view = data_flow.ContextView(
-            task_ex.in_context,
-            data_flow.get_current_task_dict(task_ex),
-            data_flow.get_workflow_environment_dict(wf_ex),
-            wf_ex.context,
-            wf_ex.input
-        )
-
-        data_flow.evaluate_object_fields(self, ctx_view)
+        utils.evaluate_object_fields(self, task.get_expression_context())
 
         self._validate()
 
-    def after_task_complete(self, task_ex, task_spec):
+    def after_task_complete(self, task):
         """Called right after task completes.
 
-        :param task_ex: Completed task DB model.
-        :param task_spec: Completed task specification.
+        :param task: Engine task. Instance of engine.tasks.Task.
         """
-        wf_ex = task_ex.workflow_execution
-
-        ctx_view = data_flow.ContextView(
-            task_ex.in_context,
-            data_flow.get_current_task_dict(task_ex),
-            data_flow.get_workflow_environment_dict(wf_ex),
-            wf_ex.context,
-            wf_ex.input
-        )
-
-        data_flow.evaluate_object_fields(self, ctx_view)
+        utils.evaluate_object_fields(self, task.get_expression_context())
 
         self._validate()
 

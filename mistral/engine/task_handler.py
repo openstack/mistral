@@ -83,7 +83,7 @@ def run_task(wf_cmd):
 
 
 def mark_task_running(task_ex, wf_spec):
-    task = _build_task_from_execution(wf_spec, task_ex)
+    task = build_task_from_execution(wf_spec, task_ex)
 
     old_task_state = task_ex.state
 
@@ -209,7 +209,7 @@ def force_fail_task(task_ex, msg, task=None):
             task_ex.workflow_execution_id
         )
 
-        task = _build_task_from_execution(wf_spec, task_ex)
+        task = build_task_from_execution(wf_spec, task_ex)
 
     old_task_state = task_ex.state
     task.set_state(states.ERROR, msg)
@@ -228,7 +228,7 @@ def continue_task(task_ex):
         task_ex.workflow_execution_id
     )
 
-    task = _build_task_from_execution(wf_spec, task_ex)
+    task = build_task_from_execution(wf_spec, task_ex)
 
     try:
         task.set_state(states.RUNNING, None)
@@ -257,7 +257,7 @@ def complete_task(task_ex, state, state_info):
         task_ex.workflow_execution_id
     )
 
-    task = _build_task_from_execution(wf_spec, task_ex)
+    task = build_task_from_execution(wf_spec, task_ex)
 
     try:
         task.complete(state, state_info)
@@ -324,7 +324,7 @@ def _check_affected_tasks(task):
         )
 
 
-def _build_task_from_execution(wf_spec, task_ex):
+def build_task_from_execution(wf_spec, task_ex):
     return _create_task(
         task_ex.workflow_execution,
         wf_spec,

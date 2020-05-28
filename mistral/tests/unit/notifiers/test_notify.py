@@ -42,7 +42,6 @@ def log_event(ctx, ex_id, data, event, timestamp, **kwargs):
 
 
 class NotifyEventsTest(base.NotifierTestCase):
-
     def setUp(self):
         super(NotifyEventsTest, self).setUp()
 
@@ -57,11 +56,13 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.publishers['noop'].publish.reset_mock()
 
         del EVENT_LOGS[:]
+
         cfg.CONF.set_default('type', 'local', group='notifier')
 
     def tearDown(self):
-        cfg.CONF.set_default('notify', None, group='notifier')
         super(NotifyEventsTest, self).tearDown()
+
+        cfg.CONF.set_default('notify', None, group='notifier')
 
     def test_notify_all_explicit(self):
         wf_def = """
@@ -93,6 +94,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
+
             task_exs = wf_ex.task_executions
 
         self.assertEqual(states.SUCCESS, wf_ex.state)

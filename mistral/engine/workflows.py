@@ -88,26 +88,25 @@ class Workflow(object):
         if not filtered_publishers:
             return
 
-        def _convert_to_notification_data():
-            return {
-                "id": self.wf_ex.id,
-                "name": self.wf_ex.name,
-                "workflow_name": self.wf_ex.workflow_name,
-                "workflow_namespace": self.wf_ex.workflow_namespace,
-                "workflow_id": self.wf_ex.workflow_id,
-                "state": self.wf_ex.state,
-                "state_info": self.wf_ex.state_info,
-                "project_id": self.wf_ex.project_id,
-                "task_execution_id": self.wf_ex.task_execution_id,
-                "root_execution_id": self.wf_ex.root_execution_id,
-                "created_at": utils.datetime_to_str(self.wf_ex.created_at),
-                "updated_at": utils.datetime_to_str(self.wf_ex.updated_at)
-            }
+        data = {
+            "id": self.wf_ex.id,
+            "name": self.wf_ex.name,
+            "workflow_name": self.wf_ex.workflow_name,
+            "workflow_namespace": self.wf_ex.workflow_namespace,
+            "workflow_id": self.wf_ex.workflow_id,
+            "state": self.wf_ex.state,
+            "state_info": self.wf_ex.state_info,
+            "project_id": self.wf_ex.project_id,
+            "task_execution_id": self.wf_ex.task_execution_id,
+            "root_execution_id": self.wf_ex.root_execution_id,
+            "created_at": utils.datetime_to_str(self.wf_ex.created_at),
+            "updated_at": utils.datetime_to_str(self.wf_ex.updated_at)
+        }
 
         def _send_notification():
             notifier.notify(
                 self.wf_ex.id,
-                _convert_to_notification_data(),
+                data,
                 event,
                 self.wf_ex.updated_at,
                 filtered_publishers
@@ -248,10 +247,11 @@ class Workflow(object):
             self.wf_spec.__class__.__name__
         )
 
-    def rerun(self, task_ex, reset=True, env=None):
+    def rerun(self, task, reset=True, env=None):
         """Rerun workflow from the given task.
 
-        :param task_ex: Task execution that the workflow needs to rerun from.
+        :param task: An engine task associated with the task the workflow
+            needs to rerun from.
         :param reset: If True, reset task state including deleting its action
             executions.
         :param env: Environment.
@@ -266,13 +266,10 @@ class Workflow(object):
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
         # Calculate commands to process next.
-        cmds = wf_ctrl.rerun_tasks([task_ex], reset=reset)
+        cmds = wf_ctrl.rerun_tasks([task.task_ex], reset=reset)
 
         if cmds:
-            # Import the task_handler module here to avoid circular reference.
-            from mistral.engine import policies
-
-            policies.RetryPolicy.refresh_runtime_context(task_ex)
+            task.cleanup_runtime_context()
 
         self._continue_workflow(cmds)
 

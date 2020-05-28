@@ -19,6 +19,7 @@ from oslo_log import log as logging
 from mistral.db.v2.sqlalchemy import models
 
 cfg.CONF.import_opt('workflow_trace_log_name', 'mistral.config')
+
 WF_TRACE = logging.getLogger(cfg.CONF.workflow_trace_log_name)
 
 

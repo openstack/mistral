@@ -24,7 +24,6 @@ from mistral import expressions as expr
 from mistral.lang import parser as spec_parser
 from mistral.workflow import states
 from mistral_lib import utils
-from mistral_lib.utils import inspect_utils
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
@@ -157,16 +156,10 @@ def _extract_execution_result(ex):
         return ex.output['result']
 
 
-def invalidate_task_execution_result(task_ex):
-    for ex in task_ex.executions:
-        ex.accepted = False
-
-
 def get_task_execution_result(task_ex):
     execs = task_ex.executions
-    execs.sort(
-        key=lambda x: x.runtime_context.get('index')
-    )
+
+    execs.sort(key=lambda x: x.runtime_context.get('index'))
 
     results = [
         _extract_execution_result(ex)
@@ -325,15 +318,6 @@ def add_workflow_variables_to_context(wf_ex, wf_spec):
     wf_vars = expr.evaluate_recursively(wf_spec.get_vars(), ctx_view)
 
     utils.merge_dicts(wf_ex.context, wf_vars)
-
-
-def evaluate_object_fields(obj, context):
-    fields = inspect_utils.get_public_fields(obj)
-
-    evaluated_fields = expr.evaluate_recursively(fields, context)
-
-    for k, v in evaluated_fields.items():
-        setattr(obj, k, v)
 
 
 def get_workflow_environment_dict(wf_ex):

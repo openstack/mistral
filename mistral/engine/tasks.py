@@ -90,33 +90,45 @@ class Task(object):
         if not filtered_publishers:
             return
 
-        def _convert_to_notification_data():
-            return {
-                "id": self.task_ex.id,
-                "name": self.task_ex.name,
-                "workflow_execution_id": self.task_ex.workflow_execution_id,
-                "workflow_name": self.task_ex.workflow_name,
-                "workflow_namespace": self.task_ex.workflow_namespace,
-                "workflow_id": self.task_ex.workflow_id,
-                "state": self.task_ex.state,
-                "state_info": self.task_ex.state_info,
-                "type": self.task_ex.type,
-                "project_id": self.task_ex.project_id,
-                "created_at": utils.datetime_to_str(self.task_ex.created_at),
-                "updated_at": utils.datetime_to_str(self.task_ex.updated_at),
-                "started_at": utils.datetime_to_str(self.task_ex.started_at),
-                "finished_at": utils.datetime_to_str(self.task_ex.finished_at)
-            }
+        data = {
+            "id": self.task_ex.id,
+            "name": self.task_ex.name,
+            "workflow_execution_id": self.task_ex.workflow_execution_id,
+            "workflow_name": self.task_ex.workflow_name,
+            "workflow_namespace": self.task_ex.workflow_namespace,
+            "workflow_id": self.task_ex.workflow_id,
+            "state": self.task_ex.state,
+            "state_info": self.task_ex.state_info,
+            "type": self.task_ex.type,
+            "project_id": self.task_ex.project_id,
+            "created_at": utils.datetime_to_str(self.task_ex.created_at),
+            "updated_at": utils.datetime_to_str(self.task_ex.updated_at),
+            "started_at": utils.datetime_to_str(self.task_ex.started_at),
+            "finished_at": utils.datetime_to_str(self.task_ex.finished_at)
+        }
 
         def _send_notification():
             notifier.notify(
                 self.task_ex.id,
-                _convert_to_notification_data(),
+                data,
                 event,
                 self.task_ex.updated_at,
                 filtered_publishers
             )
+
         post_tx_queue.register_operation(_send_notification)
+
+    def get_id(self):
+        return self.task_ex.id if self.task_ex else None
+
+    def get_name(self):
+        return self.task_ex.name if self.task_ex else None
+
+    def get_state(self):
+        return self.task_ex.state if self.task_ex else None
+
+    def get_state_info(self):
+        return self.task_ex.state_info if self.task_ex else None
 
     def is_completed(self):
         return self.task_ex and states.is_completed(self.task_ex.state)
@@ -129,6 +141,85 @@ class Task(object):
 
     def is_state_changed(self):
         return self.state_changed
+
+    def get_expression_context(self, ctx=None):
+        assert self.task_ex
+
+        return data_flow.ContextView(
+            data_flow.get_current_task_dict(self.task_ex),
+            data_flow.get_workflow_environment_dict(self.wf_ex),
+            ctx or {},
+            self.task_ex.in_context,
+            self.wf_ex.context,
+            self.wf_ex.input,
+        )
+
+    def evaluate(self, data, ctx=None):
+        """Evaluates data against the task context.
+
+        The data is evaluated against the standard task context that includes
+        all standard components like workflow environment, workflow input etc.
+        However, if needed, the method also takes an additional context that
+        can be virtually merged with the standard one.
+
+        :param data: Data (a string, dict or a list) that possibly contain
+            YAQL/Jinja expressions to evaluate.
+        :param ctx: Additional context.
+        :return:
+        """
+
+        return expr.evaluate_recursively(
+            data,
+            self.get_expression_context(ctx)
+        )
+
+    def set_runtime_context_value(self, key, value):
+        assert self.task_ex
+
+        if not self.task_ex.runtime_context:
+            self.task_ex.runtime_context = {}
+
+        self.task_ex.runtime_context[key] = value
+
+    def touch_runtime_context(self):
+        """Must be called after any update of the runtime context.
+
+
+        The ORM framework can't trace updates happening within
+        deep structures like dictionaries. So every time we update
+        something inside "runtime_context" of the task execution
+        we need to call this method that does a fake update of the
+        field.
+        """
+        runtime_ctx = self.task_ex.runtime_context
+
+        if runtime_ctx:
+            random_key = next(iter(runtime_ctx.keys()))
+            runtime_ctx[random_key] = runtime_ctx[random_key]
+
+    def cleanup_runtime_context(self):
+        runtime_context = self.task_ex.runtime_context
+
+        if runtime_context:
+            runtime_context.clear()
+
+    def get_policy_context(self, key):
+        assert self.task_ex
+
+        if not self.task_ex.runtime_context:
+            self.task_ex.runtime_context = {}
+
+        if key not in self.task_ex.runtime_context:
+            self.task_ex.runtime_context.update({key: {}})
+
+        return self.task_ex.runtime_context[key]
+
+    def invalidate_result(self):
+        if not self.task_ex:
+            return
+
+        for ex in self.task_ex.executions:
+            ex.accepted = False
 
     @abc.abstractmethod
     def on_action_complete(self, action_ex):
@@ -396,29 +487,24 @@ class Task(object):
         policies_spec = self.task_spec.get_policies()
 
         for p in policies.build_policies(policies_spec, self.wf_spec):
-            p.before_task_start(self.task_ex, self.task_spec)
+            p.before_task_start(self)
 
     def _after_task_complete(self):
         policies_spec = self.task_spec.get_policies()
 
         for p in policies.build_policies(policies_spec, self.wf_spec):
-            p.after_task_complete(self.task_ex, self.task_spec)
+            p.after_task_complete(self)
 
     @profiler.trace('task-create-task-execution')
     def _create_task_execution(self, state=states.RUNNING, state_info=None):
-        task_id = utils.generate_unicode_uuid()
-        task_name = self.task_spec.get_name()
-        task_type = self.task_spec.get_type()
-        task_tags = self.task_spec.get_tags()
-
         values = {
-            'id': task_id,
-            'name': task_name,
+            'id': utils.generate_unicode_uuid(),
+            'name': self.task_spec.get_name(),
             'workflow_execution_id': self.wf_ex.id,
             'workflow_name': self.wf_ex.workflow_name,
             'workflow_namespace': self.wf_ex.workflow_namespace,
             'workflow_id': self.wf_ex.workflow_id,
-            'tags': task_tags,
+            'tags': self.task_spec.get_tags(),
             'state': state,
             'state_info': state_info,
             'spec': self.task_spec.to_dict(),
@@ -427,7 +513,7 @@ class Task(object):
             'published': {},
             'runtime_context': {},
             'project_id': self.wf_ex.project_id,
-            'type': task_type
+            'type': self.task_spec.get_type()
         }
 
         if self.triggered_by:
@@ -647,7 +733,7 @@ class RegularTask(Task):
         input_spec = self.task_spec.get_input()
 
         input_dict = (
-            self._evaluate_expression(input_spec, ctx) if input_spec else {}
+            self.evaluate(input_spec, ctx) if input_spec else {}
         )
 
         if not isinstance(input_dict, dict):
@@ -663,18 +749,6 @@ class RegularTask(Task):
             overwrite=False
         )
 
-    def _evaluate_expression(self, expression, ctx=None):
-        ctx_view = data_flow.ContextView(
-            data_flow.get_current_task_dict(self.task_ex),
-            data_flow.get_workflow_environment_dict(self.wf_ex),
-            ctx or {},
-            self.task_ex.in_context,
-            self.wf_ex.context,
-            self.wf_ex.input,
-        )
-
-        return expr.evaluate_recursively(expression, ctx_view)
-
     def _build_action(self):
         action_name = self.task_spec.get_action_name()
         wf_name = self.task_spec.get_workflow_name()
@@ -682,13 +756,13 @@ class RegularTask(Task):
         # For dynamic workflow evaluation we regenerate the action.
         if wf_name:
             return actions.WorkflowAction(
-                wf_name=self._evaluate_expression(wf_name),
+                wf_name=self.evaluate(wf_name),
                 task_ex=self.task_ex
             )
 
         # For dynamic action evaluation we just regenerate the name.
         if action_name:
-            action_name = self._evaluate_expression(action_name)
+            action_name = self.evaluate(action_name)
 
         if not action_name:
             action_name = 'std.noop'
@@ -701,9 +775,12 @@ class RegularTask(Task):
         )
 
         if action_def.spec:
-            return actions.AdHocAction(action_def, task_ex=self.task_ex,
-                                       task_ctx=self.ctx,
-                                       wf_ctx=self.wf_ex.context)
+            return actions.AdHocAction(
+                action_def,
+                task_ex=self.task_ex,
+                task_ctx=self.ctx,
+                wf_ctx=self.wf_ex.context
+            )
 
         return actions.PythonAction(action_def, task_ex=self.task_ex)
 
@@ -833,7 +910,7 @@ class WithItemsTask(RegularTask):
         :return: Evaluated 'with-items' expression values.
         """
 
-        exp_res = self._evaluate_expression(self.task_spec.get_with_items())
+        exp_res = self.evaluate(self.task_spec.get_with_items())
 
         # Expression result may contain iterables instead of lists in the
         # dictionary values. So we need to convert them into lists and
@@ -977,6 +1054,7 @@ class WithItemsTask(RegularTask):
                 indices += list(six.moves.range(max(candidates) + 1, count))
         else:
             i = self._get_next_start_index()
+
             indices = list(six.moves.range(i, count))
 
         return indices[:capacity]

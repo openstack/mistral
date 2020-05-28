@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from eventlet import timeout
 from unittest import mock
 
 from oslo_config import cfg
@@ -22,6 +21,7 @@ from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
 from mistral.engine import policies
+from mistral.engine import tasks
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
 from mistral.rpc import clients as rpc
@@ -345,6 +345,7 @@ class PoliciesTest(base.EngineTestCase):
         )
 
         self.assertEqual(4, len(arr))
+
         p = self._assert_single_item(arr, delay=2)
 
         self.assertIsInstance(p, policies.WaitBeforePolicy)
@@ -384,8 +385,10 @@ class PoliciesTest(base.EngineTestCase):
 
         policy.delay = "<% $.int_var %>"
 
+        engine_task = tasks.RegularTask(wf_ex, None, None, {}, task_ex)
+
         # Validation is ok.
-        policy.before_task_start(task_ex, None)
+        policy.before_task_start(engine_task)
 
         policy.delay = "some_string"
 
@@ -393,8 +396,7 @@ class PoliciesTest(base.EngineTestCase):
         exception = self.assertRaises(
             exc.InvalidModelException,
             policy.before_task_start,
-            task_ex,
-            None
+            engine_task,
         )
 
         self.assertIn("Invalid data type in TaskPolicy", str(exception))
@@ -597,6 +599,7 @@ class PoliciesTest(base.EngineTestCase):
             pass
         else:
             self.fail("Shouldn't happen")
+
         self.await_task_success(task_ex.id)
 
     def test_wait_after_policy_negative_number(self):
@@ -652,6 +655,7 @@ class PoliciesTest(base.EngineTestCase):
             pass
         else:
             self.fail("Shouldn't happen")
+
         self.await_task_success(task_ex.id)
 
     def test_wait_after_policy_from_var_negative_number(self):
@@ -1257,10 +1261,15 @@ class PoliciesTest(base.EngineTestCase):
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            tasks = wf_ex.task_executions
 
-        self._assert_single_item(tasks, name="task2", state=states.ERROR)
-        self._assert_single_item(tasks, name="join_task", state=states.ERROR)
+            task_execs = wf_ex.task_executions
+
+        self._assert_single_item(task_execs, name="task2", state=states.ERROR)
+        self._assert_single_item(
+            task_execs,
+            name="join_task",
+            state=states.ERROR
+        )
 
     def test_retry_join_task_after_idle_task(self):
         retry_wb = """---
@@ -1293,10 +1302,15 @@ class PoliciesTest(base.EngineTestCase):
         with db_api.transaction():
             # Note: We need to reread execution to access related tasks.
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
-            tasks = wf_ex.task_executions
 
-        self._assert_single_item(tasks, name="task2", state=states.ERROR)
-        self._assert_single_item(tasks, name="join_task", state=states.ERROR)
+            task_execs = wf_ex.task_executions
+
+        self._assert_single_item(task_execs, name="task2", state=states.ERROR)
+        self._assert_single_item(
+            task_execs,
+            name="join_task",
+            state=states.ERROR
+        )
 
     @mock.patch.object(
         std_actions.EchoAction,
@@ -1327,6 +1341,7 @@ class PoliciesTest(base.EngineTestCase):
         """
 
         wf_service.create_workflows(retry_wf)
+
         wf_ex = self.engine.start_workflow('wf1')
 
         self.await_workflow_success(wf_ex.id)
@@ -1364,6 +1379,7 @@ class PoliciesTest(base.EngineTestCase):
             """
 
         wf_service.create_workflows(retry_wf)
+
         wf_ex = self.engine.start_workflow('repeated_retry')
 
         self.await_workflow_running(wf_ex.id)
@@ -1372,15 +1388,18 @@ class PoliciesTest(base.EngineTestCase):
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
 
             task_ex = wf_ex.task_executions[0]
+
             self.await_task_running(task_ex.id)
 
             first_action_ex = task_ex.executions[0]
+
             self.await_action_state(first_action_ex.id, states.RUNNING)
 
         complete_action_params = (
             first_action_ex.id,
             ml_actions.Result(error="mock")
         )
+
         rpc.get_engine_client().on_action_complete(*complete_action_params)
 
         for _ in range(2):
@@ -1391,6 +1410,7 @@ class PoliciesTest(base.EngineTestCase):
             )
 
         self.await_task_running(task_ex.id)
+
         with db_api.transaction():
             task_ex = db_api.get_task_execution(task_ex.id)
             action_exs = task_ex.executions
@@ -1572,6 +1592,7 @@ class PoliciesTest(base.EngineTestCase):
     def test_retry_with_input(self):
         wf_text = """---
         version: '2.0'
+
         wf1:
           tasks:
             task1:
@@ -1580,16 +1601,19 @@ class PoliciesTest(base.EngineTestCase):
                 - task2
               publish:
                 success: task4
+
             task2:
               action: std.noop
               on-success:
                - task4: <% $.success = 'task4' %>
                - task5: <% $.success = 'task5' %>
+
             task4:
               on-complete:
                 - task5
               publish:
                 param: data
+
             task5:
               action: std.echo
               input:
@@ -1605,7 +1629,9 @@ class PoliciesTest(base.EngineTestCase):
                 delay: 1
         """
         wf_service.create_workflows(wf_text)
+
         wf_ex = self.engine.start_workflow('wf1')
+
         self.await_workflow_success(wf_ex.id)
 
     def test_action_timeout(self):
@@ -1619,6 +1645,7 @@ class PoliciesTest(base.EngineTestCase):
         """
 
         wf_service.create_workflows(wf_text)
+
         wf_ex = self.engine.start_workflow('wf1')
 
         with db_api.transaction():
@@ -1626,10 +1653,9 @@ class PoliciesTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
             action_ex = task_ex.action_executions[0]
 
-        with timeout.Timeout(8):
-            self.await_workflow_error(wf_ex.id)
-            self.await_task_error(task_ex.id)
-            self.await_action_error(action_ex.id)
+        self.await_workflow_error(wf_ex.id, delay=8)
+        self.await_task_error(task_ex.id, delay=8)
+        self.await_action_error(action_ex.id, delay=8)
 
     def test_pause_before_policy(self):
         wb_service.create_workbook_v2(PAUSE_BEFORE_WB)
@@ -1881,10 +1907,11 @@ class PoliciesTest(base.EngineTestCase):
     def test_retry_policy_break_on_with_dict(self, run_method):
         run_method.return_value = types.Result(error={'key-1': 15})
 
-        wf_retry_break_on_with_dictionary = """---
+        wb_text = """---
         version: '2.0'
 
         name: wb
+
         workflows:
           wf1:
             tasks:
@@ -1896,7 +1923,7 @@ class PoliciesTest(base.EngineTestCase):
                   break-on: <% task().result['key-1'] = 15 %>
         """
 
-        wb_service.create_workbook_v2(wf_retry_break_on_with_dictionary)
+        wb_service.create_workbook_v2(wb_text)
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
@@ -1932,6 +1959,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
+
         self.await_workflow_error(wf_ex.id)
 
         with db_api.transaction():
@@ -1957,6 +1985,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
+
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
@@ -1983,6 +2012,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
+
         self.await_workflow_error(wf_ex.id)
 
         with db_api.transaction():
@@ -2016,6 +2046,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
+
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
@@ -2054,6 +2085,7 @@ class PoliciesTest(base.EngineTestCase):
 
         # Start workflow.
         wf_ex = self.engine.start_workflow('wb.wf1')
+
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():

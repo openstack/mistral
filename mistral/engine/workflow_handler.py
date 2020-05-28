@@ -202,6 +202,7 @@ def pause_workflow(wf_ex, msg=None):
     # If any subworkflows failed to pause for temporary reason, this
     # allows pause to be executed again on the main workflow.
     wf = workflows.Workflow(wf_ex=wf_ex)
+
     wf.pause(msg=msg)
 
 
@@ -209,9 +210,14 @@ def rerun_workflow(wf_ex, task_ex, reset=True, env=None):
     if wf_ex.state == states.PAUSED:
         return wf_ex.get_clone()
 
+    # To break cyclic dependency.
+    from mistral.engine import task_handler
+
     wf = workflows.Workflow(wf_ex=wf_ex)
 
-    wf.rerun(task_ex, reset=reset, env=env)
+    task = task_handler.build_task_from_execution(wf.wf_spec, task_ex)
+
+    wf.rerun(task, reset=reset, env=env)
 
     _schedule_check_and_fix_integrity(
         wf_ex,
@@ -242,6 +248,7 @@ def resume_workflow(wf_ex, env=None):
     # Resume current workflow here so to trigger continue workflow only
     # after all other subworkflows are placed back in running state.
     wf = workflows.Workflow(wf_ex=wf_ex)
+
     wf.resume(env=env)
 
 
