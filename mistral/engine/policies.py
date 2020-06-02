@@ -377,6 +377,10 @@ class RetryPolicy(base.TaskPolicy):
         # retried as-is, because these tasks can't start without
         # a correct logical state.
         if hasattr(task.task_spec, "get_join") and task.task_spec.get_join():
+            # TODO(rakhmerov): This is an example of broken encapsulation.
+            # The control over such operations should belong to the class Task.
+            # If it's done, from the outside of the class there will be just
+            # one visible operation "continue_task()" or something like that.
             from mistral.engine import task_handler as t_h
 
             task.set_state(
