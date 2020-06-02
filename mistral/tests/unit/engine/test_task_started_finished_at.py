@@ -107,7 +107,7 @@ class TaskStartedFinishedAtTest(base.EngineTestCase):
               action: std.fail
               retry:
                 delay: 1
-                count: 5
+                count: 3
         """
 
         wf_service.create_workflows(wf_text)

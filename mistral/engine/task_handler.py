@@ -212,10 +212,10 @@ def force_fail_task(task_ex, msg, task=None):
         task = build_task_from_execution(wf_spec, task_ex)
 
     old_task_state = task_ex.state
-    task.set_state(states.ERROR, msg)
-    task.notify(old_task_state, states.ERROR)
 
-    task.save_finished_time()
+    task.set_state(states.ERROR, msg)
+
+    task.notify(old_task_state, states.ERROR)
 
     wf_handler.force_fail_workflow(task_ex.workflow_execution, msg)
 
@@ -278,6 +278,9 @@ def complete_task(task_ex, state, state_info):
 
 @profiler.trace('task-handler-check-affected-tasks', hide_args=True)
 def _check_affected_tasks(task):
+    # TODO(rakhmerov): this method should eventually move into
+    # the class Task. The obvious signal is the only argument
+    # that it takes.
     if not task.is_completed():
         return
 
