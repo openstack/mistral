@@ -53,13 +53,14 @@ TASKS = [
 
 EVENTS = WORKFLOWS + TASKS
 
-TASK_STATE_TRANSITION_MAP = {
+# Describes what state transition matches to what event.
+_TASK_EVENT_MAP = {
     states.RUNNING: {
         'ANY': TASK_LAUNCHED,
-        'IDLE': TASK_RESUMED,
-        'PAUSED': TASK_RESUMED,
-        'WAITING': TASK_RESUMED,
-        'ERROR': TASK_RERUN
+        states.IDLE: TASK_RESUMED,
+        states.PAUSED: TASK_RESUMED,
+        states.WAITING: TASK_RESUMED,
+        states.ERROR: TASK_RERUN
 
     },
     states.SUCCESS: {'ANY': TASK_SUCCEEDED},
@@ -68,11 +69,26 @@ TASK_STATE_TRANSITION_MAP = {
     states.PAUSED: {'ANY': TASK_PAUSED}
 }
 
+# Describes what state transition matches to what event.
+_WF_EVENT_MAP = {
+    states.RUNNING: {
+        'ANY': WORKFLOW_LAUNCHED,
+        states.IDLE: WORKFLOW_LAUNCHED,
+        states.PAUSED: WORKFLOW_RESUMED,
+        states.ERROR: WORKFLOW_RERUN
 
-def identify_task_event(old_task_state, new_task_state):
+    },
+    states.SUCCESS: {'ANY': WORKFLOW_SUCCEEDED},
+    states.ERROR: {'ANY': WORKFLOW_FAILED},
+    states.CANCELLED: {'ANY': WORKFLOW_CANCELLED},
+    states.PAUSED: {'ANY': WORKFLOW_PAUSED}
+}
+
+
+def _identify_event(from_state, to_state, event_map):
     event_options = (
-        TASK_STATE_TRANSITION_MAP[new_task_state]
-        if new_task_state in TASK_STATE_TRANSITION_MAP
+        event_map[to_state]
+        if to_state in event_map
         else {}
     )
 
@@ -80,9 +96,17 @@ def identify_task_event(old_task_state, new_task_state):
         return None
 
     event = (
-        event_options[old_task_state]
-        if old_task_state and old_task_state in event_options
+        event_options[from_state]
+        if from_state and from_state in event_options
         else event_options['ANY']
     )
 
     return event
+
+
+def identify_task_event(from_state, to_state):
+    return _identify_event(from_state, to_state, _TASK_EVENT_MAP)
+
+
+def identify_workflow_event(from_state, to_state):
+    return _identify_event(from_state, to_state, _WF_EVENT_MAP)
