@@ -167,16 +167,9 @@ def get_task_execution_result(task_ex):
         if hasattr(ex, 'output') and ex.accepted
     ]
 
-    task_spec = spec_parser.get_task_spec(task_ex.spec)
-
-    if task_spec.get_with_items():
-        # TODO(rakhmerov): Smell: violation of 'with-items' encapsulation.
-        with_items_ctx = task_ex.runtime_context.get('with_items')
-
-        if with_items_ctx and with_items_ctx.get('count') > 0:
-            return results
-        else:
-            return []
+    # If it's a 'with-items' task we should always return an array.
+    if spec_parser.get_task_spec(task_ex.spec).get_with_items():
+        return results
 
     return results[0] if len(results) == 1 else results
 
