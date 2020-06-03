@@ -65,8 +65,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         cfg.CONF.set_default('notify', None, group='notifier')
 
     def test_notify_all_explicit(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -77,7 +78,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [
             {
@@ -119,8 +120,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertIn((wf_ex.id, events.WORKFLOW_SUCCEEDED), EVENT_LOGS)
 
     def test_notify_all_implicit(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -131,7 +133,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -166,8 +168,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertIn((wf_ex.id, events.WORKFLOW_SUCCEEDED), EVENT_LOGS)
 
     def test_notify_order(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -178,11 +181,9 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
-        notify_options = [
-            {'type': 'webhook'}
-        ]
+        notify_options = [{'type': 'webhook'}]
 
         params = {'notify': notify_options}
 
@@ -219,8 +220,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_with_event_filter(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -231,7 +233,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [
             {
@@ -274,8 +276,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertFalse(self.publishers['wbhk'].publish.called)
         self.assertFalse(self.publishers['noop'].publish.called)
 
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -286,7 +289,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [
             {'type': 'webhook'},
@@ -338,8 +341,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertFalse(self.publishers['wbhk'].publish.called)
         self.assertFalse(self.publishers['noop'].publish.called)
 
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -350,7 +354,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [
             {'type': 'webhook'},
@@ -406,8 +410,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertFalse(self.publishers['wbhk'].publish.called)
         self.assertFalse(self.publishers['noop'].publish.called)
 
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -418,7 +423,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         cfg.CONF.set_default(
             'notify',
@@ -468,9 +473,11 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_workbook_notify(self):
-        wb_def = """
+        wb_text = """
         version: '2.0'
+
         name: wb
+
         workflows:
           wf1:
             tasks:
@@ -480,13 +487,14 @@ class NotifyEventsTest(base.NotifierTestCase):
                   - t2
               t2:
                 action: std.noop
+
           wf2:
             tasks:
               t1:
                 action: std.noop
         """
 
-        wb_svc.create_workbook_v2(wb_def)
+        wb_svc.create_workbook_v2(wb_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -546,8 +554,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_task_error(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -558,7 +567,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.fail
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -596,8 +605,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_task_transition_fail(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -606,7 +616,7 @@ class NotifyEventsTest(base.NotifierTestCase):
                 - fail
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -639,8 +649,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_with_items_task(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -652,7 +663,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -691,8 +702,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_pause_resume(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -703,7 +715,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -727,6 +739,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         # Pause the workflow.
         self.engine.pause_workflow(wf_ex.id)
+
         self.await_workflow_paused(wf_ex.id)
 
         with db_api.transaction():
@@ -734,6 +747,7 @@ class NotifyEventsTest(base.NotifierTestCase):
             task_exs = wf_ex.task_executions
 
         t1_ex = self._assert_single_item(task_exs, name='t1')
+
         t1_act_exs = db_api.get_action_executions(task_execution_id=t1_ex.id)
 
         # Workflow is paused but the task is still running as expected.
@@ -818,8 +832,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_pause_resume_task(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -830,7 +845,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -854,6 +869,7 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         # Pause the action execution of task 1.
         self.engine.on_action_update(t1_act_exs[0].id, states.PAUSED)
+
         self.await_workflow_paused(wf_ex.id)
 
         with db_api.transaction():
@@ -940,8 +956,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_cancel(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -952,7 +969,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -1033,8 +1050,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_cancel_task(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -1045,7 +1063,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -1095,8 +1113,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertListEqual(expected_order, EVENT_LOGS)
 
     def test_notify_task_input_error(self):
-        wf_def = """---
+        wf_text = """---
         version: '2.0'
+
         wf:
           tasks:
             task1:
@@ -1108,7 +1127,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -1139,8 +1158,9 @@ class NotifyEventsTest(base.NotifierTestCase):
     @mock.patch('mistral.actions.std_actions.NoOpAction.run', mock.MagicMock(
         side_effect=[Exception(), None, None]))
     def test_notify_rerun_task(self):
-        wf_def = """
+        wf_text = """
         version: '2.0'
+
         wf:
           tasks:
             t1:
@@ -1151,7 +1171,7 @@ class NotifyEventsTest(base.NotifierTestCase):
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -1169,7 +1189,9 @@ class NotifyEventsTest(base.NotifierTestCase):
         self.assertEqual(states.ERROR, t1_ex.state)
         self.assertEqual(1, len(task_exs))
 
+        # Rerun the workflow.
         self.engine.rerun_workflow(t1_ex.id)
+
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
@@ -1203,27 +1225,31 @@ class NotifyEventsTest(base.NotifierTestCase):
     @mock.patch('mistral.actions.std_actions.NoOpAction.run', mock.MagicMock(
         side_effect=[Exception(), None, None, None]))
     def test_notify_rerun_nested_workflow(self):
-        wf_def = """
+        wf_text = """
+        version: '2.0'
+
         wf_1:
           tasks:
             wf_1_t1:
               workflow: wf_2
               on-success:
                 - wf_1_t2
+
             wf_1_t2:
               action: std.noop
-        version: '2.0'
+
         wf_2:
           tasks:
             wf_2_t1:
               action: std.noop
               on-success:
                 - wf_2_t2
+
             wf_2_t2:
               action: std.noop
         """
 
-        wf_svc.create_workflows(wf_def)
+        wf_svc.create_workflows(wf_text)
 
         notify_options = [{'type': 'webhook'}]
         params = {'notify': notify_options}
@@ -1234,41 +1260,79 @@ class NotifyEventsTest(base.NotifierTestCase):
 
         with db_api.transaction():
             wf_exs = db_api.get_workflow_executions()
-            self._assert_single_item(wf_exs, name='wf_1',
-                                     state=states.ERROR)
-            self._assert_single_item(wf_exs, name='wf_2',
-                                     state=states.ERROR)
+
+            self._assert_single_item(
+                wf_exs,
+                name='wf_1',
+                state=states.ERROR
+            )
+            self._assert_single_item(
+                wf_exs,
+                name='wf_2',
+                state=states.ERROR
+            )
 
             task_exs = db_api.get_task_executions()
-            self._assert_single_item(task_exs, name='wf_1_t1',
-                                     state=states.ERROR)
-            wf_2_t1 = self._assert_single_item(task_exs, name='wf_2_t1',
-                                               state=states.ERROR)
+
+            self._assert_single_item(
+                task_exs,
+                name='wf_1_t1',
+                state=states.ERROR
+            )
+
+            wf_2_t1 = self._assert_single_item(
+                task_exs,
+                name='wf_2_t1',
+                state=states.ERROR
+            )
 
         self.assertEqual(2, len(task_exs))
         self.assertEqual(2, len(wf_exs))
 
+        # Rerun the nested workflow.
         self.engine.rerun_workflow(wf_2_t1.id)
 
         self.await_workflow_success(wf_1_ex.id)
 
         with db_api.transaction():
             wf_exs = db_api.get_workflow_executions()
-            wf_1_ex = self._assert_single_item(wf_exs, name='wf_1',
-                                               state=states.SUCCESS)
-            wf_2_ex = self._assert_single_item(wf_exs, name='wf_2',
-                                               state=states.SUCCESS)
+
+            wf_1_ex = self._assert_single_item(
+                wf_exs,
+                name='wf_1',
+                state=states.SUCCESS
+            )
+            wf_2_ex = self._assert_single_item(
+                wf_exs,
+                name='wf_2',
+                state=states.SUCCESS
+            )
 
             task_wf_1_exs = wf_1_ex.task_executions
-            wf_1_t1 = self._assert_single_item(task_wf_1_exs, name='wf_1_t1',
-                                               state=states.SUCCESS)
-            wf_1_t2 = self._assert_single_item(task_wf_1_exs, name='wf_1_t2',
-                                               state=states.SUCCESS)
+
+            wf_1_t1 = self._assert_single_item(
+                task_wf_1_exs,
+                name='wf_1_t1',
+                state=states.SUCCESS
+            )
+            wf_1_t2 = self._assert_single_item(
+                task_wf_1_exs,
+                name='wf_1_t2',
+                state=states.SUCCESS
+            )
+
             task_wf_2_exs = wf_2_ex.task_executions
-            wf_2_t1 = self._assert_single_item(task_wf_2_exs, name='wf_2_t1',
-                                               state=states.SUCCESS)
-            wf_2_t2 = self._assert_single_item(task_wf_2_exs, name='wf_2_t2',
-                                               state=states.SUCCESS)
+
+            wf_2_t1 = self._assert_single_item(
+                task_wf_2_exs,
+                name='wf_2_t1',
+                state=states.SUCCESS
+            )
+            wf_2_t2 = self._assert_single_item(
+                task_wf_2_exs,
+                name='wf_2_t2',
+                state=states.SUCCESS
+            )
 
             self.assertEqual(2, len(task_wf_1_exs))
             self.assertEqual(2, len(task_wf_2_exs))
@@ -1297,5 +1361,6 @@ class NotifyEventsTest(base.NotifierTestCase):
                 (wf_1_t2.id, events.TASK_SUCCEEDED),
                 (wf_1_ex.id, events.WORKFLOW_SUCCEEDED),
             ]
+
             self.assertTrue(self.publishers['wbhk'].publish.called)
             self.assertListEqual(expected_order, EVENT_LOGS)

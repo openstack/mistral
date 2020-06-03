@@ -301,6 +301,9 @@ class Workflow(object):
 
             parent_wf._recursive_rerun()
 
+            # TODO(rakhmerov): this is a design issue again as in many places.
+            # Ideally, we should just build (or get) an instance of Task and
+            # call set_state() on it.
             from mistral.engine import task_handler
             task_handler.mark_task_running(parent_task_ex, parent_wf.wf_spec)
 
