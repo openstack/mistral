@@ -302,13 +302,21 @@ class Task(object):
 
         cur_state = self.task_ex.state
 
-        # Set initial started_at in case of waiting => running.
-        # We can't set this just in run_existing, because task retries
-        # will update started_at, which is incorrect.
-        if cur_state == states.WAITING and state == states.RUNNING:
-            self.save_started_time()
-
         if cur_state != state or self.task_ex.state_info != state_info:
+            # Recalculating "started_at" timestamp only if the state
+            # was WAITING (all preconditions are satisfied and it's
+            # ready to start) or the task is being rerun. So we treat
+            # all iterations of "retry" policy as one run.
+            if state == states.RUNNING and \
+                    (cur_state == states.WAITING or self.rerun):
+                self.task_ex.started_at = utils.utc_now_sec()
+
+            if states.is_completed(state):
+                self.task_ex.finished_at = utils.utc_now_sec()
+
+            if self.rerun:
+                self.task_ex.finished_at = None
+
             task_ex = db_api.update_task_execution_state(
                 id=self.task_ex.id,
                 cur_state=cur_state,
@@ -422,8 +430,6 @@ class Task(object):
 
         self.register_workflow_completion_check()
 
-        self.save_finished_time()
-
         # Publish task event.
         self.notify(old_task_state, self.task_ex.state)
 
@@ -513,13 +519,16 @@ class Task(object):
             'published': {},
             'runtime_context': {},
             'project_id': self.wf_ex.project_id,
-            'type': self.task_spec.get_type()
+            'type': self.task_spec.get_type(),
         }
 
         if self.triggered_by:
             values['runtime_context']['triggered_by'] = self.triggered_by
 
         self.task_ex = db_api.create_task_execution(values)
+
+        if state == states.RUNNING:
+            self.task_ex.started_at = self.task_ex.created_at
 
         self.created = True
 
@@ -548,18 +557,6 @@ class Task(object):
         env = self.wf_ex.params['env']
 
         return env.get('__actions', {}).get(action_name, {})
-
-    def save_started_time(self, value='default'):
-        if not self.task_ex:
-            return
-        time = value if value != 'default' else utils.utc_now_sec()
-        self.task_ex.started_at = time
-
-    def save_finished_time(self, value='default'):
-        if not self.task_ex:
-            return
-        time = value if value != 'default' else utils.utc_now_sec()
-        self.task_ex.finished_at = time
 
 
 class RegularTask(Task):
@@ -603,7 +600,6 @@ class RegularTask(Task):
             return
 
         self._create_task_execution()
-        self.save_started_time()
 
         # Publish event.
         self.notify(None, self.task_ex.state)
@@ -646,8 +642,6 @@ class RegularTask(Task):
         self.notify(old_task_state, self.task_ex.state)
 
         if self.rerun:
-            self.save_started_time()
-            self.save_finished_time(value=None)
             self._before_task_start()
 
             # Policies could possibly change task state.
