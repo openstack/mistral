@@ -75,6 +75,7 @@ class Task(object):
             return
 
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
+
         event = events.identify_task_event(from_state, to_state)
 
         filtered_publishers = []

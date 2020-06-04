@@ -66,13 +66,15 @@ class Workflow(object):
         else:
             self.wf_spec = None
 
-    def notify(self, event):
+    def _notify(self, from_state, to_state):
         publishers = self.wf_ex.params.get('notify')
 
         if not publishers and not isinstance(publishers, list):
             return
 
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
+
+        event = events.identify_workflow_event(from_state, to_state)
 
         filtered_publishers = []
 
@@ -153,9 +155,6 @@ class Workflow(object):
 
         self.set_state(states.RUNNING)
 
-        # Publish event as soon as state is set to running.
-        self.notify(events.WORKFLOW_LAUNCHED)
-
         wf_ctrl = wf_base.get_controller(self.wf_ex, self.wf_spec)
 
         dispatcher.dispatch_workflow_commands(
@@ -192,9 +191,6 @@ class Workflow(object):
         # Set the state of this workflow to paused.
         self.set_state(states.PAUSED, state_info=msg)
 
-        # Publish event.
-        self.notify(events.WORKFLOW_PAUSED)
-
         # If workflow execution is a subworkflow,
         # schedule update to the task execution.
         if self.wf_ex.task_execution_id:
@@ -213,9 +209,6 @@ class Workflow(object):
         wf_service.update_workflow_execution_env(self.wf_ex, env)
 
         self.set_state(states.RUNNING)
-
-        # Publish event.
-        self.notify(events.WORKFLOW_RESUMED)
 
         wf_ctrl = wf_base.get_controller(self.wf_ex)
 
@@ -282,7 +275,6 @@ class Workflow(object):
         from mistral.engine import workflow_handler
 
         self.set_state(states.RUNNING)
-        self.notify(events.WORKFLOW_RERUN)
 
         # TODO(rakhmerov): We call an internal method of a module here.
         # The simplest way is to make it public, however, I believe
@@ -410,6 +402,8 @@ class Workflow(object):
             self.wf_ex.state_info = json.dumps(state_info) \
                 if isinstance(state_info, dict) else state_info
 
+            self._notify(cur_state, state)
+
             wf_trace.info(
                 self.wf_ex,
                 "Workflow '%s' [%s -> %s, msg=%s]" %
@@ -497,9 +491,6 @@ class Workflow(object):
 
         self.wf_ex.output = output
 
-        # Publish event.
-        self.notify(events.WORKFLOW_SUCCEEDED)
-
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()
 
@@ -546,9 +537,6 @@ class Workflow(object):
 
         self.wf_ex.output = utils.merge_dicts({'result': msg}, output_on_error)
 
-        # Publish event.
-        self.notify(events.WORKFLOW_FAILED)
-
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()
 
@@ -567,9 +555,6 @@ class Workflow(object):
         )
 
         self.wf_ex.output = {'result': msg}
-
-        # Publish event.
-        self.notify(events.WORKFLOW_CANCELLED)
 
         if self.wf_ex.task_execution_id:
             self._send_result_to_parent_workflow()
