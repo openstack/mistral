@@ -23,7 +23,7 @@ import yaml
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.utils import filter_utils
-from mistral_lib import utils
+from mistral_lib import utils as ml_utils
 
 # Additional YAQL/Jinja functions provided by Mistral out of the box.
 # If a function name ends with underscore then it doesn't need to pass
@@ -160,8 +160,11 @@ def _should_pass_filter(t, state, flat):
     if state:
         state_match = t['state'] == state
 
+    # To break cyclic dependency.
+    from mistral.lang.v2 import tasks as lang_tasks
+
     if flat:
-        is_action = t['type'] == utils.ACTION_TASK_TYPE
+        is_action = t['type'] == lang_tasks.ACTION_TASK_TYPE
 
         if not is_action:
             nested_execs = db_api.get_workflow_executions(
@@ -194,12 +197,15 @@ def _get_tasks_from_db(workflow_execution_id=None, recursive=False, state=None,
 
     task_execs.extend(db_api.get_task_executions(**kwargs))
 
+    # To break cyclic dependency.
+    from mistral.lang.v2 import tasks as lang_tasks
+
     # If it is not recursive no need to check nested workflows.
     # If there is no workflow execution id, we already have all we need, and
     # doing more queries will just create duplication in the results.
     if recursive and workflow_execution_id:
         for t in task_execs:
-            if t.type == utils.WORKFLOW_TASK_TYPE:
+            if t.type == lang_tasks.WORKFLOW_TASK_TYPE:
                 # Get nested workflow execution that matches the task.
                 nested_workflow_executions = db_api.get_workflow_executions(
                     task_execution_id=t.id
@@ -265,7 +271,7 @@ def _convert_to_user_model(task_ex):
 
 
 def uuid_(context=None):
-    return utils.generate_unicode_uuid()
+    return ml_utils.generate_unicode_uuid()
 
 
 def global_(context, var_name):

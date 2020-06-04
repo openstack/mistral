@@ -15,7 +15,7 @@
 import datetime
 from unittest import mock
 
-from mistral.db.v2.sqlalchemy import api as db_api
+from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.expressions import jinja_expression as expr
 from mistral.tests.unit import base

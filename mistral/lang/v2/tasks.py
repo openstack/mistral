@@ -30,7 +30,13 @@ from mistral.lang.v2 import retry_policy
 from mistral.workflow import states
 from mistral_lib import utils
 
+# Task types.
+ACTION_TASK_TYPE = 'ACTION'
+WORKFLOW_TASK_TYPE = 'WORKFLOW'
+
+
 _expr_ptrns = [expressions.patterns[name] for name in expressions.patterns]
+
 WITH_ITEMS_PTRN = re.compile(
     r"\s*([\w\d_\-]+)\s*in\s*(\[.+\]|%s)" % '|'.join(_expr_ptrns)
 )
@@ -264,8 +270,8 @@ class TaskSpec(base.BaseSpec):
         return self._safe_rerun
 
     def get_type(self):
-        return (utils.WORKFLOW_TASK_TYPE if self._workflow
-                else utils.ACTION_TASK_TYPE)
+        return (WORKFLOW_TASK_TYPE if self._workflow
+                else ACTION_TASK_TYPE)
 
 
 class DirectWorkflowTaskSpec(TaskSpec):
@@ -311,6 +317,7 @@ class DirectWorkflowTaskSpec(TaskSpec):
 
         if self._join:
             join_task_name = self.get_name()
+
             if len(join_task_name) > MAX_LENGTH_JOIN_TASK_NAME:
                 raise exc.InvalidModelException(
                     "The length of a '{0}' join task name must not exceed {1} "
@@ -343,6 +350,7 @@ class DirectWorkflowTaskSpec(TaskSpec):
         if on_clause and on_clause.get_publish():
             if spec:
                 on_clause.get_publish().merge(spec)
+
             return on_clause.get_publish()
 
         return spec
