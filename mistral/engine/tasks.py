@@ -68,16 +68,17 @@ class Task(object):
         self.created = False
         self.state_changed = False
 
-    def notify(self, old_task_state, new_task_state):
+    def _notify(self, from_state, to_state):
         publishers = self.wf_ex.params.get('notify')
 
         if not publishers and not isinstance(publishers, list):
             return
 
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
-        event = events.identify_task_event(old_task_state, new_task_state)
+        event = events.identify_task_event(from_state, to_state)
 
         filtered_publishers = []
+
         for publisher in publishers:
             if not isinstance(publisher, dict):
                 continue
@@ -303,20 +304,6 @@ class Task(object):
         cur_state = self.task_ex.state
 
         if cur_state != state or self.task_ex.state_info != state_info:
-            # Recalculating "started_at" timestamp only if the state
-            # was WAITING (all preconditions are satisfied and it's
-            # ready to start) or the task is being rerun. So we treat
-            # all iterations of "retry" policy as one run.
-            if state == states.RUNNING and \
-                    (cur_state == states.WAITING or self.rerun):
-                self.task_ex.started_at = utils.utc_now_sec()
-
-            if states.is_completed(state):
-                self.task_ex.finished_at = utils.utc_now_sec()
-
-            if self.rerun:
-                self.task_ex.finished_at = None
-
             task_ex = db_api.update_task_execution_state(
                 id=self.task_ex.id,
                 cur_state=cur_state,
@@ -332,8 +319,24 @@ class Task(object):
                 if isinstance(state_info, dict) else state_info
             self.state_changed = True
 
+            # Recalculating "started_at" timestamp only if the state
+            # was WAITING (all preconditions are satisfied and it's
+            # ready to start) or the task is being rerun. So we treat
+            # all iterations of "retry" policy as one run.
+            if state == states.RUNNING and \
+                    (cur_state == states.WAITING or self.rerun):
+                self.task_ex.started_at = utils.utc_now_sec()
+
+            if states.is_completed(state):
+                self.task_ex.finished_at = utils.utc_now_sec()
+
+            if self.rerun:
+                self.task_ex.finished_at = None
+
             if processed is not None:
                 self.task_ex.processed = processed
+
+            self._notify(cur_state, state)
 
             wf_trace.info(
                 self.task_ex.workflow_execution,
@@ -361,15 +364,8 @@ class Task(object):
 
         assert self.task_ex
 
-        # Record the current task state.
-        old_task_state = self.task_ex.state
-
         # Ignore if task already completed.
         if self.is_completed():
-            # Publish task event again so subscribers know
-            # task completed state is being processed again.
-            self.notify(old_task_state, self.task_ex.state)
-
             return
 
         # If we were unable to change the task state it means that it was
@@ -419,9 +415,6 @@ class Task(object):
         # If workflow is paused we shouldn't schedule new commands
         # and mark task as processed.
         if states.is_paused(self.wf_ex.state):
-            # Publish task event even if the workflow is paused.
-            self.notify(old_task_state, self.task_ex.state)
-
             return
 
         # Mark task as processed after all decisions have been made
@@ -429,9 +422,6 @@ class Task(object):
         self.task_ex.processed = True
 
         self.register_workflow_completion_check()
-
-        # Publish task event.
-        self.notify(old_task_state, self.task_ex.state)
 
         dispatcher.dispatch_workflow_commands(self.wf_ex, cmds)
 
@@ -459,15 +449,8 @@ class Task(object):
 
         assert self.task_ex
 
-        # Record the current task state.
-        old_task_state = self.task_ex.state
-
         # Ignore if task already completed.
         if states.is_completed(self.task_ex.state):
-            # Publish task event again so subscribers know
-            # task completed state is being processed again.
-            self.notify(old_task_state, self.task_ex.state)
-
             return
 
         # Update only if state transition is valid.
@@ -485,9 +468,6 @@ class Task(object):
 
         if states.is_completed(self.task_ex.state):
             self.register_workflow_completion_check()
-
-        # Publish event.
-        self.notify(old_task_state, self.task_ex.state)
 
     def _before_task_start(self):
         policies_spec = self.task_spec.get_policies()
@@ -601,8 +581,8 @@ class RegularTask(Task):
 
         self._create_task_execution()
 
-        # Publish event.
-        self.notify(None, self.task_ex.state)
+        # Notify about the initial state change.
+        self._notify(None, self.task_ex.state)
 
         LOG.debug(
             'Starting task [name=%s, init_state=%s, workflow_name=%s,'
@@ -633,13 +613,7 @@ class RegularTask(Task):
                 'Rerunning succeeded tasks is not supported.'
             )
 
-        # Record the current task state.
-        old_task_state = self.task_ex.state
-
         self.set_state(states.RUNNING, None, processed=False)
-
-        # Publish event.
-        self.notify(old_task_state, self.task_ex.state)
 
         if self.rerun:
             self._before_task_start()

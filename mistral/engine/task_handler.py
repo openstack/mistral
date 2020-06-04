@@ -85,11 +85,7 @@ def run_task(wf_cmd):
 def mark_task_running(task_ex, wf_spec):
     task = build_task_from_execution(wf_spec, task_ex)
 
-    old_task_state = task_ex.state
-
     task.set_state(states.RUNNING, None, False)
-
-    task.notify(old_task_state, states.RUNNING)
 
 
 @profiler.trace('task-handler-on-action-complete', hide_args=True)
@@ -211,11 +207,7 @@ def force_fail_task(task_ex, msg, task=None):
 
         task = build_task_from_execution(wf_spec, task_ex)
 
-    old_task_state = task_ex.state
-
     task.set_state(states.ERROR, msg)
-
-    task.notify(old_task_state, states.ERROR)
 
     wf_handler.force_fail_workflow(task_ex.workflow_execution, msg)
 

@@ -21,27 +21,32 @@ LOG = logging.getLogger(__name__)
 
 
 class NotifierTestCase(engine_test_base.EngineTestCase):
-
+    # TODO(rakhmerov): All these method have a different signature comparing to
+    # their base versions. Must be fixed.
     def await_workflow_success(self, wf_ex_id, post_delay=1):
         # Override the original wait method to add a delay to allow enough
         # time for the notification events to get processed.
         super(NotifierTestCase, self).await_workflow_success(wf_ex_id)
+
         self._sleep(post_delay)
 
     def await_workflow_error(self, wf_ex_id, post_delay=1):
         # Override the original wait method to add a delay to allow enough
         # time for the notification events to get processed.
         super(NotifierTestCase, self).await_workflow_error(wf_ex_id)
+
         self._sleep(post_delay)
 
     def await_workflow_paused(self, wf_ex_id, post_delay=1):
         # Override the original wait method to add a delay to allow enough
         # time for the notification events to get processed.
         super(NotifierTestCase, self).await_workflow_paused(wf_ex_id)
+
         self._sleep(post_delay)
 
     def await_workflow_cancelled(self, wf_ex_id, post_delay=1):
         # Override the original wait method to add a delay to allow enough
         # time for the notification events to get processed.
         super(NotifierTestCase, self).await_workflow_cancelled(wf_ex_id)
+
         self._sleep(post_delay)

@@ -46,10 +46,10 @@ def notifier_process(ex_id, data, event, timestamp, publishers):
 
 
 class ServerPluginTest(base.NotifierTestCase):
-
     def tearDown(self):
-        notif.cleanup()
         super(ServerPluginTest, self).tearDown()
+
+        notif.cleanup()
 
     def test_get_bad_notifier(self):
         self.assertRaises(sd_exc.NoMatches, notif.get_notifier, 'foobar')
@@ -61,27 +61,31 @@ class ServerPluginTest(base.NotifierTestCase):
     mock.MagicMock(return_value=None)
 )
 class LocalNotifServerTest(base.NotifierTestCase):
-
     @classmethod
     def setUpClass(cls):
         super(LocalNotifServerTest, cls).setUpClass()
+
         cfg.CONF.set_default('type', 'local', group='notifier')
 
     @classmethod
     def tearDownClass(cls):
         cfg.CONF.set_default('type', 'remote', group='notifier')
+
         super(LocalNotifServerTest, cls).tearDownClass()
 
     def setUp(self):
         super(LocalNotifServerTest, self).setUp()
+
         self.publisher = notif.get_notification_publisher('webhook')
         self.publisher.publish = mock.MagicMock(side_effect=publisher_process)
         self.publisher.publish.reset_mock()
+
         del EVENT_LOGS[:]
 
     def tearDown(self):
-        notif.cleanup()
         super(LocalNotifServerTest, self).tearDown()
+
+        notif.cleanup()
 
     def test_get_notifier(self):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
@@ -150,19 +154,21 @@ class LocalNotifServerTest(base.NotifierTestCase):
     mock.MagicMock(side_effect=notifier_process)
 )
 class RemoteNotifServerTest(base.NotifierTestCase):
-
     @classmethod
     def setUpClass(cls):
         super(RemoteNotifServerTest, cls).setUpClass()
+
         cfg.CONF.set_default('type', 'remote', group='notifier')
 
     def setUp(self):
         super(RemoteNotifServerTest, self).setUp()
+
         del EVENT_LOGS[:]
 
     def tearDown(self):
-        notif.cleanup()
         super(RemoteNotifServerTest, self).tearDown()
+
+        notif.cleanup()
 
     def test_get_notifier(self):
         notifier = notif.get_notifier(cfg.CONF.notifier.type)
