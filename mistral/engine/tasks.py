@@ -322,10 +322,10 @@ class Task(object):
 
             # Recalculating "started_at" timestamp only if the state
             # was WAITING (all preconditions are satisfied and it's
-            # ready to start) or the task is being rerun. So we treat
-            # all iterations of "retry" policy as one run.
+            # ready to start) or IDLE, or the task is being rerun. So
+            # we treat all iterations of "retry" policy as one run.
             if state == states.RUNNING and \
-                    (cur_state == states.WAITING or self.rerun):
+                    (cur_state in (None, states.WAITING) or self.rerun):
                 self.task_ex.started_at = utils.utc_now_sec()
 
             if states.is_completed(state):
@@ -483,7 +483,7 @@ class Task(object):
             p.after_task_complete(self)
 
     @profiler.trace('task-create-task-execution')
-    def _create_task_execution(self, state=states.RUNNING, state_info=None):
+    def _create_task_execution(self, state=None, state_info=None):
         values = {
             'id': utils.generate_unicode_uuid(),
             'name': self.task_spec.get_name(),
@@ -507,9 +507,6 @@ class Task(object):
             values['runtime_context']['triggered_by'] = self.triggered_by
 
         self.task_ex = db_api.create_task_execution(values)
-
-        if state == states.RUNNING:
-            self.task_ex.started_at = self.task_ex.created_at
 
         self.created = True
 
@@ -582,8 +579,9 @@ class RegularTask(Task):
 
         self._create_task_execution()
 
-        # Notify about the initial state change.
-        self._notify(None, self.task_ex.state)
+        # Set the initial state and trigger all operations
+        # related to the state change.
+        self.set_state(states.RUNNING, None)
 
         LOG.debug(
             'Starting task [name=%s, init_state=%s, workflow_name=%s,'
