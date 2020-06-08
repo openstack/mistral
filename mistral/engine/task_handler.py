@@ -32,6 +32,11 @@ from mistral.workflow import base as wf_base
 from mistral.workflow import commands as wf_cmds
 from mistral.workflow import states
 
+# TODO(rakhmerov): At some point we need to completely switch to
+# exceptions from mistral_lib. For the time being though we'll
+# have to catch MistralException from both 'mistral' and 'mistral-lib'.
+from mistral_lib import exceptions as mistral_lib_exc
+
 
 """Responsible for running tasks and handling results."""
 
@@ -66,7 +71,7 @@ def run_task(wf_cmd):
             _schedule_refresh_task_state(task.task_ex.id)
 
         task.run()
-    except exc.MistralException as e:
+    except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = wf_cmd.wf_ex
         task_spec = wf_cmd.task_spec
 
@@ -114,7 +119,7 @@ def _on_action_complete(action_ex):
 
     try:
         task.on_action_complete(action_ex)
-    except exc.MistralException as e:
+    except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
         msg = ("Failed to handle action completion [error=%s, wf=%s, task=%s,"
@@ -169,7 +174,7 @@ def _on_action_update(action_ex):
             # then resume the parent workflow execution.
             wf_handler.resume_workflow(wf_ex)
 
-    except exc.MistralException as e:
+    except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
         msg = ("Failed to handle action update [error=%s, wf=%s, task=%s,"
@@ -253,7 +258,7 @@ def complete_task(task_ex, state, state_info):
 
     try:
         task.complete(state, state_info)
-    except exc.MistralException as e:
+    except (exc.MistralException, mistral_lib_exc.MistralException) as e:
         wf_ex = task_ex.workflow_execution
 
         msg = (

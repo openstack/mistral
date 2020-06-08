@@ -47,7 +47,7 @@ class ContextView(dict):
     def __init__(self, *dicts):
         super(ContextView, self).__init__()
 
-        self.dicts = dicts or []
+        self.dicts = [d for d in dicts if d is not None]
 
     def __getitem__(self, key):
         for d in self.dicts:

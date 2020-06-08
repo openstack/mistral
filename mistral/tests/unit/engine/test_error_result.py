@@ -16,7 +16,6 @@ from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
-from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -81,8 +80,8 @@ class ErrorResultTest(base.EngineTestCase):
     def setUp(self):
         super(ErrorResultTest, self).setUp()
 
-        test_base.register_action_class('my_action', MyAction)
-        test_base.register_action_class('my_async_action', MyAsyncAction)
+        self.register_action_class('my_action', MyAction)
+        self.register_action_class('my_async_action', MyAsyncAction)
 
     def test_error_result1(self):
         wf_service.create_workflows(WF.format(action_name="my_action"))

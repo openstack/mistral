@@ -129,6 +129,7 @@ class Definition(mb.MistralSecureModelBase):
 
     id = mb.id_column()
     name = sa.Column(sa.String(255))
+    namespace = sa.Column(sa.String(255), nullable=True)
     definition = sa.Column(st.MediumText(), nullable=True)
     spec = sa.Column(st.JsonMediumDictType())
     tags = sa.Column(st.JsonListType())
@@ -140,8 +141,6 @@ class Workbook(Definition):
     """Contains info about workbook (including definition in Mistral DSL)."""
 
     __tablename__ = 'workbooks_v2'
-    namespace = sa.Column(sa.String(255), nullable=True)
-
     __table_args__ = (
         sa.UniqueConstraint(
             'name',
@@ -157,7 +156,6 @@ class WorkflowDefinition(Definition):
     """Contains info about workflow (including definition in Mistral DSL)."""
 
     __tablename__ = 'workflow_definitions_v2'
-    namespace = sa.Column(sa.String(255), nullable=True)
     __table_args__ = (
         sa.UniqueConstraint(
             'name',
@@ -169,12 +167,13 @@ class WorkflowDefinition(Definition):
         sa.Index('%s_scope' % __tablename__, 'scope'),
     )
 
+    workbook_name = sa.Column(sa.String(255))
+
 
 class ActionDefinition(Definition):
     """Contains info about registered Actions."""
 
     __tablename__ = 'action_definitions_v2'
-    namespace = sa.Column(sa.String(255), nullable=True)
     __table_args__ = (
         sa.UniqueConstraint(
             'name',
@@ -185,6 +184,8 @@ class ActionDefinition(Definition):
         sa.Index('%s_project_id' % __tablename__, 'project_id'),
         sa.Index('%s_scope' % __tablename__, 'scope'),
     )
+
+    workbook_name = sa.Column(sa.String(255))
 
     # Main properties.
     description = sa.Column(sa.Text())

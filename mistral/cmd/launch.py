@@ -249,8 +249,10 @@ def main():
         else:
             # Validate launch option.
             if set(cfg.CONF.server) - set(LAUNCH_OPTIONS.keys()):
-                raise Exception('Valid options are all or any combination of '
-                                ', '.join(LAUNCH_OPTIONS.keys()))
+                raise Exception(
+                    "Valid options are 'all' or any combination of [%s]" %
+                    ', '.join(LAUNCH_OPTIONS.keys())
+                )
 
             # Launch distinct set of server(s).
             launch_any(set(cfg.CONF.server))

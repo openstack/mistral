@@ -14,9 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import cachetools
 import contextlib
-import threading
 
 from oslo_config import cfg
 from oslo_db import api as db_api
@@ -29,13 +27,6 @@ _BACKEND_MAPPING = {
 IMPL = db_api.DBAPI('sqlalchemy', backend_mapping=_BACKEND_MAPPING)
 
 CONF = cfg.CONF
-
-_ACTION_DEF_CACHE = cachetools.TTLCache(
-    maxsize=1000,
-    ttl=CONF.engine.action_definition_cache_time  # 60 seconds by default
-)
-
-_ACTION_DEF_CACHE_LOCK = threading.RLock()
 
 
 def setup_db():
@@ -192,28 +183,18 @@ def get_action_definition(name, fields=(), namespace=''):
 
 def load_action_definition(name, fields=(), namespace=''):
     """Unlike get_action_definition this method is allowed to return None."""
-    key = '{}:{}'.format(name, namespace) if namespace else name
-    with _ACTION_DEF_CACHE_LOCK:
-        action_def = _ACTION_DEF_CACHE.get(key)
-
-    if action_def:
-        return action_def
-
-    action_def = IMPL.load_action_definition(name, fields=fields,
-                                             namespace=namespace,)
+    action_def = IMPL.load_action_definition(
+        name,
+        fields=fields,
+        namespace=namespace
+    )
 
     # If action definition was not found in the workflow namespace,
     # check in the default namespace
-    if not action_def:
-        action_def = IMPL.load_action_definition(name, fields=fields,
-                                                 namespace='')
+    if action_def:
+        return action_def
 
-    with _ACTION_DEF_CACHE_LOCK:
-        _ACTION_DEF_CACHE[key] = (
-            action_def.get_clone() if action_def else None
-        )
-
-    return action_def
+    return IMPL.load_action_definition(name, fields=fields, namespace='')
 
 
 def get_action_definitions(limit=None, marker=None, sort_keys=None,

@@ -46,6 +46,7 @@ class EchoAction(actions.Action):
         super(EchoAction, self).__init__()
 
         self.output = output
+
         try:
             self._delay = float(delay)
             self._delay = 0 if self._delay < 0 else self._delay
@@ -65,6 +66,15 @@ class EchoAction(actions.Action):
 
     def test(self, context):
         return 'Echo'
+
+    def __eq__(self, other):
+        if type(other) is not EchoAction:
+            return False
+
+        if self.output != other.output or self._delay != other._delay:
+            return False
+
+        return True
 
 
 class NoOpAction(actions.Action):
@@ -105,6 +115,9 @@ class FailAction(actions.Action):
         super(FailAction, self).__init__()
 
         self.error_data = error_data
+
+    def __repr__(self):
+        return 'Fail action'
 
     def run(self, context):
         LOG.info('Running fail action.')

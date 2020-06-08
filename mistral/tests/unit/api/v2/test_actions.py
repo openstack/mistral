@@ -17,14 +17,18 @@ from unittest import mock
 
 import sqlalchemy as sa
 
+from mistral.actions import adhoc
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
-from mistral import exceptions as exc
+from mistral.lang import parser as spec_parser
+from mistral.services import adhoc_actions
 from mistral.tests.unit.api import base
+
+from mistral_lib.actions.providers import composite
 from mistral_lib import utils
 
 
-ACTION_DEFINITION = """
+ADHOC_ACTION_YAML = """
 ---
 version: '2.0'
 
@@ -34,6 +38,9 @@ my_action:
   base: std.echo
   base-input:
     output: "{$.str1}{$.str2}"
+  input:
+    - str1
+    - str2
 """
 
 ACTION_DEFINITION_INVALID_NO_BASE = """
@@ -65,42 +72,30 @@ ACTION_DSL_PARSE_EXCEPTION = """
 %
 """
 
-SYSTEM_ACTION_DEFINITION = """
----
-version: '2.0'
+ACTION_SPEC = spec_parser.get_action_list_spec_from_yaml(ADHOC_ACTION_YAML)[0]
 
-std.echo:
-  base: std.http
-  base-input:
-    url: "some.url"
-"""
-
-ACTION = {
+ACTION_DEF_VALUES = {
     'id': '123e4567-e89b-12d3-a456-426655440000',
     'name': 'my_action',
     'is_system': False,
     'description': 'My super cool action.',
     'tags': ['test', 'v2'],
-    'definition': ACTION_DEFINITION
+    'definition': ADHOC_ACTION_YAML,
+    'spec': ACTION_SPEC.to_dict(),
+    'input': '',
+    'project_id': None,
+    'scope': 'public',
+    'namespace': None
 }
 
-SYSTEM_ACTION = {
-    'id': '1234',
-    'name': 'std.echo',
-    'is_system': True,
-    'definition': SYSTEM_ACTION_DEFINITION
-}
 
-ACTION_DB = models.ActionDefinition()
-ACTION_DB.update(ACTION)
+ACTION_DEF = models.ActionDefinition()
+ACTION_DEF.update(ACTION_DEF_VALUES)
 
-SYSTEM_ACTION_DB = models.ActionDefinition()
-SYSTEM_ACTION_DB.update(SYSTEM_ACTION)
+ACTION_DESC = adhoc.AdHocActionDescriptor(ACTION_DEF)
 
-PROJECT_ID_ACTION_DB = ACTION_DB.get_clone()
-PROJECT_ID_ACTION_DB.project_id = '<default-project>'
 
-UPDATED_ACTION_DEFINITION = """
+UPDATED_ADHOC_ACTION_YAML = """
 ---
 version: '2.0'
 
@@ -111,182 +106,178 @@ my_action:
     output: "{$.str1}{$.str2}{$.str3}"
 """
 
-UPDATED_ACTION_DB = copy.copy(ACTION_DB)
-UPDATED_ACTION_DB['definition'] = UPDATED_ACTION_DEFINITION
-UPDATED_ACTION = copy.deepcopy(ACTION)
-UPDATED_ACTION['definition'] = UPDATED_ACTION_DEFINITION
+UPDATED_ACTION_DEF = copy.copy(ACTION_DEF)
+UPDATED_ACTION_DEF['definition'] = UPDATED_ADHOC_ACTION_YAML
+UPDATED_ACTION = copy.deepcopy(ACTION_DEF_VALUES)
+UPDATED_ACTION['definition'] = UPDATED_ADHOC_ACTION_YAML
 
-MOCK_ACTION = mock.MagicMock(return_value=ACTION_DB)
-MOCK_SYSTEM_ACTION = mock.MagicMock(return_value=SYSTEM_ACTION_DB)
-MOCK_ACTIONS = mock.MagicMock(return_value=[ACTION_DB])
-MOCK_UPDATED_ACTION = mock.MagicMock(return_value=UPDATED_ACTION_DB)
-MOCK_DELETE = mock.MagicMock(return_value=None)
-MOCK_EMPTY = mock.MagicMock(return_value=[])
-MOCK_NOT_FOUND = mock.MagicMock(side_effect=exc.DBEntityNotFoundError())
-MOCK_DUPLICATE = mock.MagicMock(side_effect=exc.DBDuplicateEntryError())
+MOCK_ACTIONS = mock.MagicMock(return_value=[ACTION_DEF])
+MOCK_UPDATED_ACTION = mock.MagicMock(return_value=UPDATED_ACTION_DEF)
 
 
 class TestActionsController(base.APITest):
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_ACTION)
+    def check_adhoc_action_json(self, action_json):
+        self.assertIsNotNone(action_json)
+        self.assertIsInstance(action_json, dict)
+
+        action_name = action_json['name']
+
+        action_def = db_api.get_action_definition(action_name)
+
+        self.assertIsNotNone(
+            action_def,
+            'Ad-hoc action definition does not exist [name=%s]' % action_name
+        )
+
+        # Compare action JSON with the state of the corresponding
+        # persistent object.
+        for k, v in action_json.items():
+            self.assertEqual(v, utils.datetime_to_str(getattr(action_def, k)))
+
     def test_get(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
         resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(ACTION, resp.json)
 
-    @mock.patch.object(db_api, 'get_action_definition')
+        self.check_adhoc_action_json(resp.json)
+
+    @mock.patch.object(db_api, 'load_action_definition')
     def test_get_operational_error(self, mocked_get):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        action_def = db_api.get_action_definition('my_action')
+
         mocked_get.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            ACTION_DB  # Successful run
+            action_def  # Successful run
         ]
 
         resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(200, resp.status_int)
-        self.assertDictEqual(ACTION, resp.json)
 
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_NOT_FOUND)
+        self.check_adhoc_action_json(resp.json)
+
     def test_get_not_found(self):
+        # This time we don't create an action in DB upfront.
         resp = self.app.get('/v2/actions/my_action', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(db_api, "update_action_definition", MOCK_UPDATED_ACTION)
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_ACTION)
     def test_get_by_id(self):
-        url = '/v2/actions/{0}'.format(ACTION['id'])
-        resp = self.app.get(url)
+        # NOTE(rakhmerov): We can't support this case anymore because
+        # action descriptors can now be identified only by names and
+        # namespaces.
+        pass
+
+    def test_get_within_project_id(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        # We should not be able to change 'project_id' even with a
+        # direct DB call.
+        db_api.update_action_definition(
+            'my_action',
+            {'project_id': 'foobar'}
+        )
+
+        resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(200, resp.status_int)
-        self.assertEqual(ACTION['id'], resp.json['id'])
+        self.assertEqual('<default-project>', resp.json['project_id'])
 
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_NOT_FOUND)
-    def test_get_by_id_not_found(self):
-        url = '/v2/actions/1234'
-        resp = self.app.get(url, expect_errors=True)
-
-        self.assertEqual(404, resp.status_int)
-
-    @mock.patch.object(
-        db_api, "get_action_definition", return_value=PROJECT_ID_ACTION_DB)
-    def test_get_within_project_id(self, mock_get):
-        url = '/v2/actions/1234'
-        resp = self.app.get(url, expect_errors=True)
-        self.assertEqual(200, resp.status_int)
-        self.assertTrue('project_id' in resp.json)
-
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_ACTION)
-    @mock.patch.object(
-        db_api, "update_action_definition", MOCK_UPDATED_ACTION
-    )
     def test_put(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
         resp = self.app.put(
             '/v2/actions',
-            UPDATED_ACTION_DEFINITION,
+            UPDATED_ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(200, resp.status_int)
 
-        self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
+        self.check_adhoc_action_json(resp.json['actions'][0])
 
-    @mock.patch.object(db_api, "load_action_definition", MOCK_ACTION)
-    @mock.patch.object(db_api, "update_action_definition")
-    def test_put_public(self, mock_mtd):
-        mock_mtd.return_value = UPDATED_ACTION_DB
+    def test_put_public(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
 
         resp = self.app.put(
             '/v2/actions?scope=public',
-            UPDATED_ACTION_DEFINITION,
+            UPDATED_ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'}
         )
 
+        action_json = resp.json['actions'][0]
+
         self.assertEqual(200, resp.status_int)
+        self.assertEqual('public', action_json['scope'])
 
-        self.assertEqual({"actions": [UPDATED_ACTION]}, resp.json)
+        self.check_adhoc_action_json(action_json)
 
-        self.assertEqual("public", mock_mtd.call_args[0][1]['scope'])
-
-    @mock.patch.object(db_api, "update_action_definition", MOCK_NOT_FOUND)
     def test_put_not_found(self):
         resp = self.app.put(
             '/v2/actions',
-            UPDATED_ACTION_DEFINITION,
+            UPDATED_ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
     def test_put_system(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        db_api.update_action_definition('my_action', {'is_system': True})
+
         resp = self.app.put(
             '/v2/actions',
-            SYSTEM_ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
 
         self.assertEqual(400, resp.status_int)
         self.assertIn(
-            'Attempt to modify a system action: std.echo',
+            'Attempt to modify a system action: my_action',
             resp.body.decode()
         )
 
-    @mock.patch.object(db_api, "create_action_definition")
-    def test_post(self, mock_mtd):
-        mock_mtd.return_value = ACTION_DB
-
+    def test_post(self):
         resp = self.app.post(
             '/v2/actions',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(201, resp.status_int)
-        self.assertEqual({"actions": [ACTION]}, resp.json)
 
-        self.assertEqual(1, mock_mtd.call_count)
+        self.check_adhoc_action_json(resp.json['actions'][0])
 
-        values = mock_mtd.call_args[0][0]
-
-        self.assertEqual('My super cool action.', values['description'])
-
-        spec = values['spec']
-
-        self.assertIsNotNone(spec)
-        self.assertEqual(ACTION_DB.name, spec['name'])
-
-    @mock.patch.object(db_api, "create_action_definition")
-    def test_post_public(self, mock_mtd):
-        mock_mtd.return_value = ACTION_DB
-
+    def test_post_public(self):
         resp = self.app.post(
             '/v2/actions?scope=public',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'}
         )
 
         self.assertEqual(201, resp.status_int)
-        self.assertEqual({"actions": [ACTION]}, resp.json)
 
-        self.assertEqual("public", mock_mtd.call_args[0][0]['scope'])
+        self.check_adhoc_action_json(resp.json['actions'][0])
+        self.assertEqual('public', resp.json['actions'][0]['scope'])
 
-    @mock.patch.object(db_api, "create_action_definition")
-    def test_post_wrong_scope(self, mock_mtd):
-        mock_mtd.return_value = ACTION_DB
-
+    def test_post_wrong_scope(self):
         resp = self.app.post(
             '/v2/actions?scope=unique',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -294,67 +285,111 @@ class TestActionsController(base.APITest):
         self.assertEqual(400, resp.status_int)
         self.assertIn("Scope must be one of the following", resp.body.decode())
 
-    @mock.patch.object(db_api, "create_action_definition", MOCK_DUPLICATE)
     def test_post_dup(self):
         resp = self.app.post(
             '/v2/actions',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
+            headers={'Content-Type': 'text/plain'},
+            expect_errors=True
+        )
+
+        self.assertEqual(201, resp.status_int)
+
+        # Try to create it again.
+        resp = self.app.post(
+            '/v2/actions',
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
 
         self.assertEqual(409, resp.status_int)
 
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_ACTION)
-    @mock.patch.object(db_api, "delete_action_definition", MOCK_DELETE)
     def test_delete(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        self.assertIsNotNone(db_api.load_action_definition('my_action'))
+
         resp = self.app.delete('/v2/actions/my_action')
 
         self.assertEqual(204, resp.status_int)
 
-    @mock.patch.object(db_api, "delete_action_definition", MOCK_NOT_FOUND)
+        self.assertIsNone(db_api.load_action_definition('my_action'))
+
     def test_delete_not_found(self):
         resp = self.app.delete('/v2/actions/my_action', expect_errors=True)
 
         self.assertEqual(404, resp.status_int)
 
-    @mock.patch.object(
-        db_api, "get_action_definition", MOCK_SYSTEM_ACTION)
-    def test_delete_system(self):
-        resp = self.app.delete('/v2/actions/std.echo', expect_errors=True)
-
-        self.assertEqual(400, resp.status_int)
-        self.assertIn('Attempt to delete a system action: std.echo',
-                      resp.json['faultstring'])
-
-    @mock.patch.object(
-        db_api, "get_action_definitions", MOCK_ACTIONS)
     def test_get_all(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
         resp = self.app.get('/v2/actions')
 
         self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(1, len(resp.json['actions']))
-        self.assertDictEqual(ACTION, resp.json['actions'][0])
+        actions_json = resp.json['actions']
+
+        # There will be 'std.' actions and the one we've just created.
+        self.assertGreater(len(actions_json), 1)
+
+        # Let's check some of the well-known 'std.' actions.
+        self._assert_single_item(actions_json, name='std.echo')
+        self._assert_single_item(actions_json, name='std.ssh')
+        self._assert_single_item(actions_json, name='std.fail')
+        self._assert_single_item(actions_json, name='std.noop')
+        self._assert_single_item(actions_json, name='std.async_noop')
+
+        # Now let's check the ad-hoc action data.
+        adhoc_action_json = self._assert_single_item(
+            actions_json,
+            name='my_action'
+        )
+
+        self.check_adhoc_action_json(adhoc_action_json)
 
     @mock.patch.object(db_api, 'get_action_definitions')
     def test_get_all_operational_error(self, mocked_get_all):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        action_def = db_api.get_action_definition('my_action')
+
         mocked_get_all.side_effect = [
             # Emulating DB OperationalError
             sa.exc.OperationalError('Mock', 'mock', 'mock'),
-            [ACTION_DB]  # Successful run
+            [action_def]  # Successful run
         ]
 
         resp = self.app.get('/v2/actions')
 
-        self.assertEqual(200, resp.status_int)
+        actions_json = resp.json['actions']
 
-        self.assertEqual(1, len(resp.json['actions']))
-        self.assertDictEqual(ACTION, resp.json['actions'][0])
+        # There will be 'std.' actions and the one we've just created.
+        self.assertGreater(len(actions_json), 1)
+
+        # Let's check some of the well-known 'std.' actions.
+        self._assert_single_item(actions_json, name='std.echo')
+        self._assert_single_item(actions_json, name='std.ssh')
+        self._assert_single_item(actions_json, name='std.fail')
+        self._assert_single_item(actions_json, name='std.noop')
+        self._assert_single_item(actions_json, name='std.async_noop')
+
+        # Now let's check the ad-hoc action data.
+        adhoc_action_json = self._assert_single_item(
+            actions_json,
+            name='my_action'
+        )
+
+        self.check_adhoc_action_json(adhoc_action_json)
 
     @mock.patch.object(
-        db_api, "get_action_definitions", MOCK_EMPTY)
+        composite.CompositeActionProvider,
+        'find_all',
+        mock.MagicMock(return_value=[])
+    )
     def test_get_all_empty(self):
         resp = self.app.get('/v2/actions')
 
@@ -362,24 +397,43 @@ class TestActionsController(base.APITest):
 
         self.assertEqual(0, len(resp.json['actions']))
 
-    @mock.patch.object(
-        db_api, "get_action_definitions", MOCK_ACTIONS)
+    def test_get_all_filtered(self):
+        # First check that w/o filters the result set
+        # will contain more than 1 item.
+        resp = self.app.get('/v2/actions')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertGreater(len(resp.json['actions']), 1)
+
+        # Now we'll filter it by action name.
+        resp = self.app.get('/v2/actions?name=std.echo')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(1, len(resp.json['actions']))
+
     def test_get_all_pagination(self):
-        resp = self.app.get(
-            '/v2/actions?limit=1&sort_keys=id,name')
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        resp = self.app.get('/v2/actions?limit=1&sort_keys=id,name')
 
         self.assertEqual(200, resp.status_int)
         self.assertIn('next', resp.json)
         self.assertEqual(1, len(resp.json['actions']))
-        self.assertDictEqual(ACTION, resp.json['actions'][0])
+
+        self.check_adhoc_action_json(resp.json['actions'][0])
 
         param_dict = utils.get_dict_from_string(
             resp.json['next'].split('?')[1],
             delimiter='&'
         )
 
+        action_def = db_api.get_action_definition('my_action')
+
+        # TODO(rakhmerov): In this case we can't use IDs for marker because
+        # in general we don't identify action descriptors with IDs.
         expected_dict = {
-            'marker': '123e4567-e89b-12d3-a456-426655440000',
+            'marker': action_def.id,
             'limit': 1,
             'sort_keys': 'id,name',
             'sort_dirs': 'asc,asc'
@@ -435,7 +489,7 @@ class TestActionsController(base.APITest):
     def test_validate(self):
         resp = self.app.post(
             '/v2/actions/validate',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'}
         )
 

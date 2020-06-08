@@ -16,7 +16,7 @@
 from mistral.db.v2 import api as db_api_v2
 from mistral.lang import parser as spec_parser
 from mistral import services
-from mistral.services import actions
+from mistral.services import adhoc_actions
 
 
 def create_workbook_v2(definition, namespace='', scope='private',
@@ -60,7 +60,8 @@ def update_workbook_v2(definition, namespace='', scope='private',
 
 def _on_workbook_update(wb_db, wb_spec, namespace=''):
     db_actions = _create_or_update_actions(
-        wb_db, wb_spec.get_actions(),
+        wb_db,
+        wb_spec.get_actions(),
         namespace=namespace
     )
 
@@ -80,11 +81,13 @@ def _create_or_update_actions(wb_db, actions_spec, namespace):
         for action_spec in actions_spec:
             action_name = '%s.%s' % (wb_db.name, action_spec.get_name())
 
-            input_list = actions.get_input_list(
+            input_list = adhoc_actions.get_input_list(
                 action_spec.to_dict().get('input', [])
             )
+
             values = {
                 'name': action_name,
+                'workbook_name': wb_db.name,
                 'spec': action_spec.to_dict(),
                 'tags': action_spec.get_tags(),
                 'definition': _get_action_definition(wb_db, action_spec),
@@ -115,6 +118,7 @@ def _create_or_update_workflows(wb_db, workflows_spec, namespace):
 
             values = {
                 'name': wf_name,
+                'workbook_name': wb_db.name,
                 'definition': _get_wf_definition(wb_db, wf_spec),
                 'spec': wf_spec.to_dict(),
                 'scope': wb_db.scope,

@@ -22,6 +22,8 @@ from mistral.db.v2.sqlalchemy import models
 from mistral.engine import actions
 from mistral.engine import task_handler
 from mistral import exceptions as exc
+from mistral.services import actions as action_service
+
 
 LOG = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ def on_action_complete(action_ex, result):
     task_ex = action_ex.task_execution
 
     action = _build_action(action_ex)
+
     try:
         action.complete(result)
     except exc.MistralException as e:
@@ -80,27 +83,35 @@ def on_action_update(action_ex, state):
 @profiler.trace('action-handler-build-action', hide_args=True)
 def _build_action(action_ex):
     if isinstance(action_ex, models.WorkflowExecution):
-        return actions.WorkflowAction(wf_name=action_ex.name,
-                                      action_ex=action_ex)
-
-    adhoc_action_name = action_ex.runtime_context.get('adhoc_action_name')
-
-    if adhoc_action_name:
-        action_def = actions.resolve_action_definition(
-            adhoc_action_name,
-            namespace=action_ex.workflow_namespace
+        return actions.WorkflowAction(
+            wf_name=action_ex.name,
+            action_ex=action_ex
         )
-        return actions.AdHocAction(action_def, action_ex=action_ex)
 
-    action_def = actions.resolve_action_definition(action_ex.name)
+    action_desc = action_service.get_system_action_provider().find(
+        action_ex.name,
+        action_ex.workflow_namespace
+    )
 
-    return actions.PythonAction(action_def, action_ex=action_ex)
+    if action_desc is None:
+        raise exc.InvalidActionException(
+            "Failed to find action [action_name=%s]" %
+            action_ex.name
+        )
+
+    return actions.RegularAction(action_desc, action_ex)
 
 
 def build_action_by_name(action_name, namespace=''):
-    action_def = actions.resolve_action_definition(action_name,
-                                                   namespace=namespace)
-    action_cls = (actions.PythonAction if not action_def.spec
-                  else actions.AdHocAction)
+    action_desc = action_service.get_system_action_provider().find(
+        action_name,
+        namespace=namespace
+    )
 
-    return action_cls(action_def)
+    if action_desc is None:
+        raise exc.InvalidActionException(
+            "Failed to find action [action_name=%s]" %
+            action_name
+        )
+
+    return actions.RegularAction(action_desc)

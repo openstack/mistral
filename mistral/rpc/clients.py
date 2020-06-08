@@ -353,18 +353,15 @@ class ExecutorClient(exe.Executor):
         self._client = base.get_rpc_client_driver()(rpc_conf_dict)
 
     @profiler.trace('executor-client-run-action')
-    def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, execution_context, redelivered=False,
-                   target=None, async_=True, timeout=None):
+    def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
+                   redelivered=False, target=None, async_=True, timeout=None):
         """Sends a request to run action to executor.
 
+        :param action: Action to run.
         :param action_ex_id: Action execution id.
-        :param action_cls_str: Action class name.
-        :param action_cls_attrs: Action class attributes.
-        :param params: Action input parameters.
         :param safe_rerun: If true, action would be re-run if executor dies
             during execution.
-        :param execution_context: A dict of values providing information about
+        :param exec_ctx: A dict of values providing information about
             the current execution.
         :param redelivered: Tells if given action was run before on another
             executor.
@@ -376,21 +373,22 @@ class ExecutorClient(exe.Executor):
         :return: Action result.
         """
         rpc_kwargs = {
+            'action': action,
             'action_ex_id': action_ex_id,
-            'action_cls_str': action_cls_str,
-            'action_cls_attrs': action_cls_attrs,
-            'params': params,
             'safe_rerun': safe_rerun,
-            'execution_context': execution_context,
+            'exec_ctx': exec_ctx,
             'timeout': timeout
         }
 
-        rpc_client_method = (self._client.async_call
-                             if async_ else self._client.sync_call)
+        rpc_client_method = (
+            self._client.async_call if async_
+            else self._client.sync_call
+        )
 
         LOG.debug(
-            "Sending an action to executor [action_ex_id=%s, action_cls=%s]",
-            action_ex_id, action_cls_str
+            'Sending an action to executor [action=%s, action_ex_id=%s]',
+            action,
+            action_ex_id
         )
 
         return rpc_client_method(auth_ctx.ctx(), 'run_action', **rpc_kwargs)

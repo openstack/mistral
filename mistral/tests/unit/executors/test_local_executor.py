@@ -19,7 +19,6 @@ from oslo_log import log as logging
 
 from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
-from mistral.executors import base as exe
 from mistral.executors import remote_executor as r_exe
 from mistral.services import workbooks as wb_svc
 from mistral.tests.unit.executors import base
@@ -40,17 +39,10 @@ cfg.CONF.set_default('auth_enable', False, group='pecan')
     mock.MagicMock(return_value=None)
 )
 class LocalExecutorTest(base.ExecutorTestCase):
+    def setUp(self):
+        super(LocalExecutorTest, self).setUp()
 
-    @classmethod
-    def setUpClass(cls):
-        super(LocalExecutorTest, cls).setUpClass()
-        cfg.CONF.set_default('type', 'local', group='executor')
-
-    @classmethod
-    def tearDownClass(cls):
-        exe.cleanup()
-        cfg.CONF.set_default('type', 'remote', group='executor')
-        super(LocalExecutorTest, cls).tearDownClass()
+        self.override_config('type', 'local', 'executor')
 
     @mock.patch.object(
         std_actions.EchoAction,

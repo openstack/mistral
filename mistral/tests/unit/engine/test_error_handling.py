@@ -600,7 +600,7 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
 
         self.assertIsNotNone(state_info)
         self.assertGreater(state_info.find('error='), 0)
-        self.assertLess(state_info.find('error='), state_info.find('action='))
+        self.assertGreater(state_info.find('action='), 0)
 
     def test_publish_bad_yaql(self):
         wf_text = """---
@@ -848,8 +848,8 @@ class ErrorHandlingEngineTest(base.EngineTestCase):
             task_ex = wf_ex.task_executions[0]
 
             expected = (
-                "The action raised an exception [action_ex_id=%s, "
-                "msg='Fail action expected exception.'"
+                "The action raised an exception [action=Fail action, "
+                "action_ex_id=%s, msg='Fail action expected exception.'"
             ) % task_ex.action_executions[0].id
 
             # Making sure that the actual error message goes before

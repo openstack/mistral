@@ -18,7 +18,7 @@ from oslo_config import cfg
 from mistral.db.v2 import api as db_api
 from mistral.exceptions import DBEntityNotFoundError
 from mistral.lang import parser as spec_parser
-from mistral.services import actions as action_service
+from mistral.services import adhoc_actions as adhoc_action_service
 from mistral.tests.unit import base
 from mistral_lib import utils
 
@@ -57,15 +57,15 @@ action1:
 NAMESPACE = 'test_namespace'
 
 
-class ActionServiceTest(base.DbTestCase):
+class AdhocActionServiceTest(base.DbTestCase):
     def setUp(self):
-        super(ActionServiceTest, self).setUp()
+        super(AdhocActionServiceTest, self).setUp()
 
         self.addCleanup(db_api.delete_action_definitions, name='action1')
         self.addCleanup(db_api.delete_action_definitions, name='action2')
 
     def test_create_actions(self):
-        db_actions = action_service.create_actions(ACTION_LIST)
+        db_actions = adhoc_action_service.create_actions(ACTION_LIST)
 
         self.assertEqual(2, len(db_actions))
 
@@ -88,16 +88,24 @@ class ActionServiceTest(base.DbTestCase):
         self.assertDictEqual({'output': 'Hey'}, action2_spec.get_base_input())
 
     def test_create_actions_in_namespace(self):
-        db_actions = action_service.create_actions(ACTION_LIST,
-                                                   namespace=NAMESPACE)
+        db_actions = adhoc_action_service.create_actions(
+            ACTION_LIST,
+            namespace=NAMESPACE
+        )
 
         self.assertEqual(2, len(db_actions))
 
-        action1_db = self._assert_single_item(db_actions, name='action1')
-        self.assertEqual(NAMESPACE, action1_db.namespace)
+        self._assert_single_item(
+            db_actions,
+            name='action1',
+            namespace=NAMESPACE
+        )
 
-        action2_db = self._assert_single_item(db_actions, name='action2')
-        self.assertEqual(NAMESPACE, action2_db.namespace)
+        self._assert_single_item(
+            db_actions,
+            name='action2',
+            namespace=NAMESPACE
+        )
 
         self.assertRaises(
             DBEntityNotFoundError,
@@ -107,8 +115,10 @@ class ActionServiceTest(base.DbTestCase):
         )
 
     def test_update_actions(self):
-        db_actions = action_service.create_actions(ACTION_LIST,
-                                                   namespace=NAMESPACE)
+        db_actions = adhoc_action_service.create_actions(
+            ACTION_LIST,
+            namespace=NAMESPACE
+        )
 
         self.assertEqual(2, len(db_actions))
 
@@ -120,8 +130,10 @@ class ActionServiceTest(base.DbTestCase):
         self.assertDictEqual({'output': 'Hi'}, action1_spec.get_base_input())
         self.assertDictEqual({}, action1_spec.get_input())
 
-        db_actions = action_service.update_actions(UPDATED_ACTION_LIST,
-                                                   namespace=NAMESPACE)
+        db_actions = adhoc_action_service.update_actions(
+            UPDATED_ACTION_LIST,
+            namespace=NAMESPACE
+        )
 
         # Action 1.
         action1_db = self._assert_single_item(db_actions, name='action1')
@@ -139,7 +151,7 @@ class ActionServiceTest(base.DbTestCase):
 
         self.assertRaises(
             DBEntityNotFoundError,
-            action_service.update_actions,
+            adhoc_action_service.update_actions,
             UPDATED_ACTION_LIST,
             namespace=''
         )
@@ -147,7 +159,7 @@ class ActionServiceTest(base.DbTestCase):
     def test_delete_action(self):
 
         # Create action.
-        action_service.create_actions(ACTION_LIST, namespace=NAMESPACE)
+        adhoc_action_service.create_actions(ACTION_LIST, namespace=NAMESPACE)
 
         action = db_api.get_action_definition('action1', namespace=NAMESPACE)
         self.assertEqual(NAMESPACE, action.get('namespace'))

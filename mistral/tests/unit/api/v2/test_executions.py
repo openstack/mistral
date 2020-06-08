@@ -877,7 +877,7 @@ class TestExecutionsController(base.APITest):
 
     def test_get_all_pagination_unknown_direction(self):
         resp = self.app.get(
-            '/v2/actions?limit=1&sort_keys=id&sort_dirs=nonexist',
+            '/v2/executions?limit=1&sort_keys=id&sort_dirs=nonexist',
             expect_errors=True
         )
 

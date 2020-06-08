@@ -19,7 +19,6 @@ from mistral_lib import actions as actions_base
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workflows as wf_service
-from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 
@@ -97,7 +96,7 @@ class ExecutionFieldsSizeLimitTest(base.EngineTestCase):
             group='engine'
         )
 
-        test_base.register_action_class('my_action', MyAction)
+        self.register_action_class('my_action', MyAction)
 
     def tearDown(self):
         """Restores the size limit config to default"""

@@ -338,6 +338,7 @@ class DefaultEngineTest(base.DbTestCase):
 
         # Start workflow.
         wf_service.create_workflows(workflow)
+
         wf_ex = self.engine.start_workflow('wf_async')
 
         self.assertIsNotNone(wf_ex)

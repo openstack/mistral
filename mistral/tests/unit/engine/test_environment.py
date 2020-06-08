@@ -16,6 +16,7 @@ from unittest import mock
 
 from oslo_config import cfg
 
+from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.executors import default_executor as d_exe
 from mistral.executors import remote_executor as r_exe
@@ -79,19 +80,16 @@ workflows:
 """
 
 
-def _run_at_target(action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, execution_context, target=None,
+def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx, target=None,
                    async_=True, timeout=None):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
     executor.run_action(
+        action,
         action_ex_id,
-        action_cls_str,
-        action_cls_attrs,
-        params,
         safe_rerun,
-        execution_context=execution_context,
+        exec_ctx=exec_ctx,
         target=target,
         async_=async_,
         timeout=timeout
@@ -109,6 +107,8 @@ class EnvironmentTest(base.EngineTestCase):
 
     @mock.patch.object(r_exe.RemoteExecutor, 'run_action', MOCK_RUN_AT_TARGET)
     def _test_subworkflow(self, env):
+        self.override_config('type', 'remote', 'executor')
+
         wf2_ex = self.engine.start_workflow('my_wb.wf2', env=env)
 
         # Execution of 'wf2'.
@@ -172,10 +172,8 @@ class EnvironmentTest(base.EngineTestCase):
                 callback_url = '/v2/action_executions/%s' % a_ex.id
 
                 r_exe.RemoteExecutor.run_action.assert_any_call(
+                    std_actions.EchoAction(**a_ex.input),
                     a_ex.id,
-                    'mistral.actions.std_actions.EchoAction',
-                    {},
-                    a_ex.input,
                     False,
                     {
                         'task_execution_id': t_ex.id,

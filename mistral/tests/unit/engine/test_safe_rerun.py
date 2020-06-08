@@ -24,19 +24,16 @@ from mistral.workflow import data_flow
 from mistral.workflow import states
 
 
-def _run_at_target(action_ex_id, action_class_str, attributes,
-                   action_params, safe_rerun, execution_context, target=None,
-                   async_=True, timeout=None):
+def _run_at_target(action, action_ex_id, safe_rerun, exec_ctx,
+                   target=None, async_=True, timeout=None):
     # We'll just call executor directly for testing purposes.
     executor = d_exe.DefaultExecutor()
 
     executor.run_action(
+        action,
         action_ex_id,
-        action_class_str,
-        attributes,
-        action_params,
         safe_rerun,
-        execution_context,
+        exec_ctx,
         redelivered=True
     )
 
@@ -45,6 +42,10 @@ MOCK_RUN_AT_TARGET = mock.MagicMock(side_effect=_run_at_target)
 
 
 class TestSafeRerun(base.EngineTestCase):
+    def setUp(self):
+        super(TestSafeRerun, self).setUp()
+
+        self.override_config('type', 'remote', 'executor')
 
     @mock.patch.object(r_exe.RemoteExecutor, 'run_action', MOCK_RUN_AT_TARGET)
     def test_safe_rerun_true(self):
@@ -74,6 +75,7 @@ class TestSafeRerun(base.EngineTestCase):
         # to true.
 
         wf_service.create_workflows(wf_text)
+
         wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)
@@ -120,6 +122,7 @@ class TestSafeRerun(base.EngineTestCase):
         # to true.
 
         wf_service.create_workflows(wf_text)
+
         wf_ex = self.engine.start_workflow('wf')
 
         self.await_workflow_success(wf_ex.id)

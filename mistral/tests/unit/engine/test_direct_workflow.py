@@ -1,5 +1,6 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2015 - StackStorm, Inc.
+# Copyright 2020 Nokia Software.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -283,7 +284,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
         wf_ex = self.engine.start_workflow('wf')
 
         self.assertIn(
-            "Failed to find action [action_name=wrong.task]",
+            "Failed to find action [action_name=wrong.task, namespace=]",
             wf_ex.state_info
         )
         self.assertEqual(states.ERROR, wf_ex.state)

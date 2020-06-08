@@ -14,6 +14,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import functools
 from oslo_log import log as logging
 import pecan
 from pecan import hooks
@@ -30,11 +31,36 @@ from mistral import context
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.lang import parser as spec_parser
-from mistral.services import actions
+from mistral.services import actions as action_service
+from mistral.services import adhoc_actions
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
 
+from mistral_lib import utils
+
+
 LOG = logging.getLogger(__name__)
+
+
+def _action_descriptor_to_resource(action_desc):
+    return resources.Action(
+        id=getattr(action_desc, 'id', action_desc.name),
+        name=action_desc.name,
+        description=action_desc.description,
+        input=action_desc.params_spec,
+        namespace=action_desc.namespace,
+        project_id=action_desc.project_id,
+        scope=action_desc.scope,
+        definition=getattr(action_desc, 'definition', ''),
+        is_system=False,
+        tags=getattr(action_desc, 'tags', None),
+        created_at=utils.datetime_to_str(
+            getattr(action_desc, 'created_at', '')
+        ),
+        updated_at=utils.datetime_to_str(
+            getattr(action_desc, 'updated_at', '')
+        )
+    )
 
 
 class ActionsController(rest.RestController, hooks.HookController):
@@ -59,12 +85,24 @@ class ActionsController(rest.RestController, hooks.HookController):
 
         LOG.debug("Fetch action [identifier=%s]", identifier)
 
-        # Use retries to prevent possible failures.
-        db_model = rest_utils.rest_retry_on_db_error(
-            db_api.get_action_definition
+        action_provider = action_service.get_system_action_provider()
+
+        # Here we assume that the action search might involve DB operations
+        # so we need to apply the regular retrying logic as everywhere else.
+        action_desc = rest_utils.rest_retry_on_db_error(
+            action_provider.find
         )(identifier, namespace=namespace)
 
-        return resources.Action.from_db_model(db_model)
+        if action_desc is None:
+            # TODO(rakhmerov): We need to change exception class so that
+            # it's not DB specific. But it should be associated with the
+            # same HTTP code.
+            raise exc.DBEntityNotFoundError(
+                'Action not found [name=%s, namespace=%s]'
+                % (identifier, namespace)
+            )
+
+        return _action_descriptor_to_resource(action_desc)
 
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
@@ -86,15 +124,18 @@ class ActionsController(rest.RestController, hooks.HookController):
         LOG.debug("Update action(s) [definition=%s]", definition)
 
         namespace = namespace or ''
+
         scope = pecan.request.GET.get('scope', 'private')
+
         resources.Action.validate_scope(scope)
+
         if scope == 'public':
             acl.enforce('actions:publicize', context.ctx())
 
         @rest_utils.rest_retry_on_db_error
         def _update_actions():
             with db_api.transaction():
-                return actions.update_actions(
+                return adhoc_actions.update_actions(
                     definition,
                     scope=scope,
                     identifier=identifier,
@@ -123,6 +164,7 @@ class ActionsController(rest.RestController, hooks.HookController):
             of multiple actions. In this case they all will be created.
         """
         acl.enforce('actions:create', context.ctx())
+
         namespace = namespace or ''
 
         definition = pecan.request.text
@@ -130,6 +172,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         pecan.response.status = 201
 
         resources.Action.validate_scope(scope)
+
         if scope == 'public':
             acl.enforce('actions:publicize', context.ctx())
 
@@ -138,9 +181,11 @@ class ActionsController(rest.RestController, hooks.HookController):
         @rest_utils.rest_retry_on_db_error
         def _create_action_definitions():
             with db_api.transaction():
-                return actions.create_actions(definition,
-                                              scope=scope,
-                                              namespace=namespace)
+                return adhoc_actions.create_actions(
+                    definition,
+                    scope=scope,
+                    namespace=namespace
+                )
 
         db_acts = _create_action_definitions()
 
@@ -159,19 +204,26 @@ class ActionsController(rest.RestController, hooks.HookController):
         :param namespace: The namespace of which the action is in.
         """
         acl.enforce('actions:delete', context.ctx())
+
         LOG.debug("Delete action [identifier=%s]", identifier)
 
         @rest_utils.rest_retry_on_db_error
         def _delete_action_definition():
             with db_api.transaction():
-                db_model = db_api.get_action_definition(identifier,
-                                                        namespace=namespace)
+                db_model = db_api.get_action_definition(
+                    identifier,
+                    namespace=namespace
+                )
 
                 if db_model.is_system:
-                    msg = "Attempt to delete a system action: %s" % identifier
-                    raise exc.DataAccessException(msg)
-                db_api.delete_action_definition(identifier,
-                                                namespace=namespace)
+                    raise exc.DataAccessException(
+                        "Attempt to delete a system action: %s" % identifier
+                    )
+
+                db_api.delete_action_definition(
+                    identifier,
+                    namespace=namespace
+                )
 
         _delete_action_definition()
 
@@ -232,19 +284,74 @@ class ActionsController(rest.RestController, hooks.HookController):
             namespace=namespace
         )
 
-        LOG.debug("Fetch actions. marker=%s, limit=%s, sort_keys=%s, "
-                  "sort_dirs=%s, filters=%s", marker, limit, sort_keys,
-                  sort_dirs, filters)
+        LOG.debug(
+            "Fetch actions. marker=%s, limit=%s, sort_keys=%s, "
+            "sort_dirs=%s, filters=%s",
+            marker,
+            limit,
+            sort_keys,
+            sort_dirs,
+            filters
+        )
 
-        return rest_utils.get_all(
-            resources.Actions,
-            resources.Action,
-            db_api.get_action_definitions,
-            db_api.get_action_definition_by_id,
-            marker=marker,
+        sort_keys = ['name'] if sort_keys is None else sort_keys
+        sort_dirs = ['asc'] if sort_dirs is None else sort_dirs
+        fields = [] if fields is None else fields
+
+        if fields and 'name' not in fields:
+            fields.insert(0, 'name')
+
+        rest_utils.validate_query_params(limit, sort_keys, sort_dirs)
+
+        action_provider = action_service.get_system_action_provider()
+
+        # Here we assume that the action search might involve DB operations
+        # so we need to apply the regular retrying logic as everywhere else.
+        action_descriptors = rest_utils.rest_retry_on_db_error(
+            action_provider.find_all
+        )(
+            namespace=namespace,
             limit=limit,
-            sort_keys=sort_keys,
+            sort_fields=sort_keys,
             sort_dirs=sort_dirs,
-            fields=fields,
+            filters=filters
+        )
+
+        # We can't guarantee that at this point the collection of action
+        # descriptors is properly filtered and sorted.
+
+        # Apply filters.
+        action_descriptors = filter(
+            lambda a_d: filter_utils.match_filters(a_d, filters),
+            action_descriptors
+        )
+
+        # Apply sorting.
+        def compare_(a_d1, a_d2):
+            # TODO(rakhmerov): Implement properly
+            return 0
+
+        action_descriptors = sorted(
+            action_descriptors,
+            key=functools.cmp_to_key(compare_)
+        )
+
+        if limit and limit > 0:
+            action_descriptors = action_descriptors[0:limit]
+
+        action_resources = [
+            _action_descriptor_to_resource(a_d)
+            for a_d in action_descriptors
+        ]
+
+        # TODO(rakhmerov): Fix pagination so that it doesn't work with
+        # the 'id' field as a marker. We can't use IDs anymore. "name"
+        # seems a good candidate for this.
+        return resources.Actions.convert_with_links(
+            action_resources,
+            limit,
+            pecan.request.application_url,
+            sort_keys=','.join(sort_keys),
+            sort_dirs=','.join(sort_dirs),
             **filters
         )

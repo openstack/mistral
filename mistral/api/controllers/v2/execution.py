@@ -388,7 +388,7 @@ class ExecutionsController(rest.RestController):
                            update time and date.
         :param include_output: Optional. Include the output for all executions
                                in the list.
-        :param project_id: Optional. Only get exectuions belong to the project.
+        :param project_id: Optional. Only get executions belong to the project.
             Admin required.
         :param all_projects: Optional. Get resources of all projects. Admin
             required.

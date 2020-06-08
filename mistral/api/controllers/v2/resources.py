@@ -121,7 +121,7 @@ class Workflow(resource.Resource, ScopedResource):
                               "output": []}
                    )
 
-    def _set_attributes_from_spec(self, wf_spec):
+    def set_attributes_from_spec(self, wf_spec):
         #  Sets input and interface fields for the Workflow resource.
         self._set_input(wf_spec)
         self._set_interface(wf_spec)
@@ -146,20 +146,23 @@ class Workflow(resource.Resource, ScopedResource):
 
         if wf_spec:
             self.interface['input'] = wf_spec.get('input', [])
-            self.interface['output'] = [output for output
-                                        in wf_spec.get('output', {})]
+            self.interface['output'] = [
+                output for output in wf_spec.get('output', {})
+            ]
 
     @classmethod
     def from_dict(cls, d):
         obj = super(Workflow, cls).from_dict(d)
-        obj._set_attributes_from_spec(d.get('spec'))
+
+        obj.set_attributes_from_spec(d.get('spec'))
 
         return obj
 
     @classmethod
     def from_db_model(cls, db_model):
         obj = super(Workflow, cls).from_db_model(db_model)
-        obj._set_attributes_from_spec(db_model.get('spec'))
+
+        obj.set_attributes_from_spec(db_model.get('spec'))
 
         return obj
 
@@ -177,7 +180,7 @@ class Workflow(resource.Resource, ScopedResource):
                 spec = col_val
 
         if spec:
-            obj._set_attributes_from_spec(spec)
+            obj.set_attributes_from_spec(spec)
 
         return obj
 

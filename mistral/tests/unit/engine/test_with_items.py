@@ -23,7 +23,6 @@ from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
 from mistral.services import workflows as wf_service
-from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import data_flow
 from mistral.workflow import states
@@ -553,7 +552,7 @@ class WithItemsEngineTest(base.EngineTestCase):
                   one_two_three: <% task(task1).result %>
         """
         # Register random sleep action in the DB.
-        test_base.register_action_class('sleep_echo', RandomSleepEchoAction)
+        self.register_action_class('sleep_echo', RandomSleepEchoAction)
 
         wb_service.create_workbook_v2(wb_text)
 

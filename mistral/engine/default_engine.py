@@ -86,32 +86,42 @@ class DefaultEngine(base.Engine):
     def start_action(self, action_name, action_input,
                      description=None, namespace='', **params):
         with db_api.transaction():
-            action = action_handler.build_action_by_name(action_name,
-                                                         namespace=namespace)
+            engine_action = action_handler.build_action_by_name(
+                action_name,
+                namespace=namespace
+            )
 
-            action.validate_input(action_input)
+            action_desc = engine_action.action_desc
+
+            action_desc.check_parameters(action_input)
 
             sync = params.get('run_sync')
             save = params.get('save_result')
             target = params.get('target')
             timeout = params.get('timeout')
 
-            is_action_sync = action.is_sync(action_input)
+            # In order to know if it's sync or not we have to instantiate
+            # the actual runnable action.
+            action = action_desc.instantiate(action_input, {})
+
+            is_action_sync = action.is_sync()
 
             if sync and not is_action_sync:
                 raise exceptions.InputException(
                     "Action does not support synchronous execution.")
 
             if not sync and (save or not is_action_sync):
-                action.schedule(action_input, target, timeout=timeout)
-                return action.action_ex.get_clone()
+                engine_action.schedule(action_input, target, timeout=timeout)
 
-            output = action.run(
+                return engine_action.action_ex.get_clone()
+
+            output = engine_action.run(
                 action_input,
                 target,
                 save=False,
                 timeout=timeout
             )
+
             state = states.SUCCESS if output.is_success() else states.ERROR
 
             if not save:
@@ -125,6 +135,7 @@ class DefaultEngine(base.Engine):
                     state=state,
                     workflow_namespace=namespace
                 )
+
             action_ex_id = u.generate_unicode_uuid()
 
             values = {

@@ -15,6 +15,8 @@
 
 from oslo_config import cfg
 
+from mistral_lib import actions as ml_actions
+
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
 from mistral.services import workbooks as wb_service
@@ -289,6 +291,7 @@ class AdhocActionsTest(base.EngineTestCase):
               - my_param
 
             base: std.async_noop
+            output: (((<% $ %>)))
 
         workflows:
           my_wf:
@@ -301,7 +304,23 @@ class AdhocActionsTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('my_wb1.my_wf')
 
-        self.await_workflow_running(wf_ex.id)
+        self.await_workflow_running(wf_ex.id, timeout=4)
+
+        with db_api.transaction(read_only=True):
+            wf_ex = db_api.get_workflow_execution(wf_ex.id)
+            wf_ex_id = wf_ex.id
+
+            a_ex_id = wf_ex.task_executions[0].action_executions[0].id
+
+        self.engine.on_action_complete(a_ex_id, ml_actions.Result(data='Hi!'))
+
+        self.await_action_success(a_ex_id)
+        self.await_workflow_success(wf_ex_id)
+
+        with db_api.transaction(read_only=True):
+            a_ex = db_api.get_action_execution(a_ex_id)
+
+            self.assertEqual('(((Hi!)))', a_ex.output.get('result'))
 
     def test_adhoc_action_definition_with_namespace(self):
         namespace1 = 'ad-hoc_test'
@@ -375,22 +394,16 @@ class AdhocActionsTest(base.EngineTestCase):
             wf_namespace=namespace
         )
 
-        self.await_workflow_success(wf_ex.id)
+        self.await_workflow_success(wf_ex.id, timeout=5)
 
         with db_api.transaction():
             action_execs = db_api.get_action_executions(
-                name='std.echo',
+                name='my_wb.test_env',
                 workflow_namespace=namespace
             )
 
             self.assertEqual(1, len(action_execs))
 
-            context = action_execs[0].runtime_context
-
-            self.assertEqual(
-                'my_wb.test_env',
-                context.get('adhoc_action_name')
-            )
             self.assertEqual(namespace, action_execs[0].workflow_namespace)
 
     def test_adhoc_action_runtime_context_name(self):
@@ -403,12 +416,6 @@ class AdhocActionsTest(base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
         with db_api.transaction():
-            action_execs = db_api.get_action_executions(name='std.echo')
+            action_execs = db_api.get_action_executions(name='my_wb.test_env')
 
             self.assertEqual(1, len(action_execs))
-
-            action_name = action_execs[0].runtime_context.get(
-                'adhoc_action_name'
-            )
-
-            self.assertEqual('my_wb.test_env', action_name)

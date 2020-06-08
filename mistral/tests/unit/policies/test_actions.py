@@ -17,12 +17,14 @@ from unittest import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models
+from mistral.services import adhoc_actions
 from mistral.tests.unit.api import base
 from mistral.tests.unit.mstrlfixtures import policy_fixtures
 
+
 MOCK_DELETE = mock.MagicMock(return_value=None)
 
-ACTION_DEFINITION = """
+ADHOC_ACTION_YAML = """
 ---
 version: '2.0'
 
@@ -33,15 +35,17 @@ my_action:
   base-input:
     output: "{$.str1}{$.str2}"
 """
-ACTION_DB = models.ActionDefinition(
+
+ADHOC_ACTION_DEF = models.ActionDefinition(
     id='123e4567-e89b-12d3-a456-426655440000',
     name='my_action',
     is_system=False,
     description='My super cool action.',
     tags=['test', 'v2'],
-    definition=ACTION_DEFINITION
+    definition=ADHOC_ACTION_YAML
 )
-MOCK_ACTION = mock.MagicMock(return_value=ACTION_DB)
+
+MOCK_ACTION = mock.MagicMock(return_value=ADHOC_ACTION_DEF)
 
 
 class TestActionPolicy(base.APITest):
@@ -57,17 +61,19 @@ class TestActionPolicy(base.APITest):
     """
 
     def setUp(self):
-        self.policy = self.useFixture(policy_fixtures.PolicyFixture())
         super(TestActionPolicy, self).setUp()
+
+        self.policy = self.useFixture(policy_fixtures.PolicyFixture())
 
     @mock.patch.object(db_api, "create_action_definition")
     def test_action_create_not_allowed(self, mock_obj):
         self.policy.change_policy_definition(
             {"actions:create": "role:FAKE"}
         )
+
         resp = self.app.post(
             '/v2/actions',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -79,9 +85,10 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:create": "role:FAKE or rule:admin_or_owner"}
         )
+
         resp = self.app.post(
             '/v2/actions',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -94,9 +101,10 @@ class TestActionPolicy(base.APITest):
             "actions:create": "role:FAKE or rule:admin_or_owner",
             "actions:publicize": "role:FAKE"
         })
+
         resp = self.app.post(
             '/v2/actions?scope=public',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -109,9 +117,10 @@ class TestActionPolicy(base.APITest):
             "actions:create": "role:FAKE or rule:admin_or_owner",
             "actions:publicize": "role:FAKE or rule:admin_or_owner"
         })
+
         resp = self.app.post(
             '/v2/actions?scope=public',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -124,10 +133,8 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:delete": "role:FAKE"}
         )
-        resp = self.app.delete(
-            '/v2/actions/123',
-            expect_errors=True
-        )
+
+        resp = self.app.delete('/v2/actions/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -137,34 +144,29 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:delete": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.delete(
-            '/v2/actions/123',
-            expect_errors=True
-        )
+
+        resp = self.app.delete('/v2/actions/123', expect_errors=True)
 
         self.assertEqual(204, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     def test_action_get_not_allowed(self):
         self.policy.change_policy_definition(
             {"actions:get": "role:FAKE"}
         )
-        resp = self.app.get(
-            '/v2/actions/123',
-            expect_errors=True
-        )
+
+        resp = self.app.get('/v2/actions/123', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
-    @mock.patch.object(db_api, "get_action_definition", MOCK_ACTION)
     def test_action_get_allowed(self):
+        # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
         self.policy.change_policy_definition(
             {"actions:get": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/actions/123',
-            expect_errors=True
-        )
+
+        resp = self.app.get('/v2/actions/my_action')
 
         self.assertEqual(200, resp.status_int)
 
@@ -172,10 +174,8 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:list": "role:FAKE"}
         )
-        resp = self.app.get(
-            '/v2/actions',
-            expect_errors=True
-        )
+
+        resp = self.app.get('/v2/actions', expect_errors=True)
 
         self.assertEqual(403, resp.status_int)
 
@@ -183,10 +183,8 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:list": "role:FAKE or rule:admin_or_owner"}
         )
-        resp = self.app.get(
-            '/v2/actions',
-            expect_errors=True
-        )
+
+        resp = self.app.get('/v2/actions', expect_errors=True)
 
         self.assertEqual(200, resp.status_int)
 
@@ -195,9 +193,10 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:update": "role:FAKE"}
         )
+
         resp = self.app.put(
             '/v2/actions',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -209,9 +208,10 @@ class TestActionPolicy(base.APITest):
         self.policy.change_policy_definition(
             {"actions:update": "role:FAKE or rule:admin_or_owner"}
         )
+
         resp = self.app.put(
             '/v2/actions',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -224,9 +224,10 @@ class TestActionPolicy(base.APITest):
             "actions:update": "role:FAKE or rule:admin_or_owner",
             "actions:publicize": "role:FAKE"
         })
+
         resp = self.app.put(
             '/v2/actions?scope=public',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )
@@ -239,9 +240,10 @@ class TestActionPolicy(base.APITest):
             "actions:update": "role:FAKE or rule:admin_or_owner",
             "actions:publicize": "role:FAKE or rule:admin_or_owner"
         })
+
         resp = self.app.put(
             '/v2/actions?scope=public',
-            ACTION_DEFINITION,
+            ADHOC_ACTION_YAML,
             headers={'Content-Type': 'text/plain'},
             expect_errors=True
         )

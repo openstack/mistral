@@ -33,6 +33,7 @@ from mistral import exceptions as exc
 from mistral import expressions as expr
 from mistral.notifiers import base as notif
 from mistral.notifiers import notification_events as events
+from mistral.services import actions as action_service
 from mistral.utils import wf_trace
 from mistral.workflow import base as wf_base
 from mistral.workflow import commands
@@ -666,8 +667,6 @@ class RegularTask(Task):
 
         action = self._build_action()
 
-        action.validate_input(input_dict)
-
         action.schedule(
             input_dict,
             target,
@@ -714,40 +713,66 @@ class RegularTask(Task):
             overwrite=False
         )
 
+    def _get_action_name(self):
+        result = self.task_spec.get_action_name()
+
+        # An action name can be an expression so we reevaluate it.
+        if result:
+            result = self.evaluate(result)
+
+        if not result:
+            result = 'std.noop'
+
+        return result
+
     def _build_action(self):
-        action_name = self.task_spec.get_action_name()
         wf_name = self.task_spec.get_workflow_name()
 
-        # For dynamic workflow evaluation we regenerate the action.
+        # A workflow name can be an expression so we reevaluate it.
         if wf_name:
             return actions.WorkflowAction(
                 wf_name=self.evaluate(wf_name),
                 task_ex=self.task_ex
             )
 
-        # For dynamic action evaluation we just regenerate the name.
-        if action_name:
-            action_name = self.evaluate(action_name)
+        action_desc = self._get_action_descriptor()
 
-        if not action_name:
-            action_name = 'std.noop'
-
-        action_def = actions.resolve_action_definition(
-            action_name,
-            self.wf_ex.name,
-            self.wf_spec.get_name(),
-            namespace=self.wf_ex.workflow_namespace
+        return actions.RegularAction(
+            action_desc=action_desc,
+            task_ex=self.task_ex,
+            task_ctx=self.ctx
         )
 
-        if action_def.spec:
-            return actions.AdHocAction(
-                action_def,
-                task_ex=self.task_ex,
-                task_ctx=self.ctx,
-                wf_ctx=self.wf_ex.context
+    def _get_action_descriptor(self):
+        res = None
+
+        action_name = self._get_action_name()
+        namespace = self.wf_ex.workflow_namespace
+
+        provider = action_service.get_system_action_provider()
+
+        wb_name = self.wf_ex.runtime_context.get('wb_name')
+
+        if wb_name:
+            # First try to find the action within the same workbook
+            # that the workflow belongs to.
+            res = provider.find(
+                '%s.%s' % (wb_name, action_name),
+                namespace=namespace
             )
 
-        return actions.PythonAction(action_def, task_ex=self.task_ex)
+        if res is None:
+            # Now try to find by the action name as it appears in the
+            # workflow text.
+            res = provider.find(action_name, namespace=namespace)
+
+        if res is None:
+            raise exc.MistralException(
+                "Failed to find action [action_name=%s, namespace=%s]"
+                % (action_name, namespace)
+            )
+
+        return res
 
     def _get_timeout(self):
         timeout = self.task_spec.get_policies().get_timeout()
@@ -842,8 +867,6 @@ class WithItemsTask(RegularTask):
             target = self._get_target(input_dict)
 
             action = self._build_action()
-
-            action.validate_input(input_dict)
 
             action.schedule(
                 input_dict,

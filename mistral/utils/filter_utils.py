@@ -13,6 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import datetime
+from dateutil import parser as dateparser
+
+
 EQUALS = 'eq'
 NOT_EQUAL = 'neq'
 LESS_THAN = 'lt'
@@ -23,9 +27,17 @@ IN = 'in'
 NOT_IN = 'nin'
 HAS = 'has'
 
-ALL = (GREATER_THAN_EQUALS, GREATER_THAN,
-       LESS_THAN_EQUALS, HAS, NOT_EQUAL,
-       LESS_THAN, IN, EQUALS, NOT_IN)
+ALL = (
+    EQUALS,
+    NOT_EQUAL,
+    GREATER_THAN,
+    GREATER_THAN_EQUALS,
+    LESS_THAN,
+    LESS_THAN_EQUALS,
+    HAS,
+    IN,
+    NOT_IN
+)
 
 
 def create_filters_from_request_params(none_values=None, **params):
@@ -95,4 +107,62 @@ def has_filters(value):
     for filter_type in ALL:
         if value.startswith(filter_type + ':'):
             return True
+
     return False
+
+
+def match_filter(obj, attr_name, attr_filter):
+    # If the attribute doesn't exist we assume that any filter is
+    # not applicable and we ignore it.
+    if not hasattr(obj, attr_name):
+        return True
+
+    attr_val = getattr(obj, attr_name)
+
+    for op, val in attr_filter.items():
+        # If the attribute is a date and the given filter value is a string
+        # we try to convert the filter value into a data as well.
+        if isinstance(attr_val, datetime.datetime) and isinstance(val, str):
+            val = dateparser.isoparse(val)
+
+        if op not in ALL:
+            raise ValueError(
+                'Unknown filter operation encountered [operation=%s]' % op
+            )
+
+        if op == EQUALS and attr_val != val:
+            return False
+
+        if op == NOT_EQUAL and attr_val == val:
+            return False
+
+        if op == LESS_THAN and attr_val >= val:
+            return False
+
+        if op == LESS_THAN_EQUALS and attr_val > val:
+            return False
+
+        if op == GREATER_THAN and attr_val <= val:
+            return False
+
+        if op == GREATER_THAN_EQUALS and attr_val < val:
+            return False
+
+        if op == IN and attr_val not in val:
+            return False
+
+        if op == NOT_IN and attr_val in val:
+            return False
+
+        if op == HAS and val not in attr_val:
+            return False
+
+    return True
+
+
+def match_filters(obj, filters):
+    for attr_name, attr_filter in filters.items():
+        if not match_filter(obj, attr_name, attr_filter):
+            return False
+
+    return True

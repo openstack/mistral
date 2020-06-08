@@ -63,6 +63,35 @@ auth_type_opt = cfg.StrOpt(
     help=_('Authentication type (valid options: keystone, keycloak-oidc)')
 )
 
+legacy_action_provider_opts = [
+    cfg.BoolOpt(
+        'load_action_plugins',
+        default=True,
+        help=_(
+            'If True, enables loading actions configured in the '
+            'entry point "mistral.actions".'
+        )
+    ),
+    cfg.BoolOpt(
+        'load_action_generators',
+        default=True,
+        help=_(
+            'If True, enables loading actions from action generators '
+            'configured in the entry point "mistral.generators".'
+        )
+    ),
+    cfg.BoolOpt(
+        'only_builtin_actions',
+        default=False,
+        help=_(
+            'If True, then the legacy action provider loads only '
+            'the actions delivered by the Mistral project out of '
+            'the box plugged in with the entry point "mistral.actions".'
+            'This property is needed mostly for testing.'
+        )
+    ),
+]
+
 api_opts = [
     cfg.HostAddressOpt(
         'host',
@@ -645,6 +674,7 @@ yaql_opts = [
 
 CONF = cfg.CONF
 
+LEGACY_ACTION_PROVIDER_GROUP = 'legacy_action_provider'
 API_GROUP = 'api'
 ENGINE_GROUP = 'engine'
 EXECUTOR_GROUP = 'executor'
@@ -671,6 +701,10 @@ CONF.register_opt(rpc_response_timeout_opt)
 CONF.register_opt(oslo_rpc_executor)
 CONF.register_opt(expiration_token_duration)
 
+CONF.register_opts(
+    legacy_action_provider_opts,
+    group=LEGACY_ACTION_PROVIDER_GROUP
+)
 CONF.register_opts(api_opts, group=API_GROUP)
 CONF.register_opts(engine_opts, group=ENGINE_GROUP)
 CONF.register_opts(executor_opts, group=EXECUTOR_GROUP)

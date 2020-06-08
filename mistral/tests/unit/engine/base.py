@@ -28,9 +28,9 @@ from mistral.executors import executor_server
 from mistral.notifiers import notification_server as notif_server
 from mistral.rpc import base as rpc_base
 from mistral.rpc import clients as rpc_clients
+from mistral.services import actions as action_service
 from mistral.tests.unit import base
 from mistral.workflow import states
-
 
 LOG = logging.getLogger(__name__)
 
@@ -50,6 +50,12 @@ def launch_service(s):
 class EngineTestCase(base.DbTestCase):
     def setUp(self):
         super(EngineTestCase, self).setUp()
+
+        # We assume that most tests don't need a remote executor.
+        # But this option can be overridden on a test level, if needed,
+        # because an executor instance (local or a client to a remote one)
+        # is obtained by engine dynamically on every need.
+        self.override_config('type', 'local', 'executor')
 
         # Get transport here to let oslo.messaging setup default config
         # before changing the rpc_backend to the fake driver; otherwise,
@@ -75,8 +81,12 @@ class EngineTestCase(base.DbTestCase):
             exe_svc = executor_server.get_oslo_service(setup_profiler=False)
 
             self.executor = exe_svc.executor
+
             self.threads.append(eventlet.spawn(launch_service, exe_svc))
+
             self.addCleanup(exe_svc.stop, True)
+        else:
+            self.executor = exe.get_executor(cfg.CONF.executor.type)
 
         # Start remote notifier.
         if cfg.CONF.notifier.type == 'remote':
@@ -103,6 +113,10 @@ class EngineTestCase(base.DbTestCase):
 
         self.addOnException(self.print_executions)
         self.addCleanup(self.kill_threads)
+
+        # This call ensures that all plugged in action providers are
+        # properly initialized.
+        action_service.get_system_action_provider()
 
         # Make sure that both services fully started, otherwise
         # the test may run too early.

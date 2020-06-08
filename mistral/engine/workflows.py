@@ -346,7 +346,7 @@ class Workflow(object, metaclass=abc.ABCMeta):
         return final_ctx
 
     def _create_execution(self, wf_def, wf_ex_id, input_dict, desc, params):
-        self.wf_ex = db_api.create_workflow_execution({
+        values = {
             'id': wf_ex_id,
             'name': wf_def.name,
             'description': desc,
@@ -359,10 +359,13 @@ class Workflow(object, metaclass=abc.ABCMeta):
             'output': {},
             'task_execution_id': params.get('task_execution_id'),
             'root_execution_id': params.get('root_execution_id'),
-            'runtime_context': {
-                'index': params.get('index', 0)
-            },
-        })
+            'runtime_context': {'index': params.get('index', 0)}
+        }
+
+        if wf_def.workbook_name:
+            values['runtime_context']['wb_name'] = wf_def.workbook_name
+
+        self.wf_ex = db_api.create_workflow_execution(values)
 
         self.wf_ex.input = input_dict or {}
 

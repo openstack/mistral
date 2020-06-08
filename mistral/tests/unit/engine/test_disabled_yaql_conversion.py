@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+from mistral.actions import std_actions
 from mistral.db.v2 import api as db_api
 from mistral.engine import engine_server
 from mistral import exceptions as exc
@@ -237,7 +238,5 @@ class DisabledYAQLConversionTest(engine_test_base.EngineTestCase):
             # action parameters.
             args = mocked.call_args[0]
 
-            self.assertEqual(action_ex.id, args[0])
-            self.assertEqual('mistral.actions.std_actions.EchoAction', args[1])
-            self.assertDictEqual({}, args[2])
-            self.assertDictEqual(action_ex.input, args[3])
+            self.assertIsInstance(args[0], std_actions.EchoAction)
+            self.assertEqual(action_ex.id, args[1])

@@ -30,11 +30,10 @@ from mistral.db.sqlalchemy import base as db_sa_base
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral.db.v2 import api as db_api
 from mistral.lang import parser as spec_parser
-from mistral.services import action_manager
+from mistral.services import actions as action_service
 from mistral.services import security
 from mistral.tests.unit import config as test_config
 from mistral import version
-from mistral_lib.utils import inspect_utils as i_utils
 
 RESOURCES_PATH = 'tests/resources/'
 LOG = logging.getLogger(__name__)
@@ -68,15 +67,6 @@ def get_context(default=True, admin=False):
         })
 
 
-def register_action_class(name, cls, attributes=None, desc=None):
-    action_manager.register_action_class(
-        name,
-        '%s.%s' % (cls.__module__, cls.__name__),
-        attributes or {},
-        input_str=i_utils.get_arg_list_as_str(cls.__init__)
-    )
-
-
 class FakeHTTPResponse(object):
     def __init__(self, text, status_code, reason=None, headers=None,
                  history=None, encoding='utf-8', url='', cookies=None,
@@ -100,11 +90,32 @@ class BaseTest(base.BaseTestCase):
     def setUp(self):
         super(BaseTest, self).setUp()
 
+        # By default, retain only built-in actions so that the unit tests
+        # don't see unexpected actions (i.e. provided by action generators
+        # installed by other projects).
+        self.override_config(
+            'only_builtin_actions',
+            True,
+            'legacy_action_provider'
+        )
+        self.override_config(
+            'load_action_generators',
+            False,
+            'legacy_action_provider'
+        )
+
         self.addCleanup(spec_parser.clear_caches)
 
-    def register_action_class(self, name, cls, attributes=None, desc=None):
-        # Added for convenience (to avoid unnecessary imports).
-        register_action_class(name, cls, attributes, desc)
+        def _cleanup_actions():
+            action_service.get_test_action_provider().cleanup()
+
+        self.addCleanup(_cleanup_actions)
+
+    def register_action_class(self, name, cls):
+        action_service.get_test_action_provider().register_python_action(
+            name,
+            cls
+        )
 
     def assertRaisesWithMessage(self, exception, msg, func, *args, **kwargs):
         try:
@@ -269,11 +280,7 @@ class DbTestCase(BaseTest):
 
         db_api.setup_db()
 
-        action_manager.sync_db()
-
     def _clean_db(self):
-        db_api._ACTION_DEF_CACHE.clear()
-
         contexts = [
             get_context(default=False),
             get_context(default=True)
@@ -292,6 +299,7 @@ class DbTestCase(BaseTest):
                     db_api.delete_action_executions()
                     db_api.delete_workbooks()
                     db_api.delete_workflow_definitions()
+                    db_api.delete_action_definitions()
                     db_api.delete_environments()
                     db_api.delete_resource_members()
                     db_api.delete_delayed_calls()
@@ -308,6 +316,7 @@ class DbTestCase(BaseTest):
         self.__heavy_init()
 
         self.ctx = get_context()
+
         auth_context.set_ctx(self.ctx)
 
         self.addCleanup(auth_context.set_ctx, None)

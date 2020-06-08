@@ -41,6 +41,8 @@ def _compare_parameters(expected_input, actual_input):
     return missing_params, unexpected_params
 
 
+# TODO(rakhmerov): this method now should probably belong to workflows.
+# It's not related to actions anymore.
 def validate_input(expected_input, actual_input, obj_name, obj_class):
     actual_input = actual_input or {}
 

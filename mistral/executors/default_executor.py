@@ -18,13 +18,11 @@ from mistral_lib import actions as mistral_lib
 from oslo_log import log as logging
 from osprofiler import profiler
 
-from mistral.actions import action_factory as a_f
 from mistral import context
 from mistral import exceptions as exc
 from mistral.executors import base
 from mistral.rpc import clients as rpc
 from mistral.services import action_heartbeat_sender
-from mistral_lib.utils import inspect_utils as i_u
 
 LOG = logging.getLogger(__name__)
 
@@ -34,18 +32,14 @@ class DefaultExecutor(base.Executor):
         self._engine_client = rpc.get_engine_client()
 
     @profiler.trace('default-executor-run-action', hide_args=True)
-    def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, execution_context, redelivered=False,
-                   target=None, async_=True, timeout=None):
+    def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
+                   redelivered=False, target=None, async_=True, timeout=None):
         """Runs action.
 
+        :param action: Action to run.
         :param action_ex_id: Action execution id.
-        :param action_cls_str: Path to action class in dot notation.
-        :param action_cls_attrs: Attributes of action class which
-            will be set to.
-        :param params: Action parameters.
         :param safe_rerun: Tells if given action can be safely rerun.
-        :param execution_context: A dict of values providing information about
+        :param exec_ctx: A dict of values providing information about
             the current execution.
         :param redelivered: Tells if given action was run before on another
             executor.
@@ -61,11 +55,9 @@ class DefaultExecutor(base.Executor):
             action_heartbeat_sender.add_action(action_ex_id)
 
             return self._do_run_action(
-                action_cls_attrs,
-                action_cls_str,
+                action,
                 action_ex_id,
-                execution_context,
-                params,
+                exec_ctx,
                 redelivered,
                 safe_rerun,
                 timeout
@@ -73,8 +65,8 @@ class DefaultExecutor(base.Executor):
         finally:
             action_heartbeat_sender.remove_action(action_ex_id)
 
-    def _do_run_action(self, action_cls_attrs, action_cls_str, action_ex_id,
-                       execution_context, params, redelivered, safe_rerun,
+    def _do_run_action(self, action, action_ex_id, exec_ctx,
+                       redelivered, safe_rerun,
                        timeout):
         def send_error_back(error_msg):
             error_result = mistral_lib.Result(error=error_msg)
@@ -88,36 +80,13 @@ class DefaultExecutor(base.Executor):
                 return None
 
             return error_result
+
         if redelivered and not safe_rerun:
             msg = (
-                "Request to run action %s was redelivered, but action %s "
-                "cannot be re-run safely. The only safe thing to do is fail "
-                "action." % (action_cls_str, action_cls_str)
+                "Request to run an action was redelivered, but it cannot "
+                "be re-run safely. The only safe thing to do is fail "
+                "it [action=%s]." % action
             )
-
-            return send_error_back(msg)
-
-        # Load action module.
-        action_cls = a_f.construct_action_class(
-            action_cls_str,
-            action_cls_attrs
-        )
-
-        # Instantiate action.
-        try:
-            action = action_cls(**params)
-        except Exception as e:
-            msg = (
-                "Failed to initialize action %s. Action init params = %s. "
-                "Actual init params = %s. More info: %s" % (
-                    action_cls_str,
-                    i_u.get_arg_list(action_cls.__init__),
-                    params.keys(),
-                    e
-                )
-            )
-
-            LOG.warning(msg)
 
             return send_error_back(msg)
 
@@ -127,9 +96,11 @@ class DefaultExecutor(base.Executor):
                 # NOTE(d0ugal): If the action is a subclass of mistral-lib we
                 # know that it expects to be passed the context.
                 if isinstance(action, mistral_lib.Action):
-                    action_ctx = context.create_action_context(
-                        execution_context)
-                    result = action.run(action_ctx)
+                    print("Action:", action)
+
+                    result = action.run(
+                        context.create_action_context(exec_ctx)
+                    )
                 else:
                     result = action.run()
 
@@ -141,14 +112,8 @@ class DefaultExecutor(base.Executor):
 
         except BaseException as e:
             msg = (
-                "The action raised an exception [action_ex_id=%s, msg='%s', "
-                "action_cls='%s', attributes='%s', params='%s']" % (
-                    action_ex_id,
-                    e,
-                    action_cls,
-                    action_cls_attrs,
-                    params
-                )
+                "The action raised an exception [action=%s, action_ex_id=%s, "
+                "msg='%s']" % (action, action_ex_id, e)
             )
 
             LOG.warning(msg, exc_info=True)
@@ -172,14 +137,8 @@ class DefaultExecutor(base.Executor):
             # serialized.
             msg = (
                 "Failed to complete action due to a Mistral exception "
-                "[action_ex_id=%s, action_cls='%s', "
-                "attributes='%s', params='%s']\n %s" % (
-                    action_ex_id,
-                    action_cls,
-                    action_cls_attrs,
-                    params,
-                    e
-                )
+                "[action=%s, action_ex_id=%s]\n %s" %
+                (action, action_ex_id, e)
             )
 
             LOG.exception(msg)
@@ -190,14 +149,8 @@ class DefaultExecutor(base.Executor):
             # log the error.
             msg = (
                 "Failed to complete action due to an unexpected exception "
-                "[action_ex_id=%s, action_cls='%s', "
-                "attributes='%s', params='%s']\n %s" % (
-                    action_ex_id,
-                    action_cls,
-                    action_cls_attrs,
-                    params,
-                    e
-                )
+                "[action=%s, action_ex_id=%s]\n %s" %
+                (action, action_ex_id, e)
             )
 
             LOG.exception(msg)

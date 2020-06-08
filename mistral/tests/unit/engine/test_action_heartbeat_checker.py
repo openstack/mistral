@@ -36,6 +36,8 @@ class ActionHeartbeatCheckerTest(base.EngineTestCase):
 
         super(ActionHeartbeatCheckerTest, self).setUp()
 
+        self.override_config('type', 'remote', 'executor')
+
     # Make sure actions are not sent to an executor.
     @mock.patch.object(
         rpc_clients.ExecutorClient,

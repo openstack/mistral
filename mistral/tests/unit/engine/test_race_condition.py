@@ -19,7 +19,6 @@ import testtools
 
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
-from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 from mistral_lib import actions as actions_base
@@ -122,7 +121,7 @@ class EngineActionRaceConditionTest(base.EngineTestCase):
         ACTION_SEMAPHORE = semaphore.Semaphore(1)
         TEST_SEMAPHORE = semaphore.Semaphore(0)
 
-        test_base.register_action_class('test.block', BlockingAction)
+        self.register_action_class('test.block', BlockingAction)
 
     @staticmethod
     def block_action():

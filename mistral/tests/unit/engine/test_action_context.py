@@ -14,7 +14,6 @@ from unittest import mock
 
 from mistral.db.v2 import api as db_api
 from mistral.services import workflows as wf_service
-from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral_lib import actions as actions_base
 
@@ -31,7 +30,6 @@ wf:
 
 
 class MyAction(actions_base.Action):
-
     def run(self, context):
         pass
 
@@ -40,7 +38,7 @@ class ActionContextTest(base.EngineTestCase):
     def setUp(self):
         super(ActionContextTest, self).setUp()
 
-        test_base.register_action_class('my_action', MyAction)
+        self.register_action_class('my_action', MyAction)
 
     @mock.patch.object(MyAction, 'run', return_value=None)
     def test_context(self, mocked_run):
@@ -52,6 +50,7 @@ class ActionContextTest(base.EngineTestCase):
         self.await_workflow_success(wf_ex.id)
 
         self.assertEqual(1, len(mocked_run.call_args_list))
+
         action_context = mocked_run.call_args[0][0]
         exec_context = action_context.execution
 

@@ -19,8 +19,9 @@ from mistral.executors import default_executor as exe
 from mistral.rpc import base as rpc
 from mistral.service import base as service_base
 from mistral.services import action_heartbeat_sender
+from mistral.services import actions as action_service
 from mistral.utils import profiler as profiler_utils
-from mistral_lib import utils
+
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -48,6 +49,10 @@ class ExecutorServer(service_base.MistralService):
         if self._setup_profiler:
             profiler_utils.setup('mistral-executor', cfg.CONF.executor.host)
 
+        # Initialize action providers to make sure all action classes
+        # are initially imported.
+        action_service.get_system_action_provider()
+
         # Initialize and start RPC server.
 
         self._rpc_server = rpc.get_rpc_server_driver()(cfg.CONF.executor)
@@ -65,53 +70,45 @@ class ExecutorServer(service_base.MistralService):
         if self._rpc_server:
             self._rpc_server.stop(graceful)
 
-    def run_action(self, rpc_ctx, action_ex_id, action_cls_str,
-                   action_cls_attrs, params, safe_rerun, execution_context,
+    def run_action(self, rpc_ctx, action, action_ex_id, safe_rerun, exec_ctx,
                    timeout):
+
         """Receives calls over RPC to run action on executor.
 
+        :param rpc_ctx: RPC request context dictionary.
+        :param action: Action.
+        :param action_ex_id: Action execution id.
+        :param safe_rerun: Tells if given action can be safely rerun.
+        :param exec_ctx: A dict of values providing information about
+            the current execution.
         :param timeout: a period of time in seconds after which execution of
             action will be interrupted
-        :param execution_context: A dict of values providing information about
-            the current execution.
-        :param rpc_ctx: RPC request context dictionary.
-        :param action_ex_id: Action execution id.
-        :param action_cls_str: Action class name.
-        :param action_cls_attrs: Action class attributes.
-        :param params: Action input parameters.
-        :param safe_rerun: Tells if given action can be safely rerun.
         :return: Action result.
         """
-
         LOG.debug(
-            "Received RPC request 'run_action'[action_ex_id=%s, "
-            "action_cls_str=%s, action_cls_attrs=%s, params=%s, "
-            "timeout=%s]",
+            "Received RPC request 'run_action'"
+            "[action=%s, action_ex_id=%s, timeout=%s]",
+            action,
             action_ex_id,
-            action_cls_str,
-            action_cls_attrs,
-            utils.cut(params),
             timeout
         )
 
         redelivered = rpc_ctx.redelivered or False
 
         res = self.executor.run_action(
+            action,
             action_ex_id,
-            action_cls_str,
-            action_cls_attrs,
-            params,
             safe_rerun,
-            execution_context,
+            exec_ctx,
             redelivered,
             timeout=timeout
         )
 
         LOG.debug(
             "Sending action result to engine"
-            " [action_ex_id=%s, action_cls=%s]",
-            action_ex_id,
-            action_cls_str
+            " [action=%s, action_ex_id=%s]",
+            action,
+            action_ex_id
         )
 
         return res

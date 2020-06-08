@@ -18,7 +18,6 @@ import testtools
 from mistral.db.v2 import api as db_api
 from mistral.lang.v2 import tasks as tasks_lang
 from mistral.services import workflows as wf_service
-from mistral.tests.unit import base as test_base
 from mistral.tests.unit.engine import base
 from mistral.workflow import states
 from mistral_lib import actions as actions_base
@@ -35,14 +34,12 @@ class ActionWithExceptionInInit(actions_base.Action):
         super(ActionWithExceptionInInit, self).__init__()
 
         if aaa != "bbb":
-            raise Exception("Aaa doesn't equal bbb")
+            raise Exception("Aaa doesn't equal to bbb")
 
         self.aaa = aaa
 
     def run(self, context):
-        return actions_base.Result(
-            data=self.aaa
-        )
+        return actions_base.Result(data=self.aaa)
 
     def test(self):
         raise NotImplementedError
@@ -1370,7 +1367,7 @@ class JoinEngineTest(base.EngineTestCase):
             )
 
     def test_join_task_with_input_error(self):
-        test_base.register_action_class(
+        self.register_action_class(
             'my_action',
             ActionWithExceptionInInit
         )
@@ -1397,7 +1394,7 @@ class JoinEngineTest(base.EngineTestCase):
 
         wf_ex = self.engine.start_workflow('wf')
 
-        self.await_workflow_error(wf_ex.id)
+        self.await_workflow_error(wf_ex.id, timeout=5)
 
         with db_api.transaction():
             wf_ex = db_api.get_workflow_execution(wf_ex.id)
@@ -1406,5 +1403,4 @@ class JoinEngineTest(base.EngineTestCase):
 
         self._assert_single_item(t_execs, name='task1', state=states.SUCCESS)
         self._assert_single_item(t_execs, name='task2', state=states.SUCCESS)
-        self._assert_single_item(t_execs, name='join_task',
-                                 state=states.ERROR)
+        self._assert_single_item(t_execs, name='join_task', state=states.ERROR)

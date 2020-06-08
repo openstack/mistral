@@ -43,26 +43,23 @@ class Executor(object, metaclass=abc.ABCMeta):
     """Action executor interface."""
 
     @abc.abstractmethod
-    def run_action(self, action_ex_id, action_cls_str, action_cls_attrs,
-                   params, safe_rerun, execution_context, redelivered=False,
-                   target=None, async_=True, timeout=None):
-        """Runs action.
+    def run_action(self, action, action_ex_id, safe_rerun, exec_ctx,
+                   redelivered=False, target=None, async_=True, timeout=None):
+        """Runs the given action.
 
-        :param timeout: a period of time in seconds after which execution of
-            action will be interrupted
+        :param action: Action to run.
+            An instance of mistral_lib.actions.Action.
         :param action_ex_id: Corresponding action execution id.
-        :param action_cls_str: Path to action class in dot notation.
-        :param action_cls_attrs: Attributes of action class which
-            will be set to.
-        :param params: Action parameters.
         :param safe_rerun: Tells if given action can be safely rerun.
-        :param execution_context: A dict of values providing information about
+        :param exec_ctx: A dict of values providing information about
             the current execution.
         :param redelivered: Tells if given action was run before on another
             executor.
         :param target: Target (group of action executors).
         :param async_: If True, run action in asynchronous mode (w/o waiting
             for completion).
+        :param timeout: a period of time in seconds after which execution of
+            action will be interrupted
         :return: Action result.
         """
         raise NotImplementedError()
