@@ -22,6 +22,7 @@ from oslo_log import log as logging
 import pecan
 import six
 import sqlalchemy as sa
+from sqlalchemy.orm import exc as sa_exc
 import tenacity
 import webob
 from wsme import exc as wsme_exc
@@ -197,12 +198,24 @@ def get_all(list_cls, cls, get_all_function, get_function,
             )
 
             for db_model in db_models:
-                if resource_function:
-                    rest_resource = resource_function(db_model)
-                else:
-                    rest_resource = cls.from_db_model(db_model)
+                try:
+                    if resource_function:
+                        rest_resource = resource_function(db_model)
+                    else:
+                        rest_resource = cls.from_db_model(db_model)
 
-                rest_resources.append(rest_resource)
+                    rest_resources.append(rest_resource)
+                except sa_exc.ObjectDeletedError:
+                    # If the persistent object has been removed in a parallel
+                    # transaction then it just won't be included into the
+                    # result set and the warning will be printed into the log.
+                    LOG.warning(
+                        'The object must have been deleted while being fetched'
+                        ' with a list request [model_class=%s, id=%s]',
+                        type(db_model),
+                        db_model.id,
+                        exc_info=True
+                    )
 
     rest_resources = []
 

@@ -56,8 +56,11 @@ class TestGlobalPublish(base.APITest, engine_base.EngineTestCase):
         super(TestGlobalPublish, self).setUp()
 
         wf_service.create_workflows(WF_TEXT)
+
         wf_ex = self.engine.start_workflow('wf')
+
         self.await_workflow_success(wf_ex.id)
+
         self.wf_id = wf_ex.id
 
     def test_global_publish_in_task_exec(self):
