@@ -93,7 +93,7 @@ class ServiceCoordinatorTest(base.BaseTest):
         members = coordinator.get_members('fake_group')
 
         self.assertEqual(1, len(members))
-        self.assertItemsEqual((six.b('fake_id'),), members)
+        self.assertCountEqual((six.b('fake_id'),), members)
 
     def test_join_group_and_leave_group(self):
         cfg.CONF.set_default(
