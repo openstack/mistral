@@ -916,7 +916,7 @@ def delete_workflow_execution(id, session=None):
             raise exc.DBEntityNotFoundError(
                 "WorkflowExecution not found [id=%s]" % id
             )
-    except db_exc.DBError as e:
+    except Exception as e:
         if is_mysql_max_depth_error(e) or is_mariadb_max_depth_error(e):
             # https://bugs.launchpad.net/mistral/+bug/1832300
             # mysql cascade delete error
