@@ -75,7 +75,7 @@ class V8EvalEvaluator(JSEvaluator):
         ctx_str = utils.to_json_str(ctx)
 
         return v8.eval(
-            ('$ = %s; %s' % (ctx_str, script)).encode(encoding='UTF-8')
+            '$ = %s; %s' % (ctx_str, script)
         )
 
 
