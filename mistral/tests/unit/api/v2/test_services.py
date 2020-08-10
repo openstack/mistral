@@ -39,7 +39,7 @@ class TestServicesController(base.APITest):
         self.assertEqual(1, len(resp.json['services']))
 
         srv_ret = [{"name": "service1", "type": "api_group"}]
-        self.assertItemsEqual(srv_ret, resp.json['services'])
+        self.assertCountEqual(srv_ret, resp.json['services'])
 
     def test_get_all_without_backend(self):
         cfg.CONF.set_default('backend_url', None, 'coordination')
