@@ -5,7 +5,7 @@ coverage==4.0
 croniter==0.3.4
 doc8==0.6.0
 dogpile.cache==0.6.2
-eventlet==0.20.0
+eventlet==0.26.0
 fixtures==3.0.0
 Jinja2==2.10
 jsonschema==3.2.0
