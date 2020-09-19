@@ -1,5 +1,4 @@
 alembic==0.9.6
-Babel==2.3.4
 cachetools==2.0.0
 coverage==4.0
 croniter==0.3.4

@@ -3,7 +3,6 @@
 # process, which may cause wedges in the gate later.
 
 alembic>=0.9.6 # MIT
-Babel!=2.4.0,>=2.3.4 # BSD
 croniter>=0.3.4 # MIT License
 cachetools>=2.0.0 # MIT License
 dogpile.cache>=0.6.2 # BSD
