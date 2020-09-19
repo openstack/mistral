@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import abc
-import six
 
 from stevedore import driver
 
@@ -40,8 +39,7 @@ def get_executor(exec_type):
     return _EXECUTORS[exec_type]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Executor(object):
+class Executor(object, metaclass=abc.ABCMeta):
     """Action executor interface."""
 
     @abc.abstractmethod

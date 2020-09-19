@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import abc
-import six
 
 from oslo_log import log as logging
 from stevedore import driver
@@ -63,8 +62,7 @@ def get_notification_publisher(publisher_name):
     return _NOTIFICATION_PUBLISHERS[publisher_name]
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Notifier(object):
+class Notifier(object, metaclass=abc.ABCMeta):
     """Notifier interface."""
 
     @abc.abstractmethod
@@ -72,8 +70,7 @@ class Notifier(object):
         raise NotImplementedError()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class NotificationPublisher(object):
+class NotificationPublisher(object, metaclass=abc.ABCMeta):
     """Notifier plugin interface."""
 
     @abc.abstractmethod

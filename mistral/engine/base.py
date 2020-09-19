@@ -17,7 +17,6 @@
 
 import abc
 import jsonschema
-import six
 
 from mistral import exceptions as exc
 from mistral import utils
@@ -25,8 +24,7 @@ from mistral import utils
 from mistral_lib.utils import inspect_utils
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Engine(object):
+class Engine(object, metaclass=abc.ABCMeta):
     """Engine interface."""
 
     @abc.abstractmethod
@@ -145,8 +143,7 @@ class Engine(object):
         raise NotImplementedError
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TaskPolicy(object):
+class TaskPolicy(object, metaclass=abc.ABCMeta):
     """Task policy.
 
     Provides interface to perform any work after a task has completed.

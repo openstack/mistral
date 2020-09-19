@@ -27,7 +27,6 @@ from oslo_messaging.notify import listener
 from oslo_messaging import target
 from oslo_messaging import transport
 from oslo_utils import timeutils
-import six
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
@@ -68,8 +67,7 @@ def handle_event(self, ctxt, publisher_id, event_type, payload, metadata):
     return dispatcher.NotificationResult.HANDLED
 
 
-@six.add_metaclass(abc.ABCMeta)
-class NotificationEndpoint(object):
+class NotificationEndpoint(object, metaclass=abc.ABCMeta):
     """Message listener endpoint.
 
     Only handle notifications that match the NotificationFilter rule set into

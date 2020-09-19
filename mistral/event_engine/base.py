@@ -14,11 +14,9 @@
 #    limitations under the License.
 
 import abc
-import six
 
 
-@six.add_metaclass(abc.ABCMeta)
-class EventEngine(object):
+class EventEngine(object, metaclass=abc.ABCMeta):
     """Action event trigger interface."""
 
     @abc.abstractmethod
