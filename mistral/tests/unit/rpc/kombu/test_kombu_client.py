@@ -18,7 +18,7 @@ from mistral.tests.unit.rpc.kombu import base
 from mistral.tests.unit.rpc.kombu import fake_kombu
 from unittest import mock
 
-from six import moves
+import queue
 
 with mock.patch.dict('sys.modules', kombu=fake_kombu):
     from mistral.rpc.kombu import base as kombu_base
@@ -70,7 +70,7 @@ class KombuClientTest(base.KombuTestCase):
 
     def test_sync_call_result_not_get(self):
         self.client._listener.get_result = mock.MagicMock(
-            side_effect=moves.queue.Empty
+            side_effect=queue.Empty
         )
 
         self.assertRaises(

@@ -15,6 +15,7 @@
 
 import itertools
 from kombu.mixins import ConsumerMixin
+import queue
 import six
 import threading
 
@@ -38,7 +39,7 @@ class KombuRPCListener(ConsumerMixin):
         self.ready = eventletutils.Event()
 
     def add_listener(self, correlation_id):
-        self._results[correlation_id] = six.moves.queue.Queue()
+        self._results[correlation_id] = queue.Queue()
 
     def remove_listener(self, correlation_id):
         if correlation_id in self._results:

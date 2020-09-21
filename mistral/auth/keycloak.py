@@ -23,7 +23,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import pprint
 import requests
-from six.moves import urllib
+from urllib import parse
 
 from mistral._i18n import _
 from mistral import auth
@@ -161,7 +161,7 @@ class KeycloakAuthHandler(auth.AuthHandler):
 
         verify = None
 
-        if urllib.parse.urlparse(url).scheme == "https":
+        if parse.urlparse(url).scheme == "https":
             verify = False if insecure else cafile
 
         cert = (certfile, keyfile) if certfile and keyfile else None

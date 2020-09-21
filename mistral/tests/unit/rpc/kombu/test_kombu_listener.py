@@ -19,7 +19,7 @@ from mistral.tests.unit.rpc.kombu import fake_kombu
 from mistral_lib import utils
 from unittest import mock
 
-from six import moves
+import queue
 
 with mock.patch.dict('sys.modules', kombu=fake_kombu):
     from mistral.rpc.kombu import base as kombu_base
@@ -48,7 +48,7 @@ class KombuListenerTest(base.KombuTestCase):
 
         self.assertEqual(
             type(self.listener._results.get(correlation_id)),
-            moves.queue.Queue
+            queue.Queue
         )
 
         self.assertEqual(0, self.listener._results[correlation_id].qsize())
@@ -60,7 +60,7 @@ class KombuListenerTest(base.KombuTestCase):
 
         self.assertEqual(
             type(self.listener._results.get(correlation_id)),
-            moves.queue.Queue
+            queue.Queue
         )
 
         self.listener.remove_listener(correlation_id)
@@ -76,14 +76,14 @@ class KombuListenerTest(base.KombuTestCase):
 
         self.assertEqual(
             type(self.listener._results.get(correlation_id)),
-            moves.queue.Queue
+            queue.Queue
         )
 
         self.listener.remove_listener(utils.generate_unicode_uuid())
 
         self.assertEqual(
             type(self.listener._results.get(correlation_id)),
-            moves.queue.Queue
+            queue.Queue
         )
 
     @mock.patch('threading.Thread')
@@ -123,7 +123,7 @@ class KombuListenerTest(base.KombuTestCase):
         self.listener.add_listener(correlation_id)
 
         self.assertRaises(
-            moves.queue.Empty,
+            queue.Empty,
             self.listener.get_result,
             correlation_id,
             1  # timeout

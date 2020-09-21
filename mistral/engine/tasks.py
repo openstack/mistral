@@ -1017,11 +1017,11 @@ class WithItemsTask(RegularTask):
             indices = copy.copy(candidates)
 
             if max(candidates) < count - 1:
-                indices += list(six.moves.range(max(candidates) + 1, count))
+                indices += list(range(max(candidates) + 1, count))
         else:
             i = self._get_next_start_index()
 
-            indices = list(six.moves.range(i, count))
+            indices = list(range(i, count))
 
         return indices[:capacity]
 

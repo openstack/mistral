@@ -16,6 +16,7 @@
 from collections import defaultdict
 import json
 import os
+import queue
 import threading
 
 from oslo_config import cfg
@@ -137,7 +138,7 @@ class DefaultEventEngine(base.EventEngine):
     """
     def __init__(self):
         self.engine_client = rpc.get_engine_client()
-        self.event_queue = six.moves.queue.Queue()
+        self.event_queue = queue.Queue()
         self.handler_tg = threadgroup.ThreadGroup()
 
         self.event_triggers_map = defaultdict(list)

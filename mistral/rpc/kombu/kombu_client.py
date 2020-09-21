@@ -16,8 +16,7 @@ import socket
 import itertools
 
 import errno
-import six
-from six import moves
+import queue
 
 import kombu
 from oslo_log import log as logging
@@ -110,7 +109,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
         """
         try:
             return self._listener.get_result(correlation_id, self._timeout)
-        except moves.queue.Empty:
+        except queue.Empty:
             raise exc.MistralException(
                 "RPC Request timeout, correlation_id = %s" % correlation_id
             )
@@ -142,7 +141,7 @@ class KombuRPCClient(rpc_base.RPCClient, kombu_base.Base):
                 self._listener.add_listener(correlation_id)
 
             # Publish request.
-            for retry_round in six.moves.range(EPIPE_RETRIES):
+            for retry_round in range(EPIPE_RETRIES):
                 if self._publish_request(body, correlation_id):
                     break
 

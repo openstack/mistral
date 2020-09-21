@@ -12,9 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from http import client as http_client
 import json
 import requests
-from six.moves import http_client
 
 from oslo_log import log as logging
 

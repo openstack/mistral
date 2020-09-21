@@ -18,6 +18,7 @@ from email.mime import multipart
 from email.mime import text
 import smtplib
 import time
+from urllib import parse
 
 from oslo_log import log as logging
 import requests
@@ -212,7 +213,7 @@ class HTTPAction(actions.Action):
         )
 
         try:
-            url_data = six.moves.urllib.parse.urlsplit(self.url)
+            url_data = parse.urlsplit(self.url)
             if 'https' == url_data.scheme:
                 action_verify = self.verify
             else:
