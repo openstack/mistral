@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import abc
-import six
 
 from oslo_config import cfg
 from stevedore import driver
@@ -26,8 +25,7 @@ _SCHEDULER_IMPL = None
 _SCHEDULER = None
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Scheduler(object):
+class Scheduler(object, metaclass=abc.ABCMeta):
     """Scheduler interface.
 
     Responsible for scheduling jobs to be executed at some point in future.

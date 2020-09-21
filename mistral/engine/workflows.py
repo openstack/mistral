@@ -47,8 +47,7 @@ from mistral_lib import utils
 LOG = logging.getLogger(__name__)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Workflow(object):
+class Workflow(object, metaclass=abc.ABCMeta):
     """Workflow.
 
     Represents a workflow and defines interface that can be used by

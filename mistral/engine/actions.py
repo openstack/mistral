@@ -18,7 +18,6 @@ import abc
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
-import six
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import post_tx_queue
@@ -41,8 +40,7 @@ LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Action(object):
+class Action(object, metaclass=abc.ABCMeta):
     """Action.
 
     Represents a workflow action and defines interface that can be used by

@@ -15,7 +15,6 @@
 import abc
 
 from oslo_config import cfg
-import six
 from stevedore import driver
 
 from mistral import exceptions as exc
@@ -41,8 +40,7 @@ def get_auth_handler():
     return _IMPL_AUTH_HANDLER
 
 
-@six.add_metaclass(abc.ABCMeta)
-class AuthHandler(object):
+class AuthHandler(object, metaclass=abc.ABCMeta):
     """Abstract base class for an authentication plugin."""
 
     @abc.abstractmethod
