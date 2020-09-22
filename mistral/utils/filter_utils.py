@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import six
-
 EQUALS = 'eq'
 NOT_EQUAL = 'neq'
 LESS_THAN = 'lt'
@@ -42,7 +40,7 @@ def create_filters_from_request_params(none_values=None, **params):
 
     for column, data in params.items():
         if (data is None and column in none_values) or data is not None:
-            if isinstance(data, six.string_types):
+            if isinstance(data, str):
                 f_type, value = extract_filter_type_and_value(data)
 
                 create_or_update_filter(column, value, f_type, filters)
@@ -83,7 +81,7 @@ def extract_filter_type_and_value(data):
     """
     if has_filters(data):
         filter_type, value = data.split(':', 1)
-        value = six.text_type(value)
+        value = str(value)
         if data.startswith((IN, NOT_IN)):
             value = list(value.split(","))
     else:

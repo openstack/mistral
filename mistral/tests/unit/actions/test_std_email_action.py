@@ -19,7 +19,6 @@ from email.header import decode_header
 from email import parser
 from unittest import mock
 
-import six
 import testtools
 
 from mistral.actions import std_actions as std
@@ -153,26 +152,15 @@ class SendEmailActionTest(base.BaseTest):
 
         self.assertEqual(self.from_addr, message['from'])
         self.assertEqual(self.to_addrs_str, message['to'])
-        if six.PY3:
-            self.assertEqual(
-                self.subject,
-                decode_header(message['subject'])[0][0].decode('utf-8')
-            )
-        else:
-            self.assertEqual(
-                self.subject.decode('utf-8'),
-                decode_header(message['subject'])[0][0].decode('utf-8')
-            )
-        if six.PY3:
-            self.assertEqual(
-                self.body,
-                base64.b64decode(message.get_payload()).decode('utf-8')
-            )
-        else:
-            self.assertEqual(
-                self.body.decode('utf-8'),
-                base64.b64decode(message.get_payload()).decode('utf-8')
-            )
+        self.assertEqual(
+            self.subject,
+            decode_header(message['subject'])[0][0].decode('utf-8')
+        )
+
+        self.assertEqual(
+            self.body,
+            base64.b64decode(message.get_payload()).decode('utf-8')
+        )
 
     @mock.patch('smtplib.SMTP')
     def test_send_email_with_cc(self, smtp):
@@ -294,38 +282,20 @@ class SendEmailActionTest(base.BaseTest):
 
         self.assertEqual(self.from_addr, message['from'])
         self.assertEqual(self.to_addrs_str, message['to'])
-        if six.PY3:
-            self.assertEqual(
-                self.subject,
-                decode_header(message['subject'])[0][0].decode('utf-8')
-            )
-        else:
-            self.assertEqual(
-                self.subject.decode('utf-8'),
-                decode_header(message['subject'])[0][0].decode('utf-8')
-            )
+        self.assertEqual(
+            self.subject,
+            decode_header(message['subject'])[0][0].decode('utf-8')
+        )
         body_payload = message.get_payload(0).get_payload()
-        if six.PY3:
-            self.assertEqual(
-                self.body,
-                base64.b64decode(body_payload).decode('utf-8')
-            )
-        else:
-            self.assertEqual(
-                self.body.decode('utf-8'),
-                base64.b64decode(body_payload).decode('utf-8')
-            )
+        self.assertEqual(
+            self.body,
+            base64.b64decode(body_payload).decode('utf-8')
+        )
         html_body_payload = message.get_payload(1).get_payload()
-        if six.PY3:
-            self.assertEqual(
-                self.html_body,
-                base64.b64decode(html_body_payload).decode('utf-8')
-            )
-        else:
-            self.assertEqual(
-                self.html_body.decode('utf-8'),
-                base64.b64decode(html_body_payload).decode('utf-8')
-            )
+        self.assertEqual(
+            self.html_body,
+            base64.b64decode(html_body_payload).decode('utf-8')
+        )
 
     @mock.patch('smtplib.SMTP')
     def test_with_password(self, smtp):

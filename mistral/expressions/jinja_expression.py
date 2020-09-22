@@ -20,7 +20,6 @@ from jinja2 import parser as jinja_parse
 from jinja2.sandbox import SandboxedEnvironment
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-import six
 
 from mistral import exceptions as exc
 from mistral.expressions import base
@@ -72,7 +71,7 @@ class JinjaEvaluator(base.Evaluator):
 
     @classmethod
     def validate(cls, expression):
-        if not isinstance(expression, six.string_types):
+        if not isinstance(expression, str):
             raise exc.JinjaEvaluationException(
                 "Unsupported type '%s'." % type(expression)
             )
@@ -114,7 +113,7 @@ class InlineJinjaEvaluator(base.Evaluator):
 
     @classmethod
     def validate(cls, expression):
-        if not isinstance(expression, six.string_types):
+        if not isinstance(expression, str):
             raise exc.JinjaEvaluationException(
                 "Unsupported type '%s'." % type(expression)
             )

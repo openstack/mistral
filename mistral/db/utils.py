@@ -16,7 +16,6 @@ from cachetools import keys as cachetools_keys
 import decorator
 import functools
 import inspect
-import six
 
 from sqlalchemy import exc as sqla_exc
 
@@ -156,7 +155,7 @@ def tx_cached(use_args=None, ignore_args=None):
         arg_dict = inspect.getcallargs(func, *args, **kw)
 
         if ignore_args:
-            if not isinstance(ignore_args, (six.string_types, tuple)):
+            if not isinstance(ignore_args, (str, tuple)):
                 raise ValueError(
                     "'ignore_args' must be either a tuple or a string,"
                     " actual type: %s" % type(ignore_args)
@@ -171,7 +170,7 @@ def tx_cached(use_args=None, ignore_args=None):
                 arg_dict.pop(arg_name, None)
 
         if use_args:
-            if not isinstance(use_args, (six.string_types, tuple)):
+            if not isinstance(use_args, (str, tuple)):
                 raise ValueError(
                     "'use_args' must be either a tuple or a string,"
                     " actual type: %s" % type(use_args)

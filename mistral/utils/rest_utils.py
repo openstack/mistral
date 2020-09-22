@@ -20,7 +20,6 @@ import json
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import pecan
-import six
 import sqlalchemy as sa
 from sqlalchemy.orm import exc as sa_exc
 import tenacity
@@ -53,7 +52,7 @@ def wrap_wsme_controller_exception(func):
             LOG.error('Error during API call: %s', str(e))
 
             raise wsme_exc.ClientSideError(
-                msg=six.text_type(e),
+                msg=str(e),
                 status_code=e.http_code
             )
 
@@ -76,7 +75,7 @@ def wrap_pecan_controller_exception(func):
             return webob.Response(
                 status=e.http_code,
                 content_type='application/json',
-                body=json.dumps(dict(faultstring=six.text_type(e))),
+                body=json.dumps(dict(faultstring=str(e))),
                 charset='UTF-8'
             )
 

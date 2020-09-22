@@ -17,7 +17,7 @@ import cachetools
 import threading
 from yaml import error
 
-import six
+import io as six_io
 
 from mistral.db.v2 import api as db_api
 from mistral import exceptions as exc
@@ -170,7 +170,7 @@ def get_action_definition(wb_def, action_name):
 
 
 def _parse_def_from_wb(wb_def, section_name, item_name):
-    io = six.StringIO(wb_def[wb_def.index(section_name):])
+    io = six_io.StringIO(wb_def[wb_def.index(section_name):])
     io.readline()
 
     definition = []

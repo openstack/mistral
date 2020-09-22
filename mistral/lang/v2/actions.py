@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from mistral.lang import types
 from mistral.lang.v2 import base
 from mistral_lib import utils
@@ -58,7 +56,7 @@ class ActionSpec(base.BaseSpec):
 
         self.validate_expr(self._data.get('base-input', {}))
 
-        if isinstance(self._data.get('output'), six.string_types):
+        if isinstance(self._data.get('output'), str):
             self.validate_expr(self._data.get('output'))
 
     def get_name(self):

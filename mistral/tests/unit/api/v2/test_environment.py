@@ -17,7 +17,6 @@ import datetime
 import json
 from unittest import mock
 
-import six
 import sqlalchemy as sa
 
 from mistral.api.controllers.v2 import resources
@@ -120,7 +119,7 @@ MOCK_DELETE = mock.MagicMock(return_value=None)
 def _convert_vars_to_dict(env_dict):
     """Converts 'variables' in the given environment dict into dictionary."""
     if ('variables' in env_dict and
-            isinstance(env_dict.get('variables'), six.string_types)):
+            isinstance(env_dict.get('variables'), str)):
         env_dict['variables'] = json.loads(env_dict['variables'])
 
     return env_dict

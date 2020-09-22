@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from mistral.db import utils as db_utils
 from mistral.db.v2 import api as db_api
 from mistral.engine import base
@@ -77,7 +75,7 @@ def build_wait_before_policy(policies_spec):
 
     wait_before = policies_spec.get_wait_before()
 
-    if isinstance(wait_before, six.string_types) or wait_before > 0:
+    if isinstance(wait_before, str) or wait_before > 0:
         return WaitBeforePolicy(wait_before)
     else:
         return None
@@ -89,7 +87,7 @@ def build_wait_after_policy(policies_spec):
 
     wait_after = policies_spec.get_wait_after()
 
-    if isinstance(wait_after, six.string_types) or wait_after > 0:
+    if isinstance(wait_after, str) or wait_after > 0:
         return WaitAfterPolicy(wait_after)
     else:
         return None
@@ -118,7 +116,7 @@ def build_timeout_policy(policies_spec):
 
     timeout_policy = policies_spec.get_timeout()
 
-    if isinstance(timeout_policy, six.string_types) or timeout_policy > 0:
+    if isinstance(timeout_policy, str) or timeout_policy > 0:
         return TimeoutPolicy(timeout_policy)
     else:
         return None

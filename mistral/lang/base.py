@@ -18,7 +18,6 @@ import json
 import jsonschema
 from osprofiler import profiler
 import re
-import six
 
 from mistral import exceptions as exc
 from mistral import expressions as expr
@@ -33,7 +32,7 @@ ACTION_PATTERNS = {
     "jinja_expression": ANY_JINJA_REGEXP,
 }
 CMD_PTRN = re.compile(
-    "^({})".format("|".join(six.itervalues(ACTION_PATTERNS)))
+    "^({})".format("|".join(ACTION_PATTERNS.values()))
 )
 
 EXPRESSION = '|'.join([expr.patterns[name] for name in expr.patterns])
@@ -245,15 +244,15 @@ class BaseSpec(object):
         pass
 
     def validate_expr(self, dsl_part):
-        if isinstance(dsl_part, six.string_types):
+        if isinstance(dsl_part, str):
             expr.validate(dsl_part)
         elif isinstance(dsl_part, (list, tuple)):
             for expression in dsl_part:
-                if isinstance(expression, six.string_types):
+                if isinstance(expression, str):
                     expr.validate(expression)
         elif isinstance(dsl_part, dict):
             for expression in dsl_part.values():
-                if isinstance(expression, six.string_types):
+                if isinstance(expression, str):
                     expr.validate(expression)
 
     def _spec_property(self, prop_name, spec_cls):
@@ -300,7 +299,7 @@ class BaseSpec(object):
                 result.update(t if isinstance(t, dict) else {t: ''})
 
             return result
-        elif isinstance(prop_val, six.string_types):
+        elif isinstance(prop_val, str):
             return {prop_val: ''}
 
     @staticmethod
@@ -415,7 +414,7 @@ class BaseSpecList(object):
         return self.items.keys()
 
     def __iter__(self):
-        return six.itervalues(self.items)
+        return iter(self.items.values())
 
     def __getitem__(self, name):
         return self.items.get(name)

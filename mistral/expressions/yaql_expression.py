@@ -20,7 +20,6 @@ import re
 
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-import six
 from yaml import representer
 import yaql
 from yaql.language import exceptions as yaql_exc
@@ -198,7 +197,7 @@ class InlineYAQLEvaluator(YAQLEvaluator):
 
     @classmethod
     def validate(cls, expression):
-        if not isinstance(expression, six.string_types):
+        if not isinstance(expression, str):
             raise exc.YaqlEvaluationException(
                 "Unsupported type '%s'." % type(expression)
             )

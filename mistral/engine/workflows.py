@@ -20,7 +20,6 @@ import json
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
-import six
 
 from mistral.db.v2 import api as db_api
 from mistral.db.v2.sqlalchemy import models as db_models
@@ -603,7 +602,7 @@ def _get_environment(params):
 
     if isinstance(env, dict):
         env_dict = env
-    elif isinstance(env, six.string_types):
+    elif isinstance(env, str):
         env_db = db_api.load_environment(env)
 
         if not env_db:

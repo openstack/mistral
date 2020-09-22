@@ -22,7 +22,6 @@ import json
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
-import six
 
 from mistral.db.v2 import api as db_api
 from mistral.engine import actions
@@ -828,7 +827,7 @@ class WithItemsTask(RegularTask):
         with_items_values = self._get_with_items_values()
 
         if self._is_new():
-            action_count = len(six.next(iter(with_items_values.values())))
+            action_count = len(next(iter(with_items_values.values())))
 
             self._prepare_runtime_context(action_count)
 

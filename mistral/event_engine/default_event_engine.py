@@ -23,7 +23,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import threadgroup
 from oslo_utils import fnmatch
-import six
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
@@ -60,7 +59,7 @@ class EventDefinition(object):
                 "Required field %s not specified" % err.args[0]
             )
 
-        if isinstance(self.event_types, six.string_types):
+        if isinstance(self.event_types, str):
             self.event_types = [self.event_types]
 
     def match_type(self, event_type):
@@ -207,7 +206,7 @@ class DefaultEventEngine(base.EventEngine):
         self.exchange_topic_listener_map[key] = listener
 
     def stop_all_listeners(self):
-        for listener in six.itervalues(self.exchange_topic_listener_map):
+        for listener in self.exchange_topic_listener_map.values():
             listener.stop()
             listener.wait()
 

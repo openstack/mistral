@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log
@@ -39,7 +37,8 @@ class ServiceCoordinator(object):
 
     def __init__(self, my_id=None):
         self._coordinator = None
-        self._my_id = six.b(my_id or utils.get_process_identifier())
+        self._my_id = my_id or utils.get_process_identifier()
+        self._my_id = self._my_id.encode("latin-1")
         self._started = False
 
     def start(self):
@@ -60,7 +59,7 @@ class ServiceCoordinator(object):
                 self._started = False
 
                 LOG.exception('Error connecting to coordination backend. '
-                              '%s', six.text_type(e))
+                              '%s', str(e))
 
     def stop(self):
         if not self.is_active():
@@ -83,7 +82,7 @@ class ServiceCoordinator(object):
             return
 
         try:
-            join_req = self._coordinator.join_group(six.b(group_id))
+            join_req = self._coordinator.join_group(group_id.encode("latin-1"))
             join_req.get()
 
             LOG.info(
@@ -96,7 +95,8 @@ class ServiceCoordinator(object):
         except tooz.coordination.MemberAlreadyExist:
             return
         except tooz.coordination.GroupNotCreated as e:
-            create_grp_req = self._coordinator.create_group(six.b(group_id))
+            create_grp_req = self._coordinator.create_group(
+                group_id.encode("latin-1"))
 
             try:
                 create_grp_req.get()
@@ -108,7 +108,7 @@ class ServiceCoordinator(object):
 
     def leave_group(self, group_id):
         if self.is_active():
-            self._coordinator.leave_group(six.b(group_id))
+            self._coordinator.leave_group(group_id.encode("latin-1"))
 
             LOG.info(
                 'Left service group:%s, member:%s',
@@ -125,7 +125,8 @@ class ServiceCoordinator(object):
         if not self.is_active():
             return []
 
-        get_members_req = self._coordinator.get_members(six.b(group_id))
+        get_members_req = self._coordinator.get_members(
+            group_id.encode("latin-1"))
 
         try:
             members = get_members_req.get()

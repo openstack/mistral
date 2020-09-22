@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import six
-
 from mistral import exceptions
 from mistral.tests.unit import base
 from mistral_lib.utils import inspect_utils
@@ -25,19 +23,19 @@ class ExceptionTest(base.BaseTest):
     def test_nf_with_message(self):
         exc = exceptions.DBEntityNotFoundError('check_for_this')
 
-        self.assertIn('check_for_this', six.text_type(exc))
+        self.assertIn('check_for_this', str(exc))
         self.assertEqual(404, exc.http_code)
 
     def test_nf_with_no_message(self):
         exc = exceptions.DBEntityNotFoundError()
 
-        self.assertIn("Object not found", six.text_type(exc))
+        self.assertIn("Object not found", str(exc))
         self.assertEqual(404, exc.http_code,)
 
     def test_duplicate_obj_code(self):
         exc = exceptions.DBDuplicateEntryError()
 
-        self.assertIn("Database object already exists", six.text_type(exc))
+        self.assertIn("Database object already exists", str(exc))
         self.assertEqual(409, exc.http_code,)
 
     def test_default_code(self):
@@ -48,7 +46,7 @@ class ExceptionTest(base.BaseTest):
     def test_default_message(self):
         exc = exceptions.EngineException()
 
-        self.assertIn("An unknown exception occurred", six.text_type(exc))
+        self.assertIn("An unknown exception occurred", str(exc))
 
     def test_one_param_initializer(self):
         # NOTE: this test is needed because at some places in the code we

@@ -15,7 +15,6 @@
 import croniter
 import datetime
 import json
-import six
 
 from oslo_log import log as logging
 
@@ -77,7 +76,7 @@ def create_cron_trigger(name, workflow_name, workflow_input,
     if not start_time:
         start_time = datetime.datetime.utcnow()
 
-    if isinstance(first_time, six.string_types):
+    if isinstance(first_time, str):
         try:
             first_time = datetime.datetime.strptime(
                 first_time,

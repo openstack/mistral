@@ -15,7 +15,6 @@
 
 from oslo_utils import uuidutils
 from osprofiler import profiler
-import six
 
 from mistral import exceptions as exc
 from mistral.lang import types
@@ -75,7 +74,7 @@ class WorkflowSpec(base.BaseSpec):
 
         # Inject 'type' here, so instantiate_spec function can recognize the
         # specific subclass of TaskSpec.
-        for task in six.itervalues(self._data.get('tasks')):
+        for task in self._data.get('tasks').values():
             task['type'] = self._type
 
         self._tasks = self._spec_property('tasks', tasks.TaskSpecList)

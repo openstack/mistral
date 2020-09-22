@@ -17,7 +17,6 @@
 import copy
 
 from oslo_log import log as logging
-import six
 from stevedore import extension
 
 from mistral import exceptions as exc
@@ -41,7 +40,7 @@ for name in sorted(_mgr.names()):
 def validate(expression):
     LOG.debug("Validating expression [expression='%s']", expression)
 
-    if not isinstance(expression, six.string_types):
+    if not isinstance(expression, str):
         return
 
     expression_found = None
@@ -66,7 +65,7 @@ def evaluate(expression, context):
     for name, evaluator in _evaluators:
         # Check if the passed value is expression so we don't need to do this
         # every time on a caller side.
-        if (isinstance(expression, six.string_types) and
+        if (isinstance(expression, str) and
                 evaluator.is_expression(expression)):
             return evaluator.evaluate(expression, context)
 
@@ -74,7 +73,7 @@ def evaluate(expression, context):
 
 
 def _evaluate_item(item, context):
-    if isinstance(item, six.string_types):
+    if isinstance(item, str):
         try:
             return evaluate(item, context)
         except AttributeError as e:
@@ -101,7 +100,7 @@ def evaluate_recursively(data, context):
     elif isinstance(data, list):
         for index, item in enumerate(data):
             data[index] = _evaluate_item(item, context)
-    elif isinstance(data, six.string_types):
+    elif isinstance(data, str):
         return _evaluate_item(data, context)
 
     return data

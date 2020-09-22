@@ -14,7 +14,7 @@
 
 from os import path
 
-import six
+import io
 
 from oslo_log import log as logging
 import paramiko
@@ -42,7 +42,7 @@ def _to_paramiko_private_key(private_key_filename,
                              password=None):
     if private_key:
         return paramiko.RSAKey.from_private_key(
-            file_obj=six.StringIO(private_key),
+            file_obj=io.StringIO(private_key),
             password=password)
 
     if private_key_filename:

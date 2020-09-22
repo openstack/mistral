@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from mistral.lang import types
 from mistral.lang.v2 import base
 
@@ -65,7 +63,7 @@ class RetrySpec(base.BaseSpec):
         self._delay = data['delay']
 
     def _transform_retry_one_line(self, retry):
-        if isinstance(retry, six.string_types):
+        if isinstance(retry, str):
             _, params = self._parse_cmd_and_input(retry)
             return params
 

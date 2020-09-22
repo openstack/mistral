@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from oslo_config import cfg
 
 from mistral.db.v2 import api as db_api
@@ -1119,7 +1117,7 @@ class DirectWorkflowEngineTest(base.EngineTestCase):
             # versions of Python. On Python 3 this field's value was always
             # converted into a string no matter what we tried to assign. But
             # that didn't happen on Python 2.7 which caused an SQL exception.
-            self.assertIsInstance(task_ex.state_info, six.string_types)
+            self.assertIsInstance(task_ex.state_info, str)
 
     def test_single_fail_with_next_noop(self):
         wf_text = """---

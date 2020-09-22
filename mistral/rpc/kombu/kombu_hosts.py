@@ -15,7 +15,6 @@
 
 import itertools
 import random
-import six
 
 import oslo_messaging as messaging
 
@@ -33,4 +32,4 @@ class KombuHosts(object):
         self._hosts_cycle = itertools.cycle(self.hosts)
 
     def get_host(self):
-        return six.next(self._hosts_cycle)
+        return next(self._hosts_cycle)

@@ -24,7 +24,6 @@ please see pep8.py.
 
 import ast
 import re
-import six
 
 from hacking import core
 
@@ -201,7 +200,7 @@ class CheckForLoggingIssues(BaseASTChecker):
             method_name = node.attr
 
             return obj_name + '.' + method_name
-        elif isinstance(node, six.string_types):
+        elif isinstance(node, str):
             return node
         else:  # Could be Subscript, Call or many more
             return None

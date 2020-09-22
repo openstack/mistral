@@ -16,7 +16,6 @@
 import itertools
 from kombu.mixins import ConsumerMixin
 import queue
-import six
 import threading
 
 from oslo_log import log as logging
@@ -34,7 +33,7 @@ class KombuRPCListener(ConsumerMixin):
         self._connections = itertools.cycle(connections)
         self._callback_queue = callback_queue
         self._thread = None
-        self.connection = six.next(self._connections)
+        self.connection = next(self._connections)
 
         self.ready = eventletutils.Event()
 
@@ -107,7 +106,7 @@ class KombuRPCListener(ConsumerMixin):
     def on_connection_error(self, exc, interval):
         self.ready.clear()
 
-        self.connection = six.next(self._connections)
+        self.connection = next(self._connections)
 
         LOG.debug("Broker connection failed: %s", exc)
         LOG.debug(

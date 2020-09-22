@@ -15,7 +15,6 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 from pecan import rest
-import six
 import tooz.coordination
 import wsmeext.pecan as wsme_pecan
 
@@ -79,7 +78,7 @@ class ServicesController(rest.RestController):
             # connection shutdown, ToozError will be raised.
             raise exc.CoordinationException(
                 "Failed to get service members from coordination backend. %s"
-                % six.text_type(e)
+                % str(e)
             )
 
         return resources.Services(services=services_list)

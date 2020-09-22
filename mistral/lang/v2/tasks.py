@@ -17,7 +17,6 @@
 import copy
 import json
 import re
-import six
 
 from mistral import exceptions as exc
 from mistral import expressions
@@ -170,11 +169,11 @@ class TaskSpec(base.BaseSpec):
 
         with_items = {}
 
-        if isinstance(raw, six.string_types):
+        if isinstance(raw, str):
             raw = [raw]
 
         for item in raw:
-            if not isinstance(item, six.string_types):
+            if not isinstance(item, str):
                 raise exc.InvalidModelException(
                     "'with-items' elements should be strings: %s" % self._data
                 )
@@ -331,7 +330,7 @@ class DirectWorkflowTaskSpec(TaskSpec):
             return
 
         [self.validate_expr(t)
-            for t in ([val] if isinstance(val, six.string_types) else val)]
+            for t in ([val] if isinstance(val, str) else val)]
 
     def get_publish(self, state):
         spec = super(DirectWorkflowTaskSpec, self).get_publish(state)
@@ -392,7 +391,7 @@ class ReverseWorkflowTaskSpec(TaskSpec):
         self._requires = data.get('requires', [])
 
     def get_requires(self):
-        if isinstance(self._requires, six.string_types):
+        if isinstance(self._requires, str):
             return [self._requires]
 
         return self._requires

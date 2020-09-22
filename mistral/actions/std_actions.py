@@ -22,7 +22,6 @@ from urllib import parse
 
 from oslo_log import log as logging
 import requests
-import six
 
 from mistral import exceptions as exc
 from mistral import utils
@@ -172,7 +171,7 @@ class HTTPAction(actions.Action):
 
         if isinstance(headers, dict):
             for key, val in headers.items():
-                if isinstance(val, (six.integer_types, float)):
+                if isinstance(val, (int, float)):
                     headers[key] = str(val)
 
         if body and json:

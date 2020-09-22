@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from mistral.lang import types
 from mistral.lang.v2 import base
 from mistral.lang.v2 import on_clause
@@ -98,7 +96,7 @@ class TaskDefaultsSpec(base.BaseSpec):
             return
 
         [self.validate_expr(t)
-            for t in ([val] if isinstance(val, six.string_types) else val)]
+            for t in ([val] if isinstance(val, str) else val)]
 
     def get_policies(self):
         return self._policies
@@ -116,7 +114,7 @@ class TaskDefaultsSpec(base.BaseSpec):
         return self._safe_rerun
 
     def get_requires(self):
-        if isinstance(self._requires, six.string_types):
+        if isinstance(self._requires, str):
             return [self._requires]
 
         return self._requires

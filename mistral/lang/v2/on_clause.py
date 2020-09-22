@@ -13,8 +13,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import six
-
 from mistral.lang import types
 from mistral.lang.v2 import base
 from mistral.lang.v2 import publish
@@ -121,7 +119,7 @@ def _as_list_of_tuples(data):
     if not data:
         return []
 
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         return [_as_tuple(data)]
 
     return [_as_tuple(item) for item in data]
