@@ -1,0 +1,38 @@
+---
+features:
+  - |
+    There has been a big change in the Mistral action management. All Mistral
+    subsystems don't access the database directly if they need to work with
+    action definitions. Instead, they work action providers registered in
+    the new entry point "mistral.action.providers". All action providers need
+    to implement the base class ActionProvider declared in "mistral-lib"
+    starting with the version 2.3.0. Action providers are responsible for
+    delivering so-called action descriptors that carry all the most important
+    information about particular actions like "name", "description", names
+    of input parameters and so on. The entire system has now been refactored
+    with action providers. Using this new mechanism it's now possible to
+    deliver actions into the system dynamically w/o having to reboot Mistral.
+    We just need to come up with an action provider implementation that can
+    do that and register it in the entry point from any Python project
+    installed on the same Python environment.
+    This approach also means that actions don't have to be stored in the
+    database anymore. It fully depends on a particular action provider how
+    to store action descriptors and how to perform lookup. It is possible
+    to create action providers fetching information about actions over
+    HTTP, AMQP and potentially any other protocol.
+    Additionally, switching to action providers allowed to make engine code
+    much cleaner and more encapsulated. For example, ad-hoc actions are no
+    longer a concern of the Mistral engine. Instead of implementing all
+    ad-hoc action logic in the engine there's now a special action provider
+    fully responsible for ad-hoc actions.
+    The detailed documentation on using action providers will be added soon.
+upgrade:
+  - |
+    As part of the transition to action providers the compatibility of the
+    /actions REST API endpoint has been broken to some extent. For ad-hoc
+    actions it remained almost the same. We still can do all CRUD operations
+    upon them. However, all the standard actions (prefixed with "std.") are
+    not stored in the DB anymore. For that reason this type of actions doesn't
+    have IDs anymore, and generally actions are not identified by IDs anymore,
+    only by name. This change needs to be taken into account when updating
+    to this version of Mistral.
