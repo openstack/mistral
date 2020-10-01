@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Now users can upload Python code through the API (code_sources API)
+    and create actions from it dynamically (using dynamic_actions API).
+    If needed, actions can be also modified and deleted.
+    Note that this all doesn't require a Mistral restart.
+  - |
+    Added a new endpoint "/v2/code_sources/", this is used to create,
+    update, delete and get code sources from mistral.
+  - |
+    Added a new endpoint "/v2/dynamic_actions/", this is used to create,
+    update, delete and get dynamic actions from mistral runtime.

@@ -19,7 +19,6 @@ import contextlib
 from oslo_config import cfg
 from oslo_db import api as db_api
 
-
 _BACKEND_MAPPING = {
     'sqlalchemy': 'mistral.db.v2.sqlalchemy.api',
 }
@@ -171,7 +170,61 @@ def delete_workflow_definitions(**kwargs):
     IMPL.delete_workflow_definitions(**kwargs)
 
 
-# Action definitions.
+def create_dynamic_action(values):
+    return IMPL.create_dynamic_action(values)
+
+
+def delete_dynamic_action(identifier, namespace=''):
+    return IMPL.delete_dynamic_action(identifier, namespace)
+
+
+def update_dynamic_action(identifier, values, namespace=''):
+    return IMPL.update_dynamic_action(identifier, values, namespace)
+
+
+def get_dynamic_action(identifier, namespace='', fields=()):
+    return IMPL.get_dynamic_action(identifier, fields, namespace)
+
+
+def get_dynamic_actions(limit=None, marker=None, sort_keys=None,
+                        sort_dirs=None, fields=None, **kwargs):
+    return IMPL.get_dynamic_actions(
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        fields=fields,
+        **kwargs
+    )
+
+
+def update_code_source(identifier, values, namespace=''):
+    return IMPL.update_code_source(identifier, values, namespace=namespace)
+
+
+def get_code_sources(limit=None, marker=None, sort_keys=None,
+                     sort_dirs=None, fields=None, **kwargs):
+    return IMPL.get_code_sources(
+        limit=limit,
+        marker=marker,
+        sort_keys=sort_keys,
+        sort_dirs=sort_dirs,
+        fields=fields,
+        **kwargs
+    )
+
+
+def delete_code_source(name, namespace=''):
+    return IMPL.delete_code_source(name, namespace=namespace)
+
+
+def get_code_source(identifier, namespace='', fields=()):
+    return IMPL.get_code_source(identifier, fields, namespace=namespace)
+
+
+def create_code_source(values):
+    return IMPL.create_code_source(values)
+
 
 def get_action_definition_by_id(id, fields=()):
     return IMPL.get_action_definition_by_id(id, fields=fields)

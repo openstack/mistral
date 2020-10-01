@@ -17,7 +17,9 @@ import itertools
 from mistral.policies import action
 from mistral.policies import action_executions
 from mistral.policies import base
+from mistral.policies import code_sources
 from mistral.policies import cron_trigger
+from mistral.policies import dynamic_actions
 from mistral.policies import environment
 from mistral.policies import event_trigger
 from mistral.policies import execution
@@ -33,6 +35,8 @@ def list_rules():
         action.list_rules(),
         action_executions.list_rules(),
         base.list_rules(),
+        code_sources.list_rules(),
+        dynamic_actions.list_rules(),
         cron_trigger.list_rules(),
         environment.list_rules(),
         event_trigger.list_rules(),

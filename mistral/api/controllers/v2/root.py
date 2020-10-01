@@ -20,7 +20,9 @@ import wsmeext.pecan as wsme_pecan
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import action
 from mistral.api.controllers.v2 import action_execution
+from mistral.api.controllers.v2 import code_source
 from mistral.api.controllers.v2 import cron_trigger
+from mistral.api.controllers.v2 import dynamic_action
 from mistral.api.controllers.v2 import environment
 from mistral.api.controllers.v2 import event_trigger
 from mistral.api.controllers.v2 import execution
@@ -48,6 +50,8 @@ class Controller(object):
 
     workbooks = workbook.WorkbooksController()
     actions = action.ActionsController()
+    code_sources = code_source.CodeSourcesController()
+    dynamic_actions = dynamic_action.DynamicActionsController()
     workflows = workflow.WorkflowsController()
     executions = execution.ExecutionsController()
     tasks = task.TasksController()

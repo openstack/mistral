@@ -25,7 +25,6 @@ from mistral_lib import actions as ml_actions
 
 from mistral.actions import test
 
-
 LOG = logging.getLogger(__name__)
 
 _SYSTEM_PROVIDER = None

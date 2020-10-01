@@ -196,7 +196,57 @@ class ActionDefinition(Definition):
     attributes = sa.Column(st.JsonDictType())
 
 
+class CodeSource(mb.MistralSecureModelBase):
+    """Contains info about registered CodeSources."""
+
+    __tablename__ = 'code_sources'
+
+    id = mb.id_column()
+    name = sa.Column(sa.String(255))
+    src = sa.Column(sa.Text())
+    version = sa.Column(sa.Integer())
+    namespace = sa.Column(sa.String(255), nullable=True)
+    tags = sa.Column(st.JsonListType())
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'name',
+            'namespace',
+            'project_id'),
+
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+    )
+
+
+class DynamicAction(mb.MistralSecureModelBase):
+    """Contains info about registered Dynamic Actions."""
+
+    __tablename__ = 'dynamic_actions'
+
+    # Main properties.
+    id = mb.id_column()
+    name = sa.Column(sa.String(255))
+    namespace = sa.Column(sa.String(255), nullable=True)
+    class_name = sa.Column(sa.String(255))
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'name',
+            'namespace',
+            'project_id'),
+        sa.Index('%s_project_id' % __tablename__, 'project_id'),
+        sa.Index('%s_scope' % __tablename__, 'scope'),
+    )
+
+
+DynamicAction.code_source_id = sa.Column(
+    sa.String(36),
+    sa.ForeignKey(CodeSource.id, ondelete='CASCADE'),
+    nullable=False
+)
+
 # Execution objects.
+
 
 class Execution(mb.MistralSecureModelBase):
     __abstract__ = True

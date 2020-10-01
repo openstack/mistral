@@ -285,6 +285,13 @@ def _get_collection(model, insecure=False, limit=None, marker=None,
     return query.all()
 
 
+def get_db_objects(model, insecure=False, **filters):
+    query = b.model_query(model) if insecure else _secure_query(model)
+    query = db_filters.apply_filters(query, model, **filters)
+
+    return query
+
+
 def _get_count(model, insecure=False, **filters):
     query = b.model_query(model) if insecure else _secure_query(model)
 
@@ -636,6 +643,133 @@ def delete_workflow_definitions(session=None, **kwargs):
 # Action definitions.
 
 @b.session_aware()
+def create_code_source(values, session=None):
+    code_src = models.CodeSource()
+    code_src.update(values.copy())
+
+    try:
+        code_src.save(session=session)
+    except db_exc.DBDuplicateEntry:
+        raise exc.DBDuplicateEntryError(
+            "Duplicate entry for CodeSource ['name', 'namespace',"
+            " 'project_id']: {}, {}, {}".format(code_src.name,
+                                                code_src.namespace,
+                                                code_src.project_id)
+        )
+
+    return code_src
+
+
+@b.session_aware()
+def get_code_sources(fields=None, session=None, **kwargs):
+    return _get_collection(
+        model=models.CodeSource,
+        fields=fields,
+        **kwargs
+    )
+
+
+@b.session_aware()
+def get_code_source(identifier, fields=(), session=None, namespace=''):
+    code_src = _get_db_object_by_name_and_namespace_or_id(
+        models.CodeSource,
+        identifier,
+        namespace=namespace,
+        columns=fields
+    )
+
+    if not code_src:
+        raise exc.DBEntityNotFoundError(
+            "Code Source not found [name=%s,namespace=%s]"
+            % (identifier, namespace)
+        )
+
+    return code_src
+
+
+@b.session_aware()
+def update_code_source(identifier, values, namespace='', session=None):
+    code_src = get_code_source(identifier, namespace=namespace)
+
+    values['version'] = code_src.version + 1
+
+    code_src.update(values.copy())
+
+    return code_src
+
+
+@b.session_aware()
+def delete_code_source(identifier, namespace='', session=None):
+    code_src = get_code_source(
+        identifier,
+        namespace=namespace,
+        session=session
+    )
+
+    session.delete(code_src)
+
+
+@b.session_aware()
+def create_dynamic_action(values, session=None):
+    action_def = models.DynamicAction()
+
+    action_def.update(values.copy())
+
+    try:
+        action_def.save(session=session)
+    except db_exc.DBDuplicateEntry:
+        raise exc.DBDuplicateEntryError(
+            "Duplicate entry for Action[name=%s, namespace=%s, project_id=%s]"
+            % (action_def.name, action_def.namespace, action_def.project_id)
+        )
+
+    return action_def
+
+
+@b.session_aware()
+def update_dynamic_action(identifier, values, namespace='', session=None):
+    action_def = get_dynamic_action(identifier, namespace=namespace)
+
+    action_def.update(values.copy())
+
+    return action_def
+
+
+@b.session_aware()
+def get_dynamic_action(identifier, fields=(), namespace='', session=None):
+    action = _get_db_object_by_name_and_namespace_or_id(
+        models.DynamicAction,
+        identifier,
+        namespace=namespace,
+        columns=fields
+    )
+
+    if not action:
+        raise exc.DBEntityNotFoundError(
+            "Dynamic Action not found [name=%s,namespace=%s]"
+            % (identifier, namespace)
+        )
+
+    return action
+
+
+@b.session_aware()
+def get_dynamic_actions(fields=None, session=None, **kwargs):
+    return _get_collection(
+        model=models.DynamicAction,
+        fields=fields,
+        **kwargs
+    )
+
+
+@b.session_aware()
+def delete_dynamic_action(identifier, namespace='', session=None):
+    action_def = get_dynamic_action(identifier, namespace)
+    print(action_def)
+    session.delete(action_def)
+
+
+@b.session_aware()
 def get_action_definition_by_id(id, fields=(), session=None):
     action_def = _get_db_object_by_id(
         models.ActionDefinition,
@@ -671,7 +805,7 @@ def get_action_definition(identifier, fields=(), session=None, namespace=''):
 
     if not a_def:
         raise exc.DBEntityNotFoundError(
-            "Action definition not found [action_name=%s,namespace=%s]"
+            "Action definition not found [action_name=%s, namespace=%s]"
             % (identifier, namespace)
         )
 

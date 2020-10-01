@@ -185,6 +185,150 @@ class Workflow(resource.Resource, ScopedResource):
         return obj
 
 
+class CodeSource(resource.Resource, ScopedResource):
+    """CodeSource resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+    src = wtypes.text
+    scope = SCOPE_TYPES
+    version = wtypes.IntegerType(minimum=1)
+
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
+
+    actions = [wtypes.text]
+    created_at = wtypes.text
+    updated_at = wtypes.text
+    namespace = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            name='module',
+            src='content of file',
+            version=1,
+            scope='private',
+            actions=['action1', 'action2', 'action3'],
+            project_id='a7eb669e9819420ea4bd1453e672c0a7',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000',
+            namespace=''
+        )
+
+    @classmethod
+    def from_db_model(cls, db_model):
+        return CodeSource(
+            id=getattr(db_model, 'id', db_model.name),
+            name=db_model.name,
+            version=db_model.version,
+            src=db_model.src,
+            namespace=db_model.namespace,
+            project_id=db_model.project_id,
+            scope=db_model.scope,
+            created_at=utils.datetime_to_str(
+                getattr(db_model, 'created_at', '')
+            ),
+            updated_at=utils.datetime_to_str(
+                getattr(db_model, 'updated_at', '')
+            )
+        )
+
+
+class CodeSources(resource.ResourceList):
+    """A collection of CodeSources."""
+
+    code_sources = [CodeSource]
+
+    def __init__(self, **kwargs):
+        self._type = 'code_sources'
+
+        super(CodeSources, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        code_Source_sample = cls()
+        code_Source_sample.code_sources = [CodeSource.sample()]
+        code_Source_sample.next = (
+            "http://localhost:8989/v2/code_sources?"
+            "sort_keys=id,name&"
+            "sort_dirs=asc,desc&limit=10&"
+            "marker=123e4567-e89b-12d3-a456-426655440000"
+        )
+
+        return code_Source_sample
+
+
+class DynamicAction(resource.Resource, ScopedResource):
+    """DynamicAction resource."""
+
+    id = wtypes.text
+    name = wtypes.text
+    code_source_id = wtypes.text
+    class_name = wtypes.text
+    project_id = wsme.wsattr(wtypes.text, readonly=True)
+
+    created_at = wtypes.text
+    updated_at = wtypes.text
+    namespace = wtypes.text
+
+    @classmethod
+    def sample(cls):
+        return cls(
+            id='123e4567-e89b-12d3-a456-426655440000',
+            name='actionName',
+            class_name='className',
+            code_source_id='233e4567-354b-12d3-4444-426655444444',
+            scope='private',
+            project_id='a7eb669e9819420ea4bd1453e672c0a7',
+            created_at='1970-01-01T00:00:00.000000',
+            updated_at='1970-01-01T00:00:00.000000',
+            namespace=''
+        )
+
+    @classmethod
+    def from_db_model(cls, db_model):
+        return DynamicAction(
+            id=getattr(db_model, 'id', db_model.name),
+            name=db_model.name,
+            code_source_id=db_model.code_source_id,
+            class_name=db_model.class_name,
+            namespace=db_model.namespace,
+            project_id=db_model.project_id,
+            scope=db_model.scope,
+            created_at=utils.datetime_to_str(
+                getattr(db_model, 'created_at', '')
+            ),
+            updated_at=utils.datetime_to_str(
+                getattr(db_model, 'updated_at', '')
+            )
+        )
+
+
+class DynamicActions(resource.ResourceList):
+    """A collection of DynamicActions."""
+
+    dynamic_actions = [DynamicAction]
+
+    def __init__(self, **kwargs):
+        self._type = 'dynamic_actions'
+
+        super(DynamicActions, self).__init__(**kwargs)
+
+    @classmethod
+    def sample(cls):
+        dynamic_action_sample = cls()
+        dynamic_action_sample.dynamic_actions = [DynamicAction.sample()]
+        dynamic_action_sample.next = (
+            "http://localhost:8989/v2/dynamic_actions?"
+            "sort_keys=id,name&"
+            "sort_dirs=asc,desc&limit=10&"
+            "marker=123e4567-e89b-12d3-a456-426655440000"
+        )
+
+        return dynamic_action_sample
+
+
 class Workflows(resource.ResourceList):
     """A collection of workflows."""
 
