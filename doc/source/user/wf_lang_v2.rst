@@ -1595,8 +1595,8 @@ Task publish result (partial to keep the documentation short):
               "type": "ACTION",
               "workflow_execution_id": "c0a4d2ff-0127-4826-8370-0570ef8cad80",
               "state": "ERROR",
-              "state_info": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.action_factory.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
-              "result": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.action_factory.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
+              "state_info": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.std_actions.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
+              "result": "Failed to run action [action_ex_id=bcb04b28-6d50-458e-9b7e-a45a5ff1ca01, action_cls='<class 'mistral.actions.std_actions.FailAction'>', attributes='{}', params='{}']\n Fail action expected exception.",
               "published": {},
               "spec": {
                   "action": "std.fail",
