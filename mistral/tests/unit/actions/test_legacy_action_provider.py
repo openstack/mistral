@@ -120,6 +120,11 @@ class LegacyActionProviderTest(base.BaseTest):
         )
         self.assertEqual('output, delay=0', action_desc.params_spec)
 
+    @mock.patch.object(
+        legacy.LegacyActionProvider,
+        '_get_action_generators',
+        mock.MagicMock(return_value=[TestActionGenerator])
+    )
     def test_only_action_plugins(self):
         self.override_config(
             'load_action_generators',
@@ -128,9 +133,6 @@ class LegacyActionProviderTest(base.BaseTest):
         )
 
         provider = legacy.LegacyActionProvider()
-
-        # TODO(rakhmerov): Implement loading actions from generators
-        # and test with a generator.
 
         action_descs = provider.find_all()
 
