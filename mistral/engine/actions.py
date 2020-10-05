@@ -163,8 +163,6 @@ class Action(object, metaclass=abc.ABCMeta):
         values = {
             'id': action_ex_id,
             'name': self.action_desc.name,
-            # TODO(rakhmerov): do we really need to keep "spec" in action_ex?
-            # 'spec': self.action_desc.spec,
             'state': states.RUNNING,
             'input': input_dict,
             'runtime_context': runtime_ctx,
