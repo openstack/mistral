@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from http import client as http_client
+from http import HTTPStatus
 import json
 import requests
 
@@ -34,5 +34,5 @@ class WebhookPublisher(base.NotificationPublisher):
 
         LOG.info("Webook request url=%s code=%s", url, resp.status_code)
 
-        if resp.status_code not in [http_client.OK, http_client.CREATED]:
+        if resp.status_code not in [HTTPStatus.OK, HTTPStatus.CREATED]:
             raise Exception(resp.text)
