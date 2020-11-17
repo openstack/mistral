@@ -260,7 +260,7 @@ class HTTPAction(actions.Action):
 
         # Represent important resp data as a dictionary.
         try:
-            content = resp.json(encoding=resp.encoding)
+            content = resp.json()
         except Exception:
             LOG.debug("HTTP action response is not json.")
             content = resp.content
