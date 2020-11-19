@@ -13,24 +13,22 @@
 #    limitations under the License.
 
 
-import collections
 from oslo_config import cfg
 import types
 
-from mistral import exceptions as exc
 from mistral_lib import actions as ml_actions
 from mistral_lib import serialization
 from mistral_lib.utils import inspect_utils
 
 from mistral.db.v2 import api as db_api
-from mistral.services import code_sources as code_sources_service
 
 CONF = cfg.CONF
 
 
 class DynamicAction(ml_actions.Action):
-
     def __init__(self, action, code_source_id, namespace=''):
+        super(DynamicAction, self).__init__()
+
         self.action = action
         self.namespace = namespace
         self.code_source_id = code_source_id
@@ -47,7 +45,7 @@ class DynamicAction(ml_actions.Action):
 
 
 class DynamicActionDescriptor(ml_actions.PythonActionDescriptor):
-    def __init__(self, name, cls_name, action_cls, version, code_source_id,
+    def __init__(self, name, cls_name, action_cls, code_source_id, version,
                  action_cls_attrs=None, namespace='', project_id=None,
                  scope=None):
         super(DynamicActionDescriptor, self).__init__(
@@ -60,8 +58,8 @@ class DynamicActionDescriptor(ml_actions.PythonActionDescriptor):
         )
 
         self.cls_name = cls_name
-        self.version = version
         self.code_source_id = code_source_id
+        self.version = version
 
     def __repr__(self):
         return 'Dynamic action [name=%s, cls=%s , code_source_id=%s,' \
@@ -78,7 +76,8 @@ class DynamicActionDescriptor(ml_actions.PythonActionDescriptor):
             return DynamicAction(
                 self._action_cls(**params),
                 self.code_source_id,
-                self.namespace)
+                self.namespace
+            )
 
         dynamic_cls = type(
             self._action_cls.__name__,
@@ -108,7 +107,7 @@ class DynamicActionSerializer(serialization.DictBasedSerializer):
     def deserialize_from_dict(self, entity_dict):
         cls_name = entity_dict['cls_name']
 
-        mod = _get_module(
+        mod = _get_python_module(
             entity_dict['code_source_id'],
             entity_dict['namespace']
         )
@@ -132,18 +131,18 @@ class DynamicActionSerializer(serialization.DictBasedSerializer):
         )
 
 
-def _get_module(code_source_id, namespace=''):
-    code_source = code_sources_service.get_code_source(
+def _get_python_module(code_source_id, namespace=''):
+    code_source = db_api.get_code_source(
         code_source_id,
-        namespace
+        namespace=namespace
     )
 
-    mod = _load_module(code_source.name, code_source.src)
+    mod = _load_python_module(code_source.name, code_source.src)
 
     return mod, code_source.version
 
 
-def _load_module(fullname, content):
+def _load_python_module(fullname, content):
     mod = types.ModuleType(fullname)
 
     exec(content, mod.__dict__)
@@ -160,157 +159,73 @@ class DynamicActionProvider(ml_actions.ActionProvider):
     def __init__(self, name='dynamic'):
         super().__init__(name)
 
-        self._action_descs = collections.OrderedDict()
-        self._code_sources = collections.OrderedDict()
+        # {code_source_id => (python module, version)}
+        self._code_sources = dict()
 
-    def _get_code_source_version(self, code_src_id, namespace=''):
-        code_src = code_sources_service.get_code_source(
-            code_src_id,
-            namespace,
-            fields=['version']
-        )
+    def ensure_latest_module_version(self, action_def):
+        # We need to compare the version of the corresponding module
+        # that's already loaded into memory with the version stored in
+        # DB and reimport the module if the DB version is higher.
 
-        return code_src[0]
+        code_src_id = action_def.code_source_id
 
-    def _load_code_source(self, id):
-        mod_pair = _get_module(id)
-        self._code_sources[id] = mod_pair
+        # TODO(rakhmerov): To avoid this DB call we need to store code source
+        # versions also in the dynamic action definition model.
+        db_ver = db_api.get_code_source(code_src_id, fields=['version'])[0]
 
-        return mod_pair
+        if db_ver > self._code_sources.get(code_src_id, (None, -1))[1]:
+            # Reload module.
+            code_src = db_api.get_code_source(code_src_id)
 
-    def _get_code_source(self, id):
-        mod_pair = self._code_sources.get(id)
-        code_src_db_version = self._get_code_source_version(id)
+            module = _load_python_module(code_src.name, code_src.src)
 
-        if not mod_pair or mod_pair[1] != code_src_db_version:
-            mod_pair = self._load_code_source(id)
-
-        return mod_pair
-
-    def _get_action_from_db(self, name, namespace, fields=()):
-        action = None
-
-        try:
-            action = db_api.get_dynamic_action(
-                identifier=name,
-                namespace=namespace,
-                fields=fields
-            )
-        except exc.DBEntityNotFoundError:
-            pass
-
-        return action
-
-    def _action_exists_in_db(self, name, namespace):
-        action = self._get_action_from_db(
-            name,
-            namespace,
-            fields=['name']
-        )
-
-        return action is not None
-
-    def _reload_action(self, action_desc, mod_pair):
-        action_desc._action_cls = getattr(
-            mod_pair[0],
-            action_desc.cls_name
-        )
-
-        action_desc.version = mod_pair[1]
-
-    def _load_new_action(self, action_name, namespace, action_def):
-        # only query the db if action_def was None
-        action_def = action_def or self._get_action_from_db(
-            action_name,
-            namespace=namespace
-        )
-
-        if not action_def:
-            return
-
-        mod_pair = self._get_code_source(action_def.code_source_id)
-
-        cls = getattr(mod_pair[0], action_def.class_name)
-
-        action_desc = DynamicActionDescriptor(
-            name=action_def.name,
-            action_cls=cls,
-            cls_name=action_def.class_name,
-            version=1,
-            code_source_id=action_def.code_source_id
-        )
-
-        self._action_descs[(action_name, namespace)] = action_desc
-
-        return action_desc
-
-    def _load_existing_action(self, action_desc, action_name, namespace):
-        if not self._action_exists_in_db(action_name, namespace=namespace):
-            # deleting action from cache
-            del self._action_descs[(action_name, namespace)]
-
-            return
-
-        mod_pair = self._get_code_source(action_desc.code_source_id)
-
-        if action_desc.version != mod_pair[1]:
-            self._reload_action(action_desc, mod_pair)
-
-        return action_desc
-
-    def _load_action(self, action_name, namespace=None, action_def=None):
-        action_desc = self._action_descs.get((action_name, namespace))
-
-        if action_desc:
-            action_desc = self._load_existing_action(
-                action_desc,
-                action_name,
-                namespace
-            )
+            self._code_sources[code_src_id] = (module, code_src.version)
         else:
-            action_desc = self._load_new_action(
-                action_name,
-                namespace,
-                action_def
-            )
+            module = self._code_sources[code_src_id][0]
 
-        return action_desc
+        return module
+
+    def _get_action_class(self, action_def):
+        module = self.ensure_latest_module_version(action_def)
+
+        return getattr(module, action_def.class_name)
+
+    def _build_action_descriptor(self, action_def):
+        action_cls = self._get_action_class(action_def)
+
+        return DynamicActionDescriptor(
+            name=action_def.name,
+            cls_name=action_def.class_name,
+            action_cls=action_cls,
+            code_source_id=action_def.code_source_id,
+            version=1,
+            project_id=action_def.project_id,
+            scope=action_def.scope
+        )
 
     def find(self, action_name, namespace=None):
+        action_def = db_api.load_dynamic_action_definition(
+            action_name,
+            namespace
+        )
 
-        return self._load_action(action_name, namespace)
+        if action_def is None:
+            return None
 
-    def _clean_deleted_actions_from_cache(self):
-        to_delete = [
-            key for key in self._action_descs.keys()
-            if not self._action_exists_in_db(*key)
-        ]
-
-        for key in to_delete:
-            del self._action_descs[key]
+        return self._build_action_descriptor(action_def)
 
     def find_all(self, namespace='', limit=None, sort_fields=None,
-                 sort_dirs=None, **filters):
-        filters = {
-            'namespace': {'eq': namespace}
-        }
-        self._clean_deleted_actions_from_cache()
+                 sort_dirs=None, filters=None):
+        if filters is None:
+            filters = dict()
 
-        actions = db_api.get_dynamic_actions(
+        filters['namespace'] = {'eq': namespace}
+
+        action_defs = db_api.get_dynamic_action_definitions(
             limit=limit,
             sort_keys=sort_fields,
             sort_dirs=sort_dirs,
             **filters
         )
 
-        for action in actions:
-            self._load_action(
-                action.name,
-                namespace=namespace,
-                action_def=action
-            )
-
-        return dict(filter(
-            lambda elem: elem[0][1] == namespace,
-            self._action_descs.items())
-        )
+        return [self._build_action_descriptor(a_d) for a_d in action_defs]

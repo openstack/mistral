@@ -42,19 +42,19 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_pecan_controller_exception
     @pecan.expose(content_type="text/plain")
     def post(self, namespace=''):
-        """Creates new Actions.
+        """Creates new dynamic actions.
 
         :param namespace: Optional. The namespace to create the actions in.
 
-        The text is allowed to have  multiple Actions, In such case,
-         they all will be created.
+        The text is allowed to have multiple actions. In such case, they all
+        will be created.
         """
         acl.enforce('dynamic_actions:create', context.ctx())
 
         actions = safe_yaml.load(pecan.request.text)
 
         LOG.debug(
-            'Creating Actions with names: %s in namespace:[%s]',
+            'Creating dynamic actions with names: %s in namespace:[%s]',
             actions,
             namespace
         )
@@ -66,8 +66,7 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
             for action in actions_db
         ]
 
-        return resources.DynamicActions(
-            dynamic_actions=actions_list).to_json()
+        return resources.DynamicActions(dynamic_actions=actions_list).to_json()
 
     @wsme_pecan.wsexpose(resources.DynamicActions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
@@ -138,8 +137,8 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         return rest_utils.get_all(
             resources.DynamicActions,
             resources.DynamicAction,
-            db_api.get_dynamic_actions,
-            db_api.get_dynamic_action,
+            db_api.get_dynamic_action_definitions,
+            db_api.get_dynamic_action_definition,
             marker=marker,
             limit=limit,
             sort_keys=sort_keys,
@@ -223,5 +222,4 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
             for action in actions_db
         ]
 
-        return resources.DynamicActions(
-            dynamic_actions=actions_list).to_json()
+        return resources.DynamicActions(dynamic_actions=actions_list).to_json()

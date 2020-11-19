@@ -640,7 +640,7 @@ def delete_workflow_definitions(session=None, **kwargs):
     return _delete_all(models.WorkflowDefinition, **kwargs)
 
 
-# Action definitions.
+# Code sources.
 
 @b.session_aware()
 def create_code_source(values, session=None):
@@ -709,9 +709,11 @@ def delete_code_source(identifier, namespace='', session=None):
     session.delete(code_src)
 
 
+# Dynamic actions.
+
 @b.session_aware()
-def create_dynamic_action(values, session=None):
-    action_def = models.DynamicAction()
+def create_dynamic_action_definition(values, session=None):
+    action_def = models.DynamicActionDefinition()
 
     action_def.update(values.copy())
 
@@ -719,7 +721,8 @@ def create_dynamic_action(values, session=None):
         action_def.save(session=session)
     except db_exc.DBDuplicateEntry:
         raise exc.DBDuplicateEntryError(
-            "Duplicate entry for Action[name=%s, namespace=%s, project_id=%s]"
+            "Duplicate entry for dynamic action definition "
+            "[name=%s, namespace=%s, project_id=%s]"
             % (action_def.name, action_def.namespace, action_def.project_id)
         )
 
@@ -727,8 +730,9 @@ def create_dynamic_action(values, session=None):
 
 
 @b.session_aware()
-def update_dynamic_action(identifier, values, namespace='', session=None):
-    action_def = get_dynamic_action(identifier, namespace=namespace)
+def update_dynamic_action_definition(identifier, values, namespace='',
+                                     session=None):
+    action_def = get_dynamic_action_definition(identifier, namespace=namespace)
 
     action_def.update(values.copy())
 
@@ -736,9 +740,10 @@ def update_dynamic_action(identifier, values, namespace='', session=None):
 
 
 @b.session_aware()
-def get_dynamic_action(identifier, fields=(), namespace='', session=None):
+def get_dynamic_action_definition(identifier, fields=(), namespace='',
+                                  session=None):
     action = _get_db_object_by_name_and_namespace_or_id(
-        models.DynamicAction,
+        models.DynamicActionDefinition,
         identifier,
         namespace=namespace,
         columns=fields
@@ -754,20 +759,33 @@ def get_dynamic_action(identifier, fields=(), namespace='', session=None):
 
 
 @b.session_aware()
-def get_dynamic_actions(fields=None, session=None, **kwargs):
+def load_dynamic_action_definition(identifier, fields=(), namespace='',
+                                   session=None):
+    return _get_db_object_by_name_and_namespace_or_id(
+        models.DynamicActionDefinition,
+        identifier,
+        namespace=namespace,
+        columns=fields
+    )
+
+
+@b.session_aware()
+def get_dynamic_action_definitions(fields=None, session=None, **kwargs):
     return _get_collection(
-        model=models.DynamicAction,
+        model=models.DynamicActionDefinition,
         fields=fields,
         **kwargs
     )
 
 
 @b.session_aware()
-def delete_dynamic_action(identifier, namespace='', session=None):
-    action_def = get_dynamic_action(identifier, namespace)
-    print(action_def)
+def delete_dynamic_action_definition(identifier, namespace='', session=None):
+    action_def = get_dynamic_action_definition(identifier, namespace)
+
     session.delete(action_def)
 
+
+# Action definitions.
 
 @b.session_aware()
 def get_action_definition_by_id(id, fields=(), session=None):
@@ -793,6 +811,7 @@ def get_action_definition(identifier, fields=(), session=None, namespace=''):
         namespace=namespace,
         columns=fields
     )
+
     #  If the action was not found in the given namespace,
     #  look in the default namespace
     if not a_def:

@@ -36,7 +36,6 @@ NAMESPACE = "ns"
 
 
 class DynamicActionProviderTest(base.DbTestCase):
-
     def _create_code_source(self, namespace=''):
         return code_sources_service.create_code_source(
             name='code_source',
@@ -67,7 +66,7 @@ class DynamicActionProviderTest(base.DbTestCase):
             namespace=namespace
         )
 
-    def test_Dynamic_actions(self):
+    def test_dynamic_actions(self):
         provider = dynamic_action.DynamicActionProvider()
 
         action_descs = provider.find_all()
@@ -75,6 +74,7 @@ class DynamicActionProviderTest(base.DbTestCase):
         self.assertEqual(0, len(action_descs))
 
         code_source = self._create_code_source()
+
         self._create_dynamic_actions(code_source_id=code_source['id'])
 
         action_descs = provider.find_all()
@@ -91,6 +91,7 @@ class DynamicActionProviderTest(base.DbTestCase):
         self.assertEqual(0, len(action_descs))
 
         code_source = self._create_code_source()
+
         self._create_dynamic_actions(code_source_id=code_source['id'])
 
         action_descs = provider.find_all()
@@ -103,7 +104,7 @@ class DynamicActionProviderTest(base.DbTestCase):
 
         self.assertEqual(0, len(action_descs))
 
-    def test_Dynamic_actions_with_namespace(self):
+    def test_dynamic_actions_with_namespace(self):
         provider = dynamic_action.DynamicActionProvider()
 
         action_descs = provider.find_all()
@@ -111,6 +112,7 @@ class DynamicActionProviderTest(base.DbTestCase):
         self.assertEqual(0, len(action_descs))
 
         code_source = self._create_code_source()
+
         self._create_dynamic_actions(
             code_source_id=code_source['id'],
             namespace=NAMESPACE

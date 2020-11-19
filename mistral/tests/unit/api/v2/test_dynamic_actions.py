@@ -12,21 +12,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
+from mistral.services import actions
 from mistral.tests.unit.api import base
 
-FILE_CONTENT = """from mistral_lib import actions
+
+TEST_MODULE_TEXT = """
+from mistral_lib import actions
 
 class DummyAction(actions.Action):
     def run(self, context):
-        return None
+        return "Hello from the dummy action 1!"
 
     def test(self, context):
         return None
 
 class DummyAction2(actions.Action):
     def run(self, context):
-        return None
+        return "Hello from the dummy action 2!"
 
     def test(self, context):
         return None"""
@@ -46,19 +48,20 @@ dummy_action:
 
 
 class TestDynamicActionsController(base.APITest):
-
     def setUp(self):
         super(TestDynamicActionsController, self).setUp()
+
         resp = self._create_code_source().json
 
         self.code_source_id = resp.get('code_sources')[0].get('id')
+
         self.addCleanup(self._delete_code_source)
 
     def _create_code_source(self):
         return self.app.post(
             '/v2/code_sources',
             upload_files=[
-                ('modulename', 'filename', FILE_CONTENT.encode())
+                ('test_dummy_module', 'filename', TEST_MODULE_TEXT.encode())
             ],
         )
 
@@ -70,15 +73,14 @@ class TestDynamicActionsController(base.APITest):
         )
 
     def _delete_code_source(self):
-        return self.app.delete(
-            '/v2/code_sources/modulename',
-        )
+        return self.app.delete('/v2/code_sources/test_dummy_module')
 
     def test_create_dynamic_action(self):
         resp = self._create_dynamic_action(
             CREATE_REQUEST.format(self.code_source_id)
         )
 
+        # Check the structure of the response.
         resp_json = resp.json
 
         self.assertEqual(200, resp.status_int)
@@ -95,6 +97,22 @@ class TestDynamicActionsController(base.APITest):
             self.code_source_id,
             dynamic_action.get('code_source_id')
         )
+
+        # Make sure the action can be found via the system action provider
+        # and it's fully functioning.
+        provider = actions.get_system_action_provider()
+
+        action_desc = provider.find('dummy_action')
+
+        self.assertIsNotNone(action_desc)
+
+        action = action_desc.instantiate({}, None)
+
+        self.assertIsNotNone(action)
+
+        self.assertEqual("Hello from the dummy action 1!", action.run(None))
+
+        # Delete the action
         self.app.delete('/v2/dynamic_actions/dummy_action')
 
     def test_update_dynamic_action(self):
@@ -158,6 +176,7 @@ class TestDynamicActionsController(base.APITest):
             CREATE_REQUEST.format(self.code_source_id)
         )
 
+        # Check the structure of the response
         self.assertEqual(200, resp.status_int)
 
         resp = self.app.get('/v2/dynamic_actions/dummy_action')
@@ -172,3 +191,9 @@ class TestDynamicActionsController(base.APITest):
         )
 
         self.assertEqual(404, resp.status_int)
+
+        # Make sure the system action provider doesn't find an action
+        # descriptor for the action.
+        provider = actions.get_system_action_provider()
+
+        self.assertIsNone(provider.find('dummy_action'))

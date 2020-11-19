@@ -72,9 +72,7 @@ def update_code_source(identifier, src_code, namespace=''):
         return db_api.update_code_source(
             identifier=identifier,
             namespace=namespace,
-            values={
-                'src': src_code,
-            }
+            values={'src': src_code}
         )
 
 

@@ -53,7 +53,7 @@ def upgrade():
     )
 
     op.create_table(
-        'dynamic_actions',
+        'dynamic_action_definitions',
 
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
@@ -74,7 +74,7 @@ def upgrade():
 
         sa.UniqueConstraint('name', 'namespace', 'project_id'),
 
-        sa.Index('dynamic_actions_project_id', 'project_id'),
-        sa.Index('dynamic_actions_scope', 'scope'),
+        sa.Index('dynamic_action_definitions_project_id', 'project_id'),
+        sa.Index('dynamic_action_definitions_scope', 'scope'),
 
     )

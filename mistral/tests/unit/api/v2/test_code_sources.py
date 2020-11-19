@@ -24,7 +24,6 @@ NAMESPACE = "NS"
 
 
 class TestCodeSourcesController(base.APITest):
-
     def _create_code_source(self, module_name, file_content,
                             namespace=NAMESPACE, expect_errors=False):
         return self.app.post(
@@ -46,7 +45,8 @@ class TestCodeSourcesController(base.APITest):
 
         resp = self._create_code_source(
             mod_name,
-            FILE_CONTENT)
+            FILE_CONTENT
+        )
 
         resp_json = resp.json
 
