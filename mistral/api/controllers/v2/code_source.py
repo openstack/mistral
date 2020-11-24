@@ -28,7 +28,6 @@ from mistral.api.hooks import content_type as ct_hook
 from mistral import context
 
 from mistral.db.v2 import api as db_api
-from mistral.services import code_sources
 
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
@@ -40,32 +39,76 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
     __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
 
     @rest_utils.wrap_pecan_controller_exception
-    @pecan.expose(content_type="multipart/form-data")
-    def post(self, namespace='', **files):
-        """Creates new Code Sources.
+    @pecan.expose(content_type="text/plain")
+    def post(self, name, scope='private', namespace=''):
+        """Creates new code sources.
 
+        :param name: Code source name (i.e. the name of the module).
+        :param scope: Optional. Scope (private or public).
         :param namespace: Optional. The namespace to create the code sources
             in.
-        :params **files: a list of files to create code sources from,
-            the variable name of the file will be the module name
         """
 
         acl.enforce('code_sources:create', context.ctx())
 
+        # Extract content directly from the request.
+        content = pecan.request.text
+
         LOG.debug(
-            'Creating Code Sources with names: %s in namespace:[%s]',
-            files.keys(),
+            'Creating code source [names=%s, scope=%s, namespace=%s]',
+            name,
+            scope,
             namespace
         )
 
-        code_sources_db = code_sources.create_code_sources(namespace, **files)
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.create_code_source)(
+            {
+                'name': name,
+                'content': content,
+                'namespace': namespace,
+                'scope': scope,
+                'version': 1,
+            }
+        )
 
-        code_sources_list = [
-            resources.CodeSource.from_db_model(db_cs)
-            for db_cs in code_sources_db
-        ]
+        pecan.response.status = 201
 
-        return resources.CodeSources(code_sources=code_sources_list).to_json()
+        return resources.CodeSource.from_db_model(db_model).to_json()
+
+    @rest_utils.wrap_pecan_controller_exception
+    @pecan.expose(content_type="text/plain")
+    def put(self, identifier, scope='private', namespace=''):
+        """Update code source.
+
+        :param identifier: Identifier (name or ID) of the code source.
+        :param scope: Scope (private or public) of the code source.
+        :param namespace: Optional. The namespace of the code source.
+        """
+        acl.enforce('code_sources:update', context.ctx())
+
+        LOG.debug(
+            'Updating code source [identifier(name or id)=%s, scope=%s,'
+            ' namespace=%s]',
+            identifier,
+            scope,
+            namespace
+        )
+
+        content = pecan.request.text
+
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.update_code_source
+        )(
+            identifier=identifier,
+            namespace=namespace,
+            values={
+                'scope': scope,
+                'content': content
+            }
+        )
+
+        return resources.CodeSource.from_db_model(db_model).to_json()
 
     @wsme_pecan.wsexpose(resources.CodeSources, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
@@ -73,8 +116,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
                          resources.SCOPE_TYPES, types.uuid, wtypes.text,
                          wtypes.text, bool, wtypes.text)
     def get_all(self, marker=None, limit=None, sort_keys='created_at',
-                sort_dirs='asc', fields='', name=None,
-                tags=None, scope=None,
+                sort_dirs='asc', fields='', name=None, tags=None, scope=None,
                 project_id=None, created_at=None, updated_at=None,
                 all_projects=False, namespace=None):
         """Return a list of Code Sources.
@@ -95,9 +137,6 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         :param name: Optional. Keep only resources with a specific name.
         :param namespace: Optional. Keep only resources with a specific
                           namespace
-        :param input: Optional. Keep only resources with a specific input.
-        :param definition: Optional. Keep only resources with a specific
-                           definition.
         :param tags: Optional. Keep only resources containing specific tags.
         :param scope: Optional. Keep only resources with a specific scope.
         :param project_id: Optional. The same as the requester project_id
@@ -150,7 +189,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.CodeSource, wtypes.text, wtypes.text)
     def get(self, identifier, namespace=''):
-        """Return the named Code Source.
+        """Return a code source.
 
         :param identifier: Name or UUID of the code source to retrieve.
         :param namespace: Optional. Namespace of the code source to retrieve.
@@ -159,13 +198,13 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         acl.enforce('code_sources:get', context.ctx())
 
         LOG.debug(
-            'Fetch Code Source [identifier=%s], [namespace=%s]',
+            'Fetch code source [identifier=%s, namespace=%s]',
             identifier,
             namespace
         )
 
         db_model = rest_utils.rest_retry_on_db_error(
-            code_sources.get_code_source)(
+            db_api.get_code_source)(
             identifier=identifier,
             namespace=namespace
         )
@@ -175,7 +214,7 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
     @rest_utils.wrap_pecan_controller_exception
     @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, identifier, namespace=''):
-        """Delete a Code Source.
+        """Delete a code source.
 
         :param identifier: Name or ID of Code Source to delete.
         :param namespace: Optional. Namespace of the Code Source to delete.
@@ -184,39 +223,12 @@ class CodeSourcesController(rest.RestController, hooks.HookController):
         acl.enforce('code_sources:delete', context.ctx())
 
         LOG.debug(
-            'Delete Code Source  [identifier=%s, namespace=%s]',
+            'Delete code source [identifier=%s, namespace=%s]',
             identifier,
             namespace
         )
 
-        rest_utils.rest_retry_on_db_error(
-            code_sources.delete_code_source
-        )(
+        rest_utils.rest_retry_on_db_error(db_api.delete_code_source)(
             identifier=identifier,
             namespace=namespace
         )
-
-    @rest_utils.wrap_pecan_controller_exception
-    @pecan.expose(content_type="multipart/form-data")
-    def put(self, namespace='', **files):
-        """Update Code Sources.
-
-        :param namespace: Optional. The namespace of the code sources.
-        :params **files: a list of files to update code sources from.
-        """
-        acl.enforce('code_sources:update', context.ctx())
-
-        LOG.debug(
-            'Updating Code Sources with names: %s in namespace:[%s]',
-            files.keys(),
-            namespace
-        )
-
-        code_sources_db = code_sources.update_code_sources(namespace, **files)
-
-        code_sources_list = [
-            resources.CodeSource.from_db_model(db_cs)
-            for db_cs in code_sources_db
-        ]
-
-        return resources.CodeSources(code_sources=code_sources_list).to_json()

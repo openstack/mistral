@@ -13,11 +13,12 @@
 #    limitations under the License.
 
 
+from mistral.db.v2 import api as db_api
 from mistral.tests.unit.api import base
 
-FILE_CONTENT = """test file"""
+FILE_CONTENT = "test file"
 
-UPDATED_FILE_CONTENT = """updated content"""
+UPDATED_FILE_CONTENT = "updated content"
 
 MODULE_NAME = 'modulename%s'
 NAMESPACE = "NS"
@@ -27,11 +28,9 @@ class TestCodeSourcesController(base.APITest):
     def _create_code_source(self, module_name, file_content,
                             namespace=NAMESPACE, expect_errors=False):
         return self.app.post(
-            '/v2/code_sources',
-            params={'namespace': namespace},
-            upload_files=[
-                (module_name, 'filename', file_content.encode())
-            ],
+            '/v2/code_sources?name=%s&namespace=%s' % (module_name, namespace),
+            file_content,
+            headers={'Content-Type': 'text/plain'},
             expect_errors=expect_errors
         )
 
@@ -40,79 +39,71 @@ class TestCodeSourcesController(base.APITest):
             '/v2/code_sources/%s?namespace=%s' % (id, namespace)
         )
 
-    def test_create_code_source(self):
+    def setUp(self):
+        super(TestCodeSourcesController, self).setUp()
+
+        self.addCleanup(db_api.delete_code_sources)
+
+    def test_post(self):
         mod_name = MODULE_NAME % 'create'
 
-        resp = self._create_code_source(
-            mod_name,
-            FILE_CONTENT
-        )
+        resp = self._create_code_source(mod_name, FILE_CONTENT)
 
-        resp_json = resp.json
+        self.assertEqual(201, resp.status_int)
 
-        self.assertEqual(200, resp.status_int)
+        code_src = resp.json
 
-        code_sources = resp_json.get('code_sources')
+        self.assertEqual(mod_name, code_src['name'])
+        self.assertEqual(FILE_CONTENT, code_src['content'])
+        self.assertEqual(1, code_src['version'])
+        self.assertEqual(NAMESPACE, code_src['namespace'])
 
-        self.assertEqual(1, len(code_sources))
-
-        code_source = code_sources[0]
-
-        self.assertEqual(mod_name, code_source.get('name'))
-        self.assertEqual(FILE_CONTENT, code_source.get('src'))
-        self.assertEqual(1, code_source.get('version'))
-        self.assertEqual(NAMESPACE, code_source.get('namespace'))
-
-        self._delete_code_source(mod_name)
-
-    def test_update_code_source(self):
+    def test_put(self):
         mod_name = MODULE_NAME % 'update'
 
         self._create_code_source(mod_name, FILE_CONTENT)
+
         resp = self.app.put(
-            '/v2/code_sources/',
-            params='namespace=%s' % NAMESPACE,
-            upload_files=[
-                (mod_name, 'filename', UPDATED_FILE_CONTENT.encode())
-            ],
+            '/v2/code_sources?identifier=%s&namespace=%s' %
+            (mod_name, NAMESPACE),
+            UPDATED_FILE_CONTENT,
+            headers={'Content-Type': 'text/plain'}
         )
 
-        resp_json = resp.json
-
         self.assertEqual(200, resp.status_int)
 
-        code_sources = resp_json.get('code_sources')
+        code_src = resp.json
 
-        self.assertEqual(1, len(code_sources))
+        self.assertEqual(mod_name, code_src['name'])
+        self.assertEqual(UPDATED_FILE_CONTENT, code_src['content'])
+        self.assertEqual(2, code_src['version'])
+        self.assertEqual(NAMESPACE, code_src['namespace'])
 
-        code_source = code_sources[0]
-
-        self.assertEqual(200, resp.status_int)
-
-        self.assertEqual(mod_name, code_source.get('name'))
-        self.assertEqual(UPDATED_FILE_CONTENT, code_source.get('src'))
-        self.assertEqual(2, code_source.get('version'))
-        self.assertEqual(NAMESPACE, code_source.get('namespace'))
-
-        self._delete_code_source(mod_name)
-
-    def test_delete_code_source(self):
+    def test_delete(self):
         mod_name = MODULE_NAME % 'delete'
+
         resp = self._create_code_source(mod_name, FILE_CONTENT)
 
-        resp_json = resp.json
+        self.assertEqual(201, resp.status_int)
+        self.assertEqual(mod_name, resp.json['name'])
 
-        self.assertEqual(200, resp.status_int)
-
-        code_sources = resp_json.get('code_sources')
-
-        self.assertEqual(1, len(code_sources))
+        # Make sure the object is in DB.
+        self.assertIsNotNone(
+            db_api.load_code_source(mod_name, namespace=NAMESPACE)
+        )
 
         self._delete_code_source(mod_name)
 
-    def test_create_duplicate_code_source(self):
+        # Make sure the object was deleted from DB.
+        self.assertIsNone(
+            db_api.load_code_source(mod_name, namespace=NAMESPACE)
+        )
+
+    def test_post_duplicate(self):
         mod_name = MODULE_NAME % 'duplicate'
+
         self._create_code_source(mod_name, FILE_CONTENT)
+
         resp = self._create_code_source(
             mod_name,
             FILE_CONTENT, expect_errors=True
@@ -120,28 +111,28 @@ class TestCodeSourcesController(base.APITest):
 
         self.assertEqual(409, resp.status_int)
         self.assertIn('Duplicate entry for CodeSource', resp)
+
         self._delete_code_source(mod_name)
 
-    def test_get_code_source(self):
+    def test_get(self):
         mod_name = MODULE_NAME % 'get'
+
         self._create_code_source(mod_name, FILE_CONTENT)
 
         resp = self.app.get(
-            '/v2/code_sources/%s' % mod_name,
-            params='namespace=%s' % NAMESPACE
+            '/v2/code_sources/%s?namespace=%s' % (mod_name, NAMESPACE)
         )
+
         resp_json = resp.json
 
         self.assertEqual(200, resp.status_int)
 
-        self.assertEqual(mod_name, resp_json.get('name'))
-        self.assertEqual(FILE_CONTENT, resp_json.get('src'))
-        self.assertEqual(1, resp_json.get('version'))
-        self.assertEqual(NAMESPACE, resp_json.get('namespace'))
+        self.assertEqual(mod_name, resp_json['name'])
+        self.assertEqual(FILE_CONTENT, resp_json['content'])
+        self.assertEqual(1, resp_json['version'])
+        self.assertEqual(NAMESPACE, resp_json['namespace'])
 
-        self._delete_code_source(mod_name)
-
-    def test_get_all_code_source(self):
+    def test_get_all(self):
         mod_name = MODULE_NAME % 'getall'
         mod2_name = MODULE_NAME % '2getall'
 
@@ -152,13 +143,11 @@ class TestCodeSourcesController(base.APITest):
             '/v2/code_sources',
             params='namespace=%s' % NAMESPACE
         )
+
         resp_json = resp.json
 
         self.assertEqual(200, resp.status_int)
 
-        code_sources = resp_json.get('code_sources')
+        code_sources = resp_json['code_sources']
 
         self.assertEqual(2, len(code_sources))
-
-        self._delete_code_source(mod_name)
-        self._delete_code_source(mod2_name)

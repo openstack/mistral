@@ -60,6 +60,7 @@ class Resource(wtypes.Base):
         res = "%s [" % type(self).__name__
 
         first = True
+
         for attr in self._wsme_attributes:
             if not first:
                 res += ', '

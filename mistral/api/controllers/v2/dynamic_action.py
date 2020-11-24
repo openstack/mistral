@@ -14,7 +14,6 @@
 #    limitations under the License.
 
 from oslo_log import log as logging
-import pecan
 from pecan import hooks
 from pecan import rest
 from wsme import types as wtypes
@@ -25,10 +24,9 @@ from mistral.api.controllers.v2 import resources
 from mistral.api.controllers.v2 import types
 from mistral.api.hooks import content_type as ct_hook
 from mistral import context
-from mistral.utils import safe_yaml
+from mistral import exceptions as exc
 
 from mistral.db.v2 import api as db_api
-from mistral.services import dynamic_actions
 
 from mistral.utils import filter_utils
 from mistral.utils import rest_utils
@@ -40,33 +38,94 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
     __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
 
     @rest_utils.wrap_pecan_controller_exception
-    @pecan.expose(content_type="text/plain")
-    def post(self, namespace=''):
-        """Creates new dynamic actions.
+    @wsme_pecan.wsexpose(
+        resources.DynamicAction,
+        body=resources.DynamicAction,
+        status_code=201
+    )
+    def post(self, dyn_action):
+        """Creates new dynamic action.
 
-        :param namespace: Optional. The namespace to create the actions in.
-
-        The text is allowed to have multiple actions. In such case, they all
-        will be created.
+        :param dyn_action: Dynamic action to create.
         """
         acl.enforce('dynamic_actions:create', context.ctx())
 
-        actions = safe_yaml.load(pecan.request.text)
+        LOG.debug('Creating dynamic action [action=%s]', dyn_action)
 
-        LOG.debug(
-            'Creating dynamic actions with names: %s in namespace:[%s]',
-            actions,
-            namespace
+        if not dyn_action.code_source_id and not dyn_action.code_source_name:
+            raise exc.InputException(
+                "Either 'code_source_id' or 'code_source_name'"
+                " must be provided."
+            )
+
+        code_source = db_api.get_code_source(
+            dyn_action.code_source_id or dyn_action.code_source_name,
+            namespace=dyn_action.namespace
         )
 
-        actions_db = dynamic_actions.create_dynamic_actions(actions, namespace)
+        # TODO(rakhmerov): Ideally we also need to check if the specified
+        # class exists in the specified code source. But probably it's not
+        # a controller responsibility.
 
-        actions_list = [
-            resources.DynamicAction.from_db_model(action)
-            for action in actions_db
-        ]
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.create_dynamic_action_definition
+        )(
+            {
+                'name': dyn_action.name,
+                'namespace': dyn_action.namespace,
+                'class_name': dyn_action.class_name,
+                'code_source_id': code_source.id,
+                'code_source_name': code_source.name
+            }
+        )
 
-        return resources.DynamicActions(dynamic_actions=actions_list).to_json()
+        return resources.DynamicAction.from_db_model(db_model)
+
+    @rest_utils.wrap_pecan_controller_exception
+    @wsme_pecan.wsexpose(
+        resources.DynamicAction,
+        body=resources.DynamicAction
+    )
+    def put(self, dyn_action):
+        """Update dynamic action.
+
+        :param dyn_action: Dynamic action to create.
+        """
+        acl.enforce('dynamic_actions:update', context.ctx())
+
+        LOG.debug('Updating dynamic action [action=%s]', dyn_action)
+
+        if not dyn_action.id and not dyn_action.name:
+            raise exc.InputException("Either 'name' or 'id' must be provided.")
+
+        values = {'class_name': dyn_action.class_name}
+
+        if dyn_action.scope:
+            values['scope'] = dyn_action.scope
+
+        # A client may also want to update a source code.
+        if dyn_action.code_source_id or dyn_action.code_source_name:
+            code_source = db_api.get_code_source(
+                dyn_action.code_source_id or dyn_action.code_source_name,
+                namespace=dyn_action.namespace
+            )
+
+            values['code_source_id'] = code_source.id
+            values['code_source_name'] = code_source.name
+
+        # TODO(rakhmerov): Ideally we also need to check if the specified
+        # class exists in the specified code source. But probably it's not
+        # a controller responsibility.
+
+        db_model = rest_utils.rest_retry_on_db_error(
+            db_api.update_dynamic_action_definition
+        )(
+            dyn_action.id or dyn_action.name,
+            values,
+            namespace=dyn_action.namespace
+        )
+
+        return resources.DynamicAction.from_db_model(db_model)
 
     @wsme_pecan.wsexpose(resources.DynamicActions, types.uuid, int,
                          types.uniquelist, types.list, types.uniquelist,
@@ -159,13 +218,14 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         acl.enforce('dynamic_actions:get', context.ctx())
 
         LOG.debug(
-            'Fetch Action [identifier=%s], [namespace=%s]',
+            'Fetch dynamic action [identifier=%s, namespace=%s]',
             identifier,
             namespace
         )
 
         db_model = rest_utils.rest_retry_on_db_error(
-            dynamic_actions.get_dynamic_action)(
+            db_api.get_dynamic_action_definition
+        )(
             identifier=identifier,
             namespace=namespace
         )
@@ -173,53 +233,25 @@ class DynamicActionsController(rest.RestController, hooks.HookController):
         return resources.DynamicAction.from_db_model(db_model)
 
     @rest_utils.wrap_pecan_controller_exception
-    @pecan.expose(content_type="multipart/form-data")
+    @wsme_pecan.wsexpose(None, wtypes.text, wtypes.text, status_code=204)
     def delete(self, identifier, namespace=''):
-        """Delete an Action.
+        """Delete a dynamic action.
 
-        :param identifier: Name or ID of Action to delete.
-        :param namespace: Optional. Namespace of the Action to delete.
+        :param identifier: Name or ID of the action to delete.
+        :param namespace: Optional. Namespace of the action to delete.
         """
 
         acl.enforce('dynamic_actions:delete', context.ctx())
 
         LOG.debug(
-            'Delete Action  [identifier=%s, namespace=%s]',
+            'Delete dynamic action [identifier=%s, namespace=%s]',
             identifier,
             namespace
         )
 
         rest_utils.rest_retry_on_db_error(
-            dynamic_actions.delete_dynamic_action)(
+            db_api.delete_dynamic_action_definition
+        )(
             identifier=identifier,
             namespace=namespace
         )
-
-    @rest_utils.wrap_pecan_controller_exception
-    @pecan.expose(content_type="text/plain")
-    def put(self, namespace=''):
-        """Update Actions.
-
-        :param namespace: Optional. The namespace to update the actions in.
-
-        The text is allowed to have multiple Actions, In such case,
-         they all will be updated.
-        """
-        acl.enforce('dynamic_actions:update', context.ctx())
-
-        actions = safe_yaml.load(pecan.request.text)
-
-        LOG.debug(
-            'Updating Actions with names: %s in namespace:[%s]',
-            actions.keys(),
-            namespace
-        )
-
-        actions_db = dynamic_actions.update_dynamic_actions(actions, namespace)
-
-        actions_list = [
-            resources.DynamicAction.from_db_model(action)
-            for action in actions_db
-        ]
-
-        return resources.DynamicActions(dynamic_actions=actions_list).to_json()

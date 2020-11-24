@@ -190,16 +190,17 @@ class CodeSource(resource.Resource, ScopedResource):
 
     id = wtypes.text
     name = wtypes.text
-    src = wtypes.text
-    scope = SCOPE_TYPES
+    namespace = wtypes.text
+    content = wtypes.text
     version = wtypes.IntegerType(minimum=1)
 
     project_id = wsme.wsattr(wtypes.text, readonly=True)
+    scope = SCOPE_TYPES
 
     actions = [wtypes.text]
+
     created_at = wtypes.text
     updated_at = wtypes.text
-    namespace = wtypes.text
 
     @classmethod
     def sample(cls):
@@ -214,24 +215,6 @@ class CodeSource(resource.Resource, ScopedResource):
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
             namespace=''
-        )
-
-    @classmethod
-    def from_db_model(cls, db_model):
-        return CodeSource(
-            id=getattr(db_model, 'id', db_model.name),
-            name=db_model.name,
-            version=db_model.version,
-            src=db_model.src,
-            namespace=db_model.namespace,
-            project_id=db_model.project_id,
-            scope=db_model.scope,
-            created_at=utils.datetime_to_str(
-                getattr(db_model, 'created_at', '')
-            ),
-            updated_at=utils.datetime_to_str(
-                getattr(db_model, 'updated_at', '')
-            )
         )
 
 
@@ -264,13 +247,16 @@ class DynamicAction(resource.Resource, ScopedResource):
 
     id = wtypes.text
     name = wtypes.text
+    namespace = wsme.wsattr(wtypes.text, default='')
     code_source_id = wtypes.text
+    code_source_name = wtypes.text
     class_name = wtypes.text
+
     project_id = wsme.wsattr(wtypes.text, readonly=True)
+    scope = SCOPE_TYPES
 
     created_at = wtypes.text
     updated_at = wtypes.text
-    namespace = wtypes.text
 
     @classmethod
     def sample(cls):
@@ -279,29 +265,12 @@ class DynamicAction(resource.Resource, ScopedResource):
             name='actionName',
             class_name='className',
             code_source_id='233e4567-354b-12d3-4444-426655444444',
+            code_source_name='my_sample_module',
             scope='private',
             project_id='a7eb669e9819420ea4bd1453e672c0a7',
             created_at='1970-01-01T00:00:00.000000',
             updated_at='1970-01-01T00:00:00.000000',
             namespace=''
-        )
-
-    @classmethod
-    def from_db_model(cls, db_model):
-        return DynamicAction(
-            id=getattr(db_model, 'id', db_model.name),
-            name=db_model.name,
-            code_source_id=db_model.code_source_id,
-            class_name=db_model.class_name,
-            namespace=db_model.namespace,
-            project_id=db_model.project_id,
-            scope=db_model.scope,
-            created_at=utils.datetime_to_str(
-                getattr(db_model, 'created_at', '')
-            ),
-            updated_at=utils.datetime_to_str(
-                getattr(db_model, 'updated_at', '')
-            )
         )
 
 

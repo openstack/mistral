@@ -213,7 +213,7 @@ class CodeSource(mb.MistralSecureModelBase):
     # Main properties.
     id = mb.id_column()
     name = sa.Column(sa.String(255))
-    src = sa.Column(sa.Text())
+    content = sa.Column(sa.Text())
     version = sa.Column(sa.Integer())
     namespace = sa.Column(sa.String(255), nullable=True)
     tags = sa.Column(st.JsonListType())
@@ -238,12 +238,19 @@ class DynamicActionDefinition(mb.MistralSecureModelBase):
     name = sa.Column(sa.String(255))
     namespace = sa.Column(sa.String(255), nullable=True)
     class_name = sa.Column(sa.String(255))
+    code_source_name = sa.Column(sa.String(255))
 
 
 DynamicActionDefinition.code_source_id = sa.Column(
     sa.String(36),
     sa.ForeignKey(CodeSource.id, ondelete='CASCADE'),
     nullable=False
+)
+
+DynamicActionDefinition.code_source = relationship(
+    CodeSource,
+    remote_side=CodeSource.id,
+    lazy='select'
 )
 
 

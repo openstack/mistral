@@ -184,10 +184,6 @@ def create_dynamic_action_definition(values):
     return IMPL.create_dynamic_action_definition(values)
 
 
-def delete_dynamic_action_definition(identifier, namespace=''):
-    return IMPL.delete_dynamic_action_definition(identifier, namespace)
-
-
 def update_dynamic_action_definition(identifier, values, namespace=''):
     return IMPL.update_dynamic_action_definition(identifier, values, namespace)
 
@@ -204,10 +200,22 @@ def get_dynamic_action_definitions(limit=None, marker=None, sort_keys=None,
     )
 
 
+def delete_dynamic_action_definition(identifier, namespace=''):
+    return IMPL.delete_dynamic_action_definition(identifier, namespace)
+
+
+def delete_dynamic_action_definitions(**kwargs):
+    return IMPL.delete_dynamic_action_definitions(**kwargs)
+
+
 # Code sources.
 
 def get_code_source(identifier, namespace='', fields=()):
     return IMPL.get_code_source(identifier, fields, namespace=namespace)
+
+
+def load_code_source(identifier, namespace='', fields=()):
+    return IMPL.load_code_source(identifier, fields, namespace=namespace)
 
 
 def create_code_source(values):
@@ -216,10 +224,6 @@ def create_code_source(values):
 
 def update_code_source(identifier, values, namespace=''):
     return IMPL.update_code_source(identifier, values, namespace=namespace)
-
-
-def delete_code_source(name, namespace=''):
-    return IMPL.delete_code_source(name, namespace=namespace)
 
 
 def get_code_sources(limit=None, marker=None, sort_keys=None,
@@ -232,6 +236,14 @@ def get_code_sources(limit=None, marker=None, sort_keys=None,
         fields=fields,
         **kwargs
     )
+
+
+def delete_code_source(identifier, namespace=''):
+    return IMPL.delete_code_source(identifier, namespace=namespace)
+
+
+def delete_code_sources(**kwargs):
+    return IMPL.delete_code_sources(**kwargs)
 
 
 # Action definitions.

@@ -137,7 +137,7 @@ def _get_python_module(code_source_id, namespace=''):
         namespace=namespace
     )
 
-    mod = _load_python_module(code_source.name, code_source.src)
+    mod = _load_python_module(code_source.name, code_source.content)
 
     return mod, code_source.version
 
@@ -177,7 +177,7 @@ class DynamicActionProvider(ml_actions.ActionProvider):
             # Reload module.
             code_src = db_api.get_code_source(code_src_id)
 
-            module = _load_python_module(code_src.name, code_src.src)
+            module = _load_python_module(code_src.name, code_src.content)
 
             self._code_sources[code_src_id] = (module, code_src.version)
         else:

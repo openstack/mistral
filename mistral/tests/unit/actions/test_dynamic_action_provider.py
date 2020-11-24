@@ -13,8 +13,7 @@
 #    limitations under the License.
 
 from mistral.actions import dynamic_action
-from mistral.services import code_sources as code_sources_service
-from mistral.services import dynamic_actions as dynamic_actions_service
+from mistral.db.v2 import api as db_api
 from mistral.tests.unit import base
 
 DUMMY_CODE_SOURCE = """from mistral_lib import actions
@@ -37,33 +36,36 @@ NAMESPACE = "ns"
 
 class DynamicActionProviderTest(base.DbTestCase):
     def _create_code_source(self, namespace=''):
-        return code_sources_service.create_code_source(
-            name='code_source',
-            src_code=DUMMY_CODE_SOURCE,
-            namespace=namespace
+        return db_api.create_code_source(
+            {
+                'name': 'code_source',
+                'content': DUMMY_CODE_SOURCE,
+                'namespace': namespace,
+                'version': 0
+            }
         )
 
     def _delete_code_source(self):
-        return code_sources_service.delete_code_source(
-            identifier='code_source',
-        )
+        return db_api.delete_code_source('code_source')
 
-    def _create_dynamic_actions(self, code_source_id, namespace=''):
-        actions = [
+    def _create_dynamic_actions(self, code_source, namespace=''):
+        db_api.create_dynamic_action_definition(
             {
                 "name": "dummy_action",
+                "namespace": namespace,
                 "class_name": "DummyAction",
-                "code_source_id": code_source_id
-            },
+                "code_source_id": code_source.id,
+                "code_source_name": code_source.name
+            }
+        )
+        db_api.create_dynamic_action_definition(
             {
                 "name": "dummy_action2",
+                "namespace": namespace,
                 "class_name": "DummyAction2",
-                "code_source_id": code_source_id
-            }]
-
-        dynamic_actions_service.create_dynamic_actions(
-            actions,
-            namespace=namespace
+                "code_source_id": code_source.id,
+                "code_source_name": code_source.name
+            }
         )
 
     def test_dynamic_actions(self):
@@ -75,7 +77,7 @@ class DynamicActionProviderTest(base.DbTestCase):
 
         code_source = self._create_code_source()
 
-        self._create_dynamic_actions(code_source_id=code_source['id'])
+        self._create_dynamic_actions(code_source)
 
         action_descs = provider.find_all()
 
@@ -92,7 +94,7 @@ class DynamicActionProviderTest(base.DbTestCase):
 
         code_source = self._create_code_source()
 
-        self._create_dynamic_actions(code_source_id=code_source['id'])
+        self._create_dynamic_actions(code_source)
 
         action_descs = provider.find_all()
 
@@ -114,9 +116,10 @@ class DynamicActionProviderTest(base.DbTestCase):
         code_source = self._create_code_source()
 
         self._create_dynamic_actions(
-            code_source_id=code_source['id'],
+            code_source=code_source,
             namespace=NAMESPACE
         )
+
         action_descs = provider.find_all(namespace=NAMESPACE)
 
         self.assertEqual(2, len(action_descs))

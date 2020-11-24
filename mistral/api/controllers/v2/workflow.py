@@ -47,7 +47,8 @@ class WorkflowsController(rest.RestController, hooks.HookController):
     __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
 
     validate = validation.SpecValidationController(
-        spec_parser.get_workflow_list_spec_from_yaml)
+        spec_parser.get_workflow_list_spec_from_yaml
+    )
 
     @pecan.expose()
     def _lookup(self, identifier, sub_resource, *remainder):

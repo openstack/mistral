@@ -40,7 +40,8 @@ class WorkbooksController(rest.RestController, hooks.HookController):
     __hooks__ = [ct_hook.ContentTypeHook("application/json", ['POST', 'PUT'])]
 
     validate = validation.SpecValidationController(
-        spec_parser.get_workbook_spec_from_yaml)
+        spec_parser.get_workbook_spec_from_yaml
+    )
 
     @rest_utils.wrap_wsme_controller_exception
     @wsme_pecan.wsexpose(resources.Workbook, wtypes.text, wtypes.text)
@@ -56,9 +57,12 @@ class WorkbooksController(rest.RestController, hooks.HookController):
 
         # Use retries to prevent possible failures.
         r = rest_utils.create_db_retry_object()
-        db_model = r.call(db_api.get_workbook,
-                          name,
-                          namespace=namespace)
+
+        db_model = r.call(
+            db_api.get_workbook,
+            name,
+            namespace=namespace
+        )
 
         return resources.Workbook.from_db_model(db_model)
 
@@ -68,9 +72,6 @@ class WorkbooksController(rest.RestController, hooks.HookController):
         """Update a workbook.
 
         :param namespace: Optional. Namespace of workbook to update.
-        :param validate: Optional. If set to False, disables validation of
-            the workflow YAML definition syntax, but only if allowed in the
-            service configuration. By default, validation is enabled.
         """
 
         acl.enforce('workbooks:update', context.ctx())

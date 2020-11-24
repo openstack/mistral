@@ -688,6 +688,16 @@ def get_code_source(identifier, fields=(), session=None, namespace=''):
 
 
 @b.session_aware()
+def load_code_source(identifier, fields=(), session=None, namespace=''):
+    return _get_db_object_by_name_and_namespace_or_id(
+        models.CodeSource,
+        identifier,
+        namespace=namespace,
+        columns=fields
+    )
+
+
+@b.session_aware()
 def update_code_source(identifier, values, namespace='', session=None):
     code_src = get_code_source(identifier, namespace=namespace)
 
@@ -707,6 +717,11 @@ def delete_code_source(identifier, namespace='', session=None):
     )
 
     session.delete(code_src)
+
+
+@b.session_aware()
+def delete_code_sources(session=None, **kwargs):
+    return _delete_all(models.CodeSource, **kwargs)
 
 
 # Dynamic actions.
@@ -783,6 +798,11 @@ def delete_dynamic_action_definition(identifier, namespace='', session=None):
     action_def = get_dynamic_action_definition(identifier, namespace)
 
     session.delete(action_def)
+
+
+@b.session_aware()
+def delete_dynamic_action_definitions(session=None, **kwargs):
+    return _delete_all(models.DynamicActionDefinition, **kwargs)
 
 
 # Action definitions.

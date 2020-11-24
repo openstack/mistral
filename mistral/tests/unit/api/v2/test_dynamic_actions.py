@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from mistral.db.v2 import api as db_api
 from mistral.services import actions
 from mistral.tests.unit.api import base
 
@@ -33,70 +34,49 @@ class DummyAction2(actions.Action):
     def test(self, context):
         return None"""
 
-CREATE_REQUEST = """
--
-  name: dummy_action
-  class_name: DummyAction
-  code_source_id: {}
-"""
-
-UPDATE_REQUEST = """
-dummy_action:
-  class_name: NewDummyAction
-  code_source_id: {}
-"""
-
 
 class TestDynamicActionsController(base.APITest):
     def setUp(self):
         super(TestDynamicActionsController, self).setUp()
 
-        resp = self._create_code_source().json
-
-        self.code_source_id = resp.get('code_sources')[0].get('id')
-
-        self.addCleanup(self._delete_code_source)
-
-    def _create_code_source(self):
-        return self.app.post(
-            '/v2/code_sources',
-            upload_files=[
-                ('test_dummy_module', 'filename', TEST_MODULE_TEXT.encode())
-            ],
+        resp = self.app.post(
+            '/v2/code_sources?name=test_dummy_module',
+            TEST_MODULE_TEXT
         )
 
-    def _create_dynamic_action(self, body):
-        return self.app.post(
+        self.code_source_id = resp.json['id']
+
+        self.addCleanup(db_api.delete_code_sources)
+        self.addCleanup(db_api.delete_dynamic_action_definitions)
+
+    def _create_dynamic_action(self):
+        return self.app.post_json(
             '/v2/dynamic_actions',
-            body,
-            content_type="text/plain"
+            {
+                'name': 'dummy_action',
+                'class_name': 'DummyAction',
+                'code_source_id': self.code_source_id
+            }
         )
 
-    def _delete_code_source(self):
-        return self.app.delete('/v2/code_sources/test_dummy_module')
-
-    def test_create_dynamic_action(self):
-        resp = self._create_dynamic_action(
-            CREATE_REQUEST.format(self.code_source_id)
+    def test_post(self):
+        resp = self.app.post_json(
+            '/v2/dynamic_actions',
+            {
+                'name': 'dummy_action',
+                'class_name': 'DummyAction',
+                'code_source_id': self.code_source_id
+            }
         )
 
         # Check the structure of the response.
-        resp_json = resp.json
+        self.assertEqual(201, resp.status_int)
 
-        self.assertEqual(200, resp.status_int)
+        dyn_action = resp.json
 
-        dynamic_actions = resp_json.get('dynamic_actions')
-
-        self.assertEqual(1, len(dynamic_actions))
-
-        dynamic_action = dynamic_actions[0]
-
-        self.assertEqual('dummy_action', dynamic_action.get('name'))
-        self.assertEqual('DummyAction', dynamic_action.get('class_name'))
-        self.assertEqual(
-            self.code_source_id,
-            dynamic_action.get('code_source_id')
-        )
+        self.assertEqual('dummy_action', dyn_action['name'])
+        self.assertEqual('DummyAction', dyn_action['class_name'])
+        self.assertEqual(self.code_source_id, dyn_action['code_source_id'])
 
         # Make sure the action can be found via the system action provider
         # and it's fully functioning.
@@ -112,52 +92,42 @@ class TestDynamicActionsController(base.APITest):
 
         self.assertEqual("Hello from the dummy action 1!", action.run(None))
 
-        # Delete the action
-        self.app.delete('/v2/dynamic_actions/dummy_action')
+    def test_put(self):
+        resp = self._create_dynamic_action()
 
-    def test_update_dynamic_action(self):
-        self._create_dynamic_action(
-            CREATE_REQUEST.format(self.code_source_id)
-        )
+        self.assertEqual(201, resp.status_int)
 
-        resp = self.app.put(
+        resp = self.app.put_json(
             '/v2/dynamic_actions',
-            UPDATE_REQUEST.format(self.code_source_id),
-            content_type="text/plain"
-        )
-
-        resp_json = resp.json
-
-        self.assertEqual(200, resp.status_int)
-
-        dynamic_actions = resp_json.get('dynamic_actions')
-
-        self.assertEqual(1, len(dynamic_actions))
-
-        dynamic_action = dynamic_actions[0]
-
-        self.assertEqual('dummy_action', dynamic_action.get('name'))
-        self.assertEqual('NewDummyAction', dynamic_action.get('class_name'))
-        self.assertEqual(
-            self.code_source_id,
-            dynamic_action.get('code_source_id')
-        )
-
-        self.app.delete('/v2/dynamic_actions/dummy_action')
-
-    def test_get_dynamic_action(self):
-        resp = self._create_dynamic_action(
-            CREATE_REQUEST.format(self.code_source_id)
+            {
+                'name': 'dummy_action',
+                'class_name': 'NewDummyAction'
+            }
         )
 
         self.assertEqual(200, resp.status_int)
 
-        self.app.delete('/v2/dynamic_actions/dummy_action')
+        dyn_action = resp.json
 
-    def test_get_all_dynamic_actions(self):
-        self._create_dynamic_action(
-            CREATE_REQUEST.format(self.code_source_id)
-        )
+        self.assertEqual('dummy_action', dyn_action['name'])
+        self.assertEqual('NewDummyAction', dyn_action['class_name'])
+
+    def test_get(self):
+        self._create_dynamic_action()
+
+        resp = self.app.get('/v2/dynamic_actions/dummy_action')
+
+        self.assertEqual(200, resp.status_int)
+
+        dyn_action = resp.json
+
+        self.assertEqual('dummy_action', dyn_action['name'])
+        self.assertEqual('DummyAction', dyn_action['class_name'])
+        self.assertEqual(self.code_source_id, dyn_action['code_source_id'])
+        self.assertEqual('test_dummy_module', dyn_action['code_source_name'])
+
+    def test_get_all(self):
+        self._create_dynamic_action()
 
         resp = self.app.get('/v2/dynamic_actions')
 
@@ -169,15 +139,11 @@ class TestDynamicActionsController(base.APITest):
 
         self.assertEqual(1, len(dynamic_actions))
 
-        self.app.delete('/v2/dynamic_actions/dummy_action')
-
-    def test_delete_dynamic_action(self):
-        resp = self._create_dynamic_action(
-            CREATE_REQUEST.format(self.code_source_id)
-        )
+    def test_delete(self):
+        resp = self._create_dynamic_action()
 
         # Check the structure of the response
-        self.assertEqual(200, resp.status_int)
+        self.assertEqual(201, resp.status_int)
 
         resp = self.app.get('/v2/dynamic_actions/dummy_action')
 
