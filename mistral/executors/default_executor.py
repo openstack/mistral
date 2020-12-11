@@ -96,8 +96,6 @@ class DefaultExecutor(base.Executor):
                 # NOTE(d0ugal): If the action is a subclass of mistral-lib we
                 # know that it expects to be passed the context.
                 if isinstance(action, mistral_lib.Action):
-                    print("Action:", action)
-
                     result = action.run(
                         context.create_action_context(exec_ctx)
                     )
