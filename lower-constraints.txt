@@ -2,7 +2,7 @@ alembic==0.9.6
 cachetools==2.0.0
 coverage==4.0
 croniter==0.3.4
-doc8==0.6.0
+doc8==0.8.1
 dogpile.cache==0.6.2
 eventlet==0.26.0
 fixtures==3.0.0
