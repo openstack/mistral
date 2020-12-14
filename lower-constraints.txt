@@ -23,8 +23,8 @@ oslo.messaging==5.29.0
 oslo.middleware==3.31.0
 oslo.policy==1.30.0
 oslo.serialization==2.21.1
-oslo.service==1.24.0
-oslo.utils==3.37.0
+oslo.service==2.1.0
+oslo.utils==4.0.0
 oslosphinx==4.7.0
 oslotest==3.2.0
 osprofiler==1.4.0
@@ -39,7 +39,7 @@ requests==2.14.2
 SQLAlchemy==1.2.5
 stestr==2.0.0
 stevedore==1.20.0
-tempest==17.1.0
+tempest==21.0.0
 tenacity==5.0.1
 testtools==2.2.0
 tooz==1.58.0
