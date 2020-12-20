@@ -25,6 +25,8 @@ class PolicyFixture(fixtures.Fixture):
     def setUp(self):
         super(PolicyFixture, self).setUp()
 
+        cfg.CONF(args=[], project='mistral')
+
         policy_opts.set_defaults(cfg.CONF)
 
         acl._ENFORCER = oslo_policy.Enforcer(cfg.CONF)
@@ -35,12 +37,14 @@ class PolicyFixture(fixtures.Fixture):
 
     def register_rules(self, rules):
         enf = acl._ENFORCER
+
         for rule_name, rule_check_str in rules.items():
             enf.register_default(oslo_policy.RuleDefault(rule_name,
                                                          rule_check_str))
 
     def change_policy_definition(self, rules):
         enf = acl._ENFORCER
+
         for rule_name, rule_check_str in rules.items():
             enf.rules[rule_name] = oslo_policy.RuleDefault(
                 rule_name, rule_check_str).check

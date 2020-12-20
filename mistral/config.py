@@ -26,6 +26,7 @@ from keystoneauth1 import loading
 from oslo_config import cfg
 from oslo_log import log
 from oslo_middleware import cors
+from oslo_policy import opts
 from osprofiler import opts as profiler
 
 from mistral import version
@@ -796,6 +797,10 @@ def parse_args(args=None, usage=None, default_config_files=None):
 def set_config_defaults():
     """This method updates all configuration default values."""
     set_cors_middleware_defaults()
+    # TODO(gmann): Remove setting the default value of config policy_file
+    # once oslo_policy change the default value to 'policy.yaml'.
+    # https://github.com/openstack/oslo.policy/blob/a626ad12fe5a3abd49d70e3e5b95589d279ab578/oslo_policy/opts.py#L49
+    opts.set_defaults(CONF, 'policy.yaml')
 
 
 def set_cors_middleware_defaults():

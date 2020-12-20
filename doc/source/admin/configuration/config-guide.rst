@@ -122,14 +122,14 @@ directory.
       target: my_favorite_executor
     ...Workflow YAML...
 
-#. Configure role based access policies for Mistral endpoints (policy.json)::
+#. Configure role based access policies for Mistral endpoints (policy.yaml)::
 
      [oslo_policy]
-     policy_file = <path-of-policy.json file>
+     policy_file = <path-of-policy.yaml file>
 
-   Default policy.json file is in ``mistral/etc/``.
-   For more details see `policy.json file
-   <https://docs.openstack.org/oslo.policy/latest/admin/policy-json-file.html>`_.
+   Default policy.yaml file is in ``mistral/etc/``.
+   For more details see `policy.yaml file
+   <https://docs.openstack.org/oslo.policy/latest/admin/policy-yaml-file.html>`_.
 
 #. Modify the action execution reporting configuration if needed.
 
