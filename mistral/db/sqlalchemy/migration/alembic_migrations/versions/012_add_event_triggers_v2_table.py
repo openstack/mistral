@@ -50,7 +50,7 @@ def upgrade():
 
         sa.ForeignKeyConstraint(
             ['workflow_id'],
-            [u'workflow_definitions_v2.id'],
+            ['workflow_definitions_v2.id'],
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint(

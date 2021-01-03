@@ -128,10 +128,10 @@ def upgrade():
             'workflow_execution_id', sa.String(length=36), nullable=True
         ),
         sa.ForeignKeyConstraint(
-            ['task_execution_id'], [u'executions_v2.id'],
+            ['task_execution_id'], ['executions_v2.id'],
         ),
         sa.ForeignKeyConstraint(
-            ['workflow_execution_id'], [u'executions_v2.id'],
+            ['workflow_execution_id'], ['executions_v2.id'],
         ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -218,7 +218,7 @@ def upgrade():
         sa.Column('workflow_input_hash', sa.CHAR(length=64), nullable=True),
         sa.Column('trust_id', sa.String(length=80), nullable=True),
         sa.ForeignKeyConstraint(
-            ['workflow_id'], [u'workflow_definitions_v2.id'],
+            ['workflow_id'], ['workflow_definitions_v2.id'],
         ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name', 'project_id'),

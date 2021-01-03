@@ -69,7 +69,7 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(
             ['code_source_id'],
-            [u'code_sources.id'],
+            ['code_sources.id'],
             ondelete='CASCADE'
         ),
 
