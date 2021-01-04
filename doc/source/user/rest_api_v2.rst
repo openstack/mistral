@@ -234,3 +234,50 @@ ad-hoc action Workflow Language without having to upload them into Mistral.
 
 These endpoints expect workbook, workflow or ad-hoc action text
 (Workflow Language) correspondingly in a request body.
+
+
+Code Sources
+------------
+
+Code source is a type of entity that holds information about an executable
+module. Mostly, it was designed to represent as a Python module and this is
+its main use at the moment. However, it can also be used for other languages
+in future.
+
+Code sources are now used as part of the dynamic actions mechanism. The normal
+flow is to first upload a code source, i.e. a regular Python file, and then
+create one or more dynamic actions using **POST /v2/dynamic-actions** and
+specifying the name of the action, its class name as it's declared in the
+source code, and the reference to the source code itself.
+
+.. autotype:: mistral.api.controllers.v2.resources.CodeSource
+   :members:
+
+.. autotype:: mistral.api.controllers.v2.resources.CodeSources
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.code_source:CodeSourcesController
+   :webprefix: /v2/code-sources
+
+
+Dynamic Actions
+---------------
+
+Dynamic action is the type of action that can be created right through the API,
+without having to reboot Mistral like in other cases.
+
+Before adding a dynamic action, a client first needs to upload a code source
+(i.e. a Python module) that contains the corresponding Python class that
+implements the action, and then create the action using the method
+**POST /v2/dynamic-actions** where the name of the action, its class name as
+it's declared in the code source code, and the reference to the source code
+itself must be specified.
+
+.. autotype:: mistral.api.controllers.v2.resources.DynamicAction
+   :members:
+
+.. autotype:: mistral.api.controllers.v2.resources.DynamicActions
+   :members:
+
+.. rest-controller:: mistral.api.controllers.v2.dynamic_action:DynamicActionsController
+   :webprefix: /v2/dynamic-actions
