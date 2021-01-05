@@ -207,7 +207,7 @@ class CodeSource(resource.Resource, ScopedResource):
         return cls(
             id='123e4567-e89b-12d3-a456-426655440000',
             name='module',
-            src='content of file',
+            content='content of file',
             version=1,
             scope='private',
             actions=['action1', 'action2', 'action3'],
