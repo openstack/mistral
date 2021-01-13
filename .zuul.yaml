@@ -95,7 +95,6 @@
       - publish-openstack-docs-pti
       - check-requirements
       - release-notes-jobs-python3
-      - openstack-lower-constraints-jobs
     check:
       jobs:
         - openstack-tox-cover:
