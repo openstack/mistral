@@ -92,6 +92,11 @@ class ActionHeartbeatCheckerTest(base.EngineTestCase):
         '__getitem__',
         mock.MagicMock(side_effect=KeyError)
     )
+    @mock.patch.object(
+        cachetools.LRUCache,
+        '__contains__',
+        mock.MagicMock(return_value=False)
+    )
     def test_fail_action_with_missing_heartbeats_wf_spec_not_cached(self):
         wf_text = """---
         version: '2.0'
