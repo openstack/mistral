@@ -168,7 +168,7 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(
             ['workflow_execution_id'],
-            [u'workflow_executions_v2.id'],
+            ['workflow_executions_v2.id'],
             ondelete='CASCADE'
         ),
     )
