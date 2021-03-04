@@ -160,7 +160,7 @@ class RunActionEngineTest(base.EngineTestCase):
             action_ex = db_api.get_action_execution(action_ex.id)
 
             self.assertEqual(states.SUCCESS, action_ex.state)
-            self.assertEqual({'result': u'Hello, John Doe!'}, action_ex.output)
+            self.assertEqual({'result': 'Hello, John Doe!'}, action_ex.output)
 
         action_ex = self.engine.start_action(
             'concat2',

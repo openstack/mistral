@@ -23,10 +23,10 @@ from mistral.tests.unit.api import base
 
 WORKBOOKS = [
     {
-        u'name': u'my_workbook',
-        u'description': u'My cool Mistral workbook',
-        u'scope': None,
-        u'tags': [u'deployment', u'demo']
+        'name': 'my_workbook',
+        'description': 'My cool Mistral workbook',
+        'scope': None,
+        'tags': ['deployment', 'demo']
     }
 ]
 
