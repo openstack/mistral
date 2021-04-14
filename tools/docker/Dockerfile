@@ -22,7 +22,7 @@ RUN apt-get -qq update && \
       gcc \
       libuv1 \
       libuv1-dev && \
-      curl -f -o /tmp/get-pip.py https://bootstrap.pypa.io/3.2/get-pip.py && \
+      curl -f -o /tmp/get-pip.py https://bootstrap.pypa.io/pip/3.2/get-pip.py && \
       python /tmp/get-pip.py && rm /tmp/get-pip.py && \
       pip install --upgrade pip
 
