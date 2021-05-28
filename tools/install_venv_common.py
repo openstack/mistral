@@ -44,10 +44,6 @@ class InstallVenv(object):
         print(message % args, file=sys.stderr)
         sys.exit(1)
 
-    def check_python_version(self):
-        if sys.version_info < (2, 6):
-            self.die("Need Python Version >= 2.6")
-
     def run_command_with_code(self, cmd, redirect_output=True,
                               check_exit_code=True):
         """Runs a command in an out-of-process shell.

@@ -16,7 +16,6 @@ import copy
 import datetime
 import eventlet
 import random
-import sys
 import threading
 
 from oslo_config import cfg
@@ -96,13 +95,6 @@ class DefaultScheduler(base.Scheduler):
                     "Scheduler failed to process delayed calls"
                     " due to unexpected exception."
                 )
-
-                # For some mysterious reason (probably eventlet related)
-                # the exception is not cleared from the context automatically.
-                # This results in subsequent log.warning calls to show invalid
-                # info.
-                if sys.version_info < (3,):
-                    sys.exc_clear()
 
     def _process_store_jobs(self):
         # Select and capture eligible jobs.

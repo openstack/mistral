@@ -16,14 +16,12 @@
 import datetime
 import json
 import pkg_resources as pkg
-import sys
 import time
 from unittest import mock
 
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslotest import base
-import testtools.matchers as ttm
 
 from mistral import context as auth_context
 from mistral.db.sqlalchemy import base as db_sa_base
@@ -133,18 +131,10 @@ class BaseTest(base.BaseTestCase):
             self.assertIn(msg, e.message)
 
     def assertListEqual(self, l1, l2):
-        if tuple(sys.version_info)[0:2] < (2, 7):
-            # for python 2.6 compatibility
-            self.assertEqual(l1, l2)
-        else:
-            super(BaseTest, self).assertListEqual(l1, l2)
+        super(BaseTest, self).assertListEqual(l1, l2)
 
     def assertDictEqual(self, cmp1, cmp2):
-        if tuple(sys.version_info)[0:2] < (2, 7):
-            # for python 2.6 compatibility
-            self.assertThat(cmp1, ttm.Equals(cmp2))
-        else:
-            super(BaseTest, self).assertDictEqual(cmp1, cmp2)
+        super(BaseTest, self).assertDictEqual(cmp1, cmp2)
 
     def _assert_single_item(self, items, **props):
         return self._assert_multiple_items(items, 1, **props)[0]

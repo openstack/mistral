@@ -14,7 +14,6 @@
 
 import datetime
 import eventlet
-import sys
 
 from mistral import context as auth_ctx
 from mistral.db import utils as db_utils
@@ -91,13 +90,6 @@ def _loop():
                 'Action heartbeat checker iteration failed'
                 ' due to an unexpected exception.'
             )
-
-            # For some mysterious reason (probably eventlet related)
-            # the exception is not cleared from the context automatically.
-            # This results in subsequent log.warning calls to show invalid
-            # info.
-            if sys.version_info < (3,):
-                sys.exc_clear()
 
         eventlet.sleep(CONF.action_heartbeat.check_interval)
 

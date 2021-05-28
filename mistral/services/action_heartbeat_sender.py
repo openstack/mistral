@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import eventlet
-import sys
 
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -82,13 +81,6 @@ def _loop():
                 'Action heartbeat sender iteration failed'
                 ' due to an unexpected exception.'
             )
-
-            # For some mysterious reason (probably eventlet related)
-            # the exception is not cleared from the context automatically.
-            # This results in subsequent log.warning calls to show invalid
-            # info.
-            if sys.version_info < (3,):
-                sys.exc_clear()
 
         eventlet.sleep(CONF.action_heartbeat.check_interval)
 
