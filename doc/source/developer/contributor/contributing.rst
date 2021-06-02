@@ -14,9 +14,11 @@ with Mistral.
 Communication
 ~~~~~~~~~~~~~
 
-* IRC channel #openstack-mistral at FreeNode
+* IRC channel #openstack-mistral at `OFTC`_
 * Mailing list (prefix subjects with ``[mistral]`` for faster responses)
   http://lists.openstack.org/cgi-bin/mailman/listinfo/openstack-discuss
+
+.. _`OFTC`: https://www.oftc.net
 
 Contacting the Core Team
 ~~~~~~~~~~~~~~~~~~~~~~~~
