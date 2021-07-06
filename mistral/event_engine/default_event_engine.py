@@ -14,6 +14,7 @@
 #    under the License.
 
 from collections import defaultdict
+import fnmatch
 import json
 import os
 import queue
@@ -22,7 +23,6 @@ import threading
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import threadgroup
-from oslo_utils import fnmatch
 
 from mistral import context as auth_ctx
 from mistral.db.v2 import api as db_api
