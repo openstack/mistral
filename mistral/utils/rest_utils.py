@@ -256,11 +256,14 @@ def get_all(list_cls, cls, get_all_function, get_function,
 
 
 class MistralRetrying(tenacity.Retrying):
-    def call(self, fn, *args, **kwargs):
+    def __call__(self, fn, *args, **kwargs):
         try:
-            return super(MistralRetrying, self).call(fn, *args, **kwargs)
+            return super(MistralRetrying, self).__call__(fn, *args, **kwargs)
         except tenacity.RetryError:
             raise exc.MistralError("The service is temporarily unavailable")
+
+    def call(self, fn, *args, **kwargs):
+        return self.__call__(fn, *args, **kwargs)
 
 
 def create_db_retry_object():
