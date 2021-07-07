@@ -123,7 +123,6 @@ class WorkbookTest(SQLAlchemyTest):
             )
 
             self.assertNotEqual(created, fetched)
-            self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
             self.assertEqual(created.scope, fetched[0])
 
@@ -546,7 +545,6 @@ class WorkflowDefinitionTest(SQLAlchemyTest):
             )
 
             self.assertNotEqual(created, fetched)
-            self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
             self.assertEqual(created.scope, fetched[0])
 
@@ -1142,7 +1140,6 @@ class ActionDefinitionTest(SQLAlchemyTest):
             )
 
             self.assertNotEqual(created, fetched)
-            self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
             self.assertEqual(created.scope, fetched[0])
 
@@ -1493,7 +1490,6 @@ class ActionExecutionTest(SQLAlchemyTest):
             )
 
             self.assertNotEqual(created, fetched)
-            self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
             self.assertEqual(created.name, fetched[0])
 
@@ -1689,7 +1685,6 @@ class WorkflowExecutionTest(SQLAlchemyTest):
             )
 
             self.assertNotEqual(created, fetched)
-            self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
             self.assertEqual(created.state, fetched[0])
 
@@ -2111,7 +2106,6 @@ class TaskExecutionTest(SQLAlchemyTest):
             )
 
             self.assertNotEqual(created, fetched)
-            self.assertIsInstance(fetched, tuple)
             self.assertEqual(1, len(fetched))
             self.assertEqual(created.name, fetched[0])
 
