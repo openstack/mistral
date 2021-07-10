@@ -20,6 +20,7 @@ from oslo_db import options
 from oslo_db.sqlalchemy import enginefacade
 import osprofiler.sqlalchemy
 import sqlalchemy as sa
+from sqlalchemy.sql import column
 
 from mistral.db.sqlalchemy import sqlite_lock
 from mistral import exceptions as exc
@@ -238,6 +239,7 @@ def model_query(model, columns=(), session=None):
     """
 
     if columns:
-        return session.query(*columns)
+        _columns = (column(c) if isinstance(c, str) else c for c in columns)
+        return session.query(*_columns)
 
     return session.query(model)
