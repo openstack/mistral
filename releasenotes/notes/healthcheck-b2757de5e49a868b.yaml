@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    The new ``[healthcheck] enabled`` option has been added. This option can
+    be used to enable the ``helthcheck`` middleware in mistral-api service.
