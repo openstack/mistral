@@ -16,7 +16,7 @@
 #    limitations under the License.
 
 import abc
-import collections
+from collections import abc as collections_abc
 import copy
 import json
 from oslo_config import cfg
@@ -909,7 +909,7 @@ class WithItemsTask(RegularTask):
         required_len = -1
 
         for var, items in exp_res.items():
-            if not isinstance(items, collections.Iterable):
+            if not isinstance(items, collections_abc.Iterable):
                 raise exc.InputException(
                     "Wrong input format for: %s. Iterable type is"
                     " expected for each value." % result
