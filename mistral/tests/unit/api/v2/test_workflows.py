@@ -26,6 +26,7 @@ from mistral.db.v2.sqlalchemy import models
 from mistral import exceptions as exc
 from mistral.tests.unit.api import base
 from mistral.tests.unit import base as unit_base
+from mistral.utils import safe_yaml
 from mistral_lib import utils
 
 WF_DEFINITION = """
@@ -187,7 +188,7 @@ wf2:
       action: std.echo output="Mistral"
 """
 
-WFS_YAML = yaml.load(WFS_DEFINITION)
+WFS_YAML = safe_yaml.safe_load(WFS_DEFINITION)
 FIRST_WF_DEF = yaml.dump({
     'version': '2.0',
     'wf1': WFS_YAML['wf1']
