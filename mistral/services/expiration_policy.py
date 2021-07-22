@@ -92,8 +92,8 @@ def _delete(executions):
             # TODO(tuan_luong): Manipulation with auth_ctx should be
             # out of db transaction scope.
             ctx = auth_ctx.MistralContext(
-                user=None,
-                tenant=execution.project_id,
+                user_id=None,
+                project_id=execution.project_id,
                 auth_token=None,
                 is_admin=True
             )
@@ -147,8 +147,8 @@ def setup():
     _check_ignored_states_config()
 
     ctx = auth_ctx.MistralContext(
-        user=None,
-        tenant=None,
+        user_id=None,
+        project_id=None,
         auth_token=None,
         is_admin=True
     )

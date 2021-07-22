@@ -73,16 +73,16 @@ def create_context(trust_id, project_id):
             user_id = client.user_id
 
         return auth_ctx.MistralContext(
-            user=user_id,
-            tenant=project_id,
+            user_id=user_id,
+            project_id=project_id,
             auth_token=token,
             is_trust_scoped=True,
             trust_id=trust_id,
         )
 
     return auth_ctx.MistralContext(
-        user=None,
-        tenant=None,
+        user_id=None,
+        project_id=None,
         auth_token=None,
         is_admin=True
     )
