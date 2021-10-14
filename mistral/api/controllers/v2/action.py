@@ -228,7 +228,7 @@ class ActionsController(rest.RestController, hooks.HookController):
         _delete_action_definition()
 
     @rest_utils.wrap_wsme_controller_exception
-    @wsme_pecan.wsexpose(resources.Actions, types.uuid, int, types.uniquelist,
+    @wsme_pecan.wsexpose(resources.Actions, wtypes.text, int, types.uniquelist,
                          types.list, types.uniquelist, wtypes.text,
                          wtypes.text, resources.SCOPE_TYPES, wtypes.text,
                          wtypes.text, wtypes.text, wtypes.text,
@@ -327,17 +327,36 @@ class ActionsController(rest.RestController, hooks.HookController):
         )
 
         # Apply sorting.
-        def compare_(a_d1, a_d2):
-            # TODO(rakhmerov): Implement properly
-            return 0
+        def action_descriptor_sort(a_ds, keys, dirs):
+            def compare_(a_d1, a_d2):
+                for key, dir in zip(keys, dirs):
+                    a_d1 = getattr(a_d1, key, a_d1.name)
+                    a_d2 = getattr(a_d2, key, a_d2.name)
 
-        action_descriptors = sorted(
-            action_descriptors,
-            key=functools.cmp_to_key(compare_)
-        )
+                    if a_d1 is None and a_d2 is None:
+                        ret = 0
+                    elif a_d1 is None and a_d2 is not None:
+                        ret = -1
+                    elif a_d1 is not None and a_d2 is None:
+                        ret = 1
+                    else:
+                        ret = (a_d1 > a_d2) - (a_d1 < a_d2)
+                    if ret:
+                        return ret * (1 if dir == 'asc' else -1)
+                return 0
+            return sorted(a_ds, key=functools.cmp_to_key(compare_))
+
+        action_descriptors = action_descriptor_sort(action_descriptors,
+                                                    sort_keys, sort_dirs)
+        start = 0
+        for i, a_d in enumerate(action_descriptors):
+            if a_d.name == marker:
+                start = i
+                break
 
         if limit and limit > 0:
-            action_descriptors = action_descriptors[0:limit]
+            end = start + limit
+            action_descriptors = action_descriptors[start:end]
 
         action_resources = [
             _action_descriptor_to_resource(a_d)
