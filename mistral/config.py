@@ -501,7 +501,7 @@ execution_expiration_policy_opts = [
         default=[],
         help='The states that the expiration policy will filter '
              'out and will not delete.'
-             'Valid values are, [{}]'.format(states.TERMINAL_STATES)
+             'Valid values are, [{}]'.format(sorted(states.TERMINAL_STATES))
     )
 ]
 
