@@ -52,8 +52,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Workflow Service API Reference'
-copyright = u'2017, Mistral Contributors'
+project = 'Workflow Service API Reference'
+copyright = '2017, Mistral Contributors'
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -106,8 +106,8 @@ html_sidebars = {
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mistral', u'Mistral',
-     [u'OpenStack Foundation'], 1)
+    ('index', 'mistral', 'Mistral',
+     ['OpenStack Foundation'], 1)
 ]
 
 # If true, show URL addresses after external links.
