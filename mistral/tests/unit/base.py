@@ -51,7 +51,10 @@ def get_context(default=True, admin=False):
         return auth_context.MistralContext.from_dict({
             'user_name': 'test-user',
             'user': '1-2-3-4',
+            # TODO(tkajinam): Remove this once oslo.context >= 4.0.0 becomes
+            #                 avaialble
             'tenant': security.DEFAULT_PROJECT_ID,
+            'project_id': security.DEFAULT_PROJECT_ID,
             'project_name': 'test-project',
             'is_admin': admin
         })
@@ -59,7 +62,10 @@ def get_context(default=True, admin=False):
         return auth_context.MistralContext.from_dict({
             'user_name': 'test-user',
             'user': '9-0-44-5',
+            # TODO(tkajinam): Remove this once oslo.context >= 4.0.0 becomes
+            #                 avaialble
             'tenant': '99-88-33',
+            'project_id': '99-88-33',
             'project_name': 'test-another',
             'is_admin': admin
         })

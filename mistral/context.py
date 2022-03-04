@@ -153,7 +153,10 @@ def _extract_mistral_auth_params(headers):
             'insecure': insecure,
             'auth_token': headers.get('X-Target-Auth-Token'),
             'auth_uri': headers.get('X-Target-Auth-Uri'),
+            # TODO(tkajinam): Remove this once oslo.context >= 4.0.0 becomes
+            #                 avaialble
             'tenant': headers.get('X-Target-Project-Id'),
+            'project_id': headers.get('X-Target-Project-Id'),
             'user': headers.get('X-Target-User-Id'),
             'user_name': headers.get('X-Target-User-Name'),
             'region_name': headers.get('X-Target-Region-Name'),
