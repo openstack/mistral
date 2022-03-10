@@ -104,7 +104,7 @@ class EventEngineTest(base.DbTestCase):
         auth_context.set_ctx(self.ctx)
 
         t['scope'] = 'public'
-        t['project_id'] = self.ctx.tenant
+        t['project_id'] = self.ctx.project_id
         trigger = db_api.create_event_trigger(t)
 
         # Switch to the user.
