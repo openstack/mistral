@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The dbsync needs to be executed to run the migration of the
+    description field in the workflow_executions_v2 table to text.
