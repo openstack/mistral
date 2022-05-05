@@ -87,24 +87,6 @@ class ContextView(dict):
     def values(self):
         return [self[k] for k in self.keys()]
 
-    def iteritems(self):
-        # NOTE: This is for compatibility with Python 2.7
-        # YAQL converts output objects after they are evaluated
-        # to basic types and it uses six.iteritems() internally
-        # which calls d.items() in case of Python 2.7 and d.iteritems()
-        # for Python 2.7
-        return iter(self.items())
-
-    def iterkeys(self):
-        # NOTE: This is for compatibility with Python 2.7
-        # See the comment for iteritems().
-        return iter(self.keys())
-
-    def itervalues(self):
-        # NOTE: This is for compatibility with Python 2.7
-        # See the comment for iteritems().
-        return iter(self.values())
-
     def __len__(self):
         return len(self.keys())
 
