@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Mistral'
-copyright = u'2020, Mistral Contributors'
+copyright = '2020, Mistral Contributors'
 
 policy_generator_config_file = \
     '../../tools/config/policy-generator.mistral.conf'
@@ -96,8 +96,8 @@ html_title = 'Mistral'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mistral', u'Mistral',
-     [u'OpenStack Foundation'], 1)
+    ('index', 'mistral', 'Mistral',
+     ['OpenStack Foundation'], 1)
 ]
 
 # If true, show URL addresses after external links.
