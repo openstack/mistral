@@ -106,7 +106,7 @@ def retry_on_db_error(func, retry=None):
         # auth context before calling it (potentially in a new thread).
         auth_ctx = context.ctx() if context.has_ctx() else None
 
-        return retry.call(_with_auth_context, auth_ctx, func, *args, **kw)
+        return retry(_with_auth_context, auth_ctx, func, *args, **kw)
 
     return decorate
 
