@@ -37,7 +37,8 @@ def get_pecan_config():
             "root": opts.root,
             "modules": opts.modules,
             "debug": opts.debug,
-            "auth_enable": opts.auth_enable
+            "auth_enable": opts.auth_enable,
+            "guess_content_type_from_ext": False,
         }
     }
 
