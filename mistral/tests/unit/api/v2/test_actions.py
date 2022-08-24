@@ -28,6 +28,36 @@ from mistral_lib.actions.providers import composite
 from mistral_lib import utils
 
 
+ADHOC_ACTION_YAML_A = """
+---
+version: '2.0'
+
+a_action:
+  description: My super cool action.
+  tags: ['test', 'v2']
+  base: std.echo
+  base-input:
+    output: "{$.str1}{$.str2}"
+  input:
+    - str1
+    - str2
+"""
+
+ADHOC_ACTION_YAML_B = """
+---
+version: '2.0'
+
+b_action:
+  description: My super cool action.
+  tags: ['test', 'v2']
+  base: std.echo
+  base-input:
+    output: "{$.str1}{$.str2}"
+  input:
+    - str1
+    - str2
+"""
+
 ADHOC_ACTION_YAML = """
 ---
 version: '2.0'
@@ -324,6 +354,8 @@ class TestActionsController(base.APITest):
 
     def test_get_all(self):
         # Create an adhoc action for the purpose of the test.
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML_B)
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML_A)
         adhoc_actions.create_actions(ADHOC_ACTION_YAML)
 
         resp = self.app.get('/v2/actions')
@@ -331,6 +363,11 @@ class TestActionsController(base.APITest):
         self.assertEqual(200, resp.status_int)
 
         actions_json = resp.json['actions']
+
+        # Verify they are sorted alphabetically
+        self.assertEqual(actions_json[0]['name'], 'a_action')
+        self.assertEqual(actions_json[1]['name'], 'b_action')
+        self.assertEqual(actions_json[2]['name'], 'my_action')
 
         # There will be 'std.' actions and the one we've just created.
         self.assertGreater(len(actions_json), 1)
@@ -442,6 +479,24 @@ class TestActionsController(base.APITest):
         self.assertTrue(
             set(expected_dict.items()).issubset(set(param_dict.items()))
         )
+
+    def test_get_all_pagination_marker(self):
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML_B)
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML_A)
+        adhoc_actions.create_actions(ADHOC_ACTION_YAML)
+
+        resp = self.app.get('/v2/actions?limit=1')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(1, len(resp.json['actions']))
+        self.assertEqual(resp.json['actions'][0]['name'], 'a_action')
+
+        resp = self.app.get('/v2/actions?marker=my_action&limit=2')
+
+        self.assertEqual(200, resp.status_int)
+        self.assertEqual(2, len(resp.json['actions']))
+        self.assertEqual(resp.json['actions'][0]['name'], 'my_action')
+        self.assertEqual(resp.json['actions'][1]['name'], 'std.async_noop')
 
     def test_get_all_pagination_limit_negative(self):
         resp = self.app.get(
