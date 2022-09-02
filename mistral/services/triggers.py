@@ -240,6 +240,8 @@ def on_workflow_complete(wf_ex):
     if not wf_ex.description:
         return
 
+    # NOTE(amorin) we suppose here that the description field is JSON.
+    # But, this is not always true.
     try:
         description = json.loads(wf_ex.description)
     except ValueError as e:
@@ -249,14 +251,17 @@ def on_workflow_complete(wf_ex):
     if not isinstance(description, dict):
         return
 
+    # NOTE(amorin) description can be changed by the end user, maybe we should
+    # not trust that value...
     triggered = description.get('triggered_by')
 
     if not triggered:
         return
 
-    if triggered['type'] == 'cron_trigger':
-        if not db_api.load_cron_trigger(triggered['name']):
-            security.delete_trust()
-    elif triggered['type'] == 'event_trigger':
-        if not db_api.load_event_trigger(triggered['id'], True):
-            security.delete_trust()
+    if 'type' in triggered and 'id' in triggered:
+        if triggered['type'] == 'cron_trigger':
+            if not db_api.load_cron_trigger(triggered['id']):
+                security.delete_trust()
+        elif triggered['type'] == 'event_trigger':
+            if not db_api.load_event_trigger(triggered['id'], True):
+                security.delete_trust()
