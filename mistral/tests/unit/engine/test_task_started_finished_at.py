@@ -120,8 +120,9 @@ class TaskStartedFinishedAtTest(base.EngineTestCase):
 
         created_at = task_ex.created_at
         started_at = self._get_started_finished(task_ex)[0]
+        delta = int((started_at - created_at).total_seconds())
 
-        self.assertEqual(created_at, started_at)
+        self.assertLessEqual(delta, 1)
 
     def test_wait_before_after_are_included_to_duration(self):
         wf_text = """
