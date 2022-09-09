@@ -30,12 +30,6 @@ class WorkflowCancelTest(base.EngineTestCase):
           tasks:
             task1:
               action: std.echo output="Echo"
-              on-complete:
-                - task2
-
-            task2:
-              action: std.echo output="foo"
-              wait-before: 3
         """
 
         wf_service.create_workflows(workflow)
@@ -107,12 +101,6 @@ class WorkflowCancelTest(base.EngineTestCase):
           tasks:
             task1:
               action: std.echo output="Echo"
-              on-complete:
-                - task2
-
-            task2:
-              action: std.echo output="foo"
-              wait-before: 3
         """
 
         wf_service.create_workflows(workflow)
@@ -208,12 +196,6 @@ class WorkflowCancelTest(base.EngineTestCase):
               tasks:
                 task1:
                   action: std.echo output="Echo"
-                  on-complete:
-                    - task2
-
-                task2:
-                  action: std.echo output="foo"
-                  wait-before: 2
         """
 
         wb_service.create_workbook_v2(workbook)
