@@ -113,8 +113,8 @@
         - mistral-tox-unit-postgresql
         - mistral-rally-task:
             voting: false
+    queue: mistral
     gate:
-      queue: mistral
       jobs:
         - mistral-devstack
         - mistral-devstack-tempest-ipv6-only
