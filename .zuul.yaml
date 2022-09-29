@@ -130,8 +130,8 @@
         - openstack-tox-lower-constraints:
             required-projects:
               - openstack/mistral-lib
+    queue: mistral
     gate:
-      queue: mistral
       jobs:
         - mistral-devstack
         - mistral-devstack-non-apache
