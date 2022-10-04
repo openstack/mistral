@@ -72,7 +72,6 @@ def process_cron_triggers_v2(self, ctx):
                     "triggered_by": {
                         "type": "cron_trigger",
                         "id": trigger.id,
-                        "name": trigger.name,
                     }
                 }
 
