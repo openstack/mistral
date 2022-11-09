@@ -128,10 +128,14 @@ function install_mistral {
 
     # installing python-nose.
     if is_fedora; then
-	if python3_enabled; then
+        if python3_enabled; then
             real_install_package python3-nose
-	else
+        else
             real_install_package python2-nose
+        fi
+    elif is_ubuntu; then
+        if python3_enabled; then
+            real_install_package python3-nose
         fi
     else
         real_install_package python-nose
