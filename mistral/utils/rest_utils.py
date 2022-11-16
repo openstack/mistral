@@ -1,6 +1,7 @@
 # Copyright 2014 - Mirantis, Inc.
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Nokia, Inc.
+# Copyright 2022 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@
 import functools
 import json
 
+from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import pecan
@@ -294,3 +296,25 @@ def load_deferred_fields(ex, fields):
         hasattr(ex, f)
 
     return ex
+
+
+def clear_sensitive_headers(dirty_data):
+    if not dirty_data:
+        return dirty_data
+    clean_data = dirty_data.copy()
+    for sensitive in cfg.CONF.action_logging.sensitive_headers:
+        if sensitive in clean_data:
+            del clean_data[sensitive]
+    return clean_data
+
+
+def prepare_request_body_log(body):
+    if not cfg.CONF.action_logging.hide_request_body:
+        return body
+    return 'Request body hidden due to action_logging configuration.'
+
+
+def prepare_response_body_log(body):
+    if not cfg.CONF.action_logging.hide_response_body:
+        return body
+    return 'Response body hidden due to action_logging configuration.'

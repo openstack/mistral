@@ -2,6 +2,7 @@
 # Copyright 2016 - Brocade Communications Systems, Inc.
 # Copyright 2018 - Extreme Networks, Inc.
 # Copyright 2019 - Nokia Networks
+# Copyright 2022 - NetCracker Technology Corp.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -526,6 +527,30 @@ action_heartbeat_opts = [
     )
 ]
 
+action_logging_opts = [
+    cfg.BoolOpt(
+        'hide_response_body',
+        default=False,
+        help=(
+            'If this value is set to True then HTTP action response '
+            'body will be hidden in logs.'
+        )
+    ),
+    cfg.BoolOpt(
+        'hide_request_body',
+        default=False,
+        help=(
+            'If this value is set to True then HTTP action request '
+            'body will be hidden in logs.'
+        )
+    ),
+    cfg.ListOpt(
+        'sensitive_headers',
+        default=[],
+        help='List of sensitive headers that should be hidden in logs.'
+    )
+]
+
 coordination_opts = [
     cfg.StrOpt(
         'backend_url',
@@ -687,6 +712,7 @@ PECAN_GROUP = 'pecan'
 COORDINATION_GROUP = 'coordination'
 EXECUTION_EXPIRATION_POLICY_GROUP = 'execution_expiration_policy'
 ACTION_HEARTBEAT_GROUP = 'action_heartbeat'
+ACTION_LOGGING_GROUP = 'action_logging'
 PROFILER_GROUP = profiler.list_opts()[0][0]
 KEYCLOAK_OIDC_GROUP = "keycloak_oidc"
 YAQL_GROUP = "yaql"
@@ -719,6 +745,7 @@ CONF.register_opts(
     action_heartbeat_opts,
     group=ACTION_HEARTBEAT_GROUP
 )
+CONF.register_opts(action_logging_opts, group=ACTION_LOGGING_GROUP)
 CONF.register_opts(event_engine_opts, group=EVENT_ENGINE_GROUP)
 CONF.register_opts(notifier_opts, group=NOTIFIER_GROUP)
 CONF.register_opts(pecan_opts, group=PECAN_GROUP)
@@ -774,6 +801,7 @@ def list_opts():
         (KEYCLOAK_OIDC_GROUP, keycloak_oidc_opts),
         (YAQL_GROUP, yaql_opts),
         (ACTION_HEARTBEAT_GROUP, action_heartbeat_opts),
+        (ACTION_LOGGING_GROUP, action_logging_opts),
         (None, default_group_opts)
     ]
 
