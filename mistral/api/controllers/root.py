@@ -17,6 +17,7 @@ import pecan
 from wsme import types as wtypes
 import wsmeext.pecan as wsme_pecan
 
+from mistral.api.controllers import info
 from mistral.api.controllers import resource
 from mistral.api.controllers.v2 import root as v2_root
 
@@ -62,6 +63,7 @@ class APIVersions(resource.Resource):
 
 class RootController(object):
     v2 = v2_root.Controller()
+    info = info.InfoController()
 
     @wsme_pecan.wsexpose(APIVersions)
     def index(self):

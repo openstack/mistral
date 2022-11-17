@@ -190,6 +190,10 @@ class UnauthorizedException(MistralException):
     message = "Unauthorized"
 
 
+class InfoEndpointNotAvailableException(MistralException):
+    http_code = 400
+
+
 class KombuException(Exception):
     def __init__(self, e):
         super(KombuException, self).__init__(e)

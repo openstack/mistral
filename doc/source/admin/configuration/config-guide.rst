@@ -179,6 +179,16 @@ directory.
     [notifier]
     notify = [ {"type": "webhook", "url": "http://example.com", "headers": {"X-Auth-Token": "XXXX"}}, {"type": "custom_publisher"} ]
 
+#. Configure info endpoint. Info endpoint could be used for exposing some
+   important for support data in json format. This endpoint should be enabled
+   manually. Store filled info file into environment where Mistral will be
+   running.
+
+   The default configuration is the following::
+     [api]
+     enable_info_endpoint = False
+     info_json_file_path = info.json
+
 #. Finally, try to run mistral engine and verify that it is running without
    any error::
 
